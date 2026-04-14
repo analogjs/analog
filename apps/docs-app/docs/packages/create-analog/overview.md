@@ -47,15 +47,11 @@ pnpm create analog
 
 ### Tailwind v4
 
-`create-analog` scaffolds Tailwind v4 with the current supported Analog setup. Generated projects include:
+`create-analog` scaffolds Tailwind v4 for the current Analog templates. Generated projects import Tailwind in `src/styles.css` and wire the Tailwind-related Vite config the template expects.
 
-- one root stylesheet, usually `src/styles.css`, with `@import 'tailwindcss';`
-- `@tailwindcss/vite` in `vite.config.ts`
-- `postcss.config.mjs` with `@tailwindcss/postcss`
+If you only need Tailwind utilities in templates and global styles, keep the scaffold defaults.
 
-Analog then handles component-level `@reference` injection through its Tailwind-aware stylesheet pipeline, so you do not need to add `@reference` directives manually to every component stylesheet.
-
-For the full Tailwind v4 setup and behavior details, see the [Tailwind CSS integration guide](/docs/integrations/tailwind).
+If you also want `@apply` inside Angular component styles, add Analog's `tailwindCss.rootStylesheet` option and follow the [Tailwind CSS guide](/docs/integrations/tailwind).
 
 If you do not want Tailwind in the generated app, pass `--skipTailwind true`. The default Tailwind v4 flow expects a plain CSS entry file for global styles.
 

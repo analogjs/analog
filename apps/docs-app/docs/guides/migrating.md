@@ -190,8 +190,11 @@ export default defineConfig(({ mode }) => ({
 
 ## Enabling HMR
 
-Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, prefer the `hmr` option. `liveReload` is still accepted as a compatibility alias, but `hmr` is the primary API.
-Analog requires Angular v19 or newer for `hmr` / `liveReload` to work. On Angular v17-v18, `hmr` and its `liveReload` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
+Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, use `liveReload` to control the Angular live-reload pipeline.
+
+This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `liveReload` when you need custom host, port, or path settings. `hmr` is still accepted as a compatibility alias for `liveReload`.
+
+Analog requires Angular v19 or newer for `liveReload` / `hmr` to work. On Angular v17-v18, `liveReload` and its `hmr` alias are forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
 
 ```ts
 /// <reference types="vitest" />
@@ -204,7 +207,7 @@ export default defineConfig(({ mode }) => ({
   // .. other configuration
   plugins: [
     analog({
-      hmr: true,
+      liveReload: true,
     }),
   ],
 }));
@@ -223,7 +226,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig(() => ({
   plugins: [
     analog({
-      hmr: true,
+      liveReload: true,
       vite: {
         tailwindCss: {
           rootStylesheet: resolve(import.meta.dirname, 'src/styles.css'),

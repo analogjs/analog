@@ -1,27 +1,29 @@
 # Tailwind CSS v4
 
-Analog supports Tailwind CSS v4 for both:
+Analog does not replace Tailwind's installation guides. Start with one Tailwind setup that matches your project:
 
-- utility classes in templates
-- `@apply` inside Angular component styles
+- [Install Tailwind with Vite](https://tailwindcss.com/docs/installation/using-vite)
+- [Install Tailwind with PostCSS](https://tailwindcss.com/docs/installation/using-postcss)
+- [Install Tailwind with Angular](https://tailwindcss.com/docs/installation/framework-guides/angular)
 
-The supported v3 `alpha` setup is:
+Once Tailwind is installed, Analog adds the Angular-specific part: component stylesheet handling for `@apply` and Tailwind-aware `@reference` injection.
 
-1. keep one root stylesheet such as `src/styles.css`
-2. put `@import 'tailwindcss';` in that stylesheet
-3. enable `@tailwindcss/vite` in `vite.config.ts`
-4. keep a `postcss.config.mjs` with `@tailwindcss/postcss`
-5. configure Analog with `tailwindCss.rootStylesheet`
+## What Analog adds
 
-Generated apps already follow this shape.
+Use Analog's `tailwindCss.rootStylesheet` option when you want Tailwind utilities inside Angular component styles.
 
-## Install
+That option lets Analog:
 
-```sh
-npm install -D tailwindcss @tailwindcss/vite @tailwindcss/postcss postcss
-```
+- detect component stylesheets that use Tailwind utilities
+- inject the correct `@reference` to your root stylesheet
+- keep component styles aligned with your root Tailwind theme, prefixes, and plugins
+- avoid manual `@reference` directives in every component stylesheet
 
-## Vite Config
+If you only use Tailwind utilities in templates and a global stylesheet, you can follow Tailwind's install docs and keep your generated scaffold defaults without adding extra Analog configuration.
+
+## Component Styles Setup
+
+When you enable `tailwindCss.rootStylesheet`, keep Tailwind wired through Vite for the component stylesheet path:
 
 ```ts
 /// <reference types="vitest" />
@@ -45,9 +47,7 @@ export default defineConfig(() => ({
 }));
 ```
 
-Use an absolute `rootStylesheet` path. Analog may serve component styles through virtual stylesheet ids during dev, so relative `@reference` paths are not reliable there.
-
-If you are using `@analogjs/vite-plugin-angular` directly instead of `@analogjs/platform`, the same Tailwind option lives on the Angular plugin itself:
+If you are using `@analogjs/vite-plugin-angular` directly instead of `@analogjs/platform`, the same option lives on the Angular plugin:
 
 ```ts
 import { resolve } from 'node:path';
@@ -66,6 +66,8 @@ export default defineConfig(() => ({
   ],
 }));
 ```
+
+List `analog()` before `tailwindcss()` in your Vite config. Current generators now scaffold that order.
 
 ## Root Stylesheet
 
@@ -87,19 +89,7 @@ You can keep your theme, `@source`, plugins, and prefixes there as well:
 }
 ```
 
-## PostCSS Config
-
-Create `postcss.config.mjs`:
-
-```js
-export default {
-  plugins: {
-    '@tailwindcss/postcss': {},
-  },
-};
-```
-
-Keep this even if dev already works with `@tailwindcss/vite`. Current Analog builds still rely on the PostCSS path for production CSS processing.
+Use an absolute `rootStylesheet` path. Analog may serve component styles through virtual stylesheet ids during dev, so relative `@reference` paths are not reliable there.
 
 ## How Component Styles Work
 
@@ -108,29 +98,10 @@ Angular compiles component styles in isolation. When a component stylesheet cont
 Analog handles that by:
 
 - detecting Tailwind usage in component CSS
-- injecting the correct `@reference` to the configured root stylesheet
-- externalizing component styles during dev when needed so they flow through Vite's CSS pipeline
-- preserving the build path through PostCSS for production
+- injecting `@reference` to the configured root stylesheet
+- routing those component styles through the Vite CSS pipeline when needed
 
 That means you should not manually add `@reference` to every component stylesheet in the normal setup.
-
-## Plugin Order
-
-List `analog()` before `tailwindcss()` in your Vite config. That is now how the generators scaffold it.
-
-```ts
-plugins: [analog({ vite: { tailwindCss: { ... } } }), tailwindcss()];
-```
-
-This keeps the config aligned with the generated apps and the current documentation.
-
-## HMR
-
-Prefer `hmr` over `liveReload` when you need to configure Angular HMR explicitly. `liveReload` remains a compatibility alias.
-
-Angular HMR requires Angular v19 or newer. On Angular v16-v18, `hmr` and `liveReload` are intentionally disabled at runtime and emit a console warning, so HMR is unavailable on those versions. For the broader migration guidance, see [Enabling HMR](/docs/guides/migrating#enabling-hmr).
-
-Tailwind support does not require you to enable HMR manually. The stylesheet pipeline is handled independently from whether Angular can produce a hot component update for a given edit.
 
 ## Prefixes
 
@@ -149,15 +120,25 @@ analog({
 
 Without `prefixes`, Analog falls back to its default Tailwind usage detection for component styles.
 
+## HMR
+
+Use `liveReload` when you need to configure Analog's Angular live-reload behavior explicitly.
+
+Vite's `server.hmr` option is separate. It controls the HMR websocket transport, so you can use `server.hmr` together with `liveReload` when your dev server needs custom host, port, or path settings. `hmr` is still accepted as a compatibility alias for `liveReload`.
+
+Angular HMR requires Angular v19 or newer. On Angular v17-v18, `liveReload` and its `hmr` alias are intentionally disabled at runtime and emit a console warning, so HMR is unavailable on those versions. For broader migration guidance, see the [migration guide](/docs/guides/migrating).
+
+Tailwind support does not require you to enable HMR manually. The stylesheet pipeline is handled independently from whether Angular can produce a hot component update for a given edit.
+
 ## Generated Apps
 
-Current `create-analog` and Nx app scaffolds both generate:
+Current `create-analog` and Nx app scaffolds already:
 
-- `@import 'tailwindcss';` in `src/styles.css`
-- `@tailwindcss/vite` in `vite.config.ts`
-- `postcss.config.mjs` with `@tailwindcss/postcss`
+- import Tailwind in `src/styles.css`
+- register Tailwind in `vite.config.ts`
+- keep the generated Vite plugin order aligned with the current Analog templates
 
-If you start from a generated app, keep that structure unless you have a specific reason to diverge from the supported path.
+Some templates may also include additional Tailwind tooling config files. Treat the generated scaffold as your project default, and only diverge after validating your own dev and build behavior.
 
 ## Related
 

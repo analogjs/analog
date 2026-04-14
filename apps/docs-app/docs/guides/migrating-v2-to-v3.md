@@ -158,4 +158,4 @@ Keep automated migration tooling focused on the breaking changes above:
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
-- treat optional helpers such as `withTypedRouter`, `withRouteContext`, `withLoaderCaching`, `withDebugRoutes`, and compatibility aliases such as `liveReload` as opt-in rather than mandatory rewrites
+- treat optional helpers such as `withTypedRouter`, `withRouteContext`, `withLoaderCaching`, `withDebugRoutes`, and compatibility aliases such as `hmr` as opt-in rather than mandatory rewrites

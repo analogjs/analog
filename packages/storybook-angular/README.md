@@ -35,7 +35,7 @@ const config: StorybookConfig = {
   framework: {
     name: '@analogjs/storybook-angular',
     options: {
-      hmr: true,
+      liveReload: true,
     },
   },
 };
@@ -123,7 +123,9 @@ In your global stylesheet, import Tailwind with:
 
 Storybook does not automatically infer the Tailwind plugin from your app's `vite.config.ts`, so add it in `viteFinal` when your stories depend on Tailwind utilities.
 
-Angular HMR is controlled with `framework.options.hmr`. `liveReload` is still accepted as a compatibility alias, but `hmr` is the preferred option.
+Angular reload behavior is controlled with `framework.options.liveReload`.
+
+This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `framework.options.liveReload` when Storybook needs custom host, port, or path settings. `framework.options.hmr` is still accepted as a compatibility alias.
 
 ## Enabling Zoneless Change Detection
 

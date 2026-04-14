@@ -79,6 +79,12 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
     framework.options,
     options?.angularBuilderOptions,
   );
+  const liveReload =
+    typeof framework.options?.liveReload !== 'undefined'
+      ? framework.options?.liveReload
+      : typeof framework.options?.hmr !== 'undefined'
+        ? framework.options?.hmr
+        : false;
   return vite.mergeConfig(config, {
     // Add dependencies to pre-optimization
     optimizeDeps: {
@@ -103,13 +109,8 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
           typeof framework.options?.jit !== 'undefined'
             ? framework.options?.jit
             : true,
-        hmr:
-          typeof framework.options?.hmr !== 'undefined'
-            ? framework.options?.hmr
-            : typeof framework.options?.liveReload !== 'undefined'
-              ? framework.options?.liveReload
-              : false,
-        liveReload: framework.options?.liveReload,
+        liveReload,
+        hmr: liveReload,
         tsconfig:
           typeof framework.options?.tsconfig !== 'undefined'
             ? framework.options?.tsconfig

@@ -4,19 +4,18 @@ title: 'Using CSS Pre-processors'
 
 The Vite Plugin supports CSS pre-processing using external `styleUrls` and inline `styles` in the Component decorator metadata.
 
-## Recommended Tailwind v4 setup
+## Tailwind v4 component styles
 
-If your app uses Tailwind v4, keep the supported Analog setup:
+Tailwind installation itself should follow Tailwind's docs. The Analog-specific configuration below is for Angular component styles that use Tailwind utilities such as `@apply`.
 
 - keep a single root stylesheet such as `src/styles.css`
 - put `@import 'tailwindcss';` in that root stylesheet
 - keep `@tailwindcss/vite` enabled in `vite.config.ts`
-- keep `postcss.config.mjs` with `@tailwindcss/postcss`
 - configure Analog with `tailwindCss.rootStylesheet`
 
 This lets Analog preprocess component stylesheets and inject the correct `@reference` directive automatically for component CSS that uses Tailwind utilities.
 
-For the complete setup and Tailwind-specific guidance, see the [Tailwind CSS integration guide](/docs/integrations/tailwind).
+For the broader Tailwind + Analog overview, see the [Tailwind CSS guide](/docs/integrations/tailwind).
 
 ```ts
 /// <reference types="vitest" />
@@ -32,7 +31,7 @@ export default defineConfig(() => ({
       tailwindCss: {
         rootStylesheet: resolve(__dirname, 'src/styles.css'),
       },
-      hmr: true,
+      liveReload: true,
     }),
     tailwindcss(),
   ],
@@ -45,19 +44,13 @@ And in `src/styles.css`:
 @import 'tailwindcss';
 ```
 
-And in `postcss.config.mjs`:
-
-```js
-export default {
-  plugins: {
-    '@tailwindcss/postcss': {},
-  },
-};
-```
-
 Use an absolute path for `rootStylesheet`. Analog serves some component styles through virtual stylesheet ids during dev, so relative `@reference` paths are not reliable there.
 
+Use `liveReload` to control Analog's Angular reload behavior. Vite's top-level `server.hmr` option remains available when you need to configure the HMR websocket transport separately.
+
 You only need `tailwindCss.prefixes` when your component styles use custom-prefixed utilities and you want Analog to look for those prefixes instead of the default `@apply` detection.
+
+If you only use Tailwind utilities in templates and a global stylesheet, you can keep your Tailwind install path and skip `tailwindCss.rootStylesheet`.
 
 External `styleUrls` can be used without any additional configuration.
 

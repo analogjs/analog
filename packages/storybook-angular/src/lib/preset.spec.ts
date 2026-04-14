@@ -132,28 +132,28 @@ describe('viteFinal', () => {
   };
 
   describe('Angular plugin options', () => {
-    it('prefers hmr over liveReload and keeps liveReload as compatibility input', async () => {
-      const options = makeOptions({ hmr: true, liveReload: false });
+    it('prefers liveReload over hmr and keeps hmr as compatibility input', async () => {
+      const options = makeOptions({ liveReload: false, hmr: true });
 
       await viteFinal(baseConfig, options);
 
       expect(angularPluginMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          hmr: true,
           liveReload: false,
+          hmr: false,
         }),
       );
     });
 
-    it('falls back to liveReload when hmr is omitted', async () => {
-      const options = makeOptions({ liveReload: true });
+    it('falls back to hmr when liveReload is omitted', async () => {
+      const options = makeOptions({ hmr: true });
 
       await viteFinal(baseConfig, options);
 
       expect(angularPluginMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          hmr: true,
           liveReload: true,
+          hmr: true,
         }),
       );
     });

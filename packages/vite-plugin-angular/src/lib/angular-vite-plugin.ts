@@ -155,16 +155,20 @@ export interface PluginOptions {
   include?: string[];
   additionalContentDirs?: string[];
   /**
-   * Enables Angular's HMR during development/watch mode.
+   * Enables Analog's Angular live-reload/HMR pipeline during development/watch mode.
    *
-   * Defaults to `true` for watch mode. Set to `false` to disable HMR while
-   * keeping other stylesheet externalization behavior available when needed.
-   */
-  hmr?: boolean;
-  /**
-   * @deprecated Use `hmr` instead. Kept as a compatibility alias.
+   * This is separate from Vite's `server.hmr` option, which configures the
+   * HMR client transport.
+   *
+   * Defaults to `true` for watch mode. Set to `false` to disable Angular
+   * reload updates while keeping other stylesheet externalization behavior
+   * available when needed.
    */
   liveReload?: boolean;
+  /**
+   * Compatibility alias for `liveReload`.
+   */
+  hmr?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
   experimental?: {
@@ -431,6 +435,7 @@ function buildStylePreprocessor(
 
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
+  const liveReload = options?.liveReload ?? options?.hmr ?? true;
 
   /**
    * Normalize plugin options so defaults
@@ -452,7 +457,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     jit: options?.jit,
     include: options?.include ?? [],
     additionalContentDirs: options?.additionalContentDirs ?? [],
-    hmr: options?.hmr ?? options?.liveReload ?? true,
+    liveReload,
+    hmr: liveReload,
     disableTypeChecking: options?.disableTypeChecking ?? true,
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
