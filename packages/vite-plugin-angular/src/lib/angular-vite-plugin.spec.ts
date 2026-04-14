@@ -1,4 +1,13 @@
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  it,
+  expect,
+  vi,
+} from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -46,25 +55,33 @@ describe('angularVitePlugin', () => {
   });
 
   it('prebundles rxjs and tslib in optimizeDeps', async () => {
-    const plugin = angular().find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
-    ) as Plugin;
-    const configHook =
-      typeof plugin.config === 'function'
-        ? plugin.config
-        : (plugin.config as any)?.handler;
+    const tempRoot = mkdtempSync(join(tmpdir(), 'analog-optimize-deps-'));
+    const tsconfigPath = join(tempRoot, 'tsconfig.spec.json');
+    writeFileSync(tsconfigPath, '{\n  "compilerOptions": {}\n}\n', 'utf-8');
 
-    const config = await configHook?.call(
-      {} as any,
-      { resolve: {} },
-      { command: 'serve', mode: 'development' },
-    );
+    try {
+      const plugin = angular({ tsconfig: tsconfigPath }).find(
+        (p) => p.name === '@analogjs/vite-plugin-angular',
+      ) as Plugin;
+      const configHook =
+        typeof plugin.config === 'function'
+          ? plugin.config
+          : (plugin.config as any)?.handler;
 
-    expect(config?.optimizeDeps?.include).toEqual([
-      'rxjs/operators',
-      'rxjs',
-      'tslib',
-    ]);
+      const config = await configHook?.call(
+        {} as any,
+        { resolve: {} },
+        { command: 'serve', mode: 'development' },
+      );
+
+      expect(config?.optimizeDeps?.include).toEqual([
+        'rxjs/operators',
+        'rxjs',
+        'tslib',
+      ]);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 });
 
@@ -1369,7 +1386,18 @@ describe('template class binding guard plugin', () => {
 // =============================================================================
 
 describe('tailwind-reference plugin', () => {
-  const ROOT_CSS = '/project/src/styles/tailwind.css';
+  let rootCssDir = '';
+  let ROOT_CSS = '';
+
+  beforeAll(() => {
+    rootCssDir = mkdtempSync(join(tmpdir(), 'analog-tailwind-root-'));
+    ROOT_CSS = join(rootCssDir, 'tailwind.css');
+    writeFileSync(ROOT_CSS, '@import "tailwindcss" prefix(sa);\n', 'utf-8');
+  });
+
+  afterAll(() => {
+    rmSync(rootCssDir, { recursive: true, force: true });
+  });
 
   /**
    * Helper: extract the tailwind-reference sub-plugin from the array

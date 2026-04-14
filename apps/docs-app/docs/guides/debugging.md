@@ -234,6 +234,10 @@ The examples above include the full set of published Analog workspace packages t
 | `analog:nitro:ssr`       | Server-side rendering                                   |
 | `analog:nitro:prerender` | Prerendering                                            |
 
+:::note
+When debugging SSR builds that reuse shared plugins, seeing repeated `@analogjs/vite-plugin-angular` entries in the resolved SSR plugin list can be expected. That SSR duplication is not the same as registering `analog()` twice in the client build.
+:::
+
 ## Using with `@analogjs/vite-plugin-angular` standalone
 
 The `debug` option is also available when using the Angular plugin directly:

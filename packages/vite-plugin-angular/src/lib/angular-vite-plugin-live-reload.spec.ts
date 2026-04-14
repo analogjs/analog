@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdtempSync,
   mkdirSync,
   readFileSync,
@@ -11,9 +12,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const preprocessCSSMock = vi.fn();
 const createAngularCompilationMock = vi.fn();
-const workspaceRoot = '/workspace/analog';
 const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
+const temporaryWorkspaceRoots = new Set<string>();
 
 // Cache the real module exports once so vi.doMock factories can be
 // synchronous.  Async factories inside vi.doMock can race with
@@ -44,13 +45,35 @@ async function setupLiveReloadPlugin(options: {
   process.env['NODE_ENV'] = 'development';
   delete process.env['VITEST'];
 
-  const resolvedWorkspaceRoot = options.workspaceRoot ?? workspaceRoot;
+  const resolvedWorkspaceRoot =
+    options.workspaceRoot ??
+    mkdtempSync(join(tmpdir(), 'analog-live-reload-workspace-'));
+  if (!options.workspaceRoot) {
+    temporaryWorkspaceRoots.add(resolvedWorkspaceRoot);
+  }
   const resolvedTsconfig =
     options.tsconfig ?? `${resolvedWorkspaceRoot}/tsconfig.base.json`;
   const resolvedCacheDir = join(
     resolvedWorkspaceRoot,
     'node_modules/.vite/live-reload-spec',
   );
+  mkdirSync(resolvedWorkspaceRoot, { recursive: true });
+  if (!options.tsconfig && !existsSync(resolvedTsconfig)) {
+    writeFileSync(
+      resolvedTsconfig,
+      JSON.stringify(
+        {
+          compilerOptions: {
+            module: 'esnext',
+            moduleResolution: 'bundler',
+            target: 'es2022',
+          },
+        },
+        null,
+        2,
+      ),
+    );
+  }
 
   cachedViteActual ??= await vi.importActual<typeof import('vite')>('vite');
   cachedDevkitActual ??=
@@ -149,6 +172,10 @@ describe('angular hmr style preprocessing', () => {
     vi.doUnmock('vite');
     vi.doUnmock('./utils/devkit.js');
     vi.doUnmock('node:fs');
+    for (const workspaceRoot of temporaryWorkspaceRoots) {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+    temporaryWorkspaceRoots.clear();
 
     if (originalNodeEnv === undefined) {
       delete process.env['NODE_ENV'];

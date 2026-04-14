@@ -64,6 +64,12 @@ async function setupLegacyTransformPlugin() {
     mergeTransformers: vi.fn(() => ({})),
   }));
 
+  vi.doMock('./analog-compiler-plugin.js', () => ({
+    analogCompilerPlugin: vi.fn(() => ({
+      name: 'mock-analog-compiler-plugin',
+    })),
+  }));
+
   vi.doMock('./utils/devkit.js', () => ({
     JavaScriptTransformer: class {
       close = vi.fn();
@@ -122,6 +128,7 @@ describe('legacy Angular transform', () => {
     vi.doUnmock('@angular/compiler-cli');
     vi.doUnmock('./compiler-plugin.js');
     vi.doUnmock('./host.js');
+    vi.doUnmock('./analog-compiler-plugin.js');
     vi.doUnmock('./utils/devkit.js');
     for (const workspaceRoot of temporaryWorkspaceRoots) {
       rmSync(workspaceRoot, { recursive: true, force: true });

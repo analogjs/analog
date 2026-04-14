@@ -37,12 +37,28 @@ import { debugNitro, debugSsr } from './utils/debug.js';
 // Nitro reuses the captured Vite config across client and SSR passes. Snapshot
 // the caller's objects up front so later user mutations do not leak into the
 // build orchestration for either environment.
+//
+// Pitfall if we keep a live reference:
+// - `build.outDir` can change after capture, sending the client sub-build to a
+//   different directory than the one Nitro later probes for `index.html`.
+// - a plugin can replace `{ handler, order }` with a new wrapper object, which
+//   changes hook ordering for Nitro even though Nitro already "captured" config.
+// - `resolve.alias` can be rewritten between the client and SSR passes, causing
+//   the two environments to build against different module graphs.
 type ObjectHook<T> = { handler: T; [key: string]: unknown };
 
 function isObjectHook(value: unknown): value is ObjectHook<unknown> {
   return !!value && typeof value === 'object' && 'handler' in value;
 }
 
+// Vite allows hook wrappers like `{ handler, order }`. Clone the mutable
+// wrapper object so later writes to metadata do not leak into Nitro's stored
+// config, but keep the original handler function because that is the behavior.
+//
+// Scenario: a caller swaps `{ handler, order: 'pre' }` for a fresh
+// `{ handler, order: 'post' }` object after Nitro's `config()` hook ran. Nitro
+// should keep the captured ordering metadata instead of silently retargeting
+// when the outer wrapper object changes.
 function cloneObjectHook<T>(hook: T): T {
   if (!isObjectHook(hook)) {
     return hook;
@@ -71,14 +87,68 @@ function cloneUserPlugin<T>(plugin: T): T {
   return clone as T;
 }
 
+function cloneEnvironmentEntries(
+  environments: UserConfig['environments'],
+): UserConfig['environments'] {
+  if (!environments || typeof environments !== 'object') {
+    return environments;
+  }
+
+  // Vite stores per-environment overrides in nested records. Snapshot the
+  // branches Nitro later inspects so a late write like
+  // `environments.client.build.outDir = ...` does not redirect follow-up
+  // diagnostics or asset lookups away from the client build Nitro already
+  // started coordinating.
+  return Object.fromEntries(
+    Object.entries(environments).map(([name, environment]) => {
+      if (!environment || typeof environment !== 'object') {
+        return [name, environment];
+      }
+
+      const environmentRecord = environment as Record<string, unknown>;
+      return [
+        name,
+        {
+          ...environmentRecord,
+          build:
+            environmentRecord['build'] &&
+            typeof environmentRecord['build'] === 'object'
+              ? { ...(environmentRecord['build'] as Record<string, unknown>) }
+              : environmentRecord['build'],
+        },
+      ];
+    }),
+  ) as UserConfig['environments'];
+}
+
+// This is intentionally selective rather than a deep clone of the whole Vite
+// config. Nitro only needs a stable snapshot of the mutable branches it keeps
+// reading after the `config()` hook returns: plugin entries, build/server/test
+// options, and resolve aliases.
+//
+// Pitfalls we are isolating here:
+// - a later write to `config.build.outDir` can desynchronize where the client
+//   build writes files vs where Nitro tries to read them back.
+// - plugin array edits after capture can add/remove behavior from one sub-build
+//   but not the other, which makes client and SSR resolution diverge.
+// - alias rewrites after capture can make the SSR environment import different
+//   files than the client environment even though Nitro is orchestrating one app.
+// - environment-specific build overrides can drift after capture, which makes
+//   diagnostics and any environment-aware follow-up logic observe the wrong
+//   client/SSR shape.
+//
+// We do not deep-clone functions or plugin instances because Nitro still needs
+// the original executable behavior and plugin shape; the problem is mutable
+// container objects, not function identity.
 function cloneUserConfig(userConfig: UserConfig): UserConfig {
-  const { resolve, build, server, plugins } = userConfig;
+  const { environments, resolve, build, server, plugins } = userConfig;
   const test = (userConfig as UserConfig & { test?: Record<string, unknown> })
     .test;
   return {
     ...userConfig,
     plugins: plugins?.map(cloneUserPlugin),
     build: build && { ...build },
+    environments: cloneEnvironmentEntries(environments),
     server: server && { ...server },
     test: test && { ...test },
     resolve: resolve && {
@@ -603,6 +673,15 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         isServe = command === 'serve';
         isBuild = command === 'build';
         ssrBuild = userConfig.build?.ssr === true;
+        // Store a stable view of the incoming Vite config before later config
+        // hooks or environment-specific setup can mutate the caller-owned
+        // object.
+        //
+        // Concrete failure mode: Nitro captures `userConfig`, then another
+        // hook rewrites `build.outDir` or replaces a plugin hook wrapper. If
+        // we keep the live object, `closeBundle()` and the SSR handoff can end
+        // up reading a different config than the one the client pass started
+        // with.
         config = cloneUserConfig(userConfig);
         isTest = isTest ? isTest : mode === 'test';
         rollupExternalEntries.length = 0;
