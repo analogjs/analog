@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type * as ts from 'typescript';
 import { augmentHostWithResources } from './host.js';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
+import { TailwindReferenceError } from './utils/tailwind-reference.js';
 
 describe('augmentHostWithResources', () => {
   it('preprocesses external stylesheets before Vite transforms them', async () => {
@@ -193,5 +194,26 @@ describe('augmentHostWithResources', () => {
         containingFile: '/project/src/app/demo.component.ts',
       }),
     ).resolves.toBeNull();
+  });
+
+  it('rethrows TailwindReferenceError from eager stylesheet transforms', async () => {
+    const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
+    const transform = vi
+      .fn()
+      .mockRejectedValue(
+        new TailwindReferenceError('comment-masked @reference'),
+      );
+
+    augmentHostWithResources(host, transform as any, {
+      inlineStylesExtension: 'css',
+    });
+
+    await expect(
+      (host as any).transformResource('.demo { color: red; }', {
+        type: 'style',
+        resourceFile: '/project/src/app/demo.component.css',
+        containingFile: '/project/src/app/demo.component.ts',
+      }),
+    ).rejects.toThrow('comment-masked @reference');
   });
 });

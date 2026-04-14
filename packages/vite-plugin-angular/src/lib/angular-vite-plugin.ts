@@ -92,6 +92,7 @@ import {
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import {
   inspectCssTailwindDirectives,
+  isTailwindReferenceError,
   throwTailwindReferenceTextError,
 } from './utils/tailwind-reference.js';
 import {
@@ -2461,6 +2462,9 @@ export function angular(options?: PluginOptions): Plugin[] {
               resolvedConfig,
             );
           } catch (e) {
+            if (isTailwindReferenceError(e)) {
+              throw e;
+            }
             debugStyles('preprocessCSS error', {
               filename,
               resourceFile: resourceFile ?? '(inline)',

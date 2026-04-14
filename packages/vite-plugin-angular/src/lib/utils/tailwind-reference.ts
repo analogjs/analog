@@ -10,6 +10,10 @@ export interface CssTailwindDirectiveState {
   hasTailwindImportDirective: boolean;
 }
 
+export class TailwindReferenceError extends Error {
+  readonly name = 'TailwindReferenceError';
+}
+
 // Match real CSS directives, not prose inside block comments. The scanner keeps
 // quoted CSS content intact so `/* ... */` sequences inside strings do not get
 // mistaken for real comments.
@@ -133,7 +137,7 @@ export function throwTailwindReferenceTextError(
   filename: string,
   rootStylesheet: string,
 ): never {
-  throw new Error(
+  throw new TailwindReferenceError(
     `${ANGULAR_TAILWIND_PREFIX} Tailwind @reference auto-injection was ` +
       `blocked for "${filename}" because the stylesheet contains the ` +
       `text "@reference" but does not contain a real @reference ` +
@@ -144,4 +148,10 @@ export function throwTailwindReferenceTextError(
       `  - Reword the comment so it does not contain "@reference"\n` +
       `  - Add a real @reference "${rootStylesheet}"; directive\n`,
   );
+}
+
+export function isTailwindReferenceError(
+  error: unknown,
+): error is TailwindReferenceError {
+  return error instanceof TailwindReferenceError;
 }

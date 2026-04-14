@@ -16,6 +16,7 @@ import {
 } from './stylesheet-registry.js';
 import { debugStyles } from './utils/debug.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
+import { isTailwindReferenceError } from './utils/tailwind-reference.js';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -121,6 +122,9 @@ export function augmentHostWithResources(
         `${filename}?direct`,
       );
     } catch (e) {
+      if (isTailwindReferenceError(e)) {
+        throw e;
+      }
       debugStyles('NgtscProgram: stylesheet transform error', {
         filename,
         resourceFile: context.resourceFile ?? '(inline)',
