@@ -9,17 +9,20 @@ import {
 import { ActivatedRoute } from '@angular/router';
 
 import { toSignal } from '@angular/core/rxjs-interop';
-import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import type { ContentFile } from '../../src/lib/content-file';
+import {
+  CONTENT_FILE_LOADER,
+  injectContentFileLoader,
+} from '../../src/lib/content-file-loader';
 import { injectContentLocale } from '../../src/lib/content-locale';
 import { ContentRenderer } from '../../src/lib/content-renderer';
+import { injectContentFilesMap } from '../../src/lib/inject-content-files';
 import {
   FrontmatterValidationError,
   parseRawContentFile,
   parseRawContentFileAsync,
 } from '../../src/lib/parse-raw-content-file';
-import { injectContentFileLoader } from '../../src/lib/content-file-loader';
 
 export interface ContentFileResourceResult<
   Attributes extends Record<string, any> = Record<string, any>,
@@ -209,10 +212,11 @@ export function contentFileResource(
     ? (paramsOrOptions as { schema?: StandardSchemaV1 }).schema
     : undefined;
 
-  const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
   const locale = injectContentLocale();
-  const contentFilesMap = toSignal(from(loaderPromise()));
+  const contentFilesMap = inject(CONTENT_FILE_LOADER, { optional: true })
+    ? injectContentFileLoader()()
+    : Promise.resolve(injectContentFilesMap());
   const input =
     params ||
     toSignal(
@@ -223,9 +227,10 @@ export function contentFileResource(
     );
 
   return resource({
-    params: computed(() => ({ input: input(), files: contentFilesMap() })),
+    params: computed(() => input()),
     loader: async ({ params: resourceParams }) => {
-      const { input: param, files } = resourceParams;
+      const param = resourceParams;
+      const files = await contentFilesMap;
 
       if (typeof param === 'string') {
         if (param) {

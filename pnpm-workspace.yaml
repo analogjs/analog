@@ -18,6 +18,7 @@ packages:
   # Integration / E2E test projects that need their own workspace deps.
   - 'tests/*'
 
+managePackageManagerVersions: false
 catalog:
   '@angular/animations': 21.2.7
   '@angular/cdk': 21.2.6

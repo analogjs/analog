@@ -5,8 +5,7 @@ test('should redirect to /blog', async ({ page }) => {
   await expect(page).toHaveURL(/\/blog$/);
 });
 
-// https://github.com/analogjs/analog/issues/2165
-test.fixme('should serve up HTML for pre-rendered markdown route', async ({
+test('should serve up HTML for pre-rendered markdown route', async ({
   page,
 }) => {
   await page.goto('/blog/2022-12-27-my-first-post');

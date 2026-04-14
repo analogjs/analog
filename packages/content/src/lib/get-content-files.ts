@@ -5,9 +5,9 @@
  *
  * @returns
  */
-export const getContentFilesList = () => {
-  const ANALOG_CONTENT_FILE_LIST = {};
+export const ANALOG_CONTENT_FILE_LIST = {};
 
+export const getContentFilesList = () => {
   return ANALOG_CONTENT_FILE_LIST as Record<string, Record<string, any>>;
 };
 
@@ -16,8 +16,8 @@ export const getContentFilesList = () => {
  *
  * @returns
  */
-export const getContentFiles = (): Record<string, () => Promise<string>> => {
-  const ANALOG_CONTENT_ROUTE_FILES = {};
+export const ANALOG_CONTENT_ROUTE_FILES = {};
 
+export const getContentFiles = (): Record<string, () => Promise<string>> => {
   return ANALOG_CONTENT_ROUTE_FILES as Record<string, () => Promise<string>>;
 };
