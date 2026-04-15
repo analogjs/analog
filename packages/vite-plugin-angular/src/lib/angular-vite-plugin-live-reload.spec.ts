@@ -27,6 +27,10 @@ let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('./utils/devkit.js');
 
 async function setupLiveReloadPlugin(options: {
+  emitAffectedFiles?: Array<{
+    contents: string;
+    filename: string;
+  }>;
   include?: string[];
   experimental?: {
     enableSelectorless?: boolean;
@@ -105,7 +109,9 @@ async function setupLiveReloadPlugin(options: {
     initialize,
     update: vi.fn(),
     diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
-    emitAffectedFiles: vi.fn().mockResolvedValue([]),
+    emitAffectedFiles: vi
+      .fn()
+      .mockResolvedValue(options.emitAffectedFiles ?? []),
   });
 
   let transformStylesheet:
@@ -652,6 +658,45 @@ describe('angular hmr style preprocessing', () => {
       } finally {
         rmSync(tempWorkspaceRoot, { force: true, recursive: true });
       }
+    },
+  );
+
+  it(
+    'resolves Angular emit output for Windows /@fs/ transform ids',
+    { timeout: 15_000 },
+    async () => {
+      const windowsComponentId = 'C:/project/src/app/demo.component.ts';
+      const emittedCode = 'export const demo = true;\n';
+      const { plugin } = await setupLiveReloadPlugin({
+        emitAffectedFiles: [
+          {
+            filename: windowsComponentId,
+            contents: emittedCode,
+          },
+        ],
+      });
+
+      const transformed = await plugin.transform.handler.call(
+        {
+          addWatchFile: vi.fn(),
+          error: vi.fn(),
+          warn: vi.fn(),
+        },
+        `
+          import { Component } from '@angular/core';
+
+          @Component({
+            template: '<p>Demo</p>',
+          })
+          export class DemoComponent {}
+        `,
+        `/@fs/${windowsComponentId}`,
+      );
+
+      expect(transformed).toEqual({
+        code: emittedCode,
+        map: null,
+      });
     },
   );
 });

@@ -865,8 +865,19 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
   let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
-  const normalizeEmitterLookupId = (file: string) =>
-    normalizePath(file.replace(/^\/@fs\//, '/'));
+  const normalizeEmitterLookupId = (file: string) => {
+    const normalizedFile = normalizePath(file);
+
+    if (!normalizedFile.startsWith('/@fs/')) {
+      return normalizedFile;
+    }
+
+    const fsPath = normalizedFile
+      .slice('/@fs'.length)
+      .replace(/^\/([A-Za-z]:\/)/, '$1');
+
+    return normalizePath(fsPath);
+  };
   const describeEmitMarkers = (content: string) => ({
     contentLength: content.length,
     hasCmp: content.includes('ɵcmp'),
@@ -1958,9 +1969,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             const isAngular =
               !id.includes('@ng/component') &&
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
-            debugCompilerV('transform skip (file not emitted by Angular)', {
-              id,
-            });
             debugEmit('transform emit miss', {
               id,
               normalizedId: normalizeEmitterLookupId(id),
