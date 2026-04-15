@@ -1,8 +1,10 @@
 ---
+title: Debugging Techniques
+description: Enable Analog debug logging, choose the right scopes, and debug local or GitHub-based Analog builds from another pnpm workspace.
 sidebar_position: 4
 ---
 
-# Debugging
+# Debugging Techniques
 
 Analog includes structured debug logging powered by [obug](https://www.npmjs.com/package/obug). You can enable debug output through the `debug` option in your Vite config or via the `DEBUG` environment variable.
 
