@@ -178,20 +178,6 @@ export interface PluginOptions {
     useAngularCompilationAPI?: boolean;
     useAnalogCompiler?: boolean;
     /**
-     * Controls Angular's experimental selectorless compilation mode.
-     *
-     * Defaults to `true` only when Angular 20+ applications use file-based
-     * pages or route entry points that rely on selectorless compilation.
-     * That auto mode is preserved for backwards compatibility with existing
-     * Analog route files that intentionally omit `selector`.
-     * Angular treats this as a compiler-wide mode, so once enabled it applies
-     * to the whole program, including workspace libraries pulled in through
-     * `include` globs or tsconfig references.
-     * Set this explicitly to pin behavior when route discovery would otherwise
-     * auto-enable selectorless for a larger app graph than intended.
-     */
-    enableSelectorless?: boolean;
-    /**
      * Compilation output mode for the Analog compiler.
      * - `'full'` (default): Emit final Ivy definitions for application builds.
      * - `'partial'`: Emit partial declarations for library publishing.
@@ -317,55 +303,6 @@ export function normalizeIncludeGlob(
   return normalizePath(resolve(normalizedWorkspaceRoot, normalizedGlob));
 }
 
-function isSelectorlessRouteFile(file: string): boolean {
-  const normalized = normalizePath(file);
-  return (
-    normalized.endsWith('.page.ts') ||
-    normalized.includes('/src/app/routes/') ||
-    normalized.includes('/app/routes/')
-  );
-}
-
-/**
- * Infer selectorless support from route/page entry points.
- *
- * This heuristic is intentionally broad because file-based routing commonly
- * relies on selectorless components. The resulting Angular compiler flag is
- * program-wide, not route-scoped, so a matching route-like include can affect
- * every file in the current Angular program.
- */
-function detectSelectorlessRouteUsage(
-  root: string,
-  workspaceRoot: string,
-  includeGlobs: string[],
-): { enabled: boolean; routeFileCount: number } {
-  const normalizedRoot = normalizePath(resolve(root));
-  const normalizedWorkspaceRoot = normalizePath(resolve(workspaceRoot));
-  const appRouteGlobs = [
-    `${normalizedRoot}/src/app/pages/**/*.page.ts`,
-    `${normalizedRoot}/src/app/routes/**/*.ts`,
-    `${normalizedRoot}/app/routes/**/*.ts`,
-  ];
-  const routeLikeIncludeGlobs = includeGlobs
-    .map((glob) => normalizeIncludeGlob(normalizedWorkspaceRoot, glob))
-    .filter(
-      (glob) =>
-        glob.includes('.page.') ||
-        glob.includes('/pages/') ||
-        glob.includes('/app/routes/') ||
-        glob.includes('/src/app/routes/'),
-    );
-  const routeFiles = globSync([...appRouteGlobs, ...routeLikeIncludeGlobs], {
-    absolute: true,
-    dot: true,
-    onlyFiles: true,
-  }).filter(isSelectorlessRouteFile);
-
-  return {
-    enabled: routeFiles.length > 0,
-    routeFileCount: routeFiles.length,
-  };
-}
 const classNames = new Map();
 export function evictDeletedFileMetadata(
   file: string,
@@ -508,7 +445,6 @@ export function buildStylePreprocessor(
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
-  const explicitEnableSelectorless = options?.experimental?.enableSelectorless;
 
   /**
    * Normalize plugin options so defaults
@@ -535,7 +471,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
-    enableSelectorless: explicitEnableSelectorless,
     hasTailwindCss: !!options?.tailwindCss,
     tailwindCss: options?.tailwindCss,
     stylePreprocessor: buildStylePreprocessor(options),
@@ -1079,34 +1014,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configResolved(config) {
         resolvedConfig = config;
-
-        if (typeof pluginOptions.enableSelectorless === 'undefined') {
-          // Preserve the explicit option as the authoritative value. The route
-          // scan is only a default because Angular applies selectorless to the
-          // whole program once the compiler option is enabled. We still keep
-          // the heuristic default for compatibility with checked-in Analog apps
-          // and tests that use selectorless route components without an
-          // explicit flag.
-          const selectorlessRouteUsage = detectSelectorlessRouteUsage(
-            config.root,
-            pluginOptions.workspaceRoot,
-            pluginOptions.include,
-          );
-          pluginOptions.enableSelectorless =
-            angularFullVersion >= 200000 && selectorlessRouteUsage.enabled;
-          debugCompilationApi('selectorless default resolved', {
-            angularVersion: angularFullVersion,
-            root: config.root,
-            routeFileCount: selectorlessRouteUsage.routeFileCount,
-            selectorlessEnabled: pluginOptions.enableSelectorless,
-          });
-        } else {
-          debugCompilationApi('selectorless resolved from explicit option', {
-            angularVersion: angularFullVersion,
-            root: config.root,
-            selectorlessEnabled: pluginOptions.enableSelectorless,
-          });
-        }
 
         if (pluginOptions.hasTailwindCss) {
           validateTailwindConfig(config, watchMode);
@@ -2890,20 +2797,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           shouldExternalize: shouldExternalizeStyles(),
           externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
           hmrEnabled: !!tsCompilerOptions['_enableHmr'],
-          selectorlessEnabled: pluginOptions.enableSelectorless,
         });
 
         if (tsCompilerOptions.compilationMode === 'partial') {
           // These options can't be false in partial mode
           tsCompilerOptions['supportTestBed'] = true;
           tsCompilerOptions['supportJitMode'] = true;
-        }
-
-        if (pluginOptions.enableSelectorless) {
-          // Angular reads selectorless as a compiler-wide mode rather than a
-          // per-route transform, so keep this mutation in sync with every
-          // compilation path that feeds Angular compiler options.
-          tsCompilerOptions['_enableSelectorless'] = true;
         }
 
         if (!isTest && config.build?.lib) {
@@ -3193,19 +3092,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       shouldExternalize: shouldExternalizeStyles(),
       externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
       hmrEnabled: !!tsCompilerOptions['_enableHmr'],
-      selectorlessEnabled: pluginOptions.enableSelectorless,
     });
 
     if (tsCompilerOptions['compilationMode'] === 'partial') {
       // These options can't be false in partial mode
       tsCompilerOptions['supportTestBed'] = true;
       tsCompilerOptions['supportJitMode'] = true;
-    }
-
-    if (pluginOptions.enableSelectorless) {
-      // Keep the legacy NgtscProgram path aligned with the Compilation API
-      // path above. Selectorless is still compiler-wide here.
-      tsCompilerOptions['_enableSelectorless'] = true;
     }
 
     if (!isTest && config.build?.lib) {
