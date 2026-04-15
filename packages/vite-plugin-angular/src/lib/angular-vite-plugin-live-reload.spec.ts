@@ -32,6 +32,9 @@ async function setupLiveReloadPlugin(options: {
     filename: string;
   }>;
   include?: string[];
+  experimental?: {
+    enableSelectorless?: boolean;
+  };
   stylePreprocessor?: (
     code: string,
     filename: string,
@@ -140,6 +143,7 @@ async function setupLiveReloadPlugin(options: {
     workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
+      enableSelectorless: options.experimental?.enableSelectorless,
     },
   }).find((entry) => entry.name === '@analogjs/vite-plugin-angular') as any;
 
@@ -269,6 +273,110 @@ describe('angular hmr style preprocessing', () => {
       // preprocessCSS is NOT called during compilation; Vite processes
       // the CSS at serve time when the load hook returns it.
       expect(preprocessCSSMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it(
+    'allows selectorless compilation to be disabled explicitly',
+    { timeout: 15_000 },
+    async () => {
+      const workspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-live-reload-selectorless-explicit-off-'),
+      );
+      temporaryWorkspaceRoots.add(workspaceRoot);
+      mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
+      writeFileSync(
+        join(workspaceRoot, 'src/app/pages/home.page.ts'),
+        `
+          import { Component } from '@angular/core';
+
+          @Component({
+            template: '<p>Home</p>',
+          })
+          export default class HomePageComponent {}
+        `,
+      );
+
+      const { initialize } = await setupLiveReloadPlugin({
+        workspaceRoot,
+        experimental: {
+          enableSelectorless: false,
+        },
+      });
+
+      const initializeCall = initialize.mock.calls[0];
+      expect(initializeCall).toBeTruthy();
+
+      const mutateTsCompilerOptions = initializeCall?.[2] as
+        | ((options: Record<string, unknown>) => Record<string, unknown>)
+        | undefined;
+
+      expect(mutateTsCompilerOptions).toBeTypeOf('function');
+
+      const mutated = mutateTsCompilerOptions?.({});
+
+      // Explicit app config must win even when the route heuristic would have
+      // enabled selectorless by default.
+      expect(mutated?._enableSelectorless).toBeUndefined();
+    },
+  );
+
+  it(
+    'defaults selectorless compilation off when the app has no file-based pages',
+    { timeout: 15_000 },
+    async () => {
+      const { initialize } = await setupLiveReloadPlugin({});
+
+      const initializeCall = initialize.mock.calls[0];
+      expect(initializeCall).toBeTruthy();
+
+      const mutateTsCompilerOptions = initializeCall?.[2] as
+        | ((options: Record<string, unknown>) => Record<string, unknown>)
+        | undefined;
+
+      expect(mutateTsCompilerOptions).toBeTypeOf('function');
+
+      const mutated = mutateTsCompilerOptions?.({});
+
+      expect(mutated?._enableSelectorless).toBeUndefined();
+    },
+  );
+
+  it(
+    'defaults selectorless compilation on when the app has file-based pages',
+    { timeout: 15_000 },
+    async () => {
+      const workspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-live-reload-selectorless-pages-'),
+      );
+      temporaryWorkspaceRoots.add(workspaceRoot);
+      mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
+      writeFileSync(
+        join(workspaceRoot, 'src/app/pages/home.page.ts'),
+        `
+          import { Component } from '@angular/core';
+
+          @Component({
+            template: '<p>Home</p>',
+          })
+          export default class HomePageComponent {}
+        `,
+      );
+
+      const { initialize } = await setupLiveReloadPlugin({ workspaceRoot });
+
+      const initializeCall = initialize.mock.calls[0];
+      expect(initializeCall).toBeTruthy();
+
+      const mutateTsCompilerOptions = initializeCall?.[2] as
+        | ((options: Record<string, unknown>) => Record<string, unknown>)
+        | undefined;
+
+      expect(mutateTsCompilerOptions).toBeTypeOf('function');
+
+      const mutated = mutateTsCompilerOptions?.({});
+
+      expect(mutated?._enableSelectorless).toBe(true);
     },
   );
 
