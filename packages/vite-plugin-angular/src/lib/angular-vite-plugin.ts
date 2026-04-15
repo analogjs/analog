@@ -75,6 +75,8 @@ import {
   debugCompilationApi,
   debugCompiler,
   debugCompilerV,
+  debugEmit,
+  debugEmitV,
   debugHmr,
   debugHmrV,
   debugStyles,
@@ -485,6 +487,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     string,
     { options: ts.CompilerOptions; rootNames: string[] }
   >();
+  const tsconfigGraphRootCache = new Map<string, string[]>();
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
   let includeCache: string[] = [];
@@ -495,6 +498,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     // `readConfiguration` caches the root file list, so hot-added pages can be
     // missing from Angular's compilation program until we clear this state.
     tsconfigOptionsCache.clear();
+    tsconfigGraphRootCache.clear();
     cachedHost = undefined;
     cachedHostKey = undefined;
   }
@@ -809,9 +813,45 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
   let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
+  const normalizeEmitterLookupId = (file: string) => {
+    const normalizedFile = normalizePath(file);
+
+    if (!normalizedFile.startsWith('/@fs/')) {
+      return normalizedFile;
+    }
+
+    const fsPath = normalizedFile
+      .slice('/@fs'.length)
+      .replace(/^\/([A-Za-z]:\/)/, '$1');
+
+    return normalizePath(fsPath);
+  };
+  const describeEmitMarkers = (content: string) => ({
+    contentLength: content.length,
+    hasCmp: content.includes('ɵcmp'),
+    hasFac: content.includes('ɵfac'),
+    hasProv: content.includes('ɵprov'),
+    hasDecorate: content.includes('__decorate'),
+    hasMetadata: content.includes('__metadata'),
+  });
+
   const fileEmitter = (file: string) => {
-    outputFile?.(file);
-    return outputFiles.get(normalizePath(file));
+    const normalizedFile = normalizeEmitterLookupId(file);
+    const hadCachedEmit = outputFiles.has(normalizedFile);
+    outputFile?.(normalizedFile);
+    const emittedResult = outputFiles.get(normalizedFile);
+    debugEmitV('fileEmitter lookup', {
+      requestFile: file,
+      normalizedFile,
+      hadCachedEmit,
+      hasOutputFileHook: !!outputFile,
+      emitted: !!emittedResult,
+      knownOutputCount: outputFiles.size,
+      contentLength: emittedResult?.content?.length ?? 0,
+      errorCount: emittedResult?.errors?.length ?? 0,
+      warningCount: emittedResult?.warnings?.length ?? 0,
+    });
+    return emittedResult;
   };
   let initialCompilation = false;
   const declarationFiles: DeclarationFile[] = [];
@@ -1849,19 +1889,27 @@ export function angular(options?: PluginOptions): Plugin[] {
             debugCompilerV('transform skip (file not emitted by Angular)', {
               id,
             });
-
             // File not in the Angular program — skip and let other plugins
             // or Vite's built-in transform handle it. Warn if it looks like
             // an Angular file that should have been compiled.
             const isAngular =
               !id.includes('@ng/component') &&
               /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+            debugEmit('transform emit miss', {
+              id,
+              normalizedId: normalizeEmitterLookupId(id),
+              knownOutputCount: outputFiles.size,
+              hasOutputFileHook: !!outputFile,
+              isAngular,
+            });
+
             if (isAngular) {
               this.warn(
                 `[@analogjs/vite-plugin-angular]: "${id}" contains Angular decorators but is not in the TypeScript program. ` +
                   `Ensure it is included in your tsconfig.`,
               );
             }
+
             return;
           }
 
@@ -1877,6 +1925,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           let data = typescriptResult.content ?? '';
+          debugEmitV('transform emit hit', {
+            id,
+            normalizedId: normalizeEmitterLookupId(id),
+            ...describeEmitMarkers(data),
+            errorCount: typescriptResult.errors?.length ?? 0,
+            warningCount: typescriptResult.warnings?.length ?? 0,
+          });
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -2183,15 +2238,29 @@ export function angular(options?: PluginOptions): Plugin[] {
     );
 
     // Discover TypeScript files using tinyglobby
-    return globSync(globs, {
+    const files = globSync(globs, {
       dot: true,
       absolute: true,
     });
+
+    debugEmit('include discovery', {
+      patternCount: globs.length,
+      fileCount: files.length,
+    });
+    debugEmitV('include discovery files', {
+      globs,
+      files: files.map((file) => normalizePath(file)),
+    });
+
+    return files;
   }
 
   function ensureIncludeCache(): string[] {
     if (pluginOptions.include.length > 0 && includeCache.length === 0) {
       includeCache = findIncludes();
+      debugEmit('include cache populated', {
+        fileCount: includeCache.length,
+      });
     }
 
     return includeCache;
@@ -2208,63 +2277,268 @@ export function angular(options?: PluginOptions): Plugin[] {
       isProd ? 'prod' : 'dev',
       isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
-      pluginOptions.hmr ? 'hmr' : 'nohmr',
+      pluginOptions.liveReload ? 'live-reload' : 'no-live-reload',
       pluginOptions.hasTailwindCss ? 'tw' : 'notw',
     ].join('|');
+  }
+
+  function readAngularTsconfigConfiguration(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+  ) {
+    const isProd = config.mode === 'production';
+    return compilerCli.readConfiguration(resolvedTsConfigPath, {
+      suppressOutputPathCheck: true,
+      outDir: undefined,
+      sourceMap: false,
+      inlineSourceMap: !isProd,
+      inlineSources: !isProd,
+      declaration: false,
+      declarationMap: false,
+      allowEmptyCodegenFiles: false,
+      annotationsAs: 'decorators',
+      enableResourceInlining: false,
+      noEmitOnError: false,
+      mapRoot: undefined,
+      sourceRoot: undefined,
+      supportTestBed: false,
+      supportJitMode: false,
+    });
   }
 
   function getCachedTsconfigOptions(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
   ): { options: ts.CompilerOptions; rootNames: string[] } {
-    const isProd = config.mode === 'production';
     const tsconfigKey = getTsconfigCacheKey(resolvedTsConfigPath, config);
     let cached = tsconfigOptionsCache.get(tsconfigKey);
 
     if (!cached) {
-      const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
-        suppressOutputPathCheck: true,
-        outDir: undefined,
-        sourceMap: false,
-        inlineSourceMap: !isProd,
-        inlineSources: !isProd,
-        declaration: false,
-        declarationMap: false,
-        allowEmptyCodegenFiles: false,
-        annotationsAs: 'decorators',
-        enableResourceInlining: false,
-        noEmitOnError: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
-        supportTestBed: false,
-        supportJitMode: false,
-      });
+      const read = readAngularTsconfigConfiguration(
+        resolvedTsConfigPath,
+        config,
+      );
       cached = { options: read.options, rootNames: read.rootNames };
       tsconfigOptionsCache.set(tsconfigKey, cached);
+      debugEmit('tsconfig root names loaded', {
+        resolvedTsConfigPath,
+        rootNameCount: read.rootNames.length,
+      });
+      debugEmitV('tsconfig root names', {
+        resolvedTsConfigPath,
+        rootNames: read.rootNames.map((file) => normalizePath(file)),
+      });
     }
 
     return cached;
+  }
+
+  function resolveReferenceTsconfigPath(
+    referencePath: string,
+    ownerTsconfigPath: string,
+  ): string | undefined {
+    const ownerDir = dirname(ownerTsconfigPath);
+    const resolvedReference = normalizePath(
+      isAbsolute(referencePath)
+        ? referencePath
+        : resolve(ownerDir, referencePath),
+    );
+
+    if (existsSync(resolvedReference)) {
+      try {
+        if (statSync(resolvedReference).isDirectory()) {
+          const nestedTsconfig = join(resolvedReference, 'tsconfig.json');
+          return existsSync(nestedTsconfig)
+            ? normalizePath(nestedTsconfig)
+            : undefined;
+        }
+      } catch {
+        return undefined;
+      }
+
+      return resolvedReference;
+    }
+
+    if (!resolvedReference.endsWith('.json')) {
+      const asJson = `${resolvedReference}.json`;
+      if (existsSync(asJson)) {
+        return normalizePath(asJson);
+      }
+
+      const nestedTsconfig = join(resolvedReference, 'tsconfig.json');
+      if (existsSync(nestedTsconfig)) {
+        return normalizePath(nestedTsconfig);
+      }
+    }
+
+    return undefined;
+  }
+
+  function collectTsconfigPathRoots(
+    resolvedTsConfigPath: string,
+    options: ts.CompilerOptions,
+    rawTsconfig: {
+      compilerOptions?: {
+        baseUrl?: unknown;
+        paths?: Record<string, string[]>;
+      };
+    },
+  ): string[] {
+    const tsPaths = rawTsconfig.compilerOptions?.paths ?? options.paths;
+    if (!tsPaths) {
+      return [];
+    }
+
+    const tsconfigDir = dirname(resolvedTsConfigPath);
+    const configuredBaseUrl =
+      typeof options.baseUrl === 'string'
+        ? options.baseUrl
+        : typeof rawTsconfig.compilerOptions?.baseUrl === 'string'
+          ? rawTsconfig.compilerOptions.baseUrl
+          : undefined;
+    const resolvedBaseUrl = configuredBaseUrl
+      ? isAbsolute(configuredBaseUrl)
+        ? configuredBaseUrl
+        : resolve(tsconfigDir, configuredBaseUrl)
+      : tsconfigDir;
+    const discoveredRoots = new Set<string>();
+
+    for (const targets of Object.values(tsPaths)) {
+      for (const target of targets) {
+        const resolvedTarget = normalizePath(
+          isAbsolute(target) ? target : resolve(resolvedBaseUrl, target),
+        );
+
+        if (target.includes('*')) {
+          for (const match of globSync(resolvedTarget, {
+            dot: true,
+            absolute: true,
+          })) {
+            discoveredRoots.add(normalizePath(match));
+          }
+          continue;
+        }
+
+        if (existsSync(resolvedTarget)) {
+          discoveredRoots.add(resolvedTarget);
+        }
+      }
+    }
+
+    return [...discoveredRoots];
+  }
+
+  function collectExpandedTsconfigRoots(
+    resolvedTsConfigPath: string,
+    config: ResolvedConfig,
+    visited = new Set<string>(),
+  ): string[] {
+    const normalizedTsConfigPath = normalizePath(resolvedTsConfigPath);
+    if (visited.has(normalizedTsConfigPath)) {
+      return [];
+    }
+
+    const tsconfigKey = `${getTsconfigCacheKey(normalizedTsConfigPath, config)}|graph`;
+    const cached = tsconfigGraphRootCache.get(tsconfigKey);
+    if (cached) {
+      return cached;
+    }
+
+    visited.add(normalizedTsConfigPath);
+
+    const read = readAngularTsconfigConfiguration(
+      normalizedTsConfigPath,
+      config,
+    );
+    const rawTsconfig = (ts.readConfigFile(
+      normalizedTsConfigPath,
+      ts.sys.readFile,
+    ).config ?? {}) as {
+      compilerOptions?: {
+        baseUrl?: unknown;
+        paths?: Record<string, string[]>;
+      };
+      references?: Array<{ path?: unknown }>;
+    };
+
+    const expandedRoots = new Set(
+      read.rootNames.map((file) => normalizePath(file)),
+    );
+    const pathRoots = collectTsconfigPathRoots(
+      normalizedTsConfigPath,
+      read.options,
+      rawTsconfig,
+    );
+    for (const pathRoot of pathRoots) {
+      expandedRoots.add(pathRoot);
+    }
+
+    const referenceConfigs = (rawTsconfig.references ?? [])
+      .flatMap((reference) =>
+        typeof reference.path === 'string'
+          ? [
+              resolveReferenceTsconfigPath(
+                reference.path,
+                normalizedTsConfigPath,
+              ),
+            ]
+          : [],
+      )
+      .filter((reference): reference is string => !!reference);
+
+    for (const referenceConfig of referenceConfigs) {
+      for (const referenceRoot of collectExpandedTsconfigRoots(
+        referenceConfig,
+        config,
+        visited,
+      )) {
+        expandedRoots.add(referenceRoot);
+      }
+    }
+
+    const expandedRootList = [...expandedRoots];
+    tsconfigGraphRootCache.set(tsconfigKey, expandedRootList);
+    debugEmit('expanded tsconfig graph roots', {
+      resolvedTsConfigPath: normalizedTsConfigPath,
+      directRootNameCount: read.rootNames.length,
+      pathRootCount: pathRoots.length,
+      referenceConfigCount: referenceConfigs.length,
+      expandedRootCount: expandedRootList.length,
+    });
+    debugEmitV('expanded tsconfig graph root files', {
+      resolvedTsConfigPath: normalizedTsConfigPath,
+      pathRoots,
+      referenceConfigs,
+      rootNames: expandedRootList,
+    });
+
+    return expandedRootList;
   }
 
   function resolveCompilationApiTsConfigPath(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
   ): string {
-    // Angular's Compilation API accepts one tsconfig path. When Analog adds
-    // extra roots via `include`, emit a tiny wrapper config that extends the
-    // user's tsconfig and enumerates the merged root set.
+    // Angular's Compilation API accepts one tsconfig path. When Analog needs
+    // extra roots beyond the app tsconfig's direct rootNames, emit a tiny
+    // wrapper config that extends the user's tsconfig and enumerates the
+    // merged root set.
     //
-    // Value: include-based workspace expansion works with the Compilation API
-    // without asking users to edit or duplicate their checked-in tsconfig.
+    // Value: workspace sources discovered through Analog `include`, tsconfig
+    // `references`, and explicit `compilerOptions.paths` entry points all land
+    // in Angular's program without asking users to hand-maintain a duplicate
+    // debug tsconfig.
     const includedFiles = ensureIncludeCache();
-    if (includedFiles.length === 0) {
-      return resolvedTsConfigPath;
-    }
-
     const cached = getCachedTsconfigOptions(resolvedTsConfigPath, config);
-    const mergedRootNames = union(cached.rootNames, includedFiles).map((file) =>
-      normalizePath(file),
+    const expandedGraphRoots = collectExpandedTsconfigRoots(
+      resolvedTsConfigPath,
+      config,
     );
+    const mergedRootNames = union(
+      cached.rootNames,
+      expandedGraphRoots,
+      includedFiles,
+    ).map((file) => normalizePath(file));
 
     if (mergedRootNames.length === cached.rootNames.length) {
       return resolvedTsConfigPath;
@@ -2313,6 +2587,19 @@ export function angular(options?: PluginOptions): Plugin[] {
       includeCount: includedFiles.length,
       rootNameCount: mergedRootNames.length,
     });
+    debugEmit('wrapper tsconfig root merge', {
+      originalTsconfig: resolvedTsConfigPath,
+      wrapperTsconfig: wrapperPath,
+      baseRootNameCount: cached.rootNames.length,
+      expandedGraphRootCount: expandedGraphRoots.length,
+      includeCount: includedFiles.length,
+      mergedRootNameCount: mergedRootNames.length,
+      referenceCount: rawTsconfig.references?.length ?? 0,
+    });
+    debugEmitV('wrapper tsconfig root names', {
+      wrapperTsconfig: wrapperPath,
+      rootNames: mergedRootNames,
+    });
 
     return wrapperPath;
   }
@@ -2348,10 +2635,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     config: ResolvedConfig,
     ids?: string[],
   ) {
-    // Reuse the existing instance so Angular can diff against prior state.
-    angularCompilation ??= await (
+    const compilation = (angularCompilation ??= await (
       createAngularCompilation as typeof createAngularCompilationType
-    )(!!pluginOptions.jit, false);
+    )(!!pluginOptions.jit, false));
     const modifiedFiles = ids?.length
       ? new Set(ids.map((file) => normalizePath(file)))
       : undefined;
@@ -2360,11 +2646,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
     // Notify Angular of modified files before re-initialization so it can
     // scope its incremental analysis.
-    if (modifiedFiles?.size && angularCompilation.update) {
+    if (modifiedFiles?.size && compilation.update) {
       debugCompilationApi('incremental update', {
         files: [...modifiedFiles],
       });
-      await angularCompilation.update(modifiedFiles);
+      await compilation.update(modifiedFiles);
     }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
@@ -2372,7 +2658,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       resolvedTsConfigPath,
       config,
     );
-    const compilationResult = await angularCompilation.initialize(
+    debugEmit('compilation initialize', {
+      resolvedTsConfigPath,
+      compilationApiTsConfigPath,
+      modifiedFileCount: modifiedFiles?.size ?? 0,
+    });
+    const compilationResult = await compilation.initialize(
       compilationApiTsConfigPath,
       {
         // Convert Analog's browser-style `{ replace, with }` entries into the
@@ -2514,10 +2805,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsCompilerOptions['supportJitMode'] = true;
         }
 
-        if (angularFullVersion >= 200000) {
-          tsCompilerOptions['_enableSelectorless'] = true;
-        }
-
         if (!isTest && config.build?.lib) {
           tsCompilerOptions['declaration'] = true;
           tsCompilerOptions['declarationMap'] = watchMode;
@@ -2532,7 +2819,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         return tsCompilerOptions;
       },
     );
-
     // -------------------------------------------------------------------
     // Preprocess external stylesheets for Tailwind CSS @reference
     //
@@ -2568,7 +2854,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       hasInlineMap: !!stylesheetRegistry,
     });
     const preprocessStats = { total: 0, injected: 0, skipped: 0, errors: 0 };
-    compilationResult.externalStylesheets?.forEach((value, key) => {
+    for (const [key, value] of compilationResult.externalStylesheets ?? []) {
       preprocessStats.total++;
       const angularHash = `${value}.css`;
       stylesheetRegistry?.registerExternalRequest(angularHash, key);
@@ -2675,10 +2961,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         filename: angularHash,
         resolvedPath: key,
       });
-    });
+    }
     debugStyles('external stylesheet preprocessing complete', preprocessStats);
 
-    const diagnostics = await angularCompilation.diagnoseFiles(
+    const diagnostics = await compilation.diagnoseFiles(
       pluginOptions.disableTypeChecking
         ? DiagnosticModes.All & ~DiagnosticModes.Semantic
         : DiagnosticModes.All,
@@ -2686,6 +2972,10 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const errors = diagnostics.errors?.length ? diagnostics.errors : [];
     const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+    debugEmit('compilation diagnostics', {
+      errorCount: errors.length,
+      warningCount: warnings.length,
+    });
     // Angular encodes template updates as `encodedFilePath@ClassName` keys.
     // `mapTemplateUpdatesToFiles` decodes them back to absolute file paths so
     // we can attach HMR metadata to the correct `EmitFileResult` below.
@@ -2699,7 +2989,17 @@ export function angular(options?: PluginOptions): Plugin[] {
       });
     }
 
-    for (const file of await angularCompilation.emitAffectedFiles()) {
+    const affectedFiles = await compilation.emitAffectedFiles();
+    debugEmit('emitAffectedFiles summary', {
+      count: affectedFiles.length,
+      templateUpdateCount: templateUpdates.size,
+      knownOutputCountBefore: outputFiles.size,
+    });
+    debugEmitV('emitAffectedFiles files', {
+      files: affectedFiles.map((file) => normalizePath(file.filename)),
+    });
+
+    for (const file of affectedFiles) {
       const normalizedFilename = normalizePath(file.filename);
       const templateUpdate = templateUpdates.get(normalizedFilename);
 
@@ -2718,6 +3018,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         ),
         hmrUpdateCode: templateUpdate?.code,
         hmrEligible: !!templateUpdate?.code,
+      });
+      debugEmitV('registered compilation API output', {
+        filename: normalizedFilename,
+        ...describeEmitMarkers(file.contents),
+        hasTemplateUpdate: !!templateUpdate,
+        errorCount: errors.length,
+        warningCount: warnings.length,
+        knownOutputCount: outputFiles.size,
       });
     }
   }
@@ -2790,10 +3098,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       // These options can't be false in partial mode
       tsCompilerOptions['supportTestBed'] = true;
       tsCompilerOptions['supportJitMode'] = true;
-    }
-
-    if (angularFullVersion >= 200000) {
-      tsCompilerOptions['_enableSelectorless'] = true;
     }
 
     if (!isTest && config.build?.lib) {
@@ -2971,6 +3275,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         warnings: metadata.warnings,
         hmrUpdateCode: metadata.hmrUpdateCode,
         hmrEligible: metadata.hmrEligible,
+      });
+      debugEmitV('registered ngtsc output', {
+        filename,
+        ...describeEmitMarkers(content),
+        errorCount: metadata.errors?.length ?? 0,
+        warningCount: metadata.warnings?.length ?? 0,
+        hmrEligible: !!metadata.hmrEligible,
+        knownOutputCount: outputFiles.size,
       });
     };
 

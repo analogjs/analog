@@ -27,6 +27,10 @@ let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('./utils/devkit.js');
 
 async function setupLiveReloadPlugin(options: {
+  emitAffectedFiles?: Array<{
+    contents: string;
+    filename: string;
+  }>;
   include?: string[];
   stylePreprocessor?: (
     code: string,
@@ -102,7 +106,9 @@ async function setupLiveReloadPlugin(options: {
     initialize,
     update: vi.fn(),
     diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
-    emitAffectedFiles: vi.fn().mockResolvedValue([]),
+    emitAffectedFiles: vi
+      .fn()
+      .mockResolvedValue(options.emitAffectedFiles ?? []),
   });
 
   let transformStylesheet:
@@ -125,7 +131,6 @@ async function setupLiveReloadPlugin(options: {
 
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
-    tsconfig: `${resolvedWorkspaceRoot}/tsconfig.base.json`,
     liveReload: true,
     include: options.include,
     tsconfig: resolvedTsconfig,
@@ -454,6 +459,156 @@ describe('angular hmr style preprocessing', () => {
       } finally {
         rmSync(tempWorkspaceRoot, { force: true, recursive: true });
       }
+    },
+  );
+
+  it(
+    'wraps the compilation API tsconfig when project references and tsconfig paths add source roots',
+    { timeout: 15_000 },
+    async () => {
+      const tempWorkspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-compilation-api-refs-paths-'),
+      );
+      const normalize = (value: string) => value.replaceAll('\\', '/');
+
+      try {
+        mkdirSync(join(tempWorkspaceRoot, 'src/app'), { recursive: true });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/feature/src'), {
+          recursive: true,
+        });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/extra/src'), {
+          recursive: true,
+        });
+
+        writeFileSync(
+          join(tempWorkspaceRoot, 'src/app/app.component.ts'),
+          'export const app = true;\n',
+        );
+        writeFileSync(
+          join(
+            tempWorkspaceRoot,
+            'libs/shared/feature/src/feature.component.ts',
+          ),
+          'export const feature = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/extra/src/index.ts'),
+          'export const extra = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/feature/tsconfig.lib.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                composite: true,
+              },
+              include: ['src/**/*.ts'],
+            },
+            null,
+            2,
+          ),
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                baseUrl: '.',
+                module: 'esnext',
+                moduleResolution: 'bundler',
+                paths: {
+                  '@shared/extra': ['libs/shared/extra/src/index.ts'],
+                },
+                target: 'es2022',
+              },
+              files: ['./src/app/app.component.ts'],
+              references: [{ path: './libs/shared/feature/tsconfig.lib.json' }],
+            },
+            null,
+            2,
+          ),
+        );
+
+        const { initialize } = await setupLiveReloadPlugin({
+          tsconfig: join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          workspaceRoot: tempWorkspaceRoot,
+        });
+
+        const [generatedTsconfigPath] = initialize.mock.calls[0] as [string];
+        expect(normalize(generatedTsconfigPath)).not.toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+
+        const generatedConfig = JSON.parse(
+          readFileSync(generatedTsconfigPath, 'utf-8'),
+        ) as {
+          extends: string;
+          files: string[];
+          references?: Array<{ path: string }>;
+        };
+
+        expect(generatedConfig.extends).toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+        expect(generatedConfig.files).toEqual(
+          expect.arrayContaining([
+            normalize(join(tempWorkspaceRoot, 'src/app/app.component.ts')),
+            normalize(
+              join(
+                tempWorkspaceRoot,
+                'libs/shared/feature/src/feature.component.ts',
+              ),
+            ),
+            normalize(
+              join(tempWorkspaceRoot, 'libs/shared/extra/src/index.ts'),
+            ),
+          ]),
+        );
+        expect(generatedConfig.references).toEqual([
+          { path: './libs/shared/feature/tsconfig.lib.json' },
+        ]);
+      } finally {
+        rmSync(tempWorkspaceRoot, { force: true, recursive: true });
+      }
+    },
+  );
+
+  it(
+    'resolves Angular emit output for Windows /@fs/ transform ids',
+    { timeout: 15_000 },
+    async () => {
+      const windowsComponentId = 'C:/project/src/app/demo.component.ts';
+      const emittedCode = 'export const demo = true;\n';
+      const { plugin } = await setupLiveReloadPlugin({
+        emitAffectedFiles: [
+          {
+            filename: windowsComponentId,
+            contents: emittedCode,
+          },
+        ],
+      });
+
+      const transformed = await plugin.transform.handler.call(
+        {
+          addWatchFile: vi.fn(),
+          error: vi.fn(),
+          warn: vi.fn(),
+        },
+        `
+          import { Component } from '@angular/core';
+
+          @Component({
+            template: '<p>Demo</p>',
+          })
+          export class DemoComponent {}
+        `,
+        `/@fs/${windowsComponentId}`,
+      );
+
+      expect(transformed).toEqual({
+        code: emittedCode,
+        map: null,
+      });
     },
   );
 });
