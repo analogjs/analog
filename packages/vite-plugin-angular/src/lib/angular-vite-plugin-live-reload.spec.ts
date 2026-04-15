@@ -479,6 +479,12 @@ describe('angular hmr style preprocessing', () => {
         mkdirSync(join(tempWorkspaceRoot, 'libs/shared/extra/src'), {
           recursive: true,
         });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/directory/src'), {
+          recursive: true,
+        });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/wildcard/src/nested'), {
+          recursive: true,
+        });
 
         writeFileSync(
           join(tempWorkspaceRoot, 'src/app/app.component.ts'),
@@ -494,6 +500,17 @@ describe('angular hmr style preprocessing', () => {
         writeFileSync(
           join(tempWorkspaceRoot, 'libs/shared/extra/src/index.ts'),
           'export const extra = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/directory/src/directory.ts'),
+          'export const directory = true;\n',
+        );
+        writeFileSync(
+          join(
+            tempWorkspaceRoot,
+            'libs/shared/wildcard/src/nested/wildcard.ts',
+          ),
+          'export const wildcard = true;\n',
         );
         writeFileSync(
           join(tempWorkspaceRoot, 'libs/shared/feature/tsconfig.lib.json'),
@@ -517,7 +534,9 @@ describe('angular hmr style preprocessing', () => {
                 module: 'esnext',
                 moduleResolution: 'bundler',
                 paths: {
+                  '@shared/directory': ['libs/shared/directory/src'],
                   '@shared/extra': ['libs/shared/extra/src/index.ts'],
+                  '@shared/wildcard/*': ['libs/shared/wildcard/src/**/*'],
                 },
                 target: 'es2022',
               },
@@ -562,7 +581,22 @@ describe('angular hmr style preprocessing', () => {
             normalize(
               join(tempWorkspaceRoot, 'libs/shared/extra/src/index.ts'),
             ),
+            normalize(
+              join(tempWorkspaceRoot, 'libs/shared/directory/src/directory.ts'),
+            ),
+            normalize(
+              join(
+                tempWorkspaceRoot,
+                'libs/shared/wildcard/src/nested/wildcard.ts',
+              ),
+            ),
           ]),
+        );
+        expect(generatedConfig.files).not.toContain(
+          normalize(join(tempWorkspaceRoot, 'libs/shared/directory/src')),
+        );
+        expect(generatedConfig.files).not.toContain(
+          normalize(join(tempWorkspaceRoot, 'libs/shared/wildcard/src/nested')),
         );
         expect(generatedConfig.references).toEqual([
           { path: './libs/shared/feature/tsconfig.lib.json' },
