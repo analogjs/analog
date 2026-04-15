@@ -1,3 +1,9 @@
+# [3.0.0-alpha.36](https://github.com/analogjs/analog/compare/v3.0.0-alpha.35...v3.0.0-alpha.36) (2026-04-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** expand Compilation API roots from tsconfig paths and references ([#2290](https://github.com/analogjs/analog/issues/2290)) ([d4350b2](https://github.com/analogjs/analog/commit/d4350b2c84554f327c06e0ede8606fd44003b654))
+
 # [3.0.0-alpha.35](https://github.com/analogjs/analog/compare/v3.0.0-alpha.34...v3.0.0-alpha.35) (2026-04-14)
 
 ### Bug Fixes
