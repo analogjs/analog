@@ -141,6 +141,22 @@ describe('platformPlugin', () => {
     );
   });
 
+  it('forwards experimental.enableSelectorless to the Angular vite plugin', () => {
+    platformPlugin({
+      experimental: {
+        enableSelectorless: false,
+      },
+    });
+
+    expect(angularSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        experimental: expect.objectContaining({
+          enableSelectorless: false,
+        }),
+      }),
+    );
+  });
+
   it('does not force semantic type checking onto the dev hot path by default', () => {
     platformPlugin();
 

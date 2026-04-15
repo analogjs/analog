@@ -202,6 +202,19 @@ export interface Options {
     useAngularCompilationAPI?: boolean;
 
     /**
+     * Forward Angular selectorless compilation support into
+     * `@analogjs/vite-plugin-angular`.
+     *
+     * Also accepted at `vite.experimental.enableSelectorless` for backwards
+     * compatibility.
+     *
+     * Has no effect when `vite` is set to `false`.
+     */
+    enableSelectorless?: PluginOptions['experimental'] extends object
+      ? NonNullable<PluginOptions['experimental']>['enableSelectorless']
+      : boolean;
+
+    /**
      * Enable typed route table generation for type-safe navigation.
      *
      * When enabled, `@analogjs/platform` generates a single route module

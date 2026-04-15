@@ -57,8 +57,12 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   const useAngularCompilationAPI =
     platformOptions.experimental?.useAngularCompilationAPI ??
     viteOptions?.experimental?.useAngularCompilationAPI;
+  const enableSelectorless =
+    platformOptions.experimental?.enableSelectorless ??
+    viteOptions?.experimental?.enableSelectorless;
   debugPlatform('experimental options resolved', {
     useAngularCompilationAPI: !!useAngularCompilationAPI,
+    enableSelectorless,
     typedRouter: platformOptions.experimental?.typedRouter,
     stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
@@ -128,6 +132,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             experimental: {
               ...(viteOptions?.experimental ?? {}),
               useAngularCompilationAPI,
+              enableSelectorless,
             },
           }),
         )),

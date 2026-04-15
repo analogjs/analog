@@ -28,6 +28,9 @@ let cachedDevkitActual: typeof import('./utils/devkit.js');
 
 async function setupLiveReloadPlugin(options: {
   include?: string[];
+  experimental?: {
+    enableSelectorless?: boolean;
+  };
   stylePreprocessor?: (
     code: string,
     filename: string,
@@ -134,6 +137,7 @@ async function setupLiveReloadPlugin(options: {
     workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
+      enableSelectorless: options.experimental?.enableSelectorless,
     },
   }).find((entry) => entry.name === '@analogjs/vite-plugin-angular') as any;
 
@@ -263,6 +267,90 @@ describe('angular hmr style preprocessing', () => {
       // preprocessCSS is NOT called during compilation; Vite processes
       // the CSS at serve time when the load hook returns it.
       expect(preprocessCSSMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it(
+    'allows selectorless compilation to be disabled explicitly',
+    { timeout: 15_000 },
+    async () => {
+      const { initialize } = await setupLiveReloadPlugin({
+        experimental: {
+          enableSelectorless: false,
+        },
+      });
+
+      const initializeCall = initialize.mock.calls[0];
+      expect(initializeCall).toBeTruthy();
+
+      const mutateTsCompilerOptions = initializeCall?.[2] as
+        | ((options: Record<string, unknown>) => Record<string, unknown>)
+        | undefined;
+
+      expect(mutateTsCompilerOptions).toBeTypeOf('function');
+
+      const mutated = mutateTsCompilerOptions?.({});
+
+      expect(mutated?._enableSelectorless).toBeUndefined();
+    },
+  );
+
+  it(
+    'defaults selectorless compilation off when the app has no file-based pages',
+    { timeout: 15_000 },
+    async () => {
+      const { initialize } = await setupLiveReloadPlugin({});
+
+      const initializeCall = initialize.mock.calls[0];
+      expect(initializeCall).toBeTruthy();
+
+      const mutateTsCompilerOptions = initializeCall?.[2] as
+        | ((options: Record<string, unknown>) => Record<string, unknown>)
+        | undefined;
+
+      expect(mutateTsCompilerOptions).toBeTypeOf('function');
+
+      const mutated = mutateTsCompilerOptions?.({});
+
+      expect(mutated?._enableSelectorless).toBeUndefined();
+    },
+  );
+
+  it(
+    'defaults selectorless compilation on when the app has file-based pages',
+    { timeout: 15_000 },
+    async () => {
+      const workspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-live-reload-selectorless-pages-'),
+      );
+      temporaryWorkspaceRoots.add(workspaceRoot);
+      mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
+      writeFileSync(
+        join(workspaceRoot, 'src/app/pages/home.page.ts'),
+        `
+          import { Component } from '@angular/core';
+
+          @Component({
+            template: '<p>Home</p>',
+          })
+          export default class HomePageComponent {}
+        `,
+      );
+
+      const { initialize } = await setupLiveReloadPlugin({ workspaceRoot });
+
+      const initializeCall = initialize.mock.calls[0];
+      expect(initializeCall).toBeTruthy();
+
+      const mutateTsCompilerOptions = initializeCall?.[2] as
+        | ((options: Record<string, unknown>) => Record<string, unknown>)
+        | undefined;
+
+      expect(mutateTsCompilerOptions).toBeTypeOf('function');
+
+      const mutated = mutateTsCompilerOptions?.({});
+
+      expect(mutated?._enableSelectorless).toBe(true);
     },
   );
 
@@ -444,6 +532,117 @@ describe('angular hmr style preprocessing', () => {
                 tempWorkspaceRoot,
                 'libs/shared/feature/src/feature.component.ts',
               ),
+            ),
+          ]),
+        );
+        expect(generatedConfig.references).toEqual([
+          { path: './libs/shared/feature/tsconfig.lib.json' },
+        ]);
+      } finally {
+        rmSync(tempWorkspaceRoot, { force: true, recursive: true });
+      }
+    },
+  );
+
+  it(
+    'wraps the compilation API tsconfig when project references and tsconfig paths add source roots',
+    { timeout: 15_000 },
+    async () => {
+      const tempWorkspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-compilation-api-refs-paths-'),
+      );
+      const normalize = (value: string) => value.replaceAll('\\', '/');
+
+      try {
+        mkdirSync(join(tempWorkspaceRoot, 'src/app'), { recursive: true });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/feature/src'), {
+          recursive: true,
+        });
+        mkdirSync(join(tempWorkspaceRoot, 'libs/shared/extra/src'), {
+          recursive: true,
+        });
+
+        writeFileSync(
+          join(tempWorkspaceRoot, 'src/app/app.component.ts'),
+          'export const app = true;\n',
+        );
+        writeFileSync(
+          join(
+            tempWorkspaceRoot,
+            'libs/shared/feature/src/feature.component.ts',
+          ),
+          'export const feature = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/extra/src/index.ts'),
+          'export const extra = true;\n',
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'libs/shared/feature/tsconfig.lib.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                composite: true,
+              },
+              include: ['src/**/*.ts'],
+            },
+            null,
+            2,
+          ),
+        );
+        writeFileSync(
+          join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          JSON.stringify(
+            {
+              compilerOptions: {
+                baseUrl: '.',
+                module: 'esnext',
+                moduleResolution: 'bundler',
+                paths: {
+                  '@shared/extra': ['libs/shared/extra/src/index.ts'],
+                },
+                target: 'es2022',
+              },
+              files: ['./src/app/app.component.ts'],
+              references: [{ path: './libs/shared/feature/tsconfig.lib.json' }],
+            },
+            null,
+            2,
+          ),
+        );
+
+        const { initialize } = await setupLiveReloadPlugin({
+          tsconfig: join(tempWorkspaceRoot, 'tsconfig.base.json'),
+          workspaceRoot: tempWorkspaceRoot,
+        });
+
+        const [generatedTsconfigPath] = initialize.mock.calls[0] as [string];
+        expect(normalize(generatedTsconfigPath)).not.toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+
+        const generatedConfig = JSON.parse(
+          readFileSync(generatedTsconfigPath, 'utf-8'),
+        ) as {
+          extends: string;
+          files: string[];
+          references?: Array<{ path: string }>;
+        };
+
+        expect(generatedConfig.extends).toBe(
+          normalize(join(tempWorkspaceRoot, 'tsconfig.base.json')),
+        );
+        expect(generatedConfig.files).toEqual(
+          expect.arrayContaining([
+            normalize(join(tempWorkspaceRoot, 'src/app/app.component.ts')),
+            normalize(
+              join(
+                tempWorkspaceRoot,
+                'libs/shared/feature/src/feature.component.ts',
+              ),
+            ),
+            normalize(
+              join(tempWorkspaceRoot, 'libs/shared/extra/src/index.ts'),
             ),
           ]),
         );
