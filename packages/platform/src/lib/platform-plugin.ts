@@ -59,6 +59,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     );
   }
 
+  // Keep the top-level Analog experimental surface and the legacy
+  // `vite.experimental` compatibility surface in lockstep. Missing one of
+  // these compiler flags here makes app config appear correct while the
+  // lower-level Angular plugin still sees a different value.
   const useAngularCompilationAPI =
     platformOptions.experimental?.useAngularCompilationAPI ??
     viteExperimental?.useAngularCompilationAPI;

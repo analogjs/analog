@@ -280,7 +280,25 @@ describe('angular hmr style preprocessing', () => {
     'allows selectorless compilation to be disabled explicitly',
     { timeout: 15_000 },
     async () => {
+      const workspaceRoot = mkdtempSync(
+        join(tmpdir(), 'analog-live-reload-selectorless-explicit-off-'),
+      );
+      temporaryWorkspaceRoots.add(workspaceRoot);
+      mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
+      writeFileSync(
+        join(workspaceRoot, 'src/app/pages/home.page.ts'),
+        `
+          import { Component } from '@angular/core';
+
+          @Component({
+            template: '<p>Home</p>',
+          })
+          export default class HomePageComponent {}
+        `,
+      );
+
       const { initialize } = await setupLiveReloadPlugin({
+        workspaceRoot,
         experimental: {
           enableSelectorless: false,
         },
@@ -297,6 +315,8 @@ describe('angular hmr style preprocessing', () => {
 
       const mutated = mutateTsCompilerOptions?.({});
 
+      // Explicit app config must win even when the route heuristic would have
+      // enabled selectorless by default.
       expect(mutated?._enableSelectorless).toBeUndefined();
     },
   );

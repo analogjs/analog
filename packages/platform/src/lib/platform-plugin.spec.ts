@@ -157,6 +157,27 @@ describe('platformPlugin', () => {
     );
   });
 
+  it('prefers top-level selectorless config over legacy vite.experimental config', () => {
+    platformPlugin({
+      experimental: {
+        enableSelectorless: false,
+      },
+      vite: {
+        experimental: {
+          enableSelectorless: true,
+        },
+      },
+    });
+
+    expect(angularSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        experimental: expect.objectContaining({
+          enableSelectorless: false,
+        }),
+      }),
+    );
+  });
+
   it('does not force semantic type checking onto the dev hot path by default', () => {
     platformPlugin();
 
