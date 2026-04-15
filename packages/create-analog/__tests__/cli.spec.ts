@@ -55,7 +55,7 @@ const expectTailwindScaffold = () => {
   expect(readGeneratedStyles()).toContain(`@import 'tailwindcss';`);
   expect(viteConfig).toContain(`import tailwindcss from '@tailwindcss/vite';`);
   expect(viteConfig).toMatch(
-    /plugins:\s*\[[\s\S]*tailwindcss\(\),[\s\S]*analog\(/,
+    /plugins:\s*\[[\s\S]*analog\(\),[\s\S]*tailwindcss\(\)/,
   );
   expect(readFileSync(join(genPath, 'postcss.config.mjs'), 'utf-8')).toContain(
     `'@tailwindcss/postcss': {}`,

@@ -119,7 +119,7 @@ export default defineConfig(({ mode }) => {
         allow: ['.'],
       },
     },
-    plugins: [tailwindcss(), analog()],
+    plugins: [analog(), tailwindcss()],
     test: {
       globals: true,
       environment: 'jsdom',

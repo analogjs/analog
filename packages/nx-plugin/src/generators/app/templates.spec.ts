@@ -21,6 +21,17 @@ const versionedTemplates = readdirSync(templatesDir).filter((d) =>
 );
 
 describe('generator templates', () => {
+  describe.each(versionedTemplates)('%s vite.config.ts', (template) => {
+    const viteConfig = readFileSync(
+      join(templatesDir, template, 'vite.config.ts__template__'),
+      'utf-8',
+    );
+
+    it('registers analog exactly once', () => {
+      expect(viteConfig.match(/analog\(\)/g)).toHaveLength(1);
+    });
+  });
+
   describe.each(versionedTemplates)('%s tsconfig.json', (template) => {
     const tsconfig = readTemplateJson(template, 'tsconfig.json__template__');
 

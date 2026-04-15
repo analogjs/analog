@@ -1,3 +1,15 @@
+# [3.0.0-alpha.35](https://github.com/analogjs/analog/compare/v3.0.0-alpha.34...v3.0.0-alpha.35) (2026-04-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** remove duplicate hmr option ([#2204](https://github.com/analogjs/analog/issues/2204)) ([aa90171](https://github.com/analogjs/analog/commit/aa9017130078f9749756143ffe1ab3307b405649))
+
+# [3.0.0-alpha.34](https://github.com/analogjs/analog/compare/v3.0.0-alpha.33...v3.0.0-alpha.34) (2026-04-14)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** harden Tailwind [@reference](https://github.com/reference) handling and SSR coordination ([#2289](https://github.com/analogjs/analog/issues/2289)) ([4060566](https://github.com/analogjs/analog/commit/4060566895e82741196a1e56b614c184bd3776d7))
+
 # [3.0.0-alpha.33](https://github.com/analogjs/analog/compare/v3.0.0-alpha.32...v3.0.0-alpha.33) (2026-04-14)
 
 ### Features

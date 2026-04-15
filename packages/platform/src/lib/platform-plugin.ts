@@ -30,6 +30,11 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const viteOptions = opts?.vite === false ? undefined : opts?.vite;
+  const {
+    experimental: viteExperimental,
+    hmr: _removedViteHmrOption,
+    ...forwardedViteOptions
+  } = viteOptions ?? {};
   const { ...platformOptions } = {
     ssr: true,
     ...opts,
@@ -56,10 +61,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   const useAngularCompilationAPI =
     platformOptions.experimental?.useAngularCompilationAPI ??
-    viteOptions?.experimental?.useAngularCompilationAPI;
+    viteExperimental?.useAngularCompilationAPI;
   const enableSelectorless =
     platformOptions.experimental?.enableSelectorless ??
-    viteOptions?.experimental?.enableSelectorless;
+    viteExperimental?.enableSelectorless;
   debugPlatform('experimental options resolved', {
     useAngularCompilationAPI: !!useAngularCompilationAPI,
     enableSelectorless,
@@ -116,7 +121,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
               ),
             ],
             additionalContentDirs: platformOptions.additionalContentDirs,
-            hmr: platformOptions.hmr,
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
@@ -128,9 +132,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
                     platformOptions.experimental.stylePipeline.angularPlugins,
                 }
               : undefined,
-            ...(viteOptions ?? {}),
+            ...forwardedViteOptions,
             experimental: {
-              ...(viteOptions?.experimental ?? {}),
+              ...(viteExperimental ?? {}),
               useAngularCompilationAPI,
               enableSelectorless,
             },

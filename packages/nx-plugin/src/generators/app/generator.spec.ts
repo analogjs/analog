@@ -114,7 +114,7 @@ describe('nx-plugin generator', () => {
       `import tailwindcss from '@tailwindcss/vite';`,
     );
     expect(viteConfig).toMatch(
-      /plugins:\s*\[[\s\S]*tailwindcss\(\),[\s\S]*analog\(/,
+      /plugins:\s*\[[\s\S]*analog\(\),[\s\S]*tailwindcss\(\)/,
     );
   };
 
