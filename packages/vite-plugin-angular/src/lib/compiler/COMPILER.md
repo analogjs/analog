@@ -446,7 +446,7 @@ CI runs a matrix of Angular 17, 18, 19, 20, 21, latest, and next on every pull r
 Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/compiler-compat.yml` complements it by:
 
 1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported version (`17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, plus `next`) via `pnpm.overrides`.
-2. Running the regular `packages/vite-plugin-angular/src/lib/compiler/` test suite against the swapped version with `DEBUG=analog-compiler*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
+2. Running the regular `packages/vite-plugin-angular/src/lib/compiler/` test suite against the swapped version with `DEBUG=analog-fast-compile*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
 3. On a `push` to `beta`, auto-opening (or commenting on an existing) GitHub issue using the bug-report template's section structure when a numeric matrix slot fails. PR failures show in the PR check and don't open issues to avoid spam.
 
 The matrix mixes two version-pinning strategies:

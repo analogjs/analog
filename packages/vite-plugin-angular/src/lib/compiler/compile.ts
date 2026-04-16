@@ -1174,7 +1174,7 @@ export function compile(
           new o.ExpressionStatement(classMetadataExpr),
         );
       } catch (e) {
-        // Skip if compileClassMetadata fails — surfaced via DEBUG=analog-compiler
+        // Skip if compileClassMetadata fails — surfaced via DEBUG=analog-fast-compile
         if (debugCompile.enabled) {
           debugCompile(
             'compileClassMetadata failed for %s in %s: %s',
