@@ -16,7 +16,8 @@ export function depsPlugin(options?: Options): Plugin[] {
           options?.vite === false ||
           options?.vite?.experimental?.useAngularCompilationAPI;
         const fastCompile =
-          options?.vite !== false && options?.vite?.fastCompile;
+          options?.fastCompile ||
+          (options?.vite !== false && options?.vite?.fastCompile);
 
         const esbuild =
           useCompilationAPI || fastCompile
