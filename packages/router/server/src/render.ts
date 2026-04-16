@@ -16,6 +16,7 @@ import {
   serverComponentRequest,
   renderServerComponent,
 } from './server-component-render';
+import { ɵresetI18nComponentDefCache } from '@analogjs/router';
 
 if (import.meta.env.PROD) {
   enableProdMode();
@@ -47,6 +48,12 @@ export function render(
     if (serverComponentRequest(serverContext)) {
       return await renderServerComponent(url, serverContext);
     }
+
+    // Reset any cached tViews on component defs registered by the
+    // i18n-component-registry Vite plugin so that the next render picks
+    // up the locale loaded by `provideI18n()`'s app initializer rather
+    // than the first-rendered locale's strings baked into `tView.consts`.
+    ɵresetI18nComponentDefCache();
 
     const html = await renderApplication(bootstrap, {
       document,

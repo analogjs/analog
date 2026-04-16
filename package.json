@@ -49,6 +49,7 @@
     "@angular/compiler": "21.2.7",
     "@angular/core": "21.2.7",
     "@angular/forms": "21.2.7",
+    "@angular/localize": "21.2.7",
     "@angular/material": "21.2.5",
     "@angular/platform-browser": "21.2.7",
     "@angular/platform-browser-dynamic": "21.2.7",

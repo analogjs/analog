@@ -1,11 +1,16 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
   loadTranslationsRuntime,
+  clearTranslationsRuntime,
   initI18n,
   detectClientLocale,
   replaceLocaleInPath,
   resolveI18nConfig,
   I18nConfig,
+  ɵregisterI18nComponentDef,
+  ɵresetI18nComponentDefCache,
+  getI18nComponentDefRegistrySize,
+  clearI18nComponentDefRegistry,
 } from './provide-i18n';
 
 describe('loadTranslationsRuntime', () => {
@@ -19,43 +24,86 @@ describe('loadTranslationsRuntime', () => {
     (globalThis as any).$localize = originalLocalize;
   });
 
-  it('should set translations on $localize.TRANSLATIONS', () => {
+  it('should store translations in the parsed shape $localize.translate expects', async () => {
     (globalThis as any).$localize = {};
 
-    loadTranslationsRuntime({
+    await loadTranslationsRuntime({
       'msg-hello': 'Bonjour',
       'msg-goodbye': 'Au revoir',
     });
 
-    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({
-      'msg-hello': 'Bonjour',
-      'msg-goodbye': 'Au revoir',
+    const translations = (globalThis as any).$localize.TRANSLATIONS;
+    // `@angular/localize`'s `loadTranslations` parses each message into
+    // `{ text, messageParts, placeholderNames }` so that the runtime
+    // `translate()` function can build a translated template object.
+    expect(translations['msg-hello']).toMatchObject({
+      text: 'Bonjour',
+      messageParts: ['Bonjour'],
+      placeholderNames: [],
+    });
+    expect(translations['msg-goodbye']).toMatchObject({
+      text: 'Au revoir',
+      messageParts: ['Au revoir'],
+      placeholderNames: [],
     });
   });
 
-  it('should merge with existing translations', () => {
-    (globalThis as any).$localize = {
-      TRANSLATIONS: { 'msg-existing': 'Existant' },
-    };
+  it('should wire up $localize.translate so lookups actually happen', async () => {
+    (globalThis as any).$localize = {};
 
-    loadTranslationsRuntime({ 'msg-new': 'Nouveau' });
+    await loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
 
-    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({
-      'msg-existing': 'Existant',
-      'msg-new': 'Nouveau',
-    });
+    expect(typeof (globalThis as any).$localize.translate).toBe('function');
   });
 
-  it('should warn if $localize is not available', () => {
+  it('should merge with existing translations', async () => {
+    (globalThis as any).$localize = {};
+    await loadTranslationsRuntime({ 'msg-existing': 'Existant' });
+    await loadTranslationsRuntime({ 'msg-new': 'Nouveau' });
+
+    const translations = (globalThis as any).$localize.TRANSLATIONS;
+    expect(translations['msg-existing']).toMatchObject({ text: 'Existant' });
+    expect(translations['msg-new']).toMatchObject({ text: 'Nouveau' });
+  });
+
+  it('should warn if $localize is not available', async () => {
     (globalThis as any).$localize = undefined;
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
+    await loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
 
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('$localize is not available'),
     );
     warnSpy.mockRestore();
+  });
+});
+
+describe('clearTranslationsRuntime', () => {
+  let originalLocalize: any;
+
+  beforeEach(() => {
+    originalLocalize = (globalThis as any).$localize;
+  });
+
+  afterEach(() => {
+    (globalThis as any).$localize = originalLocalize;
+  });
+
+  it('should drop $localize.translate and empty TRANSLATIONS', async () => {
+    (globalThis as any).$localize = {};
+    await loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
+    expect((globalThis as any).$localize.translate).toBeTypeOf('function');
+
+    await clearTranslationsRuntime();
+
+    expect((globalThis as any).$localize.translate).toBeUndefined();
+    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({});
+  });
+
+  it('should no-op when $localize is not available', async () => {
+    (globalThis as any).$localize = undefined;
+    await expect(clearTranslationsRuntime()).resolves.toBeUndefined();
   });
 });
 
@@ -71,7 +119,7 @@ describe('initI18n', () => {
     (globalThis as any).$localize = originalLocalize;
   });
 
-  it('should skip loading when locale matches the first (source) locale', async () => {
+  it('should skip the loader when the locale matches the source locale', async () => {
     const loader = vi.fn();
     const config: I18nConfig = {
       defaultLocale: 'en',
@@ -84,7 +132,27 @@ describe('initI18n', () => {
     expect(loader).not.toHaveBeenCalled();
   });
 
-  it('should load translations for non-source locale', async () => {
+  it('should clear translations even when the source locale is active', async () => {
+    // Simulate a prior render having loaded fr translations.
+    await loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
+    expect((globalThis as any).$localize.translate).toBeTypeOf('function');
+
+    const config: I18nConfig = {
+      defaultLocale: 'en',
+      locales: ['en', 'fr'],
+      loader: vi.fn(),
+    };
+
+    await initI18n(config, 'en');
+
+    // Previously loaded fr translations must be dropped so that the
+    // source locale's templates fall through to their source strings
+    // rather than silently rendering stale fr values.
+    expect((globalThis as any).$localize.translate).toBeUndefined();
+    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({});
+  });
+
+  it('should load translations for a non-source locale', async () => {
     const config: I18nConfig = {
       defaultLocale: 'fr',
       locales: ['en', 'fr'],
@@ -96,9 +164,31 @@ describe('initI18n', () => {
     await initI18n(config, 'fr');
 
     expect(config.loader).toHaveBeenCalledWith('fr');
-    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({
-      'msg-hello': 'Bonjour',
+    expect(
+      (globalThis as any).$localize.TRANSLATIONS['msg-hello'],
+    ).toMatchObject({
+      text: 'Bonjour',
     });
+  });
+
+  it('should clear previous translations before loading new ones', async () => {
+    // Pretend an earlier request loaded fr.
+    await loadTranslationsRuntime({ 'msg-only-in-fr': 'Seulement' });
+
+    const config: I18nConfig = {
+      defaultLocale: 'en',
+      locales: ['en', 'de'],
+      loader: vi.fn().mockResolvedValue({ 'msg-only-in-de': 'Nur' }),
+    };
+
+    await initI18n(config, 'de');
+
+    const translations = (globalThis as any).$localize.TRANSLATIONS;
+    // The fr-only message must be gone; only the newly loaded de messages
+    // should be present. Without clearing, the two maps would mix and a
+    // /de request would still resolve fr-only messages.
+    expect(translations['msg-only-in-fr']).toBeUndefined();
+    expect(translations['msg-only-in-de']).toMatchObject({ text: 'Nur' });
   });
 
   it('should handle empty translations gracefully', async () => {
@@ -111,8 +201,7 @@ describe('initI18n', () => {
     await initI18n(config, 'fr');
 
     expect(config.loader).toHaveBeenCalledWith('fr');
-    // Should not crash, TRANSLATIONS should not be set
-    expect((globalThis as any).$localize.TRANSLATIONS).toBeUndefined();
+    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({});
   });
 
   it('should support synchronous loaders', async () => {
@@ -124,8 +213,10 @@ describe('initI18n', () => {
 
     await initI18n(config, 'de');
 
-    expect((globalThis as any).$localize.TRANSLATIONS).toEqual({
-      'msg-hello': 'Hallo',
+    expect(
+      (globalThis as any).$localize.TRANSLATIONS['msg-hello'],
+    ).toMatchObject({
+      text: 'Hallo',
     });
   });
 
@@ -162,12 +253,11 @@ describe('detectClientLocale', () => {
   };
 
   it('should return defaultLocale when window is undefined (server)', () => {
-    // In Node test environment, window is typically undefined
     const originalWindow = globalThis.window;
     // @ts-ignore
     delete globalThis.window;
 
-    expect(detectClientLocale(baseConfig)).toBe('en');
+    expect(detectClientLocale(baseConfig as any)).toBe('en');
 
     globalThis.window = originalWindow;
   });
@@ -177,7 +267,7 @@ describe('detectClientLocale', () => {
     // @ts-ignore
     globalThis.window = { location: { pathname: '/fr/about' } };
 
-    expect(detectClientLocale(baseConfig)).toBe('fr');
+    expect(detectClientLocale(baseConfig as any)).toBe('fr');
 
     globalThis.window = originalWindow;
   });
@@ -187,7 +277,7 @@ describe('detectClientLocale', () => {
     // @ts-ignore
     globalThis.window = { location: { pathname: '/about' } };
 
-    expect(detectClientLocale(baseConfig)).toBe('en');
+    expect(detectClientLocale(baseConfig as any)).toBe('en');
 
     globalThis.window = originalWindow;
   });
@@ -197,8 +287,7 @@ describe('detectClientLocale', () => {
     // @ts-ignore
     globalThis.window = { location: { pathname: '/es/about' } };
 
-    // 'es' is not in the locales list
-    expect(detectClientLocale(baseConfig)).toBe('en');
+    expect(detectClientLocale(baseConfig as any)).toBe('en');
 
     globalThis.window = originalWindow;
   });
@@ -208,7 +297,7 @@ describe('detectClientLocale', () => {
     // @ts-ignore
     globalThis.window = { location: { pathname: '/de' } };
 
-    expect(detectClientLocale(baseConfig)).toBe('de');
+    expect(detectClientLocale(baseConfig as any)).toBe('de');
 
     globalThis.window = originalWindow;
   });
@@ -289,5 +378,57 @@ describe('resolveI18nConfig', () => {
     expect(() => resolveI18nConfig({ loader })).toThrow(
       'provideI18n() requires defaultLocale and locales',
     );
+  });
+});
+
+describe('component def registry', () => {
+  beforeEach(() => {
+    clearI18nComponentDefRegistry();
+  });
+
+  it('should null def.tView on registered components when reset', () => {
+    const fakeDef = {
+      template: () => undefined,
+      tView: { someCachedValue: true },
+    };
+    ɵregisterI18nComponentDef(fakeDef);
+    expect(getI18nComponentDefRegistrySize()).toBe(1);
+
+    ɵresetI18nComponentDefCache();
+
+    expect(fakeDef.tView).toBeNull();
+    // The registry itself is intentionally preserved across resets so
+    // that subsequent requests keep clearing the same defs.
+    expect(getI18nComponentDefRegistrySize()).toBe(1);
+  });
+
+  it('should accept a Type with a ɵcmp static and unwrap it', () => {
+    const fakeDef = { template: () => undefined, tView: {} };
+    class FakeComponent {
+      static ɵcmp = fakeDef;
+    }
+
+    ɵregisterI18nComponentDef(FakeComponent);
+    ɵresetI18nComponentDefCache();
+
+    expect(fakeDef.tView).toBeNull();
+  });
+
+  it('should ignore things that are not component defs', () => {
+    ɵregisterI18nComponentDef(null);
+    ɵregisterI18nComponentDef(undefined);
+    ɵregisterI18nComponentDef({ notAComponent: true });
+    ɵregisterI18nComponentDef(class Bare {});
+
+    expect(getI18nComponentDefRegistrySize()).toBe(0);
+  });
+
+  it('should de-duplicate repeated registrations of the same def', () => {
+    const fakeDef = { template: () => undefined, tView: {} };
+    ɵregisterI18nComponentDef(fakeDef);
+    ɵregisterI18nComponentDef(fakeDef);
+    ɵregisterI18nComponentDef(fakeDef);
+
+    expect(getI18nComponentDefRegistrySize()).toBe(1);
   });
 });
