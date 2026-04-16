@@ -119,14 +119,14 @@ export interface PluginOptions {
    * Defaults to `false`.
    */
   fastCompile?: boolean;
+  /**
+   * Compilation output mode used when `fastCompile` is enabled.
+   * - `'full'` (default): Emit final Ivy definitions for application builds.
+   * - `'partial'`: Emit partial declarations for library publishing.
+   */
+  fastCompileMode?: 'full' | 'partial';
   experimental?: {
     useAngularCompilationAPI?: boolean;
-    /**
-     * Compilation output mode used when `fastCompile` is enabled.
-     * - `'full'` (default): Emit final Ivy definitions for application builds.
-     * - `'partial'`: Emit partial declarations for library publishing.
-     */
-    fastCompileMode?: 'full' | 'partial';
   };
 }
 
@@ -165,7 +165,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
-    fastCompileMode: options?.experimental?.fastCompileMode ?? 'full',
+    fastCompileMode: options?.fastCompileMode ?? 'full',
   };
 
   let resolvedConfig: ResolvedConfig;
