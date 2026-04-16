@@ -126,7 +126,7 @@ export interface PluginOptions {
      * - `'full'` (default): Emit final Ivy definitions for application builds.
      * - `'partial'`: Emit partial declarations for library publishing.
      */
-    analogCompilationMode?: 'full' | 'partial';
+    fastCompileMode?: 'full' | 'partial';
   };
 }
 
@@ -165,8 +165,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
-    analogCompilationMode:
-      options?.experimental?.analogCompilationMode ?? 'full',
+    fastCompileMode: options?.experimental?.fastCompileMode ?? 'full',
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -802,7 +801,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         transformFilter: options?.transformFilter,
         isTest,
         isAstroIntegration,
-        analogCompilationMode: pluginOptions.analogCompilationMode,
+        fastCompileMode: pluginOptions.fastCompileMode,
       })
     : angularPlugin();
 

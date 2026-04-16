@@ -56,7 +56,7 @@ export interface FastCompilePluginOptions {
   transformFilter?: (code: string, id: string) => boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
-  analogCompilationMode?: 'full' | 'partial';
+  fastCompileMode?: 'full' | 'partial';
 }
 
 export function fastCompilePlugin(
@@ -323,7 +323,7 @@ export function fastCompilePlugin(
       resolvedStyles,
       resolvedInlineStyles,
       useDefineForClassFields,
-      compilationMode: pluginOptions.analogCompilationMode,
+      compilationMode: pluginOptions.fastCompileMode,
     });
 
     // Track resource dependencies for HMR
