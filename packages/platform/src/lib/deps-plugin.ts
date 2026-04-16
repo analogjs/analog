@@ -15,17 +15,16 @@ export function depsPlugin(options?: Options): Plugin[] {
         const useCompilationAPI =
           options?.vite === false ||
           options?.vite?.experimental?.useAngularCompilationAPI;
-        const useAnalogCompiler =
-          options?.vite !== false &&
-          options?.vite?.experimental?.useAnalogCompiler;
+        const fastCompile =
+          options?.vite !== false && options?.vite?.fastCompile;
 
         const esbuild =
-          useCompilationAPI || useAnalogCompiler
+          useCompilationAPI || fastCompile
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
         const oxc =
-          useCompilationAPI || useAnalogCompiler
+          useCompilationAPI || fastCompile
             ? {}
             : { exclude: ['**/*.ts', '**/*.js'] };
 
