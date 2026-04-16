@@ -67,6 +67,8 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           liveReload: platformOptions.liveReload,
           inlineStylesExtension: platformOptions.inlineStylesExtension,
           fileReplacements: platformOptions.fileReplacements,
+          fastCompile: platformOptions.fastCompile,
+          fastCompileMode: platformOptions.fastCompileMode,
           ...(opts?.vite ?? {}),
         })) as any),
     serverModePlugin(),

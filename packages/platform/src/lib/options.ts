@@ -124,6 +124,17 @@ export interface Options {
    */
   disableTypeChecking?: boolean;
   /**
+   * Opt into the fast compile path. Skips Angular's template type-checking
+   * and routes compilation through an internal single-pass transform.
+   */
+  fastCompile?: boolean;
+  /**
+   * Compilation output mode used when `fastCompile` is enabled.
+   * - `'full'` (default): Emit final Ivy definitions for application builds.
+   * - `'partial'`: Emit partial declarations for library publishing.
+   */
+  fastCompileMode?: 'full' | 'partial';
+  /**
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
