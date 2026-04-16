@@ -59,7 +59,7 @@ The compiler is integrated into `@analogjs/vite-plugin-angular` as an alternativ
 6. Appends HMR code for Angular declarations in dev mode (components via `ɵɵreplaceMetadata`, directives/pipes via field-swap + invalidate)
 7. Injects synthetic imports for NgModule-exported classes
 
-The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.) continue to work alongside the analog compiler.
+The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.) continue to work alongside the fast-compile path.
 
 ## Source Files
 
