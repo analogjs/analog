@@ -120,6 +120,6 @@ describe('Error Handling', () => {
     `,
         'bad.ts',
       ),
-    ).toThrow('[angular-compiler] Template parse error');
+    ).toThrow('[fast-compile] Template parse error');
   });
 });

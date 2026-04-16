@@ -616,7 +616,7 @@ export function compile(
               resourceDependencies.push(templatePath);
             } catch {
               console.warn(
-                `[angular-compiler] Could not read template file "${meta.templateUrl}" for ${className}`,
+                `[fast-compile] Could not read template file "${meta.templateUrl}" for ${className}`,
               );
             }
           }
@@ -632,7 +632,7 @@ export function compile(
                 resourceDependencies.push(stylePath);
               } catch {
                 console.warn(
-                  `[angular-compiler] Could not read style file "${url}" for ${className}`,
+                  `[fast-compile] Could not read style file "${url}" for ${className}`,
                 );
               }
             }
@@ -688,7 +688,7 @@ export function compile(
           if (templateErrors.length > 0) {
             const firstError = templateErrors[0];
             classCompileError = new Error(
-              `[angular-compiler] Template parse error in ${fileName} (${className}): ${firstError.msg}`,
+              `[fast-compile] Template parse error in ${fileName} (${className}): ${firstError.msg}`,
             );
             return;
           }
