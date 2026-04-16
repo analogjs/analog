@@ -99,7 +99,7 @@ describe('@Component', () => {
   it('resolves ${...} interpolation against module-level string consts in template', () => {
     // Components in the wild often hoist long Tailwind class chains into
     // module-level `const`s and reference them from the inline template via
-    // JS template-literal interpolation. The Analog compiler must resolve
+    // JS template-literal interpolation. The fast-compile path must resolve
     // those references at parse time so Angular sees the fully-expanded
     // class attribute.
     const result = compile(

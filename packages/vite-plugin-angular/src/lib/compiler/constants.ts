@@ -1,5 +1,5 @@
 /**
- * Shared Angular name constants for the analog compiler.
+ * Shared Angular name constants for the fast-compile path.
  *
  * Centralised here to prevent drift when decorator sets are referenced
  * across multiple source files (compile, registry, JIT, metadata).
