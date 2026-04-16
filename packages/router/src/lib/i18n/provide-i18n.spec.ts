@@ -7,8 +7,8 @@ import {
   replaceLocaleInPath,
   resolveI18nConfig,
   I18nConfig,
-  ɵɵregisterI18nComponentDef,
-  ɵɵresetI18nComponentDefCache,
+  ɵregisterI18nComponentDef,
+  ɵresetI18nComponentDefCache,
   getI18nComponentDefRegistrySize,
   clearI18nComponentDefRegistry,
 } from './provide-i18n';

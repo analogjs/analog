@@ -47,7 +47,11 @@ export function i18nComponentRegistryPlugin(): Plugin {
 
       return {
         code: s.toString(),
-        map: s.generateMap({ hires: true, source: id, includeContent: true }),
+        map: s.generateMap({
+          hires: true,
+          source: id,
+          includeContent: true,
+        }) as TransformResult['map'],
       };
     },
   };
