@@ -32,7 +32,7 @@ export async function resolveStyleFiles(
       result.set(filePath, processed.code);
     } catch (e: any) {
       console.warn(
-        `[angular-compiler] Style preprocessing failed for ${filePath}: ${e.message}`,
+        `[fast-compile] Style preprocessing failed for ${filePath}: ${e.message}`,
       );
     }
   }
@@ -72,7 +72,7 @@ export async function preprocessInlineStyles(
       result.set(i, processed.code);
     } catch (e: any) {
       console.warn(
-        `[angular-compiler] Inline style preprocessing failed in ${id}: ${e.message}`,
+        `[fast-compile] Inline style preprocessing failed in ${id}: ${e.message}`,
       );
     }
   }
