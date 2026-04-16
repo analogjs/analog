@@ -126,7 +126,7 @@ jobs:
         # silently-caught errors (like the LiteralMapPropertyAssignment
         # constructor regression on 20.3.x) appear in CI logs.
         env:
-          DEBUG: 'analog-compiler*'
+          DEBUG: 'analog-fast-compile*'
         run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/
 
       - name: Open or update regression issue (push to beta only)
@@ -156,7 +156,7 @@ jobs:
           - **Failing workflow run**: $RUN_URL
           - **Matrix slot**: \`@angular/compiler@${MATRIX_VERSION}\`
           - **Workspace pin**: see \`package.json\` for the version that the workspace currently builds against
-          - **Reproduction**: \`pnpm install\` with \`pnpm.overrides\` setting \`@angular/compiler\` and \`@angular/compiler-cli\` to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-compiler* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
+          - **Reproduction**: \`pnpm install\` with \`pnpm.overrides\` setting \`@angular/compiler\` and \`@angular/compiler-cli\` to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
 
           ## Which area/package is the issue in?
 
@@ -170,7 +170,7 @@ jobs:
 
           ## Please provide the exception or error you saw
 
-          See the [failing workflow run]($RUN_URL) for full output. The \`Run compiler test suite\` step has \`DEBUG=analog-compiler*\` enabled, so silently-caught compiler errors should appear in the log alongside any thrown exceptions.
+          See the [failing workflow run]($RUN_URL) for full output. The \`Run compiler test suite\` step has \`DEBUG=analog-fast-compile*\` enabled, so silently-caught compiler errors should appear in the log alongside any thrown exceptions.
 
           ## Other information
 
