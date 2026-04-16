@@ -22,6 +22,62 @@ interface PluginContextLike {
   addWatchFile(path: string): void;
 }
 
+type CssPattern = string | RegExp;
+
+type VitestCssOption =
+  | boolean
+  | undefined
+  | {
+      // Vitest accepts both single patterns and arrays for include/exclude.
+      include?: CssPattern | CssPattern[];
+      exclude?: CssPattern | CssPattern[];
+    };
+
+/**
+ * True when the given stylesheet should be run through Vite's `preprocessCSS`,
+ * given Vitest's `test.css` semantics:
+ *
+ *   - non-test contexts        → always preprocess
+ *   - `test.css: true`         → always preprocess
+ *   - `test.css: false`        → never preprocess
+ *   - `test.css: { include }`  → preprocess only when `filePath` matches an
+ *                                 include pattern and isn't excluded
+ *   - `test.css` unset         → Vitest defaults to `include: []`, so nothing
+ *                                 matches and we don't preprocess
+ *
+ * Used to gate `preprocessCSS` calls in test mode so we don't surface SCSS
+ * deprecation noise or pay preprocessing cost the user didn't ask for. (#2297)
+ */
+export function shouldPreprocessTestCss(
+  config: ResolvedConfig | undefined,
+  filePath?: string,
+): boolean {
+  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  if (!isTest) return true;
+
+  const cssOpt = (
+    config as
+      | (ResolvedConfig & { test?: { css?: VitestCssOption } })
+      | undefined
+  )?.test?.css;
+
+  if (cssOpt === true) return true;
+  if (cssOpt === false || cssOpt == null) return false;
+
+  const toArray = <T>(value: T | T[] | undefined): T[] =>
+    value == null ? [] : Array.isArray(value) ? value : [value];
+  const include = toArray(cssOpt.include);
+  const exclude = toArray(cssOpt.exclude);
+  if (!filePath || include.length === 0) return false;
+
+  const matches = (patterns: CssPattern[]) =>
+    patterns.some((p) =>
+      typeof p === 'string' ? filePath.includes(p) : p.test(filePath),
+    );
+
+  return matches(include) && !matches(exclude);
+}
+
 function resolveImportPath(
   id: string,
   importer: string | undefined,
@@ -94,6 +150,11 @@ export async function loadVirtualStyleModule(
   const filePath = fromVirtualStyleId(id);
   ctx.addWatchFile(filePath);
   const code = await fsPromises.readFile(filePath, 'utf-8');
+  // In tests, mirror Vitest's `test.css` rules — defaults to no preprocessing
+  // (matches Vite's CSS pipeline behavior under Vitest). (#2297)
+  if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
+    return `export default ${JSON.stringify(code)}`;
+  }
   const result = await preprocessCSS(code, filePath, resolvedConfig);
   return `export default ${JSON.stringify(result.code)}`;
 }
