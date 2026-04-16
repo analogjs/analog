@@ -62,7 +62,7 @@ import {
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
-import { analogCompilerPlugin } from './analog-compiler-plugin.js';
+import { fastCompilePlugin } from './fast-compile-plugin.js';
 import {
   TS_EXT_REGEX,
   createTsConfigGetter,
@@ -792,7 +792,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   const compilationPlugin = pluginOptions.fastCompile
-    ? analogCompilerPlugin({
+    ? fastCompilePlugin({
         tsconfigGetter: pluginOptions.tsconfigGetter,
         workspaceRoot: pluginOptions.workspaceRoot,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,

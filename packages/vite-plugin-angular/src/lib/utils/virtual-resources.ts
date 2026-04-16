@@ -1,6 +1,6 @@
 // Shared Vite plugin helpers for routing component resources (templates,
 // external styles) through virtual module ids. Both angular-vite-plugin and
-// analog-compiler-plugin use these so the rewriting + loading behavior stays
+// fast-compile-plugin use these so the rewriting + loading behavior stays
 // in sync between them.
 
 import { promises as fsPromises } from 'node:fs';

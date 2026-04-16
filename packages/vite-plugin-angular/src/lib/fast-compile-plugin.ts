@@ -46,7 +46,7 @@ import {
   shouldPreprocessTestCss,
 } from './utils/virtual-resources.js';
 
-export interface AnalogCompilerPluginOptions {
+export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
   workspaceRoot: string;
   inlineStylesExtension: string;
@@ -59,8 +59,8 @@ export interface AnalogCompilerPluginOptions {
   analogCompilationMode?: 'full' | 'partial';
 }
 
-export function analogCompilerPlugin(
-  pluginOptions: AnalogCompilerPluginOptions,
+export function fastCompilePlugin(
+  pluginOptions: FastCompilePluginOptions,
 ): Plugin {
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
@@ -152,7 +152,7 @@ export function analogCompilerPlugin(
     }
   }
 
-  async function initAnalogCompiler() {
+  async function initFastCompile() {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
@@ -193,7 +193,7 @@ export function analogCompilerPlugin(
         } catch (e) {
           if (debugRegistry.enabled) {
             debugRegistry(
-              'initAnalogCompiler: skipping unreadable %s: %s',
+              'initFastCompile: skipping unreadable %s: %s',
               file,
               (e as Error)?.message,
             );
@@ -230,7 +230,7 @@ export function analogCompilerPlugin(
       );
     }
     debugRegistry(
-      'initAnalogCompiler done: %d entries from %d candidate files',
+      'initFastCompile done: %d entries from %d candidate files',
       analogRegistry.size,
       candidates.size,
     );
@@ -254,7 +254,7 @@ export function analogCompilerPlugin(
     }
   }
 
-  async function handleAnalogCompilerTransform(
+  async function handleFastCompileTransform(
     code: string,
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
@@ -370,7 +370,7 @@ export function analogCompilerPlugin(
   }
 
   return {
-    name: '@analogjs/vite-plugin-angular-compiler',
+    name: '@analogjs/vite-plugin-angular-fast-compile',
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';
@@ -425,7 +425,7 @@ export function analogCompilerPlugin(
       });
     },
     async buildStart() {
-      await initAnalogCompiler();
+      await initFastCompile();
     },
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module
@@ -528,7 +528,7 @@ export function analogCompilerPlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleAnalogCompilerTransform(code, id);
+        return handleFastCompileTransform(code, id);
       },
     },
   };
