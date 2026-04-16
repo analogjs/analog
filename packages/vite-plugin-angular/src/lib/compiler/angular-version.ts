@@ -6,7 +6,7 @@ import * as o from '@angular/compiler';
 // Why this matters: Angular's compiler API surface (enum members,
 // metadata shapes, output formats) shifts between major versions in ways
 // that can't always be papered over with duck typing. The compatibility
-// matrix in .github/workflows/angular-compiler-compat.yml runs the test
+// matrix in .github/workflows/compiler-compat.yml runs the test
 // suite against multiple installed versions to catch this drift, and the
 // version-aware code paths in compile.ts / js-emitter.ts / metadata.ts
 // gate behavior on `ANGULAR_MAJOR` to keep the compiler working across
