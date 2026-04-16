@@ -1,3 +1,9 @@
+# [3.0.0-alpha.37](https://github.com/analogjs/analog/compare/v3.0.0-alpha.36...v3.0.0-alpha.37) (2026-04-16)
+
+### Bug Fixes
+
+- remove assert-deps from vite-plugin-angular ([50098fb](https://github.com/analogjs/analog/commit/50098fbbcbaed55129b49dfca176cbbfa620ac83))
+
 # [3.0.0-alpha.36](https://github.com/analogjs/analog/compare/v3.0.0-alpha.35...v3.0.0-alpha.36) (2026-04-15)
 
 ### Bug Fixes
