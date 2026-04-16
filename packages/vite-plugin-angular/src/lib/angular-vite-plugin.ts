@@ -113,11 +113,16 @@ export interface PluginOptions {
   liveReload?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
+  /**
+   * Opt into the fast compile path. Skips Angular's template type-checking
+   * and routes compilation through an internal single-pass transform.
+   * Defaults to `false`.
+   */
+  fastCompile?: boolean;
   experimental?: {
     useAngularCompilationAPI?: boolean;
-    useAnalogCompiler?: boolean;
     /**
-     * Compilation output mode for the Analog compiler.
+     * Compilation output mode used when `fastCompile` is enabled.
      * - `'full'` (default): Emit final Ivy definitions for application builds.
      * - `'partial'`: Emit partial declarations for library publishing.
      */
@@ -159,7 +164,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
-    useAnalogCompiler: options?.experimental?.useAnalogCompiler ?? false,
+    fastCompile: options?.fastCompile ?? false,
     analogCompilationMode:
       options?.experimental?.analogCompilationMode ?? 'full',
   };
@@ -786,7 +791,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
-  const compilationPlugin = pluginOptions.useAnalogCompiler
+  const compilationPlugin = pluginOptions.fastCompile
     ? analogCompilerPlugin({
         tsconfigGetter: pluginOptions.tsconfigGetter,
         workspaceRoot: pluginOptions.workspaceRoot,
@@ -804,7 +809,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     compilationPlugin,
-    !pluginOptions.useAnalogCompiler &&
+    !pluginOptions.fastCompile &&
       pluginOptions.liveReload &&
       liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
