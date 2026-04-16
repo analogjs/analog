@@ -24,7 +24,7 @@ import {
   debugCompile,
   debugRegistry,
   type ComponentRegistry,
-} from '@analogjs/angular-compiler';
+} from './compiler/index.js';
 
 import {
   TS_EXT_REGEX,
@@ -43,9 +43,10 @@ import {
   loadVirtualStyleModule,
   rewriteHtmlRawImport,
   rewriteInlineStyleImport,
+  shouldPreprocessTestCss,
 } from './utils/virtual-resources.js';
 
-export interface AnalogCompilerPluginOptions {
+export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
   workspaceRoot: string;
   inlineStylesExtension: string;
@@ -55,21 +56,21 @@ export interface AnalogCompilerPluginOptions {
   transformFilter?: (code: string, id: string) => boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
-  analogCompilationMode?: 'full' | 'partial';
+  fastCompileMode?: 'full' | 'partial';
 }
 
-export function analogCompilerPlugin(
-  pluginOptions: AnalogCompilerPluginOptions,
+export function fastCompilePlugin(
+  pluginOptions: FastCompilePluginOptions,
 ): Plugin {
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
 
-  // Analog compiler state
-  const analogRegistry: ComponentRegistry = new Map();
-  const analogResourceToSource = new Map<string, string>();
+  // fast-compile plugin state
+  const registry: ComponentRegistry = new Map();
+  const resourceToSource = new Map<string, string>();
   const scannedDtsPackages = new Set<string>();
-  let analogProjectRoot = '';
+  let projectRoot = '';
   let useDefineForClassFields = true;
 
   /**
@@ -109,8 +110,8 @@ export function analogCompilerPlugin(
       // At buildStart we want stable registry entries (don't overwrite
       // an earlier scan with a barrel re-scan); HMR explicitly asks
       // for overwrite so updated metadata replaces stale entries.
-      if (overwrite || !analogRegistry.has(entry.className)) {
-        analogRegistry.set(entry.className, entry);
+      if (overwrite || !registry.has(entry.className)) {
+        registry.set(entry.className, entry);
       }
     }
     // Collect every relative re-export specifier via OXC AST so
@@ -151,14 +152,14 @@ export function analogCompilerPlugin(
     }
   }
 
-  async function initAnalogCompiler() {
+  async function initFastCompile() {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
-    analogRegistry.clear();
+    registry.clear();
     scannedDtsPackages.clear();
     const resolvedTsConfigPath = resolveTsConfigPath();
-    analogProjectRoot = dirname(resolvedTsConfigPath);
+    projectRoot = dirname(resolvedTsConfigPath);
     const config = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
 
@@ -173,7 +174,7 @@ export function analogCompilerPlugin(
     // silently drops it because arrays don't have a directive def.
     const candidates = new Set<string>(config.rootNames);
     const tsPaths = config.options?.paths;
-    const baseUrl = (config.options?.baseUrl ?? analogProjectRoot) as string;
+    const baseUrl = (config.options?.baseUrl ?? projectRoot) as string;
     if (tsPaths) {
       for (const targets of Object.values(tsPaths)) {
         for (const target of targets as string[]) {
@@ -192,7 +193,7 @@ export function analogCompilerPlugin(
         } catch (e) {
           if (debugRegistry.enabled) {
             debugRegistry(
-              'initAnalogCompiler: skipping unreadable %s: %s',
+              'initFastCompile: skipping unreadable %s: %s',
               file,
               (e as Error)?.message,
             );
@@ -204,7 +205,7 @@ export function analogCompilerPlugin(
 
     for (const entries of results) {
       for (const entry of entries) {
-        analogRegistry.set(entry.className, entry);
+        registry.set(entry.className, entry);
       }
     }
 
@@ -229,8 +230,8 @@ export function analogCompilerPlugin(
       );
     }
     debugRegistry(
-      'initAnalogCompiler done: %d entries from %d candidate files',
-      analogRegistry.size,
+      'initFastCompile done: %d entries from %d candidate files',
+      registry.size,
       candidates.size,
     );
   }
@@ -241,10 +242,10 @@ export function analogCompilerPlugin(
       scannedDtsPackages.add(pkg);
 
       try {
-        const dtsEntries = scanPackageDts(pkg, analogProjectRoot);
+        const dtsEntries = scanPackageDts(pkg, projectRoot);
         for (const entry of dtsEntries) {
-          if (!analogRegistry.has(entry.className)) {
-            analogRegistry.set(entry.className, entry);
+          if (!registry.has(entry.className)) {
+            registry.set(entry.className, entry);
           }
         }
       } catch {
@@ -253,7 +254,7 @@ export function analogCompilerPlugin(
     }
   }
 
-  async function handleAnalogCompilerTransform(
+  async function handleFastCompileTransform(
     code: string,
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
@@ -287,6 +288,12 @@ export function analogCompilerPlugin(
               /\.ts$/,
               `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
             );
+            // In tests, mirror Vitest's `test.css` rules — defaults to no
+            // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+            if (!shouldPreprocessTestCss(resolvedConfig, fakePath)) {
+              resolvedInlineStyles.set(i, styleStrings[i]);
+              continue;
+            }
             const processed = await preprocessCSS(
               styleStrings[i],
               fakePath,
@@ -312,16 +319,16 @@ export function analogCompilerPlugin(
     ensureDtsRegistryForSource(code, id);
 
     const result = compile(code, id, {
-      registry: analogRegistry,
+      registry,
       resolvedStyles,
       resolvedInlineStyles,
       useDefineForClassFields,
-      compilationMode: pluginOptions.analogCompilationMode,
+      compilationMode: pluginOptions.fastCompileMode,
     });
 
     // Track resource dependencies for HMR
     for (const dep of result.resourceDependencies) {
-      analogResourceToSource.set(dep, id);
+      resourceToSource.set(dep, id);
     }
 
     // Strip TypeScript-only syntax
@@ -339,7 +346,7 @@ export function analogCompilerPlugin(
 
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
-      const fileDeclarations = [...analogRegistry.values()].filter(
+      const fileDeclarations = [...registry.values()].filter(
         (e) => e.fileName === id,
       );
       if (fileDeclarations.length > 0) {
@@ -363,7 +370,7 @@ export function analogCompilerPlugin(
   }
 
   return {
-    name: '@analogjs/vite-plugin-angular-compiler',
+    name: '@analogjs/vite-plugin-angular-fast-compile',
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';
@@ -418,12 +425,12 @@ export function analogCompilerPlugin(
       });
     },
     async buildStart() {
-      await initAnalogCompiler();
+      await initFastCompile();
     },
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module
-      if (analogResourceToSource.has(ctx.file)) {
-        const parentSource = analogResourceToSource.get(ctx.file)!;
+      if (resourceToSource.has(ctx.file)) {
+        const parentSource = resourceToSource.get(ctx.file)!;
         const parentModule = ctx.server.moduleGraph.getModuleById(parentSource);
         if (parentModule) {
           return [parentModule];
@@ -434,11 +441,11 @@ export function analogCompilerPlugin(
         const [fileId] = ctx.file.split('?');
 
         // Remove old entries from this file
-        const oldEntries = [...analogRegistry.entries()]
+        const oldEntries = [...registry.entries()]
           .filter(([_, v]) => v.fileName === fileId)
           .map(([k]) => k);
         for (const key of oldEntries) {
-          analogRegistry.delete(key);
+          registry.delete(key);
         }
 
         // Rescan the changed file via the barrel-aware scanner so an
@@ -492,6 +499,11 @@ export function analogCompilerPlugin(
       if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
         const filePath = id.split('?')[0];
         const code = await fsPromises.readFile(filePath, 'utf-8');
+        // In tests, mirror Vitest's `test.css` rules — defaults to no
+        // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+        if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
+          return `export default ${JSON.stringify(code)}`;
+        }
         const result = await preprocessCSS(code, filePath, resolvedConfig);
         return `export default ${JSON.stringify(result.code)}`;
       }
@@ -516,7 +528,7 @@ export function analogCompilerPlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleAnalogCompilerTransform(code, id);
+        return handleFastCompileTransform(code, id);
       },
     },
   };

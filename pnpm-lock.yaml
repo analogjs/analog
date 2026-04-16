@@ -1325,24 +1325,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/vitest-angular
 
-  packages/angular-compiler:
-    dependencies:
-      '@angular/compiler':
-        specifier: 21.2.8
-        version: 21.2.8
-      '@angular/compiler-cli':
-        specifier: 21.2.8
-        version: 21.2.8(@angular/compiler@21.2.8)(typescript@6.0.2)
-      magic-string:
-        specifier: 'catalog:'
-        version: 0.30.21
-      obug:
-        specifier: 'catalog:'
-        version: 2.1.1
-      oxc-parser:
-        specifier: 'catalog:'
-        version: 0.124.0(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
-
   packages/astro-angular:
     dependencies:
       '@analogjs/vite-plugin-angular':
@@ -1606,9 +1588,6 @@ importers:
 
   packages/vite-plugin-angular:
     dependencies:
-      '@analogjs/angular-compiler':
-        specifier: workspace:*
-        version: link:../angular-compiler
       '@angular-devkit/build-angular':
         specifier: catalog:peerAngularBuilders
         version: 21.2.7(6751719947dac3e331bdc3e329959f6e)
@@ -1618,6 +1597,9 @@ importers:
       es-toolkit:
         specifier: 'catalog:'
         version: 1.45.1
+      magic-string:
+        specifier: 'catalog:'
+        version: 0.30.21
       obug:
         specifier: 'catalog:'
         version: 2.1.1

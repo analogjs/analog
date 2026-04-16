@@ -4,7 +4,6 @@ const tag = process.env['RELEASE_TAG'];
 
 const versionFiles = [
   'package.json',
-  'packages/angular-compiler/package.json',
   'packages/astro-angular/package.json',
   'packages/content/package.json',
   'packages/create-analog/package.json',
@@ -89,11 +88,6 @@ export default {
             from: '"@analogjs/router": ".*"',
             to: '"@analogjs/router": "^${nextRelease.version}"',
           },
-          {
-            files: replacementFiles,
-            from: '"@analogjs/angular-compiler": ".*"',
-            to: '"@analogjs/angular-compiler": "^${nextRelease.version}"',
-          },
         ],
       },
     ],
@@ -158,7 +152,6 @@ export default {
           'CHANGELOG.md',
           'package.json',
           'pnpm-lock.yaml',
-          'packages/angular-compiler/package.json',
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',

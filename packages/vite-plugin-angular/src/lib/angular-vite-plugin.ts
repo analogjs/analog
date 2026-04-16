@@ -61,7 +61,7 @@ import type {
   StylesheetDependency,
 } from './style-preprocessor.js';
 
-import { analogCompilerPlugin } from './analog-compiler-plugin.js';
+import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
   createAngularCompilation,
@@ -174,15 +174,20 @@ export interface PluginOptions {
   liveReload?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
+  /**
+   * Opt into the fast compile path. Skips Angular's template type-checking
+   * and routes compilation through an internal single-pass transform.
+   * Defaults to `false`.
+   */
+  fastCompile?: boolean;
+  /**
+   * Compilation output mode used when `fastCompile` is enabled.
+   * - `'full'` (default): Emit final Ivy definitions for application builds.
+   * - `'partial'`: Emit partial declarations for library publishing.
+   */
+  fastCompileMode?: 'full' | 'partial';
   experimental?: {
     useAngularCompilationAPI?: boolean;
-    useAnalogCompiler?: boolean;
-    /**
-     * Compilation output mode for the Analog compiler.
-     * - `'full'` (default): Emit final Ivy definitions for application builds.
-     * - `'partial'`: Emit partial declarations for library publishing.
-     */
-    analogCompilationMode?: 'full' | 'partial';
   };
   /**
    * Enable debug logging for specific scopes.
@@ -471,6 +476,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    fastCompile: options?.fastCompile ?? false,
+    fastCompileMode: options?.fastCompileMode ?? 'full',
     hasTailwindCss: !!options?.tailwindCss,
     tailwindCss: options?.tailwindCss,
     stylePreprocessor: buildStylePreprocessor(options),
@@ -2018,8 +2025,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
-  const compilationPlugin = pluginOptions.useAnalogCompiler
-    ? analogCompilerPlugin({
+  const compilationPlugin = pluginOptions.fastCompile
+    ? fastCompilePlugin({
         tsconfigGetter: pluginOptions.tsconfigGetter,
         workspaceRoot: pluginOptions.workspaceRoot,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
@@ -2029,7 +2036,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         transformFilter: options?.transformFilter,
         isTest,
         isAstroIntegration,
-        analogCompilationMode: pluginOptions.analogCompilationMode,
+        fastCompileMode: pluginOptions.fastCompileMode,
       })
     : angularPlugin();
 

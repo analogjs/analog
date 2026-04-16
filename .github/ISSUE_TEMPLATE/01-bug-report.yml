@@ -32,7 +32,6 @@ body:
         - platform
         - astro-angular
         - storybook-angular
-        - angular-compiler
         - Docs
         - Don't know / other
     validations:

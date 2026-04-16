@@ -10,17 +10,13 @@
     "assert-deps": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/assert-project-dependency.mts content build-self angular-compiler:build vite-plugin-angular:build"
+        "command": "node tools/scripts/assert-project-dependency.mts content build-self vite-plugin-angular:build"
       }
     },
     "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "assert-deps",
-        "angular-compiler:build",
-        "vite-plugin-angular:build"
-      ],
+      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
         "command": "node tools/scripts/build-lib.mts content"

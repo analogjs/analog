@@ -14,17 +14,6 @@ type Step = {
 
 const steps: Step[] = [
   {
-    label: 'angular-compiler:build-self',
-    command: 'pnpm',
-    args: [
-      'exec',
-      'vite',
-      'build',
-      '--config',
-      'packages/angular-compiler/vite.config.lib.ts',
-    ],
-  },
-  {
     label: 'vite-plugin-angular:build-self',
     command: 'pnpm',
     args: [

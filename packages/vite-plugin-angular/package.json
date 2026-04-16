@@ -36,8 +36,8 @@
     }
   },
   "dependencies": {
-    "@analogjs/angular-compiler": "workspace:*",
     "es-toolkit": "catalog:",
+    "magic-string": "catalog:",
     "obug": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-resolver": "catalog:",
@@ -65,8 +65,7 @@
       "@analogjs/storybook-angular",
       "@analogjs/vite-plugin-angular",
       "@analogjs/vite-plugin-nitro",
-      "@analogjs/vitest-angular",
-      "@analogjs/angular-compiler"
+      "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
   },

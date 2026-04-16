@@ -99,7 +99,7 @@ describe('@Component', () => {
   it('resolves ${...} interpolation against module-level string consts in template', () => {
     // Components in the wild often hoist long Tailwind class chains into
     // module-level `const`s and reference them from the inline template via
-    // JS template-literal interpolation. The Analog compiler must resolve
+    // JS template-literal interpolation. The fast-compile path must resolve
     // those references at parse time so Angular sees the fully-expanded
     // class attribute.
     const result = compile(
@@ -1536,7 +1536,7 @@ describe('setClassMetadata construction shape', () => {
   // `new o.LiteralMapPropertyAssignment(...)` throws "is not a constructor"
   // when the export is missing, and the surrounding try/catch in compile.ts
   // silently disables setClassMetadata emission for every class in the
-  // project — visible only under DEBUG=analog-compiler*.
+  // project — visible only under DEBUG=analog-fast-compile*.
   //
   // The fix is to construct entries as plain `{ key, value, quoted }`
   // object literals — both Angular's own emitter and Analog's `JSEmitter`

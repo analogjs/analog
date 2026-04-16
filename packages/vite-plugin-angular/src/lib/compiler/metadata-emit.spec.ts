@@ -208,7 +208,7 @@ describe('Module-level string const interpolation in metadata', () => {
   //   const tw = `text-zinc-700 hover:text-zinc-900`;
   //   @Component({ template: `<a class="${tw}">x</a>` })
   //
-  // The Analog compiler must resolve those `${...}` expressions at metadata
+  // The fast-compile path must resolve those `${...}` expressions at metadata
   // extraction time so Angular's template parser sees the fully-expanded
   // class attribute. Otherwise the template ends up empty (silent failure)
   // or contains the literal `${tw}` token (parse error).

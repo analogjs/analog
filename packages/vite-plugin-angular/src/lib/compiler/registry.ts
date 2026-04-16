@@ -70,7 +70,7 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
   // (with or without `export`/`as const`) where every element is a bare
   // class identifier. These are how spartan-style libraries expose a
   // group of directives behind a single import (e.g. `HlmSelectImports`).
-  // Without registering them, the analog compiler treats the bare
+  // Without registering them, the fast-compile path treats the bare
   // identifier as an unknown directive and Angular's runtime never
   // matches the underlying classes.
   for (const node of program.body) {

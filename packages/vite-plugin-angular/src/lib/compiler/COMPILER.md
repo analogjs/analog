@@ -1,98 +1,25 @@
-# Analog Angular Compiler
+# Analog Angular Compiler (internal)
 
 A lightweight Angular compiler that transforms decorators and signal-based reactive APIs into Ivy static definitions. Designed for fast dev server compilation via Vite, without requiring a full TypeScript program.
 
-## Installation
-
-```bash
-npm install @analogjs/angular-compiler
-```
-
-Peer dependencies: `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, and `next` on every PR via the matrix in `.github/workflows/angular-compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
-
-## Entry Point
-
-| Import                       | Exports                                                                                                                                                                                                           | Use case                  |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `@analogjs/angular-compiler` | `compile()`, `scanFile()`, `scanDtsFile()`, `scanPackageDts()`, `collectImportedPackages()`, `collectRelativeReExports()`, `jitTransform()`, `inlineResourceUrls()`, `extractInlineStyles()`, `generateHmrCode()` | Programmatic compiler API |
-
-The compiler is integrated into `@analogjs/vite-plugin-angular` via the `experimental.useAnalogCompiler` flag — there is no separate Vite plugin entry point.
-
-## Usage
-
-### Via Analog Platform (recommended)
+This is an **internal** component of `@analogjs/vite-plugin-angular`. It is not published as a standalone package. Use the `fastCompile` flag on the vite plugin to opt into it:
 
 ```ts
-import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
 
 export default defineConfig({
-  plugins: [
-    analog({
-      vite: {
-        experimental: {
-          useAnalogCompiler: true,
-        },
-      },
-    }),
-  ],
+  plugins: [angular({ fastCompile: true })],
 });
 ```
 
-### Programmatic API
-
-```ts
-import {
-  compile,
-  scanFile,
-  scanDtsFile,
-  scanPackageDts,
-  collectImportedPackages,
-  jitTransform,
-  inlineResourceUrls,
-  extractInlineStyles,
-} from '@analogjs/angular-compiler';
-
-// Compile a single file
-const result = compile(sourceCode, fileName, { registry });
-// result.code — compiled JavaScript
-// result.map — V3 source map
-// result.resourceDependencies — external template/style paths read
-
-// Compile in partial (library) mode
-const libResult = compile(sourceCode, fileName, {
-  registry,
-  compilationMode: 'partial',
-});
-// Emits ɵɵngDeclareComponent/ɵɵngDeclareDirective/etc. for library publishing
-
-// Scan a source file for Angular metadata (uses OXC Rust parser)
-const entries = scanFile(code, fileName);
-// entries: [{ selector, kind, className, fileName, inputs, outputs, ... }]
-
-// Scan a .d.ts file for pre-compiled Angular declarations
-const dtsEntries = scanDtsFile(dtsCode, fileName);
-// Reads ɵɵDirectiveDeclaration/ComponentDeclaration/PipeDeclaration type params
-
-// Scan all .d.ts files in an npm package
-const pkgEntries = scanPackageDts('@angular/router', projectRoot);
-
-// Collect bare-specifier package names from imports
-const packages = collectImportedPackages(code, fileName);
-// Set { '@angular/router', 'rxjs', ... }
-
-// Inline templateUrl/styleUrl(s) in source code (OXC AST rewriting)
-const inlined = inlineResourceUrls(sourceCode, fileName);
-
-// Extract inline style strings for preprocessing (OXC parser)
-const styles = extractInlineStyles(sourceCode, fileName);
-```
+Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
 
 ## Architecture
 
 ```
 Source file (.ts)
   │
-  ├─ vite-plugin-angular (buildStart, when useAnalogCompiler is true)
+  ├─ vite-plugin-angular (buildStart, when fastCompile is true)
   │    @angular/compiler-cli readConfiguration() → rootNames
   │    OXC parser ──▶ scanFile() ──▶ ComponentRegistry
   │                                   (selectors, inputs, outputs, pipes, NgModule exports)
@@ -122,7 +49,7 @@ Source file (.ts)
          MagicString (surgical edits on original source → JS + source map)
 ```
 
-The compiler is integrated into `@analogjs/vite-plugin-angular` as an alternative compilation path alongside ngtsc and the Angular Compilation API. When `experimental.useAnalogCompiler` is enabled, the vite plugin:
+The compiler is integrated into `@analogjs/vite-plugin-angular` as an alternative compilation path alongside ngtsc and the Angular Compilation API. When `fastCompile` is enabled, the vite plugin:
 
 1. Scans all source files with `scanFile()` at build start to populate the `ComponentRegistry`
 2. Inlines external resources (`templateUrl`, `styleUrl`) via OXC AST rewriting before compilation
@@ -132,7 +59,7 @@ The compiler is integrated into `@analogjs/vite-plugin-angular` as an alternativ
 6. Appends HMR code for Angular declarations in dev mode (components via `ɵɵreplaceMetadata`, directives/pipes via field-swap + invalidate)
 7. Injects synthetic imports for NgModule-exported classes
 
-The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.) continue to work alongside the analog compiler.
+The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.) continue to work alongside the fast-compile path.
 
 ## Source Files
 
@@ -495,31 +422,31 @@ Remaining soft-failures are output formatting differences (`@defer` multi-file d
 
 ```bash
 # Specific major version (resolves latest patch)
-bash packages/angular-compiler/scripts/setup-conformance.sh 19
-ANGULAR_SOURCE_DIR=.angular-conformance npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts
+bash packages/vite-plugin-angular/scripts/setup-conformance.sh 19
+ANGULAR_SOURCE_DIR=.angular-conformance npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
 
 # Exact version
-bash packages/angular-compiler/scripts/setup-conformance.sh 21.0.0
+bash packages/vite-plugin-angular/scripts/setup-conformance.sh 21.0.0
 
 # Latest stable release (auto-detected via GitHub API)
-bash packages/angular-compiler/scripts/setup-conformance.sh
-bash packages/angular-compiler/scripts/setup-conformance.sh latest
+bash packages/vite-plugin-angular/scripts/setup-conformance.sh
+bash packages/vite-plugin-angular/scripts/setup-conformance.sh latest
 
 # Latest prerelease (-next.N)
-bash packages/angular-compiler/scripts/setup-conformance.sh next
+bash packages/vite-plugin-angular/scripts/setup-conformance.sh next
 
 # Local (auto-detects ~/projects/angular/angular if present)
-npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts
+npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
 ```
 
-CI runs a matrix of Angular 17, 18, 19, 20, 21, latest, and next on every push to `feat/angular-compiler` via `.github/workflows/conformance.yml`.
+CI runs a matrix of Angular 17, 18, 19, 20, 21, latest, and next on every pull request via `.github/workflows/conformance.yml`.
 
 ### Compatibility Testing
 
-Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/angular-compiler-compat.yml` complements it by:
+Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/compiler-compat.yml` complements it by:
 
 1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported version (`17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, plus `next`) via `pnpm.overrides`.
-2. Running the regular `packages/angular-compiler/src/lib/` test suite against the swapped version with `DEBUG=analog-compiler*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
+2. Running the regular `packages/vite-plugin-angular/src/lib/compiler/` test suite against the swapped version with `DEBUG=analog-fast-compile*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
 3. On a `push` to `beta`, auto-opening (or commenting on an existing) GitHub issue using the bug-report template's section structure when a numeric matrix slot fails. PR failures show in the PR check and don't open issues to avoid spam.
 
 The matrix mixes two version-pinning strategies:
@@ -530,4 +457,4 @@ The matrix mixes two version-pinning strategies:
 
 Known v17 limitation: components that use `@defer` at runtime are not supported on Angular 17. The v17 `@defer` ABI requires populated `meta.deferBlocks` and `meta.deferrableTypes` Maps that the compiler currently sets to empty. Non-`@defer` components compile cleanly. See `compile.ts` for the inline rationale.
 
-The workflow runs on `pull_request`, `push` to `beta`, and `workflow_dispatch`. When `packages/angular-compiler/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot(s). When a new Angular major ships, add a new floor slot. When an LTS patch supersedes the current pinned patch for v17/v18, bump the patch in the matrix.
+The workflow runs on `pull_request`, `push` to `beta`, and `workflow_dispatch`. When `packages/vite-plugin-angular/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot(s). When a new Angular major ships, add a new floor slot. When an LTS patch supersedes the current pinned patch for v17/v18, bump the patch in the matrix.

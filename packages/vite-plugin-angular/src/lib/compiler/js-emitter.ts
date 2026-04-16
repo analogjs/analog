@@ -285,7 +285,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     const op = BINARY_OP_STR.get(ast.operator);
     if (op === undefined) {
       throw new Error(
-        `[angular-compiler] Unsupported BinaryOperator value ${ast.operator} ` +
+        `[fast-compile] Unsupported BinaryOperator value ${ast.operator} ` +
           `on @angular/compiler ${o.VERSION?.full ?? '(unknown version)'}`,
       );
     }

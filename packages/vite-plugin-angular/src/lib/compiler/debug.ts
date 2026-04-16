@@ -1,17 +1,17 @@
 import { createDebug } from 'obug';
 
-// Structured debug output for the Analog compiler. Activated via the
+// Structured debug output for the fast-compile path. Activated via the
 // `DEBUG` environment variable, e.g.:
 //
-//   DEBUG=analog-compiler npm run build           # top-level events
-//   DEBUG=analog-compiler:* npm run build         # everything
-//   DEBUG=analog-compiler:registry npm run build  # only registry
+//   DEBUG=analog-fast-compile npm run build           # top-level events
+//   DEBUG=analog-fast-compile:* npm run build         # everything
+//   DEBUG=analog-fast-compile:registry npm run build  # only registry
 //
 // Each namespace is a `Debugger` from obug — callable like console.log
 // (with %s/%d/%O formatters), with a `.enabled` boolean for cheap
 // gating before expensive payload construction.
 
-const root = createDebug('analog-compiler');
+const root = createDebug('analog-fast-compile');
 
 /**
  * Top-level compile/transform events: per-file start, end, timing,

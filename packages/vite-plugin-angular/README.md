@@ -48,6 +48,28 @@ export default defineConfig({
 
 > The `angular` plugin should be listed **first** in the plugins array.
 
+## Fast Compile Mode
+
+`fastCompile` opts the plugin into a single-pass compilation path that emits Ivy instructions directly and skips Angular's template type-checking. It's intended for content-focused apps and faster dev iteration where build throughput matters more than inline type-safety feedback.
+
+```ts
+export default defineConfig({
+  plugins: [angular({ fastCompile: true })],
+});
+```
+
+When `fastCompile` is enabled, template and input type errors will not surface during compilation — run `ngc -p tsconfig.app.json --noEmit` as a separate step in your build script to keep full type safety:
+
+```json
+{
+  "scripts": {
+    "build": "ngc -p tsconfig.app.json --noEmit && vite build"
+  }
+}
+```
+
+The fast compile path currently passes ~91% of Angular's conformance suite. Behavior and output may change between minor releases.
+
 ## Setting up the TypeScript config
 
 The integration needs a `tsconfig.app.json` at the root of the project for compilation.

@@ -8,7 +8,6 @@ export default {
       2,
       'always',
       [
-        'angular-compiler',
         'vite-plugin-angular',
         'vite-plugin-nitro',
         'vitest-angular',
