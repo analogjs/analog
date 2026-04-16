@@ -81,6 +81,7 @@ import {
   loadVirtualStyleModule,
   rewriteHtmlRawImport,
   rewriteInlineStyleImport,
+  shouldPreprocessTestCss,
 } from './utils/virtual-resources.js';
 
 export enum DiagnosticModes {
@@ -565,6 +566,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
           const filePath = id.split('?')[0];
           const code = await fsPromises.readFile(filePath, 'utf-8');
+          // In tests, mirror Vitest's `test.css` rules — defaults to no
+          // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+          if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
+            return `export default ${JSON.stringify(code)}`;
+          }
           const result = await preprocessCSS(code, filePath, resolvedConfig);
           return `export default ${JSON.stringify(result.code)}`;
         }
@@ -912,6 +918,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           const filename =
             resourceFile ??
             containingFile.replace('.ts', `.${options?.inlineStylesExtension}`);
+
+          // In tests, mirror Vitest's `test.css` rules — defaults to no
+          // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+          if (!shouldPreprocessTestCss(resolvedConfig, filename)) {
+            return '';
+          }
 
           let stylesheetResult;
 

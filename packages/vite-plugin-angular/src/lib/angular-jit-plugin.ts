@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
 
+import { shouldPreprocessTestCss } from './utils/virtual-resources.js';
+
 export function jitPlugin({
   inlineStylesExtension,
 }: {
@@ -35,6 +37,15 @@ export function jitPlugin({
         ).toString();
 
         let styles: string | undefined = '';
+
+        // In tests, mirror Vitest's `test.css` rules — defaults to no
+        // preprocessing (matches Vite's CSS pipeline behavior). Inline
+        // component styles have no real file path to match include/exclude
+        // patterns against, so only `test.css: true` opts them in. (#2297)
+        const inlineStyleId = `${styleIdHash}.${inlineStylesExtension}`;
+        if (!shouldPreprocessTestCss(config, inlineStyleId)) {
+          return `export default \`\``;
+        }
 
         try {
           const compiled = await preprocessCSS(

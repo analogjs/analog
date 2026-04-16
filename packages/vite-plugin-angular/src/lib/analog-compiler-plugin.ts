@@ -43,6 +43,7 @@ import {
   loadVirtualStyleModule,
   rewriteHtmlRawImport,
   rewriteInlineStyleImport,
+  shouldPreprocessTestCss,
 } from './utils/virtual-resources.js';
 
 export interface AnalogCompilerPluginOptions {
@@ -287,6 +288,12 @@ export function analogCompilerPlugin(
               /\.ts$/,
               `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
             );
+            // In tests, mirror Vitest's `test.css` rules — defaults to no
+            // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+            if (!shouldPreprocessTestCss(resolvedConfig, fakePath)) {
+              resolvedInlineStyles.set(i, styleStrings[i]);
+              continue;
+            }
             const processed = await preprocessCSS(
               styleStrings[i],
               fakePath,
@@ -492,6 +499,11 @@ export function analogCompilerPlugin(
       if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
         const filePath = id.split('?')[0];
         const code = await fsPromises.readFile(filePath, 'utf-8');
+        // In tests, mirror Vitest's `test.css` rules — defaults to no
+        // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+        if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
+          return `export default ${JSON.stringify(code)}`;
+        }
         const result = await preprocessCSS(code, filePath, resolvedConfig);
         return `export default ${JSON.stringify(result.code)}`;
       }
