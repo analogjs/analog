@@ -66,11 +66,11 @@ export function fastCompilePlugin(
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
 
-  // Analog compiler state
-  const analogRegistry: ComponentRegistry = new Map();
-  const analogResourceToSource = new Map<string, string>();
+  // fast-compile plugin state
+  const registry: ComponentRegistry = new Map();
+  const resourceToSource = new Map<string, string>();
   const scannedDtsPackages = new Set<string>();
-  let analogProjectRoot = '';
+  let projectRoot = '';
   let useDefineForClassFields = true;
 
   /**
@@ -110,8 +110,8 @@ export function fastCompilePlugin(
       // At buildStart we want stable registry entries (don't overwrite
       // an earlier scan with a barrel re-scan); HMR explicitly asks
       // for overwrite so updated metadata replaces stale entries.
-      if (overwrite || !analogRegistry.has(entry.className)) {
-        analogRegistry.set(entry.className, entry);
+      if (overwrite || !registry.has(entry.className)) {
+        registry.set(entry.className, entry);
       }
     }
     // Collect every relative re-export specifier via OXC AST so
@@ -156,10 +156,10 @@ export function fastCompilePlugin(
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
-    analogRegistry.clear();
+    registry.clear();
     scannedDtsPackages.clear();
     const resolvedTsConfigPath = resolveTsConfigPath();
-    analogProjectRoot = dirname(resolvedTsConfigPath);
+    projectRoot = dirname(resolvedTsConfigPath);
     const config = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
 
@@ -174,7 +174,7 @@ export function fastCompilePlugin(
     // silently drops it because arrays don't have a directive def.
     const candidates = new Set<string>(config.rootNames);
     const tsPaths = config.options?.paths;
-    const baseUrl = (config.options?.baseUrl ?? analogProjectRoot) as string;
+    const baseUrl = (config.options?.baseUrl ?? projectRoot) as string;
     if (tsPaths) {
       for (const targets of Object.values(tsPaths)) {
         for (const target of targets as string[]) {
@@ -205,7 +205,7 @@ export function fastCompilePlugin(
 
     for (const entries of results) {
       for (const entry of entries) {
-        analogRegistry.set(entry.className, entry);
+        registry.set(entry.className, entry);
       }
     }
 
@@ -231,7 +231,7 @@ export function fastCompilePlugin(
     }
     debugRegistry(
       'initFastCompile done: %d entries from %d candidate files',
-      analogRegistry.size,
+      registry.size,
       candidates.size,
     );
   }
@@ -242,10 +242,10 @@ export function fastCompilePlugin(
       scannedDtsPackages.add(pkg);
 
       try {
-        const dtsEntries = scanPackageDts(pkg, analogProjectRoot);
+        const dtsEntries = scanPackageDts(pkg, projectRoot);
         for (const entry of dtsEntries) {
-          if (!analogRegistry.has(entry.className)) {
-            analogRegistry.set(entry.className, entry);
+          if (!registry.has(entry.className)) {
+            registry.set(entry.className, entry);
           }
         }
       } catch {
@@ -319,7 +319,7 @@ export function fastCompilePlugin(
     ensureDtsRegistryForSource(code, id);
 
     const result = compile(code, id, {
-      registry: analogRegistry,
+      registry,
       resolvedStyles,
       resolvedInlineStyles,
       useDefineForClassFields,
@@ -328,7 +328,7 @@ export function fastCompilePlugin(
 
     // Track resource dependencies for HMR
     for (const dep of result.resourceDependencies) {
-      analogResourceToSource.set(dep, id);
+      resourceToSource.set(dep, id);
     }
 
     // Strip TypeScript-only syntax
@@ -346,7 +346,7 @@ export function fastCompilePlugin(
 
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
-      const fileDeclarations = [...analogRegistry.values()].filter(
+      const fileDeclarations = [...registry.values()].filter(
         (e) => e.fileName === id,
       );
       if (fileDeclarations.length > 0) {
@@ -429,8 +429,8 @@ export function fastCompilePlugin(
     },
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module
-      if (analogResourceToSource.has(ctx.file)) {
-        const parentSource = analogResourceToSource.get(ctx.file)!;
+      if (resourceToSource.has(ctx.file)) {
+        const parentSource = resourceToSource.get(ctx.file)!;
         const parentModule = ctx.server.moduleGraph.getModuleById(parentSource);
         if (parentModule) {
           return [parentModule];
@@ -441,11 +441,11 @@ export function fastCompilePlugin(
         const [fileId] = ctx.file.split('?');
 
         // Remove old entries from this file
-        const oldEntries = [...analogRegistry.entries()]
+        const oldEntries = [...registry.entries()]
           .filter(([_, v]) => v.fileName === fileId)
           .map(([k]) => k);
         for (const key of oldEntries) {
-          analogRegistry.delete(key);
+          registry.delete(key);
         }
 
         // Rescan the changed file via the barrel-aware scanner so an
