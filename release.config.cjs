@@ -44,13 +44,6 @@ module.exports = {
       '@semantic-release/npm',
       {
         npmPublish: false,
-        pkgRoot: './packages/angular-compiler/',
-      },
-    ],
-    [
-      '@semantic-release/npm',
-      {
-        npmPublish: false,
         pkgRoot: './packages/astro-angular/',
       },
     ],
@@ -144,11 +137,6 @@ module.exports = {
             from: '"@analogjs/router": ".*"',
             to: '"@analogjs/router": "^${nextRelease.version}"',
           },
-          {
-            files: replacementFiles,
-            from: '"@analogjs/angular-compiler": ".*"',
-            to: '"@analogjs/angular-compiler": "^${nextRelease.version}"',
-          },
         ],
       },
     ],
@@ -212,7 +200,6 @@ module.exports = {
         assets: [
           'CHANGELOG.md',
           'package.json',
-          'packages/angular-compiler/package.json',
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',

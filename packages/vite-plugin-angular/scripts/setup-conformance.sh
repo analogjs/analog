@@ -1,6 +1,6 @@
 #!/bin/bash
 # Sparse-clone Angular's compliance test fixtures at a specific version.
-# Usage: bash packages/angular-compiler/scripts/setup-conformance.sh [version]
+# Usage: bash packages/vite-plugin-angular/scripts/setup-conformance.sh [version]
 # Default: latest release from GitHub
 
 set -e
@@ -63,4 +63,4 @@ cd "$TARGET"
 git sparse-checkout set packages/compiler-cli/test/compliance/test_cases
 
 echo "Done. $(find packages/compiler-cli/test/compliance/test_cases -name '*.ts' | wc -l | tr -d ' ') test files downloaded."
-echo "Run: ANGULAR_SOURCE_DIR=$TARGET npx vitest run packages/angular-compiler/src/lib/conformance.spec.ts"
+echo "Run: ANGULAR_SOURCE_DIR=$TARGET npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts"

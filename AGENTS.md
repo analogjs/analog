@@ -65,7 +65,6 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 | `packages/storybook-angular`   | `@analogjs/storybook-angular`   | `storybook-angular`   |
 | `packages/trpc`                | `@analogjs/trpc`                | `trpc`                |
 | `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
-| `packages/angular-compiler`    | `@analogjs/angular-compiler`    | `angular-compiler`    |
 
 ## Contribution Policy
 

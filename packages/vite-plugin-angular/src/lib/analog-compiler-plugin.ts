@@ -24,7 +24,7 @@ import {
   debugCompile,
   debugRegistry,
   type ComponentRegistry,
-} from '@analogjs/angular-compiler';
+} from './compiler/index.js';
 
 import {
   TS_EXT_REGEX,

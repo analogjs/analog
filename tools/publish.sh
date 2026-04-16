@@ -1,6 +1,5 @@
 #!/bin/bash
 echo "Publishing to $RELEASE_TAG"
-npm publish node_modules/@analogjs/angular-compiler --tag $RELEASE_TAG
 npm publish node_modules/@analogjs/astro-angular --tag $RELEASE_TAG
 npm publish node_modules/@analogjs/content --tag $RELEASE_TAG
 npm publish node_modules/@analogjs/platform --tag $RELEASE_TAG
