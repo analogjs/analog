@@ -1,3 +1,9 @@
+# [2.5.0-beta.43](https://github.com/analogjs/analog/compare/v2.5.0-beta.42...v2.5.0-beta.43) (2026-04-16)
+
+### Features
+
+- **platform:** passthrough fastCompile and fastCompileMode to vite-plugin-angular ([f085ecc](https://github.com/analogjs/analog/commit/f085ecc0389a2bb5e94bd9391f551e960c378e1c))
+
 # [2.5.0-beta.42](https://github.com/analogjs/analog/compare/v2.5.0-beta.41...v2.5.0-beta.42) (2026-04-16)
 
 ### Bug Fixes
