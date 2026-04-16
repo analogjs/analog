@@ -1,12 +1,13 @@
 import {
-  ENVIRONMENT_INITIALIZER,
   EnvironmentProviders,
   InjectionToken,
+  Type,
   assertInInjectionContext,
   inject,
   makeEnvironmentProviders,
+  provideAppInitializer,
 } from '@angular/core';
-import { LOCALE, injectLocale } from '@analogjs/router/tokens';
+import { LOCALE, REQUEST, ServerRequest } from '@analogjs/router/tokens';
 
 declare const ANALOG_I18N_DEFAULT_LOCALE: string;
 declare const ANALOG_I18N_LOCALES: string[];
@@ -47,9 +48,10 @@ export type ResolvedI18nConfig = Required<I18nConfig>;
 
 /**
  * Injection token for the resolved i18n configuration.
- * Provided by `provideI18n()`.
+ * Provided by `provideI18n()` and consumed by `injectSwitchLocale()`.
+ * @internal
  */
-export const I18N_CONFIG = new InjectionToken<ResolvedI18nConfig>(
+const I18N_CONFIG = new InjectionToken<ResolvedI18nConfig>(
   '@analogjs/router I18n Config',
 );
 
@@ -90,7 +92,8 @@ export function resolveI18nConfig(config: I18nConfig): Required<I18nConfig> {
  *
  * Works in both SSR and client-only modes. On the client, locale is detected
  * from `window.location.pathname`. On the server, locale is detected from
- * the request in `provideServerContext()`.
+ * the request in `provideServerContext()` and provided at the platform level;
+ * this function does not shadow it.
  *
  * When the platform plugin is configured with `i18n` in `vite.config.ts`,
  * `defaultLocale` and `locales` are injected automatically — only
@@ -104,21 +107,57 @@ export function resolveI18nConfig(config: I18nConfig): Required<I18nConfig> {
  */
 export function provideI18n(config: I18nConfig): EnvironmentProviders {
   const resolved = resolveI18nConfig(config);
-  const detectedLocale = detectClientLocale(resolved);
+
+  // Only provide LOCALE at the environment level on the client. On the
+  // server, the platform-level LOCALE set by `provideServerContext()` is
+  // authoritative and must not be shadowed by an environment-level provider.
+  const localeProviders =
+    typeof window !== 'undefined'
+      ? [{ provide: LOCALE, useValue: detectClientLocale(resolved) }]
+      : [];
 
   return makeEnvironmentProviders([
     { provide: I18N_CONFIG, useValue: resolved },
-    { provide: LOCALE, useValue: detectedLocale },
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useFactory: () => {
-        // Re-read LOCALE in case the server context overrode it
-        const locale = injectLocale();
-        return () => initI18n(resolved, locale ?? undefined);
-      },
-    },
+    ...localeProviders,
+    provideAppInitializer(async () => {
+      const locale = resolveActiveLocale(resolved);
+      await initI18n(resolved, locale);
+      // Force component definitions to re-evaluate their `consts()` factories
+      // on the next render so that `$localize` tagged templates pick up the
+      // newly loaded translations. Angular caches the result of `consts()`
+      // on `def.tView`, so without this reset the first rendered locale
+      // would be reused for every subsequent SSR request.
+      ɵresetI18nComponentDefCache();
+    }),
   ]);
+}
+
+/**
+ * Resolves the active locale, preferring the injected `LOCALE` token
+ * (which on the server reads from the platform-level provider set by
+ * `provideServerContext()`) and falling back to the request URL,
+ * `window.location.pathname`, or `defaultLocale`.
+ */
+function resolveActiveLocale(config: ResolvedI18nConfig): string {
+  const injected = inject(LOCALE, { optional: true });
+  if (injected && config.locales.includes(injected)) {
+    return injected;
+  }
+
+  // Fallback: read the path directly from the request on the server or
+  // from the browser URL on the client. This covers cases where a locale
+  // prefix is present in the URL but no token provider set it explicitly.
+  const req = inject(REQUEST, { optional: true }) as ServerRequest | null;
+  const pathname =
+    req?.originalUrl ??
+    req?.url ??
+    (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const first = pathname.split('?')[0].split('/').filter(Boolean)[0];
+  if (first && config.locales.includes(first)) {
+    return first;
+  }
+
+  return config.defaultLocale;
 }
 
 /**
@@ -143,33 +182,45 @@ export function detectClientLocale(config: ResolvedI18nConfig): string {
 
 /**
  * Loads translations for the given locale and registers them with $localize.
+ *
+ * Always clears any previously loaded translations first so that switching
+ * between locales in a single SSR process does not mix translation maps.
  */
 export async function initI18n(
   config: ResolvedI18nConfig,
   locale?: string,
 ): Promise<void> {
   const activeLocale = locale ?? config.defaultLocale;
+  await clearTranslationsRuntime();
 
-  // Skip loading translations for the source locale
-  // (source messages are already in the templates)
+  // The source locale (first entry in `locales`) has its messages baked
+  // directly into the template source, so there is nothing to load.
   if (activeLocale === config.locales[0]) {
     return;
   }
 
   const translations = await config.loader(activeLocale);
-
   if (translations && Object.keys(translations).length > 0) {
-    loadTranslationsRuntime(translations);
+    await loadTranslationsRuntime(translations);
   }
 }
 
 /**
  * Loads translations into the global $localize translation map.
- * Requires @angular/localize/init to be imported in the application entry point.
+ *
+ * Uses `@angular/localize`'s `loadTranslations` when available so that
+ * each translation string is parsed into the `{text, messageParts,
+ * placeholderNames}` shape that `$localize.translate` expects. Falls back
+ * to writing raw strings only as a last resort (in which case lookups
+ * will not succeed — the fallback exists to keep error messages useful
+ * for users who have not installed `@angular/localize`).
+ *
+ * Requires `@angular/localize/init` to be imported in the application
+ * entry point so that `globalThis.$localize` is defined.
  */
-export function loadTranslationsRuntime(
+export async function loadTranslationsRuntime(
   translations: Record<string, string>,
-): void {
+): Promise<void> {
   const $localize = (globalThis as any).$localize;
   if (!$localize) {
     console.warn(
@@ -179,10 +230,106 @@ export function loadTranslationsRuntime(
     return;
   }
 
-  $localize.TRANSLATIONS ??= {};
-  for (const [id, message] of Object.entries(translations)) {
-    $localize.TRANSLATIONS[id] = message;
+  try {
+    const { loadTranslations } = (await import('@angular/localize')) as {
+      loadTranslations: (t: Record<string, string>) => void;
+    };
+    loadTranslations(translations);
+  } catch {
+    console.warn(
+      '[@analogjs/router] Unable to import @angular/localize. ' +
+        'Install it as a dependency to enable runtime translation loading.',
+    );
+    $localize.TRANSLATIONS ??= {};
+    for (const [id, message] of Object.entries(translations)) {
+      $localize.TRANSLATIONS[id] = message;
+    }
   }
+}
+
+/**
+ * Clears any previously loaded translations from `$localize` so that the
+ * next render falls through to the source messages until new translations
+ * are loaded. Uses `@angular/localize`'s `clearTranslations` when present.
+ */
+/** @internal — exported for tests; not re-exported from the package entry. */
+export async function clearTranslationsRuntime(): Promise<void> {
+  const $localize = (globalThis as any).$localize;
+  if (!$localize) {
+    return;
+  }
+  try {
+    const { clearTranslations } = (await import('@angular/localize')) as {
+      clearTranslations: () => void;
+    };
+    clearTranslations();
+  } catch {
+    $localize.translate = undefined;
+    $localize.TRANSLATIONS = {};
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component definition registry
+// ---------------------------------------------------------------------------
+//
+// Angular caches the result of a component's `consts()` factory on
+// `def.tView` the first time the component is rendered. The factory is
+// where `$localize` tagged templates are evaluated, so once a tView has
+// been created for one locale, subsequent renders in the same process
+// reuse those strings no matter what translations are loaded.
+//
+// To support per-request locale switching in SSR, we keep a process-level
+// registry of component definitions that have been rendered, and null out
+// their cached tViews before each new render so the factory re-runs with
+// the freshly loaded translations.
+
+const componentDefRegistry = new Set<any>();
+
+/**
+ * Framework-internal: registers a component type (or `ɵcmp` definition)
+ * so that its cached tView will be reset before the next SSR render.
+ * Called from code emitted by the `i18nComponentRegistryPlugin` Vite
+ * plugin into user component modules. Not intended for direct use.
+ * @internal
+ */
+export function ɵregisterI18nComponentDef(typeOrDef: Type<any> | any): void {
+  if (!typeOrDef) return;
+  const def = (typeOrDef as any).ɵcmp ?? typeOrDef;
+  if (def && typeof def === 'object' && 'template' in def) {
+    componentDefRegistry.add(def);
+  }
+}
+
+/**
+ * Framework-internal: nulls `def.tView` on every registered component
+ * definition so that Angular's next render re-invokes `consts()` — where
+ * `$localize` tagged templates are evaluated — with whichever
+ * translations are currently loaded. Called by the server renderer
+ * before each request. Not intended for direct use.
+ * @internal
+ */
+export function ɵresetI18nComponentDefCache(): void {
+  for (const def of componentDefRegistry) {
+    def.tView = null;
+  }
+}
+
+/**
+ * Returns the number of component definitions in the registry.
+ * Exposed for testing.
+ * @internal
+ */
+export function getI18nComponentDefRegistrySize(): number {
+  return componentDefRegistry.size;
+}
+
+/**
+ * Clears the component definition registry. Exposed for testing.
+ * @internal
+ */
+export function clearI18nComponentDefRegistry(): void {
+  componentDefRegistry.clear();
 }
 
 /**

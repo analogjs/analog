@@ -21,7 +21,11 @@ export { ServerOnly } from './lib/server.component';
 export {
   provideI18n,
   I18nConfig,
-  I18N_CONFIG,
-  loadTranslationsRuntime,
   injectSwitchLocale,
+  loadTranslationsRuntime,
+  // Framework-internal helpers. `ɵ`-prefixed following the Angular
+  // convention for plumbing that is technically reachable but not part
+  // of the supported API.
+  ɵregisterI18nComponentDef,
+  ɵresetI18nComponentDefCache,
 } from './lib/i18n/provide-i18n';
