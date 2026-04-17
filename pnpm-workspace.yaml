@@ -27,6 +27,7 @@ catalog:
   '@angular/compiler': 21.2.8
   '@angular/core': 21.2.8
   '@angular/forms': 21.2.8
+  '@angular/localize': 21.2.8
   '@angular/material': 21.2.6
   '@angular/platform-browser': 21.2.8
   '@angular/platform-browser-dynamic': 21.2.8

@@ -60,3 +60,13 @@ export type {
 } from './lib/experimental';
 export { injectParams, injectQuery } from './lib/inject-typed-params';
 export { injectRouteContext } from './lib/inject-route-context';
+
+// i18n
+export {
+  provideI18n,
+  I18nConfig,
+  injectSwitchLocale,
+  loadTranslationsRuntime,
+  ɵregisterI18nComponentDef,
+  ɵresetI18nComponentDefCache,
+} from './lib/i18n/provide-i18n';

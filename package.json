@@ -69,6 +69,7 @@
     "@angular/compiler": "catalog:",
     "@angular/core": "catalog:",
     "@angular/forms": "catalog:",
+    "@angular/localize": "catalog:",
     "@angular/material": "catalog:",
     "@angular/platform-browser": "catalog:",
     "@angular/platform-browser-dynamic": "catalog:",

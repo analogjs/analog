@@ -1,12 +1,13 @@
 import {
-  ENVIRONMENT_INITIALIZER,
   EnvironmentProviders,
   InjectionToken,
+  Type,
   assertInInjectionContext,
   inject,
   makeEnvironmentProviders,
+  provideAppInitializer,
 } from '@angular/core';
-import { LOCALE, injectLocale } from '@analogjs/router/tokens';
+import { LOCALE, REQUEST, ServerRequest } from '@analogjs/router/tokens';
 
 declare const ANALOG_I18N_DEFAULT_LOCALE: string;
 declare const ANALOG_I18N_LOCALES: string[];
@@ -47,10 +48,12 @@ export type ResolvedI18nConfig = Required<I18nConfig>;
 
 /**
  * Injection token for the resolved i18n configuration.
- * Provided by `provideI18n()`.
+ * Provided by `provideI18n()` and consumed by `injectSwitchLocale()`.
+ * @internal
  */
-export const I18N_CONFIG: InjectionToken<ResolvedI18nConfig> =
-  new InjectionToken<ResolvedI18nConfig>('@analogjs/router I18n Config');
+const I18N_CONFIG = new InjectionToken<ResolvedI18nConfig>(
+  '@analogjs/router I18n Config',
+);
 
 /**
  * Resolves the full i18n config by merging explicit values with
@@ -89,7 +92,8 @@ export function resolveI18nConfig(config: I18nConfig): Required<I18nConfig> {
  *
  * Works in both SSR and client-only modes. On the client, locale is detected
  * from `window.location.pathname`. On the server, locale is detected from
- * the request in `provideServerContext()`.
+ * the request in `provideServerContext()` and provided at the platform level;
+ * this function does not shadow it.
  *
  * When the platform plugin is configured with `i18n` in `vite.config.ts`,
  * `defaultLocale` and `locales` are injected automatically — only
@@ -103,27 +107,51 @@ export function resolveI18nConfig(config: I18nConfig): Required<I18nConfig> {
  */
 export function provideI18n(config: I18nConfig): EnvironmentProviders {
   const resolved = resolveI18nConfig(config);
-  const detectedLocale = detectClientLocale(resolved);
+
+  // Only provide LOCALE at the environment level on the client. On the
+  // server, the platform-level LOCALE set by `provideServerContext()` is
+  // authoritative and must not be shadowed by an environment-level provider.
+  const localeProviders =
+    typeof window !== 'undefined'
+      ? [{ provide: LOCALE, useValue: detectClientLocale(resolved) }]
+      : [];
 
   return makeEnvironmentProviders([
     { provide: I18N_CONFIG, useValue: resolved },
-    { provide: LOCALE, useValue: detectedLocale },
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useFactory: () => {
-        // Re-read LOCALE in case the server context overrode it
-        const locale = injectLocale();
-        return () => initI18n(resolved, locale ?? undefined);
-      },
-    },
+    ...localeProviders,
+    provideAppInitializer(async () => {
+      const locale = resolveActiveLocale(resolved);
+      await initI18n(resolved, locale);
+      ɵresetI18nComponentDefCache();
+    }),
   ]);
 }
 
 /**
- * Detects the locale on the client from the URL path prefix.
- * Returns the default locale on the server or when no match is found.
+ * Resolves the active locale, preferring the injected `LOCALE` token
+ * (which on the server reads from the platform-level provider set by
+ * `provideServerContext()`) and falling back to the request URL,
+ * `window.location.pathname`, or `defaultLocale`.
  */
+function resolveActiveLocale(config: ResolvedI18nConfig): string {
+  const injected = inject(LOCALE, { optional: true });
+  if (injected && config.locales.includes(injected)) {
+    return injected;
+  }
+
+  const req = inject(REQUEST, { optional: true }) as ServerRequest | null;
+  const pathname =
+    req?.originalUrl ??
+    req?.url ??
+    (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const first = pathname.split('?')[0].split('/').filter(Boolean)[0];
+  if (first && config.locales.includes(first)) {
+    return first;
+  }
+
+  return config.defaultLocale;
+}
+
 export function detectClientLocale(config: ResolvedI18nConfig): string {
   if (typeof window === 'undefined') {
     return config.defaultLocale;
@@ -140,35 +168,26 @@ export function detectClientLocale(config: ResolvedI18nConfig): string {
   return config.defaultLocale;
 }
 
-/**
- * Loads translations for the given locale and registers them with $localize.
- */
 export async function initI18n(
   config: ResolvedI18nConfig,
   locale?: string,
 ): Promise<void> {
   const activeLocale = locale ?? config.defaultLocale;
+  await clearTranslationsRuntime();
 
-  // Skip loading translations for the source locale
-  // (source messages are already in the templates)
   if (activeLocale === config.locales[0]) {
     return;
   }
 
   const translations = await config.loader(activeLocale);
-
   if (translations && Object.keys(translations).length > 0) {
-    loadTranslationsRuntime(translations);
+    await loadTranslationsRuntime(translations);
   }
 }
 
-/**
- * Loads translations into the global $localize translation map.
- * Requires @angular/localize/init to be imported in the application entry point.
- */
-export function loadTranslationsRuntime(
+export async function loadTranslationsRuntime(
   translations: Record<string, string>,
-): void {
+): Promise<void> {
   const $localize = (globalThis as any).$localize;
   if (!$localize) {
     console.warn(
@@ -178,26 +197,72 @@ export function loadTranslationsRuntime(
     return;
   }
 
-  $localize.TRANSLATIONS ??= {};
-  for (const [id, message] of Object.entries(translations)) {
-    $localize.TRANSLATIONS[id] = message;
+  try {
+    const { loadTranslations } = (await import('@angular/localize')) as {
+      loadTranslations: (t: Record<string, string>) => void;
+    };
+    loadTranslations(translations);
+  } catch {
+    console.warn(
+      '[@analogjs/router] Unable to import @angular/localize. ' +
+        'Install it as a dependency to enable runtime translation loading.',
+    );
+    $localize.TRANSLATIONS ??= {};
+    for (const [id, message] of Object.entries(translations)) {
+      $localize.TRANSLATIONS[id] = message;
+    }
   }
 }
 
-/**
- * Returns an injectable function that switches the application locale.
- * Reads the configured locales from the I18N_CONFIG token provided
- * by `provideI18n()`.
- *
- * Triggers a full page navigation to the new locale URL so that
- * all $localize templates re-evaluate with the correct translations.
- *
- * Usage:
- * ```typescript
- * const switchLang = injectSwitchLocale();
- * switchLang('fr'); // navigates to /fr/current-path
- * ```
- */
+/** @internal — exported for tests; not re-exported from the package entry. */
+export async function clearTranslationsRuntime(): Promise<void> {
+  const $localize = (globalThis as any).$localize;
+  if (!$localize) {
+    return;
+  }
+  try {
+    const { clearTranslations } = (await import('@angular/localize')) as {
+      clearTranslations: () => void;
+    };
+    clearTranslations();
+  } catch {
+    $localize.translate = undefined;
+    $localize.TRANSLATIONS = {};
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component definition registry
+// ---------------------------------------------------------------------------
+
+const componentDefRegistry = new Set<any>();
+
+/** @internal */
+export function ɵregisterI18nComponentDef(typeOrDef: Type<any> | any): void {
+  if (!typeOrDef) return;
+  const def = (typeOrDef as any).ɵcmp ?? typeOrDef;
+  if (def && typeof def === 'object' && 'template' in def) {
+    componentDefRegistry.add(def);
+  }
+}
+
+/** @internal */
+export function ɵresetI18nComponentDefCache(): void {
+  for (const def of componentDefRegistry) {
+    def.tView = null;
+  }
+}
+
+/** @internal */
+export function getI18nComponentDefRegistrySize(): number {
+  return componentDefRegistry.size;
+}
+
+/** @internal */
+export function clearI18nComponentDefRegistry(): void {
+  componentDefRegistry.clear();
+}
+
 export function injectSwitchLocale(): (targetLocale: string) => void {
   assertInInjectionContext(injectSwitchLocale);
   const config = inject(I18N_CONFIG);
@@ -213,12 +278,6 @@ export function injectSwitchLocale(): (targetLocale: string) => void {
   };
 }
 
-/**
- * Replaces or inserts the locale prefix in a URL path.
- *
- * - If the path starts with a known locale, it is swapped.
- * - If no locale prefix exists, the target locale is prepended.
- */
 export function replaceLocaleInPath(
   pathname: string,
   targetLocale: string,
