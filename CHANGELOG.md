@@ -1,3 +1,9 @@
+# [3.0.0-alpha.38](https://github.com/analogjs/analog/compare/v3.0.0-alpha.37...v3.0.0-alpha.38) (2026-04-17)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** update nitro to 3.0.260415-beta ([#2300](https://github.com/analogjs/analog/issues/2300)) ([d351d28](https://github.com/analogjs/analog/commit/d351d2818a4f13b178f30279b73f67c7967a55f4))
+
 # [3.0.0-alpha.37](https://github.com/analogjs/analog/compare/v3.0.0-alpha.36...v3.0.0-alpha.37) (2026-04-16)
 
 ### Bug Fixes
