@@ -137,7 +137,7 @@ catalog:
   mermaid: ^11.13.0
   minimist: ^1.2.8
   ng-packagr: 21.2.2
-  nitro: 3.0.260311-beta
+  nitro: 3.0.260415-beta
   nx: 22.7.0-beta.12
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
