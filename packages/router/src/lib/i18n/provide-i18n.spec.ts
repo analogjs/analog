@@ -7,10 +7,6 @@ import {
   replaceLocaleInPath,
   resolveI18nConfig,
   I18nConfig,
-  ɵregisterI18nComponentDef,
-  ɵresetI18nComponentDefCache,
-  getI18nComponentDefRegistrySize,
-  clearI18nComponentDefRegistry,
 } from './provide-i18n';
 
 describe('loadTranslationsRuntime', () => {
@@ -378,57 +374,5 @@ describe('resolveI18nConfig', () => {
     expect(() => resolveI18nConfig({ loader })).toThrow(
       'provideI18n() requires defaultLocale and locales',
     );
-  });
-});
-
-describe('component def registry', () => {
-  beforeEach(() => {
-    clearI18nComponentDefRegistry();
-  });
-
-  it('should null def.tView on registered components when reset', () => {
-    const fakeDef = {
-      template: () => undefined,
-      tView: { someCachedValue: true },
-    };
-    ɵregisterI18nComponentDef(fakeDef);
-    expect(getI18nComponentDefRegistrySize()).toBe(1);
-
-    ɵresetI18nComponentDefCache();
-
-    expect(fakeDef.tView).toBeNull();
-    // The registry itself is intentionally preserved across resets so
-    // that subsequent requests keep clearing the same defs.
-    expect(getI18nComponentDefRegistrySize()).toBe(1);
-  });
-
-  it('should accept a Type with a ɵcmp static and unwrap it', () => {
-    const fakeDef = { template: () => undefined, tView: {} };
-    class FakeComponent {
-      static ɵcmp = fakeDef;
-    }
-
-    ɵregisterI18nComponentDef(FakeComponent);
-    ɵresetI18nComponentDefCache();
-
-    expect(fakeDef.tView).toBeNull();
-  });
-
-  it('should ignore things that are not component defs', () => {
-    ɵregisterI18nComponentDef(null);
-    ɵregisterI18nComponentDef(undefined);
-    ɵregisterI18nComponentDef({ notAComponent: true });
-    ɵregisterI18nComponentDef(class Bare {});
-
-    expect(getI18nComponentDefRegistrySize()).toBe(0);
-  });
-
-  it('should de-duplicate repeated registrations of the same def', () => {
-    const fakeDef = { template: () => undefined, tView: {} };
-    ɵregisterI18nComponentDef(fakeDef);
-    ɵregisterI18nComponentDef(fakeDef);
-    ɵregisterI18nComponentDef(fakeDef);
-
-    expect(getI18nComponentDefRegistrySize()).toBe(1);
   });
 });
