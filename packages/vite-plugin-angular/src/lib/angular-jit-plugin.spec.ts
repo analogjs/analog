@@ -23,7 +23,7 @@ describe('jitPlugin', () => {
     );
 
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
-    plugin.configResolved?.({} as any);
+    plugin.configResolved?.({ test: { css: true } } as any);
 
     const encoded = encodeURIComponent(
       Buffer.from('.demo { color: red; }').toString('base64'),
@@ -41,7 +41,7 @@ describe('jitPlugin', () => {
     vi.mocked(preprocessCSS).mockRejectedValue(new Error('boom'));
 
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
-    plugin.configResolved?.({} as any);
+    plugin.configResolved?.({ test: { css: true } } as any);
 
     const encoded = encodeURIComponent(
       Buffer.from('.demo { color: red; }').toString('base64'),

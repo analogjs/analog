@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -26,12 +26,11 @@ describe('buildServer', () => {
     vi.restoreAllMocks();
   });
 
-  it('fails when Nitro leaves an empty vercel config.json', async () => {
-    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-vercel-config-'));
-    const outputDir = resolve(workspaceRoot, '.vercel', 'output');
-    const serverDir = resolve(outputDir, 'functions', '__server.func');
-    const publicDir = resolve(outputDir, 'static');
-    const buildConfigPath = resolve(outputDir, 'config.json');
+  it('forces rollup bundler and builds successfully', async () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-build-server-'));
+    const outputDir = resolve(workspaceRoot, '.output');
+    const serverDir = resolve(outputDir, 'server');
+    const publicDir = resolve(outputDir, 'public');
 
     mkdirSync(serverDir, { recursive: true });
     mkdirSync(publicDir, { recursive: true });
@@ -47,30 +46,26 @@ describe('buildServer', () => {
           publicDir,
           serverDir,
         },
-        preset: 'vercel',
+        preset: 'node-server',
         routeRules: {},
         static: false,
-        vercel: {
-          functions: {
-            runtime: 'nodejs24.x',
-          },
-        },
       },
       close: vi.fn().mockResolvedValue(undefined),
     } as never);
     vi.mocked(prepare).mockResolvedValue(undefined as never);
     vi.mocked(copyPublicAssets).mockResolvedValue(undefined as never);
     vi.mocked(prerender).mockResolvedValue(undefined as never);
-    vi.mocked(build).mockImplementation(async () => {
-      writeFileSync(buildConfigPath, '', 'utf8');
-    });
+    vi.mocked(build).mockResolvedValue(undefined as never);
 
     try {
-      await expect(
-        buildServer({}, { preset: 'vercel', output: { publicDir } }),
-      ).rejects.toThrow(
-        `Nitro generated an empty Vercel build output config at "${buildConfigPath}".`,
+      await buildServer({}, { output: { publicDir } });
+
+      expect(createNitro).toHaveBeenCalledWith(
+        expect.objectContaining({
+          builder: 'rollup',
+        }),
       );
+      expect(build).toHaveBeenCalled();
     } finally {
       rmSync(workspaceRoot, { recursive: true, force: true });
     }

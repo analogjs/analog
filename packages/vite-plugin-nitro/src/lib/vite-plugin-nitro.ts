@@ -1062,7 +1062,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
 
             nitroConfig = {
               ...nitroConfig,
-              moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
               handlers: [
                 ...(hasAPIDir
                   ? []

@@ -16,6 +16,7 @@ import {
   serverComponentRequest,
   renderServerComponent,
 } from './server-component-render';
+import { ɵresetI18nComponentDefCache } from '@analogjs/router';
 
 if (import.meta.env.PROD) {
   enableProdMode();
@@ -47,6 +48,8 @@ export function render(
     if (serverComponentRequest(serverContext)) {
       return await renderServerComponent(url, serverContext);
     }
+
+    ɵresetI18nComponentDefCache();
 
     const html = await renderApplication(bootstrap as any, {
       document,

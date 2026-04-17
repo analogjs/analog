@@ -31,12 +31,15 @@ async function setupLegacyTransformPlugin() {
     sys: {
       readFile: vi.fn(),
     },
+    ScriptTarget: { Latest: 99 },
     readBuilderProgram: vi.fn().mockReturnValue(undefined),
     createAbstractBuilder: vi.fn().mockReturnValue(mockBuilder),
     createEmitAndSemanticDiagnosticsBuilderProgram: vi
       .fn()
       .mockReturnValue(mockBuilder),
     createIncrementalCompilerHost: vi.fn().mockReturnValue({}),
+    createPrinter: vi.fn().mockReturnValue({ printNode: vi.fn() }),
+    createSourceFile: vi.fn().mockReturnValue({}),
   }));
 
   vi.doMock('@angular/compiler-cli', () => ({
