@@ -4,7 +4,10 @@ import angular from '@analogjs/vite-plugin-angular';
 
 import { Options } from './options.js';
 import { routerPlugin } from './router-plugin.js';
-import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
+import {
+  ssrBuildPlugin,
+  i18nDefRegistryPlugin,
+} from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
 import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
@@ -12,7 +15,6 @@ import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
 import { i18nExtractPlugin } from './i18n-extract-plugin.js';
-import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
@@ -74,7 +76,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     serverModePlugin(),
     ssrXhrBuildPlugin() as Plugin,
     clearClientPageEndpointsPlugin() as Plugin,
-    ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
+    ...(platformOptions.i18n ? [i18nDefRegistryPlugin()] : []),
     ...(platformOptions.i18n?.extract
       ? [i18nExtractPlugin(platformOptions.i18n)]
       : []),

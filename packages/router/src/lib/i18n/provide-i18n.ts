@@ -1,7 +1,6 @@
 import {
   EnvironmentProviders,
   InjectionToken,
-  Type,
   assertInInjectionContext,
   inject,
   makeEnvironmentProviders,
@@ -122,12 +121,6 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
     provideAppInitializer(async () => {
       const locale = resolveActiveLocale(resolved);
       await initI18n(resolved, locale);
-      // Force component definitions to re-evaluate their `consts()` factories
-      // on the next render so that `$localize` tagged templates pick up the
-      // newly loaded translations. Angular caches the result of `consts()`
-      // on `def.tView`, so without this reset the first rendered locale
-      // would be reused for every subsequent SSR request.
-      ɵresetI18nComponentDefCache();
     }),
   ]);
 }
@@ -267,69 +260,6 @@ export async function clearTranslationsRuntime(): Promise<void> {
     $localize.translate = undefined;
     $localize.TRANSLATIONS = {};
   }
-}
-
-// ---------------------------------------------------------------------------
-// Component definition registry
-// ---------------------------------------------------------------------------
-//
-// Angular caches the result of a component's `consts()` factory on
-// `def.tView` the first time the component is rendered. The factory is
-// where `$localize` tagged templates are evaluated, so once a tView has
-// been created for one locale, subsequent renders in the same process
-// reuse those strings no matter what translations are loaded.
-//
-// To support per-request locale switching in SSR, we keep a process-level
-// registry of component definitions that have been rendered, and null out
-// their cached tViews before each new render so the factory re-runs with
-// the freshly loaded translations.
-
-const componentDefRegistry = new Set<any>();
-
-/**
- * Framework-internal: registers a component type (or `ɵcmp` definition)
- * so that its cached tView will be reset before the next SSR render.
- * Called from code emitted by the `i18nComponentRegistryPlugin` Vite
- * plugin into user component modules. Not intended for direct use.
- * @internal
- */
-export function ɵregisterI18nComponentDef(typeOrDef: Type<any> | any): void {
-  if (!typeOrDef) return;
-  const def = (typeOrDef as any).ɵcmp ?? typeOrDef;
-  if (def && typeof def === 'object' && 'template' in def) {
-    componentDefRegistry.add(def);
-  }
-}
-
-/**
- * Framework-internal: nulls `def.tView` on every registered component
- * definition so that Angular's next render re-invokes `consts()` — where
- * `$localize` tagged templates are evaluated — with whichever
- * translations are currently loaded. Called by the server renderer
- * before each request. Not intended for direct use.
- * @internal
- */
-export function ɵresetI18nComponentDefCache(): void {
-  for (const def of componentDefRegistry) {
-    def.tView = null;
-  }
-}
-
-/**
- * Returns the number of component definitions in the registry.
- * Exposed for testing.
- * @internal
- */
-export function getI18nComponentDefRegistrySize(): number {
-  return componentDefRegistry.size;
-}
-
-/**
- * Clears the component definition registry. Exposed for testing.
- * @internal
- */
-export function clearI18nComponentDefRegistry(): void {
-  componentDefRegistry.clear();
 }
 
 /**
