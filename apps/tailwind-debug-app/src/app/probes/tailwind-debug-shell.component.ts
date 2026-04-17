@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { HostStyleProbeComponent } from './host-style-probe.component';
 import { StyleProbeComponent } from './style-probe.component';
 
 @Component({
   selector: 'app-tailwind-debug-shell',
   standalone: true,
-  imports: [StyleProbeComponent],
+  imports: [StyleProbeComponent, HostStyleProbeComponent],
   styleUrls: ['./tailwind-debug-shell.component.css'],
   template: `
     <main class="shell" data-testid="debug-shell">
@@ -22,6 +23,7 @@ import { StyleProbeComponent } from './style-probe.component';
 
       <section class="workspace">
         <app-tailwind-style-probe />
+        <app-host-style-probe />
       </section>
     </main>
   `,
