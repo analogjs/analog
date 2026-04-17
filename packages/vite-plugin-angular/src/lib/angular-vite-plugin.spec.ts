@@ -1649,6 +1649,108 @@ describe('tailwind-reference plugin', () => {
       ).toBe(`@reference "${ROOT_CSS}";\n${css}`);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Windows path normalization (#2293)
+  // ---------------------------------------------------------------------------
+
+  describe('Windows path normalization', () => {
+    it('normalizes backslash paths in buildStylePreprocessor @reference injection', () => {
+      // Simulate a Windows-style absolute path with backslashes.
+      // On non-Windows, existsSync will warn but the preprocessor still
+      // runs and injects @reference — we only care about the output format.
+      const winPath = 'D:\\projects\\libs\\styles\\tailwind.css';
+      const preprocessor = buildStylePreprocessor({
+        tailwindCss: { rootStylesheet: winPath, prefixes: ['sa:'] },
+      });
+
+      const css = '.demo { @apply sa:flex; }';
+      const result = preprocessor?.(css, '/project/src/app/demo.component.css');
+      // The injected @reference path must use forward slashes
+      expect(result?.code).toContain(
+        '@reference "D:/projects/libs/styles/tailwind.css"',
+      );
+      expect(result?.code).not.toContain('\\');
+    });
+
+    it('normalizes backslash paths in tailwind-reference pre-transform plugin', () => {
+      const winPath = 'D:\\projects\\libs\\styles\\tailwind.css';
+      const plugin = getTailwindReferencePlugin({
+        tailwindCss: { rootStylesheet: winPath, prefixes: ['sa:'] },
+      })!;
+
+      const css = '.demo { @apply sa:flex; }';
+      const result = callTransform(
+        plugin,
+        css,
+        '/project/src/app/demo.component.css',
+      );
+      // The injected @reference path must use forward slashes
+      expect(result).toContain(
+        '@reference "D:/projects/libs/styles/tailwind.css"',
+      );
+      expect(result).not.toContain('\\');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Encapsulation plugin ordering (#2293)
+  //
+  // @tailwindcss/vite runs with enforce: 'pre', so Angular's encapsulation
+  // (ShadowCss rewriting :host to [_nghost-xxx]) must run AFTER Tailwind
+  // resolves @apply directives. Encapsulation is therefore placed in a
+  // separate plugin with enforce: 'post'.
+  // ---------------------------------------------------------------------------
+
+  describe('encapsulation plugin', () => {
+    function getEncapsulationPlugin(
+      options?: Parameters<typeof angular>[0],
+    ): Plugin | undefined {
+      const plugins = angular(options);
+      return plugins.find(
+        (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
+      );
+    }
+
+    it('is registered as a separate plugin with enforce: "post"', () => {
+      const plugin = getEncapsulationPlugin();
+      expect(plugin).toBeDefined();
+      expect(plugin!.enforce).toBe('post');
+    });
+
+    it('has a transform hook', () => {
+      const plugin = getEncapsulationPlugin();
+      expect(plugin!.transform).toBeDefined();
+    });
+
+    it('runs after the tailwind-reference plugin in the plugin array', () => {
+      const plugins = angular({
+        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
+      });
+      const twIndex = plugins.findIndex(
+        (p) => p.name === '@analogjs/vite-plugin-angular:tailwind-reference',
+      );
+      const encapIndex = plugins.findIndex(
+        (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
+      );
+      // Both must exist and encapsulation must come after
+      expect(twIndex).toBeGreaterThanOrEqual(0);
+      expect(encapIndex).toBeGreaterThanOrEqual(0);
+      expect(encapIndex).toBeGreaterThan(twIndex);
+    });
+
+    it('runs after the main Angular plugin in the plugin array', () => {
+      const plugins = angular();
+      const mainIndex = plugins.findIndex(
+        (p) => p.name === '@analogjs/vite-plugin-angular',
+      );
+      const encapIndex = plugins.findIndex(
+        (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
+      );
+      expect(mainIndex).toBeGreaterThanOrEqual(0);
+      expect(encapIndex).toBeGreaterThan(mainIndex);
+    });
+  });
 });
 
 // =============================================================================

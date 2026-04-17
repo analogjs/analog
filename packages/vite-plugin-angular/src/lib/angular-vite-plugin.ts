@@ -432,7 +432,10 @@ export function buildStylePreprocessor(
       debugTailwind('injected @reference via preprocessor', { filename });
 
       // Absolute path — required for virtual modules (see JSDoc above).
-      return `@reference "${rootStylesheet}";\n${code}`;
+      // Convert backslashes to forward slashes so Windows paths don't break
+      // Tailwind CSS's @reference resolution. Vite's normalizePath only
+      // converts on Windows, so we use an explicit replace for all platforms.
+      return `@reference "${rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
     };
   }
 
@@ -605,11 +608,12 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     // Monorepo: rootStylesheet outside project root needs server.fs.allow
     if (isWatchMode && tw.rootStylesheet) {
-      const projectRoot = config.root;
-      if (!tw.rootStylesheet.startsWith(projectRoot)) {
+      const projectRoot = normalizePath(config.root);
+      const normalizedRootStylesheet = normalizePath(tw.rootStylesheet);
+      if (!normalizedRootStylesheet.startsWith(projectRoot)) {
         const fsAllow = config.server?.fs?.allow ?? [];
         const isAllowed = fsAllow.some((allowed) =>
-          tw.rootStylesheet.startsWith(allowed),
+          normalizedRootStylesheet.startsWith(normalizePath(allowed)),
         );
         if (!isAllowed) {
           console.warn(
@@ -1793,30 +1797,11 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          /**
-           * Encapsulate component stylesheets that use emulated encapsulation.
-           * Must run whenever styles are externalized (not just HMR), because
-           * Angular's externalRuntimeStyles skips its own encapsulation when
-           * styles are external — the build tool is expected to handle it.
-           */
-          if (shouldExternalizeStyles() && isComponentStyleSheet(id)) {
-            const { encapsulation, componentId } =
-              getComponentStyleSheetMeta(id);
-            if (encapsulation === 'emulated' && componentId) {
-              debugStylesV('applying emulated view encapsulation', {
-                stylesheet: id.split('?')[0],
-                componentId,
-              });
-              const encapsulated = ngCompiler.encapsulateStyle(
-                code,
-                componentId,
-              );
-              return {
-                code: encapsulated,
-                map: null,
-              };
-            }
-          }
+          // Encapsulation of component stylesheets is handled by the
+          // separate '@analogjs/vite-plugin-angular:encapsulation' plugin
+          // with enforce: 'post'. This ensures @tailwindcss/vite (enforce:
+          // 'pre') fully resolves @apply directives — including those inside
+          // :host {} — before Angular's ShadowCss rewrites selectors. (#2293)
 
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
@@ -2218,7 +2203,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             debugTailwind('injected @reference via pre-transform', {
               id: id.split('/').slice(-2).join('/'),
             });
-            return `@reference "${tw.rootStylesheet}";\n${code}`;
+            return `@reference "${tw.rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
           }
         },
       } satisfies Plugin),
@@ -2236,6 +2221,32 @@ export function angular(options?: PluginOptions): Plugin[] {
     routerPlugin(),
     angularFullVersion < 190004 && pendingTasksPlugin(),
     nxFolderPlugin(),
+    // Encapsulation runs in enforce: 'post' so that @tailwindcss/vite
+    // (enforce: 'pre') fully resolves @apply directives — including those
+    // inside :host {} — before Angular's ShadowCss rewrites selectors.
+    // Previously this ran in the main plugin's normal-phase transform,
+    // which could race with @tailwindcss/vite depending on plugin
+    // registration order. (#2293)
+    {
+      name: '@analogjs/vite-plugin-angular:encapsulation',
+      enforce: 'post',
+      transform(code: string, id: string) {
+        if (shouldExternalizeStyles() && isComponentStyleSheet(id)) {
+          const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
+          if (encapsulation === 'emulated' && componentId) {
+            debugStylesV('applying emulated view encapsulation (post)', {
+              stylesheet: id.split('?')[0],
+              componentId,
+            });
+            const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
+            return {
+              code: encapsulated,
+              map: null,
+            };
+          }
+        }
+      },
+    } satisfies Plugin,
   ].filter(Boolean) as Plugin[];
 
   function findIncludes() {
