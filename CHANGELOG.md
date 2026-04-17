@@ -1,3 +1,9 @@
+# [2.5.0-beta.44](https://github.com/analogjs/analog/compare/v2.5.0-beta.43...v2.5.0-beta.44) (2026-04-17)
+
+### Bug Fixes
+
+- **platform:** reset cached tViews between SSR requests for correct i18n locale switching ([#2301](https://github.com/analogjs/analog/issues/2301)) ([a29465d](https://github.com/analogjs/analog/commit/a29465d31743a8871bc93ed3d62d9649d5d40a71))
+
 # [2.5.0-beta.43](https://github.com/analogjs/analog/compare/v2.5.0-beta.42...v2.5.0-beta.43) (2026-04-16)
 
 ### Features
