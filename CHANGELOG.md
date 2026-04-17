@@ -1,3 +1,9 @@
+# [3.0.0-alpha.39](https://github.com/analogjs/analog/compare/v3.0.0-alpha.38...v3.0.0-alpha.39) (2026-04-17)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** ensure [@apply](https://github.com/apply) inside :host works with tailwindCss prefix config ([#2303](https://github.com/analogjs/analog/issues/2303)) ([497badc](https://github.com/analogjs/analog/commit/497badc3ff676a2e6e2810c6c4338c6de2edc187))
+
 # [3.0.0-alpha.38](https://github.com/analogjs/analog/compare/v3.0.0-alpha.37...v3.0.0-alpha.38) (2026-04-17)
 
 ### Bug Fixes
