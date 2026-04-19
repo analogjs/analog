@@ -1,3 +1,9 @@
+# [3.0.0-alpha.41](https://github.com/analogjs/analog/compare/v3.0.0-alpha.40...v3.0.0-alpha.41) (2026-04-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix NgtscProgram stylesheet resolution for external styles ([#2305](https://github.com/analogjs/analog/issues/2305)) ([9bb7a9c](https://github.com/analogjs/analog/commit/9bb7a9cf49f9fdd16f1dbe6f1444b8f1b3b02ac1))
+
 # [3.0.0-alpha.40](https://github.com/analogjs/analog/compare/v3.0.0-alpha.39...v3.0.0-alpha.40) (2026-04-19)
 
 ### Bug Fixes
