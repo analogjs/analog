@@ -144,10 +144,15 @@ export function augmentHostWithResources(
     containingFile,
     fallbackResolve,
   ) {
+    // Angular's fallbackResolve callback expects (resourceUrl, containingFile),
+    // NOT (directory, resourceName). Use it correctly or fall back to
+    // path.join for simple relative paths.
+    let resolved: string | null = null;
+    if (fallbackResolve) {
+      resolved = fallbackResolve(path.dirname(containingFile), resourceName);
+    }
     const resolvedPath = normalizePath(
-      fallbackResolve
-        ? fallbackResolve(path.dirname(containingFile), resourceName)
-        : path.join(path.dirname(containingFile), resourceName),
+      resolved ?? path.join(path.dirname(containingFile), resourceName),
     );
 
     // All resource names that have template file extensions are assumed to be templates
@@ -155,7 +160,8 @@ export function augmentHostWithResources(
       return resolvedPath;
     }
 
-    // For external stylesheets, create a unique identifier and store the mapping
+    // Register the hash-based external mapping so the resolveId hook can
+    // resolve Angular's compiled stylesheet references back to the source.
     const externalId = createHash('sha256').update(resolvedPath).digest('hex');
     const filename = externalId + path.extname(resolvedPath);
 
@@ -166,7 +172,11 @@ export function augmentHostWithResources(
       filename,
     });
 
-    return filename;
+    // Return the real path so Angular can read the file during analysis.
+    // Previously, returning the hash-based filename caused "Could not find
+    // stylesheet file" errors because the hash doesn't exist on disk,
+    // preventing AOT compilation for any component with styleUrls. (#2293)
+    return resolvedPath;
   };
 }
 
