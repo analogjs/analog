@@ -32,7 +32,6 @@
     },
     "serve": {
       "executor": "nx:run-commands",
-      "dependsOn": [],
       "options": {
         "command": "pnpm exec vite --config apps/tailwind-debug-app/vite.config.ts"
       }

@@ -175,6 +175,12 @@ export interface Options {
    */
   disableTypeChecking?: boolean;
   /**
+   * Configuration for runtime i18n support.
+   * When set, enables locale detection on SSR and provides
+   * the LOCALE injection token.
+   */
+  i18n?: I18nOptions;
+  /**
    * Opt into the fast compile path. Skips Angular's template type-checking
    * and routes compilation through an internal single-pass transform.
    */

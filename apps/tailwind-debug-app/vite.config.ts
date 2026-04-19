@@ -106,7 +106,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       apiPrefix: 'api',
-      hmr: true,
       experimental: {
         // Required to reproduce #2293: @apply inside :host with Tailwind
         // prefix configuration requires the Angular Compilation API path

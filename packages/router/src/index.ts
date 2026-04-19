@@ -67,6 +67,4 @@ export {
   I18nConfig,
   injectSwitchLocale,
   loadTranslationsRuntime,
-  ɵregisterI18nComponentDef,
-  ɵresetI18nComponentDefCache,
 } from './lib/i18n/provide-i18n';

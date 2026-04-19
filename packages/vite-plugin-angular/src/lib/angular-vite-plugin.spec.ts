@@ -731,6 +731,42 @@ describe('load ?inline style imports', () => {
     }
   });
 
+  it('skips preprocessCSS for virtual style imports when test.css is disabled', async () => {
+    const cssPath = path.join(tmpDir, `analog-virtual-skip-${Date.now()}.scss`);
+    realFs.writeFileSync(cssPath, '.foo { color: red; }', 'utf-8');
+
+    try {
+      const plugins = angular({ jit: true });
+      const mainPlugin = plugins.find(
+        (p) => p.name === '@analogjs/vite-plugin-angular',
+      );
+
+      // Default Vitest config: `test.css` is unset, which Vitest treats as
+      // an empty-include (no preprocessing). The plugin must mirror that.
+      (mainPlugin as any).configResolved({
+        server: { watch: {} },
+        test: {},
+      });
+
+      const resolveId = (mainPlugin as any).resolveId;
+      const load = (mainPlugin as any).load.bind({ addWatchFile: vi.fn() });
+      const virtualId = resolveId(
+        `angular:jit:style:file;./${path.basename(cssPath)}`,
+        path.join(tmpDir, 'host.component.ts'),
+      );
+
+      vi.mocked(preprocessCSS).mockClear();
+      const result = await load(virtualId);
+
+      expect(result).toBeDefined();
+      expect(result).toContain('export default');
+      expect(result).toContain('color: red');
+      expect(vi.mocked(preprocessCSS)).not.toHaveBeenCalled();
+    } finally {
+      realFs.unlinkSync(cssPath);
+    }
+  });
+
   it('handles ?inline style imports without going through resolveId', async () => {
     const cssPath = path.join(tmpDir, `analog-inline-${Date.now()}.css`);
     realFs.writeFileSync(cssPath, '.foo { color: red; }', 'utf-8');

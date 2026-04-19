@@ -81,6 +81,10 @@ export default defineConfig(async ({ mode, command }) => {
         },
         vite: {
           inlineStylesExtension: 'scss',
+          fastCompile: true,
+          experimental: {
+            useAngularCompilationAPI: false,
+          },
         },
         hmr: true,
         experimental: {

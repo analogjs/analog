@@ -75,9 +75,6 @@ reviews:
       instructions: >-
         Review as the vite-plugin-angular package scope. Prioritize Angular and Vite integration behavior,
         build compatibility, backward compatibility, stability, and targeted coverage for regressions.
-        Analyze all impacted code paths, including watch and non-watch flows, live reload and full reload behavior,
-        test/build/dev differences, and Analog experimental Vite branches such as `experimental.useAngularCompilationAPI`,
-        covering both enabled and disabled behavior and any fallback code paths.
     - path: 'packages/vite-plugin-angular-tools/**'
       instructions: >-
         Treat changes here as part of the vite-plugin-angular scope and review them together with test fixtures

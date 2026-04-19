@@ -122,7 +122,6 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
     provideAppInitializer(async () => {
       const locale = resolveActiveLocale(resolved);
       await initI18n(resolved, locale);
-      ɵresetI18nComponentDefCache();
     }),
   ]);
 }
@@ -139,6 +138,9 @@ function resolveActiveLocale(config: ResolvedI18nConfig): string {
     return injected;
   }
 
+  // Fallback: read the path directly from the request on the server or
+  // from the browser URL on the client. This covers cases where a locale
+  // prefix is present in the URL but no token provider set it explicitly.
   const req = inject(REQUEST, { optional: true }) as ServerRequest | null;
   const pathname =
     req?.originalUrl ??
@@ -168,6 +170,12 @@ export function detectClientLocale(config: ResolvedI18nConfig): string {
   return config.defaultLocale;
 }
 
+/**
+ * Loads translations for the given locale and registers them with $localize.
+ *
+ * Always clears any previously loaded translations first so that switching
+ * between locales in a single SSR process does not mix translation maps.
+ */
 export async function initI18n(
   config: ResolvedI18nConfig,
   locale?: string,
@@ -175,6 +183,8 @@ export async function initI18n(
   const activeLocale = locale ?? config.defaultLocale;
   await clearTranslationsRuntime();
 
+  // The source locale (first entry in `locales`) has its messages baked
+  // directly into the template source, so there is nothing to load.
   if (activeLocale === config.locales[0]) {
     return;
   }
@@ -185,6 +195,19 @@ export async function initI18n(
   }
 }
 
+/**
+ * Loads translations into the global $localize translation map.
+ *
+ * Uses `@angular/localize`'s `loadTranslations` when available so that
+ * each translation string is parsed into the `{text, messageParts,
+ * placeholderNames}` shape that `$localize.translate` expects. Falls back
+ * to writing raw strings only as a last resort (in which case lookups
+ * will not succeed — the fallback exists to keep error messages useful
+ * for users who have not installed `@angular/localize`).
+ *
+ * Requires `@angular/localize/init` to be imported in the application
+ * entry point so that `globalThis.$localize` is defined.
+ */
 export async function loadTranslationsRuntime(
   translations: Record<string, string>,
 ): Promise<void> {

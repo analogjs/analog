@@ -121,6 +121,8 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
             liveReload: platformOptions.liveReload,
             inlineStylesExtension: platformOptions.inlineStylesExtension,
             fileReplacements: platformOptions.fileReplacements,
+            fastCompile: platformOptions.fastCompile,
+            fastCompileMode: platformOptions.fastCompileMode,
             debug: platformOptions.debug,
             stylePipeline: platformOptions.experimental?.stylePipeline
               ?.angularPlugins?.length
