@@ -1,3 +1,15 @@
+# [3.0.0-alpha.40](https://github.com/analogjs/analog/compare/v3.0.0-alpha.39...v3.0.0-alpha.40) (2026-04-19)
+
+### Bug Fixes
+
+- **platform:** reset cached tViews between SSR requests for correct i18n locale switching ([#2301](https://github.com/analogjs/analog/issues/2301)) ([a29465d](https://github.com/analogjs/analog/commit/a29465d31743a8871bc93ed3d62d9649d5d40a71))
+- **router:** reset cached tViews between SSR requests for correct i18n locale switching ([#2295](https://github.com/analogjs/analog/issues/2295)) ([d2ce3e5](https://github.com/analogjs/analog/commit/d2ce3e5f1738fd586a39b1a9d87b668cd1971e38))
+- **vite-plugin-angular:** honor Vitest test.css semantics to skip CSS preprocessing ([#2298](https://github.com/analogjs/analog/issues/2298)) ([d7bd331](https://github.com/analogjs/analog/commit/d7bd3315543488665c4a9c1cfd0c0a3426552986))
+
+### Features
+
+- **platform:** passthrough fastCompile and fastCompileMode to vite-plugin-angular ([f085ecc](https://github.com/analogjs/analog/commit/f085ecc0389a2bb5e94bd9391f551e960c378e1c))
+
 # [3.0.0-alpha.39](https://github.com/analogjs/analog/compare/v3.0.0-alpha.38...v3.0.0-alpha.39) (2026-04-17)
 
 ### Bug Fixes
