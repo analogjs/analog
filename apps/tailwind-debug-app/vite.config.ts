@@ -110,7 +110,7 @@ export default defineConfig(({ mode }) => ({
         // Required to reproduce #2293: @apply inside :host with Tailwind
         // prefix configuration requires the Angular Compilation API path
         // for style externalization.
-        useAngularCompilationAPI: true,
+        useAngularCompilationAPI: false,
       },
       prerender: {
         routes: [],
