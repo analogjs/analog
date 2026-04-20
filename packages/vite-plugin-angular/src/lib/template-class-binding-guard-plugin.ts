@@ -171,7 +171,7 @@ export function templateClassBindingGuardPlugin(
 export function removeActiveGraphMetadata(
   ctx: TemplateClassBindingGuardContext,
   file: string,
-) {
+): void {
   const previous = ctx.activeGraphComponentMetadata.get(file);
   if (!previous) {
     return;
@@ -234,7 +234,7 @@ function registerActiveGraphMetadata(
 export function removeStyleOwnerMetadata(
   ctx: TemplateClassBindingGuardContext,
   file: string,
-) {
+): void {
   const previous = ctx.transformedStyleOwnerMetadata.get(file);
   if (!previous) {
     return;
