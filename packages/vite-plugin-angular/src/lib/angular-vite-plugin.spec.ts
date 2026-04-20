@@ -36,11 +36,11 @@ import {
   isIgnoredHmrFile,
   injectViteIgnoreForHmrMetadata,
   mapTemplateUpdatesToFiles,
-  normalizeIncludeGlob,
   refreshStylesheetRegistryForFile,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
 } from './angular-vite-plugin';
+import { normalizeIncludeGlob } from './utils/tsconfig-resolver';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 
 const hmrPluginNames = ['analogjs-live-reload-plugin'];
