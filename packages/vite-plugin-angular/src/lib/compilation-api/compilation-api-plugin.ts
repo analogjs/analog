@@ -77,7 +77,7 @@ import {
   mapTemplateUpdatesToFiles,
   refreshStylesheetRegistryForFile,
   DiagnosticModes,
-} from '../utils/shared.js';
+} from '../utils/compilation-shared.js';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
