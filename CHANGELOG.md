@@ -1,3 +1,9 @@
+# [2.5.0-beta.45](https://github.com/analogjs/analog/compare/v2.5.0-beta.44...v2.5.0-beta.45) (2026-04-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([eef84de](https://github.com/analogjs/analog/commit/eef84de75f5c2ea14a753afe6c2920fb27fc1b35))
+
 # [2.5.0-beta.44](https://github.com/analogjs/analog/compare/v2.5.0-beta.43...v2.5.0-beta.44) (2026-04-17)
 
 ### Bug Fixes
