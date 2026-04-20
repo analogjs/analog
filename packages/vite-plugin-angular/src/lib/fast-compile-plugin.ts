@@ -32,19 +32,6 @@ import {
   createDepOptimizerConfig,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
-import {
-  VIRTUAL_RAW_PREFIX,
-  VIRTUAL_STYLE_PREFIX,
-  toVirtualRawId,
-  toVirtualStyleId,
-} from './utils/virtual-ids.js';
-import {
-  loadVirtualRawModule,
-  loadVirtualStyleModule,
-  rewriteHtmlRawImport,
-  rewriteInlineStyleImport,
-  shouldPreprocessTestCss,
-} from './utils/virtual-resources.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -457,58 +444,6 @@ export function fastCompilePlugin(
 
       // Let Vite handle the rest — the transform hook will recompile
       return ctx.modules;
-    },
-    resolveId(id, importer) {
-      if (
-        id.startsWith(VIRTUAL_STYLE_PREFIX) ||
-        id.startsWith(VIRTUAL_RAW_PREFIX)
-      ) {
-        return `\0${id}`;
-      }
-
-      if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const filePath = normalizePath(
-          resolve(dirname(importer as string), id.split(';')[1]),
-        );
-        return id.includes(':style')
-          ? toVirtualStyleId(filePath)
-          : toVirtualRawId(filePath);
-      }
-
-      const rawRewrite = rewriteHtmlRawImport(id, importer);
-      if (rawRewrite) return rawRewrite;
-
-      const inlineRewrite = rewriteInlineStyleImport(id, importer);
-      if (inlineRewrite) return inlineRewrite;
-
-      return undefined;
-    },
-    async load(id) {
-      const styleModule = await loadVirtualStyleModule(
-        this,
-        id,
-        resolvedConfig,
-      );
-      if (styleModule !== undefined) return styleModule;
-
-      const rawModule = await loadVirtualRawModule(this, id);
-      if (rawModule !== undefined) return rawModule;
-
-      // Vitest bypass: module-runner skips resolveId, so the bare `?inline`
-      // query reaches load unchanged.
-      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        const filePath = id.split('?')[0];
-        const code = await fsPromises.readFile(filePath, 'utf-8');
-        // In tests, mirror Vitest's `test.css` rules — defaults to no
-        // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-        if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
-          return `export default ${JSON.stringify(code)}`;
-        }
-        const result = await preprocessCSS(code, filePath, resolvedConfig);
-        return `export default ${JSON.stringify(result.code)}`;
-      }
-
-      return;
     },
     transform: {
       filter: {

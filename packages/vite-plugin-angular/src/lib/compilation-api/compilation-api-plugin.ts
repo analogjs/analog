@@ -3,7 +3,6 @@ import * as compilerCli from '@angular/compiler-cli';
 import { union } from 'es-toolkit';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { promises as fsPromises } from 'node:fs';
 import {
   basename,
   dirname,
@@ -43,17 +42,7 @@ import {
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
-import {
-  VIRTUAL_RAW_PREFIX,
-  VIRTUAL_STYLE_PREFIX,
-  toVirtualRawId,
-  toVirtualStyleId,
-} from '../utils/virtual-ids.js';
-import {
-  loadVirtualRawModule,
-  loadVirtualStyleModule,
-  shouldPreprocessTestCss,
-} from '../utils/virtual-resources.js';
+import { shouldPreprocessTestCss } from '../utils/virtual-resources.js';
 import { isTailwindReferenceError } from '../utils/tailwind-reference.js';
 import {
   AnalogStylesheetRegistry,
@@ -959,25 +948,7 @@ export function compilationAPIPlugin(
 
       return ctx.modules;
     },
-    resolveId(id, importer) {
-      if (
-        id.startsWith(VIRTUAL_STYLE_PREFIX) ||
-        id.startsWith(VIRTUAL_RAW_PREFIX)
-      ) {
-        return `\0${id}`;
-      }
-
-      if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const path = id.split(';')[1];
-        const resolved = normalizePath(
-          resolve(dirname(importer as string), path),
-        );
-        if (id.includes(':style')) {
-          return toVirtualStyleId(resolved);
-        }
-        return toVirtualRawId(resolved);
-      }
-
+    resolveId(id) {
       // Map angular component stylesheets
       if (isComponentStyleSheet(id)) {
         const filename = getFilenameFromPath(id);
@@ -996,27 +967,6 @@ export function compilationAPIPlugin(
       return undefined;
     },
     async load(id) {
-      const styleModule = await loadVirtualStyleModule(
-        this,
-        id,
-        resolvedConfig,
-      );
-      if (styleModule !== undefined) return styleModule;
-
-      const rawModule = await loadVirtualRawModule(this, id);
-      if (rawModule !== undefined) return rawModule;
-
-      // Vitest fallback
-      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        const filePath = id.split('?')[0];
-        const code = await fsPromises.readFile(filePath, 'utf-8');
-        if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
-          return `export default ${JSON.stringify(code)}`;
-        }
-        const result = await preprocessCSS(code, filePath, resolvedConfig);
-        return `export default ${JSON.stringify(result.code)}`;
-      }
-
       // Serve component stylesheets from registry
       if (isComponentStyleSheet(id)) {
         const filename = getFilenameFromPath(id);
