@@ -43,6 +43,7 @@
     "@angular/cli": "^21.0.0",
     "@angular/compiler-cli": "^21.0.0",
     "jsdom": "^22.0.0",
+    "rollup": "^4.40.0",
     "typescript": "6.0.2",
     "vite": "^8.0.0",
     "vite-tsconfig-paths": "^7.0.0-alpha.1",
