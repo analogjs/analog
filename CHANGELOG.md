@@ -1,3 +1,18 @@
+# [3.0.0-alpha.43](https://github.com/analogjs/analog/compare/v3.0.0-alpha.42...v3.0.0-alpha.43) (2026-04-20)
+
+### Bug Fixes
+
+- **create-analog:** add nitro and ofetch to dependencies when using pnpm ([9654db2](https://github.com/analogjs/analog/commit/9654db2b9478085e015ee0ecf174ae3ad3f581e9))
+- **create-analog:** add rollup to devDependencies in latest, blog, and minimal templates ([54da765](https://github.com/analogjs/analog/commit/54da7659b5904f85150aec036d64b10dc4c71a44))
+- **create-analog:** pin nitro and ofetch to current prerelease versions ([a57018a](https://github.com/analogjs/analog/commit/a57018a86ab31d229c4bcad053afdbb9ae6ded54))
+- disable route type gen in blog app ([aad8a55](https://github.com/analogjs/analog/commit/aad8a55607898d2b42c93c3be27d21b9371d5eb2))
+- **platform:** only generate typed routes when explicitly enabled ([3bded96](https://github.com/analogjs/analog/commit/3bded96b4b663124c4568f175a63710695817d58))
+- **router,platform:** add vite-ignore to @angular/localize dynamic imports ([ee29c28](https://github.com/analogjs/analog/commit/ee29c282e597e1743f8884d9dd8cb78a8be5c26e))
+- **router,platform:** use non-literal expressions for @angular/localize dynamic imports ([e6d1f1d](https://github.com/analogjs/analog/commit/e6d1f1d78fa802c4aee3cf324f86d9b7258b6252))
+- **vite-plugin-angular:** dedupe isTestWatchMode and DRY tailwind injection ([a1c91c6](https://github.com/analogjs/analog/commit/a1c91c61503c62c61a997c0bff5f6b2e9a634b5f))
+- **vite-plugin-angular:** remove redundant normalizeIncludeGlob import ([81a6ca0](https://github.com/analogjs/analog/commit/81a6ca0b2c1cb018eb97718ee1458a8d9c8bde55))
+- **vite-plugin-angular:** suppress node_modules sourcemap warnings during dev ([1be0e83](https://github.com/analogjs/analog/commit/1be0e832e1ae85b5534c16915cc497efbea18fb5))
+
 # [3.0.0-alpha.42](https://github.com/analogjs/analog/compare/v3.0.0-alpha.41...v3.0.0-alpha.42) (2026-04-20)
 
 ### Bug Fixes
