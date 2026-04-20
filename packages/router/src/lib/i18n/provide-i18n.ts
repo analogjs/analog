@@ -221,7 +221,9 @@ export async function loadTranslationsRuntime(
   }
 
   try {
-    const { loadTranslations } = (await import('@angular/localize')) as {
+    const { loadTranslations } = (await import(
+      /* @vite-ignore */ '@angular/localize'
+    )) as {
       loadTranslations: (t: Record<string, string>) => void;
     };
     loadTranslations(translations);
@@ -244,7 +246,9 @@ export async function clearTranslationsRuntime(): Promise<void> {
     return;
   }
   try {
-    const { clearTranslations } = (await import('@angular/localize')) as {
+    const { clearTranslations } = (await import(
+      /* @vite-ignore */ '@angular/localize'
+    )) as {
       clearTranslations: () => void;
     };
     clearTranslations();
