@@ -49,7 +49,6 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import { composeStylePreprocessors } from './style-preprocessor.js';
 import type {
   StylePreprocessor,
   StylesheetDependency,
@@ -65,6 +64,11 @@ import {
   type StyleOwnerRecord,
   type TemplateClassBindingGuardContext,
 } from './template-class-binding-guard-plugin.js';
+import {
+  tailwindReferencePlugin,
+  buildStylePreprocessor,
+  validateTailwindConfig,
+} from './tailwind-plugin.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
   createJitResourceTransformer,
@@ -82,8 +86,6 @@ import {
   debugHmrV,
   debugStyles,
   debugStylesV,
-  debugTailwind,
-  debugTailwindV,
   type DebugOption,
 } from './utils/debug.js';
 import {
@@ -93,10 +95,6 @@ import {
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
-import {
-  inspectCssTailwindDirectives,
-  throwTailwindReferenceTextError,
-} from './utils/tailwind-reference.js';
 import {
   toVirtualRawId,
   toVirtualStyleId,
@@ -130,7 +128,6 @@ import {
 } from './stylesheet-registry.js';
 import {
   AngularStylePipelineOptions,
-  stylePipelinePreprocessorFromPlugins,
   configureStylePipelineRegistry,
 } from './style-pipeline.js';
 
@@ -147,6 +144,7 @@ export {
   findStaticClassAndBoundClassConflicts,
   findBoundClassAndNgClassConflicts,
 } from './template-class-binding-guard-plugin.js';
+export { buildStylePreprocessor } from './tailwind-plugin.js';
 import {
   DiagnosticModes,
   injectViteIgnoreForHmrMetadata,
@@ -348,100 +346,6 @@ interface DeclarationFile {
   data: string;
 }
 
-/**
- * Builds a resolved stylePreprocessor function from plugin options.
- *
- * When `tailwindCss` is configured, creates an injector that prepends
- * `@reference "<rootStylesheet>"` into component CSS that uses Tailwind
- * utilities. Uses absolute paths because Angular's externalRuntimeStyles
- * serves component CSS as virtual modules (hash-based IDs) with no
- * meaningful directory — relative paths can't resolve from a hash.
- *
- * If both `tailwindCss` and `stylePreprocessor` are provided, they are
- * chained: Tailwind reference injection runs first, then the user's
- * custom preprocessor.
- */
-export function buildStylePreprocessor(
-  options?: PluginOptions,
-): StylePreprocessor | undefined {
-  const userPreprocessor = options?.stylePreprocessor;
-  const stylePipelinePreprocessor = stylePipelinePreprocessorFromPlugins(
-    options?.stylePipeline,
-  );
-  const tw = options?.tailwindCss;
-
-  if (!tw && !userPreprocessor && !stylePipelinePreprocessor) {
-    return undefined;
-  }
-
-  let tailwindPreprocessor:
-    | ((code: string, filename: string) => string)
-    | undefined;
-
-  if (tw) {
-    const rootStylesheet = tw.rootStylesheet;
-    const prefixes = tw.prefixes;
-    debugTailwind('configured', { rootStylesheet, prefixes });
-
-    if (!existsSync(rootStylesheet)) {
-      console.warn(
-        `[@analogjs/vite-plugin-angular] tailwindCss.rootStylesheet not found ` +
-          `at "${rootStylesheet}". @reference directives will point to a ` +
-          `non-existent file, which will cause Tailwind CSS errors. ` +
-          `Ensure the path is absolute and the file exists.`,
-      );
-    }
-
-    tailwindPreprocessor = (code: string, filename: string): string => {
-      const directiveState = inspectCssTailwindDirectives(code);
-
-      // Skip files that already define the Tailwind config
-      if (
-        directiveState.hasReferenceDirective ||
-        directiveState.hasTailwindImportDirective
-      ) {
-        debugTailwindV('skip (already has @reference or is root)', {
-          filename,
-        });
-        return code;
-      }
-
-      const needsReference = prefixes
-        ? prefixes.some((prefix) =>
-            directiveState.commentlessCode.includes(prefix),
-          )
-        : directiveState.commentlessCode.includes('@apply');
-
-      if (!needsReference) {
-        debugTailwindV('skip (no Tailwind usage detected)', { filename });
-        return code;
-      }
-
-      if (directiveState.hasReferenceText) {
-        throwTailwindReferenceTextError(filename, rootStylesheet);
-      }
-
-      debugTailwind('injected @reference via preprocessor', { filename });
-
-      // Absolute path — required for virtual modules (see JSDoc above).
-      // Convert backslashes to forward slashes so Windows paths don't break
-      // Tailwind CSS's @reference resolution. Vite's normalizePath only
-      // converts on Windows, so we use an explicit replace for all platforms.
-      return `@reference "${rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
-    };
-  }
-
-  if (tailwindPreprocessor && (stylePipelinePreprocessor || userPreprocessor)) {
-    debugTailwind('chained with style pipeline or user stylePreprocessor');
-  }
-
-  return composeStylePreprocessors([
-    tailwindPreprocessor,
-    stylePipelinePreprocessor,
-    userPreprocessor,
-  ]);
-}
-
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
@@ -554,135 +458,16 @@ export function angular(options?: PluginOptions): Plugin[] {
     return !!(shouldEnableLiveReload() || pluginOptions.hasTailwindCss);
   }
 
-  /**
-   * Validates the Tailwind CSS integration configuration and emits actionable
-   * warnings for common misconfigurations that cause silent failures.
-   *
-   * Called once during `configResolved` when `tailwindCss` is configured.
-   */
-  function validateTailwindConfig(
-    config: ResolvedConfig,
-    isWatchMode: boolean,
-  ): void {
-    const PREFIX = '[@analogjs/vite-plugin-angular]';
-    const tw = pluginOptions.tailwindCss;
-
-    if (!tw) return;
-
-    // rootStylesheet must be absolute — relative paths break when Angular
-    // externalizes styles as hash-based virtual modules.
-    if (!isAbsolute(tw.rootStylesheet)) {
-      console.warn(
-        `${PREFIX} tailwindCss.rootStylesheet must be an absolute path. ` +
-          `Got: "${tw.rootStylesheet}". Use path.resolve(__dirname, '...') ` +
-          `in your vite.config to convert it.`,
-      );
-    }
-
-    // Dev: @tailwindcss/vite must be registered, otherwise component CSS
-    // with @apply/@reference silently fails.
-    const resolvedPlugins = config.plugins;
-    const hasTailwindPlugin = resolvedPlugins.some(
-      (p) =>
-        p.name.startsWith('@tailwindcss/vite') ||
-        p.name.startsWith('tailwindcss'),
-    );
-
-    if (isWatchMode && !hasTailwindPlugin) {
-      throw new Error(
-        `${PREFIX} tailwindCss is configured but no @tailwindcss/vite ` +
-          `plugin was found. Component CSS with @apply directives will ` +
-          `not be processed.\n\n` +
-          `  Fix: npm install @tailwindcss/vite --save-dev\n` +
-          `  Then add tailwindcss() to your vite.config plugins array.\n`,
-      );
-    }
-
-    // Monorepo: rootStylesheet outside project root needs server.fs.allow
-    if (isWatchMode && tw.rootStylesheet) {
-      const projectRoot = normalizePath(config.root);
-      const normalizedRootStylesheet = normalizePath(tw.rootStylesheet);
-      if (!normalizedRootStylesheet.startsWith(projectRoot)) {
-        const fsAllow = config.server?.fs?.allow ?? [];
-        const isAllowed = fsAllow.some((allowed) =>
-          normalizedRootStylesheet.startsWith(normalizePath(allowed)),
-        );
-        if (!isAllowed) {
-          console.warn(
-            `${PREFIX} tailwindCss.rootStylesheet is outside the Vite ` +
-              `project root. The dev server may reject it with 403.\n\n` +
-              `  Root: ${projectRoot}\n` +
-              `  Stylesheet: ${tw.rootStylesheet}\n\n` +
-              `  Fix: server.fs.allow: ['${dirname(tw.rootStylesheet)}']\n`,
-          );
-        }
-      }
-    }
-
-    // Empty prefixes array means no component stylesheets get @reference
-    if (tw.prefixes !== undefined && tw.prefixes.length === 0) {
-      console.warn(
-        `${PREFIX} tailwindCss.prefixes is an empty array. No component ` +
-          `stylesheets will receive @reference injection. Either remove ` +
-          `the prefixes option (to use @apply detection) or specify your ` +
-          `prefixes: ['tw:']\n`,
-      );
-    }
-
-    /**
-     * Duplicate analog() registrations are a real bug for the non-SSR/client
-     * build because each plugin instance creates its own component-style state.
-     *
-     * That state includes the style maps/registries used to:
-     * - track transformed component styles
-     * - map owner components back to stylesheet requests
-     * - coordinate Tailwind/@reference processing and style reload behavior
-     *
-     * If two plugin instances are active for the same client build, one
-     * instance can record stylesheet metadata while the other services the
-     * request. The result is "missing" component CSS even though compilation
-     * appeared to succeed.
-     *
-     * SSR is different. Analog's Nitro/SSR build path reuses the already
-     * resolved plugin graph and then runs an additional `build.ssr === true`
-     * pass for the server bundle. In that flow Vite can expose multiple
-     * `@analogjs/vite-plugin-angular` entries in `config.plugins`, but that is
-     * not the same failure mode as a duplicated client build. The server build
-     * does not rely on the client-side style maps that this guard is protecting.
-     *
-     * Because of that, we only throw for duplicate registrations on non-SSR
-     * builds. Throwing during SSR would be a false positive that breaks valid
-     * Analog SSR/Nitro builds.
-     */
-    const analogInstances = resolvedPlugins.filter(
+  function validateNoDuplicateAnalogPlugins(config: ResolvedConfig): void {
+    const analogInstances = (config.plugins ?? []).filter(
       (p) => p.name === '@analogjs/vite-plugin-angular',
     );
     if (analogInstances.length > 1 && !config.build?.ssr) {
       throw new Error(
-        `${PREFIX} analog() is registered ${analogInstances.length} times. ` +
+        `[@analogjs/vite-plugin-angular] analog() is registered ${analogInstances.length} times. ` +
           `Each instance creates separate style maps, causing component ` +
           `styles to be lost. Remove duplicate registrations.`,
       );
-    }
-
-    // rootStylesheet content must contain @import "tailwindcss"
-    if (existsSync(tw.rootStylesheet)) {
-      try {
-        const rootContent = readFileSync(tw.rootStylesheet, 'utf-8');
-        if (
-          !rootContent.includes('@import "tailwindcss"') &&
-          !rootContent.includes("@import 'tailwindcss'")
-        ) {
-          console.warn(
-            `${PREFIX} tailwindCss.rootStylesheet does not contain ` +
-              `@import "tailwindcss". The @reference directive will ` +
-              `point to a file without Tailwind configuration.\n\n` +
-              `  File: ${tw.rootStylesheet}\n`,
-          );
-        }
-      } catch {
-        // Silently skip — existence check already warned in buildStylePreprocessor.
-      }
     }
   }
 
@@ -872,8 +657,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         resolvedConfig = config;
 
         if (pluginOptions.hasTailwindCss) {
-          validateTailwindConfig(config, watchMode);
+          validateTailwindConfig(pluginOptions.tailwindCss, config, watchMode);
         }
+        validateNoDuplicateAnalogPlugins(config);
 
         if (!jit) {
           styleTransform = (code: string, filename: string) =>
@@ -1857,50 +1643,8 @@ export function angular(options?: PluginOptions): Plugin[] {
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     templateClassBindingGuardPlugin(guardContext),
-    // Tailwind CSS v4 @reference injection for direct-file-loaded CSS.
-    // Catches CSS files loaded from disk (not virtual modules) that need
-    // @reference before @tailwindcss/vite processes them.
     pluginOptions.hasTailwindCss &&
-      ({
-        name: '@analogjs/vite-plugin-angular:tailwind-reference',
-        enforce: 'pre',
-        transform(code: string, id: string) {
-          const tw = pluginOptions.tailwindCss;
-          if (!tw || !id.includes('.css')) return;
-
-          const cleanId = id.split('?')[0];
-          if (cleanId === tw.rootStylesheet) return;
-
-          const directiveState = inspectCssTailwindDirectives(code);
-
-          if (
-            directiveState.hasReferenceDirective ||
-            directiveState.hasTailwindImportDirective
-          ) {
-            return;
-          }
-
-          // Skip entry stylesheets that @import the root config
-          const rootBasename = basename(tw.rootStylesheet);
-          if (directiveState.commentlessCode.includes(rootBasename)) return;
-
-          const prefixes = tw.prefixes;
-          const needsRef = prefixes
-            ? prefixes.some((p) => directiveState.commentlessCode.includes(p))
-            : directiveState.commentlessCode.includes('@apply');
-
-          if (needsRef && directiveState.hasReferenceText) {
-            throwTailwindReferenceTextError(id, tw.rootStylesheet);
-          }
-
-          if (needsRef) {
-            debugTailwind('injected @reference via pre-transform', {
-              id: id.split('/').slice(-2).join('/'),
-            });
-            return `@reference "${tw.rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
-          }
-        },
-      } satisfies Plugin),
+      tailwindReferencePlugin({ tailwindCss: pluginOptions.tailwindCss }),
     angularPlugin(),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
     compilationPlugin,
