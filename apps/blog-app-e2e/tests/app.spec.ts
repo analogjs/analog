@@ -5,6 +5,22 @@ test('should redirect to /blog', async ({ page }) => {
   await expect(page).toHaveURL(/\/blog$/);
 });
 
+test('should list posts on /blog', async ({ page }) => {
+  await page.goto('/blog');
+  const postLinks = page.locator('ul a');
+  await expect(postLinks).toHaveCount(2);
+  await expect(postLinks.nth(0)).toHaveText(/My First Post/);
+  await expect(postLinks.nth(1)).toHaveText(/My Second Post/);
+  await expect(postLinks.nth(0)).toHaveAttribute(
+    'href',
+    /\/blog\/2022-12-27-my-first-post$/,
+  );
+  await expect(postLinks.nth(1)).toHaveAttribute(
+    'href',
+    /\/blog\/my-second-post$/,
+  );
+});
+
 // https://github.com/analogjs/analog/issues/2165
 test.fixme('should serve up HTML for pre-rendered markdown route', async ({
   page,

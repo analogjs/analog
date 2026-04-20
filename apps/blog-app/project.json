@@ -32,6 +32,7 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "continuous": true,
       "dependsOn": ["platform:build", "router:build", "content:build"],
       "defaultConfiguration": "development",
       "options": {
