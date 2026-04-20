@@ -77,7 +77,7 @@ import {
   mapTemplateUpdatesToFiles,
   refreshStylesheetRegistryForFile,
   DiagnosticModes,
-} from '../angular-vite-plugin.js';
+} from '../utils/shared.js';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
