@@ -29,8 +29,8 @@ When debugging package changes in this monorepo, prefer the project-level Nx tar
 # Focus on Angular plugin HMR/style behavior
 DEBUG=analog:angular:hmr,analog:angular:styles pnpm nx test vite-plugin-angular
 
-# Focus on platform routing output
-DEBUG=analog:platform:routes pnpm nx build platform
+# Focus on Compilation API inclusion, emit registration, and transform misses
+DEBUG=analog:angular:compilation-api,analog:angular:compiler,analog:angular:emit pnpm nx test vite-plugin-angular
 
 # Focus on the style-pipeline integration seam in a served app
 DEBUG=analog:platform:style-pipeline,analog:angular:style-pipeline pnpm nx serve your-app
@@ -47,6 +47,16 @@ first so each `dist` folder contains its generated `package.json`. The source
 package manifests still contain `catalog:` and `workspace:*` references that are
 only rewritten during Analog's release-style build pipeline.
 
+Prefer `link:` for active local debugging.
+
+- `link:` keeps the consumer wired to the live built `dist` directories through
+  symlinks.
+- `file:` can stage a snapshot into the consumer's `.pnpm` store. If you later
+  rebuild Analog without changing the version or specifier, pnpm may decide the
+  consumer install is already current and keep serving stale package contents.
+- If you must use `file:`, always verify the active installed package contents,
+  not just the Analog source tree or `dist`.
+
 ### Local checkout example
 
 `pnpm-workspace.yaml`
@@ -57,11 +67,11 @@ packages:
   - 'libs/**'
 
 overrides:
-  '@analogjs/platform': file:/path/to/analog/packages/platform/dist
-  '@analogjs/router': file:/path/to/analog/packages/router/dist
-  '@analogjs/vite-plugin-angular': file:/path/to/analog/packages/vite-plugin-angular/dist
-  '@analogjs/vite-plugin-nitro': file:/path/to/analog/packages/vite-plugin-nitro/dist
-  '@analogjs/vitest-angular': file:/path/to/analog/packages/vitest-angular/dist
+  '@analogjs/platform': link:/path/to/analog/packages/platform/dist
+  '@analogjs/router': link:/path/to/analog/packages/router/dist
+  '@analogjs/vite-plugin-angular': link:/path/to/analog/packages/vite-plugin-angular/dist
+  '@analogjs/vite-plugin-nitro': link:/path/to/analog/packages/vite-plugin-nitro/dist
+  '@analogjs/vitest-angular': link:/path/to/analog/packages/vitest-angular/dist
 ```
 
 Root `package.json`
@@ -69,14 +79,14 @@ Root `package.json`
 ```json
 {
   "dependencies": {
-    "@analogjs/platform": "file:/path/to/analog/packages/platform/dist"
+    "@analogjs/platform": "link:/path/to/analog/packages/platform/dist"
   },
   "overrides": {
-    "@analogjs/platform": "file:/path/to/analog/packages/platform/dist",
-    "@analogjs/router": "file:/path/to/analog/packages/router/dist",
-    "@analogjs/vite-plugin-angular": "file:/path/to/analog/packages/vite-plugin-angular/dist",
-    "@analogjs/vite-plugin-nitro": "file:/path/to/analog/packages/vite-plugin-nitro/dist",
-    "@analogjs/vitest-angular": "file:/path/to/analog/packages/vitest-angular/dist"
+    "@analogjs/platform": "link:/path/to/analog/packages/platform/dist",
+    "@analogjs/router": "link:/path/to/analog/packages/router/dist",
+    "@analogjs/vite-plugin-angular": "link:/path/to/analog/packages/vite-plugin-angular/dist",
+    "@analogjs/vite-plugin-nitro": "link:/path/to/analog/packages/vite-plugin-nitro/dist",
+    "@analogjs/vitest-angular": "link:/path/to/analog/packages/vitest-angular/dist"
   }
 }
 ```
@@ -88,12 +98,51 @@ can still resolve transitive packages like `@analogjs/vite-plugin-angular` and
 :::
 
 :::note
-pnpm currently does not allow `file:` entries in `catalog`, so local checkout
-wiring needs direct `file:` overrides instead of `catalog:` indirection.
+If the consumer workspace uses pnpm `catalog` entries, switch both the catalog
+entries and the consumer overrides together. Mixed states are a common source of
+confusing resolution behavior.
 :::
 
 If your app also uses other published Analog packages such as
 `@analogjs/content` or `@analogjs/storybook-angular`, pin those the same way.
+
+### Consumer validation checklist
+
+After rebuilding Analog and refreshing the consumer install:
+
+```bash
+# Confirm the active install points at your local dist output
+readlink node_modules/@analogjs/vite-plugin-angular
+
+# Confirm the dev server is actually listening
+curl -k -I https://localhost:4200/
+
+# Confirm the shell HTML and stylesheet entry are present
+lightpanda fetch \
+  --insecure-disable-tls-host-verification \
+  --wait-until done \
+  --wait-ms 12000 \
+  --dump html \
+  https://localhost:4200/ | sed -n '1,80p'
+```
+
+What to trust:
+
+- `curl` is the fastest readiness check.
+- `Lightpanda` is useful for reachability, shell HTML, and asset-presence smoke
+  tests.
+- Treat the consumer dev server logs as the source of truth for Angular
+  compilation failures such as:
+  - `contains Angular decorators but is not in the TypeScript program`
+  - missing Angular emit output
+  - JIT fallback for `@Injectable()` / `@Component()`
+
+What not to over-trust:
+
+- `Lightpanda` can surface browser-client or HMR-transport behavior that does
+  not necessarily mean Analog failed to compile the app correctly.
+- A successful Analog rebuild does not prove the consumer is executing the new
+  package code unless the consumer install is verified.
 
 ### GitHub branch example
 
@@ -135,6 +184,27 @@ For Analog, the GitHub form only works when the branch exposes release-ready
 those manifests still contain unresolved `catalog:` and `workspace:*`
 specifiers.
 :::
+
+## Useful Angular Debug Scopes
+
+Start with the smallest scope set that answers the question:
+
+```bash
+DEBUG=analog:angular:compilation-api,analog:angular:compiler pnpm nx serve your-app
+DEBUG=analog:angular:emit pnpm nx serve your-app
+DEBUG=analog:angular:emit:v pnpm nx serve your-app
+```
+
+Recommended interpretation:
+
+- `analog:angular:compilation-api`
+  - wrapper tsconfig generation, initialization, high-level compilation flow
+- `analog:angular:compiler`
+  - compiler-option mutations and transform-path decisions
+- `analog:angular:emit`
+  - root-name expansion, emit registration, transform misses/hits
+- `analog:angular:emit:v`
+  - per-file root lists, output registration, and normalized emitter lookups
 
 ## Notes
 

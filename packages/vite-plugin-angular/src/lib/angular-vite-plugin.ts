@@ -2430,6 +2430,15 @@ export function angular(options?: PluginOptions): Plugin[] {
         : resolve(tsconfigDir, configuredBaseUrl)
       : tsconfigDir;
     const discoveredRoots = new Set<string>();
+    const addDiscoveredFiles = (pattern: string) => {
+      for (const match of globSync(pattern, {
+        dot: true,
+        absolute: true,
+        onlyFiles: true,
+      })) {
+        discoveredRoots.add(normalizePath(match));
+      }
+    };
 
     for (const targets of Object.values(tsPaths)) {
       for (const target of targets) {
@@ -2438,17 +2447,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         );
 
         if (target.includes('*')) {
-          for (const match of globSync(resolvedTarget, {
-            dot: true,
-            absolute: true,
-          })) {
-            discoveredRoots.add(normalizePath(match));
-          }
+          addDiscoveredFiles(resolvedTarget);
           continue;
         }
 
         if (existsSync(resolvedTarget)) {
-          discoveredRoots.add(resolvedTarget);
+          if (statSync(resolvedTarget).isDirectory()) {
+            addDiscoveredFiles(
+              normalizePath(join(resolvedTarget, '**/*.{ts,tsx,js,jsx}')),
+            );
+          } else {
+            discoveredRoots.add(normalizePath(resolvedTarget));
+          }
         }
       }
     }
