@@ -22,8 +22,6 @@ import * as vite from 'vite';
 import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
-import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
-
 import * as ngCompiler from '@angular/compiler';
 import { globSync } from 'tinyglobby';
 import {
@@ -65,7 +63,6 @@ import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
-  createAngularCompilation,
   createJitResourceTransformer,
   SourceFileCache,
   angularFullVersion,
@@ -73,7 +70,6 @@ import {
 import {
   activateDeferredDebug,
   applyDebugOption,
-  debugCompilationApi,
   debugCompiler,
   debugCompilerV,
   debugEmit,
@@ -95,7 +91,6 @@ import {
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import {
   inspectCssTailwindDirectives,
-  isTailwindReferenceError,
   throwTailwindReferenceTextError,
 } from './utils/tailwind-reference.js';
 import {
@@ -128,7 +123,6 @@ import {
   AnalogStylesheetRegistry,
   preprocessStylesheet,
   preprocessStylesheetResult,
-  registerStylesheetContent,
   rewriteRelativeCssImports,
 } from './stylesheet-registry.js';
 import {
@@ -875,14 +869,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   ) => Promise<vite.PreprocessCSSResult>;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
-  // Persistent Angular Compilation API instance. Kept alive across rebuilds so
-  // Angular can diff previous state and emit `templateUpdates` for HMR.
-  // Previously the compilation was recreated on every pass, which meant Angular
-  // never had prior state and could never produce HMR payloads.
-  let angularCompilation:
-    | Awaited<ReturnType<typeof createAngularCompilationType>>
-    | undefined;
-
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -1937,10 +1923,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             writeFileSync(declarationPath, data, 'utf-8');
           },
         );
-        // Tear down the persistent compilation instance at end of build so it
-        // does not leak memory across unrelated Vite invocations.
-        angularCompilation?.close?.();
-        angularCompilation = undefined;
       },
     };
   }
