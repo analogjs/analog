@@ -141,7 +141,9 @@ async function setupLiveReloadPlugin(options: {
     experimental: {
       useAngularCompilationAPI: true,
     },
-  }).find((entry) => entry.name === '@analogjs/vite-plugin-angular') as any;
+  }).find(
+    (entry) => entry.name === '@analogjs/vite-plugin-angular-compilation-api',
+  ) as any;
 
   await plugin.config(
     {
