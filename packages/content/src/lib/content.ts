@@ -54,21 +54,17 @@ function getContentFile<
   const contentTask = renderTaskService.addRenderTask();
   return new Observable<string | { default: string; metadata: Attributes }>(
     (observer) => {
-      const contentResolver = contentFile();
+      // `waitFor` is a no-op in non-Zone environments (browser without zone.js),
+      // so this branch works for both SSR and client. Keeping a single path also
+      // avoids Rolldown evaluating `import.meta.env.SSR` at library-build time
+      // and eliminating the task-clearing branch, which caused SSR to hang once
+      // the content map resolved a real lazy import.
+      waitFor(contentFile()).then((content) => {
+        observer.next(content);
+        observer.complete();
 
-      if (import.meta.env.SSR === true) {
-        waitFor(contentResolver).then((content) => {
-          observer.next(content);
-          observer.complete();
-
-          setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
-        });
-      } else {
-        contentResolver.then((content) => {
-          observer.next(content);
-          observer.complete();
-        });
-      }
+        setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
+      });
     },
   ).pipe(
     switchMap((contentFile) => {

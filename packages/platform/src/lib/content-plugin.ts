@@ -137,14 +137,17 @@ export function contentPlugin(
               );
             });
 
+            // Match just the assignment (not the declaration) so the rewrite
+            // works whether the source uses `const`, `let`, `var`, or
+            // `export const` — including the post-Rolldown `var X = {};`
+            // form — without destroying the declaration that keeps the
+            // module binding exported.
             let result = code.replace(
-              'const ANALOG_CONTENT_FILE_LIST = {};',
-              `
-              let ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
+              /ANALOG_CONTENT_FILE_LIST\s*=\s*\{\s*\}/,
+              `ANALOG_CONTENT_FILE_LIST = {${contentFilesList.map(
                 (module, index) =>
                   `"${getContentModuleKey(module)}": analog_module_${index}`,
-              )}};
-            `,
+              )}}`,
             );
 
             if (!code.includes('analog_module_')) {
