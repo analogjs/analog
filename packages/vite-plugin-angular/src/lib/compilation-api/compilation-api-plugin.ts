@@ -19,7 +19,6 @@ import {
   preprocessCSS,
   ResolvedConfig,
   ViteDevServer,
-  type ModuleNode,
 } from 'vite';
 import { globSync } from 'tinyglobby';
 
@@ -30,7 +29,6 @@ import {
 } from '../utils/devkit.js';
 import {
   activateDeferredDebug,
-  applyDebugOption,
   debugCompilationApi,
   debugCompiler,
   debugEmit,
@@ -38,11 +36,9 @@ import {
   debugHmr,
   debugHmrV,
   debugStyles,
-  debugStylesV,
   type DebugOption,
 } from '../utils/debug.js';
 import {
-  createTsConfigGetter,
   getTsConfigPath,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
@@ -71,10 +67,7 @@ import {
   AngularStylePipelineOptions,
   configureStylePipelineRegistry,
 } from '../style-pipeline.js';
-import {
-  type FileReplacement,
-  type FileReplacementWith,
-} from '../plugins/file-replacements.plugin.js';
+import { type FileReplacement } from '../plugins/file-replacements.plugin.js';
 import type { EmitFileResult } from '../models.js';
 import type { SourceFileCache as SourceFileCacheType } from '../utils/source-file-cache.js';
 import {
@@ -503,38 +496,12 @@ export function compilationAPIPlugin(
     return normalizePath(fsPath);
   };
 
-  const describeEmitMarkers = (content: string) => ({
-    contentLength: content.length,
-    hasCmp: content.includes('ɵcmp'),
-    hasFac: content.includes('ɵfac'),
-    hasProv: content.includes('ɵprov'),
-    hasDecorate: content.includes('__decorate'),
-    hasMetadata: content.includes('__metadata'),
-  });
-
   let outputFile: ((file: string) => void) | undefined;
   const fileEmitter = (file: string) => {
     const normalizedFile = normalizeEmitterLookupId(file);
     outputFile?.(normalizedFile);
     return outputFiles.get(normalizedFile);
   };
-
-  function describeStylesheetContent(code: string) {
-    return {
-      length: code.length,
-      digest: createHash('sha256').update(code).digest('hex').slice(0, 12),
-      preview: code.replace(/\s+/g, ' ').trim().slice(0, 160),
-    };
-  }
-
-  function safeStatMtimeMs(file: string): number | undefined {
-    try {
-      const { statSync } = require('node:fs');
-      return statSync(file).mtimeMs;
-    } catch {
-      return undefined;
-    }
-  }
 
   async function performAngularCompilation(
     config: ResolvedConfig,
@@ -824,25 +791,6 @@ export function compilationAPIPlugin(
 
   function isComponentStyleSheet(id: string): boolean {
     return id.includes('ngcomp=');
-  }
-
-  function getComponentStyleSheetMeta(id: string): {
-    componentId: string;
-    encapsulation: 'emulated' | 'shadow' | 'none';
-  } {
-    const params = new URL(id, 'http://localhost').searchParams;
-    const encapsulationMapping: Record<string, string> = {
-      '0': 'emulated',
-      '2': 'none',
-      '3': 'shadow',
-    };
-    return {
-      componentId: params.get('ngcomp')!,
-      encapsulation: encapsulationMapping[params.get('e')!] as
-        | 'emulated'
-        | 'shadow'
-        | 'none',
-    };
   }
 
   function getFilenameFromPath(id: string): string {
