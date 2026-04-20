@@ -221,8 +221,9 @@ export async function loadTranslationsRuntime(
   }
 
   try {
+    const localizePkg = '@angular/localize';
     const { loadTranslations } = (await import(
-      /* @vite-ignore */ '@angular/localize'
+      /* @vite-ignore */ localizePkg
     )) as {
       loadTranslations: (t: Record<string, string>) => void;
     };
@@ -246,8 +247,9 @@ export async function clearTranslationsRuntime(): Promise<void> {
     return;
   }
   try {
+    const localizePkg = '@angular/localize';
     const { clearTranslations } = (await import(
-      /* @vite-ignore */ '@angular/localize'
+      /* @vite-ignore */ localizePkg
     )) as {
       clearTranslations: () => void;
     };
