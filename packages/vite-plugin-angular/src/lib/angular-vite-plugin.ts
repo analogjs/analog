@@ -3,7 +3,6 @@ import { union } from 'es-toolkit';
 import {
   existsSync,
   mkdirSync,
-  promises as fsPromises,
   readFileSync,
   statSync,
   writeFileSync,
@@ -73,6 +72,7 @@ import {
   isComponentStyleSheet,
   getComponentStyleSheetMeta,
 } from './encapsulation-plugin.js';
+import { virtualModulesPlugin } from './virtual-modules-plugin.js';
 import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
   createJitResourceTransformer,
@@ -99,17 +99,7 @@ import {
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
-import {
-  toVirtualRawId,
-  toVirtualStyleId,
-  VIRTUAL_RAW_PREFIX,
-  VIRTUAL_STYLE_PREFIX,
-} from './utils/virtual-ids.js';
-import {
-  loadVirtualRawModule,
-  loadVirtualStyleModule,
-  shouldPreprocessTestCss,
-} from './utils/virtual-resources.js';
+import { toVirtualRawId, toVirtualStyleId } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
@@ -1238,51 +1228,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         classNames.clear();
         return ctx.modules;
       },
-      resolveId(id, importer) {
-        if (
-          id.startsWith(VIRTUAL_STYLE_PREFIX) ||
-          id.startsWith(VIRTUAL_RAW_PREFIX)
-        ) {
-          return `\0${id}`;
-        }
-
-        if (jit && id.startsWith('angular:jit:')) {
-          const path = id.split(';')[1];
-          const resolved = normalizePath(
-            resolve(dirname(importer as string), path),
-          );
-          if (id.includes(':style')) {
-            return toVirtualStyleId(resolved);
-          }
-          return toVirtualRawId(resolved);
-        }
-
-        // Intercept .html?raw imports to bypass Vite server.fs restrictions
-        if (id.includes('.html?raw')) {
-          const filePath = id.split('?')[0];
-          const resolved = isAbsolute(filePath)
-            ? normalizePath(filePath)
-            : importer
-              ? normalizePath(resolve(dirname(importer), filePath))
-              : undefined;
-          if (resolved) {
-            return toVirtualRawId(resolved);
-          }
-        }
-
-        // Intercept style ?inline imports to bypass Vite server.fs restrictions
-        if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-          const filePath = id.split('?')[0];
-          const resolved = isAbsolute(filePath)
-            ? normalizePath(filePath)
-            : importer
-              ? normalizePath(resolve(dirname(importer), filePath))
-              : undefined;
-          if (resolved) {
-            return toVirtualStyleId(resolved);
-          }
-        }
-
+      resolveId(id) {
         // Map angular component stylesheets. Prefer registry-served CSS
         // (preprocessed, with @reference) over external raw file mappings.
         if (isComponentStyleSheet(id)) {
@@ -1316,39 +1262,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id) {
-        // Both virtual raw (templates) and virtual style (external styles)
-        // ids come in from two paths: the transform-time substitution below
-        // (dev + production) and the resolveId rewrite for user `.html?raw`
-        // / `.scss?inline` imports. The virtual ids carry no file extension,
-        // so Vite's built-in asset/CSS plugins never pick them up and we
-        // never see the Denied ID check that blocks `?raw`/`?inline`.
-        // (#2263, #2283)
-        const styleModule = await loadVirtualStyleModule(
-          this,
-          id,
-          resolvedConfig,
-        );
-        if (styleModule !== undefined) return styleModule;
-
-        const rawModule = await loadVirtualRawModule(this, id);
-        if (rawModule !== undefined) return rawModule;
-
-        // Vitest fallback: the module-runner calls ensureEntryFromUrl before
-        // transformRequest, which skips pluginContainer.resolveId entirely,
-        // so a user `import foo from './a.scss?inline'` reaches load as the
-        // bare query form. Handle it here so tests still resolve.
-        if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-          const filePath = id.split('?')[0];
-          const code = await fsPromises.readFile(filePath, 'utf-8');
-          // In tests, mirror Vitest's `test.css` rules — defaults to no
-          // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-          if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
-            return `export default ${JSON.stringify(code)}`;
-          }
-          const result = await preprocessCSS(code, filePath, resolvedConfig);
-          return `export default ${JSON.stringify(result.code)}`;
-        }
-
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
           const filename = getFilenameFromPath(id);
@@ -1646,6 +1559,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
+    virtualModulesPlugin({ jit }),
     templateClassBindingGuardPlugin(guardContext),
     pluginOptions.hasTailwindCss &&
       tailwindReferencePlugin({ tailwindCss: pluginOptions.tailwindCss }),

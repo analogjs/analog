@@ -461,7 +461,7 @@ describe('JIT resolveId', () => {
   it('should resolve style files to virtual style ids', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
     expect(mainPlugin).toBeDefined();
 
@@ -485,7 +485,7 @@ describe('JIT resolveId', () => {
   it('should resolve template files to virtual raw ids', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
     expect(mainPlugin).toBeDefined();
 
@@ -505,7 +505,7 @@ describe('JIT resolveId', () => {
   it('should resolve bare virtual style ids to rollup virtual modules', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
     expect(mainPlugin).toBeDefined();
 
@@ -519,7 +519,7 @@ describe('JIT resolveId', () => {
   it('should resolve bare virtual raw ids to rollup virtual modules', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
     expect(mainPlugin).toBeDefined();
 
@@ -532,7 +532,7 @@ describe('JIT resolveId', () => {
   it('should intercept .html?raw imports and remap to virtual raw ids', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -557,7 +557,7 @@ describe('JIT resolveId', () => {
   it('should intercept .html?raw imports even without jit mode', () => {
     const plugins = angular();
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -573,7 +573,7 @@ describe('JIT resolveId', () => {
     const assetRE = /\.(svg|png|jpe?g|gif|webp|html)($|\?)/;
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -588,7 +588,7 @@ describe('JIT resolveId', () => {
   it('should intercept style ?inline imports and remap to virtual style ids', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -615,7 +615,7 @@ describe('JIT resolveId', () => {
   it('should intercept style ?inline imports even without jit mode', () => {
     const plugins = angular();
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -632,7 +632,7 @@ describe('JIT resolveId', () => {
   it('should not match Vite inline security regex or cssLangRE', () => {
     const plugins = angular();
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -653,7 +653,7 @@ describe('JIT resolveId', () => {
       /\.(css|less|sass|scss|styl|stylus|pcss|postcss|sss)($|\?)/;
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
 
     const resolveId = (mainPlugin as any).resolveId;
@@ -677,7 +677,7 @@ describe('load ?inline style imports', () => {
   function getLoadHook() {
     const plugins = angular();
     const mainPlugin = plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
     );
     const fakeConfig = {
       environments: {},
@@ -699,7 +699,7 @@ describe('load ?inline style imports', () => {
     try {
       const plugins = angular({ jit: true });
       const mainPlugin = plugins.find(
-        (p) => p.name === '@analogjs/vite-plugin-angular',
+        (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
       );
 
       // Trigger configResolved so resolvedConfig is set
@@ -738,7 +738,7 @@ describe('load ?inline style imports', () => {
     try {
       const plugins = angular({ jit: true });
       const mainPlugin = plugins.find(
-        (p) => p.name === '@analogjs/vite-plugin-angular',
+        (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
       );
 
       // Default Vitest config: `test.css` is unset, which Vitest treats as
@@ -799,7 +799,9 @@ describe('load virtual raw template imports', () => {
 
   function getMainPlugin() {
     const plugins = angular({ jit: true });
-    return plugins.find((p) => p.name === '@analogjs/vite-plugin-angular');
+    return plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular:virtual-modules',
+    );
   }
 
   function loadHook() {
