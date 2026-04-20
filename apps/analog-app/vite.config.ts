@@ -79,16 +79,9 @@ export default defineConfig(async ({ mode, command }) => {
             host: base,
           },
         },
-        vite: {
-          inlineStylesExtension: 'scss',
-          fastCompile: true,
-          experimental: {
-            useAngularCompilationAPI: false,
-          },
-        },
-        hmr: true,
+        inlineStylesExtension: 'scss',
+        fastCompile: true,
         experimental: {
-          useAngularCompilationAPI: true,
           typedRouter: true,
         },
         nitro: {
