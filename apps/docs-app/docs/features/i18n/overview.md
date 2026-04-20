@@ -52,7 +52,8 @@ Add `provideI18n()` to your application config:
 ```ts
 // src/app/app.config.ts
 import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter, provideI18n } from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
+import { provideI18n } from '@analogjs/router/i18n';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -166,7 +167,7 @@ Use `injectSwitchLocale()` in your components. It reads the configured locales f
 ```ts
 import { Component } from '@angular/core';
 import { injectLocale } from '@analogjs/router/tokens';
-import { injectSwitchLocale } from '@analogjs/router';
+import { injectSwitchLocale } from '@analogjs/router/i18n';
 
 @Component({
   selector: 'app-language-switcher',
@@ -190,7 +191,7 @@ Calling `switchLang('fr')` navigates from `/en/about` to `/fr/about` with a full
 If you need to update the `$localize` translation map without a navigation (e.g., preloading translations), use `loadTranslationsRuntime()`:
 
 ```ts
-import { loadTranslationsRuntime } from '@analogjs/router';
+import { loadTranslationsRuntime } from '@analogjs/router/i18n';
 
 const translations = await fetch('/i18n/fr.json').then((r) => r.json());
 loadTranslationsRuntime(translations);
@@ -281,6 +282,7 @@ import {
   withMarkdownRenderer,
   withLocale,
 } from '@analogjs/content';
+import { provideI18n } from '@analogjs/router/i18n';
 import { injectLocale } from '@analogjs/router/tokens';
 
 export const appConfig: ApplicationConfig = {
