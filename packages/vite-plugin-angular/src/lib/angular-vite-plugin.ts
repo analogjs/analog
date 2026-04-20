@@ -572,8 +572,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           const code = await fsPromises.readFile(filePath, 'utf-8');
           // In tests, mirror Vitest's `test.css` rules — defaults to no
           // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
+          // Return empty CSS rather than raw preprocessor source. (#2304)
           if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
-            return `export default ${JSON.stringify(code)}`;
+            return `export default ""`;
           }
           const result = await preprocessCSS(code, filePath, resolvedConfig);
           return `export default ${JSON.stringify(result.code)}`;

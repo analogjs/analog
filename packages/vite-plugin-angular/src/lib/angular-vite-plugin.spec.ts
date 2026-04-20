@@ -357,8 +357,9 @@ describe('load ?inline style imports', () => {
       const result = await load(virtualId);
 
       expect(result).toBeDefined();
-      expect(result).toContain('export default');
-      expect(result).toContain('color: red');
+      // When test.css is unset, styles are returned as empty strings to match
+      // Vitest's native behavior and avoid raw SCSS crashing jsdom. (#2304)
+      expect(result).toBe('export default ""');
       expect(vi.mocked(preprocessCSS)).not.toHaveBeenCalled();
     } finally {
       realFs.unlinkSync(cssPath);
@@ -373,8 +374,9 @@ describe('load ?inline style imports', () => {
       const load = getLoadHook();
       const result = await load(`${cssPath}?inline`);
       expect(result).toBeDefined();
-      expect(result).toContain('export default');
-      expect(result).toContain('color: red');
+      // When test.css is unset (no resolvedConfig), styles are returned empty
+      // to match Vitest's native behavior. (#2304)
+      expect(result).toBe('export default ""');
     } finally {
       realFs.unlinkSync(cssPath);
     }
