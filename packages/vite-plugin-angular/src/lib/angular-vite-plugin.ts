@@ -626,6 +626,23 @@ export function angular(options?: PluginOptions): Plugin[] {
       configResolved(config) {
         resolvedConfig = config;
 
+        // Suppress noisy sourcemap warnings from Angular packages that ship
+        // FESM bundles whose sourcemaps reference source files not included
+        // in the npm package.
+        if (config.logger?.warnOnce) {
+          const originalWarnOnce = config.logger.warnOnce;
+          config.logger.warnOnce = (msg, options) => {
+            if (
+              typeof msg === 'string' &&
+              msg.includes('Sourcemap') &&
+              msg.includes('node_modules')
+            ) {
+              return;
+            }
+            originalWarnOnce(msg, options);
+          };
+        }
+
         if (pluginOptions.hasTailwindCss) {
           validateTailwindConfig(pluginOptions.tailwindCss, config, watchMode);
           validateNoDuplicateAnalogPlugins(config);
