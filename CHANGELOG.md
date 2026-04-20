@@ -1,3 +1,11 @@
+# [3.0.0-alpha.44](https://github.com/analogjs/analog/compare/v3.0.0-alpha.43...v3.0.0-alpha.44) (2026-04-20)
+
+### Bug Fixes
+
+- add blog-app e2e post listing test and continuous serve config ([273b143](https://github.com/analogjs/analog/commit/273b14324855cb17d4f0b53199ee754c0a6fc85e))
+- **content:** hoist content file bindings to module scope for Rolldown compatibility ([efc9767](https://github.com/analogjs/analog/commit/efc97673a5d73c37f59503626604f94b5b636e5e))
+- **create-analog:** pin typescript to ~5.9.0 in templates ([4b45a59](https://github.com/analogjs/analog/commit/4b45a5959dbc497eb66cd437d1ae73a488cf9a87))
+
 # [3.0.0-alpha.43](https://github.com/analogjs/analog/compare/v3.0.0-alpha.42...v3.0.0-alpha.43) (2026-04-20)
 
 ### Bug Fixes
