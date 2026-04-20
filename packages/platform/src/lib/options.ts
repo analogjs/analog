@@ -249,6 +249,73 @@ export interface Options {
      */
     stylePipeline?: StylePipelineOptions | false;
   };
+
+  /**
+   * First-class Tailwind CSS v4 integration for Angular component styles.
+   *
+   * Angular's compiler processes component CSS through Vite's `preprocessCSS()`,
+   * which runs `@tailwindcss/vite` — but each component stylesheet is processed
+   * in isolation without access to the root Tailwind configuration (prefix, @theme,
+   * @custom-variant, @plugin definitions). This causes errors like:
+   *
+   *   "Cannot apply utility class `sa:grid` because the `sa` variant does not exist"
+   *
+   * The `tailwindCss` option solves this by auto-injecting a `@reference` directive
+   * into every component CSS file that uses Tailwind utilities, pointing it to the
+   * root Tailwind stylesheet so `@tailwindcss/vite` can resolve the full configuration.
+   *
+   * @example Basic usage — reference a root Tailwind CSS file:
+   * ```ts
+   * import { resolve } from 'node:path';
+   *
+   * angular({
+   *   tailwindCss: {
+   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
+   *   },
+   * })
+   * ```
+   *
+   * @example With prefix detection — only inject for files using specific prefixes:
+   * ```ts
+   * angular({
+   *   tailwindCss: {
+   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
+   *     // Only inject @reference into files that use these prefixed classes
+   *     prefixes: ['sa:', 'tw:'],
+   *   },
+   * })
+   * ```
+   *
+   * @example AnalogJS platform — passed through the `vite` option:
+   * ```ts
+   * analog({
+   *   vite: {
+   *     tailwindCss: {
+   *       rootStylesheet: resolve(__dirname, '../../../libs/meritos/tailwind.config.css'),
+   *     },
+   *   },
+   * })
+   * ```
+   */
+  tailwindCss?: {
+    /**
+     * Absolute path to the root Tailwind CSS file that contains `@import "tailwindcss"`,
+     * `@theme`, `@custom-variant`, and `@plugin` definitions.
+     *
+     * A `@reference` directive pointing to this file will be auto-injected into
+     * component CSS files that use Tailwind utilities.
+     */
+    rootStylesheet: string;
+    /**
+     * Optional list of class prefixes to detect (e.g. `['sa:', 'tw:']`).
+     * When provided, `@reference` is only injected into component CSS files that
+     * contain at least one of these prefixes. When omitted, `@reference` is injected
+     * into all component CSS files that contain `@apply` or `@` directives.
+     *
+     * @default undefined — inject into all component CSS files with `@apply`
+     */
+    prefixes?: string[];
+  };
 }
 
 export interface TypedRouterOptions {
