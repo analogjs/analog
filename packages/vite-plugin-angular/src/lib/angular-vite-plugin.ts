@@ -134,14 +134,14 @@ export {
   mapTemplateUpdatesToFiles,
   refreshStylesheetRegistryForFile,
   describeStylesheetContent,
-} from './utils/shared.js';
+} from './utils/compilation-shared.js';
 import {
   DiagnosticModes,
   injectViteIgnoreForHmrMetadata,
   isIgnoredHmrFile,
   describeStylesheetContent,
   refreshStylesheetRegistryForFile,
-} from './utils/shared.js';
+} from './utils/compilation-shared.js';
 
 export interface PluginOptions {
   tsconfig?: string | (() => string);
