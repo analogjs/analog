@@ -1,5 +1,4 @@
 import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
-import * as compilerCli from '@angular/compiler-cli';
 import { union } from 'es-toolkit';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -19,7 +18,6 @@ import {
   ResolvedConfig,
   ViteDevServer,
 } from 'vite';
-import { globSync } from 'tinyglobby';
 
 import {
   createAngularCompilation,
@@ -31,7 +29,6 @@ import {
   debugCompilationApi,
   debugCompiler,
   debugEmit,
-  debugEmitV,
   debugHmr,
   debugHmrV,
   debugStyles,
@@ -42,6 +39,7 @@ import {
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
+import { TsconfigResolver } from '../utils/tsconfig-resolver.js';
 import { shouldPreprocessTestCss } from '../utils/virtual-resources.js';
 import { isTailwindReferenceError } from '../utils/tailwind-reference.js';
 import {
@@ -114,15 +112,16 @@ export function compilationAPIPlugin(
   let compilationLock = Promise.resolve();
   let pendingCompilation: Promise<void> | null = null;
   let initialCompilation = false;
-  let includeCache: string[] = [];
-  const tsconfigOptionsCache = new Map<
-    string,
-    { options: any; rootNames: string[] }
-  >();
-  const tsconfigGraphRootCache = new Map<string, string[]>();
   let viteServer: ViteDevServer | undefined;
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const tsconfigResolver = new TsconfigResolver({
+    workspaceRoot: pluginOptions.workspaceRoot,
+    include: pluginOptions.include,
+    liveReload: pluginOptions.liveReload,
+    hasTailwindCss: pluginOptions.hasTailwindCss,
+    isTest,
+  });
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   let testWatchMode = isTestWatchMode();
 
@@ -156,268 +155,16 @@ export function compilationAPIPlugin(
     );
   }
 
-  function normalizeIncludeGlob(glob: string): string {
-    const normalizedWorkspaceRoot = normalizePath(
-      resolve(pluginOptions.workspaceRoot),
-    );
-    const normalizedGlob = normalizePath(glob);
-    if (
-      normalizedGlob === normalizedWorkspaceRoot ||
-      normalizedGlob.startsWith(`${normalizedWorkspaceRoot}/`)
-    ) {
-      return normalizedGlob;
-    }
-    if (normalizedGlob.startsWith('/')) {
-      return `${normalizedWorkspaceRoot}${normalizedGlob}`;
-    }
-    return normalizePath(resolve(normalizedWorkspaceRoot, normalizedGlob));
-  }
-
-  function findIncludes() {
-    const globs = pluginOptions.include.map((glob) =>
-      normalizeIncludeGlob(glob),
-    );
-    return globSync(globs, { dot: true, absolute: true });
-  }
-
-  function ensureIncludeCache(): string[] {
-    if (pluginOptions.include.length > 0 && includeCache.length === 0) {
-      includeCache = findIncludes();
-    }
-    return includeCache;
-  }
-
-  function invalidateIncludeCache() {
-    includeCache = [];
-  }
-
-  function invalidateTsconfigCaches() {
-    tsconfigOptionsCache.clear();
-    tsconfigGraphRootCache.clear();
-  }
-
-  function getTsconfigCacheKey(
-    resolvedTsConfigPath: string,
-    config: ResolvedConfig,
-  ): string {
-    const isProd = config.mode === 'production';
-    return [
-      resolvedTsConfigPath,
-      isProd ? 'prod' : 'dev',
-      isTest ? 'test' : 'app',
-      config.build?.lib ? 'lib' : 'nolib',
-      pluginOptions.liveReload ? 'live-reload' : 'no-live-reload',
-      pluginOptions.hasTailwindCss ? 'tw' : 'notw',
-    ].join('|');
-  }
-
-  function readAngularTsconfigConfiguration(
-    resolvedTsConfigPath: string,
-    config: ResolvedConfig,
-  ) {
-    const isProd = config.mode === 'production';
-    return compilerCli.readConfiguration(resolvedTsConfigPath, {
-      suppressOutputPathCheck: true,
-      outDir: undefined,
-      sourceMap: false,
-      inlineSourceMap: !isProd,
-      inlineSources: !isProd,
-      declaration: false,
-      declarationMap: false,
-      allowEmptyCodegenFiles: false,
-      annotationsAs: 'decorators',
-      enableResourceInlining: false,
-      noEmitOnError: false,
-      mapRoot: undefined,
-      sourceRoot: undefined,
-      supportTestBed: false,
-      supportJitMode: false,
-    });
-  }
-
-  function getCachedTsconfigOptions(
-    resolvedTsConfigPath: string,
-    config: ResolvedConfig,
-  ): { options: any; rootNames: string[] } {
-    const tsconfigKey = getTsconfigCacheKey(resolvedTsConfigPath, config);
-    let cached = tsconfigOptionsCache.get(tsconfigKey);
-    if (!cached) {
-      const read = readAngularTsconfigConfiguration(
-        resolvedTsConfigPath,
-        config,
-      );
-      cached = { options: read.options, rootNames: read.rootNames };
-      tsconfigOptionsCache.set(tsconfigKey, cached);
-    }
-    return cached;
-  }
-
-  function resolveReferenceTsconfigPath(
-    referencePath: string,
-    ownerTsconfigPath: string,
-  ): string | undefined {
-    const ownerDir = dirname(ownerTsconfigPath);
-    const resolvedReference = normalizePath(
-      isAbsolute(referencePath)
-        ? referencePath
-        : resolve(ownerDir, referencePath),
-    );
-
-    if (existsSync(resolvedReference)) {
-      try {
-        const { statSync } = require('node:fs');
-        if (statSync(resolvedReference).isDirectory()) {
-          const nestedTsconfig = join(resolvedReference, 'tsconfig.json');
-          return existsSync(nestedTsconfig)
-            ? normalizePath(nestedTsconfig)
-            : undefined;
-        }
-      } catch {
-        return undefined;
-      }
-      return resolvedReference;
-    }
-
-    if (!resolvedReference.endsWith('.json')) {
-      const asJson = `${resolvedReference}.json`;
-      if (existsSync(asJson)) {
-        return normalizePath(asJson);
-      }
-      const nestedTsconfig = join(resolvedReference, 'tsconfig.json');
-      if (existsSync(nestedTsconfig)) {
-        return normalizePath(nestedTsconfig);
-      }
-    }
-
-    return undefined;
-  }
-
-  function collectTsconfigPathRoots(
-    resolvedTsConfigPath: string,
-    options: any,
-    rawTsconfig: {
-      compilerOptions?: {
-        baseUrl?: unknown;
-        paths?: Record<string, string[]>;
-      };
-    },
-  ): string[] {
-    const tsPaths = rawTsconfig.compilerOptions?.paths ?? options.paths;
-    if (!tsPaths) return [];
-
-    const tsconfigDir = dirname(resolvedTsConfigPath);
-    const configuredBaseUrl =
-      typeof options.baseUrl === 'string'
-        ? options.baseUrl
-        : typeof rawTsconfig.compilerOptions?.baseUrl === 'string'
-          ? rawTsconfig.compilerOptions.baseUrl
-          : undefined;
-    const resolvedBaseUrl = configuredBaseUrl
-      ? isAbsolute(configuredBaseUrl)
-        ? configuredBaseUrl
-        : resolve(tsconfigDir, configuredBaseUrl)
-      : tsconfigDir;
-    const discoveredRoots = new Set<string>();
-
-    for (const targets of Object.values(tsPaths)) {
-      for (const target of targets as string[]) {
-        const resolvedTarget = normalizePath(
-          isAbsolute(target) ? target : resolve(resolvedBaseUrl, target),
-        );
-        if (target.includes('*')) {
-          for (const match of globSync(resolvedTarget, {
-            dot: true,
-            absolute: true,
-          })) {
-            discoveredRoots.add(normalizePath(match));
-          }
-          continue;
-        }
-        if (existsSync(resolvedTarget)) {
-          discoveredRoots.add(resolvedTarget);
-        }
-      }
-    }
-
-    return [...discoveredRoots];
-  }
-
-  function collectExpandedTsconfigRoots(
-    resolvedTsConfigPath: string,
-    config: ResolvedConfig,
-    visited = new Set<string>(),
-  ): string[] {
-    const normalizedTsConfigPath = normalizePath(resolvedTsConfigPath);
-    if (visited.has(normalizedTsConfigPath)) return [];
-
-    const tsconfigKey = `${getTsconfigCacheKey(normalizedTsConfigPath, config)}|graph`;
-    const cached = tsconfigGraphRootCache.get(tsconfigKey);
-    if (cached) return cached;
-
-    visited.add(normalizedTsConfigPath);
-
-    const read = readAngularTsconfigConfiguration(
-      normalizedTsConfigPath,
-      config,
-    );
-    const rawTsconfig = (ts.readConfigFile(
-      normalizedTsConfigPath,
-      ts.sys.readFile,
-    ).config ?? {}) as {
-      compilerOptions?: {
-        baseUrl?: unknown;
-        paths?: Record<string, string[]>;
-      };
-      references?: Array<{ path?: unknown }>;
-    };
-
-    const expandedRoots = new Set(
-      read.rootNames.map((file: string) => normalizePath(file)),
-    );
-    const pathRoots = collectTsconfigPathRoots(
-      normalizedTsConfigPath,
-      read.options,
-      rawTsconfig,
-    );
-    for (const pathRoot of pathRoots) {
-      expandedRoots.add(pathRoot);
-    }
-
-    const referenceConfigs = (rawTsconfig.references ?? [])
-      .flatMap((reference) =>
-        typeof reference.path === 'string'
-          ? [
-              resolveReferenceTsconfigPath(
-                reference.path,
-                normalizedTsConfigPath,
-              ),
-            ]
-          : [],
-      )
-      .filter((reference): reference is string => !!reference);
-
-    for (const referenceConfig of referenceConfigs) {
-      for (const referenceRoot of collectExpandedTsconfigRoots(
-        referenceConfig,
-        config,
-        visited,
-      )) {
-        expandedRoots.add(referenceRoot);
-      }
-    }
-
-    const expandedRootList = [...expandedRoots];
-    tsconfigGraphRootCache.set(tsconfigKey, expandedRootList);
-    return expandedRootList;
-  }
-
   function resolveCompilationApiTsConfigPath(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
   ): string {
-    const includedFiles = ensureIncludeCache();
-    const cached = getCachedTsconfigOptions(resolvedTsConfigPath, config);
-    const expandedGraphRoots = collectExpandedTsconfigRoots(
+    const includedFiles = tsconfigResolver.ensureIncludeCache();
+    const cached = tsconfigResolver.getCachedTsconfigOptions(
+      resolvedTsConfigPath,
+      config,
+    );
+    const expandedGraphRoots = tsconfigResolver.collectExpandedTsconfigRoots(
       resolvedTsConfigPath,
       config,
     );
@@ -866,15 +613,14 @@ export function compilationAPIPlugin(
       viteServer = server;
 
       const invalidateCompilation = async () => {
-        invalidateIncludeCache();
-        invalidateTsconfigCaches();
+        tsconfigResolver.invalidateAll();
         await performCompilation(resolvedConfig);
       };
       server.watcher.on('add', invalidateCompilation);
       server.watcher.on('unlink', invalidateCompilation);
       server.watcher.on('change', (file) => {
         if (file.includes('tsconfig')) {
-          invalidateTsconfigCaches();
+          tsconfigResolver.invalidateTsconfigCaches();
         }
       });
     },
