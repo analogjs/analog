@@ -291,8 +291,6 @@ export interface PluginOptions {
   };
 }
 
-export { normalizeIncludeGlob } from './utils/tsconfig-resolver.js';
-
 const classNames = new Map();
 export function evictDeletedFileMetadata(
   file: string,
