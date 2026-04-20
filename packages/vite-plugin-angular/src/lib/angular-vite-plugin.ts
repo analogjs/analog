@@ -662,8 +662,8 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         if (pluginOptions.hasTailwindCss) {
           validateTailwindConfig(pluginOptions.tailwindCss, config, watchMode);
+          validateNoDuplicateAnalogPlugins(config);
         }
-        validateNoDuplicateAnalogPlugins(config);
 
         if (!jit) {
           styleTransform = (code: string, filename: string) =>
