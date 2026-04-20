@@ -506,6 +506,8 @@ function addPnpmDependencies(pkg, template) {
   if (H3_TEMPLATES.includes(template)) {
     pkg.dependencies ??= {};
     pkg.dependencies.h3 = '^1.13.0';
+    pkg.dependencies.nitro = '^3.0.0';
+    pkg.dependencies.ofetch = '^2.0.0';
   }
 }
 
