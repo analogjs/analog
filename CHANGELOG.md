@@ -1,3 +1,9 @@
+# [3.0.0-alpha.42](https://github.com/analogjs/analog/compare/v3.0.0-alpha.41...v3.0.0-alpha.42) (2026-04-20)
+
+### Bug Fixes
+
+- **platform:** add tailwindCss to options interface ([a7ba1cf](https://github.com/analogjs/analog/commit/a7ba1cfed31071eb0f018051e2c05be881d8c41a))
+
 # [3.0.0-alpha.41](https://github.com/analogjs/analog/compare/v3.0.0-alpha.40...v3.0.0-alpha.41) (2026-04-19)
 
 ### Bug Fixes
