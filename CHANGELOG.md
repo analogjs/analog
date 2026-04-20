@@ -1,3 +1,10 @@
+# [2.5.0-beta.46](https://github.com/analogjs/analog/compare/v2.5.0-beta.45...v2.5.0-beta.46) (2026-04-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** honor Vitest test.css semantics to skip CSS preprocessing ([#2298](https://github.com/analogjs/analog/issues/2298)) ([90ac242](https://github.com/analogjs/analog/commit/90ac242b3d03dd6745b9a957bd6bc7d8c7eaeb1d))
+- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([5069b75](https://github.com/analogjs/analog/commit/5069b75d4af067a90a36198e6a3da77ae615430b))
+
 # [2.5.0-beta.45](https://github.com/analogjs/analog/compare/v2.5.0-beta.44...v2.5.0-beta.45) (2026-04-20)
 
 ### Bug Fixes
