@@ -34,11 +34,6 @@ export default defineConfig(() => {
     plugins: [
       analog({
         liveReload: true,
-        experimental: {
-          useAngularCompilationAPI: true,
-          typedRouter: true,
-        },
-        discoverRoutes: true,
         content: {
           highlighter: 'shiki',
           shikiOptions: {
