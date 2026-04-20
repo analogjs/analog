@@ -97,10 +97,7 @@ import {
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
-import {
-  TsconfigResolver,
-  normalizeIncludeGlob,
-} from './utils/tsconfig-resolver.js';
+import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import { toVirtualRawId, toVirtualStyleId } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
