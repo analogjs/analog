@@ -64,6 +64,7 @@ import {
   mapTemplateUpdatesToFiles,
   refreshStylesheetRegistryForFile,
   DiagnosticModes,
+  isTestWatchMode,
 } from '../utils/compilation-shared.js';
 
 const require = createRequire(import.meta.url);
@@ -819,16 +820,4 @@ export function compilationAPIPlugin(
       angularCompilation = undefined;
     },
   };
-}
-
-function isTestWatchMode(args: string[] = process.argv): boolean {
-  const hasRun = args.find((arg) => arg.includes('--run'));
-  if (hasRun) return false;
-  const hasNoRun = args.find((arg) => arg.includes('--no-run'));
-  if (hasNoRun) return true;
-  const hasWatch = args.find((arg) => arg.includes('watch'));
-  if (hasWatch && ['false', 'no'].some((neg) => hasWatch.includes(neg))) {
-    return false;
-  }
-  return true;
 }

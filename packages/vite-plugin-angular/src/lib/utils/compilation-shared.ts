@@ -201,3 +201,32 @@ export function refreshStylesheetRegistryForFile(
     served: describeStylesheetContent(servedCss),
   });
 }
+
+export function isTestWatchMode(args: string[] = process.argv): boolean {
+  // vitest --run
+  const hasRun = args.find((arg) => arg.includes('--run'));
+  if (hasRun) {
+    return false;
+  }
+
+  // vitest --no-run
+  const hasNoRun = args.find((arg) => arg.includes('--no-run'));
+  if (hasNoRun) {
+    return true;
+  }
+
+  // check for --watch=false or --no-watch
+  const hasWatch = args.find((arg) => arg.includes('watch'));
+  if (hasWatch && ['false', 'no'].some((neg) => hasWatch.includes(neg))) {
+    return false;
+  }
+
+  // check for --watch false
+  const watchIndex = args.findIndex((arg) => arg.includes('watch'));
+  const watchArg = args[watchIndex + 1];
+  if (watchArg && watchArg === 'false') {
+    return false;
+  }
+
+  return true;
+}

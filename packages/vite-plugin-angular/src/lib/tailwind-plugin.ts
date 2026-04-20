@@ -20,6 +20,43 @@ export interface TailwindReferencePluginOptions {
   tailwindCss?: TailwindCssOptions;
 }
 
+/**
+ * Core injection logic shared by both the Vite pre-transform plugin and the
+ * Angular style preprocessor. Returns the `@reference`-prepended CSS when
+ * injection is needed, or `undefined` when the file should be left alone.
+ */
+function injectTailwindReference(
+  code: string,
+  opts: {
+    rootStylesheet: string;
+    prefixes?: string[];
+    fileId: string;
+  },
+): string | undefined {
+  const directiveState = inspectCssTailwindDirectives(code);
+
+  if (
+    directiveState.hasReferenceDirective ||
+    directiveState.hasTailwindImportDirective
+  ) {
+    return undefined;
+  }
+
+  const needsRef = opts.prefixes
+    ? opts.prefixes.some((p) => directiveState.commentlessCode.includes(p))
+    : directiveState.commentlessCode.includes('@apply');
+
+  if (!needsRef) {
+    return undefined;
+  }
+
+  if (directiveState.hasReferenceText) {
+    throwTailwindReferenceTextError(opts.fileId, opts.rootStylesheet);
+  }
+
+  return `@reference "${opts.rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
+}
+
 export function tailwindReferencePlugin(
   options: TailwindReferencePluginOptions,
 ): Plugin {
@@ -33,34 +70,24 @@ export function tailwindReferencePlugin(
       const cleanId = id.split('?')[0];
       if (cleanId === tw.rootStylesheet) return;
 
-      const directiveState = inspectCssTailwindDirectives(code);
-
-      if (
-        directiveState.hasReferenceDirective ||
-        directiveState.hasTailwindImportDirective
-      ) {
-        return;
-      }
-
       // Skip entry stylesheets that @import the root config
       const rootBasename = basename(tw.rootStylesheet);
+      const directiveState = inspectCssTailwindDirectives(code);
       if (directiveState.commentlessCode.includes(rootBasename)) return;
 
-      const prefixes = tw.prefixes;
-      const needsRef = prefixes
-        ? prefixes.some((p) => directiveState.commentlessCode.includes(p))
-        : directiveState.commentlessCode.includes('@apply');
+      const result = injectTailwindReference(code, {
+        rootStylesheet: tw.rootStylesheet,
+        prefixes: tw.prefixes,
+        fileId: id,
+      });
 
-      if (needsRef && directiveState.hasReferenceText) {
-        throwTailwindReferenceTextError(id, tw.rootStylesheet);
-      }
-
-      if (needsRef) {
+      if (result) {
         debugTailwind('injected @reference via pre-transform', {
           id: id.split('/').slice(-2).join('/'),
         });
-        return `@reference "${tw.rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
       }
+
+      return result;
     },
   };
 }
@@ -112,36 +139,19 @@ export function buildStylePreprocessor(options?: {
     }
 
     tailwindPreprocessor = (code: string, filename: string): string => {
-      const directiveState = inspectCssTailwindDirectives(code);
+      const result = injectTailwindReference(code, {
+        rootStylesheet,
+        prefixes,
+        fileId: filename,
+      });
 
-      if (
-        directiveState.hasReferenceDirective ||
-        directiveState.hasTailwindImportDirective
-      ) {
-        debugTailwindV('skip (already has @reference or is root)', {
-          filename,
-        });
-        return code;
+      if (result) {
+        debugTailwind('injected @reference via preprocessor', { filename });
+        return result;
       }
 
-      const needsReference = prefixes
-        ? prefixes.some((prefix) =>
-            directiveState.commentlessCode.includes(prefix),
-          )
-        : directiveState.commentlessCode.includes('@apply');
-
-      if (!needsReference) {
-        debugTailwindV('skip (no Tailwind usage detected)', { filename });
-        return code;
-      }
-
-      if (directiveState.hasReferenceText) {
-        throwTailwindReferenceTextError(filename, rootStylesheet);
-      }
-
-      debugTailwind('injected @reference via preprocessor', { filename });
-
-      return `@reference "${rootStylesheet.replace(/\\/g, '/')}";\n${code}`;
+      debugTailwindV('skip (no injection needed)', { filename });
+      return code;
     };
   }
 
