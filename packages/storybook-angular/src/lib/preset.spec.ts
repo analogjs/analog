@@ -24,6 +24,7 @@ vi.mock('@storybook/builder-vite', () => ({}));
 vi.mock('vite', () => ({
   mergeConfig: (_base: unknown, override: unknown) => override,
   normalizePath: (p: string) => p,
+  rolldownVersion: undefined,
 }));
 
 vi.mock('@analogjs/vite-plugin-angular', () => ({
@@ -61,6 +62,7 @@ const registerDependencyMocks = () => {
   vi.doMock('vite', () => ({
     mergeConfig: (_base: unknown, override: unknown) => override,
     normalizePath: (p: string) => p,
+    rolldownVersion: undefined,
   }));
   vi.doMock('@analogjs/vite-plugin-angular', () => ({
     default: () => ({ name: 'angular-mock' }),
