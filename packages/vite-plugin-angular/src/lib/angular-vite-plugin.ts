@@ -70,19 +70,12 @@ import {
   createDepOptimizerConfig,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
-import {
-  VIRTUAL_RAW_PREFIX,
-  VIRTUAL_STYLE_PREFIX,
-  toVirtualRawId,
-  toVirtualStyleId,
-} from './utils/virtual-ids.js';
+import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
-  loadVirtualStyleModule,
   rewriteHtmlRawImport,
-  rewriteInlineStyleImport,
-  shouldPreprocessTestCss,
 } from './utils/virtual-resources.js';
+import { markStylePathSafe } from './utils/safe-module-paths.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -391,20 +384,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
           fileTransformMap.delete(ctx.file.split('?')[0]);
 
-          // Virtual style modules (used for JIT external styleUrls) are not
-          // found by moduleGraph.getModulesByFile because their module id is
-          // a virtual prefix, not the real file path. Look up the virtual
-          // module manually and include it so HMR propagation works.
-          const virtualStyleId = `\0${toVirtualStyleId(
-            normalizePath(ctx.file),
-          )}`;
-          const virtualMod =
-            ctx.server.moduleGraph.getModuleById(virtualStyleId);
-          if (virtualMod && !ctx.modules.includes(virtualMod)) {
-            ctx.server.moduleGraph.invalidateModule(virtualMod);
-            ctx.modules.push(virtualMod);
-          }
-
           /**
            * Check to see if this was a direct request
            * for an external resource (styles, html).
@@ -507,10 +486,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return ctx.modules;
       },
       resolveId(id, importer) {
-        if (
-          id.startsWith(VIRTUAL_STYLE_PREFIX) ||
-          id.startsWith(VIRTUAL_RAW_PREFIX)
-        ) {
+        if (id.startsWith(VIRTUAL_RAW_PREFIX)) {
           return `\0${id}`;
         }
 
@@ -518,20 +494,31 @@ export function angular(options?: PluginOptions): Plugin[] {
           const filePath = normalizePath(
             resolve(dirname(importer as string), id.split(';')[1]),
           );
-          return id.includes(':style')
-            ? toVirtualStyleId(filePath)
-            : toVirtualRawId(filePath);
+          if (id.includes(':style')) {
+            // Mark the style path as safe so Vite's Denied ID check
+            // passes, then let Vite's native CSS pipeline handle the
+            // ?inline import (preprocessing, test.css, etc.).
+            markStylePathSafe(resolvedConfig, filePath);
+            return filePath + '?inline';
+          }
+          return toVirtualRawId(filePath);
         }
 
-        // User `.html?raw` and `.scss?inline` imports get rewritten to
-        // virtual ids so Vite's server.fs Denied ID check (which fires on
-        // /[?&](raw|inline)\b/ before the load hook runs) and asset/CSS
-        // matchers (which key on file extension) stay out of the way.
+        // User `.html?raw` imports get rewritten to virtual ids so
+        // Vite's server.fs Denied ID check stays out of the way.
         const rawRewrite = rewriteHtmlRawImport(id, importer);
         if (rawRewrite) return rawRewrite;
 
-        const inlineRewrite = rewriteInlineStyleImport(id, importer);
-        if (inlineRewrite) return inlineRewrite;
+        // User `.scss?inline` / `.css?inline` imports: resolve and mark
+        // safe so Vite's native CSS pipeline handles them.
+        if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
+          const filePath = id.split('?')[0];
+          const resolved = isAbsolute(filePath)
+            ? normalizePath(filePath)
+            : normalizePath(resolve(dirname(importer), filePath));
+          markStylePathSafe(resolvedConfig, resolved);
+          return resolved + '?inline';
+        }
 
         // Map angular external styleUrls to the source file
         if (isComponentStyleSheet(id)) {
@@ -546,38 +533,19 @@ export function angular(options?: PluginOptions): Plugin[] {
         return undefined;
       },
       async load(id) {
-        // Both virtual raw (templates) and virtual style (external styles)
-        // ids come in from two paths: the transform-time substitution below
-        // (dev + production) and the resolveId rewrite for user `.html?raw`
-        // / `.scss?inline` imports. The virtual ids carry no file extension,
-        // so Vite's built-in asset/CSS plugins never pick them up and we
-        // never see the Denied ID check that blocks `?raw`/`?inline`.
-        // (#2263, #2283)
-        const styleModule = await loadVirtualStyleModule(
-          this,
-          id,
-          resolvedConfig,
-        );
-        if (styleModule !== undefined) return styleModule;
-
+        // Virtual raw ids (templates) come from the transform-time
+        // substitution below and the resolveId rewrite for user
+        // `.html?raw` imports. Style ?inline imports now flow through
+        // Vite's native CSS pipeline via safeModulePaths.
         const rawModule = await loadVirtualRawModule(this, id);
         if (rawModule !== undefined) return rawModule;
 
-        // Vitest fallback: the module-runner calls ensureEntryFromUrl before
-        // transformRequest, which skips pluginContainer.resolveId entirely,
-        // so a user `import foo from './a.scss?inline'` reaches load as the
-        // bare query form. Handle it here so tests still resolve.
+        // Vitest fallback: the module-runner calls ensureEntryFromUrl
+        // before transformRequest, which can skip resolveId. Mark the
+        // path safe here so the Denied ID check passes, then let Vite's
+        // CSS pipeline handle the rest.
         if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-          const filePath = id.split('?')[0];
-          const code = await fsPromises.readFile(filePath, 'utf-8');
-          // In tests, mirror Vitest's `test.css` rules — defaults to no
-          // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-          // Return empty CSS rather than raw preprocessor source. (#2304)
-          if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
-            return `export default ""`;
-          }
-          const result = await preprocessCSS(code, filePath, resolvedConfig);
-          return `export default ${JSON.stringify(result.code)}`;
+          markStylePathSafe(resolvedConfig, id.split('?')[0]);
         }
 
         // Map angular inline styles to the source text
@@ -733,25 +701,8 @@ export function angular(options?: PluginOptions): Plugin[] {
               'virtual:angular:jit:style:inline;',
             );
 
-            // Emit safe resource ids directly in the transformed JS so Vite
-            // never sees the dangerous ?raw / ?inline form during
-            // loadAndTransform. Both templates and external styles use
-            // virtual module ids with no file extension so neither the
-            // vite:css plugin nor the vite:asset plugin picks them up
-            // based on the extension.
-            //
-            // Why this matters: Vite's Denied ID check fires for any id
-            // matching that regex whose path is outside server.fs.allow,
-            // and it runs *before* pluginContainer.load. Vitest's worker
-            // fetchModule path also bypasses pluginContainer.resolveId
-            // (it calls moduleGraph.ensureEntryFromUrl first, which makes
-            // the resolveId chain a no-op for the module-runner). So
-            // neither the resolveId-based rewrites nor the load-hook
-            // fallback (added in 2.4.4) get a chance to run for
-            // cross-library imports — the security check has already thrown
-            // by then. Emitting the safe ids directly in transform is the
-            // only place we can guarantee Vite never sees the dangerous
-            // form. (#2263)
+            // Templates use virtual ids (no extension) so Vite's asset/CSS
+            // plugins don't interfere. (#2263)
             templateUrls.forEach((templateUrlSet) => {
               const [templateFile, resolvedTemplateUrl] =
                 templateUrlSet.split('|');
@@ -761,11 +712,17 @@ export function angular(options?: PluginOptions): Plugin[] {
               );
             });
 
+            // External styles use native ?inline imports. We mark each
+            // path as safe in Vite's safeModulePaths so the Denied ID
+            // security check passes, and Vite's CSS pipeline handles
+            // preprocessing, test.css, and browser/node differences
+            // natively. (#2263, #2310)
             styleUrls.forEach((styleUrlSet) => {
               const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
+              markStylePathSafe(resolvedConfig, resolvedStyleUrl);
               data = data.replace(
                 `angular:jit:style:file;${styleFile}`,
-                toVirtualStyleId(resolvedStyleUrl),
+                resolvedStyleUrl + '?inline',
               );
             });
           }
@@ -923,12 +880,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           const filename =
             resourceFile ??
             containingFile.replace('.ts', `.${options?.inlineStylesExtension}`);
-
-          // In tests, mirror Vitest's `test.css` rules — defaults to no
-          // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-          if (!shouldPreprocessTestCss(resolvedConfig, filename)) {
-            return '';
-          }
 
           let stylesheetResult;
 

@@ -1,5 +1,5 @@
 import { promises as fsPromises } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -32,19 +32,12 @@ import {
   createDepOptimizerConfig,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
-import {
-  VIRTUAL_RAW_PREFIX,
-  VIRTUAL_STYLE_PREFIX,
-  toVirtualRawId,
-  toVirtualStyleId,
-} from './utils/virtual-ids.js';
+import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
-  loadVirtualStyleModule,
   rewriteHtmlRawImport,
-  rewriteInlineStyleImport,
-  shouldPreprocessTestCss,
 } from './utils/virtual-resources.js';
+import { markStylePathSafe } from './utils/safe-module-paths.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -288,13 +281,6 @@ export function fastCompilePlugin(
               /\.ts$/,
               `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
             );
-            // In tests, mirror Vitest's `test.css` rules — defaults to no
-            // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-            // Return empty rather than raw preprocessor source. (#2304)
-            if (!shouldPreprocessTestCss(resolvedConfig, fakePath)) {
-              resolvedInlineStyles.set(i, '');
-              continue;
-            }
             const processed = await preprocessCSS(
               styleStrings[i],
               fakePath,
@@ -460,10 +446,7 @@ export function fastCompilePlugin(
       return ctx.modules;
     },
     resolveId(id, importer) {
-      if (
-        id.startsWith(VIRTUAL_STYLE_PREFIX) ||
-        id.startsWith(VIRTUAL_RAW_PREFIX)
-      ) {
+      if (id.startsWith(VIRTUAL_RAW_PREFIX)) {
         return `\0${id}`;
       }
 
@@ -471,43 +454,37 @@ export function fastCompilePlugin(
         const filePath = normalizePath(
           resolve(dirname(importer as string), id.split(';')[1]),
         );
-        return id.includes(':style')
-          ? toVirtualStyleId(filePath)
-          : toVirtualRawId(filePath);
+        if (id.includes(':style')) {
+          markStylePathSafe(resolvedConfig, filePath);
+          return filePath + '?inline';
+        }
+        return toVirtualRawId(filePath);
       }
 
       const rawRewrite = rewriteHtmlRawImport(id, importer);
       if (rawRewrite) return rawRewrite;
 
-      const inlineRewrite = rewriteInlineStyleImport(id, importer);
-      if (inlineRewrite) return inlineRewrite;
+      // User `.scss?inline` / `.css?inline` imports: resolve and mark
+      // safe so Vite's native CSS pipeline handles them.
+      if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
+        const filePath = id.split('?')[0];
+        const resolved = isAbsolute(filePath)
+          ? normalizePath(filePath)
+          : normalizePath(resolve(dirname(importer), filePath));
+        markStylePathSafe(resolvedConfig, resolved);
+        return resolved + '?inline';
+      }
 
       return undefined;
     },
     async load(id) {
-      const styleModule = await loadVirtualStyleModule(
-        this,
-        id,
-        resolvedConfig,
-      );
-      if (styleModule !== undefined) return styleModule;
-
       const rawModule = await loadVirtualRawModule(this, id);
       if (rawModule !== undefined) return rawModule;
 
-      // Vitest bypass: module-runner skips resolveId, so the bare `?inline`
-      // query reaches load unchanged.
+      // Vitest fallback: module-runner can skip resolveId, so the bare
+      // ?inline query reaches load. Mark safe and let Vite handle it.
       if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        const filePath = id.split('?')[0];
-        const code = await fsPromises.readFile(filePath, 'utf-8');
-        // In tests, mirror Vitest's `test.css` rules — defaults to no
-        // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-        // Return empty CSS rather than raw preprocessor source. (#2304)
-        if (!shouldPreprocessTestCss(resolvedConfig, filePath)) {
-          return `export default ""`;
-        }
-        const result = await preprocessCSS(code, filePath, resolvedConfig);
-        return `export default ${JSON.stringify(result.code)}`;
+        markStylePathSafe(resolvedConfig, id.split('?')[0]);
       }
 
       return;
