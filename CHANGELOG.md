@@ -1,3 +1,9 @@
+# [2.5.0-beta.49](https://github.com/analogjs/analog/compare/v2.5.0-beta.48...v2.5.0-beta.49) (2026-04-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add Vite Plugin Registry compatibility ([#2314](https://github.com/analogjs/analog/issues/2314)) ([c3444d1](https://github.com/analogjs/analog/commit/c3444d105f8b924cd815f4b8168eaa9575e18035))
+
 # [2.5.0-beta.48](https://github.com/analogjs/analog/compare/v2.5.0-beta.47...v2.5.0-beta.48) (2026-04-21)
 
 ### Bug Fixes
