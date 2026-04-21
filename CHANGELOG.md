@@ -1,3 +1,14 @@
+# [3.0.0-alpha.45](https://github.com/analogjs/analog/compare/v3.0.0-alpha.44...v3.0.0-alpha.45) (2026-04-21)
+
+### Bug Fixes
+
+- **storybook-angular:** use oxc config instead of esbuild for Vite 8 ([#2313](https://github.com/analogjs/analog/issues/2313)) ([ef16e7e](https://github.com/analogjs/analog/commit/ef16e7e9cf1676b37bbbc781f60789ff1e5811ff))
+- **vite-plugin-angular:** add Vite Plugin Registry compatibility ([#2314](https://github.com/analogjs/analog/issues/2314)) ([c3444d1](https://github.com/analogjs/analog/commit/c3444d105f8b924cd815f4b8168eaa9575e18035))
+- **vite-plugin-angular:** honor Vitest test.css semantics to skip CSS preprocessing ([#2298](https://github.com/analogjs/analog/issues/2298)) ([90ac242](https://github.com/analogjs/analog/commit/90ac242b3d03dd6745b9a957bd6bc7d8c7eaeb1d))
+- **vite-plugin-angular:** let CSS ?inline imports flow through Vite's pipeline ([#2311](https://github.com/analogjs/analog/issues/2311)) ([ae803bb](https://github.com/analogjs/analog/commit/ae803bb410638b42436d173ce53b7bb81040988a))
+- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([5069b75](https://github.com/analogjs/analog/commit/5069b75d4af067a90a36198e6a3da77ae615430b))
+- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([eef84de](https://github.com/analogjs/analog/commit/eef84de75f5c2ea14a753afe6c2920fb27fc1b35))
+
 # [3.0.0-alpha.44](https://github.com/analogjs/analog/compare/v3.0.0-alpha.43...v3.0.0-alpha.44) (2026-04-20)
 
 ### Bug Fixes
