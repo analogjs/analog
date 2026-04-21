@@ -1,3 +1,9 @@
+# [2.5.0-beta.48](https://github.com/analogjs/analog/compare/v2.5.0-beta.47...v2.5.0-beta.48) (2026-04-21)
+
+### Bug Fixes
+
+- **storybook-angular:** use oxc config instead of esbuild for Vite 8 ([#2313](https://github.com/analogjs/analog/issues/2313)) ([ef16e7e](https://github.com/analogjs/analog/commit/ef16e7e9cf1676b37bbbc781f60789ff1e5811ff))
+
 # [2.5.0-beta.47](https://github.com/analogjs/analog/compare/v2.5.0-beta.46...v2.5.0-beta.47) (2026-04-21)
 
 ### Bug Fixes
