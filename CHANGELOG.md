@@ -1,3 +1,9 @@
+## [2.4.10](https://github.com/analogjs/analog/compare/v2.4.9...v2.4.10) (2026-04-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** let CSS ?inline imports flow through Vite's native pipeline ([#2310](https://github.com/analogjs/analog/issues/2310)) ([07f8b47](https://github.com/analogjs/analog/commit/07f8b471628cdaa6e3c452a24ff965c06b4d4355))
+
 ## [2.4.9](https://github.com/analogjs/analog/compare/v2.4.8...v2.4.9) (2026-04-20)
 
 ### Bug Fixes
