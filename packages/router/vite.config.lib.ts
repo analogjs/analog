@@ -27,6 +27,10 @@ export default defineConfig({
           import.meta.dirname,
           'content/src/index.ts',
         ),
+        'analogjs-router-i18n': resolve(
+          import.meta.dirname,
+          'i18n/src/index.ts',
+        ),
         'analogjs-router-tanstack-query': resolve(
           import.meta.dirname,
           'tanstack-query/src/index.ts',

@@ -1,5 +1,5 @@
 import { promises as fsPromises } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -32,6 +32,12 @@ import {
   createDepOptimizerConfig,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
+import {
+  loadVirtualRawModule,
+  rewriteHtmlRawImport,
+} from './utils/virtual-resources.js';
+import { markStylePathSafe } from './utils/safe-module-paths.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -275,12 +281,6 @@ export function fastCompilePlugin(
               /\.ts$/,
               `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
             );
-            // In tests, mirror Vitest's `test.css` rules — defaults to no
-            // preprocessing (matches Vite's CSS pipeline behavior). (#2297)
-            if (!shouldPreprocessTestCss(resolvedConfig, fakePath)) {
-              resolvedInlineStyles.set(i, styleStrings[i]);
-              continue;
-            }
             const processed = await preprocessCSS(
               styleStrings[i],
               fakePath,
@@ -444,6 +444,50 @@ export function fastCompilePlugin(
 
       // Let Vite handle the rest — the transform hook will recompile
       return ctx.modules;
+    },
+    resolveId(id, importer) {
+      if (id.startsWith(VIRTUAL_RAW_PREFIX)) {
+        return `\0${id}`;
+      }
+
+      if (pluginOptions.jit && id.startsWith('angular:jit:')) {
+        const filePath = normalizePath(
+          resolve(dirname(importer as string), id.split(';')[1]),
+        );
+        if (id.includes(':style')) {
+          markStylePathSafe(resolvedConfig, filePath);
+          return filePath + '?inline';
+        }
+        return toVirtualRawId(filePath);
+      }
+
+      const rawRewrite = rewriteHtmlRawImport(id, importer);
+      if (rawRewrite) return rawRewrite;
+
+      // User `.scss?inline` / `.css?inline` imports: resolve and mark
+      // safe so Vite's native CSS pipeline handles them.
+      if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
+        const filePath = id.split('?')[0];
+        const resolved = isAbsolute(filePath)
+          ? normalizePath(filePath)
+          : normalizePath(resolve(dirname(importer), filePath));
+        markStylePathSafe(resolvedConfig, resolved);
+        return resolved + '?inline';
+      }
+
+      return undefined;
+    },
+    async load(id) {
+      const rawModule = await loadVirtualRawModule(this, id);
+      if (rawModule !== undefined) return rawModule;
+
+      // Vitest fallback: module-runner can skip resolveId, so the bare
+      // ?inline query reaches load. Mark safe and let Vite handle it.
+      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
+        markStylePathSafe(resolvedConfig, id.split('?')[0]);
+      }
+
+      return;
     },
     transform: {
       filter: {

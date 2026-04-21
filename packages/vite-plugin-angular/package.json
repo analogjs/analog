@@ -33,7 +33,23 @@
     },
     "@angular/build": {
       "optional": true
+    },
+    "vite": {
+      "optional": true
     }
+  },
+  "compatiblePackages": {
+    "vite": [
+      "^6.0.0",
+      "^7.0.0",
+      "^8.0.0"
+    ],
+    "rollup": [
+      "^4.0.0"
+    ],
+    "rolldown": [
+      "^1.0.0"
+    ]
   },
   "dependencies": {
     "es-toolkit": "catalog:",

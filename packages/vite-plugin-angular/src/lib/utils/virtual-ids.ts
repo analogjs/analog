@@ -1,16 +1,12 @@
-// Virtual module id helpers for external component resources (template and
-// style files). Routing through virtual ids keeps Vite's built-in plugins
-// (vite:css, vite:asset, the server.fs Denied ID check) out of the picture:
-// the id Vite sees has no file extension, so extension-based matchers never
-// fire, and it does not match the /[?&](raw|inline)\b/ security regex that
-// blocks user-facing ?raw and ?inline queries.
+// Virtual module id helpers for external component resources (template files).
+// Routing through virtual ids keeps Vite's built-in plugins (vite:asset, the
+// server.fs Denied ID check) out of the picture: the id Vite sees has no
+// file extension, so extension-based matchers never fire, and it does not
+// match the /[?&](raw|inline)\b/ security regex.
 //
-// Both prefixes share the same shape — a literal prefix followed by a
-// base64url-encoded absolute file path — so load hooks can round-trip back
-// to the source file for reading and watching. See #2263 / #2283.
-
-export const VIRTUAL_STYLE_PREFIX =
-  'virtual:@analogjs/vite-plugin-angular:inline-style:';
+// Style ?inline imports now flow through Vite's native CSS pipeline via
+// safeModulePaths (see safe-module-paths.ts). Only template ?raw imports
+// still use virtual ids. See #2263 / #2283 / #2310.
 
 export const VIRTUAL_RAW_PREFIX = 'virtual:@analogjs/vite-plugin-angular:raw:';
 
@@ -20,23 +16,6 @@ function encode(absPath: string): string {
 
 function decode(encoded: string): string {
   return Buffer.from(encoded, 'base64url').toString('utf-8');
-}
-
-export function toVirtualStyleId(absPath: string): string {
-  return `${VIRTUAL_STYLE_PREFIX}${encode(absPath)}`;
-}
-
-export function isVirtualStyleId(id: string): boolean {
-  const stripped = id.startsWith('\0') ? id.slice(1) : id;
-  return stripped.startsWith(VIRTUAL_STYLE_PREFIX);
-}
-
-export function fromVirtualStyleId(id: string): string {
-  const normalizedId = id.startsWith('\0') ? id.slice(1) : id;
-  if (!normalizedId.startsWith(VIRTUAL_STYLE_PREFIX)) {
-    throw new Error(`Invalid virtual style id: ${id}`);
-  }
-  return decode(normalizedId.slice(VIRTUAL_STYLE_PREFIX.length));
 }
 
 export function toVirtualRawId(absPath: string): string {

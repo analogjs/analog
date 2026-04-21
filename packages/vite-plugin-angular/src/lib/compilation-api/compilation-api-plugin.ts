@@ -2,14 +2,7 @@ import { type createAngularCompilation as createAngularCompilationType } from '@
 import { union } from 'es-toolkit';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import {
-  basename,
-  dirname,
-  isAbsolute,
-  join,
-  relative,
-  resolve,
-} from 'node:path';
+import { basename, isAbsolute, join, relative, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import {
   normalizePath,
@@ -40,7 +33,6 @@ import {
   type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
 import { TsconfigResolver } from '../utils/tsconfig-resolver.js';
-import { shouldPreprocessTestCss } from '../utils/virtual-resources.js';
 import { isTailwindReferenceError } from '../utils/tailwind-reference.js';
 import {
   AnalogStylesheetRegistry,
@@ -341,9 +333,6 @@ export function compilationAPIPlugin(
             resourceFile: resourceFile ?? '(inline)',
             dataLength: preprocessed.code.length,
           });
-          if (!shouldPreprocessTestCss(resolvedConfig, filename)) {
-            return '';
-          }
 
           let stylesheetResult;
           try {

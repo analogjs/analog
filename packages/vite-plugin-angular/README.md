@@ -1,5 +1,7 @@
 # @analogjs/vite-plugin-angular
 
+[![Vite Plugin Registry](https://img.shields.io/badge/vite-plugin--registry-blue?logo=vite)](https://registry.vite.dev/plugin/@analogjs/vite-plugin-angular)
+
 A Vite plugin for building Angular applications
 
 ## Install

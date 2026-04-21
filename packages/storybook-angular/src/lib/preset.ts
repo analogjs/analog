@@ -2,8 +2,8 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { core as PresetCore } from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
-import * as vite from 'vite';
 import type { Plugin, UserConfig } from 'vite';
+import * as vite from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 import { debugStyles } from './debug';
 
@@ -276,7 +276,7 @@ function angularOptionsPlugin(
   };
 }
 
-function storybookTransformConfigPlugin(): Plugin {
+function storybookTransformConfigPlugin() {
   const configKey = vite.rolldownVersion ? 'oxc' : 'esbuild';
 
   return {
