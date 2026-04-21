@@ -9,6 +9,7 @@
 ![NPM Downloads](https://img.shields.io/npm/dw/%40analogjs%2Fvite-plugin-angular)
 [![Static Badge](https://img.shields.io/badge/Analog-Discord-blue)](https://chat.analogjs.org)
 [![Twitter](https://img.shields.io/twitter/follow/analogjs)](https://twitter.com/analogjs)
+[![Vite Plugin Registry](https://img.shields.io/badge/vite-plugin--registry-blue?logo=vite)](https://registry.vite.dev/plugin/@analogjs/vite-plugin-angular)
 
 Analog is the meta-framework for building applications and websites with [Angular](https://angular.dev).
 
