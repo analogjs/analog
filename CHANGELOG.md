@@ -1,3 +1,14 @@
+# [3.0.0-alpha.46](https://github.com/analogjs/analog/compare/v3.0.0-alpha.45...v3.0.0-alpha.46) (2026-04-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** don't include angularPlugin twice in plugin array ([d429a2d](https://github.com/analogjs/analog/commit/d429a2d7c45788d29c51a014ab384a14a9db30c8))
+- **vite-plugin-angular:** stop matching .tsrx in TS extension regex ([b8b9048](https://github.com/analogjs/analog/commit/b8b9048dd619df5c4562616e900959e61849833e))
+
+### Features
+
+- **vite-plugin-angular:** add globalThis external-registry hook for fastCompile ([3526c03](https://github.com/analogjs/analog/commit/3526c03540dde1adf0d8a4d7874cf685a73922a8))
+
 # [3.0.0-alpha.45](https://github.com/analogjs/analog/compare/v3.0.0-alpha.44...v3.0.0-alpha.45) (2026-04-21)
 
 ### Bug Fixes
