@@ -10,10 +10,17 @@ import {
 
 /**
  * TypeScript file extension regex
- * Match .(c or m)ts, .ts extensions with an optional ? for query params
- * Ignore .tsx extensions
+ * Match .ts / .cts / .mts extensions with an optional ?query suffix.
+ * Reject .tsx — and any other `.ts<letter>…` extension like .tsrx — via
+ * a negative-lookahead on a following ASCII letter, so only genuine TS
+ * files pass.
+ *
+ * Previous form `/\.[cm]?(ts)[^x]?\??/` was intended to exclude `.tsx`
+ * specifically (`[^x]?` = not-an-x), but the `?` quantifier also allows
+ * zero characters, and any non-`x` letter was admitted — so `.tsrx`
+ * and similar extensions matched by accident.
  */
-export const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
+export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
 
 export interface TsConfigResolutionContext {
   root: string;
