@@ -1556,7 +1556,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     templateClassBindingGuardPlugin(guardContext),
     pluginOptions.hasTailwindCss &&
       tailwindReferencePlugin({ tailwindCss: pluginOptions.tailwindCss }),
-    angularPlugin(),
+    // Skip the legacy ngc-driven plugin when fastCompile owns the transform.
+    // Its `transform` hook has no `enforce: 'pre'` and runs AFTER fastCompile's,
+    // overwriting the AOT output with ngc's `fileEmitter` result. For
+    // cross-compiler imports (e.g. a TS `@Component` referencing a class
+    // compiled by an out-of-tree compiler like `@tsrx/analog`), ngc can't
+    // resolve the import and emits a legacy `__decorate` form that triggers
+    // a JIT fallback at runtime.
+    !pluginOptions.fastCompile && angularPlugin(),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
     compilationPlugin,
     !pluginOptions.fastCompile &&
