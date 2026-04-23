@@ -1,3 +1,13 @@
+# [2.5.0-beta.50](https://github.com/analogjs/analog/compare/v2.5.0-beta.49...v2.5.0-beta.50) (2026-04-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** stop matching .tsrx in TS extension regex ([2d23b19](https://github.com/analogjs/analog/commit/2d23b197f30146a0822bdf9cec6559b44d2f8135))
+
+### Features
+
+- **vite-plugin-angular:** add globalThis external-registry hook for fastCompile ([aabb5ab](https://github.com/analogjs/analog/commit/aabb5abcad5c5eb0ceaf34e5234c9ad42aac29d5))
+
 # [2.5.0-beta.49](https://github.com/analogjs/analog/compare/v2.5.0-beta.48...v2.5.0-beta.49) (2026-04-21)
 
 ### Bug Fixes
