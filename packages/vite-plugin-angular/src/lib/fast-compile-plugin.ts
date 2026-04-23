@@ -39,6 +39,21 @@ import {
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
 
+declare global {
+  /**
+   * Shared convention for out-of-tree compilers (e.g. `@tsrx/analog`) that
+   * produce Angular Ivy definitions from a non-TS source format. Populate
+   * this map with directive/component metadata for any class fastCompile
+   * can't reach through its own tsconfig-driven scan, and the per-compile
+   * registry lookup in `fastCompilePlugin` will merge those entries in —
+   * so TS `@Component({ imports: [X] })` references to such classes
+   * resolve statically instead of hitting the `_unresolved-${className}`
+   * sentinel.
+   */
+  // eslint-disable-next-line no-var
+  var __ANALOG_EXTERNAL_REGISTRY__: ComponentRegistry | undefined;
+}
+
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
   workspaceRoot: string;
@@ -305,8 +320,23 @@ export function fastCompilePlugin(
 
     ensureDtsRegistryForSource(code, id);
 
+    // Merge entries from the shared external-registry global into this
+    // compile's lookup view. Convention: out-of-tree compilers populate
+    // `globalThis.__ANALOG_EXTERNAL_REGISTRY__` with directive metadata
+    // for classes fastCompile can't reach through its tsconfig-driven
+    // scan (e.g. `.tsrx` files compiled by `@tsrx/analog`). Without this
+    // merge, a TS `@Component({ imports: [X] })` that references such a
+    // class hits `_unresolved-${className}` as its selector and the tag
+    // never matches at runtime.
+    let compileRegistry: ComponentRegistry = registry;
+    const externalRegistry = globalThis.__ANALOG_EXTERNAL_REGISTRY__;
+    if (externalRegistry && externalRegistry.size > 0) {
+      compileRegistry = new Map(registry);
+      for (const [k, v] of externalRegistry) compileRegistry.set(k, v);
+    }
+
     const result = compile(code, id, {
-      registry,
+      registry: compileRegistry,
       resolvedStyles,
       resolvedInlineStyles,
       useDefineForClassFields,
