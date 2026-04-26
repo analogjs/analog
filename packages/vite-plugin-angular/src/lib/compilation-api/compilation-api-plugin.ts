@@ -58,6 +58,7 @@ import {
   DiagnosticModes,
   isTestWatchMode,
 } from '../utils/compilation-shared.js';
+import { loadVirtualRawModule } from '../utils/virtual-resources.js';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
@@ -703,6 +704,13 @@ export function compilationAPIPlugin(
       return undefined;
     },
     async load(id) {
+      // Virtual raw ids back JIT-emitted templateUrl/styleUrl imports.
+      // virtual-modules-plugin resolves them; this plugin is the active
+      // compilation plugin in compilation-API mode, so load must read the
+      // backing file (jit=true is the test-mode default).
+      const rawModule = await loadVirtualRawModule(this, id);
+      if (rawModule !== undefined) return rawModule;
+
       // Serve component stylesheets from registry
       if (isComponentStyleSheet(id)) {
         const filename = getFilenameFromPath(id);
