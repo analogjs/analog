@@ -1,3 +1,9 @@
+# [3.0.0-alpha.47](https://github.com/analogjs/analog/compare/v3.0.0-alpha.46...v3.0.0-alpha.47) (2026-04-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** load virtual raw ids in compilation-api plugin ([4a41cd0](https://github.com/analogjs/analog/commit/4a41cd0ee54217c621e0cd85135a571124b08772))
+
 # [3.0.0-alpha.46](https://github.com/analogjs/analog/compare/v3.0.0-alpha.45...v3.0.0-alpha.46) (2026-04-23)
 
 ### Bug Fixes
