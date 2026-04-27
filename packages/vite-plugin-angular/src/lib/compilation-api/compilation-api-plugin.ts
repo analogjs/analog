@@ -106,6 +106,11 @@ export function compilationAPIPlugin(
   let compilationLock = Promise.resolve();
   let pendingCompilation: Promise<void> | null = null;
   let initialCompilation = false;
+  let compilationDiagnostics: { errors: string[]; warnings: string[] } = {
+    errors: [],
+    warnings: [],
+  };
+  let diagnosticsEmitted = false;
   let viteServer: ViteDevServer | undefined;
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
@@ -461,8 +466,33 @@ export function compilationAPIPlugin(
         : DiagnosticModes.All,
     );
 
-    const errors = diagnostics.errors?.length ? diagnostics.errors : [];
-    const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+    compilationDiagnostics = {
+      errors: (diagnostics.errors || []).map(
+        (d: {
+          text?: string;
+          location?: { file?: string; line?: number; column?: number } | null;
+        }) => {
+          const loc = d.location;
+          const prefix = loc?.file
+            ? `${loc.file}${loc.line != null ? `:${loc.line}` : ''}${loc.column != null ? `:${loc.column}` : ''} - `
+            : '';
+          return `${prefix}${d.text || ''}`;
+        },
+      ),
+      warnings: (diagnostics.warnings || []).map(
+        (d: {
+          text?: string;
+          location?: { file?: string; line?: number; column?: number } | null;
+        }) => {
+          const loc = d.location;
+          const prefix = loc?.file
+            ? `${loc.file}${loc.line != null ? `:${loc.line}` : ''}${loc.column != null ? `:${loc.column}` : ''} - `
+            : '';
+          return `${prefix}${d.text || ''}`;
+        },
+      ),
+    };
+    diagnosticsEmitted = false;
 
     const templateUpdates = mapTemplateUpdatesToFiles(
       compilationResult.templateUpdates,
@@ -492,10 +522,8 @@ export function compilationAPIPlugin(
       outputFiles.set(normalizedFilename, {
         content: file.contents,
         dependencies: [],
-        errors: errors.map((error: { text?: string }) => error.text || ''),
-        warnings: warnings.map(
-          (warning: { text?: string }) => warning.text || '',
-        ),
+        errors: [],
+        warnings: [],
         hmrUpdateCode: templateUpdate?.code,
         hmrEligible: !!templateUpdate?.code,
       });
@@ -620,6 +648,16 @@ export function compilationAPIPlugin(
         await performCompilation(resolvedConfig);
         pendingCompilation = null;
         initialCompilation = true;
+      }
+
+      if (!diagnosticsEmitted) {
+        for (const warning of compilationDiagnostics.warnings) {
+          this.warn(warning);
+        }
+        if (compilationDiagnostics.errors.length > 0) {
+          this.error(compilationDiagnostics.errors.join('\n'));
+        }
+        diagnosticsEmitted = true;
       }
     },
     async handleHotUpdate(ctx) {
@@ -774,6 +812,16 @@ export function compilationAPIPlugin(
         if (pendingCompilation) {
           await pendingCompilation;
           pendingCompilation = null;
+        }
+
+        if (!diagnosticsEmitted) {
+          for (const warning of compilationDiagnostics.warnings) {
+            this.warn(warning);
+          }
+          if (compilationDiagnostics.errors.length > 0) {
+            this.error(compilationDiagnostics.errors.join('\n'));
+          }
+          diagnosticsEmitted = true;
         }
 
         const typescriptResult = fileEmitter(id);
