@@ -6,8 +6,8 @@ test('should redirect to /blog', async ({ page }) => {
 });
 
 test('should list posts on /blog', async ({ page }) => {
-  await page.goto('/blog');
-  const postLinks = page.locator('ul a');
+  await page.goto('/');
+  const postLinks = page.locator('ul li a');
   await expect(postLinks).toHaveCount(2);
   await expect(postLinks.nth(0)).toHaveText(/My First Post/);
   await expect(postLinks.nth(1)).toHaveText(/My Second Post/);
