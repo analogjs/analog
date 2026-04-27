@@ -1,3 +1,9 @@
+# [2.5.0-beta.51](https://github.com/analogjs/analog/compare/v2.5.0-beta.50...v2.5.0-beta.51) (2026-04-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use empty string instead of undefined for mapRoot/sourceRoot overrides (beta) ([#2322](https://github.com/analogjs/analog/issues/2322)) ([cfd6cd6](https://github.com/analogjs/analog/commit/cfd6cd660f04cd98eae7a0dd231ce8ad793ed4d5))
+
 # [2.5.0-beta.50](https://github.com/analogjs/analog/compare/v2.5.0-beta.49...v2.5.0-beta.50) (2026-04-23)
 
 ### Bug Fixes
