@@ -72,6 +72,37 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+#### Recursing Into Subdirectories
+
+By default, `contentDir` only matches files at the top level of the configured directory. To prerender content organized into category subdirectories, set `recursive: true`. Each discovered file's directory relative to `contentDir` is exposed via `file.relativePath`, which `transform` can use to build the route.
+
+```ts
+import { defineConfig } from 'vite';
+import analog, { type PrerenderContentFile } from '@analogjs/platform';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      prerender: {
+        routes: async () => [
+          '/',
+          {
+            contentDir: 'src/content/docs',
+            recursive: true,
+            transform: (file: PrerenderContentFile) => {
+              const slug = file.attributes.slug || file.name;
+              return file.relativePath
+                ? `/docs/${file.relativePath}/${slug}`
+                : `/docs/${slug}`;
+            },
+          },
+        ],
+      },
+    }),
+  ],
+}));
+```
+
 ### Outputting Source Markdown Files
 
 To make prerendered pages more accessible to LLMs or other tools that prefer raw markdown, you can output the source markdown file alongside each prerendered route. The source file will be accessible at the route path with a `.md` extension (e.g., `/blog/my-post` would also be available at `/blog/my-post.md`).

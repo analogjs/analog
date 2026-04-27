@@ -274,6 +274,8 @@ Hello World
 
 To get a list using the list of content files in the `src/content` folder, use the `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` function from the `@analogjs/content` package in your component. To narrow the files, you can use the `filterFn` predicate function as an argument. You can use the `InjectContentFilesFilterFunction<T>` type to set up your predicate.
 
+> `injectContentFiles` returns metadata only — `filename`, `slug`, and `attributes`. The `content` body is not loaded; reading it from the returned items yields `undefined`. Use `injectContent` to load and render an individual file's body.
+
 ```ts
 import { Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
@@ -471,6 +473,55 @@ export default class ProjectComponent {
   });
 }
 ```
+
+### Hierarchical (Nested) Content
+
+When content is organized into category subdirectories under a `subdirectory`, pair `injectContent({ param, subdirectory })` with a catch-all route. The catch-all parameter captures the full path under the subdirectory and resolves to the matching nested file.
+
+```treeview
+src/
+└── app/
+│   └── pages/
+│       └── docs/
+│           └── [...slug].page.ts
+└── content/
+    └── docs/
+        ├── getting-started/
+        │   ├── welcome.md
+        │   └── first-upload.md
+        └── assets/
+            └── upload.md
+```
+
+```ts
+// /src/app/pages/docs/[...slug].page.ts
+import { injectContent, MarkdownComponent } from '@analogjs/content';
+import { AsyncPipe } from '@angular/common';
+import { Component } from '@angular/core';
+
+export interface DocAttributes {
+  title: string;
+}
+
+@Component({
+  standalone: true,
+  imports: [MarkdownComponent, AsyncPipe],
+  template: `
+    @if (doc$ | async; as doc) {
+      <h1>{{ doc.attributes.title }}</h1>
+      <analog-markdown [content]="doc.content"></analog-markdown>
+    }
+  `,
+})
+export default class DocComponent {
+  readonly doc$ = injectContent<DocAttributes>({
+    param: 'slug',
+    subdirectory: 'docs',
+  });
+}
+```
+
+A request for `/docs/getting-started/welcome` resolves to `src/content/docs/getting-started/welcome.md`. Frontmatter `slug` is optional in this layout — when omitted, the file is keyed by its on-disk path. If a file does specify a `slug` containing path separators, that slug is interpreted relative to its top-level subdirectory (e.g. `slug: getting-started/welcome` on a file under `src/content/docs/` resolves to `src/content/docs/getting-started/welcome`).
 
 ## Loading Custom Content
 
