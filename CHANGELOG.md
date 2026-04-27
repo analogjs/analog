@@ -1,3 +1,13 @@
+# [2.5.0-beta.52](https://github.com/analogjs/analog/compare/v2.5.0-beta.51...v2.5.0-beta.52) (2026-04-27)
+
+### Bug Fixes
+
+- **content:** scope slash-containing slugs to file's subdirectory ([#2318](https://github.com/analogjs/analog/issues/2318)) ([ee69df7](https://github.com/analogjs/analog/commit/ee69df77415582d03f071080d59dc1766419da4c))
+
+### Features
+
+- **vite-plugin-nitro:** add recursive option to PrerenderContentDir ([#2318](https://github.com/analogjs/analog/issues/2318)) ([42a5524](https://github.com/analogjs/analog/commit/42a5524acf0a2860758fc1a11997b3d15215a793))
+
 # [2.5.0-beta.51](https://github.com/analogjs/analog/compare/v2.5.0-beta.50...v2.5.0-beta.51) (2026-04-27)
 
 ### Bug Fixes
