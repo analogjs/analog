@@ -16,6 +16,7 @@ on:
         options:
           - latest
           - beta
+          - alpha
       angular_build_tag:
         description: 'Angular Build Tag'
         required: true
