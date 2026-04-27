@@ -75,8 +75,8 @@ export class TsconfigResolver {
       annotationsAs: 'decorators',
       enableResourceInlining: false,
       noEmitOnError: false,
-      mapRoot: undefined,
-      sourceRoot: undefined,
+      mapRoot: '',
+      sourceRoot: '',
       supportTestBed: false,
       supportJitMode: false,
     });
