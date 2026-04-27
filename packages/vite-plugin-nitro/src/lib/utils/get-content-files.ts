@@ -66,6 +66,7 @@ export function getMatchingContentFilesWithFrontMatter(
   workspaceRoot: string,
   rootDir: string,
   glob: string,
+  recursive = false,
 ): PrerenderContentFile[] {
   // Dynamically require front-matter library
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -77,12 +78,18 @@ export function getMatchingContentFilesWithFrontMatter(
   // Resolve the content directory path relative to the project root
   const resolvedDir = normalizePath(relative(root, join(root, glob)));
 
-  // Discover all content files in the specified directory
-  // Pattern: looks for any files in the resolved directory
-  const contentFiles: string[] = globSync([`${root}/${resolvedDir}/*`], {
+  // Discover all content files in the specified directory.
+  // Default pattern matches only top-level files; recursive opt-in walks subdirectories.
+  const pattern = recursive
+    ? `${root}/${resolvedDir}/**/*`
+    : `${root}/${resolvedDir}/*`;
+  const contentFiles: string[] = globSync([pattern], {
     dot: true,
     absolute: true,
+    onlyFiles: true,
   });
+
+  const dirPrefix = `${root}/${resolvedDir}`;
 
   // Process each discovered content file to extract metadata and front matter
   const mappedFilesWithFm: PrerenderContentFile[] = contentFiles.map((f) => {
@@ -105,6 +112,15 @@ export function getMatchingContentFilesWithFrontMatter(
       extension = match[3] || ''; // File extension or empty string if no extension
     }
 
+    // Path of the file's directory relative to the configured contentDir.
+    // For top-level files this is an empty string; for nested files it
+    // gives transforms enough context to disambiguate identically-named
+    // files (e.g. docs/a/post.md vs docs/b/post.md).
+    const relativeDir = normalizePath(relative(dirPrefix, f));
+    const lastSlash = relativeDir.lastIndexOf('/');
+    const relativePath =
+      lastSlash === -1 ? '' : relativeDir.slice(0, lastSlash);
+
     // Return structured content file data for prerendering
     return {
       name,
@@ -112,6 +128,7 @@ export function getMatchingContentFilesWithFrontMatter(
       path: resolvedDir,
       attributes: raw.attributes as { attributes: Record<string, any> },
       content: fileContents,
+      relativePath,
     };
   });
 
