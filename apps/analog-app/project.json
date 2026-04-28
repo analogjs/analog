@@ -10,8 +10,7 @@
     "storybook-angular",
     "platform",
     "router",
-    "content",
-    "my-package"
+    "content"
   ],
   "targets": {
     "build": {

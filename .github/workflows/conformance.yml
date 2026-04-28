@@ -1,0 +1,49 @@
+name: Angular Compiler Conformance Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'packages/vite-plugin-angular/src/lib/compiler/**'
+      - 'package.json'
+      - '.github/workflows/conformance.yml'
+  push:
+    branches: [beta]
+    paths:
+      - 'packages/vite-plugin-angular/src/lib/compiler/**'
+      - 'package.json'
+      - '.github/workflows/conformance.yml'
+
+env:
+  NODE_OPTIONS: --max-old-space-size=16384
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        angular-major: [17, 18, 19, 20, 21, 'latest', 'next']
+
+    name: Angular ${{ matrix.angular-major }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - run: pnpm --version
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Download Angular ${{ matrix.angular-major }} compliance fixtures
+        run: bash packages/vite-plugin-angular/scripts/setup-conformance.sh ${{ matrix.angular-major }}
+      - name: Run conformance tests
+        env:
+          ANGULAR_SOURCE_DIR: .angular-conformance
+        run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts

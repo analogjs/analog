@@ -8,55 +8,361 @@
 
 ### Bug Fixes
 
-- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([5069b75](https://github.com/analogjs/analog/commit/5069b75d4af067a90a36198e6a3da77ae615430b))
+- **content:** scope slash-containing slugs to file's subdirectory ([#2318](https://github.com/analogjs/analog/issues/2318)) ([ee69df7](https://github.com/analogjs/analog/commit/ee69df77415582d03f071080d59dc1766419da4c))
 
-## [2.4.8](https://github.com/analogjs/analog/compare/v2.4.7...v2.4.8) (2026-04-16)
+### Features
+
+- **vite-plugin-nitro:** add recursive option to PrerenderContentDir ([#2318](https://github.com/analogjs/analog/issues/2318)) ([42a5524](https://github.com/analogjs/analog/commit/42a5524acf0a2860758fc1a11997b3d15215a793))
+
+# [2.5.0-beta.51](https://github.com/analogjs/analog/compare/v2.5.0-beta.50...v2.5.0-beta.51) (2026-04-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use empty string instead of undefined for mapRoot/sourceRoot overrides (beta) ([#2322](https://github.com/analogjs/analog/issues/2322)) ([cfd6cd6](https://github.com/analogjs/analog/commit/cfd6cd660f04cd98eae7a0dd231ce8ad793ed4d5))
+
+# [2.5.0-beta.50](https://github.com/analogjs/analog/compare/v2.5.0-beta.49...v2.5.0-beta.50) (2026-04-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** stop matching .tsrx in TS extension regex ([2d23b19](https://github.com/analogjs/analog/commit/2d23b197f30146a0822bdf9cec6559b44d2f8135))
+
+### Features
+
+- **vite-plugin-angular:** add globalThis external-registry hook for fastCompile ([aabb5ab](https://github.com/analogjs/analog/commit/aabb5abcad5c5eb0ceaf34e5234c9ad42aac29d5))
+
+# [2.5.0-beta.49](https://github.com/analogjs/analog/compare/v2.5.0-beta.48...v2.5.0-beta.49) (2026-04-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** add Vite Plugin Registry compatibility ([#2314](https://github.com/analogjs/analog/issues/2314)) ([c3444d1](https://github.com/analogjs/analog/commit/c3444d105f8b924cd815f4b8168eaa9575e18035))
+
+# [2.5.0-beta.48](https://github.com/analogjs/analog/compare/v2.5.0-beta.47...v2.5.0-beta.48) (2026-04-21)
+
+### Bug Fixes
+
+- **storybook-angular:** use oxc config instead of esbuild for Vite 8 ([#2313](https://github.com/analogjs/analog/issues/2313)) ([ef16e7e](https://github.com/analogjs/analog/commit/ef16e7e9cf1676b37bbbc781f60789ff1e5811ff))
+
+# [2.5.0-beta.47](https://github.com/analogjs/analog/compare/v2.5.0-beta.46...v2.5.0-beta.47) (2026-04-21)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** let CSS ?inline imports flow through Vite's pipeline ([#2311](https://github.com/analogjs/analog/issues/2311)) ([ae803bb](https://github.com/analogjs/analog/commit/ae803bb410638b42436d173ce53b7bb81040988a))
+
+# [2.5.0-beta.46](https://github.com/analogjs/analog/compare/v2.5.0-beta.45...v2.5.0-beta.46) (2026-04-20)
 
 ### Bug Fixes
 
 - **vite-plugin-angular:** honor Vitest test.css semantics to skip CSS preprocessing ([#2298](https://github.com/analogjs/analog/issues/2298)) ([90ac242](https://github.com/analogjs/analog/commit/90ac242b3d03dd6745b9a957bd6bc7d8c7eaeb1d))
+- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([5069b75](https://github.com/analogjs/analog/commit/5069b75d4af067a90a36198e6a3da77ae615430b))
 
-## [2.4.7](https://github.com/analogjs/analog/compare/v2.4.6...v2.4.7) (2026-04-13)
+# [2.5.0-beta.45](https://github.com/analogjs/analog/compare/v2.5.0-beta.44...v2.5.0-beta.45) (2026-04-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** return empty CSS instead of raw SCSS when test.css is disabled ([#2306](https://github.com/analogjs/analog/issues/2306)) ([eef84de](https://github.com/analogjs/analog/commit/eef84de75f5c2ea14a753afe6c2920fb27fc1b35))
+
+# [2.5.0-beta.44](https://github.com/analogjs/analog/compare/v2.5.0-beta.43...v2.5.0-beta.44) (2026-04-17)
+
+### Bug Fixes
+
+- **platform:** reset cached tViews between SSR requests for correct i18n locale switching ([#2301](https://github.com/analogjs/analog/issues/2301)) ([a29465d](https://github.com/analogjs/analog/commit/a29465d31743a8871bc93ed3d62d9649d5d40a71))
+
+# [2.5.0-beta.43](https://github.com/analogjs/analog/compare/v2.5.0-beta.42...v2.5.0-beta.43) (2026-04-16)
+
+### Features
+
+- **platform:** passthrough fastCompile and fastCompileMode to vite-plugin-angular ([f085ecc](https://github.com/analogjs/analog/commit/f085ecc0389a2bb5e94bd9391f551e960c378e1c))
+
+# [2.5.0-beta.42](https://github.com/analogjs/analog/compare/v2.5.0-beta.41...v2.5.0-beta.42) (2026-04-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** honor Vitest test.css semantics to skip CSS preprocessing ([#2298](https://github.com/analogjs/analog/issues/2298)) ([d7bd331](https://github.com/analogjs/analog/commit/d7bd3315543488665c4a9c1cfd0c0a3426552986))
+
+# [2.5.0-beta.41](https://github.com/analogjs/analog/compare/v2.5.0-beta.40...v2.5.0-beta.41) (2026-04-16)
+
+### Bug Fixes
+
+- **router:** reset cached tViews between SSR requests for correct i18n locale switching ([#2295](https://github.com/analogjs/analog/issues/2295)) ([d2ce3e5](https://github.com/analogjs/analog/commit/d2ce3e5f1738fd586a39b1a9d87b668cd1971e38))
+
+# [2.5.0-beta.40](https://github.com/analogjs/analog/compare/v2.5.0-beta.39...v2.5.0-beta.40) (2026-04-13)
 
 ### Bug Fixes
 
 - **vite-plugin-angular:** route template/style imports through virtual module ids ([#2287](https://github.com/analogjs/analog/issues/2287)) ([6ae244c](https://github.com/analogjs/analog/commit/6ae244c421b54a2834f58bc3ee8a51958f8d3347))
+- **vite-plugin-angular:** use virtual modules for external JIT styles ([#2283](https://github.com/analogjs/analog/issues/2283)) ([358faf7](https://github.com/analogjs/analog/commit/358faf70499680f29f60e05bcaa61055f0f52557))
 
-## [2.4.6](https://github.com/analogjs/analog/compare/v2.4.5...v2.4.6) (2026-04-13)
+# [2.5.0-beta.39](https://github.com/analogjs/analog/compare/v2.5.0-beta.38...v2.5.0-beta.39) (2026-04-13)
 
 ### Bug Fixes
 
-- **vite-plugin-angular:** use virtual modules for external JIT styles ([#2283](https://github.com/analogjs/analog/issues/2283)) ([358faf7](https://github.com/analogjs/analog/commit/358faf70499680f29f60e05bcaa61055f0f52557))
+- **vite-plugin-angular:** route template/style imports through virtual module ids ([#2287](https://github.com/analogjs/analog/issues/2287)) ([98cfe64](https://github.com/analogjs/analog/commit/98cfe649c3a72c9e1a6daf97cc5ba6eb9f825c5f))
 
-## [2.4.5](https://github.com/analogjs/analog/compare/v2.4.4...v2.4.5) (2026-04-10)
+# [2.5.0-beta.38](https://github.com/analogjs/analog/compare/v2.5.0-beta.37...v2.5.0-beta.38) (2026-04-13)
+
+### Bug Fixes
+
+- **angular-compiler:** make hoisting dependency-aware to prevent TDZ ([#2286](https://github.com/analogjs/analog/issues/2286)) ([f33f6b5](https://github.com/analogjs/analog/commit/f33f6b514cd204df79e7661058fc79312e561324))
+
+# [2.5.0-beta.37](https://github.com/analogjs/analog/compare/v2.5.0-beta.36...v2.5.0-beta.37) (2026-04-13)
+
+### Bug Fixes
+
+- **storybook-angular:** forward applyDecorators in testing ([#2236](https://github.com/analogjs/analog/issues/2236)) ([31d996c](https://github.com/analogjs/analog/commit/31d996c035f7a6b9e533a39f735176663fcc07d3))
+- **vitest-angular:** clean generated snapshot ids ([#2238](https://github.com/analogjs/analog/issues/2238)) ([ac933ba](https://github.com/analogjs/analog/commit/ac933ba18321c5536a59ccd067fefdd769e59c9c))
+- **vitest-angular:** normalize snapshot whitespace ([#2237](https://github.com/analogjs/analog/issues/2237)) ([d1ba31f](https://github.com/analogjs/analog/commit/d1ba31f90b7515ba49e7cbe27857b5bb983d8ceb))
+
+### Features
+
+- **docs:** add AI integrations guide ([#2234](https://github.com/analogjs/analog/issues/2234)) ([545f8fc](https://github.com/analogjs/analog/commit/545f8fc5c714e97ee784ed9f6db0052eb2ee086b))
+
+# [2.5.0-beta.36](https://github.com/analogjs/analog/compare/v2.5.0-beta.35...v2.5.0-beta.36) (2026-04-13)
+
+### Features
+
+- **platform:** add shiki skipLangs option for analog v2 ([#2282](https://github.com/analogjs/analog/issues/2282)) ([d6e932c](https://github.com/analogjs/analog/commit/d6e932c0d4031d45bc259b89c7b4bc797e5099aa))
+
+# [2.5.0-beta.35](https://github.com/analogjs/analog/compare/v2.5.0-beta.34...v2.5.0-beta.35) (2026-04-13)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use virtual modules for external JIT styles ([#2283](https://github.com/analogjs/analog/issues/2283)) ([add0337](https://github.com/analogjs/analog/commit/add033798aa82e806dbe94cb66dab8bee53ba792))
+
+# [2.5.0-beta.34](https://github.com/analogjs/analog/compare/v2.5.0-beta.33...v2.5.0-beta.34) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** merge styleUrl into existing inline styles array ([56b109f](https://github.com/analogjs/analog/commit/56b109f2c0c8c7e79f5116758b501519a610380d))
+
+# [2.5.0-beta.33](https://github.com/analogjs/analog/compare/v2.5.0-beta.32...v2.5.0-beta.33) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** provide flat defer fields on Angular v17 ([70a4d9b](https://github.com/analogjs/analog/commit/70a4d9b20dd10db0261d22e81d46640de323c8da))
+
+# [2.5.0-beta.32](https://github.com/analogjs/analog/compare/v2.5.0-beta.31...v2.5.0-beta.32) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** defensive BinaryOperator map for Angular v19/v20 ([1a91f93](https://github.com/analogjs/analog/commit/1a91f932cc353efff9caf907bd48ceecc4480635))
+- **angular-compiler:** set componentMeta.interpolation for partial mode on v19/v20 ([a09ff88](https://github.com/analogjs/analog/commit/a09ff889e2b93a6a6c1c0839884e1f91f537497b))
+- **angular-compiler:** wrap Write\*Expr emissions in parens for nesting precedence ([48f80e4](https://github.com/analogjs/analog/commit/48f80e422bfe58b30810f5a850af4accf171cd94))
+
+# [2.5.0-beta.31](https://github.com/analogjs/analog/compare/v2.5.0-beta.30...v2.5.0-beta.31) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** defensive isAssignment check for Angular 20.0.0 ([8583dd1](https://github.com/analogjs/analog/commit/8583dd1ee3d5a61850975d45b677f423fb772895))
+
+# [2.5.0-beta.30](https://github.com/analogjs/analog/compare/v2.5.0-beta.29...v2.5.0-beta.30) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** construct setClassMetadata entries as plain objects ([546f427](https://github.com/analogjs/analog/commit/546f427e5495232987d497d5ebfe08cad20f6d51))
+
+# [2.5.0-beta.29](https://github.com/analogjs/analog/compare/v2.5.0-beta.28...v2.5.0-beta.29) (2026-04-10)
+
+### Features
+
+- **angular-compiler:** structured debug logging via obug ([b155f53](https://github.com/analogjs/analog/commit/b155f53b9fd207c09fccca019d3939e891c344a8))
+
+# [2.5.0-beta.28](https://github.com/analogjs/analog/compare/v2.5.0-beta.27...v2.5.0-beta.28) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve operator precedence in emitted binary expressions ([#2275](https://github.com/analogjs/analog/issues/2275)) ([e2dfb5a](https://github.com/analogjs/analog/commit/e2dfb5a9211b7f7718eb10e953379271f6ca5597))
+
+# [2.5.0-beta.27](https://github.com/analogjs/analog/compare/v2.5.0-beta.26...v2.5.0-beta.27) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** dedupe declarations across imports and module exports ([919009a](https://github.com/analogjs/analog/commit/919009a744c62c1abffdcd7dc9f063d80900c05d))
+- **angular-compiler:** hoist helpers via appendLeft when insertPos is 0 ([8a15184](https://github.com/analogjs/analog/commit/8a15184d423b0818c3c6d9f7429095554eecbd05))
+
+# [2.5.0-beta.26](https://github.com/analogjs/analog/compare/v2.5.0-beta.25...v2.5.0-beta.26) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** hoisted helpers survive type-only import elision ([99e1ba4](https://github.com/analogjs/analog/commit/99e1ba48d8b08f8eb8de53fdae5801ea7e909d7a))
+
+# [2.5.0-beta.25](https://github.com/analogjs/analog/compare/v2.5.0-beta.24...v2.5.0-beta.25) (2026-04-10)
 
 ### Bug Fixes
 
 - **vite-plugin-angular:** emit ?analog-{inline,raw} from JIT transform output ([#2272](https://github.com/analogjs/analog/issues/2272)) ([48f3ff9](https://github.com/analogjs/analog/commit/48f3ff9c7db10028fd08e95a5153043bf591d5f9))
+- **vite-plugin-angular:** handle ?inline style imports in load hook for Vitest ([#2271](https://github.com/analogjs/analog/issues/2271)) ([32d5b2d](https://github.com/analogjs/analog/commit/32d5b2ddeea0b7f7e93c32b40f53b184bd12923e))
 
-## [2.4.4](https://github.com/analogjs/analog/compare/v2.4.3...v2.4.4) (2026-04-09)
+# [2.5.0-beta.24](https://github.com/analogjs/analog/compare/v2.5.0-beta.23...v2.5.0-beta.24) (2026-04-10)
 
 ### Bug Fixes
 
-- **vite-plugin-angular:** handle ?inline style imports in load hook for Vitest ([#2271](https://github.com/analogjs/analog/issues/2271)) ([32d5b2d](https://github.com/analogjs/analog/commit/32d5b2ddeea0b7f7e93c32b40f53b184bd12923e))
+- **angular-compiler:** skip arrow fn types when finding assignment = … ([#2274](https://github.com/analogjs/analog/issues/2274)) ([992e180](https://github.com/analogjs/analog/commit/992e1803937db2fac381940982cc2f1141ddf3ff))
 
-## [2.4.3](https://github.com/analogjs/analog/compare/v2.4.2...v2.4.3) (2026-04-08)
+# [2.5.0-beta.23](https://github.com/analogjs/analog/compare/v2.5.0-beta.22...v2.5.0-beta.23) (2026-04-10)
+
+### Bug Fixes
+
+- **angular-compiler:** correct signal aliases, query refs, inheritance ([d57bc61](https://github.com/analogjs/analog/commit/d57bc61f1736ad66e1b5fabf479e058f63f58484))
+- **angular-compiler:** default contentChild() descendants to true ([4849312](https://github.com/analogjs/analog/commit/4849312e327aa9363a6f024269981d2de93f284a))
+- **angular-compiler:** emit /_@**PURE**_/ on Ivy field assignments ([c0d4f69](https://github.com/analogjs/analog/commit/c0d4f696110becded1b90c77dd0d5b84f46ac2de))
+- **angular-compiler:** emit defer deps as import().then(m => m.X) ([56d9fd5](https://github.com/analogjs/analog/commit/56d9fd580c25a77cde285876babffc6564a12543))
+- **angular-compiler:** extract output() alias in registry ([e7b1d0d](https://github.com/analogjs/analog/commit/e7b1d0d71fe2332b0eedf1f97bd76e3d34655308))
+- **angular-compiler:** forward @Injectable provider config to compileInjectable ([ed9c264](https://github.com/analogjs/analog/commit/ed9c2641e36bc503b1611551b2d265f236b0a959))
+- **angular-compiler:** parse signal query read/descendants options ([175356c](https://github.com/analogjs/analog/commit/175356c0f45a90bd6a159c0c6ce43b04ef54b3fe))
+- **angular-compiler:** reject ambiguous union/intersection DI tokens ([c379707](https://github.com/analogjs/analog/commit/c3797079ec4b6b92451d9a642524ac5f92cc07a9))
+- **angular-compiler:** strip ESM .js extension when probing dts re-exports ([d1f65ef](https://github.com/analogjs/analog/commit/d1f65efb69f2972279425c47ee63b73edeb980ae))
+- **angular-compiler:** track hasTransform on signal inputs in registry ([fd8acd4](https://github.com/analogjs/analog/commit/fd8acd49ebf2f80ee7b6e861fca5ad4578cfa78b))
+- **angular-compiler:** unwrap forwardRef inside @Inject decorator ([dcb221a](https://github.com/analogjs/analog/commit/dcb221a5cef963ee97feee80f8ac77ecd52393da))
+- **angular-compiler:** use original export name for aliased defer imports ([6ab34dd](https://github.com/analogjs/analog/commit/6ab34dd0be10784b26e2117e4dd54fb21ed10f50))
+- **angular-compiler:** wrap switch cases in blocks for biome lint ([8fc75d9](https://github.com/analogjs/analog/commit/8fc75d9f6a55e0592aae4a72c831c4f6f951bfea))
+- **vite-plugin-angular:** keep barrel registry in sync at dev time ([f5f7ef1](https://github.com/analogjs/analog/commit/f5f7ef1e013b8352d1875764a74337f18ced271f))
+
+### Features
+
+- **angular-compiler:** expand tuple barrel imports for spartan-style libs ([bf4595f](https://github.com/analogjs/analog/commit/bf4595f19f03bedcbb0ba8fa80376b68285a90f5))
+- **angular-compiler:** resolve ${var} interpolation in metadata strings ([79ade33](https://github.com/analogjs/analog/commit/79ade33e96e8f07316b7231c97837d2384fdb96d))
+
+# [2.5.0-beta.22](https://github.com/analogjs/analog/compare/v2.5.0-beta.21...v2.5.0-beta.22) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** emit bracket access for non-identifier field keys ([956c703](https://github.com/analogjs/analog/commit/956c703af97b1628b93f93fdd688910178a4dd5d))
+
+# [2.5.0-beta.21](https://github.com/analogjs/analog/compare/v2.5.0-beta.20...v2.5.0-beta.21) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** emit invalidfactory for explicit import type di tokens ([2f2204f](https://github.com/analogjs/analog/commit/2f2204f2883677636a7d4678594d6bf2b6c4f871))
+
+# [2.5.0-beta.20](https://github.com/analogjs/analog/compare/v2.5.0-beta.19...v2.5.0-beta.20) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve constructor di token imports from elision ([#2270](https://github.com/analogjs/analog/issues/2270)) ([9de43fa](https://github.com/analogjs/analog/commit/9de43fa35ee1926170d936d848098c62fafd7c74))
+
+# [2.5.0-beta.19](https://github.com/analogjs/analog/compare/v2.5.0-beta.18...v2.5.0-beta.19) (2026-04-09)
+
+### Features
+
+- **angular-compiler:** add partial compilation mode for library support ([#2269](https://github.com/analogjs/analog/issues/2269)) ([bfe0c62](https://github.com/analogjs/analog/commit/bfe0c62d86fd6286942d06eff41f06e7db314357))
+
+# [2.5.0-beta.18](https://github.com/analogjs/analog/compare/v2.5.0-beta.17...v2.5.0-beta.18) (2026-04-09)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve ivy fields when lowering trailing class field ([79cd5c1](https://github.com/analogjs/analog/commit/79cd5c1a1a97c5964ffba2a53a8fd0769d12b381))
+
+# [2.5.0-beta.17](https://github.com/analogjs/analog/compare/v2.5.0-beta.16...v2.5.0-beta.17) (2026-04-09)
+
+### Features
+
+- runtime i18n support with $localize ([#2268](https://github.com/analogjs/analog/issues/2268)) ([7dbc7df](https://github.com/analogjs/analog/commit/7dbc7dfa65140b63c7e0958a3c5da49963ea9b05))
+
+# [2.5.0-beta.16](https://github.com/analogjs/analog/compare/v2.5.0-beta.15...v2.5.0-beta.16) (2026-04-09)
+
+### Features
+
+- **angular-compiler:** support useDefineForClassFields: false ([#2267](https://github.com/analogjs/analog/issues/2267)) ([f0a5908](https://github.com/analogjs/analog/commit/f0a59081593fdfec28656c719f27117f3f0bd325))
+
+# [2.5.0-beta.15](https://github.com/analogjs/analog/compare/v2.5.0-beta.14...v2.5.0-beta.15) (2026-04-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** handle .ts files not in Angular program ([#2265](https://github.com/analogjs/analog/issues/2265)) ([fda852d](https://github.com/analogjs/analog/commit/fda852d389b1506d8969ff05c4c610b6673b7888))
+
+# [2.5.0-beta.14](https://github.com/analogjs/analog/compare/v2.5.0-beta.13...v2.5.0-beta.14) (2026-04-08)
 
 ### Bug Fixes
 
 - **vite-plugin-angular:** bypass Vite 8.0.5+ Denied ID for style ?inline imports ([#2264](https://github.com/analogjs/analog/issues/2264)) ([812c011](https://github.com/analogjs/analog/commit/812c011277ad72382def7ff77581b0fa61eec695))
 
-## [2.4.2](https://github.com/analogjs/analog/compare/v2.4.1...v2.4.2) (2026-04-08)
+# [2.5.0-beta.13](https://github.com/analogjs/analog/compare/v2.5.0-beta.12...v2.5.0-beta.13) (2026-04-08)
 
 ### Bug Fixes
 
 - **vite-plugin-angular:** bypass Vite 7.3.2+ server.fs restrictions for style ?inline imports ([#2262](https://github.com/analogjs/analog/issues/2262)) ([7e43cc4](https://github.com/analogjs/analog/commit/7e43cc4281b0a78ebee93bbdd58b64381b5cab2a))
 
-## [2.4.1](https://github.com/analogjs/analog/compare/v2.4.0...v2.4.1) (2026-04-07)
+# [2.5.0-beta.12](https://github.com/analogjs/analog/compare/v2.5.0-beta.11...v2.5.0-beta.12) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** auto-import decorator classes for signal api downleveling in jit ([d8a6265](https://github.com/analogjs/analog/commit/d8a62650878e537eac70bdf1285962cf09d6e044))
+
+# [2.5.0-beta.11](https://github.com/analogjs/analog/compare/v2.5.0-beta.10...v2.5.0-beta.11) (2026-04-07)
+
+### Performance Improvements
+
+- **angular-compiler:** optimize using oxc, add tests, consolidate strings ([#2260](https://github.com/analogjs/analog/issues/2260)) ([64a4696](https://github.com/analogjs/analog/commit/64a469627926e2125cf45b95925fecb4919e13a7))
+
+# [2.5.0-beta.10](https://github.com/analogjs/analog/compare/v2.5.0-beta.9...v2.5.0-beta.10) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** preserve @Injectable in JIT mode for providedIn registration ([1a9745c](https://github.com/analogjs/analog/commit/1a9745c41745d5c9c3c538b905b9a3861dd5e421))
+- **vite-plugin-angular,angular-compiler:** support Vite 6-8 and fix type-elision helper loss ([0aa26e0](https://github.com/analogjs/analog/commit/0aa26e06b99cc52b6e2b09c69602d44c62a0fdee))
+- **vite-plugin-angular:** fix vitest sourcemap plugin for Vite 7 ([74d52e7](https://github.com/analogjs/analog/commit/74d52e7f72d01e972df1c182f5c11c6c70e033a4))
+
+# [2.5.0-beta.9](https://github.com/analogjs/analog/compare/v2.5.0-beta.8...v2.5.0-beta.9) (2026-04-07)
 
 ### Bug Fixes
 
 - **vite-plugin-angular:** bypass server.fs restrictions on ?raw template imports ([#2259](https://github.com/analogjs/analog/issues/2259)) ([2872a94](https://github.com/analogjs/analog/commit/2872a942aae7468481a21ca19777a74679453e7f))
+
+# [2.5.0-beta.8](https://github.com/analogjs/analog/compare/v2.5.0-beta.7...v2.5.0-beta.8) (2026-04-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** bypass server.fs restrictions on ?raw template imports ([#2259](https://github.com/analogjs/analog/issues/2259)) ([87512a2](https://github.com/analogjs/analog/commit/87512a254698ce78439d0c79eb86a7784dea0c17))
+
+# [2.5.0-beta.7](https://github.com/analogjs/analog/compare/v2.5.0-beta.6...v2.5.0-beta.7) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** improve handling of type elision for imports/exports ([#2257](https://github.com/analogjs/analog/issues/2257)) ([1605a7b](https://github.com/analogjs/analog/commit/1605a7b6eb0870f9bb09e79c07debf2ac63984c4))
+
+# [2.5.0-beta.6](https://github.com/analogjs/analog/compare/v2.5.0-beta.5...v2.5.0-beta.6) (2026-04-07)
+
+### Features
+
+- **astro-angular:** add support for client hydration with Angular components ([#2212](https://github.com/analogjs/analog/issues/2212)) ([d36de5b](https://github.com/analogjs/analog/commit/d36de5baa8fa70341c0d67731d5ba32fe70ea743))
+
+# [2.5.0-beta.5](https://github.com/analogjs/analog/compare/v2.5.0-beta.4...v2.5.0-beta.5) (2026-04-07)
+
+### Bug Fixes
+
+- **angular-compiler:** hostDirectives, emitExpr safety, TDZ hoisting, misc compilation fixes ([#2255](https://github.com/analogjs/analog/issues/2255)) ([796e3e0](https://github.com/analogjs/analog/commit/796e3e09b0e7e5055fed2f1c765cd60a35c6d5b2))
+
+# [2.5.0-beta.4](https://github.com/analogjs/analog/compare/v2.5.0-beta.3...v2.5.0-beta.4) (2026-04-06)
+
+### Bug Fixes
+
+- **angular-compiler:** add type-only import elision to angular compiler ([#2249](https://github.com/analogjs/analog/issues/2249)) ([f66f042](https://github.com/analogjs/analog/commit/f66f0424afd815b91abbf01528c66eeb3c846dc0))
+
+# [2.5.0-beta.3](https://github.com/analogjs/analog/compare/v2.5.0-beta.2...v2.5.0-beta.3) (2026-04-03)
+
+### Bug Fixes
+
+- add angular-compiler to publish script ([5c86802](https://github.com/analogjs/analog/commit/5c86802ab4e3858414de47f84039181c846c7012))
+
+### Features
+
+- resolve ngmodule exports to correct sub-entry import paths ([07bc3d1](https://github.com/analogjs/analog/commit/07bc3d141104082664a55cf928918194f9ba8850))
+
+# [2.5.0-beta.2](https://github.com/analogjs/analog/compare/v2.5.0-beta.1...v2.5.0-beta.2) (2026-04-03)
+
+### Bug Fixes
+
+- correct release config replacement file path ([c91ce2d](https://github.com/analogjs/analog/commit/c91ce2dc2fb5e49991acf16a6fd2fb147835b579))
+
+### Features
+
+- improve hmr with dynamic ivy field copying and directive/pipe support ([d568bf2](https://github.com/analogjs/analog/commit/d568bf26b8cf562cb6aebffddadb01b827c40ae8))
+
+# [2.5.0-beta.1](https://github.com/analogjs/analog/compare/v2.4.0...v2.5.0-beta.1) (2026-04-03)
+
+### Features
+
+- add @analogjs/angular-compiler package ([#2221](https://github.com/analogjs/analog/issues/2221)) ([d2dfbe0](https://github.com/analogjs/analog/commit/d2dfbe0b599d4739d62fffb3f7b3740e84eb31d6))
 
 # [2.4.0](https://github.com/analogjs/analog/compare/v2.3.1...v2.4.0) (2026-03-30)
 

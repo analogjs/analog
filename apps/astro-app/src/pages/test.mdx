@@ -1,12 +1,45 @@
-import { CardComponent } from '../components/card.component.ts';
+import { ClientOnlyComponent } from '../components/client-only.component.ts';
 import { ParentComponent } from '../components/parent.component.ts';
+import { DeferTestComponent } from '../components/defer-test.component.ts';
+import { FocusHydrationTestComponent } from '../components/focus-hydration-test.component.ts';
+import { IncrementalHydrationTestComponent } from '../components/incremental-hydration-test.component.ts';
+import { SkipHydrationTestComponent } from '../components/skip-hydration-test.component.ts';
+import { TodosComponent } from '../components/todos.component.ts';
 
 Angular Component in an MDX file
 
-<CardComponent
-  href="https://angular.dev/"
-  title="Angular"
-  body="Built with Angular. ❤️"
-/>
+<ParentComponent client:load />
 
-<ParentComponent />
+{/* The showInput prop here verifies that the hydration handles input values that change the DOM structure. */}
+{/* Using a custom focus directive allows us to verify the `input` node is preserved, because it would lose focus if the element instance changes. */}
+
+<p>
+  The component below uses a custom Astro client directive to hydrate when the
+  input receives focus. The input does not immediately lose focus, showing that
+  the DOM element is reused by Angular.
+</p>
+<FocusHydrationTestComponent client:focus showInput={true} />
+
+<p>
+  The component below uses a `@defer` block which loads the component after 1
+  second. This timer starts once the component is hydrated by Astro.
+</p>
+<DeferTestComponent client:load />
+
+<p>
+  The component below uses Angular's incremental hydration with `hydrate on
+  interaction`. This enables event replay, so the initial `click` interaction
+  will be captured and the count will increment.
+</p>
+<IncrementalHydrationTestComponent client:load />
+
+<p>The component below uses `ngSkipHydration` to opt-out of DOM reuse.</p>
+<SkipHydrationTestComponent client:load />
+
+<ClientOnlyComponent client:only="@analogjs/astro-angular" />
+
+<p>
+  The component below makes an HTTP call on the server. This should be cached
+  and reused client-side.
+</p>
+<TodosComponent client:load />

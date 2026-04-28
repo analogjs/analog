@@ -121,6 +121,18 @@ const sidebars = {
           ],
         },
         {
+          type: 'category',
+          label: 'Internationalization (i18n)',
+          items: [
+            {
+              type: 'doc',
+              id: 'features/i18n/overview',
+              label: 'Overview',
+              key: 'i18n-overview',
+            },
+          ],
+        },
+        {
           type: 'doc',
           id: 'guides/forms',
           label: 'Form Actions',
@@ -244,6 +256,18 @@ const sidebars = {
           type: 'doc',
           id: 'integrations/storybook/index',
           label: 'Storybook',
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'AI',
+      items: [
+        {
+          type: 'doc',
+          id: 'integrations/ai/index',
+          label: 'Overview',
+          key: 'ai-overview',
         },
       ],
     },

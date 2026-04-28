@@ -27,7 +27,14 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "build",
+        "^build",
+        {
+          "projects": ["vite-plugin-angular"],
+          "target": "build"
+        }
+      ]
     },
     "version": {
       "executor": "@jscutlery/semver:version",

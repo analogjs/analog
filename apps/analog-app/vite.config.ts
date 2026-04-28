@@ -72,6 +72,7 @@ export default defineConfig(({ mode }) => {
         },
         vite: {
           inlineStylesExtension: 'scss',
+          fastCompile: true,
           experimental: {
             useAngularCompilationAPI: false,
           },

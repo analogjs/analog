@@ -1,10 +1,5 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import {
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-  promises as fsPromises,
-} from 'node:fs';
+import { mkdirSync, writeFileSync, promises as fsPromises } from 'node:fs';
 import {
   basename,
   dirname,
@@ -33,10 +28,6 @@ import {
 } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
-import {
-  createCompilerPlugin,
-  createRolldownCompilerPlugin,
-} from './compiler-plugin.js';
 import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
@@ -71,6 +62,14 @@ import {
 } from './plugins/file-replacements.plugin.js';
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
+import { fastCompilePlugin } from './fast-compile-plugin.js';
+import {
+  TS_EXT_REGEX,
+  createTsConfigGetter,
+  getTsConfigPath,
+  createDepOptimizerConfig,
+  type TsConfigResolutionContext,
+} from './utils/plugin-config.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
@@ -107,17 +106,23 @@ export interface PluginOptions {
   liveReload?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
+  /**
+   * Opt into the fast compile path. Skips Angular's template type-checking
+   * and routes compilation through an internal single-pass transform.
+   * Defaults to `false`.
+   */
+  fastCompile?: boolean;
+  /**
+   * Compilation output mode used when `fastCompile` is enabled.
+   * - `'full'` (default): Emit final Ivy definitions for application builds.
+   * - `'partial'`: Emit partial declarations for library publishing.
+   */
+  fastCompileMode?: 'full' | 'partial';
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
 }
 
-/**
- * TypeScript file extension regex
- * Match .(c or m)ts, .ts extensions with an optional ? for query params
- * Ignore .tsx extensions
- */
-const TS_EXT_REGEX = /\.[cm]?(ts)[^x]?\??/;
 const classNames = new Map();
 
 interface DeclarationFile {
@@ -152,15 +157,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
+    fastCompile: options?.fastCompile ?? false,
+    fastCompileMode: options?.fastCompileMode ?? 'full',
   };
 
   let resolvedConfig: ResolvedConfig;
-  // Store config context needed for getTsConfigPath resolution
-  let tsConfigResolutionContext: {
-    root: string;
-    isProd: boolean;
-    isLib: boolean;
-  } | null = null;
+  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
   const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
@@ -271,54 +273,21 @@ export function angular(options?: PluginOptions): Plugin[] {
           ? undefined
           : (config.oxc ?? false);
 
-        const defineOptions = {
-          ngJitMode: 'false',
-          ngI18nClosureMode: 'false',
-          ...(watchMode ? {} : { ngDevMode: 'false' }),
-        };
-
-        const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
-          {
-            plugins: [
-              createRolldownCompilerPlugin({
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              }),
-            ],
-          };
-
-        const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
-          plugins: [
-            createCompilerPlugin(
-              {
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              },
-              isTest,
-              !isAstroIntegration,
-            ),
-          ],
-          define: defineOptions,
-        };
+        const depOptimizer = createDepOptimizerConfig({
+          tsconfig: preliminaryTsConfigPath,
+          isProd,
+          jit,
+          watchMode,
+          isTest,
+          isAstroIntegration,
+        });
 
         return {
           ...(vite.rolldownVersion ? { oxc } : { esbuild }),
-          optimizeDeps: {
-            include: ['rxjs/operators', 'rxjs'],
-            exclude: ['@angular/platform-server'],
-            ...(vite.rolldownVersion
-              ? { rolldownOptions }
-              : { esbuildOptions }),
-          },
+          ...depOptimizer,
           resolve: {
             conditions: [
-              'style',
+              ...depOptimizer.resolve.conditions,
               ...(config.resolve?.conditions || defaultClientConditions),
             ],
           },
@@ -351,6 +320,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -696,19 +666,34 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           const typescriptResult = fileEmitter(id);
 
+          // File not in the Angular program — skip and let other plugins
+          // or Vite's built-in transform handle it. Warn if it looks like
+          // an Angular file that should have been compiled.
+          if (!typescriptResult) {
+            const isAngular =
+              !id.includes('@ng/component') &&
+              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+            if (isAngular) {
+              this.warn(
+                `[@analogjs/vite-plugin-angular]: "${id}" contains Angular decorators but is not in the TypeScript program. ` +
+                  `Ensure it is included in your tsconfig.`,
+              );
+            }
+            return;
+          }
+
           if (
-            typescriptResult?.warnings &&
-            typescriptResult?.warnings.length > 0
+            typescriptResult.warnings &&
+            typescriptResult.warnings.length > 0
           ) {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult?.errors && typescriptResult?.errors.length > 0) {
+          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
-          // return fileEmitter
-          let data = typescriptResult?.content ?? '';
+          let data = typescriptResult.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
             data = data.replace(
@@ -763,10 +748,27 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
+  const compilationPlugin = pluginOptions.fastCompile
+    ? fastCompilePlugin({
+        tsconfigGetter: pluginOptions.tsconfigGetter,
+        workspaceRoot: pluginOptions.workspaceRoot,
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        jit,
+        liveReload: pluginOptions.liveReload,
+        supportedBrowsers: pluginOptions.supportedBrowsers,
+        transformFilter: options?.transformFilter,
+        isTest,
+        isAstroIntegration,
+        fastCompileMode: pluginOptions.fastCompileMode,
+      })
+    : angularPlugin();
+
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
-    angularPlugin(),
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    compilationPlugin,
+    !pluginOptions.fastCompile &&
+      pluginOptions.liveReload &&
+      liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
     (jit &&
       jitPlugin({
@@ -794,58 +796,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       dot: true,
       absolute: true,
     });
-  }
-
-  function createTsConfigGetter(tsconfigOrGetter?: string | (() => string)) {
-    if (typeof tsconfigOrGetter === 'function') {
-      return tsconfigOrGetter;
-    }
-
-    return () => tsconfigOrGetter || '';
-  }
-
-  function getTsConfigPath(
-    root: string,
-    tsconfig: string,
-    isProd: boolean,
-    isTest: boolean,
-    isLib: boolean,
-  ) {
-    if (tsconfig && isAbsolute(tsconfig)) {
-      if (!existsSync(tsconfig)) {
-        console.error(
-          `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${tsconfig}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-        );
-      }
-
-      return tsconfig;
-    }
-
-    let tsconfigFilePath = './tsconfig.app.json';
-
-    if (isLib) {
-      tsconfigFilePath = isProd
-        ? './tsconfig.lib.prod.json'
-        : './tsconfig.lib.json';
-    }
-
-    if (isTest) {
-      tsconfigFilePath = './tsconfig.spec.json';
-    }
-
-    if (tsconfig) {
-      tsconfigFilePath = tsconfig;
-    }
-
-    const resolvedPath = resolve(root, tsconfigFilePath);
-
-    if (!existsSync(resolvedPath)) {
-      console.error(
-        `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-      );
-    }
-
-    return resolvedPath;
   }
 
   function resolveTsConfigPath() {
@@ -1084,8 +1034,8 @@ export function angular(options?: PluginOptions): Plugin[] {
         annotationsAs: 'decorators',
         enableResourceInlining: false,
         noEmitOnError: false,
-        mapRoot: undefined,
-        sourceRoot: undefined,
+        mapRoot: '',
+        sourceRoot: '',
         supportTestBed: false,
         supportJitMode: false,
       });

@@ -100,15 +100,21 @@ function fixtureVitestSerializer(fixture: any) {
   return doc.body.childNodes[0];
 }
 
+function normalizeSnapshotOutput(value: string): string {
+  return (
+    value
+      // Inline snapshots should not fail after formatters strip trailing spaces.
+      .replace(/[ \t]+$/gm, '')
+      // Comment removal can leave repeated empty lines in pretty-printed output.
+      .replace(/\n{3,}/g, '\n\n')
+  );
+}
+
 export function createAngularFixtureSnapshotSerializer(): SnapshotSerializer {
   return {
     serialize(val, config, indentation, depth, refs, printer) {
-      return printer(
-        fixtureVitestSerializer(val),
-        config,
-        indentation,
-        depth,
-        refs,
+      return normalizeSnapshotOutput(
+        printer(fixtureVitestSerializer(val), config, indentation, depth, refs),
       );
     },
     test(val) {

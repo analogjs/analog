@@ -1,7 +1,6 @@
 // Shared Vite plugin helpers for routing component resources (templates)
-// through virtual module ids. Both angular-vite-plugin and
-// analog-compiler-plugin use these so the rewriting + loading behavior stays
-// in sync between them.
+// through virtual module ids. Both angular-vite-plugin and fast-compile-plugin
+// use these so the rewriting + loading behavior stays in sync between them.
 //
 // Style ?inline imports now flow through Vite's native CSS pipeline via
 // safeModulePaths (see safe-module-paths.ts). Only template ?raw imports

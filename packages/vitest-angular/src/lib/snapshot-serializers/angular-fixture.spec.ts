@@ -84,6 +84,26 @@ describe('ng-snapshot serializer', () => {
     `);
   });
 
+  it('normalizes trailing whitespace in serialized text nodes', () => {
+    const fixture = createComponentFixture(
+      'app-copy',
+      '<p>For guides on how to customize this project, visit the <a href="https://analogjs.org">Analog documentation</a></p>',
+    );
+
+    expect(fixture).toMatchInlineSnapshot(`
+      <app-copy>
+        <p>
+          For guides on how to customize this project, visit the
+          <a
+            href="https://analogjs.org"
+          >
+            Analog documentation
+          </a>
+        </p>
+      </app-copy>
+    `);
+  });
+
   it('serializes an Angular component', () => {
     @Component({
       selector: 'app-chip',
@@ -106,5 +126,21 @@ describe('ng-snapshot serializer', () => {
         </h1>
       </app-chip>
     `);
+  });
+
+  it('normalizes trailing spaces and repeated blank lines', () => {
+    const fixture = createComponentFixture('app-test', '<span>Title</span>');
+    const serializer = createAngularFixtureSnapshotSerializer();
+
+    const result = serializer.serialize?.(
+      fixture,
+      {} as any,
+      '',
+      0,
+      [],
+      () => `<app-test>  \n\n\n  <span>Title</span>   \n</app-test>\t`,
+    );
+
+    expect(result).toBe(`<app-test>\n\n  <span>Title</span>\n</app-test>`);
   });
 });
