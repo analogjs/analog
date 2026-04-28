@@ -29,9 +29,17 @@ export const CONTENT_FILES_TOKEN: InjectionToken<
         if (slug === '') {
           slug = 'index';
         }
-        // If slug contains path separators, treat it as root-relative to /src/content
+        // Slugs with path separators are scoped to the file's top-level
+        // subdirectory (e.g. `/src/content/docs`) rather than absolute root,
+        // so nested files keep resolving through `subdirectory` lookups.
+        // Files directly under `/src/content` keep the original root-relative
+        // behavior since they have no subdirectory of their own.
+        const subdirRoot =
+          fileParts.length > 4
+            ? fileParts.slice(0, 4).join('/')
+            : '/src/content';
         const newBase = slug.includes('/')
-          ? `/src/content/${slug}`
+          ? `${subdirRoot}/${slug}`
           : `${filePath}/${slug}`;
         lookup[contentFilename] = `${newBase}.${ext}`.replace(/\/{2,}/g, '/');
       });

@@ -150,6 +150,15 @@ export interface PrerenderContentDir {
    * @returns the markdown content string to output, or `false` to skip outputting for this file
    */
   outputSourceFile?: (file: PrerenderContentFile) => string | false;
+
+  /**
+   * Recurse into subdirectories of `contentDir` when discovering files.
+   * When enabled, the matching file's directory relative to `contentDir`
+   * is exposed via `PrerenderContentFile.relativePath` so transforms can
+   * disambiguate identically-named files across subdirectories.
+   * @default false
+   */
+  recursive?: boolean;
 }
 
 /**
@@ -158,6 +167,7 @@ export interface PrerenderContentDir {
  * @param extension the file extension
  * @param attributes the frontmatter attributes extracted from the frontmatter section of the file
  * @param content the raw file content including frontmatter
+ * @param relativePath when `recursive` is enabled, the directory of the file relative to `contentDir` (empty string for files at the top level)
  * @returns a string with the route should be returned (e. g. `/blog/<slug>`) or the value `false`, when the route should not be prerendered.
  */
 export interface PrerenderContentFile {
@@ -166,6 +176,7 @@ export interface PrerenderContentFile {
   name: string;
   extension: string;
   content: string;
+  relativePath?: string;
 }
 
 export interface PrerenderSitemapConfig {

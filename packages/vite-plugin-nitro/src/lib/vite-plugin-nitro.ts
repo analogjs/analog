@@ -957,6 +957,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                     workspaceRoot,
                     rootDir,
                     current.contentDir,
+                    current.recursive,
                   );
 
                 affectedFiles.forEach((f) => {
