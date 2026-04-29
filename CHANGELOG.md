@@ -1,3 +1,9 @@
+## [2.5.1-beta.1](https://github.com/analogjs/analog/compare/v2.5.0...v2.5.1-beta.1) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** strip TS in fastCompile bypass for non-Angular files ([#2327](https://github.com/analogjs/analog/issues/2327)) ([d337c55](https://github.com/analogjs/analog/commit/d337c55ffe83b1a961e6aa91e805feab12e1aa1b))
+
 # [2.5.0](https://github.com/analogjs/analog/compare/v2.4.10...v2.5.0) (2026-04-28)
 
 ### Bug Fixes
