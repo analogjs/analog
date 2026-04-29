@@ -1,3 +1,17 @@
+# [3.0.0-alpha.49](https://github.com/analogjs/analog/compare/v3.0.0-alpha.48...v3.0.0-alpha.49) (2026-04-29)
+
+### Bug Fixes
+
+- **content:** scope slash-containing slugs to file's subdirectory ([#2318](https://github.com/analogjs/analog/issues/2318)) ([ee69df7](https://github.com/analogjs/analog/commit/ee69df77415582d03f071080d59dc1766419da4c))
+- **vite-plugin-angular:** let CSS ?inline imports flow through Vite's native pipeline ([#2310](https://github.com/analogjs/analog/issues/2310)) ([07f8b47](https://github.com/analogjs/analog/commit/07f8b471628cdaa6e3c452a24ff965c06b4d4355))
+- **vite-plugin-angular:** stop matching .tsrx in TS extension regex ([2d23b19](https://github.com/analogjs/analog/commit/2d23b197f30146a0822bdf9cec6559b44d2f8135))
+- **vite-plugin-angular:** use empty string instead of undefined for mapRoot/sourceRoot overrides (beta) ([#2322](https://github.com/analogjs/analog/issues/2322)) ([cfd6cd6](https://github.com/analogjs/analog/commit/cfd6cd660f04cd98eae7a0dd231ce8ad793ed4d5))
+
+### Features
+
+- **vite-plugin-angular:** add globalThis external-registry hook for fastCompile ([aabb5ab](https://github.com/analogjs/analog/commit/aabb5abcad5c5eb0ceaf34e5234c9ad42aac29d5))
+- **vite-plugin-nitro:** add recursive option to PrerenderContentDir ([#2318](https://github.com/analogjs/analog/issues/2318)) ([42a5524](https://github.com/analogjs/analog/commit/42a5524acf0a2860758fc1a11997b3d15215a793))
+
 # [3.0.0-alpha.48](https://github.com/analogjs/analog/compare/v3.0.0-alpha.47...v3.0.0-alpha.48) (2026-04-27)
 
 ### Bug Fixes
