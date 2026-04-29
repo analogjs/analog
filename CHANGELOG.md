@@ -1,3 +1,11 @@
+## [2.5.1-beta.2](https://github.com/analogjs/analog/compare/v2.5.1-beta.1...v2.5.1-beta.2) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** keep fallback-block components eager in defer walker ([6f90b77](https://github.com/analogjs/analog/commit/6f90b777e45af5a566d96fd626d1a49a2c5f401d))
+- **vite-plugin-angular:** support [@defer](https://github.com/defer) nested inside [@switch](https://github.com/switch) / [@case](https://github.com/case) ([28c9600](https://github.com/analogjs/analog/commit/28c960068d473dc2cc0f4eff583bd11f0fd22220))
+- **vite-plugin-angular:** wrap binary/integer-literal receivers in member access ([8a0bae6](https://github.com/analogjs/analog/commit/8a0bae6c2d7713d26ab4ab99a153fc006a9595ec))
+
 ## [2.5.1-beta.1](https://github.com/analogjs/analog/compare/v2.5.0...v2.5.1-beta.1) (2026-04-29)
 
 ### Bug Fixes
