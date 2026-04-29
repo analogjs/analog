@@ -25,9 +25,11 @@ import {
   debugHmr,
   debugHmrV,
   debugStyles,
+  debugStylesV,
   type DebugOption,
 } from '../utils/debug.js';
 import {
+  createDepOptimizerConfig,
   getTsConfigPath,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
@@ -569,17 +571,20 @@ export function compilationAPIPlugin(
       // Angular Compilation API handles TypeScript transforms — disable
       // esbuild/oxc so they don't compete.
       debugCompilationApi('esbuild/oxc disabled, Angular handles transforms');
+      const preliminaryTsConfigPath = resolveTsConfigPath();
+      const depOptimizer = createDepOptimizerConfig({
+        tsconfig: preliminaryTsConfigPath,
+        isProd,
+        jit: pluginOptions.jit,
+        watchMode,
+        isTest: pluginOptions.isTest,
+        isAstroIntegration: pluginOptions.isAstroIntegration,
+      });
 
       return {
         esbuild: undefined,
         oxc: undefined,
-        optimizeDeps: {
-          include: ['rxjs/operators', 'rxjs', 'tslib'],
-          exclude: ['@angular/platform-server'],
-        },
-        resolve: {
-          conditions: ['style', ...(config.resolve?.conditions ?? [])],
-        },
+        ...depOptimizer,
       };
     },
     configResolved(config) {
@@ -689,6 +694,17 @@ export function compilationAPIPlugin(
       // Map angular component stylesheets
       if (isComponentStyleSheet(id)) {
         const filename = getFilenameFromPath(id);
+        const search = new URL(id, 'http://localhost').search;
+        const servedSourcePath =
+          stylesheetRegistry?.getServedSourcePath(filename);
+
+        if (servedSourcePath) {
+          debugStylesV('resolveId: mapped served stylesheet to source', {
+            filename,
+            resolvedPath: servedSourcePath,
+          });
+          return servedSourcePath + search;
+        }
 
         if (stylesheetRegistry?.hasServed(filename)) {
           return id;

@@ -161,7 +161,7 @@
     "@typescript-eslint/parser": "catalog:",
     "@typescript-eslint/type-utils": "catalog:",
     "@typescript-eslint/utils": "catalog:",
-    "@typescript/native-preview": "7.0.0-dev.20260412.1",
+    "@typescript/native-preview": "7.0.0-dev.20260428.1",
     "@vitest/browser-playwright": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/ui": "catalog:",

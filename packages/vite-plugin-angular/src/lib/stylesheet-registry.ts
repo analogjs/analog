@@ -95,6 +95,10 @@ export class AnalogStylesheetRegistry {
     return this.resolveServedRecord(requestId)?.normalizedCode;
   }
 
+  getServedSourcePath(requestId: string): string | undefined {
+    return this.resolveServedRecord(requestId)?.sourcePath;
+  }
+
   resolveExternalSource(requestId: string): string | undefined {
     const normalizedRequestId = this.normalizeRequestId(requestId);
     return this.externalRequestToSource.get(normalizedRequestId);
@@ -136,7 +140,9 @@ export class AnalogStylesheetRegistry {
     const requestPath = normalizedRequestId.split('?')[0];
     const sourcePath =
       this.resolveExternalSource(requestPath) ??
-      this.resolveExternalSource(requestPath.replace(/^\//, ''));
+      this.resolveExternalSource(requestPath.replace(/^\//, '')) ??
+      this.getServedSourcePath(requestPath) ??
+      this.getServedSourcePath(requestPath.replace(/^\//, ''));
     if (!sourcePath) {
       return;
     }
@@ -295,25 +301,23 @@ export function registerStylesheetContent(
     .update(code)
     .digest('hex');
   const stylesheetId = `${id}.${inlineStylesExtension}`;
+  const sourcePath =
+    resourceFile ?? containingFile.replace('.ts', `.${inlineStylesExtension}`);
+  const normalizedSourcePath = normalizePath(normalize(sourcePath));
 
-  const aliases: string[] = [];
-
-  if (resourceFile) {
-    const normalizedResourceFile = normalizePath(normalize(resourceFile));
-    // Avoid basename-only aliases here: shared filenames like `index.css`
-    // can collide across components and break HMR lookups.
-    aliases.push(
-      resourceFile,
-      normalizedResourceFile,
-      resourceFile.replace(/^\//, ''),
-      normalizedResourceFile.replace(/^\//, ''),
-    );
-  }
+  // Avoid basename-only aliases here: shared filenames like `index.css`
+  // can collide across components and break HMR lookups.
+  const aliases = [
+    sourcePath,
+    normalizedSourcePath,
+    sourcePath.replace(/^\//, ''),
+    normalizedSourcePath.replace(/^\//, ''),
+  ];
 
   registry.registerServedStylesheet(
     {
       publicId: stylesheetId,
-      sourcePath: resourceFile,
+      sourcePath: normalizedSourcePath,
       normalizedCode: code,
       dependencies,
       diagnostics,
