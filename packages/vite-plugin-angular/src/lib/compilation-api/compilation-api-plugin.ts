@@ -34,6 +34,11 @@ import {
 } from '../utils/plugin-config.js';
 import { TsconfigResolver } from '../utils/tsconfig-resolver.js';
 import { isTailwindReferenceError } from '../utils/tailwind-reference.js';
+import { isRolldown } from '../utils/rolldown.js';
+import {
+  createCompilerPlugin,
+  createRolldownCompilerPlugin,
+} from '../compiler-plugin.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheetResult,
@@ -570,12 +575,51 @@ export function compilationAPIPlugin(
       // esbuild/oxc so they don't compete.
       debugCompilationApi('esbuild/oxc disabled, Angular handles transforms');
 
+      // The compilation API owns user-source transforms, but deps
+      // optimization still bundles partial-compiled Angular libs from
+      // node_modules (`ɵɵngDeclareInjectable/Factory`). Without the
+      // linker plugin, those declarations reach the browser unprocessed
+      // and Angular tries to JIT-compile them at runtime. Mirror the
+      // deps-optimizer wiring from `angular-vite-plugin.ts` so the
+      // linker runs on `.[cm]?js` deps under both rolldown and esbuild.
+      const useRolldown = isRolldown();
+      const preliminaryTsConfigPath = resolveTsConfigPath();
+      const compilerPluginOptions = {
+        tsconfig: preliminaryTsConfigPath,
+        sourcemap: !isProd,
+        advancedOptimizations: isProd,
+        jit: pluginOptions.jit,
+        incremental: watchMode,
+      };
+
       return {
         esbuild: undefined,
         oxc: undefined,
         optimizeDeps: {
           include: ['rxjs/operators', 'rxjs', 'tslib'],
           exclude: ['@angular/platform-server'],
+          ...(useRolldown
+            ? {
+                rolldownOptions: {
+                  plugins: [
+                    createRolldownCompilerPlugin(
+                      compilerPluginOptions,
+                      !pluginOptions.isAstroIntegration,
+                    ),
+                  ],
+                },
+              }
+            : {
+                esbuildOptions: {
+                  plugins: [
+                    createCompilerPlugin(
+                      compilerPluginOptions,
+                      isTest,
+                      !pluginOptions.isAstroIntegration,
+                    ),
+                  ],
+                },
+              }),
         },
         resolve: {
           conditions: ['style', ...(config.resolve?.conditions ?? [])],
