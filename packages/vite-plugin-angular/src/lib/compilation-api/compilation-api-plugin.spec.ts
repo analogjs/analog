@@ -218,6 +218,81 @@ describe('compilationAPIPlugin', () => {
     expect(emitAffectedFilesMock).toHaveBeenCalledOnce();
   });
 
+  it('resolves hashed component stylesheet ids to their source path', async () => {
+    const containingFile = join(tempRoot, 'src/demo.component.ts');
+    const resourceFile = join(tempRoot, 'src/demo.component.css');
+    let stylesheetId = '';
+
+    const initializeMock = vi
+      .fn()
+      .mockImplementation(async (_tsconfig, host) => {
+        stylesheetId = await host.transformStylesheet(
+          '.demo { @apply sa:flex; }',
+          containingFile,
+          resourceFile,
+          0,
+          'DemoComponent',
+        );
+
+        return {
+          externalStylesheets: new Map(),
+          templateUpdates: new Map(),
+        };
+      });
+    const emitAffectedFilesMock = vi.fn().mockResolvedValue([]);
+
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: initializeMock,
+      update: vi.fn(),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: emitAffectedFilesMock,
+    });
+
+    const { compilationAPIPlugin } =
+      await import('./compilation-api-plugin.js');
+    const plugin = compilationAPIPlugin({
+      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      hasTailwindCss: true,
+      isTest: false,
+      isAstroIntegration: false,
+      include: [],
+      additionalContentDirs: [],
+    });
+
+    await (plugin.config as any)(
+      { root: tempRoot, mode: 'development' },
+      { command: 'serve', mode: 'development' },
+    );
+    await (plugin.configResolved as any)({
+      cacheDir: join(tempRoot, '.vite'),
+      root: tempRoot,
+      mode: 'development',
+      build: {},
+      server: { hmr: true },
+      plugins: [],
+    });
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+
+    expect(stylesheetId).toMatch(/^[a-f0-9]+\.css$/);
+    expect((plugin.resolveId as any)(`/${stylesheetId}?ngcomp=ng-c1&e=0`)).toBe(
+      `${resourceFile}?ngcomp=ng-c1&e=0`,
+    );
+    await expect(
+      (plugin.load as any)(`${resourceFile}?ngcomp=ng-c1&e=0`),
+    ).resolves.toBe('.demo { @apply sa:flex; }');
+  });
+
   it('maps templateUpdates to HMR metadata', async () => {
     const testFile = join(tempRoot, 'src/app.component.ts');
     const initializeMock = vi.fn().mockResolvedValue({
