@@ -1,3 +1,9 @@
+# [3.0.0-alpha.51](https://github.com/analogjs/analog/compare/v3.0.0-alpha.50...v3.0.0-alpha.51) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** wire linker plugin into compilation-API deps optimizer ([39b5a4a](https://github.com/analogjs/analog/commit/39b5a4a9f0cc5d7906107414f7b9053576585920))
+
 # [3.0.0-alpha.50](https://github.com/analogjs/analog/compare/v3.0.0-alpha.49...v3.0.0-alpha.50) (2026-04-29)
 
 ### Bug Fixes
