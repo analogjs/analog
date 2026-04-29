@@ -1,3 +1,9 @@
+# [3.0.0-alpha.52](https://github.com/analogjs/analog/compare/v3.0.0-alpha.51...v3.0.0-alpha.52) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** scope `style` package-export condition to .css imports ([#2330](https://github.com/analogjs/analog/issues/2330)) ([0920b62](https://github.com/analogjs/analog/commit/0920b623fc225ceb180ff02fcd25a7ef6f78fdf7))
+
 # [3.0.0-alpha.51](https://github.com/analogjs/analog/compare/v3.0.0-alpha.50...v3.0.0-alpha.51) (2026-04-29)
 
 ### Bug Fixes
