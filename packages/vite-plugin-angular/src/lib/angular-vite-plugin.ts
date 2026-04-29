@@ -1223,6 +1223,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Map angular external styleUrls to the source file
         if (isComponentStyleSheet(id)) {
           const filename = getFilenameFromPath(id);
+          const search = new URL(id, 'http://localhost').search;
+          const servedSourcePath =
+            stylesheetRegistry?.getServedSourcePath(filename);
+
+          if (servedSourcePath) {
+            debugStylesV('resolveId: mapped served stylesheet to source', {
+              filename,
+              resolvedPath: servedSourcePath,
+            });
+            return servedSourcePath + search;
+          }
 
           if (stylesheetRegistry?.hasServed(filename)) {
             debugStylesV('resolveId: kept preprocessed ID', { filename });
@@ -1286,11 +1297,19 @@ export function angular(options?: PluginOptions): Plugin[] {
                 stylesheetRegistry?.resolveExternalSource(filename) ??
                 stylesheetRegistry?.resolveExternalSource(
                   filename.replace(/^\//, ''),
+                ) ??
+                stylesheetRegistry?.getServedSourcePath(filename) ??
+                stylesheetRegistry?.getServedSourcePath(
+                  filename.replace(/^\//, ''),
                 ),
               trackedRequestIds:
                 stylesheetRegistry?.getRequestIdsForSource(
                   stylesheetRegistry?.resolveExternalSource(filename) ??
                     stylesheetRegistry?.resolveExternalSource(
+                      filename.replace(/^\//, ''),
+                    ) ??
+                    stylesheetRegistry?.getServedSourcePath(filename) ??
+                    stylesheetRegistry?.getServedSourcePath(
                       filename.replace(/^\//, ''),
                     ) ??
                     '',
@@ -2053,7 +2072,9 @@ export function isModuleForChangedResource(
   const requestPath = getFilenameFromPath(mod.id);
   const sourcePath =
     stylesheetRegistry?.resolveExternalSource(requestPath) ??
-    stylesheetRegistry?.resolveExternalSource(requestPath.replace(/^\//, ''));
+    stylesheetRegistry?.resolveExternalSource(requestPath.replace(/^\//, '')) ??
+    stylesheetRegistry?.getServedSourcePath(requestPath) ??
+    stylesheetRegistry?.getServedSourcePath(requestPath.replace(/^\//, ''));
 
   return (
     normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
@@ -2101,6 +2122,10 @@ function diagnoseComponentStylesheetPipeline(
   const sourcePath = directRequestPath
     ? (stylesheetRegistry?.resolveExternalSource(directRequestPath) ??
       stylesheetRegistry?.resolveExternalSource(
+        directRequestPath.replace(/^\//, ''),
+      ) ??
+      stylesheetRegistry?.getServedSourcePath(directRequestPath) ??
+      stylesheetRegistry?.getServedSourcePath(
         directRequestPath.replace(/^\//, ''),
       ))
     : normalizedFile;
@@ -2245,7 +2270,11 @@ export async function findComponentStylesheetWrapperModules(
     : undefined;
   const sourcePath = requestPath
     ? (stylesheetRegistry?.resolveExternalSource(requestPath) ??
-      stylesheetRegistry?.resolveExternalSource(requestPath.replace(/^\//, '')))
+      stylesheetRegistry?.resolveExternalSource(
+        requestPath.replace(/^\//, ''),
+      ) ??
+      stylesheetRegistry?.getServedSourcePath(requestPath) ??
+      stylesheetRegistry?.getServedSourcePath(requestPath.replace(/^\//, '')))
     : undefined;
 
   // HMR timing matters here. On a pure CSS edit, the browser often already has
