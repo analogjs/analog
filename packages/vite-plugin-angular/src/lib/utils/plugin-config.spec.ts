@@ -1,5 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { TS_EXT_REGEX } from './plugin-config.js';
+import { TS_EXT_REGEX, createDepOptimizerConfig } from './plugin-config.js';
+
+describe('createDepOptimizerConfig', () => {
+  // Regression: an earlier shape returned `{ optimizeDeps, resolve: {
+  // conditions: ['style'] } }`. Call sites then merged that into Vite's
+  // global `resolve.conditions`, which leaked the `style` condition into
+  // every JavaScript resolution — including Tailwind v4's `@plugin`
+  // resolver. That broke packages with mixed `style`/`import` exports
+  // such as `tailwindcss-primeui`. The `style` condition is now scoped
+  // to `.css`-extension requests via `cssExtensionStyleResolverPlugin`,
+  // so this helper must not return any global `resolve` block at all.
+  it('does not return a global resolve block', () => {
+    const config = createDepOptimizerConfig({
+      tsconfig: '/project/tsconfig.app.json',
+      isProd: false,
+      jit: false,
+      watchMode: true,
+      isTest: false,
+      isAstroIntegration: false,
+    });
+
+    expect(config).not.toHaveProperty('resolve');
+  });
+});
 
 describe('TS_EXT_REGEX', () => {
   describe('matches genuine TypeScript files', () => {

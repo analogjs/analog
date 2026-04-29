@@ -21,7 +21,6 @@ import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 import {
-  defaultClientConditions,
   ModuleNode,
   normalizePath,
   Plugin,
@@ -98,6 +97,7 @@ import {
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
+import { cssExtensionStyleResolverPlugin } from './utils/css-extension-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import {
   toVirtualRawId,
@@ -619,18 +619,19 @@ export function angular(options?: PluginOptions): Plugin[] {
           define: defineOptions,
         };
 
+        // `resolve.conditions` is intentionally not extended with `style`
+        // here: that condition is scoped to `.css`-extension requests via
+        // `cssExtensionStyleResolverPlugin` (registered in the returned
+        // plugin array). Adding `style` globally caused Tailwind v4's JS
+        // plugin resolver — which inherits Vite's global conditions — to
+        // pick the `style` export of packages like `tailwindcss-primeui`
+        // and feed a `.css` file to Node's ESM loader.
         return {
           [jsTransformConfigKey]: jsTransformConfigValue,
           optimizeDeps: {
             include: ['rxjs/operators', 'rxjs', 'tslib'],
             exclude: ['@angular/platform-server'],
             ...(useRolldown ? { rolldownOptions } : { esbuildOptions }),
-          },
-          resolve: {
-            conditions: [
-              'style',
-              ...(config.resolve?.conditions || defaultClientConditions),
-            ],
           },
         };
       },
@@ -1551,6 +1552,13 @@ export function angular(options?: PluginOptions): Plugin[] {
       : angularPlugin();
 
   return [
+    // Scope the `style` package-export condition to `.css`-extension
+    // requests so packages like `@angular/material/prebuilt-themes/*.css`
+    // (gated only under `style`) still resolve from JS imports, without
+    // leaking `style` into Vite's global `resolve.conditions` and
+    // breaking Tailwind v4's JS plugin resolver for packages with mixed
+    // exports such as `tailwindcss-primeui`.
+    cssExtensionStyleResolverPlugin(),
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
     templateClassBindingGuardPlugin(guardContext),
