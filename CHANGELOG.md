@@ -1,3 +1,9 @@
+# [3.0.0-alpha.53](https://github.com/analogjs/analog/compare/v3.0.0-alpha.52...v3.0.0-alpha.53) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** improve stylesheet registry compatibility with Tailwind ([#2326](https://github.com/analogjs/analog/issues/2326)) ([fe6c528](https://github.com/analogjs/analog/commit/fe6c528b14ebb10495526886ce3deb4e32eaa217))
+
 # [3.0.0-alpha.52](https://github.com/analogjs/analog/compare/v3.0.0-alpha.51...v3.0.0-alpha.52) (2026-04-29)
 
 ### Bug Fixes
