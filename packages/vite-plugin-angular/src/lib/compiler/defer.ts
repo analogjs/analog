@@ -33,11 +33,13 @@ export function collectDeferBlocks(nodes: any[]): any[] {
 /**
  * Collect element tag names from template AST nodes recursively.
  *
- * When `excludeDeferBlocks` is true, walking stops at any DeferredBlock — its
- * children are treated as deferred, not eager. This is required when computing
- * the eager-element set: a component used only inside a nested defer block
- * must not be classified as eager just because the defer block sits inside an
- * @switch / @if / @for branch.
+ * When `excludeDeferBlocks` is true, the deferred body of any DeferredBlock is
+ * skipped — its children are treated as deferred, not eager. The fallback
+ * subtrees (`@placeholder`, `@loading`, `@error`) are still walked: Angular
+ * treats them as *eager* dependencies because the placeholder must render in
+ * the main bundle before the defer trigger fires. A component shared between
+ * the defer body and a fallback block must stay in static imports, otherwise
+ * the fallback render breaks.
  */
 export function collectElementNames(
   nodes: any[],
@@ -47,6 +49,12 @@ export function collectElementNames(
   function walk(node: any) {
     if (!node) return;
     if (excludeDeferBlocks && node.constructor?.name === 'DeferredBlock') {
+      // Skip the deferred body but keep walking the fallback subtrees so
+      // components referenced in `@placeholder` / `@loading` / `@error`
+      // stay in the eager set.
+      if (node.placeholder?.children) node.placeholder.children.forEach(walk);
+      if (node.loading?.children) node.loading.children.forEach(walk);
+      if (node.error?.children) node.error.children.forEach(walk);
       return;
     }
     if (node.constructor?.name === 'Element') result.add(node.name);
@@ -55,6 +63,9 @@ export function collectElementNames(
     if (Array.isArray(node.groups)) node.groups.forEach(walk);
     if (Array.isArray(node.cases)) node.cases.forEach(walk);
     if (node.empty?.children) node.empty.children.forEach(walk);
+    if (node.placeholder?.children) node.placeholder.children.forEach(walk);
+    if (node.loading?.children) node.loading.children.forEach(walk);
+    if (node.error?.children) node.error.children.forEach(walk);
   }
   nodes.forEach(walk);
   return result;

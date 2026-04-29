@@ -740,6 +740,57 @@ describe('@Component', () => {
         expect(result.code).toContain('DepsFn');
       },
     );
+
+    // Regression: components referenced in `@placeholder` / `@loading` /
+    // `@error` are *eager* dependencies (the placeholder must render
+    // synchronously before the defer trigger fires). When a component
+    // appears in both a defer body and a fallback block, it must stay in
+    // the eager set — otherwise it gets removed from static imports and
+    // the fallback render breaks. Earlier builds of this defer walker
+    // skipped DeferredBlock subtrees entirely on the eager pass, which
+    // dropped the shared component from static imports.
+    it.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
+      'keeps component used in @placeholder eager when also used in @defer body',
+      () => {
+        const heavySrc = `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
+        export class HeavyWidget {}
+      `;
+
+        const registry = new Map();
+        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+          registry.set(entry.className, entry);
+        }
+
+        const result = rawCompile(
+          `
+        import { Component } from '@angular/core';
+        import { HeavyWidget } from './heavy-widget';
+        @Component({
+          selector: 'app-shared-defer',
+          template: \`
+            @defer (on viewport) {
+              <heavy-widget />
+            } @placeholder {
+              <heavy-widget />
+            }
+          \`,
+          imports: [HeavyWidget]
+        })
+        export class SharedDeferComponent {}
+      `,
+          'shared-defer.ts',
+          { registry },
+        );
+
+        expectCompiles(result.code);
+        // Component is shared between the defer body and the placeholder,
+        // so it stays in static imports and no dynamic import is emitted
+        // for it.
+        expect(result.code).not.toContain('import("./heavy-widget")');
+      },
+    );
   });
 
   describe('Content Projection', () => {
