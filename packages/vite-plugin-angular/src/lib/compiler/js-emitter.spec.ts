@@ -200,4 +200,58 @@ describe('JSEmitter – operator precedence', () => {
       expect(emitAngularExpr(expr)).toBe('(x ??= 1)');
     });
   });
+
+  // Receivers of `.name`, `.name(...)`, and `[index]` need parens when
+  // they're a binary expression (precedence) or a non-negative integer
+  // literal (the dot would otherwise be parsed as a decimal-point start
+  // — `3600.toFixed(2)` is "Invalid characters after number"). Found in
+  // a real Angular template binding `((x ?? 0) / 3600).toFixed(2)` whose
+  // inner `BinaryOperatorExpr` receiver was emitted without parens, so
+  // the resulting `(x ?? 0) / 3600.toFixed(2)` failed Vite's oxc parse.
+  describe('member-access receiver parenthesization', () => {
+    it('wraps a binary-expression receiver of `.name`', () => {
+      const expr = new o.ReadPropExpr(
+        bin(o.BinaryOperator.Divide, v('a'), lit(3600)),
+        'toFixed',
+      );
+      expect(emitAngularExpr(expr)).toBe('(a / 3600).toFixed');
+    });
+
+    it('wraps a binary-expression receiver when the prop access is invoked', () => {
+      // Method calls in v21 are emitted as InvokeFunctionExpr around a
+      // ReadPropExpr — there is no separate InvokeMethodExpr. The fix
+      // lives on ReadPropExpr's receiver and must survive the wrapping.
+      const expr = new o.InvokeFunctionExpr(
+        new o.ReadPropExpr(
+          bin(o.BinaryOperator.Divide, v('a'), lit(3600)),
+          'toFixed',
+        ),
+        [lit(2)],
+      );
+      expect(emitAngularExpr(expr)).toBe('(a / 3600).toFixed(2)');
+    });
+
+    it('wraps a non-negative integer-literal receiver of `.name`', () => {
+      const expr = new o.ReadPropExpr(lit(42), 'toString');
+      expect(emitAngularExpr(expr)).toBe('(42).toString');
+    });
+
+    it('does not wrap a string-literal receiver', () => {
+      const expr = new o.ReadPropExpr(lit('hi'), 'length');
+      expect(emitAngularExpr(expr)).toBe('"hi".length');
+    });
+
+    it('does not wrap a variable receiver', () => {
+      const expr = new o.ReadPropExpr(v('foo'), 'bar');
+      expect(emitAngularExpr(expr)).toBe('foo.bar');
+    });
+
+    it('wraps a binary-expression receiver of `[index]`', () => {
+      const expr = new o.ReadKeyExpr(
+        bin(o.BinaryOperator.Plus, v('a'), v('b')),
+        lit(0),
+      );
+      expect(emitAngularExpr(expr)).toBe('(a + b)[0]');
+    });
+  });
 });
