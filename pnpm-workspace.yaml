@@ -21,191 +21,178 @@ packages:
 catalog:
   # Keep the Angular runtime/compiler patch set aligned so compiler-cli,
   # language-service, and the framework runtime all resolve the same release.
-  '@angular/animations': 21.2.8
-  '@angular/cdk': 21.2.6
-  '@angular/common': 21.2.8
-  '@angular/compiler': 21.2.8
-  '@angular/core': 21.2.8
-  '@angular/forms': 21.2.8
-  '@angular/localize': 21.2.8
-  '@angular/material': 21.2.6
-  '@angular/platform-browser': 21.2.8
-  '@angular/platform-browser-dynamic': 21.2.8
-  '@angular/platform-server': 21.2.8
-  '@angular/router': 21.2.8
-  '@angular/ssr': 21.2.7
-  '@astrojs/mdx': ^5.0.3
-  '@astrojs/markdown-component': ^1.0.5
-  '@astrojs/react': ^5.0.2
-  '@mdx-js/react': 3.1.1
-  '@nx/angular': 22.7.0-beta.12
-  '@nx/devkit': 22.7.0-beta.12
-  '@nx/eslint': 22.7.0-beta.12
-  '@nx/eslint-plugin': 22.7.0-beta.12
-  '@nx/js': 22.7.0-beta.12
-  '@nx/playwright': 22.7.0-beta.12
-  '@nx/plugin': 22.7.0-beta.12
-  '@nx/storybook': 22.7.0-beta.12
-  '@nx/vite': 22.7.0-beta.12
-  '@nx/vitest': 22.7.0-beta.12
-  '@nx/web': 22.7.0-beta.12
-  '@oxc-angular/vite': ^0.0.23
-  '@oxc-project/runtime': ^0.124.0
-  '@playwright/test': ^1.58.2
-  '@swc-node/register': ~1.11.1
-  '@swc/core': ~1.15.5
-  '@swc/helpers': ~0.5.18
-  '@tailwindcss/postcss': ^4.2.2
-  '@tailwindcss/vite': ^4.2.2
-  '@standard-schema/spec': ^1.1.0
-  '@tanstack/angular-query-experimental': ^5.95.2
-  '@tanstack/query-core': ^5.95.2
-  '@types/hast': ^3.0.4
-  '@types/node': ^25.5.0
-  '@types/prismjs': ^1.26.6
-  '@types/react': ^19.2.14
-  '@types/react-dom': ^19.2.3
-  '@types/semver': ^7.7.1
-  '@vitest/browser-playwright': 4.1.4
-  '@vitest/coverage-v8': 4.1.4
-  '@vitest/ui': 4.1.4
-  '@angular-devkit/architect': 0.2102.7
-  '@angular-devkit/build-angular': 21.2.7
-  '@angular-devkit/core': 21.2.7
-  '@angular-devkit/schematics': 21.2.7
+  '@angular-devkit/architect': 0.2102.8
+  '@angular-devkit/build-angular': 21.2.8
+  '@angular-devkit/core': 21.2.8
+  '@angular-devkit/schematics': 21.2.8
   '@angular-eslint/eslint-plugin': 21.3.1
   '@angular-eslint/eslint-plugin-template': 21.3.1
   '@angular-eslint/template-parser': 21.3.1
-  '@angular/build': 21.2.7
-  '@angular/cli': 21.2.7
-  '@angular/compiler-cli': 21.2.8
-  '@angular/language-service': 21.2.8
-  '@commitlint/cli': ^20.5.0
+  '@angular/animations': 21.2.10
+  '@angular/build': 21.2.8
+  '@angular/cdk': 21.2.8
+  '@angular/cli': 21.2.8
+  '@angular/common': 21.2.10
+  '@angular/compiler': 21.2.10
+  '@angular/compiler-cli': 21.2.10
+  '@angular/core': 21.2.10
+  '@angular/forms': 21.2.10
+  '@angular/language-service': 21.2.10
+  '@angular/localize': 21.2.10
+  '@angular/material': 21.2.8
+  '@angular/platform-browser': 21.2.10
+  '@angular/platform-browser-dynamic': 21.2.10
+  '@angular/platform-server': 21.2.10
+  '@angular/router': 21.2.10
+  '@angular/ssr': 21.2.8
+  '@astrojs/markdown-component': ^1.0.5
+  '@astrojs/mdx': ^5.0.4
+  '@astrojs/react': ^5.0.4
+  '@commitlint/cli': ^20.5.2
   '@commitlint/config-conventional': ^20.5.0
   '@compodoc/compodoc': ^1.2.1
   '@eslint/eslintrc': ^3.3.5
   '@eslint/js': ^10.0.1
-  '@netlify/functions': ^5.1.5
-  '@schematics/angular': 21.2.7
+  '@mdx-js/react': 3.1.1
+  '@netlify/functions': ^5.2.0
+  '@nx/angular': 22.7.1
+  '@nx/devkit': 22.7.1
+  '@nx/eslint': 22.7.1
+  '@nx/eslint-plugin': 22.7.1
+  '@nx/js': 22.7.1
+  '@nx/playwright': 22.7.1
+  '@nx/plugin': 22.7.1
+  '@nx/storybook': 22.7.1
+  '@nx/vite': 22.7.1
+  '@nx/vitest': 22.7.1
+  '@nx/web': 22.7.1
+  '@oxc-angular/vite': ^0.0.25
+  '@oxc-project/runtime': ^0.128.0
+  '@playwright/test': ^1.59.1
+  '@schematics/angular': 21.2.8
   '@semantic-release/changelog': ^6.0.3
   '@semantic-release/exec': ^7.1.0
   '@semantic-release/git': ^10.0.1
-  '@storybook/addon-docs': ^10.3.3
-  '@storybook/addon-links': ^10.3.3
-  '@storybook/addon-vitest': ^10.3.3
+  '@standard-schema/spec': ^1.1.0
+  '@storybook/addon-docs': ^10.3.5
+  '@storybook/addon-links': ^10.3.5
+  '@storybook/addon-vitest': ^10.3.5
   '@storybook/angular': 10.3.5
-  '@typescript-eslint/eslint-plugin': 8.58.1
-  '@typescript-eslint/parser': 8.58.1
-  '@typescript-eslint/type-utils': 8.58.1
-  '@typescript-eslint/utils': ^8.57.2
-  ajv: ^8.18.0
+  '@swc-node/register': ~1.11.1
+  '@swc/core': ~1.15.32
+  '@swc/helpers': ~0.5.21
+  '@tailwindcss/postcss': ^4.2.4
+  '@tailwindcss/vite': ^4.2.4
+  '@tanstack/angular-query-experimental': ^5.100.6
+  '@tanstack/query-core': ^5.100.6
+  '@types/hast': ^3.0.4
+  '@types/node': ^25.6.0
+  '@types/prismjs': ^1.26.6
+  '@types/react': ^19.2.14
+  '@types/react-dom': ^19.2.3
+  '@types/semver': ^7.7.1
+  '@typescript-eslint/eslint-plugin': 8.59.1
+  '@typescript-eslint/parser': 8.59.1
+  '@typescript-eslint/type-utils': 8.59.1
+  '@typescript-eslint/utils': ^8.59.1
+  '@vitest/browser-playwright': 4.1.5
+  '@vitest/coverage-v8': 4.1.5
+  '@vitest/ui': 4.1.5
+  ajv: ^8.20.0
   ajv-formats: ^3.0.1
   all-contributors-cli: ^6.26.1
-  angular-eslint: ^21.2.0
-  astro: 6.1.5
+  angular-eslint: ^21.3.1
+  astro: 6.1.10
   conventional-changelog: ^7.2.0
   cpy-cli: ^7.0.0
-  defu: ^6.1.4
+  defu: ^6.1.7
   destr: ^2.0.5
   effect: 4.0.0-beta.36
-  eslint: ^10.1.0
+  es-toolkit: ^1.46.0
+  eslint: ^10.2.1
   eslint-config-prettier: 10.1.8
-  eslint-plugin-oxlint: ^1.57.0
-  eslint-plugin-playwright: ^2.10.1
+  eslint-plugin-oxlint: ^1.62.0
+  eslint-plugin-playwright: ^2.10.2
   eslint-plugin-storybook: 10.3.5
-  front-matter: ^4.0.2
-  es-toolkit: ^1.45.1
   execa: ^9.6.1
   fast-glob: ^3.3.3
   fd-package-json: ^2.0.0
   find-up: ^8.0.0
+  front-matter: ^4.0.2
   fs-extra: ^11.3.4
-  happy-dom: ^20.8.9
+  happy-dom: ^20.9.0
   jiti: 2.6.1
-  jsdom: 29.0.2
+  jsdom: 29.1.0
   jsonc-eslint-parser: ^3.1.0
   jsonc-parser: 3.3.1
   kolorist: ^1.8.0
   less: 4.6.4
   lint-staged: ^16.4.0
   magic-string: ^0.30.21
-  marked: ^18.0.0
-  marked-gfm-heading-id: ^4.1.3
-  marked-highlight: ^2.2.3
-  marked-mangle: ^1.1.12
+  marked: ^18.0.2
+  marked-gfm-heading-id: ^4.1.4
+  marked-highlight: ^2.2.4
+  marked-mangle: ^1.1.13
   marked-shiki: ^1.2.1
   md4x: ^0.0.25
-  mermaid: ^11.13.0
+  mermaid: ^11.14.0
   minimist: ^1.2.8
-  ng-packagr: 21.2.2
+  ng-packagr: 21.2.3
   nitro: 3.0.260415-beta
-  nx: 22.7.0-beta.12
+  nx: 22.7.1
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
-  oxc-parser: ^0.124.0
-  oxc-transform: ^0.124.0
+  oxc-parser: ^0.128.0
   oxc-resolver: ^11.19.1
-  oxlint: ^1.57.0
-  oxlint-tsgolint: ^0.20.0
-  playwright: ^1.58.2
-  postcss: ^8.5.8
-  prettier: ^3.8.1
+  oxc-transform: ^0.128.0
+  oxlint: ^1.62.0
+  oxlint-tsgolint: ^0.22.1
+  playwright: ^1.59.1
+  postcss: ^8.5.12
+  prettier: ^3.8.3
   prismjs: ^1.30.0
   prompts: ^2.4.2
   radix3: ^1.1.2
-  react: ^19.2.4
-  react-dom: ^19.2.4
+  react: ^19.2.5
+  react-dom: ^19.2.5
   rehype: ^13.0.2
-  rollup: ^4.60.0
-  rolldown-plugin-dts: ^0.23.0
+  rolldown: 1.0.0-rc.17
+  rolldown-plugin-dts: ^0.23.2
+  rollup: ^4.60.2
   rollup-plugin-visualizer: ^7.0.1
-  rolldown: ^1.0.0-rc.13
   rxjs: 7.8.2
   sass: 1.99.0
   sass-embedded: 1.99.0
   satori: ^0.26.0
   satori-html: ^0.3.2
   schema-dts: ^2.0.0
-  semver: ^7.7.4
   semantic-release: ^25.0.3
   semantic-release-replace-plugin: ^1.2.7
-  shiki: ^1.29.2 || ^4.0.2
+  semver: ^7.7.4
   sharp: ^0.34.5
-  start-server-and-test: ^3.0.0
+  shiki: ^4.0.2
+  start-server-and-test: ^3.0.2
   storybook: 10.3.5
-  tslib: ^2.3.0
-  tinyglobby: ^0.2.15
-  tailwindcss: ^4.2.2
+  tailwindcss: ^4.2.4
+  tinyglobby: ^0.2.16
   ts-dedent: ^2.2.0
   ts-morph: ^28.0.0
-  tsdown: ^0.21.5
-  typescript: 6.0.2
-  typescript-eslint: ^8.57.2
+  tsdown: ^0.21.10
+  tslib: ^2.8.1
+  typescript: 6.0.3
+  typescript-eslint: ^8.59.1
   ufo: ^1.6.3
   valibot: ^1.3.1
-  vite: ^8.0.3
+  vite: ^8.0.10
   vite-plugin-eslint: ^1.8.1
   vite-plugin-inspect: 12.0.0-beta.1
-  vite-tsconfig-paths: ^7.0.0-alpha.1
-  vitefu: ^1.1.2
-  vitest: 4.1.4
+  vite-tsconfig-paths: 7.0.0-alpha.1
+  vitefu: ^1.1.3
+  vitest: 4.1.5
   xhr2: ^0.2.1
   xmlbuilder2: ^4.0.3
   zod: ^4.3.6
   zone.js: ^0.16.1
-
-overrides:
-  '@angular/animations': 21.2.8
-  '@angular/common': 21.2.8
-  '@angular/compiler': 21.2.8
-  '@angular/core': 21.2.8
-  '@angular/forms': 21.2.8
-  '@angular/platform-browser': 21.2.8
-  '@angular/platform-browser-dynamic': 21.2.8
-  '@angular/platform-server': 21.2.8
-  '@angular/router': 21.2.8
-  '@angular/compiler-cli': 21.2.8
-  '@angular/language-service': 21.2.8
 
 catalogs:
   docsApp:
@@ -217,20 +204,6 @@ catalogs:
     '@docusaurus/types': 3.10.0
     clsx: ^2.1.1
     prism-react-renderer: ^2.4.1
-  peerCompat:
-    '@angular/common': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    '@angular/core': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    '@angular/platform-browser': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    '@angular/platform-server': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    '@angular/router': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    '@nx/angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-    '@nx/devkit': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-    '@nx/vite': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-    rxjs: ^6.5.0 || ^7.5.0
-    vite: ^6.0.0 || ^7.0.0 || ^8.0.0
-  peerAngularBuilders:
-    '@angular-devkit/build-angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
-    '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
   peerAngular20Plus:
     '@angular/animations': '>=20.0.0'
     '@angular/build': '>=20.0.0'
@@ -243,6 +216,23 @@ catalogs:
     '@angular/platform-server': '>=20.0.0'
     rxjs: ^7.8.0
     tslib: ^2.4.0
+  peerAngularBuilders:
+    '@angular-devkit/build-angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+  peerCompat:
+    '@angular/common': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    '@angular/core': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    '@angular/platform-browser': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    '@angular/platform-server': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    '@angular/router': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    '@nx/angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
+    '@nx/devkit': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
+    '@nx/vite': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
+    rxjs: ^6.5.0 || ^7.5.0
+    vite: ^6.0.0 || ^7.0.0 || ^8.0.0
+  peerContentOptional:
+    md4x: '>=0.0.20'
+    satori: ^0.10.14
   peerStorybook10:
     '@storybook/angular': ^10.0.0
     '@storybook/builder-vite': ^10.3.5
@@ -253,9 +243,19 @@ catalogs:
     '@angular-devkit/schematics': '>=17.0.0'
     vitest: ^1.3.1 || ^2.0.0 || ^3.0.0 || ^4.0.0
     zone.js: '>=0.14.0'
-  peerContentOptional:
-    md4x: '>=0.0.20'
-    satori: ^0.10.14
+
+overrides:
+  '@angular/animations': 21.2.10
+  '@angular/common': 21.2.10
+  '@angular/compiler': 21.2.10
+  '@angular/compiler-cli': 21.2.10
+  '@angular/core': 21.2.10
+  '@angular/forms': 21.2.10
+  '@angular/language-service': 21.2.10
+  '@angular/platform-browser': 21.2.10
+  '@angular/platform-browser-dynamic': 21.2.10
+  '@angular/platform-server': 21.2.10
+  '@angular/router': 21.2.10
 
 # Build-script allowlists belong in the root package.json under pnpm.* config.
 # Keep this file focused on workspace membership and shared dependency versions.
