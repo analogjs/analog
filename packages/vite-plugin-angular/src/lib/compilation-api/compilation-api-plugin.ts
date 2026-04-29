@@ -592,6 +592,13 @@ export function compilationAPIPlugin(
         incremental: watchMode,
       };
 
+      // No `resolve.conditions` extension here: the `style` condition is
+      // scoped to `.css`-extension requests by
+      // `cssExtensionStyleResolverPlugin`, registered once at the
+      // `angular()` factory level. Adding `style` globally caused
+      // Tailwind v4's JS plugin resolver to pick the `style` exports of
+      // packages such as `tailwindcss-primeui`, which then crashed Node's
+      // ESM loader when it tried to import the resulting `.css` file.
       return {
         esbuild: undefined,
         oxc: undefined,
@@ -620,9 +627,6 @@ export function compilationAPIPlugin(
                   ],
                 },
               }),
-        },
-        resolve: {
-          conditions: ['style', ...(config.resolve?.conditions ?? [])],
         },
       };
     },

@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
-import { defaultClientConditions } from 'vite';
 
 import {
   createCompilerPlugin,
@@ -127,14 +126,15 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
     define: defineOptions,
   };
 
+  // No top-level `resolve` block: the `style` package-export condition
+  // is now scoped to `.css`-extension requests via
+  // `cssExtensionStyleResolverPlugin`, so this dep optimizer config no
+  // longer needs to leak it into Vite's global `resolve.conditions`.
   return {
     optimizeDeps: {
       include: ['rxjs/operators', 'rxjs'],
       exclude: ['@angular/platform-server'],
       ...(vite.rolldownVersion ? { rolldownOptions } : { esbuildOptions }),
-    },
-    resolve: {
-      conditions: ['style'],
     },
   };
 }
