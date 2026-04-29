@@ -13,6 +13,11 @@ describe('createDepOptimizerConfig', () => {
     });
 
     expect(config).not.toHaveProperty('resolve');
+    expect(config.optimizeDeps.include).toEqual([
+      'rxjs/operators',
+      'rxjs',
+      'tslib',
+    ]);
   });
 });
 

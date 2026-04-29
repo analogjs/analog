@@ -28,6 +28,7 @@ import {
   type DebugOption,
 } from '../utils/debug.js';
 import {
+  createDepOptimizerConfig,
   getTsConfigPath,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
@@ -569,14 +570,20 @@ export function compilationAPIPlugin(
       // Angular Compilation API handles TypeScript transforms — disable
       // esbuild/oxc so they don't compete.
       debugCompilationApi('esbuild/oxc disabled, Angular handles transforms');
+      const preliminaryTsConfigPath = resolveTsConfigPath();
+      const depOptimizer = createDepOptimizerConfig({
+        tsconfig: preliminaryTsConfigPath,
+        isProd,
+        jit: pluginOptions.jit,
+        watchMode,
+        isTest: pluginOptions.isTest,
+        isAstroIntegration: pluginOptions.isAstroIntegration,
+      });
 
       return {
         esbuild: undefined,
         oxc: undefined,
-        optimizeDeps: {
-          include: ['rxjs/operators', 'rxjs', 'tslib'],
-          exclude: ['@angular/platform-server'],
-        },
+        ...depOptimizer,
       };
     },
     configResolved(config) {

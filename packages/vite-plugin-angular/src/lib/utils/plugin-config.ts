@@ -128,7 +128,7 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
 
   return {
     optimizeDeps: {
-      include: ['rxjs/operators', 'rxjs'],
+      include: ['rxjs/operators', 'rxjs', 'tslib'],
       exclude: ['@angular/platform-server'],
       ...(vite.rolldownVersion ? { rolldownOptions } : { esbuildOptions }),
     },

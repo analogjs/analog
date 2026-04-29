@@ -144,6 +144,20 @@ describe('compilationAPIPlugin', () => {
     expect(result.esbuild).toBeUndefined();
     expect(result.oxc).toBeUndefined();
     expect(result.resolve?.conditions ?? []).not.toContain('style');
+    expect(result.optimizeDeps?.include).toEqual([
+      'rxjs/operators',
+      'rxjs',
+      'tslib',
+    ]);
+    const depOptimizerPlugins =
+      result.optimizeDeps?.rolldownOptions?.plugins ??
+      result.optimizeDeps?.esbuildOptions?.plugins ??
+      [];
+    expect(depOptimizerPlugins.map((plugin: any) => plugin.name)).toContain(
+      result.optimizeDeps?.rolldownOptions
+        ? 'analogjs-rolldown-deps-optimizer-plugin'
+        : 'analogjs-angular-esbuild-deps-optimizer-plugin',
+    );
   });
 
   it('initializes compilation on buildStart', async () => {
