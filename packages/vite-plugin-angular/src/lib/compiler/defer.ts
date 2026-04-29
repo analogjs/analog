@@ -14,10 +14,12 @@ export function collectDeferBlocks(nodes: any[]): any[] {
     // Element/Template: children
     // IfBlock: branches (each has children)
     // ForLoopBlock: children, empty (has children)
-    // SwitchBlock: cases (each has children)
+    // SwitchBlock: groups (Angular v21+, each is a SwitchBlockCaseGroup with
+    //   children) or cases (Angular v18-v20, each has children)
     // DeferredBlock: children, placeholder/loading/error (each has children)
     if (Array.isArray(node.children)) node.children.forEach(walk);
     if (Array.isArray(node.branches)) node.branches.forEach(walk);
+    if (Array.isArray(node.groups)) node.groups.forEach(walk);
     if (Array.isArray(node.cases)) node.cases.forEach(walk);
     if (node.empty?.children) node.empty.children.forEach(walk);
     if (node.placeholder?.children) node.placeholder.children.forEach(walk);
@@ -28,14 +30,29 @@ export function collectDeferBlocks(nodes: any[]): any[] {
   return result;
 }
 
-/** Collect element tag names from template AST nodes recursively. */
-export function collectElementNames(nodes: any[]): Set<string> {
+/**
+ * Collect element tag names from template AST nodes recursively.
+ *
+ * When `excludeDeferBlocks` is true, walking stops at any DeferredBlock — its
+ * children are treated as deferred, not eager. This is required when computing
+ * the eager-element set: a component used only inside a nested defer block
+ * must not be classified as eager just because the defer block sits inside an
+ * @switch / @if / @for branch.
+ */
+export function collectElementNames(
+  nodes: any[],
+  excludeDeferBlocks = false,
+): Set<string> {
   const result = new Set<string>();
   function walk(node: any) {
     if (!node) return;
+    if (excludeDeferBlocks && node.constructor?.name === 'DeferredBlock') {
+      return;
+    }
     if (node.constructor?.name === 'Element') result.add(node.name);
     if (Array.isArray(node.children)) node.children.forEach(walk);
     if (Array.isArray(node.branches)) node.branches.forEach(walk);
+    if (Array.isArray(node.groups)) node.groups.forEach(walk);
     if (Array.isArray(node.cases)) node.cases.forEach(walk);
     if (node.empty?.children) node.empty.children.forEach(walk);
   }
@@ -126,23 +143,17 @@ export function buildDeferDependencyMap(
     return { blocks: new Map(), deferredImports: new Set() };
   }
 
-  // Collect all element names in eager (non-defer) template parts
-  const allElements = collectElementNames(parsedTemplate.nodes);
   const deferElements = new Set<string>();
   for (const block of deferBlocks) {
     const elements = collectElementNames(block.children || []);
     for (const el of elements) deferElements.add(el);
   }
-  // Eager elements = all elements minus those only in defer blocks
-  // (An element is eager if it appears anywhere outside defer blocks too)
-  // Simple approach: collect elements from non-defer top-level nodes
-  const eagerElements = new Set<string>();
-  for (const node of parsedTemplate.nodes) {
-    if (node.constructor?.name !== 'DeferredBlock') {
-      const names = collectElementNames([node]);
-      for (const n of names) eagerElements.add(n);
-    }
-  }
+  // Eager elements = elements reachable without crossing into a DeferredBlock.
+  // Pass `excludeDeferBlocks` so a defer block nested inside @switch / @if /
+  // @for is not unfolded into the eager set. Without this, a component used
+  // only inside such a nested defer would be misclassified as eager and lose
+  // its lazy-load dependency function.
+  const eagerElements = collectElementNames(parsedTemplate.nodes, true);
 
   // Build selector → className map from registry + local selectors
   const selectorToClass = new Map<string, string>();
