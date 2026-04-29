@@ -125,6 +125,11 @@ describe('cssExtensionStyleResolverPlugin', () => {
     await callResolveId(plugin, './local.css');
     await callResolveId(plugin, '../sibling/theme.css');
     await callResolveId(plugin, '/abs/path/file.css');
+    // Vite POSIX-normalizes Windows absolute paths to `C:/...` form;
+    // those still represent absolute filesystem ids and must skip the
+    // package-exports lookup.
+    await callResolveId(plugin, 'C:/abs/path/file.css');
+    await callResolveId(plugin, 'd:/abs/path/file.css');
     await callResolveId(plugin, '\0virtual:tailwind:reference.css');
     await callResolveId(plugin, 'virtual:tailwindcss-references.css');
     await callResolveId(plugin, 'data:text/css,body{}');

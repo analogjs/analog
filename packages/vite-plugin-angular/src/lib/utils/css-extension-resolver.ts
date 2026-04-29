@@ -118,6 +118,7 @@ export function cssExtensionStyleResolverPlugin(): vite.Plugin {
       if (
         id.startsWith('.') ||
         id.startsWith('/') ||
+        /^[A-Za-z]:\//.test(id) ||
         id.startsWith('\0') ||
         id.startsWith('data:') ||
         id.startsWith('virtual:')
