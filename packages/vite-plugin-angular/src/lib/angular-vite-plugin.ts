@@ -21,7 +21,6 @@ import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 import {
-  defaultClientConditions,
   ModuleNode,
   normalizePath,
   Plugin,
@@ -625,12 +624,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             include: ['rxjs/operators', 'rxjs', 'tslib'],
             exclude: ['@angular/platform-server'],
             ...(useRolldown ? { rolldownOptions } : { esbuildOptions }),
-          },
-          resolve: {
-            conditions: [
-              'style',
-              ...(config.resolve?.conditions || defaultClientConditions),
-            ],
           },
         };
       },

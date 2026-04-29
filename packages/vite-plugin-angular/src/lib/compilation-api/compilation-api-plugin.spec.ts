@@ -143,6 +143,7 @@ describe('compilationAPIPlugin', () => {
 
     expect(result.esbuild).toBeUndefined();
     expect(result.oxc).toBeUndefined();
+    expect(result.resolve?.conditions ?? []).not.toContain('style');
   });
 
   it('initializes compilation on buildStart', async () => {

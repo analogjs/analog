@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { TS_EXT_REGEX } from './plugin-config.js';
+import { TS_EXT_REGEX, createDepOptimizerConfig } from './plugin-config.js';
+
+describe('createDepOptimizerConfig', () => {
+  it('does not add the CSS style condition to global module resolution', () => {
+    const config = createDepOptimizerConfig({
+      tsconfig: '/project/tsconfig.app.json',
+      isProd: false,
+      jit: false,
+      watchMode: true,
+      isTest: false,
+      isAstroIntegration: false,
+    });
+
+    expect(config).not.toHaveProperty('resolve');
+  });
+});
 
 describe('TS_EXT_REGEX', () => {
   describe('matches genuine TypeScript files', () => {

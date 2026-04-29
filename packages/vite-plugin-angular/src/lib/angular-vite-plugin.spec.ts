@@ -81,6 +81,7 @@ describe('angularVitePlugin', () => {
         'rxjs',
         'tslib',
       ]);
+      expect(config?.resolve?.conditions ?? []).not.toContain('style');
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }

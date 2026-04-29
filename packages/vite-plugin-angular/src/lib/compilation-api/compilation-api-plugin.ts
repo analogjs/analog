@@ -577,9 +577,6 @@ export function compilationAPIPlugin(
           include: ['rxjs/operators', 'rxjs', 'tslib'],
           exclude: ['@angular/platform-server'],
         },
-        resolve: {
-          conditions: ['style', ...(config.resolve?.conditions ?? [])],
-        },
       };
     },
     configResolved(config) {

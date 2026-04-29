@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
-import { defaultClientConditions } from 'vite';
 
 import {
   createCompilerPlugin,
@@ -132,9 +131,6 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
       include: ['rxjs/operators', 'rxjs'],
       exclude: ['@angular/platform-server'],
       ...(vite.rolldownVersion ? { rolldownOptions } : { esbuildOptions }),
-    },
-    resolve: {
-      conditions: ['style'],
     },
   };
 }

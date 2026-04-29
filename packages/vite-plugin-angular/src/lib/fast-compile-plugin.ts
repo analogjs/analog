@@ -3,13 +3,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
-import {
-  defaultClientConditions,
-  normalizePath,
-  Plugin,
-  preprocessCSS,
-  ResolvedConfig,
-} from 'vite';
+import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 
 import {
   compile,
@@ -415,12 +409,6 @@ export function fastCompilePlugin(
       return {
         ...(vite.rolldownVersion ? { oxc: {} as any } : { esbuild: false }),
         ...depOptimizer,
-        resolve: {
-          conditions: [
-            ...depOptimizer.resolve.conditions,
-            ...(config.resolve?.conditions || defaultClientConditions),
-          ],
-        },
       };
     },
     configResolved(config) {
