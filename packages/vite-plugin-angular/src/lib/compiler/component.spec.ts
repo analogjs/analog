@@ -648,6 +648,149 @@ describe('@Component', () => {
         expect(result.code).toContain('DepsFn');
       },
     );
+
+    // Regression: Angular v21 renamed `SwitchBlock.cases` to
+    // `SwitchBlock.groups` (each group holds the case body in
+    // `children`). The defer walker only traversed `cases`, so any
+    // `@defer` nested inside `@switch` / `@case` was invisible to the
+    // dep-map builder. The Angular ingestion pass then hit
+    // `deferMeta.blocks.has(deferBlock) === false` and threw
+    // `AssertionError: unable to find a dependency function for this
+    // deferred block`.
+    it('compiles @defer nested inside @switch / @case', () => {
+      const result = compile(
+        `
+        import { Component, signal } from '@angular/core';
+        @Component({
+          selector: 'app-switch-defer',
+          template: \`
+            @switch (tab()) {
+              @case (0) {
+                @defer (when tab() === 0) { <p>Tab 0</p> }
+              }
+              @case (1) {
+                @defer (when tab() === 1) { <p>Tab 1</p> }
+              }
+              @case (2) {
+                @defer (when tab() === 2) { <p>Tab 2</p> }
+              }
+            }
+          \`,
+        })
+        export class SwitchDeferComponent {
+          tab = signal(0);
+        }
+      `,
+        'switch-defer.ts',
+      );
+
+      expectCompiles(result);
+      // All three defer blocks emitted as sub-templates nested within
+      // their parent @case sub-template. Naming pattern:
+      //   <Component>_Case_<i>_Defer_0_Template
+      expect(result).toContain('SwitchDeferComponent_Case_0_Defer_0_Template');
+      expect(result).toContain('SwitchDeferComponent_Case_1_Defer_0_Template');
+      expect(result).toContain('SwitchDeferComponent_Case_2_Defer_0_Template');
+      // Each defer block emits its own ɵɵdefer / ɵɵdeferWhen pair.
+      expect(result.match(/ɵɵdefer\(/g)?.length ?? 0).toBe(3);
+      expect(result.match(/ɵɵdeferWhen\(/g)?.length ?? 0).toBe(3);
+    });
+
+    it.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
+      'generates lazy import() for defer inside @switch / @case',
+      () => {
+        const heavySrc = `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
+        export class HeavyWidget {}
+      `;
+
+        const registry = new Map();
+        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+          registry.set(entry.className, entry);
+        }
+
+        const result = rawCompile(
+          `
+        import { Component, signal } from '@angular/core';
+        import { HeavyWidget } from './heavy-widget';
+        @Component({
+          selector: 'app-switch-lazy-defer',
+          template: \`
+            @switch (tab()) {
+              @case (0) {
+                @defer (when tab() === 0) { <heavy-widget /> }
+              }
+            }
+          \`,
+          imports: [HeavyWidget]
+        })
+        export class SwitchLazyDeferComponent {
+          tab = signal(0);
+        }
+      `,
+          'switch-lazy-defer.ts',
+          { registry },
+        );
+
+        expectCompiles(result.code);
+        // Dynamic import emitted for the defer-only component reached
+        // via @switch / @case nesting.
+        expect(result.code).toContain('import("./heavy-widget")');
+        expect(result.code).toContain('DepsFn');
+      },
+    );
+
+    // Regression: components referenced in `@placeholder` / `@loading` /
+    // `@error` are *eager* dependencies (the placeholder must render
+    // synchronously before the defer trigger fires). When a component
+    // appears in both a defer body and a fallback block, it must stay in
+    // the eager set — otherwise it gets removed from static imports and
+    // the fallback render breaks. Earlier builds of this defer walker
+    // skipped DeferredBlock subtrees entirely on the eager pass, which
+    // dropped the shared component from static imports.
+    it.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
+      'keeps component used in @placeholder eager when also used in @defer body',
+      () => {
+        const heavySrc = `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
+        export class HeavyWidget {}
+      `;
+
+        const registry = new Map();
+        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+          registry.set(entry.className, entry);
+        }
+
+        const result = rawCompile(
+          `
+        import { Component } from '@angular/core';
+        import { HeavyWidget } from './heavy-widget';
+        @Component({
+          selector: 'app-shared-defer',
+          template: \`
+            @defer (on viewport) {
+              <heavy-widget />
+            } @placeholder {
+              <heavy-widget />
+            }
+          \`,
+          imports: [HeavyWidget]
+        })
+        export class SharedDeferComponent {}
+      `,
+          'shared-defer.ts',
+          { registry },
+        );
+
+        expectCompiles(result.code);
+        // Component is shared between the defer body and the placeholder,
+        // so it stays in static imports and no dynamic import is emitted
+        // for it.
+        expect(result.code).not.toContain('import("./heavy-widget")');
+      },
+    );
   });
 
   describe('Content Projection', () => {
