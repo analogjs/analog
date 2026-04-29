@@ -61,6 +61,9 @@ describe('stylesheet-registry', () => {
     });
 
     expect(stylesheetId).toMatch(/^[a-f0-9]+\.css$/);
+    expect(registry.getServedSourcePath(stylesheetId)).toBe(
+      '/project/src/app/demo.component.css',
+    );
     expect(registry.getServedContent(stylesheetId)).toBe(
       '.demo { color: red; }',
     );
@@ -71,6 +74,26 @@ describe('stylesheet-registry', () => {
       registry.getServedContent('project/src/app/demo.component.css'),
     ).toBe('.demo { color: red; }');
     expect(registry.getServedContent('demo.component.css')).toBeUndefined();
+  });
+
+  it('registers inline stylesheet content under a stable synthetic source path', () => {
+    const registry = new AnalogStylesheetRegistry();
+
+    const stylesheetId = registerStylesheetContent(registry, {
+      code: '.demo { color: red; }',
+      containingFile: '/project/src/app/demo.component.ts',
+      className: 'DemoComponent',
+      order: 0,
+      inlineStylesExtension: 'css',
+    });
+
+    expect(stylesheetId).toMatch(/^[a-f0-9]+\.css$/);
+    expect(registry.getServedSourcePath(stylesheetId)).toBe(
+      '/project/src/app/demo.component.css',
+    );
+    expect(
+      registry.getServedContent('/project/src/app/demo.component.css'),
+    ).toBe('.demo { color: red; }');
   });
 
   it('keeps structured transform metadata on the source stylesheet', () => {
