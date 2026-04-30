@@ -13,24 +13,42 @@
  * component tree sees the per-request shim while platform-level
  * singletons stay shared.
  *
- * Caveats (intentional, prototype-level):
+ * Known parity gaps vs `renderToString()` / `render()` (verified against
+ * the analog-app via apps/analog-app/parity-check.mjs):
  *
- *   - `PlatformState.getDocument()` returns the platform-level DOCUMENT
- *     that was bound at platform creation, NOT the per-request shim. We
- *     side-step this by serializing our shim directly instead of going
- *     through `PlatformState.renderToString()`.
+ *   1. No hydration annotations. `<!--nghm-->`, `ngh="..."` attributes,
+ *      and the SSR content-integrity marker are missing because we skip
+ *      `prepareForHydration`. Wire by calling
+ *      `ɵannotateForHydration(applicationRef, shimDocument)` plus
+ *      appending the integrity marker comment.
  *
- *   - `ServerPlatformLocation` is constructed once per platform from
- *     `INITIAL_CONFIG.url`, so URL is fixed to whatever the platform was
- *     created with. Apps that read `PlatformLocation` for routing-side
- *     work will see stale state. The Angular Router resolves the active
- *     URL from the application's bootstrap context, not PlatformLocation,
- *     so basic routing still works — but anything reading
- *     `platformLocation.href` directly will be wrong.
+ *   2. No `ng-server-context` attribute on the root component. We skip
+ *      `appendServerContextInfo`. Replicate it: read `SERVER_CONTEXT`
+ *      from the env injector and set the attribute on each
+ *      `applicationRef.components[i].location.nativeElement`.
  *
- *   - Hydration annotation is currently skipped. Wire it back in by
- *     calling `ɵannotateForHydration(applicationRef, shimDocument)`
- *     before serialization if hydration is enabled in the app config.
+ *   3. Event-dispatch script leaks. The build inlines
+ *      `<script id="ng-event-dispatch-contract">` into index.html;
+ *      `prepareForHydration` strips it when there are no events to
+ *      replay. We need to do the same.
+ *
+ *   4. TransferState `<script id="ng-state">` does not appear, even
+ *      though `BEFORE_APP_SERIALIZED` hooks run. Either
+ *      `transferStore.isEmpty` is true here (no calls to
+ *      `transferState.set()`), or the hook isn't being collected when
+ *      `provideServerRendering()` is spread into the per-request
+ *      `ApplicationConfig.providers`. Needs investigation before this
+ *      can replace the production path.
+ *
+ *   5. `PlatformState.getDocument()` returns the platform-level DOCUMENT
+ *      that was bound at platform creation, NOT the per-request shim.
+ *      Side-stepped by calling `serializeDocument(shimDocument)`
+ *      directly.
+ *
+ *   6. `ServerPlatformLocation` is constructed once per platform from
+ *      `INITIAL_CONFIG.url`. Anything reading `platformLocation.href`
+ *      directly sees stale data; the Angular Router is unaffected
+ *      because it gets the URL via the bootstrap context.
  */
 
 import {
