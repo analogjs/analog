@@ -43,13 +43,24 @@ interface TokenBase {
 
 export interface ElementToken extends TokenBase {
   type: TokenType.Element;
+  /** Lowercased tag, cached at create time so serialize doesn't re-lowercase. */
   tagName: string;
   namespace: string | null;
   /** Flat [k, v, k, v]; undefined when no attributes. */
   attrs?: string[];
-  /** Space-delimited; '' when no classes. */
+  /**
+   * Space-delimited class string. Receives both `setAttribute('class', x)`
+   * (replaces) and `addClass(x)` (appends). '' when no classes.
+   */
   classNames: string;
-  /** Flat [k, v, k, v]; undefined when no inline styles. */
+  /**
+   * Pre-serialized style text (e.g. 'color: red; padding: 4px').
+   * `setAttribute('style', x)` replaces it; `setStyle/removeStyle` operate
+   * on the parsed `styles` array which is rendered after this string.
+   * '' when not set via setAttribute.
+   */
+  styleText: string;
+  /** Flat [k, v, k, v]; undefined when no inline styles set via setStyle. */
   styles?: string[];
   children: Token[];
   isVoid: boolean;
@@ -89,8 +100,6 @@ const VOID_ELEMENTS = new Set([
   'wbr',
 ]);
 
-const RAW_TEXT_ELEMENTS = new Set(['script', 'style']);
-
 const PROP_TO_ATTR: Record<string, string> = {
   className: 'class',
   htmlFor: 'for',
@@ -106,14 +115,16 @@ function createElementToken(
   tagName: string,
   namespace: string | null,
 ): ElementToken {
+  const tag = tagName.toLowerCase();
   return {
     type: TokenType.Element,
-    tagName,
+    tagName: tag,
     namespace,
     classNames: '',
+    styleText: '',
     children: [],
     parent: null,
-    isVoid: VOID_ELEMENTS.has(tagName.toLowerCase()),
+    isVoid: VOID_ELEMENTS.has(tag),
   };
 }
 
@@ -278,114 +289,82 @@ function escapeText(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function pushElement(
-  out: string[],
-  token: ElementToken,
-  parentTag?: string,
-): void {
-  const tag = token.tagName.toLowerCase();
-  out.push('<', tag);
+function serializeElement(token: ElementToken): string {
+  const tag = token.tagName;
+  let s = '<' + tag;
 
-  // Attributes — class and style come from their own slots, merging with
-  // any 'class'/'style' that may also live in the flat attrs array.
-  let classFromAttrs = '';
-  let styleFromAttrs = '';
-  let appendedClassStyle = false;
-
+  // Plain attributes — class/style are routed to dedicated slots at
+  // setAttribute time, so this loop never sees them.
   if (token.attrs) {
     const a = token.attrs;
     for (let i = 0; i < a.length; i += 2) {
       const k = a[i];
       const v = a[i + 1];
-      if (k === 'class') {
-        classFromAttrs = v;
-        continue;
-      }
-      if (k === 'style') {
-        styleFromAttrs = v;
-        continue;
-      }
-      out.push(' ', k);
-      if (v !== '') out.push('="', escapeAttr(v), '"');
+      s += v === '' ? ' ' + k : ' ' + k + '="' + escapeAttr(v) + '"';
     }
   }
 
-  const finalClass = token.classNames
-    ? classFromAttrs
-      ? `${classFromAttrs} ${token.classNames}`
-      : token.classNames
-    : classFromAttrs;
-  if (finalClass) {
-    out.push(' class="', escapeAttr(finalClass), '"');
-    appendedClassStyle = true;
+  if (token.classNames) {
+    s += ' class="' + escapeAttr(token.classNames) + '"';
   }
 
-  if (token.styles && token.styles.length) {
-    let styleStr = '';
-    for (let i = 0; i < token.styles.length; i += 2) {
-      styleStr += styleStr
-        ? `; ${token.styles[i]}: ${token.styles[i + 1]}`
-        : `${token.styles[i]}: ${token.styles[i + 1]}`;
+  // Build style attribute from styleText (set via setAttribute) and the
+  // styles array (set via setStyle). Either or both may be present.
+  if (token.styleText || token.styles) {
+    let styleStr = token.styleText;
+    const styles = token.styles;
+    if (styles && styles.length) {
+      for (let i = 0; i < styles.length; i += 2) {
+        const piece = styles[i] + ': ' + styles[i + 1];
+        styleStr = styleStr ? styleStr + '; ' + piece : piece;
+      }
     }
-    const merged = styleFromAttrs ? `${styleFromAttrs}; ${styleStr}` : styleStr;
-    out.push(' style="', escapeAttr(merged), '"');
-    appendedClassStyle = true;
-  } else if (styleFromAttrs) {
-    out.push(' style="', escapeAttr(styleFromAttrs), '"');
-    appendedClassStyle = true;
+    if (styleStr) {
+      s += ' style="' + escapeAttr(styleStr) + '"';
+    }
   }
-
-  // Suppress unused-variable warning
-  void appendedClassStyle;
-  void parentTag;
 
   if (token.isVoid) {
-    out.push('>');
-    return;
+    return s + '>';
   }
 
-  out.push('>');
+  s += '>';
 
   for (const child of token.children) {
-    pushToken(out, child, tag);
+    s += serializeNode(child, tag);
   }
 
-  out.push('</', tag, '>');
+  return s + '</' + tag + '>';
 }
 
-function pushToken(out: string[], token: Token, parentTag?: string): void {
+function serializeNode(token: Token, parentTag?: string): string {
   switch (token.type) {
     case TokenType.Text:
-      if (parentTag && RAW_TEXT_ELEMENTS.has(parentTag)) {
-        out.push(token.value);
-      } else {
-        out.push(escapeText(token.value));
+      // Inline raw-text check — `script` and `style` are the only HTML
+      // elements whose contents are not HTML-escaped.
+      if (parentTag === 'script' || parentTag === 'style') {
+        return token.value;
       }
-      return;
+      return escapeText(token.value);
     case TokenType.Raw:
-      out.push(token.value);
-      return;
+      return token.value;
     case TokenType.Comment:
-      out.push('<!--', token.value, '-->');
-      return;
+      return '<!--' + token.value + '-->';
     case TokenType.Element:
-      pushElement(out, token, parentTag);
-      return;
+      return serializeElement(token);
   }
 }
 
 export function serializeToken(token: Token, parentTag?: string): string {
-  const out: string[] = [];
-  pushToken(out, token, parentTag);
-  return out.join('');
+  return serializeNode(token, parentTag);
 }
 
 export function serializeTokenTree(root: ElementToken): string {
-  const out: string[] = [];
+  let s = '';
   for (const child of root.children) {
-    pushToken(out, child);
+    s += serializeNode(child);
   }
-  return out.join('');
+  return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -486,8 +465,23 @@ export class StringRendererV2 implements Renderer2 {
       return;
     }
     if (el && el.type === TokenType.Element) {
+      const token = el as ElementToken;
+      // Route 'class' and 'style' to dedicated slots so the serializer
+      // doesn't have to scan attrs for them on every element. Only the
+      // unprefixed names — namespaced attributes (e.g. xml:lang) keep
+      // their full key in the flat attrs array.
+      if (!namespace) {
+        if (name === 'class') {
+          token.classNames = value;
+          return;
+        }
+        if (name === 'style') {
+          token.styleText = value;
+          return;
+        }
+      }
       const attrName = namespace ? `${namespace}:${name}` : name;
-      setAttrFlat(el as ElementToken, attrName, value);
+      setAttrFlat(token, attrName, value);
     }
   }
 
@@ -497,8 +491,19 @@ export class StringRendererV2 implements Renderer2 {
       return;
     }
     if (el && el.type === TokenType.Element) {
+      const token = el as ElementToken;
+      if (!namespace) {
+        if (name === 'class') {
+          token.classNames = '';
+          return;
+        }
+        if (name === 'style') {
+          token.styleText = '';
+          return;
+        }
+      }
       const attrName = namespace ? `${namespace}:${name}` : name;
-      removeAttrFlat(el as ElementToken, attrName);
+      removeAttrFlat(token, attrName);
     }
   }
 
@@ -593,6 +598,21 @@ export class StringRendererV2 implements Renderer2 {
           t.parent = token;
           token.children.push(t);
         }
+        return;
+      }
+
+      // Route mapped 'class'/'style' (e.g. className/style props) to the
+      // dedicated slots, matching setAttribute semantics.
+      if (attrName === 'class') {
+        if (value == null || value === false) token.classNames = '';
+        else if (value === true) token.classNames = '';
+        else token.classNames = String(value);
+        return;
+      }
+      if (attrName === 'style') {
+        if (value == null || value === false) token.styleText = '';
+        else if (value === true) token.styleText = '';
+        else token.styleText = String(value);
         return;
       }
 
