@@ -14,7 +14,7 @@ import {
   RendererType2,
 } from '@angular/core';
 
-import { ShimDocument, ShimElement, ShimNode } from './dom-shim';
+import { ShimDocument, ShimElement, ShimNode, ShimRaw } from './dom-shim';
 
 // ---------------------------------------------------------------------------
 // Token types — lightweight stand-ins for DOM nodes
@@ -24,6 +24,8 @@ const enum TokenType {
   Element = 1,
   Text = 3,
   Comment = 8,
+  /** Raw HTML pass-through — used for innerHTML and inert script/style content. */
+  Raw = 99,
 }
 
 interface TokenBase {
@@ -55,7 +57,15 @@ export interface CommentToken extends TokenBase {
   value: string;
 }
 
-export type Token = ElementToken | TextToken | CommentToken;
+export interface RawToken extends TokenBase {
+  type: TokenType.Raw;
+  value: string;
+}
+
+export type Token = ElementToken | TextToken | CommentToken | RawToken;
+
+// Elements whose content is parsed as raw text — must not be HTML-escaped
+const RAW_TEXT_ELEMENTS = new Set(['script', 'style']);
 
 // Void elements
 const VOID_ELEMENTS = new Set([
@@ -155,6 +165,16 @@ function createCommentToken(value: string): CommentToken {
   };
 }
 
+function createRawToken(value: string): RawToken {
+  return {
+    type: TokenType.Raw,
+    value,
+    parent: null,
+    nextSibling: null,
+    prevSibling: null,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tree manipulation helpers
 // ---------------------------------------------------------------------------
@@ -213,50 +233,59 @@ function removeToken(parent: ElementToken, child: Token): void {
 // Serialization
 // ---------------------------------------------------------------------------
 
-function escapeHTML(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+function escapeAttr(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
-export function serializeToken(token: Token): string {
+function escapeText(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+export function serializeToken(token: Token, parentTag?: string): string {
   switch (token.type) {
     case TokenType.Text:
+      // Inside <script>/<style>, text is raw; everywhere else, escape it
+      // so user-supplied interpolation can never inject HTML.
+      if (parentTag && RAW_TEXT_ELEMENTS.has(parentTag)) {
+        return token.value;
+      }
+      return escapeText(token.value);
+    case TokenType.Raw:
       return token.value;
     case TokenType.Comment:
       return `<!--${token.value}-->`;
     case TokenType.Element: {
       const tag = token.tagName.toLowerCase();
-      let attrs = '';
 
-      // Merge classes into attribute map
+      // Build the final attribute set in a local map — never mutate the
+      // token, since the serializer can be invoked more than once.
+      const finalAttrs = new Map<string, string>(token.attributes);
+
       if (token.classes.size > 0) {
-        const existing = token.attributes.get('class');
+        const existing = finalAttrs.get('class');
         const classStr = [...token.classes].join(' ');
-        token.attributes.set(
+        finalAttrs.set(
           'class',
           existing ? `${existing} ${classStr}` : classStr,
         );
       }
 
-      // Merge styles into attribute map
       if (token.styles.size > 0) {
         const parts: string[] = [];
         for (const [k, v] of token.styles) {
           parts.push(`${k}: ${v}`);
         }
-        const existing = token.attributes.get('style');
+        const existing = finalAttrs.get('style');
         const styleStr = parts.join('; ');
-        token.attributes.set(
+        finalAttrs.set(
           'style',
           existing ? `${existing}; ${styleStr}` : styleStr,
         );
       }
 
-      for (const [k, v] of token.attributes) {
-        attrs += v === '' ? ` ${k}` : ` ${k}="${escapeHTML(v)}"`;
+      let attrs = '';
+      for (const [k, v] of finalAttrs) {
+        attrs += v === '' ? ` ${k}` : ` ${k}="${escapeAttr(v)}"`;
       }
 
       if (token.isVoid) {
@@ -265,7 +294,7 @@ export function serializeToken(token: Token): string {
 
       let childrenHTML = '';
       for (const child of token.children) {
-        childrenHTML += serializeToken(child);
+        childrenHTML += serializeToken(child, tag);
       }
       return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
     }
@@ -497,12 +526,12 @@ export class StringRenderer implements Renderer2 {
       const attrName = PROP_TO_ATTR[name] || name;
 
       if (name === 'innerHTML') {
-        // Clear children and add raw text
+        // Clear children and add a raw HTML pass-through token
         token.children = [];
         if (value) {
-          const text = createTextToken(String(value));
-          text.parent = token;
-          token.children.push(text);
+          const raw = createRawToken(String(value));
+          raw.parent = token;
+          token.children.push(raw);
         }
         return;
       }
@@ -572,18 +601,29 @@ export class StringRendererFactory2 implements RendererFactory2 {
   end(): void {}
 
   /**
-   * Serialize the token tree and inject it into the shim document's
-   * app root element as innerHTML. This must be called after Angular's
-   * render pass completes but before serializeDocument().
+   * Serialize the token tree and attach it to the shim document's app
+   * root element as a raw-HTML node. Goes via ShimRaw rather than
+   * `innerHTML` so the rendered HTML isn't reparsed (the shim parser
+   * doesn't decode entities, which would double-escape on the next
+   * serialization).
+   *
+   * Must be called after Angular's render pass completes but before
+   * the document is serialized.
    */
   injectIntoDocument(appRootSelector: string): void {
     const html = serializeTokenTree(this.rootToken);
-    const appRoot = this.shimDocument.querySelector(appRootSelector);
-    if (appRoot) {
-      appRoot.innerHTML = html;
-    } else {
-      // Fallback: inject into body
-      this.shimDocument.body.innerHTML = html;
+    const target =
+      this.shimDocument.querySelector(appRootSelector) ??
+      this.shimDocument.body;
+
+    // Drop existing children, then attach the rendered HTML as a
+    // single raw-HTML node.
+    for (const child of [...target.childNodes]) {
+      target.removeChild(child);
+    }
+    if (html) {
+      const raw = new ShimRaw(html);
+      target.appendChild(raw);
     }
   }
 

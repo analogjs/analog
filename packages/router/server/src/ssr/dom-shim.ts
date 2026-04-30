@@ -213,6 +213,26 @@ export class ShimText extends ShimNode {
 }
 
 // ---------------------------------------------------------------------------
+// ShimRaw — pre-serialized HTML pass-through
+//
+// Used by the string renderer to inject its serialized token tree into
+// the shim document without round-tripping through parseHTML (which
+// would re-encode entities and double-escape attribute values).
+// ---------------------------------------------------------------------------
+
+const RAW_NODE = 99;
+
+export class ShimRaw extends ShimNode {
+  rawHTML: string;
+  nodeName = '#raw';
+
+  constructor(html: string) {
+    super(RAW_NODE);
+    this.rawHTML = html;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // ShimComment
 // ---------------------------------------------------------------------------
 
@@ -584,17 +604,26 @@ export class ShimDocument extends ShimNode {
 // Serialization
 // ---------------------------------------------------------------------------
 
-function escapeHTML(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+// Elements whose content is parsed as raw text — must not be HTML-escaped
+const RAW_TEXT_ELEMENTS = new Set(['script', 'style']);
+
+function escapeAttr(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
-function serializeNode(node: ShimNode): string {
+function escapeText(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function serializeNode(node: ShimNode, parentTag?: string): string {
   if (node instanceof ShimText) {
-    return node.nodeValue;
+    if (parentTag && RAW_TEXT_ELEMENTS.has(parentTag)) {
+      return node.nodeValue;
+    }
+    return escapeText(node.nodeValue);
+  }
+  if (node instanceof ShimRaw) {
+    return node.rawHTML;
   }
   if (node instanceof ShimComment) {
     return `<!--${node.nodeValue}-->`;
@@ -603,20 +632,20 @@ function serializeNode(node: ShimNode): string {
     const tag = node.localName;
     let attrs = '';
     for (const [k, v] of node.attributes) {
-      attrs += v === '' ? ` ${k}` : ` ${k}="${escapeHTML(v)}"`;
+      attrs += v === '' ? ` ${k}` : ` ${k}="${escapeAttr(v)}"`;
     }
     if (VOID_ELEMENTS.has(tag)) {
       return `<${tag}${attrs}>`;
     }
-    return `<${tag}${attrs}>${serializeChildren(node)}</${tag}>`;
+    return `<${tag}${attrs}>${serializeChildren(node, tag)}</${tag}>`;
   }
-  return serializeChildren(node);
+  return serializeChildren(node, parentTag);
 }
 
-function serializeChildren(node: ShimNode): string {
+function serializeChildren(node: ShimNode, parentTag?: string): string {
   let html = '';
   for (const child of node.childNodes) {
-    html += serializeNode(child);
+    html += serializeNode(child, parentTag);
   }
   return html;
 }
