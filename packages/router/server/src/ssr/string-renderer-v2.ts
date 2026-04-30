@@ -21,9 +21,46 @@ import {
   RendererFactory2,
   RendererStyleFlags2,
   RendererType2,
+  ViewEncapsulation,
 } from '@angular/core';
 
 import { ShimDocument, ShimElement, ShimNode, ShimRaw } from './dom-shim';
+
+// ---------------------------------------------------------------------------
+// View encapsulation helpers — mirror Angular's _dom_renderer-chunk
+//
+// Component styles ship with `%COMP%` as a placeholder for the component id.
+// At render time we substitute it for `${appId}-${component.id}`, and emit
+// matching `_ngcontent-${compId}` attributes on every element created by the
+// component's renderer + `_nghost-${compId}` on the host element.
+// ---------------------------------------------------------------------------
+
+const COMPONENT_REGEX = /%COMP%/g;
+const HOST_ATTR = `_nghost-%COMP%`;
+const CONTENT_ATTR = `_ngcontent-%COMP%`;
+
+function shimContentAttribute(compId: string): string {
+  return CONTENT_ATTR.replace(COMPONENT_REGEX, compId);
+}
+
+function shimHostAttribute(compId: string): string {
+  return HOST_ATTR.replace(COMPONENT_REGEX, compId);
+}
+
+function shimStylesContent(compId: string, styles: string[]): string[] {
+  return styles.map((s) => s.replace(COMPONENT_REGEX, compId));
+}
+
+/**
+ * Subset of @angular/platform-browser's SharedStylesHost that this factory
+ * uses. The default platform-browser implementation already speaks plain
+ * DOM, so it works directly with our shim — we just need to call
+ * addStyles/removeStyles on it.
+ */
+interface SharedStylesHostLike {
+  addStyles(styles: string[], urls?: string[]): void;
+  removeStyles(styles: string[], urls?: string[]): void;
+}
 
 // ---------------------------------------------------------------------------
 // Token types
@@ -650,22 +687,167 @@ export class StringRendererV2 implements Renderer2 {
 }
 
 // ---------------------------------------------------------------------------
+// Encapsulation-aware renderers
+//
+// One renderer instance per component type — the factory caches by
+// `type.id`, mirroring DomRendererFactory2's behavior. Each variant builds
+// on the base StringRendererV2 and only specializes the bits the
+// encapsulation mode requires.
+// ---------------------------------------------------------------------------
+
+class NoneStringRendererV2 extends StringRendererV2 {
+  protected componentStyles: string[];
+  protected styleUrls: string[] | undefined;
+  private styles_applied = false;
+
+  constructor(
+    shimDocument: ShimDocument,
+    rootToken: ElementToken,
+    component: RendererType2,
+    private sharedStylesHost: SharedStylesHostLike | null,
+    compId?: string,
+  ) {
+    super(shimDocument, rootToken);
+    const styles = component.styles ?? [];
+    this.componentStyles = compId ? shimStylesContent(compId, styles) : styles;
+    // Angular's component def exposes external style URLs via a
+    // `getExternalStyles(compId?)` method on `RendererType2`. It's optional
+    // and only present in some compilation modes.
+    const getExternal = (component as any).getExternalStyles as
+      | ((compId?: string) => string[])
+      | undefined;
+    this.styleUrls = getExternal?.(compId);
+  }
+
+  applyStyles(): void {
+    if (this.styles_applied) return;
+    this.styles_applied = true;
+    this.sharedStylesHost?.addStyles(this.componentStyles, this.styleUrls);
+  }
+}
+
+class EmulatedStringRendererV2 extends NoneStringRendererV2 {
+  private contentAttr: string;
+  private hostAttr: string;
+
+  constructor(
+    shimDocument: ShimDocument,
+    rootToken: ElementToken,
+    component: RendererType2,
+    appId: string,
+    sharedStylesHost: SharedStylesHostLike | null,
+  ) {
+    const compId = `${appId}-${component.id}`;
+    super(shimDocument, rootToken, component, sharedStylesHost, compId);
+    this.contentAttr = shimContentAttribute(compId);
+    this.hostAttr = shimHostAttribute(compId);
+  }
+
+  override createElement(
+    name: string,
+    namespace?: string | null,
+  ): ElementToken {
+    const el = super.createElement(name, namespace);
+    super.setAttribute(el, this.contentAttr, '');
+    return el;
+  }
+
+  /**
+   * Called by the factory once per component instance, with the host
+   * element. Sets the `_nghost-${compId}` attribute and triggers style
+   * application — matching EmulatedEncapsulationDomRenderer2.
+   */
+  applyToHost(element: any): void {
+    this.applyStyles();
+    super.setAttribute(element, this.hostAttr, '');
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
+
+export interface StringRendererFactory2V2Deps {
+  sharedStylesHost?: SharedStylesHostLike;
+  appId?: string;
+}
 
 export class StringRendererFactory2V2 implements RendererFactory2 {
   private shimDocument: ShimDocument;
   private rootToken: ElementToken;
-  private renderer: StringRendererV2;
+  /**
+   * Used for renderers that aren't tied to a component (e.g. the renderer
+   * Angular asks for at app startup before any component is bootstrapped).
+   * Carries no encapsulation behaviour.
+   */
+  private defaultRenderer: StringRendererV2;
+  private rendererByCompId = new Map<string, StringRendererV2>();
+  private sharedStylesHost: SharedStylesHostLike | null;
+  private appId: string;
 
-  constructor(shimDocument: ShimDocument) {
+  constructor(
+    shimDocument: ShimDocument,
+    deps: StringRendererFactory2V2Deps = {},
+  ) {
     this.shimDocument = shimDocument;
     this.rootToken = createElementToken('__root__', null);
-    this.renderer = new StringRendererV2(shimDocument, this.rootToken);
+    this.defaultRenderer = new StringRendererV2(shimDocument, this.rootToken);
+    this.sharedStylesHost = deps.sharedStylesHost ?? null;
+    this.appId = deps.appId ?? 'ng';
   }
 
-  createRenderer(_hostElement: any, _type: RendererType2 | null): Renderer2 {
-    return this.renderer;
+  createRenderer(hostElement: any, type: RendererType2 | null): Renderer2 {
+    if (!hostElement || !type) {
+      return this.defaultRenderer;
+    }
+    // Server-side ShadowDom falls back to Emulated — same as
+    // DomRendererFactory2.
+    const encapsulation =
+      type.encapsulation === ViewEncapsulation.ShadowDom
+        ? ViewEncapsulation.Emulated
+        : type.encapsulation;
+    const renderer = this.getOrCreateRenderer(
+      type,
+      encapsulation ?? ViewEncapsulation.Emulated,
+    );
+    if (renderer instanceof EmulatedStringRendererV2) {
+      renderer.applyToHost(hostElement);
+    } else if (renderer instanceof NoneStringRendererV2) {
+      renderer.applyStyles();
+    }
+    return renderer;
+  }
+
+  private getOrCreateRenderer(
+    type: RendererType2,
+    encapsulation: ViewEncapsulation,
+  ): StringRendererV2 {
+    let renderer = this.rendererByCompId.get(type.id);
+    if (!renderer) {
+      switch (encapsulation) {
+        case ViewEncapsulation.Emulated:
+          renderer = new EmulatedStringRendererV2(
+            this.shimDocument,
+            this.rootToken,
+            type,
+            this.appId,
+            this.sharedStylesHost,
+          );
+          break;
+        case ViewEncapsulation.None:
+          renderer = new NoneStringRendererV2(
+            this.shimDocument,
+            this.rootToken,
+            type,
+            this.sharedStylesHost,
+          );
+          break;
+        default:
+          renderer = this.defaultRenderer;
+      }
+      this.rendererByCompId.set(type.id, renderer);
+    }
+    return renderer;
   }
 
   begin(): void {}

@@ -51,7 +51,10 @@ import {
   ɵannotateForHydration as annotateForHydration,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  bootstrapApplication,
+  ɵSharedStylesHost as SharedStylesHost,
+} from '@angular/platform-browser';
 import {
   BEFORE_APP_SERIALIZED,
   INITIAL_CONFIG,
@@ -139,22 +142,37 @@ export function renderToStringFast(
     resetComponentDefTViews();
 
     const shimDocument = createDocument(document);
-    const rendererFactory = new StringRendererFactory2V2(shimDocument);
     const appRootSelector = findAppRootSelector(document);
 
     const platform = getOrCreatePlatform(platformProviders);
+
+    // The renderer factory needs SharedStylesHost + APP_ID from the
+    // application injector to wire view encapsulation. We can't construct
+    // it ahead of time, so we close over a mutable handle that the
+    // BEFORE_APP_SERIALIZED hook reads after bootstrap fills it in.
+    let rendererFactory: StringRendererFactory2V2 | null = null;
 
     const requestConfig: ApplicationConfig = {
       ...config,
       providers: [
         ...(config.providers ?? []),
         { provide: DOCUMENT, useValue: shimDocument },
-        { provide: RendererFactory2, useValue: rendererFactory },
+        {
+          provide: RendererFactory2,
+          useFactory: (sharedStylesHost: SharedStylesHost, appId: string) => {
+            rendererFactory = new StringRendererFactory2V2(shimDocument, {
+              sharedStylesHost,
+              appId,
+            });
+            return rendererFactory;
+          },
+          deps: [SharedStylesHost, APP_ID],
+        },
         provideServerContext(serverContext),
         {
           provide: BEFORE_APP_SERIALIZED,
           useFactory: () => () => {
-            rendererFactory.injectIntoDocument(appRootSelector);
+            rendererFactory?.injectIntoDocument(appRootSelector);
           },
           multi: true,
         },
