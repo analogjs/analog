@@ -295,12 +295,13 @@ function serializeElement(token: ElementToken): string {
 
   // Plain attributes — class/style are routed to dedicated slots at
   // setAttribute time, so this loop never sees them.
+  // Empty attributes are emitted as `name=""` (not the bare `name` HTML5
+  // shorthand) to match Domino's serialization output.
   if (token.attrs) {
     const a = token.attrs;
     for (let i = 0; i < a.length; i += 2) {
-      const k = a[i];
       const v = a[i + 1];
-      s += v === '' ? ' ' + k : ' ' + k + '="' + escapeAttr(v) + '"';
+      s += ' ' + a[i] + '="' + (v === '' ? '' : escapeAttr(v)) + '"';
     }
   }
 
