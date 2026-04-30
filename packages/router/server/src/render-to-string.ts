@@ -31,6 +31,7 @@ import {
 } from './server-component-render';
 import { createDocument } from './ssr/dom-shim';
 import { StringRendererFactory2 } from './ssr/string-renderer';
+import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
 
 if (import.meta.env.PROD) {
   enableProdMode();
@@ -59,10 +60,6 @@ export function renderToString(
   config: ApplicationConfig,
   platformProviders: Provider[] = [],
 ) {
-  function bootstrap(context?: BootstrapContext) {
-    return bootstrapApplication(rootComponent, config, context);
-  }
-
   return async function render(
     url: string,
     document: string,
@@ -73,26 +70,25 @@ export function renderToString(
       return await renderServerComponent(url, serverContext);
     }
 
-    // Create a lightweight shim document from the HTML template
+    resetComponentDefTViews();
+
+    // Per-request shim document and renderer — token state cannot be
+    // shared across concurrent renders.
     const shimDocument = createDocument(document);
-
-    // Create the string-based renderer factory
     const rendererFactory = new StringRendererFactory2(shimDocument);
-
-    // Find the app root selector from the template
-    // Angular's app root is typically the first unknown element in <body>
     const appRootSelector = findAppRootSelector(document);
 
-    const html = await renderApplication(bootstrap, {
-      document: shimDocument as any,
-      url,
-      platformProviders: [
-        provideServerContext(serverContext),
-        // Provide our shim document as the DOCUMENT token
-        { provide: DOCUMENT, useValue: shimDocument },
-        // Swap in our string-based renderer
+    // RendererFactory2 must be provided at the application/environment
+    // injector level. BrowserModule (transitively imported by ServerModule)
+    // registers it there, and app-level providers shadow platform-level
+    // ones — so a useValue override in `platformProviders` would be
+    // ignored. BEFORE_APP_SERIALIZED is read off the environment injector
+    // for the same reason. Both go on the per-request ApplicationConfig.
+    const requestConfig: ApplicationConfig = {
+      ...config,
+      providers: [
+        ...(config.providers ?? []),
         { provide: RendererFactory2, useValue: rendererFactory },
-        // Inject rendered HTML into the shim document before serialization
         {
           provide: BEFORE_APP_SERIALIZED,
           useFactory: () => () => {
@@ -100,6 +96,22 @@ export function renderToString(
           },
           multi: true,
         },
+      ],
+    };
+
+    function bootstrap(context?: BootstrapContext) {
+      return bootstrapApplication(rootComponent, requestConfig, context);
+    }
+
+    const html = await renderApplication(bootstrap, {
+      document: shimDocument as any,
+      url,
+      platformProviders: [
+        provideServerContext(serverContext),
+        // Platform-level DOCUMENT override — INTERNAL_SERVER_PLATFORM_PROVIDERS
+        // also defines DOCUMENT here, and the user-supplied provider wins
+        // because it is registered last on the same injector.
+        { provide: DOCUMENT, useValue: shimDocument },
         ...platformProviders,
       ],
     });
