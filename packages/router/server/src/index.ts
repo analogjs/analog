@@ -6,6 +6,10 @@ export {
 } from './server-component-render';
 export { render } from './render';
 export { renderToString } from './render-to-string';
+export {
+  renderToStringFast,
+  destroySharedPlatform,
+} from './render-to-string-fast';
 
 // Server Functions (issue #2422) — server authoring + dispatch runtime.
 export { serverFn } from './server-fn/server-fn';

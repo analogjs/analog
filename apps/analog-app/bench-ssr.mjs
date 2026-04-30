@@ -1,7 +1,7 @@
 /**
- * End-to-end SSR benchmark: render() vs renderToString()
+ * End-to-end SSR benchmark: render() vs renderToString() vs renderToStringFast()
  *
- * Boots a Vite dev server, loads both renderer entry points,
+ * Boots a Vite dev server, loads each renderer entry point,
  * and measures real rendering times for the analog-app.
  *
  * Usage: node apps/analog-app/bench-ssr.mjs
@@ -107,18 +107,32 @@ function printResults(results) {
     const experimental = results.find(
       (r) => r.name === 'renderToString()' && r.url === url,
     );
-    if (baseline && experimental) {
-      const diff =
-        ((baseline.mean - experimental.mean) / baseline.mean) * 100;
+    const fast = results.find(
+      (r) => r.name === 'renderToStringFast()' && r.url === url,
+    );
+    const compareTo = (other, label) => {
+      if (!baseline || !other) return;
+      const diff = ((baseline.mean - other.mean) / baseline.mean) * 100;
       const faster = diff > 0 ? 'faster' : 'slower';
       console.log(
-        `  ${url}: renderToString() is ${Math.abs(diff).toFixed(1)}% ${faster} than render()`,
+        `  ${url}: ${label} is ${Math.abs(diff).toFixed(1)}% ${faster} than render()`,
       );
+    };
+    compareTo(experimental, 'renderToString()');
+    compareTo(fast, 'renderToStringFast()');
+    if (baseline) {
       console.log(
-        `    render():         ${formatMs(baseline.mean)} (median ${formatMs(baseline.median)})`,
+        `    render():               ${formatMs(baseline.mean)} (median ${formatMs(baseline.median)})`,
       );
+    }
+    if (experimental) {
       console.log(
-        `    renderToString(): ${formatMs(experimental.mean)} (median ${formatMs(experimental.median)})`,
+        `    renderToString():       ${formatMs(experimental.mean)} (median ${formatMs(experimental.median)})`,
+      );
+    }
+    if (fast) {
+      console.log(
+        `    renderToStringFast():   ${formatMs(fast.mean)} (median ${formatMs(fast.median)})`,
       );
     }
   }
@@ -151,6 +165,10 @@ async function main() {
         '~analog/entry-server-string': resolve(
           APP_ROOT,
           'src/main.server.string.ts',
+        ),
+        '~analog/entry-server-fast': resolve(
+          APP_ROOT,
+          'src/main.server.fast.ts',
         ),
       },
     },
@@ -209,6 +227,24 @@ async function main() {
       } catch (err) {
         console.log = origLog;
         console.log('  renderToString() failed:', err.message);
+      }
+
+      console.log = origLog;
+      console.log('  renderToStringFast() ...');
+      console.log = quietConsole(origLog);
+
+      try {
+        const fast = await benchmarkRenderer(
+          viteServer,
+          '~analog/entry-server-fast',
+          'renderToStringFast()',
+          template,
+          url,
+        );
+        results.push(fast);
+      } catch (err) {
+        console.log = origLog;
+        console.log('  renderToStringFast() failed:', err.message);
       }
 
       // Restore console
