@@ -18,6 +18,7 @@ import {
   serializeToken,
   serializeTokenTree,
 } from '../string-renderer';
+import { StringRendererFactory2V2 } from '../string-renderer-v2';
 
 // ---------------------------------------------------------------------------
 // Test data
@@ -152,45 +153,114 @@ describe('DOM shim operations', () => {
   );
 });
 
-describe('String renderer token operations', () => {
-  bench('StringRendererFactory2 full render cycle (50 components)', () => {
-    const doc = createDocument(SIMPLE_HTML);
-    const factory = new StringRendererFactory2(doc);
-    const renderer = factory.createRenderer(null, null);
+// Builds a synthetic Angular component tree against the given factory:
+// 50 outer components, each with text + comment + 3 span children.
+// ~250 elements total.
+function buildAndRenderRendererTree(factory: any): void {
+  const renderer = factory.createRenderer(null, null);
+  const root = renderer.createElement('div', null);
+  renderer.setAttribute(root, 'class', 'app-root');
 
-    // Simulate Angular rendering 50 components
-    const root = renderer.createElement('div', null);
-    renderer.setAttribute(root, 'class', 'app-root');
+  for (let i = 0; i < 50; i++) {
+    const component = renderer.createElement('div', null);
+    renderer.setAttribute(component, 'class', `component-${i}`);
+    renderer.setAttribute(component, 'data-id', String(i));
+    if (i % 2 === 0) renderer.addClass(component, 'even');
+    renderer.setStyle(component, 'display', 'block');
 
-    for (let i = 0; i < 50; i++) {
-      const component = renderer.createElement('div', null);
-      renderer.setAttribute(component, 'class', `component-${i}`);
-      renderer.setAttribute(component, 'data-id', String(i));
-      if (i % 2 === 0) {
-        renderer.addClass(component, 'even');
-      }
-      renderer.setStyle(component, 'display', 'block');
+    const text = renderer.createText(`Content ${i}`);
+    renderer.appendChild(component, text);
 
-      const text = renderer.createText(`Content ${i}`);
-      renderer.appendChild(component, text);
+    const comment = renderer.createComment('ng-container');
+    renderer.appendChild(component, comment);
 
-      const comment = renderer.createComment(`ng-container`);
-      renderer.appendChild(component, comment);
-
-      // Nested children
-      for (let j = 0; j < 3; j++) {
-        const child = renderer.createElement('span', null);
-        renderer.setAttribute(child, 'class', 'child');
-        const childText = renderer.createText(`Child ${j}`);
-        renderer.appendChild(child, childText);
-        renderer.appendChild(component, child);
-      }
-
-      renderer.appendChild(root, component);
+    for (let j = 0; j < 3; j++) {
+      const child = renderer.createElement('span', null);
+      renderer.setAttribute(child, 'class', 'child');
+      const childText = renderer.createText(`Child ${j}`);
+      renderer.appendChild(child, childText);
+      renderer.appendChild(component, child);
     }
 
-    // Serialize
-    factory.injectIntoDocument('app-root');
+    renderer.appendChild(root, component);
+  }
+
+  factory.injectIntoDocument('app-root');
+}
+
+describe('String renderer token operations — V1 vs V2', () => {
+  bench('V1 (Map/Set) full render cycle (50 components)', () => {
+    const doc = createDocument(SIMPLE_HTML);
+    const factory = new StringRendererFactory2(doc);
+    buildAndRenderRendererTree(factory);
+  });
+
+  bench('V2 (lazy strings) full render cycle (50 components)', () => {
+    const doc = createDocument(SIMPLE_HTML);
+    const factory = new StringRendererFactory2V2(doc);
+    buildAndRenderRendererTree(factory);
+  });
+});
+
+// Build phase only (no serialization) — isolates per-element allocation cost
+function buildRendererTreeOnly(factory: any): void {
+  const renderer = factory.createRenderer(null, null);
+  const root = renderer.createElement('div', null);
+  renderer.setAttribute(root, 'class', 'app-root');
+
+  for (let i = 0; i < 50; i++) {
+    const component = renderer.createElement('div', null);
+    renderer.setAttribute(component, 'class', `component-${i}`);
+    renderer.setAttribute(component, 'data-id', String(i));
+    if (i % 2 === 0) renderer.addClass(component, 'even');
+    renderer.setStyle(component, 'display', 'block');
+
+    const text = renderer.createText(`Content ${i}`);
+    renderer.appendChild(component, text);
+    const comment = renderer.createComment('ng-container');
+    renderer.appendChild(component, comment);
+
+    for (let j = 0; j < 3; j++) {
+      const child = renderer.createElement('span', null);
+      renderer.setAttribute(child, 'class', 'child');
+      renderer.appendChild(child, renderer.createText(`Child ${j}`));
+      renderer.appendChild(component, child);
+    }
+
+    renderer.appendChild(root, component);
+  }
+}
+
+describe('String renderer build-only (no serialize) — V1 vs V2', () => {
+  const doc = createDocument(SIMPLE_HTML);
+
+  bench('V1 build-only', () => {
+    const factory = new StringRendererFactory2(doc);
+    buildRendererTreeOnly(factory);
+  });
+
+  bench('V2 build-only', () => {
+    const factory = new StringRendererFactory2V2(doc);
+    buildRendererTreeOnly(factory);
+  });
+});
+
+describe('String renderer serialize-only — V1 vs V2', () => {
+  // Pre-build the tree once per renderer; the bench measures pure serialize
+  const v1Doc = createDocument(SIMPLE_HTML);
+  const v1Factory = new StringRendererFactory2(v1Doc);
+  buildRendererTreeOnly(v1Factory);
+
+  const v2Doc = createDocument(SIMPLE_HTML);
+  const v2Factory = new StringRendererFactory2V2(v2Doc);
+  buildRendererTreeOnly(v2Factory);
+
+  bench('V1 serialize-only', () => {
+    v1Factory.getRenderedHTML();
+  });
+
+  bench('V2 serialize-only', () => {
+    v2Factory.getRenderedHTML();
   });
 });
 
