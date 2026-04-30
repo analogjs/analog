@@ -42,7 +42,6 @@ export class ShimNode {
   parentNode: ShimElement | null = null;
   childNodes: ShimNode[] = [];
   ownerDocument: ShimDocument | null = null;
-  textContent: string = '';
 
   constructor(nodeType: number) {
     this.nodeType = nodeType;
@@ -178,7 +177,6 @@ export class ShimNode {
 
   cloneNode(deep?: boolean): ShimNode {
     const clone = new ShimNode(this.nodeType);
-    clone.textContent = this.textContent;
     if (deep) {
       for (const child of this.childNodes) {
         clone.appendChild(child.cloneNode(true));
@@ -199,7 +197,6 @@ export class ShimText extends ShimNode {
   constructor(data: string) {
     super(TEXT_NODE);
     this.nodeValue = data;
-    this.textContent = data;
   }
 
   get data(): string {
@@ -208,7 +205,14 @@ export class ShimText extends ShimNode {
 
   set data(value: string) {
     this.nodeValue = value;
-    this.textContent = value;
+  }
+
+  get textContent(): string {
+    return this.nodeValue;
+  }
+
+  set textContent(value: string) {
+    this.nodeValue = value;
   }
 }
 
@@ -243,7 +247,6 @@ export class ShimComment extends ShimNode {
   constructor(data: string) {
     super(COMMENT_NODE);
     this.nodeValue = data;
-    this.textContent = data;
   }
 
   get data(): string {
@@ -252,7 +255,14 @@ export class ShimComment extends ShimNode {
 
   set data(value: string) {
     this.nodeValue = value;
-    this.textContent = value;
+  }
+
+  get textContent(): string {
+    return this.nodeValue;
+  }
+
+  set textContent(value: string) {
+    this.nodeValue = value;
   }
 }
 
@@ -286,6 +296,33 @@ export class ShimElement extends ShimNode {
     return this.childNodes.filter(
       (n): n is ShimElement => n instanceof ShimElement,
     );
+  }
+
+  // --- textContent ---
+  // Reading concatenates text from descendants (skipping comments);
+  // writing replaces all children with a single text node so callers
+  // like `script.textContent = json` produce serializable content.
+
+  get textContent(): string {
+    let s = '';
+    for (const c of this.childNodes) {
+      if (c instanceof ShimText) {
+        s += c.nodeValue;
+      } else if (c instanceof ShimElement) {
+        s += c.textContent;
+      }
+    }
+    return s;
+  }
+
+  set textContent(value: string) {
+    this.childNodes = [];
+    if (value !== '' && value != null) {
+      const t = new ShimText(String(value));
+      t.parentNode = this;
+      t.ownerDocument = this.ownerDocument;
+      this.childNodes.push(t);
+    }
   }
 
   // --- Attribute accessors ---

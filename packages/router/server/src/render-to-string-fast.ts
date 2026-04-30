@@ -13,52 +13,42 @@
  * component tree sees the per-request shim while platform-level
  * singletons stay shared.
  *
- * Known parity gaps vs `renderToString()` / `render()` (verified against
- * the analog-app via apps/analog-app/parity-check.mjs):
+ * What this module reimplements (`renderInternal` is bypassed):
  *
- *   1. No hydration annotations. `<!--nghm-->`, `ngh="..."` attributes,
- *      and the SSR content-integrity marker are missing because we skip
- *      `prepareForHydration`. Wire by calling
- *      `ɵannotateForHydration(applicationRef, shimDocument)` plus
- *      appending the integrity marker comment.
+ *   - Hydration prep (`prepareForHydration`): ɵannotateForHydration on
+ *     the application + SSR content-integrity marker comment + decide
+ *     whether to keep or remove the inlined event-dispatch script.
+ *   - Server-context attribute (`appendServerContextInfo`): set
+ *     `ng-server-context` on each bootstrapped component's host.
+ *   - `BEFORE_APP_SERIALIZED` callbacks (TransferState's serializer
+ *     lives here, plus our own injectIntoDocument hook).
  *
- *   2. No `ng-server-context` attribute on the root component. We skip
- *      `appendServerContextInfo`. Replicate it: read `SERVER_CONTEXT`
- *      from the env injector and set the attribute on each
- *      `applicationRef.components[i].location.nativeElement`.
+ * Caveats:
  *
- *   3. Event-dispatch script leaks. The build inlines
- *      `<script id="ng-event-dispatch-contract">` into index.html;
- *      `prepareForHydration` strips it when there are no events to
- *      replay. We need to do the same.
+ *   - `PlatformState.getDocument()` returns the platform-level DOCUMENT
+ *     bound at platform creation, NOT the per-request shim. Side-stepped
+ *     by serializing our shim directly.
  *
- *   4. TransferState `<script id="ng-state">` does not appear, even
- *      though `BEFORE_APP_SERIALIZED` hooks run. Either
- *      `transferStore.isEmpty` is true here (no calls to
- *      `transferState.set()`), or the hook isn't being collected when
- *      `provideServerRendering()` is spread into the per-request
- *      `ApplicationConfig.providers`. Needs investigation before this
- *      can replace the production path.
- *
- *   5. `PlatformState.getDocument()` returns the platform-level DOCUMENT
- *      that was bound at platform creation, NOT the per-request shim.
- *      Side-stepped by calling `serializeDocument(shimDocument)`
- *      directly.
- *
- *   6. `ServerPlatformLocation` is constructed once per platform from
- *      `INITIAL_CONFIG.url`. Anything reading `platformLocation.href`
- *      directly sees stale data; the Angular Router is unaffected
- *      because it gets the URL via the bootstrap context.
+ *   - `ServerPlatformLocation` is constructed once per platform from
+ *     `INITIAL_CONFIG.url`. Anything reading `platformLocation.href`
+ *     directly sees stale data; the Angular Router is unaffected because
+ *     it gets the URL via the bootstrap context.
  */
 
 import {
+  APP_ID,
   ApplicationConfig,
   ApplicationRef,
+  CSP_NONCE,
   PlatformRef,
+  Renderer2,
   RendererFactory2,
   StaticProvider,
   Type,
   enableProdMode,
+  ɵIS_HYDRATION_DOM_REUSE_ENABLED as IS_HYDRATION_DOM_REUSE_ENABLED,
+  ɵSSR_CONTENT_INTEGRITY_MARKER as SSR_CONTENT_INTEGRITY_MARKER,
+  ɵannotateForHydration as annotateForHydration,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -66,6 +56,7 @@ import {
   BEFORE_APP_SERIALIZED,
   INITIAL_CONFIG,
   platformServer,
+  ɵSERVER_CONTEXT as SERVER_CONTEXT,
 } from '@angular/platform-server';
 import type { ServerContext } from '@analogjs/router/tokens';
 
@@ -74,13 +65,20 @@ import {
   serverComponentRequest,
   renderServerComponent,
 } from './server-component-render';
-import { createDocument, serializeDocument } from './ssr/dom-shim';
+import {
+  ShimDocument,
+  createDocument,
+  serializeDocument,
+} from './ssr/dom-shim';
 import { StringRendererFactory2V2 } from './ssr/string-renderer-v2';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
 
 if (import.meta.env.PROD) {
   enableProdMode();
 }
+
+const EVENT_DISPATCH_SCRIPT_ID = 'ng-event-dispatch-contract';
+const DEFAULT_SERVER_CONTEXT = 'other';
 
 /**
  * Lazily-initialized shared platform. The first call creates it with a
@@ -97,8 +95,6 @@ function getOrCreatePlatform(
     {
       provide: INITIAL_CONFIG,
       useValue: {
-        // Empty placeholder — the real document is provided per-request
-        // via the application injector and read by component code.
         document:
           '<!DOCTYPE html><html><head></head><body><app-root></app-root></body></html>',
         url: '/',
@@ -152,10 +148,6 @@ export function renderToStringFast(
       ...config,
       providers: [
         ...(config.providers ?? []),
-        // App-level DOCUMENT override — every component / service that
-        // injects DOCUMENT sees the per-request shim. Platform-level
-        // PlatformState and PlatformLocation still hold the platform
-        // DOCUMENT, but we don't use them for serialization.
         { provide: DOCUMENT, useValue: shimDocument },
         { provide: RendererFactory2, useValue: rendererFactory },
         provideServerContext(serverContext),
@@ -178,26 +170,13 @@ export function renderToStringFast(
       );
       await applicationRef.whenStable();
 
-      // Run BEFORE_APP_SERIALIZED hooks ourselves — we're not going
-      // through `renderInternal`, so platform-server doesn't run them
-      // for us.
-      const callbacks = applicationRef.injector.get(
-        BEFORE_APP_SERIALIZED,
-        null,
-      );
-      if (callbacks) {
-        for (const cb of callbacks) {
-          try {
-            await cb();
-          } catch (e) {
-            console.warn('Ignoring BEFORE_APP_SERIALIZED Exception: ', e);
-          }
-        }
-      }
+      // Replicate platform-server's renderInternal pipeline.
+      prepareForHydration(applicationRef, shimDocument);
+      appendServerContextInfo(applicationRef);
+      await runBeforeAppSerialized(applicationRef);
 
       return serializeDocument(shimDocument);
     } finally {
-      // Destroy just the application — keep the platform alive.
       if (applicationRef) {
         try {
           applicationRef.destroy();
@@ -207,6 +186,129 @@ export function renderToStringFast(
       }
     }
   };
+}
+
+/**
+ * Mirrors `prepareForHydration` from @angular/platform-server.
+ *
+ *   - Hydration disabled → strip the build-inlined event-dispatch script.
+ *   - Hydration enabled  → append the integrity marker, run
+ *     ɵannotateForHydration, then either insert the event-replay script
+ *     or strip the dispatch script if there are no events to replay.
+ */
+function prepareForHydration(
+  applicationRef: ApplicationRef,
+  doc: ShimDocument,
+): void {
+  const env = applicationRef.injector;
+
+  if (!env.get(IS_HYDRATION_DOM_REUSE_ENABLED, false)) {
+    removeEventDispatchScript(doc);
+    return;
+  }
+
+  appendSsrContentIntegrityMarker(doc);
+
+  // ɵannotateForHydration walks the LView tree and writes ngh attributes
+  // onto host elements via the renderer. Our StringRenderer routes those
+  // writes either to the ShimElement (root host) or to ElementToken
+  // attrs (everything else), so the markers land in the right places.
+  const eventTypesToReplay = annotateForHydration(applicationRef, doc as any);
+
+  if (eventTypesToReplay.regular.size || eventTypesToReplay.capture.size) {
+    insertEventRecordScript(
+      env.get(APP_ID),
+      doc,
+      eventTypesToReplay,
+      env.get(CSP_NONCE, null),
+    );
+  } else {
+    removeEventDispatchScript(doc);
+  }
+}
+
+function appendSsrContentIntegrityMarker(doc: ShimDocument): void {
+  const comment = doc.createComment(SSR_CONTENT_INTEGRITY_MARKER);
+  if (doc.body.firstChild) {
+    doc.body.insertBefore(comment, doc.body.firstChild);
+  } else {
+    doc.body.appendChild(comment);
+  }
+}
+
+function removeEventDispatchScript(doc: ShimDocument): void {
+  doc.getElementById(EVENT_DISPATCH_SCRIPT_ID)?.remove();
+}
+
+function insertEventRecordScript(
+  appId: string,
+  doc: ShimDocument,
+  eventTypesToReplay: { regular: Set<string>; capture: Set<string> },
+  nonce: string | null,
+): void {
+  const dispatchScript = doc.getElementById(EVENT_DISPATCH_SCRIPT_ID);
+  if (!dispatchScript) return;
+
+  const replayContents =
+    `window.__jsaction_bootstrap(` +
+    `document.body,` +
+    `"${appId}",` +
+    `${JSON.stringify(Array.from(eventTypesToReplay.regular))},` +
+    `${JSON.stringify(Array.from(eventTypesToReplay.capture))}` +
+    `);`;
+  const replayScript = doc.createElement('script');
+  replayScript.appendChild(doc.createTextNode(replayContents));
+  if (nonce) replayScript.setAttribute('nonce', nonce);
+  dispatchScript.after(replayScript);
+}
+
+/**
+ * Mirrors `appendServerContextInfo` from @angular/platform-server.
+ *
+ * Sets `ng-server-context="..."` on each bootstrapped component's host
+ * element, via that component's renderer (so attribute writes go through
+ * our string renderer for ElementToken hosts and through the ShimElement
+ * directly for the root host).
+ */
+function appendServerContextInfo(applicationRef: ApplicationRef): void {
+  const serverContext = sanitizeServerContext(
+    applicationRef.injector.get(SERVER_CONTEXT, DEFAULT_SERVER_CONTEXT),
+  );
+  for (const componentRef of applicationRef.components) {
+    const renderer = componentRef.injector.get(Renderer2);
+    const element = componentRef.location.nativeElement;
+    if (element) {
+      renderer.setAttribute(element, 'ng-server-context', serverContext);
+    }
+  }
+}
+
+function sanitizeServerContext(serverContext: string): string {
+  const cleaned = serverContext.replace(/[^a-zA-Z0-9\-]/g, '');
+  return cleaned.length > 0 ? cleaned : DEFAULT_SERVER_CONTEXT;
+}
+
+async function runBeforeAppSerialized(
+  applicationRef: ApplicationRef,
+): Promise<void> {
+  const callbacks = applicationRef.injector.get(BEFORE_APP_SERIALIZED, null);
+  if (!callbacks) return;
+  const asyncCallbacks: Promise<unknown>[] = [];
+  for (const cb of callbacks) {
+    try {
+      const result = cb();
+      if (result) asyncCallbacks.push(result as Promise<unknown>);
+    } catch (e) {
+      console.warn('Ignoring BEFORE_APP_SERIALIZED Exception: ', e);
+    }
+  }
+  if (asyncCallbacks.length) {
+    for (const r of await Promise.allSettled(asyncCallbacks)) {
+      if (r.status === 'rejected') {
+        console.warn('Ignoring BEFORE_APP_SERIALIZED Exception: ', r.reason);
+      }
+    }
+  }
 }
 
 function findAppRootSelector(html: string): string {
