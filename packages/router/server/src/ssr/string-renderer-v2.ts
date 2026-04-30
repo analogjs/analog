@@ -461,8 +461,13 @@ export class StringRendererV2 implements Renderer2 {
     value: string,
     namespace?: string | null,
   ): void {
+    // HTML attribute names are ASCII case-insensitive; Domino (the default
+    // server DOM) lowercases them on write, so to stay byte-for-byte
+    // compatible with `render()` we do the same. Namespaced attributes
+    // keep their original case.
+    const lowered = namespace ? name : name.toLowerCase();
     if (el instanceof ShimElement) {
-      el.setAttribute(namespace ? `${namespace}:${name}` : name, value);
+      el.setAttribute(namespace ? `${namespace}:${lowered}` : lowered, value);
       return;
     }
     if (el && el.type === TokenType.Element) {
@@ -472,38 +477,39 @@ export class StringRendererV2 implements Renderer2 {
       // unprefixed names — namespaced attributes (e.g. xml:lang) keep
       // their full key in the flat attrs array.
       if (!namespace) {
-        if (name === 'class') {
+        if (lowered === 'class') {
           token.classNames = value;
           return;
         }
-        if (name === 'style') {
+        if (lowered === 'style') {
           token.styleText = value;
           return;
         }
       }
-      const attrName = namespace ? `${namespace}:${name}` : name;
+      const attrName = namespace ? `${namespace}:${lowered}` : lowered;
       setAttrFlat(token, attrName, value);
     }
   }
 
   removeAttribute(el: any, name: string, namespace?: string | null): void {
+    const lowered = namespace ? name : name.toLowerCase();
     if (el instanceof ShimElement) {
-      el.removeAttribute(namespace ? `${namespace}:${name}` : name);
+      el.removeAttribute(namespace ? `${namespace}:${lowered}` : lowered);
       return;
     }
     if (el && el.type === TokenType.Element) {
       const token = el as ElementToken;
       if (!namespace) {
-        if (name === 'class') {
+        if (lowered === 'class') {
           token.classNames = '';
           return;
         }
-        if (name === 'style') {
+        if (lowered === 'style') {
           token.styleText = '';
           return;
         }
       }
-      const attrName = namespace ? `${namespace}:${name}` : name;
+      const attrName = namespace ? `${namespace}:${lowered}` : lowered;
       removeAttrFlat(token, attrName);
     }
   }
