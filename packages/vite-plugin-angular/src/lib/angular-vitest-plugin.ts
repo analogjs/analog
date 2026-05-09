@@ -79,12 +79,20 @@ export function angularVitestEsbuildPlugin(): Plugin {
 }
 
 /**
- * This plugin does post-processing with esbuild
- * instead of preprocessing to re-align
- * the sourcemaps so breakpoints and coverage reports
- * work correctly.
+ * Post-processing pass that converts any `.ts` files Angular's compilation
+ * skipped (e.g. files without Angular decorators when
+ * `useAngularCompilationAPI` is on) into runnable JS via esbuild/OXC.
+ *
+ * Files Angular already compiled have a sourcemap available via
+ * `getInMap` — we skip those here to avoid breaking the chain Vite is
+ * already wiring up. Re-running OXC over already-compiled JS produces a
+ * map relative to the TS-emitted JS, not the original .ts source, and
+ * OXC's `inMap` parameter does not chain through the way esbuild's inline
+ * `//# sourceMappingURL=` auto-detection does.
  */
-export function angularVitestSourcemapPlugin(): Plugin {
+export function angularVitestSourcemapPlugin(
+  getInMap?: (id: string) => string | undefined,
+): Plugin {
   return {
     name: '@analogjs/vitest-angular-sourcemap-plugin',
     async transform(code: string, id: string) {
@@ -92,33 +100,35 @@ export function angularVitestSourcemapPlugin(): Plugin {
         return;
       }
 
-      const [, query] = id.split('?');
+      const [bareId, query] = id.split('?');
 
       if (query && query.includes('inline')) {
         return;
       }
 
-      if (vite.transformWithOxc) {
-        const result = await vite.transformWithOxc(code, id, {
-          lang: 'js',
-        });
+      if (getInMap?.(bareId)) {
+        return;
+      }
 
+      if (vite.transformWithOxc) {
+        const result = await vite.transformWithOxc(code, id, { lang: 'js' });
         return result as unknown as vite.TransformResult;
       } else {
         const result = await vite.transformWithEsbuild(code, id, {
           loader: 'ts',
         });
-
         return result;
       }
     },
   };
 }
 
-export function angularVitestPlugins() {
+export function angularVitestPlugins(
+  getInMap?: (id: string) => string | undefined,
+) {
   return [
     angularVitestPlugin(),
     angularVitestEsbuildPlugin(),
-    angularVitestSourcemapPlugin(),
+    angularVitestSourcemapPlugin(getInMap),
   ];
 }
