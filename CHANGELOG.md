@@ -1,3 +1,9 @@
+## [2.5.1-beta.3](https://github.com/analogjs/analog/compare/v2.5.1-beta.2...v2.5.1-beta.3) (2026-05-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve TS sourcemaps in test pipeline ([#2333](https://github.com/analogjs/analog/issues/2333)) ([46c608f](https://github.com/analogjs/analog/commit/46c608f0e365e483e623d52bd7ef61b01d535365))
+
 ## [2.5.1-beta.2](https://github.com/analogjs/analog/compare/v2.5.1-beta.1...v2.5.1-beta.2) (2026-04-29)
 
 ### Bug Fixes
