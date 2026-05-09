@@ -1,6 +1,10 @@
 import { promises as fsPromises } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, isAbsolute, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as vite from 'vite';
+
+const require = createRequire(import.meta.url);
 
 import * as compilerCli from '@angular/compiler-cli';
 import {
@@ -65,6 +69,12 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  /**
+   * Enable a background worker that runs Angular template type-checking
+   * (NgtscProgram in diagnostic-only mode) in parallel with fastCompile's
+   * code generation. Diagnostics are reported asynchronously to the console.
+   */
+  parallelTemplateTypeChecking?: boolean;
 }
 
 export function fastCompilePlugin(
@@ -73,6 +83,7 @@ export function fastCompilePlugin(
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
+  let typeCheckWorker: import('node:worker_threads').Worker | undefined;
 
   // fast-compile plugin state
   const registry: ComponentRegistry = new Map();
@@ -421,6 +432,8 @@ export function fastCompilePlugin(
       }
     }
 
+    typeCheckWorker?.postMessage({ type: 'check', files: [id] });
+
     return { code: outputCode, map: result.map };
   }
 
@@ -487,11 +500,70 @@ export function fastCompilePlugin(
           !filePath.endsWith('.d.ts')
         ) {
           await scanBarrelExports(filePath, new Set(), true);
+          typeCheckWorker?.postMessage({ type: 'check' });
+        }
+      });
+      server.watcher.on('unlink', (filePath) => {
+        if (filePath.endsWith('.ts')) {
+          // rootNames change shape — let the worker re-read tsconfig
+          typeCheckWorker?.postMessage({ type: 'check' });
         }
       });
     },
     async buildStart() {
       await initFastCompile();
+
+      if (
+        pluginOptions.parallelTemplateTypeChecking &&
+        watchMode &&
+        !typeCheckWorker
+      ) {
+        const { Worker } = await import('node:worker_threads');
+        // Resolve the sibling worker file relative to the running plugin
+        // module — the package's `exports` field doesn't expose deep
+        // subpaths, so `require.resolve('@analogjs/vite-plugin-angular/...')`
+        // would fail with ERR_PACKAGE_PATH_NOT_EXPORTED.
+        const workerPath = fileURLToPath(
+          new URL('./type-check-worker.js', import.meta.url),
+        );
+        typeCheckWorker = new Worker(workerPath);
+        typeCheckWorker.on('message', (msg: any) => {
+          if (msg.type === 'diagnostics' && msg.diagnostics?.length > 0) {
+            for (const d of msg.diagnostics) {
+              const loc = d.file ? `${d.file}:${d.line}:${d.column}` : '';
+              const prefix =
+                d.category === 'error'
+                  ? '\x1b[31m✗\x1b[0m'
+                  : '\x1b[33m⚠\x1b[0m';
+              // Negative codes are Angular-specific (NG); positive codes are
+              // TypeScript-emitted by ngtsc's template type-checker.
+              const codeTag = d.code < 0 ? `NG${-d.code}` : `TS${d.code}`;
+              console.log(
+                `${prefix} [template] ${codeTag}: ${d.message}${loc ? `\n  at ${loc}` : ''}`,
+              );
+            }
+          } else if (msg.type === 'error') {
+            console.warn(`[fast-compile] Type check worker: ${msg.message}`);
+          }
+        });
+        typeCheckWorker.on('error', (err) => {
+          console.warn(
+            `[fast-compile] Type check worker error: ${err.message}`,
+          );
+          typeCheckWorker = undefined;
+        });
+
+        typeCheckWorker.postMessage({
+          type: 'init',
+          tsconfig: resolveTsConfigPath(),
+        });
+      }
+    },
+    closeBundle() {
+      if (typeCheckWorker) {
+        typeCheckWorker.postMessage({ type: 'shutdown' });
+        typeCheckWorker = undefined;
+      }
     },
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module
@@ -519,6 +591,8 @@ export function fastCompilePlugin(
         // Pass overwrite=true so updated metadata replaces stale
         // entries from the previous scan.
         await scanBarrelExports(fileId, new Set(), true);
+
+        typeCheckWorker?.postMessage({ type: 'check', files: [fileId] });
       }
 
       // Let Vite handle the rest — the transform hook will recompile
