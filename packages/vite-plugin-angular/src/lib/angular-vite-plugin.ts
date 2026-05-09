@@ -118,6 +118,13 @@ export interface PluginOptions {
    * - `'partial'`: Emit partial declarations for library publishing.
    */
   fastCompileMode?: 'full' | 'partial';
+  /**
+   * When `fastCompile` is enabled, spawn a background worker that runs
+   * Angular's NgtscProgram in diagnostic-only mode in parallel with
+   * fastCompile's code generation. Reports template type-checking
+   * diagnostics asynchronously without blocking transforms.
+   */
+  parallelTemplateTypeChecking?: boolean;
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
@@ -159,6 +166,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
+    parallelTemplateTypeChecking:
+      options?.parallelTemplateTypeChecking ?? false,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -760,6 +769,8 @@ export function angular(options?: PluginOptions): Plugin[] {
         isTest,
         isAstroIntegration,
         fastCompileMode: pluginOptions.fastCompileMode,
+        parallelTemplateTypeChecking:
+          pluginOptions.parallelTemplateTypeChecking,
       })
     : angularPlugin();
 
