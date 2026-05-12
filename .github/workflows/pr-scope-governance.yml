@@ -1,7 +1,7 @@
 name: pr-scope-governance
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, reopened, edited, synchronize, ready_for_review]
 
 permissions:
