@@ -5,6 +5,7 @@ import aotProject from './src/aot/vitest.project';
 import snapshotSerializersProject from './src/snapshot-serializers/vitest.project';
 import providersProject from './src/providers/vitest.project';
 import resetTestBedBetweenTestsProject from './src/reset-test-bed-between-tests/vitest.project';
+import sourcemapProject from './src/sourcemap/vitest.project';
 
 export default defineConfig({
   root: __dirname,
@@ -30,6 +31,7 @@ export default defineConfig({
       resetTestBedBetweenTestsProject,
       providersProject,
       snapshotSerializersProject,
+      sourcemapProject,
     ],
   },
 });

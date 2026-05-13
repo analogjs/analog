@@ -66,8 +66,8 @@ export class TsconfigResolver {
     return compilerCli.readConfiguration(resolvedTsConfigPath, {
       suppressOutputPathCheck: true,
       outDir: undefined,
-      sourceMap: false,
-      inlineSourceMap: !isProd,
+      sourceMap: !isProd,
+      inlineSourceMap: false,
       inlineSources: !isProd,
       declaration: false,
       declarationMap: false,

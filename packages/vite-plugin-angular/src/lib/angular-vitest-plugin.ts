@@ -106,13 +106,20 @@ export function angularVitestEsbuildPlugin(): Plugin {
 }
 
 /**
- * Post-processes `.ts` files with the JS transformer (esbuild / OXC) to
- * re-align sourcemaps so breakpoints and coverage reports work correctly.
+ * Post-processing pass that converts any `.ts` files Angular's compilation
+ * skipped (e.g. files without Angular decorators when
+ * `useAngularCompilationAPI` is on) into runnable JS via esbuild/OXC.
  *
- * Inline style/template virtual modules (`?inline`) are excluded because
- * they are already handled by the Angular compiler.
+ * Files Angular already compiled have a sourcemap available via
+ * `getInMap` — we skip those here to avoid breaking the chain Vite is
+ * already wiring up. Re-running OXC over already-compiled JS produces a
+ * map relative to the TS-emitted JS, not the original .ts source, and
+ * OXC's `inMap` parameter does not chain through the way esbuild's inline
+ * `//# sourceMappingURL=` auto-detection does.
  */
-export function angularVitestSourcemapPlugin(): Plugin {
+export function angularVitestSourcemapPlugin(
+  getInMap?: (id: string) => string | undefined,
+): Plugin {
   return {
     name: '@analogjs/vitest-angular-sourcemap-plugin',
     transform: {
@@ -126,25 +133,23 @@ export function angularVitestSourcemapPlugin(): Plugin {
         id: /\.ts(?:\?|$)/,
       },
       async handler(code: string, id: string) {
-        const [, query] = id.split('?');
+        const [bareId, query] = id.split('?');
 
         if (query && query.includes('inline')) {
           return;
         }
 
-        if (isRolldown()) {
-          // lang must be 'ts' (not 'js') so OXC parses TypeScript syntax;
-          // using 'js' would cause parse errors on type annotations.
-          const result = await vite.transformWithOxc(code, id, {
-            lang: 'ts',
-          });
+        if (getInMap?.(bareId)) {
+          return;
+        }
 
-          return result as unknown as TransformResult;
+        if (isRolldown()) {
+          const result = await vite.transformWithOxc(code, id, { lang: 'ts' });
+          return result as unknown as vite.TransformResult;
         } else {
           const result = await vite.transformWithEsbuild(code, id, {
             loader: 'ts',
           });
-
           return result;
         }
       },
@@ -152,10 +157,12 @@ export function angularVitestSourcemapPlugin(): Plugin {
   };
 }
 
-export function angularVitestPlugins(): Plugin[] {
+export function angularVitestPlugins(
+  getInMap?: (id: string) => string | undefined,
+): Plugin[] {
   return [
     angularVitestPlugin(),
     angularVitestEsbuildPlugin(),
-    angularVitestSourcemapPlugin(),
+    angularVitestSourcemapPlugin(getInMap),
   ];
 }
