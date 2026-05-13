@@ -1,3 +1,23 @@
+## [2.5.1-beta.3](https://github.com/analogjs/analog/compare/v2.5.1-beta.2...v2.5.1-beta.3) (2026-05-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve TS sourcemaps in test pipeline ([#2333](https://github.com/analogjs/analog/issues/2333)) ([46c608f](https://github.com/analogjs/analog/commit/46c608f0e365e483e623d52bd7ef61b01d535365))
+
+## [2.5.1-beta.2](https://github.com/analogjs/analog/compare/v2.5.1-beta.1...v2.5.1-beta.2) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** keep fallback-block components eager in defer walker ([6f90b77](https://github.com/analogjs/analog/commit/6f90b777e45af5a566d96fd626d1a49a2c5f401d))
+- **vite-plugin-angular:** support [@defer](https://github.com/defer) nested inside [@switch](https://github.com/switch) / [@case](https://github.com/case) ([28c9600](https://github.com/analogjs/analog/commit/28c960068d473dc2cc0f4eff583bd11f0fd22220))
+- **vite-plugin-angular:** wrap binary/integer-literal receivers in member access ([8a0bae6](https://github.com/analogjs/analog/commit/8a0bae6c2d7713d26ab4ab99a153fc006a9595ec))
+
+## [2.5.1-beta.1](https://github.com/analogjs/analog/compare/v2.5.0...v2.5.1-beta.1) (2026-04-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** strip TS in fastCompile bypass for non-Angular files ([#2327](https://github.com/analogjs/analog/issues/2327)) ([d337c55](https://github.com/analogjs/analog/commit/d337c55ffe83b1a961e6aa91e805feab12e1aa1b))
+
 # [2.5.0](https://github.com/analogjs/analog/compare/v2.4.10...v2.5.0) (2026-04-28)
 
 ### Bug Fixes

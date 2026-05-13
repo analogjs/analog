@@ -267,9 +267,25 @@ export function fastCompilePlugin(
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
     if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
-      // Non-Angular file — leave it alone so a downstream plugin (or
-      // Vite's built-in TS handler) can process it.
-      return undefined;
+      // Non-Angular file — strip TS-only syntax ourselves so barrels
+      // like `export { Foo, type Bar } from './x'` and other TS-only
+      // forms don't leak unstripped to Rolldown. In rolldown-vite the
+      // built-in `vite:oxc` strip is registered as a Rust-side native
+      // plugin (`viteTransformPlugin` from `rolldown/experimental`); if
+      // its hook-filter treats files our `transform.filter.id.include`
+      // claimed as already-handled, no JS-side fallback runs and raw
+      // TS reaches the parser → `SyntaxError: Unexpected identifier`.
+      const stripped = vite.transformWithOxc
+        ? await vite.transformWithOxc(code, id, {
+            lang: 'ts',
+            sourcemap: true,
+            decorator: { legacy: false, emitDecoratorMetadata: false },
+          })
+        : await vite.transformWithEsbuild(code, id, {
+            loader: 'ts',
+            sourcemap: true,
+          });
+      return { code: stripped.code, map: stripped.map };
     }
 
     // JIT mode

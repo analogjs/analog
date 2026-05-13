@@ -727,9 +727,17 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           }
 
+          if (typescriptResult.map) {
+            // TS emits `//# sourceMappingURL=foo.js.map` at the end of the
+            // .js content, but the .map file isn't served by Vite — we
+            // return the map object directly. Strip the stale reference so
+            // downstream tools don't see two sourceMappingURL comments.
+            data = data.replace(/\s*\/\/# sourceMappingURL=[^\r\n]*\s*$/, '');
+          }
+
           return {
             code: data,
-            map: null,
+            map: typescriptResult.map ?? null,
           };
         },
       },
@@ -769,7 +777,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     !pluginOptions.fastCompile &&
       pluginOptions.liveReload &&
       liveReloadPlugin({ classNames, fileEmitter }),
-    ...(isTest && !isStackBlitz ? angularVitestPlugins() : []),
+    ...(isTest && !isStackBlitz
+      ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
+      : []),
     (jit &&
       jitPlugin({
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
@@ -1025,8 +1035,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
         suppressOutputPathCheck: true,
         outDir: undefined,
-        sourceMap: false,
-        inlineSourceMap: !isProd,
+        sourceMap: !isProd,
+        inlineSourceMap: false,
         inlineSources: !isProd,
         declaration: false,
         declarationMap: false,
@@ -1217,9 +1227,26 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
+      // TS emits the .js.map file separately — attach it to the entry for
+      // the same source file so the transform hook can return the map and
+      // coverage tools can chain maps back to the original TS. The .map can
+      // arrive before or after the .js, so upsert in either order. Match
+      // only `.js.map` (not `.d.ts.map`) so a future `declarationMap: true`
+      // doesn't clobber the JS source map with the declaration map.
+      if (/\.[cm]?js\.map$/.test(_filename)) {
+        const existing = outputFiles.get(filename);
+        outputFiles.set(filename, {
+          ...(existing ?? { dependencies: [] }),
+          map: content,
+        });
+        return;
+      }
+
       const metadata = watchMode ? fileMetadata(filename) : {};
+      const existing = outputFiles.get(filename);
 
       outputFiles.set(filename, {
+        ...(existing ?? {}),
         content,
         dependencies: [],
         errors: metadata.errors,
@@ -1236,11 +1263,18 @@ export function angular(options?: PluginOptions): Plugin[] {
       }
 
       let content = '';
+      let map: string | undefined;
+      let mapFilename: string | undefined;
       builder.emit(
         sourceFile,
         (filename, data) => {
           if (/\.[cm]?js$/.test(filename)) {
             content = data;
+          }
+
+          if (/\.[cm]?js\.map$/.test(filename)) {
+            map = data;
+            mapFilename = filename;
           }
 
           if (
@@ -1273,6 +1307,11 @@ export function angular(options?: PluginOptions): Plugin[] {
       );
 
       writeFileCallback(id, content, false, undefined, [sourceFile]);
+      if (map !== undefined && mapFilename !== undefined) {
+        // Use the filename TypeScript emitted (handles `.cts`/`.mts` as well
+        // as `.ts`) instead of regex-replacing the source `.ts` extension.
+        writeFileCallback(mapFilename, map, false, undefined, [sourceFile]);
+      }
 
       if (angularCompiler) {
         angularCompiler.incrementalCompilation.recordSuccessfulEmit(sourceFile);
