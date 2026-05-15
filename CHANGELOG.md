@@ -1,3 +1,10 @@
+## [2.5.2-beta.2](https://github.com/analogjs/analog/compare/v2.5.2-beta.1...v2.5.2-beta.2) (2026-05-15)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** reject @Service on Angular below 22 ([bc63520](https://github.com/analogjs/analog/commit/bc63520720dd983d6ae8e2dcd6a936efe6168625))
+- **vite-plugin-angular:** support the @Service decorator in the fast compiler ([b284696](https://github.com/analogjs/analog/commit/b284696088faa4e65f572eb83708329b6eed3f79))
+
 ## [2.5.2-beta.1](https://github.com/analogjs/analog/compare/v2.5.1...v2.5.2-beta.1) (2026-05-15)
 
 ### Bug Fixes
