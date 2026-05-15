@@ -236,6 +236,18 @@ const CATEGORY_MIN_MAJOR: Record<string, number> = {
   service_decorator: 22,
 };
 
+// Compliance categories the fast compiler deliberately does not run in this
+// sweep, each with a reason. This list exists so the drift detector can tell
+// a consciously-skipped category apart from a brand-new one Angular just
+// added — see the "compliance category drift" test at the end of the file.
+const UNSUPPORTED_CATEGORIES: Record<string, string> = {
+  r3_view_compiler_arrow_functions: 'template arrow functions — not yet wired',
+  r3_view_compiler_i18n: 'i18n message extraction — not yet wired',
+  r3_view_compiler_providers: 'view-level providers — not yet wired',
+  signal_queries: 'signal-based queries — not yet wired',
+  source_mapping: 'template source maps — out of scope for the fast compiler',
+};
+
 // Skip test cases known to be unsupported
 const SKIP_PATTERNS = [
   /local compilation/i,
@@ -350,6 +362,33 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
       }
     });
   }
+
+  // Drift detector: every directory under Angular's compliance test_cases
+  // must be consciously triaged — either into CATEGORIES (we run it) or
+  // UNSUPPORTED_CATEGORIES (we skip it, with a reason). A directory in
+  // neither means Angular shipped new compiler fixtures the fast compiler
+  // has never been checked against; fail loudly so a maintainer triages it
+  // rather than letting the gap pass silently.
+  it('has no untriaged Angular compliance categories', () => {
+    const onDisk = fs
+      .readdirSync(COMPLIANCE_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    const triaged = new Set([
+      ...CATEGORIES,
+      ...Object.keys(UNSUPPORTED_CATEGORIES),
+    ]);
+    const untriaged = onDisk.filter((name) => !triaged.has(name));
+
+    expect(
+      untriaged,
+      `New Angular compliance categories detected: [${untriaged.join(', ')}]. ` +
+        `Angular added compiler test fixtures the fast compiler has not been ` +
+        `triaged against. Add each to CATEGORIES (and implement support) or to ` +
+        `UNSUPPORTED_CATEGORIES (with a reason) in conformance.spec.ts.`,
+    ).toEqual([]);
+  });
 
   it('summary', () => {
     const total = results.pass + results.fail + results.skip + results.error;
