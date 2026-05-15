@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { compile, type CompileOptions } from './compile';
 import { scanFile, type ComponentRegistry } from './registry';
+import { angularVersionAtLeast } from './angular-version';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -112,6 +113,8 @@ function expectEmit(
     };
   }
 
+  const actualAggressive = aggressiveNorm(actualNorm);
+
   let matched = 0;
   for (const ec of expectedCalls) {
     const ecNorm = normalizeInstruction(ec.full);
@@ -122,6 +125,13 @@ function expectEmit(
     }
     // Try normalized match (template↔domTemplate, named→anon functions)
     if (actualNormInstr.includes(ecNorm)) {
+      matched++;
+      continue;
+    }
+    // Try cosmetic-insensitive match: the same normalization the ellipsis
+    // path uses. Catches calls textually identical apart from whitespace
+    // — e.g. our `{token: …}` vs Angular's `{ token: … }`.
+    if (actualAggressive.includes(aggressiveNorm(ec.full))) {
       matched++;
       continue;
     }
@@ -216,7 +226,15 @@ const CATEGORIES = [
   'signal_inputs', // v17-v18 category name
   'model_inputs', // v17+ model inputs
   'output_function', // v17+ output function
+  'service_decorator', // v22+ @Service decorator
 ];
+
+// Categories that only exist (and only compile) on a minimum Angular major.
+// A category gated here still counts as "covered" for the drift detector
+// below; it is just skipped when the installed compiler is too old.
+const CATEGORY_MIN_MAJOR: Record<string, number> = {
+  service_decorator: 22,
+};
 
 // Skip test cases known to be unsupported
 const SKIP_PATTERNS = [
@@ -244,6 +262,9 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
   for (const category of CATEGORIES) {
     const categoryDir = path.join(COMPLIANCE_DIR, category);
     if (!fs.existsSync(categoryDir)) continue;
+
+    const minMajor = CATEGORY_MIN_MAJOR[category];
+    if (minMajor && !angularVersionAtLeast(minMajor)) continue;
 
     const testCases = loadTestCases(categoryDir);
     if (testCases.length === 0) continue;
