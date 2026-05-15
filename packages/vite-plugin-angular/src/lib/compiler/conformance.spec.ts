@@ -221,6 +221,7 @@ const CATEGORIES = [
   'r3_view_compiler_directives',
   'r3_view_compiler_styling',
   'r3_view_compiler_di',
+  'r3_view_compiler_arrow_functions',
   'r3_view_compiler',
   'r3_compiler_compliance',
   'signal_inputs', // v17-v18 category name
@@ -241,7 +242,6 @@ const CATEGORY_MIN_MAJOR: Record<string, number> = {
 // a consciously-skipped category apart from a brand-new one Angular just
 // added — see the "compliance category drift" test at the end of the file.
 const UNSUPPORTED_CATEGORIES: Record<string, string> = {
-  r3_view_compiler_arrow_functions: 'template arrow functions — not yet wired',
   r3_view_compiler_i18n: 'i18n message extraction — not yet wired',
   r3_view_compiler_providers: 'view-level providers — not yet wired',
   signal_queries: 'signal-based queries — not yet wired',
