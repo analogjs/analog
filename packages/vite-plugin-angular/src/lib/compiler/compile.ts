@@ -34,6 +34,7 @@ import {
 import { ComponentRegistry } from './registry.js';
 import { findAllClasses } from './utils.js';
 import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
+import { angularVersionAtLeast } from './angular-version.js';
 import {
   detectTypeOnlyImportNames,
   elideTypeOnlyImportsMagicString,
@@ -966,6 +967,34 @@ export function compile(
             const inj = o.compileInjectable(injectableMeta, true);
             ivyCode.push(
               `static ɵprov = /*@__PURE__*/ ${emitAngularExpr(inj.expression)}`,
+            );
+          }
+          break;
+        }
+
+        case 'Service': {
+          // `@Service` (and the `compileService` compiler API) landed in
+          // Angular 22. Skip on older peers where the API is absent.
+          if (!angularVersionAtLeast(22)) break;
+          targetType = (FactoryTarget as any).Service;
+          const serviceMeta: any = {
+            name: className,
+            type: classRef,
+            typeArgumentCount: 0,
+          };
+          if (meta.autoProvided === false) serviceMeta.autoProvided = false;
+          if (meta.factory) serviceMeta.factory = meta.factory;
+          if (isPartial) {
+            const svc = (o as any).compileDeclareServiceFromMetadata(
+              serviceMeta,
+            );
+            ivyCode.push(
+              `static ɵprov = /*@__PURE__*/ ${emitAngularExpr(svc.expression)}`,
+            );
+          } else {
+            const svc = (o as any).compileService(serviceMeta, false);
+            ivyCode.push(
+              `static ɵprov = /*@__PURE__*/ ${emitAngularExpr(svc.expression)}`,
             );
           }
           break;
