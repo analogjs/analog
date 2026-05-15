@@ -292,6 +292,11 @@ const CATEGORY_MIN_MAJOR: Record<string, number> = {
 // added — see the "compliance category drift" test at the end of the file.
 const UNSUPPORTED_CATEGORIES: Record<string, string> = {
   source_mapping: 'template source maps — out of scope for the fast compiler',
+  // Present in Angular 21.x fixtures (not on 22/main). Tests the
+  // source-to-source "isolated" transform mode — expected outputs are
+  // transformed `.ts` + `.ngtypecheck.ts` shims, not Ivy JS.
+  isolated:
+    'source-to-source isolated transform mode — fast compiler emits Ivy JS only',
 };
 
 // Skip test cases known to be unsupported
