@@ -81,10 +81,10 @@ export function jitTransform(
       const expr = dec.expression;
       if (!expr || expr.type !== 'CallExpression') return false;
       const name: string | undefined = expr.callee?.name;
-      // Keep @Injectable on the class — Angular's decorator function
-      // self-registers ɵprov (providedIn) at class definition time and
-      // there is no ɵcompileInjectable JIT entry point to call instead.
-      if (name === 'Injectable') return false;
+      // Keep @Injectable and @Service on the class — their decorator
+      // functions self-register ɵprov/ɵfac at class definition time and
+      // there is no JIT compile entry point to call instead.
+      if (name === 'Injectable' || name === 'Service') return false;
       return name !== undefined && ANGULAR_DECORATORS.has(name);
     });
     if (angularDecs.length === 0) continue;

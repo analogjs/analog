@@ -5,19 +5,20 @@
  * across multiple source files (compile, registry, JIT, metadata).
  */
 
-/** All five Angular class decorators. */
+/** All six Angular class decorators. */
 export const ANGULAR_DECORATORS = new Set([
   'Component',
   'Directive',
   'Pipe',
   'Injectable',
+  'Service',
   'NgModule',
 ]);
 
 /**
  * Angular decorators that produce compilable declarations (selector, template,
- * pipe name, or module exports).  Excludes `@Injectable` which self-registers
- * via ɵprov and doesn't need Ivy compilation.
+ * pipe name, or module exports).  Excludes `@Injectable` and `@Service`, which
+ * self-register via ɵprov and don't need Ivy compilation.
  */
 export const COMPILABLE_DECORATORS = new Set([
   'Component',

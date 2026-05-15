@@ -123,7 +123,7 @@ function propKeyName(prop: any): string | null {
 
 /**
  * Extract decorator metadata from an OXC decorator AST node.
- * Parses @Component, @Directive, @Pipe, @Injectable, @NgModule arguments.
+ * Parses @Component, @Directive, @Pipe, @Injectable, @Service, @NgModule arguments.
  *
  * `stringConsts`, when provided, lets string-typed metadata fields
  * (`template`, `selector`, `templateUrl`, `styles`, `styleUrl`, `styleUrls`,
@@ -316,6 +316,15 @@ export function extractMetadata(
       }
       case 'useFactory':
         meta[key] = new o.WrappedNodeExpr(valNode);
+        break;
+      // `@Service` configuration. `autoProvided` defaults to `true`, so only
+      // an explicit `false` is meaningful; `factory` is a bare expression
+      // forwarded to compileService.
+      case 'autoProvided':
+        meta.autoProvided = valText === 'true';
+        break;
+      case 'factory':
+        meta.factory = new o.WrappedNodeExpr(valNode);
         break;
       case 'hostDirectives':
         if (valNode.type === 'ArrayExpression') {
