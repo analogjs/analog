@@ -91,6 +91,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `@Directive`  | `ɵdir`, `ɵfac`, `setClassMetadata`         | Host bindings, listeners, inputs/outputs                          |
 | `@Pipe`       | `ɵpipe`, `ɵfac`, `setClassMetadata`        | Pure and impure                                                   |
 | `@Injectable` | `ɵprov`, `ɵfac`, `setClassMetadata`        | `providedIn`, `useFactory`, `useClass`, `useExisting`, `useValue` |
+| `@Service`    | `ɵprov`, `ɵfac`, `setClassMetadata`        | Angular 22+; `autoProvided`, `factory`; emits `ɵɵdefineService`   |
 | `@NgModule`   | `ɵmod`, `ɵinj`, `ɵfac`, `setClassMetadata` | Declarations, exports, providers, bootstrap                       |
 
 ### Field Decorators
@@ -417,6 +418,12 @@ The compiler is validated against Angular's official compliance test suite. A co
 | next (v22.0.0)     | 91.8%     | 160   |
 
 Remaining soft-failures are output formatting differences (`@defer` multi-file deps, named function patterns), not functional issues. All versions produce 0 hard test failures.
+
+#### Category Drift Detection
+
+The conformance runner only tests the compliance categories listed in `CATEGORIES`. On its own that means a new Angular feature — a new decorator, a new template construct — is silently ignored: the suite keeps testing what it already knows and never reports the gap.
+
+The `has no untriaged Angular compliance categories` test closes this. It enumerates every directory under Angular's `test_cases` and asserts each is consciously triaged into either `CATEGORIES` (run) or `UNSUPPORTED_CATEGORIES` (skipped, with a reason). A directory in neither fails the test. When Angular ships new compiler fixtures — as it did with `service_decorator` in v22 — the drift detector fails until a maintainer either implements support or records a deliberate skip. Because the conformance matrix includes the `next` (prerelease) slot, the warning lands a major version early.
 
 #### Running Conformance Tests
 
