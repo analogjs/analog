@@ -1,3 +1,9 @@
+## [2.5.2-beta.1](https://github.com/analogjs/analog/compare/v2.5.1...v2.5.2-beta.1) (2026-05-15)
+
+### Bug Fixes
+
+- **storybook-angular:** support Storybook 10.4+ object-shaped core preset ([#2337](https://github.com/analogjs/analog/issues/2337)) ([1956794](https://github.com/analogjs/analog/commit/1956794ce6bb0b15d5aacf53a81b22469bb568a7))
+
 ## [2.5.1](https://github.com/analogjs/analog/compare/v2.5.0...v2.5.1) (2026-05-13)
 
 ### Bug Fixes
