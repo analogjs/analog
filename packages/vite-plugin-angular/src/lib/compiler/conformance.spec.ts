@@ -226,6 +226,7 @@ const CATEGORIES = [
   'r3_view_compiler',
   'r3_compiler_compliance',
   'signal_inputs', // v17-v18 category name
+  'signal_queries', // v17+ signal-based queries
   'model_inputs', // v17+ model inputs
   'output_function', // v17+ output function
   'service_decorator', // v22+ @Service decorator
@@ -244,7 +245,6 @@ const CATEGORY_MIN_MAJOR: Record<string, number> = {
 // added — see the "compliance category drift" test at the end of the file.
 const UNSUPPORTED_CATEGORIES: Record<string, string> = {
   r3_view_compiler_i18n: 'i18n message extraction — not yet wired',
-  signal_queries: 'signal-based queries — not yet wired',
   source_mapping: 'template source maps — out of scope for the fast compiler',
 };
 
