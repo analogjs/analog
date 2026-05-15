@@ -209,6 +209,39 @@ function loadFile(categoryDir: string, fileName: string): string {
   return fs.readFileSync(filePath, 'utf-8');
 }
 
+interface TestCaseGroup {
+  /** Directory holding this group's TEST_CASES.json and fixture files. */
+  dir: string;
+  /** Subpath relative to the category dir; '' for the category's own file. */
+  label: string;
+  cases: TestCase[];
+}
+
+// Discover TEST_CASES.json files for a category. Always includes the
+// category's own file; when `recurse` is set, also descends into
+// subdirectories. Angular nests related fixtures into subfolders (the i18n
+// category groups ICU, namespace, and block cases this way), and a flat
+// read of the top-level file alone would miss them.
+function loadTestCaseGroups(
+  categoryDir: string,
+  recurse: boolean,
+): TestCaseGroup[] {
+  const groups: TestCaseGroup[] = [];
+  const walk = (dir: string) => {
+    const cases = loadTestCases(dir);
+    if (cases.length > 0) {
+      groups.push({ dir, label: path.relative(categoryDir, dir), cases });
+    }
+    if (recurse) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.isDirectory()) walk(path.join(dir, entry.name));
+      }
+    }
+  };
+  walk(categoryDir);
+  return groups;
+}
+
 // Categories to test (focus on features this compiler supports)
 const CATEGORIES = [
   'r3_view_compiler_control_flow',
@@ -230,7 +263,13 @@ const CATEGORIES = [
   'model_inputs', // v17+ model inputs
   'output_function', // v17+ output function
   'service_decorator', // v22+ @Service decorator
+  'r3_view_compiler_i18n', // i18n / ICU (fixtures nested in subdirectories)
 ];
+
+// Categories whose fixtures are split across subdirectories that the runner
+// descends into. Other wired categories also have nested fixture folders
+// that are not yet swept — wiring those is tracked as separate follow-up.
+const NESTED_CATEGORIES = new Set(['r3_view_compiler_i18n']);
 
 // Categories that only exist (and only compile) on a minimum Angular major.
 // A category gated here still counts as "covered" for the drift detector
@@ -244,7 +283,6 @@ const CATEGORY_MIN_MAJOR: Record<string, number> = {
 // a consciously-skipped category apart from a brand-new one Angular just
 // added — see the "compliance category drift" test at the end of the file.
 const UNSUPPORTED_CATEGORIES: Record<string, string> = {
-  r3_view_compiler_i18n: 'i18n message extraction — not yet wired',
   source_mapping: 'template source maps — out of scope for the fast compiler',
 };
 
@@ -278,87 +316,98 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
     const minMajor = CATEGORY_MIN_MAJOR[category];
     if (minMajor && !angularVersionAtLeast(minMajor)) continue;
 
-    const testCases = loadTestCases(categoryDir);
-    if (testCases.length === 0) continue;
+    const groups = loadTestCaseGroups(
+      categoryDir,
+      NESTED_CATEGORIES.has(category),
+    );
+    if (groups.every((g) => g.cases.length === 0)) continue;
 
     describe(category, () => {
-      for (const tc of testCases) {
-        if (shouldSkip(tc)) {
-          it.skip(tc.description, () => {});
-          results.skip++;
-          continue;
-        }
+      for (const group of groups) {
+        for (const tc of group.cases) {
+          // Prefix nested-subdirectory cases so descriptions repeated
+          // across subdirectories stay distinguishable in the output.
+          const label = group.label
+            ? `${group.label}: ${tc.description}`
+            : tc.description;
 
-        it(tc.description, () => {
-          // Build a registry from all .ts files in the test directory
-          // so cross-file references (e.g. @defer deps) can be resolved
-          const registry: ComponentRegistry = new Map();
-          try {
-            const allTsFiles = fs
-              .readdirSync(categoryDir)
-              .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
-            for (const f of allTsFiles) {
-              const code = loadFile(categoryDir, f);
-              if (!code) continue;
-              for (const entry of scanFile(code, path.join(categoryDir, f))) {
-                registry.set(entry.className, entry);
-              }
-            }
-          } catch {
-            /* ignore scan errors */
+          if (shouldSkip(tc)) {
+            it.skip(label, () => {});
+            results.skip++;
+            continue;
           }
 
-          // Load and compile all input files
-          for (const inputFile of tc.inputFiles) {
-            if (!inputFile) {
-              results.skip++;
-              continue;
-            }
-            const inputCode = loadFile(categoryDir, inputFile);
-            if (!inputCode) {
-              results.skip++;
-              return;
-            }
-
-            let compiled: string;
+          it(label, () => {
+            // Build a registry from all .ts files in the test directory
+            // so cross-file references (e.g. @defer deps) can be resolved
+            const registry: ComponentRegistry = new Map();
             try {
-              const result = compile(
-                inputCode,
-                path.join(categoryDir, inputFile),
-                { registry, useDefineForClassFields: true },
-              );
-              compiled = result.code;
-            } catch (e: any) {
-              // Some test cases use features we don't support — record as error
-              results.error++;
-              // Don't fail the test, just record the error
-              expect(true).toBe(true);
-              return;
+              const allTsFiles = fs
+                .readdirSync(group.dir)
+                .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
+              for (const f of allTsFiles) {
+                const code = loadFile(group.dir, f);
+                if (!code) continue;
+                for (const entry of scanFile(code, path.join(group.dir, f))) {
+                  registry.set(entry.className, entry);
+                }
+              }
+            } catch {
+              /* ignore scan errors */
             }
 
-            // Check expectations
-            for (const expectation of tc.expectations) {
-              if (!expectation.files || !Array.isArray(expectation.files))
+            // Load and compile all input files
+            for (const inputFile of tc.inputFiles || []) {
+              if (!inputFile) {
+                results.skip++;
                 continue;
-              for (const file of expectation.files) {
-                if (!file?.expected) continue;
-                const expectedCode = loadFile(categoryDir, file.expected);
-                if (!expectedCode) continue;
+              }
+              const inputCode = loadFile(group.dir, inputFile);
+              if (!inputCode) {
+                results.skip++;
+                return;
+              }
 
-                const result = expectEmit(compiled, expectedCode);
-                if (!result.pass) {
-                  results.fail++;
-                  // Soft failure — report but don't block other tests
-                  console.warn(
-                    `[CONFORMANCE FAIL] ${category}/${tc.description}: ${result.message}`,
-                  );
-                } else {
-                  results.pass++;
+              let compiled: string;
+              try {
+                const result = compile(
+                  inputCode,
+                  path.join(group.dir, inputFile),
+                  { registry, useDefineForClassFields: true },
+                );
+                compiled = result.code;
+              } catch (e: any) {
+                // Some test cases use features we don't support — record as error
+                results.error++;
+                // Don't fail the test, just record the error
+                expect(true).toBe(true);
+                return;
+              }
+
+              // Check expectations
+              for (const expectation of tc.expectations || []) {
+                if (!expectation.files || !Array.isArray(expectation.files))
+                  continue;
+                for (const file of expectation.files) {
+                  if (!file?.expected) continue;
+                  const expectedCode = loadFile(group.dir, file.expected);
+                  if (!expectedCode) continue;
+
+                  const result = expectEmit(compiled, expectedCode);
+                  if (!result.pass) {
+                    results.fail++;
+                    // Soft failure — report but don't block other tests
+                    console.warn(
+                      `[CONFORMANCE FAIL] ${category}/${label}: ${result.message}`,
+                    );
+                  } else {
+                    results.pass++;
+                  }
                 }
               }
             }
-          }
-        });
+          });
+        }
       }
     });
   }
