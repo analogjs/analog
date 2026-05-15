@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { core as PresetCore } from '@storybook/angular/preset';
+import * as angularPreset from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import * as vite from 'vite';
 
@@ -28,7 +28,10 @@ export const previewAnnotations = async (entries = [], options) => {
 };
 
 export const core = async (config, options) => {
-  const presetCore = await PresetCore(config, options);
+  const presetCore =
+    typeof angularPreset.core === 'function'
+      ? await angularPreset.core(config, options)
+      : { ...config, ...angularPreset.core };
   return {
     ...presetCore,
     builder: {
