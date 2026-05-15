@@ -974,8 +974,15 @@ export function compile(
 
         case 'Service': {
           // `@Service` (and the `compileService` compiler API) landed in
-          // Angular 22. Skip on older peers where the API is absent.
-          if (!angularVersionAtLeast(22)) break;
+          // Angular 22. On older peers the decorator does not exist; fail
+          // loudly rather than falling through and emitting a default
+          // `Injectable`-target factory with no `ɵprov`.
+          if (!angularVersionAtLeast(22)) {
+            classCompileError = new Error(
+              `[fast-compile] @Service on ${className} requires Angular 22 or later`,
+            );
+            break;
+          }
           targetType = (FactoryTarget as any).Service;
           const serviceMeta: any = {
             name: className,
