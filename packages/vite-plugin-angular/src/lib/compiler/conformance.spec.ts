@@ -267,9 +267,17 @@ const CATEGORIES = [
 ];
 
 // Categories whose fixtures are split across subdirectories that the runner
-// descends into. Other wired categories also have nested fixture folders
-// that are not yet swept — wiring those is tracked as separate follow-up.
-const NESTED_CATEGORIES = new Set(['r3_view_compiler_i18n']);
+// descends into. Angular nests related fixtures into subfolders; a flat read
+// of the category's top-level TEST_CASES.json alone would miss them.
+const NESTED_CATEGORIES = new Set([
+  'r3_view_compiler_i18n',
+  'r3_view_compiler_bindings',
+  'r3_view_compiler_styling',
+  'r3_view_compiler_di',
+  'r3_view_compiler_directives',
+  'r3_view_compiler',
+  'r3_compiler_compliance',
+]);
 
 // Categories that only exist (and only compile) on a minimum Angular major.
 // A category gated here still counts as "covered" for the drift detector
