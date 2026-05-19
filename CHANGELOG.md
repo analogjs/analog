@@ -1,3 +1,9 @@
+## [2.5.2-beta.3](https://github.com/analogjs/analog/compare/v2.5.2-beta.2...v2.5.2-beta.3) (2026-05-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip source .d.ts files for composite TS projects ([#2335](https://github.com/analogjs/analog/issues/2335)) ([96ec5b3](https://github.com/analogjs/analog/commit/96ec5b38c030aa36009be2c6f0d9c5be342aa351))
+
 ## [2.5.2-beta.2](https://github.com/analogjs/analog/compare/v2.5.2-beta.1...v2.5.2-beta.2) (2026-05-15)
 
 ### Bug Fixes
