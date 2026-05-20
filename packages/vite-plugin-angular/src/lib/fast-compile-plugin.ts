@@ -298,17 +298,33 @@ export function fastCompilePlugin(
       // StackBlitz / WebContainer — and the production build pipeline
       // does not register it either — so the JIT path must self-strip
       // to stay safe across environments.
+      //
+      // Pass the jitTransform map as `inMap` so OXC/esbuild emit a map
+      // composed with the original `.ts` source — without this, debug
+      // stack traces and breakpoints land on the wrong lines once the
+      // strip removes any TS-only token. `jitTransform` returns
+      // `map: null` for files with no Angular class (no edits made);
+      // passing that to OXC/esbuild as `inMap` throws, so coerce to
+      // `undefined` in that case.
+      const inMap = result.map ?? undefined;
       const stripped = vite.transformWithOxc
-        ? await vite.transformWithOxc(result.code, id, {
-            lang: 'ts',
-            sourcemap: false,
-            decorator: { legacy: false, emitDecoratorMetadata: false },
-          })
-        : await vite.transformWithEsbuild(result.code, id, {
-            loader: 'ts',
-            sourcemap: false,
-          });
-      return { code: stripped.code, map: result.map };
+        ? await vite.transformWithOxc(
+            result.code,
+            id,
+            {
+              lang: 'ts',
+              sourcemap: true,
+              decorator: { legacy: false, emitDecoratorMetadata: false },
+            },
+            inMap,
+          )
+        : await vite.transformWithEsbuild(
+            result.code,
+            id,
+            { loader: 'ts', sourcemap: true },
+            inMap,
+          );
+      return { code: stripped.code, map: stripped.map };
     }
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation
