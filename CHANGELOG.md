@@ -1,3 +1,9 @@
+## [2.5.2-beta.5](https://github.com/analogjs/analog/compare/v2.5.2-beta.4...v2.5.2-beta.5) (2026-05-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** compose fastCompile JIT strip map and cover esbuild fallback ([#2341](https://github.com/analogjs/analog/issues/2341)) ([532aa3e](https://github.com/analogjs/analog/commit/532aa3e0ff239175ead36d57278a243022492f0c))
+
 ## [2.5.2-beta.4](https://github.com/analogjs/analog/compare/v2.5.2-beta.3...v2.5.2-beta.4) (2026-05-20)
 
 ### Bug Fixes
