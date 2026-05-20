@@ -155,6 +155,8 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 - `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
 - `teardown.destroyAfterEach` (boolean): Whether to destroy the test environment after each test. Set to `false` to keep the component rendered, allowing you to inspect its final state. (default: `true`)
 
+Each Vitest setup file can call `setupTestBed()` with its own configuration. If multiple setup files run in the same Vitest process, the latest call replaces the active Angular test environment so project-specific providers and options do not leak across test projects.
+
 **Example with options:**
 
 ```ts
