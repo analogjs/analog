@@ -291,7 +291,24 @@ export function fastCompilePlugin(
     // JIT mode
     if (pluginOptions.jit) {
       const result = jitTransform(code, id);
-      return { code: result.code, map: result.map };
+      // Strip TypeScript-only syntax (e.g. `readonly`, parameter property
+      // modifiers, type annotations on fields) so the output is valid JS
+      // for Rolldown. `angularVitestSourcemapPlugin` normally runs this
+      // strip downstream in tests, but it is intentionally skipped on
+      // StackBlitz / WebContainer — and the production build pipeline
+      // does not register it either — so the JIT path must self-strip
+      // to stay safe across environments.
+      const stripped = vite.transformWithOxc
+        ? await vite.transformWithOxc(result.code, id, {
+            lang: 'ts',
+            sourcemap: false,
+            decorator: { legacy: false, emitDecoratorMetadata: false },
+          })
+        : await vite.transformWithEsbuild(result.code, id, {
+            loader: 'ts',
+            sourcemap: false,
+          });
+      return { code: stripped.code, map: result.map };
     }
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation
