@@ -1,3 +1,9 @@
+## [2.5.2-beta.4](https://github.com/analogjs/analog/compare/v2.5.2-beta.3...v2.5.2-beta.4) (2026-05-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** strip TS in fastCompile JIT path for StackBlitz ([#2340](https://github.com/analogjs/analog/issues/2340)) ([44e6334](https://github.com/analogjs/analog/commit/44e6334cd9add9187fab6f5007e0b43361a9d84c))
+
 ## [2.5.2-beta.3](https://github.com/analogjs/analog/compare/v2.5.2-beta.2...v2.5.2-beta.3) (2026-05-19)
 
 ### Bug Fixes
