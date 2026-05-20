@@ -167,14 +167,76 @@ export class App {
     );
 
     // OXC strip must have been called with the jitTransform output (which
-    // still contains `readonly`) so Rolldown receives valid JS.
+    // still contains `readonly`) so Rolldown receives valid JS. We also
+    // pass the jitTransform map as `inMap` so OXC composes the strip map
+    // with it, keeping debug positions accurate.
     const oxcStripCall = mockTransformWithOxc.mock.calls.find(
       ([, callId]) => callId === '/src/app/app.ts',
     );
     expect(oxcStripCall).toBeDefined();
     expect(oxcStripCall![0]).toContain('readonly');
-    expect(oxcStripCall![2]).toMatchObject({ lang: 'ts' });
+    expect(oxcStripCall![2]).toMatchObject({ lang: 'ts', sourcemap: true });
+    expect(oxcStripCall![3]).toBeDefined(); // inMap from jitTransform
     expect(result.code).not.toContain('readonly');
+  });
+
+  it('JIT path falls back to esbuild when transformWithOxc is unavailable', async () => {
+    // Vite 6-8 compatibility: the same regression coverage as the OXC test
+    // above, but exercising the esbuild branch the plugin takes when
+    // `vite.transformWithOxc` is undefined (Vite 6 / pre-Rolldown).
+    mockTransformWithEsbuild.mockResolvedValue({
+      code: 'export class App { test = ""; }\n',
+      map: { mappings: '' },
+    });
+
+    const viteMod = await import('vite');
+    const realOxc = viteMod.transformWithOxc;
+    Object.defineProperty(viteMod, 'transformWithOxc', {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      const plugin = fastCompilePlugin({
+        tsconfigGetter: () => 'tsconfig.json',
+        workspaceRoot: '/workspace',
+        inlineStylesExtension: 'css',
+        jit: true,
+        liveReload: false,
+        supportedBrowsers: [],
+        isTest: true,
+        isAstroIntegration: false,
+      });
+      const handler = getTransformHandler(plugin);
+
+      const code = `import { Component } from '@angular/core';
+@Component({ selector: 'app-root', template: '<div></div>' })
+export class App {
+  readonly test = '';
+}
+`;
+      const result = await handler.call(
+        { addWatchFile: () => undefined },
+        code,
+        '/src/app/app.ts',
+      );
+
+      const esbuildStripCall = mockTransformWithEsbuild.mock.calls.find(
+        ([, callId]) => callId === '/src/app/app.ts',
+      );
+      expect(esbuildStripCall).toBeDefined();
+      expect(esbuildStripCall![0]).toContain('readonly');
+      expect(esbuildStripCall![2]).toMatchObject({
+        loader: 'ts',
+        sourcemap: true,
+      });
+      expect(esbuildStripCall![3]).toBeDefined(); // inMap from jitTransform
+      expect(result.code).not.toContain('readonly');
+    } finally {
+      Object.defineProperty(viteMod, 'transformWithOxc', {
+        value: realOxc,
+        configurable: true,
+      });
+    }
   });
 
   it('does not run the bypass strip when the file has @Component', async () => {
