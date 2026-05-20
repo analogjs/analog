@@ -127,6 +127,56 @@ describe('fastCompilePlugin bypass strips TS', () => {
     expect(mockTransformWithOxc).toHaveBeenCalled();
   });
 
+  it('strips TS-only syntax in the JIT path so `readonly` etc. never reach Rolldown', async () => {
+    // Regression for analogjs/analog#2339: fastCompile's JIT path returned
+    // the jitTransform output as-is, leaving TS-only modifiers like
+    // `readonly` in place. On StackBlitz / WebContainer (and any other
+    // environment without `angularVitestSourcemapPlugin`), Rolldown's parser
+    // chokes on the unstripped TS:
+    //   `Parse failure: Unexpected token \`ident\`. Expected * for generator, …`
+    // The JIT path must self-strip so the output is valid JS regardless of
+    // which downstream plugins are registered.
+    mockRolldownVersion = '1.0.0';
+    mockTransformWithOxc.mockResolvedValue({
+      code: 'export class App { test = ""; }\n',
+      map: { mappings: '' },
+    });
+
+    const plugin = fastCompilePlugin({
+      tsconfigGetter: () => 'tsconfig.json',
+      workspaceRoot: '/workspace',
+      inlineStylesExtension: 'css',
+      jit: true,
+      liveReload: false,
+      supportedBrowsers: [],
+      isTest: true,
+      isAstroIntegration: false,
+    });
+    const handler = getTransformHandler(plugin);
+
+    const code = `import { Component } from '@angular/core';
+@Component({ selector: 'app-root', template: '<div></div>' })
+export class App {
+  readonly test = '';
+}
+`;
+    const result = await handler.call(
+      { addWatchFile: () => undefined },
+      code,
+      '/src/app/app.ts',
+    );
+
+    // OXC strip must have been called with the jitTransform output (which
+    // still contains `readonly`) so Rolldown receives valid JS.
+    const oxcStripCall = mockTransformWithOxc.mock.calls.find(
+      ([, callId]) => callId === '/src/app/app.ts',
+    );
+    expect(oxcStripCall).toBeDefined();
+    expect(oxcStripCall![0]).toContain('readonly');
+    expect(oxcStripCall![2]).toMatchObject({ lang: 'ts' });
+    expect(result.code).not.toContain('readonly');
+  });
+
   it('does not run the bypass strip when the file has @Component', async () => {
     const plugin = buildPlugin();
     const handler = getTransformHandler(plugin);
