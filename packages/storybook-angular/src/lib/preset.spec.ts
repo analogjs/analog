@@ -69,14 +69,19 @@ afterEach(() => {
  */
 const registerDependencyMocks = (
   viteOverrides: Record<string, unknown> = {},
+  presetMock?: Record<string, unknown>,
 ) => {
-  vi.doMock('@storybook/angular/preset', () => ({
-    core: async () => ({
-      options: {},
-      channelOptions: { wsToken: 'mock-token' },
-    }),
-    addons: [],
-  }));
+  vi.doMock(
+    '@storybook/angular/preset',
+    () =>
+      presetMock ?? {
+        core: async () => ({
+          options: {},
+          channelOptions: { wsToken: 'mock-token' },
+        }),
+        addons: [],
+      },
+  );
   vi.doMock('storybook/internal/types', () => ({}));
   vi.doMock('@storybook/angular', () => ({}));
   vi.doMock('@storybook/builder-vite', () => ({}));
@@ -105,6 +110,13 @@ const importWithAngularVersion = async (major: string) => {
   return mod.viteFinal;
 };
 
+const importCoreWithPreset = async (presetMock: Record<string, unknown>) => {
+  vi.resetModules();
+  registerDependencyMocks({}, presetMock);
+  const mod = await import('./preset');
+  return mod.core;
+};
+
 describe('core', () => {
   it('should await PresetCore and include channelOptions from resolved config', async () => {
     const result = await core({}, {});
@@ -117,6 +129,35 @@ describe('core', () => {
 
     expect(result.builder).toBeDefined();
     expect(result.builder.name).toBeDefined();
+  });
+
+  it('should support Storybook <= 10.3 where core is an async function', async () => {
+    const freshCore = await importCoreWithPreset({
+      core: async (config: Record<string, unknown>) => ({
+        ...config,
+        channelOptions: { wsToken: 'fn-token' },
+      }),
+      addons: [],
+    });
+
+    const result = await freshCore({ tags: ['cli'] }, {});
+
+    expect(result.tags).toEqual(['cli']);
+    expect(result.channelOptions?.wsToken).toBe('fn-token');
+    expect(result.builder.name).toBeDefined();
+  });
+
+  it('should support Storybook >= 10.4 where core is a static object', async () => {
+    const freshCore = await importCoreWithPreset({
+      core: { builder: 'webpack5-builder-path' },
+      addons: [],
+    });
+
+    const result = await freshCore({ tags: ['cli'] }, {});
+
+    expect(result.tags).toEqual(['cli']);
+    expect(result.builder.name).toBeDefined();
+    expect(result.builder.name).not.toBe('webpack5-builder-path');
   });
 });
 

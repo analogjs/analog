@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { core as PresetCore } from '@storybook/angular/preset';
+import * as angularPreset from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import type { Plugin, UserConfig } from 'vite';
 import * as vite from 'vite';
@@ -35,7 +35,10 @@ export const previewAnnotations = async (
 };
 
 export const core = async (config: any, options: any): Promise<any> => {
-  const presetCore = await PresetCore(config, options);
+  const presetCore =
+    typeof angularPreset.core === 'function'
+      ? await angularPreset.core(config, options)
+      : { ...config, ...angularPreset.core };
   return {
     ...presetCore,
     builder: {
