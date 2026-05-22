@@ -1223,7 +1223,14 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       const filename = normalizePath(sourceFiles[0].fileName);
 
-      if (filename.includes('ngtypecheck.ts') || filename.includes('.d.')) {
+      // Skip declaration outputs and declaration source files.
+      if (
+        filename.includes('ngtypecheck.ts') ||
+        filename.includes('.d.') ||
+        _filename.endsWith('.d.ts') ||
+        _filename.endsWith('.d.mts') ||
+        _filename.endsWith('.d.cts')
+      ) {
         return;
       }
 
