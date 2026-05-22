@@ -1,3 +1,14 @@
+# [3.0.0-alpha.55](https://github.com/analogjs/analog/compare/v3.0.0-alpha.54...v3.0.0-alpha.55) (2026-05-22)
+
+### Bug Fixes
+
+- **storybook-angular:** support Storybook 10.4+ object-shaped core preset ([#2337](https://github.com/analogjs/analog/issues/2337)) ([1956794](https://github.com/analogjs/analog/commit/1956794ce6bb0b15d5aacf53a81b22469bb568a7))
+- **vite-plugin-angular:** compose fastCompile JIT strip map and cover esbuild fallback ([#2341](https://github.com/analogjs/analog/issues/2341)) ([532aa3e](https://github.com/analogjs/analog/commit/532aa3e0ff239175ead36d57278a243022492f0c))
+- **vite-plugin-angular:** reject @Service on Angular below 22 ([bc63520](https://github.com/analogjs/analog/commit/bc63520720dd983d6ae8e2dcd6a936efe6168625))
+- **vite-plugin-angular:** skip source .d.ts files for composite TS projects ([#2335](https://github.com/analogjs/analog/issues/2335)) ([96ec5b3](https://github.com/analogjs/analog/commit/96ec5b38c030aa36009be2c6f0d9c5be342aa351))
+- **vite-plugin-angular:** strip TS in fastCompile JIT path for StackBlitz ([#2340](https://github.com/analogjs/analog/issues/2340)) ([44e6334](https://github.com/analogjs/analog/commit/44e6334cd9add9187fab6f5007e0b43361a9d84c))
+- **vite-plugin-angular:** support the @Service decorator in the fast compiler ([b284696](https://github.com/analogjs/analog/commit/b284696088faa4e65f572eb83708329b6eed3f79))
+
 # [3.0.0-alpha.54](https://github.com/analogjs/analog/compare/v3.0.0-alpha.53...v3.0.0-alpha.54) (2026-05-20)
 
 ### Bug Fixes
