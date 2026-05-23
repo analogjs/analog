@@ -80,6 +80,7 @@ catalog:
   '@angular/cli': 21.2.7
   '@angular/compiler-cli': 21.2.8
   '@angular/language-service': 21.2.8
+  '@babel/core': ^7.28.6
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
   '@compodoc/compodoc': ^1.2.1

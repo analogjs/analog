@@ -47,6 +47,7 @@
     "nitro": "catalog:",
     "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vite-plugin-nitro": "workspace:*",
+    "@babel/core": "catalog:",
     "ofetch": "catalog:",
     "oxc-parser": "catalog:",
     "rolldown": "catalog:",
