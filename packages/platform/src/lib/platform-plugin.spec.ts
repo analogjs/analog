@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  viteNitroPluginSpy,
+  nitroFromViteSpy,
+  analogNitroPluginSpy,
   angularSpy,
   ssrBuildPluginSpy,
   injectHTMLPluginSpy,
@@ -16,7 +17,8 @@ const {
   stylePipelineFactorySpy,
   stylePipelinePluginSpy,
 } = vi.hoisted(() => ({
-  viteNitroPluginSpy: vi.fn(() => []),
+  nitroFromViteSpy: vi.fn(() => []),
+  analogNitroPluginSpy: vi.fn(() => ({ name: '@analogjs/nitro' })),
   angularSpy: vi.fn(() => []),
   ssrBuildPluginSpy: vi.fn(() => []),
   injectHTMLPluginSpy: vi.fn(() => []),
@@ -36,12 +38,11 @@ const {
   stylePipelinePluginSpy: { name: 'community-style-pipeline' },
 }));
 
-vi.mock('@analogjs/vite-plugin-nitro', () => ({
-  nitro: viteNitroPluginSpy,
-  default: viteNitroPluginSpy,
+vi.mock('nitro/vite', () => ({
+  nitro: nitroFromViteSpy,
 }));
-vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
-  debugInstances: [],
+vi.mock('./nitro/analog-nitro-plugin.js', () => ({
+  analogNitroPlugin: analogNitroPluginSpy,
 }));
 vi.mock('@analogjs/vite-plugin-angular', () => ({
   angular: angularSpy,
@@ -94,7 +95,8 @@ import { platformPlugin } from './platform-plugin.js';
 describe('platformPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    viteNitroPluginSpy.mockReturnValue([]);
+    nitroFromViteSpy.mockReturnValue([]);
+    analogNitroPluginSpy.mockReturnValue({ name: '@analogjs/nitro' });
     angularSpy.mockReturnValue([]);
     ssrBuildPluginSpy.mockReturnValue([]);
     injectHTMLPluginSpy.mockReturnValue([]);
@@ -112,7 +114,10 @@ describe('platformPlugin', () => {
   it('defaults ssr to true and passes that value to the composed plugins', () => {
     platformPlugin();
 
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: true }, undefined);
+    expect(nitroFromViteSpy).toHaveBeenCalledWith({});
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ ssr: true }),
+    );
     expect(ssrBuildPluginSpy).toHaveBeenCalled();
     expect(injectHTMLPluginSpy).toHaveBeenCalled();
   });
@@ -120,7 +125,9 @@ describe('platformPlugin', () => {
   it('passes through ssr false without wiring SSR-only plugins', () => {
     platformPlugin({ ssr: false });
 
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ ssr: false }),
+    );
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
     expect(injectHTMLPluginSpy).not.toHaveBeenCalled();
   });
@@ -160,9 +167,9 @@ describe('platformPlugin', () => {
   it('still includes non-Angular plugins when vite is set to false', () => {
     const plugins = platformPlugin({ vite: false });
 
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith(
+    expect(nitroFromViteSpy).toHaveBeenCalled();
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
       expect.objectContaining({ ssr: true }),
-      undefined,
     );
     expect(routeGenerationPluginSpy).toHaveBeenCalled();
     expect(serverModePluginSpy).toHaveBeenCalled();
@@ -197,11 +204,10 @@ describe('platformPlugin', () => {
         additionalPagesDirs: ['/libs/shared/feature'],
       }),
     );
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith(
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
       }),
-      undefined,
     );
     expect(contentPluginSpy).toHaveBeenCalledWith(
       undefined,
