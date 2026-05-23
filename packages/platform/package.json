@@ -47,9 +47,12 @@
     "nitro": "catalog:",
     "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vite-plugin-nitro": "workspace:*",
+    "ofetch": "catalog:",
+    "oxc-parser": "catalog:",
     "rolldown": "catalog:",
     "obug": "catalog:",
-    "vitefu": "catalog:"
+    "vitefu": "catalog:",
+    "xmlbuilder2": "catalog:"
   },
   "peerDependencies": {
     "@nx/angular": "catalog:peerCompat",

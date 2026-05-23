@@ -13,7 +13,7 @@ import type {
   PrerenderContentFile,
   PrerenderSitemapConfig,
   PrerenderRouteConfig,
-} from '@analogjs/vite-plugin-nitro';
+} from './nitro/types.js';
 
 import type { ContentPluginOptions } from './content-plugin.js';
 import type { DebugOption } from './utils/debug.js';

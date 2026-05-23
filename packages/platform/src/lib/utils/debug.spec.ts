@@ -10,8 +10,8 @@ vi.mock('obug', () => ({
   enable: vi.fn(),
 }));
 
-vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
-  debugInstances: [],
+vi.mock('../nitro/debug.js', () => ({
+  nitroDebugInstances: [],
 }));
 
 vi.mock('./debug-log-file.js', () => ({
