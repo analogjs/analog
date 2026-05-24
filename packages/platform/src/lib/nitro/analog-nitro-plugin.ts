@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { Plugin, UserConfig } from 'vite';
@@ -221,6 +221,15 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         // `renderer.template` are empty (vite.mjs:574), which never holds
         // for a typical app — so we install our own renderer virtual
         // explicitly here.
+        //
+        // `#analog/ssr` is a Nitro virtual (not a Vite virtual) so it
+        // resolves under both Vite-built bundles (main) and Rolldown-built
+        // bundles (Nitro's prerender, which forces builder: 'rolldown' —
+        // see nitro/dist/_chunks/nitro.mjs:769). That sidesteps nitro/vite's
+        // prodSetup polyfill, which is Vite-only and leaves `__nitro_vite_envs__`
+        // unset in the prerender bundle.
+        nitro.options.virtual['#analog/ssr'] = () =>
+          generateSsrServiceVirtual(nitro);
         nitro.options.virtual['#analog/ssr-renderer'] =
           generateSsrRendererVirtual(readIndexHtml());
         nitro.options.renderer ??= {};
@@ -256,7 +265,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 function generateSsrRendererVirtual(template: string): string {
   return `
 import { defineHandler } from 'nitro/h3';
-import { fetchViteEnv } from 'nitro/vite/runtime';
+import ssr from '#analog/ssr';
 
 const TEMPLATE = ${JSON.stringify(template)};
 
@@ -269,9 +278,47 @@ export default defineHandler(async (event) => {
   if (event.res.headers.get('x-analog-no-ssr') === 'true') {
     return TEMPLATE;
   }
-  return fetchViteEnv('ssr', event.req);
+  const service = ssr.default ?? ssr;
+  return service.fetch(event.req);
 });
 `;
+}
+
+/**
+ * Resolves \`#analog/ssr\` to the SSR fetch handler. The shape returned by
+ * this function is bundler-agnostic: works in Vite-built main bundles and
+ * Rolldown-built prerender bundles alike.
+ *
+ * - Dev: dispatch through nitro/vite's env runner (\`fetchViteEnv\`); the SSR
+ *   service module isn't on disk yet, so we delegate to the runner.
+ * - Build / prerender: re-export the built SSR entry directly from the
+ *   filesystem. By the time Nitro's bundlers ask for \`#analog/ssr\`, Vite has
+ *   already produced \`<buildDir>/vite/services/ssr/<entry>.mjs\`.
+ */
+function generateSsrServiceVirtual(nitro: Nitro): string {
+  if (nitro.options.dev) {
+    return `
+import { fetchViteEnv } from 'nitro/vite/runtime';
+export default {
+  async fetch(req) {
+    return fetchViteEnv('ssr', req);
+  },
+};
+`;
+  }
+
+  const ssrDir = resolve(nitro.options.buildDir, 'vite/services/ssr');
+  if (!existsSync(ssrDir)) {
+    return `export default { async fetch() { throw new Error('Analog SSR service directory missing: ${ssrDir}'); } };`;
+  }
+  const entries = readdirSync(ssrDir).filter((f) => f.endsWith('.mjs'));
+  if (entries.length === 0) {
+    return `export default { async fetch() { throw new Error('No Analog SSR entry file built in: ${ssrDir}'); } };`;
+  }
+  // Prefer 'main.server.mjs' if present; otherwise take the only entry.
+  const entry = entries.find((f) => f === 'main.server.mjs') ?? entries[0];
+  const entryPath = resolve(ssrDir, entry);
+  return `export { default } from ${JSON.stringify(entryPath)};`;
 }
 
 /**

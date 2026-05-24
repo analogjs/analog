@@ -125,8 +125,12 @@ describe('analogNitroPlugin', () => {
     const nitroMock: any = {
       options: {
         rootDir: projectRoot,
+        buildDir: join(projectRoot, '.nitro'),
         handlers: [],
         scanDirs: [],
+        virtual: {},
+        renderer: {},
+        dev: true,
       },
       hooks: { hook: hookFn },
     };
