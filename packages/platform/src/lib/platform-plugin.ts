@@ -1,7 +1,7 @@
 import { Plugin } from 'vite';
 import { nitro } from 'nitro/vite';
 import angular from '@analogjs/vite-plugin-angular';
-import { mapValues, union } from 'es-toolkit';
+import { union } from 'es-toolkit';
 
 import { Options } from './options.js';
 import {
@@ -69,20 +69,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     typedRouter: platformOptions.experimental?.typedRouter,
     stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
-  let nitroOptions = platformOptions?.nitro;
-
-  if (nitroOptions?.routeRules) {
-    nitroOptions = {
-      ...nitroOptions,
-      routeRules: mapValues(nitroOptions.routeRules, (rule) => ({
-        ...rule,
-        headers: {
-          ...rule.headers,
-          'x-analog-no-ssr': rule?.ssr === false ? 'true' : undefined,
-        } as any,
-      })),
-    };
-  }
+  const nitroOptions = platformOptions?.nitro;
 
   return [
     {

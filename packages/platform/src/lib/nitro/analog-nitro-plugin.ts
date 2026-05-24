@@ -200,6 +200,8 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           }
         });
 
+        injectAnalogRouteRuleHeaders(nitro);
+
         await wirePrerender(nitro, options, context, apiPrefix);
 
         if (options.i18n) {
@@ -215,6 +217,24 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   };
 
   return plugin;
+}
+
+/**
+ * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
+ * any rule with `ssr: false`. Analog's SSR service wrapper reads this header
+ * to short-circuit the renderer and return the raw template.
+ */
+function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
+  const routeRules = nitro.options.routeRules as
+    | Record<string, { ssr?: boolean; headers?: Record<string, string> }>
+    | undefined;
+  if (!routeRules) return;
+
+  for (const rule of Object.values(routeRules)) {
+    if (rule?.ssr === false) {
+      rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    }
+  }
 }
 
 /**
