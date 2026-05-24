@@ -123,6 +123,13 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       const overrides: UserConfig = {};
 
       if (ssr) {
+        // Two-pronged registration: `experimental.vite.services.ssr.entry`
+        // is the documented hook, but nitro/vite's setupNitroContext also
+        // accepts an `environments.ssr.build.rollupOptions.input` entry
+        // (see node_modules/nitro/dist/vite.mjs:710-734). When `analog()`
+        // and `nitro()` are invoked separately, the `services` slot on
+        // `nitro()`'s pluginConfig is empty, so the rollupOptions.input
+        // path is how we get our wrapper entry recognized.
         overrides.experimental = {
           vite: {
             services: {
@@ -132,6 +139,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         };
         overrides.environments = {
           ssr: {
+            build: {
+              rollupOptions: {
+                input: { index: ssrEntryMarkerPath },
+              },
+            },
             optimizeDeps: {
               include: ANGULAR_SSR_DEPS,
               rolldownOptions: {
