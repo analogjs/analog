@@ -18,6 +18,14 @@ packages:
   # Integration / E2E test projects that need their own workspace deps.
   - 'tests/*'
 
+patchedDependencies:
+  # srvx's toNodeHandler awaits only one level of promise; nitro/h3's fetch
+  # chain returns Promise<Promise<Response>>, so without this patch the
+  # outer promise leaks through as the "response" and srvx's
+  # sendNodeResponse throws `webRes.headers is not iterable`. Backport of
+  # the fix from analogjs/analog#2188.
+  srvx@0.11.15: patches/srvx@0.11.15.patch
+
 catalog:
   # Keep the Angular runtime/compiler patch set aligned so compiler-cli,
   # language-service, and the framework runtime all resolve the same release.
