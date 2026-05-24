@@ -1,6 +1,5 @@
 import { Plugin } from 'vite';
 import { nitro } from 'nitro/vite';
-import angular from '@analogjs/vite-plugin-angular';
 import { union } from 'es-toolkit';
 
 import { Options } from './options.js';
@@ -31,12 +30,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   applyDebugOption(opts.debug, opts.workspaceRoot);
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  const viteOptions = opts?.vite === false ? undefined : opts?.vite;
-  const {
-    experimental: viteExperimental,
-    hmr: _removedViteHmrOption,
-    ...forwardedViteOptions
-  } = viteOptions ?? {};
   const { ...platformOptions } = {
     ssr: true,
     ...opts,
@@ -61,11 +54,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     );
   }
 
-  const useAngularCompilationAPI =
-    platformOptions.experimental?.useAngularCompilationAPI ??
-    viteExperimental?.useAngularCompilationAPI;
   debugPlatform('experimental options resolved', {
-    useAngularCompilationAPI: !!useAngularCompilationAPI,
     typedRouter: platformOptions.experimental?.typedRouter,
     stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
@@ -94,42 +83,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...routerPlugin(platformOptions),
     routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
-    ...(opts?.vite === false
-      ? []
-      : externalPlugins(
-          angular({
-            jit: platformOptions.jit,
-            workspaceRoot: platformOptions.workspaceRoot,
-            // Let the Angular plugin keep its own dev-friendly default unless the
-            // app explicitly opts into stricter serve-time diagnostics.
-            disableTypeChecking: platformOptions.disableTypeChecking,
-            include: [
-              ...(platformOptions.include ?? []),
-              ...(platformOptions.additionalPagesDirs ?? []).map(
-                (pageDir) => `${pageDir}/**/*.page.ts`,
-              ),
-            ],
-            additionalContentDirs: platformOptions.additionalContentDirs,
-            liveReload: platformOptions.liveReload,
-            inlineStylesExtension: platformOptions.inlineStylesExtension,
-            fileReplacements: platformOptions.fileReplacements,
-            fastCompile: platformOptions.fastCompile,
-            fastCompileMode: platformOptions.fastCompileMode,
-            debug: platformOptions.debug,
-            stylePipeline: platformOptions.experimental?.stylePipeline
-              ?.angularPlugins?.length
-              ? {
-                  plugins:
-                    platformOptions.experimental.stylePipeline.angularPlugins,
-                }
-              : undefined,
-            ...forwardedViteOptions,
-            experimental: {
-              ...(viteExperimental ?? {}),
-              useAngularCompilationAPI,
-            },
-          }),
-        )),
     ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
     ...serverModePlugin(),
     ...clearClientPageEndpointsPlugin(),

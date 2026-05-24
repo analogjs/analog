@@ -1,4 +1,3 @@
-import type { PluginOptions } from '@analogjs/vite-plugin-angular';
 import type { NitroConfig, PrerenderRoute } from 'nitro/types';
 import type {
   SitemapConfig,
@@ -87,50 +86,23 @@ export interface Options {
   static?: boolean;
   prerender?: PrerenderOptions;
   entryServer?: string;
-  /**
-   * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
-   * plugin. Set to `false` to disable the internal vite plugin (e.g. when
-   * using an alternative compiler like `@oxc-angular/vite`).
-   *
-   * `vite.build` uses Vite's native config shape and is forwarded to the
-   * internal Nitro/Vite build pipeline, while the remaining fields are passed
-   * to `@analogjs/vite-plugin-angular`.
-   *
-   * When `false`, the following top-level options are ignored because they
-   * are only forwarded to the internal Angular plugin: `jit`,
-   * `disableTypeChecking`, `liveReload`, `inlineStylesExtension`,
-   * `fileReplacements`, and `include`.
-   *
-   * Use this to configure the embedded Angular integration itself, not as the
-   * primary home for Analog-owned experimental features.
-   */
-  vite?: PluginOptions | false;
   nitro?: NitroConfig;
   apiPrefix?: string;
-  jit?: boolean;
   index?: string;
   workspaceRoot?: string;
   content?: ContentPluginOptions;
   /**
-   * Extension applied for inline styles
-   */
-  inlineStylesExtension?: string;
-  /**
-   * Enables Analog's Angular live-reload/HMR pipeline during development/watch mode.
+   * Enable debug logging for the `analog:platform:*` and `analog:nitro:*`
+   * scopes.
    *
-   * This is separate from Vite's `server.hmr` option, which configures the
-   * HMR client transport.
-   *
-   * Defaults to `true` for watch mode.
-   */
-  liveReload?: boolean;
-  /**
-   * Enable debug logging for specific scopes.
-   *
-   * - `true` → enables all `analog:*` scopes (platform + angular + nitro)
+   * - `true` → enables all platform + nitro scopes
    * - `string[]` → enables listed namespaces
    * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
    *   to restrict output to a specific Vite command (omit for both)
+   *
+   * Angular scopes (`analog:angular:*`) are owned by
+   * `@analogjs/vite-plugin-angular` — pass `debug` to `angular()` directly
+   * to enable them.
    *
    * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
    * (browser), using the `obug` convention.
@@ -161,40 +133,17 @@ export interface Options {
    */
   discoverRoutes?: boolean;
   /**
-   * Additional files to include in compilation
-   */
-  include?: string[];
-  /**
    * Toggles internal API middleware.
    * If disabled, a proxy request is used to route /api
    * requests to / in the production server build.
    */
   useAPIMiddleware?: boolean;
   /**
-   * Disable type checking diagnostics by the Angular compiler
-   */
-  disableTypeChecking?: boolean;
-  /**
    * Configuration for runtime i18n support.
    * When set, enables locale detection on SSR and provides
    * the LOCALE injection token.
    */
   i18n?: I18nOptions;
-  /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
-   */
-  fastCompile?: boolean;
-  /**
-   * Compilation output mode used when `fastCompile` is enabled.
-   * - `'full'` (default): Emit final Ivy definitions for application builds.
-   * - `'partial'`: Emit partial declarations for library publishing.
-   */
-  fastCompileMode?: 'full' | 'partial';
-  /**
-   * File replacements
-   */
-  fileReplacements?: PluginOptions['fileReplacements'];
   /**
    * Experimental features. These APIs are subject to change.
    *
@@ -204,19 +153,6 @@ export interface Options {
    * a single Analog-first authoring surface.
    */
   experimental?: {
-    /**
-     * Use Angular's experimental compilation API.
-     *
-     * This is forwarded to `@analogjs/vite-plugin-angular`'s
-     * `experimental.useAngularCompilationAPI`.
-     *
-     * Also accepted at `vite.experimental.useAngularCompilationAPI`
-     * for backwards compatibility.
-     *
-     * Has no effect when `vite` is set to `false`.
-     */
-    useAngularCompilationAPI?: boolean;
-
     /**
      * Enable typed route table generation for type-safe navigation.
      *
@@ -248,73 +184,6 @@ export interface Options {
      * target contracts, or framework-specific theming semantics.
      */
     stylePipeline?: StylePipelineOptions | false;
-  };
-
-  /**
-   * First-class Tailwind CSS v4 integration for Angular component styles.
-   *
-   * Angular's compiler processes component CSS through Vite's `preprocessCSS()`,
-   * which runs `@tailwindcss/vite` — but each component stylesheet is processed
-   * in isolation without access to the root Tailwind configuration (prefix, @theme,
-   * @custom-variant, @plugin definitions). This causes errors like:
-   *
-   *   "Cannot apply utility class `sa:grid` because the `sa` variant does not exist"
-   *
-   * The `tailwindCss` option solves this by auto-injecting a `@reference` directive
-   * into every component CSS file that uses Tailwind utilities, pointing it to the
-   * root Tailwind stylesheet so `@tailwindcss/vite` can resolve the full configuration.
-   *
-   * @example Basic usage — reference a root Tailwind CSS file:
-   * ```ts
-   * import { resolve } from 'node:path';
-   *
-   * angular({
-   *   tailwindCss: {
-   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
-   *   },
-   * })
-   * ```
-   *
-   * @example With prefix detection — only inject for files using specific prefixes:
-   * ```ts
-   * angular({
-   *   tailwindCss: {
-   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
-   *     // Only inject @reference into files that use these prefixed classes
-   *     prefixes: ['sa:', 'tw:'],
-   *   },
-   * })
-   * ```
-   *
-   * @example AnalogJS platform — passed through the `vite` option:
-   * ```ts
-   * analog({
-   *   vite: {
-   *     tailwindCss: {
-   *       rootStylesheet: resolve(__dirname, '../../../libs/meritos/tailwind.config.css'),
-   *     },
-   *   },
-   * })
-   * ```
-   */
-  tailwindCss?: {
-    /**
-     * Absolute path to the root Tailwind CSS file that contains `@import "tailwindcss"`,
-     * `@theme`, `@custom-variant`, and `@plugin` definitions.
-     *
-     * A `@reference` directive pointing to this file will be auto-injected into
-     * component CSS files that use Tailwind utilities.
-     */
-    rootStylesheet: string;
-    /**
-     * Optional list of class prefixes to detect (e.g. `['sa:', 'tw:']`).
-     * When provided, `@reference` is only injected into component CSS files that
-     * contain at least one of these prefixes. When omitted, `@reference` is injected
-     * into all component CSS files that contain `@apply` or `@` directives.
-     *
-     * @default undefined — inject into all component CSS files with `@apply`
-     */
-    prefixes?: string[];
   };
 }
 
