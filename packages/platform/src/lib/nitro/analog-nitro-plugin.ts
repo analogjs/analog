@@ -212,6 +212,21 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           }
         });
 
+        // Override Nitro's auto-detected template-serving renderer with one
+        // that routes HTML requests to our SSR service. Nitro's
+        // `resolveRendererOptions` finds `index.html` at the project root
+        // and installs `internal/routes/renderer-template[.dev]`, which
+        // just serves the raw template. nitro/vite's own SSR-routing
+        // renderer only auto-installs when both `renderer.handler` and
+        // `renderer.template` are empty (vite.mjs:574), which never holds
+        // for a typical app — so we install our own renderer virtual
+        // explicitly here.
+        nitro.options.virtual['#analog/ssr-renderer'] =
+          generateSsrRendererVirtual(readIndexHtml());
+        nitro.options.renderer ??= {};
+        nitro.options.renderer.handler = '#analog/ssr-renderer';
+        delete nitro.options.renderer.template;
+
         injectAnalogRouteRuleHeaders(nitro);
 
         await wirePrerender(nitro, options, context, apiPrefix);
@@ -232,9 +247,38 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 }
 
 /**
+ * Builds the h3 handler installed as Nitro's `renderer.handler`. Short-circuits
+ * `ssr: false` routes to the raw client template; otherwise dispatches the
+ * request to the SSR service env (`fetchViteEnv("ssr", req)` works in dev via
+ * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
+ * nitro/vite's `prodSetup`).
+ */
+function generateSsrRendererVirtual(template: string): string {
+  return `
+import { defineHandler } from 'nitro/h3';
+import { fetchViteEnv } from 'nitro/vite/runtime';
+
+const TEMPLATE = ${JSON.stringify(template)};
+
+export default defineHandler(async (event) => {
+  event.res.headers.set('content-type', 'text/html; charset=utf-8');
+  // 'x-analog-no-ssr' is stamped on response headers by
+  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
+  // applies routeRule headers to the response before the renderer fires,
+  // so we can short-circuit by reading them here.
+  if (event.res.headers.get('x-analog-no-ssr') === 'true') {
+    return TEMPLATE;
+  }
+  return fetchViteEnv('ssr', event.req);
+});
+`;
+}
+
+/**
  * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
- * any rule with `ssr: false`. Analog's SSR service wrapper reads this header
- * to short-circuit the renderer and return the raw template.
+ * any rule with `ssr: false`. Kept as a response-header hint for downstream
+ * consumers (CDN, edge logic); the actual SSR short-circuit happens inside
+ * the SSR renderer virtual above.
  */
 function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   const routeRules = nitro.options.routeRules as
