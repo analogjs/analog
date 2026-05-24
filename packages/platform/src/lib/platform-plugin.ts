@@ -1,5 +1,4 @@
 import { Plugin } from 'vite';
-import { nitro } from 'nitro/vite';
 import { union } from 'es-toolkit';
 
 import { Options } from './options.js';
@@ -20,11 +19,6 @@ import { routeGenerationPlugin } from './route-generation-plugin.js';
 import { resolveStylePipelinePlugins } from './style-pipeline.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
 import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
-
-// Bridge Plugin types from external @analogjs packages that resolve a different vite instance
-function externalPlugins(plugins: unknown): Plugin[] {
-  return plugins as Plugin[];
-}
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   applyDebugOption(opts.debug, opts.workspaceRoot);
@@ -58,7 +52,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     typedRouter: platformOptions.experimental?.typedRouter,
     stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
-  const nitroOptions = platformOptions?.nitro;
 
   return [
     {
@@ -67,11 +60,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
         activateDeferredDebug(command);
       },
     },
-    ...externalPlugins(nitro(nitroOptions ?? {})),
-    analogNitroPlugin({
-      ...platformOptions,
-      nitro: nitroOptions,
-    }),
+    analogNitroPlugin(platformOptions),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),

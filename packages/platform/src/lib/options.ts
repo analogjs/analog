@@ -1,4 +1,4 @@
-import type { NitroConfig, PrerenderRoute } from 'nitro/types';
+import type { PrerenderRoute } from 'nitro/types';
 import type {
   SitemapConfig,
   SitemapEntry,
@@ -86,7 +86,6 @@ export interface Options {
   static?: boolean;
   prerender?: PrerenderOptions;
   entryServer?: string;
-  nitro?: NitroConfig;
   apiPrefix?: string;
   index?: string;
   workspaceRoot?: string;

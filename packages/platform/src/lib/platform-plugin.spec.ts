@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  nitroFromViteSpy,
   analogNitroPluginSpy,
   ssrBuildPluginSpy,
   injectHTMLPluginSpy,
@@ -16,7 +15,6 @@ const {
   stylePipelineFactorySpy,
   stylePipelinePluginSpy,
 } = vi.hoisted(() => ({
-  nitroFromViteSpy: vi.fn(() => []),
   analogNitroPluginSpy: vi.fn(() => ({ name: '@analogjs/nitro' })),
   ssrBuildPluginSpy: vi.fn(() => []),
   injectHTMLPluginSpy: vi.fn(() => []),
@@ -36,9 +34,6 @@ const {
   stylePipelinePluginSpy: { name: 'community-style-pipeline' },
 }));
 
-vi.mock('nitro/vite', () => ({
-  nitro: nitroFromViteSpy,
-}));
 vi.mock('./nitro/analog-nitro-plugin.js', () => ({
   analogNitroPlugin: analogNitroPluginSpy,
 }));
@@ -89,7 +84,6 @@ import { platformPlugin } from './platform-plugin.js';
 describe('platformPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    nitroFromViteSpy.mockReturnValue([]);
     analogNitroPluginSpy.mockReturnValue({ name: '@analogjs/nitro' });
     ssrBuildPluginSpy.mockReturnValue([]);
     injectHTMLPluginSpy.mockReturnValue([]);
@@ -107,7 +101,6 @@ describe('platformPlugin', () => {
   it('defaults ssr to true and passes that value to the composed plugins', () => {
     platformPlugin();
 
-    expect(nitroFromViteSpy).toHaveBeenCalledWith({});
     expect(analogNitroPluginSpy).toHaveBeenCalledWith(
       expect.objectContaining({ ssr: true }),
     );
