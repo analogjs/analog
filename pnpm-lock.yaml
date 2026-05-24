@@ -1155,6 +1155,9 @@ importers:
       '@analogjs/vitest-angular':
         specifier: workspace:*
         version: link:../../packages/vitest-angular
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260415-beta(chokidar@5.0.0)(dotenv@16.4.7)(jiti@2.6.1)(lru-cache@11.3.5)(rollup@4.60.1)(vite@8.0.8(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.1)(yaml@2.8.3))
 
   apps/analog-app-e2e: {}
 

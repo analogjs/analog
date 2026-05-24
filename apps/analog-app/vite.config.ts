@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
-import analog from '@analogjs/platform';
+import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
@@ -37,6 +39,11 @@ export default defineConfig(async ({ mode, command }) => {
           },
         ];
 
+  const discoveredLibs = discoverLibraryRoutes(resolve(__dirname, '../..'));
+  const explicitLibPages = useBuiltWorkspaceLibs
+    ? []
+    : ['/libs/my-package/src/**/*.ts', '/libs/top-bar/src/**/*.ts'];
+
   return {
     root: __dirname,
     publicDir: 'src/public',
@@ -58,11 +65,9 @@ export default defineConfig(async ({ mode, command }) => {
         content: {
           highlighter: 'prism',
         },
-        include: useBuiltWorkspaceLibs
-          ? []
-          : ['/libs/my-package/src/**/*.ts', '/libs/top-bar/src/**/*.ts'],
-        discoverRoutes: true,
-        fileReplacements,
+        additionalPagesDirs: discoveredLibs.additionalPagesDirs,
+        additionalContentDirs: discoveredLibs.additionalContentDirs,
+        additionalAPIDirs: discoveredLibs.additionalAPIDirs,
         prerender: {
           routes: [
             '/',
@@ -79,23 +84,26 @@ export default defineConfig(async ({ mode, command }) => {
             host: base,
           },
         },
-        inlineStylesExtension: 'scss',
-        fastCompile: true,
         experimental: {
           typedRouter: true,
         },
-        nitro: {
-          routeRules: {
-            '/client': {
-              ssr: false,
-            },
-            '/cart/**': {
-              ssr: false,
-            },
-            '/404.html': {
-              ssr: false,
-            },
-          },
+      }),
+      angular({
+        workspaceRoot: resolve(__dirname, '../..'),
+        include: [
+          ...explicitLibPages,
+          ...pageGlobs(discoveredLibs.additionalPagesDirs),
+        ],
+        additionalContentDirs: discoveredLibs.additionalContentDirs,
+        inlineStylesExtension: 'scss',
+        fileReplacements,
+        fastCompile: true,
+      }),
+      nitro({
+        routeRules: {
+          '/client': { ssr: false },
+          '/cart/**': { ssr: false },
+          '/404.html': { ssr: false },
         },
       }),
       {
