@@ -47,6 +47,7 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
+      "dependsOn": ["platform:build", "router:build", "vitest-angular:build"],
       "outputs": ["{projectRoot}/coverage"]
     },
     "typecheck": {

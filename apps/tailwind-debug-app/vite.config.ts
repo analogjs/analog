@@ -131,9 +131,12 @@ export default defineConfig(({ mode }) => ({
           ssr: false,
         },
       },
-      experimental: {
-        websocket: true,
-      },
+      // Vitest spins up a headless Vite (server.httpServer === null), and
+      // nitro/vite's configureViteDevServer unconditionally calls
+      // `server.httpServer.on('upgrade', ...)` when websocket is enabled,
+      // crashing the test runner. Drop the flag under Vitest; the websocket
+      // probe is only exercised by the dev server and e2e suite.
+      ...(process.env['VITEST'] ? {} : { experimental: { websocket: true } }),
     }),
     tailwindcss(),
     hmrWiretapPlugin(),
