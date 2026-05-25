@@ -41,7 +41,7 @@ Analog SFC support was removed and `.agx` files are no longer supported. Replace
 
 Analog v3 splits the Vite plugin chain into three explicit calls. `analog()` no longer internally invokes `@analogjs/vite-plugin-angular` or `nitro/vite` — you call them yourself. Pass each plugin only the options it owns.
 
-`@analogjs/vite-plugin-nitro` is deprecated; the Nitro orchestration moved into `@analogjs/platform`. Direct importers of `@analogjs/vite-plugin-nitro` must migrate to the separated shape below.
+`@analogjs/platform` v3 owns its own Nitro orchestration via `nitro/vite` directly and no longer composes `@analogjs/vite-plugin-nitro` internally. `@analogjs/vite-plugin-nitro` continues to ship as a standalone package for projects that want to wire it themselves; users coming from a v2 `analog({ nitro: {...} })` shape should migrate to the separated shape below (analog + angular + nitro from `nitro/vite`).
 
 Before:
 
@@ -319,7 +319,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - require Angular v17 or newer before applying v3 changes
 - replace deep or internal imports with public package entrypoints
 - split `analog()` into `analog() + angular() + nitro()`, moving each option to the plugin that now owns it (see [plugin separation](#analog-angular-and-nitro-are-now-separate-plugins))
-- flag `@analogjs/vite-plugin-nitro` as deprecated; direct importers must migrate to `@analogjs/platform` + `nitro/vite`
+- @analogjs/platform no longer composes @analogjs/vite-plugin-nitro internally; direct importers can either migrate to `@analogjs/platform` + `nitro/vite` (recommended) or continue using @analogjs/vite-plugin-nitro standalone
 - add `@analogjs/vite-plugin-angular` and `nitro` to app `devDependencies` (the separated shape imports them directly)
 - replace `@nx/vite:build` with `nx:run-commands` invoking `vite build -c apps/<app>/vite.config.ts`; drop the legacy `build.outDir` override and update `outputs` to `apps/<app>/.output`
 - add `server.fs.allow` pointing at the workspace root in `vite.config.ts` so Vite 8's strict fs allows nitro/vite's env runner to load its own dev runtime through pnpm content-hash paths
