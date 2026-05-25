@@ -506,8 +506,13 @@ function addPnpmDependencies(pkg, template) {
   if (H3_TEMPLATES.includes(template)) {
     pkg.dependencies ??= {};
     pkg.dependencies.h3 = '^1.13.0';
-    pkg.dependencies.nitro = '3.0.260415-beta';
     pkg.dependencies.ofetch = '2.0.0-alpha.3';
+    // nitro is only imported via `nitro/vite` in vite.config.ts (a build-time
+    // tool). npm/yarn auto-hoist it as a transitive of @analogjs/platform;
+    // pnpm's strict node_modules layout doesn't, so add it explicitly for
+    // pnpm users only.
+    pkg.devDependencies ??= {};
+    pkg.devDependencies.nitro = '3.0.260415-beta';
   }
 }
 
