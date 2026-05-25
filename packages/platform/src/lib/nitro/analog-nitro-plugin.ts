@@ -210,31 +210,38 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           if (Array.isArray(rollupConfig.plugins)) {
             rollupConfig.plugins.push(pageEndpointsPlugin());
           }
+          applyAnalogNitroExternals(rollupConfig);
+          sanitizeNitroBundlerConfig(rollupConfig);
         });
 
-        // Override Nitro's auto-detected template-serving renderer with one
-        // that routes HTML requests to our SSR service. Nitro's
-        // `resolveRendererOptions` finds `index.html` at the project root
-        // and installs `internal/routes/renderer-template[.dev]`, which
-        // just serves the raw template. nitro/vite's own SSR-routing
-        // renderer only auto-installs when both `renderer.handler` and
-        // `renderer.template` are empty (vite.mjs:574), which never holds
-        // for a typical app — so we install our own renderer virtual
-        // explicitly here.
-        //
-        // `#analog/ssr` is a Nitro virtual (not a Vite virtual) so it
-        // resolves under both Vite-built bundles (main) and Rolldown-built
-        // bundles (Nitro's prerender, which forces builder: 'rolldown' —
-        // see nitro/dist/_chunks/nitro.mjs:769). That sidesteps nitro/vite's
-        // prodSetup polyfill, which is Vite-only and leaves `__nitro_vite_envs__`
-        // unset in the prerender bundle.
-        nitro.options.virtual['#analog/ssr'] = () =>
-          generateSsrServiceVirtual(nitro);
-        nitro.options.virtual['#analog/ssr-renderer'] =
-          generateSsrRendererVirtual(readIndexHtml());
-        nitro.options.renderer ??= {};
-        nitro.options.renderer.handler = '#analog/ssr-renderer';
-        delete nitro.options.renderer.template;
+        if (ssr) {
+          // Override Nitro's auto-detected template-serving renderer with one
+          // that routes HTML requests to our SSR service. Nitro's
+          // `resolveRendererOptions` finds `index.html` at the project root
+          // and installs `internal/routes/renderer-template[.dev]`, which
+          // just serves the raw template. nitro/vite's own SSR-routing
+          // renderer only auto-installs when both `renderer.handler` and
+          // `renderer.template` are empty (vite.mjs:574), which never holds
+          // for a typical app — so we install our own renderer virtual
+          // explicitly here.
+          //
+          // `#analog/ssr` is a Nitro virtual (not a Vite virtual) so it
+          // resolves under both Vite-built bundles (main) and Rolldown-built
+          // bundles (Nitro's prerender, which forces builder: 'rolldown' —
+          // see nitro/dist/_chunks/nitro.mjs:769). That sidesteps nitro/vite's
+          // prodSetup polyfill, which is Vite-only and leaves
+          // `__nitro_vite_envs__` unset in the prerender bundle.
+          nitro.options.virtual['#analog/ssr'] = () =>
+            generateSsrServiceVirtual(nitro);
+          nitro.options.virtual['#analog/ssr-renderer'] =
+            generateSsrRendererVirtual(readIndexHtml());
+          nitro.options.renderer ??= {};
+          nitro.options.renderer.handler = '#analog/ssr-renderer';
+          delete nitro.options.renderer.template;
+        }
+        // When ssr === false, Nitro's auto-detected template-serving
+        // renderer is exactly what we want (serve the raw index.html for
+        // every HTML request) — leave it in place.
 
         injectAnalogRouteRuleHeaders(nitro);
 
@@ -319,6 +326,90 @@ export default {
   const entry = entries.find((f) => f === 'main.server.mjs') ?? entries[0];
   const entryPath = resolve(ssrDir, entry);
   return `export { default } from ${JSON.stringify(entryPath)};`;
+}
+
+/**
+ * Packages Analog forces external in the Nitro server bundle. Each entry is
+ * here for a specific reason — see comments.
+ */
+const ANALOG_NITRO_EXTERNALS = [
+  // rxjs ships per-entry CJS/ESM facades that confuse the Nitro/Rolldown
+  // resolver during bundling.
+  'rxjs',
+  // node-fetch-native's polyfill subpath rewrites global fetch and isn't
+  // safe to inline into the Nitro bundle.
+  'node-fetch-native/dist/polyfill',
+  // sharp ships platform-specific native binaries under @img/sharp-*. pnpm
+  // creates symlinks for ALL optional platform deps but only installs the
+  // matching one, leaving broken symlinks that crash Nitro's externals
+  // plugin with ENOENT during realpath(). Externalizing sharp avoids
+  // bundling it; the user's app resolves it from node_modules at runtime.
+  'sharp',
+];
+
+function applyAnalogNitroExternals(rollupConfig: { external?: unknown }): void {
+  // Rolldown's `external` only accepts `Array<string | RegExp>`; promote
+  // whatever shape Nitro gave us (regex, single string, undefined) to an
+  // array and append Analog's entries as regex patterns that also match
+  // sub-paths (e.g. `sharp` matches `sharp/lib/foo`).
+  const prev = rollupConfig.external;
+  const existing: Array<string | RegExp> =
+    prev === undefined
+      ? []
+      : Array.isArray(prev)
+        ? (prev as Array<string | RegExp>)
+        : prev instanceof RegExp
+          ? [prev]
+          : typeof prev === 'string'
+            ? [prev]
+            : [];
+
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  for (const entry of ANALOG_NITRO_EXTERNALS) {
+    const pattern = new RegExp(`^${escapeRegExp(entry)}(?:/|$)`);
+    if (!existing.some((p) => String(p) === String(pattern))) {
+      existing.push(pattern);
+    }
+  }
+
+  rollupConfig.external = existing;
+}
+
+/**
+ * Workarounds for Nitro v3 + Rolldown bundler interaction quirks. Each
+ * is narrowly scoped and can be removed once the upstream bug is fixed:
+ *
+ * 1. `output.codeSplitting` — Nitro 3.0.x sets this; Rolldown rejects it
+ *    as an unknown key.
+ * 2. `output.manualChunks` — Nitro's default manual chunking crashes
+ *    Nitro's prerender rebundle.
+ * 3. `output.chunkFileNames` — Nitro's chunk-name function produces
+ *    route-derived `[token]` patterns which Rollup/Rolldown interprets as
+ *    placeholders; we rewrite non-standard tokens to `_token_`.
+ */
+function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
+  const output = rollupConfig.output;
+  if (!output || Array.isArray(output) || typeof output !== 'object') return;
+  const out = output as Record<string, unknown>;
+
+  if ('codeSplitting' in out) delete out['codeSplitting'];
+  if ('manualChunks' in out) delete out['manualChunks'];
+
+  const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
+  const chunkFileNames = out['chunkFileNames'];
+  if (typeof chunkFileNames === 'function') {
+    const originalFn = chunkFileNames as (...args: unknown[]) => unknown;
+    out['chunkFileNames'] = (...args: unknown[]) => {
+      const result = originalFn(...args);
+      if (typeof result !== 'string') return result;
+      return result.replace(/\[[^\]]+\]/g, (match: string) =>
+        VALID_ROLLUP_PLACEHOLDER.test(match)
+          ? match
+          : `_${match.slice(1, -1)}_`,
+      );
+    };
+  }
 }
 
 /**
