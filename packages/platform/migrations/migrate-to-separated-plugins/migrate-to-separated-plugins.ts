@@ -1,5 +1,6 @@
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
 import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
+import * as ts from 'typescript';
 
 const ANALOG_PLATFORM_IMPORT = `from '@analogjs/platform'`;
 const ANGULAR_PLUGIN_IMPORT = `from '@analogjs/vite-plugin-angular'`;
@@ -97,9 +98,192 @@ function addDependencies(tree: Tree, context: SchematicContext): boolean {
   return true;
 }
 
+interface TransformResult {
+  source: string;
+  movedVite: boolean;
+  movedNitro: boolean;
+}
+
+interface Edit {
+  start: number;
+  end: number;
+  text: string;
+}
+
+function applyEdits(source: string, edits: Edit[]): string {
+  // Apply right-to-left so earlier offsets stay valid.
+  const sorted = [...edits].sort((a, b) => b.start - a.start);
+  let result = source;
+  for (const edit of sorted) {
+    result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
+  }
+  return result;
+}
+
+function getLineIndent(source: string, pos: number): string {
+  let lineStart = pos;
+  while (lineStart > 0 && source[lineStart - 1] !== '\n') {
+    lineStart--;
+  }
+  let indent = '';
+  for (let i = lineStart; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === ' ' || ch === '\t') indent += ch;
+    else break;
+  }
+  return indent;
+}
+
+/**
+ * Tries to lift `vite: {...}` and `nitro: {...}` properties off the
+ * single `analog(...)` call into companion `angular(...)` / `nitro(...)`
+ * calls. Returns the rewritten source on success, or null if the file
+ * doesn't match the supported pattern (we then fall back to logging
+ * instructions rather than risking a corrupted file).
+ *
+ * Supported pattern: exactly one `analog(...)` call whose argument is
+ * an object literal. Properties named `vite` and `nitro` are recognized;
+ * everything else stays on `analog`.
+ */
+function tryTransformViteConfig(
+  filePath: string,
+  source: string,
+): TransformResult | null {
+  let sourceFile: ts.SourceFile;
+  try {
+    sourceFile = ts.createSourceFile(
+      filePath,
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+  } catch {
+    return null;
+  }
+
+  let analogImportEnd = -1;
+  let angularImported = false;
+  let nitroImported = false;
+  let analogCalls: ts.CallExpression[] = [];
+
+  function visit(node: ts.Node): void {
+    if (ts.isImportDeclaration(node)) {
+      const ml = node.moduleSpecifier;
+      if (ts.isStringLiteral(ml)) {
+        if (ml.text === '@analogjs/platform') {
+          analogImportEnd = node.end;
+        } else if (ml.text === '@analogjs/vite-plugin-angular') {
+          angularImported = true;
+        } else if (ml.text === 'nitro/vite') {
+          nitroImported = true;
+        }
+      }
+    } else if (ts.isCallExpression(node)) {
+      if (
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === 'analog'
+      ) {
+        analogCalls.push(node);
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sourceFile);
+
+  if (analogImportEnd === -1) return null;
+  if (analogCalls.length !== 1) return null;
+
+  const analogCall = analogCalls[0];
+  const callStart = analogCall.getStart(sourceFile);
+  const callEnd = analogCall.getEnd();
+
+  let viteValueText: string | null = null;
+  let nitroValueText: string | null = null;
+  let remainingPropsText: string | null = null;
+
+  const arg = analogCall.arguments[0];
+  if (arg && ts.isObjectLiteralExpression(arg)) {
+    const remaining: ts.ObjectLiteralElementLike[] = [];
+    for (const prop of arg.properties) {
+      if (
+        ts.isPropertyAssignment(prop) &&
+        ts.isIdentifier(prop.name) &&
+        (prop.name.text === 'vite' || prop.name.text === 'nitro')
+      ) {
+        const value = prop.initializer;
+        const text = source.slice(value.getStart(sourceFile), value.getEnd());
+        if (prop.name.text === 'vite') viteValueText = text;
+        else nitroValueText = text;
+      } else {
+        remaining.push(prop);
+      }
+    }
+
+    if (viteValueText === null && nitroValueText === null) return null;
+
+    if (remaining.length > 0) {
+      // Reconstruct the analog object literal from the remaining props,
+      // preserving their original source text (comments, spacing).
+      const propTexts = remaining.map((p) =>
+        source.slice(p.getStart(sourceFile), p.getEnd()),
+      );
+      const objStart = arg.getStart(sourceFile);
+      const indent = getLineIndent(source, objStart);
+      const propIndent = indent + '  ';
+      remainingPropsText = `{\n${propTexts.map((t) => `${propIndent}${t}`).join(',\n')},\n${indent}}`;
+    }
+  } else if (arg === undefined) {
+    // analog() with no options — nothing to move.
+    return null;
+  } else {
+    return null;
+  }
+
+  if (viteValueText === null && nitroValueText === null) return null;
+
+  const indent = getLineIndent(source, callStart);
+  const newAnalogCall = remainingPropsText
+    ? `analog(${remainingPropsText})`
+    : `analog()`;
+  const parts: string[] = [newAnalogCall];
+  if (viteValueText !== null) parts.push(`angular(${viteValueText})`);
+  else parts.push('angular()');
+  if (nitroValueText !== null) parts.push(`nitro(${nitroValueText})`);
+  else parts.push('nitro()');
+  const replacement = parts.join(`,\n${indent}`);
+
+  const edits: Edit[] = [{ start: callStart, end: callEnd, text: replacement }];
+
+  const importsToAdd: string[] = [];
+  if (!angularImported) {
+    importsToAdd.push(`import angular from '@analogjs/vite-plugin-angular';`);
+  }
+  if (!nitroImported) {
+    importsToAdd.push(`import { nitro } from 'nitro/vite';`);
+  }
+  if (importsToAdd.length > 0) {
+    edits.push({
+      start: analogImportEnd,
+      end: analogImportEnd,
+      text: `\n${importsToAdd.join('\n')}`,
+    });
+  }
+
+  const rewritten = applyEdits(source, edits);
+
+  return {
+    source: rewritten,
+    movedVite: viteValueText !== null,
+    movedNitro: nitroValueText !== null,
+  };
+}
+
 export default function migrateToSeparatedPlugins(): Rule {
   return (tree: Tree, context: SchematicContext) => {
     const filesUsingLegacyShape: string[] = [];
+    const rewrittenFiles: string[] = [];
+    const unhandledFiles: string[] = [];
 
     tree.visit((filePath) => {
       if (filePath.includes('/node_modules/')) return;
@@ -109,8 +293,16 @@ export default function migrateToSeparatedPlugins(): Rule {
       if (!content) return;
 
       const source = content.toString('utf-8');
-      if (usesLegacyPluginShape(source)) {
-        filesUsingLegacyShape.push(filePath);
+      if (!usesLegacyPluginShape(source)) return;
+
+      filesUsingLegacyShape.push(filePath);
+
+      const transformed = tryTransformViteConfig(filePath, source);
+      if (transformed) {
+        tree.overwrite(filePath, transformed.source);
+        rewrittenFiles.push(filePath);
+      } else {
+        unhandledFiles.push(filePath);
       }
     });
 
@@ -118,15 +310,29 @@ export default function migrateToSeparatedPlugins(): Rule {
       return tree;
     }
 
-    context.logger.info(
-      `Detected ${filesUsingLegacyShape.length} vite.config file(s) using the legacy single-call \`analog()\` plugin shape:`,
-    );
-    for (const file of filesUsingLegacyShape) {
-      context.logger.info(`  - ${file}`);
+    if (rewrittenFiles.length > 0) {
+      context.logger.info(
+        `Rewrote ${rewrittenFiles.length} vite.config file(s) to the separated \`analog() + angular() + nitro()\` shape:`,
+      );
+      for (const file of rewrittenFiles) {
+        context.logger.info(`  - ${file}`);
+      }
+      context.logger.info(
+        `Review the result — only \`vite\` and \`nitro\` were moved automatically. Other angular-passthrough options (\`liveReload\`, \`fastCompile\`, \`fileReplacements\`, \`tailwindCss\`, etc.) still need to be relocated by hand.\nSee ${MIGRATION_DOC_URL}`,
+      );
     }
-    context.logger.info(
-      `Split \`analog()\` into \`analog() + angular() + nitro()\` and move each option to its owning plugin.\nSee ${MIGRATION_DOC_URL}`,
-    );
+
+    if (unhandledFiles.length > 0) {
+      context.logger.info(
+        `Could not safely rewrite ${unhandledFiles.length} vite.config file(s); migrate them by hand:`,
+      );
+      for (const file of unhandledFiles) {
+        context.logger.info(`  - ${file}`);
+      }
+      context.logger.info(
+        `Split \`analog()\` into \`analog() + angular() + nitro()\` and move each option to its owning plugin.\nSee ${MIGRATION_DOC_URL}`,
+      );
+    }
 
     addDependencies(tree, context);
 
