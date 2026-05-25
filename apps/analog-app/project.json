@@ -7,7 +7,7 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@analogjs/platform:vite",
       "dependsOn": [
         "platform:build",
         "router:build",
@@ -16,15 +16,17 @@
       ],
       "outputs": ["{workspaceRoot}/apps/analog-app/.output"],
       "options": {
-        "command": "vite build -c apps/analog-app/vite.config.ts"
+        "configFile": "apps/analog-app/vite.config.ts",
+        "outputPath": "dist/apps/analog-app/client"
       },
       "defaultConfiguration": "production",
       "configurations": {
         "development": {
-          "command": "vite build -c apps/analog-app/vite.config.ts --mode development"
+          "mode": "development"
         },
         "production": {
-          "command": "vite build -c apps/analog-app/vite.config.ts --mode production"
+          "sourcemap": false,
+          "mode": "production"
         }
       }
     },
