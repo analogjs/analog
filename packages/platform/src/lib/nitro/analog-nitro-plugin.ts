@@ -269,7 +269,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           resolve(
             context.workspaceRoot,
             context.rootDir,
-            `${context.sourceRoot}/server/routes/${apiPrefix.replace(/^\/+/, '')}`,
+            `${context.sourceRoot}/server/routes/api`,
           ),
         );
 
@@ -279,7 +279,6 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           rootDir: context.rootDir,
           additionalPagesDirs: options.additionalPagesDirs,
           hasAPIDir,
-          apiPrefix,
         });
         nitro.options.handlers.push(...pageHandlers);
 
