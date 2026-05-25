@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { create } from 'xmlbuilder2';
-import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
+import type { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { UserConfig } from 'vite';
 import type {
   I18nPrerenderOptions,
