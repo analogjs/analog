@@ -122,7 +122,12 @@ export default defineHandler(async (event) => {
   const prefix = useRuntimeConfig().prefix;
   const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
 
-  if (event.path?.startsWith(apiPrefix)) {
+  // Match the configured prefix as a full path segment. A bare
+  // startsWith would false-match /apiary against an apiPrefix of /api.
+  if (
+    event.path === apiPrefix ||
+    event.path?.startsWith(apiPrefix + '/')
+  ) {
     const reqUrl = event.path?.replace(apiPrefix, '');
 
     if (
