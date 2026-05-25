@@ -7,7 +7,7 @@ const ANGULAR_PLUGIN_IMPORT = `from '@analogjs/vite-plugin-angular'`;
 const NITRO_VITE_IMPORT = `from 'nitro/vite'`;
 const ANGULAR_PLUGIN_PKG = '@analogjs/vite-plugin-angular';
 const NITRO_PKG = 'nitro';
-const NITRO_VERSION = '3.0.260415-beta';
+const NITRO_VERSION = '3.0.260522-beta';
 const MIGRATION_DOC_URL =
   'https://analogjs.org/docs/guides/migrating-v2-to-v3#analog-angular-and-nitro-are-now-separate-plugins';
 

@@ -512,7 +512,7 @@ function addPnpmDependencies(pkg, template) {
     // pnpm's strict node_modules layout doesn't, so add it explicitly for
     // pnpm users only.
     pkg.devDependencies ??= {};
-    pkg.devDependencies.nitro = '3.0.260415-beta';
+    pkg.devDependencies.nitro = '3.0.260522-beta';
   }
 }
 
