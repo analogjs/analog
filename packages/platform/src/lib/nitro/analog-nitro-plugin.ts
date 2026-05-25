@@ -545,10 +545,11 @@ async function wirePrerender(
   const prerender = options.prerender;
   if (!prerender && !options.i18n) return;
 
-  const { routes: collected, sitemaps: routeSitemaps } = await collectRoutes(
-    prerender?.routes,
-    context,
-  );
+  const {
+    routes: collected,
+    sitemaps: routeSitemaps,
+    routeSourceFiles,
+  } = await collectRoutes(prerender?.routes, context, apiPrefix);
 
   const expanded = options.i18n
     ? expandRoutesWithLocales(collected, {
@@ -569,6 +570,24 @@ async function wirePrerender(
 
   if (prerender?.postRenderingHooks?.length) {
     addPostRenderingHooks(nitro, prerender.postRenderingHooks);
+  }
+
+  if (Object.keys(routeSourceFiles).length > 0) {
+    // Mirror the legacy `@analogjs/vite-plugin-nitro` behavior: after
+    // prerender completes, write the route's source content alongside the
+    // prerendered HTML at `<publicDir>/<route>.md`. Drives the
+    // `outputSourceFile` option on both `PrerenderRouteConfig` (string path
+    // to source markdown) and `PrerenderContentDir` (per-file callback).
+    nitro.hooks.hook('prerender:done', async () => {
+      const publicDir = resolve(nitro.options.output.publicDir);
+      const { mkdirSync, writeFileSync } = await import('node:fs');
+      const { dirname, join } = await import('node:path');
+      for (const [route, content] of Object.entries(routeSourceFiles)) {
+        const outputPath = join(publicDir, `${route}.md`);
+        mkdirSync(dirname(outputPath), { recursive: true });
+        writeFileSync(outputPath, content, 'utf8');
+      }
+    });
   }
 
   const sitemapConfig = prerender?.sitemap;
@@ -597,11 +616,17 @@ async function collectRoutes(
       : never
     : never,
   context: NitroPluginContext,
-): Promise<{ routes: string[]; sitemaps: Record<string, RouteSitemap> }> {
+  apiPrefix: string,
+): Promise<{
+  routes: string[];
+  sitemaps: Record<string, RouteSitemap>;
+  routeSourceFiles: Record<string, string>;
+}> {
   const out: string[] = [];
   const sitemaps: Record<string, RouteSitemap> = {};
+  const routeSourceFiles: Record<string, string> = {};
 
-  if (!routesInput) return { routes: out, sitemaps };
+  if (!routesInput) return { routes: out, sitemaps, routeSourceFiles };
 
   const inputs = Array.isArray(routesInput)
     ? routesInput
@@ -639,6 +664,12 @@ async function collectRoutes(
                 )(file)
               : dir.sitemap;
         }
+        if (dir.outputSourceFile) {
+          const sourceContent = dir.outputSourceFile(file);
+          if (typeof sourceContent === 'string') {
+            routeSourceFiles[route] = sourceContent;
+          }
+        }
       }
       continue;
     }
@@ -649,8 +680,26 @@ async function collectRoutes(
       if (cfg.sitemap) {
         sitemaps[cfg.route] = cfg.sitemap;
       }
+      if (cfg.outputSourceFile) {
+        const sourcePath = resolve(
+          context.workspaceRoot,
+          context.rootDir,
+          cfg.outputSourceFile,
+        );
+        if (existsSync(sourcePath)) {
+          routeSourceFiles[cfg.route] = readFileSync(sourcePath, 'utf8');
+        }
+      }
+      if (cfg.staticData) {
+        // Mirror the legacy plugin: when staticData is requested, also
+        // prerender the page's data-fetching endpoint so the JSON payload
+        // is available statically.
+        const prefix = apiPrefix.startsWith('/') ? apiPrefix : `/${apiPrefix}`;
+        const route = cfg.route.startsWith('/') ? cfg.route : `/${cfg.route}`;
+        out.push(`${prefix}/_analog/pages${route}`);
+      }
     }
   }
 
-  return { routes: out, sitemaps };
+  return { routes: out, sitemaps, routeSourceFiles };
 }
