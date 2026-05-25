@@ -11,7 +11,9 @@
       "x-priority": "important"
     },
     "port": {
-      "type": "number",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
       "description": "Port to listen on.",
       "x-priority": "important"
     },
