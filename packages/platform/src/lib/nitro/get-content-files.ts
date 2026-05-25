@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { basename, join, relative, resolve } from 'node:path';
 import { normalizePath } from 'vite';
 import { createRequire } from 'node:module';
 import { globSync } from 'tinyglobby';
@@ -46,14 +46,15 @@ export function getMatchingContentFilesWithFrontMatter(
     const fileContents = readFileSync(f, 'utf8');
     const raw = fm(fileContents);
 
-    const filepath = normalizePath(f).replace(root, '');
-    const match = filepath.match(/\/([^/.]+)(\.([^/.]+))?$/);
-    let name = '';
-    let extension = '';
-    if (match) {
-      name = match[1];
-      extension = match[3] || '';
-    }
+    // Split the basename on the LAST dot so file names that contain
+    // additional dots (e.g. locale suffixes like `post.en.md`) keep the
+    // inner dots in `name` and only the trailing segment becomes the
+    // extension. The previous regex stopped at the first dot and
+    // discarded everything between it and the extension.
+    const filename = basename(normalizePath(f));
+    const dot = filename.lastIndexOf('.');
+    const name = dot === -1 ? filename : filename.slice(0, dot);
+    const extension = dot === -1 ? '' : filename.slice(dot + 1);
 
     const relativeDir = normalizePath(relative(dirPrefix, f));
     const lastSlash = relativeDir.lastIndexOf('/');
