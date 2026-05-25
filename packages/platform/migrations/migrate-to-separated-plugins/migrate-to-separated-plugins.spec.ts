@@ -310,7 +310,7 @@ describe('migrate-to-separated-plugins', () => {
       expect(result).not.toMatch(/nitro:\s*\{/);
     });
 
-    it('falls back to logging instructions when analog() has no argument', () => {
+    it('rewrites analog() with no argument into analog(), angular(), nitro()', () => {
       tree.create(
         '/vite.config.ts',
         [
@@ -323,14 +323,40 @@ describe('migrate-to-separated-plugins', () => {
       );
       tree.create('/package.json', PKG);
 
-      const { context, infoLogs } = createContext();
+      const { context } = createContext();
       migrateToSeparatedPlugins()(tree, context);
 
       const result = tree.readContent('/vite.config.ts');
-      // Source untouched.
-      expect(result).toContain(`plugins: [analog()]`);
-      // But user gets pointed at the doc.
-      expect(infoLogs.join('\n')).toContain(MIGRATION_DOC_PHRASE);
+      expect(result).toContain(
+        `import angular from '@analogjs/vite-plugin-angular';`,
+      );
+      expect(result).toContain(`import { nitro } from 'nitro/vite';`);
+      expect(result).toMatch(/analog\(\),\s+angular\(\),\s+nitro\(\)/);
+    });
+
+    it('rewrites analog({ apiPrefix }) (no vite/nitro keys) and adds empty companion plugins', () => {
+      tree.create(
+        '/vite.config.ts',
+        [
+          `import analog from '@analogjs/platform';`,
+          ``,
+          `export default {`,
+          `  plugins: [`,
+          `    analog({ apiPrefix: 'api' }),`,
+          `  ],`,
+          `};`,
+        ].join('\n'),
+      );
+      tree.create('/package.json', PKG);
+
+      const { context } = createContext();
+      migrateToSeparatedPlugins()(tree, context);
+
+      const result = tree.readContent('/vite.config.ts');
+      expect(result).toContain(`analog({`);
+      expect(result).toContain(`apiPrefix: 'api'`);
+      expect(result).toContain(`angular()`);
+      expect(result).toContain(`nitro()`);
     });
 
     it('does not rewrite when the analog() call argument is not an object literal', () => {

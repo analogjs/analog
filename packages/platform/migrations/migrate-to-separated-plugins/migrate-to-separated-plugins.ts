@@ -220,8 +220,6 @@ function tryTransformViteConfig(
       }
     }
 
-    if (viteValueText === null && nitroValueText === null) return null;
-
     if (remaining.length > 0) {
       // Reconstruct the analog object literal from the remaining props,
       // preserving their original source text (comments, spacing).
@@ -233,14 +231,13 @@ function tryTransformViteConfig(
       const propIndent = indent + '  ';
       remainingPropsText = `{\n${propTexts.map((t) => `${propIndent}${t}`).join(',\n')},\n${indent}}`;
     }
-  } else if (arg === undefined) {
-    // analog() with no options — nothing to move.
-    return null;
-  } else {
+  } else if (arg !== undefined) {
+    // analog(otherExpression) — can't statically split a variable or call
+    // expression. Fall back to logging instructions.
     return null;
   }
-
-  if (viteValueText === null && nitroValueText === null) return null;
+  // analog() with no argument falls through to the rewrite below; we just
+  // emit `analog(), angular(), nitro()` to scaffold the new plugin chain.
 
   const indent = getLineIndent(source, callStart);
   const newAnalogCall = remainingPropsText
