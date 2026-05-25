@@ -9,7 +9,7 @@
     "build": {
       "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build"],
-      "outputs": ["{workspaceRoot}/apps/tailwind-debug-app/.output"],
+      "outputs": ["{workspaceRoot}/dist/apps/tailwind-debug-app/analog"],
       "options": {
         "configFile": "apps/tailwind-debug-app/vite.config.ts",
         "outputPath": "dist/apps/tailwind-debug-app/client"

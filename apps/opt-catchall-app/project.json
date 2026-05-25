@@ -9,7 +9,7 @@
     "build": {
       "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build", "content:build"],
-      "outputs": ["{workspaceRoot}/apps/opt-catchall-app/.output"],
+      "outputs": ["{workspaceRoot}/dist/apps/opt-catchall-app/analog"],
       "options": {
         "configFile": "apps/opt-catchall-app/vite.config.ts",
         "outputPath": "dist/apps/opt-catchall-app/client"

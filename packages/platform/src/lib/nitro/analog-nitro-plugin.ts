@@ -140,6 +140,12 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         overrides.environments = {
           ssr: {
             build: {
+              outDir: resolve(
+                context.workspaceRoot,
+                'dist',
+                context.rootDir,
+                'ssr',
+              ),
               rollupOptions: {
                 input: { index: ssrEntryMarkerPath },
               },
@@ -176,6 +182,31 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         if (!context || context.rootDir === '.') {
           refreshContext(nitro.options.rootDir);
         }
+
+        // Preserve the legacy `@analogjs/vite-plugin-nitro` final output
+        // layout so downstream tooling (deploy scripts, docs, the
+        // `dist/analog/server` start command) keeps working. nitro/vite's
+        // default `<rootDir>/.output` would otherwise drop artifacts in an
+        // unexpected location for users upgrading from v2.
+        //
+        // `buildDir` (Nitro's intermediate scratch dir) stays at its default
+        // inside the project root. Nitro's prerender phase re-bundles SSR
+        // chunks out of `<buildDir>/vite/services/ssr/`, and Rolldown's
+        // resolver walks up from those files looking for `node_modules/`.
+        // Keeping `buildDir` adjacent to the project root means workspace
+        // packages installed at `<rootDir>/node_modules/` (the usual install
+        // shape for both standalone and Nx setups) remain reachable.
+        const distRoot = resolve(
+          context.workspaceRoot,
+          'dist',
+          context.rootDir,
+        );
+        nitro.options.output = {
+          ...nitro.options.output,
+          dir: resolve(distRoot, 'analog'),
+          publicDir: resolve(distRoot, 'analog/public'),
+          serverDir: resolve(distRoot, 'analog/server'),
+        };
 
         const hasAPIDir = existsSync(
           resolve(
