@@ -114,7 +114,6 @@ export default defineConfig(({ mode }) => ({
       ssr: false,
     }),
     angular({
-      workspaceRoot: resolve(__dirname, '../..'),
       experimental: {
         // Required to reproduce #2293: @apply inside :host with Tailwind
         // prefix configuration requires the Angular Compilation API path

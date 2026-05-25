@@ -96,7 +96,6 @@ export default defineConfig(async ({ mode, command }) => {
         },
       }),
       angular({
-        workspaceRoot: resolve(__dirname, '../..'),
         include: [
           ...explicitLibPages,
           ...pageGlobs(discoveredLibs.additionalPagesDirs),

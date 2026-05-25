@@ -35,7 +35,6 @@ export default defineConfig(() => {
         },
       }),
       angular({
-        workspaceRoot: resolve(__dirname, '../..'),
         liveReload: true,
         experimental: {
           useAngularCompilationAPI: true,

@@ -33,9 +33,7 @@ export default defineConfig(({ mode }) => {
       analog({
         apiPrefix: 'api',
       }),
-      angular({
-        workspaceRoot: resolve(__dirname, '../..'),
-      }),
+      angular(),
       nitro({}),
     ],
     test: {
