@@ -529,12 +529,34 @@ function generateSsrEntryWrapper(
   template: string,
 ): string {
   return `
+import { serverFetch as nitroServerFetch } from 'nitro/app';
 import renderer from ${JSON.stringify(entryServer)};
 
 const TEMPLATE = ${JSON.stringify(template)};
 
 const normalizeRequestPath = (url) =>
   url.replace(/\\/index\\.html(?=$|[?#])/, '/');
+
+// In-process fetch wired into Nitro's request pipeline. Angular's HttpClient
+// (via withFetch()) and Analog's injectLoad() call this during SSR/prerender
+// so they hit the running app's page-endpoint and API routes without going
+// through the network — the prerender pipeline doesn't have a listening
+// socket. Without this, every SSR data fetch ECONNREFUSEs and Angular's
+// router fails to resolve any data-bound route, producing an empty
+// <router-outlet/> in the prerendered HTML.
+const ssrFetch = (resource, init) => {
+  let url = typeof resource === 'string'
+    ? resource
+    : resource instanceof URL
+      ? resource.href
+      : resource.url;
+  // Relative URLs from injectAPIPrefix() etc. need a host for Nitro's
+  // Request constructor to accept them.
+  if (typeof url === 'string' && url.startsWith('/')) {
+    url = 'http://localhost' + url;
+  }
+  return nitroServerFetch(url, init);
+};
 
 export default {
   async fetch(req) {
@@ -559,7 +581,10 @@ export default {
     };
 
     try {
-      const html = await renderer(requestPath, TEMPLATE, { req: reqShim });
+      const html = await renderer(requestPath, TEMPLATE, {
+        req: reqShim,
+        fetch: ssrFetch,
+      });
       return new Response(html, {
         status: 200,
         headers: { 'content-type': 'text/html; charset=utf-8' },
