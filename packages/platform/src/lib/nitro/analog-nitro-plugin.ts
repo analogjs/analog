@@ -121,15 +121,19 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       refreshContext(userConfig.root);
 
       // Bridge the legacy `BUILD_PRESET` env var that `@analogjs/vite-plugin-nitro`
-      // accepted into Nitro v3's `NITRO_PRESET`, and auto-pick the `vercel`
-      // preset when the build runs inside Vercel CI (`process.env.VERCEL`
-      // is set on every Vercel build). Mirrors the legacy plugin's behavior
-      // so users upgrading don't need to change their CI configuration.
+      // accepted into Nitro v3's `NITRO_PRESET`, and auto-pick the matching
+      // preset when the build runs inside a host's CI (each host sets its
+      // own well-known env var). Mirrors the legacy plugin's behavior so
+      // users upgrading don't need to change their CI configuration.
       if (!process.env['NITRO_PRESET']) {
         if (process.env['BUILD_PRESET']) {
           process.env['NITRO_PRESET'] = process.env['BUILD_PRESET'];
         } else if (process.env['VERCEL']) {
           process.env['NITRO_PRESET'] = 'vercel';
+        } else if (process.env['NETLIFY']) {
+          process.env['NITRO_PRESET'] = 'netlify';
+        } else if (process.env['CF_PAGES']) {
+          process.env['NITRO_PRESET'] = 'cloudflare-pages';
         }
       }
 
@@ -228,18 +232,24 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         // packages installed at `<rootDir>/node_modules/` (the usual install
         // shape for both standalone and Nx setups) remain reachable.
         if (!nitro.options.dev) {
-          // Vercel's preset owns its own output layout (the Build Output
-          // API expects `<rootDir>/.vercel/output/{functions,static}/...`
-          // populated together); overriding to the legacy
-          // `dist/<rootDir>/analog/` paths leaves functions and static
-          // files in different trees. For Vercel, defer to Nitro's preset.
-          // For everything else, restore the legacy paths so docs and
-          // `dist/analog/server` start commands keep working.
-          const isVercel =
-            (nitro.options.preset ?? '').toLowerCase().includes('vercel') ||
-            !!process.env['VERCEL'];
+          // Deployment presets (Vercel, Netlify, Cloudflare, Firebase, ...)
+          // own their own output layout — Vercel writes the Build Output API
+          // tree under `.vercel/output/`, Netlify expects functions under
+          // `.netlify/functions-internal/` with static assets under `dist/`,
+          // and so on. Clobbering `output.{dir,publicDir,serverDir}` for
+          // those presets leaves functions and static files in different
+          // trees and breaks the deploy. Only override when running the
+          // default node-server preset (or no preset at all) so docs and
+          // the legacy `dist/analog/server` start command keep working for
+          // standalone Node deployments.
+          const preset = (nitro.options.preset ?? '').toLowerCase();
+          const isManagedPreset =
+            preset !== '' &&
+            preset !== 'node-server' &&
+            preset !== 'node' &&
+            preset !== 'nitro-dev';
 
-          if (isVercel) {
+          if (preset.includes('vercel')) {
             const vercel = (nitro.options as { vercel?: Record<string, any> })
               .vercel;
             (nitro.options as { vercel?: Record<string, any> }).vercel = {
@@ -250,7 +260,36 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
                 ...vercel?.functions,
               },
             };
-          } else {
+          }
+
+          // Netlify auto-discovers functions under
+          // `<workspaceRoot>/.netlify/functions-internal/`. Nitro's netlify
+          // preset anchors that to `{{rootDir}}`, which in Nx monorepos
+          // becomes `apps/<name>/.netlify/...` and is invisible to the
+          // Netlify deploy. Hoist the functions to the workspace root so
+          // `nx build <app>` produces a deploy-ready tree at the repo root.
+          // Keep `publicDir` under `dist/<rootDir>/analog/public/` (the
+          // legacy Analog Netlify publish layout) — the user wires their
+          // `netlify.toml` publish path to it.
+          if (preset === 'netlify' || preset === 'netlify-edge') {
+            const netlifyDir = resolve(
+              context.workspaceRoot,
+              '.netlify/functions-internal',
+            );
+            nitro.options.output = {
+              ...nitro.options.output,
+              dir: netlifyDir,
+              serverDir: resolve(netlifyDir, 'server'),
+              publicDir: resolve(
+                context.workspaceRoot,
+                'dist',
+                context.rootDir,
+                'analog/public',
+              ),
+            };
+          }
+
+          if (!isManagedPreset) {
             const distRoot = resolve(
               context.workspaceRoot,
               'dist',
@@ -530,6 +569,7 @@ function generateSsrEntryWrapper(
 ): string {
   return `
 import { serverFetch as nitroServerFetch } from 'nitro/app';
+import { createFetch } from 'ofetch';
 import renderer from ${JSON.stringify(entryServer)};
 
 const TEMPLATE = ${JSON.stringify(template)};
@@ -558,6 +598,15 @@ const ssrFetch = (resource, init) => {
   return nitroServerFetch(url, init);
 };
 
+// Wrap in ofetch so consumers that expect \`$fetch.raw()\` (the router's
+// request-context interceptor short-circuits SSR HttpClient calls through
+// \`globalThis.$fetch.raw\`) can call it. Set on globalThis so router code
+// running inside the Angular renderer can find it.
+const ssrOFetch = createFetch({ fetch: ssrFetch });
+if (typeof globalThis.$fetch === 'undefined') {
+  globalThis.$fetch = ssrOFetch;
+}
+
 export default {
   async fetch(req) {
     const url = new URL(req.url);
@@ -583,7 +632,11 @@ export default {
     try {
       const html = await renderer(requestPath, TEMPLATE, {
         req: reqShim,
-        fetch: ssrFetch,
+        // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
+        // router's request-context interceptor via \`serverFetch.raw(...)\`,
+        // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
+        // and throws TypeError during prerender/SSR.
+        fetch: ssrOFetch,
       });
       return new Response(html, {
         status: 200,
