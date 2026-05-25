@@ -503,6 +503,9 @@ export default {
   async fetch(req) {
     const url = new URL(req.url);
     const requestPath = normalizeRequestPath(url.pathname);
+    // Preserve the query string so Angular's router + injectQuery() and
+    // server data loaders that read from req.url see the full path+query.
+    const requestUrl = requestPath + url.search;
 
     if (req.headers.get('x-analog-no-ssr') === 'true') {
       return new Response(TEMPLATE, {
@@ -513,8 +516,8 @@ export default {
 
     const reqShim = {
       headers: Object.fromEntries(req.headers.entries()),
-      url: requestPath,
-      originalUrl: requestPath,
+      url: requestUrl,
+      originalUrl: requestUrl,
       connection: {},
     };
 
