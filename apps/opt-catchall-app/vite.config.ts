@@ -32,7 +32,7 @@ export default defineConfig(() => {
           useAngularCompilationAPI: true,
         },
       }),
-      nitro({}),
+      nitro(),
     ],
   };
 });

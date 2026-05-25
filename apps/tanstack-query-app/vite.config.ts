@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
         apiPrefix: 'api',
       }),
       angular(),
-      nitro({}),
+      nitro(),
     ],
     test: {
       reporters: ['default'],

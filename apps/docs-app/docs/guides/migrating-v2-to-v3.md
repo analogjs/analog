@@ -159,7 +159,7 @@ plugins: [
     include: pageGlobs(libs.additionalPagesDirs),
     additionalContentDirs: libs.additionalContentDirs,
   }),
-  nitro({}),
+  nitro(),
 ];
 ```
 
