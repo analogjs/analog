@@ -60,7 +60,11 @@ export function getPageHandlers({
       .replace(/\.server\.ts$/, '')
       .replace(/\[\.{3}(.+)\]/g, '**:$1')
       .replace(/\[\.{3}(\w+)\]/g, '**:$1')
-      .replace(/\/\((.*?)\)$/, '/-$1-')
+      // Strip Angular Router group syntax `(group)` from any segment, not
+      // just trailing ones. Routes like `(auth)/login.server.ts` need to
+      // become `/-auth-/login`, otherwise the literal parens leak through
+      // and the handler is mounted under an invalid Nitro path.
+      .replace(/\/\(([^/]+)\)/g, '/-$1-')
       .replace(/\[(\w+)\]/g, ':$1')
       .replace(/\./g, '/');
 
