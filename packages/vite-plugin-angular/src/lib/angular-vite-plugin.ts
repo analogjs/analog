@@ -340,7 +340,10 @@ export function angular(options?: PluginOptions): Plugin[] {
    */
   const pluginOptions = {
     tsconfigGetter: createTsConfigGetter(options?.tsconfig),
-    workspaceRoot: options?.workspaceRoot ?? process.cwd(),
+    workspaceRoot:
+      options?.workspaceRoot ??
+      process.env['NX_WORKSPACE_ROOT'] ??
+      process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
     advanced: {
       tsTransformers: {
