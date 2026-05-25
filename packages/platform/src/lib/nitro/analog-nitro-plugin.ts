@@ -120,6 +120,19 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     config(userConfig) {
       refreshContext(userConfig.root);
 
+      // Bridge the legacy `BUILD_PRESET` env var that `@analogjs/vite-plugin-nitro`
+      // accepted into Nitro v3's `NITRO_PRESET`, and auto-pick the `vercel`
+      // preset when the build runs inside Vercel CI (`process.env.VERCEL`
+      // is set on every Vercel build). Mirrors the legacy plugin's behavior
+      // so users upgrading don't need to change their CI configuration.
+      if (!process.env['NITRO_PRESET']) {
+        if (process.env['BUILD_PRESET']) {
+          process.env['NITRO_PRESET'] = process.env['BUILD_PRESET'];
+        } else if (process.env['VERCEL']) {
+          process.env['NITRO_PRESET'] = 'vercel';
+        }
+      }
+
       const overrides: UserConfig = {
         // Vite 8 defaults `server.fs.allow` to `[searchForWorkspaceRoot(root)]`,
         // which should already cover the workspace root. In practice, nitro/vite's
@@ -215,17 +228,41 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         // packages installed at `<rootDir>/node_modules/` (the usual install
         // shape for both standalone and Nx setups) remain reachable.
         if (!nitro.options.dev) {
-          const distRoot = resolve(
-            context.workspaceRoot,
-            'dist',
-            context.rootDir,
-          );
-          nitro.options.output = {
-            ...nitro.options.output,
-            dir: resolve(distRoot, 'analog'),
-            publicDir: resolve(distRoot, 'analog/public'),
-            serverDir: resolve(distRoot, 'analog/server'),
-          };
+          // Vercel's preset owns its own output layout (the Build Output
+          // API expects `<rootDir>/.vercel/output/{functions,static}/...`
+          // populated together); overriding to the legacy
+          // `dist/<rootDir>/analog/` paths leaves functions and static
+          // files in different trees. For Vercel, defer to Nitro's preset.
+          // For everything else, restore the legacy paths so docs and
+          // `dist/analog/server` start commands keep working.
+          const isVercel =
+            (nitro.options.preset ?? '').toLowerCase().includes('vercel') ||
+            !!process.env['VERCEL'];
+
+          if (isVercel) {
+            const vercel = (nitro.options as { vercel?: Record<string, any> })
+              .vercel;
+            (nitro.options as { vercel?: Record<string, any> }).vercel = {
+              ...vercel,
+              entryFormat: vercel?.entryFormat ?? 'node',
+              functions: {
+                runtime: vercel?.functions?.runtime ?? 'nodejs24.x',
+                ...vercel?.functions,
+              },
+            };
+          } else {
+            const distRoot = resolve(
+              context.workspaceRoot,
+              'dist',
+              context.rootDir,
+            );
+            nitro.options.output = {
+              ...nitro.options.output,
+              dir: resolve(distRoot, 'analog'),
+              publicDir: resolve(distRoot, 'analog/public'),
+              serverDir: resolve(distRoot, 'analog/server'),
+            };
+          }
         }
 
         const hasAPIDir = existsSync(
