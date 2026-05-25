@@ -31,7 +31,7 @@
     "lint": "pnpm run /^lint:/",
     "ng": "nx",
     "preinstall": "npx only-allow pnpm",
-    "prepare": "git config core.hookspath .githooks || true && node tools/scripts/build-release.mts",
+    "prepare": "node tools/scripts/build-release.mts",
     "prettier:check": "prettier --check .",
     "release:pack": "node tools/scripts/release-artifacts.mts pack",
     "release:smoke": "node tools/scripts/smoke-release-consumers.mts",

@@ -213,7 +213,24 @@ function runStep(step: Step): void {
     cwd: root,
     stdio: 'inherit',
     env: process.env,
+    shell: process.platform === 'win32',
   });
+}
+
+// Wire git hooks. Previously the prepare script ran
+// `git config core.hookspath .githooks || true && node tools/scripts/build-release.mts`,
+// but cmd.exe doesn't have a `true` builtin, so the entire chain short-
+// circuits on Windows before the build steps run. Move the git-config
+// step into the script so a missing/failed git invocation can't block
+// the rest of the prepare work.
+try {
+  execFileSync('git', ['config', 'core.hookspath', '.githooks'], {
+    cwd: root,
+    stdio: 'ignore',
+    shell: process.platform === 'win32',
+  });
+} catch {
+  // Not a git checkout, or git isn't available — skip silently.
 }
 
 for (const step of steps) {
