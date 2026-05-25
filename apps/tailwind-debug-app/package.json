@@ -8,6 +8,7 @@
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
     "@analogjs/vite-plugin-angular": "workspace:*",
-    "@analogjs/vitest-angular": "workspace:*"
+    "@analogjs/vitest-angular": "workspace:*",
+    "nitro": "catalog:"
   }
 }

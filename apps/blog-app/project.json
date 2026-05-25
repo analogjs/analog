@@ -7,26 +7,19 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "nx:run-commands",
       "dependsOn": ["platform:build", "router:build", "content:build"],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/blog-app/.nitro",
-        "{workspaceRoot}/dist/apps/blog-app/ssr",
-        "{workspaceRoot}/dist/apps/blog-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/apps/blog-app/.output"],
       "options": {
-        "configFile": "apps/blog-app/vite.config.ts",
-        "outputPath": "dist/apps/blog-app/client"
+        "command": "vite build -c apps/blog-app/vite.config.ts"
       },
       "defaultConfiguration": "production",
       "configurations": {
         "development": {
-          "mode": "development"
+          "command": "vite build -c apps/blog-app/vite.config.ts --mode development"
         },
         "production": {
-          "sourcemap": false,
-          "mode": "production"
+          "command": "vite build -c apps/blog-app/vite.config.ts --mode production"
         }
       }
     },

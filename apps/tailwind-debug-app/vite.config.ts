@@ -1,9 +1,12 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolve } from 'node:path';
 import { createLogger, defineConfig, type Plugin } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -88,7 +91,6 @@ export default defineConfig(({ mode }) => ({
     exclude: getWorkspaceDependencyExcludes(__dirname),
   },
   build: {
-    outDir: '../../dist/apps/tailwind-debug-app/client',
     reportCompressedSize: true,
     target: ['es2020'],
   },
@@ -106,29 +108,32 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       apiPrefix: 'api',
+      prerender: {
+        routes: [],
+      },
+      ssr: false,
+    }),
+    angular({
+      workspaceRoot: resolve(__dirname, '../..'),
       experimental: {
         // Required to reproduce #2293: @apply inside :host with Tailwind
         // prefix configuration requires the Angular Compilation API path
         // for style externalization.
         useAngularCompilationAPI: true,
       },
-      prerender: {
-        routes: [],
-      },
-      ssr: false,
-      nitro: {
-        routeRules: {
-          '/probe': {
-            ssr: false,
-          },
-        },
-        experimental: {
-          websocket: true,
-        },
-      },
       tailwindCss: {
         prefixes: ['tdbg:'],
         rootStylesheet: 'apps/tailwind-debug-app/src/styles.css',
+      },
+    }),
+    nitro({
+      routeRules: {
+        '/probe': {
+          ssr: false,
+        },
+      },
+      experimental: {
+        websocket: true,
       },
     }),
     tailwindcss(),
@@ -151,7 +156,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 43040,
     fs: {
-      allow: ['.'],
+      allow: [resolve(__dirname, '../..')],
     },
     hmr: {
       clientPort: 4201,

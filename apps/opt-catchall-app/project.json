@@ -7,26 +7,19 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "nx:run-commands",
       "dependsOn": ["platform:build", "router:build", "content:build"],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/.nitro",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/ssr",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/apps/opt-catchall-app/.output"],
       "options": {
-        "configFile": "apps/opt-catchall-app/vite.config.ts",
-        "outputPath": "dist/apps/opt-catchall-app/client"
+        "command": "vite build -c apps/opt-catchall-app/vite.config.ts"
       },
       "defaultConfiguration": "production",
       "configurations": {
         "development": {
-          "mode": "development"
+          "command": "vite build -c apps/opt-catchall-app/vite.config.ts --mode development"
         },
         "production": {
-          "sourcemap": false,
-          "mode": "production"
+          "command": "vite build -c apps/opt-catchall-app/vite.config.ts --mode production"
         }
       }
     },

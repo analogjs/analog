@@ -7,9 +7,11 @@
   },
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
+    "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vitest-angular": "workspace:*",
     "@tailwindcss/vite": "catalog:",
     "daisyui": "^5.5.19",
+    "nitro": "catalog:",
     "tailwindcss": "catalog:"
   }
 }

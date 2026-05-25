@@ -7,26 +7,19 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "nx:run-commands",
       "dependsOn": ["platform:build", "router:build"],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/tailwind-debug-app/.nitro",
-        "{workspaceRoot}/dist/apps/tailwind-debug-app/ssr",
-        "{workspaceRoot}/dist/apps/tailwind-debug-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/apps/tailwind-debug-app/.output"],
       "options": {
-        "configFile": "apps/tailwind-debug-app/vite.config.ts",
-        "outputPath": "dist/apps/tailwind-debug-app/client"
+        "command": "vite build -c apps/tailwind-debug-app/vite.config.ts"
       },
       "defaultConfiguration": "production",
       "configurations": {
         "development": {
-          "mode": "development"
+          "command": "vite build -c apps/tailwind-debug-app/vite.config.ts --mode development"
         },
         "production": {
-          "sourcemap": false,
-          "mode": "production"
+          "command": "vite build -c apps/tailwind-debug-app/vite.config.ts --mode production"
         }
       }
     },
