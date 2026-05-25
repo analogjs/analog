@@ -17,7 +17,15 @@ export function expandRoutesWithLocales(
   const expanded: string[] = [];
 
   for (const route of routes) {
-    if (route.includes('/_analog/') || route.startsWith('/api/')) {
+    // Skip locale expansion for internal analog endpoints and API routes.
+    // `startsWith('/api/')` alone misses the bare `/api` path, which
+    // would otherwise get locale-prefixed and produce phantom routes like
+    // `/en/api`.
+    if (
+      route.includes('/_analog/') ||
+      route === '/api' ||
+      route.startsWith('/api/')
+    ) {
       expanded.push(route);
       continue;
     }
