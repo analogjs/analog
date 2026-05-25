@@ -79,7 +79,6 @@ export interface I18nOptions {
 
 export interface Options {
   ssr?: boolean;
-  ssrBuildDir?: string;
   /**
    * Prerender the static pages without producing the server output.
    */
@@ -131,12 +130,6 @@ export interface Options {
    * @default false
    */
   discoverRoutes?: boolean;
-  /**
-   * Toggles internal API middleware.
-   * If disabled, a proxy request is used to route /api
-   * requests to / in the production server build.
-   */
-  useAPIMiddleware?: boolean;
   /**
    * Configuration for runtime i18n support.
    * When set, enables locale detection on SSR and provides
