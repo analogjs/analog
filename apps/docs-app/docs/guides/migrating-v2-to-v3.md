@@ -37,6 +37,172 @@ Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 o
 
 Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.
 
+### `analog()`, `angular()`, and `nitro()` are now separate plugins
+
+Analog v3 splits the Vite plugin chain into three explicit calls. `analog()` no longer internally invokes `@analogjs/vite-plugin-angular` or `nitro/vite` — you call them yourself. Pass each plugin only the options it owns.
+
+`@analogjs/vite-plugin-nitro` is deprecated; the Nitro orchestration moved into `@analogjs/platform`. Direct importers of `@analogjs/vite-plugin-nitro` must migrate to the separated shape below.
+
+Before:
+
+```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+
+export default defineConfig(() => ({
+  plugins: [
+    analog({
+      ssr: true,
+      apiPrefix: 'api',
+      vite: {
+        inlineStylesExtension: 'scss',
+        fastCompile: true,
+      },
+      fileReplacements: [
+        { replace: 'src/environment.ts', with: 'src/environment.prod.ts' },
+      ],
+      nitro: {
+        routeRules: { '/admin/**': { ssr: false } },
+      },
+      prerender: {
+        routes: ['/', '/about'],
+      },
+    }),
+  ],
+}));
+```
+
+After:
+
+```ts
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
+
+export default defineConfig(() => ({
+  server: {
+    // Vite 8's strict fs only allows reads under config.root; nitro/vite's
+    // env-runner reaches pnpm content-hash paths at the workspace root
+    // when loading its own dev runtime.
+    fs: { allow: [resolve(__dirname, '../..')] },
+  },
+  plugins: [
+    analog({
+      ssr: true,
+      apiPrefix: 'api',
+      prerender: {
+        routes: ['/', '/about'],
+      },
+    }),
+    angular({
+      workspaceRoot: resolve(__dirname, '../..'),
+      inlineStylesExtension: 'scss',
+      fastCompile: true,
+      fileReplacements: [
+        { replace: 'src/environment.ts', with: 'src/environment.prod.ts' },
+      ],
+    }),
+    nitro({
+      routeRules: { '/admin/**': { ssr: false } },
+    }),
+  ],
+}));
+```
+
+Add `@analogjs/vite-plugin-angular` and `nitro` to the app's `devDependencies`:
+
+```json
+{
+  "devDependencies": {
+    "@analogjs/platform": "...",
+    "@analogjs/vite-plugin-angular": "...",
+    "nitro": "..."
+  }
+}
+```
+
+#### Options that moved off `analog()`
+
+These options used to live on `analog()`. Pass them to `angular()` or `nitro()` directly:
+
+| v2 location                                                                                                                                      | v3 location                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                           |
+| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                |
+| `analog({ tailwindCss: {...} })`                                                                                                                 | `angular({ tailwindCss: {...} })`                               |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })` |
+| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | `angular({ stylePipeline: { plugins: [...] } })`                |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                      |
+| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                         |
+
+`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`/`experimental.stylePipeline`.
+
+#### Workspace library globs
+
+If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to both `analog()` and `angular()`:
+
+```ts
+import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+
+const libs = discoverLibraryRoutes(resolve(__dirname, '../..'));
+
+plugins: [
+  analog({
+    additionalPagesDirs: libs.additionalPagesDirs,
+    additionalContentDirs: libs.additionalContentDirs,
+    additionalAPIDirs: libs.additionalAPIDirs,
+  }),
+  angular({
+    include: pageGlobs(libs.additionalPagesDirs),
+    additionalContentDirs: libs.additionalContentDirs,
+  }),
+  nitro({}),
+];
+```
+
+#### Nx build target
+
+If your app uses `@nx/vite:build`, switch it to `nx:run-commands` invoking `vite build`. `@nx/vite:build` iterates `builder.environments` but doesn't call `builder.buildApp()` — and `nitro/vite`'s prerender + final Nitro env build orchestration lives in the `buildApp` hook. Without the CLI's `buildApp` invocation, no prerender runs and the SSR/Nitro env outputs are skipped.
+
+Before (`apps/<app>/project.json`):
+
+```json
+{
+  "build": {
+    "executor": "@nx/vite:build",
+    "outputs": [
+      "{options.outputPath}",
+      "{workspaceRoot}/dist/apps/<app>/.nitro",
+      "{workspaceRoot}/dist/apps/<app>/ssr",
+      "{workspaceRoot}/dist/apps/<app>/analog"
+    ],
+    "options": {
+      "configFile": "apps/<app>/vite.config.ts",
+      "outputPath": "dist/apps/<app>/client"
+    }
+  }
+}
+```
+
+After:
+
+```json
+{
+  "build": {
+    "executor": "nx:run-commands",
+    "outputs": ["{workspaceRoot}/apps/<app>/.output"],
+    "options": {
+      "command": "vite build -c apps/<app>/vite.config.ts"
+    }
+  }
+}
+```
+
+Also drop the top-level `build.outDir` override in `vite.config.ts`. Under `nitro/vite`, the client environment's output is relocated to `<rootDir>/.output/public` by Nitro; the legacy `dist/apps/<app>/client` override no longer matches the active output path.
+
 ### Content rendering now requires an explicit highlighter
 
 If your app renders markdown content, configure the content highlighter through the `analog()` plugin in `vite.config.ts`. New blog templates already do this, but older full-stack apps often do not.
@@ -152,6 +318,11 @@ Keep automated migration tooling focused on the breaking changes above:
 
 - require Angular v17 or newer before applying v3 changes
 - replace deep or internal imports with public package entrypoints
+- split `analog()` into `analog() + angular() + nitro()`, moving each option to the plugin that now owns it (see [plugin separation](#analog-angular-and-nitro-are-now-separate-plugins))
+- flag `@analogjs/vite-plugin-nitro` as deprecated; direct importers must migrate to `@analogjs/platform` + `nitro/vite`
+- add `@analogjs/vite-plugin-angular` and `nitro` to app `devDependencies` (the separated shape imports them directly)
+- replace `@nx/vite:build` with `nx:run-commands` invoking `vite build -c apps/<app>/vite.config.ts`; drop the legacy `build.outDir` override and update `outputs` to `apps/<app>/.output`
+- add `server.fs.allow` pointing at the workspace root in `vite.config.ts` so Vite 8's strict fs allows nitro/vite's env runner to load its own dev runtime through pnpm content-hash paths
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
