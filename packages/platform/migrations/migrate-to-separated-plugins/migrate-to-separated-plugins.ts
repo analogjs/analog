@@ -6,8 +6,6 @@ const ANALOG_PLATFORM_IMPORT = `from '@analogjs/platform'`;
 const ANGULAR_PLUGIN_IMPORT = `from '@analogjs/vite-plugin-angular'`;
 const NITRO_VITE_IMPORT = `from 'nitro/vite'`;
 const ANGULAR_PLUGIN_PKG = '@analogjs/vite-plugin-angular';
-const NITRO_PKG = 'nitro';
-const NITRO_VERSION = '3.0.260522-beta';
 const MIGRATION_DOC_URL =
   'https://analogjs.org/docs/guides/migrating-v2-to-v3#analog-angular-and-nitro-are-now-separate-plugins';
 
@@ -75,14 +73,6 @@ function addDependencies(tree: Tree, context: SchematicContext): boolean {
     changed = true;
     context.logger.info(
       `Added '${ANGULAR_PLUGIN_PKG}': '${platformVersion}' to devDependencies.`,
-    );
-  }
-
-  if (!getDepVersion(pkg, NITRO_PKG)) {
-    devDeps[NITRO_PKG] = NITRO_VERSION;
-    changed = true;
-    context.logger.info(
-      `Added '${NITRO_PKG}': '${NITRO_VERSION}' to devDependencies.`,
     );
   }
 

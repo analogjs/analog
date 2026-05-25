@@ -320,7 +320,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - replace deep or internal imports with public package entrypoints
 - split `analog()` into `analog() + angular() + nitro()`, moving each option to the plugin that now owns it (see [plugin separation](#analog-angular-and-nitro-are-now-separate-plugins))
 - @analogjs/platform no longer composes @analogjs/vite-plugin-nitro internally; direct importers can either migrate to `@analogjs/platform` + `nitro/vite` (recommended) or continue using @analogjs/vite-plugin-nitro standalone
-- add `@analogjs/vite-plugin-angular` and `nitro` to app `devDependencies` (the separated shape imports them directly)
+- add `@analogjs/vite-plugin-angular` to app `devDependencies` (the separated shape imports it directly). `nitro` is picked up as a transitive of `@analogjs/platform` for npm/yarn; pnpm users must add it to `devDependencies` explicitly
 - replace `@nx/vite:build` with `nx:run-commands` invoking `vite build -c apps/<app>/vite.config.ts`; drop the legacy `build.outDir` override and update `outputs` to `apps/<app>/.output`
 - add `server.fs.allow` pointing at the workspace root in `vite.config.ts` so Vite 8's strict fs allows nitro/vite's env runner to load its own dev runtime through pnpm content-hash paths
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content

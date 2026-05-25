@@ -68,7 +68,10 @@ describe('migrate-to-separated-plugins', () => {
     expect(pkg.devDependencies['@analogjs/vite-plugin-angular']).toBe(
       PLATFORM_VERSION,
     );
-    expect(pkg.devDependencies['nitro']).toBeTruthy();
+    // The schematic does not pin `nitro` — npm/yarn pick it up as a transitive
+    // of @analogjs/platform; pnpm users add it themselves following the
+    // migration guide.
+    expect(pkg.devDependencies['nitro']).toBeUndefined();
     expect(infoLogs.join('\n')).toContain('/vite.config.ts');
     expect(infoLogs.join('\n')).toContain('migrating-v2-to-v3');
   });
@@ -89,13 +92,11 @@ describe('migrate-to-separated-plugins', () => {
     expect(
       pkg.devDependencies['@analogjs/vite-plugin-angular'],
     ).toBeUndefined();
-    expect(pkg.devDependencies['nitro']).toBeUndefined();
     expect(infoLogs).toEqual([]);
   });
 
   it('does not duplicate deps that are already declared', () => {
     const PREEXISTING_VPA = '^2.5.0';
-    const PREEXISTING_NITRO = '3.0.0-beta';
     tree.create('/vite.config.ts', LEGACY_CONFIG);
     tree.create(
       '/package.json',
@@ -103,7 +104,6 @@ describe('migrate-to-separated-plugins', () => {
         devDependencies: {
           '@analogjs/platform': PLATFORM_VERSION,
           '@analogjs/vite-plugin-angular': PREEXISTING_VPA,
-          nitro: PREEXISTING_NITRO,
         },
       }),
     );
@@ -115,7 +115,6 @@ describe('migrate-to-separated-plugins', () => {
     expect(pkg.devDependencies['@analogjs/vite-plugin-angular']).toBe(
       PREEXISTING_VPA,
     );
-    expect(pkg.devDependencies['nitro']).toBe(PREEXISTING_NITRO);
   });
 
   it('reads version from `dependencies` if `devDependencies` is missing platform', () => {
@@ -150,7 +149,9 @@ describe('migrate-to-separated-plugins', () => {
     migrateToSeparatedPlugins()(tree, context);
 
     const pkg = JSON.parse(tree.readContent('/package.json'));
-    expect(pkg.devDependencies['nitro']).toBeUndefined();
+    expect(
+      pkg.devDependencies['@analogjs/vite-plugin-angular'],
+    ).toBeUndefined();
   });
 
   it('only matches vite.config files (vite.config.ts, .mts, .js, .mjs)', () => {
@@ -167,7 +168,9 @@ describe('migrate-to-separated-plugins', () => {
     migrateToSeparatedPlugins()(tree, context);
 
     const pkg = JSON.parse(tree.readContent('/package.json'));
-    expect(pkg.devDependencies['nitro']).toBeUndefined();
+    expect(
+      pkg.devDependencies['@analogjs/vite-plugin-angular'],
+    ).toBeUndefined();
   });
 
   it('detects a vite.config.mts file', () => {
@@ -183,7 +186,9 @@ describe('migrate-to-separated-plugins', () => {
     migrateToSeparatedPlugins()(tree, context);
 
     const pkg = JSON.parse(tree.readContent('/package.json'));
-    expect(pkg.devDependencies['nitro']).toBeTruthy();
+    expect(pkg.devDependencies['@analogjs/vite-plugin-angular']).toBe(
+      PLATFORM_VERSION,
+    );
   });
 
   it('does not treat a config that already imports the new plugins as legacy', () => {
@@ -195,7 +200,6 @@ describe('migrate-to-separated-plugins', () => {
         devDependencies: {
           '@analogjs/platform': PLATFORM_VERSION,
           '@analogjs/vite-plugin-angular': PLATFORM_VERSION,
-          nitro: '3.0.0-beta',
         },
       }),
     );
