@@ -93,6 +93,16 @@
       "import": "./dist/src/index.js",
       "require": "./dist/src/index.js",
       "default": "./dist/src/index.js"
+    },
+    "./builders/vite": {
+      "import": "./dist/src/lib/tools/src/builders/vite/vite-build.impl.js",
+      "require": "./dist/src/lib/tools/src/builders/vite/vite-build.impl.js",
+      "default": "./dist/src/lib/tools/src/builders/vite/vite-build.impl.js"
+    },
+    "./builders/vite-dev-server": {
+      "import": "./dist/src/lib/tools/src/builders/vite-dev-server/dev-server.impl.js",
+      "require": "./dist/src/lib/tools/src/builders/vite-dev-server/dev-server.impl.js",
+      "default": "./dist/src/lib/tools/src/builders/vite-dev-server/dev-server.impl.js"
     }
   },
   "publishConfig": {
