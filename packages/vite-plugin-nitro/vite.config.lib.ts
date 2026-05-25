@@ -40,6 +40,7 @@ export default defineConfig({
     lib: {
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
+        'src/lib/utils/debug': resolve(pkgDir, 'src/lib/utils/debug.ts'),
       },
       formats: ['es' as const],
     },

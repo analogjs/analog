@@ -1,7 +1,7 @@
 {
   "name": "@analogjs/vite-plugin-nitro",
   "version": "3.0.0-alpha.55",
-  "description": "Deprecated — Nitro orchestration moved to @analogjs/platform. This package no longer exposes a plugin.",
+  "description": "A Vite plugin for adding a nitro API server",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
@@ -9,6 +9,11 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js",
       "default": "./dist/src/index.js"
+    },
+    "./internal": {
+      "types": "./dist/src/lib/utils/debug.d.ts",
+      "import": "./dist/src/lib/utils/debug.js",
+      "default": "./dist/src/lib/utils/debug.js"
     },
     "./package.json": "./package.json"
   },
@@ -33,7 +38,23 @@
     "type": "github",
     "url": "https://github.com/sponsors/brandonroberts"
   },
-  "dependencies": {},
+  "peerDependencies": {
+    "sharp": ">=0.32.0"
+  },
+  "peerDependenciesMeta": {
+    "sharp": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "defu": "catalog:",
+    "nitro": "catalog:",
+    "obug": "catalog:",
+    "ofetch": "catalog:",
+    "oxc-parser": "catalog:",
+    "radix3": "catalog:",
+    "xmlbuilder2": "catalog:"
+  },
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",
@@ -45,6 +66,10 @@
       "@analogjs/vitest-angular"
     ],
     "migrations": "./migrations/migration.json"
+  },
+  "imports": {
+    "#analog/ssr": "./dist/src/index.js",
+    "#analog/index": "./dist/src/index.js"
   },
   "publishConfig": {
     "access": "public",

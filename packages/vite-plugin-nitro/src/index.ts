@@ -1,16 +1,31 @@
-/**
- * @deprecated `@analogjs/vite-plugin-nitro` has been deprecated. The Nitro
- * orchestration lives in `@analogjs/platform`, which composes Nitro's
- * first-party Vite plugin (`nitro/vite`) with Analog's `analogNitroPlugin`.
- *
- * Migration:
- * - Replace `import { nitro } from '@analogjs/vite-plugin-nitro'` with
- *   `import { analog } from '@analogjs/platform'` and use `analog()` in
- *   your Vite plugin chain.
- * - Type exports (`SitemapConfig`, `PrerenderRouteConfig`,
- *   `PrerenderContentDir`, etc.) are re-exported from `@analogjs/platform`.
- *
- * This package is kept as a placeholder so existing dependency declarations
- * don't fail to install, but it no longer exposes a Vite plugin.
- */
-export {};
+import { nitro } from './lib/vite-plugin-nitro.js';
+export { debugInstances } from './lib/utils/debug.js';
+export { nitro } from './lib/vite-plugin-nitro.js';
+export type {
+  Options,
+  SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
+  PrerenderSitemapConfig,
+  PrerenderRouteConfig,
+  PrerenderContentDir,
+  PrerenderContentFile,
+  I18nPrerenderOptions,
+} from './lib/options.js';
+
+declare module 'nitro/types' {
+  interface NitroRouteConfig {
+    ssr?: boolean;
+  }
+
+  interface NitroRouteRules {
+    ssr?: boolean;
+  }
+}
+
+export default nitro;
