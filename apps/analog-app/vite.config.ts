@@ -51,15 +51,6 @@ export default defineConfig(async ({ mode, command }) => {
       reportCompressedSize: true,
       target: ['es2020'],
     },
-    server: {
-      fs: {
-        // Allow Vite's dev fs fallback to read pnpm content-hash paths under
-        // the workspace root (e.g. node_modules/.pnpm/nitro@.../...). Without
-        // this, nitro/vite's env-runner cannot resolve its own dev-entry.mjs
-        // through Vite's ModuleRunner.
-        allow: [resolve(__dirname, '../..')],
-      },
-    },
     optimizeDeps: {
       include: ['@angular/forms'],
       // Keep workspace Angular libraries on the source-transform path so Analog

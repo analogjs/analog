@@ -3,7 +3,6 @@
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
-import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -31,11 +30,6 @@ export default defineConfig(() => {
     build: {
       reportCompressedSize: true,
       target: ['es2020'],
-    },
-    server: {
-      fs: {
-        allow: [resolve(__dirname, '../..')],
-      },
     },
     plugins: [
       analog({

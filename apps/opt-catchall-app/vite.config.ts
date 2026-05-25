@@ -3,7 +3,6 @@
 import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
-import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -20,13 +19,6 @@ export default defineConfig(() => {
     build: {
       reportCompressedSize: true,
       target: ['es2020'],
-    },
-    server: {
-      fs: {
-        // Allow Vite's fs fallback to read pnpm content-hash paths so
-        // nitro/vite's env-runner can load its own dev runtime entry.
-        allow: [resolve(__dirname, '../..')],
-      },
     },
     plugins: [
       analog({

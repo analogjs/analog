@@ -120,7 +120,20 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     config(userConfig) {
       refreshContext(userConfig.root);
 
-      const overrides: UserConfig = {};
+      const overrides: UserConfig = {
+        // Vite 8 defaults `server.fs.allow` to `[searchForWorkspaceRoot(root)]`,
+        // which should already cover the workspace root. In practice, nitro/vite's
+        // env-runner loads its own `dev-entry.mjs` from a pnpm content-hash path
+        // (`node_modules/.pnpm/nitro@.../...`) through Vite's ModuleRunner and
+        // hits an `ERR_LOAD_URL`/"Does the file exist?" error unless an explicit
+        // allow entry covers the same root. Whitelist the workspace root here so
+        // users don't have to write the workaround in every vite.config.ts.
+        server: {
+          fs: {
+            allow: [context.workspaceRoot],
+          },
+        },
+      };
 
       if (ssr) {
         // Two-pronged registration: `experimental.vite.services.ssr.entry`
@@ -189,6 +202,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         // default `<rootDir>/.output` would otherwise drop artifacts in an
         // unexpected location for users upgrading from v2.
         //
+        // Build only. During dev, leaving the output paths at Nitro's
+        // defaults keeps the dev server's `readAsset` happy — those
+        // virtuals expect to read from the in-memory module graph, not
+        // from a `dist/` directory that doesn't exist yet.
+        //
         // `buildDir` (Nitro's intermediate scratch dir) stays at its default
         // inside the project root. Nitro's prerender phase re-bundles SSR
         // chunks out of `<buildDir>/vite/services/ssr/`, and Rolldown's
@@ -196,17 +214,19 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         // Keeping `buildDir` adjacent to the project root means workspace
         // packages installed at `<rootDir>/node_modules/` (the usual install
         // shape for both standalone and Nx setups) remain reachable.
-        const distRoot = resolve(
-          context.workspaceRoot,
-          'dist',
-          context.rootDir,
-        );
-        nitro.options.output = {
-          ...nitro.options.output,
-          dir: resolve(distRoot, 'analog'),
-          publicDir: resolve(distRoot, 'analog/public'),
-          serverDir: resolve(distRoot, 'analog/server'),
-        };
+        if (!nitro.options.dev) {
+          const distRoot = resolve(
+            context.workspaceRoot,
+            'dist',
+            context.rootDir,
+          );
+          nitro.options.output = {
+            ...nitro.options.output,
+            dir: resolve(distRoot, 'analog'),
+            publicDir: resolve(distRoot, 'analog/public'),
+            serverDir: resolve(distRoot, 'analog/server'),
+          };
+        }
 
         const hasAPIDir = existsSync(
           resolve(

@@ -3,7 +3,6 @@
 import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
-import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
@@ -22,11 +21,6 @@ export default defineConfig(({ mode }) => {
       // Keep workspace Angular libraries on the source-transform path so Analog
       // can compile external templates/styles instead of Vite prebundling them.
       exclude: getWorkspaceDependencyExcludes(__dirname),
-    },
-    server: {
-      fs: {
-        allow: [resolve(__dirname, '../..')],
-      },
     },
     plugins: [
       tailwindcss(),

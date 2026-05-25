@@ -157,9 +157,6 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: 43040,
-    fs: {
-      allow: [resolve(__dirname, '../..')],
-    },
     hmr: {
       clientPort: 4201,
       path: 'vite-hmr',
