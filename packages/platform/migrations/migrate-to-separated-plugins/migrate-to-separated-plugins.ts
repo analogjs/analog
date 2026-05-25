@@ -155,7 +155,7 @@ function tryTransformViteConfig(
   let analogImportEnd = -1;
   let angularImported = false;
   let nitroImported = false;
-  let analogCalls: ts.CallExpression[] = [];
+  const analogCalls: ts.CallExpression[] = [];
 
   function visit(node: ts.Node): void {
     if (ts.isImportDeclaration(node)) {
