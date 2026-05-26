@@ -204,6 +204,33 @@ describe('JIT Transform', () => {
       expect(result).toContain('required: true');
     });
 
+    it('drops transform from input() metadata so it does not run twice', () => {
+      const result = transform(`
+        import { Component, input, numberAttribute } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { size = input(0, { transform: numberAttribute }); }
+      `);
+
+      // The signal already applies the transform; forwarding it to the
+      // @Input decorator would make Angular's runtime call it a second time.
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).not.toContain('transform');
+      expect(propDecorators).toContain('isSignal: true');
+      expect(propDecorators).toContain('required: false');
+    });
+
+    it('drops transform from input.required() metadata', () => {
+      const result = transform(`
+        import { Component, input, booleanAttribute } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { open = input.required({ transform: booleanAttribute }); }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).not.toContain('transform');
+      expect(propDecorators).toContain('required: true');
+    });
+
     it('downlevels model() to Input + Output on the same field', () => {
       const result = transform(`
         import { Component, model } from '@angular/core';
