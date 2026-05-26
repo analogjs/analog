@@ -204,7 +204,7 @@ describe('JIT Transform', () => {
       expect(result).toContain('required: true');
     });
 
-    it('downlevels model() to Input + Output', () => {
+    it('downlevels model() to Input + Output on the same field', () => {
       const result = transform(`
         import { Component, model } from '@angular/core';
         @Component({ selector: 'x', template: '' })
@@ -214,7 +214,52 @@ describe('JIT Transform', () => {
       expect(result).toContain('X.propDecorators');
       expect(result).toContain('type: Input');
       expect(result).toContain('type: Output');
-      expect(result).toContain('valueChange');
+      // Both decorators must be under the class field name, not a synthetic
+      // `valueChange` key — the runtime reads `instance[field]` for the
+      // emitter on the model signal.
+      expect(result).toMatch(
+        /value:\s*\[[\s\S]*?type:\s*Input[\s\S]*?type:\s*Output/,
+      );
+      expect(result).toContain(`'valueChange'`);
+      expect(result).toContain(`alias: 'value'`);
+      expect(result).toContain('required: false');
+    });
+
+    it('downlevels model.required() with required: true', () => {
+      const result = transform(`
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { value = model.required<number>(); }
+      `);
+
+      expect(result).toContain('type: Input');
+      expect(result).toContain('required: true');
+      expect(result).toContain(`'valueChange'`);
+    });
+
+    it('downlevels model() with alias on both Input and Change', () => {
+      const result = transform(`
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { value = model('seed', { alias: 'publicName' }); }
+      `);
+
+      expect(result).toContain(`alias: 'publicName'`);
+      expect(result).toContain(`'publicNameChange'`);
+      // Should not leak the property name when an alias is given.
+      expect(result).not.toContain(`'valueChange'`);
+    });
+
+    it('downlevels model.required() with alias', () => {
+      const result = transform(`
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { value = model.required<number>({ alias: 'publicName' }); }
+      `);
+
+      expect(result).toContain(`alias: 'publicName'`);
+      expect(result).toContain(`'publicNameChange'`);
+      expect(result).toContain('required: true');
     });
 
     it('downlevels output() to propDecorators', () => {
