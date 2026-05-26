@@ -209,26 +209,38 @@ export function buildPropDecorators(
         } else {
           props[memberName].push(`{type: Output}`);
         }
-      } else if (api === 'viewChild' || api === 'viewChildren') {
-        if (!props[memberName]) props[memberName] = [];
-        const queryType = api === 'viewChildren' ? 'ViewChildren' : 'ViewChild';
-        if (args.length > 0) {
-          props[memberName].push(
-            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}]}`,
-          );
-        } else {
-          props[memberName].push(`{type: ${queryType}}`);
-        }
-      } else if (api === 'contentChild' || api === 'contentChildren') {
+      } else if (
+        api === 'viewChild' ||
+        api === 'viewChildren' ||
+        api === 'contentChild' ||
+        api === 'contentChildren'
+      ) {
         if (!props[memberName]) props[memberName] = [];
         const queryType =
-          api === 'contentChildren' ? 'ContentChildren' : 'ContentChild';
+          api === 'viewChildren'
+            ? 'ViewChildren'
+            : api === 'viewChild'
+              ? 'ViewChild'
+              : api === 'contentChildren'
+                ? 'ContentChildren'
+                : 'ContentChild';
+        // Signal queries need `isSignal: true` so the runtime JIT compiler
+        // wires them through the signal query infrastructure rather than
+        // treating them as plain @ViewChild/@ContentChild assignments.
+        // Mirrors Angular's own JIT transform in
+        // compiler-cli/.../initializer_api_transforms/query_functions.ts.
         if (args.length > 0) {
+          const opts =
+            args.length > 1
+              ? `{...${sourceCode.slice(args[1].start, args[1].end)}, isSignal: true}`
+              : `{isSignal: true}`;
           props[memberName].push(
-            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}]}`,
+            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}, ${opts}]}`,
           );
         } else {
-          props[memberName].push(`{type: ${queryType}}`);
+          props[memberName].push(
+            `{type: ${queryType}, args: [undefined, {isSignal: true}]}`,
+          );
         }
       }
     }
