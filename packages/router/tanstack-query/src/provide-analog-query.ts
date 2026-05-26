@@ -107,12 +107,17 @@ function mergeDehydrated(
   base: DehydratedState,
   next: DehydratedState,
 ): DehydratedState {
-  const seen = new Set(base.queries.map((q) => q.queryHash));
+  // Last-writer-wins on duplicate `queryHash`: child route resolves run
+  // after parent resolves, so the later entry is the fresher one and
+  // matches `hydrate()`'s own newer-wins semantics for the QueryClient.
+  const queriesByHash = new Map(
+    base.queries.map((query) => [query.queryHash, query]),
+  );
+  for (const query of next.queries) {
+    queriesByHash.set(query.queryHash, query);
+  }
   return {
     mutations: [...base.mutations, ...next.mutations],
-    queries: [
-      ...base.queries,
-      ...next.queries.filter((q) => !seen.has(q.queryHash)),
-    ],
+    queries: [...queriesByHash.values()],
   };
 }
