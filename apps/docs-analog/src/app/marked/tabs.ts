@@ -1,8 +1,9 @@
 import type { MarkedExtension, Tokens } from 'marked';
 
 const TABS_PATTERN = /^<Tabs\b[^>]*>([\s\S]*?)<\/Tabs>\s*(?:\n|$)/;
-const TAB_ITEM_PATTERN =
-  /<TabItem\b[^>]*\b(?:label|value)="([^"]+)"[^>]*>([\s\S]*?)<\/TabItem>/g;
+const TAB_ITEM_PATTERN = /<TabItem\b([^>]*)>([\s\S]*?)<\/TabItem>/g;
+const LABEL_ATTR = /\blabel="([^"]+)"/;
+const VALUE_ATTR = /\bvalue="([^"]+)"/;
 
 interface TabsToken extends Tokens.Generic {
   type: 'mdxTabs';
@@ -33,7 +34,11 @@ export const mdxTabsExtension: MarkedExtension = {
         TAB_ITEM_PATTERN.lastIndex = 0;
         let m: RegExpExecArray | null;
         while ((m = TAB_ITEM_PATTERN.exec(inner)) !== null) {
-          const label = humanLabel(m[1]);
+          const attrs = m[1];
+          // Prefer explicit `label="..."` over the slug-y `value="..."`.
+          const labelMatch = LABEL_ATTR.exec(attrs) ?? VALUE_ATTR.exec(attrs);
+          const label = humanLabel(labelMatch?.[1] ?? '');
+          if (!label) continue;
           const body = m[2].trim();
           items.push({
             label,

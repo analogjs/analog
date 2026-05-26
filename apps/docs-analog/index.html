@@ -6,6 +6,22 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <!-- Resolve theme before first paint to avoid a light->dark flash on load. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('docs-theme');
+          if (
+            t === 'dark' ||
+            (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          ) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          /* localStorage unavailable */
+        }
+      })();
+    </script>
     <link href="/src/styles.css" rel="stylesheet" />
     <link
       rel="stylesheet"
