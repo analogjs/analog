@@ -73,7 +73,7 @@ export async function renderServerComponent(
   const body = (await readBody(event)) || {};
   const appId = `analog-server-${selector.toLowerCase()}-${new Date().getTime()}`;
 
-  const bootstrap = (context?: BootstrapContext) =>
+  const bootstrap = (context: BootstrapContext) =>
     bootstrapApplication(
       component,
       {

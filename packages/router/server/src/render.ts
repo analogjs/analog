@@ -56,7 +56,7 @@ export function render(
   config: ApplicationConfig,
   platformProviders: Provider[] = [],
 ) {
-  function bootstrap(context?: BootstrapContext) {
+  function bootstrap(context: BootstrapContext) {
     return bootstrapApplication(rootComponent, config, context);
   }
 
