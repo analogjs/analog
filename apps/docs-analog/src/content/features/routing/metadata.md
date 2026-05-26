@@ -5,11 +5,6 @@ Additional metadata to add to the generated route config for each route can be d
 ## Defining Route Metadata
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'About Analog',
   canActivate: [() => true],
@@ -37,8 +32,6 @@ To create a redirect route, add the `redirectTo` and `pathMatch` properties to t
 
 ```ts
 // src/app/pages/index.page.ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/home',
   pathMatch: 'full',
@@ -68,8 +61,6 @@ src/
 and the following `routeMeta` definition to the `src/app/pages/cities/index.page.ts` file:
 
 ```ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/cities/new-york',
   pathMatch: 'full',
@@ -89,11 +80,6 @@ Nested redirects always require an absolute path.
 The `RouteMeta` type has a property `meta` which can be used to define a list of meta tags for each route:
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'Refresh every 30 sec',
   meta: [

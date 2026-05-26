@@ -7,8 +7,6 @@ Analog supports defining API routes that can be used to serve data to the applic
 API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based, and are exposed under the default `/api` prefix.
 
 ```ts
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
@@ -18,8 +16,6 @@ To create an RSS feed for your site, set the `content-type` to be `text/xml` and
 
 ```ts
 //server/routes/api/rss.xml.ts
-
-import { defineEventHandler, setHeader } from 'h3';
 export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -58,8 +54,6 @@ Dynamic API routes are defined by using the filename as the route path enclosed 
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
@@ -69,8 +63,6 @@ Another way to access route parameters is by using the `getRouterParam` function
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineEventHandler, getRouterParam } from 'h3';
-
 export default defineEventHandler((event) => {
   const name = getRouterParam(event, 'name');
   return `Hello, ${name}!`;
@@ -85,8 +77,6 @@ File names can be suffixed with `.get`, `.post`, `.put`, `.delete`, etc. to matc
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
-import { defineEventHandler, getRouterParam } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   // TODO: fetch user by id
@@ -98,8 +88,6 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
-import { defineEventHandler, readBody } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   // TODO: Handle body and add user
@@ -115,8 +103,6 @@ Sample query `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
 // routes/api/v1/query.ts
-import { defineEventHandler, getQuery } from 'h3';
-
 export default defineEventHandler((event) => {
   const { param1, param2 } = getQuery(event);
   return `Hello, ${param1} and ${param2}!`;
@@ -139,8 +125,6 @@ To return other error codes, throw an exception with createError
 
 ```ts
 // routes/api/v1/[id].ts
-import { defineEventHandler, getRouterParam, createError } from 'h3';
-
 export default defineEventHandler((event) => {
   const param = getRouterParam(event, 'id');
   const id = parseInt(param ? param : '');
@@ -162,15 +146,6 @@ Analog allows setting and reading cookies in your server-side calls.
 
 ```ts
 //(home).server.ts
-import { setCookie } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
-
-import { Product } from '../products';
-
-export const load = async ({ fetch, event }: PageServerLoad) => {
-  setCookie(event, 'products', 'loaded'); // setting the cookie
-  const products = await fetch<Product[]>('/api/v1/products');
-
   return {
     products: products,
   };
@@ -181,12 +156,6 @@ export const load = async ({ fetch, event }: PageServerLoad) => {
 
 ```ts
 //index.server.ts
-import { parseCookies } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
-
-export const load = async ({ event }: PageServerLoad) => {
-  const cookies = parseCookies(event);
-
   console.log('products cookie', cookies['products']);
 
   return {

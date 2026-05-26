@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Updating to the latest version
 
 You can use the `ng update` command for an Angular CLI workspace, or the `nx migrate` command for updating within an Nx workspace.

@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Angular Material Integration mit Analog
 
 Dieses Tutorial führt dich durch den Prozess der Integration der Angular Material-Bibliothek in deine Analog-Anwendung.

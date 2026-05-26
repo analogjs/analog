@@ -29,8 +29,6 @@ Además, si no está presente, agregar los archivos de middleware en el arreglo 
 El middleware se define usando la función `defineEventHandler`.
 
 ```ts
-import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
-
 export default eventHandler((event) => {
   if (event.node.req.originalUrl === '/checkout') {
     console.log('event url', event.node.req.originalUrl);
@@ -69,8 +67,6 @@ export default defineEventHandler(async (event) => {
 Utilice el objeto global `process.env` para acceder a las variables de entorno dentro de las funciones del middleware. Tanto las variables de entorno exclusivas para el servidor como las de acceso público definidas en los archivos `.env` pueden leerse desde el middleware.
 
 ```ts
-import { defineEventHandler, getRequestURL } from 'h3';
-
 export default defineEventHandler((event) => {
   console.log('Path:', getRequestURL(event).pathname);
   console.log(

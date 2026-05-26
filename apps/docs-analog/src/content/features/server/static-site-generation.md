@@ -9,9 +9,6 @@ Analog supports Static Site Generation when building for deployment. This includ
 To prerender pages, use the `prerender` property to configure routes to be rendered at build time. The routes to be prerendered can be provided asynchronously also.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -42,9 +39,6 @@ Using `transform` allows you also filter out some routes by returning `false`. T
 The `contentDir` value of that object can be a glob pattern or just a specific path.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -77,9 +71,6 @@ export default defineConfig(({ mode }) => ({
 By default, `contentDir` only matches files at the top level of the configured directory. To prerender content organized into category subdirectories, set `recursive: true`. Each discovered file's directory relative to `contentDir` is exposed via `file.relativePath`, which `transform` can use to build the route.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
-
 export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
@@ -110,9 +101,6 @@ To make prerendered pages more accessible to LLMs or other tools that prefer raw
 For individual routes, specify the path to the source file:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -134,9 +122,6 @@ export default defineConfig(({ mode }) => ({
 For content directories, use a function that receives the file information and returns the content to output:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -178,9 +163,6 @@ To only prerender the static pages without building the server, use the `static:
 > The `ssr` flag must still be set to `true` for prerendering static pages.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -215,9 +197,6 @@ When using [Server-Side Data Fetching](/docs/features/data-fetching/server-side-
 For example, a route defined as `src/app/pages/shipping.page.ts` with an associated `src/app/pages/shipping.server.ts` has the route and server data prerendered to be completely static.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -242,9 +221,6 @@ export default defineConfig(({ mode }) => ({
 Analog also supports automatic sitemap generation. Analog generates a sitemap in the `dist/analog/public` directory when running a build if a sitemap configuration is provided.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -263,10 +239,6 @@ export default defineConfig(({ mode }) => ({
 To customize the sitemap definition, use the `sitemap` callback function to customize the `lastmod`, `changefreq`, and `priority` fields.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-import fs from 'node:fs';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -332,10 +304,6 @@ Analog supports the post-rendering hooks during the prerendering process. The us
 The sample code below shows how to use `postRenderingHooks` in your code:
 
 ```ts
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
-
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -364,12 +332,6 @@ Below is a small example where we can append a script to include Google Analytic
 
 ```ts
 /// <reference types="vitest" />
-
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
-
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

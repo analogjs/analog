@@ -2,9 +2,6 @@
 title: Ionic Framework
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 集成 Ionic 框架
 
 此向导将向你展示如何在 Analog 应用里集成 Ionic 框架，这样你就可以在你的 Analog 项目里应用 Ionic 强大的 iOS 以及 Andriod 组件了。
@@ -130,12 +127,6 @@ export default defineConfig(({ mode }) => {
 2. 在 `app.config.ts` 里添加 `provideIonicAngular` 方法和 `IonicRouteStrategy` 依赖提供者
 
 ```ts
-import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(),
@@ -150,9 +141,6 @@ export const appConfig: ApplicationConfig = {
 3. 更新你的 `app.component.ts` 文件以在模板中设置所需的 Ionic 标签。你可能要查看 [服务端渲染注意事项](#server-side-rendering-caveat) 因为 [Ionic 尚不支持客户端水合](https://github.com/ionic-team/)
 
 ```ts
-import { Component } from '@angular/core';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-
 @Component({
   selector: 'demo-root',
   standalone: true,
@@ -228,12 +216,6 @@ Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ion
    - 下面的代码移除 Angular 新的客户端水合机制并改为上一个版本，新的版本会导致客户端重渲染时的闪屏现象。
 
    ```ts
-   import { RouteReuseStrategy, provideRouter } from '@angular/router';
-   import {
-     IonicRouteStrategy,
-     provideIonicAngular,
-   } from '@ionic/angular/standalone';
-
    export const appConfig: ApplicationConfig = {
      providers: [
        provideFileRouter(),
@@ -249,9 +231,6 @@ Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ion
    - 这将在 `ion-app` 元素及其子元素上禁用客户端水合机制，但将继续对其他元素使用客户端水合。这还会导致 Ionic 组件的页面闪，而且对其他元素/组件没有太大帮助，因为对于 Ionic 应用，您的所有 Ionic 组件都存在于 `ion-app` 标签内。
 
      ```ts
-     import { Component } from '@angular/core';
-     import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-
      @Component({
        selector: 'demo-root',
        standalone: true,
@@ -348,8 +327,6 @@ npx cap init
 3. 更新 `capacitor.config.ts` 的 `webDir` 属性指向 analog 构建的 dist 目录
 
 ```ts
-import type { CapacitorConfig } from '@capacitor/cli';
-
 const config: CapacitorConfig = {
   appId: 'com.ionic.capacitor',
   appName: 'ionic-capacitor',

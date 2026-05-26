@@ -5,11 +5,6 @@ Zusätzliche Metadaten, die der generierten Routenkonfiguration für jede Route 
 ## Definieren von Routen-Metadaten
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'About Analog',
   canActivate: [() => true],
@@ -37,8 +32,6 @@ Um eine Umleitungsroute zu erstellen, füge die Eigenschaften `redirectTo` und `
 
 ```ts
 // src/app/pages/index.page.ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/home',
   pathMatch: 'full',
@@ -68,8 +61,6 @@ src/
 Und die folgende `routeMeta`-Definition in der Datei `src/app/pages/cities/index.page.ts`:
 
 ```ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/cities/new-york',
   pathMatch: 'full',
@@ -89,11 +80,6 @@ Verschachtelte Weiterleitungen erfordern immer einen absoluten Pfad.
 Der Typ `RouteMeta` hat eine Eigenschaft `meta`, die dazu verwendet werden kann, eine Liste von Meta-Tags für jede Route zu definieren:
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'Refresh every 30 sec',
   meta: [

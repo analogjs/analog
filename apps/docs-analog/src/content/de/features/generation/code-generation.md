@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Code-Generierung
 
 Analog unterstützt die automatische Codegenerierung mit Nx Generatoren und Angular Schemata.

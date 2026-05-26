@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Tests durchführen
 
 Analog unterstützt [Vitest] (https://vitest.dev) zur Durchführung von Unit-Tests.

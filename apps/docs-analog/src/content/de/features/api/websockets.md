@@ -9,9 +9,6 @@ Derzeit ist die WebSocket-Unterstützung in [Nitro](https://nitro.unjs.io/guide/
 `vite.config.ts`
 
 ```typescript
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -33,9 +30,6 @@ export default defineConfig({
 `vite.config.ts`
 
 ```typescript
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   server: {
@@ -55,8 +49,6 @@ export default defineConfig({
 
 ```typescript
 // src/server/routes/ws/chat.ts
-import { defineWebSocketHandler } from 'h3';
-
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });
@@ -94,8 +86,6 @@ Server-Sent Event Handler können mit der Funktion `createEventStream` im Event-
 
 ```typescript
 // src/server/routes/sse.ts
-import { defineEventHandler, createEventStream } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const eventStream = createEventStream(event);
 

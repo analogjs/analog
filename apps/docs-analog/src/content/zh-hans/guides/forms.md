@@ -26,9 +26,6 @@ Analog 支持服务器端处理表单提交和验证。
 
 ```ts
 // src/app/pages/newsletter.page.ts
-import { Component, signal } from '@angular/core';
-import { FormAction } from '@analogjs/router';
-
 type FormErrors =
   | {
       email?: string;
@@ -89,14 +86,6 @@ export default class NewsletterComponent {
 
 ```ts
 // src/app/pages/newsletter.server.ts
-import {
-  type PageServerAction,
-  redirect,
-  json,
-  fail,
-} from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
-
 export async function action({ event }: PageServerAction) {
   const body = await readFormData(event);
   const email = body.get('email') as string;
@@ -155,12 +144,6 @@ export async function action({ event }: PageServerAction) {
 
 ```ts
 // src/app/pages/search.page.ts
-import { Component, computed } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad, FormAction } from '@analogjs/router';
-
-import type { load } from './search.server';
-
 @Component({
   selector: 'app-search-page',
   standalone: true,
@@ -192,9 +175,6 @@ export default class NewsletterComponent {
 
 ```ts
 // src/app/pages/search.server.ts
-import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
-
 export async function load({ event }: PageServerLoad) {
   const query = getQuery(event);
   console.log('loaded search', query['search']);

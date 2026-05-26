@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Ionic Framework Integration mit Analog
 
 Dieses Tutorial führt durch den Prozess der Integration von Ionic Framework in eine Analog-Anwendung, damit die Leistungsfähigkeit der iOS- und Android-Komponenten von Ionic in einer Anwendungen genutzt werden kann.
@@ -126,12 +123,6 @@ export default defineConfig(({ mode }) => {
 2. Füge in der `app.config.ts` die Methode `provideIonicAngular` und den Provider `IonicRouteStrategy` hinzu.
 
 ```ts
-import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(),
@@ -146,9 +137,6 @@ export const appConfig: ApplicationConfig = {
 3. Aktualisiere die `app.component.ts`-Datei, um in der Vorlage die erforderlichen Ionic-Tags zu setzen. Du solltest dir die [Vorsichtsmaßnahme für serverseitiges Rendern](#vorsichtsmaßnahme-für-serverseitiges-Rendern) ansehen, da [Ionic noch keine Client-Hydrierung unterstützt](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548)
 
 ```ts
-import { Component } from '@angular/core';
-import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-
 @Component({
   selector: 'demo-root',
   standalone: true,
@@ -225,12 +213,6 @@ Das Ionic Framework [unterstützt nicht Angulars neue Client Hydration](https://
 - Dies entfernt den neuen Client-Hydrierungsmechanismus von Angular und kehrt zum vorherigen Mechanismus zurück, der ein Flackern verursacht, wenn das DOM vom Client neu gerendert wird.
 
 ```ts
-import { RouteReuseStrategy, provideRouter } from '@angular/router';
-import {
-  IonicRouteStrategy,
-  provideIonicAngular,
-} from '@ionic/angular/standalone';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(),
@@ -247,9 +229,6 @@ export const appConfig: ApplicationConfig = {
 - Dadurch wird der Client-Hydrierungsmechanismus für das Element `ion-app` und seine Kinder deaktiviert, aber die Client-Hydrierung wird weiterhin für andere Elemente verwendet. Dies wird auch ein Flackern auf der Seite für die Ionic-Komponenten verursachen. Dies ist für andere Elemente/Komponenten nicht sehr hilfreich, da bei Ionic-Apps alle Ionic-Komponenten innerhalb des Tags `ion-app` existieren.
 
   ```ts
-  import { Component } from '@angular/core';
-  import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-
   @Component({
     selector: 'demo-root',
     standalone: true,
@@ -347,8 +326,6 @@ npx cap init
 3. Aktualisiere die Eigenschaft `webDir` der Datei `capacitor.config.ts` so, dass sie auf den dist-Ordner des Analog Builds zeigt
 
 ```ts
-import type { CapacitorConfig } from '@capacitor/cli';
-
 const config: CapacitorConfig = {
   appId: 'com.ionic.capacitor',
   appName: 'ionic-capacitor',

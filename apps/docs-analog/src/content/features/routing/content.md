@@ -7,9 +7,6 @@ Analog also supports using markdown content as routes, and rendering markdown co
 In the `src/app/app.config.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     // ... other providers
@@ -22,10 +19,6 @@ Next, enable the content package in the `vite.config.ts`
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -67,8 +60,6 @@ Analog is a meta-framework for Angular.
 Analog supports syntax highlighting with PrismJS. To enable syntax highlighting with `PrismJS`, add `withPrismHighlighter()` to the `provideContent()` function in `app.config.ts`.
 
 ```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -93,9 +84,6 @@ Analog supports highlighting diff changes with PrismJS.
 Add the `prism-diff` language to the `additionalLangs` in the `analog` plugin:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -114,36 +102,6 @@ export default defineConfig({
 Add the `diff-highlight` plugin import to the `app.config.ts`:
 
 ```ts
-import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
-```
-
-Use the `diff` language tag to highlight them or `diff-<language>` to highlight the diff changes in a specific language.
-
-````md
-```diff
-- This is a sentence.
-+ This is a longer sentence.
-```
-
-```diff-typescript
-- const foo = 'bar';
-+ const foo = 'baz';
-```
-````
-
-To highlight changed line backgrounds instead of just the text, add this import to your global stylesheet:
-
-```css
-@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
-```
-
-### Shiki Syntax Highlighting
-
-Analog also supports syntax highlighting with Shiki. To enable syntax highlighting with `Shiki`, add `withShikiHighlighter()` to the `provideContent()` function in `app.config.ts`.
-
-```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -158,9 +116,6 @@ export const appConfig: ApplicationConfig = {
 To enable build-time syntax highlighting with `shiki`, configure the `analog` plugin in the `vite.config.ts`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -180,9 +135,6 @@ export default defineConfig({
 To configure Shiki, you can pass options to the `shikiOptions` object.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -208,9 +160,6 @@ export default defineConfig({
 For Mermaid-heavy content, keep the existing `loadMermaid` runtime path and skip Mermaid grammar loading in Shiki to avoid unnecessary server-side highlighting work in constrained CI environments:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   plugins: [
     analog({
@@ -277,10 +226,6 @@ To get a list using the list of content files in the `src/content` folder, use t
 > `injectContentFiles` returns metadata only — `filename`, `slug`, and `attributes`. The `content` body is not loaded; reading it from the returned items yields `undefined`. Use `injectContent` to load and render an individual file's body.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { injectContentFiles } from '@analogjs/content';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -320,10 +265,6 @@ The `injectContent()` function uses the `slug` route parameter by default to get
 
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -445,10 +386,6 @@ src/
 
 ```ts
 // /src/app/pages/project.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface ProjectAttributes {
   title: string;
   slug: string;
@@ -495,10 +432,6 @@ src/
 
 ```ts
 // /src/app/pages/docs/[...slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface DocAttributes {
   title: string;
 }

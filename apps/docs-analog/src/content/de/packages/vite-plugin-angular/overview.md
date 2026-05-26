@@ -37,9 +37,6 @@ bun install @analogjs/vite-plugin-angular --dev
 Füge das Plugin zum Array `plugins` in der Vite-Konfiguration hinzu
 
 ```ts
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {

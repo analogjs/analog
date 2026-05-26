@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Veröffentlichung
 
 Die Node.js-Veröffentlichung ist die Standardvorlage für die Analog Ausgabe der Produktions-Builds.
@@ -36,8 +33,6 @@ BUILD_PRESET=node-server
 **Beispiel:** Verwendung von `vite.config.ts`
 
 ```ts
-import { defineConfig } from 'vite';
-
 export default defineConfig({
   plugins: [
     analog({
@@ -56,9 +51,6 @@ Wenn mit einem benutzerdefinierte URL-Präfix wie https://domain.com/`basehref`/
 1. Weise Angular an, wie es URLs erkennt und generiert. Erstelle eine neue Datei `app.config.env.ts`.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { APP_BASE_HREF } from '@angular/common';
-
 export const envConfig: ApplicationConfig = {
   providers: [{ provide: APP_BASE_HREF, useValue: '/basehref/' }],
 };
@@ -67,12 +59,7 @@ export const envConfig: ApplicationConfig = {
 2. Aktualisiere die Datei `app.config.ts`, um die neue Datei zu verwenden.
 
 ```ts
-import { mergeApplicationConfig } from '@angular/core';
-import { envConfig } from './app.config.env';
 
-export const appConfig = mergeApplicationConfig(envConfig, {
-....
-});
 ```
 
 3. Im CI-Produktionsbuild

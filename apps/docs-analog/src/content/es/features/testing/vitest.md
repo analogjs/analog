@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Usando Vitest con un Proyecto Angular
 
 [Vitest](https://vitest.dev) puede ser añadido a **_cualquier_** proyecto Angular existente con unos pocos pasos.
@@ -98,10 +95,6 @@ Para configurar Vitest, crea un archivo `vite.config.ts` en la raíz de tu proye
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -123,10 +116,6 @@ Como desde Angular v21, `Zoneless` es la opción por defecto para la detección 
 Utilice la siguiente configuración:
 
 ```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-snapshots';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
 setupTestBed();
 ```
 
@@ -135,10 +124,6 @@ setupTestBed();
 Si estás usando `Zone.js` para la detección de cambios, importa el script `setup-zone`. Este script incluye automáticamente soporte para configurar pruebas de snapshots.
 
 ```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
 setupTestBed({
   zoneless: false,
 });
@@ -245,11 +230,6 @@ Actualiza el objeto `test` en el archivo `vite.config.ts`.
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import { playwright } from '@vitest/browser-playwright';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -272,10 +252,6 @@ export default defineConfig(({ mode }) => ({
 Cuando se ejecutan las pruebas con el modo de navegador con interfaz gráfica, probablemente quieras actualizar tu `src/test-setup.ts` para mantener el componente renderizado:
 
 ```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-snapshots';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-
 setupTestBed({
   teardown: { destroyAfterEach: false }, // Enables visual test preview
 });
@@ -327,11 +303,6 @@ A continuación, se muestra un pequeño ejemplo de cómo escribir una prueba de 
 
 ```ts
 // card.component.spec.ts
-
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CardComponent } from './card.component';
-
 describe('CardComponent', () => {
   let fixture: ComponentFixture<CardComponent>;
   let component: CardComponent;
@@ -404,11 +375,6 @@ Luego, añade el plugin al arreglo `plugins` en el archivo `vite.config.ts` con 
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
 }));
@@ -420,11 +386,6 @@ Para espacios de trabajo Nx, importa y usa el plugin `nxViteTsPaths` del paquete
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), nxViteTsPaths()],
 }));

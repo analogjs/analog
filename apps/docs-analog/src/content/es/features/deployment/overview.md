@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Despliegue
 
 El despliegue en Node.js es el preset de salida predeterminado de Analog para las compilaciones de producción.
@@ -36,8 +33,6 @@ BUILD_PRESET=node-server
 **Ejemplo:** Usando `vite.config.ts`
 
 ```ts
-import { defineConfig } from 'vite';
-
 export default defineConfig({
   plugins: [
     analog({
@@ -78,9 +73,6 @@ export default defineConfig(({ mode }) => ({
 Esto instruye a Angular como debe reconocer y generar las URLs.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { APP_BASE_HREF } from '@angular/common';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],

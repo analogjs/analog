@@ -41,8 +41,6 @@ Analog 在 Angular 路由之上支持基于文件系统的路由。
 以下文件 `src/app/pages/(home).page.ts` 定义了一个 `/` 路由。
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: ` <h2>Welcome</h2> `,
@@ -63,8 +61,6 @@ export default class HomePageComponent {}
 以下文件 `src/app/pages/about.page.ts` 中定义了一个 `/about` 路由.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: `
@@ -103,11 +99,6 @@ src/
 以下的例子中 `src/app/pages/products/[productId].page.ts` 定义了 `/products/:productId` 路由。
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
-
 @Component({
   standalone: true,
   imports: [AsyncPipe],
@@ -136,10 +127,6 @@ export default class ProductDetailsPageComponent {
 
 ```ts
 // src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter } from '@analogjs/router';
-import { withComponentInputBinding } from '@angular/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withComponentInputBinding()),
@@ -152,8 +139,6 @@ export const appConfig: ApplicationConfig = {
 
 ```ts
 // src/app/pages/products/[productId].page.ts
-import { Component, Input } from '@angular/core';
-
 @Component({
   standalone: true,
   template: `
@@ -191,9 +176,6 @@ src/
 父级文件 `src/app/pages/products.page.ts` 是一个包含了 router outlet 的布局页。
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-
 @Component({
   standalone: true,
   imports: [RouterOutlet],
@@ -209,8 +191,6 @@ export default class ProductsComponent {}
 下一级的 `src/app/pages/products/(products-list).page.ts` 文件包含了 `/products` 列表页。
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: ` <h2>Products List</h2> `,
@@ -221,11 +201,6 @@ export default class ProductsListComponent {}
 再下一级的 `src/app/pages/products/[productId].page.ts` 文件则包含了 `/products/:productId` 详情页。
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
-
 @Component({
   standalone: true,
   imports: [AsyncPipe, JsonPipe],
@@ -267,11 +242,6 @@ Catch-all 路由通过一个包含`[]`并且以`...`为开头的文件来定义
 下面在 `src/app/pages/[...page-not-found].page.ts` 里定义了一个通配符`**`路由，通常用于展示 404 页面。
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { injectResponse } from '@analogjs/router/tokens';
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   title: 'Page Not Found',
   canActivate: [
@@ -343,10 +313,6 @@ src/
 除了通过文件系统发现的路由外，还可以手动添加路由。使用带有路由数组的 `withExtraRoutes`，将其预置到发现的路由数组中。所有路由将合并到一个数组中。
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { Routes } from '@angular/router';
-import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
-
 const customRoutes: Routes = [
   {
     path: 'custom',
@@ -367,9 +333,6 @@ export const appConfig: ApplicationConfig = {
 在 `app.config.ts` 中使用 `withDebugRoutes` 函数：
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };
@@ -384,10 +347,6 @@ export const appConfig: ApplicationConfig = {
 除了通过文件系统发现的路由外，还可以手动添加路由。使用带有路由数组的 `withExtraRoutes`，将其预置到发现的路由数组中。所有路由将合并到一个数组中。
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { Routes } from '@angular/router';
-import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
-
 const customRoutes: Routes = [
   {
     path: 'custom',
@@ -408,9 +367,6 @@ export const appConfig: ApplicationConfig = {
 在 `app.config.ts` 中使用 `withDebugRoutes` 函数：
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };

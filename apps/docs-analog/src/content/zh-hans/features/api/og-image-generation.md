@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 开放图谱 (OG) 图片生成
 
 开放图谱图片可以用来在例如：Twitter/X，LinkedIn，Facebook 等社交媒体上分享时展示页面的预览。Analog 支持通过[API Routes](./overview)来生成开放图谱图片
@@ -41,10 +38,6 @@ pnpm install -w satori satori-html sharp
 
 ```ts
 // src/server/routes/api/v1/og-images.ts
-import { defineEventHandler, getQuery } from 'h3';
-
-import { ImageResponse } from '@analogjs/content/og';
-
 export default defineEventHandler(async (event) => {
   const fontFile = await fetch(
     'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff',

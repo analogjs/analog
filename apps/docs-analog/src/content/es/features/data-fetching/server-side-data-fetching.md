@@ -8,18 +8,6 @@ Para obtener los datos desde el servidor, crea un archivo `.server.ts` que conte
 
 ```ts
 // src/app/pages/index.server.ts
-import { PageServerLoad } from '@analogjs/router';
-
-export const load = async ({
-  params, // params/queryParams de la solicitud
-  req, // Solicitud H3
-  res, // Manejador de Respuesta H3
-  fetch, // fetch interno para llamadas API directas,
-  event, // evento de solicitud completo
-}: PageServerLoad) => {
-  return {
-    loaded: true,
-  };
 };
 ```
 
@@ -30,34 +18,6 @@ La función `load` se resuelve utilizando resolutores de rutas de Angular, por l
 
 ```ts
 // src/app/pages/index.page.ts
-import { Component } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad } from '@analogjs/router';
-
-import { load } from './index.server'; // no incluido en la compilación del cliente
-
-@Component({
-  standalone: true,
-  template: `
-    <h2>Inicio</h2>
-
-    Loaded: {{ data().loaded }}
-  `,
-})
-export default class BlogComponent {
-  data = toSignal(injectLoad<typeof load>(), { requireSync: true });
-}
-```
-
-Acceder a los datos también se puede hacer con Entradas de Componentes y Enlaces de Entradas de Componentes proporcionados en la configuración del Router de Angular. Para configurar el Router de Angular para `Component Input Bindings`, agrega `withComponentInputBinding()` a los argumentos pasados a `provideFileRouter()` en el `app.config.ts`.
-
-```ts
-import { provideHttpClient } from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
-import { provideClientHydration } from '@angular/platform-browser';
-import { provideFileRouter } from '@analogjs/router';
-import { withNavigationErrorHandler } from '@angular/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
@@ -74,34 +34,6 @@ Ahora, para obtener los datos en el componente, agrega una entrada llamada `load
 
 ```ts
 // src/app/pages/index.page.ts
-import { Component } from '@angular/core';
-import { LoadResult } from '@analogjs/router';
-
-import { load } from './index.server'; // no incluido en la compilación del cliente
-
-@Component({
-  standalone: true,
-  template: `
-    <h2>Inicio</h2>
-    Loaded: {{ data.loaded }}
-  `,
-})
-export default class BlogComponent {
-  @Input() load(data: LoadResult<typeof load>) {
-    this.data = data;
-  }
-
-  data!: LoadResult<typeof load>;
-}
-```
-
-## Acceso a los Datos de Carga del Servidor
-
-Acceder a los datos de carga del servidor desde el resolutor `RouteMeta` se puede hacer utilizando la función `getLoadResolver` proporcionada por `@analogjs/router`.
-
-```ts
-import { getLoadResolver } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   resolve: {
     data: async (route) => {

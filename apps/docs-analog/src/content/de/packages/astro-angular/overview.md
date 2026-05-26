@@ -104,9 +104,6 @@ yarn add @angular-devkit/build-angular @angular/{animations,common,compiler-cli,
 Füge die Integration in die Datei `astro.config.mjs` ein.
 
 ```js
-import { defineConfig } from 'astro/config';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [angular()],
 });
@@ -121,9 +118,6 @@ Weiter zu [Definieren einer Komponente](#definieren-einer-komponente)
 Geben Sie ein Optionsobjekt an, um das `@analogjs/vite-plugin-angular` zu konfigurieren, das dieses Plugin antreibt.
 
 ```js
-import { defineConfig } from 'astro/config';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [
     angular({
@@ -140,10 +134,6 @@ export default defineConfig({
 Um sicherzustellen, dass Angular-Bibliotheken während des SSR-Prozesses von Astro umgewandelt werden, füge diese dem Array `ssr.noExternal` in der Vite-Konfiguration hinzu.
 
 ```js
-import { defineConfig } from 'astro/config';
-
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [angular()],
   vite: {
@@ -160,9 +150,6 @@ export default defineConfig({
 Die Astro-Angular-Integration unterstützt **nur** das Rendern von standalone Komponenten:
 
 ```ts
-import { NgIf } from '@angular/common';
-import { Component, Input } from '@angular/core';
-
 @Component({
   selector: 'app-hello',
   standalone: true,
@@ -190,8 +177,6 @@ Füge die Angular-Komponente zur Vorlage der Astro-Komponente hinzu. Dadurch wir
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
-
 const helpText = "Helping binding";
 ---
 
@@ -204,7 +189,6 @@ Um die Komponente auf dem Client zu hydrieren, verwende eine der Astro-[Client-D
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible />
@@ -219,7 +203,6 @@ Um diese Funktion zu aktivieren, füge eine Client-Direktive und eine eindeutige
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible data-analog-id="hello-component-1" />
@@ -229,14 +212,11 @@ Dann höre auf das Ereignis in der Astro-Komponente mit der Funktion `addOutputL
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible data-analog-id="hello-component-1" />
 
 <script>
-  import { addOutputListener } from '@analogjs/astro-angular/utils';
-
   addOutputListener('hello-component-1', 'outputName', (event) => {
     console.log(event.detail);
   });
@@ -250,10 +230,6 @@ Zusätzliche Provider können zu einer Komponente für statisches Rendering und 
 Diese sind `renderProviders` bzw. `clientProviders`. Diese Provider sind als statische Arrays in der Komponenten Klasse definiert und werden registriert, wenn die Komponente gerendert wird, und auf dem Client hydriert.
 
 ```ts
-import { Component, OnInit, inject } from '@angular/core';
-import { NgFor } from '@angular/common';
-import { provideHttpClient, HttpClient } from '@angular/common/http';
-
 interface Todo {
   id: number;
   title: string;
@@ -296,10 +272,6 @@ Um Komponenten mit MDX-Seiten zu verwenden, muss die MDX-Unterstützung installi
 > Hinweis: Shiki ist der Standard-Syntax-Highlighter für das MDX-Plugin und wird derzeit nicht unterstützt. `astro-angular` wird dies mit `prism` überschreiben, aber es sollte in der Konfiguration angeben werden, um Warnungen oder Probleme zu vermeiden.
 
 ```js
-import { defineConfig } from 'astro/config';
-import mdx from '@astrojs/mdx';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [mdx({ syntaxHighlight: 'prism' }), angular()],
 });
@@ -315,8 +287,6 @@ description: 'Lorem ipsum dolor sit amet'
 pubDate: 'Sep 22 2022'
 ---
 
-import { HelloComponent } from "../../components/hello.component.ts";
-
 <HelloComponent />
 <HelloComponent helpText="Helping" />
 ```
@@ -330,8 +300,6 @@ title: 'Using Angular in MDX'
 description: 'Lorem ipsum dolor sit amet'
 pubDate: 'Sep 22 2022'
 ---
-
-import { HelloComponent } from "../../components/hello.component.ts";
 
 <HelloComponent client:load />
 <HelloComponent client:visible helpText="Helping" />

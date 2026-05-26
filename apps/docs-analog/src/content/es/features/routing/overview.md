@@ -41,8 +41,6 @@ Las rutas de índice se definen usando el nombre del archivo como la ruta encerr
 El ejemplo de ruta a continuación en `src/app/pages/(home).page.ts` define una ruta `/`.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: ` <h2>Welcome</h2> `,
@@ -63,8 +61,6 @@ Las rutas estáticas se definen usando el nombre del archivo como la ruta.
 El ejemplo de ruta a continuación en `src/app/pages/about.page.ts` define una ruta `/about`.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: `
@@ -103,11 +99,6 @@ Las rutas dinámicas se definen usando el nombre del archivo como la ruta encerr
 El ejemplo de ruta a continuación en `src/app/pages/products/[productId].page.ts` define una ruta `/products/:productId`.
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
-
 @Component({
   standalone: true,
   imports: [AsyncPipe],
@@ -136,10 +127,6 @@ Primero, añade `withComponentInputBinding()` a los argumentos de la función `p
 
 ```ts
 // src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter } from '@analogjs/router';
-import { withComponentInputBinding } from '@angular/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withComponentInputBinding()),
@@ -152,8 +139,6 @@ Luego, usa el parámetro de ruta como una entrada.
 
 ```ts
 // src/app/pages/products/[productId].page.ts
-import { Component, Input } from '@angular/core';
-
 @Component({
   standalone: true,
   template: `
@@ -191,9 +176,6 @@ Esto define dos rutas con un layout compartido:
 El archivo padre `src/app/pages/products.page.ts` contiene la página padre con un router outlet.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-
 @Component({
   standalone: true,
   imports: [RouterOutlet],
@@ -209,8 +191,6 @@ export default class ProductsComponent {}
 El archivo anidado `src/app/pages/products/(products-list).page.ts` contiene la página de lista `/products`.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: ` <h2>Products List</h2> `,
@@ -221,11 +201,6 @@ export default class ProductsListComponent {}
 El archivo anidado `src/app/pages/products/[productId].page.ts` contiene la página de detalles `/products/:productId`.
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
-
 @Component({
   standalone: true,
   imports: [AsyncPipe, JsonPipe],
@@ -267,11 +242,6 @@ Las rutas catch-all se definen usando el nombre del archivo como la ruta prefija
 El ejemplo de ruta a continuación en `src/app/pages/[...page-not-found].page.ts` define una ruta comodín `**`. Esta ruta generalmente es para páginas 404.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { injectResponse } from '@analogjs/router/tokens';
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   title: 'Page Not Found',
   canActivate: [
@@ -343,10 +313,6 @@ El enrutador basado en el sistema de archivos generará las siguientes rutas:
 Las rutas se pueden agregar manualmente en adición a las rutas descubiertas a través del sistema de archivos. Utiliza `withExtraRoutes` con un array de rutas para agregar al principio del array de rutas descubiertas. Todas las rutas se fusionan en un array único.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { Routes } from '@angular/router';
-import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
-
 const customRoutes: Routes = [
   {
     path: 'custom',
@@ -367,9 +333,6 @@ Cuando estás construyendo las páginas de tu aplicación, puede ser útil ver l
 Utiliza la función `withDebugRoutes` en el archivo `app.config.ts`:
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };

@@ -9,9 +9,6 @@ Analog 还通过 Nitro 支持 `WebSockets` 和 `Server-Sent Events`。
 `vite.config.ts`
 
 ```typescript
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -33,9 +30,6 @@ export default defineConfig({
 `vite.config.ts`
 
 ```typescript
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   server: {
@@ -55,8 +49,6 @@ export default defineConfig({
 
 ```typescript
 // src/server/api/routes/ws/chat.ts
-import { defineWebSocketHandler } from 'h3';
-
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });
@@ -91,8 +83,6 @@ WebSocket 路由与 API 路由的路径相同。例如，`src/server/routes/api/
 
 ```typescript
 // src/server/routes/api/sse.ts
-import { defineEventHandler, createEventStream } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const eventStream = createEventStream(event);
 

@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Crear una librería de Angular
 
 Las librerías de Angular se crean para dar soporte a diferentes servicios y funcionalidades. Estas se pueden crear utilizando Vite y se pueden publicar en npm.
@@ -50,9 +47,6 @@ A continuación, crear el archivo `vite.config.ts` en la raíz del proyecto, y c
 > Actualizar las referencias de `my-lib` para coincidir con el nombre del proyecto.
 
 ```ts
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/my-lib',
@@ -157,11 +151,6 @@ Importar el plugin y configurarlo:
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/vite-plugin-angular';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...

@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Open-Graph-(OG)-Bildgenerierung
 
 Open-Graph-Bilder können verwendet werden, um Vorschauen von Seiten anzuzeigen, wenn die Seiten auf Social-Media-Websites wie Twitter/X, LinkedIn, Facebook usw. geteilt werden. Analog unterstützt die Generierung von Open-Graph-Bildern mithilfe von [API-Routen](./overview).
@@ -41,8 +38,6 @@ Als Nächstes definiere eine API-Route im Verzeichnis `src/server/routes`.
 
 ```ts
 // src/server/routes/api/v1/og-images.ts
-import { ImageResponse } from '@analogjs/content/og';
-
 export default defineEventHandler(async (event) => {
   const fontFile = await fetch(
     'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff',

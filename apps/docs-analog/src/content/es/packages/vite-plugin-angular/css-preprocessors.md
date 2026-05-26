@@ -9,8 +9,6 @@ Las `styleUrls` externas pueden ser usadas sin ninguna configuración adicional.
 Un ejemplo con `styleUrls`:
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   templateUrl: './app.component.html',
@@ -24,8 +22,6 @@ Para soportar el preprocesamiento de `styles` en línea, el plugin debe ser conf
 Un ejemplo de uso de `scss` con `styles` en línea:
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   templateUrl: './app.component.html',
@@ -49,9 +45,6 @@ export class AppComponent {}
 En el `vite.config.ts`, proporciona un objeto a la función del plugin `angular` con la propiedad `inlineStylesExtension` establecida a la extensión del archivo del preprocesador de CSS que se está usando.
 
 ```ts
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {

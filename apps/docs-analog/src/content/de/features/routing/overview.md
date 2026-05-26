@@ -35,8 +35,6 @@ Index Routen werden definiert, indem der Dateiname als Routenpfad in Klammern an
 Die Beispielroute unten in `src/app/pages/(home).page.ts` definiert eine `/`-Route.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: ` <h2>Welcome</h2> `,
@@ -57,8 +55,6 @@ Statische Routen werden durch die Verwendung des Dateinamens als Routenpfad defi
 Die Beispielroute unten in `src/app/pages/about.page.ts` definiert eine `/about`-Route.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: `
@@ -97,11 +93,6 @@ Dynamische Routen werden definiert, indem der Dateiname als Routenpfad in eckige
 Die folgende Beispielroute in `src/app/pages/products/[productId].page.ts` definiert eine `/products/:productId`-Route.
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
-
 @Component({
   standalone: true,
   imports: [AsyncPipe],
@@ -130,10 +121,6 @@ Fügen zunächst die Option `withComponentInputBinding()` zu den Argumenten für
 
 ```ts
 // src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter } from '@analogjs/router';
-import { withComponentInputBinding } from '@angular/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withComponentInputBinding()),
@@ -146,8 +133,6 @@ Als nächstes verwende den Routenparameter als Eingabe.
 
 ```ts
 // src/app/pages/products/[productId].page.ts
-import { Component, Input } from '@angular/core';
-
 @Component({
   standalone: true,
   template: `
@@ -185,9 +170,6 @@ Damit werden zwei Routen mit einem gemeinsamen Layout definiert:
 Die übergeordnete Datei `src/app/pages/products.page.ts` enthält die übergeordnete Seite mit einem `router-outlet`.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-
 @Component({
   standalone: true,
   imports: [RouterOutlet],
@@ -203,8 +185,6 @@ export default class ProductsComponent {}
 Die verschachtelte Datei `src/app/pages/products/(products-list).page.ts` enthält die Listenseite `/products`.
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   standalone: true,
   template: ` <h2>Products List</h2> `,
@@ -215,11 +195,6 @@ export default class ProductsListComponent {}
 Die verschachtelte Datei `src/app/pages/products/[productId].page.ts` enthält die Detailseite `/products/:productId`.
 
 ```ts
-import { Component, inject } from '@angular/core';
-import { AsyncPipe, JsonPipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
-
 @Component({
   standalone: true,
   imports: [AsyncPipe, JsonPipe],
@@ -261,9 +236,6 @@ Sammelrouten werden definiert, indem der Dateiname als Routenpfad mit 3 Punkten 
 Die Beispielroute unten in `src/app/pages/[...page-not-found].page.ts` definiert eine Platzhalterroute `**`. Diese Route wird normalerweise für 404-Seiten verwendet.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-
 @Component({
   standalone: true,
   imports: [RouterLink],

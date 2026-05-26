@@ -22,10 +22,6 @@ npm install @analogjs/vite-plugin-nitro --save-dev
 
 ```ts
 // vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import nitro from '@analogjs/vite-plugin-nitro';
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -48,11 +44,6 @@ export default defineConfig({
 下面是 React SSR 的最小示例：
 
 ```ts
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
-
-import App from './App';
-
 export default async function render(_url: string, document: string) {
   const html = ReactDOMServer.renderToString(
     <React.StrictMode>
@@ -85,8 +76,6 @@ API 路由定义在 `src/server/routes/api` 文件夹中。API 路由也是基�
 
 ```ts
 // src/server/routes/api/v1/hello
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
@@ -98,9 +87,6 @@ export default defineEventHandler(() => ({ message: 'Hello World' }));
 
 ```ts
 // vite.config.ts
-import { defineConfig } from 'vite';
-import nitro from '@analogjs/vite-plugin-nitro';
-
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [

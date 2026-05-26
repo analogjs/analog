@@ -9,9 +9,6 @@ Analog soporta la Generación de Sitios Estáticos al construir para despliegue.
 Para prerenderizar páginas, usa la propiedad `prerender` para configurar las rutas que serán renderizadas en tiempo de compilación. Las rutas a prerenderizar también pueden proporcionarse de forma asíncrona.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -42,9 +39,6 @@ Usar `transform` también te permite filtrar algunas rutas retornando `false`. E
 El valor de `contentDir` de ese objeto puede ser un patrón glob o simplemente una ruta específica.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -79,9 +73,6 @@ Para hacer las páginas prerrenderizadas más accesibles a LLMs u otras herramie
 Para rutas individuales, especifica la ruta al archivo fuente:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -103,9 +94,6 @@ export default defineConfig(({ mode }) => ({
 Para directorios de contenido, usa una función que reciba la información del archivo y devuelva el contenido a exportar:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -147,9 +135,6 @@ Para prerenderizar únicamente las páginas estáticas, usa la bandera `static: 
 > La bandera `ssr` tiene que estar establecida en `true` para prerenderizar páginas estáticas.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -184,9 +169,6 @@ Al utilizar [la recuperación de datos del lado del servidor](/docs/features/dat
 Por ejemplo, una ruta definida como `src/app/pages/shipping.page.ts` con un archivo asociado `src/app/pages/shipping.server.ts` tiene la ruta y los datos del lado del servidor prerenderizados para ser completamente estáticos.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -211,9 +193,6 @@ export default defineConfig(({ mode }) => ({
 Analog también soporta la generación automática de sitemaps. Analog genera un sitemap en el directorio `dist/analog/public` al ejecutar una compilación si se proporciona una configuración de sitemap.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -232,10 +211,6 @@ export default defineConfig(({ mode }) => ({
 Para personalizar la definición del sitemap, utilice la función de callback `sitemap` para personalizar los campos `lastmod`, `changefreq` y `priority`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-import fs from 'node:fs';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -301,10 +276,6 @@ Analog soporta hooks de post-renderización durante el proceso de prerenderizaci
 El siguiente código de ejemplo muestra cómo usar `postRenderingHooks` en tu código:
 
 ```ts
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
-
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -333,12 +304,6 @@ A continuación, se muestra un pequeño ejemplo donde podemos añadir un script 
 
 ```ts
 /// <reference types="vitest" />
-
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
-
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

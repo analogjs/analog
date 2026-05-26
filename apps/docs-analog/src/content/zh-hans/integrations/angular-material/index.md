@@ -2,9 +2,6 @@
 title: Angular Material
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 集成 Angular Material
 
 此向导将向你展示如何在 Analog 应用里集成 [Angular Material](https://material.angular.io)。

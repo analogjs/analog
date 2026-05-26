@@ -17,44 +17,6 @@ npm install @angular/localize
 Import the `$localize` polyfill in your application's entry point (`src/main.ts` or `src/main.server.ts`):
 
 ```ts
-import '@angular/localize/init';
-```
-
-### 3. Create Translation Files
-
-Create JSON translation files for each supported locale. For example:
-
-```
-src/
-  i18n/
-    en.json
-    fr.json
-    de.json
-```
-
-Each file maps message IDs to translated strings:
-
-```json
-{
-  "greeting": "Bonjour",
-  "farewell": "Au revoir"
-}
-```
-
-:::tip
-Message IDs are generated automatically by Angular's `$localize` runtime based on the template content, meaning, and description.
-:::
-
-### 4. Provide i18n Configuration
-
-Add `provideI18n()` to your application config:
-
-```ts
-// src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter } from '@analogjs/router';
-import { provideI18n } from '@analogjs/router/i18n';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(),
@@ -90,8 +52,6 @@ Use Angular's `i18n` attribute to mark text for translation:
 Or use `$localize` directly in component code:
 
 ```ts
-import { Component } from '@angular/core';
-
 @Component({
   selector: 'app-home',
   template: `<h1>{{ title }}</h1>`,
@@ -121,9 +81,6 @@ When SSR is disabled (`ssr: false`), `provideI18n()` detects the locale from `wi
 The detected locale is available through the `LOCALE` injection token. Inject it anywhere in your application:
 
 ```ts
-import { Component } from '@angular/core';
-import { injectLocale } from '@analogjs/router/tokens';
-
 @Component({
   selector: 'app-language-switcher',
   template: `<span>Current locale: {{ locale }}</span>`,
@@ -141,10 +98,6 @@ A common pattern is to redirect the root URL to the user's preferred locale:
 
 ```ts
 // src/app/pages/index.page.ts
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { LOCALE } from '@analogjs/router/tokens';
-
 @Component({
   standalone: true,
   template: '',
@@ -165,10 +118,6 @@ Angular's `$localize` resolves translations at template evaluation time, so swit
 Use `injectSwitchLocale()` in your components. It reads the configured locales from `provideI18n()` automatically:
 
 ```ts
-import { Component } from '@angular/core';
-import { injectLocale } from '@analogjs/router/tokens';
-import { injectSwitchLocale } from '@analogjs/router/i18n';
-
 @Component({
   selector: 'app-language-switcher',
   template: `
@@ -191,8 +140,6 @@ Calling `switchLang('fr')` navigates from `/en/about` to `/fr/about` with a full
 If you need to update the `$localize` translation map without a navigation (e.g., preloading translations), use `loadTranslationsRuntime()`:
 
 ```ts
-import { loadTranslationsRuntime } from '@analogjs/router/i18n';
-
 const translations = await fetch('/i18n/fr.json').then((r) => r.json());
 loadTranslationsRuntime(translations);
 ```
@@ -206,9 +153,6 @@ loadTranslationsRuntime(translations);
 Analog can extract i18n message IDs from your compiled build output. Enable extraction in the platform plugin options:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -277,14 +221,6 @@ Analog's content system supports locale-aware content resolution for blogs, docs
 
 ```ts
 // src/app/app.config.ts
-import {
-  provideContent,
-  withMarkdownRenderer,
-  withLocale,
-} from '@analogjs/content';
-import { provideI18n } from '@analogjs/router/i18n';
-import { injectLocale } from '@analogjs/router/tokens';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(),
@@ -394,9 +330,6 @@ During development, the Analog dev server provides full i18n support:
 When `i18n` is configured in the platform options, prerendering automatically generates locale-prefixed variants for each route.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -427,9 +360,6 @@ This configuration will:
 You can declare your supported locales in the platform plugin options in `vite.config.ts`:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [

@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Anbieter
 
 Analog unterstützt die Veröffentlichung bei vielen Anbietern mit wenig oder gar keiner zusätzlichen Konfiguration unter Verwendung von [Nitro](https://nitro.unjs.io) als zugrunde liegende Server-Engine. Weitere Anbieter sind in den [Nitro veröffentlichungs Dokumentationen](https://nitro.unjs.io/deploy) zu finden.
@@ -99,9 +96,6 @@ Es kann der Fall eintreten, dass Vercel die Voreinstellung nicht automatisch lä
 - Lege die Voreinstellung in der Datei `vite.config.ts` fest:
 
 ```ts [vite.config.ts]
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   /// ...other config

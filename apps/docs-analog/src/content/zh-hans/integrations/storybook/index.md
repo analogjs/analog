@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 在 Angular 和 Vite 中使用 Storybook
 
 [Storybook](https://storybook.js.org) 是一个用于独立构建 UI 组件和页面的前端工作室。
@@ -74,8 +71,6 @@ bun install @analogjs/storybook-angular --save-dev
 更新 `.storybook/main.ts` 文件以使用 `StorybookConfig` 类型。同时更新 `framework` 以使用 `@analogjs/storybook-angular` 包。
 
 ```ts
-import { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // 其他配置, addons 等
   framework: {
@@ -196,8 +191,6 @@ export default config;
 下面的示例展示了如何添加相对于 `.storybook/main.ts` 文件的 `src/public` 中的 `public` 目录。
 
 ```ts
-import { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // 其他配置, addons 等
   framework: {
@@ -265,11 +258,6 @@ pnpm install -w vite-tsconfig-paths --save-dev
 接下来，将插件添加到 `.storybook/main.ts` 中的 `plugins` 数组。
 
 ```ts
-import viteTsConfigPaths from 'vite-tsconfig-paths';
-import { UserConfig, mergeConfig } from 'vite';
-
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // ... 其他配置, addons 等
   async viteFinal(config: UserConfig) {
@@ -287,11 +275,6 @@ export default config;
 对于 Nx 工作区，从 `@nx/vite` 包导入并使用 `nxViteTsPaths` 插件。将插件添加到 `.storybook/main.ts` 中的 `plugins` 数组。
 
 ```ts
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { UserConfig, mergeConfig } from 'vite';
-
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // ... 其他配置, addons 等
   async viteFinal(config: UserConfig) {
@@ -311,11 +294,6 @@ export default config;
 导入插件并进行设置：
 
 ```ts
-import { replaceFiles } from '@nx/vite/plugins/rollup-replace-files.plugin';
-import { UserConfig, mergeConfig } from 'vite';
-
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // ... 其他配置, addons 等
   async viteFinal(config: UserConfig) {
@@ -362,8 +340,6 @@ npm install @analogjs/vitest-angular @storybook/addon-vitest vitest @vitest/brow
 将插件添加到你的 `.storybook/main.ts`：
 
 ```ts
-import { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: [
@@ -385,11 +361,6 @@ export default config;
 创建一个 `.storybook/vitest.setup.ts` 文件：
 
 ```ts
-import '@angular/compiler';
-import { setProjectAnnotations } from '@analogjs/storybook-angular/testing';
-import { beforeAll } from 'vitest';
-import * as projectAnnotations from './preview';
-
 const project = setProjectAnnotations([projectAnnotations]);
 
 beforeAll(project.beforeAll);
@@ -415,12 +386,6 @@ beforeAll(project.beforeAll);
 
 ```ts
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
-import { playwright } from '@vitest/browser-playwright';
-
 const dirname =
   typeof __dirname !== 'undefined'
     ? __dirname

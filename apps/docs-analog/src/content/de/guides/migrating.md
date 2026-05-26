@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Migrieren einer Angular-Anwendung zu Analog
 
 Eine bestehende Angular Single Page Application kann mit Hilfe eines Schemas/Generators für Angular CLI oder Nx Workspaces für die Verwendung von Analog konfiguriert werden.

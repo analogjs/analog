@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Proveedores
 
 Analog soporta el despliegue en muchos proveedores con poca o ninguna configuración adicional usando [Nitro](https://nitro.unjs.io) como su motor de servidor subyacente. Puedes encontrar más proveedores en la [documentación de despliegue de Nitro](https://nitro.unjs.io/deploy).
@@ -249,9 +246,6 @@ Puede haber casos en los que Vercel no cargue el preset automáticamente. En ese
 - Establece el preset en el archivo `vite.config.ts`:
 
 ```ts [vite.config.ts]
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   /// ...otra configuración

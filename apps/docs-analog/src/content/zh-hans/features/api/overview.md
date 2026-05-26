@@ -7,8 +7,6 @@ Analog 支持定义 API 路由来为应用提供数据。
 API 路由在 `src/server/routes` 目录里定义。API 路由同样是基于文件系统的，并且在开发过程中通过 `/api` 前缀访问。
 
 ```ts
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
@@ -18,8 +16,6 @@ export default defineEventHandler(() => ({ message: 'Hello World' }));
 
 ```ts
 //server/routes/rss.xml.ts
-
-import { defineEventHandler, setHeader } from 'h3';
 export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -78,8 +74,6 @@ export default defineConfig(({ mode }) => {
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
@@ -89,8 +83,6 @@ export default defineEventHandler(
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineEventHandler, getRouterParam } from 'h3';
-
 export default defineEventHandler((event) => {
   const name = getRouterParam(event, 'name');
   return `Hello, ${name}!`;
@@ -105,8 +97,6 @@ export default defineEventHandler((event) => {
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
-import { defineEventHandler, getRouterParam } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   // TODO: fetch user by id
@@ -118,8 +108,6 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
-import { defineEventHandler, readBody } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   // TODO: Handle body and add user
@@ -135,8 +123,6 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // routes/v1/query.ts
-import { defineEventHandler, getQuery } from 'h3';
-
 export default defineEventHandler((event) => {
   const { param1, param2 } = getQuery(event);
   return `Hello, ${param1} and ${param2}!`;
@@ -158,8 +144,6 @@ export default defineEventHandler((event) => `Default page`);
 
 ```ts
 // routes/v1/[id].ts
-import { defineEventHandler, getRouterParam, createError } from 'h3';
-
 export default defineEventHandler((event) => {
   const param = getRouterParam(event, 'id');
   const id = parseInt(param ? param : '');
@@ -181,15 +165,6 @@ Analog 支持在服务端调用的时候设置和读取 cookies。
 
 ```ts
 //(home).server.ts
-import { setCookie } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
-
-import { Product } from '../products';
-
-export const load = async ({ fetch, event }: PageServerLoad) => {
-  setCookie(event, 'products', 'loaded'); // setting the cookie
-  const products = await fetch<Product[]>('/api/v1/products');
-
   return {
     products: products,
   };
@@ -200,12 +175,6 @@ export const load = async ({ fetch, event }: PageServerLoad) => {
 
 ```ts
 //index.server.ts
-import { parseCookies } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
-
-export const load = async ({ event }: PageServerLoad) => {
-  const cookies = parseCookies(event);
-
   console.log('products cookie', cookies['products']);
 
   return {

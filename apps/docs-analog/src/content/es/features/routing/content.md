@@ -7,9 +7,6 @@ Analog también soporta el uso de contenido en markdown como rutas y la renderiz
 En el archivo `src/app/app.config.ts`, añade la función `provideContent()` junto con la característica `withMarkdownRenderer()` al arreglo de `providers` al iniciar la aplicación.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     // ... otros proveedores
@@ -22,10 +19,6 @@ Luego, habilitar el paquete contenido en el archivo `vite.config.ts`
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -67,8 +60,6 @@ Analog is a meta-framework for Angular.
 Analog soporta el resaltado de sintaxis con PrismJS. Para habilitar el resaltado de sintaxis con `PrismJS`, añade `withPrismHighlighter()` a la función `provideContent()` en `app.config.ts`.
 
 ```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -93,9 +84,6 @@ Analog soporta el resaltado de cambios en diffs con PrismJS.
 Añade el lenguaje `prism-diff` a `additionalLangs` en el plugin `analog`:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -114,36 +102,6 @@ export default defineConfig({
 Añade la importación del plugin `diff-highlight` al `app.config.ts`:
 
 ```ts
-import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
-```
-
-Usa la etiqueta de lenguaje `diff` para resaltar o `diff-<language>` para resaltar los cambios de diffs en un lenguaje específico.
-
-````md
-```diff
-- This is a sentence.
-+ This is a longer sentence.
-```
-
-```diff-typescript
-- const foo = 'bar';
-+ const foo = 'baz';
-```
-````
-
-Para resaltar los fondos de las líneas cambiadas en lugar de solo el texto, añade esta importación a tu hoja de estilos global:
-
-```css
-@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
-```
-
-### Resaltado de Sintaxis con Shiki
-
-Analog también soporta el resaltado de sintaxis con Shiki. Para habilitar el resaltado de sintaxis con `Shiki`, añade `withShikiHighlighter()` a la función `provideContent()` en `app.config.ts`.
-
-```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -158,9 +116,6 @@ export const appConfig: ApplicationConfig = {
 Para habilitar el resaltado de sintaxis en tiempo de compilación con `shiki`, configura el plugin `analog` en el `vite.config.ts`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -180,9 +135,6 @@ export default defineConfig({
 Para configurar Shiki, puedes pasar opciones al objeto `shikiOptions`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -250,10 +202,6 @@ Hello World
 Para obtener una lista usando los archivos de contenido en la carpeta `src/content`, usa la función `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` del paquete `@analogjs/content` en tu componente. Para filtrar los archivos, puedes usar la función predicado `filterFn` como argumento. Puedes usar el tipo `InjectContentFilesFilterFunction<T>` para configurar tu predicado.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { injectContentFiles } from '@analogjs/content';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -293,10 +241,6 @@ La función `injectContent()` usa el parámetro de ruta `slug` por defecto para 
 
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -418,10 +362,6 @@ src/
 
 ```ts
 // /src/app/pages/project.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface ProjectAttributes {
   title: string;
   slug: string;

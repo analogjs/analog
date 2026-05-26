@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Deployment
 
 Node.js deployment is the default Analog output preset for production builds.
@@ -36,8 +33,6 @@ BUILD_PRESET=node-server
 **Example:** Using `vite.config.ts`
 
 ```ts
-import { defineConfig } from 'vite';
-
 export default defineConfig({
   plugins: [
     analog({
@@ -78,9 +73,6 @@ export default defineConfig(({ mode }) => ({
 This instructs Angular on how recognize and generate URLs.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { APP_BASE_HREF } from '@angular/common';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],

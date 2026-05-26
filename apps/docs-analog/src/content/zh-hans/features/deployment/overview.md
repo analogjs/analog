@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 部署
 
 Node.js 部署是 Analog 为生产环境构建的默认预设输出。
@@ -36,8 +33,6 @@ BUILD_PRESET=node-server
 **例如:** 使用 `vite.config.ts`
 
 ```ts
-import { defineConfig } from 'vite';
-
 export default defineConfig({
   plugins: [
     analog({
@@ -78,9 +73,6 @@ export default defineConfig(({ mode }) => ({
 这里告知 Angular 如何识别并生成对应的 URL。
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { APP_BASE_HREF } from '@angular/common';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     [{ provide: APP_BASE_HREF, useValue: import.meta.env.BASE_URL || '/' }],

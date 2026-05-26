@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 构建 Angular 类库
 
 Angular 类库是为了支持许多不同的服务和功能而构建的。可以使用 Vite 构建 Angular 类库，并将其发布到 npm。
@@ -50,9 +47,6 @@ pnpm install -w @analogjs/platform
 > 更新 `my-lib` 的引用以匹配类库项目名称。
 
 ```ts
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/my-lib',
@@ -157,11 +151,6 @@ export default defineConfig(({ mode }) => ({
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/vite-plugin-angular';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...

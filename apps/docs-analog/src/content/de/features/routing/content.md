@@ -7,9 +7,6 @@ Analog unterstützt auch die Verwendung von Markdown-Inhalten als Routen und das
 Fügen in der Datei `src/app/app.config.ts` die Funktion `provideContent()` zusammen mit der Funktion `withMarkdownRenderer()` in das Array `providers` ein.
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     // ... other providers
@@ -46,8 +43,6 @@ Analog is a meta-framework for Angular.
 Analog unterstützt die Syntaxhervorhebung mit PrismJS. Um die Syntaxhervorhebung mit `PrismJS` zu aktivieren, füge `withPrismHighlighter()` zur Funktion `provideContent()` in `app.config.ts` hinzu.
 
 ```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -66,9 +61,6 @@ Analog unterstützt das Hervorheben von Diff-Änderungen mit PrismJS.
 Füge die Sprache `prism-diff` zu den `additionalLangs` im Plugin `analog` hinzu:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -86,37 +78,6 @@ export default defineConfig({
 Fügen den Plugin-Import `diff-highlight` in die `app.config.ts` ein:
 
 ```ts
-import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
-```
-
-Verwenden den `diff` language tag, um es hervorzuheben oder
-`diff-<language>`, um die Diff-Änderungen in einer bestimmten Sprache hervorzuheben.
-
-````md
-```diff
-- This is a sentence.
-+ This is a longer sentence.
-```
-
-```diff-typescript
-- const foo = 'bar';
-+ const foo = 'baz';
-```
-````
-
-Um geänderte Zeilenhintergründe und nicht nur den Text hervorzuheben, fügen Sie diesen Import in Ihr globales Stylesheet ein:
-
-```css
-@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
-```
-
-### Shiki Syntax-Hervorhebung
-
-Analog unterstützt auch die Syntaxhervorhebung mit Shiki. Um die Syntaxhervorhebung mit `Shiki` zu aktivieren, füge `withShikiHighlighter()` zur Funktion `provideContent()` in `app.config.ts` hinzu.
-
-```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -131,9 +92,6 @@ export const appConfig: ApplicationConfig = {
 Um die Syntaxhervorhebung mit `shiki` zu aktivieren, konfiguriere das Plugin `analog` in der `vite.config.ts`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -153,9 +111,6 @@ export default defineConfig({
 Um Shiki zu konfigurieren, können Optionen an das Objekt `shikiOptions` übergeben werden.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -223,11 +178,6 @@ Hello World
 Um eine Liste mit der Inhaltsdateien im Ordner `src/content` zu erhalten, verwende die Funktion `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` aus dem Paket `@analogjs/content` in der Komponente. Um die Dateien einzugrenzen, kann die Prädikatsfunktion `filterFn` als Argument verwendet werden. Du kannst den Typ `InjectContentFilesFilterFunction<T>` verwenden, um Ihr Prädikat einzurichten.
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { injectContentFiles } from '@analogjs/content';
-import { NgFor } from '@angular/common';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -263,10 +213,6 @@ Die Funktion `injectContent()` verwendet standardmäßig den Routenparameter `sl
 
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -388,10 +334,6 @@ src/
 
 ```ts
 // /src/app/pages/project.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface ProjectAttributes {
   title: string;
   slug: string;

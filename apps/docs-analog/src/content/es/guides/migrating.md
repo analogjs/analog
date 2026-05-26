@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Migrando una Aplicación Angular a Analog
 
 Una Aplicación SPA Angular existente puede configurarse para usar Analog utilizando un schematic/generator para Angular CLI o espacios de trabajo Nx.
@@ -91,9 +88,6 @@ MY_SERVER_API_KEY=development-server-key
 Importa y usa la variable de entorno en tu código.
 
 ```ts
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -123,10 +117,6 @@ Importa el plugin y configúralo:
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   build: {
@@ -169,11 +159,6 @@ Importa el plugin y configúralo:
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...
@@ -187,10 +172,6 @@ Angular soporta HMR/Live reload donde en la mayoría de los casos los componente
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // .. otra configuración

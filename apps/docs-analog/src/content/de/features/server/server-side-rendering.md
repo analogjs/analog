@@ -9,9 +9,6 @@ Einige Abhängigkeiten benötigen möglicherweise zusätzliche Transformationen,
 Es können glob-Muster verwendet werden, um Gruppen von Paketen oder Bibliotheken einzuschließen. Einige Beispiele sind unten aufgeführt.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   ssr: {
@@ -33,9 +30,6 @@ SSR is enabled by default. You can opt-out of it and generate a client-only buil
 SSR ist standardmäßig aktiviert. Du kannst dich dagegen entscheiden und einen reinen Client-Build erzeugen, indem die folgende Option zum `analog()`-Plugin in Ihrer `vite.config.ts` hinzugefügt wird:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...other config
@@ -50,8 +44,6 @@ Mit SSR wird die `"/"`-Route standardmäßig vorberechnet.
 Es ist ein notwendiger Schritt, um ein gerendertes HTML zurückzugeben, wenn der Benutzer das Stammverzeichnis der Anwendung besucht. Die vorberechneten Routen können angepasst werden, aber denke daran, auch die `"/"`-Route einzubeziehen.
 
 ```js
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...other config

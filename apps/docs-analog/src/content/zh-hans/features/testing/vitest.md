@@ -2,9 +2,6 @@
 title: 添加Vitest
 ---
 
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 添加 Vitest 到现有的项目
 
 通过几个步骤，[Vitest](https://vitest.dev) 可以被添加到现有的 Angular 工作区。
@@ -85,10 +82,6 @@ pnpm install -w @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --s
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -111,14 +104,6 @@ export default defineConfig(({ mode }) => ({
 如果你使用 `Zone.js` 进行变更检测，导入 `setup-zone` 脚本。此脚本自动包含设置快照测试的支持。
 
 ```ts
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
 getTestBed().initTestEnvironment(
   BrowserTestingModule,
   platformBrowserTesting(),
@@ -130,18 +115,6 @@ getTestBed().initTestEnvironment(
 如果你使用 `Zoneless` 变更检测，使用以下设置：
 
 ```ts
-import '@analogjs/vitest-angular/setup-snapshots';
-
-import {
-  provideExperimentalZonelessChangeDetection,
-  NgModule,
-} from '@angular/core';
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
 @NgModule({
   providers: [provideZonelessChangeDetection()],
 })
@@ -236,10 +209,6 @@ pnpm install -w @vitest/browser playwright
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -265,15 +234,6 @@ export default defineConfig(({ mode }) => ({
 接下来，添加 `@angular/compiler` 导入到 `src/test-setup.ts` 文件。
 
 ```ts
-import '@angular/compiler';
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
 getTestBed().initTestEnvironment(
   BrowserTestingModule,
   platformBrowserTesting(),
@@ -320,11 +280,6 @@ pnpm test
 
 ```ts
 // card.component.spec.ts
-
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CardComponent } from './card.component';
-
 describe('CardComponent', () => {
   let fixture: ComponentFixture<CardComponent>;
   let component: CardComponent;
@@ -397,11 +352,6 @@ pnpm install -w vite-tsconfig-paths --save-dev
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
 }));
@@ -413,11 +363,6 @@ export default defineConfig(({ mode }) => ({
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), nxViteTsPaths()],
 }));

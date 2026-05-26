@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Usando Storybook con Angular y Vite
 
 [Storybook](https://storybook.js.org) es un taller frontend para construir componentes de UI y páginas de forma aislada.
@@ -74,8 +71,6 @@ bun install @analogjs/storybook-angular --save-dev
 Actualizar el archivo `.storybook/main.ts` para usar el tipo `StorybookConfig`. Además actualizar el `framework` para usar el paquete `@analogjs/storybook-angular`.
 
 ```ts
-import { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // otras configuraciones
   framework: {
@@ -195,8 +190,6 @@ Los archivos estáticos son configurados en el archivp `.storybook/main.ts` util
 Por ejemplo a continuación se muestra como agregar el directorio público `public` con la ruta relativa `src/public` en el archivo `.storybook/main.ts`.
 
 ```ts
-import { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // otras configuraciones
   framework: {
@@ -264,11 +257,6 @@ pnpm install -w vite-tsconfig-paths --save-dev
 Luego, agregar el plugin en el arreglo de `plugins` en el archivo `.storybook/main.ts`.
 
 ```ts
-import viteTsConfigPaths from 'vite-tsconfig-paths';
-import { UserConfig, mergeConfig } from 'vite';
-
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // ... otras configuraciones
   async viteFinal(config: UserConfig) {
@@ -286,11 +274,6 @@ export default config;
 Para espacios de trabajo Nx, importar y usar el plugin `nxViteTsPaths` para el paquete `@nx/vite`. Agregarlo en el arreglo `plugins` en el archivo `.storybook/main.ts`.
 
 ```ts
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { UserConfig, mergeConfig } from 'vite';
-
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // ... otras configuraciones
   async viteFinal(config: UserConfig) {
@@ -310,11 +293,6 @@ También puedes utilizar el plugin `replaceFiles()` de Nx para reemplazar archiv
 Importar el plugin y configurarlo:
 
 ```ts
-import { replaceFiles } from '@nx/vite/plugins/rollup-replace-files.plugin';
-import { UserConfig, mergeConfig } from 'vite';
-
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   // ... otras opciones.
   async viteFinal(config: UserConfig) {
@@ -361,8 +339,6 @@ npm install @analogjs/vitest-angular @storybook/addon-vitest vitest @vitest/brow
 Agrega el addon a tu archivo `.storybook/main.ts`:
 
 ```ts
-import { StorybookConfig } from '@analogjs/storybook-angular';
-
 const config: StorybookConfig = {
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: [
@@ -384,11 +360,6 @@ export default config;
 Crea un archivo `.storybook/vitest.setup.ts`:
 
 ```ts
-import '@angular/compiler';
-import { setProjectAnnotations } from '@analogjs/storybook-angular/testing';
-import { beforeAll } from 'vitest';
-import * as projectAnnotations from './preview';
-
 const project = setProjectAnnotations([projectAnnotations]);
 
 beforeAll(project.beforeAll);
@@ -414,12 +385,6 @@ Crea un archivo `vitest.config.ts` en la raíz de tu proyecto, o agrega un proye
 
 ```ts
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
-import { playwright } from '@vitest/browser-playwright';
-
 const dirname =
   typeof __dirname !== 'undefined'
     ? __dirname

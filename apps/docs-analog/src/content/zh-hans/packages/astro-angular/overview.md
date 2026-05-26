@@ -104,9 +104,6 @@ npm install @angular/build @angular/{animations,common,compiler-cli,compiler,cor
 将集成添加到 `astro.config.mjs`
 
 ```js
-import { defineConfig } from 'astro/config';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [angular()],
 });
@@ -121,9 +118,6 @@ export default defineConfig({
 提供一个选项对象来配置驱动此插件的 `@analogjs/vite-plugin-angular`。
 
 ```js
-import { defineConfig } from 'astro/config';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [
     angular({
@@ -140,9 +134,6 @@ export default defineConfig({
 为了在与其他插件（如 [Starlight](https://starlight.astro.build)）集成时获得更好的兼容性，请将 Angular 组件放在特定文件夹中，并使用 `transformFilter` 回调函数仅转换这些文件。
 
 ```js
-import { defineConfig } from 'astro/config';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [
     angular({
@@ -161,10 +152,6 @@ export default defineConfig({
 为确保 Angular 库在 Astro 的 SSR 过程中被转换，请将它们添加到 Vite 配置中的 `ssr.noExternal` 数组中。
 
 ```js
-import { defineConfig } from 'astro/config';
-
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [angular()],
   vite: {
@@ -181,8 +168,6 @@ export default defineConfig({
 Astro Angular 集成 **仅** 支持渲染 standalone components：
 
 ```ts
-import { Component, Input } from '@angular/core';
-
 @Component({
   selector: 'app-hello',
   template: `
@@ -210,8 +195,6 @@ export class HelloComponent {
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
-
 const helpText = "Helping binding";
 ---
 
@@ -224,7 +207,6 @@ const helpText = "Helping binding";
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible />
@@ -239,7 +221,6 @@ Angular 组件发出的 Output 会作为 HTML 事件转发给 Astro island。
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible data-analog-id="hello-component-1" />
@@ -249,14 +230,11 @@ import { HelloComponent } from '../components/hello.component';
 
 ```tsx
 ---
-import { HelloComponent } from '../components/hello.component';
 ---
 
 <HelloComponent client:visible data-analog-id="hello-component-1" />
 
 <script>
-  import { addOutputListener } from '@analogjs/astro-angular/utils';
-
   addOutputListener('hello-component-1', 'outputName', (event) => {
     console.log(event.detail);
   });
@@ -270,9 +248,6 @@ import { HelloComponent } from '../components/hello.component';
 它们分别是 `renderProviders` 和 `clientProviders`。这些 providers 被定义为组件类上的静态数组，并在组件渲染和在客户端 hydrate 时注册。
 
 ```ts
-import { Component, OnInit, inject } from '@angular/core';
-import { provideHttpClient, HttpClient } from '@angular/common/http';
-
 interface Todo {
   id: number;
   title: string;
@@ -313,10 +288,6 @@ export class TodosComponent implements OnInit {
 要在 MDX 页面中使用组件，必须按照 [@astrojs/mdx](https://docs.astro.build/en/guides/integrations-guide/mdx/) 的 Astro 集成指南安装和配置 MDX 支持。你的 `astro.config.mjs` 现在应该包含 `@astrojs/mdx` 集成。
 
 ```js
-import { defineConfig } from 'astro/config';
-import mdx from '@astrojs/mdx';
-import angular from '@analogjs/astro-angular';
-
 export default defineConfig({
   integrations: [mdx(), angular()],
 });
@@ -332,8 +303,6 @@ description: 'Lorem ipsum dolor sit amet'
 pubDate: 'Sep 22 2022'
 ---
 
-import { HelloComponent } from "../../components/hello.component.ts";
-
 <HelloComponent />
 <HelloComponent helpText="Helping" />
 ```
@@ -347,8 +316,6 @@ title: 'Using Angular in MDX'
 description: 'Lorem ipsum dolor sit amet'
 pubDate: 'Sep 22 2022'
 ---
-
-import { HelloComponent } from "../../components/hello.component.ts";
 
 <HelloComponent client:load />
 <HelloComponent client:visible helpText="Helping" />

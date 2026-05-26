@@ -9,9 +9,6 @@ Analog unterstützt die statische Webseiten-Generierung bei der Erstellung für 
 Um Seiten vorzuberechnen, verwende die Eigenschaft `prerender`, um Routen zu konfigurieren, die zur Erstellungszeit berechnet werden. Die Routen, die vorgerendert werden sollen, können auch asynchron bereitgestellt werden.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -42,9 +39,6 @@ Das schließt diese nicht in den Vorberechnungsprozess ein, wie z.B. Dateien, di
 Der `contentDir`-Wert dieses Objekts kann ein glob-Muster oder ein bestimmter Pfad sein.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog, { type PrerenderContentFile } from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -77,9 +71,6 @@ export default defineConfig(({ mode }) => ({
 Um nur die statischen Seiten vorzuberechnen, verwenden den Flag `static: true`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -106,9 +97,6 @@ Analog unterstützt auch die automatische Erstellung von Sitemaps. Analog erzeug
 Verzeichnis, wenn ein Build ausgeführt wird und eine Sitemap-Konfiguration angegeben ist.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -149,10 +137,6 @@ Analog unterstützt die Post-Rendering-Hooks während des Vorberechnungs-Prozess
 Das folgende Codebeispiel zeigt, wie `postRenderingHooks` im Code verwendet werden können:
 
 ```ts
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { PrerenderRoute } from 'nitropack';
-
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -181,12 +165,6 @@ Nachfolgend ein kleines Beispiel, in dem ein Skript angehängt wird, um Google A
 
 ```ts
 /// <reference types="vitest" />
-
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { PrerenderRoute } from 'nitropack';
-
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

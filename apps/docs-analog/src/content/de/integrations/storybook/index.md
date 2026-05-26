@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Verwendung von Storybook mit Angular und Vite
 
 [Storybook](https://storybook.js.org) ist ein Frontend-Workshop für die isolierte Erstellung von UI-Komponenten und Seiten.
@@ -62,10 +59,6 @@ bun install @analogjs/vite-plugin-angular @storybook/builder-vite --save-dev
 Aktualisieren die Datei `.storybook/main.ts`, um `@storybook/builder-vite` zu verwenden, und fügen die Konfigurationsfunktion `viteFinal` hinzu, um das Vite-Plugin für Angular zu konfigurieren.
 
 ```ts
-import { StorybookConfig } from '@storybook/angular';
-import { StorybookConfigVite } from '@storybook/builder-vite';
-import { UserConfig } from 'vite';
-
 const config: StorybookConfig & StorybookConfigVite = {
   // other config, addons, etc.
   core: {

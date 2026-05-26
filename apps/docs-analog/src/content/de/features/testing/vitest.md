@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Hinzufügen von Vitest zu einem bestehenden Projekt
 
 [Vitest](https://vitest.dev) kann mit wenigen Schritten zu bestehenden Angular-Workspaces hinzugefügt werden.
@@ -81,10 +78,6 @@ Um Vitest einzurichten, erstelle eine `vite.config.ts` im Stammverzeichnis des P
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -103,14 +96,6 @@ export default defineConfig(({ mode }) => ({
 Als nächstes wird eine Datei `src/test-setup.ts` definiert, um das `TestBed` einzurichten:
 
 ```ts
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserTestingModule,
-  platformBrowserTesting,
-} from '@angular/platform-browser/testing';
-import { getTestBed } from '@angular/core/testing';
-
 getTestBed().initTestEnvironment(
   BrowserTestingModule,
   platformBrowserTesting(),
@@ -200,10 +185,6 @@ Aktualisiere das Objekt `test` in der Datei `vite.config.ts`.
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -264,11 +245,6 @@ Im Folgenden findest du ein kleines Beispiel für die Erstellung eines Snapshot-
 
 ```ts
 // card.component.spec.ts
-
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CardComponent } from './card.component';
-
 describe('CardComponent', () => {
   let fixture: ComponentFixture<CardComponent>;
   let component: CardComponent;
@@ -341,11 +317,6 @@ Als Nächstes füge das Plugin zum Array `plugins` in der Datei `vite.config.ts`
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), viteTsConfigPaths()],
 }));
@@ -357,11 +328,6 @@ Für Nx-Arbeitsbereiche importiere und verwende das Plugin `nxViteTsPaths` aus d
 
 ```ts
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
 export default defineConfig(({ mode }) => ({
   plugins: [angular(), nxViteTsPaths()],
 }));

@@ -15,9 +15,6 @@ yarn add @analogjs/vite-plugin-angular
 添加插件到你的 Vite 配置的 `plugins` 列表
 
 ```ts
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {

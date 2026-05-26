@@ -9,9 +9,6 @@ Algunas dependencias pueden necesitar transformaciones adicionales para funciona
 Puedes usar patrones glob para incluir conjuntos de paquetes o bibliotecas. A continuación se listan algunos ejemplos.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   ssr: {
@@ -32,9 +29,6 @@ Para más información sobre externals con SSR, consulta la [documentación de V
 El SSR está activado por defecto. Para un enfoque híbrido, puedes especificar algunas rutas para que solo se rendericen en el lado del cliente, y no se rendericen en el lado del servidor. Esto se logra a través de la configuración del objeto `routeRules` especificando una opción `ssr`.
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...otras opciones
@@ -62,9 +56,6 @@ export default defineConfig(({ mode }) => ({
 SSR está habilitado por defecto. Puedes optar por no usarlo y generar una compilación solo del cliente añadiendo la siguiente opción al plugin `analog()` en tu `vite.config.ts`:
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...otras opciones
@@ -86,8 +77,6 @@ Con SSR, la ruta `"/"` se prerenderiza por defecto.
 Es un paso necesario para devolver un HTML renderizado cuando el usuario visita la raíz de la aplicación. Las rutas prerenderizadas pueden personalizarse, pero ten en cuenta incluir también la ruta `"/"`.
 
 ```js
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...otra configuración
@@ -104,9 +93,6 @@ export default defineConfig(({ mode }) => ({
 Puedes optar por no prerenderizar pasando un arreglo vacío de rutas y deshabilitando el prerender en la ruta raíz.
 
 ```js
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...other config

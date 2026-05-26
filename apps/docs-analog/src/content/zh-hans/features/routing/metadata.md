@@ -5,11 +5,6 @@
 ## 定义路由元数据
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'About Analog',
   canActivate: [() => true],
@@ -37,8 +32,6 @@ export default class AboutPageComponent {
 
 ```ts
 // src/app/pages/index.page.ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/home',
   pathMatch: 'full',
@@ -68,8 +61,6 @@ src/
 以及 `src/app/pages/cities/index.page.ts` 中的 `routeMeta` 定义：
 
 ```ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/cities/new-york',
   pathMatch: 'full',
@@ -89,11 +80,6 @@ export const routeMeta: RouteMeta = {
 `RouteMeta` 类型由一个 `meta` 属性可以用来为每一个路由定义一组 meta 标签：
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'Refresh every 30 sec',
   meta: [

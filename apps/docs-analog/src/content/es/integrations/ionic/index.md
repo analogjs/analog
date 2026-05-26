@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Integración del Framework Ionic con Analog
 
 Este tutorial te guía a través del proceso de integración del Ionic Framework en tu aplicación Analog para que puedas aprovechar el poder de los componentes iOS y Android de Ionic en tus aplicaciones.
@@ -126,12 +123,6 @@ pnpm install ionicons
 2. Agrega en tu `app.config.ts` el método `provideIonicAngular` y el proveedor `IonicRouteStrategy`.
 
    ```ts
-   import { RouteReuseStrategy, provideRouter } from '@angular/router';
-   import {
-     IonicRouteStrategy,
-     provideIonicAngular,
-   } from '@ionic/angular/standalone';
-
    export const appConfig: ApplicationConfig = {
      providers: [
        provideFileRouter(),
@@ -146,9 +137,6 @@ pnpm install ionicons
 3. Actualiza tu archivo `app.component.ts` para establecer en la plantilla las etiquetas Ionic requeridas. Necesitarás consultar la [Advertencia sobre Server Side Rendering](#advertencia-sobre-server-side-rendering) ya que [Ionic aún no soporta la hidratación del cliente](https://github.com/ionic-team/ionic-framework/issues/28625#issuecomment-1843919548).
 
    ```ts
-   import { Component } from '@angular/core';
-   import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-
    @Component({
      selector: 'demo-root',
      standalone: true,
@@ -236,12 +224,6 @@ El Ionic Framework [no soporta la nueva Hidratación del Cliente de Angular](htt
    - Esto elimina el nuevo mecanismo de hidratación del cliente de Angular y vuelve al anterior, lo que causará un parpadeo al re-renderizar el DOM desde el cliente.
 
    ```ts
-   import { RouteReuseStrategy, provideRouter } from '@angular/router';
-   import {
-     IonicRouteStrategy,
-     provideIonicAngular,
-   } from '@ionic/angular/standalone';
-
    export const appConfig: ApplicationConfig = {
      providers: [
        provideFileRouter(),
@@ -257,9 +239,6 @@ El Ionic Framework [no soporta la nueva Hidratación del Cliente de Angular](htt
    - Esto deshabilitará el mecanismo de hidratación del cliente para el elemento `ion-app` y sus hijos, pero continuará usando la hidratación del cliente en otros elementos. Esto también causará un parpadeo en la página para los componentes Ionic. No es muy útil para otros elementos/componentes ya que, con aplicaciones Ionic, todos tus componentes Ionic existen dentro de la etiqueta `ion-app`.
 
      ```ts
-     import { Component } from '@angular/core';
-     import { IonApp, IonRouterOutlet } from '@ionic/angular/standalone';
-
      @Component({
        selector: 'demo-root',
        standalone: true,
@@ -356,8 +335,6 @@ pnpm install -D @capacitor/cli
 3. Actualiza la propiedad `webDir` en `capacitor.config.ts` para que apunte a la carpeta `dist` de la compilación de Analog.
 
    ```ts
-   import type { CapacitorConfig } from '@capacitor/cli';
-
    const config: CapacitorConfig = {
      appId: 'com.ionic.capacitor',
      appName: 'ionic-capacitor',

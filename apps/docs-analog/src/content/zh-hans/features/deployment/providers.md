@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 提供商
 
 Analog 支持通过 [Nitro](https://nitro.unjs.io) 作为其底层服务器引擎，几乎无需额外配置即可部署到许多提供商。您可以在 [Nitro 部署文档](https://nitro.unjs.io/deploy) 中找到更多提供商。
@@ -229,9 +226,6 @@ Analog 支持在 [Vercel](https://vercel.com/) 上进行部署，无需额外配
 - 在 `vite.config.ts` 文件中设置预设：
 
 ```ts [vite.config.ts]
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   /// ...other config

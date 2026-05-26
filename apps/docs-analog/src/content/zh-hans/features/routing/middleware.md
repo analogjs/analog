@@ -16,8 +16,6 @@ src/
 中间件通过 `defineEventHandler` 函数来定义。
 
 ```ts
-import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
-
 export default defineEventHandler((event) => {
   if (event.node.req.originalUrl === '/checkout') {
     console.log('event url', event.node.req.originalUrl);
@@ -56,8 +54,6 @@ export default defineEventHandler(async (event) => {
 使用 `process.env` 全局变量在中间件函数中访问环境变量。在 `.env` 文件中定义的仅服务器和可公开访问的环境变量都可以从中读取。
 
 ```ts
-import { defineEventHandler, getRequestURL } from 'h3';
-
 export default defineEventHandler((event) => {
   console.log('Path:', getRequestURL(event).pathname);
   console.log(

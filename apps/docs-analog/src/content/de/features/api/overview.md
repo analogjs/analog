@@ -8,8 +8,6 @@ API-Routen werden im Ordner `src/server/routes` definiert. API-Routen sind ebenf
 und werden in der Entwicklung unter dem Standard-Präfix `/api` bereitgestellt.
 
 ```ts
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
@@ -19,8 +17,6 @@ Um einen RSS-Feed für Ihre Website zu erstellen, setzen Sie den `content-type` 
 
 ```ts
 //server/routes/rss.xml.ts
-
-import { defineEventHandler, setHeader } from 'h3';
 export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -79,8 +75,6 @@ Dynamische API-Routen werden durch die Verwendung des Dateinamens als Routenpfad
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineEventHandler } from 'h3';
-
 export default defineEventHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
@@ -90,8 +84,6 @@ Eine weitere Möglichkeit, auf Routenparameter zuzugreifen, besteht in der Verwe
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineEventHandler, getRouterParam } from 'h3';
-
 export default defineEventHandler((event) => {
   const name = getRouterParam(event, 'name');
   return `Hello, ${name}!`;
@@ -106,8 +98,6 @@ Dateinamen können mit dem Suffix `.get`, `.post`, `.put`, `.delete` usw. verseh
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
-import { defineEventHandler, getRouterParam } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   // TODO: fetch user by id
@@ -119,8 +109,6 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
-import { defineEventHandler, readBody } from 'h3';
-
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   // TODO: Handle body and add user
@@ -136,8 +124,6 @@ Beispielabfrage `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
 // routes/v1/query.ts
-import { defineEventHandler, getQuery } from 'h3';
-
 export default defineEventHandler((event) => {
   const { param1, param2 } = getQuery(event);
   return `Hello, ${param1} and ${param2}!`;
@@ -160,8 +146,6 @@ Um andere Fehlercodes zurückzugeben, lösen Sie mit `createError` eine Ausnahme
 
 ```ts
 // routes/v1/[id].ts
-import { defineEventHandler, getRouterParam, createError } from 'h3';
-
 export default defineEventHandler((event) => {
   const param = getRouterParam(event, 'id');
   const id = parseInt(param ? param : '');
@@ -183,15 +167,6 @@ Analog ermöglicht das Setzen und Lesen von Cookies in serverseitigen Aufrufen.
 
 ```ts
 //(home).server.ts
-import { setCookie } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
-
-import { Product } from '../products';
-
-export const load = async ({ fetch, event }: PageServerLoad) => {
-  setCookie(event, 'products', 'loaded'); // setting the cookie
-  const products = await fetch<Product[]>('/api/v1/products');
-
   return {
     products: products,
   };
@@ -202,12 +177,6 @@ export const load = async ({ fetch, event }: PageServerLoad) => {
 
 ```ts
 //index.server.ts
-import { parseCookies } from 'h3';
-import { PageServerLoad } from '@analogjs/router';
-
-export const load = async ({ event }: PageServerLoad) => {
-  const cookies = parseCookies(event);
-
   console.log('products cookie', cookies['products']);
 
   return {

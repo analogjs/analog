@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 运行测试
 
 Analog 支持使用 [Vitest](https://vitest.dev) 运行单元测试。

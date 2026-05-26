@@ -9,9 +9,6 @@ Analog 支持在开发和生产环境构建时的服务端渲染。
 你可以使用 glob 范式来包括包或者库。下面是一些例子：
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   ssr: {
@@ -32,9 +29,6 @@ export default defineConfig(({ mode }) => ({
 SSR 默认是启用的。对于混合方法，你可以指定一些路由仅在客户端渲染，而不进行服务端渲染。这是通过 `routeRules` 配置对象指定 `ssr` 选项来完成的。
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...其他配置
@@ -62,9 +56,6 @@ export default defineConfig(({ mode }) => ({
 SSR 默认是开启的。你可以通过在 `vite.config.ts` 的 `analog()` 插件里添加以下选项来禁用它并且生成仅客户端的构建：
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...其他配置
@@ -86,8 +77,6 @@ export default defineConfig(({ mode }) => ({
 当用户访问应用的根目录时返回渲染的 HTML 是一个关键步骤。预渲染的路由可以自定义，但是请记住一定要包含 `"/"` 根路由。
 
 ```js
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...其他配置
@@ -104,8 +93,6 @@ export default defineConfig(({ mode }) => ({
 你可以通过传入一个空数组来禁用预渲染，并在根路由上禁用预渲染。
 
 ```js
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...其他配置

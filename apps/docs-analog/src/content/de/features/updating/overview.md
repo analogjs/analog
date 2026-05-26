@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Aktualisieren auf die neueste Version
 
 Es kann det Befehl `ng update` für einen Angular CLI-Arbeitsbereich oder der Befehl `nx migrate` für die Aktualisierung innerhalb eines Nx-Arbeitsbereichs verwendet werden.

@@ -11,18 +11,7 @@ Using `HttpClient` is the recommended way to make API requests for internal and 
 On the server, use the `provideServerContext` function from the Analog router in the `main.server.ts`.
 
 ```ts
-import 'zone.js/node';
-import { enableProdMode } from '@angular/core';
-import { bootstrapApplication } from '@angular/platform-browser';
-import { renderApplication } from '@angular/platform-server';
-
 // Analog server context
-import { provideServerContext } from '@analogjs/router/server';
-import { ServerContext } from '@analogjs/router/tokens';
-
-import { config } from './app/app.config.server';
-import { AppComponent } from './app/app.component';
-
 if (import.meta.env.PROD) {
   enableProdMode();
 }
@@ -51,13 +40,6 @@ This provides the `Request` and `Response`, and `Base URL` from the server and r
 ## Injection Functions
 
 ```ts
-import { inject } from '@angular/core';
-import {
-  injectRequest,
-  injectResponse,
-  injectBaseURL,
-} from '@analogjs/router/tokens';
-
 class MyService {
   request = injectRequest(); // <- Server Request Object
   response = injectResponse(); // <- Server Response Object
@@ -72,16 +54,6 @@ Analog also provides `requestContextInterceptor` for the HttpClient that handles
 Use it with the `withInterceptors` function from the `@angular/common/http` packages.
 
 ```ts
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
-import { ApplicationConfig } from '@angular/core';
-import { provideClientHydration } from '@angular/platform-browser';
-import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
-import { withNavigationErrorHandler } from '@angular/router';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
@@ -104,8 +76,6 @@ An example API route that fetches todos.
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-import { eventHandler } from 'h3';
-
 export default eventHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
@@ -118,11 +88,6 @@ An example service that fetches todos from the API endpoint.
 
 ```ts
 // todos.service.ts
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-
-import { Todo } from './todos';
-
 @Injectable({
   providedIn: 'root',
 })

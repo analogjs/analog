@@ -7,9 +7,6 @@ Analog 同样支持将 markdown 文档作为路由并且在组件中渲染 markd
 在文件 `src/app/app.config.ts` 的 `providers` 数组里添加 `provideContent()` 函数并传入 `withMarkdownRenderer()` 参数。
 
 ```ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-
 export const appConfig: ApplicationConfig = {
   providers: [
     // ... other providers
@@ -46,8 +43,6 @@ Analog is a meta-framework on top of Angular.
 Analog 支持基于 PrismJS 的语法高亮。通过在 `app.config.ts` 里的 `provideContent()` 添加 `withPrismHighlighter()` 参数来启用语法高亮
 
 ```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -72,9 +67,6 @@ Analog 支持基于 PrismJS 高亮差异。
 在 `analog` 插件的 `additionalLangs` 部分添加 `prism-diff` 即可：
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -92,36 +84,6 @@ export default defineConfig({
 在 `app.config.ts` 里导入 `diff-highlight` 插件：
 
 ```ts
-import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
-```
-
-使用 `diff` 语法标签高亮或者 `diff-<language>` 来高亮指定的语言。
-
-````md
-```diff
-- This is a sentence.
-+ This is a longer sentence.
-```
-
-```diff-typescript
-- const foo = 'bar';
-+ const foo = 'baz';
-```
-````
-
-如果要高亮变更行的背景而不是文本自身，在全局样式里添加如下样式文件：
-
-```css
-@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
-```
-
-### Shiki 语法高亮
-
-Analog 也支持基于 Shiki 的语法高亮。要启用 `Shiki` 语法高亮，在 `app.config.ts` 的 `provideContent()` 函数里添加 `withShikiHighlighter()` 。
-
-```diff-ts
-import { ApplicationConfig } from '@angular/core';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 + import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 
 export const appConfig: ApplicationConfig = {
@@ -136,9 +98,6 @@ export const appConfig: ApplicationConfig = {
 在 `vite.config.ts` 里的 `analog` 插件配置里添加 `shiki` 来启用编译时语法高亮。
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -158,9 +117,6 @@ export default defineConfig({
 要配置 Shiki，你可以通过 `shikiOptions` 对象实现。
 
 ```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-
 export default defineConfig({
   // ...
   plugins: [
@@ -228,11 +184,6 @@ Hello World
 在组件中调用 `@analogjs/content` 包中的 `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` 函数可以获取 `src/content` 目录下的内容文件列表。要过滤指定的文件，可以使用 `filterFn` 函数作为参数，也可以用 `InjectContentFilesFilterFunction<T>` 来设置过滤器。
 
 ```ts
-import { Component } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
-import { injectContentFiles } from '@analogjs/content';
-import { NgFor } from '@angular/common';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -268,10 +219,6 @@ Analog 提供了一个 `MarkdownComponent` 和 `injectContent()` 函数用于渲
 
 ```ts
 // /src/app/pages/blog/posts.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface PostAttributes {
   title: string;
   slug: string;
@@ -393,10 +340,6 @@ src/
 
 ```ts
 // /src/app/pages/project.[slug].page.ts
-import { injectContent, MarkdownComponent } from '@analogjs/content';
-import { AsyncPipe, NgIf } from '@angular/common';
-import { Component } from '@angular/core';
-
 export interface ProjectAttributes {
   title: string;
   slug: string;

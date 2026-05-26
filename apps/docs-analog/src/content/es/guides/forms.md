@@ -26,10 +26,6 @@ La página de ejemplo a continuación envía un correo electrónico para el regi
 
 ```ts
 // src/app/pages/newsletter.page.ts
-import { Component, signal } from '@angular/core';
-
-import { FormAction } from '@analogjs/router';
-
 type FormErrors =
   | {
       email?: string;
@@ -90,14 +86,6 @@ En la acción del servidor, puedes acceder a variables de entorno (environment v
 
 ```ts
 // src/app/pages/newsletter.server.ts
-import {
-  type PageServerAction,
-  redirect,
-  json,
-  fail,
-} from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
-
 export async function action({ event }: PageServerAction) {
   const body = await readFormData(event);
   const email = body.get('email') as string;
@@ -156,12 +144,6 @@ El ejemplo a continuación define un formulario de búsqueda con el campo `searc
 
 ```ts
 // src/app/pages/search.page.ts
-import { Component, computed } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad, FormAction } from '@analogjs/router';
-
-import type { load } from './search.server';
-
 @Component({
   selector: 'app-search-page',
   standalone: true,
@@ -193,9 +175,6 @@ El parámetro de consulta puede ser accedido a través de la acción del formula
 
 ```ts
 // src/app/pages/search.server.ts
-import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
-
 export async function load({ event }: PageServerLoad) {
   const query = getQuery(event);
   console.log('loaded search', query['search']);

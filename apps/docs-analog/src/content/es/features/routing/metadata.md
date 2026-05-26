@@ -5,11 +5,6 @@ Los metadatos adicionales para agregar a la configuración de ruta generada para
 ## Definiendo Metadatos de Ruta
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'About Analog',
   canActivate: [() => true],
@@ -37,8 +32,6 @@ Para crear una ruta de redirección, añade las propiedades `redirectTo` y `path
 
 ```ts
 // src/app/pages/index.page.ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/home',
   pathMatch: 'full',
@@ -68,8 +61,6 @@ src/
 y la siguiente definición de `routeMeta` en el archivo `src/app/pages/cities/index.page.ts`:
 
 ```ts
-import { RouteMeta } from '@analogjs/router';
-
 export const routeMeta: RouteMeta = {
   redirectTo: '/cities/new-york',
   pathMatch: 'full',
@@ -89,11 +80,6 @@ Las redirecciones anidadas siempre requieren una ruta absoluta.
 El tipo `RouteMeta` tiene una propiedad `meta` que puede usarse para definir una lista de metatags para cada ruta:
 
 ```ts
-import { Component } from '@angular/core';
-import { RouteMeta } from '@analogjs/router';
-
-import { AboutService } from './about.service';
-
 export const routeMeta: RouteMeta = {
   title: 'Refresh every 30 sec',
   meta: [

@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # create-analog
 
 Das Paket `create-analog` enthält Vorlagen für die Erstellung neuer Analog-Projekte.

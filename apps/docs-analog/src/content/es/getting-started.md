@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Comenzando
 
 Crear un projecto en Analog puede ser hecho en una mínima cantidad de pasos.

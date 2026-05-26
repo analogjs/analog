@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # 代码生成
 
 Analog 支持使用 NX 生成器 和 Angular 原理图 自动生成代码。

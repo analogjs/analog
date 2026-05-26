@@ -26,10 +26,6 @@ The example page below submits an email for a newsletter signup.
 
 ```ts
 // src/app/pages/newsletter.page.ts
-import { Component, signal } from '@angular/core';
-
-import { FormAction } from '@analogjs/router';
-
 type FormErrors =
   | {
       email?: string;
@@ -90,14 +86,6 @@ In the server action, you can use access environment variables, read cookies, an
 
 ```ts
 // src/app/pages/newsletter.server.ts
-import {
-  type PageServerAction,
-  redirect,
-  json,
-  fail,
-} from '@analogjs/router/server/actions';
-import { readFormData } from 'h3';
-
 export async function action({ event }: PageServerAction) {
   const body = await readFormData(event);
   const email = body.get('email') as string;
@@ -156,12 +144,6 @@ The example below defines a search form with the `search` field as a query param
 
 ```ts
 // src/app/pages/search.page.ts
-import { Component, computed } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { injectLoad, FormAction } from '@analogjs/router';
-
-import type { load } from './search.server';
-
 @Component({
   selector: 'app-search-page',
   standalone: true,
@@ -193,9 +175,6 @@ The query parameter can be accessed through the server form action.
 
 ```ts
 // src/app/pages/search.server.ts
-import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
-
 export async function load({ event }: PageServerLoad) {
   const query = getQuery(event);
   console.log('loaded search', query['search']);

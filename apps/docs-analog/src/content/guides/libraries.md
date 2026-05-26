@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Building an Angular Library
 
 Angular libraries are built for supporting many different services and functionality. Angular libraries can be built using Vite that can be published to npm.
@@ -50,9 +47,6 @@ Next, create a `vite.config.ts` at the root of the project, and configure it to 
 > Update the references to `my-lib` to match the library project name.
 
 ```ts
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-
 export default defineConfig(({ mode }) => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/libs/my-lib',
@@ -157,11 +151,6 @@ Import the plugin and set it up:
 
 ```ts
 /// <reference types="vitest" />
-
-import { defineConfig } from 'vite';
-import analog from '@analogjs/vite-plugin-angular';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...

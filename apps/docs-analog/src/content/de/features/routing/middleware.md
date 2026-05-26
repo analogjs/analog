@@ -16,8 +16,6 @@ src/
 Eine Middleware wird mit der Funktion `defineEventHandler` definiert.
 
 ```ts
-import { defineEventHandler, sendRedirect, setHeaders } from 'h3';
-
 export default eventHandler((event) => {
   if (event.node.req.originalUrl === '/checkout') {
     console.log('event url', event.node.req.originalUrl);
