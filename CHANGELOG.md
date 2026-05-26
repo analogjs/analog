@@ -1,3 +1,13 @@
+## [2.5.3-beta.1](https://github.com/analogjs/analog/compare/v2.5.2...v2.5.3-beta.1) (2026-05-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** drop transform from input() jit metadata ([3fcc05c](https://github.com/analogjs/analog/commit/3fcc05cdc29deb450a261512033b206320c8e24e))
+- **vite-plugin-angular:** emit isSignal on jit signal-query decorators ([0af2189](https://github.com/analogjs/analog/commit/0af21898ef1170168f9a77442f55534fbe0faf99)), closes [analogjs/analog#2344](https://github.com/analogjs/analog/issues/2344)
+- **vite-plugin-angular:** preserve model() alias, required, and field ([88a6c75](https://github.com/analogjs/analog/commit/88a6c7504188af7cea30c3aa5026f961d33fe0a7))
+- **vite-plugin-angular:** read outputFromObservable options from args[1] ([f530f08](https://github.com/analogjs/analog/commit/f530f089ae0c2a8cf75a816a2543b75afd68d7ce))
+- **vite-plugin-angular:** skip signal downleveling when a matching decorator is on the field ([0221f10](https://github.com/analogjs/analog/commit/0221f1022c58ff65fa814353d038228777b24294))
+
 ## [2.5.2](https://github.com/analogjs/analog/compare/v2.5.1...v2.5.2) (2026-05-22)
 
 ### Bug Fixes
