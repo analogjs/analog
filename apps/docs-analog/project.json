@@ -1,0 +1,58 @@
+{
+  "name": "docs-analog",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/docs-analog/src",
+  "prefix": "docs",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/docs-analog/.nitro",
+        "{workspaceRoot}/dist/apps/docs-analog/ssr",
+        "{workspaceRoot}/dist/apps/docs-analog/analog"
+      ],
+      "options": {
+        "configFile": "apps/docs-analog/vite.config.ts",
+        "outputPath": "dist/apps/docs-analog/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "docs-analog:build",
+        "port": 4400
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "docs-analog:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "docs-analog:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{projectRoot}/coverage"],
+      "dependsOn": ["^build"]
+    }
+  }
+}
