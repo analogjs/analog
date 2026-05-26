@@ -8,6 +8,8 @@ import { admonitionExtension } from './src/app/marked/admonition';
 import { mdxTabsExtension } from './src/app/marked/tabs';
 import { contributingCopyPlugin } from './src/vite-plugins/contributing';
 import { sitemapPlugin } from './src/vite-plugins/sitemap';
+import { brokenLinksPlugin } from './src/vite-plugins/broken-links';
+import { llmsTxtPlugin } from './src/vite-plugins/llms-txt';
 
 export default defineConfig(({ mode }) => ({
   root: __dirname,
@@ -58,6 +60,8 @@ export default defineConfig(({ mode }) => ({
     }),
     contributingCopyPlugin(),
     sitemapPlugin(),
+    llmsTxtPlugin(),
+    brokenLinksPlugin(),
     tailwindcss(),
     nxViteTsPaths(),
   ],
