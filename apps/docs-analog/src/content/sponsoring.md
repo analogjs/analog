@@ -1,10 +1,3 @@
----
-sidebar_position: 5
----
-
-import GithubSponsorsLogo from '@site/static/img/logos/github-sponsors-logo.svg';
-import GithubLogo from '@site/static/img/logos/github-logo.svg';
-
 # Sponsorships and Partnerships
 
 Analog is an MIT-licensed open-source project and completely free to use. The continual effort needed to maintain this project is supported by the financial backing of our partners and sponsors.

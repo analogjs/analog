@@ -5,6 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 import { admonitionExtension } from './src/app/marked/admonition';
+import { mdxTabsExtension } from './src/app/marked/tabs';
+import { contributingCopyPlugin } from './src/vite-plugins/contributing';
 
 export default defineConfig(({ mode }) => ({
   root: __dirname,
@@ -49,10 +51,11 @@ export default defineConfig(({ mode }) => ({
           },
         },
         markedOptions: {
-          extensions: [admonitionExtension],
+          extensions: [admonitionExtension, mdxTabsExtension],
         },
       },
     }),
+    contributingCopyPlugin(),
     tailwindcss(),
     nxViteTsPaths(),
   ],
