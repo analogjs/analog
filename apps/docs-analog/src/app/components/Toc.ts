@@ -5,7 +5,6 @@ import {
   ElementRef,
   OnDestroy,
   PLATFORM_ID,
-  computed,
   inject,
   input,
   signal,
@@ -84,8 +83,9 @@ export class Toc implements AfterViewInit, OnDestroy {
       article.querySelectorAll<HTMLElement>(HEADING_SELECTOR),
     );
     const list: Heading[] = els.map((h) => {
+      const text = headingText(h);
       if (!h.id) {
-        h.id = (h.textContent ?? '')
+        h.id = text
           .toLowerCase()
           .trim()
           .replace(/[^\w\s-]/g, '')
@@ -93,7 +93,7 @@ export class Toc implements AfterViewInit, OnDestroy {
       }
       return {
         level: Number(h.tagName.substring(1)),
-        text: h.textContent ?? '',
+        text,
         id: h.id,
       };
     });
@@ -117,4 +117,14 @@ export class Toc implements AfterViewInit, OnDestroy {
       .querySelectorAll<HTMLElement>(HEADING_SELECTOR)
       .forEach((h) => this.intersectionObserver!.observe(h));
   }
+}
+
+/**
+ * Read a heading's visible text without the `#` anchor that
+ * EnhanceCode prepends to every h2/h3.
+ */
+function headingText(h: HTMLElement): string {
+  const clone = h.cloneNode(true) as HTMLElement;
+  clone.querySelector('.heading-anchor')?.remove();
+  return (clone.textContent ?? '').trim();
 }
