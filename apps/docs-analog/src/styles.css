@@ -11,6 +11,9 @@
   --hover-bg: #f9fafb;
   --link: #2563eb;
   --code-bg: #f6f8fa;
+  /* Brand crimson, sampled from prod analogjs.org #c30f2e */
+  --brand: #c30f2e;
+  --brand-hover: #a40c26;
 }
 .dark {
   --bg: #0a1429;

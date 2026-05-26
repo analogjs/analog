@@ -68,40 +68,54 @@ const SPONSORS: Sponsor[] = [
 @Component({
   imports: [RouterLink],
   template: `
-    <section class="mx-auto max-w-5xl px-6 py-20 text-center">
-      <img
-        src="/img/logos/analog-logo.svg"
-        alt=""
-        width="120"
-        height="120"
-        class="mx-auto"
-      />
-      <h1 class="mt-6 text-5xl font-bold tracking-tight">Analog</h1>
-      <p class="mt-4 text-xl" style="color: var(--fg-muted)">
-        The fullstack Angular meta-framework
-      </p>
-      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <a
-          routerLink="/docs"
-          class="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 font-semibold text-white shadow hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+    <section
+      class="relative overflow-hidden px-6 py-20 text-center"
+      style="
+        background:
+          radial-gradient(ellipse at 20% 0%, rgba(195, 15, 46, 0.18), transparent 55%),
+          radial-gradient(ellipse at 80% 0%, rgba(124, 58, 237, 0.15), transparent 55%),
+          var(--bg);
+      "
+    >
+      <div class="mx-auto max-w-5xl">
+        <img
+          src="/img/logos/analog-logo.svg"
+          alt=""
+          width="120"
+          height="120"
+          class="mx-auto drop-shadow"
+        />
+        <h1
+          class="mt-6 bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-6xl font-bold tracking-tight text-transparent"
         >
-          Read the Docs
-        </a>
-        <a
-          href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
-          target="_blank"
-          rel="noopener"
-          class="inline-flex items-center gap-2 rounded-md border px-6 py-3 font-semibold hover:bg-gray-50 dark:hover:bg-gray-900"
-          style="border-color: var(--border)"
-        >
-          <img
-            src="/img/logos/stackblitz-logo.svg"
-            alt=""
-            width="20"
-            height="20"
-          />
-          Open in StackBlitz
-        </a>
+          Analog
+        </h1>
+        <p class="mt-4 text-xl" style="color: var(--fg-muted)">
+          The fullstack Angular meta-framework
+        </p>
+        <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <a
+            routerLink="/docs"
+            class="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 font-semibold text-white shadow hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+          >
+            Read the Docs
+          </a>
+          <a
+            href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center gap-2 rounded-md border px-6 py-3 font-semibold hover:bg-gray-50 dark:hover:bg-gray-900"
+            style="border-color: var(--border)"
+          >
+            <img
+              src="/img/logos/stackblitz-logo.svg"
+              alt=""
+              width="20"
+              height="20"
+            />
+            Open in StackBlitz
+          </a>
+        </div>
       </div>
     </section>
 
@@ -172,7 +186,10 @@ const SPONSORS: Sponsor[] = [
 
         <a
           href="mailto:partnerships@analogjs.org?subject=Partnerships"
-          class="mt-10 inline-block rounded-md bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-rose-700"
+          class="mt-10 inline-block rounded-md px-5 py-2 text-sm font-semibold text-white shadow"
+          style="background: var(--brand)"
+          onmouseover="this.style.background='var(--brand-hover)'"
+          onmouseout="this.style.background='var(--brand)'"
         >
           Partner with Analog
         </a>
