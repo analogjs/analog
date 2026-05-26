@@ -66,6 +66,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     sourceRoot,
   };
   let ssrEntryMarkerPath = '';
+  let userPublicDir: string | undefined;
 
   function refreshContext(viteRoot: string | undefined) {
     const root = viteRoot ?? process.cwd();
@@ -120,6 +121,21 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 
     config(userConfig) {
       refreshContext(userConfig.root);
+
+      // Capture the user's Vite `publicDir` so the nitro `setup()` hook can
+      // register it as a Nitro `publicAssets` source. nitro/vite forces the
+      // client environment's `build.copyPublicDir` to `false`
+      // (vite.mjs:248), expecting Nitro to manage public assets — but
+      // doesn't auto-add the user's `publicDir`. Without this, anything
+      // under `src/public/` (e.g. `/assets/shipping.json`) 404s during SSR
+      // and ofetch consumers parse the catch-all SSR HTML as JSON.
+      if (userConfig.publicDir !== false) {
+        userPublicDir = resolve(
+          context.workspaceRoot,
+          context.rootDir,
+          (userConfig.publicDir as string | undefined) ?? 'public',
+        );
+      }
 
       // Bridge the legacy `BUILD_PRESET` env var that `@analogjs/vite-plugin-nitro`
       // accepted into Nitro v3's `NITRO_PRESET`, and auto-pick the matching
@@ -360,6 +376,49 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             }
           });
         }
+
+        // Register the user's Vite `publicDir` (e.g. `src/public/`) as a
+        // Nitro public asset source. nitro/vite turns off Vite's own copy
+        // of publicDir so Nitro can take over, but doesn't auto-bridge the
+        // user's setting — without this entry, files like
+        // `src/public/assets/shipping.json` aren't served and `HttpClient`
+        // SSR fetches fall through to the catch-all SSR renderer, leaking
+        // HTML where consumers expected JSON.
+        if (userPublicDir && existsSync(userPublicDir)) {
+          const already = nitro.options.publicAssets.some(
+            (asset) => asset.dir === userPublicDir,
+          );
+          if (!already) {
+            nitro.options.publicAssets.push({
+              dir: userPublicDir,
+              baseURL: '/',
+              maxAge: 0,
+              fallthrough: true,
+            });
+          }
+        }
+
+        // Bridge the outer Nitro's `output.publicDir` into the prerender's
+        // own Nitro instance. Nitro spawns a nested `nitroRenderer` for the
+        // prerender pass (`createNitro({ preset: 'nitro-prerender' })`) and
+        // builds the public-assets manifest by glob-scanning that
+        // instance's `output.publicDir`. The nested config resets
+        // `output.publicDir` to undefined and resolves it against the
+        // prerender preset defaults (`<rootDir>/.output/public`), so the
+        // scan hits an empty directory and the manifest is empty — every
+        // `HttpClient.get('/assets/...')` during SSR then falls through to
+        // the catch-all SSR renderer and the consumer parses HTML as JSON.
+        // Force the nested publicDir to match the outer publicDir (which
+        // `copyPublicAssets` has already populated by this point).
+        nitro.hooks.hook(
+          'prerender:config',
+          (prerendererConfig: { output?: Record<string, unknown> }) => {
+            prerendererConfig.output = {
+              ...prerendererConfig.output,
+              publicDir: nitro.options.output.publicDir,
+            };
+          },
+        );
 
         const hasAPIDir = existsSync(
           resolve(
@@ -694,7 +753,7 @@ export default {
     };
 
     try {
-      const html = await renderer(requestPath, TEMPLATE, {
+      const html = await renderer(requestUrl, TEMPLATE, {
         req: reqShim,
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
