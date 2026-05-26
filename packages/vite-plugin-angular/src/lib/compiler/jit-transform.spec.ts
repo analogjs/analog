@@ -307,7 +307,33 @@ describe('JIT Transform', () => {
         export class X { c = output({alias: 'cPublic'}); }
       `);
 
-      expect(result).toContain('cPublic');
+      expect(result).toContain(`'cPublic'`);
+    });
+
+    it('downlevels outputFromObservable() reading options from args[1]', () => {
+      const result = transform(`
+        import { Component, outputFromObservable } from '@angular/core';
+        import { of } from 'rxjs';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          ready = outputFromObservable(of(1), { alias: 'readyPublic' });
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).toContain('type: Output');
+      expect(propDecorators).toContain(`'readyPublic'`);
+    });
+
+    it('escapes single quotes in output alias strings', () => {
+      const result = transform(`
+        import { Component, output } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { c = output({alias: "tricky'name"}); }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).toContain(`'tricky\\'name'`);
     });
 
     it('downlevels viewChild() to propDecorators', () => {
