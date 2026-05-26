@@ -185,6 +185,53 @@ describe('TanStack Query SSR integration', () => {
     expect(queryClient.getQueryData(['posts'])).toEqual(['a', 'b']);
   });
 
+  it('keeps the later entry when parent and child prefetch the same queryHash (last-writer-wins)', async () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+    const transferState = new TransferState();
+
+    // Parent prefetched `['posts']` with stale data.
+    const parentSeed = new QueryClient();
+    await parentSeed.prefetchQuery({
+      queryKey: ['posts'],
+      queryFn: async () => ['stale'],
+    });
+
+    // Child prefetched the same queryKey with fresher data.
+    const childSeed = new QueryClient();
+    await childSeed.prefetchQuery({
+      queryKey: ['posts'],
+      queryFn: async () => ['fresh'],
+    });
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: TransferState, useValue: transferState },
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+    TestBed.inject(QueryClient);
+
+    const child = makeSnapshot({
+      load: { [ANALOG_QUERIES_KEY]: dehydrate(childSeed) },
+    });
+    const root = makeSnapshot(
+      { load: { [ANALOG_QUERIES_KEY]: dehydrate(parentSeed) } },
+      [child],
+    );
+    emitResolveEnd(events, root);
+
+    const stored = transferState.get<ReturnType<typeof dehydrate> | null>(
+      ANALOG_QUERY_STATE_KEY,
+      null,
+    );
+    expect(stored?.queries).toHaveLength(1);
+    expect(stored?.queries[0]?.state.data).toEqual(['fresh']);
+  });
+
   it('mirrors hydrated load payloads into TransferState on the server', async () => {
     const events = new Subject<unknown>();
     const queryClient = new QueryClient();
