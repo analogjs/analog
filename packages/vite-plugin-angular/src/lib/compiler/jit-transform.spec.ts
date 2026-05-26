@@ -247,6 +247,32 @@ describe('JIT Transform', () => {
 
       expect(result).toContain('X.propDecorators');
       expect(result).toContain('type: ViewChild');
+      // Signal queries must carry `isSignal: true` so the JIT compiler
+      // wires them through the signal query infrastructure (NG0951).
+      expect(result).toContain('isSignal: true');
+    });
+
+    it('downlevels viewChild.required() with isSignal so the signal resolves', () => {
+      const result = transform(`
+        import { Component, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #ref></div>' })
+        export class X { trigger = viewChild.required<ElementRef>('ref'); }
+      `);
+
+      expect(result).toContain('type: ViewChild');
+      expect(result).toMatch(/args: \['ref', \{isSignal: true\}\]/);
+    });
+
+    it('downlevels viewChild() with read option, spreading existing options', () => {
+      const result = transform(`
+        import { Component, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #ref></div>' })
+        export class X { ref = viewChild('ref', { read: ElementRef }); }
+      `);
+
+      expect(result).toContain('type: ViewChild');
+      expect(result).toContain('{ read: ElementRef }');
+      expect(result).toContain('isSignal: true');
     });
 
     it('downlevels contentChildren() to propDecorators', () => {
@@ -257,6 +283,7 @@ describe('JIT Transform', () => {
       `);
 
       expect(result).toContain('type: ContentChildren');
+      expect(result).toContain('isSignal: true');
     });
   });
 
