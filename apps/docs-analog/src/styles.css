@@ -189,7 +189,6 @@ body {
 /* Markdown body typography */
 .analog-markdown {
   line-height: 1.65;
-  max-width: 52rem;
 }
 .analog-markdown h1 {
   font-size: 3rem;

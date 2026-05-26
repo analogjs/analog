@@ -5,7 +5,9 @@ import { SidebarDrawer } from '../components/SidebarDrawer';
 @Component({
   imports: [RouterOutlet, SidebarDrawer],
   template: `
-    <div class="mx-auto flex max-w-7xl gap-8 px-6 py-8 lg:flex-row flex-col">
+    <div
+      class="mx-auto flex max-w-[96rem] gap-10 px-6 py-8 lg:flex-row flex-col"
+    >
       <docs-sidebar-drawer />
       <article class="flex-1 min-w-0">
         <router-outlet />

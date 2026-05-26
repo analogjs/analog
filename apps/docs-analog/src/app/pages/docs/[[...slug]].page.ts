@@ -27,7 +27,7 @@ interface DocAttributes {
 @Component({
   imports: [AsyncPipe, MarkdownComponent, DocFooter, EnhanceCode, Toc],
   template: `
-    <div class="flex gap-12">
+    <div class="flex gap-8">
       <div #article docsEnhanceCode class="flex-1 min-w-0">
         @if (doc$ | async; as doc) {
           <header class="mb-6">
