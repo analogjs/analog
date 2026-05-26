@@ -49,6 +49,7 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
+import { InjectionToken } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
 import { requestContextInterceptor } from '@analogjs/router';
 import { provideAnalogQuery } from '@analogjs/router/tanstack-query';
@@ -57,19 +58,31 @@ import {
   provideTanStackQuery,
 } from '@tanstack/angular-query-experimental';
 
+// Per-injector `QueryClient` factory. `bootstrapApplication` creates a
+// fresh root injector per SSR request, so each request gets its own
+// `QueryClient` and request state can't leak across responses. On the
+// browser this still resolves to a single instance for the app.
+const QUERY_CLIENT = new InjectionToken<QueryClient>('QueryClient', {
+  factory: () => new QueryClient(),
+});
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
-    provideTanStackQuery(new QueryClient()),
+    provideTanStackQuery(QUERY_CLIENT),
     provideAnalogQuery(),
   ],
 };
 ```
 
 `provideAnalogQuery()` rehydrates the TanStack Query cache from `TransferState` on the client, preventing duplicate fetches after SSR navigation.
+
+:::warning Pass a factory, not a `new QueryClient()` instance.
+`provideTanStackQuery(new QueryClient())` evaluates the constructor once at module-load time, so every SSR request on the same Node process shares the same cache and leaks query state between responses. Wrapping the client in an `InjectionToken` with `factory: () => new QueryClient()` gives each `bootstrapApplication` call its own client.
+:::
 
 ## Step 3: Configure the Server Provider
 
