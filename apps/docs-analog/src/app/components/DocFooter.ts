@@ -16,8 +16,10 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
             [routerLink]="p.href"
             class="flex flex-col rounded border p-3 transition hover:bg-gray-50"
           >
-            <span class="text-xs text-gray-500">Previous</span>
-            <span class="font-medium">← {{ p.label }}</span>
+            <span class="text-xs text-gray-700 dark:text-white">Previous</span>
+            <span class="font-medium" style="color: var(--brand)"
+              >← {{ p.label }}</span
+            >
           </a>
         } @else {
           <span></span>
@@ -27,8 +29,10 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
             [routerLink]="n.href"
             class="flex flex-col items-end rounded border p-3 text-right transition hover:bg-gray-50"
           >
-            <span class="text-xs text-gray-500">Next</span>
-            <span class="font-medium">{{ n.label }} →</span>
+            <span class="text-xs text-gray-700 dark:text-white">Next</span>
+            <span class="font-medium" style="color: var(--brand)"
+              >{{ n.label }} →</span
+            >
           </a>
         } @else {
           <span></span>
