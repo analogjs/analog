@@ -9,24 +9,19 @@ import { getJsTransformConfigKey } from './utils/rolldown.js';
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot =
     options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd();
-  const viteOptions = options?.vite === false ? undefined : options?.vite;
 
   return [
     {
       name: 'analogjs-deps-plugin',
       config() {
-        const useAngularCompilationAPI =
-          options?.experimental?.useAngularCompilationAPI ??
-          viteOptions?.experimental?.useAngularCompilationAPI;
-
-        const transformConfig =
-          options?.vite === false || useAngularCompilationAPI
-            ? {}
-            : { exclude: ['**/*.ts', '**/*.js'] };
+        // Skip Vite's built-in ts/js transform so `@analogjs/vite-plugin-angular`
+        // (when the user includes it) owns Angular file compilation. Users who
+        // run an alternative compiler or compile through Angular's own
+        // compilation API can override this in their own Vite config.
+        const transformConfig = { exclude: ['**/*.ts', '**/*.js'] };
         debugPlatform('deps transform config', {
-          useAngularCompilationAPI: !!useAngularCompilationAPI,
           jsTransformKey: getJsTransformConfigKey(),
-          transformExcluded: 'exclude' in transformConfig,
+          transformExcluded: true,
         });
 
         return {

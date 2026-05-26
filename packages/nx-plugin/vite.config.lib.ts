@@ -122,15 +122,16 @@ export default defineConfig({
           pkgDir,
           'src/generators/setup-vitest/compat.ts',
         ),
+        // Architect builders (thin shims re-exporting from vpa)
+        'src/builders/vite/vite-build': resolve(
+          pkgDir,
+          'src/builders/vite/vite-build.ts',
+        ),
+        'src/builders/vite-dev-server/dev-server': resolve(
+          pkgDir,
+          'src/builders/vite-dev-server/dev-server.ts',
+        ),
         // Executors
-        'src/executors/vite/vite.impl': resolve(
-          pkgDir,
-          'src/executors/vite/vite.impl.ts',
-        ),
-        'src/executors/vite/compat': resolve(
-          pkgDir,
-          'src/executors/vite/compat.ts',
-        ),
         'src/executors/vite-dev-server/vite-dev-server.impl': resolve(
           pkgDir,
           'src/executors/vite-dev-server/vite-dev-server.impl.ts',
@@ -153,6 +154,7 @@ export default defineConfig({
     outDir: resolve(pkgDir, '../platform/dist/src/lib/nx-plugin'),
     rolldownOptions: {
       external: [
+        /^@analogjs\//,
         /^@angular-devkit\//,
         /^@angular\//,
         /^@nx\//,

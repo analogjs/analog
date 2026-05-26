@@ -7,14 +7,9 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build"],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/tanstack-query-app/.nitro",
-        "{workspaceRoot}/dist/apps/tanstack-query-app/ssr",
-        "{workspaceRoot}/dist/apps/tanstack-query-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/tanstack-query-app/analog"],
       "options": {
         "configFile": "apps/tanstack-query-app/vite.config.ts",
         "outputPath": "dist/apps/tanstack-query-app/client"

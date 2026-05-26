@@ -14,6 +14,11 @@ export type {
   SitemapRouteSource,
   SitemapTransform,
 } from './lib/options.js';
+export {
+  discoverLibraryRoutes,
+  pageGlobs,
+} from './lib/discover-library-routes.js';
+export type { DiscoveredLibraryRoutes } from './lib/discover-library-routes.js';
 export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
 export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
 export type {

@@ -72,10 +72,13 @@ async function resolveExperimentalZoneless(
 }
 
 export const viteFinal = async (config: any, options: any): Promise<any> => {
-  // Remove any loaded analogjs plugins from a vite.config.(m)ts file
+  // Remove any loaded analogjs plugins from a vite.config.(m)ts file.
+  // Anonymous plugin entries (no `name` property) and falsy entries from
+  // conditional plugin arrays must pass through untouched — only filter
+  // plugins whose name explicitly contains "analogjs".
   config.plugins = (config.plugins ?? [])
     .flat()
-    .filter((plugin: any) => !plugin.name.includes('analogjs'));
+    .filter((plugin: any) => !plugin?.name?.includes?.('analogjs'));
 
   // @ts-expect-error - untyped storybook presets API
   const framework = await options.presets.apply('framework');

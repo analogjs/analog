@@ -119,7 +119,8 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
     manifestFields: ['builders', 'executors', 'generators', 'schematics'],
     requiredPaths: [
       'packages/platform/dist/src/lib/nx-plugin',
-      'packages/platform/dist/src/lib/nx-plugin/src/executors/vite/vite.impl.js',
+      'packages/platform/dist/src/lib/nx-plugin/src/builders/vite/vite-build.js',
+      'packages/platform/dist/src/lib/nx-plugin/src/builders/vite-dev-server/dev-server.js',
       'packages/platform/dist/src/lib/nx-plugin/src/generators/preset/generator.js',
     ],
   },

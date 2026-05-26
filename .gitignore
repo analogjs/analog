@@ -62,6 +62,7 @@ stats.html
 
 # Nitro
 .nitro
+.output
 /migrations.json
 
 /.env

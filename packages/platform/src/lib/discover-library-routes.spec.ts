@@ -5,7 +5,7 @@ vi.mock('tinyglobby', () => ({
 }));
 
 import { globSync } from 'tinyglobby';
-import { discoverLibraryRoutes } from './discover-library-routes.js';
+import { discoverLibraryRoutes, pageGlobs } from './discover-library-routes.js';
 
 const mockGlobSync = vi.mocked(globSync);
 
@@ -97,5 +97,18 @@ describe('discoverLibraryRoutes', () => {
     expect(result.additionalContentDirs).toEqual([
       '/libs/shared/feature/src/content',
     ]);
+  });
+});
+
+describe('pageGlobs', () => {
+  it('maps directories to *.page.ts globs', () => {
+    expect(pageGlobs(['/libs/foo', '/libs/bar'])).toEqual([
+      '/libs/foo/**/*.page.ts',
+      '/libs/bar/**/*.page.ts',
+    ]);
+  });
+
+  it('returns an empty array for no directories', () => {
+    expect(pageGlobs([])).toEqual([]);
   });
 });

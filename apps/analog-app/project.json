@@ -7,19 +7,14 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "dependsOn": [
         "platform:build",
         "router:build",
         "my-package:build",
         "top-bar:build"
       ],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/analog-app/.nitro",
-        "{workspaceRoot}/dist/apps/analog-app/ssr",
-        "{workspaceRoot}/dist/apps/analog-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/analog-app/analog"],
       "options": {
         "configFile": "apps/analog-app/vite.config.ts",
         "outputPath": "dist/apps/analog-app/client"

@@ -13,11 +13,9 @@ describe('style-pipeline', () => {
     expect(
       defineStylePipeline({
         plugins: [plugin],
-        angularPlugins: [],
       }),
     ).toEqual({
       plugins: [plugin],
-      angularPlugins: [],
     });
   });
 

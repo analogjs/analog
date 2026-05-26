@@ -7,14 +7,9 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build"],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/tailwind-debug-app/.nitro",
-        "{workspaceRoot}/dist/apps/tailwind-debug-app/ssr",
-        "{workspaceRoot}/dist/apps/tailwind-debug-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/tailwind-debug-app/analog"],
       "options": {
         "configFile": "apps/tailwind-debug-app/vite.config.ts",
         "outputPath": "dist/apps/tailwind-debug-app/client"
@@ -52,6 +47,7 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
+      "dependsOn": ["platform:build", "router:build", "vitest-angular:build"],
       "outputs": ["{projectRoot}/coverage"]
     },
     "typecheck": {

@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -15,21 +17,22 @@ export default defineConfig(() => {
       exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     build: {
-      outDir: '../../dist/apps/opt-catchall-app/client',
-      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },
     plugins: [
       analog({
-        liveReload: true,
-        experimental: {
-          useAngularCompilationAPI: true,
-        },
         content: {
           highlighter: 'shiki',
         },
       }),
+      angular({
+        liveReload: true,
+        experimental: {
+          useAngularCompilationAPI: true,
+        },
+      }),
+      nitro(),
     ],
   };
 });

@@ -64,7 +64,6 @@ export type StylePipelinePluginEntry =
 
 export interface StylePipelineOptions {
   plugins?: StylePipelinePluginEntry[];
-  angularPlugins?: AngularStylePipelinePlugin[];
 }
 
 export function defineStylePipeline<const T extends StylePipelineOptions>(

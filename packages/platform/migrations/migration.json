@@ -1,4 +1,10 @@
 {
   "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "schematics": {}
+  "schematics": {
+    "migrate-to-separated-plugins": {
+      "version": "3.0.0-alpha.56",
+      "description": "Migrate Analog vite.config from a single analog() call to the separated analog() + angular() + nitro() plugin shape",
+      "factory": "./migrate-to-separated-plugins/migrate-to-separated-plugins"
+    }
+  }
 }

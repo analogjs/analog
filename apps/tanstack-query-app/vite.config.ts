@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
@@ -11,7 +13,6 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     publicDir: 'src/public',
     build: {
-      outDir: '../../dist/apps/tanstack-query-app/client',
       reportCompressedSize: true,
       target: ['es2020'],
     },
@@ -26,6 +27,8 @@ export default defineConfig(({ mode }) => {
       analog({
         apiPrefix: 'api',
       }),
+      angular(),
+      nitro(),
     ],
     test: {
       reporters: ['default'],

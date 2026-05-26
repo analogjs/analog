@@ -4,12 +4,12 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"],
+      "dependsOn": ["vite-plugin-angular:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [
@@ -34,7 +34,7 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["vite-plugin-angular:build", "vite-plugin-nitro:build"]
+      "dependsOn": ["vite-plugin-angular:build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",

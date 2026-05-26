@@ -7,14 +7,9 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build", "content:build"],
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/.nitro",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/ssr",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/analog"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/opt-catchall-app/analog"],
       "options": {
         "configFile": "apps/opt-catchall-app/vite.config.ts",
         "outputPath": "dist/apps/opt-catchall-app/client"

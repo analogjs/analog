@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -26,14 +28,11 @@ export default defineConfig(() => {
       exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     build: {
-      outDir: '../../dist/apps/blog-app/client',
-      emptyOutDir: true,
       reportCompressedSize: true,
       target: ['es2020'],
     },
     plugins: [
       analog({
-        liveReload: true,
         content: {
           highlighter: 'shiki',
           shikiOptions: {
@@ -84,11 +83,14 @@ export default defineConfig(() => {
             host: 'https://analog-blog.netlify.app',
           },
         },
-        nitro: {
-          prerender: {
-            autoSubfolderIndex: false,
-            failOnError: true,
-          },
+      }),
+      angular({
+        liveReload: true,
+      }),
+      nitro({
+        prerender: {
+          autoSubfolderIndex: false,
+          failOnError: true,
         },
       }),
     ],

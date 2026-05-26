@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  viteNitroPluginSpy,
-  angularSpy,
+  analogNitroPluginSpy,
   ssrBuildPluginSpy,
   injectHTMLPluginSpy,
   depsPluginSpy,
@@ -16,8 +15,7 @@ const {
   stylePipelineFactorySpy,
   stylePipelinePluginSpy,
 } = vi.hoisted(() => ({
-  viteNitroPluginSpy: vi.fn(() => []),
-  angularSpy: vi.fn(() => []),
+  analogNitroPluginSpy: vi.fn(() => ({ name: '@analogjs/nitro' })),
   ssrBuildPluginSpy: vi.fn(() => []),
   injectHTMLPluginSpy: vi.fn(() => []),
   depsPluginSpy: vi.fn(() => []),
@@ -36,16 +34,8 @@ const {
   stylePipelinePluginSpy: { name: 'community-style-pipeline' },
 }));
 
-vi.mock('@analogjs/vite-plugin-nitro', () => ({
-  nitro: viteNitroPluginSpy,
-  default: viteNitroPluginSpy,
-}));
-vi.mock('@analogjs/vite-plugin-nitro/internal', () => ({
-  debugInstances: [],
-}));
-vi.mock('@analogjs/vite-plugin-angular', () => ({
-  angular: angularSpy,
-  default: angularSpy,
+vi.mock('./nitro/analog-nitro-plugin.js', () => ({
+  analogNitroPlugin: analogNitroPluginSpy,
 }));
 vi.mock('./ssr/ssr-build-plugin.js', () => ({
   ssrBuildPlugin: ssrBuildPluginSpy,
@@ -94,8 +84,7 @@ import { platformPlugin } from './platform-plugin.js';
 describe('platformPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    viteNitroPluginSpy.mockReturnValue([]);
-    angularSpy.mockReturnValue([]);
+    analogNitroPluginSpy.mockReturnValue({ name: '@analogjs/nitro' });
     ssrBuildPluginSpy.mockReturnValue([]);
     injectHTMLPluginSpy.mockReturnValue([]);
     depsPluginSpy.mockReturnValue([]);
@@ -112,7 +101,9 @@ describe('platformPlugin', () => {
   it('defaults ssr to true and passes that value to the composed plugins', () => {
     platformPlugin();
 
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: true }, undefined);
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ ssr: true }),
+    );
     expect(ssrBuildPluginSpy).toHaveBeenCalled();
     expect(injectHTMLPluginSpy).toHaveBeenCalled();
   });
@@ -120,66 +111,11 @@ describe('platformPlugin', () => {
   it('passes through ssr false without wiring SSR-only plugins', () => {
     platformPlugin({ ssr: false });
 
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ ssr: false }),
+    );
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
     expect(injectHTMLPluginSpy).not.toHaveBeenCalled();
-  });
-
-  it('forwards experimental.useAngularCompilationAPI to the Angular vite plugin', () => {
-    platformPlugin({
-      experimental: {
-        useAngularCompilationAPI: true,
-      },
-    });
-
-    expect(angularSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        experimental: {
-          useAngularCompilationAPI: true,
-        },
-      }),
-    );
-  });
-
-  it('does not force semantic type checking onto the dev hot path by default', () => {
-    platformPlugin();
-
-    expect(angularSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        disableTypeChecking: undefined,
-      }),
-    );
-  });
-
-  it('does not call the Angular vite plugin when vite is set to false', () => {
-    platformPlugin({ vite: false });
-
-    expect(angularSpy).not.toHaveBeenCalled();
-  });
-
-  it('still includes non-Angular plugins when vite is set to false', () => {
-    const plugins = platformPlugin({ vite: false });
-
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ ssr: true }),
-      undefined,
-    );
-    expect(routeGenerationPluginSpy).toHaveBeenCalled();
-    expect(serverModePluginSpy).toHaveBeenCalled();
-    expect(clearClientPageEndpointsPluginSpy).toHaveBeenCalled();
-    expect(plugins.length).toBeGreaterThan(0);
-  });
-
-  it('does not crash when vite is false and useAngularCompilationAPI is true', () => {
-    const plugins = platformPlugin({
-      vite: false,
-      experimental: {
-        useAngularCompilationAPI: true,
-      },
-    });
-
-    expect(angularSpy).not.toHaveBeenCalled();
-    expect(plugins.length).toBeGreaterThan(0);
   });
 
   it('merges discovered library routes when discoverRoutes is true', () => {
@@ -197,11 +133,10 @@ describe('platformPlugin', () => {
         additionalPagesDirs: ['/libs/shared/feature'],
       }),
     );
-    expect(viteNitroPluginSpy).toHaveBeenCalledWith(
+    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
       }),
-      undefined,
     );
     expect(contentPluginSpy).toHaveBeenCalledWith(
       undefined,
@@ -253,27 +188,5 @@ describe('platformPlugin', () => {
       '/workspace',
     );
     expect(stylePipelineFactorySpy).not.toHaveBeenCalled();
-  });
-
-  it('forwards angular style-pipeline plugins to the Angular vite plugin', () => {
-    const angularStylePipelinePlugin = {
-      name: 'community-angular-style-pipeline',
-    };
-
-    platformPlugin({
-      experimental: {
-        stylePipeline: {
-          angularPlugins: [angularStylePipelinePlugin],
-        },
-      },
-    });
-
-    expect(angularSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        stylePipeline: {
-          plugins: [angularStylePipelinePlugin],
-        },
-      }),
-    );
   });
 });

@@ -1,9 +1,12 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolve } from 'node:path';
 import { createLogger, defineConfig, type Plugin } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
@@ -88,7 +91,6 @@ export default defineConfig(({ mode }) => ({
     exclude: getWorkspaceDependencyExcludes(__dirname),
   },
   build: {
-    outDir: '../../dist/apps/tailwind-debug-app/client',
     reportCompressedSize: true,
     target: ['es2020'],
   },
@@ -106,30 +108,35 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       apiPrefix: 'api',
+      prerender: {
+        routes: [],
+      },
+      ssr: false,
+    }),
+    angular({
       experimental: {
         // Required to reproduce #2293: @apply inside :host with Tailwind
         // prefix configuration requires the Angular Compilation API path
         // for style externalization.
         useAngularCompilationAPI: true,
       },
-      prerender: {
-        routes: [],
-      },
-      ssr: false,
-      nitro: {
-        routeRules: {
-          '/probe': {
-            ssr: false,
-          },
-        },
-        experimental: {
-          websocket: true,
-        },
-      },
       tailwindCss: {
         prefixes: ['tdbg:'],
         rootStylesheet: 'apps/tailwind-debug-app/src/styles.css',
       },
+    }),
+    nitro({
+      routeRules: {
+        '/probe': {
+          ssr: false,
+        },
+      },
+      // Vitest spins up a headless Vite (server.httpServer === null), and
+      // nitro/vite's configureViteDevServer unconditionally calls
+      // `server.httpServer.on('upgrade', ...)` when websocket is enabled,
+      // crashing the test runner. Drop the flag under Vitest; the websocket
+      // probe is only exercised by the dev server and e2e suite.
+      ...(process.env['VITEST'] ? {} : { experimental: { websocket: true } }),
     }),
     tailwindcss(),
     hmrWiretapPlugin(),
@@ -150,9 +157,6 @@ export default defineConfig(({ mode }) => ({
   },
   server: {
     port: 43040,
-    fs: {
-      allow: ['.'],
-    },
     hmr: {
       clientPort: 4201,
       path: 'vite-hmr',

@@ -1,7 +1,5 @@
 import { Plugin } from 'vite';
-import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
-import angular from '@analogjs/vite-plugin-angular';
-import { mapValues, union } from 'es-toolkit';
+import { union } from 'es-toolkit';
 
 import { Options } from './options.js';
 import {
@@ -20,22 +18,12 @@ import { serverModePlugin } from '../server-mode-plugin.js';
 import { routeGenerationPlugin } from './route-generation-plugin.js';
 import { resolveStylePipelinePlugins } from './style-pipeline.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
-
-// Bridge Plugin types from external @analogjs packages that resolve a different vite instance
-function externalPlugins(plugins: unknown): Plugin[] {
-  return plugins as Plugin[];
-}
+import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
   applyDebugOption(opts.debug, opts.workspaceRoot);
 
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  const viteOptions = opts?.vite === false ? undefined : opts?.vite;
-  const {
-    experimental: viteExperimental,
-    hmr: _removedViteHmrOption,
-    ...forwardedViteOptions
-  } = viteOptions ?? {};
   const { ...platformOptions } = {
     ssr: true,
     ...opts,
@@ -60,28 +48,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     );
   }
 
-  const useAngularCompilationAPI =
-    platformOptions.experimental?.useAngularCompilationAPI ??
-    viteExperimental?.useAngularCompilationAPI;
   debugPlatform('experimental options resolved', {
-    useAngularCompilationAPI: !!useAngularCompilationAPI,
     typedRouter: platformOptions.experimental?.typedRouter,
     stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
-  let nitroOptions = platformOptions?.nitro;
-
-  if (nitroOptions?.routeRules) {
-    nitroOptions = {
-      ...nitroOptions,
-      routeRules: mapValues(nitroOptions.routeRules, (rule) => ({
-        ...rule,
-        headers: {
-          ...rule.headers,
-          'x-analog-no-ssr': rule?.ssr === false ? 'true' : undefined,
-        } as any,
-      })),
-    };
-  }
 
   return [
     {
@@ -90,7 +60,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
         activateDeferredDebug(command);
       },
     },
-    ...externalPlugins(viteNitroPlugin(platformOptions as any, nitroOptions)),
+    analogNitroPlugin(platformOptions),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
@@ -102,42 +72,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...routerPlugin(platformOptions),
     routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
-    ...(opts?.vite === false
-      ? []
-      : externalPlugins(
-          angular({
-            jit: platformOptions.jit,
-            workspaceRoot: platformOptions.workspaceRoot,
-            // Let the Angular plugin keep its own dev-friendly default unless the
-            // app explicitly opts into stricter serve-time diagnostics.
-            disableTypeChecking: platformOptions.disableTypeChecking,
-            include: [
-              ...(platformOptions.include ?? []),
-              ...(platformOptions.additionalPagesDirs ?? []).map(
-                (pageDir) => `${pageDir}/**/*.page.ts`,
-              ),
-            ],
-            additionalContentDirs: platformOptions.additionalContentDirs,
-            liveReload: platformOptions.liveReload,
-            inlineStylesExtension: platformOptions.inlineStylesExtension,
-            fileReplacements: platformOptions.fileReplacements,
-            fastCompile: platformOptions.fastCompile,
-            fastCompileMode: platformOptions.fastCompileMode,
-            debug: platformOptions.debug,
-            stylePipeline: platformOptions.experimental?.stylePipeline
-              ?.angularPlugins?.length
-              ? {
-                  plugins:
-                    platformOptions.experimental.stylePipeline.angularPlugins,
-                }
-              : undefined,
-            ...forwardedViteOptions,
-            experimental: {
-              ...(viteExperimental ?? {}),
-              useAngularCompilationAPI,
-            },
-          }),
-        )),
     ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
     ...serverModePlugin(),
     ...clearClientPageEndpointsPlugin(),
