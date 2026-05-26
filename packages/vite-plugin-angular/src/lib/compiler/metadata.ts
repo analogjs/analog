@@ -1,6 +1,6 @@
 import * as o from '@angular/compiler';
 import { unwrapForwardRefOxc } from './utils.js';
-import { SIGNAL_APIS } from './constants.js';
+import { FIELD_DECORATORS, SIGNAL_APIS } from './constants.js';
 
 function getCallApi(call: any): { api: string; required: boolean } | null {
   const callee = call.callee;
@@ -446,6 +446,39 @@ export function detectSignals(classNode: any, sourceCode: string) {
 
     const { api, required } = signalCall;
     if (!SIGNAL_APIS.has(api)) continue;
+
+    // Skip signal synthesis when an explicit Angular decorator already
+    // covers the same field. Mirrors Angular's transform behavior
+    // (input_function.ts:42-48 et al.) and the JIT fix in
+    // jit-metadata.ts. Without this, the downstream merge in compile.ts
+    // overwrites decorator-derived metadata or, worse, concats duplicate
+    // query entries that fire twice.
+    const explicit = new Set<string>();
+    for (const dec of m.decorators || []) {
+      const decName: string | undefined = dec.expression?.callee?.name;
+      if (decName && FIELD_DECORATORS.has(decName)) explicit.add(decName);
+    }
+    const hasInput = explicit.has('Input');
+    const hasOutput = explicit.has('Output');
+    const hasQuery =
+      explicit.has('ViewChild') ||
+      explicit.has('ViewChildren') ||
+      explicit.has('ContentChild') ||
+      explicit.has('ContentChildren');
+    if (api === 'input' && hasInput) continue;
+    if (api === 'model' && (hasInput || hasOutput)) continue;
+    if ((api === 'output' || api === 'outputFromObservable') && hasOutput) {
+      continue;
+    }
+    if (
+      (api === 'viewChild' ||
+        api === 'viewChildren' ||
+        api === 'contentChild' ||
+        api === 'contentChildren') &&
+      hasQuery
+    ) {
+      continue;
+    }
 
     const args: any[] = m.value.arguments || [];
 
