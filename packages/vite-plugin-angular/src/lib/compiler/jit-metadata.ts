@@ -234,27 +234,14 @@ export function buildPropDecorators(
         );
       } else if (api === 'output' || api === 'outputFromObservable') {
         if (!props[memberName]) props[memberName] = [];
-        // Extract alias
-        let alias: string | null = null;
-        const optArg = args[0];
-        if (optArg?.type === 'ObjectExpression') {
-          for (const p of optArg.properties || []) {
-            if (
-              (p.type === 'ObjectProperty' || p.type === 'Property') &&
-              (p.key?.name || p.key?.value) === 'alias'
-            ) {
-              if (
-                p.value?.type === 'StringLiteral' ||
-                (p.value?.type === 'Literal' &&
-                  typeof p.value.value === 'string')
-              ) {
-                alias = p.value.value;
-              }
-            }
-          }
-        }
-        if (alias) {
-          props[memberName].push(`{type: Output, args: ['${alias}']}`);
+        // outputFromObservable(observable, options) — options is args[1].
+        // output(options) — options is args[0].
+        const optArg = api === 'outputFromObservable' ? args[1] : args[0];
+        const alias = extractAlias(optArg);
+        if (alias !== null) {
+          props[memberName].push(
+            `{type: Output, args: ['${escapeStringLiteral(alias)}']}`,
+          );
         } else {
           props[memberName].push(`{type: Output}`);
         }
