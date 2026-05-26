@@ -383,6 +383,49 @@ describe('JIT Transform', () => {
       expect(result).toContain('type: ContentChildren');
       expect(result).toContain('isSignal: true');
     });
+
+    it('skips signal downleveling when @Input already decorates the field', () => {
+      const result = transform(`
+        import { Component, Input, input } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input() name = input<string>();
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      // Only one Input entry — the explicit decorator wins.
+      expect(propDecorators.match(/type:\s*Input/g)?.length).toBe(1);
+      expect(propDecorators).not.toContain('isSignal: true');
+    });
+
+    it('skips model downleveling when @Input or @Output already decorates the field', () => {
+      const result = transform(`
+        import { Component, Input, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input() value = model(0);
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators.match(/type:\s*Input/g)?.length).toBe(1);
+      expect(propDecorators).not.toContain('type: Output');
+    });
+
+    it('skips signal-query downleveling when @ViewChild already decorates the field', () => {
+      const result = transform(`
+        import { Component, ViewChild, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #ref></div>' })
+        export class X {
+          @ViewChild('ref') ref = viewChild<ElementRef>('ref');
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators.match(/type:\s*ViewChild/g)?.length).toBe(1);
+      expect(propDecorators).not.toContain('isSignal: true');
+    });
   });
 
   describe('External Resources', () => {
