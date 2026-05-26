@@ -1,0 +1,160 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Integración de Angular Material con Analog
+
+Este tutorial te guiará a través del proceso de integrar la biblioteca Angular Material en tu aplicación de Analog.
+
+## Paso 1: Instalación de la biblioteca Angular Material
+
+Para comenzar, instala los paquetes `@angular/cdk` y `@angular/material`. Ejecuta el comando correspondiente a tu gestor de paquetes preferido:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install @angular/cdk @angular/material
+```
+
+  </TabItem>
+
+  <TabItem label="yarn" value="yarn">
+
+```shell
+yarn add @angular/cdk @angular/material
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install @angular/cdk @angular/material
+```
+
+  </TabItem>
+</Tabs>
+
+## Paso 2: Configuración de la biblioteca Angular Material
+
+1. Renombra el fichero `styles.css` a `styles.scss`.
+2. Si estas usando `zone.js`, configure la opción `scss` de `preprocessorOptions` y api en `legacy`.
+3. Establece la propiedad `inlineStylesExtension` a `'scss'` ien el fichero `vite.config.ts`:
+
+```ts
+export default defineConfig(({ mode }) => {
+  return {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'legacy',
+        },
+      },
+    },
+    plugins: [
+      analog({
+        inlineStylesExtension: 'scss',
+      }),
+    ],
+  };
+});
+```
+
+4. Actualiza el `index.html` para referenciar el nuevo fichero SCSS:
+
+```html
+<head>
+  <!-- otras cabeceras -->
+  <link rel="stylesheet" href="/src/styles.scss" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    rel="stylesheet"
+  />
+</head>
+<body class="mat-typography">
+  <!-- content -->
+</body>
+```
+
+5. Actualiza el fichero `styles.scss` para importar los estilos de Angular Material y definir tu tema visual personalizado:
+
+```scss
+@use '@angular/material' as mat;
+
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: mat.$violet-palette,
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 30px;
+  height: 100%;
+}
+
+html {
+  height: 100%;
+}
+```
+
+## Paso Opcional: Configuración de Animaciones
+
+Si deseas activar o desactivar animaciones donde sea necesario, sigue los pasos correspondientes:
+
+1. Abre el fichero `app.config.ts` y declara el proveedor `provideAnimations()`
+
+```ts
+providers: [
+  // other providers
+  provideAnimations(),
+],
+```
+
+2. Abre el fichero `app.config.server.ts` y declara el proveedor `provideNoopAnimations()`
+
+```ts
+providers: [
+  // other providers
+  provideNoopAnimations(),
+],
+```
+
+## Paso Opcional: Configuración de Tailwind CSS
+
+Si utilizas Tailwind CSS, configura PostCSS para que funcione correctamente con Angular Material:
+
+1. **Instala el plugin PostCSS de Tailwind:**
+
+```shell
+npm install @tailwindcss/postcss
+```
+
+2. **Crea un archivo `.postcssrc.json`:**
+
+```json
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}
+```
+
+> **Nota:** Utiliza `@use 'tailwindcss';` en lugar del deprecated `@import 'tailwindcss';`.
+
+Con estos pasos, has configurado las animaciones para que estén habilitadas en el cliente y deshabilitadas en el servidor en tu aplicación de Analog.
+
+¡Eso es todo! Has instalado y configurado con éxito la biblioteca Angular Material para tu aplicación de Analog. Ahora puedes comenzar a utilizar los componentes y estilos de Angular Material en tu proyecto.
+
+Para más información sobre la creación de temas visuales con Angular Material, consulta la [Guía de Temas de Angular Material.](https://material.angular.io/guide/theming).
