@@ -6,9 +6,9 @@ zerops:
         CI: true
       buildCommands:
         - pnpm i
-        - pnpm exec nx build docs-app
+        - pnpm exec nx build docs-analog
       deployFiles:
-        - dist/apps/docs-app/~
+        - dist/apps/docs-analog/client/~
       cache:
         - node_modules
     run:

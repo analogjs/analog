@@ -49,7 +49,7 @@ pnpm test
 
 ### Folder structure
 
-Source code for the Analog docs and the analogjs.org website exists under the `apps/docs-app` project folder. To contribute documentation or website content, locate the relevant source code in one of the sub-folders:
+Source code for the Analog docs and the analogjs.org website exists under the `apps/docs-analog` project folder. To contribute documentation or website content, locate the relevant source code in one of the sub-folders:
 
 - `blog` - Blog (unused).
 - `docs` - Documentation pages with React MDX support.
@@ -70,7 +70,7 @@ pnpm i
 
 ### Running locally
 
-Analog uses [Docusaurus](https://docusaurus.io/) to develop the docs and analogjs.org website. Run the following command from the `apps/docs-app` folder to serve the website:
+Analog dogfoods itself to develop the docs and analogjs.org website. Run the following command from the `apps/docs-analog` folder to serve the website:
 
 ```shell
 pnpm nx serve
@@ -79,14 +79,14 @@ pnpm nx serve
 or alternatively run this command from the root folder:
 
 ```shell
-pnpm nx serve docs-app
+pnpm nx serve docs-analog
 ```
 
 Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
 
 ### Build
 
-Analog uses [Nx](https://nx.dev) to build the docs and analogjs.org website. To build the website locally, run the following command from the `apps/docs-app` folder:
+Analog uses [Nx](https://nx.dev) to build the docs and analogjs.org website. To build the website locally, run the following command from the `apps/docs-analog` folder:
 
 ```shell
 pnpm nx build
@@ -95,12 +95,12 @@ pnpm nx build
 or alternatively run this command from the root folder:
 
 ```shell
-pnpm nx build docs-app
+pnpm nx build docs-analog
 ```
 
 ### Running static website locally
 
-To run the generated static website locally, run the following command from the `apps/docs-app` folder:
+To run the generated static website locally, run the following command from the `apps/docs-analog` folder:
 
 ```shell
 pnpm nx serve-static
@@ -109,7 +109,7 @@ pnpm nx serve-static
 or alternatively run this command from the root folder:
 
 ```shell
-pnpm nx serve-static docs-app
+pnpm nx serve-static docs-analog
 ```
 
 ## Submitting pull requests

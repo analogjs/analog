@@ -31,7 +31,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Lint:** `nx lint <project>`
 - **Check formatting:** `nx format:check`
 - **Storybook:** `nx storybook <project>`
-- **Docs site:** `pnpm nx serve docs-app` (Docusaurus)
+- **Docs site:** `pnpm nx serve docs-analog` (Analog)
 - **E2E:** `nx e2e <project>` (Cypress/Playwright)
 
 ## Testing a Specific Package
@@ -43,7 +43,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 ## Project Structure & Conventions
 
-- **Apps:** in `apps/` (e.g., `analog-app`, `astro-app`, `docs-app`, `blog-app`, etc.)
+- **Apps:** in `apps/` (e.g., `analog-app`, `astro-app`, `docs-analog`, `blog-app`, etc.)
 - **Libraries:** in `packages/` (shared code, features, platform, plugins)
 - **TypeScript path aliases:** defined in `tsconfig.base.json`
 - **Vite config:** each app has its own `vite.config.ts` (see `apps/analog-app/vite.config.ts` for advanced AnalogJS/Vite usage)
@@ -103,7 +103,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - Avoid custom code that replicates Angular framework functionality.
 - Don't be overly verbose with comments.
 - Keep tests lightweight and targeted to critical functionality testing.
-- Add concise documentation with descriptive sections to the appropriate guides in the `docs-app` app.
+- Add concise documentation with descriptive sections to the appropriate guides in the `docs-analog` app.
 - Maintain compatibility with Vite versions 6-8, with progressive fallbacks.
 - Use other projects as inspiration, but do not directly copy their APIs.
 - See `CONTRIBUTING.md` file for more contribution guidelines.
@@ -128,7 +128,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - **Vite**: All apps use Vite for build/dev, with custom plugins for Angular and Nitro
 - **Nitro**: Used for SSR, SSG, and API routes (see `vite.config.ts` and `server.mjs`)
-- **Docusaurus**: Docs site in `apps/docs-app`
+- **Analog**: Docs site in `apps/docs-analog`
 - **Storybook**: For Angular components, see `@analogjs/storybook-angular`
 - **CI/CD**: Release and publish via semantic-release and custom scripts
 
@@ -136,4 +136,4 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - **Add a new Angular app:** `nx g @nx/angular:application <name>`
 - **Run tests for a lib:** `nx test <lib-name>`
-- **Build docs site:** `pnpm nx build docs-app`
+- **Build docs site:** `pnpm nx build docs-analog`

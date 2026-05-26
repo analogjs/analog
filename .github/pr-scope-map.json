@@ -110,7 +110,7 @@
       "kind": "auxiliary",
       "color": "fbca04",
       "description": "Documentation changes",
-      "prefixes": ["apps/docs-app/"],
+      "prefixes": ["apps/docs-analog/"],
       "files": [
         "README.md",
         "CONTRIBUTING.md",

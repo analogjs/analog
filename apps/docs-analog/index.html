@@ -11,6 +11,19 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"
     />
+    <!-- Google Analytics (matches apps/docs-app's gtag.trackingID) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-8S6ZF9V3Q6"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-8S6ZF9V3Q6', { anonymize_ip: true });
+    </script>
   </head>
   <body>
     <docs-root></docs-root>
