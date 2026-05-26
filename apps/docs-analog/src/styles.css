@@ -188,21 +188,33 @@ body {
 
 /* Markdown body typography */
 .analog-markdown {
-  line-height: 1.7;
+  line-height: 1.65;
+  max-width: 52rem;
 }
 .analog-markdown h1 {
-  font-size: 2.25rem;
+  font-size: 3rem;
   font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   margin: 1.5rem 0 1rem;
 }
 .analog-markdown h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 2rem 0 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 2.5rem 0 1rem;
 }
 .analog-markdown h3 {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 600;
+  line-height: 1.35;
+  margin: 2rem 0 0.75rem;
+}
+.analog-markdown h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.4;
   margin: 1.5rem 0 0.5rem;
 }
 .analog-markdown p,

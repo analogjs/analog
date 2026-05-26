@@ -30,14 +30,17 @@ interface DocAttributes {
     <div class="flex gap-12">
       <div #article docsEnhanceCode class="flex-1 min-w-0">
         @if (doc$ | async; as doc) {
-          <header class="mb-8">
+          <header class="mb-6">
             @if (doc.attributes.title) {
-              <h1 class="text-4xl font-bold tracking-tight">
+              <h1
+                class="text-5xl font-bold leading-tight tracking-tight"
+                style="letter-spacing: -0.02em"
+              >
                 {{ doc.attributes.title }}
               </h1>
             }
             @if (doc.attributes.description) {
-              <p class="mt-3 text-lg text-gray-600">
+              <p class="mt-3 text-lg" style="color: var(--fg-muted)">
                 {{ doc.attributes.description }}
               </p>
             }
