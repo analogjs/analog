@@ -29,9 +29,9 @@ const HEADING_SELECTOR = 'h2, h3';
               <a
                 [href]="'#' + h.id"
                 (click)="scrollTo($event, h.id)"
-                class="block py-1 text-gray-600 hover:text-gray-900"
+                class="block py-1 text-gray-600 hover:text-rose-600"
                 [class.font-semibold]="active() === h.id"
-                [class.text-blue-600]="active() === h.id"
+                [class.text-rose-600]="active() === h.id"
                 >{{ h.text }}</a
               >
             </li>
