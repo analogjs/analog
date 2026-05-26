@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, relative, resolve } from 'node:path';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { Plugin, UserConfig } from 'vite';
 
@@ -334,6 +335,30 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
               serverDir: resolve(distRoot, 'analog/server'),
             };
           }
+
+          // Nitro v3's prerender writer compares `filePath.startsWith(publicDir)`
+          // with `filePath` built via `node:path.join` (platform-native
+          // separators on Windows) and `publicDir` set via `resolveNitroPath`
+          // (always forward slashes via pathe). On Windows the two sides
+          // disagree and every route is marked `(skipped)` — no HTML is
+          // written. Hook `prerender:route` and write the file ourselves
+          // when Nitro has skipped it but the route generated content.
+          nitro.hooks.hook('prerender:route', async (route) => {
+            if (!route.skip || route.error) return;
+            const buffer = route.data;
+            if (!buffer || !route.fileName) return;
+            const filePath = resolve(
+              nitro.options.output.publicDir,
+              route.fileName.replace(/^[\\/]+/, ''),
+            );
+            try {
+              await mkdir(dirname(filePath), { recursive: true });
+              await writeFile(filePath, Buffer.from(buffer));
+              route.skip = false;
+            } catch {
+              // leave Nitro's skip in place if the manual write also fails
+            }
+          });
         }
 
         const hasAPIDir = existsSync(
