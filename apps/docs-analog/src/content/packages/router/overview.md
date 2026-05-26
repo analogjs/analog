@@ -1,8 +1,9 @@
 ---
-title: ''
+title: Router
 ---
 
-<RouterIntegration />
+# Analog
 
-<!-- Workaround for generating table of contents -->
-<!-- See https://github.com/facebook/docusaurus/issues/3915#issuecomment-896193142 -->
+The fullstack meta-framework for Angular
+
+Learn more at [analogjs.org](https://analogjs.org)
