@@ -130,6 +130,21 @@ import { RouterLinkWithHref } from '@angular/router';
             </p>
           </div>
         </a>
+
+        <a
+          routerLink="/tanstack-query-load"
+          class="card card-border bg-base-100 shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
+        >
+          <div class="card-body">
+            <div class="badge badge-info badge-outline">Load-time prefetch</div>
+            <h2 class="card-title text-xl">Prefetch in <code>load()</code></h2>
+            <p class="text-base-content/70">
+              Declare a route's queries in its <code>.server.ts</code> handler
+              with <code>definePageLoadQueries</code> — components render
+              against a warm cache, no SSR-to-client refetch.
+            </p>
+          </div>
+        </a>
       </div>
 
       <div class="grid gap-4 lg:grid-cols-3">
