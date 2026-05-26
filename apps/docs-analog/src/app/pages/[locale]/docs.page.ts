@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Sidebar } from '../../components/Sidebar';
 
 @Component({
@@ -15,4 +15,14 @@ import { Sidebar } from '../../components/Sidebar';
     </div>
   `,
 })
-export default class LocaleDocsLayoutPage {}
+export default class LocaleDocsLayoutPage {
+  constructor() {
+    const router = inject(Router);
+    const route = inject(ActivatedRoute);
+    const locale = route.snapshot.paramMap.get('locale');
+    const url = router.url.split('?')[0].replace(/\/$/, '');
+    if (locale && url === `/${locale}/docs`) {
+      router.navigate([`/${locale}/docs/introduction`], { replaceUrl: true });
+    }
+  }
+}

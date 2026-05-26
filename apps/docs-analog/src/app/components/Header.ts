@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LocalePicker } from './LocalePicker';
 import { Search } from './Search';
 import { ThemeToggle } from './ThemeToggle';
 
 @Component({
   selector: 'docs-header',
-  imports: [RouterLink, Search, ThemeToggle],
+  imports: [LocalePicker, RouterLink, Search, ThemeToggle],
   template: `
     <header
       class="flex items-center justify-between border-b px-6 py-3"
@@ -36,6 +37,7 @@ import { ThemeToggle } from './ThemeToggle';
             >Discord</a
           >
         </nav>
+        <docs-locale-picker />
         <docs-theme-toggle />
       </div>
     </header>

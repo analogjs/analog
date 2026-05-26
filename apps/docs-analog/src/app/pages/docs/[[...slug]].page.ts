@@ -61,7 +61,10 @@ export default class DocPage {
   protected readonly articleRef =
     viewChild.required<ElementRef<HTMLElement>>('article');
   protected readonly slug = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((p) => p.get('slug') ?? '')),
+    inject(ActivatedRoute).paramMap.pipe(
+      // Empty slug == /docs (or /<locale>/docs) root; serve introduction.
+      map((p) => p.get('slug') || 'introduction'),
+    ),
   );
 
   private readonly doc = toSignal(this.doc$);

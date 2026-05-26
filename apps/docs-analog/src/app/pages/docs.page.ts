@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { Sidebar } from '../components/Sidebar';
 
 @Component({
@@ -15,4 +15,15 @@ import { Sidebar } from '../components/Sidebar';
     </div>
   `,
 })
-export default class DocsLayoutPage {}
+export default class DocsLayoutPage {
+  // /docs (with no slug) is the docs root — redirect to introduction so
+  // the URL contract matches the Docusaurus default and inbound links
+  // to /docs/ don't render an empty article.
+  constructor() {
+    const router = inject(Router);
+    const url = router.url.split('?')[0].replace(/\/$/, '');
+    if (url === '/docs') {
+      router.navigate(['/docs/introduction'], { replaceUrl: true });
+    }
+  }
+}
