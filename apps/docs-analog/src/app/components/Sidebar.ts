@@ -14,7 +14,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
   selector: 'docs-sidebar',
   imports: [RouterLink, RouterLinkActive, Sidebar],
   template: `
-    <nav class="text-sm">
+    <nav class="text-base">
       <ul class="space-y-1">
         @for (node of nodes(); track nodeKey(node)) {
           @if (node.kind === 'doc') {
@@ -32,7 +32,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
               <button
                 type="button"
                 (click)="toggle(node)"
-                class="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                class="flex w-full items-center justify-between rounded px-2 py-1 text-left text-base font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 [attr.aria-expanded]="isOpen(node)"
               >
                 <span>{{ node.label }}</span>
