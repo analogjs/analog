@@ -255,6 +255,39 @@ describe('@Component', () => {
       expect(result).toContain('ɵɵlistener');
     });
 
+    it('honors alias on output()', () => {
+      const result = compile(
+        `
+        import { Component, output } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { ready = output({ alias: 'readyPub' }); }
+      `,
+        'output-alias.ts',
+      );
+
+      expectCompiles(result);
+      expect(result).toContain('ready: "readyPub"');
+    });
+
+    it('honors alias on outputFromObservable() — options live in args[1]', () => {
+      // Without selecting args[1] for outputFromObservable, the alias is
+      // silently dropped because args[0] is the source observable.
+      const result = compile(
+        `
+        import { Component, outputFromObservable } from '@angular/core';
+        import { of } from 'rxjs';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          ready = outputFromObservable(of(1), { alias: 'readyPub' });
+        }
+      `,
+        'output-obs-alias.ts',
+      );
+
+      expectCompiles(result);
+      expect(result).toContain('ready: "readyPub"');
+    });
+
     it('detects model() and model.required()', () => {
       const result = compile(
         `
