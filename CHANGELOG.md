@@ -1,3 +1,12 @@
+## [2.5.3-beta.2](https://github.com/analogjs/analog/compare/v2.5.3-beta.1...v2.5.3-beta.2) (2026-05-26)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** drop transform from aot input metadata ([c5ab296](https://github.com/analogjs/analog/commit/c5ab2960833ee8a81350fa9d0465b79128d9428b))
+- **vite-plugin-angular:** propagate required through aot model metadata ([f163239](https://github.com/analogjs/analog/commit/f163239045d38dcded27749a6efcb1dfc55f99cf))
+- **vite-plugin-angular:** read outputFromObservable options from args[1] in aot ([6f7ccb9](https://github.com/analogjs/analog/commit/6f7ccb90ca646247f28b16f7e75317484136f0cd))
+- **vite-plugin-angular:** skip aot signal synthesis when a matching decorator is on the field ([b823830](https://github.com/analogjs/analog/commit/b823830b4a10bb005eea5ba835d90feb4d06a3a6))
+
 ## [2.5.3-beta.1](https://github.com/analogjs/analog/compare/v2.5.2...v2.5.3-beta.1) (2026-05-26)
 
 ### Bug Fixes
