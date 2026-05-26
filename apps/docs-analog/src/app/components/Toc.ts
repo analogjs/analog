@@ -18,8 +18,10 @@ const HEADING_SELECTOR = 'h2, h3';
   selector: 'docs-toc',
   template: `
     @if (headings().length > 0) {
-      <nav class="text-xs">
-        <p class="mb-2 font-semibold uppercase tracking-wide text-gray-500">
+      <nav class="text-sm">
+        <p
+          class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500"
+        >
           On this page
         </p>
         <ul class="space-y-1">
