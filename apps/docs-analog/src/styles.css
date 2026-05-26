@@ -161,26 +161,44 @@ body {
   content: ' ✓';
 }
 
-/* doc-tabs (from mdxTabsExtension) */
+/* doc-tabs (from mdxTabsExtension + EnhanceCode hydration) */
 .doc-tabs {
   border: 1px solid var(--border);
   border-radius: 0.5rem;
   margin: 1rem 0;
   overflow: hidden;
 }
-.doc-tab + .doc-tab {
-  border-top: 1px solid var(--border);
-}
-.doc-tab-label {
+.doc-tabs-headers {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
   background: var(--hover-bg);
-  padding: 0.5rem 1rem;
-  margin: 0;
+  overflow-x: auto;
+}
+.doc-tabs-trigger {
+  padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--fg-muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
-.doc-tab > :not(.doc-tab-label) {
-  padding: 0.5rem 1rem;
+.doc-tabs-trigger:hover {
+  color: var(--fg);
+}
+.doc-tabs-trigger[data-active='true'] {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+.doc-tab {
+  padding: 0.75rem 1rem;
+}
+.doc-tab > .doc-tab-label {
+  display: none;
 }
 
 /* Markdown table */

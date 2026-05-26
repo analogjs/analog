@@ -11,10 +11,7 @@ interface TabsToken extends Tokens.Generic {
 }
 
 function humanLabel(rawLabel: string): string {
-  // value="npm" or label="Yarn"; if label was missing, capitalize value
-  if (/^[a-z]/.test(rawLabel) && rawLabel === rawLabel.toLowerCase()) {
-    return rawLabel.charAt(0).toUpperCase() + rawLabel.slice(1);
-  }
+  // Preserve the source casing exactly — npm stays npm, Yarn stays Yarn.
   return rawLabel;
 }
 

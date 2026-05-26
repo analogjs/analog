@@ -23,6 +23,7 @@ export class EnhanceCode implements AfterViewChecked {
     if (!isPlatformBrowser(this.platformId)) return;
     this.attachCopyButtons();
     this.attachHeadingAnchors();
+    this.attachTabs();
   }
 
   private attachCopyButtons(): void {
@@ -50,6 +51,48 @@ export class EnhanceCode implements AfterViewChecked {
         }
       });
       pre.appendChild(btn);
+    });
+  }
+
+  private attachTabs(): void {
+    const containers = this.host.nativeElement.querySelectorAll<HTMLElement>(
+      '.doc-tabs:not([data-tabs-hydrated="true"])',
+    );
+    containers.forEach((container) => {
+      container.dataset['tabsHydrated'] = 'true';
+      const panels = Array.from(
+        container.querySelectorAll<HTMLElement>(':scope > .doc-tab'),
+      );
+      if (panels.length === 0) return;
+
+      const headerBar = document.createElement('div');
+      headerBar.className = 'doc-tabs-headers';
+
+      panels.forEach((panel, idx) => {
+        const labelEl = panel.querySelector<HTMLElement>('.doc-tab-label');
+        const label = labelEl?.textContent?.trim() ?? `Tab ${idx + 1}`;
+        labelEl?.remove();
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'doc-tabs-trigger';
+        btn.textContent = label;
+        btn.dataset['index'] = String(idx);
+        if (idx === 0) btn.dataset['active'] = 'true';
+        else panel.style.display = 'none';
+        btn.addEventListener('click', () => {
+          headerBar
+            .querySelectorAll<HTMLElement>('.doc-tabs-trigger')
+            .forEach((b) => b.removeAttribute('data-active'));
+          btn.dataset['active'] = 'true';
+          panels.forEach((p, i) => {
+            p.style.display = i === idx ? '' : 'none';
+          });
+        });
+        headerBar.appendChild(btn);
+      });
+
+      container.insertBefore(headerBar, container.firstChild);
     });
   }
 
