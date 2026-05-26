@@ -51,13 +51,19 @@ export const mdxTabsExtension: MarkedExtension = {
       },
       renderer(token) {
         const t = token as TabsToken;
-        const sections = t.items
+        const headers = t.items
           .map(
-            (item) =>
-              `<section class="doc-tab"><h4 class="doc-tab-label">${item.label}</h4>${this.parser.parse(item.tokens)}</section>`,
+            (item, i) =>
+              `<button type="button" class="doc-tabs-trigger" data-index="${i}"${i === 0 ? ' data-active="true"' : ''}>${item.label}</button>`,
           )
           .join('');
-        return `<div class="doc-tabs">${sections}</div>`;
+        const panels = t.items
+          .map(
+            (item, i) =>
+              `<section class="doc-tab" data-index="${i}"${i === 0 ? '' : ' hidden'}>${this.parser.parse(item.tokens)}</section>`,
+          )
+          .join('');
+        return `<div class="doc-tabs" data-tabs><div class="doc-tabs-headers">${headers}</div>${panels}</div>`;
       },
     },
   ],

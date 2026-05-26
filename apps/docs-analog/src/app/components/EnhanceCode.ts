@@ -56,43 +56,27 @@ export class EnhanceCode implements AfterViewChecked {
 
   private attachTabs(): void {
     const containers = this.host.nativeElement.querySelectorAll<HTMLElement>(
-      '.doc-tabs:not([data-tabs-hydrated="true"])',
+      '.doc-tabs[data-tabs]:not([data-tabs-hydrated="true"])',
     );
     containers.forEach((container) => {
       container.dataset['tabsHydrated'] = 'true';
+      const triggers = Array.from(
+        container.querySelectorAll<HTMLButtonElement>('.doc-tabs-trigger'),
+      );
       const panels = Array.from(
         container.querySelectorAll<HTMLElement>(':scope > .doc-tab'),
       );
-      if (panels.length === 0) return;
-
-      const headerBar = document.createElement('div');
-      headerBar.className = 'doc-tabs-headers';
-
-      panels.forEach((panel, idx) => {
-        const labelEl = panel.querySelector<HTMLElement>('.doc-tab-label');
-        const label = labelEl?.textContent?.trim() ?? `Tab ${idx + 1}`;
-        labelEl?.remove();
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'doc-tabs-trigger';
-        btn.textContent = label;
-        btn.dataset['index'] = String(idx);
-        if (idx === 0) btn.dataset['active'] = 'true';
-        else panel.style.display = 'none';
+      triggers.forEach((btn) => {
         btn.addEventListener('click', () => {
-          headerBar
-            .querySelectorAll<HTMLElement>('.doc-tabs-trigger')
-            .forEach((b) => b.removeAttribute('data-active'));
+          const idx = Number(btn.dataset['index']);
+          triggers.forEach((b) => b.removeAttribute('data-active'));
           btn.dataset['active'] = 'true';
           panels.forEach((p, i) => {
-            p.style.display = i === idx ? '' : 'none';
+            if (i === idx) p.removeAttribute('hidden');
+            else p.setAttribute('hidden', '');
           });
         });
-        headerBar.appendChild(btn);
       });
-
-      container.insertBefore(headerBar, container.firstChild);
     });
   }
 
