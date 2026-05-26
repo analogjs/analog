@@ -1,3 +1,56 @@
+# [3.0.0-alpha.56](https://github.com/analogjs/analog/compare/v3.0.0-alpha.55...v3.0.0-alpha.56) (2026-05-26)
+
+### Features
+
+- **platform:** migrate to nitro/vite and split analog() into analog() + angular() + nitro() ([#2343](https://github.com/analogjs/analog/issues/2343)) ([a498926](https://github.com/analogjs/analog/commit/a49892601d06efe6c67d5f5f5aeafdf6c77607cf)), closes [#2035](https://github.com/analogjs/analog/issues/2035) [#2188](https://github.com/analogjs/analog/issues/2188)
+
+### BREAKING CHANGES
+
+- **platform:** `@analogjs/vite-plugin-nitro` → `nitro/vite`
+
+  `@analogjs/platform`'s `analog()` now bundles Nitro v3's first-party `nitro/vite` plugin instead of `@analogjs/vite-plugin-nitro`. Standalone users
+  (those who used `@analogjs/vite-plugin-nitro` directly) must install `nitro` as a dev dep and add `nitro()` to their Vite plugin chain alongside `analog()`.
+
+BEFORE:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      /* ... */
+    }),
+  ],
+});
+```
+
+AFTER:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      /* ... */
+    }),
+    angular({
+      /* ... vite object */
+    }),
+    nitro({
+      /* ... nitro object*/
+    }),
+  ],
+});
+```
+
 # [3.0.0-alpha.55](https://github.com/analogjs/analog/compare/v3.0.0-alpha.54...v3.0.0-alpha.55) (2026-05-22)
 
 ### Bug Fixes
