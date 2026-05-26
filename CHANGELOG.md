@@ -1,3 +1,19 @@
+# [3.0.0-alpha.57](https://github.com/analogjs/analog/compare/v3.0.0-alpha.56...v3.0.0-alpha.57) (2026-05-26)
+
+### Bug Fixes
+
+- isolate QueryClient per SSR request via InjectionToken factory ([b382293](https://github.com/analogjs/analog/commit/b382293b581b30164d50456601f481e9c4179ae4))
+- **platform:** safe-access event.context.params in page endpoint wrapper ([5e00e91](https://github.com/analogjs/analog/commit/5e00e91596c246df49c413ad64b40f6e99547890))
+- **router:** dehydrate on first post-render app-stable, not BEFORE_APP_SERIALIZED ([c85a625](https://github.com/analogjs/analog/commit/c85a6254ad0a4a7cbd3ddde32049af5efb4686bc))
+- **router:** last-writer-wins on duplicate queryHash in TransferState merge ([125807e](https://github.com/analogjs/analog/commit/125807e225ecafd4ba7bf83e165753a096eb6a6c))
+
+### Features
+
+- demonstrate definePageLoadQueries in tanstack-query-app ([dec315e](https://github.com/analogjs/analog/commit/dec315e00e6de132f2b73aa296454c26a2d45777))
+- **router:** add definePageLoadQueries helper ([1983157](https://github.com/analogjs/analog/commit/1983157434eaed6b04731a44d87481d4e282f42f))
+- **router:** hydrate route-data \_\_analogQueries on ResolveEnd ([f9ba111](https://github.com/analogjs/analog/commit/f9ba111d0ff1498e8ac794dbcb2fc77904729926))
+- **router:** mirror load-prefetched state into TransferState on server ([92d17ee](https://github.com/analogjs/analog/commit/92d17ee9ce2f5f9f1fc58b75caa74b152092e2f0))
+
 # [3.0.0-alpha.56](https://github.com/analogjs/analog/compare/v3.0.0-alpha.55...v3.0.0-alpha.56) (2026-05-26)
 
 ### Features
