@@ -152,3 +152,63 @@ export default class TodosComponent {
 ```
 
 Query params, mutation bodies, and response shapes are all inferred from the server route definition with no manual type duplication.
+
+## Prefetching Queries in `load()`
+
+Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
+
+```ts
+// src/app/pages/posts.server.ts
+import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
+import { queryOptions } from '@tanstack/angular-query-experimental';
+
+export const postsQuery = queryOptions({
+  queryKey: ['posts'],
+  queryFn: async ({ signal }) =>
+    fetch('https://api.example.com/posts', { signal }).then((r) => r.json()),
+});
+
+export const load = definePageLoadQueries({
+  handler: async ({ client }) => {
+    await client.prefetchQuery(postsQuery);
+  },
+});
+```
+
+```ts
+// src/app/pages/posts.page.ts
+import { Component } from '@angular/core';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+
+import { postsQuery } from './posts.server';
+
+@Component({
+  template: `
+    @if (posts.data(); as items) {
+      @for (post of items; track post.id) {
+        <p>{{ post.title }}</p>
+      }
+    }
+  `,
+})
+export default class PostsPage {
+  readonly posts = injectQuery(() => postsQuery);
+}
+```
+
+`definePageLoadQueries` inherits `params` and `query` validation from `definePageLoad`; pass a Standard Schema and the handler is only invoked after validation succeeds. Any value you return from the handler is available as `data` on the load result for use with `injectLoad()`:
+
+```ts
+export const load = definePageLoadQueries({
+  handler: async ({ client, params }) => {
+    await client.prefetchQuery(postBySlugQuery(params['slug']));
+    return { renderedAt: Date.now() };
+  },
+});
+
+// in the component:
+readonly loadResult = toSignal(injectLoad<typeof load>());
+// loadResult()?.data.renderedAt
+```
+
+A fresh `QueryClient` is constructed per request. Pass `client: () => new QueryClient({ defaultOptions: ... })` if you need to override the defaults used for prefetching.
