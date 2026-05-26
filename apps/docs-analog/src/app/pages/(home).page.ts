@@ -49,19 +49,19 @@ const SPONSORS: Sponsor[] = [
     name: 'Nx',
     logo: '/img/logos/nx-logo.dark.svg',
     url: 'https://nx.dev',
-    scale: 'h-10',
+    scale: 'h-16',
   },
   {
     name: 'Snyder Tech',
     logo: '/img/logos/snyder-logo.dark.svg',
     url: 'https://snyder.tech',
-    scale: 'h-10',
+    scale: 'h-16',
   },
   {
     name: 'CodeRabbit',
     logo: '/img/logos/coderabbit.svg',
     url: 'https://www.coderabbit.ai',
-    scale: 'h-10',
+    scale: 'h-16',
   },
 ];
 
@@ -81,12 +81,12 @@ const SPONSORS: Sponsor[] = [
         <img
           src="/img/logos/analog-logo.svg"
           alt=""
-          width="120"
-          height="120"
+          width="200"
+          height="200"
           class="mx-auto drop-shadow"
         />
         <h1
-          class="mt-6 bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-6xl font-bold tracking-tight text-transparent"
+          class="mt-8 bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-7xl font-bold tracking-tight text-transparent"
         >
           Analog
         </h1>
@@ -128,12 +128,12 @@ const SPONSORS: Sponsor[] = [
           <img
             [src]="f.logo"
             [alt]="f.alt"
-            width="96"
-            height="96"
-            class="mb-4"
+            width="160"
+            height="160"
+            class="mb-6"
           />
-          <h2 class="text-lg font-semibold">{{ f.title }}</h2>
-          <p class="mt-2 text-sm" style="color: var(--fg-muted)">
+          <h2 class="text-xl font-semibold">{{ f.title }}</h2>
+          <p class="mt-2 text-base" style="color: var(--fg-muted)">
             {{ f.body }}
           </p>
         </article>
@@ -159,7 +159,7 @@ const SPONSORS: Sponsor[] = [
               <img
                 [src]="p.logo"
                 [alt]="p.name"
-                class="h-12 dark:brightness-0 dark:invert"
+                class="h-20 dark:brightness-0 dark:invert"
               />
             </a>
           }
@@ -178,7 +178,7 @@ const SPONSORS: Sponsor[] = [
                 [src]="s.logo"
                 [alt]="s.name"
                 class="dark:brightness-0 dark:invert"
-                [class]="s.scale || 'h-10'"
+                [class]="s.scale || 'h-16'"
               />
             </a>
           }
