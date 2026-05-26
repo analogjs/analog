@@ -73,7 +73,9 @@ export default class DocPage {
       const slug = this.slug();
       const doc = this.doc();
       if (slug && doc) {
-        this.seo.apply(slug, doc.attributes, this.locale, doc.content);
+        const contentStr =
+          typeof doc.content === 'string' ? doc.content : undefined;
+        this.seo.apply(slug, doc.attributes, this.locale, contentStr);
       }
     });
   }

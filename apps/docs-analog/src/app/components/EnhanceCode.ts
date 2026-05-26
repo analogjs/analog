@@ -16,7 +16,7 @@ import {
   selector: '[docsEnhanceCode]',
 })
 export class EnhanceCode implements AfterViewChecked {
-  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly platformId = inject(PLATFORM_ID);
 
   ngAfterViewChecked(): void {
