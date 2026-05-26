@@ -595,7 +595,10 @@ export function detectSignals(classNode: any, sourceCode: string) {
     // 4. STANDARD OUTPUTS (output() and outputFromObservable())
     else if (api === 'output' || api === 'outputFromObservable') {
       let alias = name;
-      const optArg = args[0];
+      // outputFromObservable(observable, options) — options is args[1].
+      // output(options) — options is args[0]. Mirrors upstream
+      // output_function.ts:81.
+      const optArg = api === 'outputFromObservable' ? args[1] : args[0];
       if (optArg?.type === 'ObjectExpression') {
         for (const prop of optArg.properties || []) {
           if (
