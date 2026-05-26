@@ -173,6 +173,25 @@ describe('Partial Compilation (Library Mode)', () => {
       expect(result).toMatch(/b:\s*\{[^}]*isRequired:\s*true/);
     });
 
+    it('emits transformFunction: null for input() — signal applies it internally', () => {
+      // Forwarding the user's transform to the directive metadata makes
+      // Angular's runtime apply it a second time on top of the signal's
+      // own internal application.
+      const result = compilePartial(
+        `
+        import { Component, input, numberAttribute } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { size = input(0, { transform: numberAttribute }); }
+      `,
+        'transform.ts',
+      );
+
+      expect(result).toMatch(/size:\s*\{[^}]*transformFunction:\s*null/);
+      expect(result).not.toMatch(
+        /size:\s*\{[^}]*transformFunction:\s*numberAttribute/,
+      );
+    });
+
     it('emits isRequired: true for model.required() and false for model()', () => {
       // Without propagating required through the model branch, the
       // template type-checker silently accepts unbound required models —

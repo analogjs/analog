@@ -451,17 +451,13 @@ export function detectSignals(classNode: any, sourceCode: string) {
 
     // 1. SIGNAL INPUTS (Standard & Required)
     if (api === 'input') {
-      let transform: any = null;
       let alias: string | null = null;
       const optionsArg = required ? args[0] : args[1];
       if (optionsArg?.type === 'ObjectExpression') {
         for (const prop of optionsArg.properties || []) {
           if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
             continue;
-          const k = propKeyName(prop);
-          if (k === 'transform') {
-            transform = new o.WrappedNodeExpr(prop.value);
-          } else if (k === 'alias') {
+          if (propKeyName(prop) === 'alias') {
             const sv = stringValue(prop.value);
             if (sv !== null) alias = sv;
           }
@@ -477,7 +473,13 @@ export function detectSignals(classNode: any, sourceCode: string) {
         bindingPropertyName: alias ?? name,
         isSignal: true,
         required,
-        transform,
+        // Always null for signal inputs. The input() factory already
+        // applies the user's transform internally; forwarding it to the
+        // directive metadata would make Angular's emitter set the
+        // HasDecoratorInputTransform flag, causing the transform to run
+        // again via the runtime input setter. Mirrors upstream
+        // input_function.ts:74.
+        transform: null,
       };
     }
 
