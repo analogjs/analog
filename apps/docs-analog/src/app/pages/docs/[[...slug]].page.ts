@@ -1,11 +1,22 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, ElementRef, inject, viewChild } from '@angular/core';
+import {
+  Component,
+  effect,
+  ElementRef,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
-import { injectContent, MarkdownComponent } from '@analogjs/content';
+import {
+  CONTENT_LOCALE,
+  injectContent,
+  MarkdownComponent,
+} from '@analogjs/content';
 import { DocFooter } from '../../components/DocFooter';
 import { Toc } from '../../components/Toc';
+import { DocSeo } from '../../seo';
 
 interface DocAttributes {
   title?: string;
@@ -51,4 +62,18 @@ export default class DocPage {
   protected readonly slug = toSignal(
     inject(ActivatedRoute).paramMap.pipe(map((p) => p.get('slug') ?? '')),
   );
+
+  private readonly doc = toSignal(this.doc$);
+  private readonly locale = inject(CONTENT_LOCALE, { optional: true });
+  private readonly seo = inject(DocSeo);
+
+  constructor() {
+    effect(() => {
+      const slug = this.slug();
+      const doc = this.doc();
+      if (slug && doc) {
+        this.seo.apply(slug, doc.attributes, this.locale, doc.content);
+      }
+    });
+  }
 }

@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 import { admonitionExtension } from './src/app/marked/admonition';
 import { mdxTabsExtension } from './src/app/marked/tabs';
 import { contributingCopyPlugin } from './src/vite-plugins/contributing';
+import { sitemapPlugin } from './src/vite-plugins/sitemap';
 
 export default defineConfig(({ mode }) => ({
   root: __dirname,
@@ -56,6 +57,7 @@ export default defineConfig(({ mode }) => ({
       },
     }),
     contributingCopyPlugin(),
+    sitemapPlugin(),
     tailwindcss(),
     nxViteTsPaths(),
   ],
