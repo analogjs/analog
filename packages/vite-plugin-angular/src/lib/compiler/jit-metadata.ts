@@ -29,6 +29,31 @@ function getCallApi(call: any): { api: string; required: boolean } | null {
 }
 
 /**
+ * Read a string-literal `alias` value out of an OXC ObjectExpression.
+ * Returns null when the arg isn't an object literal, has no alias, or
+ * the alias value isn't a static string. Shorthand `{alias}` is skipped
+ * because the identifier wouldn't be in scope when the propDecorators
+ * static block is evaluated at class top level.
+ */
+function extractAlias(optArg: any): string | null {
+  if (!optArg || optArg.type !== 'ObjectExpression') return null;
+  for (const p of optArg.properties || []) {
+    if (p.type !== 'ObjectProperty' && p.type !== 'Property') continue;
+    if (p.shorthand) continue;
+    const pKey = p.key?.name || p.key?.value;
+    if (pKey !== 'alias') continue;
+    const v = p.value;
+    if (v?.type === 'StringLiteral') return v.value;
+    if (v?.type === 'Literal' && typeof v.value === 'string') return v.value;
+  }
+  return null;
+}
+
+function escapeStringLiteral(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+/**
  * Build ctorParameters for constructor DI in JIT format:
  * [{ type: ServiceA }, { type: ServiceB, decorators: [{type: Optional}] }]
  *
@@ -177,12 +202,23 @@ export function buildPropDecorators(
           `{type: Input, args: [{${optParts.join(', ')}}]}`,
         );
       } else if (api === 'model') {
+        // Both Input and Output must live on the SAME propDecorators key
+        // (the class field name). Angular's JIT facade indexes outputs by
+        // classPropertyName and reads `instance[classPropertyName]` for
+        // the EventEmitter — for a model that's the signal itself, which
+        // exposes the emitter via [SIGNAL]. Splitting Output onto a
+        // synthetic `<name>Change` key would point at a field that does
+        // not exist on the class, breaking two-way bindings.
         if (!props[memberName]) props[memberName] = [];
-        props[memberName].push(`{type: Input, args: [{isSignal: true}]}`);
-        // Model also generates a Change output
-        const changeName = memberName + 'Change';
-        if (!props[changeName]) props[changeName] = [];
-        props[changeName].push(`{type: Output, args: ['${changeName}']}`);
+        const optArg = required ? args[0] : args[1];
+        const alias = extractAlias(optArg);
+        const bindingName = alias ?? memberName;
+        props[memberName].push(
+          `{type: Input, args: [{isSignal: true, alias: '${escapeStringLiteral(bindingName)}', required: ${required}}]}`,
+        );
+        props[memberName].push(
+          `{type: Output, args: ['${escapeStringLiteral(bindingName + 'Change')}']}`,
+        );
       } else if (api === 'output' || api === 'outputFromObservable') {
         if (!props[memberName]) props[memberName] = [];
         // Extract alias
