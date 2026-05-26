@@ -568,7 +568,14 @@ function generateSsrEntryWrapper(
   template: string,
 ): string {
   return `
-import { serverFetch as nitroServerFetch } from 'nitro/app';
+// Import \`serverFetch\` from the root \`nitro\` entry rather than \`nitro/app\`.
+// The /app subpath creates a fresh \`useNitroApp()\` instance scoped to the
+// importing bundle, which in our setup is the standalone SSR vite bundle —
+// it has no route handlers, so every fetch 404s. The root entry instead
+// reads \`globalThis.__nitro__.{default,prerender}\`, which the surrounding
+// Nitro server (prerender pass or production runtime) has already
+// populated with the real app + handlers.
+import { serverFetch as nitroServerFetch } from 'nitro';
 import { createFetch } from 'ofetch';
 import renderer from ${JSON.stringify(entryServer)};
 
