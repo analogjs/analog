@@ -185,15 +185,28 @@ export function buildPropDecorators(
 
       if (api === 'input') {
         if (!props[memberName]) props[memberName] = [];
-        // Preserve all original options from the input() call and overlay isSignal/required
+        // Preserve original options from the input() call and overlay
+        // isSignal/required. `transform` is dropped: the input signal
+        // already applies it internally, so forwarding it to the
+        // decorator would make Angular's runtime JIT wrap it a second
+        // time via the directive metadata's transformFunction slot.
+        // Shorthand props ({alias}) are skipped — the identifier
+        // wouldn't be in scope when the propDecorators block runs at
+        // class top level.
         const optArg = required ? args[0] : args[1];
         const optParts: string[] = [];
         if (optArg?.type === 'ObjectExpression') {
           for (const p of optArg.properties || []) {
             if (p.type !== 'ObjectProperty' && p.type !== 'Property') continue;
+            if (p.shorthand) continue;
             const pKey = p.key?.name || p.key?.value;
-            // Skip isSignal/required — we override them below
-            if (pKey === 'isSignal' || pKey === 'required') continue;
+            if (
+              pKey === 'isSignal' ||
+              pKey === 'required' ||
+              pKey === 'transform'
+            ) {
+              continue;
+            }
             optParts.push(sourceCode.slice(p.start, p.end));
           }
         }
