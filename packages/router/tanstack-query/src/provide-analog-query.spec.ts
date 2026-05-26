@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { TransferState, makeStateKey } from '@angular/core';
+import { PLATFORM_ID, TransferState, makeStateKey } from '@angular/core';
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
 import {
   ResolveEnd,
@@ -165,6 +165,78 @@ describe('TanStack Query SSR integration', () => {
 
     expect(queryClient.getQueryData(['user'])).toEqual({ name: 'analog' });
     expect(queryClient.getQueryData(['posts'])).toEqual(['a', 'b']);
+  });
+
+  it('mirrors hydrated load payloads into TransferState on the server', async () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+    const transferState = new TransferState();
+
+    const seedClient = new QueryClient();
+    await seedClient.prefetchQuery({
+      queryKey: ['posts'],
+      queryFn: async () => [{ id: 1 }],
+    });
+    const dehydratedState = dehydrate(seedClient);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: TransferState, useValue: transferState },
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+    TestBed.inject(QueryClient);
+
+    emitResolveEnd(
+      events,
+      makeSnapshot({
+        load: { [ANALOG_QUERIES_KEY]: dehydratedState },
+      }),
+    );
+
+    const stored = transferState.get<typeof dehydratedState | null>(
+      ANALOG_QUERY_STATE_KEY,
+      null,
+    );
+    expect(stored?.queries).toHaveLength(1);
+    expect(stored?.queries[0]?.queryKey).toEqual(['posts']);
+    expect(queryClient.getQueryData(['posts'])).toEqual([{ id: 1 }]);
+  });
+
+  it('does not write to TransferState on the client (PLATFORM_ID = browser)', async () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+    const transferState = new TransferState();
+
+    const seedClient = new QueryClient();
+    await seedClient.prefetchQuery({
+      queryKey: ['posts'],
+      queryFn: async () => [{ id: 1 }],
+    });
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: TransferState, useValue: transferState },
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+    TestBed.inject(QueryClient);
+
+    emitResolveEnd(
+      events,
+      makeSnapshot({
+        load: { [ANALOG_QUERIES_KEY]: dehydrate(seedClient) },
+      }),
+    );
+
+    expect(transferState.hasKey(ANALOG_QUERY_STATE_KEY)).toBe(false);
+    expect(queryClient.getQueryData(['posts'])).toEqual([{ id: 1 }]);
   });
 
   it('ignores route data without an __analogQueries field', async () => {
