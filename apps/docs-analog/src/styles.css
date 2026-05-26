@@ -1,1 +1,224 @@
 @import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens — light defaults, overridden under .dark on <html> */
+:root {
+  --bg: #ffffff;
+  --fg: #1f2937;
+  --fg-muted: #6b7280;
+  --border: #e5e7eb;
+  --hover-bg: #f9fafb;
+  --link: #2563eb;
+  --code-bg: #f6f8fa;
+}
+.dark {
+  --bg: #0a1429;
+  --fg: #e5e7eb;
+  --fg-muted: #9ca3af;
+  --border: #1f2937;
+  --hover-bg: #111827;
+  --link: #60a5fa;
+  --code-bg: #111827;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Admonition color variants — picks up the kind from the
+   custom marked extension. */
+.admonition {
+  border-left: 4px solid var(--border);
+  background: var(--hover-bg);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0.25rem;
+}
+.admonition-tip {
+  border-left-color: #10b981;
+  background: #ecfdf5;
+}
+.dark .admonition-tip {
+  background: rgba(16, 185, 129, 0.08);
+}
+.admonition-info {
+  border-left-color: #3b82f6;
+  background: #eff6ff;
+}
+.dark .admonition-info {
+  background: rgba(59, 130, 246, 0.08);
+}
+.admonition-note {
+  border-left-color: #6366f1;
+  background: #eef2ff;
+}
+.dark .admonition-note {
+  background: rgba(99, 102, 241, 0.08);
+}
+.admonition-warning {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+.dark .admonition-warning {
+  background: rgba(245, 158, 11, 0.08);
+}
+.admonition-caution {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+.dark .admonition-caution {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Heading hover anchors */
+.analog-markdown h2,
+.analog-markdown h3 {
+  scroll-margin-top: 4rem;
+  position: relative;
+}
+.analog-markdown h2:hover .heading-anchor,
+.analog-markdown h3:hover .heading-anchor {
+  opacity: 1;
+}
+.heading-anchor {
+  position: absolute;
+  left: -1.25rem;
+  opacity: 0;
+  color: var(--fg-muted);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.heading-anchor:hover {
+  color: var(--link);
+}
+
+/* Code block enhancements */
+.analog-markdown pre {
+  position: relative;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+.analog-markdown pre code {
+  background: transparent;
+  padding: 0;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  font-size: 0.875rem;
+}
+.analog-markdown code:not(pre code) {
+  background: var(--code-bg);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+/* Code block copy button (added by EnhanceCode directive) */
+.code-copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e5e7eb;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.analog-markdown pre:hover .code-copy-btn {
+  opacity: 1;
+}
+.code-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.code-copy-btn[data-copied='true']::after {
+  content: ' ✓';
+}
+
+/* doc-tabs (from mdxTabsExtension) */
+.doc-tabs {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+.doc-tab + .doc-tab {
+  border-top: 1px solid var(--border);
+}
+.doc-tab-label {
+  background: var(--hover-bg);
+  padding: 0.5rem 1rem;
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+.doc-tab > :not(.doc-tab-label) {
+  padding: 0.5rem 1rem;
+}
+
+/* Markdown table */
+.analog-markdown table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  display: block;
+  overflow-x: auto;
+}
+.analog-markdown th,
+.analog-markdown td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.analog-markdown th {
+  background: var(--hover-bg);
+}
+
+/* Markdown body typography */
+.analog-markdown {
+  line-height: 1.7;
+}
+.analog-markdown h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 1.5rem 0 1rem;
+}
+.analog-markdown h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+}
+.analog-markdown h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+.analog-markdown p,
+.analog-markdown ul,
+.analog-markdown ol {
+  margin: 0 0 1rem;
+}
+.analog-markdown a {
+  color: var(--link);
+  text-decoration: underline;
+}
+.analog-markdown ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.analog-markdown ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}

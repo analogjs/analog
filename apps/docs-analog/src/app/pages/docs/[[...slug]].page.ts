@@ -15,6 +15,7 @@ import {
   MarkdownComponent,
 } from '@analogjs/content';
 import { DocFooter } from '../../components/DocFooter';
+import { EnhanceCode } from '../../components/EnhanceCode';
 import { Toc } from '../../components/Toc';
 import { DocSeo } from '../../seo';
 
@@ -24,10 +25,10 @@ interface DocAttributes {
 }
 
 @Component({
-  imports: [AsyncPipe, MarkdownComponent, DocFooter, Toc],
+  imports: [AsyncPipe, MarkdownComponent, DocFooter, EnhanceCode, Toc],
   template: `
     <div class="flex gap-12">
-      <div #article class="flex-1 min-w-0">
+      <div #article docsEnhanceCode class="flex-1 min-w-0">
         @if (doc$ | async; as doc) {
           <header class="mb-8">
             @if (doc.attributes.title) {
