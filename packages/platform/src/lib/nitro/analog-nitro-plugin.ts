@@ -249,6 +249,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             preset !== 'node' &&
             preset !== 'nitro-dev';
 
+          // Vercel's Build Output API expects `.vercel/output/` at the cwd
+          // `vercel build` runs from (the repo root). Nitro's preset anchors
+          // to `{{rootDir}}`, so in Nx monorepos artifacts land at
+          // `apps/<name>/.vercel/output/` and the deploy can't find them.
+          // Hoist to workspace root and apply Analog's runtime defaults.
           if (preset.includes('vercel')) {
             const vercel = (nitro.options as { vercel?: Record<string, any> })
               .vercel;
@@ -259,6 +264,13 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
                 runtime: vercel?.functions?.runtime ?? 'nodejs24.x',
                 ...vercel?.functions,
               },
+            };
+            const vercelDir = resolve(context.workspaceRoot, '.vercel/output');
+            nitro.options.output = {
+              ...nitro.options.output,
+              dir: vercelDir,
+              serverDir: resolve(vercelDir, 'functions/__server.func'),
+              publicDir: resolve(vercelDir, 'static'),
             };
           }
 
@@ -286,6 +298,26 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
                 context.rootDir,
                 'analog/public',
               ),
+            };
+          }
+
+          // Cloudflare Pages/Workers presets anchor their output at
+          // `{{rootDir}}/dist` or `{{rootDir}}/.output`, which puts the
+          // deploy tree at `apps/<name>/...` for Nx monorepos. Hoist to
+          // `<workspaceRoot>/dist/<rootDir>/` so `wrangler pages deploy
+          // dist/<rootDir>` from the workspace root finds `_worker.js/`
+          // alongside the static assets.
+          if (preset.includes('cloudflare')) {
+            const cfDir = resolve(
+              context.workspaceRoot,
+              'dist',
+              context.rootDir,
+            );
+            nitro.options.output = {
+              ...nitro.options.output,
+              dir: cfDir,
+              publicDir: cfDir,
+              serverDir: resolve(cfDir, '_worker.js'),
             };
           }
 
