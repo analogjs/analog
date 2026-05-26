@@ -155,6 +155,46 @@ describe('Partial Compilation (Library Mode)', () => {
     });
   });
 
+  describe('signal API metadata', () => {
+    it('emits isRequired: true for input.required() and false for input()', () => {
+      const result = compilePartial(
+        `
+        import { Component, input } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          a = input<string>();
+          b = input.required<number>();
+        }
+      `,
+        'inputs.ts',
+      );
+
+      expect(result).toMatch(/a:\s*\{[^}]*isRequired:\s*false/);
+      expect(result).toMatch(/b:\s*\{[^}]*isRequired:\s*true/);
+    });
+
+    it('emits isRequired: true for model.required() and false for model()', () => {
+      // Without propagating required through the model branch, the
+      // template type-checker silently accepts unbound required models —
+      // the consumer only discovers the bug at runtime when the signal
+      // is first read.
+      const result = compilePartial(
+        `
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          c = model<string>();
+          d = model.required<number>();
+        }
+      `,
+        'models.ts',
+      );
+
+      expect(result).toMatch(/c:\s*\{[^}]*isRequired:\s*false/);
+      expect(result).toMatch(/d:\s*\{[^}]*isRequired:\s*true/);
+    });
+  });
+
   describe('full mode unchanged', () => {
     it('still emits ɵɵdefineComponent in full mode', () => {
       // Verify that full mode (default) is unaffected
