@@ -1,6 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { TransferState, makeStateKey } from '@angular/core';
 import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
+import {
+  ResolveEnd,
+  Router,
+  type ActivatedRouteSnapshot,
+  type RouterStateSnapshot,
+} from '@angular/router';
+import { Subject } from 'rxjs';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   QueryClient,
@@ -8,11 +15,28 @@ import {
   provideTanStackQuery,
 } from '@tanstack/angular-query-experimental';
 
+import { ANALOG_QUERIES_KEY } from './constants';
 import {
   ANALOG_QUERY_STATE_KEY,
   provideAnalogQuery,
 } from './provide-analog-query';
 import { provideServerAnalogQuery } from './provide-server-analog-query';
+
+function makeSnapshot(
+  data: Record<string, unknown>,
+  children: ActivatedRouteSnapshot[] = [],
+): ActivatedRouteSnapshot {
+  return { data, children } as unknown as ActivatedRouteSnapshot;
+}
+
+function emitResolveEnd(
+  events: Subject<unknown>,
+  root: ActivatedRouteSnapshot,
+): void {
+  events.next(
+    new ResolveEnd(0, '/', '/', { root } as unknown as RouterStateSnapshot),
+  );
+}
 
 describe('TanStack Query SSR integration', () => {
   afterEach(() => {
@@ -70,5 +94,96 @@ describe('TanStack Query SSR integration', () => {
 
     expect(dehydratedState?.queries).toHaveLength(1);
     expect(dehydratedState?.queries[0]?.queryKey).toEqual(['todos']);
+  });
+
+  it('hydrates the QueryClient from route data on ResolveEnd', async () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+
+    const seedClient = new QueryClient();
+    await seedClient.prefetchQuery({
+      queryKey: ['posts'],
+      queryFn: async () => [{ id: 1 }],
+    });
+    const dehydratedState = dehydrate(seedClient);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+
+    // Force the environment initializers to run.
+    TestBed.inject(QueryClient);
+
+    const snapshot = makeSnapshot({
+      load: {
+        [ANALOG_QUERIES_KEY]: dehydratedState,
+        data: undefined,
+      },
+    });
+    emitResolveEnd(events, snapshot);
+
+    expect(queryClient.getQueryData(['posts'])).toEqual([{ id: 1 }]);
+  });
+
+  it('walks the snapshot tree and merges dehydrated state from child routes', async () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+
+    const rootSeed = new QueryClient();
+    await rootSeed.prefetchQuery({
+      queryKey: ['user'],
+      queryFn: async () => ({ name: 'analog' }),
+    });
+
+    const childSeed = new QueryClient();
+    await childSeed.prefetchQuery({
+      queryKey: ['posts'],
+      queryFn: async () => ['a', 'b'],
+    });
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+    TestBed.inject(QueryClient);
+
+    const child = makeSnapshot({
+      load: { [ANALOG_QUERIES_KEY]: dehydrate(childSeed) },
+    });
+    const root = makeSnapshot(
+      { load: { [ANALOG_QUERIES_KEY]: dehydrate(rootSeed) } },
+      [child],
+    );
+    emitResolveEnd(events, root);
+
+    expect(queryClient.getQueryData(['user'])).toEqual({ name: 'analog' });
+    expect(queryClient.getQueryData(['posts'])).toEqual(['a', 'b']);
+  });
+
+  it('ignores route data without an __analogQueries field', async () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+    TestBed.inject(QueryClient);
+
+    // Plain load data — should not crash, should not affect the cache.
+    emitResolveEnd(events, makeSnapshot({ load: { user: { id: 1 } } }));
+    emitResolveEnd(events, makeSnapshot({}));
+
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
   });
 });
