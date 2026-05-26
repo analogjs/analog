@@ -71,6 +71,17 @@ describe('pageEndpointsPlugin', () => {
     expect(result).toBeUndefined();
   });
 
+  it('safe-accesses event.context for params (handles internal fetchWithEvent dispatches)', async () => {
+    const result = await plugin.transform?.(
+      `export const load = () => ({ ok: true });`,
+      '/src/app/pages/index.server.ts',
+    );
+
+    expect(result).toBeDefined();
+    expect(result?.code).toContain('params: event.context?.params');
+    expect(result?.code).not.toContain('params: event.context.params');
+  });
+
   it('skips .server.ts files outside /pages/', async () => {
     const result = await plugin.transform?.(
       `export const load = () => ({ ok: true });`,

@@ -22,9 +22,11 @@ export function pageEndpointsPlugin() {
         );
 
         // In h3 v2 / Nitro v3, event.node is undefined during prerendering
-        // (which uses the fetch-based pipeline, not Node.js http). We use
-        // optional chaining so that page endpoints work in both Node.js
-        // server and fetch-based prerender contexts.
+        // (which uses the fetch-based pipeline, not Node.js http), and
+        // event.context is undefined for sub-handler dispatches that
+        // didn't go through the router params layer. We use optional
+        // chaining on both so page endpoints work in Node.js server,
+        // fetch-based prerender, and internal `fetchWithEvent` paths.
         //
         // Page loaders expect Nitro-style `$fetch` semantics (parsed data plus
         // internal relative-route support), so we construct a request-local
@@ -59,7 +61,7 @@ export function pageEndpointsPlugin() {
               if (event.method === 'GET') {
                 try {
                   return await load({
-                    params: event.context.params,
+                    params: event.context?.params,
                     req: event.node?.req,
                     res: event.node?.res,
                     fetch: serverFetch,
@@ -72,7 +74,7 @@ export function pageEndpointsPlugin() {
               } else {
                 try {
                   return await action({
-                    params: event.context.params,
+                    params: event.context?.params,
                     req: event.node?.req,
                     res: event.node?.res,
                     fetch: serverFetch,
