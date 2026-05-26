@@ -1,32 +1,24 @@
----
-title: Introduction
-description: What Analog is and why it exists.
----
+# Introduction
 
-Analog is the fullstack meta-framework for Angular. It uses Vite for fast dev
-and Nitro for the server runtime, and gives you file-based routing, server
-endpoints, and content-driven pages — all with idiomatic Angular at the core.
+Analog is a fullstack meta-framework for building applications and websites with [Angular](https://angular.dev).
 
-## Why Analog?
+Similar to other meta-frameworks such as Next.JS, Nuxt, SvelteKit, Qwik City, and others, Analog provides a similar experience, building on top of Angular.
 
-Angular is a great framework for building applications, but the developer
-experience around tooling and server-side capabilities has historically
-trailed other ecosystems. Analog closes that gap.
+## Features
 
-:::tip
-Analog works seamlessly with existing Angular apps. You can adopt it
-incrementally, one route at a time.
-:::
+- Supports Vite/Vitest/Playwright
+- Server and deployment integrations powered by [Nitro](https://nitro.unjs.io)
+- [File-based routing](/docs/features/routing/overview)
+- [Server-side data fetching](/docs/features/data-fetching/server-side-data-fetching)
+- [Support for using Markdown as content routes](/docs/features/routing/content)
+- [API/server routes](/docs/features/api/overview)
+- Hybrid [SSR](/docs/features/server/server-side-rendering)/[SSG support](/docs/features/server/static-site-generation)
+- Supports Angular CLI/[Nx workspaces](/docs/integrations/nx)
+- Supports [Angular components](/docs/packages/astro-angular/overview) with Astro
 
-## Quick example
+## Support Us
 
-```ts
-import { Component } from '@angular/core';
-
-@Component({
-  template: `<h1>Hello, {{ name() }}!</h1>`,
-})
-export default class HomePage {
-  readonly name = signal('Analog');
-}
-```
+- Visit and Star the [GitHub Repo](https://github.com/analogjs/analog)
+- Join the [Discord](https://chat.analogjs.org)
+- Follow us on [Twitter](https://twitter.com/analogjs)
+- Become a [Sponsor](/docs/sponsoring)

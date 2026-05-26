@@ -27,7 +27,25 @@ export default defineConfig(({ mode }) => ({
             themes: { light: 'github-light', dark: 'night-owl' },
           },
           highlighter: {
-            additionalLangs: ['bash', 'json', 'toml'],
+            additionalLangs: [
+              'bash',
+              'json',
+              'toml',
+              'yaml',
+              'diff',
+              'scss',
+              'xml',
+              'markdown',
+            ],
+            // Languages the corpus uses that aren't real shiki grammars
+            // (treeview directory listings, mermaid diagrams, diff- variants).
+            // skipLangs escapes the block as plain text without crashing.
+            skipLangs: [
+              'treeview',
+              'mermaid',
+              'diff-ts',
+              'diff-typescript',
+            ] as never,
           },
         },
         markedOptions: {

@@ -1,7 +1,3 @@
----
-sidebar_position: 4
----
-
 # Build with AI
 
 Analog provides integrations to use AI-assisted development practics.

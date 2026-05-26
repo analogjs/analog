@@ -1,7 +1,3 @@
----
-sidebar_position: 5
----
-
 # Support
 
 Whether you're a solo developer or a large enterprise, different options are available!

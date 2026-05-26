@@ -1,22 +1,140 @@
----
-title: Getting Started
-description: Spin up a new Analog app in under a minute.
----
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-The fastest way to get started is the official template.
+# Getting Started
 
-```bash
-npm create analog@latest my-app
-cd my-app
-npm install
-npm start
+Creating an Analog project can be done with minimal steps.
+
+## System Requirements
+
+Analog requires the following Node and Angular versions:
+
+- Node v18.13.0 and higher is recommended
+- Angular v15 or higher
+
+## Creating a New Application
+
+To create a new Analog project, you can use the `create-analog` package with your package manager of choice:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm create analog@latest
 ```
 
-:::info
-Node 22 or 24 is required. Earlier versions are not supported.
-:::
+  </TabItem>
 
-:::warning
-Don't commit `node_modules/` or `dist/` — they're regenerated from
-`package.json` and the source.
-:::
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn create analog
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm create analog
+```
+
+  </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun create analog
+```
+
+  </TabItem>
+</Tabs>
+
+You can also [scaffold a new project with Nx](/docs/integrations/nx).
+
+### Serving the application
+
+To start the development server for the application, run the `start` command.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm run start
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn start
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm start
+```
+
+  </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun start
+```
+
+  </TabItem>
+</Tabs>
+
+Visit [http://localhost:5173](http://localhost:5173) in your browser to view the running application.
+
+Next, you can [define additional routes using components](/docs/features/routing/overview) for navigation.
+
+### Building the Application
+
+To build the application for deployment
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm run build
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn build
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm run build
+```
+
+  </TabItem>
+  <TabItem value="bun">
+
+```shell
+bun run build
+```
+
+  </TabItem>
+</Tabs>
+
+### Build Artifacts
+
+By default, Analog comes with [Server-Side Rendering](/docs/features/server/server-side-rendering) enabled.
+Client artifacts are located in the `dist/analog/public` directory.
+The server for the API/SSR build artifacts is located in the `dist/analog/server` directory.
+
+## Migrating an Existing Application
+
+You can also migrate an existing Angular application to Analog. See the [migration guide](/docs/guides/migrating) for migration steps.
