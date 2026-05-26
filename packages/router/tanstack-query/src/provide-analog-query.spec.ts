@@ -1,13 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { PLATFORM_ID, TransferState, makeStateKey } from '@angular/core';
-import { BEFORE_APP_SERIALIZED } from '@angular/platform-server';
+import {
+  ApplicationRef,
+  PLATFORM_ID,
+  TransferState,
+  makeStateKey,
+} from '@angular/core';
 import {
   ResolveEnd,
   Router,
   type ActivatedRouteSnapshot,
   type RouterStateSnapshot,
 } from '@angular/router';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   QueryClient,
@@ -69,10 +73,11 @@ describe('TanStack Query SSR integration', () => {
     expect(transferState.hasKey(ANALOG_QUERY_STATE_KEY)).toBe(false);
   });
 
-  it('serializes the QueryClient into TransferState on the server hook', async () => {
+  it('serializes the QueryClient into TransferState on first post-render app-stable', async () => {
     const transferState = new TransferState();
     const queryClient = new QueryClient();
     const stateKey = makeStateKey<any>('analog_query_state');
+    const isStable = new BehaviorSubject<boolean>(true);
 
     await queryClient.prefetchQuery({
       queryKey: ['todos'],
@@ -82,16 +87,29 @@ describe('TanStack Query SSR integration', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: TransferState, useValue: transferState },
+        {
+          provide: ApplicationRef,
+          useValue: { isStable, onDestroy: () => {} },
+        },
         provideTanStackQuery(queryClient),
         provideServerAnalogQuery(),
       ],
     });
 
-    const hooks = TestBed.inject(BEFORE_APP_SERIALIZED);
-    await hooks[0]?.();
+    // Force the environment initializers to run.
+    TestBed.inject(TransferState);
+
+    // Initial stable transitions should be ignored (`skipWhile`).
+    expect(transferState.hasKey(stateKey)).toBe(false);
+
+    // First unstable transition (rendering kicks off).
+    isStable.next(false);
+    expect(transferState.hasKey(stateKey)).toBe(false);
+
+    // Post-render stable: dehydrate fires.
+    isStable.next(true);
 
     const dehydratedState = transferState.get(stateKey, null);
-
     expect(dehydratedState?.queries).toHaveLength(1);
     expect(dehydratedState?.queries[0]?.queryKey).toEqual(['todos']);
   });
