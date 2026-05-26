@@ -47,13 +47,13 @@ const PARTNERS: Sponsor[] = [
 const SPONSORS: Sponsor[] = [
   {
     name: 'Nx',
-    logo: '/img/logos/nx-logo.light.svg',
+    logo: '/img/logos/nx-logo.dark.svg',
     url: 'https://nx.dev',
     scale: 'h-10',
   },
   {
     name: 'Snyder Tech',
-    logo: '/img/logos/snyder-logo.light.svg',
+    logo: '/img/logos/snyder-logo.dark.svg',
     url: 'https://snyder.tech',
     scale: 'h-10',
   },
@@ -83,7 +83,7 @@ const SPONSORS: Sponsor[] = [
       <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
         <a
           routerLink="/docs"
-          class="inline-flex items-center rounded-md bg-rose-600 px-6 py-3 font-semibold text-white shadow hover:bg-rose-700"
+          class="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 font-semibold text-white shadow hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
         >
           Read the Docs
         </a>
@@ -126,14 +126,17 @@ const SPONSORS: Sponsor[] = [
       }
     </section>
 
-    <section class="bg-rose-600 px-6 py-12 text-white">
+    <section class="border-t px-6 py-12" style="border-color: var(--border)">
       <div class="mx-auto max-w-6xl text-center">
-        <p class="text-sm sm:text-base">
+        <p class="text-sm sm:text-base" style="color: var(--fg-muted)">
           Analog is free, open source, and supported by our partners and
           sponsors.
         </p>
 
-        <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide">
+        <h2
+          class="mt-8 text-sm font-semibold uppercase tracking-wide"
+          style="color: var(--fg-muted)"
+        >
           Partners
         </h2>
         <div class="mt-4 flex flex-wrap items-center justify-center gap-8">
@@ -142,13 +145,16 @@ const SPONSORS: Sponsor[] = [
               <img
                 [src]="p.logo"
                 [alt]="p.name"
-                class="h-12 brightness-0 invert"
+                class="h-12 dark:brightness-0 dark:invert"
               />
             </a>
           }
         </div>
 
-        <h2 class="mt-10 text-sm font-semibold uppercase tracking-wide">
+        <h2
+          class="mt-10 text-sm font-semibold uppercase tracking-wide"
+          style="color: var(--fg-muted)"
+        >
           Sponsors
         </h2>
         <div class="mt-4 flex flex-wrap items-center justify-center gap-8">
@@ -157,7 +163,7 @@ const SPONSORS: Sponsor[] = [
               <img
                 [src]="s.logo"
                 [alt]="s.name"
-                class="brightness-0 invert"
+                class="dark:brightness-0 dark:invert"
                 [class]="s.scale || 'h-10'"
               />
             </a>
@@ -166,7 +172,7 @@ const SPONSORS: Sponsor[] = [
 
         <a
           href="mailto:partnerships@analogjs.org?subject=Partnerships"
-          class="mt-10 inline-block rounded-md border border-white px-5 py-2 text-sm font-semibold hover:bg-white hover:text-rose-600"
+          class="mt-10 inline-block rounded-md bg-rose-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-rose-700"
         >
           Partner with Analog
         </a>
