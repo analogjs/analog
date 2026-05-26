@@ -154,6 +154,7 @@ export function buildPropDecorators(
     if (!memberName) continue;
 
     // Check for field decorators (@Input, @Output, @ViewChild, etc.)
+    const explicitDecoratorNames = new Set<string>();
     const decorators: any[] = member.decorators || [];
     for (const dec of decorators) {
       const expr = dec.expression;
@@ -161,6 +162,7 @@ export function buildPropDecorators(
       const decName: string | undefined = expr.callee?.name;
       if (!decName || !FIELD_DECORATORS.has(decName)) continue;
 
+      explicitDecoratorNames.add(decName);
       if (!props[memberName]) props[memberName] = [];
       const args: any[] = expr.arguments || [];
       if (args.length > 0) {
@@ -172,7 +174,10 @@ export function buildPropDecorators(
       }
     }
 
-    // Signal API downleveling
+    // Signal API downleveling. Skip when a matching explicit decorator
+    // is already on the field — Angular's transform bails in that case
+    // (input_function.ts, model_function.ts, output_function.ts,
+    // query_functions.ts) to avoid duplicate metadata entries.
     if (
       member.type === 'PropertyDefinition' &&
       member.value?.type === 'CallExpression'
@@ -182,6 +187,29 @@ export function buildPropDecorators(
 
       const { api, required } = signalCall;
       const args: any[] = member.value.arguments || [];
+
+      const hasInput = explicitDecoratorNames.has('Input');
+      const hasOutput = explicitDecoratorNames.has('Output');
+      const hasQuery =
+        explicitDecoratorNames.has('ViewChild') ||
+        explicitDecoratorNames.has('ViewChildren') ||
+        explicitDecoratorNames.has('ContentChild') ||
+        explicitDecoratorNames.has('ContentChildren');
+
+      if (api === 'input' && hasInput) continue;
+      if (api === 'model' && (hasInput || hasOutput)) continue;
+      if ((api === 'output' || api === 'outputFromObservable') && hasOutput) {
+        continue;
+      }
+      if (
+        (api === 'viewChild' ||
+          api === 'viewChildren' ||
+          api === 'contentChild' ||
+          api === 'contentChildren') &&
+        hasQuery
+      ) {
+        continue;
+      }
 
       if (api === 'input') {
         if (!props[memberName]) props[memberName] = [];
