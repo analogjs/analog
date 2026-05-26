@@ -501,6 +501,10 @@ export function detectSignals(classNode: any, sourceCode: string) {
         classPropertyName: name,
         bindingPropertyName: alias ?? name,
         isSignal: true,
+        // Propagate `.required` so the runtime enforces the unbound-required
+        // check. Without this, `model.required(...)` accepts an unbound parent
+        // and the model signal stays at its undefined initial value silently.
+        required,
       };
       // The compiled `outputs` field is `{ classPropertyName: bindingName }`.
       // Angular inverts this at runtime via
