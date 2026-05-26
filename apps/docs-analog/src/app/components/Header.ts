@@ -1,22 +1,25 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Search } from './Search';
 
 @Component({
   selector: 'docs-header',
-  standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Search],
   template: `
     <header class="flex items-center justify-between border-b px-6 py-3">
       <a routerLink="/" class="text-lg font-semibold">Analog</a>
-      <nav class="flex gap-4 text-sm">
-        <a routerLink="/docs">Docs</a>
-        <a
-          href="https://github.com/analogjs/analog"
-          target="_blank"
-          rel="noopener"
-          >GitHub</a
-        >
-      </nav>
+      <div class="flex items-center gap-4 text-sm">
+        <docs-search />
+        <nav class="flex gap-4">
+          <a routerLink="/docs">Docs</a>
+          <a
+            href="https://github.com/analogjs/analog"
+            target="_blank"
+            rel="noopener"
+            >GitHub</a
+          >
+        </nav>
+      </div>
     </header>
   `,
 })
