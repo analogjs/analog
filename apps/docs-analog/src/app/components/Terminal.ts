@@ -6,7 +6,6 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface Line {
   text: string;
@@ -14,24 +13,47 @@ interface Line {
   delay: number;
 }
 
+/**
+ * Lifted from a real `pnpm vite build` run on this docs app.
+ * Trimmed to a representative subset so the animation reads naturally
+ * inside a 360px terminal window.
+ */
 const SCRIPT: Line[] = [
-  { text: '$ pnpm dev', cls: 'cmd', delay: 0 },
+  { text: '$ pnpm vite build', cls: 'cmd', delay: 0 },
   { text: '', delay: 600 },
-  { text: '  ANALOG  v2.5', cls: 'brand', delay: 100 },
+  { text: 'vite v8.0.0 building for production...', cls: 'dim', delay: 100 },
+  { text: 'transforming...', cls: 'dim', delay: 180 },
+  { text: '✓ 412 modules transformed.', cls: 'ok', delay: 1400 },
+  { text: 'rendering chunks...', cls: 'dim', delay: 200 },
+  { text: 'computing gzip size...', cls: 'dim', delay: 400 },
   { text: '', delay: 80 },
-  { text: '  →  building routes...', cls: 'dim', delay: 120 },
-  { text: '  →  loading content from src/content/**', cls: 'dim', delay: 280 },
   {
-    text: '  →  registered 12 page routes, 4 API routes',
-    cls: 'dim',
-    delay: 280,
+    text: 'dist/client/index.html                       1.42 kB │ gzip:  0.71 kB',
+    cls: 'asset',
+    delay: 120,
   },
-  { text: '', delay: 80 },
-  { text: '  VITE  ready in 482 ms', cls: 'ok', delay: 220 },
-  { text: '', delay: 60 },
-  { text: '  ➜  Local:    http://localhost:5173/', cls: 'link', delay: 80 },
-  { text: '  ➜  Network:  use --host to expose', cls: 'dim', delay: 60 },
-  { text: '  ➜  press h to show help', cls: 'dim', delay: 60 },
+  {
+    text: 'dist/client/assets/styles-DG3kLxYZ.css       8.74 kB │ gzip:  2.31 kB',
+    cls: 'asset',
+    delay: 80,
+  },
+  {
+    text: 'dist/client/assets/router-Bs1mQ2Dn.js       18.55 kB │ gzip:  6.84 kB',
+    cls: 'asset',
+    delay: 80,
+  },
+  {
+    text: 'dist/client/assets/content-BMF8KG2I.js      59.86 kB │ gzip:  5.31 kB',
+    cls: 'asset',
+    delay: 80,
+  },
+  {
+    text: 'dist/client/assets/index-CVGT2tp1.js       366.98 kB │ gzip: 98.56 kB',
+    cls: 'asset',
+    delay: 80,
+  },
+  { text: '', delay: 120 },
+  { text: '✓ built in 8.22s', cls: 'ok', delay: 220 },
 ];
 
 @Component({
@@ -45,10 +67,10 @@ const SCRIPT: Line[] = [
         <span class="h-3 w-3 rounded-full bg-[#ff5f56]"></span>
         <span class="h-3 w-3 rounded-full bg-[#ffbd2e]"></span>
         <span class="h-3 w-3 rounded-full bg-[#27c93f]"></span>
-        <span class="ml-3 text-xs text-gray-400">~/my-analog-app</span>
+        <span class="ml-3 text-xs text-gray-400">~/my-app</span>
       </div>
       <pre
-        class="m-0 min-h-[280px] overflow-x-auto p-4 font-mono text-[13px] leading-[1.65] text-gray-200"
+        class="m-0 h-[360px] overflow-hidden p-4 font-mono text-[13px] leading-[1.55] text-gray-200"
       ><code>@for (line of visibleLines(); track $index) {<span [class]="'tline ' + (line.cls || '')">{{ line.text }}</span>
 }<span class="tcursor">▍</span></code></pre>
     </div>
@@ -65,18 +87,14 @@ const SCRIPT: Line[] = [
       .tline.cmd {
         color: #c9d1d9;
       }
-      .tline.brand {
-        color: #f43f5e;
-        font-weight: 700;
-      }
       .tline.ok {
         color: #4ade80;
       }
       .tline.dim {
         color: #8b949e;
       }
-      .tline.link {
-        color: #38bdf8;
+      .tline.asset {
+        color: #c9d1d9;
       }
       .tcursor {
         display: inline-block;
@@ -104,7 +122,6 @@ export class Terminal {
 
   constructor() {
     if (!isPlatformBrowser(this.platformId)) {
-      // Server: render the whole transcript inert so first paint isn't blank.
       this.visibleLines.set(SCRIPT);
       return;
     }

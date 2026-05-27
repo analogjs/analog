@@ -1,32 +1,41 @@
-import { Component } from '@angular/core';
+import { Component, inject, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { DomSanitizer } from '@angular/platform-browser';
+import { codeToHtml } from 'shiki';
 
-const CLIENT_CODE = `// src/app/pages/products/[id].page.ts
-import { Component, inject } from '@angular/core';
-import { injectLoad } from '@analogjs/router';
-import type { load } from './[id].server';
+const TICK = '`';
 
-@Component({
-  template: \`
-    <h1>{{ product().name }}</h1>
-    <p>{{ product().price | currency }}</p>
-  \`,
-})
-export default class ProductPage {
-  protected readonly product = injectLoad<typeof load>();
-}`;
+const CLIENT_CODE = [
+  `// src/app/pages/products/[id].page.ts`,
+  `import { Component } from '@angular/core';`,
+  `import { injectLoad } from '@analogjs/router';`,
+  `import type { load } from './[id].server';`,
+  ``,
+  `@Component({`,
+  `  template: ${TICK}`,
+  `    <h1>{{ product().name }}</h1>`,
+  `    <p>{{ product().price | currency }}</p>`,
+  `  ${TICK},`,
+  `})`,
+  `export default class ProductPage {`,
+  `  protected readonly product = injectLoad<typeof load>();`,
+  `}`,
+].join('\n');
 
-const SERVER_CODE = `// src/app/pages/products/[id].server.ts
-import type { PageServerLoad } from '@analogjs/router';
-import { db } from '~/server/db';
-
-export const load = async ({
-  params,
-}: PageServerLoad) => {
-  const product = await db.products.byId(
-    params['id'],
-  );
-  return product;
-};`;
+const SERVER_CODE = [
+  `// src/app/pages/products/[id].server.ts`,
+  `import type { PageServerLoad } from '@analogjs/router';`,
+  `import { db } from '~/server/db';`,
+  ``,
+  `export const load = async ({`,
+  `  params,`,
+  `}: PageServerLoad) => {`,
+  `  const product = await db.products.byId(`,
+  `    params['id'],`,
+  `  );`,
+  `  return product;`,
+  `};`,
+].join('\n');
 
 @Component({
   selector: 'docs-full-stack-example',
@@ -43,10 +52,7 @@ export const load = async ({
           <span>Page component (browser)</span>
           <span class="font-mono">.page.ts</span>
         </header>
-        <pre
-          class="m-0 overflow-x-auto p-4 font-mono text-[12.5px] leading-[1.65]"
-          style="background: var(--bg)"
-        ><code>{{ clientCode }}</code></pre>
+        <div class="fs-example" [innerHTML]="clientHtml()"></div>
       </article>
 
       <article
@@ -60,10 +66,7 @@ export const load = async ({
           <span>Server load (server-only)</span>
           <span class="font-mono">.server.ts</span>
         </header>
-        <pre
-          class="m-0 overflow-x-auto p-4 font-mono text-[12.5px] leading-[1.65]"
-          style="background: var(--bg)"
-        ><code>{{ serverCode }}</code></pre>
+        <div class="fs-example" [innerHTML]="serverHtml()"></div>
       </article>
     </div>
 
@@ -73,8 +76,63 @@ export const load = async ({
       and Analog runs the loader on the server, hydrates it on the client.
     </p>
   `,
+  styles: [
+    `
+      :host ::ng-deep .fs-example pre {
+        margin: 0;
+        border-radius: 0;
+        padding: 1rem;
+        font-size: 12.5px;
+        line-height: 1.55;
+        overflow-x: auto;
+      }
+      :host ::ng-deep .fs-example pre code {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          'Liberation Mono', monospace;
+      }
+    `,
+  ],
 })
 export class FullStackExample {
-  protected readonly clientCode = CLIENT_CODE;
-  protected readonly serverCode = SERVER_CODE;
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly platformId = inject(PLATFORM_ID);
+
+  protected readonly clientHtml = signal<unknown>('');
+  protected readonly serverHtml = signal<unknown>('');
+
+  constructor() {
+    // Shiki is bundle-heavy; defer to the browser so SSR doesn't load
+    // 1MB of grammars/themes per request. The static <pre> below
+    // renders unstyled first paint, then shiki paints over it.
+    if (!isPlatformBrowser(this.platformId)) {
+      this.clientHtml.set(this.bare(CLIENT_CODE));
+      this.serverHtml.set(this.bare(SERVER_CODE));
+      return;
+    }
+    this.highlight(CLIENT_CODE).then((html) => this.clientHtml.set(html));
+    this.highlight(SERVER_CODE).then((html) => this.serverHtml.set(html));
+  }
+
+  private async highlight(code: string): Promise<unknown> {
+    const html = await codeToHtml(code, {
+      lang: 'ts',
+      themes: { light: 'github-light', dark: 'night-owl' },
+    });
+    return this.sanitizer.bypassSecurityTrustHtml(html);
+  }
+
+  private bare(code: string): unknown {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      `<pre><code>${escapeHtml(code)}</code></pre>`,
+    );
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
