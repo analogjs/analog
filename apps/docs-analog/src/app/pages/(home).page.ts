@@ -7,6 +7,7 @@ import { Terminal } from '../components/Terminal';
 interface Sponsor {
   name: string;
   logo: string;
+  logoDark?: string;
   url: string;
   scale?: string;
 }
@@ -65,12 +66,14 @@ const SPONSORS: Sponsor[] = [
   {
     name: 'Nx',
     logo: '/img/logos/nx-logo.dark.svg',
+    logoDark: '/img/logos/nx-logo.light.svg',
     url: 'https://nx.dev',
     scale: 'h-16',
   },
   {
     name: 'Snyder Tech',
     logo: '/img/logos/snyder-logo.dark.svg',
+    logoDark: '/img/logos/snyder-logo.light.svg',
     url: 'https://snyder.tech',
     scale: 'h-16',
   },
@@ -302,12 +305,24 @@ const SPONSORS: Sponsor[] = [
         <div class="mt-4 flex flex-wrap items-center justify-center gap-8">
           @for (s of sponsors; track s.name) {
             <a [href]="s.url" target="_blank" rel="noopener" [title]="s.name">
-              <img
-                [src]="s.logo"
-                [alt]="s.name"
-                class="dark:brightness-0 dark:invert"
-                [class]="s.scale || 'h-16'"
-              />
+              @if (s.logoDark) {
+                <img
+                  [src]="s.logo"
+                  [alt]="s.name"
+                  [class]="(s.scale || 'h-16') + ' dark:hidden'"
+                />
+                <img
+                  [src]="s.logoDark"
+                  [alt]="s.name"
+                  [class]="(s.scale || 'h-16') + ' hidden dark:block'"
+                />
+              } @else {
+                <img
+                  [src]="s.logo"
+                  [alt]="s.name"
+                  [class]="s.scale || 'h-16'"
+                />
+              }
             </a>
           }
         </div>
