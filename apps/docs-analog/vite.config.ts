@@ -14,7 +14,6 @@ import { llmsTxtPlugin } from './src/vite-plugins/llms-txt';
 
 export default defineConfig(({ mode }) => ({
   root: __dirname,
-  publicDir: 'src/public',
   build: {
     outDir: '../../dist/apps/docs-analog/client',
     reportCompressedSize: true,
