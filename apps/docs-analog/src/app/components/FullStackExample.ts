@@ -72,6 +72,10 @@ const SERVER_CODE = [
   `,
   styles: [
     `
+      :host {
+        display: block;
+        min-width: 0;
+      }
       :host ::ng-deep .fs-example pre {
         margin: 0;
         border-radius: 0;

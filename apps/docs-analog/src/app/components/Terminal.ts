@@ -130,6 +130,7 @@ function delayFor(line: Line): number {
     `
       :host {
         display: block;
+        min-width: 0;
       }
       .tline {
         display: block;
