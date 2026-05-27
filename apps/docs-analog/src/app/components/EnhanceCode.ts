@@ -24,6 +24,7 @@ export class EnhanceCode implements AfterViewChecked {
     this.attachCopyButtons();
     this.attachHeadingAnchors();
     this.attachTabs();
+    this.normalizeLinks();
   }
 
   private attachCopyButtons(): void {
@@ -77,6 +78,46 @@ export class EnhanceCode implements AfterViewChecked {
           });
         });
       });
+    });
+  }
+
+  /**
+   * Rewrites markdown-rendered relative + anchor-only hrefs so they
+   * resolve from the current page, not from <base href="/"> which
+   * silently strips them to root. Runs on every change since marked
+   * may add new links.
+   */
+  private normalizeLinks(): void {
+    const links = this.host.nativeElement.querySelectorAll<HTMLAnchorElement>(
+      'analog-markdown a[href]:not([data-href-normalized])',
+    );
+    if (links.length === 0) return;
+    const path = window.location.pathname.replace(/\/$/, '');
+    const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+    links.forEach((a) => {
+      a.dataset['hrefNormalized'] = 'true';
+      const raw = a.getAttribute('href') ?? '';
+      if (!raw || /^([a-z]+:|\/\/|\/)/i.test(raw)) return;
+      if (raw.startsWith('#')) {
+        a.setAttribute('href', `${path}${raw}`);
+      } else if (raw.startsWith('./')) {
+        a.setAttribute('href', `${dir}/${raw.slice(2)}`);
+      } else if (raw.startsWith('../')) {
+        // simple ../ resolution against current dir
+        const segments = dir.split('/').filter(Boolean);
+        let rest = raw;
+        while (rest.startsWith('../')) {
+          segments.pop();
+          rest = rest.slice(3);
+        }
+        a.setAttribute(
+          'href',
+          '/' + [...segments, rest].filter(Boolean).join('/'),
+        );
+      } else {
+        // plain "overview" with no leading marker — treat as sibling
+        a.setAttribute('href', `${dir}/${raw}`);
+      }
     });
   }
 

@@ -14,13 +14,17 @@ import {
   withLocale,
   withMarkdownRenderer,
 } from '@analogjs/content';
-import { withRouterConfig } from '@angular/router';
+import { withInMemoryScrolling, withRouterConfig } from '@angular/router';
 import { resolveActiveLocale } from './locale';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+      withInMemoryScrolling({
+        anchorScrolling: 'enabled',
+        scrollPositionRestoration: 'enabled',
+      }),
     ),
     provideHttpClient(
       withFetch(),
