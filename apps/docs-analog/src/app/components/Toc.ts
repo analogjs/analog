@@ -78,7 +78,9 @@ export class Toc implements AfterViewInit, OnDestroy {
     event.preventDefault();
     const el = document.getElementById(id);
     if (el) {
-      history.replaceState(null, '', `#${id}`);
+      // Include the pathname so <base href="/"> doesn't clobber the
+      // URL to /#id when we only pass the fragment.
+      history.replaceState(null, '', `${window.location.pathname}#${id}`);
       el.scrollIntoView({ behavior: 'smooth' });
     }
   }
