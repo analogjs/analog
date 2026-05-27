@@ -9,6 +9,9 @@ import {
   input,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, map, startWith } from 'rxjs/operators';
 
 type Heading = { level: number; text: string; id: string };
 
@@ -30,7 +33,7 @@ const HEADING_SELECTOR = 'h2, h3';
           @for (h of headings(); track h.id) {
             <li [style.paddingLeft.px]="(h.level - 2) * 12">
               <a
-                [href]="'#' + h.id"
+                [href]="pathname() + '#' + h.id"
                 (click)="scrollTo($event, h.id)"
                 class="block py-1 text-gray-700 hover:text-rose-600 dark:text-white"
                 [class.font-semibold]="active() === h.id"
@@ -50,9 +53,18 @@ export class Toc implements AfterViewInit, OnDestroy {
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
+  private readonly router = inject(Router);
 
   protected readonly headings = signal<Heading[]>([]);
   protected readonly active = signal<string | null>(null);
+  protected readonly pathname = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => this.router.url.split('?')[0].split('#')[0]),
+      startWith(this.router.url.split('?')[0].split('#')[0]),
+    ),
+    { initialValue: this.router.url.split('?')[0].split('#')[0] },
+  );
 
   private mutationObserver?: MutationObserver;
   private intersectionObserver?: IntersectionObserver;
