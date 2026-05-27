@@ -1,5 +1,5 @@
 zerops:
-  - setup: docs0
+  - setup: static
     build:
       base: nodejs@22
       envVariables:
