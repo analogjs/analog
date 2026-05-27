@@ -25,19 +25,11 @@
   --code-bg: #111827;
 }
 
-html {
-  scroll-behavior: smooth;
-}
 html,
 body {
   background: var(--bg);
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
-}
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
 }
 
 /* Admonition color variants — picks up the kind from the
