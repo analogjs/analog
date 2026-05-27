@@ -142,9 +142,63 @@ export class EnhanceCode implements AfterViewChecked {
       // bare "overview" with no leading marker — treat as sibling
       a.setAttribute('href', `${dir}/${raw}`);
     });
+
+    this.repairOrphanAnchors();
+  }
+
+  /**
+   * Translated docs often keep the original English `#anchor` slug
+   * (`[Rutas de índice](#index-routes)`) even though the actual heading
+   * was translated and now slugs to `#rutas-de-índice`. Walk anchor
+   * links whose target id is not on the page and try to repair them by
+   * matching the link's visible text against heading text.
+   */
+  private repairOrphanAnchors(): void {
+    const article = this.host.nativeElement;
+    const headings = Array.from(
+      article.querySelectorAll<HTMLElement>(
+        'analog-markdown h2[id], analog-markdown h3[id]',
+      ),
+    );
+    if (headings.length === 0) return;
+    const byNormalizedText = new Map<string, string>();
+    for (const h of headings) {
+      const clone = h.cloneNode(true) as HTMLElement;
+      clone.querySelector('.heading-anchor')?.remove();
+      const norm = (clone.textContent ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+      if (norm && !byNormalizedText.has(norm)) {
+        byNormalizedText.set(norm, h.id);
+      }
+    }
+
+    const candidates = article.querySelectorAll<HTMLAnchorElement>(
+      'analog-markdown a[href*="#"]:not([data-anchor-repaired])',
+    );
+    candidates.forEach((a) => {
+      a.dataset['anchorRepaired'] = 'true';
+      const href = a.getAttribute('href') ?? '';
+      const hashIdx = href.indexOf('#');
+      if (hashIdx < 0) return;
+      const targetId = decodeURIComponent(href.slice(hashIdx + 1));
+      if (!targetId) return;
+      if (article.querySelector(`#${cssEscape(targetId)}`)) return;
+      const linkText = (a.textContent ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+      const matched = byNormalizedText.get(linkText);
+      if (matched) {
+        a.setAttribute('href', `${href.slice(0, hashIdx)}#${matched}`);
+      }
+    });
   }
 
   private attachHeadingAnchors(): void {
+    // Inner helper — no-op outside the directive so we can reuse it
+    // in repairOrphanAnchors without circular imports.
     const headings = this.host.nativeElement.querySelectorAll<HTMLElement>(
       'h2:not([data-anchor-attached]), h3:not([data-anchor-attached])',
     );
@@ -165,4 +219,13 @@ export class EnhanceCode implements AfterViewChecked {
       h.insertBefore(a, h.firstChild);
     });
   }
+}
+
+// CSS.escape isn't universal in older runtimes; fall back to a manual
+// escape of attribute-selector unsafe chars.
+function cssEscape(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+  return value.replace(/[^a-zA-Z0-9_-]/g, (c) => `\\${c}`);
 }
