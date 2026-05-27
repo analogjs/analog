@@ -102,8 +102,8 @@ const SPONSORS: Sponsor[] = [
     </section>
 
     <section class="border-t px-6 py-20" style="border-color: var(--border)">
-      <div class="mx-auto max-w-6xl">
-        <div class="mb-10 text-center">
+      <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div>
           <p
             class="text-xs font-semibold uppercase tracking-wide"
             style="color: var(--brand)"
@@ -113,18 +113,18 @@ const SPONSORS: Sponsor[] = [
           <h2 class="mt-2 text-4xl font-bold tracking-tight">
             Filesystem-based routing
           </h2>
-          <p
-            class="mx-auto mt-3 max-w-2xl text-base"
-            style="color: var(--fg-muted)"
-          >
+          <p class="mt-4 text-lg" style="color: var(--fg-muted)">
             Files in
             <code
-              class="rounded px-1.5 py-0.5"
+              class="rounded px-1.5 py-0.5 text-base"
               style="background: var(--hover-bg)"
               >src/app/pages/</code
             >
             become routes. Brackets are dynamic. Double brackets are catch-alls.
             Parentheses are pathless groups.
+          </p>
+          <p class="mt-4 text-base" style="color: var(--fg-muted)">
+            No route config file. No registration step. Add a file, ship a page.
           </p>
         </div>
         <docs-file-routing />
@@ -140,8 +140,8 @@ const SPONSORS: Sponsor[] = [
           var(--bg);
       "
     >
-      <div class="mx-auto max-w-6xl">
-        <div class="mb-10 text-center">
+      <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div class="lg:order-last">
           <p
             class="text-xs font-semibold uppercase tracking-wide"
             style="color: var(--brand)"
@@ -151,13 +151,15 @@ const SPONSORS: Sponsor[] = [
           <h2 class="mt-2 text-4xl font-bold tracking-tight">
             Client and server, one file pair
           </h2>
-          <p
-            class="mx-auto mt-3 max-w-2xl text-base"
-            style="color: var(--fg-muted)"
-          >
+          <p class="mt-4 text-lg" style="color: var(--fg-muted)">
             Co-locate a server loader next to the page component. Analog runs it
             on the server, ships only the response to the client, and types the
             response end-to-end.
+          </p>
+          <p class="mt-4 text-base" style="color: var(--fg-muted)">
+            The page
+            <strong style="color: var(--fg)">imports the load type</strong>
+            — no separate API client, no manual fetch.
           </p>
         </div>
         <docs-full-stack-example />

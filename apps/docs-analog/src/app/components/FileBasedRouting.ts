@@ -17,7 +17,7 @@ const MAPPINGS: Mapping[] = [
 @Component({
   selector: 'docs-file-routing',
   template: `
-    <div class="grid items-stretch gap-8 lg:grid-cols-2">
+    <div class="grid items-stretch gap-4">
       <div
         class="rounded-xl border p-5 font-mono text-sm"
         style="border-color: var(--border); background: var(--hover-bg)"

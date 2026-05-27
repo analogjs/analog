@@ -40,7 +40,7 @@ const SERVER_CODE = [
 @Component({
   selector: 'docs-full-stack-example',
   template: `
-    <div class="grid items-start gap-6 lg:grid-cols-2">
+    <div class="grid items-start gap-4">
       <article
         class="overflow-hidden rounded-xl border"
         style="border-color: var(--border)"
@@ -69,12 +69,6 @@ const SERVER_CODE = [
         <div class="fs-example" [innerHTML]="serverHtml()"></div>
       </article>
     </div>
-
-    <p class="mt-6 text-center text-sm" style="color: var(--fg-muted)">
-      The page component
-      <strong style="color: var(--fg)">imports the load type</strong>
-      and Analog runs the loader on the server, hydrates it on the client.
-    </p>
   `,
   styles: [
     `
