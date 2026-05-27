@@ -99,7 +99,8 @@ const SPONSORS: Sponsor[] = [
             class="bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-6xl font-bold leading-tight tracking-tight text-transparent sm:text-7xl"
             style="letter-spacing: -0.02em"
           >
-            The fullstack <br />Angular meta-framework
+            The fullstack <br />Angular
+            <span class="whitespace-nowrap">meta-framework</span>
           </h1>
           <p class="mt-6 text-xl" style="color: var(--fg-muted)">
             Vite-powered. File-based routing. API routes. SSR and SSG.
