@@ -4,15 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
 import { injectRequest } from '@analogjs/router/tokens';
 
-export const SUPPORTED_LOCALES = [
-  'de',
-  'es',
-  'fr',
-  'ko',
-  'pt-br',
-  'tr',
-  'zh-hans',
-] as const;
+export const SUPPORTED_LOCALES = ['de', 'es', 'pt-br', 'zh-hans'] as const;
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 

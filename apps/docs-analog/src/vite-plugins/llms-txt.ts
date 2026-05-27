@@ -3,15 +3,7 @@ import { resolve, relative } from 'node:path';
 import type { Plugin } from 'vite';
 
 const SITE_URL = 'https://analogjs.org';
-const SUPPORTED_LOCALES = new Set([
-  'de',
-  'es',
-  'fr',
-  'ko',
-  'pt-br',
-  'tr',
-  'zh-hans',
-]);
+const SUPPORTED_LOCALES = new Set(['de', 'es', 'pt-br', 'zh-hans']);
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

@@ -3,15 +3,7 @@ import { resolve, relative } from 'node:path';
 import type { Plugin } from 'vite';
 
 const SITE_URL = 'https://analogjs.org';
-const SUPPORTED_LOCALES = [
-  'de',
-  'es',
-  'fr',
-  'ko',
-  'pt-br',
-  'tr',
-  'zh-hans',
-] as const;
+const SUPPORTED_LOCALES = ['de', 'es', 'pt-br', 'zh-hans'] as const;
 const LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 
 interface DocEntry {

@@ -23,7 +23,26 @@ export default defineConfig(({ mode }) => ({
     analog({
       static: true,
       prerender: {
-        routes: ['/'],
+        discover: true,
+        routes: [
+          '/',
+          {
+            contentDir: '/src/content',
+            recursive: true,
+            transform: (file) => {
+              const LOCALES = new Set(['de', 'es', 'pt-br', 'zh-hans']);
+              const dir = (file.relativePath ?? '').split('/').filter(Boolean);
+              const locale = dir.length && LOCALES.has(dir[0]) ? dir[0] : null;
+              const rest = locale ? dir.slice(1) : dir;
+              const tail =
+                file.name === 'index'
+                  ? rest.join('/')
+                  : [...rest, file.name].join('/');
+              if (!tail) return false;
+              return locale ? `/${locale}/docs/${tail}` : `/docs/${tail}`;
+            },
+          },
+        ],
       },
       content: {
         highlighter: 'shiki',
