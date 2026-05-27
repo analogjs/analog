@@ -288,11 +288,7 @@ const SPONSORS: Sponsor[] = [
         <div class="mt-4 flex flex-wrap items-center justify-center gap-8">
           @for (p of partners; track p.name) {
             <a [href]="p.url" target="_blank" rel="noopener" [title]="p.name">
-              <img
-                [src]="p.logo"
-                [alt]="p.name"
-                class="h-20 dark:brightness-0 dark:invert"
-              />
+              <img [src]="p.logo" [alt]="p.name" class="h-20" />
             </a>
           }
         </div>
