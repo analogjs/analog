@@ -3,7 +3,11 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import type { ApplicationConfig } from '@angular/core';
+import {
+  type ApplicationConfig,
+  provideAppInitializer,
+  inject,
+} from '@angular/core';
 import {
   provideClientHydration,
   withEventReplay,
@@ -16,14 +20,17 @@ import {
 } from '@analogjs/content';
 import { withInMemoryScrolling, withRouterConfig } from '@angular/router';
 import { resolveActiveLocale } from './locale';
+import { ScrollRestorer } from './scroll';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+      // Emit Scroll events so ScrollRestorer can defer the actual scroll
+      // until our async markdown content has loaded.
       withInMemoryScrolling({
         anchorScrolling: 'enabled',
-        scrollPositionRestoration: 'enabled',
+        scrollPositionRestoration: 'disabled',
       }),
     ),
     provideHttpClient(
@@ -35,5 +42,6 @@ export const appConfig: ApplicationConfig = {
       withMarkdownRenderer(),
       withLocale({ loadLocale: resolveActiveLocale }),
     ),
+    provideAppInitializer(() => inject(ScrollRestorer).start()),
   ],
 };
