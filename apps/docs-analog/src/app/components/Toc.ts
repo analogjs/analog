@@ -162,8 +162,6 @@ export class Toc implements AfterViewInit, OnDestroy {
 
   private watchHeadings(article: HTMLElement): void {
     this.intersectionObserver?.disconnect();
-    let rafScheduled = false;
-    let pending: string | null = null;
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
         const top = entries
@@ -171,16 +169,9 @@ export class Toc implements AfterViewInit, OnDestroy {
           .sort(
             (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
           )[0];
-        if (!top) return;
-        pending = top.target.id;
-        if (rafScheduled) return;
-        rafScheduled = true;
-        requestAnimationFrame(() => {
-          rafScheduled = false;
-          if (pending && pending !== this.active()) this.active.set(pending);
-        });
+        if (top) this.active.set(top.target.id);
       },
-      { rootMargin: '0px 0px -60% 0px', threshold: 0 },
+      { rootMargin: '0px 0px -60% 0px', threshold: [0, 1] },
     );
     article
       .querySelectorAll<HTMLElement>(HEADING_SELECTOR)

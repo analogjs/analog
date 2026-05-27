@@ -1,11 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
-  AfterViewInit,
-  DestroyRef,
+  AfterViewChecked,
   Directive,
   ElementRef,
   inject,
-  OnDestroy,
   PLATFORM_ID,
 } from '@angular/core';
 
@@ -13,47 +11,16 @@ import {
  * Adds a "Copy" button to every <pre> code block under the host
  * element, idempotent (skips blocks that already have one).
  * Also wraps each h2/h3 with a hover-revealed anchor link.
- *
- * Runs once on view init and re-runs only when the article DOM
- * actually changes (SPA nav to a new doc) — avoids the per-CD-cycle
- * DOM scans that were causing scroll jank when the TOC IntersectionObserver
- * updated the active heading signal.
  */
 @Directive({
   selector: '[docsEnhanceCode]',
 })
-export class EnhanceCode implements AfterViewInit, OnDestroy {
+export class EnhanceCode implements AfterViewChecked {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly destroyRef = inject(DestroyRef);
 
-  private observer?: MutationObserver;
-  private scheduled = false;
-
-  ngAfterViewInit(): void {
+  ngAfterViewChecked(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.run();
-    this.observer = new MutationObserver(() => this.schedule());
-    this.observer.observe(this.host.nativeElement, {
-      childList: true,
-      subtree: true,
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.observer?.disconnect();
-  }
-
-  private schedule(): void {
-    if (this.scheduled) return;
-    this.scheduled = true;
-    queueMicrotask(() => {
-      this.scheduled = false;
-      this.run();
-    });
-  }
-
-  private run(): void {
     this.attachCopyButtons();
     this.attachHeadingAnchors();
     this.attachTabs();
