@@ -45,13 +45,7 @@ const COLUMNS: LinkColumn[] = [
       class="border-t px-6 py-10"
       style="border-color: var(--border); color: var(--fg-muted)"
     >
-      <div class="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="flex items-start gap-3">
-          <img src="/img/logos/analog-logo.svg" alt="" width="40" height="40" />
-          <p class="text-xs">
-            The fullstack Angular meta-framework, MIT licensed.
-          </p>
-        </div>
+      <div class="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
         @for (col of columns; track col.title) {
           <div>
             <h3 class="mb-3 text-xs font-semibold uppercase tracking-wide">
