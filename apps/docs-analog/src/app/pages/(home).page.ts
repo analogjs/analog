@@ -80,7 +80,7 @@ const SPONSORS: Sponsor[] = [
   {
     name: 'CodeRabbit',
     logo: '/img/logos/coderabbit.svg',
-    url: 'https://www.coderabbit.ai',
+    url: 'https://coderabbit.link/analogjs',
     scale: 'h-16',
   },
 ];
