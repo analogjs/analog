@@ -14,25 +14,35 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
   selector: 'docs-sidebar',
   imports: [RouterLink, RouterLinkActive, Sidebar],
   template: `
-    <nav class="text-base">
-      <ul class="space-y-1">
+    <nav [class]="depth() === 0 ? 'text-[15px]' : 'text-[14px]'">
+      <ul
+        [class]="
+          depth() === 0
+            ? 'space-y-0.5'
+            : 'mt-1 space-y-0.5 border-l ml-2 pl-3 border-gray-200 dark:border-gray-800'
+        "
+      >
         @for (node of nodes(); track nodeKey(node)) {
           @if (node.kind === 'doc') {
             <li>
               <a
                 [routerLink]="hrefFor(node.id)"
-                routerLinkActive="font-semibold text-rose-600"
+                routerLinkActive="font-medium text-rose-600 dark:text-rose-500"
                 [routerLinkActiveOptions]="{ exact: true }"
-                class="block rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-900"
+                class="block rounded px-2 py-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-100"
                 >{{ node.label }}</a
               >
             </li>
           } @else {
-            <li class="mt-4">
+            <li [class]="depth() === 0 ? 'mt-6' : 'mt-3'">
               <button
                 type="button"
                 (click)="toggle(node)"
-                class="flex w-full items-center justify-between rounded px-2 py-1 text-left text-base font-semibold uppercase tracking-wide text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                [class]="
+                  depth() === 0
+                    ? 'flex w-full items-center justify-between rounded px-2 py-1 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-200'
+                    : 'flex w-full items-center justify-between rounded px-2 py-1 text-left text-[13px] font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100'
+                "
                 [attr.aria-expanded]="isOpen(node)"
               >
                 <span>{{ node.label }}</span>
@@ -46,7 +56,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
                 >
               </button>
               @if (isOpen(node)) {
-                <docs-sidebar [nodes]="node.items" />
+                <docs-sidebar [nodes]="node.items" [depth]="depth() + 1" />
               }
             </li>
           }
@@ -57,6 +67,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
 })
 export class Sidebar {
   readonly nodes = input<readonly SidebarNode[]>(sidebar);
+  readonly depth = input<number>(0);
 
   private readonly locale = useLocaleSignal();
   private readonly router = inject(Router);

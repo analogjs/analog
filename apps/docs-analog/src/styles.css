@@ -110,10 +110,15 @@ body {
 /* Code block enhancements */
 .analog-markdown pre {
   position: relative;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  border-radius: 0.625rem;
+  padding: 1rem 1.125rem;
   overflow-x: auto;
-  margin: 1rem 0;
+  margin: 1.25rem 0;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.04);
+}
+.dark .analog-markdown pre {
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.4);
 }
 
 /* Shiki dual-theme switch: flip every span's color/bg to its
@@ -149,24 +154,33 @@ body {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #e5e7eb;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
   font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s;
+  backdrop-filter: blur(4px);
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    border-color 0.15s;
 }
-.analog-markdown pre:hover .code-copy-btn {
+.analog-markdown pre:hover .code-copy-btn,
+.code-copy-btn:focus-visible {
   opacity: 1;
 }
 .code-copy-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
 }
-.code-copy-btn[data-copied='true']::after {
-  content: ' ✓';
+.code-copy-btn[data-copied='true'] {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.4);
 }
 
 /* doc-tabs (from mdxTabsExtension + EnhanceCode hydration) */
@@ -264,6 +278,17 @@ body {
 .analog-markdown a {
   color: var(--link);
   text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--link) 35%, transparent);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+.analog-markdown a:hover {
+  color: var(--brand);
+  text-decoration-color: var(--brand);
+  text-decoration-thickness: 2px;
 }
 .analog-markdown ul {
   list-style: disc;
