@@ -34,6 +34,12 @@ body {
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
+
+/* Promote sticky rails to their own compositor layer so Chrome doesn't
+   re-layout/repaint them every scroll frame on long docs pages. */
+.docs-sticky-rail {
+  will-change: transform;
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

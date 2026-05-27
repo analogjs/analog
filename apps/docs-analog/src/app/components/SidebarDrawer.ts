@@ -45,7 +45,7 @@ import { Sidebar } from './Sidebar';
 
     <aside
       id="docs-sidebar-drawer"
-      class="lg:sticky lg:top-8 lg:self-start lg:block lg:w-56 lg:shrink-0"
+      class="docs-sticky-rail lg:sticky lg:top-8 lg:self-start lg:block lg:w-56 lg:shrink-0"
       [class.fixed]="open()"
       [class.inset-y-0]="open()"
       [class.left-0]="open()"
