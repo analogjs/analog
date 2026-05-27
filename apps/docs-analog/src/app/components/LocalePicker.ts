@@ -82,6 +82,10 @@ export class LocalePicker {
       '/',
     );
     const target = code === 'en' ? stripped : `/${code}${stripped}`;
-    this.router.navigateByUrl(target);
+    // Hard reload: CONTENT_LOCALE is provided once at app bootstrap via
+    // a useFactory and the cached value drives every content lookup, so
+    // a SPA navigation keeps serving the previous locale's markdown.
+    // Reloading rebuilds the injector with the new active locale.
+    window.location.assign(target);
   }
 }
