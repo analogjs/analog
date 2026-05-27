@@ -8,7 +8,7 @@ zerops:
         - pnpm i
         - pnpm exec nx build docs-analog
       deployFiles:
-        - dist/apps/docs-analog/client/~
+        - dist/apps/docs-analog/analog/public/~
       cache:
         - node_modules
     run:
