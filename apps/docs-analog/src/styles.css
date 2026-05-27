@@ -164,7 +164,6 @@ body {
   letter-spacing: 0.01em;
   cursor: pointer;
   opacity: 0;
-  backdrop-filter: blur(4px);
   transition:
     opacity 0.15s,
     background 0.15s,
