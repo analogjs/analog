@@ -1,4 +1,7 @@
-import { inject } from '@angular/core';
+import { inject, type Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, map, startWith } from 'rxjs/operators';
 import { injectRequest } from '@analogjs/router/tokens';
 
 export const SUPPORTED_LOCALES = [
@@ -29,4 +32,22 @@ export function resolveActiveLocale(): SupportedLocale | null {
     return extractLocale(window.location.pathname);
   }
   return null;
+}
+
+/**
+ * Router-reactive locale. Components that build hrefs from the locale
+ * (sidebar, prev/next, etc.) should call this in field initializers so
+ * the hrefs re-evaluate when the user navigates between locales.
+ */
+export function useLocaleSignal(): Signal<SupportedLocale | null> {
+  const router = inject(Router);
+  const initial = extractLocale(router.url);
+  return toSignal(
+    router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(() => extractLocale(router.url)),
+      startWith(initial),
+    ),
+    { initialValue: initial },
+  );
 }

@@ -7,7 +7,7 @@ import {
   RouterLinkActive,
 } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
-import { CONTENT_LOCALE } from '@analogjs/content';
+import { useLocaleSignal } from '../locale';
 import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
 
 @Component({
@@ -58,7 +58,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
 export class Sidebar {
   readonly nodes = input<readonly SidebarNode[]>(sidebar);
 
-  private readonly locale = inject(CONTENT_LOCALE, { optional: true });
+  private readonly locale = useLocaleSignal();
   private readonly router = inject(Router);
 
   private readonly currentUrl = toSignal(
@@ -78,7 +78,8 @@ export class Sidebar {
   private readonly overrides = signal(new Map<string, boolean>());
 
   protected hrefFor(id: string): string {
-    return this.locale ? `/${this.locale}/docs/${id}` : `/docs/${id}`;
+    const loc = this.locale();
+    return loc ? `/${loc}/docs/${id}` : `/docs/${id}`;
   }
 
   protected nodeKey(node: SidebarNode): string {
