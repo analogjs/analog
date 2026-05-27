@@ -39,17 +39,17 @@ const ECOSYSTEM: EcosystemTool[] = [
     url: 'https://storybook.js.org',
   },
   {
-    name: 'Astro',
-    tagline: 'Angular components as islands',
-    logo: 'https://cdn.simpleicons.org/astro/BC52EE',
-    url: 'https://astro.build',
-  },
-  {
     name: 'Nx',
     tagline: 'Smart monorepos',
     logo: '/img/logos/nx-logo.dark.svg',
     logoDark: '/img/logos/nx-logo.light.svg',
     url: 'https://nx.dev',
+  },
+  {
+    name: 'Astro',
+    tagline: 'Angular components as islands',
+    logo: 'https://cdn.simpleicons.org/astro/BC52EE',
+    url: 'https://astro.build',
   },
 ];
 
