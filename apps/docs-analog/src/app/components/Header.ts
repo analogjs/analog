@@ -25,7 +25,7 @@ import { ThemeToggle } from './ThemeToggle';
       <div class="flex items-center gap-4 text-sm">
         <docs-search />
         <nav class="hidden gap-4 sm:flex">
-          <a routerLink="/docs">Docs</a>
+          <a routerLink="/docs/introduction">Docs</a>
           <a routerLink="/docs/support">Support</a>
           <a
             href="https://github.com/analogjs/analog"

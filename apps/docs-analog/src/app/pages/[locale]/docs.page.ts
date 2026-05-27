@@ -1,5 +1,12 @@
-import { Component, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  Router,
+  RouterOutlet,
+} from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { SidebarDrawer } from '../../components/SidebarDrawer';
 
 @Component({
@@ -19,10 +26,19 @@ export default class LocaleDocsLayoutPage {
   constructor() {
     const router = inject(Router);
     const route = inject(ActivatedRoute);
-    const locale = route.snapshot.paramMap.get('locale');
-    const url = router.url.split('?')[0].replace(/\/$/, '');
-    if (locale && url === `/${locale}/docs`) {
-      router.navigate([`/${locale}/docs/introduction`], { replaceUrl: true });
-    }
+    const redirectIfRoot = () => {
+      const locale = route.snapshot.paramMap.get('locale');
+      const url = router.url.split('?')[0].replace(/\/$/, '');
+      if (locale && url === `/${locale}/docs`) {
+        router.navigate([`/${locale}/docs/introduction`], { replaceUrl: true });
+      }
+    };
+    redirectIfRoot();
+    router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(inject(DestroyRef)),
+      )
+      .subscribe(() => redirectIfRoot());
   }
 }

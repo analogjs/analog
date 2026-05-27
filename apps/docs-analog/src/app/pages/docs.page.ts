@@ -1,5 +1,7 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { SidebarDrawer } from '../components/SidebarDrawer';
 
 @Component({
@@ -18,12 +20,23 @@ import { SidebarDrawer } from '../components/SidebarDrawer';
 export default class DocsLayoutPage {
   // /docs (with no slug) is the docs root — redirect to introduction so
   // the URL contract matches the Docusaurus default and inbound links
-  // to /docs/ don't render an empty article.
+  // to /docs/ don't render an empty article. Runs on every NavigationEnd
+  // because the layout component is reused across docs child routes, so
+  // the constructor only fires on first mount.
   constructor() {
     const router = inject(Router);
-    const url = router.url.split('?')[0].replace(/\/$/, '');
-    if (url === '/docs') {
-      router.navigate(['/docs/introduction'], { replaceUrl: true });
-    }
+    const redirectIfRoot = () => {
+      const url = router.url.split('?')[0].replace(/\/$/, '');
+      if (url === '/docs') {
+        router.navigate(['/docs/introduction'], { replaceUrl: true });
+      }
+    };
+    redirectIfRoot();
+    router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(inject(DestroyRef)),
+      )
+      .subscribe(() => redirectIfRoot());
   }
 }
