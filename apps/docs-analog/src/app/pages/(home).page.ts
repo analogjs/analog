@@ -11,6 +11,40 @@ interface Sponsor {
   scale?: string;
 }
 
+interface EcosystemTool {
+  name: string;
+  tagline: string;
+  logo: string;
+  url: string;
+}
+
+const ECOSYSTEM: EcosystemTool[] = [
+  {
+    name: 'Vite',
+    tagline: 'Build and dev server',
+    logo: '/img/logos/vite-logo.svg',
+    url: 'https://vitejs.dev',
+  },
+  {
+    name: 'Vitest',
+    tagline: 'Unit + component tests',
+    logo: 'https://cdn.simpleicons.org/vitest/729B1B',
+    url: 'https://vitest.dev',
+  },
+  {
+    name: 'Storybook',
+    tagline: 'Component workshop',
+    logo: 'https://cdn.simpleicons.org/storybook/FF4785',
+    url: 'https://storybook.js.org',
+  },
+  {
+    name: 'Astro',
+    tagline: 'Angular components as islands',
+    logo: 'https://cdn.simpleicons.org/astro/BC52EE',
+    url: 'https://astro.build',
+  },
+];
+
 const PARTNERS: Sponsor[] = [
   {
     name: 'Zerops',
@@ -166,6 +200,52 @@ const SPONSORS: Sponsor[] = [
       </div>
     </section>
 
+    <section class="border-t px-6 py-20" style="border-color: var(--border)">
+      <div class="mx-auto max-w-6xl text-center">
+        <p
+          class="text-xs font-semibold uppercase tracking-wide"
+          style="color: var(--brand)"
+        >
+          Ecosystem
+        </p>
+        <h2 class="mt-2 text-4xl font-bold tracking-tight">
+          The Vite ecosystem, in Angular
+        </h2>
+        <p
+          class="mx-auto mt-3 max-w-2xl text-lg"
+          style="color: var(--fg-muted)"
+        >
+          Analog plugs into the tools your team already trusts. No fork, no shim
+          — the same plugins, the same configuration.
+        </p>
+        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          @for (tool of ecosystem; track tool.name) {
+            <a
+              [href]="tool.url"
+              target="_blank"
+              rel="noopener"
+              class="flex flex-col items-center gap-4 rounded-xl border p-6 transition hover:-translate-y-1 hover:shadow-md"
+              style="border-color: var(--border); background: var(--bg)"
+            >
+              <img
+                [src]="tool.logo"
+                [alt]="tool.name"
+                width="64"
+                height="64"
+                class="h-16 w-16"
+              />
+              <div>
+                <p class="text-lg font-semibold">{{ tool.name }}</p>
+                <p class="mt-1 text-sm" style="color: var(--fg-muted)">
+                  {{ tool.tagline }}
+                </p>
+              </div>
+            </a>
+          }
+        </div>
+      </div>
+    </section>
+
     <section class="border-t px-6 py-12" style="border-color: var(--border)">
       <div class="mx-auto max-w-6xl text-center">
         <p class="text-sm sm:text-base" style="color: var(--fg-muted)">
@@ -222,6 +302,7 @@ const SPONSORS: Sponsor[] = [
   `,
 })
 export default class HomePage {
+  protected readonly ecosystem = ECOSYSTEM;
   protected readonly partners = PARTNERS;
   protected readonly sponsors = SPONSORS;
 }
