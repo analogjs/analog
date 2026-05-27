@@ -22,13 +22,13 @@ const ECOSYSTEM: EcosystemTool[] = [
   {
     name: 'Vite',
     tagline: 'Build and dev server',
-    logo: '/img/logos/vite-logo.svg',
+    logo: '/img/logos/vite-icon-color-dark.svg',
     url: 'https://vitejs.dev',
   },
   {
     name: 'Vitest',
     tagline: 'Unit + component tests',
-    logo: 'https://cdn.simpleicons.org/vitest/729B1B',
+    logo: '/img/logos/vitest-icon-color-dark.svg',
     url: 'https://vitest.dev',
   },
   {
