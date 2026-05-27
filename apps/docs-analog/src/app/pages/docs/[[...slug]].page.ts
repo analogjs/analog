@@ -45,6 +45,20 @@ interface DocAttributes {
               </p>
             }
           </header>
+          <details
+            class="mb-6 rounded border p-3 lg:hidden"
+            style="border-color: var(--border)"
+          >
+            <summary
+              class="cursor-pointer text-sm font-semibold uppercase tracking-wide"
+              style="color: var(--fg-muted)"
+            >
+              On this page
+            </summary>
+            <div class="mt-3">
+              <docs-toc [articleRef]="articleRef()" [hideHeader]="true" />
+            </div>
+          </details>
           <analog-markdown class="prose max-w-none" [content]="doc.content" />
           @if (slug(); as s) {
             <docs-doc-footer [slug]="s" />

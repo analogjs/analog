@@ -19,11 +19,13 @@ const HEADING_SELECTOR = 'h2, h3';
   template: `
     @if (headings().length > 0) {
       <nav class="text-sm">
-        <p
-          class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500"
-        >
-          On this page
-        </p>
+        @if (!hideHeader()) {
+          <p
+            class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500"
+          >
+            On this page
+          </p>
+        }
         <ul class="space-y-1">
           @for (h of headings(); track h.id) {
             <li [style.paddingLeft.px]="(h.level - 2) * 12">
@@ -44,6 +46,7 @@ const HEADING_SELECTOR = 'h2, h3';
 })
 export class Toc implements AfterViewInit, OnDestroy {
   readonly articleRef = input.required<ElementRef<HTMLElement>>();
+  readonly hideHeader = input(false);
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
