@@ -35,39 +35,36 @@ import { Sidebar } from './Sidebar';
       ☰ Menu
     </button>
 
-    @if (open()) {
-      <div
-        class="fixed inset-0 z-40 bg-black/40 lg:hidden"
-        (click)="open.set(false)"
-        aria-hidden="true"
-      ></div>
-    }
+    <!-- Backdrop: always rendered, fades opacity for animation. -->
+    <div
+      class="pointer-events-none fixed inset-0 z-40 bg-black/40 opacity-0 transition-opacity duration-200 ease-out lg:hidden"
+      [class.!pointer-events-auto]="open()"
+      [class.!opacity-100]="open()"
+      (click)="open.set(false)"
+      aria-hidden="true"
+    ></div>
 
+    <!--
+      Drawer:
+        mobile: always positioned fixed; translates off-screen when closed
+        so the open/close transition is smooth in both directions.
+        lg+: reset to a sticky inline rail and clear the transform.
+    -->
     <aside
       id="docs-sidebar-drawer"
-      class="docs-sticky-rail lg:sticky lg:top-8 lg:self-start lg:block lg:w-56 lg:shrink-0"
-      [class.fixed]="open()"
-      [class.inset-y-0]="open()"
-      [class.left-0]="open()"
-      [class.z-50]="open()"
-      [class.w-72]="open()"
-      [class.overflow-y-auto]="open()"
-      [class.p-6]="open()"
-      [class.shadow-xl]="open()"
-      [class.hidden]="!open()"
-      [style.background]="open() ? 'var(--bg)' : ''"
+      class="docs-sticky-rail fixed inset-y-0 left-0 z-50 w-72 -translate-x-full overflow-y-auto p-6 shadow-xl transition-transform duration-200 ease-out lg:sticky lg:inset-auto lg:left-auto lg:top-8 lg:z-auto lg:block lg:w-56 lg:translate-x-0 lg:self-start lg:overflow-visible lg:p-0 lg:shadow-none lg:transition-none"
+      [class.translate-x-0]="open()"
+      [style.background]="'var(--bg)'"
     >
-      @if (open()) {
-        <button
-          type="button"
-          class="mb-4 ml-auto flex h-8 w-8 items-center justify-center rounded border lg:hidden"
-          style="border-color: var(--border)"
-          aria-label="Close documentation menu"
-          (click)="open.set(false)"
-        >
-          ✕
-        </button>
-      }
+      <button
+        type="button"
+        class="mb-4 ml-auto flex h-8 w-8 items-center justify-center rounded border lg:hidden"
+        style="border-color: var(--border)"
+        aria-label="Close documentation menu"
+        (click)="open.set(false)"
+      >
+        ✕
+      </button>
       <docs-sidebar />
     </aside>
   `,
