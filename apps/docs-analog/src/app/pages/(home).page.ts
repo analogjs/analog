@@ -1,12 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-
-interface Feature {
-  title: string;
-  body: string;
-  logo: string;
-  alt: string;
-}
+import { FileBasedRouting } from '../components/FileBasedRouting';
+import { FullStackExample } from '../components/FullStackExample';
+import { Terminal } from '../components/Terminal';
 
 interface Sponsor {
   name: string;
@@ -14,27 +10,6 @@ interface Sponsor {
   url: string;
   scale?: string;
 }
-
-const FEATURES: Feature[] = [
-  {
-    title: 'Vite-powered',
-    body: 'Analog is powered by Vite and Vitest, with the full ecosystem of plugins, integrations, and tools.',
-    logo: '/img/logos/vite-logo.svg',
-    alt: 'Vite',
-  },
-  {
-    title: 'Hybrid SSR/SSG support',
-    body: 'Hybrid Server-Side Rendering and Static Site Generation for Angular applications, out of the box.',
-    logo: '/img/logos/angular-gradient.png',
-    alt: 'Angular',
-  },
-  {
-    title: 'File-based routing and API routes',
-    body: 'File-based routing, API routes, and server-side data fetching — a seamless developer experience for Angular.',
-    logo: '/img/logos/analog-logo.svg',
-    alt: 'Analog',
-  },
-];
 
 const PARTNERS: Sponsor[] = [
   {
@@ -66,10 +41,10 @@ const SPONSORS: Sponsor[] = [
 ];
 
 @Component({
-  imports: [RouterLink],
+  imports: [RouterLink, FileBasedRouting, FullStackExample, Terminal],
   template: `
     <section
-      class="relative overflow-hidden px-6 py-20 text-center"
+      class="relative overflow-hidden px-6 pb-20 pt-24"
       style="
         background:
           radial-gradient(ellipse at 20% 0%, rgba(195, 15, 46, 0.18), transparent 55%),
@@ -77,67 +52,116 @@ const SPONSORS: Sponsor[] = [
           var(--bg);
       "
     >
-      <div class="mx-auto max-w-5xl">
-        <img
-          src="/img/logos/analog-logo.svg"
-          alt=""
-          width="200"
-          height="200"
-          class="mx-auto drop-shadow"
-        />
-        <h1
-          class="mt-8 bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-7xl font-bold tracking-tight text-transparent"
-        >
-          Analog
-        </h1>
-        <p class="mt-4 text-xl" style="color: var(--fg-muted)">
-          The fullstack Angular meta-framework
-        </p>
-        <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <a
-            routerLink="/docs"
-            class="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 font-semibold text-white shadow hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+      <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div class="text-center lg:text-left">
+          <img
+            src="/img/logos/analog-logo.svg"
+            alt=""
+            width="96"
+            height="96"
+            class="mx-auto mb-6 lg:mx-0"
+          />
+          <h1
+            class="bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-6xl font-bold leading-tight tracking-tight text-transparent sm:text-7xl"
+            style="letter-spacing: -0.02em"
           >
-            Read the Docs
-          </a>
-          <a
-            href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
-            target="_blank"
-            rel="noopener"
-            class="inline-flex items-center gap-2 rounded-md border px-6 py-3 font-semibold hover:bg-gray-50 dark:hover:bg-gray-900"
-            style="border-color: var(--border)"
+            The fullstack <br />Angular meta-framework
+          </h1>
+          <p class="mt-6 text-xl" style="color: var(--fg-muted)">
+            Vite-powered. File-based routing. API routes. SSR and SSG.
+            Everything you need to build modern Angular apps and sites.
+          </p>
+          <div
+            class="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
           >
-            <img
-              src="/img/logos/stackblitz-logo.svg"
-              alt=""
-              width="20"
-              height="20"
-            />
-            Open in StackBlitz
-          </a>
+            <a
+              routerLink="/docs/introduction"
+              class="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 font-semibold text-white shadow hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+            >
+              Read the Docs
+            </a>
+            <a
+              href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
+              target="_blank"
+              rel="noopener"
+              class="inline-flex items-center gap-2 rounded-md border px-6 py-3 font-semibold hover:bg-gray-50 dark:hover:bg-gray-900"
+              style="border-color: var(--border)"
+            >
+              <img
+                src="/img/logos/stackblitz-logo.svg"
+                alt=""
+                width="20"
+                height="20"
+              />
+              Open in StackBlitz
+            </a>
+          </div>
         </div>
+        <docs-terminal />
+      </div>
+    </section>
+
+    <section class="border-t px-6 py-20" style="border-color: var(--border)">
+      <div class="mx-auto max-w-6xl">
+        <div class="mb-10 text-center">
+          <p
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: var(--brand)"
+          >
+            Routing
+          </p>
+          <h2 class="mt-2 text-4xl font-bold tracking-tight">
+            Filesystem-based routing
+          </h2>
+          <p
+            class="mx-auto mt-3 max-w-2xl text-base"
+            style="color: var(--fg-muted)"
+          >
+            Files in
+            <code
+              class="rounded px-1.5 py-0.5"
+              style="background: var(--hover-bg)"
+              >src/app/pages/</code
+            >
+            become routes. Brackets are dynamic. Double brackets are catch-alls.
+            Parentheses are pathless groups.
+          </p>
+        </div>
+        <docs-file-routing />
       </div>
     </section>
 
     <section
-      class="mx-auto grid max-w-6xl gap-8 border-t px-6 py-16 sm:grid-cols-2 lg:grid-cols-3"
-      style="border-color: var(--border)"
+      class="border-t px-6 py-20"
+      style="
+        border-color: var(--border);
+        background:
+          radial-gradient(ellipse at 50% 100%, rgba(124, 58, 237, 0.08), transparent 60%),
+          var(--bg);
+      "
     >
-      @for (f of features; track f.title) {
-        <article class="flex flex-col items-center text-center">
-          <img
-            [src]="f.logo"
-            [alt]="f.alt"
-            width="160"
-            height="160"
-            class="mb-6"
-          />
-          <h2 class="text-xl font-semibold">{{ f.title }}</h2>
-          <p class="mt-2 text-base" style="color: var(--fg-muted)">
-            {{ f.body }}
+      <div class="mx-auto max-w-6xl">
+        <div class="mb-10 text-center">
+          <p
+            class="text-xs font-semibold uppercase tracking-wide"
+            style="color: var(--brand)"
+          >
+            Fullstack
           </p>
-        </article>
-      }
+          <h2 class="mt-2 text-4xl font-bold tracking-tight">
+            Client and server, one file pair
+          </h2>
+          <p
+            class="mx-auto mt-3 max-w-2xl text-base"
+            style="color: var(--fg-muted)"
+          >
+            Co-locate a server loader next to the page component. Analog runs it
+            on the server, ships only the response to the client, and types the
+            response end-to-end.
+          </p>
+        </div>
+        <docs-full-stack-example />
+      </div>
     </section>
 
     <section class="border-t px-6 py-12" style="border-color: var(--border)">
@@ -188,8 +212,6 @@ const SPONSORS: Sponsor[] = [
           href="mailto:partnerships@analogjs.org?subject=Partnerships"
           class="mt-10 inline-block rounded-md px-5 py-2 text-sm font-semibold text-white shadow"
           style="background: var(--brand)"
-          onmouseover="this.style.background='var(--brand-hover)'"
-          onmouseout="this.style.background='var(--brand)'"
         >
           Partner with Analog
         </a>
@@ -198,7 +220,6 @@ const SPONSORS: Sponsor[] = [
   `,
 })
 export default class HomePage {
-  protected readonly features = FEATURES;
   protected readonly partners = PARTNERS;
   protected readonly sponsors = SPONSORS;
 }
