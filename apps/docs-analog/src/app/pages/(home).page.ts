@@ -103,8 +103,8 @@ const SPONSORS: Sponsor[] = [
             <span class="whitespace-nowrap">meta-framework</span>
           </h1>
           <p class="mt-6 text-xl" style="color: var(--fg-muted)">
-            Vite-powered. File-based routing. API routes. SSR and SSG.
-            Everything you need to build modern Angular apps and sites.
+            Vite-based. File-based routing. API routes. SSR and SSG. Everything
+            you need to build modern Angular apps and sites.
           </p>
           <div
             class="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
