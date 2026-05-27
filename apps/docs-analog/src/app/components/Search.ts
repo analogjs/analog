@@ -7,7 +7,9 @@ const DOCSEARCH_SCRIPT = 'https://cdn.jsdelivr.net/npm/@docsearch/js@3';
 
 @Component({
   selector: 'docs-search',
-  template: ` <div class="docsearch-trigger min-h-9 min-w-[11rem]"></div> `,
+  template: ` <div
+    class="docsearch-trigger min-h-9 min-w-9 sm:min-w-[11rem]"
+  ></div>`,
 })
 export class Search implements AfterViewInit {
   private readonly platformId = inject(PLATFORM_ID);

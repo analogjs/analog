@@ -89,7 +89,7 @@ const SPONSORS: Sponsor[] = [
   imports: [RouterLink, FileBasedRouting, FullStackExample, Terminal],
   template: `
     <section
-      class="relative overflow-hidden px-6 pb-20 pt-24"
+      class="relative overflow-hidden px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-24"
       style="
         background:
           radial-gradient(ellipse at 20% 0%, rgba(195, 15, 46, 0.18), transparent 55%),
@@ -104,25 +104,28 @@ const SPONSORS: Sponsor[] = [
             alt=""
             width="96"
             height="96"
-            class="mx-auto mb-6 lg:mx-0"
+            class="mx-auto mb-6 h-20 w-20 sm:h-24 sm:w-24 lg:mx-0"
           />
           <h1
-            class="bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-6xl font-bold leading-tight tracking-tight text-transparent sm:text-7xl"
+            class="bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-4xl font-bold leading-[1.05] tracking-tight text-transparent sm:text-6xl lg:text-7xl"
             style="letter-spacing: -0.02em"
           >
-            The fullstack <br />Angular
+            The fullstack <br class="hidden sm:inline" />Angular
             <span class="whitespace-nowrap">meta-framework</span>
           </h1>
-          <p class="mt-6 text-xl" style="color: var(--fg-muted)">
+          <p
+            class="mt-5 text-base sm:mt-6 sm:text-xl"
+            style="color: var(--fg-muted)"
+          >
             Vite-based. File-based routing. API routes. SSR and SSG. Everything
             you need to build modern Angular apps and sites.
           </p>
           <div
-            class="mt-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start"
+            class="mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 lg:justify-start"
           >
             <a
               routerLink="/docs/introduction"
-              class="inline-flex items-center rounded-md bg-gray-900 px-6 py-3 font-semibold text-white shadow hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+              class="inline-flex items-center rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-gray-800 sm:px-6 sm:py-3 sm:text-base dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
             >
               Read the Docs
             </a>
@@ -130,7 +133,7 @@ const SPONSORS: Sponsor[] = [
               href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
               target="_blank"
               rel="noopener"
-              class="inline-flex items-center gap-2 rounded-md border px-6 py-3 font-semibold hover:bg-gray-50 dark:hover:bg-gray-900"
+              class="inline-flex items-center gap-2 rounded-md border px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 sm:px-6 sm:py-3 sm:text-base dark:hover:bg-gray-900"
               style="border-color: var(--border)"
             >
               <img
