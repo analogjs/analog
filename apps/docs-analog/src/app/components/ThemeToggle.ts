@@ -11,16 +11,11 @@ type Theme = 'light' | 'dark';
     <button
       type="button"
       class="rounded p-1.5 text-sm hover:bg-gray-100"
-      [attr.aria-label]="
-        theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
-      "
+      aria-label="Toggle theme"
       (click)="toggle()"
     >
-      @if (theme() === 'dark') {
-        ☀️
-      } @else {
-        🌙
-      }
+      <span class="dark:hidden">🌙</span>
+      <span class="hidden dark:inline">☀️</span>
     </button>
   `,
 })

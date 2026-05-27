@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   AfterViewInit,
   Component,
+  effect,
   ElementRef,
   OnDestroy,
   PLATFORM_ID,
@@ -13,7 +14,24 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
 
-type Heading = { level: number; text: string; id: string };
+export type Heading = { level: number; text: string; id: string };
+
+/**
+ * Extract h2/h3 entries from a rendered markdown HTML string.
+ * Mirrors what Toc.collectHeadings produces from the live DOM, but
+ * runs synchronously on both server and client so the SSR snapshot
+ * can include a populated TOC.
+ */
+export function extractHeadings(html: string): Heading[] {
+  const re = /<h([23])\s+id="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
+  const out: Heading[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const text = m[3].replace(/<[^>]*>/g, '').trim();
+    if (text) out.push({ level: Number(m[1]), text, id: m[2] });
+  }
+  return out;
+}
 
 const HEADING_SELECTOR = 'h2, h3';
 
@@ -50,12 +68,18 @@ const HEADING_SELECTOR = 'h2, h3';
 export class Toc implements AfterViewInit, OnDestroy {
   readonly articleRef = input.required<ElementRef<HTMLElement>>();
   readonly hideHeader = input(false);
+  /**
+   * Optional pre-computed headings (extracted from the rendered markdown
+   * string by the parent). When provided, the TOC renders these
+   * immediately on SSR so the right rail isn't empty before hydration.
+   */
+  readonly initialHeadings = input<readonly Heading[]>([]);
 
   private readonly platformId = inject(PLATFORM_ID);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly router = inject(Router);
 
-  protected readonly headings = signal<Heading[]>([]);
+  protected readonly headings = signal<readonly Heading[]>([]);
   protected readonly active = signal<string | null>(null);
   protected readonly pathname = toSignal(
     this.router.events.pipe(
@@ -68,6 +92,23 @@ export class Toc implements AfterViewInit, OnDestroy {
 
   private mutationObserver?: MutationObserver;
   private intersectionObserver?: IntersectionObserver;
+
+  constructor() {
+    // Mirror the parent's pre-parsed headings into the signal so SSR
+    // renders a populated TOC. On the client, ngAfterViewInit overwrites
+    // from the live DOM after first paint to pick up any post-render IDs
+    // assigned by EnhanceCode.
+    effect(() => {
+      const initial = this.initialHeadings();
+      this.headings.set(initial);
+      // Default the active highlight to the first heading so the SSR
+      // snapshot matches a fresh "scrolled to top" load. The
+      // IntersectionObserver overrides this once the user scrolls.
+      if (initial.length > 0) {
+        this.active.set(initial[0].id);
+      }
+    });
+  }
 
   ngAfterViewInit(): void {
     if (!this.isBrowser) return;

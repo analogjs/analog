@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import {
   Component,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -16,7 +17,7 @@ import {
 } from '@analogjs/content';
 import { DocFooter } from '../../components/DocFooter';
 import { EnhanceCode } from '../../components/EnhanceCode';
-import { Toc } from '../../components/Toc';
+import { extractHeadings, Toc } from '../../components/Toc';
 import { DocSeo } from '../../seo';
 
 interface DocAttributes {
@@ -28,7 +29,7 @@ interface DocAttributes {
   imports: [AsyncPipe, MarkdownComponent, DocFooter, EnhanceCode, Toc],
   template: `
     <div class="flex gap-8">
-      <div #article docsEnhanceCode class="flex-1 min-w-0">
+      <div #article docsEnhanceCode class="flex-1 min-w-0 min-h-screen">
         @if (doc$ | async; as doc) {
           <header class="mb-6">
             @if (doc.attributes.title) {
@@ -56,7 +57,11 @@ interface DocAttributes {
               On this page
             </summary>
             <div class="mt-3">
-              <docs-toc [articleRef]="articleRef()" [hideHeader]="true" />
+              <docs-toc
+                [articleRef]="articleRef()"
+                [initialHeadings]="headings()"
+                [hideHeader]="true"
+              />
             </div>
           </details>
           <analog-markdown class="prose max-w-none" [content]="doc.content" />
@@ -67,7 +72,10 @@ interface DocAttributes {
       </div>
       <aside class="hidden w-56 shrink-0 lg:block">
         <div class="sticky top-8">
-          <docs-toc [articleRef]="articleRef()" />
+          <docs-toc
+            [articleRef]="articleRef()"
+            [initialHeadings]="headings()"
+          />
         </div>
       </aside>
     </div>
@@ -85,6 +93,10 @@ export default class DocPage {
   );
 
   private readonly doc = toSignal(this.doc$);
+  protected readonly headings = computed(() => {
+    const c = this.doc()?.content;
+    return typeof c === 'string' ? extractHeadings(c) : [];
+  });
   private readonly locale = inject(CONTENT_LOCALE, { optional: true });
   private readonly seo = inject(DocSeo);
 

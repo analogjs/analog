@@ -7,19 +7,7 @@ const DOCSEARCH_SCRIPT = 'https://cdn.jsdelivr.net/npm/@docsearch/js@3';
 
 @Component({
   selector: 'docs-search',
-  template: `
-    <button
-      type="button"
-      class="docsearch-trigger flex items-center gap-2 rounded border px-3 py-1 text-sm text-gray-500 hover:bg-gray-50"
-      aria-label="Search docs"
-    >
-      <span>Search…</span>
-      <kbd
-        class="hidden rounded border bg-gray-50 px-1.5 py-0.5 text-xs sm:inline"
-        >⌘K</kbd
-      >
-    </button>
-  `,
+  template: ` <div class="docsearch-trigger min-h-9 min-w-[11rem]"></div> `,
 })
 export class Search implements AfterViewInit {
   private readonly platformId = inject(PLATFORM_ID);
