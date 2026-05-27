@@ -34,7 +34,6 @@ type FormErrors =
 
 @Component({
   selector: 'app-newsletter-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Newsletter Signup</h3>
@@ -146,7 +145,6 @@ The example below defines a search form with the `search` field as a query param
 // src/app/pages/search.page.ts
 @Component({
   selector: 'app-search-page',
-  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Search</h3>

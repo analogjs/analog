@@ -5,7 +5,6 @@ import { Footer } from './components/Footer';
 
 @Component({
   selector: 'docs-root',
-  standalone: true,
   imports: [RouterOutlet, Header, Footer],
   template: `
     <docs-header />

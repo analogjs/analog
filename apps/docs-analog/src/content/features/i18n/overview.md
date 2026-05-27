@@ -99,7 +99,6 @@ A common pattern is to redirect the root URL to the user's preferred locale:
 ```ts
 // src/app/pages/index.page.ts
 @Component({
-  standalone: true,
   template: '',
 })
 export default class IndexPage {

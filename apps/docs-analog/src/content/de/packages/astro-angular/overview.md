@@ -152,7 +152,6 @@ Die Astro-Angular-Integration unterstützt **nur** das Rendern von standalone Ko
 ```ts
 @Component({
   selector: 'app-hello',
-  standalone: true,
   imports: [NgIf],
   template: `
     <p>Hello from Angular!!</p>
@@ -238,7 +237,6 @@ interface Todo {
 
 @Component({
   selector: 'app-todos',
-  standalone: true,
   imports: [NgFor],
   template: `
     <h2>Todos</h2>

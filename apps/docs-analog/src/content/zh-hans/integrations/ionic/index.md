@@ -143,7 +143,6 @@ export const appConfig: ApplicationConfig = {
 ```ts
 @Component({
   selector: 'demo-root',
-  standalone: true,
   imports: [IonApp, IonRouterOutlet],
   template: `<ion-app><ion-router-outlet></ion-router-outlet></ion-app>`,
 })
@@ -233,7 +232,6 @@ Ionic 框架 [尚不支持 Angular 新的客户端水合](https://github.com/ion
      ```ts
      @Component({
        selector: 'demo-root',
-       standalone: true,
        imports: [IonApp, IonRouterOutlet],
        template: `
          <ion-app ngSkipHydration>

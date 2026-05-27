@@ -139,7 +139,6 @@ pnpm install ionicons
    ```ts
    @Component({
      selector: 'demo-root',
-     standalone: true,
      imports: [IonApp, IonRouterOutlet],
      template: `<ion-app><ion-router-outlet></ion-router-outlet></ion-app>`,
    })
@@ -241,7 +240,6 @@ El Ionic Framework [no soporta la nueva Hidratación del Cliente de Angular](htt
      ```ts
      @Component({
        selector: 'demo-root',
-       standalone: true,
        imports: [IonApp, IonRouterOutlet],
        template: `
          <ion-app ngSkipHydration>

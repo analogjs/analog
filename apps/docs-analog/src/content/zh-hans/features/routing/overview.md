@@ -42,7 +42,6 @@ Analog 在 Angular 路由之上支持基于文件系统的路由。
 
 ```ts
 @Component({
-  standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
@@ -62,7 +61,6 @@ export default class HomePageComponent {}
 
 ```ts
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -100,7 +98,6 @@ src/
 
 ```ts
 @Component({
-  standalone: true,
   imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
@@ -140,7 +137,6 @@ export const appConfig: ApplicationConfig = {
 ```ts
 // src/app/pages/products/[productId].page.ts
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
 
@@ -177,7 +173,6 @@ src/
 
 ```ts
 @Component({
-  standalone: true,
   imports: [RouterOutlet],
   template: `
     <h2>Products</h2>
@@ -192,7 +187,6 @@ export default class ProductsComponent {}
 
 ```ts
 @Component({
-  standalone: true,
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
@@ -202,7 +196,6 @@ export default class ProductsListComponent {}
 
 ```ts
 @Component({
-  standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
@@ -257,7 +250,6 @@ export const routeMeta: RouteMeta = {
 };
 
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Page Not Found</h2>

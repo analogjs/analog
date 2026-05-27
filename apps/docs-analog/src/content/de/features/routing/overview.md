@@ -36,7 +36,6 @@ Die Beispielroute unten in `src/app/pages/(home).page.ts` definiert eine `/`-Rou
 
 ```ts
 @Component({
-  standalone: true,
   template: ` <h2>Welcome</h2> `,
 })
 export default class HomePageComponent {}
@@ -56,7 +55,6 @@ Die Beispielroute unten in `src/app/pages/about.page.ts` definiert eine `/about`
 
 ```ts
 @Component({
-  standalone: true,
   template: `
     <h2>Hello Analog</h2>
 
@@ -94,7 +92,6 @@ Die folgende Beispielroute in `src/app/pages/products/[productId].page.ts` defin
 
 ```ts
 @Component({
-  standalone: true,
   imports: [AsyncPipe],
   template: `
     <h2>Product Details</h2>
@@ -134,7 +131,6 @@ Als nächstes verwende den Routenparameter als Eingabe.
 ```ts
 // src/app/pages/products/[productId].page.ts
 @Component({
-  standalone: true,
   template: `
     <h2>Product Details</h2>
 
@@ -171,7 +167,6 @@ Die übergeordnete Datei `src/app/pages/products.page.ts` enthält die übergeor
 
 ```ts
 @Component({
-  standalone: true,
   imports: [RouterOutlet],
   template: `
     <h2>Products</h2>
@@ -186,7 +181,6 @@ Die verschachtelte Datei `src/app/pages/products/(products-list).page.ts` enthä
 
 ```ts
 @Component({
-  standalone: true,
   template: ` <h2>Products List</h2> `,
 })
 export default class ProductsListComponent {}
@@ -196,7 +190,6 @@ Die verschachtelte Datei `src/app/pages/products/[productId].page.ts` enthält d
 
 ```ts
 @Component({
-  standalone: true,
   imports: [AsyncPipe, JsonPipe],
   template: `
     <h2>Product Details</h2>
@@ -237,7 +230,6 @@ Die Beispielroute unten in `src/app/pages/[...page-not-found].page.ts` definiert
 
 ```ts
 @Component({
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Page Not Found</h2>

@@ -139,7 +139,6 @@ export const appConfig: ApplicationConfig = {
 ```ts
 @Component({
   selector: 'demo-root',
-  standalone: true,
   imports: [IonApp, IonRouterOutlet],
   template: `<ion-app><ion-router-outlet></ion-router-outlet></ion-app>`,
 })
@@ -231,7 +230,6 @@ export const appConfig: ApplicationConfig = {
   ```ts
   @Component({
     selector: 'demo-root',
-    standalone: true,
     imports: [IonApp, IonRouterOutlet],
     template: `
       <ion-app ngSkipHydration>

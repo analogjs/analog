@@ -139,7 +139,6 @@ export const appConfig: ApplicationConfig = {
 ```ts
 @Component({
   selector: 'demo-root',
-  standalone: true,
   imports: [IonApp, IonRouterOutlet],
   template: `<ion-app><ion-router-outlet></ion-router-outlet></ion-app>`,
 })
@@ -241,7 +240,6 @@ Ionic Framework [doesn't support Angular's new Client Hydration](https://github.
      ```ts
      @Component({
        selector: 'demo-root',
-       standalone: true,
        imports: [IonApp, IonRouterOutlet],
        template: `
          <ion-app ngSkipHydration>

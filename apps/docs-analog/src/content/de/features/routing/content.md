@@ -186,7 +186,6 @@ export interface PostAttributes {
 }
 
 @Component({
-  standalone: true,
   imports: [RouterOutlet, RouterLink, NgFor],
   template: `
     <ul>
@@ -221,7 +220,6 @@ export interface PostAttributes {
 }
 
 @Component({
-  standalone: true,
   imports: [MarkdownComponent, AsyncPipe, NgIf],
   template: `
     <ng-container *ngIf="post$ | async as post">
@@ -342,7 +340,6 @@ export interface ProjectAttributes {
 }
 
 @Component({
-  standalone: true,
   imports: [MarkdownComponent, AsyncPipe, NgIf],
   template: `
     <ng-container *ngIf="project$ | async as project">

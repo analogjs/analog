@@ -10,7 +10,6 @@ An example with `styleUrls`:
 
 ```ts
 @Component({
-  standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -23,7 +22,6 @@ An example of using `scss` with inline `styles`:
 
 ```ts
 @Component({
-  standalone: true,
   templateUrl: './app.component.html',
   styles: [
     `
