@@ -27,6 +27,8 @@ export class Search implements AfterViewInit {
         appId: '8W3CAMYOQF',
         apiKey: '650d723674c8cd38658add35fb9433e3',
         indexName: 'analogjs',
+        transformItems: (items: { url: string }[]) =>
+          items.map((item) => ({ ...item, url: localizeHitUrl(item.url) })),
       });
     };
 
@@ -39,5 +41,19 @@ export class Search implements AfterViewInit {
     script.async = true;
     script.onload = init;
     document.head.appendChild(script);
+  }
+}
+
+/**
+ * Algolia indexes the production https://analogjs.org/... URLs, so the
+ * raw hit.url would yank a local-dev visitor over to production. Strip
+ * the origin so clicks stay on whatever host the page is served from.
+ */
+function localizeHitUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname + parsed.search + parsed.hash;
+  } catch {
+    return url;
   }
 }
