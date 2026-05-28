@@ -320,10 +320,16 @@ const SPONSORS: Sponsor[] = [
                   [class]="(s.scale || 'h-16') + ' hidden dark:block'"
                 />
               } @else {
+                <!--
+                  No dark variant: the source logo is designed for a dark
+                  background (e.g. white wordmark + dark bunny). Invert
+                  flips the colors for light mode so the text reads and
+                  the bunny silhouette stays visible inside its disc.
+                -->
                 <img
                   [src]="s.logo"
                   [alt]="s.name"
-                  [class]="s.scale || 'h-16'"
+                  [class]="(s.scale || 'h-16') + ' invert dark:invert-0'"
                 />
               }
             </a>
