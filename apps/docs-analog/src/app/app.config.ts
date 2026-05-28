@@ -24,6 +24,8 @@ import {
   withMarkdownRenderer,
 } from '@analogjs/content';
 import {
+  type CanMatchFn,
+  Router,
   type Route,
   type UrlMatchResult,
   type UrlSegment,
@@ -48,6 +50,26 @@ const localeHomeRoute: Route = {
   loadComponent: () => import('./pages/(home).page').then((m) => m.default),
 };
 
+// English is the unprefixed default; rewrite any incoming /en/... URL
+// (e.g. external Algolia hits) to the canonical /... form.
+const stripEnPrefix: CanMatchFn = (_route, segments) => {
+  const router = inject(Router);
+  const rest = segments
+    .slice(1)
+    .map((s) => s.path)
+    .join('/');
+  return router.parseUrl('/' + rest);
+};
+const enRedirectRoute: Route = {
+  matcher: (segments: UrlSegment[]): UrlMatchResult | null =>
+    segments.length > 0 && segments[0].path === 'en'
+      ? { consumed: segments, posParams: {} }
+      : null,
+  canMatch: [stripEnPrefix],
+  // Never reached — canMatch returns a UrlTree which triggers the redirect.
+  children: [],
+};
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
@@ -58,7 +80,7 @@ export const appConfig: ApplicationConfig = {
         anchorScrolling: 'enabled',
         scrollPositionRestoration: 'disabled',
       }),
-      withExtraRoutes([localeHomeRoute]),
+      withExtraRoutes([enRedirectRoute, localeHomeRoute]),
     ),
     provideHttpClient(
       withFetch(),
