@@ -5,8 +5,8 @@ import { injectSwitchLocale } from '@analogjs/router/i18n';
 
 const LOCALES: { code: string; label: string }[] = [
   { code: 'en', label: 'English' },
-  { code: 'de', label: 'Deutsch' },
   { code: 'es', label: 'Español' },
+  { code: 'de', label: 'Deutsch' },
   { code: 'pt-br', label: 'Português (Brasil)' },
   { code: 'zh-hans', label: '简体中文' },
 ];
