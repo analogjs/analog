@@ -71,7 +71,9 @@ interface DocAttributes {
         }
       </div>
       <aside class="hidden w-56 shrink-0 lg:block">
-        <div class="docs-sticky-rail sticky top-8">
+        <div
+          class="docs-sticky-rail sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto pr-2"
+        >
           <docs-toc
             [articleRef]="articleRef()"
             [initialHeadings]="headings()"

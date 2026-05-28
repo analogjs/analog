@@ -52,7 +52,7 @@ import { Sidebar } from './Sidebar';
     -->
     <aside
       id="docs-sidebar-drawer"
-      class="docs-sticky-rail fixed inset-y-0 left-0 z-50 w-72 -translate-x-full overflow-y-auto p-6 shadow-xl transition-transform duration-200 ease-out lg:sticky lg:inset-auto lg:left-auto lg:top-8 lg:z-auto lg:block lg:w-56 lg:translate-x-0 lg:self-start lg:overflow-visible lg:p-0 lg:shadow-none lg:transition-none"
+      class="docs-sticky-rail fixed inset-y-0 left-0 z-50 w-72 -translate-x-full overflow-y-auto p-6 shadow-xl transition-transform duration-200 ease-out lg:sticky lg:inset-auto lg:left-auto lg:top-8 lg:z-auto lg:block lg:max-h-[calc(100vh-4rem)] lg:w-56 lg:translate-x-0 lg:self-start lg:overflow-y-auto lg:p-0 lg:pr-2 lg:shadow-none lg:transition-none"
       [class.translate-x-0]="open()"
       [style.background]="'var(--bg)'"
     >
