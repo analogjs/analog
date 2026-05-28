@@ -72,17 +72,23 @@ export class LocalePicker {
   protected pick(code: string): void {
     this.open.set(false);
     if (!isPlatformBrowser(this.platformId)) return;
-    const cur = window.location.pathname;
-    // Strip any existing locale prefix
-    const stripped = cur.replace(
-      /^\/(de|es|fr|ko|pt-br|tr|zh-hans)(\/|$)/,
-      '/',
-    );
-    const target = code === 'en' ? stripped : `/${code}${stripped}`;
     // Hard reload: CONTENT_LOCALE is provided once at app bootstrap via
     // a useFactory and the cached value drives every content lookup, so
     // a SPA navigation keeps serving the previous locale's markdown.
     // Reloading rebuilds the injector with the new active locale.
-    window.location.assign(target);
+    window.location.assign(computeLocaleTarget(code, window.location.pathname));
   }
+}
+
+/**
+ * Map (locale code, current pathname) → the URL we should hard-reload to.
+ * Strips any existing supported-locale prefix, then prepends the new one
+ * (or nothing for the default English route).
+ */
+export function computeLocaleTarget(code: string, pathname: string): string {
+  const stripped = pathname.replace(
+    /^\/(de|es|fr|ko|pt-br|tr|zh-hans)(\/|$)/,
+    '/',
+  );
+  return code === 'en' ? stripped : `/${code}${stripped}`;
 }
