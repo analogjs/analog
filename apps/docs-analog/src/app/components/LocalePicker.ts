@@ -1,13 +1,7 @@
-import { isPlatformBrowser } from '@angular/common';
-import {
-  Component,
-  computed,
-  inject,
-  PLATFORM_ID,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CONTENT_LOCALE } from '@analogjs/content';
+import { injectSwitchLocale } from '@analogjs/router/i18n';
 
 const LOCALES: { code: string; label: string }[] = [
   { code: 'en', label: 'English' },
@@ -57,8 +51,10 @@ const LOCALES: { code: string; label: string }[] = [
 })
 export class LocalePicker {
   private readonly router = inject(Router);
-  private readonly platformId = inject(PLATFORM_ID);
   private readonly currentLocale = inject(CONTENT_LOCALE, { optional: true });
+  // Hard-reloads so $localize-resolved templates and CONTENT_LOCALE
+  // (provided once via useFactory at bootstrap) pick up the new locale.
+  private readonly switchLocale = injectSwitchLocale();
 
   protected readonly locales = LOCALES;
   protected readonly open = signal(false);
@@ -71,31 +67,6 @@ export class LocalePicker {
 
   protected pick(code: string): void {
     this.open.set(false);
-    if (!isPlatformBrowser(this.platformId)) return;
-    // Hard reload: CONTENT_LOCALE is provided once at app bootstrap via
-    // a useFactory and the cached value drives every content lookup, so
-    // a SPA navigation keeps serving the previous locale's markdown.
-    // Reloading rebuilds the injector with the new active locale.
-    window.location.assign(computeLocaleTarget(code, window.location.pathname));
+    this.switchLocale(code);
   }
-}
-
-/**
- * Map (locale code, current pathname) → the URL we should hard-reload to.
- * Strips any existing supported-locale prefix, then prepends the new one
- * (or nothing for the default English route).
- *
- * The only translated content lives under /docs, so picking a non-English
- * locale from a page that has no /docs equivalent (e.g. the marketing
- * home `/`) lands on /<locale>/docs/introduction instead of /<locale>/
- * (which has no route and renders blank).
- */
-export function computeLocaleTarget(code: string, pathname: string): string {
-  const stripped = pathname.replace(
-    /^\/(de|es|fr|ko|pt-br|tr|zh-hans)(\/|$)/,
-    '/',
-  );
-  if (code === 'en') return stripped;
-  const hasDocs = stripped === '/docs' || stripped.startsWith('/docs/');
-  return hasDocs ? `/${code}${stripped}` : `/${code}/docs/introduction`;
 }

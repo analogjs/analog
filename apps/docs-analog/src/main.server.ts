@@ -1,5 +1,7 @@
 import 'zone.js/node';
 import '@angular/platform-server/init';
+// Defines globalThis.$localize for SSR rendering.
+import '@angular/localize/init';
 import { render } from '@analogjs/router/server';
 
 import { config } from './app/app.config.server';

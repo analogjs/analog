@@ -109,6 +109,7 @@ const SPONSORS: Sponsor[] = [
           <h1
             class="bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-4xl font-bold leading-[1.05] tracking-tight text-transparent sm:text-6xl lg:text-7xl"
             style="letter-spacing: -0.02em"
+            i18n="@@home.hero.title"
           >
             The fullstack <br class="hidden sm:inline" />Angular
             <span class="whitespace-nowrap">meta-framework</span>
@@ -116,6 +117,7 @@ const SPONSORS: Sponsor[] = [
           <p
             class="mt-5 text-base sm:mt-6 sm:text-xl"
             style="color: var(--fg-muted)"
+            i18n="@@home.hero.subtitle"
           >
             Vite-based. File-based routing. API routes. SSR and SSG. Everything
             you need to build modern Angular apps and sites.
@@ -126,6 +128,7 @@ const SPONSORS: Sponsor[] = [
             <a
               routerLink="/docs/introduction"
               class="inline-flex items-center rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-gray-800 sm:px-6 sm:py-3 sm:text-base dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+              i18n="@@home.cta.docs"
             >
               Read the Docs
             </a>
@@ -142,7 +145,7 @@ const SPONSORS: Sponsor[] = [
                 width="20"
                 height="20"
               />
-              Open in StackBlitz
+              <span i18n="@@home.cta.stackblitz">Open in StackBlitz</span>
             </a>
           </div>
         </div>
@@ -156,13 +159,21 @@ const SPONSORS: Sponsor[] = [
           <p
             class="text-xs font-semibold uppercase tracking-wide"
             style="color: var(--brand)"
+            i18n="@@home.routing.eyebrow"
           >
             Routing
           </p>
-          <h2 class="mt-2 text-4xl font-bold tracking-tight">
+          <h2
+            class="mt-2 text-4xl font-bold tracking-tight"
+            i18n="@@home.routing.title"
+          >
             Filesystem-based routing
           </h2>
-          <p class="mt-4 text-lg" style="color: var(--fg-muted)">
+          <p
+            class="mt-4 text-lg"
+            style="color: var(--fg-muted)"
+            i18n="@@home.routing.p1"
+          >
             Files in
             <code
               class="rounded px-1.5 py-0.5 text-base"
@@ -172,7 +183,11 @@ const SPONSORS: Sponsor[] = [
             become routes. Brackets are dynamic. Double brackets are catch-alls.
             Parentheses are pathless groups.
           </p>
-          <p class="mt-4 text-base" style="color: var(--fg-muted)">
+          <p
+            class="mt-4 text-base"
+            style="color: var(--fg-muted)"
+            i18n="@@home.routing.p2"
+          >
             No route config file. No registration step. Add a file, ship a page.
           </p>
         </div>
@@ -194,18 +209,30 @@ const SPONSORS: Sponsor[] = [
           <p
             class="text-xs font-semibold uppercase tracking-wide"
             style="color: var(--brand)"
+            i18n="@@home.fullstack.eyebrow"
           >
             Fullstack
           </p>
-          <h2 class="mt-2 text-4xl font-bold tracking-tight">
+          <h2
+            class="mt-2 text-4xl font-bold tracking-tight"
+            i18n="@@home.fullstack.title"
+          >
             Client and server, one file pair
           </h2>
-          <p class="mt-4 text-lg" style="color: var(--fg-muted)">
+          <p
+            class="mt-4 text-lg"
+            style="color: var(--fg-muted)"
+            i18n="@@home.fullstack.p1"
+          >
             Co-locate a server loader next to the page component. Analog runs it
             on the server, ships only the response to the client, and types the
             response end-to-end.
           </p>
-          <p class="mt-4 text-base" style="color: var(--fg-muted)">
+          <p
+            class="mt-4 text-base"
+            style="color: var(--fg-muted)"
+            i18n="@@home.fullstack.p2"
+          >
             The page
             <strong style="color: var(--fg)">imports the load type</strong>
             — no separate API client, no manual fetch.
@@ -220,15 +247,20 @@ const SPONSORS: Sponsor[] = [
         <p
           class="text-xs font-semibold uppercase tracking-wide"
           style="color: var(--brand)"
+          i18n="@@home.ecosystem.eyebrow"
         >
           Ecosystem
         </p>
-        <h2 class="mt-2 text-4xl font-bold tracking-tight">
+        <h2
+          class="mt-2 text-4xl font-bold tracking-tight"
+          i18n="@@home.ecosystem.title"
+        >
           The Vite ecosystem, in Angular
         </h2>
         <p
           class="mx-auto mt-3 max-w-2xl text-lg"
           style="color: var(--fg-muted)"
+          i18n="@@home.ecosystem.p"
         >
           Analog plugs into the tools your team already trusts. No fork, no shim
           — the same plugins, the same configuration.
@@ -269,7 +301,7 @@ const SPONSORS: Sponsor[] = [
               <div>
                 <p class="text-lg font-semibold">{{ tool.name }}</p>
                 <p class="mt-1 text-sm" style="color: var(--fg-muted)">
-                  {{ tool.tagline }}
+                  {{ toolTagline(tool.name) }}
                 </p>
               </div>
             </a>
@@ -280,7 +312,11 @@ const SPONSORS: Sponsor[] = [
 
     <section class="border-t px-6 py-12" style="border-color: var(--border)">
       <div class="mx-auto max-w-6xl text-center">
-        <p class="text-sm sm:text-base" style="color: var(--fg-muted)">
+        <p
+          class="text-sm sm:text-base"
+          style="color: var(--fg-muted)"
+          i18n="@@home.support.line"
+        >
           Analog is free, open source, and supported by our partners and
           sponsors.
         </p>
@@ -288,6 +324,7 @@ const SPONSORS: Sponsor[] = [
         <h2
           class="mt-8 text-sm font-semibold uppercase tracking-wide"
           style="color: var(--fg-muted)"
+          i18n="@@home.partners.heading"
         >
           Partners
         </h2>
@@ -302,6 +339,7 @@ const SPONSORS: Sponsor[] = [
         <h2
           class="mt-10 text-sm font-semibold uppercase tracking-wide"
           style="color: var(--fg-muted)"
+          i18n="@@home.sponsors.heading"
         >
           Sponsors
         </h2>
@@ -340,6 +378,7 @@ const SPONSORS: Sponsor[] = [
           href="mailto:partnerships@analogjs.org?subject=Partnerships"
           class="mt-10 inline-block rounded-md px-5 py-2 text-sm font-semibold text-white shadow"
           style="background: var(--brand)"
+          i18n="@@home.partner.cta"
         >
           Partner with Analog
         </a>
@@ -351,4 +390,26 @@ export default class HomePage {
   protected readonly ecosystem = ECOSYSTEM;
   protected readonly partners = PARTNERS;
   protected readonly sponsors = SPONSORS;
+
+  // Each tagline is a $localize template so the runtime translation
+  // map (loaded by provideI18n) substitutes the right locale per call.
+  // Defined inline in code (rather than the ECOSYSTEM array, which
+  // initializes at module load before translations are registered) so
+  // every render re-evaluates with the current locale.
+  protected toolTagline(name: string): string {
+    switch (name) {
+      case 'Vite':
+        return $localize`:@@home.tool.vite:Build and dev server`;
+      case 'Vitest':
+        return $localize`:@@home.tool.vitest:Unit + component tests`;
+      case 'Storybook':
+        return $localize`:@@home.tool.storybook:Component workshop`;
+      case 'Nx':
+        return $localize`:@@home.tool.nx:Smart monorepos`;
+      case 'Astro':
+        return $localize`:@@home.tool.astro:Angular components as islands`;
+      default:
+        return '';
+    }
+  }
 }
