@@ -84,11 +84,18 @@ export class LocalePicker {
  * Map (locale code, current pathname) → the URL we should hard-reload to.
  * Strips any existing supported-locale prefix, then prepends the new one
  * (or nothing for the default English route).
+ *
+ * The only translated content lives under /docs, so picking a non-English
+ * locale from a page that has no /docs equivalent (e.g. the marketing
+ * home `/`) lands on /<locale>/docs/introduction instead of /<locale>/
+ * (which has no route and renders blank).
  */
 export function computeLocaleTarget(code: string, pathname: string): string {
   const stripped = pathname.replace(
     /^\/(de|es|fr|ko|pt-br|tr|zh-hans)(\/|$)/,
     '/',
   );
-  return code === 'en' ? stripped : `/${code}${stripped}`;
+  if (code === 'en') return stripped;
+  const hasDocs = stripped === '/docs' || stripped.startsWith('/docs/');
+  return hasDocs ? `/${code}${stripped}` : `/${code}/docs/introduction`;
 }

@@ -27,6 +27,11 @@ describe('computeLocaleTarget', () => {
       '/docs/introduction',
     );
   });
+
+  it('routes to /<locale>/docs/introduction when current path has no /docs equivalent', () => {
+    expect(computeLocaleTarget('es', '/')).toBe('/es/docs/introduction');
+    expect(computeLocaleTarget('de', '/about')).toBe('/de/docs/introduction');
+  });
 });
 
 describe('LocalePicker', () => {
