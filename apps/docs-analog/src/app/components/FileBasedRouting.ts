@@ -20,12 +20,9 @@ const MAPPINGS: Mapping[] = [
     <div class="grid items-stretch gap-4">
       <div
         class="rounded-xl border p-5 font-mono text-sm"
-        style="border-color: var(--border); background: var(--hover-bg)"
+        style="border-color: #1f2937; background: #011627; color: #d6deeb"
       >
-        <p
-          class="mb-3 text-xs uppercase tracking-wide"
-          style="color: var(--fg-muted)"
-        >
+        <p class="mb-3 text-xs uppercase tracking-wide" style="color: #8b949e">
           src/app/pages/
         </p>
         <ul class="space-y-1">
@@ -33,8 +30,10 @@ const MAPPINGS: Mapping[] = [
             <li
               class="rounded px-2 py-1"
               [class.font-semibold]="m.highlight"
-              [style.background]="m.highlight ? 'var(--bg)' : 'transparent'"
-              [style.color]="m.highlight ? 'var(--brand)' : 'var(--fg)'"
+              [style.background]="
+                m.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'
+              "
+              [style.color]="m.highlight ? '#fb7185' : '#d6deeb'"
             >
               {{ m.file }}
             </li>
@@ -44,12 +43,9 @@ const MAPPINGS: Mapping[] = [
 
       <div
         class="rounded-xl border p-5 font-mono text-sm"
-        style="border-color: var(--border); background: var(--hover-bg)"
+        style="border-color: #1f2937; background: #011627; color: #d6deeb"
       >
-        <p
-          class="mb-3 text-xs uppercase tracking-wide"
-          style="color: var(--fg-muted)"
-        >
+        <p class="mb-3 text-xs uppercase tracking-wide" style="color: #8b949e">
           generated routes
         </p>
         <ul class="space-y-1">
@@ -57,8 +53,10 @@ const MAPPINGS: Mapping[] = [
             <li
               class="rounded px-2 py-1"
               [class.font-semibold]="m.highlight"
-              [style.background]="m.highlight ? 'var(--bg)' : 'transparent'"
-              [style.color]="m.highlight ? 'var(--brand)' : 'var(--fg)'"
+              [style.background]="
+                m.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'
+              "
+              [style.color]="m.highlight ? '#fb7185' : '#d6deeb'"
             >
               {{ m.url }}
             </li>

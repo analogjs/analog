@@ -83,11 +83,26 @@ const SERVER_CODE = [
         font-size: 12.5px;
         line-height: 1.55;
         overflow-x: auto;
+        /* Dark backdrop so the SSR plain <pre> fallback and the shiki
+           swap don't flash light first in light mode. */
+        background: #011627;
+        color: #d6deeb;
       }
       :host ::ng-deep .fs-example pre code {
         font-family:
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
           'Liberation Mono', monospace;
+      }
+      /* Force shiki's dark theme on these hero code blocks regardless
+         of the page's light/dark mode — they live in a dark-on-dark
+         hero card on the homepage. */
+      :host ::ng-deep .fs-example .shiki,
+      :host ::ng-deep .fs-example .shiki span {
+        color: var(--shiki-dark) !important;
+        background-color: var(--shiki-dark-bg) !important;
+        font-style: var(--shiki-dark-font-style) !important;
+        font-weight: var(--shiki-dark-font-weight) !important;
+        text-decoration: var(--shiki-dark-text-decoration) !important;
       }
     `,
   ],
