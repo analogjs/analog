@@ -308,6 +308,38 @@ export function fastCompilePlugin(
       return { code: stripped.code, map: stripped.map };
     }
 
+    // OXC engine: route component compilation through `@oxc-angular/vite`
+    // when the user has opted in via `fastCompileEngine: 'oxc'`. The native
+    // Rust pipeline handles both AOT and JIT — for JIT it emits the
+    // downleveled-decorator form with synthesized propDecorators (per
+    // voidzero-dev/oxc-angular-compiler#319) and serves templates/styles
+    // at runtime via `angular:jit:` virtual modules. Partial-library
+    // output still flows through the TS engine since the OXC NAPI
+    // doesn't model `ɵɵngDeclare*` emission.
+    if (
+      pluginOptions.fastCompileEngine === 'oxc' &&
+      (pluginOptions.fastCompileMode ?? 'full') === 'full'
+    ) {
+      const result = await oxcTransform(code, id, {
+        resolvedConfig,
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        liveReload: pluginOptions.liveReload,
+        watchMode,
+        jit: pluginOptions.jit,
+      });
+      for (const dep of result.resourceDependencies) {
+        resourceToSource.set(dep, id);
+      }
+      if (oxcHmr) {
+        oxcHmr.recordTransform(id, code, result.templateUpdates);
+        oxcHmr.pruneStaleResources(id, result.resourceDependencies);
+        for (const dep of result.resourceDependencies) {
+          oxcHmr.recordResource(dep, id);
+        }
+      }
+      return { code: result.code, map: result.map };
+    }
+
     // JIT mode
     if (pluginOptions.jit) {
       const result = jitTransform(code, id);
@@ -345,43 +377,6 @@ export function fastCompilePlugin(
             inMap,
           );
       return { code: stripped.code, map: stripped.map };
-    }
-
-    // OXC engine: route component compilation through `@oxc-angular/vite`
-    // when the user has opted in via `fastCompileEngine: 'oxc'`. The native
-    // Rust pipeline handles resource resolution, template compilation, and
-    // TS→JS emission itself, so we skip the TS-side inlining, registry
-    // merging, and post-strip passes below.
-    //
-    // Engine selection is narrow on purpose: JIT and partial-library output
-    // still flow through the TS path because the OXC NAPI surface doesn't
-    // model `ɵɵngDeclare*` emission and Analog's JIT path also down-levels
-    // signal APIs the OXC build optimizer expects to see pre-emitted.
-    if (
-      pluginOptions.fastCompileEngine === 'oxc' &&
-      (pluginOptions.fastCompileMode ?? 'full') === 'full'
-    ) {
-      const result = await oxcTransform(code, id, {
-        resolvedConfig,
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        liveReload: pluginOptions.liveReload,
-        watchMode,
-      });
-      for (const dep of result.resourceDependencies) {
-        resourceToSource.set(dep, id);
-      }
-      // Feed the OXC HMR controller: component → file membership,
-      // inline-template/styles caches, and resource → owner mapping for
-      // the 4-branch dispatch. `recordTransform` also prunes stale
-      // entries (a class that used to live here but doesn't any more).
-      if (oxcHmr) {
-        oxcHmr.recordTransform(id, code, result.templateUpdates);
-        oxcHmr.pruneStaleResources(id, result.resourceDependencies);
-        for (const dep of result.resourceDependencies) {
-          oxcHmr.recordResource(dep, id);
-        }
-      }
-      return { code: result.code, map: result.map };
     }
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation

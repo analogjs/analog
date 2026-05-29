@@ -128,6 +128,16 @@ export interface OxcEngineContext {
   inlineStylesExtension: string;
   liveReload: boolean;
   watchMode: boolean;
+  /**
+   * Enable JIT (Just-In-Time) compilation. When true, OXC emits the
+   * downleveled-decorator form (synthesized `propDecorators`, factory
+   * downleveling, signal-API metadata) instead of AOT Ivy definitions,
+   * and templates/styles are loaded dynamically at runtime via the
+   * `angular:jit:` virtual-module URLs handled in the plugin layer.
+   *
+   * Requires `@oxc-angular/vite` ≥ 0.0.30 for signal-API JIT lowering.
+   */
+  jit: boolean;
 }
 
 export interface OxcEngineResult {
@@ -230,7 +240,7 @@ export async function oxcTransform(
     {
       sourcemap: true,
       hmr,
-      jit: false,
+      jit: ctx.jit,
       emitClassMetadata: true,
       angularVersion: {
         major: angularMajor,
