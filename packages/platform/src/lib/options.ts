@@ -135,6 +135,20 @@ export interface Options {
    */
   fastCompileMode?: 'full' | 'partial';
   /**
+   * Which compiler backs `fastCompile`.
+   * - `'ts'` (default): the in-process TS/OXC-AST compiler shipped with
+   *   `@analogjs/vite-plugin-angular`.
+   * - `'oxc'`: experimental — route AOT and JIT component compilation
+   *   through the native Rust pipeline from `@oxc-angular/vite` (must
+   *   be installed as an optional peer dependency). Also unlocks OXC's
+   *   `@ng/component` HMR contract, library linker
+   *   (`linkAngularPackage`), and FESM build optimizer
+   *   (`optimizeAngularPackage`). `fastCompileMode: 'partial'` still
+   *   flows through the TS engine since the OXC NAPI doesn't model
+   *   `ɵɵngDeclare*` emission.
+   */
+  fastCompileEngine?: 'ts' | 'oxc';
+  /**
    * File replacements
    */
   fileReplacements?: PluginOptions['fileReplacements'];
