@@ -25,7 +25,9 @@ import {
   debugRegistry,
   type ComponentRegistry,
 } from './compiler/index.js';
-import { oxcTransform } from './compiler/oxc-engine.js';
+import { loadOxcHmrApi, oxcTransform } from './compiler/oxc-engine.js';
+import { createOxcHmrController } from './compiler/oxc-hmr.js';
+import { angularMajor, angularMinor, angularPatch } from './utils/devkit.js';
 
 import {
   TS_EXT_REGEX,
@@ -89,6 +91,15 @@ export function fastCompilePlugin(
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
+
+  // OXC engine + liveReload only: controller for the `@ng/component`
+  // virtual-module HMR contract. Instantiated lazily once we know the
+  // mode + watch state in `config()`.
+  let oxcHmr: ReturnType<typeof createOxcHmrController> | null = null;
+  const oxcHmrEnabled = () =>
+    pluginOptions.fastCompileEngine === 'oxc' &&
+    pluginOptions.liveReload &&
+    watchMode;
 
   /**
    * Scan a file into the registry, then recursively walk its relative
@@ -359,6 +370,17 @@ export function fastCompilePlugin(
       for (const dep of result.resourceDependencies) {
         resourceToSource.set(dep, id);
       }
+      // Feed the OXC HMR controller: component → file membership,
+      // inline-template/styles caches, and resource → owner mapping for
+      // the 4-branch dispatch. `recordTransform` also prunes stale
+      // entries (a class that used to live here but doesn't any more).
+      if (oxcHmr) {
+        oxcHmr.recordTransform(id, code, result.templateUpdates);
+        oxcHmr.pruneStaleResources(id, result.resourceDependencies);
+        for (const dep of result.resourceDependencies) {
+          oxcHmr.recordResource(dep, id);
+        }
+      }
       return { code: result.code, map: result.map };
     }
 
@@ -509,6 +531,21 @@ export function fastCompilePlugin(
     },
     configResolved(config) {
       resolvedConfig = config;
+
+      // Spin up the OXC HMR controller once we know it's needed. The
+      // closure captures `resolvedConfig` via accessor so SCSS/Less
+      // styleUrls can be preprocessed via Vite's pipeline at request time.
+      if (oxcHmrEnabled() && !oxcHmr) {
+        oxcHmr = createOxcHmrController({
+          resolvedConfig: () => resolvedConfig,
+          angularVersion: {
+            major: angularMajor,
+            minor: angularMinor,
+            patch: angularPatch,
+          },
+          loadApi: () => loadOxcHmrApi(),
+        });
+      }
     },
     configureServer(server) {
       // Watch for new .ts files and scan them into the registry. Use
@@ -524,11 +561,26 @@ export function fastCompilePlugin(
           await scanBarrelExports(filePath, new Set(), true);
         }
       });
+
+      // OXC HMR — `@ng/component?c=<id>` middleware + `angular:invalidate`
+      // WebSocket listener. Falls back to Vite's default reload path on
+      // failure via the same channel.
+      if (oxcHmr) {
+        oxcHmr.mountMiddleware(server);
+      }
     },
     async buildStart() {
       await initFastCompile();
     },
     async handleHotUpdate(ctx) {
+      // OXC engine + liveReload: hand the 4-branch dispatch (external
+      // resource / inline-only / component .ts other / plain .ts) over
+      // to the OXC HMR controller. It owns the `@ng/component`
+      // virtual-module contract end to end on this path.
+      if (oxcHmr) {
+        return oxcHmr.handleHotUpdate(ctx);
+      }
+
       // Resource file changes → invalidate parent .ts module
       if (resourceToSource.has(ctx.file)) {
         const parentSource = resourceToSource.get(ctx.file)!;
@@ -560,6 +612,15 @@ export function fastCompilePlugin(
       return ctx.modules;
     },
     resolveId(id, importer) {
+      // SSR safety net for OXC HMR: OXC emits dynamic `@ng/component?c=…`
+      // imports inside the dev-only HMR initializer. The HTTP middleware
+      // serves them in the browser, but Nitro/SSR resolves through plugin
+      // hooks instead — return a virtual id so the matching `load` can
+      // stub it (HMR is browser-only).
+      if (oxcHmr && id.includes('@ng/component')) {
+        return `\0${id}`;
+      }
+
       if (id.startsWith(VIRTUAL_RAW_PREFIX)) {
         return `\0${id}`;
       }
@@ -592,6 +653,11 @@ export function fastCompilePlugin(
       return undefined;
     },
     async load(id) {
+      // OXC HMR SSR stub — pair with the `resolveId` safety net above.
+      if (oxcHmr && id.startsWith('\0') && id.includes('@ng/component')) {
+        return 'export default undefined;';
+      }
+
       const rawModule = await loadVirtualRawModule(this, id);
       if (rawModule !== undefined) return rawModule;
 

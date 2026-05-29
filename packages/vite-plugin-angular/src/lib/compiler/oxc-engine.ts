@@ -4,6 +4,7 @@ import type { ResolvedConfig } from 'vite';
 import * as vite from 'vite';
 import { preprocessCSS } from 'vite';
 
+import { angularMajor, angularMinor, angularPatch } from '../utils/devkit.js';
 import { debugCompile } from './debug.js';
 
 /**
@@ -21,6 +22,25 @@ interface OxcApi {
     source: string,
     filename: string,
   ) => Promise<{ templateUrls: string[]; styleUrls: string[] }>;
+  /** Sync HMR module compilation used by the dev-only `@ng/component` middleware. */
+  compileForHmrSync: (
+    template: string,
+    componentName: string,
+    filePath: string,
+    styles?: string[] | null,
+    options?: OxcTransformOptions | null,
+  ) => {
+    hmrModule: string;
+    componentId: string;
+    templateJs: string;
+    errors: Array<{ severity: string; message: string }>;
+  };
+}
+
+interface OxcAngularVersion {
+  major: number;
+  minor: number;
+  patch: number;
 }
 
 interface OxcTransformOptions {
@@ -31,6 +51,7 @@ interface OxcTransformOptions {
   preserveWhitespaces?: boolean;
   emitClassMetadata?: boolean;
   minifyComponentStyles?: boolean;
+  angularVersion?: OxcAngularVersion;
 }
 
 interface OxcResolvedResources {
@@ -42,11 +63,32 @@ interface OxcTransformResult {
   code: string;
   map?: string;
   dependencies: string[];
+  /**
+   * Per-component HMR template updates, keyed by `filePath@ClassName`.
+   * Populated when `hmr: true` is set. The value is the compiled template
+   * function JS, ready to feed into `generateHmrModule`. NAPI maps
+   * surface as plain objects (`Record<string, string>`) on the JS side.
+   */
+  templateUpdates?: Record<string, string>;
+  /**
+   * Per-component HMR style updates, keyed by `filePath@ClassName`. Each
+   * value is the post-encapsulation CSS array for that component.
+   */
+  styleUpdates?: Record<string, string[]>;
   errors: Array<{ severity: string; message: string }>;
   warnings: Array<{ severity: string; message: string }>;
 }
 
 let apiPromise: Promise<OxcApi> | undefined;
+
+/**
+ * Lazy accessor for the OXC NAPI surface used both by this adapter and
+ * by `oxc-hmr.ts`. Cached so the native binary is loaded at most once
+ * even when both call sites race on the first request.
+ */
+export async function loadOxcHmrApi(): Promise<OxcApi> {
+  return loadOxcApi();
+}
 
 async function loadOxcApi(): Promise<OxcApi> {
   if (!apiPromise) {
@@ -61,10 +103,11 @@ async function loadOxcApi(): Promise<OxcApi> {
         const api = mod as Partial<OxcApi>;
         if (
           typeof api.transformAngularFile !== 'function' ||
-          typeof api.extractComponentUrls !== 'function'
+          typeof api.extractComponentUrls !== 'function' ||
+          typeof api.compileForHmrSync !== 'function'
         ) {
           throw new Error(
-            'The installed version of @oxc-angular/vite does not export the expected api surface (transformAngularFile, extractComponentUrls).',
+            'The installed version of @oxc-angular/vite does not export the expected api surface (transformAngularFile, extractComponentUrls, compileForHmrSync).',
           );
         }
         return api as OxcApi;
@@ -83,12 +126,6 @@ async function loadOxcApi(): Promise<OxcApi> {
 export interface OxcEngineContext {
   resolvedConfig: ResolvedConfig;
   inlineStylesExtension: string;
-  /**
-   * Whether `import.meta.hot` HMR support should be emitted. Currently
-   * unsupported by this adapter — opting into the OXC engine downgrades
-   * style/template edits to a full reload until the OXC HMR contract is
-   * wired into Analog's `handleHotUpdate` path.
-   */
   liveReload: boolean;
   watchMode: boolean;
 }
@@ -97,6 +134,15 @@ export interface OxcEngineResult {
   code: string;
   map: unknown;
   resourceDependencies: string[];
+  /**
+   * Per-component HMR template updates emitted by OXC when `hmr: true` is
+   * passed (dev-only). Keyed by `filePath@ClassName`. The plugin layer
+   * caches these and serves them from the `@ng/component` middleware on
+   * the next request after a watcher event marks the component dirty.
+   */
+  templateUpdates: Record<string, string>;
+  /** Per-component HMR style updates, keyed by `filePath@ClassName`. */
+  styleUpdates: Record<string, string[]>;
 }
 
 async function preprocessStyleContent(
@@ -173,18 +219,24 @@ export async function oxcTransform(
     }
   }
 
+  // Emit HMR-flavored output in dev when live reload is enabled. The
+  // plugin layer pairs this with the `@ng/component` virtual-module
+  // middleware to deliver per-component updates instead of full reloads.
+  const hmr = ctx.liveReload && ctx.watchMode;
+
   const result = await api.transformAngularFile(
     code,
     id,
     {
       sourcemap: true,
-      // HMR is emitted by OXC as imports of `@ng/component` virtual modules
-      // served by its own dev middleware. Analog's fast-compile plugin owns
-      // a different HMR contract via `generateHmrCode`, so we keep OXC's
-      // HMR off for now and rely on Vite's full-reload fallback.
-      hmr: false,
+      hmr,
       jit: false,
       emitClassMetadata: true,
+      angularVersion: {
+        major: angularMajor,
+        minor: angularMinor,
+        patch: angularPatch,
+      },
     },
     { templates, styles },
   );
@@ -239,5 +291,7 @@ export async function oxcTransform(
     code: stripped.code,
     map: stripped.map ?? map,
     resourceDependencies,
+    templateUpdates: result.templateUpdates ?? {},
+    styleUpdates: result.styleUpdates ?? {},
   };
 }
