@@ -26,6 +26,7 @@
   "peerDependencies": {
     "@angular-devkit/build-angular": "^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
     "@angular/build": "^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0",
+    "@oxc-angular/vite": "^0.0.30",
     "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "peerDependenciesMeta": {
@@ -33,6 +34,9 @@
       "optional": true
     },
     "@angular/build": {
+      "optional": true
+    },
+    "@oxc-angular/vite": {
       "optional": true
     },
     "vite": {
