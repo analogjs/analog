@@ -353,13 +353,20 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     return '!(' + ast.condition.visitExpression(this, null) + ')';
   }
   visitFunctionExpr(ast: o.FunctionExpr) {
-    return (
-      '(' +
-      ast.params.map((p: any) => p.name).join(', ') +
-      ') => {' +
-      ast.statements.map((s: any) => s.visitStatement(this, null)).join(' ') +
-      '}'
-    );
+    // Angular constructs `FunctionExpr` (vs `ArrowFunctionExpr`) when it
+    // wants a *named* function expression — e.g. `contentQueries`,
+    // `viewQuery`, and `template` are emitted as named functions so the
+    // body shows up under `TestComp_Template` / `TestComp_Query` /
+    // `TestComp_ContentQueries` in stack traces and so the runtime can
+    // detect the original component for HMR. Emitting an arrow drops the
+    // name and breaks the upstream emit contract — keep the form
+    // Angular built.
+    const params = ast.params.map((p: any) => p.name).join(', ');
+    const body = ast.statements
+      .map((s: any) => s.visitStatement(this, null))
+      .join(' ');
+    const name = ast.name ? ' ' + ast.name : '';
+    return 'function' + name + '(' + params + ') {' + body + '}';
   }
   visitArrowFunctionExpr(ast: o.ArrowFunctionExpr) {
     const params = '(' + ast.params.map((p: any) => p.name).join(', ') + ')';

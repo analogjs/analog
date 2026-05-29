@@ -403,8 +403,11 @@ describe('Pure annotations on Ivy fields', () => {
     expectCompiles(result);
     // Factory parameter name differs by Angular version: v17 emits `t`,
     // v18+ uses the descriptive `__ngFactoryType__`. Both are valid.
+    // Function form also varies — we emit the upstream-style named
+    // `function ClassName_Factory(...)` (see js-emitter `visitFunctionExpr`);
+    // historical Analog output used a `/*@__PURE__*/` arrow. Accept both.
     expect(result).toMatch(
-      /static ɵfac = \/\*@__PURE__\*\/\s*\((?:__ngFactoryType__|t)\)/,
+      /static ɵfac = \/\*@__PURE__\*\/\s*(?:function\s+\w+\s*)?\((?:__ngFactoryType__|t)\)/,
     );
     expect(result).toMatch(/static ɵcmp = \/\*@__PURE__\*\/\s*i0\.ɵɵdefine/);
     expect(result).toMatch(
