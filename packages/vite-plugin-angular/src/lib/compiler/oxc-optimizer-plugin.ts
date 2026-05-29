@@ -107,7 +107,10 @@ export function oxcOptimizerPlugin({
 
           return { code: result.code, map: result.map ?? null };
         } catch (e) {
-          console.warn(
+          // Vite warning so the failure shows in the dev-server overlay
+          // and build log. We don't `this.error()` — the unoptimized
+          // bundle is still functionally correct.
+          this.warn(
             `[oxc-optimizer] Failed to optimize ${id}: ${(e as Error)?.message ?? e}`,
           );
           return;

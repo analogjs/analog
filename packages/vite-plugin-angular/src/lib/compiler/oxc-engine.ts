@@ -37,7 +37,7 @@ interface OxcApi {
     hmrModule: string;
     componentId: string;
     templateJs: string;
-    errors: Array<{ severity: string; message: string }>;
+    errors: OxcDiagnostic[];
   };
   /**
    * Link partial Angular declarations (`ɵɵngDeclare*`) to their final
@@ -89,6 +89,20 @@ interface OxcResolvedResources {
   styles: Record<string, string[]>;
 }
 
+/**
+ * NAPI-side diagnostic shape from `@oxc-angular/vite/api`. Each entry can
+ * carry one or more positional `labels`, a free-form `helpMessage`, and a
+ * pre-rendered `codeframe`. We forward the structured pieces through to
+ * Vite's diagnostic surface instead of collapsing to `.message`.
+ */
+interface OxcDiagnostic {
+  severity: 'Error' | 'Warning' | 'Advice';
+  message: string;
+  labels: Array<{ message: string | null; start: number; end: number }>;
+  helpMessage: string | null;
+  codeframe: string | null;
+}
+
 interface OxcTransformResult {
   code: string;
   map?: string;
@@ -105,8 +119,8 @@ interface OxcTransformResult {
    * value is the post-encapsulation CSS array for that component.
    */
   styleUpdates?: Record<string, string[]>;
-  errors: Array<{ severity: string; message: string }>;
-  warnings: Array<{ severity: string; message: string }>;
+  errors: OxcDiagnostic[];
+  warnings: OxcDiagnostic[];
 }
 
 let apiPromise: Promise<OxcApi> | undefined;
@@ -185,6 +199,33 @@ export interface OxcEngineResult {
   templateUpdates: Record<string, string>;
   /** Per-component HMR style updates, keyed by `filePath@ClassName`. */
   styleUpdates: Record<string, string[]>;
+  /**
+   * Compile diagnostics. The adapter does NOT throw on `errors` — it
+   * passes them through so the caller (a Vite plugin transform hook)
+   * can route them through `this.error()` / `this.warn()` and surface
+   * codeframes in the dev-server overlay. Each entry preserves OXC's
+   * structured `labels`, `helpMessage`, and `codeframe`.
+   */
+  diagnostics: OxcEngineDiagnostic[];
+}
+
+/**
+ * Plugin-friendly diagnostic shape — same as OXC's NAPI diagnostic with
+ * a derived `offset` (the start of the first label, if any) ready to
+ * feed into Rollup's `this.error(_, position)` API.
+ */
+export interface OxcEngineDiagnostic {
+  severity: 'Error' | 'Warning' | 'Advice';
+  /**
+   * Pre-formatted message including the headline, optional codeframe,
+   * and optional help text. Ready to pass to `this.error()` or
+   * `this.warn()` as-is.
+   */
+  formatted: string;
+  /** Headline only, without codeframe/help — useful for short summaries. */
+  message: string;
+  /** Byte offset into the transformed source, or undefined if no label. */
+  offset?: number;
 }
 
 async function preprocessStyleContent(
@@ -371,14 +412,15 @@ export async function oxcTransform(
     { templates, styles },
   );
 
-  for (const err of result.errors) {
-    throw new Error(`[oxc-angular] ${err.message} (${id})`);
-  }
-  if (debugCompile.enabled && result.warnings.length > 0) {
-    for (const warn of result.warnings) {
-      debugCompile('oxc-engine: warning in %s: %s', id, warn.message);
-    }
-  }
+  // Collect every diagnostic (errors + warnings) and hand them back to
+  // the caller. The plugin transform hook routes them through Vite's
+  // `this.error()` / `this.warn()` so codeframes land in the dev-server
+  // overlay; throwing here would collapse the structured info to a
+  // single message and only the first error would surface.
+  const diagnostics: OxcEngineDiagnostic[] = [
+    ...result.errors.map((d) => formatDiagnostic(d, id)),
+    ...result.warnings.map((d) => formatDiagnostic(d, id)),
+  ];
 
   // OXC returns the source map as a serialized JSON string; Vite accepts
   // either a string or an object, but downstream `transformWithOxc`
@@ -423,5 +465,32 @@ export async function oxcTransform(
     resourceDependencies,
     templateUpdates: result.templateUpdates ?? {},
     styleUpdates: result.styleUpdates ?? {},
+    diagnostics,
+  };
+}
+
+/**
+ * Convert one OXC NAPI diagnostic into the plugin-friendly shape:
+ * a single `formatted` blob (headline + codeframe + help) ready for
+ * `this.error()` / `this.warn()`, plus the first label's offset so
+ * Vite can map it to a `{line, column}` overlay position.
+ */
+function formatDiagnostic(d: OxcDiagnostic, id: string): OxcEngineDiagnostic {
+  const parts: string[] = [`[oxc-angular] ${d.message} (${id})`];
+  // Each label gets a short inline note. OXC usually emits one but
+  // multi-label diagnostics (e.g. "this is here, related is over there")
+  // are worth surfacing if/when they show up.
+  for (const label of d.labels) {
+    if (label.message) {
+      parts.push(`  • ${label.message} (offset ${label.start}..${label.end})`);
+    }
+  }
+  if (d.codeframe) parts.push(d.codeframe);
+  if (d.helpMessage) parts.push(`help: ${d.helpMessage}`);
+  return {
+    severity: d.severity,
+    message: d.message,
+    formatted: parts.join('\n'),
+    offset: d.labels[0]?.start,
   };
 }

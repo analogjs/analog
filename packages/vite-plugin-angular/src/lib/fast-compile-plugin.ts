@@ -25,7 +25,11 @@ import {
   debugRegistry,
   type ComponentRegistry,
 } from './compiler/index.js';
-import { loadOxcHmrApi, oxcTransform } from './compiler/oxc-engine.js';
+import {
+  loadOxcHmrApi,
+  oxcTransform,
+  type OxcEngineDiagnostic,
+} from './compiler/oxc-engine.js';
 import { createOxcHmrController } from './compiler/oxc-hmr.js';
 import { angularMajor, angularMinor, angularPatch } from './utils/devkit.js';
 
@@ -285,7 +289,21 @@ export function fastCompilePlugin(
   async function handleFastCompileTransform(
     code: string,
     id: string,
-  ): Promise<{ code: string; map: any } | undefined> {
+  ): Promise<
+    | {
+        code: string;
+        map: any;
+        /**
+         * Plugin-friendly diagnostics surfaced by the OXC engine. The
+         * caller (Vite `transform.handler`) routes errors through
+         * `this.error()` and warnings through `this.warn()` so they hit
+         * the dev-server overlay with codeframes preserved. Empty for
+         * the TS-engine path (its diagnostics throw directly).
+         */
+        diagnostics?: OxcEngineDiagnostic[];
+      }
+    | undefined
+  > {
     if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
       // Non-Angular file — strip TS-only syntax ourselves so barrels
       // like `export { Foo, type Bar } from './x'` and other TS-only
@@ -337,7 +355,11 @@ export function fastCompilePlugin(
           oxcHmr.recordResource(dep, id);
         }
       }
-      return { code: result.code, map: result.map };
+      return {
+        code: result.code,
+        map: result.map,
+        diagnostics: result.diagnostics,
+      };
     }
 
     // JIT mode
@@ -682,7 +704,24 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleFastCompileTransform(code, id);
+        const result = await handleFastCompileTransform(code, id);
+
+        // OXC engine: route structured diagnostics through Rollup's
+        // plugin context so they hit Vite's dev-server overlay with
+        // codeframes + offset → {line, column} mapping. Errors and
+        // warnings are reported separately. Reporting every error
+        // before the throwing one means the user sees the full list
+        // in one round-trip instead of fixing them one at a time.
+        if (result?.diagnostics?.length) {
+          for (const d of result.diagnostics) {
+            if (d.severity === 'Error') {
+              this.error(d.formatted, d.offset);
+            } else {
+              this.warn(d.formatted);
+            }
+          }
+        }
+        return result;
       },
     },
   };

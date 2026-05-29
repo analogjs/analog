@@ -318,6 +318,33 @@ export function createOxcHmrController(
           { angularVersion: opts.angularVersion },
         );
 
+        // Compile errors come back STRUCTURED on the result, not as a
+        // throw — without this check a broken template would be served
+        // as a no-op update module and the browser would silently keep
+        // stale content. Fall back via `angular:invalidate` so the
+        // runtime requests a full reload, mirroring the catch path
+        // below.
+        if (result.errors.length > 0) {
+          const summary = result.errors
+            .map((e) => `[oxc-hmr] ${e.message}`)
+            .join('\n');
+          console.error(
+            `[Angular HMR] ${resolvedId}@${className}:\n${summary}`,
+          );
+          pendingHmrUpdates.delete(decodedComponentId);
+          server.ws.send({
+            type: 'custom',
+            event: 'angular:invalidate',
+            data: {
+              id: componentId,
+              message: result.errors[0].message,
+              error: true,
+            },
+          });
+          serveEmpty();
+          return;
+        }
+
         // Consume the pending slot only after we have content to serve —
         // a transient empty during atomic-write truncation resolves on
         // the next watcher event.

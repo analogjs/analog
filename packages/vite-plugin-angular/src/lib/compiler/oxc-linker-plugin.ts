@@ -147,9 +147,20 @@ export function oxcLinkerPlugin(): Plugin {
         if (!code.includes(LINKER_DECLARATION_PREFIX)) return;
         if (SKIP_REGEX.test(id)) return;
 
-        const result = await linkCode(code, id);
-        if (!result.linked) return;
-        return { code: result.code, map: result.map };
+        try {
+          const result = await linkCode(code, id);
+          if (!result.linked) return;
+          return { code: result.code, map: result.map };
+        } catch (e) {
+          // Surface a linker failure as a Vite warning so the dev
+          // server overlay shows it; the runtime can still fall back
+          // to JIT linking, so we don't `this.error()` and abort the
+          // build.
+          this.warn(
+            `[oxc-linker] Failed to link ${id}: ${(e as Error)?.message ?? e}`,
+          );
+          return;
+        }
       },
     },
   };
