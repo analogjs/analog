@@ -146,14 +146,17 @@ function childNeedsParens(
  *    `a / 3600.toFixed(2)` where `3600.toFixed` is read as the start of a
  *    decimal literal followed by an identifier — an "Invalid characters
  *    after number" error. Wrapping gives `(a / 3600).toFixed(2)`.
- * 2. A non-negative integer `LiteralExpr` receiver: `42.toFixed(2)` is
- *    invalid for the same decimal-literal-ambiguity reason. Wrapping gives
- *    `(42).toFixed(2)`. Negative numbers are already emitted as `(-42)` by
- *    `visitLiteralExpr`. Floats (e.g. `4.5.toFixed`) and strings parse fine.
+ * 2. An integer `LiteralExpr` receiver: `42.toFixed(2)` is invalid for the
+ *    same decimal-literal-ambiguity reason. `-1.toString()` is also
+ *    ambiguous because `.` binds tighter than unary minus, so the parser
+ *    reads it as `-(1.toString())`. Wrap both — `(42).toFixed(2)` and
+ *    `(-1).toString()`. Floats (e.g. `4.5.toFixed`) and strings parse
+ *    fine and don't need wrapping.
  *
- * Other expression kinds either already self-wrap (`ConditionalExpr`,
- * `UnaryOperatorExpr`) or are primary forms that don't need parens
- * (`ReadVarExpr`, `ReadPropExpr`, `InvokeFunctionExpr`, etc.).
+ * Other expression kinds are primary forms that don't need parens
+ * (`ConditionalExpr`, `UnaryOperatorExpr`, `ReadVarExpr`, `ReadPropExpr`,
+ * `InvokeFunctionExpr`, etc.). Member-receiver wrapping for compound
+ * expressions like `(a ? b : c).d` is the caller's responsibility.
  */
 function emitReceiverForMemberAccess(
   receiver: o.Expression,

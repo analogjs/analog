@@ -121,16 +121,11 @@ const FIXTURES: UpstreamFixture[] = [
     golden: 'basic_for_template.js',
   },
 
-  // ─── Still divergent ───
   {
     name: 'control_flow / basic_if',
     dir: 'r3_view_compiler_control_flow',
     input: 'basic_if.ts',
     golden: 'basic_if_template.js',
-    // TS engine drift: still emits the inner conditional template
-    // (`MyApp_Conditional_2_Template`) inline rather than hoisting it to
-    // a top-level named declaration. OXC engine matches upstream.
-    expectedDivergent: { ts: true, oxc: false },
   },
 ];
 
