@@ -77,7 +77,7 @@ importers:
         version: 10.45.4
       ajv-formats:
         specifier: ^3.0.1
-        version: 3.0.1(ajv@8.18.0)
+        version: 3.0.1(ajv@6.14.0)
       defu:
         specifier: ^6.1.4
         version: 6.1.4
@@ -233,8 +233,8 @@ importers:
         specifier: 22.6.4
         version: 22.6.4(@babel/traverse@7.29.0)(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.25)(typescript@5.9.3))(@swc/core@1.15.18(@swc/helpers@0.5.19))(nx@22.6.4(@swc-node/register@1.11.1(@swc/core@1.15.18(@swc/helpers@0.5.19))(@swc/types@0.1.25)(typescript@5.9.3))(@swc/core@1.15.18(@swc/helpers@0.5.19)))
       '@oxc-angular/vite':
-        specifier: ^0.0.15
-        version: 0.0.15(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
+        specifier: ^0.0.30
+        version: 0.0.30(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))
       '@oxc-project/runtime':
         specifier: ^0.117.0
         version: 0.117.0
@@ -4242,52 +4242,52 @@ packages:
   '@oslojs/encoding@1.1.0':
     resolution: {integrity: sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ==}
 
-  '@oxc-angular/binding-darwin-arm64@0.0.15':
-    resolution: {integrity: sha512-A5XAeU4A3BCRdo5jrMNlXCA/ivq6jtBeoQ/8EcjWj+YumEZt36mAa27XhKHCq2/V645YTMHdyDDOLNJqJ5k+4Q==}
+  '@oxc-angular/binding-darwin-arm64@0.0.30':
+    resolution: {integrity: sha512-OM8PhN3IFQx0+qz+SgewmKH0bhs8F8fQxHZpW32amDXEBet5AFcXzAyhZYOHGnQggp7jpeJEGi2CLWAaB8gYjg==}
     cpu: [arm64]
     os: [darwin]
 
-  '@oxc-angular/binding-darwin-x64@0.0.15':
-    resolution: {integrity: sha512-kxQVWhnL0dr6ozAKCroI/ZmX0mQFM6PqFUMZ6nCNGdESs49PcCOMBHGNkLIre96cJFfz5RVB16zCbBe9sC12Aw==}
+  '@oxc-angular/binding-darwin-x64@0.0.30':
+    resolution: {integrity: sha512-QbFeIjqaF9AH3IFME9TXvD3D0MeAGTYBs5AqajKrpJnuZcyLfYGRiTwYWFBv+Pg5oEsINGkGuNQRgXPZ7Ae/mQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@oxc-angular/binding-linux-arm64-gnu@0.0.15':
-    resolution: {integrity: sha512-/xoe8QhbH6kKbDajUPRUx0x3/ukgkvYuIckZAZQA3scqr8WChP9w0Qo2vtCMeQ7i71PgUZ7ed+B1qrx+GRmcrw==}
+  '@oxc-angular/binding-linux-arm64-gnu@0.0.30':
+    resolution: {integrity: sha512-nljt/7vKl3yV2RCXy8gb4XUL6pwas3mZ5WEe9vOJivsKuORedsU/ceIgq5buTqrWHMl5mgX/E6/mQvMCGCDbEA==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@oxc-angular/binding-linux-arm64-musl@0.0.15':
-    resolution: {integrity: sha512-u+R7jmVU35bLI+9o2oqC09zv3St2ZURk+b4RXzT2j9QLwy6LuGMLuKMOpB9oMVQpg5EdVxEG+8nyrv1QM9eOHA==}
+  '@oxc-angular/binding-linux-arm64-musl@0.0.30':
+    resolution: {integrity: sha512-2HnA9fFm+IwotiFoEfMn1ZqKJgSW+CTdpWv62aXDKK5jMk/gfDNJEuscipNTxsg2HdcJLJXKattHsgqmHUUV3w==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@oxc-angular/binding-linux-x64-gnu@0.0.15':
-    resolution: {integrity: sha512-EjJJhM+Q4wv8uYNdIPwErRtDfI/PJ2F08Z7AHwFzrKIu6yuz6GsVvT7jgTydqkkysrRYH7iR4Pis+tuoWAEkGA==}
+  '@oxc-angular/binding-linux-x64-gnu@0.0.30':
+    resolution: {integrity: sha512-TmHJruPrHXMGrOc7GJe7kSNUvtCc1HAreV9Y6tYpqtI3XBleQmy84MZ0ybfGtA9B77CT8ff2dzQ7T1YKlpjcgg==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@oxc-angular/binding-linux-x64-musl@0.0.15':
-    resolution: {integrity: sha512-L9JcgC8m3WwA05nGppIrLUAAcedZ8Oy1EjSXTJREFGwAIWGEtQ1CFmPi8PIpvWmTLbagPp7waP3TGiQJWER6PQ==}
+  '@oxc-angular/binding-linux-x64-musl@0.0.30':
+    resolution: {integrity: sha512-TQuIgenowo+kSbm5jovaT3Or9qILwMXIWKPyfBt36CXeTnoWbzt4KmKiskc1sM69Kj35JWWSTmi6tjNLa17CXg==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@oxc-angular/binding-win32-arm64-msvc@0.0.15':
-    resolution: {integrity: sha512-QZ5GSMVeH+Ib58SHEqyTh0fJVWQG/C868gdHQ6M4qbUBzMpZZn3o6jrGOL1dmQRQlv+58jNkimk9OYOGC++2eQ==}
+  '@oxc-angular/binding-win32-arm64-msvc@0.0.30':
+    resolution: {integrity: sha512-jGvcDVt/T4e5dusOFCGAD3q6oUVmZAuSM5QozvJtr/DLHpuNFDFszMY/dg30QR65wvwD+F1WdhurV+kyE8o3gQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@oxc-angular/binding-win32-x64-msvc@0.0.15':
-    resolution: {integrity: sha512-S+nFeI2Kv32oTrAq+xG4OegFvVQmWwGGklF8YxMaH0Ybk7F9//+lKR5ZzS5ltdP89MjBlNIa/hLUoL9Zu+bKsA==}
+  '@oxc-angular/binding-win32-x64-msvc@0.0.30':
+    resolution: {integrity: sha512-H/DotVh/vrnLR46CeoNrpADck0TE1Ur1+z3haOTYPoX8vgZgoGcXd+nk8t9OLh3OwwOOvU31muXlUPzed2FwAA==}
     cpu: [x64]
     os: [win32]
 
-  '@oxc-angular/vite@0.0.15':
-    resolution: {integrity: sha512-y2lUT6kTJdyHh+ap3xkKIereHnBp87prGKPeczwte67y1AnZ5n6fcZmI/zJeUDyXHWtuf//HVYjhS70WbwZ0vg==}
+  '@oxc-angular/vite@0.0.30':
+    resolution: {integrity: sha512-UVwb3126LWFRBBh+emB0OjzCMC4YUKriqxqUYMMoi8Y2TsMwJhTScSvpIagDYEn6YcF5i2wrRdUqOoslY6hUCA==}
     peerDependencies:
       vite: ^8.0.0
 
@@ -21726,43 +21726,43 @@ snapshots:
 
   '@oslojs/encoding@1.1.0': {}
 
-  '@oxc-angular/binding-darwin-arm64@0.0.15':
+  '@oxc-angular/binding-darwin-arm64@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-darwin-x64@0.0.15':
+  '@oxc-angular/binding-darwin-x64@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-linux-arm64-gnu@0.0.15':
+  '@oxc-angular/binding-linux-arm64-gnu@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-linux-arm64-musl@0.0.15':
+  '@oxc-angular/binding-linux-arm64-musl@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-linux-x64-gnu@0.0.15':
+  '@oxc-angular/binding-linux-x64-gnu@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-linux-x64-musl@0.0.15':
+  '@oxc-angular/binding-linux-x64-musl@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-win32-arm64-msvc@0.0.15':
+  '@oxc-angular/binding-win32-arm64-msvc@0.0.30':
     optional: true
 
-  '@oxc-angular/binding-win32-x64-msvc@0.0.15':
+  '@oxc-angular/binding-win32-x64-msvc@0.0.30':
     optional: true
 
-  '@oxc-angular/vite@0.0.15(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
+  '@oxc-angular/vite@0.0.30(vite@8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2))':
     dependencies:
       obug: 2.1.1
       vite: 8.0.0(@types/node@22.19.15)(esbuild@0.27.3)(jiti@2.6.1)(less@4.6.4)(sass-embedded@1.98.0)(sass@1.98.0)(stylus@0.64.0)(terser@5.46.0)(yaml@2.8.2)
     optionalDependencies:
-      '@oxc-angular/binding-darwin-arm64': 0.0.15
-      '@oxc-angular/binding-darwin-x64': 0.0.15
-      '@oxc-angular/binding-linux-arm64-gnu': 0.0.15
-      '@oxc-angular/binding-linux-arm64-musl': 0.0.15
-      '@oxc-angular/binding-linux-x64-gnu': 0.0.15
-      '@oxc-angular/binding-linux-x64-musl': 0.0.15
-      '@oxc-angular/binding-win32-arm64-msvc': 0.0.15
-      '@oxc-angular/binding-win32-x64-msvc': 0.0.15
+      '@oxc-angular/binding-darwin-arm64': 0.0.30
+      '@oxc-angular/binding-darwin-x64': 0.0.30
+      '@oxc-angular/binding-linux-arm64-gnu': 0.0.30
+      '@oxc-angular/binding-linux-arm64-musl': 0.0.30
+      '@oxc-angular/binding-linux-x64-gnu': 0.0.30
+      '@oxc-angular/binding-linux-x64-musl': 0.0.30
+      '@oxc-angular/binding-win32-arm64-msvc': 0.0.30
+      '@oxc-angular/binding-win32-x64-msvc': 0.0.30
 
   '@oxc-parser/binding-android-arm-eabi@0.121.0':
     optional: true
@@ -24012,6 +24012,10 @@ snapshots:
   ajv-formats@2.1.1(ajv@8.18.0):
     optionalDependencies:
       ajv: 8.18.0
+
+  ajv-formats@3.0.1(ajv@6.14.0):
+    optionalDependencies:
+      ajv: 6.14.0
 
   ajv-formats@3.0.1(ajv@8.17.1):
     optionalDependencies:
