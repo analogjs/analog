@@ -1,6 +1,7 @@
 import { promises as fsPromises } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import type { ResolvedConfig } from 'vite';
+import * as vite from 'vite';
 import { preprocessCSS } from 'vite';
 
 import { debugCompile } from './debug.js';
@@ -209,5 +210,34 @@ export async function oxcTransform(
     }
   }
 
-  return { code: result.code, map, resourceDependencies };
+  // OXC@0.0.30 augments the class with Ivy static members (ɵcmp / ɵdir /
+  // ɵpip / ɵfac / ɵprov / ɵinj) but leaves the original field initializers
+  // and decorator arguments unmodified — so for a signal-API directive
+  // like `label = input<string>('')` the type argument survives into the
+  // output. That's invalid JS once the file leaves Vite's plugin
+  // boundary, so we run a single TS strip pass here to match what the
+  // in-tree TS engine does after `compile()`.
+  const stripped = vite.transformWithOxc
+    ? await vite.transformWithOxc(
+        result.code,
+        id,
+        {
+          lang: 'ts',
+          sourcemap: !!map,
+          decorator: { legacy: false, emitDecoratorMetadata: false },
+        },
+        map as never,
+      )
+    : await vite.transformWithEsbuild(
+        result.code,
+        id,
+        { loader: 'ts', sourcemap: !!map },
+        map as never,
+      );
+
+  return {
+    code: stripped.code,
+    map: stripped.map ?? map,
+    resourceDependencies,
+  };
 }
