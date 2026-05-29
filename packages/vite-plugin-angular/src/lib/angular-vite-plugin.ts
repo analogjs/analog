@@ -118,6 +118,16 @@ export interface PluginOptions {
    * - `'partial'`: Emit partial declarations for library publishing.
    */
   fastCompileMode?: 'full' | 'partial';
+  /**
+   * Which compiler backs `fastCompile`.
+   * - `'ts'` (default): the in-process TS/OXC-AST compiler shipped with this
+   *   package.
+   * - `'oxc'`: experimental — route AOT component compilation through the
+   *   native Rust pipeline from `@oxc-angular/vite` (must be installed as an
+   *   optional peer dependency). JIT mode and `fastCompileMode: 'partial'`
+   *   still flow through the TS engine.
+   */
+  fastCompileEngine?: 'ts' | 'oxc';
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
@@ -159,6 +169,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
+    fastCompileEngine: options?.fastCompileEngine ?? 'ts',
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -768,6 +779,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         isTest,
         isAstroIntegration,
         fastCompileMode: pluginOptions.fastCompileMode,
+        fastCompileEngine: pluginOptions.fastCompileEngine,
       })
     : angularPlugin();
 

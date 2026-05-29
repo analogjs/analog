@@ -25,6 +25,7 @@ import {
   debugRegistry,
   type ComponentRegistry,
 } from './compiler/index.js';
+import { oxcTransform } from './compiler/oxc-engine.js';
 
 import {
   TS_EXT_REGEX,
@@ -65,6 +66,14 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  /**
+   * Which compiler backs the fastCompile transform.
+   * - `'ts'` (default): the in-process TS/OXC-AST compiler under `./compiler/`.
+   * - `'oxc'`: route component compilation through `@oxc-angular/vite/api`
+   *   (Rust). Experimental: JIT, partial mode, and inline-HMR fall back to
+   *   the TS engine; SCSS in inline styles is not yet supported.
+   */
+  fastCompileEngine?: 'ts' | 'oxc';
 }
 
 export function fastCompilePlugin(
@@ -325,6 +334,32 @@ export function fastCompilePlugin(
             inMap,
           );
       return { code: stripped.code, map: stripped.map };
+    }
+
+    // OXC engine: route component compilation through `@oxc-angular/vite`
+    // when the user has opted in via `fastCompileEngine: 'oxc'`. The native
+    // Rust pipeline handles resource resolution, template compilation, and
+    // TS→JS emission itself, so we skip the TS-side inlining, registry
+    // merging, and post-strip passes below.
+    //
+    // Engine selection is narrow on purpose: JIT and partial-library output
+    // still flow through the TS path because the OXC NAPI surface doesn't
+    // model `ɵɵngDeclare*` emission and Analog's JIT path also down-levels
+    // signal APIs the OXC build optimizer expects to see pre-emitted.
+    if (
+      pluginOptions.fastCompileEngine === 'oxc' &&
+      (pluginOptions.fastCompileMode ?? 'full') === 'full'
+    ) {
+      const result = await oxcTransform(code, id, {
+        resolvedConfig,
+        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        liveReload: pluginOptions.liveReload,
+        watchMode,
+      });
+      for (const dep of result.resourceDependencies) {
+        resourceToSource.set(dep, id);
+      }
+      return { code: result.code, map: result.map };
     }
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation
