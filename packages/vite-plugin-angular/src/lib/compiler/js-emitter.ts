@@ -160,11 +160,11 @@ function emitReceiverForMemberAccess(
   emitted: string,
 ): string {
   if (receiver instanceof o.BinaryOperatorExpr) return '(' + emitted + ')';
-  if (
-    receiver instanceof o.LiteralExpr &&
-    typeof receiver.value === 'number' &&
-    receiver.value >= 0
-  ) {
+  if (receiver instanceof o.LiteralExpr && typeof receiver.value === 'number') {
+    // Both positive and negative integer literals need wrapping when used
+    // as a member receiver: `42.toFixed` is ambiguous (decimal-literal
+    // continuation), and `-1.toString()` parses as `-(1.toString())`
+    // because `.` binds tighter than unary minus. Wrap both.
     return '(' + emitted + ')';
   }
   return emitted;
@@ -258,7 +258,11 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   visitLiteralExpr(ast: o.LiteralExpr) {
     const v = ast.value;
     if (typeof v === 'string') return JSON.stringify(v);
-    if (typeof v === 'number') return v < 0 ? '(-' + -v + ')' : '' + v;
+    // Negative numerics emit bare (`-1`, not `(-1)`) — matches upstream
+    // Angular emit. `emitReceiverForMemberAccess` wraps when the literal
+    // is the receiver of a property access (`.toFixed` etc.), which is
+    // the only context where the bare form would mis-parse.
+    if (typeof v === 'number') return '' + v;
     if (typeof v === 'boolean') return v ? 'true' : 'false';
     if (v === undefined) return 'void 0';
     return 'null';
@@ -300,14 +304,18 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     );
   }
   visitConditionalExpr(ast: o.ConditionalExpr) {
+    // Upstream Angular emits the ternary unwrapped — `cond ? a : b` rather
+    // than `(cond ? a : b)`. The outer wrapping was historically defensive
+    // for nested-ternary cases, but the wrapping done by the *parent*
+    // (e.g. `visitBinaryOperatorExpr`'s `childNeedsParens`) is sufficient
+    // for those. Function-call arguments and bare-statement contexts —
+    // the common cases — should match upstream's clean form.
     return (
-      '(' +
       ast.condition.visitExpression(this, null) +
       ' ? ' +
       ast.trueCase.visitExpression(this, null) +
       ' : ' +
-      ast.falseCase!.visitExpression(this, null) +
-      ')'
+      ast.falseCase!.visitExpression(this, null)
     );
   }
   visitBinaryOperatorExpr(ast: o.BinaryOperatorExpr) {
@@ -444,7 +452,18 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     return 'typeof ' + ast.expr.visitExpression(this, null);
   }
   visitUnaryOperatorExpr(ast: o.UnaryOperatorExpr) {
-    return '-(' + ast.expr.visitExpression(this, null) + ')';
+    const inner = ast.expr.visitExpression(this, null);
+    // Bare numeric literals don't need wrapping — Angular emits `-1`, not
+    // `-(1)`. Wrap anything else defensively (precedence-safe for `-(a + b)`
+    // etc.; the contexts that emit unary minus on complex operands aren't
+    // worth a full precedence table).
+    if (
+      ast.expr instanceof o.LiteralExpr &&
+      typeof (ast.expr as o.LiteralExpr).value === 'number'
+    ) {
+      return '-' + inner;
+    }
+    return '-(' + inner + ')';
   }
   visitInstantiateExpr(ast: o.InstantiateExpr) {
     return (
@@ -459,7 +478,24 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     return ast.parts.map((p: any) => p.visitExpression(this, null)).join(', ');
   }
   visitParenthesizedExpr(ast: o.ParenthesizedExpr) {
-    return '(' + ast.expr.visitExpression(this, null) + ')';
+    // Angular's AST wraps some expressions in explicit `ParenthesizedExpr`
+    // nodes for safety even when the wrapping is unnecessary at emit time
+    // (e.g. `-1` and other simple unary-on-literal forms). Drop the parens
+    // for those primary forms so the output matches upstream emit
+    // (`ɵɵconditional(cond ? 2 : -1)` rather than `… : (-1))`).
+    const inner = ast.expr;
+    const isUnaryOnNumericLiteral =
+      inner instanceof o.UnaryOperatorExpr &&
+      (inner as o.UnaryOperatorExpr).expr instanceof o.LiteralExpr &&
+      typeof ((inner as o.UnaryOperatorExpr).expr as o.LiteralExpr).value ===
+        'number';
+    const isNumericLiteral =
+      inner instanceof o.LiteralExpr &&
+      typeof (inner as o.LiteralExpr).value === 'number';
+    if (isNumericLiteral || isUnaryOnNumericLiteral) {
+      return inner.visitExpression(this, null);
+    }
+    return '(' + inner.visitExpression(this, null) + ')';
   }
   visitVoidExpr(ast: o.VoidExpr) {
     return 'void ' + ast.expr.visitExpression(this, null);
