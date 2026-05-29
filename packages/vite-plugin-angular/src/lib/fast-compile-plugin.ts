@@ -708,17 +708,29 @@ export function fastCompilePlugin(
 
         // OXC engine: route structured diagnostics through Rollup's
         // plugin context so they hit Vite's dev-server overlay with
-        // codeframes + offset → {line, column} mapping. Errors and
-        // warnings are reported separately. Reporting every error
-        // before the throwing one means the user sees the full list
-        // in one round-trip instead of fixing them one at a time.
+        // codeframes + offset → {line, column} mapping.
+        //
+        // `this.error()` throws synchronously, so a naive per-diagnostic
+        // loop would only surface the first error. Instead, report
+        // warnings first via `this.warn()`, then aggregate every error
+        // into one combined `this.error()` call so the user sees the
+        // whole list in one round-trip. The first error's offset is
+        // used for the overlay's `{line, column}` mapping — subsequent
+        // errors' messages still appear in the formatted blob.
         if (result?.diagnostics?.length) {
+          const errors = result.diagnostics.filter(
+            (d) => d.severity === 'Error',
+          );
           for (const d of result.diagnostics) {
-            if (d.severity === 'Error') {
-              this.error(d.formatted, d.offset);
-            } else {
-              this.warn(d.formatted);
-            }
+            if (d.severity !== 'Error') this.warn(d.formatted);
+          }
+          if (errors.length > 0) {
+            const header =
+              errors.length === 1
+                ? errors[0].formatted
+                : `${errors.length} OXC compile errors in this file:\n\n` +
+                  errors.map((e) => e.formatted).join('\n\n');
+            this.error(header, errors[0].offset);
           }
         }
         return result;
