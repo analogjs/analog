@@ -64,7 +64,6 @@ import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { oxcLinkerPlugin } from './compiler/oxc-linker-plugin.js';
-import { oxcOptimizerPlugin } from './compiler/oxc-optimizer-plugin.js';
 import {
   TS_EXT_REGEX,
   createTsConfigGetter,
@@ -795,19 +794,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       ? oxcLinkerPlugin()
       : (false as unknown as Plugin);
 
-  // OXC engine: tree-shake FESM Angular packages via OXC's native
-  // optimizer (elide metadata, wrap statics in pure IIFEs, mark
-  // `@__PURE__`, adjust TS-enum patterns). TS engine path keeps Analog's
-  // existing optimizer, which uses `@angular/build`'s `JavaScriptTransformer`
-  // for the same job.
-  const useOxcOptimizer =
-    pluginOptions.fastCompile && pluginOptions.fastCompileEngine === 'oxc';
-  const optimizerPlugin = useOxcOptimizer
-    ? oxcOptimizerPlugin({ jit, sourcemap: false })
-    : buildOptimizerPlugin({
-        supportedBrowsers: pluginOptions.supportedBrowsers,
-        jit,
-      });
+  // Both engines use Analog's `JavaScriptTransformer`-backed optimizer.
+  // OXC's `optimizeAngularPackage` leaves `@angular/core/fesm2022/core.mjs`
+  // essentially untouched, so unused public re-exports (including the JIT
+  // runtime) survive tree-shaking and ~150KB extra ships to the client.
+  // Revisit `oxcOptimizerPlugin` once upstream closes the gap.
+  const optimizerPlugin = buildOptimizerPlugin({
+    supportedBrowsers: pluginOptions.supportedBrowsers,
+    jit,
+  });
 
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
