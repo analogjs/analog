@@ -48,6 +48,23 @@ interface OxcApi {
     code: string,
     filename: string,
   ) => Promise<{ code: string; map?: string; linked: boolean }>;
+  /**
+   * Apply tree-shaking optimizations to FESM Angular packages: elide
+   * `ɵsetClassMetadata`, pure-IIFE-wrap static Ivy members, mark
+   * top-level calls `/* @__PURE__ *\/`, and adjust TS-enum patterns.
+   * Production-only, called from the optimizer plugin.
+   */
+  optimizeAngularPackage: (
+    code: string,
+    filename: string,
+    options: {
+      sourcemap?: boolean;
+      elideMetadata?: boolean;
+      wrapStaticMembers?: boolean;
+      markPure?: boolean;
+      adjustEnums?: boolean;
+    },
+  ) => Promise<{ code: string; map?: string }>;
 }
 
 interface OxcAngularVersion {
@@ -118,10 +135,11 @@ async function loadOxcApi(): Promise<OxcApi> {
           typeof api.transformAngularFile !== 'function' ||
           typeof api.extractComponentUrls !== 'function' ||
           typeof api.compileForHmrSync !== 'function' ||
-          typeof api.linkAngularPackage !== 'function'
+          typeof api.linkAngularPackage !== 'function' ||
+          typeof api.optimizeAngularPackage !== 'function'
         ) {
           throw new Error(
-            'The installed version of @oxc-angular/vite does not export the expected api surface (transformAngularFile, extractComponentUrls, compileForHmrSync, linkAngularPackage).',
+            'The installed version of @oxc-angular/vite does not export the expected api surface (transformAngularFile, extractComponentUrls, compileForHmrSync, linkAngularPackage, optimizeAngularPackage).',
           );
         }
         return api as OxcApi;
