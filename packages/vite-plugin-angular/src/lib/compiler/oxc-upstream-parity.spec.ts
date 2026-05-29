@@ -99,17 +99,22 @@ const FIXTURES: UpstreamFixture[] = [
     golden: 'model_component_definition.js',
   },
 
-  // ─── Previously divergent — now closed by the
+  // ─── Previously divergent — TS engine closed by the
   //     `emitDistinctChangesOnly` + named-function-expression fixes
-  //     in metadata.ts and js-emitter.ts (TS engine), and the
-  //     chained-query + content-before-view pool ordering fixes in
-  //     `@oxc-angular/vite` (OXC PR voidzero-dev/oxc-angular-compiler#323)
-  //     paired with the adapter passing the installed Angular version. ───
+  //     in metadata.ts and js-emitter.ts. OXC engine still diverges
+  //     on the released `@oxc-angular/vite@0.0.30`: queries emit as
+  //     separate statements rather than chained
+  //     (`ɵɵviewQuerySignal(...)(...)`) and the const-table indices
+  //     for content vs view queries are swapped. Both gaps are
+  //     closed in voidzero-dev/oxc-angular-compiler#323 but it
+  //     hasn't shipped to npm yet — flip back to `oxc: false` once
+  //     the next OXC release lands. ───
   {
     name: 'signal_queries / query_in_component',
     dir: 'signal_queries',
     input: 'query_in_component.ts',
     golden: 'query_in_component.js',
+    expectedDivergent: { ts: false, oxc: true },
   },
   {
     name: 'control_flow / basic_for',
