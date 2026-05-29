@@ -99,43 +99,37 @@ const FIXTURES: UpstreamFixture[] = [
     golden: 'model_component_definition.js',
   },
 
-  // ─── DIVERGENT (real punch-list items — fix one and flip the flag) ───
+  // ─── Previously divergent — now closed by the
+  //     `emitDistinctChangesOnly` + named-function-expression fixes
+  //     in metadata.ts and js-emitter.ts ───
   {
     name: 'signal_queries / query_in_component',
     dir: 'signal_queries',
     input: 'query_in_component.ts',
     golden: 'query_in_component.js',
-    // TS engine drift: query flags emitted as `1`/`0` (descendants only)
-    //   instead of upstream `5`/`4` (descendants | emitDistinctChangesOnly).
-    //   This is a real correctness gap — Angular v22 requires
-    //   emitDistinctChangesOnly on signal queries.
-    // Additional TS-engine cosmetic: template/contentQueries/viewQuery emit
-    //   as inline arrow functions instead of named `function` declarations.
-    // OXC engine drift: chained instruction calls (`fn(...)(...)`) are
-    //   flattened into separate statements (`fn(...); fn(...);`). Same
-    //   runtime behavior but breaks Angular's instructionChainAfter()
-    //   emit contract. Also: const-table numbering is reversed for
-    //   content vs view queries (`_c0`-`_c3` order swaps).
-    expectedDivergent: { ts: true, oxc: true },
-  },
-  {
-    name: 'control_flow / basic_if',
-    dir: 'r3_view_compiler_control_flow',
-    input: 'basic_if.ts',
-    golden: 'basic_if_template.js',
-    // TS engine drift only: emits the template body inline as an arrow
-    //   function inside `defineComponent({ template: (rf, ctx) => … })`
-    //   instead of upstream's top-level `function MyApp_Template(rf, ctx)
-    //   {…}` declaration. Same for `MyApp_Conditional_2_Template`. OXC
-    //   engine matches upstream — it hoists nested template functions.
-    expectedDivergent: { ts: true, oxc: false },
+    // OXC engine still drifts: chained instruction calls (`fn(...)(...)`)
+    // are flattened into separate statements (`fn(...); fn(...);`). Same
+    // runtime behavior but breaks Angular's `instructionChainAfter()`
+    // emit contract. Also: const-table numbering is reversed for content
+    // vs view queries (`_c0`-`_c3` order swaps).
+    expectedDivergent: { ts: false, oxc: true },
   },
   {
     name: 'control_flow / basic_for',
     dir: 'r3_view_compiler_control_flow',
     input: 'basic_for.ts',
     golden: 'basic_for_template.js',
-    // Same TS-only hoisting gap as basic_if. OXC matches upstream.
+  },
+
+  // ─── Still divergent ───
+  {
+    name: 'control_flow / basic_if',
+    dir: 'r3_view_compiler_control_flow',
+    input: 'basic_if.ts',
+    golden: 'basic_if_template.js',
+    // TS engine drift: still emits the inner conditional template
+    // (`MyApp_Conditional_2_Template`) inline rather than hoisting it to
+    // a top-level named declaration. OXC engine matches upstream.
     expectedDivergent: { ts: true, oxc: false },
   },
 ];
