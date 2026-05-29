@@ -6,6 +6,10 @@ import { preprocessCSS } from 'vite';
 
 import { angularMajor, angularMinor, angularPatch } from '../utils/devkit.js';
 import { debugCompile } from './debug.js';
+import {
+  locateComponentDecorators,
+  locateStylesInArgs,
+} from './oxc-hmr-helpers.js';
 
 /**
  * Minimal subset of `@oxc-angular/vite/api` we depend on. Loaded lazily so the
@@ -175,12 +179,100 @@ async function preprocessStyleContent(
   }
 }
 
+/**
+ * Rewrite every inline `styles:` entry in `code` to its preprocessed CSS
+ * form, in-place. Returns the mutated source.
+ *
+ * Inline styles aren't part of OXC's `ResolvedResources` map (that one
+ * is keyed by URL, for external `styleUrl` / `styleUrls`), so the only
+ * place Vite's `preprocessCSS` pipeline can run on `styles: ['…scss…']`
+ * literals is *before* the source reaches OXC. We walk each
+ * `@Component(...)` decorator, find every string-literal element inside
+ * its `styles:` array (or its bare string form), pipe each through Vite,
+ * and substitute the result back as a JSON-quoted plain-CSS literal.
+ *
+ * No-op when `inlineExt === 'css'` — OXC handles CSS natively.
+ *
+ * Substitutions are applied from highest offset to lowest so earlier
+ * offsets stay valid while the string is mutated from the end backwards.
+ */
+async function rewriteInlineStyles(
+  code: string,
+  filename: string,
+  inlineExt: string,
+  config: ResolvedConfig,
+): Promise<string> {
+  if (inlineExt === 'css') return code;
+
+  const decorators = locateComponentDecorators(code);
+  if (decorators.length === 0) return code;
+
+  const tasks: Array<{ start: number; end: number; content: string }> = [];
+  for (const d of decorators) {
+    const stylesRange = locateStylesInArgs(code, d.argsRange);
+    if (!stylesRange) continue;
+    const [openIdx, closeIdx] = stylesRange;
+    if (code[openIdx] === '[') {
+      const body = code.slice(openIdx + 1, closeIdx);
+      const stringRe = /`([\s\S]*?)`|'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"/g;
+      let m: RegExpExecArray | null;
+      while ((m = stringRe.exec(body)) !== null) {
+        const absStart = openIdx + 1 + m.index;
+        tasks.push({
+          start: absStart,
+          end: absStart + m[0].length,
+          content: m[1] ?? m[2] ?? m[3] ?? '',
+        });
+      }
+    } else {
+      // Bare-string form: `styles: '…'`. Range covers the literal incl. quotes.
+      tasks.push({
+        start: openIdx,
+        end: closeIdx + 1,
+        content: code.slice(openIdx + 1, closeIdx),
+      });
+    }
+  }
+
+  if (tasks.length === 0) return code;
+
+  const preprocessed = await Promise.all(
+    tasks.map(async (t, i) => {
+      // Synthetic path with the right extension so Vite picks the
+      // matching preprocessor (Sass/Less/etc.).
+      const fakePath = filename.replace(/\.ts$/, `.inline-${i}.${inlineExt}`);
+      return preprocessStyleContent(t.content, fakePath, config);
+    }),
+  );
+
+  let out = code;
+  for (let i = tasks.length - 1; i >= 0; i--) {
+    const { start, end } = tasks[i];
+    out =
+      out.slice(0, start) + JSON.stringify(preprocessed[i]) + out.slice(end);
+  }
+  return out;
+}
+
 export async function oxcTransform(
   code: string,
   id: string,
   ctx: OxcEngineContext,
 ): Promise<OxcEngineResult> {
   const api = await loadOxcApi();
+
+  // Run Vite's CSS preprocessor over every inline `styles:` literal
+  // before OXC sees the source. OXC operates on plain CSS and has no
+  // slot for pre-processed inline styles (`ResolvedResources.styles`
+  // is keyed by URL, not by inline-array index), so the substitution
+  // has to happen at the source level. No-op when the user is on
+  // `inlineStylesExtension: 'css'`.
+  code = await rewriteInlineStyles(
+    code,
+    id,
+    ctx.inlineStylesExtension,
+    ctx.resolvedConfig,
+  );
 
   const { templateUrls, styleUrls } = await api.extractComponentUrls(code, id);
   const dir = dirname(id);

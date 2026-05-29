@@ -178,7 +178,7 @@ function locateFieldInsideArgs(
   return null;
 }
 
-interface ComponentDecorator {
+export interface ComponentDecorator {
   argsRange: [number, number];
   className: string;
 }
@@ -226,7 +226,7 @@ function findClassName(
   return null;
 }
 
-function locateComponentDecorators(code: string): ComponentDecorator[] {
+export function locateComponentDecorators(code: string): ComponentDecorator[] {
   type Found = {
     decoratorStart: number;
     openParen: number;
@@ -255,7 +255,7 @@ function locateComponentDecorators(code: string): ComponentDecorator[] {
   return out;
 }
 
-function locateStylesInArgs(
+export function locateStylesInArgs(
   code: string,
   argsRange: [number, number],
 ): [number, number] | null {
