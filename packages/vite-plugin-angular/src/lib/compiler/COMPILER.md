@@ -12,6 +12,15 @@ export default defineConfig({
 });
 ```
 
+`fastCompile` now picks between two engines via `fastCompileEngine`:
+
+```ts
+angular({ fastCompile: true, fastCompileEngine: 'ts' /* default */ }); // this in-tree compiler
+angular({ fastCompile: true, fastCompileEngine: 'oxc' }); // native Rust via @oxc-angular/vite
+```
+
+The bulk of this document describes the TS engine. The OXC engine — wired in via `oxc-engine.ts`, `oxc-hmr.ts`, `oxc-linker-plugin.ts`, `oxc-optimizer-plugin.ts` — is summarised in § OXC Engine.
+
 Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
 
 ## Architecture
@@ -253,6 +262,59 @@ Both external and inline styles are preprocessed via Vite's `preprocessCSS` API:
 When a `@Component` decorator combines both an inline `styles: [...]` array and a `styleUrl`/`styleUrls` property, `inlineResourceUrls` merges the inlined CSS into the existing array rather than emitting a second `styles` property. The merge inserts each file's content right after the last real element in the existing array, so source-level trailing commas are preserved and the output never contains sparse (`null`) elements — downstream metadata extraction walks the array and crashes on null entries. If the existing array is empty, the leading comma is dropped to avoid a `[, "..."]` sparse hole. When a decorator has `styleUrl` and `styleUrls` together with no inline `styles`, both url-based props collapse into a single synthesized `styles: [...]` write so only one `styles` key is ever emitted.
 
 The `inlineStyleLanguage` option (default: `'scss'`) controls the file extension used for inline style preprocessing. Set to `'css'` to disable inline preprocessing.
+
+## OXC Engine
+
+Selecting `fastCompileEngine: 'oxc'` swaps the in-tree TS-engine compilation pipeline for `@oxc-angular/vite` (native Rust via NAPI). The Vite plugin shell, dispatch order, and engine option are still owned by `fastCompilePlugin`; OXC owns AOT/JIT compilation, HMR codegen, partial-declaration linking, and FESM build optimization.
+
+Wired against `@oxc-angular/vite@^0.0.30`. The adapter calls into OXC's NAPI exports — `transformAngularFile`, `extractComponentUrls`, `compileForHmrSync`, `linkAngularPackage`, `optimizeAngularPackage` — and `loadOxcHmrApi` validates every export at load time so a stale OXC version surfaces a clear error instead of silent breakage.
+
+### Coverage on `0.0.30`
+
+| Capability                                                                             | OXC engine                                                                                                                                          |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AOT compile (`ɵɵdefineComponent`)                                                      | ✅ Native Rust pipeline                                                                                                                             |
+| JIT compile (decorator downleveling)                                                   | ✅ `jit: true` forwarded; emits `angular:jit:template:file;` / `angular:jit:style:file;` URLs Analog resolves natively                              |
+| Inline `template:` / `styles:`                                                         | ✅ With `inlineStylesExtension: 'scss' \| 'less' \| 'sass'` Vite's `preprocessCSS` runs over each inline style literal in source before OXC sees it |
+| External `templateUrl` / `styleUrl`                                                    | ✅ Pre-resolved by the adapter; preprocessed via Vite                                                                                               |
+| HMR                                                                                    | ✅ OXC's `@ng/component?c=<id>` virtual-module contract; 4-branch dispatch (resource / inline-only / other .ts / plain .ts)                         |
+| `angular:invalidate` runtime escalation                                                | ✅ Falls back to full reload when the runtime can't patch (e.g. element-structure changes)                                                          |
+| Pre-compiled library linking (`ɵɵngDeclare*` → `ɵɵdefine*`)                            | ✅ Via `oxc-linker-plugin.ts` (Rolldown pre-bundle + transform hook, both)                                                                          |
+| FESM build optimizer (`elideMetadata`, `wrapStaticMembers`, `markPure`, `adjustEnums`) | ✅ Via `oxc-optimizer-plugin.ts` (production builds only)                                                                                           |
+| Cross-file selector resolution                                                         | ✅ Trusts OXC's internal `namespace_registry`; Analog's TS-side `ComponentRegistry` is bypassed                                                     |
+| Style encapsulation                                                                    | ✅ Via OXC's `encapsulation` option                                                                                                                 |
+| Diagnostics                                                                            | ✅ Structured errors/warnings flow through `this.error()` / `this.warn()` — codeframes + helpMessage land in Vite's dev-server overlay              |
+| `fastCompileMode: 'partial'` (library publishing)                                      | ❌ Falls back to TS engine. OXC's NAPI doesn't model `ɵɵngDeclare*` emission                                                                        |
+| `__ANALOG_EXTERNAL_REGISTRY__` (out-of-tree compilers like `@tsrx/analog`)             | ❌ Ignored on the OXC path by design. OXC's internal resolution doesn't take a foreign registry                                                     |
+| SSR manifest plugin                                                                    | ⚠️ OXC's `ssrManifestPlugin` not wired yet                                                                                                          |
+
+### Open OXC drift on `0.0.30`
+
+| Divergence                                                                                          | Tracking                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signal queries emit as separate statements (`fn(...); fn(...)`) instead of chained (`fn(...)(...)`) | [voidzero-dev/oxc-angular-compiler#323](https://github.com/voidzero-dev/oxc-angular-compiler/pull/323) — merged upstream; awaiting next release |
+| `_c<N>` const-table indices reversed for content vs view queries                                    | Same PR                                                                                                                                         |
+
+The `signal_queries / query_in_component` fixture in `oxc-upstream-parity.spec.ts` carries `expectedDivergent: { oxc: true }` for these. When the next OXC release lands, flipping the marker to `oxc: false` re-asserts upstream parity.
+
+### Files (OXC engine)
+
+| File                      | Purpose                                                                                                                                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `oxc-engine.ts`           | Adapter around `transformAngularFile` — pre-processes inline SCSS, resolves external resources, forwards `jit` + `hmr` + `angularVersion`, post-strips residual TS syntax. Returns structured diagnostics instead of throwing                  |
+| `oxc-hmr.ts`              | HMR controller: state caches (componentsByFile / pendingHmrUpdates / inlineTemplateCache / inlineStylesCache / componentMetadataCache), `@ng/component` HTTP middleware, 4-branch `handleHotUpdate` dispatch, `angular:invalidate` WS listener |
+| `oxc-hmr-helpers.ts`      | Inline copy of OXC's private decorator-field locators (`locateComponentDecorators`, `locateStylesInArgs`, `extractInlineTemplate`, `extractInlineStyles`, `stripComponentMetadata`). TODO-tagged for removal once OXC re-exports them          |
+| `oxc-linker-plugin.ts`    | Vite plugin wrapping `linkAngularPackage`. Skips `@angular/compiler` and `@angular/core`, honors `optimizeDeps.exclude`, runs as both a Rolldown pre-bundle `load` hook and a Vite `transform` hook                                            |
+| `oxc-optimizer-plugin.ts` | Vite plugin wrapping `optimizeAngularPackage`. Production-only (`apply: 'build'`); FESM filter; sets `ngDevMode` / `ngJitMode` / `ngI18nClosureMode` / `ngServerMode` defines                                                                  |
+
+### Test files (OXC engine)
+
+| File                          | Coverage                                                                                                   |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `oxc-parity.spec.ts`          | Engine-vs-engine — 21 fixtures × parity + parseability assertions, plus a `KNOWN_OXC_GAPS` allow-list slot |
+| `oxc-upstream-parity.spec.ts` | Compares each engine's output against Angular's official compliance goldens via a slim `expectEmit` port   |
+| `oxc-diagnostics.spec.ts`     | Structured-error contract: compile errors come back on `diagnostics`, not as a throw                       |
+| `oxc-inline-styles.spec.ts`   | SCSS nesting in inline styles compiles cleanly; `css` extension is a no-op                                 |
 
 ## Comparison with Angular's Compilers
 
