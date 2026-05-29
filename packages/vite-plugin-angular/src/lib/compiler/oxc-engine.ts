@@ -39,6 +39,15 @@ interface OxcApi {
     templateJs: string;
     errors: Array<{ severity: string; message: string }>;
   };
+  /**
+   * Link partial Angular declarations (`ɵɵngDeclare*`) to their final
+   * `ɵɵdefine*` form. Used by the linker plugin to process pre-compiled
+   * Angular libraries published in partial format.
+   */
+  linkAngularPackage: (
+    code: string,
+    filename: string,
+  ) => Promise<{ code: string; map?: string; linked: boolean }>;
 }
 
 interface OxcAngularVersion {
@@ -108,10 +117,11 @@ async function loadOxcApi(): Promise<OxcApi> {
         if (
           typeof api.transformAngularFile !== 'function' ||
           typeof api.extractComponentUrls !== 'function' ||
-          typeof api.compileForHmrSync !== 'function'
+          typeof api.compileForHmrSync !== 'function' ||
+          typeof api.linkAngularPackage !== 'function'
         ) {
           throw new Error(
-            'The installed version of @oxc-angular/vite does not export the expected api surface (transformAngularFile, extractComponentUrls, compileForHmrSync).',
+            'The installed version of @oxc-angular/vite does not export the expected api surface (transformAngularFile, extractComponentUrls, compileForHmrSync, linkAngularPackage).',
           );
         }
         return api as OxcApi;

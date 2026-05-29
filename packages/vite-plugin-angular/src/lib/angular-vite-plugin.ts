@@ -63,6 +63,7 @@ import {
 import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
+import { oxcLinkerPlugin } from './compiler/oxc-linker-plugin.js';
 import {
   TS_EXT_REGEX,
   createTsConfigGetter,
@@ -783,9 +784,20 @@ export function angular(options?: PluginOptions): Plugin[] {
       })
     : angularPlugin();
 
+  // OXC engine only: link pre-compiled Angular libraries (`ɵɵngDeclare*`
+  // → `ɵɵdefine*`) using OXC's native Rust linker. Without this, those
+  // libraries fall back to runtime JIT linking which pulls
+  // `@angular/compiler` into the browser bundle. Skipped on the TS
+  // engine path, which has its own dts-reader covering the same need.
+  const linkerPlugin =
+    pluginOptions.fastCompile && pluginOptions.fastCompileEngine === 'oxc'
+      ? oxcLinkerPlugin()
+      : (false as unknown as Plugin);
+
   return [
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     compilationPlugin,
+    linkerPlugin,
     !pluginOptions.fastCompile &&
       pluginOptions.liveReload &&
       liveReloadPlugin({ classNames, fileEmitter }),
