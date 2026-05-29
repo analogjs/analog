@@ -617,7 +617,12 @@ export function detectSignals(classNode: any, sourceCode: string) {
         descendants,
         read,
         static: false,
-        emitFlags: 0,
+        // Upstream ngtsc sets this unconditionally for every signal query
+        // (compiler-cli/src/ngtsc/annotations/directive/src/query_functions.
+        // ts:123). Without it, the `ɵɵ{view,content}QuerySignal` flag bits
+        // come out as `1`/`0` instead of `5`/`4` — runtime change-detection
+        // emits on every check instead of only on distinct changes.
+        emitDistinctChangesOnly: true,
         isSignal: true,
       };
 
@@ -754,6 +759,11 @@ export function detectFieldDecorators(classNode: any, sourceCode: string) {
           let read: any = null;
           let isStatic = false;
           let descendants = isView || isFirst;
+          // Angular's default for both decorator and signal queries —
+          // see `emitDistinctChangesOnlyDefaultValue` in compiler/src/
+          // core.ts (= true). Users can only opt out via the
+          // `@ViewChildren` / `@ContentChildren` option.
+          let emitDistinctChangesOnly = true;
 
           if (args.length > 1 && args[1]?.type === 'ObjectExpression') {
             for (const prop of args[1].properties || []) {
@@ -767,6 +777,9 @@ export function detectFieldDecorators(classNode: any, sourceCode: string) {
               if (k === 'descendants')
                 descendants =
                   sourceCode.slice(prop.value.start, prop.value.end) === 'true';
+              if (k === 'emitDistinctChangesOnly')
+                emitDistinctChangesOnly =
+                  sourceCode.slice(prop.value.start, prop.value.end) === 'true';
             }
           }
 
@@ -777,7 +790,7 @@ export function detectFieldDecorators(classNode: any, sourceCode: string) {
             descendants,
             read,
             static: isStatic,
-            emitFlags: 0,
+            emitDistinctChangesOnly,
             isSignal: false,
           };
 

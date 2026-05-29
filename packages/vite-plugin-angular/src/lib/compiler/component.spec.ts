@@ -90,8 +90,12 @@ describe('@Component', () => {
     expect(fullResult.code).not.toMatch(/@Component/);
     // i0 import prepended
     expect(outLines[0]).toContain('import * as i0');
-    // Template function emitted
-    expect(result).toMatch(/template:\s*\(rf, ctx\)/);
+    // Template function emitted as a named function expression — matches
+    // upstream Angular v22's emit shape (`function ClassName_Template(rf,
+    // ctx) {…}`) so stack traces and HMR detection see the original name.
+    expect(result).toMatch(
+      /template:\s*function\s+HelloComponent_Template\s*\(rf, ctx\)/,
+    );
     // Text interpolation instruction
     expect(result).toContain('ɵɵtextInterpolate');
   });
@@ -3197,6 +3201,11 @@ describe('Signal query read/descendants options', () => {
     expect(result).toContain('ElementRef');
   });
 
+  // ɵɵcontentQuerySignal's fourth arg is a QueryFlags bitmask:
+  //   bit 0 (1) = descendants, bit 2 (4) = emitDistinctChangesOnly.
+  // Signal queries always set the latter (mirrors upstream ngtsc —
+  // `compiler-cli/src/ngtsc/annotations/directive/src/query_functions.
+  // ts:123`), so flag = 4 when descendants is false, 5 when true.
   it('parses `descendants: false` on contentChildren', () => {
     const result = compile(
       `
@@ -3209,9 +3218,7 @@ describe('Signal query read/descendants options', () => {
       'c.ts',
     );
     expectCompiles(result);
-    // ɵɵcontentQuery's third arg is the descendants flag (1 = true,
-    // 0 = false). With descendants: false we expect a `, 0,` flag.
-    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*0/);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*4/);
   });
 
   it('defaults contentChildren descendants to false when no options', () => {
@@ -3226,7 +3233,7 @@ describe('Signal query read/descendants options', () => {
       'c.ts',
     );
     expectCompiles(result);
-    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*0/);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*4/);
   });
 
   it('parses contentChildren with descendants: true', () => {
@@ -3241,7 +3248,7 @@ describe('Signal query read/descendants options', () => {
       'c.ts',
     );
     expectCompiles(result);
-    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*5/);
   });
 
   it('defaults contentChild() descendants to true (matches Angular API)', () => {
@@ -3256,8 +3263,7 @@ describe('Signal query read/descendants options', () => {
       'c.ts',
     );
     expectCompiles(result);
-    // ɵɵcontentQuerySignal flag arg = 1 means descendants: true.
-    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*1/);
+    expect(result).toMatch(/ɵɵcontentQuerySignal\([^,]+,[^,]+,[^,]+,\s*5/);
   });
 });
 
