@@ -3,7 +3,10 @@ import * as angularPreset from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
 import * as vite from 'vite';
 
-export const previewAnnotations = async (entries = [], options) => {
+export const previewAnnotations = async (
+  entries: string[] = [],
+  options: any,
+) => {
   const config = fileURLToPath(
     import.meta.resolve('@storybook/angular/client/config'),
   );
@@ -27,7 +30,7 @@ export const previewAnnotations = async (entries = [], options) => {
   return annotations;
 };
 
-export const core = async (config, options) => {
+export const core = async (config: any, options: any) => {
   const presetCore =
     typeof angularPreset.core === 'function'
       ? await angularPreset.core(config, options)
@@ -42,8 +45,8 @@ export const core = async (config, options) => {
 };
 
 async function resolveExperimentalZoneless(
-  frameworkOptions,
-  angularBuilderOptions,
+  frameworkOptions: any,
+  angularBuilderOptions: any,
 ) {
   // 1. Explicit framework option (user's .storybook/main.ts)
   if (typeof frameworkOptions?.experimentalZoneless === 'boolean') {
@@ -64,11 +67,13 @@ async function resolveExperimentalZoneless(
   }
 }
 
-export const viteFinal = async (config, options) => {
+export const viteFinal = async (config: vite.InlineConfig, options: any) => {
   // Remove any loaded analogjs plugins from a vite.config.(m)ts file
   config.plugins = (config.plugins ?? [])
     .flat()
-    .filter((plugin) => !plugin.name.includes('analogjs'));
+    .filter(
+      (plugin) => !(plugin as vite.Plugin)?.name?.includes('analogjs'),
+    ) as vite.InlineConfig['plugins'];
 
   // Merge custom configuration into the default config
   const { mergeConfig, normalizePath } = await import('vite');
@@ -123,13 +128,19 @@ export const viteFinal = async (config, options) => {
 };
 
 function angularOptionsPlugin(
-  options,
-  { normalizePath, experimentalZoneless },
-) {
-  let resolvedConfig;
+  options: any,
+  {
+    normalizePath,
+    experimentalZoneless,
+  }: {
+    normalizePath: typeof vite.normalizePath;
+    experimentalZoneless: boolean;
+  },
+): vite.Plugin {
+  let resolvedConfig: vite.UserConfig | undefined;
   return {
     name: 'analogjs-storybook-options-plugin',
-    config(userConfig) {
+    config(userConfig: vite.UserConfig) {
       resolvedConfig = userConfig;
       const loadPaths =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
@@ -157,7 +168,7 @@ function angularOptionsPlugin(
 
       return;
     },
-    async transform(code, id) {
+    async transform(code: string, id: string) {
       if (
         normalizePath(id).endsWith(
           normalizePath(`${options.configDir}/preview.ts`),

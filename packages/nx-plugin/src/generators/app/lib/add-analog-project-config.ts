@@ -16,7 +16,7 @@ export function addAnalogProjectConfig(
   const targets = isNx ? 'targets' : 'architect';
   const builders = isNx ? 'executor' : 'builder';
 
-  let projectConfiguration: ProjectConfiguration = {
+  let projectConfiguration: any = {
     root: projectRoot,
     projectType: 'application',
     [targets]: {
@@ -57,7 +57,7 @@ export function addAnalogProjectConfig(
   };
 
   if (isNx) {
-    projectConfiguration.targets['build'].outputs = [
+    projectConfiguration[targets]['build'].outputs = [
       '{options.outputPath}',
       `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/.nitro`,
       `{workspaceRoot}/dist/${workspaceAppsDir}${projectName}/ssr`,

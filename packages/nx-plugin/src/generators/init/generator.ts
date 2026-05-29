@@ -28,7 +28,7 @@ function addFiles(
 ) {
   const isNx = tree.read('/nx.json');
   const projects = getProjects(tree);
-  const projectConfig = projects.get(options.project);
+  const projectConfig = projects.get(options.project)!;
 
   const templateOptions = {
     ...options,
@@ -62,8 +62,13 @@ export async function setupAnalogGenerator(
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
-  const majorAngularVersion = major(coerce(angularVersion));
-  addAnalogDependencies(tree, angularVersion, options.vitest, nxVersion);
+  const majorAngularVersion = major(coerce(angularVersion!)!);
+  addAnalogDependencies(
+    tree,
+    angularVersion!,
+    options.vitest,
+    nxVersion ?? undefined,
+  );
   updateBuildTarget(tree, options);
   updateServeTarget(tree, options);
 

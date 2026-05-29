@@ -51,15 +51,17 @@ export function updateServeTarget(
 
     const projectConfig = projects.get(schema.project);
 
-    projectConfig.targets.serve = {
-      executor: '@analogjs/platform:vite-dev-server',
-      continuous: true,
-      ...commonConfig,
-    };
-    projectConfig.targets.build.outputs = [
-      `{workspaceRoot}/dist/apps/${projectConfig.name}`,
-    ];
+    if (projectConfig && projectConfig.targets) {
+      projectConfig.targets.serve = {
+        executor: '@analogjs/platform:vite-dev-server',
+        continuous: true,
+        ...commonConfig,
+      };
+      projectConfig.targets.build.outputs = [
+        `{workspaceRoot}/dist/apps/${projectConfig.name}`,
+      ];
 
-    updateProjectConfiguration(tree, schema.project, projectConfig);
+      updateProjectConfiguration(tree, schema.project, projectConfig);
+    }
   }
 }

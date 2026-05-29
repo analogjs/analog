@@ -11,3 +11,5 @@ pnpm-lock.yaml
 /packages/create-analog/template-*
 .vite-inspect
 .all-contributorsrc
+
+.nx/self-healing
