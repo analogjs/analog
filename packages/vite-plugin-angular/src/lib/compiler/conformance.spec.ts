@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { compile, type CompileOptions } from './compile';
+import { oxcTransform } from './oxc-engine';
 import { scanFile, type ComponentRegistry } from './registry';
 import { angularVersionAtLeast } from './angular-version';
 import * as fs from 'node:fs';
@@ -12,6 +13,47 @@ const COMPLIANCE_DIR = path.join(
   ANGULAR_ROOT,
   'packages/compiler-cli/test/compliance/test_cases',
 );
+
+// Engine selector: `CONFORMANCE_ENGINE=oxc` routes compilation through
+// `@oxc-angular/vite` instead of the in-tree TS engine. The harness,
+// fixtures, expectEmit matcher, and pass-rate threshold are identical
+// either way — divergence between engines surfaces as a delta in the
+// final summary.
+type Engine = 'ts' | 'oxc';
+const ENGINE = (process.env.CONFORMANCE_ENGINE ?? 'ts') as Engine;
+
+// Minimal OXC context for compile-only conformance runs. No live reload,
+// no watch, no JIT — the suite covers AOT emit shape only.
+const OXC_CTX: Parameters<typeof oxcTransform>[2] = {
+  resolvedConfig: {
+    root: process.cwd(),
+    command: 'build',
+    mode: 'production',
+    isProduction: true,
+    css: {},
+  } as never,
+  inlineStylesExtension: 'css',
+  liveReload: false,
+  watchMode: false,
+  jit: false,
+};
+
+async function compileWithEngine(
+  code: string,
+  fileName: string,
+  registry: ComponentRegistry,
+): Promise<string> {
+  if (ENGINE === 'oxc') {
+    const result = await oxcTransform(code, fileName, OXC_CTX);
+    const firstError = result.diagnostics.find((d) => d.severity === 'Error');
+    if (firstError) {
+      throw new Error(firstError.message);
+    }
+    return result.code;
+  }
+  const opts: CompileOptions = { registry, useDefineForClassFields: true };
+  return compile(code, fileName, opts).code;
+}
 
 /**
  * Fuzzy matcher for Angular compliance test expected output.
@@ -306,6 +348,13 @@ const SKIP_PATTERNS = [
   /forward.?ref.*provider/i, // Complex forwardRef in providers
 ];
 
+// Categories known to crash the OXC native binary (SIGILL — Rust panic
+// in the NAPI layer, not catchable from JS). Skip them under
+// `CONFORMANCE_ENGINE=oxc` so the rest of the suite completes and we
+// still get a comparable pass-rate number. Re-enable once the upstream
+// panic is fixed.
+const OXC_CRASHING_CATEGORIES = new Set<string>(['r3_view_compiler_template']);
+
 function shouldSkip(testCase: TestCase): boolean {
   if (testCase.excludeTest) return true;
   if (testCase.compilationModeFilter?.includes('linked compile')) return true;
@@ -316,154 +365,164 @@ function shouldSkip(testCase: TestCase): boolean {
 // Only run if Angular source is available
 const angularAvailable = fs.existsSync(COMPLIANCE_DIR);
 
-describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
-  const results = { pass: 0, fail: 0, skip: 0, error: 0 };
-  const MIN_CONFORMANCE_PASS_RATE = Number.parseFloat(
-    process.env.ANGULAR_CONFORMANCE_MIN_PASS_RATE ?? '0.75',
-  );
-
-  for (const category of CATEGORIES) {
-    const categoryDir = path.join(COMPLIANCE_DIR, category);
-    if (!fs.existsSync(categoryDir)) continue;
-
-    const minMajor = CATEGORY_MIN_MAJOR[category];
-    if (minMajor && !angularVersionAtLeast(minMajor)) continue;
-
-    const groups = loadTestCaseGroups(
-      categoryDir,
-      NESTED_CATEGORIES.has(category),
+describe.skipIf(!angularAvailable)(
+  `Angular Compliance Tests (engine=${ENGINE})`,
+  () => {
+    const results = { pass: 0, fail: 0, skip: 0, error: 0 };
+    const MIN_CONFORMANCE_PASS_RATE = Number.parseFloat(
+      process.env.ANGULAR_CONFORMANCE_MIN_PASS_RATE ?? '0.75',
     );
-    if (groups.every((g) => g.cases.length === 0)) continue;
 
-    describe(category, () => {
-      for (const group of groups) {
-        for (const tc of group.cases) {
-          // Prefix nested-subdirectory cases so descriptions repeated
-          // across subdirectories stay distinguishable in the output.
-          const label = group.label
-            ? `${group.label}: ${tc.description}`
-            : tc.description;
+    for (const category of CATEGORIES) {
+      const categoryDir = path.join(COMPLIANCE_DIR, category);
+      if (!fs.existsSync(categoryDir)) continue;
 
-          if (shouldSkip(tc)) {
-            it.skip(label, () => {});
-            results.skip++;
-            continue;
-          }
+      const minMajor = CATEGORY_MIN_MAJOR[category];
+      if (minMajor && !angularVersionAtLeast(minMajor)) continue;
+      if (ENGINE === 'oxc' && OXC_CRASHING_CATEGORIES.has(category)) {
+        describe.skip(`${category} (skipped on OXC engine — native crash)`, () => {
+          it.skip('upstream panic — track and re-enable when fixed', () => {});
+        });
+        continue;
+      }
 
-          it(label, () => {
-            // Build a registry from all .ts files in the test directory
-            // so cross-file references (e.g. @defer deps) can be resolved
-            const registry: ComponentRegistry = new Map();
-            try {
-              const allTsFiles = fs
-                .readdirSync(group.dir)
-                .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
-              for (const f of allTsFiles) {
-                const code = loadFile(group.dir, f);
-                if (!code) continue;
-                for (const entry of scanFile(code, path.join(group.dir, f))) {
-                  registry.set(entry.className, entry);
-                }
-              }
-            } catch {
-              /* ignore scan errors */
+      const groups = loadTestCaseGroups(
+        categoryDir,
+        NESTED_CATEGORIES.has(category),
+      );
+      if (groups.every((g) => g.cases.length === 0)) continue;
+
+      describe(category, () => {
+        for (const group of groups) {
+          for (const tc of group.cases) {
+            // Prefix nested-subdirectory cases so descriptions repeated
+            // across subdirectories stay distinguishable in the output.
+            const label = group.label
+              ? `${group.label}: ${tc.description}`
+              : tc.description;
+
+            if (shouldSkip(tc)) {
+              it.skip(label, () => {});
+              results.skip++;
+              continue;
             }
 
-            // Load and compile all input files
-            for (const inputFile of tc.inputFiles || []) {
-              if (!inputFile) {
-                results.skip++;
-                continue;
-              }
-              const inputCode = loadFile(group.dir, inputFile);
-              if (!inputCode) {
-                results.skip++;
-                return;
-              }
-
-              let compiled: string;
+            it(label, async () => {
+              // Build a registry from all .ts files in the test directory
+              // so cross-file references (e.g. @defer deps) can be resolved
+              const registry: ComponentRegistry = new Map();
               try {
-                const result = compile(
-                  inputCode,
-                  path.join(group.dir, inputFile),
-                  { registry, useDefineForClassFields: true },
-                );
-                compiled = result.code;
-              } catch (e: any) {
-                // Some test cases use features we don't support — record as error
-                results.error++;
-                // Don't fail the test, just record the error
-                expect(true).toBe(true);
-                return;
+                const allTsFiles = fs
+                  .readdirSync(group.dir)
+                  .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
+                for (const f of allTsFiles) {
+                  const code = loadFile(group.dir, f);
+                  if (!code) continue;
+                  for (const entry of scanFile(code, path.join(group.dir, f))) {
+                    registry.set(entry.className, entry);
+                  }
+                }
+              } catch {
+                /* ignore scan errors */
               }
 
-              // Check expectations
-              for (const expectation of tc.expectations || []) {
-                if (!expectation.files || !Array.isArray(expectation.files))
+              // Load and compile all input files
+              for (const inputFile of tc.inputFiles || []) {
+                if (!inputFile) {
+                  results.skip++;
                   continue;
-                for (const file of expectation.files) {
-                  if (!file?.expected) continue;
-                  const expectedCode = loadFile(group.dir, file.expected);
-                  if (!expectedCode) continue;
+                }
+                const inputCode = loadFile(group.dir, inputFile);
+                if (!inputCode) {
+                  results.skip++;
+                  return;
+                }
 
-                  const result = expectEmit(compiled, expectedCode);
-                  if (!result.pass) {
-                    results.fail++;
-                    // Soft failure — report but don't block other tests
-                    console.warn(
-                      `[CONFORMANCE FAIL] ${category}/${label}: ${result.message}`,
-                    );
-                  } else {
-                    results.pass++;
+                let compiled: string;
+                try {
+                  compiled = await compileWithEngine(
+                    inputCode,
+                    path.join(group.dir, inputFile),
+                    registry,
+                  );
+                } catch (e: any) {
+                  // Some test cases use features we don't support — record as error
+                  results.error++;
+                  // Don't fail the test, just record the error
+                  expect(true).toBe(true);
+                  return;
+                }
+
+                // Check expectations
+                for (const expectation of tc.expectations || []) {
+                  if (!expectation.files || !Array.isArray(expectation.files))
+                    continue;
+                  for (const file of expectation.files) {
+                    if (!file?.expected) continue;
+                    const expectedCode = loadFile(group.dir, file.expected);
+                    if (!expectedCode) continue;
+
+                    const result = expectEmit(compiled, expectedCode);
+                    if (!result.pass) {
+                      results.fail++;
+                      // Soft failure — report but don't block other tests
+                      console.warn(
+                        `[CONFORMANCE FAIL] ${category}/${label}: ${result.message}`,
+                      );
+                    } else {
+                      results.pass++;
+                    }
                   }
                 }
               }
-            }
-          });
+            });
+          }
         }
-      }
+      });
+    }
+
+    // Drift detector: every directory under Angular's compliance test_cases
+    // must be consciously triaged — either into CATEGORIES (we run it) or
+    // UNSUPPORTED_CATEGORIES (we skip it, with a reason). A directory in
+    // neither means Angular shipped new compiler fixtures the fast compiler
+    // has never been checked against; fail loudly so a maintainer triages it
+    // rather than letting the gap pass silently.
+    it('has no untriaged Angular compliance categories', () => {
+      const onDisk = fs
+        .readdirSync(COMPLIANCE_DIR, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name);
+
+      const triaged = new Set([
+        ...CATEGORIES,
+        ...Object.keys(UNSUPPORTED_CATEGORIES),
+      ]);
+      const untriaged = onDisk.filter((name) => !triaged.has(name));
+
+      expect(
+        untriaged,
+        `New Angular compliance categories detected: [${untriaged.join(', ')}]. ` +
+          `Angular added compiler test fixtures the fast compiler has not been ` +
+          `triaged against. Add each to CATEGORIES (and implement support) or to ` +
+          `UNSUPPORTED_CATEGORIES (with a reason) in conformance.spec.ts.`,
+      ).toEqual([]);
     });
-  }
 
-  // Drift detector: every directory under Angular's compliance test_cases
-  // must be consciously triaged — either into CATEGORIES (we run it) or
-  // UNSUPPORTED_CATEGORIES (we skip it, with a reason). A directory in
-  // neither means Angular shipped new compiler fixtures the fast compiler
-  // has never been checked against; fail loudly so a maintainer triages it
-  // rather than letting the gap pass silently.
-  it('has no untriaged Angular compliance categories', () => {
-    const onDisk = fs
-      .readdirSync(COMPLIANCE_DIR, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name);
-
-    const triaged = new Set([
-      ...CATEGORIES,
-      ...Object.keys(UNSUPPORTED_CATEGORIES),
-    ]);
-    const untriaged = onDisk.filter((name) => !triaged.has(name));
-
-    expect(
-      untriaged,
-      `New Angular compliance categories detected: [${untriaged.join(', ')}]. ` +
-        `Angular added compiler test fixtures the fast compiler has not been ` +
-        `triaged against. Add each to CATEGORIES (and implement support) or to ` +
-        `UNSUPPORTED_CATEGORIES (with a reason) in conformance.spec.ts.`,
-    ).toEqual([]);
-  });
-
-  it('summary', () => {
-    const total = results.pass + results.fail + results.skip + results.error;
-    const compared = results.pass + results.fail;
-    const passRate = compared > 0 ? results.pass / compared : 0;
-    console.log('\n=== Angular Compliance Test Results ===');
-    console.log(`Pass: ${results.pass}`);
-    console.log(`Fail: ${results.fail}`);
-    console.log(`Skip: ${results.skip}`);
-    console.log(`Error (compile failed): ${results.error}`);
-    console.log(`Total: ${total}`);
-    console.log(`Pass rate: ${(passRate * 100).toFixed(1)}%`);
-    expect(compared).toBeGreaterThan(0);
-    expect(passRate).toBeGreaterThanOrEqual(MIN_CONFORMANCE_PASS_RATE);
-  });
-});
+    it('summary', () => {
+      const total = results.pass + results.fail + results.skip + results.error;
+      const compared = results.pass + results.fail;
+      const passRate = compared > 0 ? results.pass / compared : 0;
+      console.log(
+        `\n=== Angular Compliance Test Results (engine=${ENGINE}) ===`,
+      );
+      console.log(`Pass: ${results.pass}`);
+      console.log(`Fail: ${results.fail}`);
+      console.log(`Skip: ${results.skip}`);
+      console.log(`Error (compile failed): ${results.error}`);
+      console.log(`Total: ${total}`);
+      console.log(`Pass rate: ${(passRate * 100).toFixed(1)}%`);
+      expect(compared).toBeGreaterThan(0);
+      expect(passRate).toBeGreaterThanOrEqual(MIN_CONFORMANCE_PASS_RATE);
+    });
+  },
+);

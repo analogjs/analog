@@ -20,12 +20,16 @@ env:
 jobs:
   conformance:
     runs-on: ubuntu-latest
+    # OXC engine rows are advisory while it's an opt-in compiler — drift
+    # signal without blocking PR merges. TS engine rows stay required.
+    continue-on-error: ${{ matrix.engine == 'oxc' }}
     strategy:
       fail-fast: false
       matrix:
         angular-major: [17, 18, 19, 20, 21, 'latest', 'next']
+        engine: [ts, oxc]
 
-    name: Angular ${{ matrix.angular-major }}
+    name: Angular ${{ matrix.angular-major }} (engine=${{ matrix.engine }})
 
     steps:
       - uses: actions/checkout@v3
@@ -46,4 +50,5 @@ jobs:
       - name: Run conformance tests
         env:
           ANGULAR_SOURCE_DIR: .angular-conformance
+          CONFORMANCE_ENGINE: ${{ matrix.engine }}
         run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
