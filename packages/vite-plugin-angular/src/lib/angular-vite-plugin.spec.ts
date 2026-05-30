@@ -15,6 +15,7 @@ vi.mock('vite', async () => {
 import {
   angular,
   createFsWatcherCacheInvalidator,
+  groupDiagnosticsByFile,
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
@@ -535,5 +536,103 @@ describe('mapTemplateUpdatesToFiles', () => {
       'BarComponent',
       'FooComponent',
     ]);
+  });
+});
+
+describe('groupDiagnosticsByFile', () => {
+  it('groups each diagnostic under its own file with file:line:column', () => {
+    const { errorsByFile, warningsByFile } = groupDiagnosticsByFile({
+      errors: [
+        {
+          text: 'TS2339: Property does not exist',
+          location: { file: '/src/app/a.component.ts', line: 5, column: 20 },
+        },
+      ],
+      warnings: [
+        {
+          text: 'NG8113: All imports are unused',
+          location: { file: '/src/app/b.component.ts', line: 3, column: 50 },
+        },
+      ],
+    });
+
+    expect(errorsByFile.get(normalizePath('/src/app/a.component.ts'))).toEqual([
+      '/src/app/a.component.ts:5:20: TS2339: Property does not exist',
+    ]);
+    expect(
+      warningsByFile.get(normalizePath('/src/app/b.component.ts')),
+    ).toEqual(['/src/app/b.component.ts:3:50: NG8113: All imports are unused']);
+  });
+
+  it('does not duplicate a diagnostic across files (one bucket per file)', () => {
+    const { warningsByFile } = groupDiagnosticsByFile({
+      warnings: [
+        {
+          text: 'NG8113: unused a',
+          location: { file: '/src/a.component.ts', line: 1, column: 0 },
+        },
+        {
+          text: 'NG8113: unused b',
+          location: { file: '/src/b.component.ts', line: 1, column: 0 },
+        },
+      ],
+    });
+
+    expect(warningsByFile.size).toBe(2);
+    expect(
+      [...warningsByFile.values()].every((bucket) => bucket.length === 1),
+    ).toBe(true);
+  });
+
+  it('accumulates multiple diagnostics for the same file', () => {
+    const { errorsByFile } = groupDiagnosticsByFile({
+      errors: [
+        {
+          text: 'TS1: first',
+          location: { file: '/src/a.component.ts', line: 1, column: 1 },
+        },
+        {
+          text: 'TS2: second',
+          location: { file: '/src/a.component.ts', line: 9, column: 4 },
+        },
+      ],
+    });
+
+    expect(errorsByFile.get(normalizePath('/src/a.component.ts'))).toEqual([
+      '/src/a.component.ts:1:1: TS1: first',
+      '/src/a.component.ts:9:4: TS2: second',
+    ]);
+  });
+
+  it('routes location-less diagnostics to the global buckets', () => {
+    const { errorsByFile, warningsByFile, globalErrors, globalWarnings } =
+      groupDiagnosticsByFile({
+        errors: [{ text: 'NG: program-wide error' }],
+        warnings: [{ text: 'NG: program-wide warning', location: null }],
+      });
+
+    expect(errorsByFile.size).toBe(0);
+    expect(warningsByFile.size).toBe(0);
+    expect(globalErrors).toEqual(['NG: program-wide error']);
+    expect(globalWarnings).toEqual(['NG: program-wide warning']);
+  });
+
+  it('defaults missing line/column to 0', () => {
+    const { errorsByFile } = groupDiagnosticsByFile({
+      errors: [{ text: 'TS1: msg', location: { file: '/src/a.ts' } }],
+    });
+
+    expect(errorsByFile.get(normalizePath('/src/a.ts'))).toEqual([
+      '/src/a.ts:0:0: TS1: msg',
+    ]);
+  });
+
+  it('returns empty structures for empty/undefined input', () => {
+    const result = groupDiagnosticsByFile({});
+
+    expect(result.errorsByFile.size).toBe(0);
+    expect(result.warningsByFile.size).toBe(0);
+    expect(result.globalErrors).toEqual([]);
+    expect(result.globalWarnings).toEqual([]);
   });
 });
