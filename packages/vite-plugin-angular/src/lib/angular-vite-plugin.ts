@@ -131,6 +131,19 @@ interface DeclarationFile {
   data: string;
 }
 
+/**
+ * Subset of the esbuild-style `PartialMessage` that `@angular/build`'s
+ * `diagnoseFiles()` returns. Only the fields the plugin reads are modeled.
+ */
+export interface AngularDiagnostic {
+  text?: string;
+  location?: {
+    file?: string;
+    line?: number;
+    column?: number;
+  } | null;
+}
+
 export function angular(options?: PluginOptions): Plugin[] {
   /**
    * Normalize plugin options so defaults
@@ -924,10 +937,27 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsCompilerOptions['supportJitMode'] = true;
         }
 
-        if (!isTest && config.build?.lib) {
-          tsCompilerOptions['declaration'] = true;
-          tsCompilerOptions['declarationMap'] = watchMode;
-          tsCompilerOptions['inlineSources'] = true;
+        // The Angular Compilation API path must NOT enable declaration emit for
+        // library builds. Unlike the legacy path, it has no mechanism to write
+        // `.d.ts` files to disk, and `@angular/build`'s `emitAffectedFiles()`
+        // keys outputs by source file (last-write-wins) — so a `.d.ts` would
+        // overwrite the `.js` content for the same source, feeding declaration
+        // text back to Vite as if it were the module source. Enabling
+        // `inlineSources` here is also invalid: this path forces `sourceMap`
+        // off, so an unpaired `inlineSources` trips TS5051. See #2324.
+
+        // Force whole-program TypeScript transpilation. `@angular/build`'s
+        // `emitAffectedFiles()` skips full TS emit when `isolatedModules` is on
+        // and no sourcemap is set, instead printing Angular-only transforms that
+        // leave TS type annotations in the output. Analog returns that emitted
+        // content to Vite/Rolldown as the module source, so the leftover types
+        // (e.g. `App_Factory(__ngFactoryType__: any)`) fail to parse. Disabling
+        // `isolatedModules` for emit makes TypeScript strip types, matching the
+        // legacy path. Currently-working builds are unaffected (they already
+        // have it off); only the otherwise-broken `isolatedModules: true` case
+        // changes. The user's editor/`tsc` still enforces it. See #2324.
+        if (!isTest) {
+          tsCompilerOptions['isolatedModules'] = false;
         }
 
         if (isTest) {
@@ -949,8 +979,16 @@ export function angular(options?: PluginOptions): Plugin[] {
         : DiagnosticModes.All,
     );
 
-    const errors = diagnostics.errors?.length ? diagnostics.errors : [];
-    const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+    // `diagnoseFiles()` returns whole-program diagnostics. Group them by the
+    // source file they point at so each is attached to its own emitted file and
+    // reported exactly once — on that file's transform — instead of duplicating
+    // the entire global list across every emitted file (an N×M explosion, e.g.
+    // 485 warnings × 85 files). `groupDiagnosticsByFile` also folds the
+    // `file:line:column` from `location` into each message, which was
+    // previously discarded. #2317
+    const { errorsByFile, warningsByFile, globalErrors, globalWarnings } =
+      groupDiagnosticsByFile(diagnostics);
+
     // Angular encodes template updates as `encodedFilePath@ClassName` keys.
     // `mapTemplateUpdatesToFiles` decodes them back to absolute file paths so
     // we can attach HMR metadata to the correct `EmitFileResult` below.
@@ -958,6 +996,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       compilationResult.templateUpdates,
     );
 
+    let globalsAttached = false;
     for (const file of await angularCompilation.emitAffectedFiles()) {
       const normalizedFilename = normalizePath(file.filename);
       const templateUpdate = templateUpdates.get(normalizedFilename);
@@ -966,15 +1005,24 @@ export function angular(options?: PluginOptions): Plugin[] {
         classNames.set(normalizedFilename, templateUpdate.className);
       }
 
+      const fileErrors = errorsByFile.get(normalizedFilename) ?? [];
+      const fileWarnings = warningsByFile.get(normalizedFilename) ?? [];
+
+      // Location-less diagnostics (e.g. program-wide errors) have no owning
+      // file, so surface them once on the first emitted file.
+      if (!globalsAttached) {
+        fileErrors.push(...globalErrors);
+        fileWarnings.push(...globalWarnings);
+        globalsAttached = true;
+      }
+
       // Surface Angular's HMR payloads into Analog's existing live-reload
       // flow via the `hmrUpdateCode` / `hmrEligible` fields.
       outputFiles.set(normalizedFilename, {
         content: file.contents,
         dependencies: [],
-        errors: errors.map((error: { text?: string }) => error.text || ''),
-        warnings: warnings.map(
-          (warning: { text?: string }) => warning.text || '',
-        ),
+        errors: fileErrors,
+        warnings: fileWarnings,
         hmrUpdateCode: templateUpdate?.code,
         hmrEligible: !!templateUpdate?.code,
       });
@@ -1074,7 +1122,16 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (!isTest && config.build?.lib) {
       tsCompilerOptions['declaration'] = true;
       tsCompilerOptions['declarationMap'] = watchMode;
-      tsCompilerOptions['inlineSources'] = true;
+      // `inlineSources` is only valid alongside a sourcemap option — an
+      // unpaired `inlineSources` trips TS5051. In production this path leaves
+      // both `sourceMap` and `inlineSourceMap` off, so only enable it when one
+      // is set (e.g. dev/watch builds). See #2324.
+      if (
+        tsCompilerOptions['inlineSourceMap'] ||
+        tsCompilerOptions['sourceMap']
+      ) {
+        tsCompilerOptions['inlineSources'] = true;
+      }
     }
 
     if (isTest) {
@@ -1422,6 +1479,63 @@ export function toAngularCompilationFileReplacements(
  * them so the caller can look up updates by the same normalized absolute path
  * used elsewhere in the plugin (`outputFiles`, `classNames`, etc.).
  */
+/**
+ * Group `@angular/build` `diagnoseFiles()` diagnostics by the source file they
+ * point at, folding the esbuild-style `location` into each message as
+ * `file:line:column`. Diagnostics without a file location are collected into
+ * the `globalErrors` / `globalWarnings` buckets.
+ *
+ * Grouping lets the caller attach each diagnostic to its own emitted file so it
+ * is reported exactly once, rather than duplicating the whole global list
+ * across every emitted file (the N×M explosion in #2317).
+ */
+export function groupDiagnosticsByFile(diagnostics: {
+  errors?: AngularDiagnostic[];
+  warnings?: AngularDiagnostic[];
+}): {
+  errorsByFile: Map<string, string[]>;
+  warningsByFile: Map<string, string[]>;
+  globalErrors: string[];
+  globalWarnings: string[];
+} {
+  const errorsByFile = new Map<string, string[]>();
+  const warningsByFile = new Map<string, string[]>();
+  const globalErrors: string[] = [];
+  const globalWarnings: string[] = [];
+
+  const group = (
+    list: AngularDiagnostic[] | undefined,
+    byFile: Map<string, string[]>,
+    global: string[],
+  ) => {
+    for (const diagnostic of list ?? []) {
+      const location = diagnostic.location;
+      const message = location?.file
+        ? `${location.file}:${location.line ?? 0}:${location.column ?? 0}: ${
+            diagnostic.text ?? ''
+          }`
+        : (diagnostic.text ?? '');
+
+      if (location?.file) {
+        const key = normalizePath(location.file);
+        const bucket = byFile.get(key);
+        if (bucket) {
+          bucket.push(message);
+        } else {
+          byFile.set(key, [message]);
+        }
+      } else {
+        global.push(message);
+      }
+    }
+  };
+
+  group(diagnostics.errors, errorsByFile, globalErrors);
+  group(diagnostics.warnings, warningsByFile, globalWarnings);
+
+  return { errorsByFile, warningsByFile, globalErrors, globalWarnings };
+}
+
 export function mapTemplateUpdatesToFiles(
   templateUpdates: ReadonlyMap<string, string> | undefined,
 ) {
