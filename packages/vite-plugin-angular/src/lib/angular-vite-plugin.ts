@@ -944,7 +944,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         // overwrite the `.js` content for the same source, feeding declaration
         // text back to Vite as if it were the module source. Enabling
         // `inlineSources` here is also invalid: this path forces `sourceMap`
-        // off, so an unpaired `inlineSources` trips TS5051. See #2324.
+        // off, so an unpaired `inlineSources` trips TS5051. Because declaration
+        // emit never runs here, an explicit `declaration: false` (#2348/#2352)
+        // is already the effective state. See #2324.
 
         // Force whole-program TypeScript transpilation. `@angular/build`'s
         // `emitAffectedFiles()` skips full TS emit when `isolatedModules` is on
@@ -1086,8 +1088,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         sourceMap: !isProd,
         inlineSourceMap: false,
         inlineSources: !isProd,
-        declaration: false,
-        declarationMap: false,
+        // Don't force-override `declaration`/`declarationMap` here — the
+        // user's tsconfig value is respected below so that app builds running
+        // through Vite's library mode (e.g. WXT entrypoints) can opt out of
+        // declaration emit. See #2348.
         allowEmptyCodegenFiles: false,
         annotationsAs: 'decorators',
         enableResourceInlining: false,
@@ -1119,7 +1123,15 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportJitMode'] = true;
     }
 
-    if (!isTest && config.build?.lib) {
+    // Library builds emit `.d.ts` by default, but an explicit
+    // `declaration: false` in the user's tsconfig is respected — this prevents
+    // declaration emit for app builds that run through Vite's library mode
+    // (e.g. WXT extension entrypoints). Every other build never emits. #2348
+    if (
+      !isTest &&
+      config.build?.lib &&
+      tsCompilerOptions['declaration'] !== false
+    ) {
       tsCompilerOptions['declaration'] = true;
       tsCompilerOptions['declarationMap'] = watchMode;
       // `inlineSources` is only valid alongside a sourcemap option — an
@@ -1132,6 +1144,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       ) {
         tsCompilerOptions['inlineSources'] = true;
       }
+    } else {
+      tsCompilerOptions['declaration'] = false;
+      tsCompilerOptions['declarationMap'] = false;
     }
 
     if (isTest) {
@@ -1344,14 +1359,25 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (
             !watchMode &&
             !isTest &&
+            config.build?.lib &&
             /\.d\.ts/.test(filename) &&
             !filename.includes('.ngtypecheck.')
           ) {
+            const relativeToRoot = relative(config.root, filename);
+
+            // Never write declarations for source files that live outside the
+            // project root (e.g. a path-mapped workspace library imported from
+            // the entrypoint). Their relative path would escape `outDir` and
+            // land back in the app source tree. See #2348.
+            if (relativeToRoot.startsWith('..') || isAbsolute(relativeToRoot)) {
+              return;
+            }
+
             // output to library root instead /src
             const declarationPath = resolve(
               config.root,
               config.build.outDir,
-              relative(config.root, filename),
+              relativeToRoot,
             ).replace('/src/', '/');
 
             const declarationFileDir = declarationPath

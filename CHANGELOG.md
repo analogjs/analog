@@ -1,3 +1,9 @@
+## [2.5.3-beta.3](https://github.com/analogjs/analog/compare/v2.5.3-beta.2...v2.5.3-beta.3) (2026-05-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** respect explicit declaration:false in lib-mode builds ([#2352](https://github.com/analogjs/analog/issues/2352)) ([dfa4c95](https://github.com/analogjs/analog/commit/dfa4c9564262c64471f125d6bc7ae940a28de16d))
+
 ## [2.5.3-beta.2](https://github.com/analogjs/analog/compare/v2.5.3-beta.1...v2.5.3-beta.2) (2026-05-26)
 
 ### Bug Fixes
