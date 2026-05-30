@@ -1,3 +1,9 @@
+## [2.5.3-beta.5](https://github.com/analogjs/analog/compare/v2.5.3-beta.4...v2.5.3-beta.5) (2026-05-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** aggregate and locate template diagnostics on the default compilation path ([#2354](https://github.com/analogjs/analog/issues/2354)) ([c7947ef](https://github.com/analogjs/analog/commit/c7947ef87723a02f80049cf30ac2829f3dce5658))
+
 ## [2.5.3-beta.4](https://github.com/analogjs/analog/compare/v2.5.3-beta.3...v2.5.3-beta.4) (2026-05-30)
 
 ### Bug Fixes
