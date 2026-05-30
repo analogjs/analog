@@ -51,4 +51,7 @@ jobs:
         env:
           ANGULAR_SOURCE_DIR: .angular-conformance
           CONFORMANCE_ENGINE: ${{ matrix.engine }}
-        run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
+        # OXC's NAPI binary crashes vitest's default isolated forks pool.
+        # `--no-isolate` runs all spec files in a single shared worker,
+        # which the binary survives. Identical pass rate, harmless on TS.
+        run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts --no-isolate

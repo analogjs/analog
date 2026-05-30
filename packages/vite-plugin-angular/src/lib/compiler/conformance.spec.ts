@@ -348,13 +348,6 @@ const SKIP_PATTERNS = [
   /forward.?ref.*provider/i, // Complex forwardRef in providers
 ];
 
-// Categories known to crash the OXC native binary (SIGILL — Rust panic
-// in the NAPI layer, not catchable from JS). Skip them under
-// `CONFORMANCE_ENGINE=oxc` so the rest of the suite completes and we
-// still get a comparable pass-rate number. Re-enable once the upstream
-// panic is fixed.
-const OXC_CRASHING_CATEGORIES = new Set<string>(['r3_view_compiler_template']);
-
 function shouldSkip(testCase: TestCase): boolean {
   if (testCase.excludeTest) return true;
   if (testCase.compilationModeFilter?.includes('linked compile')) return true;
@@ -379,12 +372,6 @@ describe.skipIf(!angularAvailable)(
 
       const minMajor = CATEGORY_MIN_MAJOR[category];
       if (minMajor && !angularVersionAtLeast(minMajor)) continue;
-      if (ENGINE === 'oxc' && OXC_CRASHING_CATEGORIES.has(category)) {
-        describe.skip(`${category} (skipped on OXC engine — native crash)`, () => {
-          it.skip('upstream panic — track and re-enable when fixed', () => {});
-        });
-        continue;
-      }
 
       const groups = loadTestCaseGroups(
         categoryDir,
