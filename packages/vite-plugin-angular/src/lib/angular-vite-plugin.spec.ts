@@ -12,14 +12,18 @@ vi.mock('vite', async () => {
   };
 });
 
+import type ts from 'typescript';
 import {
   angular,
+  collectEmittedDiagnostics,
   createFsWatcherCacheInvalidator,
+  formatDiagnosticWithLocation,
   groupDiagnosticsByFile,
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
 } from './angular-vite-plugin';
+import type { EmitFileResult } from './models';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
@@ -634,5 +638,120 @@ describe('groupDiagnosticsByFile', () => {
     expect(result.warningsByFile.size).toBe(0);
     expect(result.globalErrors).toEqual([]);
     expect(result.globalWarnings).toEqual([]);
+  });
+});
+
+describe('collectEmittedDiagnostics', () => {
+  const file = (over: Partial<EmitFileResult>): EmitFileResult => ({
+    dependencies: [],
+    ...over,
+  });
+
+  it('aggregates errors and warnings across every output file', () => {
+    const outputFiles = new Map<string, EmitFileResult>([
+      ['/src/a.component.ts', file({ errors: ['a: error one'] })],
+      [
+        '/src/b.component.ts',
+        file({ errors: ['b: error two'], warnings: ['b: warning one'] }),
+      ],
+      ['/src/c.component.ts', file({ warnings: ['c: warning two'] })],
+    ]);
+
+    const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
+
+    // Every file contributes — a single errored file does not hide the rest.
+    expect(errors).toEqual(['a: error one', 'b: error two']);
+    expect(warnings).toEqual(['b: warning one', 'c: warning two']);
+  });
+
+  it('flattens diagnostic message chains into strings', () => {
+    const chain = {
+      messageText: 'Type X is not assignable to type Y',
+      category: 1,
+      code: 2322,
+      next: [
+        { messageText: "Property 'foo' is missing", category: 1, code: 1 },
+      ],
+    };
+
+    const outputFiles = new Map<string, EmitFileResult>([
+      ['/src/a.component.ts', file({ errors: [chain] })],
+    ]);
+
+    const { errors } = collectEmittedDiagnostics(outputFiles);
+
+    expect(errors).toEqual([
+      "Type X is not assignable to type Y\n  Property 'foo' is missing",
+    ]);
+  });
+
+  it('ignores files without diagnostics and returns empty arrays', () => {
+    const outputFiles = new Map<string, EmitFileResult>([
+      ['/src/a.component.ts', file({ content: 'compiled' })],
+    ]);
+
+    expect(collectEmittedDiagnostics(outputFiles)).toEqual({
+      errors: [],
+      warnings: [],
+    });
+  });
+});
+
+describe('formatDiagnosticWithLocation', () => {
+  // Minimal `ts.SourceFile` stand-in: only the bits the formatter touches.
+  const sourceFile = (fileName: string, line: number, character: number) =>
+    ({
+      fileName,
+      getLineAndCharacterOfPosition: () => ({ line, character }),
+    }) as unknown as ts.SourceFile;
+
+  it('prefixes the message with normalized file:line:column (1-based)', () => {
+    const diagnostic = {
+      file: sourceFile('/src/app/a.component.ts', 4, 19),
+      start: 42,
+      messageText: "Property 'foo' does not exist on type 'AppComponent'.",
+      category: 1,
+      code: 2339,
+    } as unknown as ts.Diagnostic;
+
+    // line 4/char 19 (0-based) render as 5:20, matching the Compilation API path.
+    expect(formatDiagnosticWithLocation(diagnostic)).toBe(
+      "/src/app/a.component.ts:5:20: Property 'foo' does not exist on type 'AppComponent'.",
+    );
+  });
+
+  it('flattens message chains and keeps the location prefix', () => {
+    const diagnostic = {
+      file: sourceFile('/src/app/a.component.ts', 0, 0),
+      start: 0,
+      messageText: {
+        messageText: 'Type X is not assignable to type Y',
+        category: 1,
+        code: 2322,
+        next: [
+          { messageText: "Property 'foo' is missing", category: 1, code: 1 },
+        ],
+      },
+      category: 1,
+      code: 2322,
+    } as unknown as ts.Diagnostic;
+
+    expect(formatDiagnosticWithLocation(diagnostic)).toBe(
+      "/src/app/a.component.ts:1:1: Type X is not assignable to type Y\n  Property 'foo' is missing",
+    );
+  });
+
+  it('falls back to the bare message for location-less diagnostics', () => {
+    const diagnostic = {
+      file: undefined,
+      start: undefined,
+      messageText: 'Cannot find a tsconfig option.',
+      category: 1,
+      code: 5000,
+    } as unknown as ts.Diagnostic;
+
+    expect(formatDiagnosticWithLocation(diagnostic)).toBe(
+      'Cannot find a tsconfig option.',
+    );
   });
 });

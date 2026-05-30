@@ -359,6 +359,29 @@ export function angular(options?: PluginOptions): Plugin[] {
           initialCompilation = true;
         }
       },
+      buildEnd() {
+        // Report diagnostics for production builds. Watch/serve already report
+        // per-module from `transform`; build mode defers to here so a single
+        // errored file no longer aborts the build before the rest are checked
+        // — every file's diagnostics are aggregated and reported together.
+        // Which diagnostics exist is governed by `disableTypeChecking` inside
+        // `getDiagnosticsForSourceFile` (syntactic-only by default, full
+        // semantic + Angular template diagnostics when type checking is on),
+        // so reporting itself is unconditional.
+        if (watchMode) {
+          return;
+        }
+
+        const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
+
+        if (warnings.length > 0) {
+          this.warn(warnings.join('\n'));
+        }
+
+        if (errors.length > 0) {
+          this.error(errors.join('\n\n'));
+        }
+      },
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
@@ -702,7 +725,15 @@ export function angular(options?: PluginOptions): Plugin[] {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
+          // In watch/serve, surface this module's errors immediately so the
+          // dev overlay points at the edited file. In build mode, defer to the
+          // `buildEnd` hook, which aggregates diagnostics across every file
+          // instead of aborting the whole build at the first errored module.
+          if (
+            watchMode &&
+            typescriptResult.errors &&
+            typescriptResult.errors.length > 0
+          ) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
@@ -1321,7 +1352,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
-      const metadata = watchMode ? fileMetadata(filename) : {};
+      // Collect diagnostics for every emitted file in both watch/serve (for
+      // the dev overlay and HMR metadata) and build, so the `buildEnd` hook
+      // can report them aggregated across every file instead of aborting at
+      // the first error. `getDiagnosticsForSourceFile` honours
+      // `disableTypeChecking`, returning syntactic-only diagnostics by default
+      // and the full semantic + Angular template set when type checking is on.
+      const metadata = fileMetadata(filename);
       const existing = outputFiles.get(filename);
 
       outputFiles.set(filename, {
@@ -1590,6 +1627,70 @@ function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
   classNames.delete(id);
 }
 
+/**
+ * Flatten the per-file diagnostics accumulated on the emitted output files
+ * into a single list of error and warning strings.
+ *
+ * Each {@link EmitFileResult} carries the diagnostics for its own source file
+ * (populated as the file is emitted). The build-mode `buildEnd` hook drains
+ * them here so it can report every file's diagnostics together instead of
+ * throwing on the first errored file — which would otherwise abort the build
+ * before the remaining files are ever checked.
+ */
+export function collectEmittedDiagnostics(
+  outputFiles: Map<string, EmitFileResult>,
+): { errors: string[]; warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  for (const result of outputFiles.values()) {
+    if (result.errors?.length) {
+      errors.push(...result.errors.map(diagnosticMessageToString));
+    }
+    if (result.warnings?.length) {
+      warnings.push(...result.warnings.map(diagnosticMessageToString));
+    }
+  }
+
+  return { errors, warnings };
+}
+
+function diagnosticMessageToString(
+  message: string | ts.DiagnosticMessageChain,
+): string {
+  return typeof message === 'string'
+    ? message
+    : ts.flattenDiagnosticMessageText(message, '\n');
+}
+
+/**
+ * Format a TypeScript/Angular diagnostic as `file:line:column: message`.
+ *
+ * This mirrors the Compilation API path's `groupDiagnosticsByFile` output so
+ * both compilation paths report diagnostics in the same shape — the default
+ * path previously discarded the location and emitted only the message text.
+ * Line/column are 1-based (matching `tsc` and editor gutters). Diagnostics
+ * without a source location (program-wide / option diagnostics) fall back to
+ * the bare flattened message.
+ */
+export function formatDiagnosticWithLocation(
+  diagnostic: ts.Diagnostic,
+): string {
+  const text = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+
+  if (!diagnostic.file || diagnostic.start == null) {
+    return text;
+  }
+
+  const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
+    diagnostic.start,
+  );
+
+  return `${normalizePath(diagnostic.file.fileName)}:${line + 1}:${
+    character + 1
+  }: ${text}`;
+}
+
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],
@@ -1612,15 +1713,11 @@ export function getFileMetadata(
 
     const errors = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Error)
-      .map((d) =>
-        typeof d.messageText === 'object'
-          ? d.messageText.messageText
-          : d.messageText,
-      );
+      .map(formatDiagnosticWithLocation);
 
     const warnings = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
-      .map((d) => d.messageText);
+      .map(formatDiagnosticWithLocation);
 
     let hmrUpdateCode: string | null | undefined = undefined;
 
