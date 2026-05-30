@@ -1,3 +1,9 @@
+## [2.5.3-beta.4](https://github.com/analogjs/analog/compare/v2.5.3-beta.3...v2.5.3-beta.4) (2026-05-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support build.lib + dedupe diagnostics on the Angular Compilation API path ([#2353](https://github.com/analogjs/analog/issues/2353)) ([61e8a56](https://github.com/analogjs/analog/commit/61e8a56df42dd1e502fc056e810ed671e93c8e94))
+
 ## [2.5.3-beta.3](https://github.com/analogjs/analog/compare/v2.5.3-beta.2...v2.5.3-beta.3) (2026-05-30)
 
 ### Bug Fixes
