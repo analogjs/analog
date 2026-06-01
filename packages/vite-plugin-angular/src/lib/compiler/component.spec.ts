@@ -255,6 +255,82 @@ describe('@Component', () => {
       expect(result).toContain('ɵɵlistener');
     });
 
+    it('honors alias on output()', () => {
+      const result = compile(
+        `
+        import { Component, output } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { ready = output({ alias: 'readyPub' }); }
+      `,
+        'output-alias.ts',
+      );
+
+      expectCompiles(result);
+      expect(result).toContain('ready: "readyPub"');
+    });
+
+    it('skips signal-query synthesis when @ViewChild already decorates the field', () => {
+      // Without the skip, the same field is registered as both a
+      // decorator-derived query and a signal-derived query, so the
+      // template's viewQuery instructions fire twice for the same ref
+      // and `this.r` gets clobbered in registration order.
+      const result = compile(
+        `
+        import { Component, ViewChild, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #r></div>' })
+        export class X {
+          @ViewChild('r') r = viewChild<ElementRef>('r');
+        }
+      `,
+        'view-coexist.ts',
+      );
+
+      expectCompiles(result);
+      // One ɵɵviewQuery call per registered query. Without the skip, the
+      // same field is registered twice and the call count doubles.
+      const queryCalls = (result.match(/ɵɵviewQuery/g) || []).length;
+      expect(queryCalls).toBe(1);
+    });
+
+    it('skips signal input synthesis when @Input already decorates the field', () => {
+      const result = compile(
+        `
+        import { Component, Input, input } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input() name = input<string>();
+        }
+      `,
+        'input-coexist.ts',
+      );
+
+      expectCompiles(result);
+      // The explicit @Input wins → the input descriptor stays in the
+      // non-signal short form (just the public name string), not the
+      // signal-flag array.
+      expect(result).toMatch(/inputs:\s*\{[^}]*name:\s*"name"/);
+      expect(result).not.toMatch(/inputs:\s*\{[^}]*name:\s*\[/);
+    });
+
+    it('honors alias on outputFromObservable() — options live in args[1]', () => {
+      // Without selecting args[1] for outputFromObservable, the alias is
+      // silently dropped because args[0] is the source observable.
+      const result = compile(
+        `
+        import { Component, outputFromObservable } from '@angular/core';
+        import { of } from 'rxjs';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          ready = outputFromObservable(of(1), { alias: 'readyPub' });
+        }
+      `,
+        'output-obs-alias.ts',
+      );
+
+      expectCompiles(result);
+      expect(result).toContain('ready: "readyPub"');
+    });
+
     it('detects model() and model.required()', () => {
       const result = compile(
         `

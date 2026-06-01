@@ -131,6 +131,19 @@ interface DeclarationFile {
   data: string;
 }
 
+/**
+ * Subset of the esbuild-style `PartialMessage` that `@angular/build`'s
+ * `diagnoseFiles()` returns. Only the fields the plugin reads are modeled.
+ */
+export interface AngularDiagnostic {
+  text?: string;
+  location?: {
+    file?: string;
+    line?: number;
+    column?: number;
+  } | null;
+}
+
 export function angular(options?: PluginOptions): Plugin[] {
   /**
    * Normalize plugin options so defaults
@@ -344,6 +357,29 @@ export function angular(options?: PluginOptions): Plugin[] {
           pendingCompilation = null;
 
           initialCompilation = true;
+        }
+      },
+      buildEnd() {
+        // Report diagnostics for production builds. Watch/serve already report
+        // per-module from `transform`; build mode defers to here so a single
+        // errored file no longer aborts the build before the rest are checked
+        // — every file's diagnostics are aggregated and reported together.
+        // Which diagnostics exist is governed by `disableTypeChecking` inside
+        // `getDiagnosticsForSourceFile` (syntactic-only by default, full
+        // semantic + Angular template diagnostics when type checking is on),
+        // so reporting itself is unconditional.
+        if (watchMode) {
+          return;
+        }
+
+        const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
+
+        if (warnings.length > 0) {
+          this.warn(warnings.join('\n'));
+        }
+
+        if (errors.length > 0) {
+          this.error(errors.join('\n\n'));
         }
       },
       async handleHotUpdate(ctx) {
@@ -689,7 +725,15 @@ export function angular(options?: PluginOptions): Plugin[] {
             this.warn(`${typescriptResult.warnings.join('\n')}`);
           }
 
-          if (typescriptResult.errors && typescriptResult.errors.length > 0) {
+          // In watch/serve, surface this module's errors immediately so the
+          // dev overlay points at the edited file. In build mode, defer to the
+          // `buildEnd` hook, which aggregates diagnostics across every file
+          // instead of aborting the whole build at the first errored module.
+          if (
+            watchMode &&
+            typescriptResult.errors &&
+            typescriptResult.errors.length > 0
+          ) {
             this.error(`${typescriptResult.errors.join('\n')}`);
           }
 
@@ -924,10 +968,29 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsCompilerOptions['supportJitMode'] = true;
         }
 
-        if (!isTest && config.build?.lib) {
-          tsCompilerOptions['declaration'] = true;
-          tsCompilerOptions['declarationMap'] = watchMode;
-          tsCompilerOptions['inlineSources'] = true;
+        // The Angular Compilation API path must NOT enable declaration emit for
+        // library builds. Unlike the legacy path, it has no mechanism to write
+        // `.d.ts` files to disk, and `@angular/build`'s `emitAffectedFiles()`
+        // keys outputs by source file (last-write-wins) — so a `.d.ts` would
+        // overwrite the `.js` content for the same source, feeding declaration
+        // text back to Vite as if it were the module source. Enabling
+        // `inlineSources` here is also invalid: this path forces `sourceMap`
+        // off, so an unpaired `inlineSources` trips TS5051. Because declaration
+        // emit never runs here, an explicit `declaration: false` (#2348/#2352)
+        // is already the effective state. See #2324.
+
+        // Force whole-program TypeScript transpilation. `@angular/build`'s
+        // `emitAffectedFiles()` skips full TS emit when `isolatedModules` is on
+        // and no sourcemap is set, instead printing Angular-only transforms that
+        // leave TS type annotations in the output. Analog returns that emitted
+        // content to Vite/Rolldown as the module source, so the leftover types
+        // (e.g. `App_Factory(__ngFactoryType__: any)`) fail to parse. Disabling
+        // `isolatedModules` for emit makes TypeScript strip types, matching the
+        // legacy path. Currently-working builds are unaffected (they already
+        // have it off); only the otherwise-broken `isolatedModules: true` case
+        // changes. The user's editor/`tsc` still enforces it. See #2324.
+        if (!isTest) {
+          tsCompilerOptions['isolatedModules'] = false;
         }
 
         if (isTest) {
@@ -949,8 +1012,16 @@ export function angular(options?: PluginOptions): Plugin[] {
         : DiagnosticModes.All,
     );
 
-    const errors = diagnostics.errors?.length ? diagnostics.errors : [];
-    const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+    // `diagnoseFiles()` returns whole-program diagnostics. Group them by the
+    // source file they point at so each is attached to its own emitted file and
+    // reported exactly once — on that file's transform — instead of duplicating
+    // the entire global list across every emitted file (an N×M explosion, e.g.
+    // 485 warnings × 85 files). `groupDiagnosticsByFile` also folds the
+    // `file:line:column` from `location` into each message, which was
+    // previously discarded. #2317
+    const { errorsByFile, warningsByFile, globalErrors, globalWarnings } =
+      groupDiagnosticsByFile(diagnostics);
+
     // Angular encodes template updates as `encodedFilePath@ClassName` keys.
     // `mapTemplateUpdatesToFiles` decodes them back to absolute file paths so
     // we can attach HMR metadata to the correct `EmitFileResult` below.
@@ -958,6 +1029,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       compilationResult.templateUpdates,
     );
 
+    let globalsAttached = false;
     for (const file of await angularCompilation.emitAffectedFiles()) {
       const normalizedFilename = normalizePath(file.filename);
       const templateUpdate = templateUpdates.get(normalizedFilename);
@@ -966,15 +1038,24 @@ export function angular(options?: PluginOptions): Plugin[] {
         classNames.set(normalizedFilename, templateUpdate.className);
       }
 
+      const fileErrors = errorsByFile.get(normalizedFilename) ?? [];
+      const fileWarnings = warningsByFile.get(normalizedFilename) ?? [];
+
+      // Location-less diagnostics (e.g. program-wide errors) have no owning
+      // file, so surface them once on the first emitted file.
+      if (!globalsAttached) {
+        fileErrors.push(...globalErrors);
+        fileWarnings.push(...globalWarnings);
+        globalsAttached = true;
+      }
+
       // Surface Angular's HMR payloads into Analog's existing live-reload
       // flow via the `hmrUpdateCode` / `hmrEligible` fields.
       outputFiles.set(normalizedFilename, {
         content: file.contents,
         dependencies: [],
-        errors: errors.map((error: { text?: string }) => error.text || ''),
-        warnings: warnings.map(
-          (warning: { text?: string }) => warning.text || '',
-        ),
+        errors: fileErrors,
+        warnings: fileWarnings,
         hmrUpdateCode: templateUpdate?.code,
         hmrEligible: !!templateUpdate?.code,
       });
@@ -1038,8 +1119,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         sourceMap: !isProd,
         inlineSourceMap: false,
         inlineSources: !isProd,
-        declaration: false,
-        declarationMap: false,
+        // Don't force-override `declaration`/`declarationMap` here — the
+        // user's tsconfig value is respected below so that app builds running
+        // through Vite's library mode (e.g. WXT entrypoints) can opt out of
+        // declaration emit. See #2348.
         allowEmptyCodegenFiles: false,
         annotationsAs: 'decorators',
         enableResourceInlining: false,
@@ -1071,10 +1154,30 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportJitMode'] = true;
     }
 
-    if (!isTest && config.build?.lib) {
+    // Library builds emit `.d.ts` by default, but an explicit
+    // `declaration: false` in the user's tsconfig is respected — this prevents
+    // declaration emit for app builds that run through Vite's library mode
+    // (e.g. WXT extension entrypoints). Every other build never emits. #2348
+    if (
+      !isTest &&
+      config.build?.lib &&
+      tsCompilerOptions['declaration'] !== false
+    ) {
       tsCompilerOptions['declaration'] = true;
       tsCompilerOptions['declarationMap'] = watchMode;
-      tsCompilerOptions['inlineSources'] = true;
+      // `inlineSources` is only valid alongside a sourcemap option — an
+      // unpaired `inlineSources` trips TS5051. In production this path leaves
+      // both `sourceMap` and `inlineSourceMap` off, so only enable it when one
+      // is set (e.g. dev/watch builds). See #2324.
+      if (
+        tsCompilerOptions['inlineSourceMap'] ||
+        tsCompilerOptions['sourceMap']
+      ) {
+        tsCompilerOptions['inlineSources'] = true;
+      }
+    } else {
+      tsCompilerOptions['declaration'] = false;
+      tsCompilerOptions['declarationMap'] = false;
     }
 
     if (isTest) {
@@ -1249,7 +1352,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
-      const metadata = watchMode ? fileMetadata(filename) : {};
+      // Collect diagnostics for every emitted file in both watch/serve (for
+      // the dev overlay and HMR metadata) and build, so the `buildEnd` hook
+      // can report them aggregated across every file instead of aborting at
+      // the first error. `getDiagnosticsForSourceFile` honours
+      // `disableTypeChecking`, returning syntactic-only diagnostics by default
+      // and the full semantic + Angular template set when type checking is on.
+      const metadata = fileMetadata(filename);
       const existing = outputFiles.get(filename);
 
       outputFiles.set(filename, {
@@ -1287,14 +1396,25 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (
             !watchMode &&
             !isTest &&
+            config.build?.lib &&
             /\.d\.ts/.test(filename) &&
             !filename.includes('.ngtypecheck.')
           ) {
+            const relativeToRoot = relative(config.root, filename);
+
+            // Never write declarations for source files that live outside the
+            // project root (e.g. a path-mapped workspace library imported from
+            // the entrypoint). Their relative path would escape `outDir` and
+            // land back in the app source tree. See #2348.
+            if (relativeToRoot.startsWith('..') || isAbsolute(relativeToRoot)) {
+              return;
+            }
+
             // output to library root instead /src
             const declarationPath = resolve(
               config.root,
               config.build.outDir,
-              relative(config.root, filename),
+              relativeToRoot,
             ).replace('/src/', '/');
 
             const declarationFileDir = declarationPath
@@ -1422,6 +1542,63 @@ export function toAngularCompilationFileReplacements(
  * them so the caller can look up updates by the same normalized absolute path
  * used elsewhere in the plugin (`outputFiles`, `classNames`, etc.).
  */
+/**
+ * Group `@angular/build` `diagnoseFiles()` diagnostics by the source file they
+ * point at, folding the esbuild-style `location` into each message as
+ * `file:line:column`. Diagnostics without a file location are collected into
+ * the `globalErrors` / `globalWarnings` buckets.
+ *
+ * Grouping lets the caller attach each diagnostic to its own emitted file so it
+ * is reported exactly once, rather than duplicating the whole global list
+ * across every emitted file (the N×M explosion in #2317).
+ */
+export function groupDiagnosticsByFile(diagnostics: {
+  errors?: AngularDiagnostic[];
+  warnings?: AngularDiagnostic[];
+}): {
+  errorsByFile: Map<string, string[]>;
+  warningsByFile: Map<string, string[]>;
+  globalErrors: string[];
+  globalWarnings: string[];
+} {
+  const errorsByFile = new Map<string, string[]>();
+  const warningsByFile = new Map<string, string[]>();
+  const globalErrors: string[] = [];
+  const globalWarnings: string[] = [];
+
+  const group = (
+    list: AngularDiagnostic[] | undefined,
+    byFile: Map<string, string[]>,
+    global: string[],
+  ) => {
+    for (const diagnostic of list ?? []) {
+      const location = diagnostic.location;
+      const message = location?.file
+        ? `${location.file}:${location.line ?? 0}:${location.column ?? 0}: ${
+            diagnostic.text ?? ''
+          }`
+        : (diagnostic.text ?? '');
+
+      if (location?.file) {
+        const key = normalizePath(location.file);
+        const bucket = byFile.get(key);
+        if (bucket) {
+          bucket.push(message);
+        } else {
+          byFile.set(key, [message]);
+        }
+      } else {
+        global.push(message);
+      }
+    }
+  };
+
+  group(diagnostics.errors, errorsByFile, globalErrors);
+  group(diagnostics.warnings, warningsByFile, globalWarnings);
+
+  return { errorsByFile, warningsByFile, globalErrors, globalWarnings };
+}
+
 export function mapTemplateUpdatesToFiles(
   templateUpdates: ReadonlyMap<string, string> | undefined,
 ) {
@@ -1450,6 +1627,70 @@ function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
   classNames.delete(id);
 }
 
+/**
+ * Flatten the per-file diagnostics accumulated on the emitted output files
+ * into a single list of error and warning strings.
+ *
+ * Each {@link EmitFileResult} carries the diagnostics for its own source file
+ * (populated as the file is emitted). The build-mode `buildEnd` hook drains
+ * them here so it can report every file's diagnostics together instead of
+ * throwing on the first errored file — which would otherwise abort the build
+ * before the remaining files are ever checked.
+ */
+export function collectEmittedDiagnostics(
+  outputFiles: Map<string, EmitFileResult>,
+): { errors: string[]; warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  for (const result of outputFiles.values()) {
+    if (result.errors?.length) {
+      errors.push(...result.errors.map(diagnosticMessageToString));
+    }
+    if (result.warnings?.length) {
+      warnings.push(...result.warnings.map(diagnosticMessageToString));
+    }
+  }
+
+  return { errors, warnings };
+}
+
+function diagnosticMessageToString(
+  message: string | ts.DiagnosticMessageChain,
+): string {
+  return typeof message === 'string'
+    ? message
+    : ts.flattenDiagnosticMessageText(message, '\n');
+}
+
+/**
+ * Format a TypeScript/Angular diagnostic as `file:line:column: message`.
+ *
+ * This mirrors the Compilation API path's `groupDiagnosticsByFile` output so
+ * both compilation paths report diagnostics in the same shape — the default
+ * path previously discarded the location and emitted only the message text.
+ * Line/column are 1-based (matching `tsc` and editor gutters). Diagnostics
+ * without a source location (program-wide / option diagnostics) fall back to
+ * the bare flattened message.
+ */
+export function formatDiagnosticWithLocation(
+  diagnostic: ts.Diagnostic,
+): string {
+  const text = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+
+  if (!diagnostic.file || diagnostic.start == null) {
+    return text;
+  }
+
+  const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(
+    diagnostic.start,
+  );
+
+  return `${normalizePath(diagnostic.file.fileName)}:${line + 1}:${
+    character + 1
+  }: ${text}`;
+}
+
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],
@@ -1472,15 +1713,11 @@ export function getFileMetadata(
 
     const errors = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Error)
-      .map((d) =>
-        typeof d.messageText === 'object'
-          ? d.messageText.messageText
-          : d.messageText,
-      );
+      .map(formatDiagnosticWithLocation);
 
     const warnings = diagnostics
       .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
-      .map((d) => d.messageText);
+      .map(formatDiagnosticWithLocation);
 
     let hmrUpdateCode: string | null | undefined = undefined;
 
