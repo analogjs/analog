@@ -600,7 +600,15 @@ export function angular(options?: PluginOptions): Plugin[] {
         filter: {
           id: {
             include: [TS_EXT_REGEX],
-            exclude: [/node_modules/, 'type=script', '@ng/component'],
+            // `?raw` ids already carry Vite's native raw-loader output
+            // (`export default "<source>"`). Recompiling them as Angular/TS
+            // would strip that default export, so leave them to Vite (#2356).
+            exclude: [
+              /node_modules/,
+              'type=script',
+              '@ng/component',
+              /[?&]raw\b/,
+            ],
           },
         },
         async handler(code, id) {
