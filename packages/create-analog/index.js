@@ -65,6 +65,10 @@ async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = argv.template || argv.t;
   let skipTailwind = fromBoolArg(argv.skipTailwind);
+  // Internal flag (no prompt): when set, strip the `overrides` block that
+  // pins vite/vitest from the generated package.json. Defaults to keeping
+  // them, preserving current behavior.
+  const skipViteOverrides = fromBoolArg(argv.skipViteOverrides);
 
   const defaultTargetDir = 'analog-project';
   const getProjectName = () =>
@@ -236,6 +240,14 @@ async function init() {
 
   if (pkgManager === 'pnpm') {
     addPnpmDependencies(pkg, template);
+  }
+
+  if (skipViteOverrides && pkg.overrides) {
+    delete pkg.overrides.vite;
+    delete pkg.overrides.vitest;
+    if (Object.keys(pkg.overrides).length === 0) {
+      delete pkg.overrides;
+    }
   }
 
   pkg.dependencies = sortObjectKeys(pkg.dependencies);
