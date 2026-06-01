@@ -38,11 +38,38 @@ export function updateBuildTarget(
 
     const projectConfig = projects.get(schema.project);
 
-    updateJson(tree, angularJsonPath, (json) => {
-      json.projects[schema.project].root = projectConfig.root;
-      json.projects[schema.project].sourceRoot = projectConfig.sourceRoot;
-      json.projects[schema.project].architect.build = {
-        builder: '@analogjs/platform:vite',
+    if (projectConfig) {
+      updateJson(tree, angularJsonPath, (json) => {
+        json.projects[schema.project].root = projectConfig.root;
+        json.projects[schema.project].sourceRoot = projectConfig.sourceRoot;
+        json.projects[schema.project].architect.build = {
+          builder: '@analogjs/platform:vite',
+          ...commonConfig,
+          options: {
+            configFile: `${joinPathFragments(
+              projectConfig.root,
+              'vite.config.ts',
+            )}`,
+            main: `${joinPathFragments(projectConfig.root, 'src/main.ts')}`,
+            outputPath: `dist/${joinPathFragments(projectConfig.root, 'client')}`,
+            tsConfig: `${joinPathFragments(
+              projectConfig.root,
+              'tsconfig.app.json',
+            )}`,
+          },
+        };
+
+        return json;
+      });
+    }
+  } else {
+    const projects = getProjects(tree);
+
+    const projectConfig = projects.get(schema.project);
+
+    if (projectConfig && projectConfig?.targets) {
+      projectConfig.targets.build = {
+        executor: '@analogjs/platform:vite',
         ...commonConfig,
         options: {
           configFile: `${joinPathFragments(
@@ -58,30 +85,7 @@ export function updateBuildTarget(
         },
       };
 
-      return json;
-    });
-  } else {
-    const projects = getProjects(tree);
-
-    const projectConfig = projects.get(schema.project);
-
-    projectConfig.targets.build = {
-      executor: '@analogjs/platform:vite',
-      ...commonConfig,
-      options: {
-        configFile: `${joinPathFragments(
-          projectConfig.root,
-          'vite.config.ts',
-        )}`,
-        main: `${joinPathFragments(projectConfig.root, 'src/main.ts')}`,
-        outputPath: `dist/${joinPathFragments(projectConfig.root, 'client')}`,
-        tsConfig: `${joinPathFragments(
-          projectConfig.root,
-          'tsconfig.app.json',
-        )}`,
-      },
-    };
-
-    updateProjectConfiguration(tree, schema.project, projectConfig);
+      updateProjectConfiguration(tree, schema.project, projectConfig);
+    }
   }
 }
