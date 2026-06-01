@@ -1,3 +1,9 @@
+# [2.6.0-beta.1](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0-beta.1) (2026-06-01)
+
+### Features
+
+- upgrade to Angular 22 RC and Nx 22.7.5 ([#2357](https://github.com/analogjs/analog/issues/2357)) ([3961629](https://github.com/analogjs/analog/commit/39616298caa9efa264486b229d3f9bb44765f7ee))
+
 ## [2.5.3](https://github.com/analogjs/analog/compare/v2.5.2...v2.5.3) (2026-06-01)
 
 ### Bug Fixes
