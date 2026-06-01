@@ -1,3 +1,9 @@
+# [2.6.0-beta.2](https://github.com/analogjs/analog/compare/v2.6.0-beta.1...v2.6.0-beta.2) (2026-06-01)
+
+### Features
+
+- **create-analog:** add --skipViteOverrides flag and Angular v22 RC templates ([#2358](https://github.com/analogjs/analog/issues/2358)) ([f9f672c](https://github.com/analogjs/analog/commit/f9f672ceae4d15d445742757121a5daabc5320ba))
+
 # [2.6.0-beta.1](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0-beta.1) (2026-06-01)
 
 ### Features
