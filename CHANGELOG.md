@@ -1,3 +1,9 @@
+# [2.6.0-beta.3](https://github.com/analogjs/analog/compare/v2.6.0-beta.2...v2.6.0-beta.3) (2026-06-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** don't shadow Vite ?raw imports of .ts files ([#2359](https://github.com/analogjs/analog/issues/2359)) ([722eccb](https://github.com/analogjs/analog/commit/722eccbe69fb50b600b5f609568c2a014c60521e))
+
 # [2.6.0-beta.2](https://github.com/analogjs/analog/compare/v2.6.0-beta.1...v2.6.0-beta.2) (2026-06-01)
 
 ### Features
