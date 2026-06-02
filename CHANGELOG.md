@@ -1,3 +1,9 @@
+# [2.6.0-beta.4](https://github.com/analogjs/analog/compare/v2.6.0-beta.3...v2.6.0-beta.4) (2026-06-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit fastCompile JIT metadata in nested class scope ([#2361](https://github.com/analogjs/analog/issues/2361)) ([a73ee49](https://github.com/analogjs/analog/commit/a73ee490d0229c24c3573a2c4705db33ff3ac623))
+
 # [2.6.0-beta.3](https://github.com/analogjs/analog/compare/v2.6.0-beta.2...v2.6.0-beta.3) (2026-06-02)
 
 ### Bug Fixes
