@@ -1,3 +1,9 @@
+# [2.6.0-beta.5](https://github.com/analogjs/analog/compare/v2.6.0-beta.4...v2.6.0-beta.5) (2026-06-03)
+
+### Features
+
+- add support for Angular v22 release ([#2362](https://github.com/analogjs/analog/issues/2362)) ([911eb9a](https://github.com/analogjs/analog/commit/911eb9abd3b61aeacc55039dd7ed6f01fcb6612e))
+
 # [2.6.0-beta.4](https://github.com/analogjs/analog/compare/v2.6.0-beta.3...v2.6.0-beta.4) (2026-06-02)
 
 ### Bug Fixes
