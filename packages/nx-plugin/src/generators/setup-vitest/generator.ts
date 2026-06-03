@@ -22,7 +22,7 @@ function addFiles(
   const projects = getProjects(tree);
   const isNx = tree.exists('/nx.json');
 
-  const projectConfig = projects.get(options.project);
+  const projectConfig = projects.get(options.project)!;
 
   const templateOptions = {
     ...options,
@@ -44,11 +44,11 @@ export async function setupVitestGenerator(
   options: SetupVitestGeneratorSchema,
 ) {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion));
+  const majorAngularVersion = major(coerce(angularVersion!)!);
 
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
-  addAnalogDependencies(tree, angularVersion, nxVersion);
+  addAnalogDependencies(tree, angularVersion!, nxVersion ?? undefined);
   updateTsConfig(tree, options);
   updateTestTarget(tree, options);
 

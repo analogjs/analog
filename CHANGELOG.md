@@ -1,3 +1,81 @@
+# [2.6.0](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0) (2026-06-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** don't shadow Vite ?raw imports of .ts files ([#2359](https://github.com/analogjs/analog/issues/2359)) ([722eccb](https://github.com/analogjs/analog/commit/722eccbe69fb50b600b5f609568c2a014c60521e))
+- **vite-plugin-angular:** emit fastCompile JIT metadata in nested class scope ([#2361](https://github.com/analogjs/analog/issues/2361)) ([a73ee49](https://github.com/analogjs/analog/commit/a73ee490d0229c24c3573a2c4705db33ff3ac623))
+
+### Features
+
+- add support for Angular v22 release ([#2362](https://github.com/analogjs/analog/issues/2362)) ([911eb9a](https://github.com/analogjs/analog/commit/911eb9abd3b61aeacc55039dd7ed6f01fcb6612e))
+- **create-analog:** add --skipViteOverrides flag and Angular v22 RC templates ([#2358](https://github.com/analogjs/analog/issues/2358)) ([f9f672c](https://github.com/analogjs/analog/commit/f9f672ceae4d15d445742757121a5daabc5320ba))
+- upgrade to Angular 22 RC and Nx 22.7.5 ([#2357](https://github.com/analogjs/analog/issues/2357)) ([3961629](https://github.com/analogjs/analog/commit/39616298caa9efa264486b229d3f9bb44765f7ee))
+
+# [2.6.0-beta.5](https://github.com/analogjs/analog/compare/v2.6.0-beta.4...v2.6.0-beta.5) (2026-06-03)
+
+### Features
+
+- add support for Angular v22 release ([#2362](https://github.com/analogjs/analog/issues/2362)) ([911eb9a](https://github.com/analogjs/analog/commit/911eb9abd3b61aeacc55039dd7ed6f01fcb6612e))
+
+# [2.6.0-beta.4](https://github.com/analogjs/analog/compare/v2.6.0-beta.3...v2.6.0-beta.4) (2026-06-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit fastCompile JIT metadata in nested class scope ([#2361](https://github.com/analogjs/analog/issues/2361)) ([a73ee49](https://github.com/analogjs/analog/commit/a73ee490d0229c24c3573a2c4705db33ff3ac623))
+
+# [2.6.0-beta.3](https://github.com/analogjs/analog/compare/v2.6.0-beta.2...v2.6.0-beta.3) (2026-06-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** don't shadow Vite ?raw imports of .ts files ([#2359](https://github.com/analogjs/analog/issues/2359)) ([722eccb](https://github.com/analogjs/analog/commit/722eccbe69fb50b600b5f609568c2a014c60521e))
+
+# [2.6.0-beta.2](https://github.com/analogjs/analog/compare/v2.6.0-beta.1...v2.6.0-beta.2) (2026-06-01)
+
+### Features
+
+- **create-analog:** add --skipViteOverrides flag and Angular v22 RC templates ([#2358](https://github.com/analogjs/analog/issues/2358)) ([f9f672c](https://github.com/analogjs/analog/commit/f9f672ceae4d15d445742757121a5daabc5320ba))
+
+# [2.6.0-beta.1](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0-beta.1) (2026-06-01)
+
+### Features
+
+- upgrade to Angular 22 RC and Nx 22.7.5 ([#2357](https://github.com/analogjs/analog/issues/2357)) ([3961629](https://github.com/analogjs/analog/commit/39616298caa9efa264486b229d3f9bb44765f7ee))
+
+## [2.5.3](https://github.com/analogjs/analog/compare/v2.5.2...v2.5.3) (2026-06-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** aggregate and locate template diagnostics on the default compilation path ([#2354](https://github.com/analogjs/analog/issues/2354)) ([c7947ef](https://github.com/analogjs/analog/commit/c7947ef87723a02f80049cf30ac2829f3dce5658))
+- **vite-plugin-angular:** drop transform from aot input metadata ([c5ab296](https://github.com/analogjs/analog/commit/c5ab2960833ee8a81350fa9d0465b79128d9428b))
+- **vite-plugin-angular:** drop transform from input() jit metadata ([3fcc05c](https://github.com/analogjs/analog/commit/3fcc05cdc29deb450a261512033b206320c8e24e))
+- **vite-plugin-angular:** emit isSignal on jit signal-query decorators ([0af2189](https://github.com/analogjs/analog/commit/0af21898ef1170168f9a77442f55534fbe0faf99)), closes [analogjs/analog#2344](https://github.com/analogjs/analog/issues/2344)
+- **vite-plugin-angular:** preserve model() alias, required, and field ([88a6c75](https://github.com/analogjs/analog/commit/88a6c7504188af7cea30c3aa5026f961d33fe0a7))
+- **vite-plugin-angular:** propagate required through aot model metadata ([f163239](https://github.com/analogjs/analog/commit/f163239045d38dcded27749a6efcb1dfc55f99cf))
+- **vite-plugin-angular:** read outputFromObservable options from args[1] ([f530f08](https://github.com/analogjs/analog/commit/f530f089ae0c2a8cf75a816a2543b75afd68d7ce))
+- **vite-plugin-angular:** read outputFromObservable options from args[1] in aot ([6f7ccb9](https://github.com/analogjs/analog/commit/6f7ccb90ca646247f28b16f7e75317484136f0cd))
+- **vite-plugin-angular:** respect explicit declaration:false in lib-mode builds ([#2352](https://github.com/analogjs/analog/issues/2352)) ([dfa4c95](https://github.com/analogjs/analog/commit/dfa4c9564262c64471f125d6bc7ae940a28de16d))
+- **vite-plugin-angular:** skip aot signal synthesis when a matching decorator is on the field ([b823830](https://github.com/analogjs/analog/commit/b823830b4a10bb005eea5ba835d90feb4d06a3a6))
+- **vite-plugin-angular:** skip signal downleveling when a matching decorator is on the field ([0221f10](https://github.com/analogjs/analog/commit/0221f1022c58ff65fa814353d038228777b24294))
+- **vite-plugin-angular:** support build.lib + dedupe diagnostics on the Angular Compilation API path ([#2353](https://github.com/analogjs/analog/issues/2353)) ([61e8a56](https://github.com/analogjs/analog/commit/61e8a56df42dd1e502fc056e810ed671e93c8e94))
+
+## [2.5.3-beta.5](https://github.com/analogjs/analog/compare/v2.5.3-beta.4...v2.5.3-beta.5) (2026-05-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** aggregate and locate template diagnostics on the default compilation path ([#2354](https://github.com/analogjs/analog/issues/2354)) ([c7947ef](https://github.com/analogjs/analog/commit/c7947ef87723a02f80049cf30ac2829f3dce5658))
+
+## [2.5.3-beta.4](https://github.com/analogjs/analog/compare/v2.5.3-beta.3...v2.5.3-beta.4) (2026-05-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support build.lib + dedupe diagnostics on the Angular Compilation API path ([#2353](https://github.com/analogjs/analog/issues/2353)) ([61e8a56](https://github.com/analogjs/analog/commit/61e8a56df42dd1e502fc056e810ed671e93c8e94))
+
+## [2.5.3-beta.3](https://github.com/analogjs/analog/compare/v2.5.3-beta.2...v2.5.3-beta.3) (2026-05-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** respect explicit declaration:false in lib-mode builds ([#2352](https://github.com/analogjs/analog/issues/2352)) ([dfa4c95](https://github.com/analogjs/analog/commit/dfa4c9564262c64471f125d6bc7ae940a28de16d))
+
 ## [2.5.3-beta.2](https://github.com/analogjs/analog/compare/v2.5.3-beta.1...v2.5.3-beta.2) (2026-05-26)
 
 ### Bug Fixes

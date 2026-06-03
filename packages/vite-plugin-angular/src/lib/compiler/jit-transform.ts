@@ -69,7 +69,15 @@ export function jitTransform(
 
   const allClasses = findAllClasses(program.body);
 
-  const postClassStatements: string[] = [];
+  // Accumulates every class's emitted statements so the post-loop import
+  // detection (missing field-decorator imports) can scan all of them.
+  // The statements themselves are inserted in-scope after each class via
+  // `ms.appendLeft(node.end, ...)` rather than dumped at the end of the
+  // file — a class declared inside a function/callback scope (e.g. a host
+  // `@Component` defined inside a `describe(...)`/`it(...)` block in a test)
+  // is not in scope at module end, so a file-end emit would reference an
+  // undefined name (#2360).
+  const allEmittedStatements: string[] = [];
   let importCounter = 0;
   const resourceImports: string[] = [];
   let needsJitImport = false;
@@ -92,6 +100,10 @@ export function jitTransform(
     const className: string | undefined = node.id?.name;
     if (!className) continue;
     hasAngularClass = true;
+
+    // Statements emitted for THIS class. Inserted directly after the class
+    // body (see end of loop) so they run in the class's own lexical scope.
+    const classStatements: string[] = [];
 
     // 1. Remove Angular decorators from source
     for (const dec of angularDecs) {
@@ -182,7 +194,7 @@ export function jitTransform(
       decoratorMeta.push({ name: decName, argsText: '{}' });
       return `{ type: ${decName} }`;
     });
-    postClassStatements.push(
+    classStatements.push(
       `${className}.decorators = [${decoratorEntries.join(', ')}];`,
     );
 
@@ -191,22 +203,22 @@ export function jitTransform(
       needsJitImport = true;
       switch (dm.name) {
         case 'Component':
-          postClassStatements.push(
+          classStatements.push(
             `_jitCompileComponent(${className}, ${dm.argsText});`,
           );
           break;
         case 'Directive':
-          postClassStatements.push(
+          classStatements.push(
             `_jitCompileDirective(${className}, ${dm.argsText});`,
           );
           break;
         case 'Pipe':
-          postClassStatements.push(
+          classStatements.push(
             `_jitCompilePipe(${className}, ${dm.argsText});`,
           );
           break;
         case 'NgModule':
-          postClassStatements.push(
+          classStatements.push(
             `_jitCompileNgModule(${className}, ${dm.argsText});`,
           );
           break;
@@ -216,7 +228,7 @@ export function jitTransform(
     // 3. Emit Class.ctorParameters for constructor DI
     const ctorParams = buildCtorParameters(node, sourceCode, typeOnlyImports);
     if (ctorParams) {
-      postClassStatements.push(
+      classStatements.push(
         `${className}.ctorParameters = () => [${ctorParams}];`,
       );
     }
@@ -224,9 +236,7 @@ export function jitTransform(
     // 4. Emit Class.propDecorators for field decorators + signal APIs
     const propDecorators = buildPropDecorators(node, sourceCode);
     if (propDecorators) {
-      postClassStatements.push(
-        `${className}.propDecorators = ${propDecorators};`,
-      );
+      classStatements.push(`${className}.propDecorators = ${propDecorators};`);
     }
 
     // 5. Remove member and parameter decorators from source now that
@@ -267,6 +277,17 @@ export function jitTransform(
         }
       }
     }
+
+    // Insert this class's metadata statements directly after the class body
+    // so they execute in the class's own lexical scope. `node.end` is the
+    // position just past the closing brace (decorators were stripped before
+    // `node.start`), so for a top-level class this is module scope and for a
+    // class nested in a function/callback it is that enclosing scope —
+    // keeping the class identifier in scope either way (#2360).
+    if (classStatements.length > 0) {
+      allEmittedStatements.push(...classStatements);
+      ms.appendLeft(node.end, '\n' + classStatements.join('\n') + '\n');
+    }
   }
 
   if (!hasAngularClass) {
@@ -293,7 +314,7 @@ export function jitTransform(
       }
     }
   }
-  const allPostCode = postClassStatements.join('\n');
+  const allPostCode = allEmittedStatements.join('\n');
   const missingDecorators: string[] = [];
   for (const dec of FIELD_DECORATORS) {
     if (allPostCode.includes(`type: ${dec}`) && !existingImports.has(dec)) {
@@ -311,11 +332,6 @@ export function jitTransform(
     ms.prepend(
       `import { ɵcompileComponent as _jitCompileComponent, ɵcompileDirective as _jitCompileDirective, ɵcompilePipe as _jitCompilePipe, ɵcompileNgModule as _jitCompileNgModule } from '@angular/core';\n`,
     );
-  }
-
-  // Append all post-class statements at the end
-  if (postClassStatements.length > 0) {
-    ms.append('\n' + postClassStatements.join('\n') + '\n');
   }
 
   const map = ms.generateMap({

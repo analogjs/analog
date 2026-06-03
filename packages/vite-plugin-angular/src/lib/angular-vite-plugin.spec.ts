@@ -12,13 +12,18 @@ vi.mock('vite', async () => {
   };
 });
 
+import type ts from 'typescript';
 import {
   angular,
+  collectEmittedDiagnostics,
   createFsWatcherCacheInvalidator,
+  formatDiagnosticWithLocation,
+  groupDiagnosticsByFile,
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
 } from './angular-vite-plugin';
+import type { EmitFileResult } from './models';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
@@ -185,6 +190,29 @@ describe('JIT resolveId', () => {
     );
 
     expect(assetRE.test(virtualId)).toBe(false);
+  });
+
+  it('should exclude .ts?raw ids from the transform filter so Vite raw handling stands', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const exclude = (mainPlugin as any).transform.filter.id
+      .exclude as unknown[];
+    const matchesExclude = (id: string) =>
+      exclude.some((re) => re instanceof RegExp && re.test(id));
+
+    // `?raw` ids must be skipped, letting Vite's native raw loader stand (#2356)
+    expect(matchesExclude('/project/src/app/foo.ts?raw')).toBe(true);
+    expect(matchesExclude('/project/src/app/foo.cts?raw')).toBe(true);
+    expect(matchesExclude('/project/src/app/foo.mts?raw')).toBe(true);
+    expect(matchesExclude('/project/src/app/foo.ts?import&raw')).toBe(true);
+
+    // Plain and HMR/query .ts ids must still be compiled by Angular
+    expect(matchesExclude('/project/src/app/foo.ts')).toBe(false);
+    expect(matchesExclude('/project/src/app/foo.ts?t=12345')).toBe(false);
+    expect(matchesExclude('/project/src/app/foo.ts?component')).toBe(false);
   });
 
   it('should resolve style ?inline imports to absolute ?inline paths', () => {
@@ -535,5 +563,218 @@ describe('mapTemplateUpdatesToFiles', () => {
       'BarComponent',
       'FooComponent',
     ]);
+  });
+});
+
+describe('groupDiagnosticsByFile', () => {
+  it('groups each diagnostic under its own file with file:line:column', () => {
+    const { errorsByFile, warningsByFile } = groupDiagnosticsByFile({
+      errors: [
+        {
+          text: 'TS2339: Property does not exist',
+          location: { file: '/src/app/a.component.ts', line: 5, column: 20 },
+        },
+      ],
+      warnings: [
+        {
+          text: 'NG8113: All imports are unused',
+          location: { file: '/src/app/b.component.ts', line: 3, column: 50 },
+        },
+      ],
+    });
+
+    expect(errorsByFile.get(normalizePath('/src/app/a.component.ts'))).toEqual([
+      '/src/app/a.component.ts:5:20: TS2339: Property does not exist',
+    ]);
+    expect(
+      warningsByFile.get(normalizePath('/src/app/b.component.ts')),
+    ).toEqual(['/src/app/b.component.ts:3:50: NG8113: All imports are unused']);
+  });
+
+  it('does not duplicate a diagnostic across files (one bucket per file)', () => {
+    const { warningsByFile } = groupDiagnosticsByFile({
+      warnings: [
+        {
+          text: 'NG8113: unused a',
+          location: { file: '/src/a.component.ts', line: 1, column: 0 },
+        },
+        {
+          text: 'NG8113: unused b',
+          location: { file: '/src/b.component.ts', line: 1, column: 0 },
+        },
+      ],
+    });
+
+    expect(warningsByFile.size).toBe(2);
+    expect(
+      [...warningsByFile.values()].every((bucket) => bucket.length === 1),
+    ).toBe(true);
+  });
+
+  it('accumulates multiple diagnostics for the same file', () => {
+    const { errorsByFile } = groupDiagnosticsByFile({
+      errors: [
+        {
+          text: 'TS1: first',
+          location: { file: '/src/a.component.ts', line: 1, column: 1 },
+        },
+        {
+          text: 'TS2: second',
+          location: { file: '/src/a.component.ts', line: 9, column: 4 },
+        },
+      ],
+    });
+
+    expect(errorsByFile.get(normalizePath('/src/a.component.ts'))).toEqual([
+      '/src/a.component.ts:1:1: TS1: first',
+      '/src/a.component.ts:9:4: TS2: second',
+    ]);
+  });
+
+  it('routes location-less diagnostics to the global buckets', () => {
+    const { errorsByFile, warningsByFile, globalErrors, globalWarnings } =
+      groupDiagnosticsByFile({
+        errors: [{ text: 'NG: program-wide error' }],
+        warnings: [{ text: 'NG: program-wide warning', location: null }],
+      });
+
+    expect(errorsByFile.size).toBe(0);
+    expect(warningsByFile.size).toBe(0);
+    expect(globalErrors).toEqual(['NG: program-wide error']);
+    expect(globalWarnings).toEqual(['NG: program-wide warning']);
+  });
+
+  it('defaults missing line/column to 0', () => {
+    const { errorsByFile } = groupDiagnosticsByFile({
+      errors: [{ text: 'TS1: msg', location: { file: '/src/a.ts' } }],
+    });
+
+    expect(errorsByFile.get(normalizePath('/src/a.ts'))).toEqual([
+      '/src/a.ts:0:0: TS1: msg',
+    ]);
+  });
+
+  it('returns empty structures for empty/undefined input', () => {
+    const result = groupDiagnosticsByFile({});
+
+    expect(result.errorsByFile.size).toBe(0);
+    expect(result.warningsByFile.size).toBe(0);
+    expect(result.globalErrors).toEqual([]);
+    expect(result.globalWarnings).toEqual([]);
+  });
+});
+
+describe('collectEmittedDiagnostics', () => {
+  const file = (over: Partial<EmitFileResult>): EmitFileResult => ({
+    dependencies: [],
+    ...over,
+  });
+
+  it('aggregates errors and warnings across every output file', () => {
+    const outputFiles = new Map<string, EmitFileResult>([
+      ['/src/a.component.ts', file({ errors: ['a: error one'] })],
+      [
+        '/src/b.component.ts',
+        file({ errors: ['b: error two'], warnings: ['b: warning one'] }),
+      ],
+      ['/src/c.component.ts', file({ warnings: ['c: warning two'] })],
+    ]);
+
+    const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
+
+    // Every file contributes — a single errored file does not hide the rest.
+    expect(errors).toEqual(['a: error one', 'b: error two']);
+    expect(warnings).toEqual(['b: warning one', 'c: warning two']);
+  });
+
+  it('flattens diagnostic message chains into strings', () => {
+    const chain = {
+      messageText: 'Type X is not assignable to type Y',
+      category: 1,
+      code: 2322,
+      next: [
+        { messageText: "Property 'foo' is missing", category: 1, code: 1 },
+      ],
+    };
+
+    const outputFiles = new Map<string, EmitFileResult>([
+      ['/src/a.component.ts', file({ errors: [chain] })],
+    ]);
+
+    const { errors } = collectEmittedDiagnostics(outputFiles);
+
+    expect(errors).toEqual([
+      "Type X is not assignable to type Y\n  Property 'foo' is missing",
+    ]);
+  });
+
+  it('ignores files without diagnostics and returns empty arrays', () => {
+    const outputFiles = new Map<string, EmitFileResult>([
+      ['/src/a.component.ts', file({ content: 'compiled' })],
+    ]);
+
+    expect(collectEmittedDiagnostics(outputFiles)).toEqual({
+      errors: [],
+      warnings: [],
+    });
+  });
+});
+
+describe('formatDiagnosticWithLocation', () => {
+  // Minimal `ts.SourceFile` stand-in: only the bits the formatter touches.
+  const sourceFile = (fileName: string, line: number, character: number) =>
+    ({
+      fileName,
+      getLineAndCharacterOfPosition: () => ({ line, character }),
+    }) as unknown as ts.SourceFile;
+
+  it('prefixes the message with normalized file:line:column (1-based)', () => {
+    const diagnostic = {
+      file: sourceFile('/src/app/a.component.ts', 4, 19),
+      start: 42,
+      messageText: "Property 'foo' does not exist on type 'AppComponent'.",
+      category: 1,
+      code: 2339,
+    } as unknown as ts.Diagnostic;
+
+    // line 4/char 19 (0-based) render as 5:20, matching the Compilation API path.
+    expect(formatDiagnosticWithLocation(diagnostic)).toBe(
+      "/src/app/a.component.ts:5:20: Property 'foo' does not exist on type 'AppComponent'.",
+    );
+  });
+
+  it('flattens message chains and keeps the location prefix', () => {
+    const diagnostic = {
+      file: sourceFile('/src/app/a.component.ts', 0, 0),
+      start: 0,
+      messageText: {
+        messageText: 'Type X is not assignable to type Y',
+        category: 1,
+        code: 2322,
+        next: [
+          { messageText: "Property 'foo' is missing", category: 1, code: 1 },
+        ],
+      },
+      category: 1,
+      code: 2322,
+    } as unknown as ts.Diagnostic;
+
+    expect(formatDiagnosticWithLocation(diagnostic)).toBe(
+      "/src/app/a.component.ts:1:1: Type X is not assignable to type Y\n  Property 'foo' is missing",
+    );
+  });
+
+  it('falls back to the bare message for location-less diagnostics', () => {
+    const diagnostic = {
+      file: undefined,
+      start: undefined,
+      messageText: 'Cannot find a tsconfig option.',
+      category: 1,
+      code: 5000,
+    } as unknown as ts.Diagnostic;
+
+    expect(formatDiagnosticWithLocation(diagnostic)).toBe(
+      'Cannot find a tsconfig option.',
+    );
   });
 });

@@ -5,7 +5,7 @@ import { getAnalogDevDependencies } from '../../../utils/versions/dev-dependenci
 export function addAnalogDependencies(
   tree: Tree,
   angularVersion: string,
-  nxVersion: string,
+  nxVersion?: string,
 ) {
   const devDependencies = getAnalogDevDependencies(angularVersion, nxVersion);
 
