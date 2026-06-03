@@ -192,6 +192,29 @@ describe('JIT resolveId', () => {
     expect(assetRE.test(virtualId)).toBe(false);
   });
 
+  it('should exclude .ts?raw ids from the transform filter so Vite raw handling stands', () => {
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    const exclude = (mainPlugin as any).transform.filter.id
+      .exclude as unknown[];
+    const matchesExclude = (id: string) =>
+      exclude.some((re) => re instanceof RegExp && re.test(id));
+
+    // `?raw` ids must be skipped, letting Vite's native raw loader stand (#2356)
+    expect(matchesExclude('/project/src/app/foo.ts?raw')).toBe(true);
+    expect(matchesExclude('/project/src/app/foo.cts?raw')).toBe(true);
+    expect(matchesExclude('/project/src/app/foo.mts?raw')).toBe(true);
+    expect(matchesExclude('/project/src/app/foo.ts?import&raw')).toBe(true);
+
+    // Plain and HMR/query .ts ids must still be compiled by Angular
+    expect(matchesExclude('/project/src/app/foo.ts')).toBe(false);
+    expect(matchesExclude('/project/src/app/foo.ts?t=12345')).toBe(false);
+    expect(matchesExclude('/project/src/app/foo.ts?component')).toBe(false);
+  });
+
   it('should resolve style ?inline imports to absolute ?inline paths', () => {
     const plugins = angular({ jit: true });
     const mainPlugin = plugins.find(

@@ -12,8 +12,8 @@ async function viteDevServerBuilder(
   context: BuilderContext,
 ): Promise<BuilderOutput> {
   const { createServer } = await Function('return import("vite")')();
-  const projectConfig = await context.getProjectMetadata(context.target);
-  const projectName = context.target.project;
+  const projectConfig = await context.getProjectMetadata(context.target!);
+  const projectName = context.target?.project;
   const buildTargetSpecifier = options.buildTarget ?? `::development`;
   const buildTarget = targetFromTargetString(
     buildTargetSpecifier,

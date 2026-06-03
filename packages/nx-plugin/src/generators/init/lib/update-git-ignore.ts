@@ -4,7 +4,7 @@ export function updateGitIgnore(tree: Tree) {
   const gitIgnorePath = '/.gitignore';
 
   if (tree.exists(gitIgnorePath)) {
-    const gitIgnoreContents = tree.read(gitIgnorePath, 'utf-8');
+    const gitIgnoreContents = tree.read(gitIgnorePath, 'utf-8')!;
 
     if (!gitIgnoreContents.includes('.nx/cache')) {
       const updatedGitIgnore = `${gitIgnoreContents}\n

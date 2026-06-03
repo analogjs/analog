@@ -1,3 +1,33 @@
+# [2.6.0-beta.5](https://github.com/analogjs/analog/compare/v2.6.0-beta.4...v2.6.0-beta.5) (2026-06-03)
+
+### Features
+
+- add support for Angular v22 release ([#2362](https://github.com/analogjs/analog/issues/2362)) ([911eb9a](https://github.com/analogjs/analog/commit/911eb9abd3b61aeacc55039dd7ed6f01fcb6612e))
+
+# [2.6.0-beta.4](https://github.com/analogjs/analog/compare/v2.6.0-beta.3...v2.6.0-beta.4) (2026-06-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit fastCompile JIT metadata in nested class scope ([#2361](https://github.com/analogjs/analog/issues/2361)) ([a73ee49](https://github.com/analogjs/analog/commit/a73ee490d0229c24c3573a2c4705db33ff3ac623))
+
+# [2.6.0-beta.3](https://github.com/analogjs/analog/compare/v2.6.0-beta.2...v2.6.0-beta.3) (2026-06-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** don't shadow Vite ?raw imports of .ts files ([#2359](https://github.com/analogjs/analog/issues/2359)) ([722eccb](https://github.com/analogjs/analog/commit/722eccbe69fb50b600b5f609568c2a014c60521e))
+
+# [2.6.0-beta.2](https://github.com/analogjs/analog/compare/v2.6.0-beta.1...v2.6.0-beta.2) (2026-06-01)
+
+### Features
+
+- **create-analog:** add --skipViteOverrides flag and Angular v22 RC templates ([#2358](https://github.com/analogjs/analog/issues/2358)) ([f9f672c](https://github.com/analogjs/analog/commit/f9f672ceae4d15d445742757121a5daabc5320ba))
+
+# [2.6.0-beta.1](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0-beta.1) (2026-06-01)
+
+### Features
+
+- upgrade to Angular 22 RC and Nx 22.7.5 ([#2357](https://github.com/analogjs/analog/issues/2357)) ([3961629](https://github.com/analogjs/analog/commit/39616298caa9efa264486b229d3f9bb44765f7ee))
+
 ## [2.5.3](https://github.com/analogjs/analog/compare/v2.5.2...v2.5.3) (2026-06-01)
 
 ### Bug Fixes

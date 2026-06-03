@@ -31,10 +31,12 @@ export function updateTestTarget(
 
     const projectConfig = projects.get(schema.project);
 
-    projectConfig.targets.test = {
-      executor: '@analogjs/vitest-angular:test',
-    };
+    if (projectConfig && projectConfig?.targets) {
+      projectConfig.targets.test = {
+        executor: '@analogjs/vitest-angular:test',
+      };
 
-    updateProjectConfiguration(tree, schema.project, projectConfig);
+      updateProjectConfiguration(tree, schema.project, projectConfig);
+    }
   }
 }

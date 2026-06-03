@@ -1,6 +1,12 @@
 import type { ExecaSyncReturnValue, SyncOptions } from 'execa';
 import { execaCommandSync as commandSync } from 'execa';
-import { mkdirpSync, readdirSync, remove, writeFileSync } from 'fs-extra';
+import {
+  mkdirpSync,
+  readdirSync,
+  readJsonSync,
+  remove,
+  writeFileSync,
+} from 'fs-extra';
 import { join } from 'node:path';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 
@@ -99,4 +105,30 @@ test('works with the -t alias', () => {
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
   expect(templateFiles).toEqual(generatedFiles);
+});
+
+test('keeps the vite/vitest overrides by default', () => {
+  run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
+    cwd: __dirname,
+  });
+  const pkg = readJsonSync(join(genPath, 'package.json'));
+  expect(pkg.overrides).toBeDefined();
+  expect(pkg.overrides).toHaveProperty('vite');
+  expect(pkg.overrides).toHaveProperty('vitest');
+});
+
+test('strips the vite/vitest overrides with --skipViteOverrides', () => {
+  run(
+    [
+      projectName,
+      '--template',
+      'latest',
+      '--skipTailwind',
+      'false',
+      '--skipViteOverrides',
+    ],
+    { cwd: __dirname },
+  );
+  const pkg = readJsonSync(join(genPath, 'package.json'));
+  expect(pkg.overrides).toBeUndefined();
 });

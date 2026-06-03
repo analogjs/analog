@@ -16,7 +16,7 @@ export function updatePackageJson(
 
   if (tree.exists(angularJsonPath)) {
     const projects = getProjects(tree);
-    const projectConfig = projects.get(schema.project);
+    const projectConfig = projects.get(schema.project)!;
     const packageJsonPath = joinPathFragments(
       projectConfig.root || '.',
       'package.json',
@@ -33,7 +33,7 @@ export function updatePackageJson(
     }
   } else {
     const projects = getProjects(tree);
-    const projectConfig = projects.get(schema.project);
+    const projectConfig = projects.get(schema.project)!;
 
     const packageJsonPath = joinPathFragments(
       projectConfig.root,
