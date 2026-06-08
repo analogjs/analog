@@ -77,8 +77,11 @@ export interface FastCompilePluginOptions {
    * Which compiler backs the fastCompile transform.
    * - `'ts'` (default): the in-process TS/OXC-AST compiler under `./compiler/`.
    * - `'oxc'`: route component compilation through `@oxc-angular/vite/api`
-   *   (Rust). Experimental: JIT, partial mode, and inline-HMR fall back to
-   *   the TS engine; SCSS in inline styles is not yet supported.
+   *   (Rust). Handles AOT, JIT, inline-HMR, and partial/library builds
+   *   (which also emit Ivy `.d.ts` declarations via `dtsDeclarations`);
+   *   inline SCSS/Sass/Less is preprocessed before OXC sees it.
+   *   Experimental — the FESM build optimizer and SSR manifest still run
+   *   through the TS-engine path.
    */
   fastCompileEngine?: 'ts' | 'oxc';
 }
