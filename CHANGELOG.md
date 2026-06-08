@@ -1,3 +1,9 @@
+## [2.6.1-beta.1](https://github.com/analogjs/analog/compare/v2.6.0...v2.6.1-beta.1) (2026-06-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** parse skipped .ts files as TypeScript in vitest sourcemap plugin ([#2367](https://github.com/analogjs/analog/issues/2367)) ([ba284a8](https://github.com/analogjs/analog/commit/ba284a8b9e5d01a9f605b201b895056adceb167d))
+
 # [2.6.0](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0) (2026-06-03)
 
 ### Bug Fixes
