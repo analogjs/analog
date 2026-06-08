@@ -3,6 +3,7 @@ import {
   mkdirpSync,
   readdirSync,
   readFileSync,
+  readJsonSync,
   remove,
   writeFileSync,
 } from 'fs-extra';
@@ -171,3 +172,29 @@ test(
     }
   },
 );
+
+test('keeps the vite/vitest overrides by default', () => {
+  run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
+    cwd: tmpDir,
+  });
+  const pkg = readJsonSync(join(genPath, 'package.json'));
+  expect(pkg.overrides).toBeDefined();
+  expect(pkg.overrides).toHaveProperty('vite');
+  expect(pkg.overrides).toHaveProperty('vitest');
+});
+
+test('strips the vite/vitest overrides with --skipViteOverrides', () => {
+  run(
+    [
+      projectName,
+      '--template',
+      'latest',
+      '--skipTailwind',
+      'false',
+      '--skipViteOverrides',
+    ],
+    { cwd: tmpDir },
+  );
+  const pkg = readJsonSync(join(genPath, 'package.json'));
+  expect(pkg.overrides).toBeUndefined();
+});

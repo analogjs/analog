@@ -269,3 +269,21 @@ export class XComponent {}
     expect(sawBypassCall).toBe(false);
   });
 });
+
+describe('fastCompilePlugin transform filter', () => {
+  it('excludes .ts?raw ids so Vite raw handling stands (#2356)', () => {
+    const plugin = buildPlugin();
+    const exclude = (plugin.transform as any).filter.id.exclude as unknown[];
+    const matchesExclude = (id: string) =>
+      exclude.some((re) => re instanceof RegExp && re.test(id));
+
+    expect(matchesExclude('/src/app/foo.ts?raw')).toBe(true);
+    expect(matchesExclude('/src/app/foo.cts?raw')).toBe(true);
+    expect(matchesExclude('/src/app/foo.mts?raw')).toBe(true);
+    expect(matchesExclude('/src/app/foo.ts?import&raw')).toBe(true);
+
+    expect(matchesExclude('/src/app/foo.ts')).toBe(false);
+    expect(matchesExclude('/src/app/foo.ts?t=12345')).toBe(false);
+    expect(matchesExclude('/src/app/foo.ts?component')).toBe(false);
+  });
+});

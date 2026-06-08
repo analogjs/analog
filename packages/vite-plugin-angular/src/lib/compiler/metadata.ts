@@ -1,6 +1,6 @@
 import * as o from '@angular/compiler';
 import { unwrapForwardRefOxc } from './utils.js';
-import { SIGNAL_APIS } from './constants.js';
+import { FIELD_DECORATORS, SIGNAL_APIS } from './constants.js';
 
 function getCallApi(call: any): { api: string; required: boolean } | null {
   const callee = call.callee;
@@ -447,21 +447,50 @@ export function detectSignals(classNode: any, sourceCode: string) {
     const { api, required } = signalCall;
     if (!SIGNAL_APIS.has(api)) continue;
 
+    // Skip signal synthesis when an explicit Angular decorator already
+    // covers the same field. Mirrors Angular's transform behavior
+    // (input_function.ts:42-48 et al.) and the JIT fix in
+    // jit-metadata.ts. Without this, the downstream merge in compile.ts
+    // overwrites decorator-derived metadata or, worse, concats duplicate
+    // query entries that fire twice.
+    const explicit = new Set<string>();
+    for (const dec of m.decorators || []) {
+      const decName: string | undefined = dec.expression?.callee?.name;
+      if (decName && FIELD_DECORATORS.has(decName)) explicit.add(decName);
+    }
+    const hasInput = explicit.has('Input');
+    const hasOutput = explicit.has('Output');
+    const hasQuery =
+      explicit.has('ViewChild') ||
+      explicit.has('ViewChildren') ||
+      explicit.has('ContentChild') ||
+      explicit.has('ContentChildren');
+    if (api === 'input' && hasInput) continue;
+    if (api === 'model' && (hasInput || hasOutput)) continue;
+    if ((api === 'output' || api === 'outputFromObservable') && hasOutput) {
+      continue;
+    }
+    if (
+      (api === 'viewChild' ||
+        api === 'viewChildren' ||
+        api === 'contentChild' ||
+        api === 'contentChildren') &&
+      hasQuery
+    ) {
+      continue;
+    }
+
     const args: any[] = m.value.arguments || [];
 
     // 1. SIGNAL INPUTS (Standard & Required)
     if (api === 'input') {
-      let transform: any = null;
       let alias: string | null = null;
       const optionsArg = required ? args[0] : args[1];
       if (optionsArg?.type === 'ObjectExpression') {
         for (const prop of optionsArg.properties || []) {
           if (prop.type !== 'ObjectProperty' && prop.type !== 'Property')
             continue;
-          const k = propKeyName(prop);
-          if (k === 'transform') {
-            transform = new o.WrappedNodeExpr(prop.value);
-          } else if (k === 'alias') {
+          if (propKeyName(prop) === 'alias') {
             const sv = stringValue(prop.value);
             if (sv !== null) alias = sv;
           }
@@ -477,7 +506,13 @@ export function detectSignals(classNode: any, sourceCode: string) {
         bindingPropertyName: alias ?? name,
         isSignal: true,
         required,
-        transform,
+        // Always null for signal inputs. The input() factory already
+        // applies the user's transform internally; forwarding it to the
+        // directive metadata would make Angular's emitter set the
+        // HasDecoratorInputTransform flag, causing the transform to run
+        // again via the runtime input setter. Mirrors upstream
+        // input_function.ts:74.
+        transform: null,
       };
     }
 
@@ -501,6 +536,10 @@ export function detectSignals(classNode: any, sourceCode: string) {
         classPropertyName: name,
         bindingPropertyName: alias ?? name,
         isSignal: true,
+        // Propagate `.required` so the runtime enforces the unbound-required
+        // check. Without this, `model.required(...)` accepts an unbound parent
+        // and the model signal stays at its undefined initial value silently.
+        required,
       };
       // The compiled `outputs` field is `{ classPropertyName: bindingName }`.
       // Angular inverts this at runtime via
@@ -589,7 +628,10 @@ export function detectSignals(classNode: any, sourceCode: string) {
     // 4. STANDARD OUTPUTS (output() and outputFromObservable())
     else if (api === 'output' || api === 'outputFromObservable') {
       let alias = name;
-      const optArg = args[0];
+      // outputFromObservable(observable, options) — options is args[1].
+      // output(options) — options is args[0]. Mirrors upstream
+      // output_function.ts:81.
+      const optArg = api === 'outputFromObservable' ? args[1] : args[0];
       if (optArg?.type === 'ObjectExpression') {
         for (const prop of optArg.properties || []) {
           if (

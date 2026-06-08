@@ -7,7 +7,7 @@ export function updateMain(
   schema: SetupAnalogGeneratorSchema,
 ): void {
   const projects = getProjects(tree);
-  const projectConfig = projects.get(schema.project);
+  const projectConfig = projects.get(schema.project)!;
 
   if (!projectConfig) {
     throw new Error(`Project "${schema.project}" not found.`);

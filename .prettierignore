@@ -13,3 +13,4 @@ pnpm-lock.yaml
 .vite-inspect
 .all-contributorsrc
 **/routeTree.gen.ts
+.nx/self-healing

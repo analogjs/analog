@@ -1,5 +1,6 @@
 import {
   provideHttpClient,
+  withFetch,
   withInterceptors,
 } from '@angular/common/http';
 import {
@@ -7,22 +8,16 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import {
-  provideFileRouter,
-  requestContextInterceptor,
-} from '@analogjs/router';
-import { withContentRoutes } from '@analogjs/router/content';
-import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-import { __HIGHLIGHTER__ } from '@analogjs/content/__HIGHLIGHTER_ENTRY_POINT__';
+import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideFileRouter(withContentRoutes()),
+    provideFileRouter(),
     provideHttpClient(
+      withFetch(),
       withInterceptors([requestContextInterceptor])
     ),
     provideClientHydration(withEventReplay()),
-    provideContent(withMarkdownRenderer(), __HIGHLIGHTER__()),
   ],
 };

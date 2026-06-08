@@ -133,6 +133,11 @@ async function init() {
   let skipTailwind = fromBoolArg(argv.skipTailwind);
   const skipGit = fromBoolArg(argv.skipGit ?? argv['skip-git']) ?? false;
 
+  // Internal flag (no prompt): when set, strip the `overrides` block that
+  // pins vite/vitest from the generated package.json. Defaults to keeping
+  // them, preserving current behavior.
+  const skipViteOverrides = fromBoolArg(argv.skipViteOverrides);
+
   const getProjectName = () =>
     targetDir === '.' ? path.basename(path.resolve()) : (targetDir ?? '');
 
@@ -311,6 +316,14 @@ async function init() {
 
   if (pkgManager === 'pnpm') {
     addPnpmDependencies(pkg, template);
+  }
+
+  if (skipViteOverrides && pkg.overrides) {
+    delete pkg.overrides.vite;
+    delete pkg.overrides.vitest;
+    if (Object.keys(pkg.overrides).length === 0) {
+      delete pkg.overrides;
+    }
   }
 
   pkg.dependencies = sortObjectKeys(pkg.dependencies);
