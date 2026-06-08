@@ -31,6 +31,7 @@ import {
   type OxcEngineDiagnostic,
 } from './compiler/oxc-engine.js';
 import { createOxcHmrController } from './compiler/oxc-hmr.js';
+import { injectDtsDeclarations } from './compiler/dts-writer.js';
 import { angularMajor, angularMinor, angularPatch } from './utils/devkit.js';
 
 import {
@@ -84,7 +85,7 @@ export interface FastCompilePluginOptions {
 
 export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
-): Plugin {
+): Plugin[] {
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
@@ -95,6 +96,13 @@ export function fastCompilePlugin(
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
+
+  // Angular Ivy `.d.ts` member declarations collected during OXC-engine
+  // library builds, keyed by class name (last write wins — a library
+  // publishes one class per name). Consumed by `generateBundle` to augment
+  // the `.d.ts` a separate declaration generator emits. Only populated when
+  // `fastCompileEngine: 'oxc'` and `fastCompileMode: 'partial'`.
+  const collectedDtsDeclarations = new Map<string, string>();
 
   // OXC engine + liveReload only: controller for the `@ng/component`
   // virtual-module HMR contract. Instantiated lazily once we know the
@@ -331,19 +339,22 @@ export function fastCompilePlugin(
     // Rust pipeline handles both AOT and JIT — for JIT it emits the
     // downleveled-decorator form with synthesized propDecorators (per
     // voidzero-dev/oxc-angular-compiler#319) and serves templates/styles
-    // at runtime via `angular:jit:` virtual modules. Partial-library
-    // output still flows through the TS engine since the OXC NAPI
-    // doesn't model `ɵɵngDeclare*` emission.
-    if (
-      pluginOptions.fastCompileEngine === 'oxc' &&
-      (pluginOptions.fastCompileMode ?? 'full') === 'full'
-    ) {
+    // at runtime via `angular:jit:` virtual modules. Library builds
+    // (`fastCompileMode: 'partial'`) are also handled here: OXC emits
+    // `ɵɵngDeclare*` partial declarations and returns `dtsDeclarations`,
+    // which `generateBundle` splices into the emitted `.d.ts`.
+    if (pluginOptions.fastCompileEngine === 'oxc') {
+      const compilationMode =
+        (pluginOptions.fastCompileMode ?? 'full') === 'partial'
+          ? 'partial'
+          : 'full';
       const result = await oxcTransform(code, id, {
         resolvedConfig,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         liveReload: pluginOptions.liveReload,
         watchMode,
         jit: pluginOptions.jit,
+        compilationMode,
       });
       for (const dep of result.resourceDependencies) {
         resourceToSource.set(dep, id);
@@ -353,6 +364,13 @@ export function fastCompilePlugin(
         oxcHmr.pruneStaleResources(id, result.resourceDependencies);
         for (const dep of result.resourceDependencies) {
           oxcHmr.recordResource(dep, id);
+        }
+      }
+      // Library builds: stash the Ivy `.d.ts` member declarations so
+      // `generateBundle` can splice them into the emitted declarations.
+      if (compilationMode === 'partial') {
+        for (const decl of result.dtsDeclarations) {
+          collectedDtsDeclarations.set(decl.className, decl.members);
         }
       }
       return {
@@ -509,7 +527,42 @@ export function fastCompilePlugin(
     );
   }
 
-  return {
+  // Library builds: splice the Angular Ivy member declarations collected
+  // during OXC partial compilation into the `.d.ts` produced by a separate
+  // declaration generator (rolldown-plugin-dts, vite-plugin-dts, tsdown,
+  // `tsc`). This is a dedicated `enforce: 'post'` plugin so its
+  // `generateBundle` runs AFTER the dts generator has emitted its assets —
+  // the main fast-compile plugin is `enforce: 'pre'` and would run first.
+  const dtsPlugin: Plugin = {
+    name: '@analogjs/vite-plugin-angular-fast-compile-dts',
+    enforce: 'post' as const,
+    generateBundle(_outputOptions, bundle) {
+      if (!tsConfigResolutionContext?.isLib) return;
+      if (collectedDtsDeclarations.size === 0) return;
+
+      const declarations = Array.from(
+        collectedDtsDeclarations,
+        ([className, members]) => ({ className, members }),
+      );
+
+      for (const file of Object.values(bundle)) {
+        if (file.type !== 'asset') continue;
+        if (!file.fileName.endsWith('.d.ts')) continue;
+
+        const source =
+          typeof file.source === 'string'
+            ? file.source
+            : Buffer.from(file.source).toString('utf-8');
+
+        const augmented = injectDtsDeclarations(source, declarations);
+        if (augmented !== source) {
+          file.source = augmented;
+        }
+      }
+    },
+  };
+
+  const mainPlugin: Plugin = {
     name: '@analogjs/vite-plugin-angular-fast-compile',
     enforce: 'pre' as const,
     async config(config, { command }) {
@@ -745,4 +798,6 @@ export function fastCompilePlugin(
       },
     },
   };
+
+  return [mainPlugin, dtsPlugin];
 }

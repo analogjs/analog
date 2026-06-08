@@ -874,7 +874,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     routerPlugin(),
     angularFullVersion < 190004 && pendingTasksPlugin(),
     nxFolderPlugin(),
-  ].filter(Boolean) as Plugin[];
+  ]
+    .flat()
+    .filter(Boolean) as Plugin[];
 
   function findIncludes() {
     const workspaceRoot = normalizePath(resolve(pluginOptions.workspaceRoot));

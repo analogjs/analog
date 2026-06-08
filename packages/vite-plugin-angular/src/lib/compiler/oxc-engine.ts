@@ -82,6 +82,12 @@ interface OxcTransformOptions {
   emitClassMetadata?: boolean;
   minifyComponentStyles?: boolean;
   angularVersion?: OxcAngularVersion;
+  /**
+   * `'full'` (default) emits resolved Ivy definitions for app builds;
+   * `'partial'` emits `ɵɵngDeclare*` declarations for library publishing.
+   * Library builds also rely on the returned `dtsDeclarations`.
+   */
+  compilationMode?: 'full' | 'partial';
 }
 
 interface OxcResolvedResources {
@@ -121,6 +127,20 @@ interface OxcTransformResult {
   styleUpdates?: Record<string, string[]>;
   errors: OxcDiagnostic[];
   warnings: OxcDiagnostic[];
+  /**
+   * Per-class Ivy `.d.ts` static member declarations (`static ɵfac`,
+   * `static ɵcmp`, …) for library builds. Produced by OXC regardless of
+   * compilation mode; consumed only on `isLib` builds to augment the
+   * declaration files a separate dts generator emits. The members are
+   * `i0`-prefixed (the `@angular/core` namespace alias).
+   */
+  dtsDeclarations?: OxcDtsDeclaration[];
+}
+
+/** A single class's `.d.ts` static member declarations from OXC. */
+export interface OxcDtsDeclaration {
+  className: string;
+  members: string;
 }
 
 let apiPromise: Promise<OxcApi> | undefined;
@@ -184,6 +204,12 @@ export interface OxcEngineContext {
    * Requires `@oxc-angular/vite` ≥ 0.0.30 for signal-API JIT lowering.
    */
   jit: boolean;
+  /**
+   * Compilation mode forwarded to OXC. `'partial'` for library builds
+   * (emits `ɵɵngDeclare*` + populates `dtsDeclarations`), `'full'`
+   * otherwise. Defaults to `'full'` when omitted.
+   */
+  compilationMode?: 'full' | 'partial';
 }
 
 export interface OxcEngineResult {
@@ -207,6 +233,12 @@ export interface OxcEngineResult {
    * structured `labels`, `helpMessage`, and `codeframe`.
    */
   diagnostics: OxcEngineDiagnostic[];
+  /**
+   * Per-class Ivy `.d.ts` static member declarations for library builds.
+   * Empty for app builds. The plugin layer collects these across the build
+   * and splices them into emitted `.d.ts` on `isLib` builds.
+   */
+  dtsDeclarations: OxcDtsDeclaration[];
 }
 
 /**
@@ -403,6 +435,7 @@ export async function oxcTransform(
       hmr,
       jit: ctx.jit,
       emitClassMetadata: true,
+      compilationMode: ctx.compilationMode ?? 'full',
       angularVersion: {
         major: angularMajor,
         minor: angularMinor,
@@ -466,6 +499,7 @@ export async function oxcTransform(
     templateUpdates: result.templateUpdates ?? {},
     styleUpdates: result.styleUpdates ?? {},
     diagnostics,
+    dtsDeclarations: result.dtsDeclarations ?? [],
   };
 }
 
