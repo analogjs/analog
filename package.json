@@ -118,7 +118,7 @@
     "@nx/vite": "22.7.5",
     "@nx/vitest": "22.7.5",
     "@nx/web": "22.7.5",
-    "@oxc-angular/vite": "^0.0.30",
+    "@oxc-angular/vite": "^0.0.31",
     "@oxc-project/runtime": "^0.117.0",
     "@playwright/test": "^1.58.2",
     "@schematics/angular": "21.1.5",
