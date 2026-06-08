@@ -123,10 +123,12 @@ export interface PluginOptions {
    * Which compiler backs `fastCompile`.
    * - `'ts'` (default): the in-process TS/OXC-AST compiler shipped with this
    *   package.
-   * - `'oxc'`: experimental — route AOT component compilation through the
-   *   native Rust pipeline from `@oxc-angular/vite` (must be installed as an
-   *   optional peer dependency). JIT mode and `fastCompileMode: 'partial'`
-   *   still flow through the TS engine.
+   * - `'oxc'`: experimental — route component compilation through the native
+   *   Rust pipeline from `@oxc-angular/vite` (must be installed as an optional
+   *   peer dependency).
+   *
+   * Can also be enabled with the `ANALOG_OXC=true` environment variable when
+   * this option is left unset (explicit values here take precedence).
    */
   fastCompileEngine?: 'ts' | 'oxc';
   experimental?: {
@@ -160,6 +162,10 @@ export function angular(options?: PluginOptions): Plugin[] {
    * Normalize plugin options so defaults
    * are used for values not provided.
    */
+  // Allow enabling the experimental OXC engine from the environment (e.g. in
+  // CI) without editing config. Explicit plugin options take precedence.
+  const oxcEngineFromEnv = process.env['ANALOG_OXC'] === 'true';
+
   const pluginOptions = {
     tsconfigGetter: createTsConfigGetter(options?.tsconfig),
     workspaceRoot: options?.workspaceRoot ?? process.cwd(),
@@ -181,9 +187,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
-    fastCompile: options?.fastCompile ?? false,
+    fastCompile: options?.fastCompile ?? oxcEngineFromEnv,
     fastCompileMode: options?.fastCompileMode ?? 'full',
-    fastCompileEngine: options?.fastCompileEngine ?? 'ts',
+    fastCompileEngine:
+      options?.fastCompileEngine ?? (oxcEngineFromEnv ? 'oxc' : 'ts'),
   };
 
   let resolvedConfig: ResolvedConfig;

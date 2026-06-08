@@ -65,6 +65,8 @@ export default defineConfig({
 
 :::
 
+You can also enable the engine without editing your config by setting the `ANALOG_OXC=true` environment variable — useful for trying it in CI. An explicit `fastCompileEngine` in your config takes precedence.
+
 ### What it supports
 
 | Capability                                   | OXC-based engine                                                       |
