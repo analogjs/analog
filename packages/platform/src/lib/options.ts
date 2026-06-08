@@ -124,30 +124,29 @@ export interface Options {
    */
   disableTypeChecking?: boolean;
   /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
+   * Opt into the fast compile path and select the engine that backs it. The
+   * fast path skips Angular's template type-checking and routes compilation
+   * through an internal single-pass transform.
+   * - `false` (default) / unset: use Angular's full compilation (with
+   *   template type-checking).
+   * - `true` or `'ts'`: the in-process TS/OXC-AST compiler shipped with
+   *   `@analogjs/vite-plugin-angular`.
+   * - `'oxc'`: experimental — route AOT and JIT component compilation through
+   *   the native Rust pipeline from `@oxc-angular/vite` (must be installed as
+   *   an optional peer dependency). Also unlocks OXC's `@ng/component` HMR
+   *   contract, library linker (`linkAngularPackage`), and FESM build
+   *   optimizer (`optimizeAngularPackage`).
+   *
+   * The OXC engine can also be selected with the `ANALOG_OXC=true` environment
+   * variable when this option is left unset (explicit values take precedence).
    */
-  fastCompile?: boolean;
+  fastCompile?: boolean | 'ts' | 'oxc';
   /**
    * Compilation output mode used when `fastCompile` is enabled.
    * - `'full'` (default): Emit final Ivy definitions for application builds.
    * - `'partial'`: Emit partial declarations for library publishing.
    */
   fastCompileMode?: 'full' | 'partial';
-  /**
-   * Which compiler backs `fastCompile`.
-   * - `'ts'` (default): the in-process TS/OXC-AST compiler shipped with
-   *   `@analogjs/vite-plugin-angular`.
-   * - `'oxc'`: experimental — route AOT and JIT component compilation
-   *   through the native Rust pipeline from `@oxc-angular/vite` (must
-   *   be installed as an optional peer dependency). Also unlocks OXC's
-   *   `@ng/component` HMR contract, library linker
-   *   (`linkAngularPackage`), and FESM build optimizer
-   *   (`optimizeAngularPackage`). `fastCompileMode: 'partial'` still
-   *   flows through the TS engine since the OXC NAPI doesn't model
-   *   `ɵɵngDeclare*` emission.
-   */
-  fastCompileEngine?: 'ts' | 'oxc';
   /**
    * File replacements
    */

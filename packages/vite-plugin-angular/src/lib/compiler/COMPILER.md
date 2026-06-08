@@ -12,11 +12,11 @@ export default defineConfig({
 });
 ```
 
-`fastCompile` now picks between two engines via `fastCompileEngine`:
+`fastCompile` selects the engine directly:
 
 ```ts
-angular({ fastCompile: true, fastCompileEngine: 'ts' /* default */ }); // this in-tree compiler
-angular({ fastCompile: true, fastCompileEngine: 'oxc' }); // native Rust via @oxc-angular/vite
+angular({ fastCompile: true }); // or fastCompile: 'ts' — this in-tree compiler
+angular({ fastCompile: 'oxc' }); // native Rust via @oxc-angular/vite
 ```
 
 The bulk of this document describes the TS engine. The OXC engine — wired in via `oxc-engine.ts`, `oxc-hmr.ts`, `oxc-linker-plugin.ts` — is summarised in § OXC Engine.
@@ -265,7 +265,7 @@ The `inlineStyleLanguage` option (default: `'scss'`) controls the file extension
 
 ## OXC Engine
 
-Selecting `fastCompileEngine: 'oxc'` swaps the in-tree TS-engine compilation pipeline for `@oxc-angular/vite` (native Rust via NAPI). The Vite plugin shell, dispatch order, and engine option are still owned by `fastCompilePlugin`; OXC owns AOT/JIT compilation, HMR codegen, partial-declaration linking, and FESM build optimization.
+Selecting `fastCompile: 'oxc'` swaps the in-tree TS-engine compilation pipeline for `@oxc-angular/vite` (native Rust via NAPI). The Vite plugin shell, dispatch order, and engine option are still owned by `fastCompilePlugin`; OXC owns AOT/JIT compilation, HMR codegen, partial-declaration linking, and FESM build optimization.
 
 Wired against `@oxc-angular/vite@^0.0.31`. The adapter calls into OXC's NAPI exports — `transformAngularFile`, `extractComponentUrls`, `compileForHmrSync`, `linkAngularPackage`, `optimizeAngularPackage` — and `loadOxcHmrApi` validates every export at load time so a stale OXC version surfaces a clear error instead of silent breakage.
 

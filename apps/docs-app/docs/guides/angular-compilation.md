@@ -45,27 +45,26 @@ import angular from '@analogjs/vite-plugin-angular';
 export default defineConfig({
   plugins: [
     angular({
-      fastCompile: true,
-      fastCompileEngine: 'oxc',
+      fastCompile: 'oxc',
     }),
   ],
 });
 ```
 
 :::note
-In an Analog application, configure the plugin through `@analogjs/platform` instead — its `analog()` plugin forwards the same `fastCompile` and `fastCompileEngine` options:
+In an Analog application, configure the plugin through `@analogjs/platform` instead — its `analog()` plugin forwards the same `fastCompile` option:
 
 ```ts
 import analog from '@analogjs/platform';
 
 export default defineConfig({
-  plugins: [analog({ fastCompile: true, fastCompileEngine: 'oxc' })],
+  plugins: [analog({ fastCompile: 'oxc' })],
 });
 ```
 
 :::
 
-You can also enable the engine without editing your config by setting the `ANALOG_OXC=true` environment variable — useful for trying it in CI. An explicit `fastCompileEngine` in your config takes precedence.
+You can also enable the engine without editing your config by setting the `ANALOG_OXC=true` environment variable — useful for trying it in CI. An explicit `fastCompile` in your config takes precedence.
 
 ### What it supports
 
@@ -147,7 +146,7 @@ For overall Angular/Analog/Vite version support, see [Version Compatibility](/do
 The OXC Angular compiler is **experimental** and trades compile-time safety for speed.
 
 - **No compile-time template type checking.** The OXC engine emits identical Ivy output and identical runtime behavior, but it does not validate template bindings, inputs, or types at build time. Run the **Angular Language Service** in your editor to catch these errors as you type — they appear as editor squiggles instead of failing the build.
-- **Optional peer dependency.** The engine requires `@oxc-angular/vite` to be installed. If it is missing, enabling `fastCompileEngine: 'oxc'` throws a clear error at startup.
+- **Optional peer dependency.** The engine requires `@oxc-angular/vite` to be installed. If it is missing, enabling `fastCompile: 'oxc'` throws a clear error at startup.
 
 If you need template type errors to fail your build (for example in CI), add the [type-checking step](#type-checking) or use the default compilation path.
 :::

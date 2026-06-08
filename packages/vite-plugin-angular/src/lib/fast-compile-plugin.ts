@@ -104,7 +104,7 @@ export function fastCompilePlugin(
   // library builds, keyed by class name (last write wins — a library
   // publishes one class per name). Consumed by `generateBundle` to augment
   // the `.d.ts` a separate declaration generator emits. Only populated when
-  // `fastCompileEngine: 'oxc'` and `fastCompileMode: 'partial'`.
+  // `fastCompile: 'oxc'` and `fastCompileMode: 'partial'`.
   const collectedDtsDeclarations = new Map<string, string>();
 
   // OXC engine + liveReload only: controller for the `@ng/component`
@@ -338,7 +338,7 @@ export function fastCompilePlugin(
     }
 
     // OXC engine: route component compilation through `@oxc-angular/vite`
-    // when the user has opted in via `fastCompileEngine: 'oxc'`. The native
+    // when the user has opted in via `fastCompile: 'oxc'`. The native
     // Rust pipeline handles both AOT and JIT — for JIT it emits the
     // downleveled-decorator form with synthesized propDecorators (per
     // voidzero-dev/oxc-angular-compiler#319) and serves templates/styles

@@ -71,7 +71,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           fileReplacements: platformOptions.fileReplacements,
           fastCompile: platformOptions.fastCompile,
           fastCompileMode: platformOptions.fastCompileMode,
-          fastCompileEngine: platformOptions.fastCompileEngine,
           ...(opts?.vite ?? {}),
         })) as any),
     serverModePlugin(),

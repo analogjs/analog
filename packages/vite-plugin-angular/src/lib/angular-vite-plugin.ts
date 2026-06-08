@@ -108,29 +108,27 @@ export interface PluginOptions {
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
   /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
-   * Defaults to `false`.
+   * Opt into the fast compile path and select the engine that backs it. The
+   * fast path skips Angular's template type-checking and routes compilation
+   * through an internal single-pass transform.
+   * - `false` (default) / unset: use Angular's full compilation (with
+   *   template type-checking).
+   * - `true` or `'ts'`: the in-process TS/OXC-AST compiler shipped with this
+   *   package.
+   * - `'oxc'`: experimental — route component compilation through the native
+   *   Rust pipeline from `@oxc-angular/vite` (must be installed as an optional
+   *   peer dependency).
+   *
+   * The OXC engine can also be selected with the `ANALOG_OXC=true` environment
+   * variable when this option is left unset (explicit values take precedence).
    */
-  fastCompile?: boolean;
+  fastCompile?: boolean | 'ts' | 'oxc';
   /**
    * Compilation output mode used when `fastCompile` is enabled.
    * - `'full'` (default): Emit final Ivy definitions for application builds.
    * - `'partial'`: Emit partial declarations for library publishing.
    */
   fastCompileMode?: 'full' | 'partial';
-  /**
-   * Which compiler backs `fastCompile`.
-   * - `'ts'` (default): the in-process TS/OXC-AST compiler shipped with this
-   *   package.
-   * - `'oxc'`: experimental — route component compilation through the native
-   *   Rust pipeline from `@oxc-angular/vite` (must be installed as an optional
-   *   peer dependency).
-   *
-   * Can also be enabled with the `ANALOG_OXC=true` environment variable when
-   * this option is left unset (explicit values here take precedence).
-   */
-  fastCompileEngine?: 'ts' | 'oxc';
   experimental?: {
     useAngularCompilationAPI?: boolean;
   };
@@ -162,9 +160,14 @@ export function angular(options?: PluginOptions): Plugin[] {
    * Normalize plugin options so defaults
    * are used for values not provided.
    */
-  // Allow enabling the experimental OXC engine from the environment (e.g. in
-  // CI) without editing config. Explicit plugin options take precedence.
+  // Resolve the consolidated `fastCompile` option (boolean | 'ts' | 'oxc')
+  // into an internal enabled flag + engine. `ANALOG_OXC=true` selects the OXC
+  // engine when the option is unset; explicit config takes precedence.
   const oxcEngineFromEnv = process.env['ANALOG_OXC'] === 'true';
+  const fastCompileValue =
+    options?.fastCompile ?? (oxcEngineFromEnv ? 'oxc' : false);
+  const fastCompileEngine: 'ts' | 'oxc' =
+    fastCompileValue === 'oxc' ? 'oxc' : 'ts';
 
   const pluginOptions = {
     tsconfigGetter: createTsConfigGetter(options?.tsconfig),
@@ -187,10 +190,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     fileReplacements: options?.fileReplacements ?? [],
     useAngularCompilationAPI:
       options?.experimental?.useAngularCompilationAPI ?? false,
-    fastCompile: options?.fastCompile ?? oxcEngineFromEnv,
+    fastCompile: fastCompileValue !== false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
-    fastCompileEngine:
-      options?.fastCompileEngine ?? (oxcEngineFromEnv ? 'oxc' : 'ts'),
+    fastCompileEngine,
   };
 
   let resolvedConfig: ResolvedConfig;

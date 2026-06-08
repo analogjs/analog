@@ -5,7 +5,7 @@
  * per-component update protocol that swaps templates and styles via
  * Angular's runtime `ɵɵreplaceMetadata` without re-instantiating the
  * component. Wired into Analog's `fastCompilePlugin` when
- * `fastCompileEngine: 'oxc'` and `liveReload: true`.
+ * `fastCompile: 'oxc'` and `liveReload: true`.
  *
  * Responsibilities:
  *  - Track which component classes live in each `.ts` file (populated as

@@ -13,7 +13,7 @@ import {
 
 /**
  * Minimal subset of `@oxc-angular/vite/api` we depend on. Loaded lazily so the
- * native binary is only required when `fastCompileEngine: 'oxc'` is selected.
+ * native binary is only required when `fastCompile: 'oxc'` is selected.
  */
 interface OxcApi {
   transformAngularFile: (
@@ -180,7 +180,7 @@ async function loadOxcApi(): Promise<OxcApi> {
       } catch (e) {
         const reason = (e as Error)?.message ?? String(e);
         throw new Error(
-          "[@analogjs/vite-plugin-angular] fastCompileEngine: 'oxc' requires the optional peer dependency '@oxc-angular/vite'. Install it (e.g. `pnpm add -D @oxc-angular/vite`) or set fastCompileEngine: 'ts'.\n\nOriginal error: " +
+          "[@analogjs/vite-plugin-angular] fastCompile: 'oxc' requires the optional peer dependency '@oxc-angular/vite'. Install it (e.g. `pnpm add -D @oxc-angular/vite`) or set fastCompile: true.\n\nOriginal error: " +
             reason,
         );
       }
