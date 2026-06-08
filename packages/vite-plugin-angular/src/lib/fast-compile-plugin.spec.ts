@@ -22,17 +22,27 @@ vi.mock('vite', async () => {
 
 import { fastCompilePlugin } from './fast-compile-plugin';
 
+// `fastCompilePlugin` returns a [main, dts] plugin pair; these tests drive the
+// main plugin's transform hook.
+const FAST_COMPILE_PLUGIN_NAME = '@analogjs/vite-plugin-angular-fast-compile';
+
+function pickMainPlugin(result: ReturnType<typeof fastCompilePlugin>) {
+  return result.find((p) => p.name === FAST_COMPILE_PLUGIN_NAME)!;
+}
+
 function buildPlugin() {
-  return fastCompilePlugin({
-    tsconfigGetter: () => 'tsconfig.json',
-    workspaceRoot: '/workspace',
-    inlineStylesExtension: 'css',
-    jit: false,
-    liveReload: false,
-    supportedBrowsers: [],
-    isTest: false,
-    isAstroIntegration: false,
-  });
+  return pickMainPlugin(
+    fastCompilePlugin({
+      tsconfigGetter: () => 'tsconfig.json',
+      workspaceRoot: '/workspace',
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      supportedBrowsers: [],
+      isTest: false,
+      isAstroIntegration: false,
+    }),
+  );
 }
 
 function getTransformHandler(plugin: ReturnType<typeof buildPlugin>) {
@@ -142,16 +152,18 @@ describe('fastCompilePlugin bypass strips TS', () => {
       map: { mappings: '' },
     });
 
-    const plugin = fastCompilePlugin({
-      tsconfigGetter: () => 'tsconfig.json',
-      workspaceRoot: '/workspace',
-      inlineStylesExtension: 'css',
-      jit: true,
-      liveReload: false,
-      supportedBrowsers: [],
-      isTest: true,
-      isAstroIntegration: false,
-    });
+    const plugin = pickMainPlugin(
+      fastCompilePlugin({
+        tsconfigGetter: () => 'tsconfig.json',
+        workspaceRoot: '/workspace',
+        inlineStylesExtension: 'css',
+        jit: true,
+        liveReload: false,
+        supportedBrowsers: [],
+        isTest: true,
+        isAstroIntegration: false,
+      }),
+    );
     const handler = getTransformHandler(plugin);
 
     const code = `import { Component } from '@angular/core';
@@ -196,16 +208,18 @@ export class App {
       configurable: true,
     });
     try {
-      const plugin = fastCompilePlugin({
-        tsconfigGetter: () => 'tsconfig.json',
-        workspaceRoot: '/workspace',
-        inlineStylesExtension: 'css',
-        jit: true,
-        liveReload: false,
-        supportedBrowsers: [],
-        isTest: true,
-        isAstroIntegration: false,
-      });
+      const plugin = pickMainPlugin(
+        fastCompilePlugin({
+          tsconfigGetter: () => 'tsconfig.json',
+          workspaceRoot: '/workspace',
+          inlineStylesExtension: 'css',
+          jit: true,
+          liveReload: false,
+          supportedBrowsers: [],
+          isTest: true,
+          isAstroIntegration: false,
+        }),
+      );
       const handler = getTransformHandler(plugin);
 
       const code = `import { Component } from '@angular/core';
