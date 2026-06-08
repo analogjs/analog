@@ -17,6 +17,7 @@
         ],
         "updateBuildableProjectDepsInPackageJson": false,
         "additionalEntryPoints": [
+          "packages/vite-plugin-angular/esbuild.ts",
           "packages/vite-plugin-angular/setup-vitest.ts"
         ],
         "generateExportsField": false
