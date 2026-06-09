@@ -574,3 +574,52 @@ npm run test-storybook
 ```
 
 You can also run tests directly in the Storybook UI. Start Storybook and use the "Run Tests" button in the sidebar, or navigate to a story to see interaction tests run automatically in the Interactions panel.
+
+## Code Coverage
+
+To collect coverage while running your stories, enable the V8 provider on the `storybook` test project:
+
+```ts
+test: {
+  name: 'storybook',
+  coverage: {
+    provider: 'v8',
+    include: ['src/**/*.ts'],
+  },
+  browser: {
+    enabled: true,
+    headless: true,
+    provider: playwright(),
+    instances: [{ browser: 'chromium' }],
+  },
+  setupFiles: ['.storybook/vitest.setup.ts'],
+},
+```
+
+### Monorepo configuration
+
+In a monorepo, a story often imports a shared library from another project through its package/barrel entry point (for example `@my-org/ui`). When coverage is configured to include those dependent-project sources, Vite pre-bundles the barrel and serves it from `node_modules/.vite/deps`. Browser-mode V8 coverage ignores any module served from `node_modules`, so the dependency is reported with **0 hits at its source path even though it executed** — and merging that report with your unit-test report double-counts the file and drags the overall percentage down.
+
+To collect real coverage for those dependencies, keep them out of Vite's dependency pre-bundling so they are served — and instrumented — from source. Add them to `optimizeDeps.exclude` in your `.storybook/main.ts` via `viteFinal`:
+
+```ts
+import { UserConfig, mergeConfig } from 'vite';
+
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      // serve workspace libraries from source so browser coverage can instrument them
+      optimizeDeps: {
+        exclude: ['@my-org/ui'],
+      },
+    });
+  },
+};
+
+export default config;
+```
+
+Alternatively, if you only want story-level coverage, scope `coverage.include` to the current project's files so dependent-project sources are not emitted as zero-hit records.

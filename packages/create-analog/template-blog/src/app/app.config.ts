@@ -1,6 +1,5 @@
 import {
   provideHttpClient,
-  withFetch,
   withInterceptors,
 } from '@angular/common/http';
 import {
@@ -21,7 +20,6 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideFileRouter(withContentRoutes()),
     provideHttpClient(
-      withFetch(),
       withInterceptors([requestContextInterceptor])
     ),
     provideClientHydration(withEventReplay()),

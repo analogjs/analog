@@ -204,7 +204,34 @@ describe('JIT Transform', () => {
       expect(result).toContain('required: true');
     });
 
-    it('downlevels model() to Input + Output', () => {
+    it('drops transform from input() metadata so it does not run twice', () => {
+      const result = transform(`
+        import { Component, input, numberAttribute } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { size = input(0, { transform: numberAttribute }); }
+      `);
+
+      // The signal already applies the transform; forwarding it to the
+      // @Input decorator would make Angular's runtime call it a second time.
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).not.toContain('transform');
+      expect(propDecorators).toContain('isSignal: true');
+      expect(propDecorators).toContain('required: false');
+    });
+
+    it('drops transform from input.required() metadata', () => {
+      const result = transform(`
+        import { Component, input, booleanAttribute } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { open = input.required({ transform: booleanAttribute }); }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).not.toContain('transform');
+      expect(propDecorators).toContain('required: true');
+    });
+
+    it('downlevels model() to Input + Output on the same field', () => {
       const result = transform(`
         import { Component, model } from '@angular/core';
         @Component({ selector: 'x', template: '' })
@@ -214,7 +241,52 @@ describe('JIT Transform', () => {
       expect(result).toContain('X.propDecorators');
       expect(result).toContain('type: Input');
       expect(result).toContain('type: Output');
-      expect(result).toContain('valueChange');
+      // Both decorators must be under the class field name, not a synthetic
+      // `valueChange` key — the runtime reads `instance[field]` for the
+      // emitter on the model signal.
+      expect(result).toMatch(
+        /value:\s*\[[\s\S]*?type:\s*Input[\s\S]*?type:\s*Output/,
+      );
+      expect(result).toContain(`'valueChange'`);
+      expect(result).toContain(`alias: 'value'`);
+      expect(result).toContain('required: false');
+    });
+
+    it('downlevels model.required() with required: true', () => {
+      const result = transform(`
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { value = model.required<number>(); }
+      `);
+
+      expect(result).toContain('type: Input');
+      expect(result).toContain('required: true');
+      expect(result).toContain(`'valueChange'`);
+    });
+
+    it('downlevels model() with alias on both Input and Change', () => {
+      const result = transform(`
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { value = model('seed', { alias: 'publicName' }); }
+      `);
+
+      expect(result).toContain(`alias: 'publicName'`);
+      expect(result).toContain(`'publicNameChange'`);
+      // Should not leak the property name when an alias is given.
+      expect(result).not.toContain(`'valueChange'`);
+    });
+
+    it('downlevels model.required() with alias', () => {
+      const result = transform(`
+        import { Component, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { value = model.required<number>({ alias: 'publicName' }); }
+      `);
+
+      expect(result).toContain(`alias: 'publicName'`);
+      expect(result).toContain(`'publicNameChange'`);
+      expect(result).toContain('required: true');
     });
 
     it('downlevels output() to propDecorators', () => {
@@ -235,7 +307,33 @@ describe('JIT Transform', () => {
         export class X { c = output({alias: 'cPublic'}); }
       `);
 
-      expect(result).toContain('cPublic');
+      expect(result).toContain(`'cPublic'`);
+    });
+
+    it('downlevels outputFromObservable() reading options from args[1]', () => {
+      const result = transform(`
+        import { Component, outputFromObservable } from '@angular/core';
+        import { of } from 'rxjs';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          ready = outputFromObservable(of(1), { alias: 'readyPublic' });
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).toContain('type: Output');
+      expect(propDecorators).toContain(`'readyPublic'`);
+    });
+
+    it('escapes single quotes in output alias strings', () => {
+      const result = transform(`
+        import { Component, output } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X { c = output({alias: "tricky'name"}); }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators).toContain(`'tricky\\'name'`);
     });
 
     it('downlevels viewChild() to propDecorators', () => {
@@ -247,6 +345,32 @@ describe('JIT Transform', () => {
 
       expect(result).toContain('X.propDecorators');
       expect(result).toContain('type: ViewChild');
+      // Signal queries must carry `isSignal: true` so the JIT compiler
+      // wires them through the signal query infrastructure (NG0951).
+      expect(result).toContain('isSignal: true');
+    });
+
+    it('downlevels viewChild.required() with isSignal so the signal resolves', () => {
+      const result = transform(`
+        import { Component, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #ref></div>' })
+        export class X { trigger = viewChild.required<ElementRef>('ref'); }
+      `);
+
+      expect(result).toContain('type: ViewChild');
+      expect(result).toMatch(/args: \['ref', \{isSignal: true\}\]/);
+    });
+
+    it('downlevels viewChild() with read option, spreading existing options', () => {
+      const result = transform(`
+        import { Component, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #ref></div>' })
+        export class X { ref = viewChild('ref', { read: ElementRef }); }
+      `);
+
+      expect(result).toContain('type: ViewChild');
+      expect(result).toContain('{ read: ElementRef }');
+      expect(result).toContain('isSignal: true');
     });
 
     it('downlevels contentChildren() to propDecorators', () => {
@@ -257,6 +381,50 @@ describe('JIT Transform', () => {
       `);
 
       expect(result).toContain('type: ContentChildren');
+      expect(result).toContain('isSignal: true');
+    });
+
+    it('skips signal downleveling when @Input already decorates the field', () => {
+      const result = transform(`
+        import { Component, Input, input } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input() name = input<string>();
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      // Only one Input entry — the explicit decorator wins.
+      expect(propDecorators.match(/type:\s*Input/g)?.length).toBe(1);
+      expect(propDecorators).not.toContain('isSignal: true');
+    });
+
+    it('skips model downleveling when @Input or @Output already decorates the field', () => {
+      const result = transform(`
+        import { Component, Input, model } from '@angular/core';
+        @Component({ selector: 'x', template: '' })
+        export class X {
+          @Input() value = model(0);
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators.match(/type:\s*Input/g)?.length).toBe(1);
+      expect(propDecorators).not.toContain('type: Output');
+    });
+
+    it('skips signal-query downleveling when @ViewChild already decorates the field', () => {
+      const result = transform(`
+        import { Component, ViewChild, viewChild, ElementRef } from '@angular/core';
+        @Component({ selector: 'x', template: '<div #ref></div>' })
+        export class X {
+          @ViewChild('ref') ref = viewChild<ElementRef>('ref');
+        }
+      `);
+
+      const propDecorators = result.slice(result.indexOf('X.propDecorators'));
+      expect(propDecorators.match(/type:\s*ViewChild/g)?.length).toBe(1);
+      expect(propDecorators).not.toContain('isSignal: true');
     });
   });
 
@@ -463,6 +631,64 @@ describe('JIT transform nested class support', () => {
     // Both top-level and nested classes should be processed
     expect(result).toContain('TopComponent.decorators');
     expect(result).toContain('InnerComponent.decorators');
+  });
+
+  // Regression for #2360: a component declared inside a function/callback
+  // scope (the common "host component to test a directive" pattern, where the
+  // class lives inside a `describe(...)`/`it(...)` block) must have its
+  // metadata statements emitted IN SCOPE — emitting them at the end of the
+  // file would reference an undefined name and throw `ReferenceError` when the
+  // spec module is evaluated.
+  it('emits nested-class metadata in scope (no ReferenceError on eval)', () => {
+    const emitted = jitTransform(
+      `
+      import { Component } from '@angular/core';
+
+      export function makeHost() {
+        @Component({ selector: 'app-host', template: '' })
+        class TestComponent {}
+        return TestComponent;
+      }
+    `,
+      'example.component.spec.ts',
+    ).code;
+
+    // Stub @angular/core so the emitted JS can run under \`new Function\`.
+    const stubs = {
+      Component: () => () => undefined,
+      ɵcompileComponent: () => undefined,
+      ɵcompileDirective: () => undefined,
+      ɵcompilePipe: () => undefined,
+      ɵcompileNgModule: () => undefined,
+    };
+    const runnable = emitted
+      .replace(
+        /import\s+\{([^}]+)\}\s+from\s+['"]@angular\/core['"];?/g,
+        (_m, specs: string) => {
+          const destructured = specs
+            .split(',')
+            .map((s) => {
+              const parts = s.trim().match(/^(\S+)(?:\s+as\s+(\S+))?$/);
+              if (!parts) return '';
+              const [, imported, local] = parts;
+              return local ? `${imported}: ${local}` : imported;
+            })
+            .filter(Boolean)
+            .join(', ');
+          return `const { ${destructured} } = __stubs__;`;
+        },
+      )
+      .replace(/^\s*export\s+(?=function)/gm, '');
+
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const fn = new Function('__stubs__', `${runnable}\nreturn makeHost();`);
+    const Cls = fn(stubs);
+
+    // Evaluating the factory must not throw, and the in-scope statements must
+    // have attached the metadata to the nested class.
+    expect(typeof Cls).toBe('function');
+    expect((Cls as any).decorators).toBeDefined();
+    expect((Cls as any).decorators[0].args[0].selector).toBe('app-host');
   });
 });
 

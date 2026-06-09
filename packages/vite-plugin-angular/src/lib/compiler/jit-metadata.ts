@@ -29,6 +29,31 @@ function getCallApi(call: any): { api: string; required: boolean } | null {
 }
 
 /**
+ * Read a string-literal `alias` value out of an OXC ObjectExpression.
+ * Returns null when the arg isn't an object literal, has no alias, or
+ * the alias value isn't a static string. Shorthand `{alias}` is skipped
+ * because the identifier wouldn't be in scope when the propDecorators
+ * static block is evaluated at class top level.
+ */
+function extractAlias(optArg: any): string | null {
+  if (!optArg || optArg.type !== 'ObjectExpression') return null;
+  for (const p of optArg.properties || []) {
+    if (p.type !== 'ObjectProperty' && p.type !== 'Property') continue;
+    if (p.shorthand) continue;
+    const pKey = p.key?.name || p.key?.value;
+    if (pKey !== 'alias') continue;
+    const v = p.value;
+    if (v?.type === 'StringLiteral') return v.value;
+    if (v?.type === 'Literal' && typeof v.value === 'string') return v.value;
+  }
+  return null;
+}
+
+function escapeStringLiteral(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+/**
  * Build ctorParameters for constructor DI in JIT format:
  * [{ type: ServiceA }, { type: ServiceB, decorators: [{type: Optional}] }]
  *
@@ -129,6 +154,7 @@ export function buildPropDecorators(
     if (!memberName) continue;
 
     // Check for field decorators (@Input, @Output, @ViewChild, etc.)
+    const explicitDecoratorNames = new Set<string>();
     const decorators: any[] = member.decorators || [];
     for (const dec of decorators) {
       const expr = dec.expression;
@@ -136,6 +162,7 @@ export function buildPropDecorators(
       const decName: string | undefined = expr.callee?.name;
       if (!decName || !FIELD_DECORATORS.has(decName)) continue;
 
+      explicitDecoratorNames.add(decName);
       if (!props[memberName]) props[memberName] = [];
       const args: any[] = expr.arguments || [];
       if (args.length > 0) {
@@ -147,7 +174,10 @@ export function buildPropDecorators(
       }
     }
 
-    // Signal API downleveling
+    // Signal API downleveling. Skip when a matching explicit decorator
+    // is already on the field — Angular's transform bails in that case
+    // (input_function.ts, model_function.ts, output_function.ts,
+    // query_functions.ts) to avoid duplicate metadata entries.
     if (
       member.type === 'PropertyDefinition' &&
       member.value?.type === 'CallExpression'
@@ -158,17 +188,53 @@ export function buildPropDecorators(
       const { api, required } = signalCall;
       const args: any[] = member.value.arguments || [];
 
+      const hasInput = explicitDecoratorNames.has('Input');
+      const hasOutput = explicitDecoratorNames.has('Output');
+      const hasQuery =
+        explicitDecoratorNames.has('ViewChild') ||
+        explicitDecoratorNames.has('ViewChildren') ||
+        explicitDecoratorNames.has('ContentChild') ||
+        explicitDecoratorNames.has('ContentChildren');
+
+      if (api === 'input' && hasInput) continue;
+      if (api === 'model' && (hasInput || hasOutput)) continue;
+      if ((api === 'output' || api === 'outputFromObservable') && hasOutput) {
+        continue;
+      }
+      if (
+        (api === 'viewChild' ||
+          api === 'viewChildren' ||
+          api === 'contentChild' ||
+          api === 'contentChildren') &&
+        hasQuery
+      ) {
+        continue;
+      }
+
       if (api === 'input') {
         if (!props[memberName]) props[memberName] = [];
-        // Preserve all original options from the input() call and overlay isSignal/required
+        // Preserve original options from the input() call and overlay
+        // isSignal/required. `transform` is dropped: the input signal
+        // already applies it internally, so forwarding it to the
+        // decorator would make Angular's runtime JIT wrap it a second
+        // time via the directive metadata's transformFunction slot.
+        // Shorthand props ({alias}) are skipped — the identifier
+        // wouldn't be in scope when the propDecorators block runs at
+        // class top level.
         const optArg = required ? args[0] : args[1];
         const optParts: string[] = [];
         if (optArg?.type === 'ObjectExpression') {
           for (const p of optArg.properties || []) {
             if (p.type !== 'ObjectProperty' && p.type !== 'Property') continue;
+            if (p.shorthand) continue;
             const pKey = p.key?.name || p.key?.value;
-            // Skip isSignal/required — we override them below
-            if (pKey === 'isSignal' || pKey === 'required') continue;
+            if (
+              pKey === 'isSignal' ||
+              pKey === 'required' ||
+              pKey === 'transform'
+            ) {
+              continue;
+            }
             optParts.push(sourceCode.slice(p.start, p.end));
           }
         }
@@ -177,58 +243,68 @@ export function buildPropDecorators(
           `{type: Input, args: [{${optParts.join(', ')}}]}`,
         );
       } else if (api === 'model') {
+        // Both Input and Output must live on the SAME propDecorators key
+        // (the class field name). Angular's JIT facade indexes outputs by
+        // classPropertyName and reads `instance[classPropertyName]` for
+        // the EventEmitter — for a model that's the signal itself, which
+        // exposes the emitter via [SIGNAL]. Splitting Output onto a
+        // synthetic `<name>Change` key would point at a field that does
+        // not exist on the class, breaking two-way bindings.
         if (!props[memberName]) props[memberName] = [];
-        props[memberName].push(`{type: Input, args: [{isSignal: true}]}`);
-        // Model also generates a Change output
-        const changeName = memberName + 'Change';
-        if (!props[changeName]) props[changeName] = [];
-        props[changeName].push(`{type: Output, args: ['${changeName}']}`);
+        const optArg = required ? args[0] : args[1];
+        const alias = extractAlias(optArg);
+        const bindingName = alias ?? memberName;
+        props[memberName].push(
+          `{type: Input, args: [{isSignal: true, alias: '${escapeStringLiteral(bindingName)}', required: ${required}}]}`,
+        );
+        props[memberName].push(
+          `{type: Output, args: ['${escapeStringLiteral(bindingName + 'Change')}']}`,
+        );
       } else if (api === 'output' || api === 'outputFromObservable') {
         if (!props[memberName]) props[memberName] = [];
-        // Extract alias
-        let alias: string | null = null;
-        const optArg = args[0];
-        if (optArg?.type === 'ObjectExpression') {
-          for (const p of optArg.properties || []) {
-            if (
-              (p.type === 'ObjectProperty' || p.type === 'Property') &&
-              (p.key?.name || p.key?.value) === 'alias'
-            ) {
-              if (
-                p.value?.type === 'StringLiteral' ||
-                (p.value?.type === 'Literal' &&
-                  typeof p.value.value === 'string')
-              ) {
-                alias = p.value.value;
-              }
-            }
-          }
-        }
-        if (alias) {
-          props[memberName].push(`{type: Output, args: ['${alias}']}`);
+        // outputFromObservable(observable, options) — options is args[1].
+        // output(options) — options is args[0].
+        const optArg = api === 'outputFromObservable' ? args[1] : args[0];
+        const alias = extractAlias(optArg);
+        if (alias !== null) {
+          props[memberName].push(
+            `{type: Output, args: ['${escapeStringLiteral(alias)}']}`,
+          );
         } else {
           props[memberName].push(`{type: Output}`);
         }
-      } else if (api === 'viewChild' || api === 'viewChildren') {
-        if (!props[memberName]) props[memberName] = [];
-        const queryType = api === 'viewChildren' ? 'ViewChildren' : 'ViewChild';
-        if (args.length > 0) {
-          props[memberName].push(
-            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}]}`,
-          );
-        } else {
-          props[memberName].push(`{type: ${queryType}}`);
-        }
-      } else if (api === 'contentChild' || api === 'contentChildren') {
+      } else if (
+        api === 'viewChild' ||
+        api === 'viewChildren' ||
+        api === 'contentChild' ||
+        api === 'contentChildren'
+      ) {
         if (!props[memberName]) props[memberName] = [];
         const queryType =
-          api === 'contentChildren' ? 'ContentChildren' : 'ContentChild';
+          api === 'viewChildren'
+            ? 'ViewChildren'
+            : api === 'viewChild'
+              ? 'ViewChild'
+              : api === 'contentChildren'
+                ? 'ContentChildren'
+                : 'ContentChild';
+        // Signal queries need `isSignal: true` so the runtime JIT compiler
+        // wires them through the signal query infrastructure rather than
+        // treating them as plain @ViewChild/@ContentChild assignments.
+        // Mirrors Angular's own JIT transform in
+        // compiler-cli/.../initializer_api_transforms/query_functions.ts.
         if (args.length > 0) {
+          const opts =
+            args.length > 1
+              ? `{...${sourceCode.slice(args[1].start, args[1].end)}, isSignal: true}`
+              : `{isSignal: true}`;
           props[memberName].push(
-            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}]}`,
+            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}, ${opts}]}`,
           );
         } else {
-          props[memberName].push(`{type: ${queryType}}`);
+          props[memberName].push(
+            `{type: ${queryType}, args: [undefined, {isSignal: true}]}`,
+          );
         }
       }
     }

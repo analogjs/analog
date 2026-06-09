@@ -87,3 +87,5 @@ gradle.properties
 .claude
 gradle.properties
 *.tsbuildinfo
+.nx/polygraph
+.nx/self-healing
