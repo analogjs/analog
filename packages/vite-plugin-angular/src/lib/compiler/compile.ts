@@ -32,7 +32,7 @@ import {
   compileDeclareClassMetadata,
 } from '@angular/compiler';
 import { ComponentRegistry } from './registry.js';
-import { findAllClasses } from './utils.js';
+import { findAllClasses, resolveSyntheticImportSpecifier } from './utils.js';
 import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 import { angularVersionAtLeast } from './angular-version.js';
 import {
@@ -461,12 +461,14 @@ export function compile(
                 const memberEntry = registry?.get(memberName);
                 if (!memberEntry || memberEntry.kind === 'tuple') continue;
                 const memberRef = new o.WrappedNodeExpr(memberName);
-                if (memberEntry.sourcePackage || tupleSpecifier) {
-                  if (!importedNames.has(memberName)) {
-                    syntheticImports.set(
-                      memberName,
-                      memberEntry.sourcePackage || tupleSpecifier!,
-                    );
+                if (!importedNames.has(memberName)) {
+                  const memberSpecifier = resolveSyntheticImportSpecifier(
+                    fileName,
+                    memberEntry,
+                    tupleSpecifier,
+                  );
+                  if (memberSpecifier) {
+                    syntheticImports.set(memberName, memberSpecifier);
                   }
                 }
                 const kind = memberEntry.kind === 'pipe' ? 1 : 0;
@@ -527,11 +529,13 @@ export function compile(
                   // Create a reference to the exported class. If it's not
                   // already imported, track it for synthetic import injection.
                   const exportedRef = new o.WrappedNodeExpr(exportedName);
-                  if (exportedEntry.sourcePackage || moduleSpecifier) {
-                    syntheticImports.set(
-                      exportedName,
-                      exportedEntry.sourcePackage || moduleSpecifier!,
-                    );
+                  const exportedSpecifier = resolveSyntheticImportSpecifier(
+                    fileName,
+                    exportedEntry,
+                    moduleSpecifier,
+                  );
+                  if (exportedSpecifier) {
+                    syntheticImports.set(exportedName, exportedSpecifier);
                   }
                   const decl: CompileDeclaration = {
                     type: exportedRef,
