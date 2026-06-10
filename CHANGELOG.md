@@ -1,3 +1,9 @@
+## [2.6.1-beta.2](https://github.com/analogjs/analog/compare/v2.6.1-beta.1...v2.6.1-beta.2) (2026-06-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** import NgModule/tuple exports from their defining file in fastCompile ([#2370](https://github.com/analogjs/analog/issues/2370)) ([dafa025](https://github.com/analogjs/analog/commit/dafa0250249686b129bfce1a99874e7f40b78e35))
+
 ## [2.6.1-beta.1](https://github.com/analogjs/analog/compare/v2.6.0...v2.6.1-beta.1) (2026-06-08)
 
 ### Bug Fixes
