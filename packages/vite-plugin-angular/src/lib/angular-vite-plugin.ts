@@ -1825,6 +1825,11 @@ export function isTestWatchMode(args = process.argv) {
     return false;
   }
 
+  // vitest run
+  if (args.includes('run')) {
+    return false;
+  }
+
   // vitest --no-run
   const hasNoRun = args.find((arg) => arg.includes('--no-run'));
   if (hasNoRun) {
