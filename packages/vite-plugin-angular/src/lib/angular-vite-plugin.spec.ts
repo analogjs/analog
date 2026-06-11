@@ -128,6 +128,24 @@ describe('isTestWatchMode', () => {
     expect(result).toBeFalsy();
   });
 
+  it('should return false for vitest run', () => {
+    const result = isTestWatchMode(['run']);
+
+    expect(result).toBeFalsy();
+  });
+
+  it('should return false for vitest run with a file filter', () => {
+    const result = isTestWatchMode(['run', 'src/example.spec.ts']);
+
+    expect(result).toBeFalsy();
+  });
+
+  it('should return true for a file filter that contains run', () => {
+    const result = isTestWatchMode(['src/run-helpers.spec.ts']);
+
+    expect(result).toBeTruthy();
+  });
+
   it('should return true for vitest --no-run', () => {
     const result = isTestWatchMode(['--no-run']);
 

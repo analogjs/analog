@@ -5,7 +5,7 @@ import TabItem from '@theme/TabItem';
 
 Una Aplicación SPA Angular existente puede configurarse para usar Analog utilizando un schematic/generator para Angular CLI o espacios de trabajo Nx.
 
-> Analog es compatible con Angular v15 y versiones superiores.
+> Analog es compatible con Angular v17 y versiones superiores.
 
 ## Usando un Schematic/Generator
 

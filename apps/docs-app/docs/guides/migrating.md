@@ -5,16 +5,7 @@ import TabItem from '@theme/TabItem';
 
 An existing Angular Single Page Application can be configured to use Analog using a schematic/generator for Angular CLI or Nx workspaces.
 
-> Analog v3 requires Angular v17 or newer. Angular v16 is no longer supported.
-
-## Existing Analog apps
-
-If you are upgrading an existing Analog app between major versions, use the dedicated guides:
-
-- [Migrating from Analog v1 to v2](/docs/guides/migrating-v1-to-v2)
-- [Migrating from Analog v2 to v3](/docs/guides/migrating-v2-to-v3)
-
-If you are migrating a standard Angular app into Analog for the first time, continue with the guide below.
+> Analog is compatible with Angular v17 and above.
 
 ## Using a Schematic/Generator
 

@@ -2706,8 +2706,3 @@ function getFilenameFromPath(id: string): string {
     return pathname.replace(/^\//, '');
   }
 }
-
-/**
- * Checks for vitest run from the command line
- * @returns boolean
- */

@@ -99,13 +99,17 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
 
   const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] = {
     plugins: [
-      createRolldownCompilerPlugin({
-        tsconfig: opts.tsconfig,
-        sourcemap: !opts.isProd,
-        advancedOptimizations: opts.isProd,
-        jit: opts.jit,
-        incremental: opts.watchMode,
-      }),
+      createRolldownCompilerPlugin(
+        {
+          tsconfig: opts.tsconfig,
+          sourcemap: !opts.isProd,
+          advancedOptimizations: opts.isProd,
+          jit: opts.jit,
+          incremental: opts.watchMode,
+        },
+        opts.isTest,
+        !opts.isAstroIntegration,
+      ),
     ],
   };
 

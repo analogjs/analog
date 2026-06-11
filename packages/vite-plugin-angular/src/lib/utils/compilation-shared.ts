@@ -202,10 +202,19 @@ export function refreshStylesheetRegistryForFile(
   });
 }
 
-export function isTestWatchMode(args: string[] = process.argv): boolean {
+/**
+ * Checks for vitest run from the command line
+ * @returns boolean
+ */
+export function isTestWatchMode(args = process.argv): boolean {
   // vitest --run
   const hasRun = args.find((arg) => arg.includes('--run'));
   if (hasRun) {
+    return false;
+  }
+
+  // vitest run
+  if (args.includes('run')) {
     return false;
   }
 
