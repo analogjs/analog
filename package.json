@@ -212,26 +212,5 @@
     "vitest": "4.0.18",
     "webpack-bundle-analyzer": "^5.2.0",
     "xmlbuilder2": "^4.0.3"
-  },
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "cypress"
-    ],
-    "onlyBuiltDependencies": [
-      "@compodoc/compodoc",
-      "@swc/core",
-      "core-js",
-      "core-js-pure",
-      "esbuild",
-      "lmdb",
-      "msgpackr-extract",
-      "nx",
-      "sharp"
-    ],
-    "overrides": {
-      "vite": "^8.0.0",
-      "@typescript-eslint/type-utils": "8.57.0",
-      "webpack": "5.105.4"
-    }
   }
 }

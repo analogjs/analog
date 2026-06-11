@@ -14,3 +14,8 @@ allowBuilds:
   nx: true
   sharp: true
   unrs-resolver: true
+
+overrides:
+  vite: '^8.0.0'
+  '@typescript-eslint/type-utils': '8.57.0'
+  webpack: '5.105.4'
