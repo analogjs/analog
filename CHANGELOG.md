@@ -1,3 +1,9 @@
+## [2.6.1-beta.4](https://github.com/analogjs/analog/compare/v2.6.1-beta.3...v2.6.1-beta.4) (2026-06-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** treat the vitest run command as a single run instead of watch mode ([#2374](https://github.com/analogjs/analog/issues/2374)) ([931200a](https://github.com/analogjs/analog/commit/931200a0028b0e9e334b429b6e730340a7d557e7))
+
 ## [2.6.1-beta.3](https://github.com/analogjs/analog/compare/v2.6.1-beta.2...v2.6.1-beta.3) (2026-06-11)
 
 ### Bug Fixes
