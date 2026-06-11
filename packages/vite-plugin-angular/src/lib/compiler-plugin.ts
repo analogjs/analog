@@ -50,14 +50,20 @@ export function createCompilerPlugin(
 
 export function createRolldownCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
+  isTest: boolean,
+  closeTransformer: boolean,
 ): Rolldown.Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     { ...pluginOptions, jit: true },
     1,
   );
-  return {
+
+  const plugin: Rolldown.Plugin = {
     name: 'analogjs-rolldown-deps-optimizer-plugin',
-    load: {
+  };
+
+  if (!isTest) {
+    plugin.load = {
       filter: {
         id: /\.[cm]?js$/,
       },
@@ -69,6 +75,12 @@ export function createRolldownCompilerPlugin(
           loader: 'js',
         } as any;
       },
-    },
-  };
+    };
+  }
+
+  if (closeTransformer) {
+    plugin.buildEnd = () => javascriptTransformer.close();
+  }
+
+  return plugin;
 }
