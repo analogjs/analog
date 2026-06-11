@@ -12,7 +12,7 @@ import TabItem from '@theme/TabItem';
 Analog benötigt die folgenden Node- und Angular-Versionen:
 
 - Node v18.13.0 und höher wird empfohlen
-- Angular v15 oder höher
+- Angular v17 oder höher
 
 ## Erstellen einer neuen Anwendung
 

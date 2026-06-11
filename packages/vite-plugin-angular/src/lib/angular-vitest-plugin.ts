@@ -111,7 +111,9 @@ export function angularVitestSourcemapPlugin(
       }
 
       if (vite.transformWithOxc) {
-        const result = await vite.transformWithOxc(code, id, { lang: 'js' });
+        const result = await vite.transformWithOxc(code, id, {
+          lang: /\.tsx(\?|$)/.test(bareId) ? 'tsx' : 'ts',
+        });
         return result as unknown as vite.TransformResult;
       } else {
         const result = await vite.transformWithEsbuild(code, id, {

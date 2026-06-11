@@ -5,7 +5,7 @@ import TabItem from '@theme/TabItem';
 
 Eine bestehende Angular Single Page Application kann mit Hilfe eines Schemas/Generators für Angular CLI oder Nx Workspaces für die Verwendung von Analog konfiguriert werden.
 
-> Analog ist kompatibel mit Angular v15 und höher.
+> Analog ist kompatibel mit Angular v17 und höher.
 
 ## Verwendung eines Schemas/Generators
 
