@@ -18,7 +18,6 @@
   "dependencies": {
     "@analogjs/content": "^2.6.1-beta.4",
     "@analogjs/router": "^2.6.1-beta.4",
-    "@angular/animations": "^22.0.0",
     "@angular/common": "^22.0.0",
     "@angular/compiler": "^22.0.0",
     "@angular/core": "^22.0.0",
