@@ -23,10 +23,10 @@
     "build:test": "nx build ng-app --skip-nx-cache"
   },
   "engines": {
-    "node": "^20.19.0 || ^22.13.0 || ^24.0.0",
-    "pnpm": "^10.0.0"
+    "node": "^22.22.3 || ^24.15.0 || ^26.0.0",
+    "pnpm": "^11.0.0"
   },
-  "packageManager": "pnpm@10.32.0",
+  "packageManager": "pnpm@11.5.3",
   "keywords": [
     "vite-plugin",
     "angular",
