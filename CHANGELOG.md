@@ -1,3 +1,9 @@
+## [2.6.1-beta.3](https://github.com/analogjs/analog/compare/v2.6.1-beta.2...v2.6.1-beta.3) (2026-06-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip rolldown dep optimizer transform in test mode and close transformer ([#2373](https://github.com/analogjs/analog/issues/2373)) ([756d510](https://github.com/analogjs/analog/commit/756d510a411cacac158fded278d914dfeaec1d1d))
+
 ## [2.6.1-beta.2](https://github.com/analogjs/analog/compare/v2.6.1-beta.1...v2.6.1-beta.2) (2026-06-10)
 
 ### Bug Fixes
