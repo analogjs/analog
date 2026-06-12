@@ -80,7 +80,6 @@
       "require": "./src/index.js",
       "default": "./src/index.js"
     },
-    "./esbuild": "./esbuild.js",
     "./setup-vitest": "./setup-vitest.js"
   },
   "publishConfig": {
@@ -88,3 +87,4 @@
     "provenance": true
   }
 }
+
