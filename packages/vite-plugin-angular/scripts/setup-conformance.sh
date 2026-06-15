@@ -71,7 +71,12 @@ if ! git clone --depth 1 --branch "$VERSION" --filter=blob:none --sparse \
 fi
 
 cd "$TARGET"
-git sparse-checkout set packages/compiler-cli/test/compliance/test_cases
+# test_cases drives conformance.spec; core/src and the ngtsc initializer-function
+# list are the upstream sources the decorator / signal-API drift detectors read.
+git sparse-checkout set \
+  packages/compiler-cli/test/compliance/test_cases \
+  packages/core/src \
+  packages/compiler-cli/src/ngtsc/annotations/directive/src
 
 echo "Done. $(find packages/compiler-cli/test/compliance/test_cases -name '*.ts' | wc -l | tr -d ' ') test files downloaded."
 echo "Run: ANGULAR_SOURCE_DIR=$TARGET npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts"
