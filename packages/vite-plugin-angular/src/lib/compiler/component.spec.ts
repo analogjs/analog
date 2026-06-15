@@ -2424,6 +2424,28 @@ describe('OXC-based resource inlining', () => {
     expect(styleExtensions.has(0)).toBe(false);
     expect(styleExtensions.get(1)).toBe('scss');
   });
+
+  it('reports the source extension for each preprocessable styleUrl type', () => {
+    // The fast-compile path preprocesses each external style by its own
+    // extension, so every preprocessable style language must be surfaced
+    // distinctly (not collapsed onto a single `inlineStylesExtension`).
+    for (const ext of ['css', 'scss', 'less']) {
+      const { styleExtensions } = inlineResourceUrls(
+        `
+        import { Component } from '@angular/core';
+        @Component({
+          selector: 'app-ext',
+          template: '',
+          styleUrl: './test.component.${ext}'
+        })
+        export class ExtComponent {}
+      `,
+        __dirname + '/__fixtures__/test.component.ts',
+      );
+
+      expect(styleExtensions.get(0), `extension for .${ext}`).toBe(ext);
+    }
+  });
 });
 
 describe.skipIf(!SUPPORTS_DEFER_RUNTIME)(
