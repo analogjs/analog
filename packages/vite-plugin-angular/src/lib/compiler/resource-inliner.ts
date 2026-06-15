@@ -18,6 +18,14 @@ export interface InlineResourceResult {
   styleExtensions: Map<number, string>;
 }
 
+/** Whether a node is an inline style value (string literal or single-quasi template). */
+function isInlineStyleValue(node: any): boolean {
+  return (
+    (node?.type === 'Literal' && typeof node.value === 'string') ||
+    (node?.type === 'TemplateLiteral' && node.quasis?.length === 1)
+  );
+}
+
 /** Count the elements of a `styles: [...]` array that {@link extractInlineStyles} would emit. */
 function countInlineStyleLiterals(arrayExpr: any): number {
   let count = 0;
@@ -80,23 +88,31 @@ export function inlineResourceUrls(
       const arg = expr.arguments?.[0];
       if (!arg || arg.type !== 'ObjectExpression') continue;
 
-      // First pass: locate an existing `styles: [...]` array in the same
-      // decorator. Inlined CSS will be merged into it to avoid duplicate keys.
+      // First pass: locate an existing `styles` property in the same decorator.
+      // Inlined CSS is merged into it — converting a singular string/template
+      // value to an array when needed — to avoid emitting a duplicate `styles`
+      // key.
+      let existingStylesProp: any = null;
       let existingStylesArray: any = null;
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
         const key: string = prop.key?.name ?? prop.key?.value;
-        if (key === 'styles' && prop.value?.type === 'ArrayExpression') {
-          existingStylesArray = prop.value;
+        if (key === 'styles') {
+          existingStylesProp = prop;
+          if (prop.value?.type === 'ArrayExpression') {
+            existingStylesArray = prop.value;
+          }
           break;
         }
       }
 
-      // Inline `styles: [...]` entries already present come first in the flat
-      // list; appended external styles follow them.
+      // Inline `styles` entries already present come first in the flat list;
+      // appended external styles follow them.
       const existingInlineCount = existingStylesArray
         ? countInlineStyleLiterals(existingStylesArray)
-        : 0;
+        : isInlineStyleValue(existingStylesProp?.value)
+          ? 1
+          : 0;
 
       // Collect the props we want to rewrite. Contents from styleUrl /
       // styleUrls are accumulated so that multiple url-based props in one
@@ -207,6 +223,25 @@ export function inlineResourceUrls(
             ms.appendLeft(existingStylesArray.end - 1, insertion);
           }
 
+          for (const { prop } of cssProps) {
+            removePropertyWithSeparator(ms, code, prop.start, prop.end);
+          }
+        } else if (isInlineStyleValue(existingStylesProp?.value)) {
+          // Singular `styles: '...'` / `styles: \`...\`` — wrap the original
+          // value into an array merged with the inlined styles, then drop the
+          // styleUrl props so only one `styles` key remains.
+          const original = code.slice(
+            existingStylesProp.value.start,
+            existingStylesProp.value.end,
+          );
+          const merged = allContents
+            .map((c) => `, ${JSON.stringify(c)}`)
+            .join('');
+          ms.overwrite(
+            existingStylesProp.value.start,
+            existingStylesProp.value.end,
+            `[${original}${merged}]`,
+          );
           for (const { prop } of cssProps) {
             removePropertyWithSeparator(ms, code, prop.start, prop.end);
           }

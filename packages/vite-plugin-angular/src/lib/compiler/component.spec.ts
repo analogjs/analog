@@ -2446,6 +2446,33 @@ describe('OXC-based resource inlining', () => {
       expect(styleExtensions.get(0), `extension for .${ext}`).toBe(ext);
     }
   });
+
+  it('merges a singular `styles` string with an external styleUrl without duplicating the key', () => {
+    // Regression: a non-array `styles` (single string/template) plus an
+    // external `styleUrl` must collapse into one `styles` key, and the external
+    // style must be indexed *after* the existing inline style (index 1).
+    const { code, styleExtensions } = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styles: \`:host { display: block; }\`,
+        styleUrl: './test.component.scss'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    // Exactly one `styles` key — no duplicate object-literal key.
+    expect((code.match(/styles:/g) || []).length).toBe(1);
+    // The original inline style is preserved.
+    expect(code).toContain(':host { display: block; }');
+    // External scss is mapped after the singular inline style.
+    expect(styleExtensions.has(0)).toBe(false);
+    expect(styleExtensions.get(1)).toBe('scss');
+  });
 });
 
 describe.skipIf(!SUPPORTS_DEFER_RUNTIME)(
