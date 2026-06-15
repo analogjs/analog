@@ -2197,7 +2197,7 @@ describe('OXC-based resource inlining', () => {
   }
 
   it('inlines templateUrl via AST rewriting', () => {
-    const result = inlineResourceUrls(
+    const { code: result } = inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2214,7 +2214,7 @@ describe('OXC-based resource inlining', () => {
   });
 
   it('inlines styleUrls via AST rewriting', () => {
-    const result = inlineResourceUrls(
+    const { code: result } = inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2240,12 +2240,12 @@ describe('OXC-based resource inlining', () => {
       })
       export class InlineComponent {}
     `;
-    const result = inlineResourceUrls(src, 'inline.ts');
+    const { code: result } = inlineResourceUrls(src, 'inline.ts');
     expect(result).toBe(src);
   });
 
   it('merges styleUrl into existing inline styles array (no duplicate key)', () => {
-    const result = inlineResourceUrls(
+    const { code: result } = inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2269,7 +2269,7 @@ describe('OXC-based resource inlining', () => {
   });
 
   it('merges styleUrls into existing inline styles array (no duplicate key)', () => {
-    const result = inlineResourceUrls(
+    const { code: result } = inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2290,7 +2290,7 @@ describe('OXC-based resource inlining', () => {
   });
 
   it('merges styleUrl into an existing styles array with a trailing comma without producing a sparse element', () => {
-    const result = inlineResourceUrls(
+    const { code: result } = inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2318,7 +2318,7 @@ describe('OXC-based resource inlining', () => {
   });
 
   it('merges styleUrl into an empty styles array without producing a sparse element', () => {
-    const result = inlineResourceUrls(
+    const { code: result } = inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2364,6 +2364,65 @@ describe('OXC-based resource inlining', () => {
     expect(styles).toHaveLength(2);
     expect(styles[0]).toBe('h1 { color: red }');
     expect(styles[1]).toBe('p { margin: 0 }');
+  });
+
+  it('reports the source extension of an inlined external styleUrl', () => {
+    // Regression: fastCompile must preprocess external `styleUrl`s by their own
+    // file extension (e.g. `.scss`), independent of `inlineStylesExtension`.
+    // `inlineResourceUrls` surfaces each inlined external style's extension at
+    // the flat index that `extractInlineStyles`/`resolvedInlineStyles` use.
+    const { styleExtensions } = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styleUrl: './test.component.scss'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(styleExtensions.get(0)).toBe('scss');
+  });
+
+  it('reports a css extension for plain external styleUrls', () => {
+    const { styleExtensions } = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styleUrls: ['./test.component.css']
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(styleExtensions.get(0)).toBe('css');
+  });
+
+  it('indexes an external styleUrl after pre-existing inline styles', () => {
+    // Inline `styles: [...]` come first in the flat list; the external scss
+    // styleUrl is appended after it, so it must map to index 1 (not 0).
+    const { styleExtensions } = inlineResourceUrls(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-ext',
+        template: '',
+        styles: [\`:host { display: block; }\`],
+        styleUrl: './test.component.scss'
+      })
+      export class ExtComponent {}
+    `,
+      __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(styleExtensions.has(0)).toBe(false);
+    expect(styleExtensions.get(1)).toBe('scss');
   });
 });
 

@@ -4,30 +4,65 @@ import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
 import { extractInlineStyles as extractStylesFromAst } from './style-ast.js';
 
+export interface InlineResourceResult {
+  /** The modified source code, or the original if no changes were needed. */
+  code: string;
+  /**
+   * Source extension (without the leading dot, lower-cased — e.g. `scss`) of
+   * each inlined external style, keyed by its position in the flat per-file
+   * style list produced by {@link extractInlineStyles}. Lets the caller run
+   * each external `styleUrl` through the right preprocessor by its own file
+   * extension, independent of the `inlineStylesExtension` option (which governs
+   * truly-inline `styles: [...]` template strings).
+   */
+  styleExtensions: Map<number, string>;
+}
+
+/** Count the elements of a `styles: [...]` array that {@link extractInlineStyles} would emit. */
+function countInlineStyleLiterals(arrayExpr: any): number {
+  let count = 0;
+  for (const el of arrayExpr.elements ?? []) {
+    if (el?.type === 'Literal' && typeof el.value === 'string') count++;
+    else if (el?.type === 'TemplateLiteral' && el.quasis?.length === 1) count++;
+  }
+  return count;
+}
+
 /**
  * Inline external templateUrl and styleUrl/styleUrls into the source code
  * using OXC parser for precise AST-based rewriting.
  *
  * Replaces:
  *   templateUrl: './file.html'  →  template: "...file contents..."
- *   styleUrl: './file.css'      →  styles: ["...file contents..."]
- *   styleUrls: ['./a.css']      →  styles: ["...contents..."]
+ *   styleUrl: './file.scss'     →  styles: ["...file contents..."]
+ *   styleUrls: ['./a.scss']     →  styles: ["...contents..."]
  *
  * When the decorator already has a `styles: [...]` array, inlined CSS is
  * merged into that existing array instead of emitting a second `styles`
  * property (which would be a duplicate object literal key).
  *
- * Returns the modified source code, or the original if no changes were needed.
+ * Returns the modified source code plus the per-style-index extension map
+ * (see {@link InlineResourceResult}).
  */
-export function inlineResourceUrls(code: string, fileName: string): string {
+export function inlineResourceUrls(
+  code: string,
+  fileName: string,
+): InlineResourceResult {
+  const styleExtensions = new Map<number, string>();
+
   if (!code.includes('templateUrl') && !code.includes('styleUrl')) {
-    return code;
+    return { code, styleExtensions };
   }
 
   const { program } = parseSync(fileName, code);
   const ms = new MagicString(code);
   let changed = false;
   const dir = path.dirname(fileName);
+
+  // Running base index into the flat per-file style list (matching the order
+  // `extractInlineStyles` walks classes/decorators/properties) so external
+  // styles can be mapped to the index `resolvedInlineStyles` later keys on.
+  let flatStyleBase = 0;
 
   for (const node of program.body) {
     const decl =
@@ -57,11 +92,22 @@ export function inlineResourceUrls(code: string, fileName: string): string {
         }
       }
 
+      // Inline `styles: [...]` entries already present come first in the flat
+      // list; appended external styles follow them.
+      const existingInlineCount = existingStylesArray
+        ? countInlineStyleLiterals(existingStylesArray)
+        : 0;
+
       // Collect the props we want to rewrite. Contents from styleUrl /
       // styleUrls are accumulated so that multiple url-based props in one
-      // decorator collapse into a single `styles` array write.
+      // decorator collapse into a single `styles` array write. `extensions`
+      // tracks each content's source extension in the same order.
       const templateUrlRewrites: Array<{ prop: any; content: string }> = [];
-      const cssProps: Array<{ prop: any; contents: string[] }> = [];
+      const cssProps: Array<{
+        prop: any;
+        contents: string[];
+        extensions: string[];
+      }> = [];
 
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
@@ -91,7 +137,11 @@ export function inlineResourceUrls(code: string, fileName: string): string {
           try {
             const filePath = path.resolve(dir, val.value);
             const content = fs.readFileSync(filePath, 'utf-8');
-            cssProps.push({ prop, contents: [content] });
+            cssProps.push({
+              prop,
+              contents: [content],
+              extensions: [extensionOf(filePath)],
+            });
           } catch {
             // Keep original if file can't be read
           }
@@ -100,12 +150,14 @@ export function inlineResourceUrls(code: string, fileName: string): string {
 
         if (key === 'styleUrls' && val?.type === 'ArrayExpression') {
           const contents: string[] = [];
+          const extensions: string[] = [];
           let allRead = true;
           for (const el of val.elements) {
             if (el?.type === 'Literal' && typeof el.value === 'string') {
               try {
                 const filePath = path.resolve(dir, el.value);
                 contents.push(fs.readFileSync(filePath, 'utf-8'));
+                extensions.push(extensionOf(filePath));
               } catch {
                 allRead = false;
                 break;
@@ -113,7 +165,7 @@ export function inlineResourceUrls(code: string, fileName: string): string {
             }
           }
           if (allRead && contents.length > 0) {
-            cssProps.push({ prop, contents });
+            cssProps.push({ prop, contents, extensions });
           }
         }
       }
@@ -129,6 +181,7 @@ export function inlineResourceUrls(code: string, fileName: string): string {
 
       if (cssProps.length > 0) {
         const allContents = cssProps.flatMap((c) => c.contents);
+        const allExtensions = cssProps.flatMap((c) => c.extensions);
 
         if (existingStylesArray) {
           // Filter out null holes in case the source already has a sparse array.
@@ -172,11 +225,26 @@ export function inlineResourceUrls(code: string, fileName: string): string {
           }
         }
         changed = true;
+
+        // The appended external styles occupy the flat indices after any
+        // pre-existing inline styles for this component.
+        const externalBase = flatStyleBase + existingInlineCount;
+        allExtensions.forEach((ext, k) => {
+          if (ext) styleExtensions.set(externalBase + k, ext);
+        });
+        flatStyleBase = externalBase + allContents.length;
+      } else {
+        flatStyleBase += existingInlineCount;
       }
     }
   }
 
-  return changed ? ms.toString() : code;
+  return { code: changed ? ms.toString() : code, styleExtensions };
+}
+
+/** Lower-cased file extension without the leading dot (e.g. `scss`), or `''`. */
+function extensionOf(filePath: string): string {
+  return path.extname(filePath).slice(1).toLowerCase();
 }
 
 /**
