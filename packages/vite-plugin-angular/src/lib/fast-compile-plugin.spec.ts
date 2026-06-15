@@ -268,6 +268,38 @@ export class XComponent {}
     );
     expect(sawBypassCall).toBe(false);
   });
+
+  it('does not run the bypass strip when the file has only @Service', async () => {
+    // Regression: Angular v22's `@Service` decorator must be detected as an
+    // Angular file so it takes the full compile path (emitting ɵfac/ɵprov)
+    // rather than the strip-only bypass. When skipped, the class is left
+    // without Ivy defs and falls back to the JIT compiler at runtime.
+    const plugin = buildPlugin();
+    const handler = getTransformHandler(plugin);
+
+    const code = `
+import { Service, inject } from '@angular/core';
+@Service({ autoProvided: false })
+export class MyService {
+  private dep = inject(Object);
+}
+`;
+    try {
+      await handler.call(
+        { addWatchFile: () => undefined },
+        code,
+        '/src/app/my.service.ts',
+      );
+    } catch {
+      // The full compile path may throw under the mocked OXC return value;
+      // we only care that the bypass branch was not taken.
+    }
+
+    const sawBypassCall = mockTransformWithOxc.mock.calls.some(
+      ([, , opts]: any[]) => opts?.sourcemap === true,
+    );
+    expect(sawBypassCall).toBe(false);
+  });
 });
 
 describe('fastCompilePlugin transform filter', () => {

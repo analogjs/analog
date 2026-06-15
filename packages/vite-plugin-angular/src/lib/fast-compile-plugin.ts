@@ -23,6 +23,7 @@ import {
   generateHmrCode,
   debugCompile,
   debugRegistry,
+  ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
 } from './compiler/index.js';
 
@@ -266,7 +267,7 @@ export function fastCompilePlugin(
     code: string,
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
-    if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
+    if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
       // Non-Angular file — strip TS-only syntax ourselves so barrels
       // like `export { Foo, type Bar } from './x'` and other TS-only
       // forms don't leak unstripped to Rolldown. In rolldown-vite the
