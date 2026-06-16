@@ -1,3 +1,9 @@
+## [2.6.2-beta.2](https://github.com/analogjs/analog/compare/v2.6.2-beta.1...v2.6.2-beta.2) (2026-06-16)
+
+### Bug Fixes
+
+- **create-analog:** update Node.js compat with Angular v22 and @angular/animations deprecation ([#2375](https://github.com/analogjs/analog/issues/2375)) ([9282770](https://github.com/analogjs/analog/commit/928277029217ac9a8b0a790a56ad42248943cfc2))
+
 ## [2.6.2-beta.1](https://github.com/analogjs/analog/compare/v2.6.1...v2.6.2-beta.1) (2026-06-16)
 
 ### Bug Fixes
