@@ -21,7 +21,7 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.22.3"
   },
   "repository": {
     "type": "git",
