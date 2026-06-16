@@ -1,3 +1,9 @@
+## [2.6.2-beta.1](https://github.com/analogjs/analog/compare/v2.6.1...v2.6.2-beta.1) (2026-06-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** @Service detection and external styleUrl preprocessing in fastCompile ([#2383](https://github.com/analogjs/analog/issues/2383)) ([bb789c1](https://github.com/analogjs/analog/commit/bb789c19dc394735d2f849b11b19be47a0086b9c))
+
 ## [2.6.1](https://github.com/analogjs/analog/compare/v2.6.0...v2.6.1) (2026-06-11)
 
 ### Bug Fixes
