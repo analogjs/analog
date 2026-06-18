@@ -267,7 +267,7 @@ The `inlineStyleLanguage` option (default: `'scss'`) controls the file extension
 
 Selecting `fastCompile: 'oxc'` swaps the in-tree TS-engine compilation pipeline for `@oxc-angular/vite` (native Rust via NAPI). The Vite plugin shell, dispatch order, and engine option are still owned by `fastCompilePlugin`; OXC owns AOT/JIT compilation, HMR codegen, partial-declaration linking, and FESM build optimization.
 
-Wired against `@oxc-angular/vite@^0.0.31`. The adapter calls into OXC's NAPI exports — `transformAngularFile`, `extractComponentUrls`, `compileForHmrSync`, `linkAngularPackage`, `optimizeAngularPackage` — and `loadOxcHmrApi` validates every export at load time so a stale OXC version surfaces a clear error instead of silent breakage.
+Wired against `@oxc-angular/vite@^0.0.32`. The adapter calls into OXC's NAPI exports — `transformAngularFile`, `extractComponentUrls`, `compileForHmrSync`, `linkAngularPackage`, `optimizeAngularPackage` — and `loadOxcHmrApi` validates every export at load time so a stale OXC version surfaces a clear error instead of silent breakage.
 
 ### Coverage on `0.0.31`
 

@@ -126,7 +126,7 @@ For overall Angular/Analog/Vite version support, see [Version Compatibility](/do
 
 | Analog Version | `@oxc-angular/vite` |
 | -------------- | ------------------- |
-| **latest**     | ^0.0.31             |
+| **latest**     | ^0.0.32             |
 
 ### Default vs OXC-based engine
 
