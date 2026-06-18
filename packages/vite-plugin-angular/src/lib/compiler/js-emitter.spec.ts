@@ -255,3 +255,76 @@ describe('JSEmitter – operator precedence', () => {
     });
   });
 });
+
+describe('JSEmitter – optional chaining', () => {
+  // Angular v22 lowers template safe-navigation (`a?.b`) to native optional
+  // chaining, carried on the output AST via the `isOptional` flag. The emitter
+  // must honor it — dropping `?.` to `.` dereferences a nullish receiver and
+  // throws at runtime (the original `errors()?.email` newsletter regression).
+  describe('emits `?.` when isOptional is set', () => {
+    it('property read: `a?.b`', () => {
+      const expr = new o.ReadPropExpr(
+        v('a'),
+        'b',
+        undefined,
+        undefined,
+        undefined,
+        true,
+      );
+      expect(emitAngularExpr(expr)).toBe('a?.b');
+    });
+
+    it('keyed read: `a?.[k]`', () => {
+      const expr = new o.ReadKeyExpr(
+        v('a'),
+        v('k'),
+        undefined,
+        undefined,
+        undefined,
+        true,
+      );
+      expect(emitAngularExpr(expr)).toBe('a?.[k]');
+    });
+
+    it('optional call: `a?.()`', () => {
+      const expr = new o.InvokeFunctionExpr(
+        v('a'),
+        [],
+        undefined,
+        undefined,
+        false,
+        undefined,
+        true,
+      );
+      expect(emitAngularExpr(expr)).toBe('a?.()');
+    });
+
+    it('safe-navigates the result of a call: `errors()?.email`', () => {
+      // Direct regression for the newsletter page: `errors()` returns a
+      // nullish signal value, so the `?.` guard must be preserved.
+      const expr = new o.ReadPropExpr(
+        new o.InvokeFunctionExpr(v('errors'), []),
+        'email',
+        undefined,
+        undefined,
+        undefined,
+        true,
+      );
+      expect(emitAngularExpr(expr)).toBe('errors()?.email');
+    });
+  });
+
+  describe('emits `.` / `[` / `(` when isOptional is unset', () => {
+    it('property read stays `a.b`', () => {
+      expect(emitAngularExpr(new o.ReadPropExpr(v('a'), 'b'))).toBe('a.b');
+    });
+
+    it('keyed read stays `a[k]`', () => {
+      expect(emitAngularExpr(new o.ReadKeyExpr(v('a'), v('k')))).toBe('a[k]');
+    });
+
+    it('call stays `a()`', () => {
+      expect(emitAngularExpr(new o.InvokeFunctionExpr(v('a'), []))).toBe('a()');
+    });
+  });
+});

@@ -279,14 +279,16 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   visitInvokeFunctionExpr(ast: o.InvokeFunctionExpr) {
     const fn = ast.fn.visitExpression(this, null);
     const args = ast.args.map((a: any) => this.emitExpr(a)).join(', ');
+    // `isOptional` carries Angular's native optional call (`a?.()`).
+    const call = ast.isOptional ? '?.(' : '(';
     // Wrap arrow/function expressions in parens for valid IIFE syntax
     if (
       ast.fn instanceof o.ArrowFunctionExpr ||
       ast.fn instanceof o.FunctionExpr
     ) {
-      return '(' + fn + ')(' + args + ')';
+      return '(' + fn + ')' + call + args + ')';
     }
-    return fn + '(' + args + ')';
+    return fn + call + args + ')';
   }
   visitReadVarExpr(ast: o.ReadVarExpr) {
     if (ast.name === 'this') return 'this';
@@ -295,13 +297,20 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitReadPropExpr(ast: o.ReadPropExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
-    return emitReceiverForMemberAccess(ast.receiver, receiver) + '.' + ast.name;
+    // `isOptional` carries Angular's native optional chaining (`a?.b`). Emit
+    // `?.` so the null guard is preserved; dropping it would dereference a
+    // nullish receiver and throw at runtime.
+    const access = ast.isOptional ? '?.' : '.';
+    return (
+      emitReceiverForMemberAccess(ast.receiver, receiver) + access + ast.name
+    );
   }
   visitReadKeyExpr(ast: o.ReadKeyExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
+    const access = ast.isOptional ? '?.[' : '[';
     return (
       emitReceiverForMemberAccess(ast.receiver, receiver) +
-      '[' +
+      access +
       ast.index.visitExpression(this, null) +
       ']'
     );
