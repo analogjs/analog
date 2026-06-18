@@ -64,6 +64,7 @@ import { routerPlugin } from './router-plugin.js';
 import { createHash } from 'node:crypto';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { oxcLinkerPlugin } from './compiler/oxc-linker-plugin.js';
+import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   TS_EXT_REGEX,
   createTsConfigGetter,
@@ -644,8 +645,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (pluginOptions.useAngularCompilationAPI) {
-            const isAngular =
-              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+            const isAngular = ANGULAR_DECORATOR_CALL_RE.test(code);
 
             if (!isAngular) {
               return;
@@ -737,7 +737,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (!typescriptResult) {
             const isAngular =
               !id.includes('@ng/component') &&
-              /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
+              ANGULAR_DECORATOR_CALL_RE.test(code);
             if (isAngular) {
               this.warn(
                 `[@analogjs/vite-plugin-angular]: "${id}" contains Angular decorators but is not in the TypeScript program. ` +
@@ -1864,6 +1864,11 @@ export function isTestWatchMode(args = process.argv) {
   // vitest --run
   const hasRun = args.find((arg) => arg.includes('--run'));
   if (hasRun) {
+    return false;
+  }
+
+  // vitest run
+  if (args.includes('run')) {
     return false;
   }
 

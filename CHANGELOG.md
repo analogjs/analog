@@ -1,3 +1,48 @@
+## [2.6.2-beta.2](https://github.com/analogjs/analog/compare/v2.6.2-beta.1...v2.6.2-beta.2) (2026-06-16)
+
+### Bug Fixes
+
+- **create-analog:** update Node.js compat with Angular v22 and @angular/animations deprecation ([#2375](https://github.com/analogjs/analog/issues/2375)) ([9282770](https://github.com/analogjs/analog/commit/928277029217ac9a8b0a790a56ad42248943cfc2))
+
+## [2.6.2-beta.1](https://github.com/analogjs/analog/compare/v2.6.1...v2.6.2-beta.1) (2026-06-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** @Service detection and external styleUrl preprocessing in fastCompile ([#2383](https://github.com/analogjs/analog/issues/2383)) ([bb789c1](https://github.com/analogjs/analog/commit/bb789c19dc394735d2f849b11b19be47a0086b9c))
+
+## [2.6.1](https://github.com/analogjs/analog/compare/v2.6.0...v2.6.1) (2026-06-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** import NgModule/tuple exports from their defining file in fastCompile ([#2370](https://github.com/analogjs/analog/issues/2370)) ([dafa025](https://github.com/analogjs/analog/commit/dafa0250249686b129bfce1a99874e7f40b78e35))
+- **vite-plugin-angular:** parse skipped .ts files as TypeScript in vitest sourcemap plugin ([#2367](https://github.com/analogjs/analog/issues/2367)) ([ba284a8](https://github.com/analogjs/analog/commit/ba284a8b9e5d01a9f605b201b895056adceb167d))
+- **vite-plugin-angular:** skip rolldown dep optimizer transform in test mode and close transformer ([#2373](https://github.com/analogjs/analog/issues/2373)) ([756d510](https://github.com/analogjs/analog/commit/756d510a411cacac158fded278d914dfeaec1d1d))
+- **vite-plugin-angular:** treat the vitest run command as a single run instead of watch mode ([#2374](https://github.com/analogjs/analog/issues/2374)) ([931200a](https://github.com/analogjs/analog/commit/931200a0028b0e9e334b429b6e730340a7d557e7))
+
+## [2.6.1-beta.4](https://github.com/analogjs/analog/compare/v2.6.1-beta.3...v2.6.1-beta.4) (2026-06-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** treat the vitest run command as a single run instead of watch mode ([#2374](https://github.com/analogjs/analog/issues/2374)) ([931200a](https://github.com/analogjs/analog/commit/931200a0028b0e9e334b429b6e730340a7d557e7))
+
+## [2.6.1-beta.3](https://github.com/analogjs/analog/compare/v2.6.1-beta.2...v2.6.1-beta.3) (2026-06-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip rolldown dep optimizer transform in test mode and close transformer ([#2373](https://github.com/analogjs/analog/issues/2373)) ([756d510](https://github.com/analogjs/analog/commit/756d510a411cacac158fded278d914dfeaec1d1d))
+
+## [2.6.1-beta.2](https://github.com/analogjs/analog/compare/v2.6.1-beta.1...v2.6.1-beta.2) (2026-06-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** import NgModule/tuple exports from their defining file in fastCompile ([#2370](https://github.com/analogjs/analog/issues/2370)) ([dafa025](https://github.com/analogjs/analog/commit/dafa0250249686b129bfce1a99874e7f40b78e35))
+
+## [2.6.1-beta.1](https://github.com/analogjs/analog/compare/v2.6.0...v2.6.1-beta.1) (2026-06-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** parse skipped .ts files as TypeScript in vitest sourcemap plugin ([#2367](https://github.com/analogjs/analog/issues/2367)) ([ba284a8](https://github.com/analogjs/analog/commit/ba284a8b9e5d01a9f605b201b895056adceb167d))
+
 # [2.6.0](https://github.com/analogjs/analog/compare/v2.5.3...v2.6.0) (2026-06-03)
 
 ### Bug Fixes

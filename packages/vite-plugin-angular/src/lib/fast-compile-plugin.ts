@@ -23,6 +23,7 @@ import {
   generateHmrCode,
   debugCompile,
   debugRegistry,
+  ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
 } from './compiler/index.js';
 import {
@@ -315,7 +316,7 @@ export function fastCompilePlugin(
       }
     | undefined
   > {
-    if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
+    if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
       // Non-Angular file — strip TS-only syntax ourselves so barrels
       // like `export { Foo, type Bar } from './x'` and other TS-only
       // forms don't leak unstripped to Rolldown. In rolldown-vite the
@@ -422,24 +423,36 @@ export function fastCompilePlugin(
       return { code: stripped.code, map: stripped.map };
     }
 
-    // Inline external templateUrl/styleUrl(s) into the source before compilation
-    code = inlineResourceUrls(code, id);
+    // Inline external templateUrl/styleUrl(s) into the source before compilation.
+    // `styleExtensions` carries the source extension of each inlined external
+    // style so it can be preprocessed by its own file type (e.g. an external
+    // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
+    const inlined = inlineResourceUrls(code, id);
+    code = inlined.code;
+    const { styleExtensions } = inlined;
 
-    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less)
+    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
+    // whenever a style needs a non-`css` preprocessor — either the configured
+    // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
+    // own extension.
     let resolvedStyles: Map<string, string> | undefined;
     let resolvedInlineStyles: Map<number, string> | undefined;
 
-    if (pluginOptions.inlineStylesExtension !== 'css') {
+    const inlineExt = pluginOptions.inlineStylesExtension;
+    const styleNeedsPreprocess = (ext: string) => ext !== '' && ext !== 'css';
+
+    if (styleNeedsPreprocess(inlineExt) || styleExtensions.size > 0) {
       const styleStrings = extractInlineStyles(code, id);
 
       if (styleStrings.length > 0) {
         resolvedInlineStyles = new Map();
         for (let i = 0; i < styleStrings.length; i++) {
+          // External styleUrls are preprocessed by their own extension; truly
+          // inline `styles: [...]` fall back to `inlineStylesExtension`.
+          const ext = styleExtensions.get(i) ?? inlineExt;
+          if (!styleNeedsPreprocess(ext)) continue;
           try {
-            const fakePath = id.replace(
-              /\.ts$/,
-              `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
-            );
+            const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
             const processed = await preprocessCSS(
               styleStrings[i],
               fakePath,

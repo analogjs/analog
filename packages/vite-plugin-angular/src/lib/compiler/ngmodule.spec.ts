@@ -129,6 +129,47 @@ describe('NgModule export expansion', () => {
     // The template should resolve ui-button from the NgModule exports
     expect(result).toContain('"ui-button"');
   });
+
+  it('imports an expanded NgModule export from its defining file, not the module file', () => {
+    // Component lives in its own file; the NgModule only re-exports it.
+    const buttonSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'ui-button', template: '<button><ng-content /></button>' })
+      export class ButtonComponent {}
+    `;
+    const moduleSrc = `
+      import { NgModule } from '@angular/core';
+      import { ButtonComponent } from './button.component';
+      @NgModule({ declarations: [ButtonComponent], exports: [ButtonComponent] })
+      export class SharedModule {}
+    `;
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { SharedModule } from './shared.module';
+      @Component({
+        selector: 'app-root',
+        imports: [SharedModule],
+        template: '<ui-button>Click</ui-button>'
+      })
+      export class AppComponent {}
+    `;
+
+    const registry = buildRegistry({
+      'button.component.ts': buttonSrc,
+      'shared.module.ts': moduleSrc,
+    });
+    const result = compile(appSrc, 'app.ts', registry);
+
+    expectCompiles(result);
+    // The synthetic import must point at the component's own file...
+    expect(result).toContain(
+      'import { ButtonComponent } from "./button.component"',
+    );
+    // ...not the NgModule file, which doesn't export the component.
+    expect(result).not.toContain(
+      'import { ButtonComponent } from "./shared.module"',
+    );
+  });
 });
 
 describe('Recursive NgModule export expansion', () => {
