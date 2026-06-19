@@ -5,3 +5,8 @@ export {
   renderServerComponent,
 } from './server-component-render';
 export { render } from './render';
+export {
+  renderStream,
+  createStreamingResponse,
+  splitHtmlIntoChunks,
+} from './stream-render';

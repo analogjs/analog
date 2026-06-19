@@ -94,7 +94,42 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             }
 
             if (result instanceof Response) {
-              sendWebResponse(createEvent(req, res), result);
+              // Handle streaming responses (ReadableStream body)
+              if (result.body instanceof ReadableStream) {
+                // Propagate status code from the Response
+                res.statusCode = result.status;
+
+                // Copy headers from the Response to the Node.js response
+                result.headers.forEach((value, key) => {
+                  if (key.toLowerCase() !== 'transfer-encoding') {
+                    res.setHeader(key, value);
+                  }
+                });
+
+                // Set default Content-Type if not already set
+                if (!res.getHeader('content-type')) {
+                  res.setHeader('Content-Type', 'text/html');
+                }
+                res.setHeader('Transfer-Encoding', 'chunked');
+
+                const reader = result.body.getReader();
+                const decoder = new TextDecoder();
+
+                try {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    res.write(decoder.decode(value, { stream: true }));
+                  }
+                  res.end();
+                } catch (streamError) {
+                  if (!res.destroyed) {
+                    res.destroy(streamError as Error);
+                  }
+                }
+              } else {
+                sendWebResponse(createEvent(req, res), result);
+              }
               return;
             }
 

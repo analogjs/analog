@@ -1,5 +1,5 @@
 export const ssrRenderer = `
-import { eventHandler, getResponseHeader } from 'h3';
+import { eventHandler, getResponseHeader, setResponseHeader } from 'h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
 // @ts-ignore
@@ -12,12 +12,51 @@ export default eventHandler(async (event) => {
     return template;
   }
 
-  const html = await renderer(event.node.req.url, template, {
+  const result = await renderer(event.node.req.url, template, {
     req: event.node.req,
     res: event.node.res,
   });
 
-  return html;
+  // Handle streaming responses (ReadableStream body)
+  if (result instanceof Response && result.body instanceof ReadableStream) {
+    const nodeRes = event.node.res;
+
+    // Propagate status code from the Response
+    nodeRes.statusCode = result.status;
+
+    // Copy headers from the Response to the h3 event
+    result.headers.forEach((value, key) => {
+      if (key.toLowerCase() !== 'transfer-encoding') {
+        setResponseHeader(event, key, value);
+      }
+    });
+
+    // Set default Content-Type if not already set
+    if (!nodeRes.getHeader('content-type')) {
+      nodeRes.setHeader('Content-Type', 'text/html');
+    }
+    nodeRes.setHeader('Transfer-Encoding', 'chunked');
+
+    const reader = result.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        nodeRes.write(decoder.decode(value, { stream: true }));
+      }
+      nodeRes.end();
+    } catch (streamError) {
+      if (!nodeRes.destroyed) {
+        nodeRes.destroy(streamError);
+      }
+    }
+
+    return;
+  }
+
+  return result;
 });`;
 
 export const clientRenderer = `

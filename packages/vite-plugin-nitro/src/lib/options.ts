@@ -58,6 +58,19 @@ export interface Options {
    * prerendered HTML receives the appropriate `lang` attribute.
    */
   i18n?: I18nPrerenderOptions;
+
+  /**
+   * Enable streaming SSR. When enabled, the HTML response is streamed
+   * to the client using Transfer-Encoding: chunked. The HTML shell is
+   * sent immediately, improving Time to First Byte (TTFB) and First
+   * Contentful Paint (FCP).
+   *
+   * Requires an `<!--analog-outlet-->` marker in the index.html to
+   * split the shell from the remaining content.
+   *
+   * @default false
+   */
+  streaming?: boolean;
 }
 
 export interface PrerenderOptions {

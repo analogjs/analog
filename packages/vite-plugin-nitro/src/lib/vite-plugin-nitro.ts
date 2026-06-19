@@ -72,6 +72,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           index: options?.index,
           routeRules: nitroOptions?.routeRules,
           i18n: options?.i18n,
+          streaming: options?.streaming,
         })
       : false) as Plugin,
     {
