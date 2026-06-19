@@ -103,7 +103,8 @@ export function routerPlugin(options?: Options): Plugin[] {
       transform(code) {
         if (
           code.includes('ANALOG_ROUTE_FILES') ||
-          code.includes('ANALOG_CONTENT_ROUTE_FILES')
+          code.includes('ANALOG_CONTENT_ROUTE_FILES') ||
+          code.includes('ANALOG_LOADING_FILES')
         ) {
           // Discover route files using tinyglobby
           // NOTE: { absolute: true } returns absolute paths for ALL files
@@ -155,6 +156,36 @@ export function routerPlugin(options?: Options): Plugin[] {
               ? module.replace(root, '')
               : module;
             return `"${key}": () => import('${module}?analog-content-file=true').then(m => m.default)`;
+          })}};
+          `,
+          );
+
+          // Discover loading page files using tinyglobby
+          const loadingFiles: string[] = globSync(
+            [
+              `${root}/app/routes/**/loading.ts`,
+              `${root}/src/app/routes/**/loading.ts`,
+              `${root}/src/app/pages/**/loading.page.ts`,
+              `${root}/app/routes/**/loading.page.ts`,
+              `${root}/src/app/routes/**/loading.page.ts`,
+              ...(options?.additionalPagesDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/loading.page.ts`,
+              ),
+              ...(options?.additionalPagesDirs || [])?.map(
+                (glob) => `${workspaceRoot}${glob}/**/loading.ts`,
+              ),
+            ],
+            { dot: true, absolute: true },
+          );
+
+          result = result.replace(
+            'ANALOG_LOADING_FILES = {};',
+            `
+          ANALOG_LOADING_FILES = {${loadingFiles.map((module) => {
+            const key = module.startsWith(root)
+              ? module.replace(root, '')
+              : module;
+            return `"${key}": () => import('${module}')`;
           })}};
           `,
           );

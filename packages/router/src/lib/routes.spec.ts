@@ -742,4 +742,160 @@ Testing nested markdown routes.
       );
     });
   });
+
+  describe('loading states', () => {
+    class LoadingComponent {}
+    class PageComponent {}
+
+    const loadingFiles: Record<string, () => Promise<{ default: any }>> = {
+      '/src/app/pages/dashboard/loading.page.ts': () =>
+        Promise.resolve({ default: LoadingComponent }),
+    };
+
+    describe('a route with a loading component (pages convention)', () => {
+      const files: Files = {
+        '/src/app/pages/dashboard.page.ts': () =>
+          Promise.resolve<RouteExport>({
+            default: PageComponent,
+          }),
+      };
+
+      const routes = createRoutes(files, loadingFiles);
+      const route = routes[0];
+
+      it('should have a path', () => {
+        expect(route.path).toBe('dashboard');
+      });
+
+      it('should have a loadChildren property', () => {
+        expect(route.loadChildren).toBeDefined();
+      });
+
+      it('should wrap the page in RouteLoadingComponent when loading exists', async () => {
+        const innerRoutes = (await route.loadChildren()) as Route[];
+
+        expect(innerRoutes.length).toBe(1);
+
+        const innerRoute = innerRoutes[0];
+
+        expect(innerRoute.path).toBe('');
+        expect(innerRoute.component?.name).toBe('RouteLoadingComponent');
+      });
+
+      it('should pass loading component and page factory in data', async () => {
+        const innerRoutes = (await route.loadChildren()) as Route[];
+        const innerRoute = innerRoutes[0];
+
+        expect(innerRoute.data['_analogLoading']).toBe(LoadingComponent);
+        expect(typeof innerRoute.data['_analogLoad']).toBe('function');
+      });
+    });
+
+    describe('a route with a loading component (routes convention)', () => {
+      const loadingFilesRoutes: Record<
+        string,
+        () => Promise<{ default: any }>
+      > = {
+        '/app/routes/about/loading.ts': () =>
+          Promise.resolve({ default: LoadingComponent }),
+      };
+
+      const files: Files = {
+        '/app/routes/about.ts': () =>
+          Promise.resolve<RouteExport>({
+            default: PageComponent,
+          }),
+      };
+
+      const routes = createRoutes(files, loadingFilesRoutes);
+      const route = routes[0];
+
+      it('should wrap the page in RouteLoadingComponent', async () => {
+        const innerRoutes = (await route.loadChildren()) as Route[];
+        const innerRoute = innerRoutes[0];
+
+        expect(innerRoute.component?.name).toBe('RouteLoadingComponent');
+      });
+    });
+
+    describe('a route without a matching loading component', () => {
+      const files: Files = {
+        '/src/app/pages/settings.page.ts': () =>
+          Promise.resolve<RouteExport>({
+            default: PageComponent,
+          }),
+      };
+
+      const routes = createRoutes(files, loadingFiles);
+      const route = routes[0];
+
+      it('should render the page component directly', async () => {
+        const innerRoutes = (await route.loadChildren()) as Route[];
+        const innerRoute = innerRoutes[0];
+
+        expect(innerRoute.path).toBe('');
+        expect(innerRoute.component).toBe(PageComponent);
+      });
+    });
+
+    describe('a nested route with a loading component', () => {
+      const loadingFilesNested: Record<
+        string,
+        () => Promise<{ default: any }>
+      > = {
+        '/src/app/pages/products/loading.page.ts': () =>
+          Promise.resolve({ default: LoadingComponent }),
+      };
+
+      const files: Files = {
+        '/src/app/pages/products/[productId].page.ts': () =>
+          Promise.resolve<RouteExport>({
+            default: PageComponent,
+          }),
+      };
+
+      const routes = createRoutes(files, loadingFilesNested);
+      const parent = routes[0];
+
+      it('should have a parent path', () => {
+        expect(parent.path).toBe('products');
+      });
+
+      it('should wrap the child page in RouteLoadingComponent', async () => {
+        const childRoutes = (await parent.children![0]
+          .loadChildren!()) as Route[];
+        const childRoute = childRoutes[0];
+
+        expect(childRoute.component?.name).toBe('RouteLoadingComponent');
+      });
+    });
+
+    describe('loading files matching', () => {
+      const loadingFilesVarious: Record<
+        string,
+        () => Promise<{ default: any }>
+      > = {
+        '/src/app/pages/auth/login/loading.page.ts': () =>
+          Promise.resolve({ default: LoadingComponent }),
+      };
+
+      const files: Files = {
+        '/src/app/pages/auth/login.page.ts': () =>
+          Promise.resolve<RouteExport>({
+            default: PageComponent,
+          }),
+      };
+
+      const routes = createRoutes(files, loadingFilesVarious);
+      const parent = routes[0];
+
+      it('should match loading component from nested path', async () => {
+        const childRoutes = (await parent.children![0]
+          .loadChildren!()) as Route[];
+        const childRoute = childRoutes[0];
+
+        expect(childRoute.component?.name).toBe('RouteLoadingComponent');
+      });
+    });
+  });
 });

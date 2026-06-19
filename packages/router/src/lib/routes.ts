@@ -7,6 +7,7 @@ import { toRouteConfig } from './route-config';
 import { toMarkdownModule } from './markdown-helpers';
 import { ENDPOINT_EXTENSION } from './constants';
 import { ANALOG_META_KEY } from './endpoints';
+import { RouteLoadingComponent } from './route-loading.component';
 
 /**
  * This variable reference is replaced with a glob of all page routes.
@@ -17,6 +18,14 @@ export let ANALOG_ROUTE_FILES = {};
  * This variable reference is replaced with a glob of all content routes.
  */
 export let ANALOG_CONTENT_ROUTE_FILES = {};
+
+/**
+ * This variable reference is replaced with a glob of all loading page routes.
+ */
+export let ANALOG_LOADING_FILES: Record<
+  string,
+  () => Promise<{ default: any }>
+> = {};
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
 
@@ -39,7 +48,11 @@ type RawRouteByLevelMap = Record<number, RawRouteMap>;
  * @param files
  * @returns Array of routes
  */
-export function createRoutes(files: Files, debug = false): Route[] {
+export function createRoutes(
+  files: Files,
+  loadingFiles: Record<string, () => Promise<{ default: any }>> = {},
+  debug = false,
+): Route[] {
   const filenames = Object.keys(files);
 
   if (filenames.length === 0) {
@@ -115,7 +128,7 @@ export function createRoutes(files: Files, debug = false): Route[] {
   );
   sortRawRoutes(rawRoutes);
 
-  return toRoutes(rawRoutes, files, debug);
+  return toRoutes(rawRoutes, files, loadingFiles, debug);
 }
 
 function toRawPath(filename: string): string {
@@ -153,16 +166,23 @@ function createOptionalCatchAllMatcher(paramName: string): UrlMatcher {
   };
 }
 
-function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
+function toRoutes(
+  rawRoutes: RawRoute[],
+  files: Files,
+  loadingFiles: Record<string, () => Promise<{ default: any }>>,
+  debug = false,
+): Route[] {
   const routes: Route[] = [];
 
   for (const rawRoute of rawRoutes) {
     const children: Route[] | undefined =
       rawRoute.children.length > 0
-        ? toRoutes(rawRoute.children, files, debug)
+        ? toRoutes(rawRoute.children, files, loadingFiles, debug)
         : undefined;
     let module: (() => Promise<RouteExport>) | undefined = undefined;
     let analogMeta: { endpoint: string; endpointKey: string } | undefined =
+      undefined;
+    let loadingModule: (() => Promise<{ default: any }>) | undefined =
       undefined;
 
     if (rawRoute.filename) {
@@ -172,6 +192,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
         module = isMarkdownFile
           ? toMarkdownModule(files[rawRoute.filename] as () => Promise<string>)
           : (files[rawRoute.filename] as () => Promise<RouteExport>);
+        loadingModule = matchLoadingFile(rawRoute.filename, loadingFiles);
       }
 
       const endpointKey = rawRoute.filename.replace(
@@ -210,7 +231,7 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
       ? {
           path: rawRoute.segment,
           loadChildren: () =>
-            module!().then((m) => {
+            module!().then(async (m) => {
               if (import.meta.env.DEV) {
                 const hasModuleDefault = !!m.default;
                 const hasRedirect = !!m.routeMeta?.redirectTo;
@@ -220,6 +241,22 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
                     `[Analog] Missing default export at ${rawRoute.filename}`,
                   );
                 }
+              }
+
+              if (loadingModule) {
+                const loadingM = await loadingModule();
+                return [
+                  {
+                    path: '',
+                    component: RouteLoadingComponent,
+                    data: {
+                      _analogLoading: loadingM.default,
+                      _analogLoad: module,
+                    },
+                    children,
+                    [ANALOG_META_KEY]: analogMeta,
+                  },
+                ];
               }
 
               const baseChild = {
@@ -266,6 +303,43 @@ function toRoutes(rawRoutes: RawRoute[], files: Files, debug = false): Route[] {
   return routes;
 }
 
+function matchLoadingFile(
+  pageFilename: string,
+  loadingFiles: Record<string, () => Promise<{ default: any }>>,
+): (() => Promise<{ default: any }>) | undefined {
+  const candidates: string[] = [];
+
+  // pages convention: .page.ts files
+  // /src/app/pages/dashboard.page.ts -> /src/app/pages/dashboard/loading.page.ts
+  // /src/app/pages/products/[productId].page.ts -> /src/app/pages/products/loading.page.ts
+  const pagesMatch = pageFilename.match(
+    /^(.+\/)([^/]+)\.(page\.(ts|analog|ag))$/,
+  );
+  if (pagesMatch) {
+    const [, dir, name] = pagesMatch;
+    // Check sibling directory: pages/dashboard/loading.page.ts
+    candidates.push(`${dir}${name}/loading.page.ts`);
+    // Check parent directory: pages/products/loading.page.ts (for nested routes)
+    candidates.push(`${dir}loading.page.ts`);
+  }
+
+  // routes convention: .ts files in routes/
+  // /app/routes/about.ts -> /app/routes/about/loading.ts
+  const routesMatch = pageFilename.match(/^(.+\/)([^/]+)\.(ts|analog|ag)$/);
+  if (routesMatch && !pagesMatch) {
+    const [, dir, name, ext] = routesMatch;
+    candidates.push(`${dir}${name}/loading.${ext}`);
+  }
+
+  for (const candidate of candidates) {
+    if (loadingFiles[candidate]) {
+      return loadingFiles[candidate];
+    }
+  }
+
+  return undefined;
+}
+
 function sortRawRoutes(rawRoutes: RawRoute[]): void {
   rawRoutes.sort((a, b) => {
     let segmentA = deprioritizeSegment(a.segment);
@@ -291,7 +365,10 @@ function deprioritizeSegment(segment: string): string {
   return segment.replace(':', '~~').replace('**', '~~~~');
 }
 
-export const routes: Route[] = createRoutes({
-  ...ANALOG_ROUTE_FILES,
-  ...ANALOG_CONTENT_ROUTE_FILES,
-});
+export const routes: Route[] = createRoutes(
+  {
+    ...ANALOG_ROUTE_FILES,
+    ...ANALOG_CONTENT_ROUTE_FILES,
+  },
+  ANALOG_LOADING_FILES,
+);

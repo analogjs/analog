@@ -3,6 +3,7 @@ import { Route } from '@angular/router';
 
 import {
   ANALOG_CONTENT_ROUTE_FILES,
+  ANALOG_LOADING_FILES,
   ANALOG_ROUTE_FILES,
   createRoutes,
 } from '../routes';
@@ -17,6 +18,7 @@ export const DEBUG_ROUTES = new InjectionToken(
           ...ANALOG_ROUTE_FILES,
           ...ANALOG_CONTENT_ROUTE_FILES,
         },
+        ANALOG_LOADING_FILES,
         true,
       );
 
