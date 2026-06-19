@@ -16,6 +16,30 @@ const HAS_EXPONENTIATION =
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
 
+// Native optional chaining (`a?.b`) in the output AST is carried by the
+// `isOptional` constructor parameter on `ReadPropExpr`/`ReadKeyExpr`/
+// `InvokeFunctionExpr`, added in Angular v22. On v17–v21 that parameter
+// doesn't exist — the constructor ignores the extra arg, so `isOptional`
+// reads back as `undefined` and the emitter (correctly) emits `.`; those
+// versions express safe navigation via the `== null ? null` ternary instead.
+// Feature-detect by round-tripping the flag so the `?.` assertions only run
+// where the AST can represent it.
+const HAS_OPTIONAL_CHAINING = (() => {
+  try {
+    const probe = new o.ReadPropExpr(
+      new o.ReadVarExpr('a'),
+      'b',
+      undefined,
+      undefined,
+      undefined,
+      true,
+    );
+    return (probe as unknown as { isOptional?: boolean }).isOptional === true;
+  } catch {
+    return false;
+  }
+})();
+
 function bin(op: o.BinaryOperator, lhs: o.Expression, rhs: o.Expression) {
   return new o.BinaryOperatorExpr(op, lhs, rhs);
 }
@@ -261,58 +285,61 @@ describe('JSEmitter – optional chaining', () => {
   // chaining, carried on the output AST via the `isOptional` flag. The emitter
   // must honor it — dropping `?.` to `.` dereferences a nullish receiver and
   // throws at runtime (the original `errors()?.email` newsletter regression).
-  describe('emits `?.` when isOptional is set', () => {
-    it('property read: `a?.b`', () => {
-      const expr = new o.ReadPropExpr(
-        v('a'),
-        'b',
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-      expect(emitAngularExpr(expr)).toBe('a?.b');
-    });
+  describe.skipIf(!HAS_OPTIONAL_CHAINING)(
+    'emits `?.` when isOptional is set',
+    () => {
+      it('property read: `a?.b`', () => {
+        const expr = new o.ReadPropExpr(
+          v('a'),
+          'b',
+          undefined,
+          undefined,
+          undefined,
+          true,
+        );
+        expect(emitAngularExpr(expr)).toBe('a?.b');
+      });
 
-    it('keyed read: `a?.[k]`', () => {
-      const expr = new o.ReadKeyExpr(
-        v('a'),
-        v('k'),
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-      expect(emitAngularExpr(expr)).toBe('a?.[k]');
-    });
+      it('keyed read: `a?.[k]`', () => {
+        const expr = new o.ReadKeyExpr(
+          v('a'),
+          v('k'),
+          undefined,
+          undefined,
+          undefined,
+          true,
+        );
+        expect(emitAngularExpr(expr)).toBe('a?.[k]');
+      });
 
-    it('optional call: `a?.()`', () => {
-      const expr = new o.InvokeFunctionExpr(
-        v('a'),
-        [],
-        undefined,
-        undefined,
-        false,
-        undefined,
-        true,
-      );
-      expect(emitAngularExpr(expr)).toBe('a?.()');
-    });
+      it('optional call: `a?.()`', () => {
+        const expr = new o.InvokeFunctionExpr(
+          v('a'),
+          [],
+          undefined,
+          undefined,
+          false,
+          undefined,
+          true,
+        );
+        expect(emitAngularExpr(expr)).toBe('a?.()');
+      });
 
-    it('safe-navigates the result of a call: `errors()?.email`', () => {
-      // Direct regression for the newsletter page: `errors()` returns a
-      // nullish signal value, so the `?.` guard must be preserved.
-      const expr = new o.ReadPropExpr(
-        new o.InvokeFunctionExpr(v('errors'), []),
-        'email',
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-      expect(emitAngularExpr(expr)).toBe('errors()?.email');
-    });
-  });
+      it('safe-navigates the result of a call: `errors()?.email`', () => {
+        // Direct regression for the newsletter page: `errors()` returns a
+        // nullish signal value, so the `?.` guard must be preserved.
+        const expr = new o.ReadPropExpr(
+          new o.InvokeFunctionExpr(v('errors'), []),
+          'email',
+          undefined,
+          undefined,
+          undefined,
+          true,
+        );
+        expect(emitAngularExpr(expr)).toBe('errors()?.email');
+      });
+    },
+  );
 
   describe('emits `.` / `[` / `(` when isOptional is unset', () => {
     it('property read stays `a.b`', () => {
