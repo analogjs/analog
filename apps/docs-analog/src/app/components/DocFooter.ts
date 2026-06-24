@@ -14,9 +14,9 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
         @if (prev(); as p) {
           <a
             [routerLink]="p.href"
-            class="flex flex-col rounded border p-3 transition hover:bg-gray-50"
+            class="flex flex-col rounded border p-3 transition hover:bg-[var(--bg-subtle)]"
           >
-            <span class="text-xs text-gray-700 dark:text-white">Previous</span>
+            <span class="text-xs text-[var(--fg-muted)]">Previous</span>
             <span class="font-medium" style="color: var(--brand)"
               >← {{ p.label }}</span
             >
@@ -27,9 +27,9 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
         @if (next(); as n) {
           <a
             [routerLink]="n.href"
-            class="flex flex-col items-end rounded border p-3 text-right transition hover:bg-gray-50"
+            class="flex flex-col items-end rounded border p-3 text-right transition hover:bg-[var(--bg-subtle)]"
           >
-            <span class="text-xs text-gray-700 dark:text-white">Next</span>
+            <span class="text-xs text-[var(--fg-muted)]">Next</span>
             <span class="font-medium" style="color: var(--brand)"
               >{{ n.label }} →</span
             >

@@ -118,11 +118,14 @@ function delayFor(line: Line): number {
         <span class="h-3 w-3 rounded-full bg-[#ff5f56]"></span>
         <span class="h-3 w-3 rounded-full bg-[#ffbd2e]"></span>
         <span class="h-3 w-3 rounded-full bg-[#27c93f]"></span>
-        <span class="ml-3 text-xs text-gray-400">~/my-app</span>
+        <span class="ml-3 text-xs" style="color: var(--demo-card-fg-muted)"
+          >~/my-app</span
+        >
       </div>
       <pre
         #scroller
-        class="m-0 h-[360px] overflow-y-auto overflow-x-auto p-4 font-mono text-[12.5px] leading-[1.5] text-gray-200"
+        class="m-0 h-[360px] overflow-y-auto overflow-x-auto p-4 font-mono text-[12.5px] leading-[1.5]"
+        style="color: var(--demo-card-fg)"
       ><code>@for (line of visibleLines(); track $index) {<span [class]="'tline ' + line.cls">{{ line.text }}</span>}<span class="tcursor">▍</span></code></pre>
     </div>
   `,

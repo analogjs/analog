@@ -20,9 +20,12 @@ const MAPPINGS: Mapping[] = [
     <div class="grid items-stretch gap-4">
       <div
         class="rounded-xl border p-5 font-mono text-sm"
-        style="border-color: #1f2937; background: #011627; color: #d6deeb"
+        style="border-color: var(--demo-card-border); background: var(--demo-card-bg); color: var(--demo-card-fg)"
       >
-        <p class="mb-3 text-xs uppercase tracking-wide" style="color: #8b949e">
+        <p
+          class="mb-3 text-xs uppercase tracking-wide"
+          style="color: var(--demo-card-fg-muted)"
+        >
           src/app/pages/
         </p>
         <ul class="space-y-1">
@@ -31,9 +34,11 @@ const MAPPINGS: Mapping[] = [
               class="rounded px-2 py-1"
               [class.font-semibold]="m.highlight"
               [style.background]="
-                m.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'
+                m.highlight ? 'var(--demo-card-accent-bg)' : 'transparent'
               "
-              [style.color]="m.highlight ? '#fb7185' : '#d6deeb'"
+              [style.color]="
+                m.highlight ? 'var(--demo-card-accent)' : 'var(--demo-card-fg)'
+              "
             >
               {{ m.file }}
             </li>
@@ -43,9 +48,12 @@ const MAPPINGS: Mapping[] = [
 
       <div
         class="rounded-xl border p-5 font-mono text-sm"
-        style="border-color: #1f2937; background: #011627; color: #d6deeb"
+        style="border-color: var(--demo-card-border); background: var(--demo-card-bg); color: var(--demo-card-fg)"
       >
-        <p class="mb-3 text-xs uppercase tracking-wide" style="color: #8b949e">
+        <p
+          class="mb-3 text-xs uppercase tracking-wide"
+          style="color: var(--demo-card-fg-muted)"
+        >
           generated routes
         </p>
         <ul class="space-y-1">
@@ -54,9 +62,11 @@ const MAPPINGS: Mapping[] = [
               class="rounded px-2 py-1"
               [class.font-semibold]="m.highlight"
               [style.background]="
-                m.highlight ? 'rgba(255,255,255,0.06)' : 'transparent'
+                m.highlight ? 'var(--demo-card-accent-bg)' : 'transparent'
               "
-              [style.color]="m.highlight ? '#fb7185' : '#d6deeb'"
+              [style.color]="
+                m.highlight ? 'var(--demo-card-accent)' : 'var(--demo-card-fg)'
+              "
             >
               {{ m.url }}
             </li>

@@ -2,27 +2,108 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Design tokens — light defaults, overridden under .dark on <html> */
+/* Design tokens — light defaults, overridden under .dark on <html>.
+   Themes override by redefining any subset of these in their own
+   stylesheet loaded after this one. */
 :root {
+  /* Surfaces */
   --bg: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f9fafb;
+
+  /* Text */
   --fg: #1f2937;
   --fg-muted: #6b7280;
+  --fg-subtle: #9ca3af;
+
+  /* Lines */
   --border: #e5e7eb;
-  --hover-bg: #f9fafb;
+  --border-subtle: #f3f4f6;
+
+  /* Accents */
   --link: #2563eb;
-  --code-bg: #f6f8fa;
-  /* Brand crimson, sampled from prod analogjs.org #c30f2e */
+  --link-hover: #1d4ed8;
+
+  /* Brand — sampled from prod analogjs.org #c30f2e */
   --brand: #c30f2e;
   --brand-hover: #a40c26;
+  --brand-fg: #ffffff;
+
+  /* Inverted surface — for high-contrast CTAs (button flips colors in dark) */
+  --surface-inverted: #111827;
+  --surface-inverted-hover: #1f2937;
+  --surface-inverted-fg: #ffffff;
+
+  /* Code */
+  --code-bg: #f6f8fa;
+  --code-copy-bg: rgba(15, 23, 42, 0.06);
+  --code-copy-border: rgba(15, 23, 42, 0.12);
+  --code-copy-fg: #1f2937;
+
+  /* Typography */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+
+  /* Radii */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.625rem;
+
+  /* Demo cards — the constant-dark "code snippet" hero cards on the home
+     page. Not overridden under .dark; they're a deliberate visual element. */
+  --demo-card-bg: #011627;
+  --demo-card-fg: #d6deeb;
+  --demo-card-fg-muted: #8b949e;
+  --demo-card-border: #1f2937;
+  --demo-card-accent: #fb7185;
+  --demo-card-accent-bg: rgba(255, 255, 255, 0.06);
+
+  /* Admonitions — per-kind border + bg tokens so a theme can recolor them */
+  --admonition-tip-border: #10b981;
+  --admonition-tip-bg: #ecfdf5;
+  --admonition-info-border: #3b82f6;
+  --admonition-info-bg: #eff6ff;
+  --admonition-note-border: #6366f1;
+  --admonition-note-bg: #eef2ff;
+  --admonition-warning-border: #f59e0b;
+  --admonition-warning-bg: #fffbeb;
+  --admonition-caution-border: #ef4444;
+  --admonition-caution-bg: #fef2f2;
 }
+
 .dark {
   --bg: #0a1429;
+  --bg-elevated: #0f172a;
+  --bg-subtle: #111827;
+
   --fg: #e5e7eb;
   --fg-muted: #9ca3af;
+  --fg-subtle: #6b7280;
+
   --border: #1f2937;
-  --hover-bg: #111827;
+  --border-subtle: #111827;
+
   --link: #60a5fa;
+  --link-hover: #93c5fd;
+
+  --surface-inverted: #ffffff;
+  --surface-inverted-hover: #f3f4f6;
+  --surface-inverted-fg: #111827;
+
   --code-bg: #111827;
+  --code-copy-bg: rgba(255, 255, 255, 0.08);
+  --code-copy-border: rgba(255, 255, 255, 0.12);
+  --code-copy-fg: #e5e7eb;
+
+  --admonition-tip-bg: rgba(16, 185, 129, 0.08);
+  --admonition-info-bg: rgba(59, 130, 246, 0.08);
+  --admonition-note-bg: rgba(99, 102, 241, 0.08);
+  --admonition-warning-bg: rgba(245, 158, 11, 0.08);
+  --admonition-caution-bg: rgba(239, 68, 68, 0.08);
 }
 
 html {
@@ -32,6 +113,7 @@ html,
 body {
   background: var(--bg);
   color: var(--fg);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -50,45 +132,30 @@ body {
    custom marked extension. */
 .admonition {
   border-left: 4px solid var(--border);
-  background: var(--hover-bg);
+  background: var(--bg-subtle);
   padding: 0.75rem 1rem;
   margin: 1rem 0;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
 }
 .admonition-tip {
-  border-left-color: #10b981;
-  background: #ecfdf5;
-}
-.dark .admonition-tip {
-  background: rgba(16, 185, 129, 0.08);
+  border-left-color: var(--admonition-tip-border);
+  background: var(--admonition-tip-bg);
 }
 .admonition-info {
-  border-left-color: #3b82f6;
-  background: #eff6ff;
-}
-.dark .admonition-info {
-  background: rgba(59, 130, 246, 0.08);
+  border-left-color: var(--admonition-info-border);
+  background: var(--admonition-info-bg);
 }
 .admonition-note {
-  border-left-color: #6366f1;
-  background: #eef2ff;
-}
-.dark .admonition-note {
-  background: rgba(99, 102, 241, 0.08);
+  border-left-color: var(--admonition-note-border);
+  background: var(--admonition-note-bg);
 }
 .admonition-warning {
-  border-left-color: #f59e0b;
-  background: #fffbeb;
-}
-.dark .admonition-warning {
-  background: rgba(245, 158, 11, 0.08);
+  border-left-color: var(--admonition-warning-border);
+  background: var(--admonition-warning-bg);
 }
 .admonition-caution {
-  border-left-color: #ef4444;
-  background: #fef2f2;
-}
-.dark .admonition-caution {
-  background: rgba(239, 68, 68, 0.08);
+  border-left-color: var(--admonition-caution-border);
+  background: var(--admonition-caution-bg);
 }
 
 /* Heading hover anchors */
@@ -116,7 +183,7 @@ body {
 /* Code block enhancements */
 .analog-markdown pre {
   position: relative;
-  border-radius: 0.625rem;
+  border-radius: var(--radius-lg);
   padding: 1rem 1.125rem;
   overflow-x: auto;
   margin: 1.25rem 0;
@@ -137,19 +204,15 @@ body {
 .analog-markdown pre code {
   background: transparent;
   padding: 0;
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 0.875rem;
 }
 .analog-markdown code:not(pre code) {
   background: var(--code-bg);
   padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-sm);
   font-size: 0.875em;
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 
 /* Code block copy button (added by EnhanceCode directive) */
@@ -157,11 +220,11 @@ body {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #e5e7eb;
+  background: var(--code-copy-bg);
+  border: 1px solid var(--code-copy-border);
+  color: var(--code-copy-fg);
   padding: 0.25rem 0.625rem;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-md);
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -177,8 +240,8 @@ body {
   opacity: 1;
 }
 .code-copy-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.24);
+  background: color-mix(in srgb, var(--code-copy-bg) 60%, transparent);
+  border-color: color-mix(in srgb, var(--code-copy-border) 70%, transparent);
 }
 .code-copy-btn[data-copied='true'] {
   color: #4ade80;
@@ -188,7 +251,7 @@ body {
 /* doc-tabs (from mdxTabsExtension + EnhanceCode hydration) */
 .doc-tabs {
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   margin: 1rem 0;
   overflow: hidden;
 }
@@ -196,7 +259,7 @@ body {
   display: flex;
   gap: 0;
   border-bottom: 1px solid var(--border);
-  background: var(--hover-bg);
+  background: var(--bg-subtle);
   overflow-x: auto;
 }
 .doc-tabs-trigger {
@@ -239,7 +302,7 @@ body {
   text-align: left;
 }
 .analog-markdown th {
-  background: var(--hover-bg);
+  background: var(--bg-subtle);
 }
 
 /* Markdown body typography */

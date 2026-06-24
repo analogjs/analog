@@ -47,7 +47,7 @@ const SERVER_CODE = [
       >
         <header
           class="flex items-center justify-between border-b px-4 py-2 text-xs"
-          style="border-color: var(--border); background: var(--hover-bg); color: var(--fg-muted)"
+          style="border-color: var(--border); background: var(--bg-subtle); color: var(--fg-muted)"
         >
           <span>Page component (browser)</span>
           <span class="font-mono">.page.ts</span>
@@ -61,7 +61,7 @@ const SERVER_CODE = [
       >
         <header
           class="flex items-center justify-between border-b px-4 py-2 text-xs"
-          style="border-color: var(--border); background: var(--hover-bg); color: var(--fg-muted)"
+          style="border-color: var(--border); background: var(--bg-subtle); color: var(--fg-muted)"
         >
           <span>Server load (server-only)</span>
           <span class="font-mono">.server.ts</span>
@@ -85,13 +85,11 @@ const SERVER_CODE = [
         overflow-x: auto;
         /* Dark backdrop so the SSR plain <pre> fallback and the shiki
            swap don't flash light first in light mode. */
-        background: #011627;
-        color: #d6deeb;
+        background: var(--demo-card-bg);
+        color: var(--demo-card-fg);
       }
       :host ::ng-deep .fs-example pre code {
-        font-family:
-          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-          'Liberation Mono', monospace;
+        font-family: var(--font-mono);
       }
       /* Force shiki's dark theme on these hero code blocks regardless
          of the page's light/dark mode — they live in a dark-on-dark

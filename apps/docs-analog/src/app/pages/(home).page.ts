@@ -127,7 +127,7 @@ const SPONSORS: Sponsor[] = [
           >
             <a
               routerLink="/docs/introduction"
-              class="inline-flex items-center rounded-md bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-gray-800 sm:px-6 sm:py-3 sm:text-base dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+              class="inline-flex items-center rounded-md bg-[var(--surface-inverted)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-inverted-fg)] shadow hover:bg-[var(--surface-inverted-hover)] sm:px-6 sm:py-3 sm:text-base"
               i18n="@@home.cta.docs"
             >
               Read the Docs
@@ -136,7 +136,7 @@ const SPONSORS: Sponsor[] = [
               href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
               target="_blank"
               rel="noopener"
-              class="inline-flex items-center gap-2 rounded-md border px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 sm:px-6 sm:py-3 sm:text-base dark:hover:bg-gray-900"
+              class="inline-flex items-center gap-2 rounded-md border px-5 py-2.5 text-sm font-semibold hover:bg-[var(--bg-subtle)] sm:px-6 sm:py-3 sm:text-base"
               style="border-color: var(--border)"
             >
               <img
@@ -177,7 +177,7 @@ const SPONSORS: Sponsor[] = [
             Files in
             <code
               class="rounded px-1.5 py-0.5 text-base"
-              style="background: var(--hover-bg)"
+              style="background: var(--bg-subtle)"
               >src/app/pages/</code
             >
             become routes. Brackets are dynamic. Double brackets are catch-alls.
@@ -376,8 +376,8 @@ const SPONSORS: Sponsor[] = [
 
         <a
           href="mailto:partnerships@analogjs.org?subject=Partnerships"
-          class="mt-10 inline-block rounded-md px-5 py-2 text-sm font-semibold text-white shadow"
-          style="background: var(--brand)"
+          class="mt-10 inline-block rounded-md px-5 py-2 text-sm font-semibold shadow"
+          style="background: var(--brand); color: var(--brand-fg)"
           i18n="@@home.partner.cta"
         >
           Partner with Analog

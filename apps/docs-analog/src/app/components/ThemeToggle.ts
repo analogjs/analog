@@ -21,7 +21,7 @@ type Theme = 'light' | 'dark';
   template: `
     <button
       type="button"
-      class="rounded p-1.5 text-sm hover:bg-gray-100"
+      class="rounded p-1.5 text-sm hover:bg-[var(--bg-subtle)]"
       aria-label="Toggle theme"
       (click)="toggle()"
     >

@@ -19,7 +19,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
         [class]="
           depth() === 0
             ? 'space-y-0.5'
-            : 'mt-1 space-y-0.5 border-l ml-2 pl-3 border-gray-200 dark:border-gray-800'
+            : 'mt-1 space-y-0.5 border-l ml-2 pl-3 border-[var(--border)]'
         "
       >
         @for (node of nodes(); track nodeKey(node)) {
@@ -27,9 +27,9 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
             <li>
               <a
                 [routerLink]="hrefFor(node.id)"
-                routerLinkActive="font-medium text-rose-600 dark:text-rose-500"
+                routerLinkActive="font-medium !text-[var(--brand)]"
                 [routerLinkActiveOptions]="{ exact: true }"
-                class="block rounded px-2 py-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-100"
+                class="block rounded px-2 py-1 text-[var(--fg-muted)] hover:bg-[var(--bg-subtle)] hover:text-[var(--fg)]"
                 >{{ node.label }}</a
               >
             </li>
@@ -40,14 +40,14 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
                 (click)="toggle(node)"
                 [class]="
                   depth() === 0
-                    ? 'flex w-full items-center justify-between rounded px-2 py-1 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-gray-500 hover:text-gray-900 dark:text-gray-500 dark:hover:text-gray-200'
-                    : 'flex w-full items-center justify-between rounded px-2 py-1 text-left text-[13px] font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100'
+                    ? 'flex w-full items-center justify-between rounded px-2 py-1 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--fg-muted)] hover:text-[var(--fg)]'
+                    : 'flex w-full items-center justify-between rounded px-2 py-1 text-left text-[13px] font-medium text-[var(--fg-muted)] hover:text-[var(--fg)]'
                 "
                 [attr.aria-expanded]="isOpen(node)"
               >
                 <span>{{ node.label }}</span>
                 <span
-                  class="text-gray-400 transition-transform"
+                  class="text-[var(--fg-subtle)] transition-transform"
                   [style.transform]="
                     isOpen(node) ? 'rotate(90deg)' : 'rotate(0)'
                   "

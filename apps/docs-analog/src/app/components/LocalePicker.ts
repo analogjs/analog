@@ -17,7 +17,7 @@ const LOCALES: { code: string; label: string }[] = [
     <div class="relative">
       <button
         type="button"
-        class="flex items-center gap-1 rounded p-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-900"
+        class="flex items-center gap-1 rounded p-1.5 text-sm hover:bg-[var(--bg-subtle)]"
         aria-haspopup="menu"
         [attr.aria-expanded]="open()"
         (click)="open.set(!open())"
@@ -28,15 +28,15 @@ const LOCALES: { code: string; label: string }[] = [
       @if (open()) {
         <ul
           role="menu"
-          class="absolute right-0 z-10 mt-1 min-w-[10rem] rounded border bg-white py-1 text-sm shadow-lg dark:bg-gray-900"
-          style="border-color: var(--border)"
+          class="absolute right-0 z-10 mt-1 min-w-[10rem] rounded border py-1 text-sm shadow-lg"
+          style="border-color: var(--border); background: var(--bg-elevated)"
         >
           @for (loc of locales; track loc.code) {
             <li>
               <button
                 type="button"
                 role="menuitem"
-                class="block w-full px-3 py-1.5 text-left hover:bg-gray-50 dark:hover:bg-gray-800"
+                class="block w-full px-3 py-1.5 text-left hover:bg-[var(--bg-subtle)]"
                 [class.font-semibold]="loc.code === active()"
                 (click)="pick(loc.code)"
               >

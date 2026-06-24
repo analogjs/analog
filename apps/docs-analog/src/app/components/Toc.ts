@@ -42,7 +42,7 @@ const HEADING_SELECTOR = 'h2, h3';
       <nav class="text-sm">
         @if (!hideHeader()) {
           <p
-            class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500"
+            class="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--fg-muted)]"
           >
             On this page
           </p>
@@ -53,9 +53,9 @@ const HEADING_SELECTOR = 'h2, h3';
               <a
                 [href]="pathname() + '#' + h.id"
                 (click)="scrollTo($event, h.id)"
-                class="block py-1 text-gray-700 hover:text-rose-600 dark:text-white"
+                class="block py-1 text-[var(--fg-muted)] hover:text-[var(--brand)]"
                 [class.font-semibold]="active() === h.id"
-                [class.!text-rose-600]="active() === h.id"
+                [style.color]="active() === h.id ? 'var(--brand)' : null"
                 >{{ h.text }}</a
               >
             </li>
