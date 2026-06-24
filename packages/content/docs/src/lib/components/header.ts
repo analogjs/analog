@@ -41,8 +41,10 @@ import { ThemeToggle } from './theme-toggle';
             }
           </nav>
         }
-        <docs-locale-picker />
-        <docs-theme-toggle />
+        <div class="flex items-center gap-1">
+          <docs-locale-picker />
+          <docs-theme-toggle />
+        </div>
       </div>
     </header>
   `,
