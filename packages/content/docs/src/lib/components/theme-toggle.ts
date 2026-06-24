@@ -1,5 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, inject, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  PLATFORM_ID,
+  signal,
+} from '@angular/core';
 
 const STORAGE_KEY = 'docs-theme';
 
@@ -25,38 +31,43 @@ type Theme = 'light' | 'dark';
       aria-label="Toggle theme"
       (click)="toggle()"
     >
-      <!-- Moon (light mode → click to switch to dark) -->
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5 dark:!hidden"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-        />
-      </svg>
-      <!-- Sun (dark mode → click to switch to light) -->
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="hidden h-5 w-5 dark:!block"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-        />
-      </svg>
+      @if (isDark()) {
+        <!-- Sun: in dark mode, click switches to light -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      } @else {
+        <!-- Moon: in light mode, click switches to dark -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      }
     </button>
   `,
 })
@@ -64,8 +75,12 @@ export class ThemeToggle {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
 
+  protected readonly isDark = signal(false);
+
   constructor() {
     if (!isPlatformBrowser(this.platformId)) return;
+    this.isDark.set(this.currentTheme() === 'dark');
+
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     const onSystemChange = (e: MediaQueryListEvent) => {
       if (!localStorage.getItem(STORAGE_KEY)) {
@@ -92,5 +107,6 @@ export class ThemeToggle {
 
   private applyTheme(t: Theme): void {
     document.documentElement.classList.toggle('dark', t === 'dark');
+    this.isDark.set(t === 'dark');
   }
 }
