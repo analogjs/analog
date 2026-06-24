@@ -38,6 +38,10 @@
         "./node_modules/@analogjs/platform",
         "packages/platform/src/index.ts"
       ],
+      "@analogjs/docs": [
+        "./node_modules/@analogjs/docs",
+        "packages/docs/src/index.ts"
+      ],
       "@analogjs/router": [
         "./node_modules/@analogjs/router",
         "packages/router/src/index.ts"

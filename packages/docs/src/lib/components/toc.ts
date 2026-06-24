@@ -94,16 +94,9 @@ export class Toc implements AfterViewInit, OnDestroy {
   private intersectionObserver?: IntersectionObserver;
 
   constructor() {
-    // Mirror the parent's pre-parsed headings into the signal so SSR
-    // renders a populated TOC. On the client, ngAfterViewInit overwrites
-    // from the live DOM after first paint to pick up any post-render IDs
-    // assigned by EnhanceCode.
     effect(() => {
       const initial = this.initialHeadings();
       this.headings.set(initial);
-      // Default the active highlight to the first heading so the SSR
-      // snapshot matches a fresh "scrolled to top" load. The
-      // IntersectionObserver overrides this once the user scrolls.
       if (initial.length > 0) {
         this.active.set(initial[0].id);
       }
@@ -131,8 +124,6 @@ export class Toc implements AfterViewInit, OnDestroy {
     event.preventDefault();
     const el = document.getElementById(id);
     if (el) {
-      // Include the pathname so <base href="/"> doesn't clobber the
-      // URL to /#id when we only pass the fragment.
       history.replaceState(null, '', `${window.location.pathname}#${id}`);
       el.scrollIntoView({ behavior: 'smooth' });
     }
@@ -179,10 +170,6 @@ export class Toc implements AfterViewInit, OnDestroy {
   }
 }
 
-/**
- * Read a heading's visible text without the `#` anchor that
- * EnhanceCode prepends to every h2/h3.
- */
 function headingText(h: HTMLElement): string {
   const clone = h.cloneNode(true) as HTMLElement;
   clone.querySelector('.heading-anchor')?.remove();

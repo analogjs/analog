@@ -32,8 +32,10 @@ import {
   withInMemoryScrolling,
   withRouterConfig,
 } from '@angular/router';
-import { SUPPORTED_LOCALES, resolveActiveLocale } from './locale';
+import { provideAnalogDocs, resolveActiveLocale } from '@analogjs/docs';
+import { SUPPORTED_LOCALES } from './locale';
 import { ScrollRestorer } from './scroll';
+import { sidebar } from './sidebar';
 
 // Picking a locale from the marketing home (`/`) hard-reloads to
 // `/<locale>/` — this route renders the same HomePage so the URL keeps
@@ -97,6 +99,75 @@ export const appConfig: ApplicationConfig = {
           default: Record<string, string>;
         };
         return m.default;
+      },
+    }),
+    provideAnalogDocs({
+      brand: {
+        name: 'Analog',
+        logoSrc: '/img/logos/analog-logo.svg',
+        logoAlt: '',
+      },
+      sidebar,
+      locales: {
+        default: 'en',
+        list: [
+          { code: 'en', label: 'English' },
+          { code: 'es', label: 'Español' },
+          { code: 'de', label: 'Deutsch' },
+          { code: 'pt-br', label: 'Português (Brasil)' },
+          { code: 'zh-hans', label: '简体中文' },
+        ],
+        // Legacy locales (fr/ko/tr) still appear in the Algolia index
+        // even though we no longer ship those translations; list them
+        // here so Search can recognize and strip their URL prefixes.
+        indexed: ['de', 'es', 'fr', 'ko', 'pt-br', 'tr', 'zh-hans'],
+      },
+      search: {
+        appId: '8W3CAMYOQF',
+        apiKey: '650d723674c8cd38658add35fb9433e3',
+        indexName: 'analogjs',
+      },
+      headerNav: [
+        { label: 'Docs', routerLink: '/docs/introduction' },
+        { label: 'Support', routerLink: '/docs/support' },
+        { label: 'GitHub', href: 'https://github.com/analogjs/analog' },
+        { label: 'Discord', href: 'https://chat.analogjs.org' },
+      ],
+      footer: {
+        columns: [
+          {
+            title: 'Documentation',
+            items: [
+              { label: 'Introduction', routerLink: '/docs/introduction' },
+              { label: 'Getting Started', routerLink: '/docs/getting-started' },
+              { label: 'llms.txt', href: 'https://analogjs.org/llms.txt' },
+              {
+                label: 'llms-full.txt',
+                href: 'https://analogjs.org/llms-full.txt',
+              },
+            ],
+          },
+          {
+            title: 'Open source',
+            items: [
+              { label: 'Contributors', routerLink: '/docs/contributors' },
+              { label: 'Contributing', routerLink: '/docs/contributing' },
+              { label: 'Sponsoring', routerLink: '/docs/sponsoring' },
+            ],
+          },
+          {
+            title: 'More',
+            items: [
+              { label: 'GitHub', href: 'https://github.com/analogjs/analog' },
+              { label: 'Discord', href: 'https://chat.analogjs.org' },
+              {
+                label: 'Stack Overflow',
+                href: 'https://stackoverflow.com/questions/tagged/analogjs',
+              },
+            ],
+          },
+        ],
+        legalLine: `© 2022–${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
     }),
     provideAppInitializer(() => inject(ScrollRestorer).start()),

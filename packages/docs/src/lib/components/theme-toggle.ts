@@ -12,9 +12,9 @@ type Theme = 'light' | 'dark';
  *   - User clicks the toggle → flips the theme and writes the chosen
  *     value to localStorage, sticking until cleared.
  *
- * The .dark class on <html> is what every style hangs off of; the inline
- * script in index.html handles first paint before this component
- * bootstraps, so there's no flash.
+ * The .dark class on <html> is what every style hangs off of; consumers
+ * should set it pre-bootstrap (e.g. via an inline script in index.html)
+ * to avoid a flash.
  */
 @Component({
   selector: 'docs-theme-toggle',

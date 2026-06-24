@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
+  "dest": "../../node_modules/@analogjs/docs",
+  "assets": ["*.md"],
+  "lib": {
+    "entryFile": "src/index.ts"
+  }
+}

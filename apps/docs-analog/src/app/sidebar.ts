@@ -1,16 +1,4 @@
-export type SidebarDoc = {
-  kind: 'doc';
-  id: string;
-  label: string;
-};
-
-export type SidebarCategory = {
-  kind: 'category';
-  label: string;
-  items: SidebarNode[];
-};
-
-export type SidebarNode = SidebarDoc | SidebarCategory;
+import type { SidebarNode } from '@analogjs/docs';
 
 /**
  * Hand-curated navigation tree, ported verbatim from
@@ -201,41 +189,3 @@ export const sidebar: SidebarNode[] = [
   { kind: 'doc', id: 'contributors', label: 'Contributors' },
   { kind: 'doc', id: 'support', label: 'Support' },
 ];
-
-export type FlatSidebarEntry = {
-  id: string;
-  label: string;
-  href: string;
-  categoryPath: string[];
-};
-
-export function flattenSidebar(
-  nodes: readonly SidebarNode[] = sidebar,
-  locale: string | null = null,
-  categoryPath: string[] = [],
-): FlatSidebarEntry[] {
-  const localePrefix = locale ? `/${locale}` : '';
-  const out: FlatSidebarEntry[] = [];
-  for (const node of nodes) {
-    if (node.kind === 'doc') {
-      out.push({
-        id: node.id,
-        label: node.label,
-        href: `${localePrefix}/docs/${node.id}`,
-        categoryPath,
-      });
-    } else {
-      out.push(
-        ...flattenSidebar(node.items, locale, [...categoryPath, node.label]),
-      );
-    }
-  }
-  return out;
-}
-
-export function findSidebarIndex(
-  flat: readonly FlatSidebarEntry[],
-  id: string,
-): number {
-  return flat.findIndex((e) => e.id === id);
-}

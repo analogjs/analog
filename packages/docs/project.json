@@ -1,0 +1,26 @@
+{
+  "name": "docs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/docs/src",
+  "prefix": "analogjs",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:ng-packagr",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/docs"],
+      "options": {
+        "project": "packages/docs/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/docs/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/docs/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    }
+  }
+}

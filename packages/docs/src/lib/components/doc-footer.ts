@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { injectDocsConfig } from '../config';
 import { useLocaleSignal } from '../locale';
 import { findSidebarIndex, flattenSidebar } from '../sidebar';
 
@@ -44,10 +45,11 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
 export class DocFooter {
   readonly slug = input.required<string>();
 
+  private readonly config = injectDocsConfig();
   private readonly locale = useLocaleSignal();
 
   private readonly flat = computed(() =>
-    flattenSidebar(undefined, this.locale()),
+    flattenSidebar(this.config.sidebar, this.locale()),
   );
   private readonly index = computed(() =>
     findSidebarIndex(this.flat(), this.slug()),

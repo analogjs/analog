@@ -6,11 +6,14 @@ import {
   inject,
   PLATFORM_ID,
 } from '@angular/core';
+import { injectDocsConfig } from '../config';
 
 /**
  * Adds a "Copy" button to every <pre> code block under the host
  * element, idempotent (skips blocks that already have one).
- * Also wraps each h2/h3 with a hover-revealed anchor link.
+ * Also wraps each h2/h3 with a hover-revealed anchor link, hydrates
+ * doc-tabs, and rewrites relative/anchor markdown links so they
+ * resolve against the current page and preserve the active locale.
  */
 @Directive({
   selector: '[docsEnhanceCode]',
@@ -18,6 +21,7 @@ import {
 export class EnhanceCode implements AfterViewChecked {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly config = injectDocsConfig();
 
   ngAfterViewChecked(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -81,15 +85,6 @@ export class EnhanceCode implements AfterViewChecked {
     });
   }
 
-  /**
-   * Rewrites markdown-rendered links so they:
-   *   - resolve relative + anchor-only hrefs against the current page
-   *     (not against <base href="/"> which silently strips them to root)
-   *   - inherit the active locale prefix when the current URL is under
-   *     /<locale>/docs/... — keeps inbound links to /docs/X from
-   *     escaping the locale tree.
-   * Runs on every change since marked may add new links.
-   */
   private normalizeLinks(): void {
     const links = this.host.nativeElement.querySelectorAll<HTMLAnchorElement>(
       'analog-markdown a[href]:not([data-href-normalized])',
@@ -97,15 +92,25 @@ export class EnhanceCode implements AfterViewChecked {
     if (links.length === 0) return;
     const path = window.location.pathname.replace(/\/$/, '');
     const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
-    const localeMatch = path.match(/^\/(de|es|fr|ko|pt-br|tr|zh-hans)(?=\/|$)/);
-    const localePrefix = localeMatch ? localeMatch[0] : '';
+
+    const indexedLocales =
+      this.config.locales?.indexed ??
+      this.config.locales?.list?.map((l) => l.code) ??
+      [];
+    const defaultLocale = this.config.locales?.default ?? 'en';
+    const nonDefault = indexedLocales.filter((c) => c !== defaultLocale);
+    const localePrefix = (() => {
+      if (nonDefault.length === 0) return '';
+      const re = new RegExp(`^/(${nonDefault.join('|')})(?=/|$)`);
+      const m = path.match(re);
+      return m ? m[0] : '';
+    })();
 
     links.forEach((a) => {
       a.dataset['hrefNormalized'] = 'true';
       const raw = a.getAttribute('href') ?? '';
       if (!raw) return;
 
-      // External / protocol-relative — leave alone.
       if (/^([a-z]+:|\/\/)/i.test(raw)) return;
 
       if (raw.startsWith('#')) {
@@ -130,16 +135,13 @@ export class EnhanceCode implements AfterViewChecked {
         return;
       }
       if (raw.startsWith('/docs/') || raw === '/docs') {
-        // Absolute doc paths in localized markdown — keep the user in
-        // the same locale instead of bouncing them back to English.
         if (localePrefix && !raw.startsWith(`${localePrefix}/`)) {
           a.setAttribute('href', `${localePrefix}${raw}`);
         }
         return;
       }
-      if (raw.startsWith('/')) return; // other absolute paths — leave alone
+      if (raw.startsWith('/')) return;
 
-      // bare "overview" with no leading marker — treat as sibling
       a.setAttribute('href', `${dir}/${raw}`);
     });
 
@@ -147,11 +149,10 @@ export class EnhanceCode implements AfterViewChecked {
   }
 
   /**
-   * Translated docs often keep the original English `#anchor` slug
-   * (`[Rutas de índice](#index-routes)`) even though the actual heading
-   * was translated and now slugs to `#rutas-de-índice`. Walk anchor
-   * links whose target id is not on the page and try to repair them by
-   * matching the link's visible text against heading text.
+   * Translated docs often keep the original English `#anchor` slug even
+   * though the actual heading was translated and now slugs differently.
+   * Walk anchor links whose target id is not on the page and try to
+   * repair them by matching the link's visible text against heading text.
    */
   private repairOrphanAnchors(): void {
     const article = this.host.nativeElement;
@@ -197,8 +198,6 @@ export class EnhanceCode implements AfterViewChecked {
   }
 
   private attachHeadingAnchors(): void {
-    // Inner helper — no-op outside the directive so we can reuse it
-    // in repairOrphanAnchors without circular imports.
     const headings = this.host.nativeElement.querySelectorAll<HTMLElement>(
       'h2:not([data-anchor-attached]), h3:not([data-anchor-attached])',
     );
@@ -221,8 +220,6 @@ export class EnhanceCode implements AfterViewChecked {
   }
 }
 
-// CSS.escape isn't universal in older runtimes; fall back to a manual
-// escape of attribute-selector unsafe chars.
 function cssEscape(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(value);

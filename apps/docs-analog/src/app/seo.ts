@@ -1,8 +1,9 @@
 import { DOCUMENT, inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { injectContentFilesMap } from '@analogjs/content';
+import { flattenSidebar } from '@analogjs/docs';
 import { SUPPORTED_LOCALES } from './locale';
-import { flattenSidebar } from './sidebar';
+import { sidebar } from './sidebar';
 
 const SITE_URL = 'https://analogjs.org';
 
@@ -26,7 +27,7 @@ export class DocSeo {
   ): void {
     const title =
       attrs.title ??
-      flattenSidebar(undefined, locale).find((e) => e.id === slug)?.label ??
+      flattenSidebar(sidebar, locale).find((e) => e.id === slug)?.label ??
       firstHeadingOf(content);
     const pageTitle = title ? `${title} | Analog` : 'Analog';
     this.titleSvc.setTitle(pageTitle);

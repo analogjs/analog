@@ -7,8 +7,9 @@ import {
   RouterLinkActive,
 } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
+import { injectDocsConfig } from '../config';
 import { useLocaleSignal } from '../locale';
-import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
+import type { SidebarCategory, SidebarNode } from '../sidebar';
 
 @Component({
   selector: 'docs-sidebar',
@@ -22,7 +23,7 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
             : 'mt-1 space-y-0.5 border-l ml-2 pl-3 border-[var(--border)]'
         "
       >
-        @for (node of nodes(); track nodeKey(node)) {
+        @for (node of effectiveNodes(); track nodeKey(node)) {
           @if (node.kind === 'doc') {
             <li>
               <a
@@ -66,9 +67,10 @@ import { sidebar, type SidebarCategory, type SidebarNode } from '../sidebar';
   `,
 })
 export class Sidebar {
-  readonly nodes = input<readonly SidebarNode[]>(sidebar);
+  readonly nodes = input<readonly SidebarNode[] | null>(null);
   readonly depth = input<number>(0);
 
+  private readonly config = injectDocsConfig();
   private readonly locale = useLocaleSignal();
   private readonly router = inject(Router);
 
@@ -79,6 +81,10 @@ export class Sidebar {
       startWith(this.router.url),
     ),
     { initialValue: this.router.url },
+  );
+
+  protected readonly effectiveNodes = computed<readonly SidebarNode[]>(
+    () => this.nodes() ?? this.config.sidebar ?? [],
   );
 
   /**
