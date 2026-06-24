@@ -32,7 +32,7 @@ import {
   withInMemoryScrolling,
   withRouterConfig,
 } from '@angular/router';
-import { provideAnalogDocs } from '@analogjs/content/docs/ui';
+import { provideAnalogDocs } from '@analogjs/content/docs';
 import { injectSwitchLocale } from '@analogjs/router/i18n';
 import { resolveActiveLocale, SUPPORTED_LOCALES } from './locale';
 import { ScrollRestorer } from './scroll';

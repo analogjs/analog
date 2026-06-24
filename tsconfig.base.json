@@ -38,9 +38,9 @@
         "./node_modules/@analogjs/platform",
         "packages/platform/src/index.ts"
       ],
-      "@analogjs/content/docs/ui": [
-        "./node_modules/@analogjs/content/docs/ui",
-        "packages/content/docs/ui/src/index.ts"
+      "@analogjs/content/docs": [
+        "./node_modules/@analogjs/content/docs",
+        "packages/content/docs/src/index.ts"
       ],
       "@analogjs/content/docs/vite": [
         "./node_modules/@analogjs/content/docs/vite",
