@@ -1,10 +1,10 @@
 @import 'tailwindcss';
 
-/* Tailwind v4 excludes node_modules by default; opt the
-   @analogjs/content/docs FESM bundle in so utility classes used only
-   in package components (e.g. h-5/w-5 on the theme-toggle SVGs) get
-   generated. */
-@source '../../../node_modules/@analogjs/content/fesm2022';
+/* Tailwind v4 excludes node_modules by default; opt @analogjs/content
+   in so utility classes used only in package components get generated.
+   Bare package name resolves via Node module resolution — no fragile
+   relative path to node_modules. */
+@source '@analogjs/content';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
