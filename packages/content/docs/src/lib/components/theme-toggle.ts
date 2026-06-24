@@ -44,7 +44,7 @@ type Theme = 'light' | 'dark';
       <!-- Sun (dark mode → click to switch to light) -->
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        class="hidden h-5 w-5 dark:inline"
+        class="hidden h-5 w-5 dark:block"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
