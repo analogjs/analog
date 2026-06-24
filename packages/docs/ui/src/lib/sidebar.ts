@@ -7,9 +7,12 @@ import {
   RouterLinkActive,
 } from '@angular/router';
 import { filter, map, startWith } from 'rxjs/operators';
-import { injectDocsConfig } from '../config';
-import { useLocaleSignal } from '../locale';
-import type { SidebarCategory, SidebarNode } from '../sidebar';
+import {
+  injectDocsConfig,
+  useLocaleSignal,
+  type SidebarCategory,
+  type SidebarNode,
+} from '@analogjs/docs';
 
 @Component({
   selector: 'docs-sidebar',

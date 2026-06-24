@@ -1,0 +1,10 @@
+export { DocFooter } from './lib/doc-footer';
+export { EnhanceCode } from './lib/enhance-code';
+export { Footer } from './lib/footer';
+export { Header } from './lib/header';
+export { LocalePicker } from './lib/locale-picker';
+export { Search, currentLocaleFromPath, localizeHitUrl } from './lib/search';
+export { Sidebar } from './lib/sidebar';
+export { SidebarDrawer } from './lib/sidebar-drawer';
+export { ThemeToggle } from './lib/theme-toggle';
+export { Toc, extractHeadings, type Heading } from './lib/toc';

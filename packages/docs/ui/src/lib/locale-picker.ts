@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CONTENT_LOCALE } from '@analogjs/content';
 import { injectSwitchLocale } from '@analogjs/router/i18n';
-import { injectDocsConfig } from '../config';
+import { injectDocsConfig } from '@analogjs/docs';
 
 @Component({
   selector: 'docs-locale-picker',

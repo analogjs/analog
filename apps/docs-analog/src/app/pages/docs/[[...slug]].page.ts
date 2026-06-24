@@ -15,7 +15,12 @@ import {
   injectContent,
   MarkdownComponent,
 } from '@analogjs/content';
-import { DocFooter, EnhanceCode, extractHeadings, Toc } from '@analogjs/docs';
+import {
+  DocFooter,
+  EnhanceCode,
+  extractHeadings,
+  Toc,
+} from '@analogjs/docs/ui';
 import { DocSeo } from '../../seo';
 
 interface DocAttributes {

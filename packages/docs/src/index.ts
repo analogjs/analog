@@ -22,18 +22,3 @@ export {
 } from './lib/sidebar';
 
 export { resolveActiveLocale, useLocaleSignal } from './lib/locale';
-
-export { DocFooter } from './lib/components/doc-footer';
-export { EnhanceCode } from './lib/components/enhance-code';
-export { Footer } from './lib/components/footer';
-export { Header } from './lib/components/header';
-export { LocalePicker } from './lib/components/locale-picker';
-export {
-  Search,
-  currentLocaleFromPath,
-  localizeHitUrl,
-} from './lib/components/search';
-export { Sidebar } from './lib/components/sidebar';
-export { SidebarDrawer } from './lib/components/sidebar-drawer';
-export { ThemeToggle } from './lib/components/theme-toggle';
-export { Toc, extractHeadings, type Heading } from './lib/components/toc';

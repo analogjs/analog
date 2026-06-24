@@ -42,6 +42,10 @@
         "./node_modules/@analogjs/docs",
         "packages/docs/src/index.ts"
       ],
+      "@analogjs/docs/ui": [
+        "./node_modules/@analogjs/docs/ui",
+        "packages/docs/ui/src/index.ts"
+      ],
       "@analogjs/router": [
         "./node_modules/@analogjs/router",
         "packages/router/src/index.ts"

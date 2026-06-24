@@ -6,7 +6,7 @@ import {
   inject,
   PLATFORM_ID,
 } from '@angular/core';
-import { injectDocsConfig } from '../config';
+import { injectDocsConfig } from '@analogjs/docs';
 
 /**
  * Adds a "Copy" button to every <pre> code block under the host

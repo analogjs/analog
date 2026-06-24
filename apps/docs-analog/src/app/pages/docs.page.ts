@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { SidebarDrawer } from '@analogjs/docs';
+import { SidebarDrawer } from '@analogjs/docs/ui';
 
 @Component({
   imports: [RouterOutlet, SidebarDrawer],

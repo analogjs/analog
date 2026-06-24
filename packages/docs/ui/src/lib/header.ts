@@ -1,6 +1,6 @@
 import { Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { injectDocsConfig } from '../config';
+import { injectDocsConfig } from '@analogjs/docs';
 import { LocalePicker } from './locale-picker';
 import { Search } from './search';
 import { ThemeToggle } from './theme-toggle';

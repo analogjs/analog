@@ -1,8 +1,11 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { injectDocsConfig } from '../config';
-import { useLocaleSignal } from '../locale';
-import { findSidebarIndex, flattenSidebar } from '../sidebar';
+import {
+  findSidebarIndex,
+  flattenSidebar,
+  injectDocsConfig,
+  useLocaleSignal,
+} from '@analogjs/docs';
 
 @Component({
   selector: 'docs-doc-footer',
