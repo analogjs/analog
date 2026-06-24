@@ -68,7 +68,7 @@ export function llmsTxtPlugin(options: LlmsTxtOptions): Plugin {
   const skip = new Set<string>(skipLocales);
 
   return {
-    name: '@analogjs/docs:llms-txt',
+    name: '@analogjs/content/docs:llms-txt',
     apply: 'build',
     closeBundle() {
       const docs: {

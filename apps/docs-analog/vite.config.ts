@@ -10,7 +10,7 @@ import {
   copyMarkdownPlugin,
   llmsTxtPlugin,
   sitemapPlugin,
-} from '@analogjs/docs/vite';
+} from '@analogjs/content/docs/vite';
 import { admonitionExtension } from './src/app/marked/admonition';
 import { mdxTabsExtension } from './src/app/marked/tabs';
 

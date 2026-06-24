@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "module": "node16",
     "moduleResolution": "node16",
@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "../../../node_modules/@analogjs/docs/vite",
+    "outDir": "../../../../node_modules/@analogjs/content/docs/vite",
     "rootDir": "./src"
   },
   "include": ["src/**/*.ts"]
