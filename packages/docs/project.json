@@ -7,6 +7,19 @@
   "tags": [],
   "targets": {
     "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/docs"],
+      "dependsOn": ["^build"],
+      "options": {
+        "parallel": false,
+        "commands": [
+          "nx run docs:build-ng",
+          "nx run docs:build-vite",
+          "node packages/docs/scripts/patch-package-json.mjs"
+        ]
+      }
+    },
+    "build-ng": {
       "executor": "@angular-devkit/build-angular:ng-packagr",
       "outputs": ["{workspaceRoot}/node_modules/@analogjs/docs"],
       "options": {
@@ -21,6 +34,13 @@
         }
       },
       "defaultConfiguration": "production"
+    },
+    "build-vite": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/docs/vite"],
+      "options": {
+        "command": "tsc -p packages/docs/vite/tsconfig.json"
+      }
     }
   }
 }

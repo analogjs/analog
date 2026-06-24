@@ -2,8 +2,22 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import type { Plugin } from 'vite';
 
-const SITE_URL = 'https://analogjs.org';
-const SUPPORTED_LOCALES = new Set(['de', 'es', 'pt-br', 'zh-hans']);
+export interface LlmsTxtOptions {
+  /** Public site origin, e.g. `https://analogjs.org`. No trailing slash. */
+  siteUrl: string;
+  /** Brand name written as the top-level heading in `llms.txt`. */
+  siteName: string;
+  /** Absolute path to the content root. */
+  contentDir: string;
+  /** Absolute path to the prerendered client dist directory. */
+  distDir: string;
+  /**
+   * Non-default locale codes to SKIP. llms.txt convention indexes the
+   * default locale only; translated docs are filtered out by matching
+   * any of these prefixes on the slug.
+   */
+  skipLocales: ReadonlyArray<string>;
+}
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -41,29 +55,23 @@ function stripFrontmatter(text: string): {
 }
 
 /**
- * Emits two files at the dist root, matching the existing
- * apps/docs-app docusaurus.config.js llms-txt-plugin output:
+ * Emits two files at the dist root:
  *
- *   - llms.txt       index of all English doc titles with URLs
- *   - llms-full.txt  concatenated EN markdown bodies, each prefixed
- *                    by its title + URL
+ *   - llms.txt       index of all default-locale doc titles + URLs
+ *   - llms-full.txt  concatenated default-locale markdown bodies,
+ *                    each prefixed by its title + URL
  *
- * Translated docs are not included (per Phase 4-5 layout the canonical
- * URL set is English-only at /docs/, locales mirror at /<locale>/docs/
- * but llms.txt convention indexes the default locale only).
+ * Translated docs are excluded (per the llms.txt convention).
  */
-export function llmsTxtPlugin(): Plugin {
+export function llmsTxtPlugin(options: LlmsTxtOptions): Plugin {
+  const { siteUrl, siteName, contentDir, distDir, skipLocales } = options;
+  const skip = new Set<string>(skipLocales);
+
   return {
-    name: 'docs-analog:llms-txt',
+    name: '@analogjs/docs:llms-txt',
     apply: 'build',
     closeBundle() {
-      const contentDir = resolve(__dirname, '../content');
-      const outDir = resolve(
-        __dirname,
-        '../../../../dist/apps/docs-analog/client',
-      );
-
-      const enDocs: {
+      const docs: {
         slug: string;
         title: string;
         description?: string;
@@ -72,10 +80,10 @@ export function llmsTxtPlugin(): Plugin {
       for (const file of walk(contentDir)) {
         const rel = relative(contentDir, file).replace(/\.md$/, '');
         const parts = rel.split('/');
-        if (SUPPORTED_LOCALES.has(parts[0])) continue;
+        if (skip.has(parts[0])) continue;
         const raw = readFileSync(file, 'utf8');
         const { body, title, description } = stripFrontmatter(raw);
-        enDocs.push({
+        docs.push({
           slug: rel,
           title: title ?? rel,
           description,
@@ -83,26 +91,26 @@ export function llmsTxtPlugin(): Plugin {
         });
       }
 
-      enDocs.sort((a, b) => a.slug.localeCompare(b.slug));
+      docs.sort((a, b) => a.slug.localeCompare(b.slug));
 
-      const indexEntries = enDocs
+      const indexEntries = docs
         .map(
           (d) =>
-            `- [${d.title}](${SITE_URL}/docs/${d.slug}): ${d.description ?? d.title}`,
+            `- [${d.title}](${siteUrl}/docs/${d.slug}): ${d.description ?? d.title}`,
         )
         .join('\n');
-      const llmsTxt = `# Analog\n\n## Docs\n\n${indexEntries}\n`;
-      writeFileSync(resolve(outDir, 'llms.txt'), llmsTxt, 'utf8');
+      const llmsTxt = `# ${siteName}\n\n## Docs\n\n${indexEntries}\n`;
+      writeFileSync(resolve(distDir, 'llms.txt'), llmsTxt, 'utf8');
 
-      const fullEntries = enDocs
+      const fullEntries = docs
         .map(
           (d) =>
-            `# ${d.title}\n\nURL: ${SITE_URL}/docs/${d.slug}\n\n${d.body.trim()}`,
+            `# ${d.title}\n\nURL: ${siteUrl}/docs/${d.slug}\n\n${d.body.trim()}`,
         )
         .join('\n---\n\n');
-      writeFileSync(resolve(outDir, 'llms-full.txt'), fullEntries, 'utf8');
+      writeFileSync(resolve(distDir, 'llms-full.txt'), fullEntries, 'utf8');
 
-      this.info?.(`llms.txt: indexed ${enDocs.length} EN docs`);
+      this.info?.(`llms.txt: indexed ${docs.length} docs`);
     },
   };
 }

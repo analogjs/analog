@@ -46,6 +46,10 @@
         "./node_modules/@analogjs/docs/ui",
         "packages/docs/ui/src/index.ts"
       ],
+      "@analogjs/docs/vite": [
+        "./node_modules/@analogjs/docs/vite",
+        "packages/docs/vite/src/index.ts"
+      ],
       "@analogjs/router": [
         "./node_modules/@analogjs/router",
         "packages/router/src/index.ts"

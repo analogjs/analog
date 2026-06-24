@@ -1,16 +1,24 @@
 /// <reference types="vitest" />
 
+import { resolve } from 'node:path';
 import analog from '@analogjs/platform';
 import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
+import {
+  brokenLinksPlugin,
+  copyMarkdownPlugin,
+  llmsTxtPlugin,
+  sitemapPlugin,
+} from '@analogjs/docs/vite';
 import { admonitionExtension } from './src/app/marked/admonition';
 import { mdxTabsExtension } from './src/app/marked/tabs';
-import { contributingCopyPlugin } from './src/vite-plugins/contributing';
-import { packageReadmesPlugin } from './src/vite-plugins/package-readmes';
-import { sitemapPlugin } from './src/vite-plugins/sitemap';
-import { brokenLinksPlugin } from './src/vite-plugins/broken-links';
-import { llmsTxtPlugin } from './src/vite-plugins/llms-txt';
+
+const REPO_ROOT = resolve(__dirname, '../..');
+const CONTENT_DIR = resolve(__dirname, 'src/content');
+const CLIENT_DIST = resolve(REPO_ROOT, 'dist/apps/docs-analog/client');
+const SITE_URL = 'https://analogjs.org';
+const NON_DEFAULT_LOCALES = ['de', 'es', 'pt-br', 'zh-hans'] as const;
 
 export default defineConfig(({ mode }) => ({
   root: __dirname,
@@ -81,11 +89,49 @@ export default defineConfig(({ mode }) => ({
         },
       },
     }),
-    contributingCopyPlugin(),
-    packageReadmesPlugin(),
-    sitemapPlugin(),
-    llmsTxtPlugin(),
-    brokenLinksPlugin(),
+    copyMarkdownPlugin({
+      entries: [
+        {
+          src: resolve(REPO_ROOT, 'CONTRIBUTING.md'),
+          dst: resolve(CONTENT_DIR, 'contributing.md'),
+          frontmatterTitle: 'Contributing',
+        },
+        {
+          src: resolve(REPO_ROOT, 'packages/astro-angular/README.md'),
+          dst: resolve(CONTENT_DIR, 'packages/astro-angular/overview.md'),
+          frontmatterTitle: 'Astro',
+        },
+        {
+          src: resolve(REPO_ROOT, 'packages/router/README.md'),
+          dst: resolve(CONTENT_DIR, 'packages/router/overview.md'),
+          frontmatterTitle: 'Router',
+        },
+        {
+          src: resolve(REPO_ROOT, 'packages/vite-plugin-angular/README.md'),
+          dst: resolve(CONTENT_DIR, 'packages/vite-plugin-angular/overview.md'),
+          frontmatterTitle: 'Vite',
+        },
+        {
+          src: resolve(REPO_ROOT, 'packages/vite-plugin-nitro/README.md'),
+          dst: resolve(CONTENT_DIR, 'packages/vite-plugin-nitro/overview.md'),
+          frontmatterTitle: 'Nitro',
+        },
+      ],
+    }),
+    sitemapPlugin({
+      siteUrl: SITE_URL,
+      contentDir: CONTENT_DIR,
+      distDir: CLIENT_DIST,
+      locales: NON_DEFAULT_LOCALES,
+    }),
+    llmsTxtPlugin({
+      siteUrl: SITE_URL,
+      siteName: 'Analog',
+      contentDir: CONTENT_DIR,
+      distDir: CLIENT_DIST,
+      skipLocales: NON_DEFAULT_LOCALES,
+    }),
+    brokenLinksPlugin({ distDir: CLIENT_DIST }),
     tailwindcss(),
     nxViteTsPaths(),
   ],
