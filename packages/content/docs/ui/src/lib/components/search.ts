@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import { AfterViewInit, Component, inject, PLATFORM_ID } from '@angular/core';
-import { injectDocsConfig } from '@analogjs/docs';
+import { injectDocsConfig } from '../config';
 
 declare const docsearch: ((opts: Record<string, unknown>) => void) | undefined;
 

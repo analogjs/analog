@@ -1,6 +1,6 @@
 import { Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { injectDocsConfig } from '@analogjs/docs';
+import { injectDocsConfig } from '../config';
 
 @Component({
   selector: 'docs-footer',

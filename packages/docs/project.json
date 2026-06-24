@@ -2,8 +2,7 @@
   "name": "docs",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "packages/docs/src",
-  "prefix": "analogjs",
+  "sourceRoot": "packages/docs/vite/src",
   "tags": [],
   "targets": {
     "build": {
@@ -13,27 +12,10 @@
       "options": {
         "parallel": false,
         "commands": [
-          "nx run docs:build-ng",
           "nx run docs:build-vite",
-          "node packages/docs/scripts/patch-package-json.mjs"
+          "node packages/docs/scripts/write-package-json.mjs"
         ]
       }
-    },
-    "build-ng": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/docs"],
-      "options": {
-        "project": "packages/docs/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/docs/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/docs/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
     },
     "build-vite": {
       "executor": "nx:run-commands",

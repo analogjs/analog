@@ -32,8 +32,9 @@ import {
   withInMemoryScrolling,
   withRouterConfig,
 } from '@angular/router';
-import { provideAnalogDocs, resolveActiveLocale } from '@analogjs/docs';
-import { SUPPORTED_LOCALES } from './locale';
+import { provideAnalogDocs } from '@analogjs/content/docs/ui';
+import { injectSwitchLocale } from '@analogjs/router/i18n';
+import { resolveActiveLocale, SUPPORTED_LOCALES } from './locale';
 import { ScrollRestorer } from './scroll';
 import { sidebar } from './sidebar';
 
@@ -108,6 +109,7 @@ export const appConfig: ApplicationConfig = {
         logoAlt: '',
       },
       sidebar,
+      switchLocaleFactory: () => injectSwitchLocale(),
       locales: {
         default: 'en',
         list: [

@@ -78,6 +78,13 @@ export interface DocsConfig {
   headerNav?: DocsNavLink[];
   /** Footer link columns + legal line. */
   footer?: DocsFooterConfig;
+  /**
+   * Factory that returns the switch-locale callback used by the locale
+   * picker. Called inside an injection context (the picker constructor),
+   * so the body may use `inject()` — typically
+   * `() => injectSwitchLocale()` from `@analogjs/router/i18n`.
+   */
+  switchLocaleFactory?: () => (code: string) => void;
 }
 
 export const ANALOG_DOCS_CONFIG = new InjectionToken<DocsConfig>(

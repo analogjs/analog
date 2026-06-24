@@ -1,7 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CONTENT_LOCALE } from '@analogjs/content';
-import { injectSwitchLocale } from '@analogjs/router/i18n';
-import { injectDocsConfig } from '@analogjs/docs';
+import { injectDocsConfig } from '../config';
 
 @Component({
   selector: 'docs-locale-picker',
@@ -46,9 +45,7 @@ import { injectDocsConfig } from '@analogjs/docs';
 export class LocalePicker {
   private readonly config = injectDocsConfig();
   private readonly currentLocale = inject(CONTENT_LOCALE, { optional: true });
-  // Hard-reloads so $localize-resolved templates and CONTENT_LOCALE
-  // (provided once via useFactory at bootstrap) pick up the new locale.
-  private readonly switchLocale = injectSwitchLocale();
+  private readonly switchLocale = this.config.switchLocaleFactory?.();
 
   protected readonly locales = computed(() => this.config.locales?.list ?? []);
   protected readonly open = signal(false);
@@ -63,6 +60,6 @@ export class LocalePicker {
 
   protected pick(code: string): void {
     this.open.set(false);
-    this.switchLocale(code);
+    this.switchLocale?.(code);
   }
 }

@@ -20,7 +20,7 @@ import {
   EnhanceCode,
   extractHeadings,
   Toc,
-} from '@analogjs/docs/ui';
+} from '@analogjs/content/docs/ui';
 import { DocSeo } from '../../seo';
 
 interface DocAttributes {
