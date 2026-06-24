@@ -51,7 +51,7 @@ export function sitemapPlugin(options: SitemapOptions): Plugin {
       : `${siteUrl}/${locale}/docs/${slug}`;
 
   return {
-    name: '@analogjs/content/docs:sitemap',
+    name: '@analogjs/content:sitemap',
     apply: 'build',
     closeBundle() {
       const entries = new Map<string, DocEntry>();

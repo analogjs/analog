@@ -34,7 +34,7 @@ export function copyMarkdownPlugin(options: CopyMarkdownOptions): Plugin {
     }
   };
   return {
-    name: '@analogjs/content/docs:copy-markdown',
+    name: '@analogjs/content:copy-markdown',
     buildStart() {
       sync();
     },

@@ -48,7 +48,7 @@ function targetExists(distRoot: string, href: string): boolean {
 export function brokenLinksPlugin(options: BrokenLinksOptions): Plugin {
   const { distDir, maxReported = 30 } = options;
   return {
-    name: '@analogjs/content/docs:broken-links',
+    name: '@analogjs/content:broken-links',
     apply: 'build',
     closeBundle() {
       if (!existsSync(distDir)) {

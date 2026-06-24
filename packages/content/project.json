@@ -13,19 +13,19 @@
         "commands": [
           "nx build-package content",
           "nx build content-plugin",
-          "nx run content:build-docs-vite",
-          "node packages/content/scripts/patch-docs-vite-export.mjs",
+          "nx run content:build-vite",
+          "node packages/content/scripts/patch-vite-export.mjs",
           "npx rimraf node_modules/@analogjs/content/.npmignore"
         ],
         "parallel": false
       },
       "dependsOn": ["^build"]
     },
-    "build-docs-vite": {
+    "build-vite": {
       "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content/docs/vite"],
+      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content/vite"],
       "options": {
-        "command": "tsc -p packages/content/docs/vite/tsconfig.json"
+        "command": "tsc -p packages/content/vite/tsconfig.json"
       }
     },
     "build-package": {

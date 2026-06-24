@@ -42,9 +42,9 @@
         "./node_modules/@analogjs/content/docs",
         "packages/content/docs/src/index.ts"
       ],
-      "@analogjs/content/docs/vite": [
-        "./node_modules/@analogjs/content/docs/vite",
-        "packages/content/docs/vite/src/index.ts"
+      "@analogjs/content/vite": [
+        "./node_modules/@analogjs/content/vite",
+        "packages/content/vite/src/index.ts"
       ],
       "@analogjs/router": [
         "./node_modules/@analogjs/router",
