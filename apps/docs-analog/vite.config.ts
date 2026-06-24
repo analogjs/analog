@@ -6,13 +6,13 @@ import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 import {
+  admonitionExtension,
   brokenLinksPlugin,
   copyMarkdownPlugin,
   llmsTxtPlugin,
+  mdxTabsExtension,
   sitemapPlugin,
 } from '@analogjs/content/vite';
-import { admonitionExtension } from './src/app/marked/admonition';
-import { mdxTabsExtension } from './src/app/marked/tabs';
 
 const REPO_ROOT = resolve(__dirname, '../..');
 const CONTENT_DIR = resolve(__dirname, 'src/content');
