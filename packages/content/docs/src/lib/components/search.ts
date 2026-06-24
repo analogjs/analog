@@ -35,22 +35,27 @@ export class Search implements AfterViewInit {
 
     const init = () => {
       if (typeof docsearch === 'undefined') return;
+      const current = currentLocaleFromPath(
+        window.location.pathname,
+        indexedSet,
+        defaultLocale,
+      );
       docsearch({
         container: '.docsearch-trigger',
         appId: search.appId,
         apiKey: search.apiKey,
         indexName: search.indexName,
-        transformItems: (items: { url: string }[]) => {
-          const current = currentLocaleFromPath(
-            window.location.pathname,
-            indexedSet,
-            defaultLocale,
-          );
-          return items.map((item) => ({
+        // Restrict hits to the active locale. Matches the `language`
+        // facet that Algolia DocSearch's crawler attaches to each
+        // indexed page based on URL prefix.
+        searchParameters: {
+          facetFilters: [`language:${current}`],
+        },
+        transformItems: (items: { url: string }[]) =>
+          items.map((item) => ({
             ...item,
             url: localizeHitUrl(item.url, current, indexedSet, defaultLocale),
-          }));
-        },
+          })),
       });
     };
 
