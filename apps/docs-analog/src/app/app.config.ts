@@ -36,7 +36,7 @@ import { provideAnalogDocs } from '@analogjs/content/docs';
 import { injectSwitchLocale } from '@analogjs/router/i18n';
 import { resolveActiveLocale, SUPPORTED_LOCALES } from './locale';
 import { ScrollRestorer } from './scroll';
-import { sidebar } from './sidebar';
+import { getSidebar } from './sidebar';
 
 // Picking a locale from the marketing home (`/`) hard-reloads to
 // `/<locale>/` — this route renders the same HomePage so the URL keeps
@@ -102,13 +102,16 @@ export const appConfig: ApplicationConfig = {
         return m.default;
       },
     }),
-    provideAnalogDocs({
+    // Factory form so $localize labels evaluate against translations
+    // loaded by provideI18n's app initializer (useFactory defers until
+    // a component first injects the token — well after bootstrap).
+    provideAnalogDocs(() => ({
       brand: {
         name: 'Analog',
         logoSrc: '/img/logos/analog-logo.svg',
         logoAlt: '',
       },
-      sidebar,
+      sidebar: getSidebar(),
       switchLocaleFactory: () => injectSwitchLocale(),
       locales: {
         default: 'en',
@@ -130,18 +133,30 @@ export const appConfig: ApplicationConfig = {
         indexName: 'analogjs',
       },
       headerNav: [
-        { label: 'Docs', routerLink: '/docs/introduction' },
-        { label: 'Support', routerLink: '/docs/support' },
+        {
+          label: $localize`:@@nav.docs:Docs`,
+          routerLink: '/docs/introduction',
+        },
+        {
+          label: $localize`:@@nav.support:Support`,
+          routerLink: '/docs/support',
+        },
         { label: 'GitHub', href: 'https://github.com/analogjs/analog' },
         { label: 'Discord', href: 'https://chat.analogjs.org' },
       ],
       footer: {
         columns: [
           {
-            title: 'Documentation',
+            title: $localize`:@@footer.documentation:Documentation`,
             items: [
-              { label: 'Introduction', routerLink: '/docs/introduction' },
-              { label: 'Getting Started', routerLink: '/docs/getting-started' },
+              {
+                label: $localize`:@@sidebar.introduction:Introduction`,
+                routerLink: '/docs/introduction',
+              },
+              {
+                label: $localize`:@@sidebar.getting-started:Getting Started`,
+                routerLink: '/docs/getting-started',
+              },
               { label: 'llms.txt', href: 'https://analogjs.org/llms.txt' },
               {
                 label: 'llms-full.txt',
@@ -150,15 +165,24 @@ export const appConfig: ApplicationConfig = {
             ],
           },
           {
-            title: 'Open source',
+            title: $localize`:@@footer.open-source:Open source`,
             items: [
-              { label: 'Contributors', routerLink: '/docs/contributors' },
-              { label: 'Contributing', routerLink: '/docs/contributing' },
-              { label: 'Sponsoring', routerLink: '/docs/sponsoring' },
+              {
+                label: $localize`:@@sidebar.contributors:Contributors`,
+                routerLink: '/docs/contributors',
+              },
+              {
+                label: $localize`:@@footer.contributing:Contributing`,
+                routerLink: '/docs/contributing',
+              },
+              {
+                label: $localize`:@@footer.sponsoring:Sponsoring`,
+                routerLink: '/docs/sponsoring',
+              },
             ],
           },
           {
-            title: 'More',
+            title: $localize`:@@footer.more:More`,
             items: [
               { label: 'GitHub', href: 'https://github.com/analogjs/analog' },
               { label: 'Discord', href: 'https://chat.analogjs.org' },
@@ -171,7 +195,7 @@ export const appConfig: ApplicationConfig = {
         ],
         legalLine: `© 2022–${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
-    }),
+    })),
     provideAppInitializer(() => inject(ScrollRestorer).start()),
   ],
 };

@@ -92,10 +92,16 @@ export const ANALOG_DOCS_CONFIG = new InjectionToken<DocsConfig>(
 );
 
 export function provideAnalogDocs(
-  config: DocsConfig,
+  configOrFactory: DocsConfig | (() => DocsConfig),
 ): EnvironmentProviders | Provider {
+  // Accept a factory so $localize calls inside the config resolve
+  // against translations loaded by provideI18n's app initializer.
+  // useFactory defers evaluation until the token is first injected
+  // (a component construction), well after bootstrap.
   return makeEnvironmentProviders([
-    { provide: ANALOG_DOCS_CONFIG, useValue: config },
+    typeof configOrFactory === 'function'
+      ? { provide: ANALOG_DOCS_CONFIG, useFactory: configOrFactory }
+      : { provide: ANALOG_DOCS_CONFIG, useValue: configOrFactory },
   ]);
 }
 
