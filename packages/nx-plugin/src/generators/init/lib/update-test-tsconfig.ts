@@ -17,7 +17,7 @@ export function updateTestTsConfig(
 ) {
   const projects = getProjects(tree);
 
-  const projectConfig = projects.get(schema.project);
+  const projectConfig = projects.get(schema.project)!;
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,

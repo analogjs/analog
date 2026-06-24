@@ -4,7 +4,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 
 export function updateMain(tree: Tree, schema: SetupAnalogGeneratorSchema) {
   const projects = getProjects(tree);
-  const projectConfig = projects.get(schema.project);
+  const projectConfig = projects.get(schema.project)!;
 
   const mainPath = joinPathFragments(projectConfig.root, 'src/main.ts');
 

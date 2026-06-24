@@ -84,6 +84,17 @@ export default defineConfig(() => {
           prerender: {
             failOnError: true,
           },
+          externals: {
+            // `sharp` lists `@img/sharp-wasm32` as an optional dependency.
+            // pnpm leaves a dangling symlink for it on non-wasm platforms
+            // (the package is never fetched), and nitro's external file
+            // trace calls `realpath()` on every traced file — throwing
+            // ENOENT on that dangling link. Exclude it from the trace; the
+            // wasm32 fallback is never used when a native binary is present.
+            traceOptions: {
+              ignore: (path: string) => path.includes('@img/sharp-wasm32'),
+            },
+          },
         },
       }),
       nxViteTsPaths(),

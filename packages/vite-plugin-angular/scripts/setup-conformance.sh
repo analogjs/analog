@@ -6,8 +6,19 @@
 set -e
 
 if [ -z "$1" ] || [ "$1" = "latest" ]; then
-  # Auto-detect latest release
-  VERSION=$(curl -sL https://api.github.com/repos/angular/angular/releases/latest | grep -o '"tag_name": "[^"]*"' | sed 's/"tag_name": "//;s/"//')
+  # Latest stable release: highest x.y.z tag (excludes -next/-rc prereleases).
+  # Resolved with `git ls-remote` like the cases below — the unauthenticated
+  # GitHub releases API is rate-limited on shared CI runners and returned an
+  # empty tag, which produced a `git clone --branch ""` failure (exit 128).
+  VERSION=$(git ls-remote --tags https://github.com/angular/angular.git \
+    | grep -oE "refs/tags/v?[0-9]+\.[0-9]+\.[0-9]+$" \
+    | sed 's|refs/tags/||' \
+    | sort -V \
+    | tail -1)
+  if [ -z "$VERSION" ]; then
+    echo "Could not detect latest Angular release"
+    exit 1
+  fi
   echo "Detected latest Angular release: $VERSION"
 elif [ "$1" = "next" ]; then
   # Find the latest -next.N prerelease tag (may have v prefix)
@@ -60,7 +71,12 @@ if ! git clone --depth 1 --branch "$VERSION" --filter=blob:none --sparse \
 fi
 
 cd "$TARGET"
-git sparse-checkout set packages/compiler-cli/test/compliance/test_cases
+# test_cases drives conformance.spec; core/src and the ngtsc initializer-function
+# list are the upstream sources the decorator / signal-API drift detectors read.
+git sparse-checkout set \
+  packages/compiler-cli/test/compliance/test_cases \
+  packages/core/src \
+  packages/compiler-cli/src/ngtsc/annotations/directive/src
 
 echo "Done. $(find packages/compiler-cli/test/compliance/test_cases -name '*.ts' | wc -l | tr -d ' ') test files downloaded."
 echo "Run: ANGULAR_SOURCE_DIR=$TARGET npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts"

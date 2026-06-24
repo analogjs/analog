@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/storybook-angular",
-  "version": "2.5.3-beta.2",
+  "version": "2.6.2-beta.2",
   "description": "Storybook Integration for Angular & Vite",
   "type": "module",
   "keywords": [
@@ -45,7 +45,7 @@
     "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.22.3"
   },
   "builders": "src/lib/builders.json",
   "ng-add": {

@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: '24.11.0'
+          node-version: '24.15.0'
       - run: npm install --global corepack@0.34.6
       - run: corepack enable
       - run: npm --version

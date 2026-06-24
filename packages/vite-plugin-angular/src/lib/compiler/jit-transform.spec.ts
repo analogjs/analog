@@ -632,6 +632,64 @@ describe('JIT transform nested class support', () => {
     expect(result).toContain('TopComponent.decorators');
     expect(result).toContain('InnerComponent.decorators');
   });
+
+  // Regression for #2360: a component declared inside a function/callback
+  // scope (the common "host component to test a directive" pattern, where the
+  // class lives inside a `describe(...)`/`it(...)` block) must have its
+  // metadata statements emitted IN SCOPE — emitting them at the end of the
+  // file would reference an undefined name and throw `ReferenceError` when the
+  // spec module is evaluated.
+  it('emits nested-class metadata in scope (no ReferenceError on eval)', () => {
+    const emitted = jitTransform(
+      `
+      import { Component } from '@angular/core';
+
+      export function makeHost() {
+        @Component({ selector: 'app-host', template: '' })
+        class TestComponent {}
+        return TestComponent;
+      }
+    `,
+      'example.component.spec.ts',
+    ).code;
+
+    // Stub @angular/core so the emitted JS can run under \`new Function\`.
+    const stubs = {
+      Component: () => () => undefined,
+      ɵcompileComponent: () => undefined,
+      ɵcompileDirective: () => undefined,
+      ɵcompilePipe: () => undefined,
+      ɵcompileNgModule: () => undefined,
+    };
+    const runnable = emitted
+      .replace(
+        /import\s+\{([^}]+)\}\s+from\s+['"]@angular\/core['"];?/g,
+        (_m, specs: string) => {
+          const destructured = specs
+            .split(',')
+            .map((s) => {
+              const parts = s.trim().match(/^(\S+)(?:\s+as\s+(\S+))?$/);
+              if (!parts) return '';
+              const [, imported, local] = parts;
+              return local ? `${imported}: ${local}` : imported;
+            })
+            .filter(Boolean)
+            .join(', ');
+          return `const { ${destructured} } = __stubs__;`;
+        },
+      )
+      .replace(/^\s*export\s+(?=function)/gm, '');
+
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const fn = new Function('__stubs__', `${runnable}\nreturn makeHost();`);
+    const Cls = fn(stubs);
+
+    // Evaluating the factory must not throw, and the in-scope statements must
+    // have attached the metadata to the nested class.
+    expect(typeof Cls).toBe('function');
+    expect((Cls as any).decorators).toBeDefined();
+    expect((Cls as any).decorators[0].args[0].selector).toBe('app-host');
+  });
 });
 
 describe('JIT transform auto-imports decorator classes for signal API downleveling', () => {

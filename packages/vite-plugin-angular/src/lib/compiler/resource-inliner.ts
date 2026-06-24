@@ -4,30 +4,73 @@ import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
 import { extractInlineStyles as extractStylesFromAst } from './style-ast.js';
 
+export interface InlineResourceResult {
+  /** The modified source code, or the original if no changes were needed. */
+  code: string;
+  /**
+   * Source extension (without the leading dot, lower-cased — e.g. `scss`) of
+   * each inlined external style, keyed by its position in the flat per-file
+   * style list produced by {@link extractInlineStyles}. Lets the caller run
+   * each external `styleUrl` through the right preprocessor by its own file
+   * extension, independent of the `inlineStylesExtension` option (which governs
+   * truly-inline `styles: [...]` template strings).
+   */
+  styleExtensions: Map<number, string>;
+}
+
+/** Whether a node is an inline style value (string literal or single-quasi template). */
+function isInlineStyleValue(node: any): boolean {
+  return (
+    (node?.type === 'Literal' && typeof node.value === 'string') ||
+    (node?.type === 'TemplateLiteral' && node.quasis?.length === 1)
+  );
+}
+
+/** Count the elements of a `styles: [...]` array that {@link extractInlineStyles} would emit. */
+function countInlineStyleLiterals(arrayExpr: any): number {
+  let count = 0;
+  for (const el of arrayExpr.elements ?? []) {
+    if (el?.type === 'Literal' && typeof el.value === 'string') count++;
+    else if (el?.type === 'TemplateLiteral' && el.quasis?.length === 1) count++;
+  }
+  return count;
+}
+
 /**
  * Inline external templateUrl and styleUrl/styleUrls into the source code
  * using OXC parser for precise AST-based rewriting.
  *
  * Replaces:
  *   templateUrl: './file.html'  →  template: "...file contents..."
- *   styleUrl: './file.css'      →  styles: ["...file contents..."]
- *   styleUrls: ['./a.css']      →  styles: ["...contents..."]
+ *   styleUrl: './file.scss'     →  styles: ["...file contents..."]
+ *   styleUrls: ['./a.scss']     →  styles: ["...contents..."]
  *
  * When the decorator already has a `styles: [...]` array, inlined CSS is
  * merged into that existing array instead of emitting a second `styles`
  * property (which would be a duplicate object literal key).
  *
- * Returns the modified source code, or the original if no changes were needed.
+ * Returns the modified source code plus the per-style-index extension map
+ * (see {@link InlineResourceResult}).
  */
-export function inlineResourceUrls(code: string, fileName: string): string {
+export function inlineResourceUrls(
+  code: string,
+  fileName: string,
+): InlineResourceResult {
+  const styleExtensions = new Map<number, string>();
+
   if (!code.includes('templateUrl') && !code.includes('styleUrl')) {
-    return code;
+    return { code, styleExtensions };
   }
 
   const { program } = parseSync(fileName, code);
   const ms = new MagicString(code);
   let changed = false;
   const dir = path.dirname(fileName);
+
+  // Running base index into the flat per-file style list (matching the order
+  // `extractInlineStyles` walks classes/decorators/properties) so external
+  // styles can be mapped to the index `resolvedInlineStyles` later keys on.
+  let flatStyleBase = 0;
 
   for (const node of program.body) {
     const decl =
@@ -45,23 +88,42 @@ export function inlineResourceUrls(code: string, fileName: string): string {
       const arg = expr.arguments?.[0];
       if (!arg || arg.type !== 'ObjectExpression') continue;
 
-      // First pass: locate an existing `styles: [...]` array in the same
-      // decorator. Inlined CSS will be merged into it to avoid duplicate keys.
+      // First pass: locate an existing `styles` property in the same decorator.
+      // Inlined CSS is merged into it — converting a singular string/template
+      // value to an array when needed — to avoid emitting a duplicate `styles`
+      // key.
+      let existingStylesProp: any = null;
       let existingStylesArray: any = null;
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
         const key: string = prop.key?.name ?? prop.key?.value;
-        if (key === 'styles' && prop.value?.type === 'ArrayExpression') {
-          existingStylesArray = prop.value;
+        if (key === 'styles') {
+          existingStylesProp = prop;
+          if (prop.value?.type === 'ArrayExpression') {
+            existingStylesArray = prop.value;
+          }
           break;
         }
       }
 
+      // Inline `styles` entries already present come first in the flat list;
+      // appended external styles follow them.
+      const existingInlineCount = existingStylesArray
+        ? countInlineStyleLiterals(existingStylesArray)
+        : isInlineStyleValue(existingStylesProp?.value)
+          ? 1
+          : 0;
+
       // Collect the props we want to rewrite. Contents from styleUrl /
       // styleUrls are accumulated so that multiple url-based props in one
-      // decorator collapse into a single `styles` array write.
+      // decorator collapse into a single `styles` array write. `extensions`
+      // tracks each content's source extension in the same order.
       const templateUrlRewrites: Array<{ prop: any; content: string }> = [];
-      const cssProps: Array<{ prop: any; contents: string[] }> = [];
+      const cssProps: Array<{
+        prop: any;
+        contents: string[];
+        extensions: string[];
+      }> = [];
 
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
@@ -91,7 +153,11 @@ export function inlineResourceUrls(code: string, fileName: string): string {
           try {
             const filePath = path.resolve(dir, val.value);
             const content = fs.readFileSync(filePath, 'utf-8');
-            cssProps.push({ prop, contents: [content] });
+            cssProps.push({
+              prop,
+              contents: [content],
+              extensions: [extensionOf(filePath)],
+            });
           } catch {
             // Keep original if file can't be read
           }
@@ -100,12 +166,14 @@ export function inlineResourceUrls(code: string, fileName: string): string {
 
         if (key === 'styleUrls' && val?.type === 'ArrayExpression') {
           const contents: string[] = [];
+          const extensions: string[] = [];
           let allRead = true;
           for (const el of val.elements) {
             if (el?.type === 'Literal' && typeof el.value === 'string') {
               try {
                 const filePath = path.resolve(dir, el.value);
                 contents.push(fs.readFileSync(filePath, 'utf-8'));
+                extensions.push(extensionOf(filePath));
               } catch {
                 allRead = false;
                 break;
@@ -113,7 +181,7 @@ export function inlineResourceUrls(code: string, fileName: string): string {
             }
           }
           if (allRead && contents.length > 0) {
-            cssProps.push({ prop, contents });
+            cssProps.push({ prop, contents, extensions });
           }
         }
       }
@@ -129,6 +197,7 @@ export function inlineResourceUrls(code: string, fileName: string): string {
 
       if (cssProps.length > 0) {
         const allContents = cssProps.flatMap((c) => c.contents);
+        const allExtensions = cssProps.flatMap((c) => c.extensions);
 
         if (existingStylesArray) {
           // Filter out null holes in case the source already has a sparse array.
@@ -157,6 +226,25 @@ export function inlineResourceUrls(code: string, fileName: string): string {
           for (const { prop } of cssProps) {
             removePropertyWithSeparator(ms, code, prop.start, prop.end);
           }
+        } else if (isInlineStyleValue(existingStylesProp?.value)) {
+          // Singular `styles: '...'` / `styles: \`...\`` — wrap the original
+          // value into an array merged with the inlined styles, then drop the
+          // styleUrl props so only one `styles` key remains.
+          const original = code.slice(
+            existingStylesProp.value.start,
+            existingStylesProp.value.end,
+          );
+          const merged = allContents
+            .map((c) => `, ${JSON.stringify(c)}`)
+            .join('');
+          ms.overwrite(
+            existingStylesProp.value.start,
+            existingStylesProp.value.end,
+            `[${original}${merged}]`,
+          );
+          for (const { prop } of cssProps) {
+            removePropertyWithSeparator(ms, code, prop.start, prop.end);
+          }
         } else {
           // No existing `styles` array — rewrite the first styleUrl/styleUrls
           // prop with the merged contents and drop any additional ones so we
@@ -172,11 +260,26 @@ export function inlineResourceUrls(code: string, fileName: string): string {
           }
         }
         changed = true;
+
+        // The appended external styles occupy the flat indices after any
+        // pre-existing inline styles for this component.
+        const externalBase = flatStyleBase + existingInlineCount;
+        allExtensions.forEach((ext, k) => {
+          if (ext) styleExtensions.set(externalBase + k, ext);
+        });
+        flatStyleBase = externalBase + allContents.length;
+      } else {
+        flatStyleBase += existingInlineCount;
       }
     }
   }
 
-  return changed ? ms.toString() : code;
+  return { code: changed ? ms.toString() : code, styleExtensions };
+}
+
+/** Lower-cased file extension without the leading dot (e.g. `scss`), or `''`. */
+function extensionOf(filePath: string): string {
+  return path.extname(filePath).slice(1).toLowerCase();
 }
 
 /**

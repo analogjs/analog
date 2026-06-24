@@ -14,7 +14,7 @@ interface TsConfig {
 export function updateTsConfig(tree: Tree, schema: SetupVitestGeneratorSchema) {
   const projects = getProjects(tree);
 
-  const projectConfig = projects.get(schema.project);
+  const projectConfig = projects.get(schema.project)!;
 
   const tsconfigPath = joinPathFragments(
     projectConfig.root,
