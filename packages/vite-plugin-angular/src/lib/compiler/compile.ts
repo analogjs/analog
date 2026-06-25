@@ -638,14 +638,21 @@ export function compile(
           // declarations + imports. We resolve the owning module's transitive scope
           // here and inline it into the component's own `dependencies` — matching
           // ngtsc, and surviving tree-shaking (unlike a separate, droppable
-          // `ɵɵsetComponentScope` call). Angular 19+ requires an explicit
-          // `standalone: false`; on v17/v18 NgModule-declared components usually
-          // omit the flag (it defaulted to false), so treat a missing flag as
-          // non-standalone there without misclassifying v19+ (default true).
-          const isNonStandalone =
-            meta.standalone === false ||
-            (ANGULAR_MAJOR < 19 && meta.standalone !== true);
-          if (!isPartial && isNonStandalone && registry) {
+          // `ɵɵsetComponentScope` call).
+          //
+          // The real "non-standalone" signal is the owning-module lookup below:
+          // a component listed in an @NgModule's `declarations` is non-standalone
+          // by definition (Angular forbids declaring a standalone component). The
+          // `meta.standalone` flag can't be trusted to detect this — the metadata
+          // default is `true`, so an *omitted* flag (the common pre-v19 form,
+          // where it defaulted to false) is indistinguishable from explicit
+          // `true`. So gate cheaply: on v19+ a declared component must set
+          // `standalone: false`, so only run the lookup for those; pre-v19 the
+          // flag is unreliable, so run it for every component (the lookup itself
+          // filters out genuinely standalone ones — they aren't declared).
+          const mightBeNonStandalone =
+            meta.standalone === false || ANGULAR_MAJOR < 19;
+          if (!isPartial && mightBeNonStandalone && registry) {
             let owningModule:
               | { declarations?: string[]; imports?: string[] }
               | undefined;
