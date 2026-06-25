@@ -1,3 +1,9 @@
+## [2.6.2-beta.4](https://github.com/analogjs/analog/compare/v2.6.2-beta.3...v2.6.2-beta.4) (2026-06-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** cover legacy compliance fixtures + fix surfaced DI emit bugs ([#2389](https://github.com/analogjs/analog/issues/2389)) ([8d0f053](https://github.com/analogjs/analog/commit/8d0f0532ca5c381fe00f844708412a14ac800e4a))
+
 ## [2.6.2-beta.3](https://github.com/analogjs/analog/compare/v2.6.2-beta.2...v2.6.2-beta.3) (2026-06-25)
 
 ### Bug Fixes
