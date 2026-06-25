@@ -1,3 +1,9 @@
+## [2.6.2-beta.5](https://github.com/analogjs/analog/compare/v2.6.2-beta.4...v2.6.2-beta.5) (2026-06-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** resolve non-standalone component scope in fastCompile ([#2390](https://github.com/analogjs/analog/issues/2390)) ([f115390](https://github.com/analogjs/analog/commit/f115390a36e4660a2327f04ea9dc5012c476059b))
+
 ## [2.6.2-beta.4](https://github.com/analogjs/analog/compare/v2.6.2-beta.3...v2.6.2-beta.4) (2026-06-25)
 
 ### Bug Fixes
