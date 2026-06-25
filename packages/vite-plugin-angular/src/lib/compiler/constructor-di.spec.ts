@@ -164,4 +164,58 @@ describe('Constructor DI', () => {
     // util is a runtime value, should still be preserved
     expect(result).toContain('util');
   });
+
+  it('injects the attribute name for @Attribute with a string literal', () => {
+    const result = compile(
+      `
+      import { Directive, Attribute } from '@angular/core';
+      @Directive({ selector: '[x]' })
+      export class X { constructor(@Attribute('name') n: string) {} }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // The attribute name must reach the factory, not be dropped to null.
+    expect(result).toMatch(/ɵɵinjectAttribute\(\s*["']name["']\s*\)/);
+    expect(result).not.toContain('ɵɵinjectAttribute(null)');
+  });
+
+  it('passes a computed @Attribute name through instead of failing', () => {
+    const result = compile(
+      `
+      import { Directive, Attribute } from '@angular/core';
+      function attrName() { return 'name'; }
+      @Directive({ selector: '[x]' })
+      export class X { constructor(@Attribute(attrName()) n: string) {} }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // A non-literal name must not poison the whole factory.
+    expect(result).not.toContain('ɵɵinvalidFactory');
+    expect(result).toMatch(/ɵɵinjectAttribute\(\s*attrName\(\)\s*\)/);
+  });
+
+  it('reads the implementation, not an overload signature, for ctor deps', () => {
+    const result = compile(
+      `
+      import { Injectable, Optional } from '@angular/core';
+      class Dep {}
+      class OptDep {}
+      @Injectable({ providedIn: 'root' })
+      export class X {
+        constructor(dep: Dep);
+        constructor(dep: Dep, @Optional() opt?: OptDep) {}
+      }
+    `,
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    // Both deps must appear — the overload signature only has one.
+    expect(result).toContain('Dep');
+    expect(result).toMatch(/ɵɵinject\(\s*OptDep\s*,\s*8\s*\)/);
+  });
 });

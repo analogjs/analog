@@ -337,6 +337,16 @@ export function extractMetadata(
       case 'useFactory':
         meta[key] = new o.WrappedNodeExpr(valNode);
         break;
+      // `@Injectable({ deps: [...] })` — the dependency list for `useFactory`
+      // / `useClass`. Each entry is either a bare token or a flag array such
+      // as `[new Optional(), new SkipSelf(), Token]`. Without parsing this the
+      // emitted factory ignores the deps and calls the factory/ctor with no
+      // arguments.
+      case 'deps':
+        if (valNode.type === 'ArrayExpression') {
+          meta.deps = extractInjectableDeps(valNode, sourceCode);
+        }
+        break;
       // `@Service` configuration. `autoProvided` defaults to `true`, so only
       // an explicit `false` is meaningful; `factory` is a bare expression
       // forwarded to compileService.
@@ -852,6 +862,73 @@ export function detectFieldDecorators(classNode: any, sourceCode: string) {
  *
  * Accepts an OXC ClassDeclaration node and the original source string.
  */
+/**
+ * Parse an `@Injectable({ deps: [...] })` dependency list into
+ * R3DependencyMetadata. Each element is either a bare token expression or a
+ * flag array combining DI modifiers with the token, e.g.
+ * `[new Optional(), new SkipSelf(), Token]` or `[new Inject(TOKEN)]`.
+ */
+function extractInjectableDeps(depsNode: any, sourceCode: string): any[] {
+  const deps: any[] = [];
+  for (const el of depsNode.elements || []) {
+    if (!el) continue;
+    let tokenNode: any = el;
+    let optional = false,
+      self = false,
+      skipSelf = false,
+      host = false;
+
+    if (el.type === 'ArrayExpression') {
+      // Flag array: zero or more `new <Modifier>()` instances plus the token.
+      tokenNode = null;
+      for (const item of el.elements || []) {
+        if (!item) continue;
+        if (item.type === 'NewExpression') {
+          switch (item.callee?.name) {
+            case 'Optional':
+              optional = true;
+              continue;
+            case 'Self':
+              self = true;
+              continue;
+            case 'SkipSelf':
+              skipSelf = true;
+              continue;
+            case 'Host':
+              host = true;
+              continue;
+            case 'Inject':
+              tokenNode = item.arguments?.[0] ?? null;
+              continue;
+          }
+        }
+        // Bare token (identifier, member expression, `new InjectionToken()`…)
+        tokenNode = item;
+      }
+    }
+
+    // Unwrap `forwardRef(() => TOKEN)` to TOKEN so the emitted factory
+    // references the token directly — matching `extractConstructorDeps` and
+    // covering every form (`deps: [forwardRef(...)]`,
+    // `[new Inject(forwardRef(...))]`, `[[new Optional(), forwardRef(...)]]`).
+    const resolvedToken = tokenNode ? unwrapForwardRefOxc(tokenNode) : null;
+    const tokenStr = resolvedToken
+      ? sourceCode.slice(resolvedToken.start, resolvedToken.end)
+      : null;
+    deps.push({
+      token: tokenStr
+        ? new o.WrappedNodeExpr(tokenStr)
+        : new o.LiteralExpr(null),
+      attributeNameType: null,
+      host,
+      optional,
+      self,
+      skipSelf,
+    });
+  }
+  return deps;
+}
+
 export function extractConstructorDeps(
   classNode: any,
   sourceCode: string,
@@ -861,9 +938,14 @@ export function extractConstructorDeps(
   const hasSuper = heritage.length > 0;
 
   const members: any[] = classNode.body?.body || [];
-  const ctor = members.find(
+  const ctors = members.filter(
     (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
   );
+  // With overloaded constructors, only the implementation carries the real
+  // parameter list and parameter decorators; the overload *signatures* have
+  // `value.body === null`. Picking the first constructor would read an
+  // overload signature and emit a factory missing the remaining deps.
+  const ctor = ctors.find((m: any) => m.value?.body != null) ?? ctors[0];
 
   if (!ctor) {
     return hasSuper ? null : [];
@@ -875,6 +957,13 @@ export function extractConstructorDeps(
 
   for (const param of params) {
     let token: string | null = null;
+    // For `@Attribute(...)` the injected value is the attribute name itself,
+    // not a type token. `attributeToken` holds that name expression (a string
+    // literal for `@Attribute('name')`, or the raw expression for a computed
+    // name like `@Attribute(dynamicAttrName())`); `attributeNameType` being
+    // non-null flags the dep as an attribute injection so the factory emits
+    // `ɵɵinjectAttribute(<name>)` instead of `ɵɵdirectiveInject(...)`.
+    let attributeToken: any = null;
     let attributeNameType: any = null;
     let host = false,
       optional = false,
@@ -983,15 +1072,23 @@ export function extractConstructorDeps(
           if (args.length > 0) {
             const sv = stringValue(args[0]);
             if (sv !== null) {
+              attributeToken = new o.LiteralExpr(sv);
               attributeNameType = new o.LiteralExpr(sv);
-              token = '';
+            } else {
+              // Computed attribute name, e.g. `@Attribute(dynamicAttrName())`.
+              // ngtsc emits `ɵɵinjectAttribute(<expr>)`; pass the expression
+              // through by value. `attributeNameType` only feeds the (unused)
+              // `.d.ts` type, so a placeholder is sufficient to flag the dep.
+              attributeToken = new o.WrappedNodeExpr(args[0]);
+              attributeNameType = new o.LiteralExpr('unknown');
             }
+            token = '';
           }
           break;
       }
     }
 
-    if (!token && !attributeNameType) {
+    if (!token && !attributeToken) {
       invalid = true;
       continue;
     }
@@ -1002,7 +1099,9 @@ export function extractConstructorDeps(
     }
 
     deps.push({
-      token: token ? new o.WrappedNodeExpr(token) : new o.LiteralExpr(null),
+      token:
+        attributeToken ??
+        (token ? new o.WrappedNodeExpr(token) : new o.LiteralExpr(null)),
       attributeNameType,
       host,
       optional,
