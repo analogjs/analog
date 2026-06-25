@@ -65,6 +65,29 @@ describe('@Injectable provider configuration', () => {
     expect(result).toMatch(/useFactory|factory:\s*\(\)/);
   });
 
+  it('wires useFactory deps (incl. flag arrays) into the factory', () => {
+    const result = compile(
+      `
+      import { Injectable, Optional } from '@angular/core';
+      class SomeDep {}
+      @Injectable({
+        providedIn: 'root',
+        useFactory: (dep, optional) => new Alt(dep, optional),
+        deps: [SomeDep, [new Optional(), SomeDep]],
+      })
+      export class Alt { constructor(public a: SomeDep, public b: SomeDep | null) {} }
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    // Both deps must be injected, the second flagged Optional (8)...
+    expect(result).toMatch(/ɵɵinject\(\s*SomeDep\s*\)/);
+    expect(result).toMatch(/ɵɵinject\(\s*SomeDep\s*,\s*8\s*\)/);
+    // ...and the useFactory arrow must be parenthesized before it is invoked,
+    // so the deps bind to the arrow and not to its body.
+    expect(result).toMatch(/\(\([^)]*\)\s*=>[\s\S]*?\)\(/);
+  });
+
   it('emits useValue in ɵprov', () => {
     const result = compile(
       `

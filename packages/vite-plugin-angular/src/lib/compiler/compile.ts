@@ -976,6 +976,9 @@ export function compile(
           if (meta.useFactory) injectableMeta.useFactory = meta.useFactory;
           if (meta.useExisting) injectableMeta.useExisting = meta.useExisting;
           if (meta.useValue) injectableMeta.useValue = meta.useValue;
+          // Dependency list for `useFactory` / `useClass`; without it the
+          // emitted factory is invoked with no arguments.
+          if (meta.deps) injectableMeta.deps = meta.deps;
           if (isPartial) {
             const inj = compileDeclareInjectableFromMetadata(injectableMeta);
             ivyCode.push(
