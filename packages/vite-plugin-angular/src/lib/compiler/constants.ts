@@ -16,6 +16,15 @@ export const ANGULAR_DECORATORS = new Set([
 ]);
 
 /**
+ * Matches a call to any Angular class decorator (e.g. `Component(` or `Service(`).
+ * Derived from {@link ANGULAR_DECORATORS} so the fast-path "is this an Angular file?"
+ * checks stay in sync with the canonical decorator set and don't drift.
+ */
+export const ANGULAR_DECORATOR_CALL_RE = new RegExp(
+  `(${[...ANGULAR_DECORATORS].join('|')})\\(`,
+);
+
+/**
  * Angular decorators that produce compilable declarations (selector, template,
  * pipe name, or module exports).  Excludes `@Injectable` and `@Service`, which
  * self-register via ɵprov and don't need Ivy compilation.

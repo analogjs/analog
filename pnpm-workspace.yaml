@@ -1,2 +1,21 @@
 packages:
   - 'apps/docs-app'
+allowBuilds:
+  '@compodoc/compodoc': true
+  '@parcel/watcher': true
+  '@swc/core': true
+  core-js: true
+  core-js-pure: true
+  cypress: true
+  esbuild: true
+  less: true
+  lmdb: true
+  msgpackr-extract: true
+  nx: true
+  sharp: true
+  unrs-resolver: true
+
+overrides:
+  vite: '^8.0.0'
+  '@typescript-eslint/type-utils': '8.57.0'
+  webpack: '5.105.4'

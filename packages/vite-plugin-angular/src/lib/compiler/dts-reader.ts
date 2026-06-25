@@ -39,6 +39,7 @@ export function scanDtsFile(code: string, fileName: string): RegistryEntry[] {
 export function scanPackageDts(
   packageName: string,
   basePath: string,
+  visited?: Set<string>,
 ): RegistryEntry[] {
   // Walk up from basePath to find the nearest node_modules containing the package.
   // This handles monorepos where node_modules is at the workspace root,
@@ -67,6 +68,11 @@ export function scanPackageDts(
 
   const dtsFiles = collectDtsFiles(searchDir);
   const entries: RegistryEntry[] = [];
+  // Packages re-exported by this package's NgModule declarations. A library
+  // NgModule can re-export another package's module (e.g. BrowserModule exports
+  // CommonModule), so those packages must be scanned too or their directives
+  // (NgIf, NgForOf, …) never reach the registry.
+  const referencedPackages = new Set<string>();
 
   for (const file of dtsFiles) {
     try {
@@ -79,8 +85,28 @@ export function scanPackageDts(
           packageName;
       }
       entries.push(...fileEntries);
+      // Only follow cross-package imports of declaration files that actually
+      // contain an NgModule — those are the ones whose exports can pull in
+      // another package's directives/pipes. This keeps the walk bounded.
+      if (visited && fileEntries.some((e) => e.kind === 'ngmodule')) {
+        for (const p of collectImportedPackages(code, file)) {
+          referencedPackages.add(p);
+        }
+      }
     } catch {
       // Skip unreadable files
+    }
+  }
+
+  if (visited) {
+    for (const p of referencedPackages) {
+      if (p === packageName || visited.has(p)) continue;
+      visited.add(p);
+      try {
+        entries.push(...scanPackageDts(p, basePath, visited));
+      } catch {
+        // Package may not have .d.ts or not be Angular
+      }
     }
   }
 
@@ -324,6 +350,35 @@ export function collectRelativeReExports(
     const specifier: string | undefined = stmt.source?.value;
     if (!specifier || !specifier.startsWith('.')) continue;
     result.push(specifier);
+  }
+  return result;
+}
+
+/**
+ * Parse a source file with OXC and return every module specifier it imports or
+ * re-exports from (relative AND bare), including `import`, `export * from`, and
+ * `export { … } from`. Used to walk the transitive import graph at startup so
+ * the registry contains components/directives/pipes/modules from files not
+ * directly listed in tsconfig `files`/`include` (transitively-imported app
+ * sources) or behind wildcard `paths` (workspace libraries).
+ */
+export function collectAllImports(code: string, fileName: string): string[] {
+  let program: any;
+  try {
+    program = parseSync(fileName, code).program;
+  } catch {
+    return [];
+  }
+  const result: string[] = [];
+  for (const stmt of program.body || []) {
+    if (
+      stmt.type === 'ImportDeclaration' ||
+      stmt.type === 'ExportAllDeclaration' ||
+      stmt.type === 'ExportNamedDeclaration'
+    ) {
+      const specifier: string | undefined = stmt.source?.value;
+      if (specifier) result.push(specifier);
+    }
   }
   return result;
 }

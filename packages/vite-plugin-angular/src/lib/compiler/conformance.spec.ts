@@ -27,6 +27,13 @@ function expectEmit(
 
   // Normalize both sides
   let normalizedExpected = expected.replace(/\$r3\$/g, 'i0');
+  // Legacy `r3_compiler_compliance` fixtures use a comment-style ellipsis
+  // (`// ...` / inline `/* ... */`) as "match any content here", whereas
+  // newer categories use `…` (U+2026). Fold the legacy form into `…` so the
+  // ellipsis/structural matchers apply to both.
+  normalizedExpected = normalizedExpected
+    .replace(/\/\/\s*\.\.\.[^\n]*/g, ' … ')
+    .replace(/\/\*\s*\.\.\.\s*\*\//g, ' … ');
   const actualNorm = normalizeWs(actual);
   const expectedNorm = normalizeWs(normalizedExpected);
 
@@ -111,6 +118,54 @@ function expectEmit(
       pass: true,
       message: `OK (ellipsis fragments matched in order)`,
     };
+  }
+
+  // Placeholder-aware structural match. Angular's fixtures use `$ident$`
+  // placeholders (e.g. `$ctx$`, `$index$`) to mean "some generated
+  // identifier here" — they are wildcards, not literal text. The looser
+  // per-call heuristics below *delete* them (`$\w+$` → ''), turning
+  // `ɵɵclassMap($ctx$.expr)` into `ɵɵclassMap(.expr)` which then fails to
+  // match the real emit `ɵɵclassMap(ctx.expr)`. Build a regex from the
+  // expected snippet instead: `…` → any run, `$ident$` → an identifier,
+  // everything else literal. A symmetric pre-pass folds away emit-style
+  // differences (arrow vs named render/factory functions, `static ɵcmp =`
+  // vs `Cmp.ɵcmp =`, version-dependent `dom`-prefixed instruction aliases)
+  // so the match is about semantics, not style. Only engages when the
+  // expected actually contains a wildcard, so it cannot loosen exact cases.
+  const structuralMatch = (() => {
+    const canon = (s: string) =>
+      s
+        .replace(/\/\*\s*@__PURE__\s*\*\//g, '')
+        .replace(/\bstatic\s+(ɵ)/g, '$1')
+        .replace(/[A-Za-z_$][\w$]*\.(ɵ[\w$]*\s*=)/g, '$1')
+        .replace(/\bfunction\s+[A-Za-z_$][\w$]*\s*\(/g, '(')
+        .replace(/\bfunction\s*\(/g, '(')
+        .replace(/=>/g, '')
+        .replace(/ɵɵdom([A-Z])/g, (_m, c: string) => 'ɵɵ' + c.toLowerCase());
+    const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const haystack = canon(actualNorm).replace(/\s+/g, '');
+    const e = canon(normalizedExpected);
+    const tokenRe = /…|\$[A-Za-z_][\w$]*\$/g;
+    let pattern = '';
+    let last = 0;
+    let sawWildcard = false;
+    let m: RegExpExecArray | null;
+    while ((m = tokenRe.exec(e)) !== null) {
+      pattern += escapeRe(e.slice(last, m.index).replace(/\s+/g, ''));
+      pattern += m[0] === '…' ? '[\\s\\S]*?' : '[A-Za-z_$][\\w$]*';
+      sawWildcard = true;
+      last = m.index + m[0].length;
+    }
+    if (!sawWildcard) return null; // no wildcards — defer to other paths
+    pattern += escapeRe(e.slice(last).replace(/\s+/g, ''));
+    try {
+      return new RegExp(pattern).test(haystack);
+    } catch {
+      return null;
+    }
+  })();
+  if (structuralMatch) {
+    return { pass: true, message: 'OK (structural placeholder match)' };
   }
 
   const actualAggressive = aggressiveNorm(actualNorm);
@@ -402,8 +457,17 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
                 if (!expectation.files || !Array.isArray(expectation.files))
                   continue;
                 for (const file of expectation.files) {
-                  if (!file?.expected) continue;
-                  const expectedCode = loadFile(group.dir, file.expected);
+                  // Angular expresses the expected-output file two ways: newer
+                  // categories use an object (`{ expected: 'x.js', generated:
+                  // 'x.ts' }`), the older `r3_compiler_compliance` fixtures use
+                  // a bare string (`'x.js'`). Normalize so the legacy string
+                  // form is actually compared instead of silently skipped — it
+                  // was the bare-string shape that hid the `variable_providers`
+                  // (providers-by-const) regression.
+                  const expectedName =
+                    typeof file === 'string' ? file : file?.expected;
+                  if (!expectedName) continue;
+                  const expectedCode = loadFile(group.dir, expectedName);
                   if (!expectedCode) continue;
 
                   const result = expectEmit(compiled, expectedCode);
