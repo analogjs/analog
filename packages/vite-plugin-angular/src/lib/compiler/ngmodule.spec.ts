@@ -448,3 +448,124 @@ describe('Dependency list deduplication', () => {
     expect(countRefs(deps, 'SelfCmp')).toBe(1);
   });
 });
+
+describe('NgModule scope for declared (non-standalone) components', () => {
+  function depsArrayFor(result: string): string {
+    const m = result.match(/dependencies:\s*\(\)\s*=>\s*\[([\s\S]*?)\]/);
+    expect(
+      m,
+      'compiled output should contain a dependencies array',
+    ).not.toBeNull();
+    return m![1];
+  }
+
+  it("inlines the declaring module's own declarations and transitive imported-module exports into a non-standalone component", () => {
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-panel',
+        standalone: false,
+        template: '<div highlight shared>x</div>',
+      })
+      export class PanelComponent {}
+    `;
+    const highlightSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[highlight]', standalone: false })
+      export class HighlightDirective {}
+    `;
+    const sharedDirectiveSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[shared]' })
+      export class SharedDirective {}
+    `;
+    const sharedModuleSrc = `
+      import { NgModule } from '@angular/core';
+      import { SharedDirective } from './shared.directive';
+      @NgModule({ declarations: [SharedDirective], exports: [SharedDirective] })
+      export class SharedModule {}
+    `;
+    const moduleSrc = `
+      import { NgModule } from '@angular/core';
+      import { PanelComponent } from './panel.component';
+      import { HighlightDirective } from './highlight.directive';
+      import { SharedModule } from './shared.module';
+      @NgModule({
+        declarations: [PanelComponent, HighlightDirective],
+        imports: [SharedModule],
+      })
+      export class PanelModule {}
+    `;
+
+    const registry = buildRegistry({
+      'panel.component.ts': componentSrc,
+      'highlight.directive.ts': highlightSrc,
+      'shared.directive.ts': sharedDirectiveSrc,
+      'shared.module.ts': sharedModuleSrc,
+      'panel.module.ts': moduleSrc,
+    });
+
+    const result = compile(componentSrc, 'panel.component.ts', registry);
+    expectCompiles(result);
+
+    const deps = depsArrayFor(result);
+    // sibling declaration from the owning module
+    expect(deps).toContain('HighlightDirective');
+    // directive re-exported by an imported module (transitive scope)
+    expect(deps).toContain('SharedDirective');
+    // every dependency resolved to a real selector, none left unresolved
+    expect(result).not.toContain('_unresolved-');
+  });
+
+  it('resolves ModuleWithProviders (forRoot) imports in declared-component scope', () => {
+    const widgetSrc = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-widget',
+        standalone: false,
+        template: '<i config></i>',
+      })
+      export class WidgetComponent {}
+    `;
+    const configDirectiveSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[config]' })
+      export class ConfigDirective {}
+    `;
+    const configModuleSrc = `
+      import { NgModule, ModuleWithProviders } from '@angular/core';
+      import { ConfigDirective } from './config.directive';
+      @NgModule({ declarations: [ConfigDirective], exports: [ConfigDirective] })
+      export class ConfigModule {
+        static forRoot(): ModuleWithProviders<ConfigModule> {
+          return { ngModule: ConfigModule };
+        }
+      }
+    `;
+    const widgetModuleSrc = `
+      import { NgModule } from '@angular/core';
+      import { WidgetComponent } from './widget.component';
+      import { ConfigModule } from './config.module';
+      @NgModule({
+        declarations: [WidgetComponent],
+        imports: [ConfigModule.forRoot()],
+      })
+      export class WidgetModule {}
+    `;
+
+    const registry = buildRegistry({
+      'widget.component.ts': widgetSrc,
+      'config.directive.ts': configDirectiveSrc,
+      'config.module.ts': configModuleSrc,
+      'widget.module.ts': widgetModuleSrc,
+    });
+
+    const result = compile(widgetSrc, 'widget.component.ts', registry);
+    expectCompiles(result);
+
+    const deps = depsArrayFor(result);
+    // directive exported by the module imported via `ConfigModule.forRoot()`
+    expect(deps).toContain('ConfigDirective');
+    expect(result).not.toContain('_unresolved-');
+  });
+});
