@@ -153,7 +153,11 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
             if (e?.type === 'Identifier') return e.name;
             if (
               e?.type === 'CallExpression' &&
-              e.callee?.type === 'MemberExpression' &&
+              // OXC emits `StaticMemberExpression`; the ESTree shape some
+              // versions produce uses `MemberExpression`. Accept both (matches
+              // the other member-expression checks in this file).
+              (e.callee?.type === 'StaticMemberExpression' ||
+                e.callee?.type === 'MemberExpression') &&
               e.callee.object?.type === 'Identifier'
             ) {
               return e.callee.object.name;

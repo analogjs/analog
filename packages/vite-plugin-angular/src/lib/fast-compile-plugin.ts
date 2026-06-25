@@ -227,26 +227,28 @@ export function fastCompilePlugin(
     // declarations and `ɵɵsetComponentScope` is never emitted for it. Only
     // relative imports and `paths`-mapped (project/workspace) bare specifiers are
     // followed; true `node_modules` packages are left to the lazy `.d.ts` scanner.
-    const resolvePathSpecifier = (spec: string): string | null => {
-      if (!tsPaths) return null;
+    // Return *all* candidate base paths a bare specifier maps to. A `paths`
+    // entry can list several fallback targets (e.g. a built `dist` path first
+    // and the workspace `src` second); the caller probes them in order.
+    const resolvePathSpecifier = (spec: string): string[] => {
+      if (!tsPaths) return [];
       for (const [key, targets] of Object.entries(tsPaths)) {
         const list = targets as string[];
         if (key.endsWith('/*')) {
           const prefix = key.slice(0, -1);
-          if (spec.startsWith(prefix) && list[0]) {
+          if (spec.startsWith(prefix)) {
             // `split('*').join(...)` substitutes the single tsconfig `*`
             // wildcard without `String.replace`'s first-match-only behavior or
             // `$`-pattern interpretation of the replacement.
-            const substituted = list[0]
-              .split('*')
-              .join(spec.slice(prefix.length));
-            return resolve(baseUrl, substituted);
+            return list.map((t) =>
+              resolve(baseUrl, t.split('*').join(spec.slice(prefix.length))),
+            );
           }
-        } else if (key === spec && list[0]) {
-          return resolve(baseUrl, list[0]);
+        } else if (key === spec) {
+          return list.map((t) => resolve(baseUrl, t));
         }
       }
-      return null;
+      return [];
     };
     const resolveToSource = async (base: string): Promise<string | null> => {
       const candidates = base.endsWith('.ts')
@@ -259,6 +261,16 @@ export function fastCompilePlugin(
         } catch {
           // try next candidate
         }
+      }
+      return null;
+    };
+    // Probe each `paths` target in order; first one that resolves to source wins.
+    const resolveFirstSource = async (
+      bases: string[],
+    ): Promise<string | null> => {
+      for (const base of bases) {
+        const resolved = await resolveToSource(base);
+        if (resolved) return resolved;
       }
       return null;
     };
@@ -305,8 +317,7 @@ export function fastCompilePlugin(
               resolve(dir, spec.replace(/\.(?:js|mjs)$/u, '')),
             );
           }
-          const mapped = resolvePathSpecifier(spec);
-          return mapped ? resolveToSource(mapped) : Promise.resolve(null);
+          return resolveFirstSource(resolvePathSpecifier(spec));
         }),
       );
       await Promise.all(

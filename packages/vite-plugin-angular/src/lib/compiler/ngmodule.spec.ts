@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { compileCode as compile } from './test-helpers';
 import { expectCompiles, buildRegistry } from './test-helpers';
+import { ANGULAR_MAJOR } from './angular-version';
 
 describe('@NgModule', () => {
   it('compiles a basic NgModule', () => {
@@ -567,5 +568,47 @@ describe('NgModule scope for declared (non-standalone) components', () => {
     // directive exported by the module imported via `ConfigModule.forRoot()`
     expect(deps).toContain('ConfigDirective');
     expect(result).not.toContain('_unresolved-');
+  });
+
+  it('treats a declared component that omits `standalone` per the Angular version', () => {
+    // Angular 19+ defaults `standalone` to true, so a component must set
+    // `standalone: false` to be NgModule-declared. On v17/v18 the flag is
+    // usually omitted (it defaulted to false), so the owning-module scope must
+    // still apply there. This asserts both sides of that version gate.
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-bare', template: '<div sibling></div>' })
+      export class BareComponent {}
+    `;
+    const siblingSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[sibling]' })
+      export class SiblingDirective {}
+    `;
+    const moduleSrc = `
+      import { NgModule } from '@angular/core';
+      import { BareComponent } from './bare.component';
+      import { SiblingDirective } from './sibling.directive';
+      @NgModule({ declarations: [BareComponent, SiblingDirective] })
+      export class BareModule {}
+    `;
+
+    const registry = buildRegistry({
+      'bare.component.ts': componentSrc,
+      'sibling.directive.ts': siblingSrc,
+      'bare.module.ts': moduleSrc,
+    });
+
+    const result = compile(componentSrc, 'bare.component.ts', registry);
+    expectCompiles(result);
+    const deps = depsArrayFor(result);
+
+    if (ANGULAR_MAJOR < 19) {
+      // pre-v19: omitted flag means non-standalone, so module scope applies
+      expect(deps).toContain('SiblingDirective');
+    } else {
+      // v19+: omitted flag means standalone, so no module scope is forced
+      expect(deps).not.toContain('SiblingDirective');
+    }
   });
 });
