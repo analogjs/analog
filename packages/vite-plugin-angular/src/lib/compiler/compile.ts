@@ -631,6 +631,88 @@ export function compile(
             });
           }
 
+          // Non-standalone components get their directive/pipe scope from the
+          // @NgModule that declares them. Whole-program ngtsc resolves this; a
+          // per-file engine can't read the module from the component file, but the
+          // project-wide registry (populated at buildStart) records every module's
+          // declarations + imports. We resolve the owning module's transitive scope
+          // here and inline it into the component's own `dependencies` — matching
+          // ngtsc, and surviving tree-shaking (unlike a separate, droppable
+          // `ɵɵsetComponentScope` call). `standalone: false` is explicit on
+          // Angular 19+, which is the only place NgModule declarations apply.
+          if (!isPartial && meta.standalone === false && registry) {
+            let owningModule:
+              | { declarations?: string[]; imports?: string[] }
+              | undefined;
+            for (const entry of registry.values()) {
+              if (
+                entry.kind === 'ngmodule' &&
+                entry.declarations?.includes(className)
+              ) {
+                owningModule = entry;
+                break;
+              }
+            }
+            if (owningModule) {
+              // Transitive scope = the module's own declarations + the exported
+              // declarations of every imported module (recursively) + tuple members.
+              const scopeNames = new Set<string>();
+              const addExportsOf = (modName: string, visited: Set<string>) => {
+                if (visited.has(modName)) return;
+                visited.add(modName);
+                const e = registry.get(modName);
+                if (!e) return;
+                if (e.kind === 'ngmodule') {
+                  for (const exp of e.exports ?? []) addExportsOf(exp, visited);
+                } else if (e.kind === 'tuple') {
+                  for (const m of e.members ?? []) scopeNames.add(m);
+                } else {
+                  scopeNames.add(modName);
+                }
+              };
+              for (const d of owningModule.declarations ?? [])
+                scopeNames.add(d);
+              for (const imp of owningModule.imports ?? [])
+                addExportsOf(imp, new Set());
+
+              for (const name of scopeNames) {
+                if (seenDeclarationNames.has(name)) continue;
+                const entry = registry.get(name);
+                if (
+                  !entry ||
+                  entry.kind === 'ngmodule' ||
+                  entry.kind === 'tuple'
+                )
+                  continue;
+                if (!importedNames.has(name)) {
+                  const spec = resolveSyntheticImportSpecifier(
+                    fileName,
+                    entry,
+                    importSpecifierByName.get(name),
+                  );
+                  if (spec) syntheticImports.set(name, spec);
+                }
+                const kind = entry.kind === 'pipe' ? 1 : 0;
+                const decl: CompileDeclaration = {
+                  type: new o.WrappedNodeExpr(name),
+                  selector: entry.selector || `_unresolved-${name}`,
+                  kind,
+                  ...(kind === 1 ? { name: entry.pipeName } : {}),
+                };
+                if (entry.inputs) {
+                  decl.inputs = Object.values(entry.inputs).map(
+                    (i) => i.bindingPropertyName,
+                  );
+                }
+                if (entry.outputs) {
+                  decl.outputs = Object.values(entry.outputs) as string[];
+                }
+                seenDeclarationNames.add(name);
+                declarations.push(decl);
+              }
+            }
+          }
+
           let templateContent = meta.template || '';
           if (!templateContent && meta.templateUrl) {
             try {

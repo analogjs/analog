@@ -10,6 +10,7 @@ export {
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
+  collectAllImports,
 } from './dts-reader.js';
 export { jitTransform, type JitTransformResult } from './jit-transform.js';
 export { generateHmrCode } from './hmr.js';
