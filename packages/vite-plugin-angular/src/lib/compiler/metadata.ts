@@ -907,8 +907,13 @@ function extractInjectableDeps(depsNode: any, sourceCode: string): any[] {
       }
     }
 
-    const tokenStr = tokenNode
-      ? sourceCode.slice(tokenNode.start, tokenNode.end)
+    // Unwrap `forwardRef(() => TOKEN)` to TOKEN so the emitted factory
+    // references the token directly — matching `extractConstructorDeps` and
+    // covering every form (`deps: [forwardRef(...)]`,
+    // `[new Inject(forwardRef(...))]`, `[[new Optional(), forwardRef(...)]]`).
+    const resolvedToken = tokenNode ? unwrapForwardRefOxc(tokenNode) : null;
+    const tokenStr = resolvedToken
+      ? sourceCode.slice(resolvedToken.start, resolvedToken.end)
       : null;
     deps.push({
       token: tokenStr

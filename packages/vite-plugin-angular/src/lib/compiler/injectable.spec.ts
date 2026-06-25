@@ -88,6 +88,51 @@ describe('@Injectable provider configuration', () => {
     expect(result).toMatch(/\(\([^)]*\)\s*=>[\s\S]*?\)\(/);
   });
 
+  it('wires useClass deps into ɵprov', () => {
+    const result = compile(
+      `
+      import { Injectable, Optional } from '@angular/core';
+      class SomeDep {}
+      class Impl { constructor(public dep: SomeDep | null) {} }
+      @Injectable({
+        providedIn: 'root',
+        useClass: Impl,
+        deps: [[new Optional(), SomeDep]],
+      })
+      export class Alt {}
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('Impl');
+    expect(result).toMatch(/ɵɵinject\(\s*SomeDep\s*,\s*8\s*\)/);
+  });
+
+  it('unwraps forwardRef tokens in useFactory deps', () => {
+    const result = compile(
+      `
+      import { Injectable, Inject, Optional, forwardRef } from '@angular/core';
+      class TOKEN {}
+      @Injectable({
+        providedIn: 'root',
+        useFactory: (a, b) => new Alt(a, b),
+        deps: [
+          forwardRef(() => TOKEN),
+          [new Optional(), new Inject(forwardRef(() => TOKEN))],
+        ],
+      })
+      export class Alt { constructor(a: unknown, b: unknown) {} }
+    `,
+      's.ts',
+    );
+    expectCompiles(result);
+    // forwardRef must be unwrapped to the bare token, matching constructor DI;
+    // the raw forwardRef(...) call must not reach the factory.
+    expect(result).toMatch(/ɵɵinject\(\s*TOKEN\s*\)/);
+    expect(result).toMatch(/ɵɵinject\(\s*TOKEN\s*,\s*8\s*\)/);
+    expect(result).not.toMatch(/ɵɵinject\(\s*forwardRef/);
+  });
+
   it('emits useValue in ɵprov', () => {
     const result = compile(
       `
