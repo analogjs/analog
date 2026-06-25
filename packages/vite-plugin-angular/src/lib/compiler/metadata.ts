@@ -284,8 +284,6 @@ export function extractMetadata(
         }
         break;
       case 'imports':
-      case 'providers':
-      case 'viewProviders':
       case 'animations':
       case 'rawImports':
       case 'declarations':
@@ -295,6 +293,28 @@ export function extractMetadata(
           meta[key] = (valNode.elements || []).map(
             (e: any) => new o.WrappedNodeExpr(unwrapForwardRefOxc(e)),
           );
+        }
+        break;
+      case 'providers':
+      case 'viewProviders':
+        if (valNode.type === 'ArrayExpression') {
+          meta[key] = (valNode.elements || []).map(
+            (e: any) => new o.WrappedNodeExpr(unwrapForwardRefOxc(e)),
+          );
+        } else {
+          // `providers: safeProviders` / `viewProviders: SHARED_PROVIDERS`
+          // — a reference to a module-level const (or any non-literal
+          // expression such as a spread or function call) rather than an
+          // inline array literal. ngtsc's partial evaluator expands the
+          // identifier to its array; fastCompile does no static evaluation,
+          // so it cannot. But Angular emits injector/host `providers` as a
+          // single Expression and flattens nested arrays at runtime, so the
+          // reference can be passed through by value. Storing it as a bare
+          // `o.Expression` (not an array) signals the emission sites to emit
+          // it directly instead of wrapping it in a `LiteralArrayExpr`.
+          // Without this, the whole `providers` list is silently dropped and
+          // every token it provides fails at runtime with NG0201.
+          meta[key] = new o.WrappedNodeExpr(valNode);
         }
         break;
       // @Injectable provider configuration. Pass these through to

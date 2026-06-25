@@ -49,6 +49,65 @@ describe('@NgModule', () => {
     expect(result).toContain('MyService');
   });
 
+  it('emits providers referenced by a const identifier instead of an inline array', () => {
+    // `providers: <identifier>` (a module-level const array, common with
+    // helpers like Bitwarden's `safeProvider(...)` collected into a
+    // `safeProviders` const) must be passed through to `ɵɵdefineInjector`
+    // by reference. fastCompile does no static evaluation, so it cannot
+    // expand the identifier the way ngtsc does — but Angular flattens the
+    // expression at runtime. Previously the non-array value was dropped,
+    // emitting `ɵɵdefineInjector({})` and failing every provided token with
+    // NG0201 at runtime.
+    const result = compile(
+      `
+      import { NgModule, Injectable } from '@angular/core';
+
+      @Injectable()
+      export class MyService {}
+
+      const providers = [MyService];
+
+      @NgModule({
+        providers,
+      })
+      export class ServiceModule {}
+    `,
+      'ref-service.module.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('ɵinj');
+    // The injector definition must reference the const, not be emitted empty.
+    expect(result).toMatch(/ɵɵdefineInjector\(\{\s*providers\b/);
+    expect(result).not.toMatch(/ɵɵdefineInjector\(\{\s*\}\)/);
+  });
+
+  it('emits component providers referenced by a const identifier', () => {
+    const result = compile(
+      `
+      import { Component, Injectable } from '@angular/core';
+
+      @Injectable()
+      export class PanelService {}
+
+      const PANEL_PROVIDERS = [PanelService];
+
+      @Component({
+        selector: 'app-panel',
+        template: '<span>panel</span>',
+        providers: PANEL_PROVIDERS,
+      })
+      export class PanelComponent {}
+    `,
+      'panel.component.ts',
+    );
+
+    expectCompiles(result);
+    // ɵɵProvidersFeature must receive the referenced const, not null.
+    expect(result).toContain('ɵɵProvidersFeature');
+    expect(result).toContain('PANEL_PROVIDERS');
+  });
+
   it('resolves NgModule exports when imported by a component', () => {
     const childSrc = `
       import { Component } from '@angular/core';

@@ -125,6 +125,27 @@ function hasExportModifier(node: ts.Node): boolean {
 }
 
 /**
+ * Normalize a `providers` / `viewProviders` metadata value into the single
+ * `o.Expression` Angular's injector/host emitters expect.
+ *
+ * `extractMetadata` stores these as an array of `WrappedNodeExpr` when the
+ * source used an inline array literal (`providers: [A, B]`) — those get
+ * wrapped in a `LiteralArrayExpr`. When the source referenced a const,
+ * spread, or call instead (`providers: safeProviders`), it stores the raw
+ * expression, which is emitted by value. Returns `null` when there is
+ * nothing to emit so callers skip the feature entirely.
+ */
+function providersToExpr(
+  value: o.Expression[] | o.Expression | undefined | null,
+): o.Expression | null {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    return value.length ? new o.LiteralArrayExpr(value) : null;
+  }
+  return value;
+}
+
+/**
  * Collect identifier names referenced in eagerly-evaluated code only.
  * Skips function/arrow/class bodies so that lazy references
  * (e.g. `const TOKEN = () => LaterClass`) are not treated as dependencies.
@@ -728,12 +749,8 @@ export function compile(
             changeDetection: meta.changeDetection ?? (isPartial ? null : 1),
             encapsulation: meta.encapsulation ?? 0,
             exportAs: meta.exportAs,
-            providers: meta.providers?.length
-              ? new o.LiteralArrayExpr(meta.providers)
-              : null,
-            viewProviders: meta.viewProviders?.length
-              ? new o.LiteralArrayExpr(meta.viewProviders)
-              : null,
+            providers: providersToExpr(meta.providers),
+            viewProviders: providersToExpr(meta.viewProviders),
             animations: meta.animations?.length
               ? new o.LiteralArrayExpr(meta.animations)
               : null,
@@ -885,16 +902,13 @@ export function compile(
             queries: [...fields.contentQueries, ...sigs.contentQueries],
             // Angular's compiler treats `providers` as an Expression and
             // emits `ɵɵProvidersFeature(<expr>)` whenever it is truthy.
-            // Passing the bare JS array of WrappedNodeExpr from
-            // extractMetadata causes the emitter to lower it to `null`,
-            // which then crashes Angular at runtime in `resolveProvider`
-            // because it tries to read `.provide` on `null`. Wrap into a
-            // LiteralArrayExpr (matching the Component branch) so it
-            // emits a real array literal — and pass `null` when there are
-            // no providers so Angular skips the feature entirely.
-            providers: meta.providers?.length
-              ? new o.LiteralArrayExpr(meta.providers)
-              : null,
+            // `providersToExpr` lowers an inline array literal to a
+            // LiteralArrayExpr (matching the Component branch) and passes a
+            // const/spread reference through by value — returning `null`
+            // when there are no providers so Angular skips the feature
+            // entirely. Passing the bare JS array would otherwise be lowered
+            // to `null` and crash Angular at runtime in `resolveProvider`.
+            providers: providersToExpr(meta.providers),
             exportAs: meta.exportAs,
             isStandalone: meta.standalone,
             lifecycle: { usesOnChanges: false },
@@ -1054,9 +1068,7 @@ export function compile(
           const injectorMeta = {
             name: className,
             type: classRef,
-            providers: meta.providers
-              ? new o.LiteralArrayExpr(meta.providers)
-              : null,
+            providers: providersToExpr(meta.providers),
             imports: ngModuleImports.map((e: o.WrappedNodeExpr<any>) => e),
           };
           if (isPartial) {
