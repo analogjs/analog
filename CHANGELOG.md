@@ -1,3 +1,9 @@
+## [2.6.2-beta.3](https://github.com/analogjs/analog/compare/v2.6.2-beta.2...v2.6.2-beta.3) (2026-06-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit fastCompile providers referenced by a const ([#2388](https://github.com/analogjs/analog/issues/2388)) ([8ca1d0b](https://github.com/analogjs/analog/commit/8ca1d0be4364f5f8677b6562cee8e464c65a4898))
+
 ## [2.6.2-beta.2](https://github.com/analogjs/analog/compare/v2.6.2-beta.1...v2.6.2-beta.2) (2026-06-16)
 
 ### Bug Fixes
