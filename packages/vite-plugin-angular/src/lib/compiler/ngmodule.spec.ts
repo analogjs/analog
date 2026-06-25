@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { compileCode as compile } from './test-helpers';
 import { expectCompiles, buildRegistry } from './test-helpers';
+import { ANGULAR_MAJOR } from './angular-version';
 
 describe('@NgModule', () => {
   it('compiles a basic NgModule', () => {
@@ -446,5 +447,168 @@ describe('Dependency list deduplication', () => {
     expectCompiles(result);
     const deps = depsArrayFor(result);
     expect(countRefs(deps, 'SelfCmp')).toBe(1);
+  });
+});
+
+describe('NgModule scope for declared (non-standalone) components', () => {
+  function depsArrayFor(result: string): string {
+    const m = result.match(/dependencies:\s*\(\)\s*=>\s*\[([\s\S]*?)\]/);
+    expect(
+      m,
+      'compiled output should contain a dependencies array',
+    ).not.toBeNull();
+    return m![1];
+  }
+
+  it("inlines the declaring module's own declarations and transitive imported-module exports into a non-standalone component", () => {
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-panel',
+        standalone: false,
+        template: '<div highlight shared>x</div>',
+      })
+      export class PanelComponent {}
+    `;
+    const highlightSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[highlight]', standalone: false })
+      export class HighlightDirective {}
+    `;
+    const sharedDirectiveSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[shared]' })
+      export class SharedDirective {}
+    `;
+    const sharedModuleSrc = `
+      import { NgModule } from '@angular/core';
+      import { SharedDirective } from './shared.directive';
+      @NgModule({ declarations: [SharedDirective], exports: [SharedDirective] })
+      export class SharedModule {}
+    `;
+    const moduleSrc = `
+      import { NgModule } from '@angular/core';
+      import { PanelComponent } from './panel.component';
+      import { HighlightDirective } from './highlight.directive';
+      import { SharedModule } from './shared.module';
+      @NgModule({
+        declarations: [PanelComponent, HighlightDirective],
+        imports: [SharedModule],
+      })
+      export class PanelModule {}
+    `;
+
+    const registry = buildRegistry({
+      'panel.component.ts': componentSrc,
+      'highlight.directive.ts': highlightSrc,
+      'shared.directive.ts': sharedDirectiveSrc,
+      'shared.module.ts': sharedModuleSrc,
+      'panel.module.ts': moduleSrc,
+    });
+
+    const result = compile(componentSrc, 'panel.component.ts', registry);
+    expectCompiles(result);
+
+    const deps = depsArrayFor(result);
+    // sibling declaration from the owning module
+    expect(deps).toContain('HighlightDirective');
+    // directive re-exported by an imported module (transitive scope)
+    expect(deps).toContain('SharedDirective');
+    // every dependency resolved to a real selector, none left unresolved
+    expect(result).not.toContain('_unresolved-');
+  });
+
+  it('resolves ModuleWithProviders (forRoot) imports in declared-component scope', () => {
+    const widgetSrc = `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-widget',
+        standalone: false,
+        template: '<i config></i>',
+      })
+      export class WidgetComponent {}
+    `;
+    const configDirectiveSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[config]' })
+      export class ConfigDirective {}
+    `;
+    const configModuleSrc = `
+      import { NgModule, ModuleWithProviders } from '@angular/core';
+      import { ConfigDirective } from './config.directive';
+      @NgModule({ declarations: [ConfigDirective], exports: [ConfigDirective] })
+      export class ConfigModule {
+        static forRoot(): ModuleWithProviders<ConfigModule> {
+          return { ngModule: ConfigModule };
+        }
+      }
+    `;
+    const widgetModuleSrc = `
+      import { NgModule } from '@angular/core';
+      import { WidgetComponent } from './widget.component';
+      import { ConfigModule } from './config.module';
+      @NgModule({
+        declarations: [WidgetComponent],
+        imports: [ConfigModule.forRoot()],
+      })
+      export class WidgetModule {}
+    `;
+
+    const registry = buildRegistry({
+      'widget.component.ts': widgetSrc,
+      'config.directive.ts': configDirectiveSrc,
+      'config.module.ts': configModuleSrc,
+      'widget.module.ts': widgetModuleSrc,
+    });
+
+    const result = compile(widgetSrc, 'widget.component.ts', registry);
+    expectCompiles(result);
+
+    const deps = depsArrayFor(result);
+    // directive exported by the module imported via `ConfigModule.forRoot()`
+    expect(deps).toContain('ConfigDirective');
+    expect(result).not.toContain('_unresolved-');
+  });
+
+  it('treats a declared component that omits `standalone` per the Angular version', () => {
+    // Angular 19+ defaults `standalone` to true, so a component must set
+    // `standalone: false` to be NgModule-declared. On v17/v18 the flag is
+    // usually omitted (it defaulted to false), so the owning-module scope must
+    // still apply there. This asserts both sides of that version gate.
+    const componentSrc = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-bare', template: '<div sibling></div>' })
+      export class BareComponent {}
+    `;
+    const siblingSrc = `
+      import { Directive } from '@angular/core';
+      @Directive({ selector: '[sibling]' })
+      export class SiblingDirective {}
+    `;
+    const moduleSrc = `
+      import { NgModule } from '@angular/core';
+      import { BareComponent } from './bare.component';
+      import { SiblingDirective } from './sibling.directive';
+      @NgModule({ declarations: [BareComponent, SiblingDirective] })
+      export class BareModule {}
+    `;
+
+    const registry = buildRegistry({
+      'bare.component.ts': componentSrc,
+      'sibling.directive.ts': siblingSrc,
+      'bare.module.ts': moduleSrc,
+    });
+
+    const result = compile(componentSrc, 'bare.component.ts', registry);
+    expectCompiles(result);
+    const deps = depsArrayFor(result);
+
+    if (ANGULAR_MAJOR < 19) {
+      // pre-v19: omitted flag means non-standalone, so module scope applies
+      expect(deps).toContain('SiblingDirective');
+    } else {
+      // v19+: omitted flag means standalone, so no module scope is forced
+      expect(deps).not.toContain('SiblingDirective');
+    }
   });
 });

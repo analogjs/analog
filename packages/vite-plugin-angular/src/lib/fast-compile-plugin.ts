@@ -17,6 +17,7 @@ import {
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
+  collectAllImports,
   jitTransform,
   inlineResourceUrls,
   extractInlineStyles,
@@ -218,6 +219,113 @@ export function fastCompilePlugin(
       }
     }
 
+    // Walk the transitive import graph from the root files so the registry also
+    // contains declarations that live in files not directly in tsconfig
+    // `files`/`include` (transitively-imported app sources) and in workspace
+    // libraries reached through wildcard `paths` (e.g. `@bitwarden/*`). Without
+    // this, a non-standalone component's owning module can't classify its
+    // declarations and `ɵɵsetComponentScope` is never emitted for it. Only
+    // relative imports and `paths`-mapped (project/workspace) bare specifiers are
+    // followed; true `node_modules` packages are left to the lazy `.d.ts` scanner.
+    // Return *all* candidate base paths a bare specifier maps to. A `paths`
+    // entry can list several fallback targets (e.g. a built `dist` path first
+    // and the workspace `src` second); the caller probes them in order.
+    const resolvePathSpecifier = (spec: string): string[] => {
+      if (!tsPaths) return [];
+      for (const [key, targets] of Object.entries(tsPaths)) {
+        const list = targets as string[];
+        if (key.endsWith('/*')) {
+          const prefix = key.slice(0, -1);
+          if (spec.startsWith(prefix)) {
+            // `split('*').join(...)` substitutes the single tsconfig `*`
+            // wildcard without `String.replace`'s first-match-only behavior or
+            // `$`-pattern interpretation of the replacement.
+            return list.map((t) =>
+              resolve(baseUrl, t.split('*').join(spec.slice(prefix.length))),
+            );
+          }
+        } else if (key === spec) {
+          return list.map((t) => resolve(baseUrl, t));
+        }
+      }
+      return [];
+    };
+    const resolveToSource = async (base: string): Promise<string | null> => {
+      const candidates = base.endsWith('.ts')
+        ? [base]
+        : [base + '.ts', resolve(base, 'index.ts')];
+      for (const candidate of candidates) {
+        try {
+          await fsPromises.access(candidate);
+          return candidate;
+        } catch {
+          // try next candidate
+        }
+      }
+      return null;
+    };
+    // Probe each `paths` target in order; first one that resolves to source wins.
+    const resolveFirstSource = async (
+      bases: string[],
+    ): Promise<string | null> => {
+      for (const base of bases) {
+        const resolved = await resolveToSource(base);
+        if (resolved) return resolved;
+      }
+      return null;
+    };
+    const importWalkVisited = new Set<string>();
+    const walkImports = async (file: string): Promise<void> => {
+      if (importWalkVisited.has(file)) return;
+      importWalkVisited.add(file);
+      let code: string;
+      try {
+        code = await fsPromises.readFile(file, 'utf-8');
+      } catch {
+        return;
+      }
+      for (const entry of scanFile(code, file)) {
+        if (!registry.has(entry.className))
+          registry.set(entry.className, entry);
+      }
+      // Pre-scan the `.d.ts` of every external package this file imports (and,
+      // transitively, packages those packages' NgModules re-export — e.g.
+      // BrowserModule → CommonModule → NgIf). Doing this at buildStart means the
+      // registry is complete before any component transforms, so non-standalone
+      // component scope resolves regardless of file transform order.
+      for (const pkg of collectImportedPackages(code, file)) {
+        if (scannedDtsPackages.has(pkg)) continue;
+        scannedDtsPackages.add(pkg);
+        try {
+          for (const entry of scanPackageDts(
+            pkg,
+            projectRoot,
+            scannedDtsPackages,
+          )) {
+            if (!registry.has(entry.className))
+              registry.set(entry.className, entry);
+          }
+        } catch {
+          // Package may not have .d.ts or not be Angular
+        }
+      }
+      const dir = dirname(file);
+      const targets = await Promise.all(
+        collectAllImports(code, file).map((spec) => {
+          if (spec.startsWith('.')) {
+            return resolveToSource(
+              resolve(dir, spec.replace(/\.(?:js|mjs)$/u, '')),
+            );
+          }
+          return resolveFirstSource(resolvePathSpecifier(spec));
+        }),
+      );
+      await Promise.all(
+        targets.filter((t): t is string => !!t).map((t) => walkImports(t)),
+      );
+    };
+    await Promise.all(config.rootNames.map((file) => walkImports(file)));
+
     // Library barrels typically `export * from './lib/...'` rather than
     // declaring directives directly, so the entry file alone gives us
     // the tuple consts but not the directive classes they reference.
@@ -251,7 +359,7 @@ export function fastCompilePlugin(
       scannedDtsPackages.add(pkg);
 
       try {
-        const dtsEntries = scanPackageDts(pkg, projectRoot);
+        const dtsEntries = scanPackageDts(pkg, projectRoot, scannedDtsPackages);
         for (const entry of dtsEntries) {
           if (!registry.has(entry.className)) {
             registry.set(entry.className, entry);

@@ -24,6 +24,12 @@ export interface RegistryEntry {
   pipeName?: string;
   /** Exported class names (only for NgModules) */
   exports?: string[];
+  /** Declared class names (only for NgModules) — used to wire non-standalone
+   * component scope from the declaring module. */
+  declarations?: string[];
+  /** Imported module/class names (only for NgModules) — expanded transitively
+   * to compute the directive/pipe scope of declared components. */
+  imports?: string[];
   /**
    * Member class names (only for `tuple` kind) — produced by top-level
    * `export const X = [A, B, C] as const` style barrels common in
@@ -136,6 +142,29 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
       let selector: string | undefined;
       let pipeName: string | undefined;
       let moduleExports: string[] | undefined;
+      let moduleDeclarations: string[] | undefined;
+      let moduleImports: string[] | undefined;
+
+      // Class names from an NgModule metadata array: bare `Identifier`s and the
+      // module out of `Module.forRoot(...)`/`forChild(...)` ModuleWithProviders.
+      const classNamesFrom = (val: any): string[] =>
+        (val?.elements ?? [])
+          .map((e: any) => {
+            if (e?.type === 'Identifier') return e.name;
+            if (
+              e?.type === 'CallExpression' &&
+              // OXC emits `StaticMemberExpression`; the ESTree shape some
+              // versions produce uses `MemberExpression`. Accept both (matches
+              // the other member-expression checks in this file).
+              (e.callee?.type === 'StaticMemberExpression' ||
+                e.callee?.type === 'MemberExpression') &&
+              e.callee.object?.type === 'Identifier'
+            ) {
+              return e.callee.object.name;
+            }
+            return undefined;
+          })
+          .filter((n: unknown): n is string => typeof n === 'string');
 
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
@@ -157,14 +186,11 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
         ) {
           pipeName = val.value;
         }
-        if (
-          key === 'exports' &&
-          val?.type === 'ArrayExpression' &&
-          decoratorName === 'NgModule'
-        ) {
-          moduleExports = val.elements
-            .filter((e: any) => e?.type === 'Identifier')
-            .map((e: any) => e.name);
+        if (val?.type === 'ArrayExpression' && decoratorName === 'NgModule') {
+          if (key === 'exports') moduleExports = classNamesFrom(val);
+          else if (key === 'declarations')
+            moduleDeclarations = classNamesFrom(val);
+          else if (key === 'imports') moduleImports = classNamesFrom(val);
         }
       }
 
@@ -173,6 +199,8 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
           selector: className,
           kind: 'ngmodule',
           exports: moduleExports || [],
+          declarations: moduleDeclarations || [],
+          imports: moduleImports || [],
           fileName,
           className,
         });
