@@ -1,3 +1,13 @@
+## [2.6.2](https://github.com/analogjs/analog/compare/v2.6.1...v2.6.2) (2026-06-25)
+
+### Bug Fixes
+
+- **create-analog:** update Node.js compat with Angular v22 and @angular/animations deprecation ([#2375](https://github.com/analogjs/analog/issues/2375)) ([9282770](https://github.com/analogjs/analog/commit/928277029217ac9a8b0a790a56ad42248943cfc2))
+- **vite-plugin-angular:** @Service detection and external styleUrl preprocessing in fastCompile ([#2383](https://github.com/analogjs/analog/issues/2383)) ([bb789c1](https://github.com/analogjs/analog/commit/bb789c19dc394735d2f849b11b19be47a0086b9c))
+- **vite-plugin-angular:** cover legacy compliance fixtures + fix surfaced DI emit bugs ([#2389](https://github.com/analogjs/analog/issues/2389)) ([8d0f053](https://github.com/analogjs/analog/commit/8d0f0532ca5c381fe00f844708412a14ac800e4a))
+- **vite-plugin-angular:** emit fastCompile providers referenced by a const ([#2388](https://github.com/analogjs/analog/issues/2388)) ([8ca1d0b](https://github.com/analogjs/analog/commit/8ca1d0be4364f5f8677b6562cee8e464c65a4898))
+- **vite-plugin-angular:** resolve non-standalone component scope in fastCompile ([#2390](https://github.com/analogjs/analog/issues/2390)) ([f115390](https://github.com/analogjs/analog/commit/f115390a36e4660a2327f04ea9dc5012c476059b))
+
 ## [2.6.2-beta.5](https://github.com/analogjs/analog/compare/v2.6.2-beta.4...v2.6.2-beta.5) (2026-06-25)
 
 ### Bug Fixes
