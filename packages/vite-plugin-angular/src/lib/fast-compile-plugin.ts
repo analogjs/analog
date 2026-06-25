@@ -234,10 +234,13 @@ export function fastCompilePlugin(
         if (key.endsWith('/*')) {
           const prefix = key.slice(0, -1);
           if (spec.startsWith(prefix) && list[0]) {
-            return resolve(
-              baseUrl,
-              list[0].replace('*', spec.slice(prefix.length)),
-            );
+            // `split('*').join(...)` substitutes the single tsconfig `*`
+            // wildcard without `String.replace`'s first-match-only behavior or
+            // `$`-pattern interpretation of the replacement.
+            const substituted = list[0]
+              .split('*')
+              .join(spec.slice(prefix.length));
+            return resolve(baseUrl, substituted);
           }
         } else if (key === spec && list[0]) {
           return resolve(baseUrl, list[0]);
