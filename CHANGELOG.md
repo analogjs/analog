@@ -1,3 +1,9 @@
+## [2.6.3-beta.1](https://github.com/analogjs/analog/compare/v2.6.2...v2.6.3-beta.1) (2026-06-28)
+
+### Bug Fixes
+
+- support and migrate to Nx 23 ([#2393](https://github.com/analogjs/analog/issues/2393)) ([b4e9140](https://github.com/analogjs/analog/commit/b4e9140706baef2fb1507974534f3e85a92463c4))
+
 ## [2.6.2](https://github.com/analogjs/analog/compare/v2.6.1...v2.6.2) (2026-06-25)
 
 ### Bug Fixes
