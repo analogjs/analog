@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
       fileName: `fesm2022/my-package`,
       formats: ['es' as const],
     },
-    rollupOptions: {
+    rolldownOptions: {
       external: [/^@angular\/.*/, 'rxjs', 'rxjs/operators'],
       output: {
         preserveModules: false,
