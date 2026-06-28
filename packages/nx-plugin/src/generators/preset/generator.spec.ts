@@ -64,4 +64,12 @@ describe('preset generator', () => {
 
     expect(packageJson['devDependencies']['vitest']).toBe('^3.0.0');
   });
+
+  it('should use @nx/vite 23 for Nx >= 23.0.0', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' }, '23.0.1');
+
+    const packageJson = JSON.parse(tree.read('/package.json').toString());
+
+    expect(packageJson['devDependencies']['@nx/vite']).toBe('^23.0.0');
+  });
 });
