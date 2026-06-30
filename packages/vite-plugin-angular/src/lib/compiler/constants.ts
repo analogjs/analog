@@ -21,7 +21,7 @@ export const ANGULAR_DECORATORS = new Set([
  * checks stay in sync with the canonical decorator set and don't drift.
  */
 export const ANGULAR_DECORATOR_CALL_RE = new RegExp(
-  `(${[...ANGULAR_DECORATORS].join('|')})\\(`,
+  `@(${[...ANGULAR_DECORATORS].join('|')})\\(`,
 );
 
 /**
