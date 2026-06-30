@@ -1,33 +1,17 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "workspaceLayout": {
-    "libsDir": "packages"
-  },
-  "cli": {
-    "packageManager": "pnpm"
-  },
+  "workspaceLayout": { "libsDir": "packages" },
+  "cli": { "packageManager": "pnpm" },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "test": {
-      "dependsOn": ["^build"],
-      "cache": true
-    },
-    "e2e": {
-      "dependsOn": ["^build"],
-      "cache": true
-    },
-    "serve": {
-      "dependsOn": ["^build"]
-    },
-    "build-package": {
-      "cache": false
-    },
-    "@nx/js:tsc": {
-      "cache": false
-    },
+    "test": { "dependsOn": ["^build"], "cache": true },
+    "e2e": { "dependsOn": ["^build"], "cache": true },
+    "serve": { "dependsOn": ["^build"] },
+    "build-package": { "cache": false },
+    "@nx/js:tsc": { "cache": false },
     "@nx/eslint:lint": {
       "inputs": [
         "default",
@@ -42,10 +26,7 @@
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "@nx/vitest:test": {
-      "cache": true,
-      "inputs": ["default", "^production"]
-    }
+    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
   },
   "generators": {
     "@nx/angular:application": {
@@ -58,9 +39,7 @@
       "linter": "eslint",
       "unitTestRunner": "vitest-analog"
     },
-    "@nx/angular:component": {
-      "style": "css"
-    }
+    "@nx/angular:component": { "style": "css" }
   },
   "defaultProject": "analog-app",
   "namedInputs": {
@@ -83,10 +62,9 @@
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "eslint:lint"
-      }
+      "options": { "targetName": "eslint:lint" }
     }
   ],
-  "analytics": false
+  "analytics": false,
+  "nxCloudId": "6a440f229f68ea99f27e4235"
 }
