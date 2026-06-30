@@ -86,8 +86,8 @@ jobs:
   # serially on the slowest runner was wasted time. `--skip-nx-cache` is
   # deliberate: Nx's cache hash is OS-independent, so without it Windows could
   # restore the linux agents' artifacts and never actually compile here,
-  # defeating the smoke test. The broad `--all` Windows build runs nightly and
-  # in the merge queue via ci-windows-full.yml.
+  # defeating the smoke test. The broad `--all` Windows build runs nightly via
+  # ci-windows-full.yml.
   build-windows:
     runs-on: windows-latest
     steps:
