@@ -78,9 +78,16 @@ jobs:
         if: always()
         run: pnpm exec nx-cloud complete-ci-run
 
-  # Windows smoke build of the produced output. Left as a native runner job:
-  # it requires a Windows OS plane (not the linux agents) and verifies the
-  # built artifact, so it is genuinely coordinator/provider-local work.
+  # Windows smoke build. Native runner job (separate OS plane from the linux
+  # agents) that verifies an Analog app actually builds on Windows.
+  #
+  # Scoped to `blog-app` and its deps (6 build tasks) instead of every project
+  # (20) — the Verify step only checks blog-app's output, so building the rest
+  # serially on the slowest runner was wasted time. `--skip-nx-cache` is
+  # deliberate: Nx's cache hash is OS-independent, so without it Windows could
+  # restore the linux agents' artifacts and never actually compile here,
+  # defeating the smoke test. The broad `--all` Windows build runs nightly via
+  # ci-windows-full.yml.
   build-windows:
     runs-on: windows-latest
     steps:
@@ -89,9 +96,13 @@ jobs:
         with:
           node-version-file: .node-version
       - run: corepack enable
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Build
-        run: pnpm build
+        run: pnpm exec nx build blog-app --skip-nx-cache
       - name: Verify
         run: more dist\apps\blog-app\analog\public\index.html
