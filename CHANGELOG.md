@@ -1,3 +1,9 @@
+## [2.6.3-beta.2](https://github.com/analogjs/analog/compare/v2.6.3-beta.1...v2.6.3-beta.2) (2026-06-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** be more selective with potential angular code detection ([#2394](https://github.com/analogjs/analog/issues/2394)) ([f257d10](https://github.com/analogjs/analog/commit/f257d10023de32b5fa0a86d42cbd0a23a73207bb))
+
 ## [2.6.3-beta.1](https://github.com/analogjs/analog/compare/v2.6.2...v2.6.3-beta.1) (2026-06-28)
 
 ### Bug Fixes
