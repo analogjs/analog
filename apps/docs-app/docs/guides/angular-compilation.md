@@ -161,7 +161,7 @@ For overall Angular/Analog/Vite version support, see [Version Compatibility](/do
 | i18n message extraction             | Yes                     | `$localize` emitted                   |
 | Library / partial builds            | Yes                     | Yes (`fastCompileMode: 'partial'`)    |
 
-## Caveat
+## Trade-offs
 
 :::caution
 Fast compile trades compile-time safety for speed.
