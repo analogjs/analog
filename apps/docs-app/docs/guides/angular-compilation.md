@@ -110,6 +110,39 @@ Add it as a script and run it alongside your build:
 
 This keeps fast builds during development while still failing on template and type errors before you ship — and the Angular Language Service surfaces the same errors live in your editor.
 
+### Nx workspaces
+
+In an Nx workspace, [`angular-typechecker`](https://www.npmjs.com/package/angular-typechecker) provides an Nx executor that runs the complete Angular type-check — TypeScript checks plus template type-checking and extended `NG8xxx` diagnostics — with no emit, decoupled from build and test, and cacheable per project.
+
+Install it:
+
+```bash
+npm install --save-dev angular-typechecker
+```
+
+Then add an `angular-typecheck` target to the project you want to check:
+
+```jsonc
+// apps/my-app/project.json
+{
+  "targets": {
+    "angular-typecheck": {
+      "executor": "angular-typechecker:angular-typecheck",
+      "options": {
+        "tsConfig": "apps/my-app/tsconfig.app.json",
+        "includeDeps": true,
+      },
+    },
+  },
+}
+```
+
+Run it:
+
+```bash
+nx run my-app:angular-typecheck
+```
+
 ## Compatibility
 
 ### Angular versions
