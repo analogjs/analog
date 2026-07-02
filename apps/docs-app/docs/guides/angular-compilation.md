@@ -147,7 +147,7 @@ nx run my-app:angular-typecheck
 
 ### Angular versions
 
-Fast compile is validated against Angular `17`, `18`, `19`, `20`, `21`, and `next` on every PR. Components that use `@defer` at runtime require Angular 18+.
+Fast compile is validated against Angular `17`, `18`, `19`, `20`, `21`, `22`, and `next` on every PR. Components that use `@defer` at runtime require Angular 18+.
 
 For overall Angular/Analog/Vite version support, see [Version Compatibility](/docs/guides/compatibility).
 
