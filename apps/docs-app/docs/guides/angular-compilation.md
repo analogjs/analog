@@ -1,6 +1,6 @@
 # Angular Compilation
 
-Analog compiles your Angular components, directives, and pipes to Ivy definitions during the Vite build. There are two compilation paths:
+The AnalogJS Vite Plugin (`@analogjs/vite-plugin-angular`) compiles your Angular components, directives, and pipes to Ivy definitions during the Vite build. It provides two compilation paths:
 
 - **Default compilation** — Angular's own compiler (`ngtsc`), with full compile-time type checking.
 - **Fast compile** — an in-tree single-pass compiler that produces the same Ivy output much faster.
