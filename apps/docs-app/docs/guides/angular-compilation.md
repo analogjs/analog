@@ -7,6 +7,10 @@ The AnalogJS Vite Plugin (`@analogjs/vite-plugin-angular`) compiles your Angular
 
 Both emit identical Ivy code and identical runtime behavior, because both ultimately call the same `@angular/compiler` lowering APIs.
 
+:::tip
+For background on why compilation, type-checking, and build times are in tension, read [Angular Compilation, Type-Checking, and Build Bottlenecks](https://dev.to/brandontroberts/angular-compilation-type-checking-and-build-bottlenecks-4n2f).
+:::
+
 ## Default compilation
 
 This is what you get out of the box — no configuration required:
