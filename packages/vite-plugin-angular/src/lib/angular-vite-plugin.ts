@@ -217,6 +217,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
   let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
+  let emittedIds = new Set<string>();
   const fileEmitter = (file: string) => {
     outputFile?.(file);
     return outputFiles.get(normalizePath(file));
@@ -1089,6 +1090,10 @@ export function angular(options?: PluginOptions): Plugin[] {
    * It should not be called concurrently. Use `performCompilation` which wraps this method in a lock to ensure only one compilation runs at a time.
    */
   async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
+    // Each pass creates a new builder/program, so previously emitted output
+    // can go stale — only dedupe emits within a single pass.
+    emittedIds = new Set<string>();
+
     // Forward `ids` (modified files) so the Compilation API path can do
     // incremental re-analysis instead of a full recompile on every change.
     if (pluginOptions.useAngularCompilationAPI) {
@@ -1381,6 +1386,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
 
     const writeOutputFile = (id: string) => {
+      const normalizedId = normalizePath(id);
+      if (
+        emittedIds.has(normalizedId) &&
+        outputFiles.get(normalizedId)?.content != null
+      ) {
+        return;
+      }
+
       const sourceFile = builder.getSourceFile(id);
       if (!sourceFile) {
         return;
@@ -1451,6 +1464,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       if (angularCompiler) {
         angularCompiler.incrementalCompilation.recordSuccessfulEmit(sourceFile);
       }
+
+      emittedIds.add(normalizedId);
     };
 
     if (watchMode) {
