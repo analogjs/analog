@@ -526,7 +526,7 @@ export function fastCompilePlugin(
     // `styleExtensions` carries the source extension of each inlined external
     // style so it can be preprocessed by its own file type (e.g. an external
     // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
-    const inlined = inlineResourceUrls(code, id);
+    const inlined = await inlineResourceUrls(code, id);
     code = inlined.code;
     const { styleExtensions } = inlined;
 

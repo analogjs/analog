@@ -52,10 +52,10 @@ function countInlineStyleLiterals(arrayExpr: any): number {
  * Returns the modified source code plus the per-style-index extension map
  * (see {@link InlineResourceResult}).
  */
-export function inlineResourceUrls(
+export async function inlineResourceUrls(
   code: string,
   fileName: string,
-): InlineResourceResult {
+): Promise<InlineResourceResult> {
   const styleExtensions = new Map<number, string>();
 
   if (!code.includes('templateUrl') && !code.includes('styleUrl')) {
@@ -67,10 +67,21 @@ export function inlineResourceUrls(
   let changed = false;
   const dir = path.dirname(fileName);
 
-  // Running base index into the flat per-file style list (matching the order
-  // `extractInlineStyles` walks classes/decorators/properties) so external
-  // styles can be mapped to the index `resolvedInlineStyles` later keys on.
-  let flatStyleBase = 0;
+  // Phase 1: walk the AST and collect resource descriptors per decorator,
+  // in source order — no I/O during the walk. A plan is recorded for every
+  // `@Component` decorator (even without url props) because the flat style
+  // index bookkeeping below advances per decorator.
+  type ResourceProp =
+    | { kind: 'templateUrl'; prop: any; resolvedPath: string }
+    | { kind: 'styleUrl'; prop: any; resolvedPath: string }
+    | { kind: 'styleUrls'; prop: any; resolvedPaths: string[] };
+  interface DecoratorPlan {
+    existingStylesProp: any;
+    existingStylesArray: any;
+    existingInlineCount: number;
+    resourceProps: ResourceProp[];
+  }
+  const plans: DecoratorPlan[] = [];
 
   for (const node of program.body) {
     const decl =
@@ -114,16 +125,7 @@ export function inlineResourceUrls(
           ? 1
           : 0;
 
-      // Collect the props we want to rewrite. Contents from styleUrl /
-      // styleUrls are accumulated so that multiple url-based props in one
-      // decorator collapse into a single `styles` array write. `extensions`
-      // tracks each content's source extension in the same order.
-      const templateUrlRewrites: Array<{ prop: any; content: string }> = [];
-      const cssProps: Array<{
-        prop: any;
-        contents: string[];
-        extensions: string[];
-      }> = [];
+      const resourceProps: ResourceProp[] = [];
 
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
@@ -135,13 +137,11 @@ export function inlineResourceUrls(
           val?.type === 'Literal' &&
           typeof val.value === 'string'
         ) {
-          try {
-            const filePath = path.resolve(dir, val.value);
-            const content = fs.readFileSync(filePath, 'utf-8');
-            templateUrlRewrites.push({ prop, content });
-          } catch {
-            // Keep original if file can't be read
-          }
+          resourceProps.push({
+            kind: 'templateUrl',
+            prop,
+            resolvedPath: path.resolve(dir, val.value),
+          });
           continue;
         }
 
@@ -150,127 +150,202 @@ export function inlineResourceUrls(
           val?.type === 'Literal' &&
           typeof val.value === 'string'
         ) {
-          try {
-            const filePath = path.resolve(dir, val.value);
-            const content = fs.readFileSync(filePath, 'utf-8');
-            cssProps.push({
-              prop,
-              contents: [content],
-              extensions: [extensionOf(filePath)],
-            });
-          } catch {
-            // Keep original if file can't be read
-          }
+          resourceProps.push({
+            kind: 'styleUrl',
+            prop,
+            resolvedPath: path.resolve(dir, val.value),
+          });
           continue;
         }
 
         if (key === 'styleUrls' && val?.type === 'ArrayExpression') {
-          const contents: string[] = [];
-          const extensions: string[] = [];
-          let allRead = true;
+          const resolvedPaths: string[] = [];
           for (const el of val.elements) {
             if (el?.type === 'Literal' && typeof el.value === 'string') {
-              try {
-                const filePath = path.resolve(dir, el.value);
-                contents.push(fs.readFileSync(filePath, 'utf-8'));
-                extensions.push(extensionOf(filePath));
-              } catch {
-                allRead = false;
-                break;
-              }
+              resolvedPaths.push(path.resolve(dir, el.value));
             }
           }
-          if (allRead && contents.length > 0) {
-            cssProps.push({ prop, contents, extensions });
-          }
+          resourceProps.push({ kind: 'styleUrls', prop, resolvedPaths });
         }
       }
 
-      for (const { prop, content } of templateUrlRewrites) {
-        ms.overwrite(
-          prop.start,
-          prop.end,
-          `template: ${JSON.stringify(content)}`,
-        );
-        changed = true;
+      plans.push({
+        existingStylesProp,
+        existingStylesArray,
+        existingInlineCount,
+        resourceProps,
+      });
+    }
+  }
+
+  // Phase 2: read every referenced resource without blocking the event
+  // loop. Each read catches its own failure to `undefined` — one missing
+  // file must not abort sibling reads that succeed.
+  const pathsToRead = new Set<string>();
+  for (const plan of plans) {
+    for (const rp of plan.resourceProps) {
+      if (rp.kind === 'styleUrls') {
+        for (const p of rp.resolvedPaths) pathsToRead.add(p);
+      } else {
+        pathsToRead.add(rp.resolvedPath);
       }
+    }
+  }
+  const fileContents = new Map<string, string | undefined>();
+  await Promise.all(
+    [...pathsToRead].map(async (p) => {
+      fileContents.set(
+        p,
+        await fs.promises.readFile(p, 'utf-8').catch(() => undefined),
+      );
+    }),
+  );
 
-      if (cssProps.length > 0) {
-        const allContents = cssProps.flatMap((c) => c.contents);
-        const allExtensions = cssProps.flatMap((c) => c.extensions);
+  // Phase 3: apply MagicString rewrites in the original AST order so the
+  // flat style index bookkeeping matches `extractInlineStyles`.
 
-        if (existingStylesArray) {
-          // Filter out null holes in case the source already has a sparse array.
-          const realElements = (existingStylesArray.elements as any[]).filter(
-            (e) => e != null,
-          );
+  // Running base index into the flat per-file style list (matching the order
+  // `extractInlineStyles` walks classes/decorators/properties) so external
+  // styles can be mapped to the index `resolvedInlineStyles` later keys on.
+  let flatStyleBase = 0;
 
-          if (realElements.length > 0) {
-            // Insert right after the last real element. This preserves any
-            // trailing comma the source may have (e.g. Prettier output) and
-            // avoids producing a sparse `[existing, , "new"]` element, which
-            // would crash downstream decorator metadata extraction.
-            const lastElement = realElements[realElements.length - 1];
-            const insertion = allContents
-              .map((c) => `, ${JSON.stringify(c)}`)
-              .join('');
-            ms.appendRight(lastElement.end, insertion);
-          } else {
-            // Empty array — drop the leading comma.
-            const insertion = allContents
-              .map((c) => JSON.stringify(c))
-              .join(', ');
-            ms.appendLeft(existingStylesArray.end - 1, insertion);
+  for (const plan of plans) {
+    const { existingStylesProp, existingStylesArray, existingInlineCount } =
+      plan;
+
+    // Collect the props we want to rewrite. Contents from styleUrl /
+    // styleUrls are accumulated so that multiple url-based props in one
+    // decorator collapse into a single `styles` array write. `extensions`
+    // tracks each content's source extension in the same order.
+    const templateUrlRewrites: Array<{ prop: any; content: string }> = [];
+    const cssProps: Array<{
+      prop: any;
+      contents: string[];
+      extensions: string[];
+    }> = [];
+
+    for (const rp of plan.resourceProps) {
+      if (rp.kind === 'templateUrl') {
+        // Keep original if file can't be read
+        const content = fileContents.get(rp.resolvedPath);
+        if (content !== undefined) {
+          templateUrlRewrites.push({ prop: rp.prop, content });
+        }
+      } else if (rp.kind === 'styleUrl') {
+        // Keep original if file can't be read
+        const content = fileContents.get(rp.resolvedPath);
+        if (content !== undefined) {
+          cssProps.push({
+            prop: rp.prop,
+            contents: [content],
+            extensions: [extensionOf(rp.resolvedPath)],
+          });
+        }
+      } else {
+        // styleUrls is all-or-nothing: keep the original property if any
+        // entry failed to read.
+        const contents: string[] = [];
+        const extensions: string[] = [];
+        let allRead = true;
+        for (const p of rp.resolvedPaths) {
+          const content = fileContents.get(p);
+          if (content === undefined) {
+            allRead = false;
+            break;
           }
+          contents.push(content);
+          extensions.push(extensionOf(p));
+        }
+        if (allRead && contents.length > 0) {
+          cssProps.push({ prop: rp.prop, contents, extensions });
+        }
+      }
+    }
 
-          for (const { prop } of cssProps) {
-            removePropertyWithSeparator(ms, code, prop.start, prop.end);
-          }
-        } else if (isInlineStyleValue(existingStylesProp?.value)) {
-          // Singular `styles: '...'` / `styles: \`...\`` — wrap the original
-          // value into an array merged with the inlined styles, then drop the
-          // styleUrl props so only one `styles` key remains.
-          const original = code.slice(
-            existingStylesProp.value.start,
-            existingStylesProp.value.end,
-          );
-          const merged = allContents
+    for (const { prop, content } of templateUrlRewrites) {
+      ms.overwrite(
+        prop.start,
+        prop.end,
+        `template: ${JSON.stringify(content)}`,
+      );
+      changed = true;
+    }
+
+    if (cssProps.length > 0) {
+      const allContents = cssProps.flatMap((c) => c.contents);
+      const allExtensions = cssProps.flatMap((c) => c.extensions);
+
+      if (existingStylesArray) {
+        // Filter out null holes in case the source already has a sparse array.
+        const realElements = (existingStylesArray.elements as any[]).filter(
+          (e) => e != null,
+        );
+
+        if (realElements.length > 0) {
+          // Insert right after the last real element. This preserves any
+          // trailing comma the source may have (e.g. Prettier output) and
+          // avoids producing a sparse `[existing, , "new"]` element, which
+          // would crash downstream decorator metadata extraction.
+          const lastElement = realElements[realElements.length - 1];
+          const insertion = allContents
             .map((c) => `, ${JSON.stringify(c)}`)
             .join('');
-          ms.overwrite(
-            existingStylesProp.value.start,
-            existingStylesProp.value.end,
-            `[${original}${merged}]`,
-          );
-          for (const { prop } of cssProps) {
-            removePropertyWithSeparator(ms, code, prop.start, prop.end);
-          }
+          ms.appendRight(lastElement.end, insertion);
         } else {
-          // No existing `styles` array — rewrite the first styleUrl/styleUrls
-          // prop with the merged contents and drop any additional ones so we
-          // don't emit multiple `styles` properties.
-          const [first, ...rest] = cssProps;
-          ms.overwrite(
-            first.prop.start,
-            first.prop.end,
-            `styles: [${allContents.map((c) => JSON.stringify(c)).join(', ')}]`,
-          );
-          for (const { prop } of rest) {
-            removePropertyWithSeparator(ms, code, prop.start, prop.end);
-          }
+          // Empty array — drop the leading comma.
+          const insertion = allContents
+            .map((c) => JSON.stringify(c))
+            .join(', ');
+          ms.appendLeft(existingStylesArray.end - 1, insertion);
         }
-        changed = true;
 
-        // The appended external styles occupy the flat indices after any
-        // pre-existing inline styles for this component.
-        const externalBase = flatStyleBase + existingInlineCount;
-        allExtensions.forEach((ext, k) => {
-          if (ext) styleExtensions.set(externalBase + k, ext);
-        });
-        flatStyleBase = externalBase + allContents.length;
+        for (const { prop } of cssProps) {
+          removePropertyWithSeparator(ms, code, prop.start, prop.end);
+        }
+      } else if (isInlineStyleValue(existingStylesProp?.value)) {
+        // Singular `styles: '...'` / `styles: \`...\`` — wrap the original
+        // value into an array merged with the inlined styles, then drop the
+        // styleUrl props so only one `styles` key remains.
+        const original = code.slice(
+          existingStylesProp.value.start,
+          existingStylesProp.value.end,
+        );
+        const merged = allContents
+          .map((c) => `, ${JSON.stringify(c)}`)
+          .join('');
+        ms.overwrite(
+          existingStylesProp.value.start,
+          existingStylesProp.value.end,
+          `[${original}${merged}]`,
+        );
+        for (const { prop } of cssProps) {
+          removePropertyWithSeparator(ms, code, prop.start, prop.end);
+        }
       } else {
-        flatStyleBase += existingInlineCount;
+        // No existing `styles` array — rewrite the first styleUrl/styleUrls
+        // prop with the merged contents and drop any additional ones so we
+        // don't emit multiple `styles` properties.
+        const [first, ...rest] = cssProps;
+        ms.overwrite(
+          first.prop.start,
+          first.prop.end,
+          `styles: [${allContents.map((c) => JSON.stringify(c)).join(', ')}]`,
+        );
+        for (const { prop } of rest) {
+          removePropertyWithSeparator(ms, code, prop.start, prop.end);
+        }
       }
+      changed = true;
+
+      // The appended external styles occupy the flat indices after any
+      // pre-existing inline styles for this component.
+      const externalBase = flatStyleBase + existingInlineCount;
+      allExtensions.forEach((ext, k) => {
+        if (ext) styleExtensions.set(externalBase + k, ext);
+      });
+      flatStyleBase = externalBase + allContents.length;
+    } else {
+      flatStyleBase += existingInlineCount;
     }
   }
 
