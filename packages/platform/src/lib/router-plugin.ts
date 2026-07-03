@@ -82,8 +82,22 @@ export function routerPlugin(options?: Options): Plugin[] {
           });
         }
 
+        /**
+         * Invalidates only the changed route file's modules so ordinary edits
+         * keep standard HMR instead of triggering a full reload.
+         *
+         * @param path The file path that was changed
+         */
+        function invalidateChangedRoute(path: string) {
+          if (!isRouteLikeFile(path)) {
+            return;
+          }
+
+          invalidateFileModules(server, path);
+        }
+
         server.watcher.on('add', invalidateRoutes);
-        server.watcher.on('change', invalidateRoutes);
+        server.watcher.on('change', invalidateChangedRoute);
         server.watcher.on('unlink', invalidateRoutes);
       },
     },
