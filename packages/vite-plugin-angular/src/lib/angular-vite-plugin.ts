@@ -18,6 +18,7 @@ import { type createAngularCompilation as createAngularCompilationType } from '@
 import * as ngCompiler from '@angular/compiler';
 import { globSync } from 'tinyglobby';
 import {
+  createFilter,
   defaultClientConditions,
   ModuleNode,
   normalizePath,
@@ -217,6 +218,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   const templateUrlsResolver = new TemplateUrlsResolver();
   let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
+  let emittedIds = new Set<string>();
   const fileEmitter = (file: string) => {
     outputFile?.(file);
     return outputFiles.get(normalizePath(file));
@@ -342,6 +344,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           invalidateFsCaches,
           invalidateTsconfigCaches,
           () => performCompilation(resolvedConfig),
+          pluginOptions.include.map(
+            (glob) =>
+              `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
+          ),
         );
         server.watcher.on('add', invalidateCompilationOnFsChange);
         server.watcher.on('unlink', invalidateCompilationOnFsChange);
@@ -685,15 +691,18 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const hasComponent = code.includes('@Component');
-          const templateUrls = hasComponent
+          // Resource URLs are only consumed for watch-file registration and
+          // JIT rewrites, so skip resolution entirely in prod AOT builds.
+          const resolveResourceUrls =
+            code.includes('@Component') && (watchMode || jit);
+          const templateUrls = resolveResourceUrls
             ? templateUrlsResolver.resolve(code, id)
             : [];
-          const styleUrls = hasComponent
+          const styleUrls = resolveResourceUrls
             ? styleUrlsResolver.resolve(code, id)
             : [];
 
-          if (hasComponent && watchMode) {
+          if (resolveResourceUrls && watchMode) {
             for (const urlSet of [...templateUrls, ...styleUrls]) {
               // `urlSet` is a string where a relative path is joined with an
               // absolute path using the `|` symbol.
@@ -1089,6 +1098,10 @@ export function angular(options?: PluginOptions): Plugin[] {
    * It should not be called concurrently. Use `performCompilation` which wraps this method in a lock to ensure only one compilation runs at a time.
    */
   async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
+    // Each pass creates a new builder/program, so previously emitted output
+    // can go stale — only dedupe emits within a single pass.
+    emittedIds = new Set<string>();
+
     // Forward `ids` (modified files) so the Compilation API path can do
     // incremental re-analysis instead of a full recompile on every change.
     if (pluginOptions.useAngularCompilationAPI) {
@@ -1381,6 +1394,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
 
     const writeOutputFile = (id: string) => {
+      const normalizedId = normalizePath(id);
+      if (
+        emittedIds.has(normalizedId) &&
+        outputFiles.get(normalizedId)?.content != null
+      ) {
+        return;
+      }
+
       const sourceFile = builder.getSourceFile(id);
       if (!sourceFile) {
         return;
@@ -1451,6 +1472,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       if (angularCompiler) {
         angularCompiler.incrementalCompilation.recordSuccessfulEmit(sourceFile);
       }
+
+      emittedIds.add(normalizedId);
     };
 
     if (watchMode) {
@@ -1489,15 +1512,46 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 }
 
+const COMPONENT_RESOURCE_EXT_REGEX = /\.(html|htm|css|scss|sass|less)$/;
+// Spec files stay included — a newly added spec must join the program's
+// root names in Vitest watch mode.
+const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
+
 export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
   invalidateTsconfigCaches: () => void,
   performCompilation: () => Promise<void>,
+  includeGlobs: string[] = [],
+  debounceMs = 100,
 ) {
-  return async () => {
+  const includeFilter = includeGlobs.length
+    ? createFilter(includeGlobs)
+    : undefined;
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  return (file: string) => {
+    const affectsProgram =
+      (TS_EXT_REGEX.test(file) && !EXCLUDED_TS_EXT_REGEX.test(file)) ||
+      COMPONENT_RESOURCE_EXT_REGEX.test(file) ||
+      basename(file).includes('tsconfig') ||
+      !!includeFilter?.(file);
+
+    if (!affectsProgram) {
+      return;
+    }
+
     invalidateFsCaches();
     invalidateTsconfigCaches();
-    await performCompilation();
+
+    // Coalesce event bursts (atomic-save add+unlink pairs, git branch
+    // switches) into a single recompilation.
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    debounceTimer = setTimeout(() => {
+      debounceTimer = undefined;
+      void performCompilation();
+    }, debounceMs);
   };
 }
 
@@ -1699,6 +1753,17 @@ export function formatDiagnosticWithLocation(
   }: ${text}`;
 }
 
+// Keyed by SourceFile identity — invalidation recreates source files, so a
+// reused object is guaranteed to produce the same HMR update module.
+const hmrMetadataCache = new WeakMap<
+  ts.SourceFile,
+  {
+    hmrUpdateCode: string | null | undefined;
+    hmrEligible: boolean;
+    className?: string;
+  }
+>();
+
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],
@@ -1731,14 +1796,28 @@ export function getFileMetadata(
 
     let hmrEligible = false;
     if (liveReload) {
-      for (const node of sourceFile.statements) {
-        if (ts.isClassDeclaration(node) && (node as any).name != null) {
-          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
-          if (!!hmrUpdateCode) {
-            classNames.set(file, (node as any).name.getText());
-            hmrEligible = true;
+      let cached = hmrMetadataCache.get(sourceFile);
+
+      if (!cached) {
+        cached = { hmrUpdateCode: undefined, hmrEligible: false };
+        for (const node of sourceFile.statements) {
+          if (ts.isClassDeclaration(node) && (node as any).name != null) {
+            cached.hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(
+              node as any,
+            );
+            if (!!cached.hmrUpdateCode) {
+              cached.className = (node as any).name.getText();
+              cached.hmrEligible = true;
+            }
           }
         }
+        hmrMetadataCache.set(sourceFile, cached);
+      }
+
+      hmrUpdateCode = cached.hmrUpdateCode;
+      hmrEligible = cached.hmrEligible;
+      if (cached.className != null) {
+        classNames.set(file, cached.className);
       }
     }
 
