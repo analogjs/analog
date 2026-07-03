@@ -60,7 +60,20 @@ export interface DocsFooterColumn {
   items: DocsNavLink[];
 }
 
+export interface DocsFooterBrand {
+  /** Path to the logo (svg/png) shown in the brand column */
+  logoSrc?: string;
+  /** Alt text on the logo image */
+  logoAlt?: string;
+  /** Copyright line, e.g. `© 2026 Analog` */
+  copyright?: string;
+  /** Extra line below the copyright, e.g. the license */
+  tagline?: string;
+}
+
 export interface DocsFooterConfig {
+  /** Logo/copyright column rendered before the link columns. */
+  brand?: DocsFooterBrand;
   columns?: DocsFooterColumn[];
   /** Copyright/license line, rendered below the columns. */
   legalLine?: string;

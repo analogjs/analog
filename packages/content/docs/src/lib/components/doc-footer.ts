@@ -17,7 +17,16 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
             [routerLink]="p.href"
             class="flex flex-col rounded border p-3 transition hover:bg-[var(--bg-subtle)]"
           >
-            <span class="text-xs text-[var(--fg-muted)]">Previous</span>
+            <span class="text-xs text-[var(--fg-muted)]">
+              @for (parent of p.parents; track $index) {
+                @if (!$first) {
+                  <span aria-hidden="true">›</span>
+                }
+                {{ parent }}
+              } @empty {
+                Previous
+              }
+            </span>
             <span class="font-medium" style="color: var(--brand)"
               >← {{ p.label }}</span
             >
@@ -30,7 +39,16 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
             [routerLink]="n.href"
             class="flex flex-col items-end rounded border p-3 text-right transition hover:bg-[var(--bg-subtle)]"
           >
-            <span class="text-xs text-[var(--fg-muted)]">Next</span>
+            <span class="text-xs text-[var(--fg-muted)]">
+              @for (parent of n.parents; track $index) {
+                @if (!$first) {
+                  <span aria-hidden="true">›</span>
+                }
+                {{ parent }}
+              } @empty {
+                Next
+              }
+            </span>
             <span class="font-medium" style="color: var(--brand)"
               >{{ n.label }} →</span
             >

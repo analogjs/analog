@@ -10,8 +10,29 @@ import { injectDocsConfig } from '../config';
       class="border-t px-6 py-10"
       style="border-color: var(--border); color: var(--fg-muted)"
     >
-      @if (columns().length > 0) {
-        <div class="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      @if (brand() || columns().length > 0) {
+        <div
+          class="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2"
+          [class.lg:grid-cols-3]="!brand()"
+          [class.lg:grid-cols-4]="brand()"
+        >
+          @if (brand(); as b) {
+            <div class="flex flex-col gap-3 text-sm">
+              @if (b.logoSrc) {
+                <img
+                  [src]="b.logoSrc"
+                  [alt]="b.logoAlt ?? ''"
+                  class="h-10 w-auto self-start"
+                />
+              }
+              @if (b.copyright) {
+                <span>{{ b.copyright }}</span>
+              }
+              @if (b.tagline) {
+                <span>{{ b.tagline }}</span>
+              }
+            </div>
+          }
           @for (col of columns(); track col.title) {
             <div>
               <h3 class="mb-3 text-xs font-semibold uppercase tracking-wide">
@@ -55,6 +76,7 @@ import { injectDocsConfig } from '../config';
 })
 export class Footer {
   private readonly config = injectDocsConfig();
+  protected readonly brand = computed(() => this.config.footer?.brand);
   protected readonly columns = computed(
     () => this.config.footer?.columns ?? [],
   );

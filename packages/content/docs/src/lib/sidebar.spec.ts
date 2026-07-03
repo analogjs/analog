@@ -3,12 +3,17 @@ import { findSidebarIndex, flattenSidebar, type SidebarNode } from './sidebar';
 
 const nodes: SidebarNode[] = [
   { kind: 'doc', id: 'introduction', label: 'Introduction' },
+  { kind: 'break' },
   {
     kind: 'category',
     label: 'Guides',
     items: [
       { kind: 'doc', id: 'guides/forms', label: 'Forms' },
-      { kind: 'doc', id: 'guides/routing', label: 'Routing' },
+      {
+        kind: 'category',
+        label: 'Advanced',
+        items: [{ kind: 'doc', id: 'guides/routing', label: 'Routing' }],
+      },
     ],
   },
 ];
@@ -27,6 +32,25 @@ describe('flattenSidebar', () => {
     const flat = flattenSidebar(nodes, 'es');
     expect(flat[0].href).toBe('/es/docs/introduction');
     expect(flat[2].href).toBe('/es/docs/guides/routing');
+  });
+
+  it('records the ancestor category labels of each entry', () => {
+    const flat = flattenSidebar(nodes, null);
+    expect(flat.map((e) => e.parents)).toEqual([
+      [],
+      ['Guides'],
+      ['Guides', 'Advanced'],
+    ]);
+  });
+
+  it('skips break nodes', () => {
+    const flat = flattenSidebar(nodes, null);
+    expect(flat).toHaveLength(3);
+    expect(flat.map((e) => e.id)).toEqual([
+      'introduction',
+      'guides/forms',
+      'guides/routing',
+    ]);
   });
 });
 
