@@ -226,7 +226,7 @@ export function compile(
     fileName,
     sourceCode,
     ts.ScriptTarget.Latest,
-    true,
+    false,
   );
   // OXC parse for metadata extraction (faster than TS for decorator/signal analysis)
   const { program: oxcProgram } = parseSync(fileName, sourceCode);
