@@ -66,6 +66,7 @@ export default defineConfig(({ mode }) => ({
             additionalLangs: [
               'bash',
               'json',
+              'jsonc',
               'toml',
               'yaml',
               'diff',
