@@ -60,7 +60,11 @@ const DECORATOR_RE = new RegExp(`@(${[...COMPILABLE_DECORATORS].join('|')})`);
  * Lightweight scan of a TypeScript file to extract Angular decorator metadata
  * without performing full compilation. Uses OXC's native Rust parser for speed.
  */
-export function scanFile(code: string, fileName: string): RegistryEntry[] {
+export function scanFile(
+  code: string,
+  fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): RegistryEntry[] {
   const entries: RegistryEntry[] = [];
 
   // Fast regex pre-filter — skip files with neither Angular decorators
@@ -70,7 +74,7 @@ export function scanFile(code: string, fileName: string): RegistryEntry[] {
     return entries;
   }
 
-  const { program } = parseSync(fileName, code);
+  program ??= parseSync(fileName, code).program;
 
   // First pass: collect tuple barrels — top-level `const X = [A, B, C]`
   // (with or without `export`/`as const`) where every element is a bare

@@ -64,7 +64,7 @@ export function jitTransform(
 ): JitTransformResult {
   const { program } = parseSync(fileName, sourceCode);
   const ms = new MagicString(sourceCode, { filename: fileName });
-  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode);
+  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode, program);
   let hasAngularClass = false;
 
   const allClasses = findAllClasses(program.body);

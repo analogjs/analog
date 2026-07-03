@@ -300,9 +300,10 @@ function subEntryFromFilePath(
 export function collectImportedPackages(
   code: string,
   fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
 ): Set<string> {
   const packages = new Set<string>();
-  const { program } = parseSync(fileName, code);
+  program ??= parseSync(fileName, code).program;
 
   for (const stmt of program.body) {
     if (stmt.type !== 'ImportDeclaration') continue;
@@ -330,12 +331,14 @@ export function collectImportedPackages(
 export function collectRelativeReExports(
   code: string,
   fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
 ): string[] {
-  let program: any;
-  try {
-    program = parseSync(fileName, code).program;
-  } catch {
-    return [];
+  if (!program) {
+    try {
+      program = parseSync(fileName, code).program;
+    } catch {
+      return [];
+    }
   }
   const result: string[] = [];
   for (const stmt of program.body || []) {
@@ -362,12 +365,17 @@ export function collectRelativeReExports(
  * directly listed in tsconfig `files`/`include` (transitively-imported app
  * sources) or behind wildcard `paths` (workspace libraries).
  */
-export function collectAllImports(code: string, fileName: string): string[] {
-  let program: any;
-  try {
-    program = parseSync(fileName, code).program;
-  } catch {
-    return [];
+export function collectAllImports(
+  code: string,
+  fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): string[] {
+  if (!program) {
+    try {
+      program = parseSync(fileName, code).program;
+    } catch {
+      return [];
+    }
   }
   const result: string[] = [];
   for (const stmt of program.body || []) {

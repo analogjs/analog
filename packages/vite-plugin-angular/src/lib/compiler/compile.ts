@@ -99,6 +99,11 @@ export interface CompileOptions {
    *   Partial output is version-stable and linked at application build time.
    */
   compilationMode?: 'full' | 'partial';
+  /**
+   * Pre-parsed OXC program of `sourceCode`, so callers that already parsed
+   * the identical string can avoid a re-parse. Treated as read-only.
+   */
+  oxcProgram?: ReturnType<typeof parseSync>['program'];
 }
 
 type CompileMetadata = ReturnType<typeof extractMetadata>;
@@ -226,10 +231,10 @@ export function compile(
     fileName,
     sourceCode,
     ts.ScriptTarget.Latest,
-    true,
+    false,
   );
   // OXC parse for metadata extraction (faster than TS for decorator/signal analysis)
-  const { program: oxcProgram } = parseSync(fileName, sourceCode);
+  const oxcProgram = opts.oxcProgram ?? parseSync(fileName, sourceCode).program;
   const oxcClassMap = new Map<string, any>();
   for (const stmt of oxcProgram.body) {
     const decl =
@@ -255,7 +260,7 @@ export function compile(
   const parseFile = new ParseSourceFile(sourceCode, fileName);
   const parseLoc = new ParseLocation(parseFile, 0, 0, 0);
   const typeSourceSpan = new ParseSourceSpan(parseLoc, parseLoc);
-  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode);
+  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode, oxcProgram);
   const importSpecifierByName = new Map<string, string>();
   const importedNames = new Set<string>();
 
@@ -1593,7 +1598,7 @@ export function compile(
   //    implements, generics, etc.).  Without this pass, single-file transpilers
   //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
   //    and will leave the import in the output, causing runtime errors.
-  elideTypeOnlyImportsMagicString(ms);
+  elideTypeOnlyImportsMagicString(ms, oxcProgram);
 
   const map = ms.generateMap({
     source: fileName,
