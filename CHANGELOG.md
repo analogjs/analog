@@ -1,3 +1,9 @@
+## [2.6.3-beta.4](https://github.com/analogjs/analog/compare/v2.6.3-beta.3...v2.6.3-beta.4) (2026-07-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** track inlined resources for HMR invalidation in fast compile ([#2414](https://github.com/analogjs/analog/issues/2414)) ([db3d366](https://github.com/analogjs/analog/commit/db3d3667e81b41db632932badcefc29a1ea21a9d))
+
 ## [2.6.3-beta.3](https://github.com/analogjs/analog/compare/v2.6.3-beta.2...v2.6.3-beta.3) (2026-07-03)
 
 ### Performance Improvements
