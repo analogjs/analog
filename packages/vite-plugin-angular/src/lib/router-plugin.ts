@@ -2,7 +2,13 @@ import type { Plugin } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 
 export function routerPlugin(): Plugin {
-  const javascriptTransformer = new JavaScriptTransformer({ jit: true }, 1);
+  const transformCache = new Map<string, Uint8Array>();
+  const javascriptTransformer = new JavaScriptTransformer({ jit: true }, 1, {
+    get: (key: string) => transformCache.get(key),
+    put: (key: string, value: Uint8Array) => {
+      transformCache.set(key, value);
+    },
+  });
 
   /**
    * Transforms Angular packages the didn't get picked up by Vite's pre-optimization.
@@ -11,6 +17,9 @@ export function routerPlugin(): Plugin {
     name: 'analogjs-router-optimization',
     enforce: 'pre',
     apply: 'serve',
+    buildEnd() {
+      return javascriptTransformer.close();
+    },
     transform: {
       filter: {
         id: /fesm(.*?)\.mjs/,
