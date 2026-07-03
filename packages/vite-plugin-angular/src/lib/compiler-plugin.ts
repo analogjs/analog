@@ -13,6 +13,7 @@ import {
   CompilerPluginOptions,
   JavaScriptTransformer,
 } from './utils/devkit.js';
+import type { TransformCacheStore } from './utils/transform-cache.js';
 
 type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;
 type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
@@ -21,10 +22,12 @@ export function createCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
   isTest: boolean,
   closeTransformer: boolean,
+  cache?: TransformCacheStore,
 ): EsbuildPlugin {
   const javascriptTransformer = new JavaScriptTransformer(
     { ...pluginOptions, jit: true },
     1,
+    cache,
   );
 
   return {
@@ -52,10 +55,12 @@ export function createRolldownCompilerPlugin(
   pluginOptions: CompilerPluginOptions,
   isTest: boolean,
   closeTransformer: boolean,
+  cache?: TransformCacheStore,
 ): Rolldown.Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     { ...pluginOptions, jit: true },
     1,
+    cache,
   );
 
   const plugin: Rolldown.Plugin = {
