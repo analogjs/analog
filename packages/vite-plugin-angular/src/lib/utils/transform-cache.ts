@@ -115,8 +115,10 @@ export function withMemoryLayer(
 }
 
 /**
- * Resolve the shared on-disk cache directory: the nearest `node_modules`
- * at or above `startDir`, namespaced by the installed Angular version
+ * Resolve the shared on-disk cache directory: `node_modules/.cache` at the
+ * nearest `node_modules` above `startDir` — the conventional tool-cache
+ * location, so installs and `node_modules` cleans evict it without a
+ * separate eviction pass. Namespaced by the installed Angular version
  * because the transformer's cache key does not cover the linker version.
  * Returns `null` (caching disabled) when no `node_modules` exists or the
  * `ANALOG_TRANSFORM_CACHE=0` kill switch is set.
@@ -129,7 +131,8 @@ export function resolveTransformCacheDir(startDir: string): string | null {
       return path.join(
         dir,
         'node_modules',
-        '.analog',
+        '.cache',
+        'analog',
         'transform-cache',
         VERSION.full,
       );
