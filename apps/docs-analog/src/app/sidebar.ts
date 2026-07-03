@@ -200,6 +200,11 @@ export function getSidebar(): SidebarNode[] {
         },
         {
           kind: 'doc',
+          id: 'guides/angular-compilation',
+          label: $localize`:@@sidebar.angular-compilation:Angular Compilation`,
+        },
+        {
+          kind: 'doc',
           id: 'guides/compatibility',
           label: $localize`:@@sidebar.compatibility:Version Compatibility`,
         },

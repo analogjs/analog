@@ -59,6 +59,7 @@
   "sidebar.guides": "指南",
   "sidebar.migrating": "将 Angular 应用迁移到 Analog",
   "sidebar.libraries": "构建 Angular 库",
+  "sidebar.angular-compilation": "Angular 编译",
   "sidebar.compatibility": "版本兼容性",
   "sidebar.integrations": "集成",
   "sidebar.nx": "Nx",

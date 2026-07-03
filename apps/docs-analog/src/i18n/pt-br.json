@@ -59,6 +59,7 @@
   "sidebar.guides": "Guias",
   "sidebar.migrating": "Migrar um app Angular para Analog",
   "sidebar.libraries": "Criar uma biblioteca Angular",
+  "sidebar.angular-compilation": "Compilação Angular",
   "sidebar.compatibility": "Compatibilidade de versões",
   "sidebar.integrations": "Integrações",
   "sidebar.nx": "Nx",
