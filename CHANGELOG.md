@@ -1,3 +1,11 @@
+## [2.6.3-beta.3](https://github.com/analogjs/analog/compare/v2.6.3-beta.2...v2.6.3-beta.3) (2026-07-03)
+
+### Performance Improvements
+
+- **platform:** scope route invalidation to add/unlink and enable router fesm transform cache ([#2410](https://github.com/analogjs/analog/issues/2410)) ([120407c](https://github.com/analogjs/analog/commit/120407cd7f8b374c9f6620c0cd0456d108d1cfec))
+- **vite-plugin-angular:** dedupe emits, filter watcher invalidation, and memoize HMR metadata ([#2412](https://github.com/analogjs/analog/issues/2412)) ([1d9e6fe](https://github.com/analogjs/analog/commit/1d9e6fe2b2d8ba7b349ee33ae297030725a0778b))
+- **vite-plugin-angular:** reduce redundant parsing, fs work, and blocking reads in fastCompile ([#2411](https://github.com/analogjs/analog/issues/2411)) ([f7f1fb2](https://github.com/analogjs/analog/commit/f7f1fb24dff32ec5f32b9d609116f17ba7ec9303))
+
 ## [2.6.3-beta.2](https://github.com/analogjs/analog/compare/v2.6.3-beta.1...v2.6.3-beta.2) (2026-06-30)
 
 ### Bug Fixes
