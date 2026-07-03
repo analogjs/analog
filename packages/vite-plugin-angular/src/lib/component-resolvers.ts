@@ -8,7 +8,7 @@ import {
 import { normalizePath } from 'vite';
 
 interface StyleUrlsCacheEntry {
-  matchedStyleUrls: string[];
+  code: string;
   styleUrls: string[];
 }
 
@@ -20,32 +20,42 @@ export class StyleUrlsResolver {
   private readonly styleUrlsCache = new Map<string, StyleUrlsCacheEntry>();
 
   resolve(code: string, id: string): string[] {
-    // Given the code is the following:
-    // @Component({
-    //   styleUrls: [
-    //     './app.component.scss'
-    //   ]
-    // })
-    // The `matchedStyleUrls` would result in: `styleUrls: [\n    './app.component.scss'\n  ]`.
-    const matchedStyleUrls = getStyleUrls(code);
     const entry = this.styleUrlsCache.get(id);
-    // We're using `matchedStyleUrls` as a key because the code may be changing continuously,
-    // resulting in the resolver being called multiple times. While the code changes, the
-    // `styleUrls` may remain constant, which means we should always return the previously
-    // resolved style URLs.
-    if (entry && entry.matchedStyleUrls === matchedStyleUrls) {
+    if (entry?.code === code) {
       return entry.styleUrls;
     }
 
-    const styleUrls = matchedStyleUrls.map((styleUrlPath) => {
+    const styleUrls = getStyleUrls(code).map((styleUrlPath) => {
       return `${styleUrlPath}|${normalizePath(
         resolve(dirname(id), styleUrlPath),
       )}`;
     });
 
-    this.styleUrlsCache.set(id, { styleUrls, matchedStyleUrls });
+    this.styleUrlsCache.set(id, { code, styleUrls });
     return styleUrls;
   }
+}
+
+// Shared project so template and style extraction for the same code reuse a
+// single parse. `resolve()` is synchronous, so the last-parse memo cannot be
+// interleaved by another file's code.
+const project = new Project({ useInMemoryFileSystem: true });
+let lastParsedCode: string | undefined;
+let lastParsedProperties: PropertyAssignment[] = [];
+
+function getPropertyAssignments(code: string): PropertyAssignment[] {
+  if (code === lastParsedCode) {
+    return lastParsedProperties;
+  }
+
+  const sourceFile = project.createSourceFile('cmp.ts', code, {
+    overwrite: true,
+  });
+  lastParsedCode = code;
+  lastParsedProperties = sourceFile.getDescendantsOfKind(
+    SyntaxKind.PropertyAssignment,
+  );
+  return lastParsedProperties;
 }
 
 function getTextByProperty(name: string, properties: PropertyAssignment[]) {
@@ -58,11 +68,7 @@ function getTextByProperty(name: string, properties: PropertyAssignment[]) {
 }
 
 export function getStyleUrls(code: string) {
-  const project = new Project({ useInMemoryFileSystem: true });
-  const sourceFile = project.createSourceFile('cmp.ts', code);
-  const properties = sourceFile.getDescendantsOfKind(
-    SyntaxKind.PropertyAssignment,
-  );
+  const properties = getPropertyAssignments(code);
   const styleUrl = getTextByProperty('styleUrl', properties);
   const styleUrls = properties
     .filter((property) => property.getName() === 'styleUrls')
@@ -75,12 +81,7 @@ export function getStyleUrls(code: string) {
 }
 
 export function getTemplateUrls(code: string) {
-  const project = new Project({ useInMemoryFileSystem: true });
-  const sourceFile = project.createSourceFile('cmp.ts', code);
-  const properties = sourceFile.getDescendantsOfKind(
-    SyntaxKind.PropertyAssignment,
-  );
-  return getTextByProperty('templateUrl', properties);
+  return getTextByProperty('templateUrl', getPropertyAssignments(code));
 }
 
 interface TemplateUrlsCacheEntry {

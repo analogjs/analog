@@ -691,15 +691,18 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          const hasComponent = code.includes('@Component');
-          const templateUrls = hasComponent
+          // Resource URLs are only consumed for watch-file registration and
+          // JIT rewrites, so skip resolution entirely in prod AOT builds.
+          const resolveResourceUrls =
+            code.includes('@Component') && (watchMode || jit);
+          const templateUrls = resolveResourceUrls
             ? templateUrlsResolver.resolve(code, id)
             : [];
-          const styleUrls = hasComponent
+          const styleUrls = resolveResourceUrls
             ? styleUrlsResolver.resolve(code, id)
             : [];
 
-          if (hasComponent && watchMode) {
+          if (resolveResourceUrls && watchMode) {
             for (const urlSet of [...templateUrls, ...styleUrls]) {
               // `urlSet` is a string where a relative path is joined with an
               // absolute path using the `|` symbol.
