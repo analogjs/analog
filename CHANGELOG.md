@@ -1,3 +1,9 @@
+## [2.6.3-beta.5](https://github.com/analogjs/analog/compare/v2.6.3-beta.4...v2.6.3-beta.5) (2026-07-03)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** persist dependency transform output across dep-optimizer runs ([#2416](https://github.com/analogjs/analog/issues/2416)) ([c7fe67b](https://github.com/analogjs/analog/commit/c7fe67b379cdc913e916aa1d220dffb62fda4226))
+
 ## [2.6.3-beta.4](https://github.com/analogjs/analog/compare/v2.6.3-beta.3...v2.6.3-beta.4) (2026-07-03)
 
 ### Bug Fixes
