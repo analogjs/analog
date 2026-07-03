@@ -1751,6 +1751,17 @@ export function formatDiagnosticWithLocation(
   }: ${text}`;
 }
 
+// Keyed by SourceFile identity — invalidation recreates source files, so a
+// reused object is guaranteed to produce the same HMR update module.
+const hmrMetadataCache = new WeakMap<
+  ts.SourceFile,
+  {
+    hmrUpdateCode: string | null | undefined;
+    hmrEligible: boolean;
+    className?: string;
+  }
+>();
+
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],
@@ -1783,14 +1794,28 @@ export function getFileMetadata(
 
     let hmrEligible = false;
     if (liveReload) {
-      for (const node of sourceFile.statements) {
-        if (ts.isClassDeclaration(node) && (node as any).name != null) {
-          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
-          if (!!hmrUpdateCode) {
-            classNames.set(file, (node as any).name.getText());
-            hmrEligible = true;
+      let cached = hmrMetadataCache.get(sourceFile);
+
+      if (!cached) {
+        cached = { hmrUpdateCode: undefined, hmrEligible: false };
+        for (const node of sourceFile.statements) {
+          if (ts.isClassDeclaration(node) && (node as any).name != null) {
+            cached.hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(
+              node as any,
+            );
+            if (!!cached.hmrUpdateCode) {
+              cached.className = (node as any).name.getText();
+              cached.hmrEligible = true;
+            }
           }
         }
+        hmrMetadataCache.set(sourceFile, cached);
+      }
+
+      hmrUpdateCode = cached.hmrUpdateCode;
+      hmrEligible = cached.hmrEligible;
+      if (cached.className != null) {
+        classNames.set(file, cached.className);
       }
     }
 

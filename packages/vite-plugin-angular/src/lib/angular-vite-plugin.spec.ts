@@ -13,11 +13,13 @@ vi.mock('vite', async () => {
 });
 
 import type ts from 'typescript';
+import * as tsModule from 'typescript';
 import {
   angular,
   collectEmittedDiagnostics,
   createFsWatcherCacheInvalidator,
   formatDiagnosticWithLocation,
+  getFileMetadata,
   groupDiagnosticsByFile,
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
@@ -818,6 +820,83 @@ describe('collectEmittedDiagnostics', () => {
       errors: [],
       warnings: [],
     });
+  });
+});
+
+describe('getFileMetadata HMR memoization', () => {
+  const createProgram = (sourceFile: ts.SourceFile) =>
+    ({
+      getSourceFile: () => sourceFile,
+      getSyntacticDiagnostics: () => [],
+    }) as unknown as ts.BuilderProgram;
+
+  const createSourceFile = () =>
+    tsModule.createSourceFile(
+      '/src/app/foo.component.ts',
+      'export class FooComponent {}',
+      tsModule.ScriptTarget.Latest,
+      true,
+    );
+
+  it('emits the HMR update module once per source file identity', () => {
+    const sourceFile = createSourceFile();
+    const angularCompiler = {
+      emitHmrUpdateModule: vi.fn(() => 'hmr-update-code'),
+    };
+    const metadata = getFileMetadata(
+      createProgram(sourceFile),
+      angularCompiler as any,
+      true,
+      true,
+    );
+
+    const first = metadata('/src/app/foo.component.ts');
+    const second = metadata('/src/app/foo.component.ts');
+
+    expect(angularCompiler.emitHmrUpdateModule).toHaveBeenCalledOnce();
+    expect(first.hmrUpdateCode).toBe('hmr-update-code');
+    expect(first.hmrEligible).toBe(true);
+    expect(second.hmrUpdateCode).toBe('hmr-update-code');
+    expect(second.hmrEligible).toBe(true);
+  });
+
+  it('recomputes for a new source file identity', () => {
+    const angularCompiler = {
+      emitHmrUpdateModule: vi.fn(() => 'hmr-update-code'),
+    };
+
+    getFileMetadata(
+      createProgram(createSourceFile()),
+      angularCompiler as any,
+      true,
+      true,
+    )('/src/app/foo.component.ts');
+    getFileMetadata(
+      createProgram(createSourceFile()),
+      angularCompiler as any,
+      true,
+      true,
+    )('/src/app/foo.component.ts');
+
+    expect(angularCompiler.emitHmrUpdateModule).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not emit HMR update modules without liveReload', () => {
+    const angularCompiler = {
+      emitHmrUpdateModule: vi.fn(() => 'hmr-update-code'),
+    };
+    const metadata = getFileMetadata(
+      createProgram(createSourceFile()),
+      angularCompiler as any,
+      false,
+      true,
+    );
+
+    const result = metadata('/src/app/foo.component.ts');
+
+    expect(angularCompiler.emitHmrUpdateModule).not.toHaveBeenCalled();
+    expect(result.hmrUpdateCode).toBeUndefined();
+    expect(result.hmrEligible).toBe(false);
   });
 });
 
