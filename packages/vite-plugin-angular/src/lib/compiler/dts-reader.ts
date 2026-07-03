@@ -300,9 +300,10 @@ function subEntryFromFilePath(
 export function collectImportedPackages(
   code: string,
   fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
 ): Set<string> {
   const packages = new Set<string>();
-  const { program } = parseSync(fileName, code);
+  program ??= parseSync(fileName, code).program;
 
   for (const stmt of program.body) {
     if (stmt.type !== 'ImportDeclaration') continue;

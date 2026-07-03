@@ -324,7 +324,11 @@ function isWhitespace(ch: string): boolean {
  * Extract inline style strings from Angular @Component decorator using OXC parser.
  * Returns an array of style string values for preprocessing.
  */
-export function extractInlineStyles(code: string, fileName: string): string[] {
+export function extractInlineStyles(
+  code: string,
+  fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): string[] {
   if (!code.includes('styles')) return [];
-  return extractStylesFromAst(code, fileName);
+  return extractStylesFromAst(code, fileName, program);
 }

@@ -1,5 +1,6 @@
 import { promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
+import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -353,8 +354,12 @@ export function fastCompilePlugin(
     );
   }
 
-  function ensureDtsRegistryForSource(code: string, id: string) {
-    for (const pkg of collectImportedPackages(code, id)) {
+  function ensureDtsRegistryForSource(
+    code: string,
+    id: string,
+    program?: ReturnType<typeof parseSync>['program'],
+  ) {
+    for (const pkg of collectImportedPackages(code, id, program)) {
       if (scannedDtsPackages.has(pkg)) continue;
       scannedDtsPackages.add(pkg);
 
@@ -444,6 +449,11 @@ export function fastCompilePlugin(
     code = inlined.code;
     const { styleExtensions } = inlined;
 
+    // Single OXC parse of the post-inline source, shared by every AST
+    // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
+    // so its program can never be reused here.
+    const { program: oxcProgram } = parseSync(id, code);
+
     // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
     // whenever a style needs a non-`css` preprocessor — either the configured
     // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
@@ -455,7 +465,7 @@ export function fastCompilePlugin(
     const styleNeedsPreprocess = (ext: string) => ext !== '' && ext !== 'css';
 
     if (styleNeedsPreprocess(inlineExt) || styleExtensions.size > 0) {
-      const styleStrings = extractInlineStyles(code, id);
+      const styleStrings = extractInlineStyles(code, id, oxcProgram);
 
       if (styleStrings.length > 0) {
         resolvedInlineStyles = new Map();
@@ -488,7 +498,7 @@ export function fastCompilePlugin(
       }
     }
 
-    ensureDtsRegistryForSource(code, id);
+    ensureDtsRegistryForSource(code, id, oxcProgram);
 
     // Merge entries from the shared external-registry global into this
     // compile's lookup view. Convention: out-of-tree compilers populate
@@ -511,6 +521,7 @@ export function fastCompilePlugin(
       resolvedInlineStyles,
       useDefineForClassFields,
       compilationMode: pluginOptions.fastCompileMode,
+      oxcProgram,
     });
 
     // Track resource dependencies for HMR
