@@ -506,7 +506,6 @@ describe('createFsWatcherCacheInvalidator', () => {
     } = setup();
 
     invalidate('/project/src/assets/logo.png');
-    invalidate('/project/src/app/app.component.spec.ts');
     invalidate('/project/src/app/types.d.ts');
     invalidate('/project/src/app/data.json');
     await vi.runAllTimersAsync();
@@ -514,6 +513,22 @@ describe('createFsWatcherCacheInvalidator', () => {
     expect(invalidateFsCaches).not.toHaveBeenCalled();
     expect(invalidateTsconfigCaches).not.toHaveBeenCalled();
     expect(performCompilation).not.toHaveBeenCalled();
+  });
+
+  it('recompiles when a spec file is added so it joins the program', async () => {
+    const {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    } = setup();
+
+    invalidate('/project/src/app/app.component.spec.ts');
+    await vi.runAllTimersAsync();
+
+    expect(invalidateFsCaches).toHaveBeenCalledOnce();
+    expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    expect(performCompilation).toHaveBeenCalledOnce();
   });
 
   it('coalesces bursts of events into a single recompilation', async () => {

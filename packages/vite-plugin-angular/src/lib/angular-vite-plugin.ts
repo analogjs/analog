@@ -1513,7 +1513,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 }
 
 const COMPONENT_RESOURCE_EXT_REGEX = /\.(html|htm|css|scss|sass|less)$/;
-const EXCLUDED_TS_EXT_REGEX = /\.(spec|d)\.[cm]?ts$/;
+// Spec files stay included — a newly added spec must join the program's
+// root names in Vitest watch mode.
+const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
 
 export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
