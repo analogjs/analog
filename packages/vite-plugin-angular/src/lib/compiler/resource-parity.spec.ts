@@ -64,4 +64,31 @@ export class ParityComponent {}
 
     expect(externalOut).toBe(inlineOut);
   });
+
+  it('reports every inlined resource path so HMR can invalidate the owning module', async () => {
+    const external = `import { Component } from '@angular/core';
+@Component({
+  selector: 'app-parity',
+  templateUrl: './test.component.html',
+  styleUrls: ['./test.component.css'],
+})
+export class ParityComponent {}
+`;
+
+    const result = await inlineResourceUrls(external, ID);
+
+    expect(result.resourceDependencies.sort()).toEqual([
+      path.join(FIXTURES, 'test.component.css'),
+      path.join(FIXTURES, 'test.component.html'),
+    ]);
+
+    // Unreadable resources are not reported (nothing was inlined for them).
+    const missing = await inlineResourceUrls(
+      external.replace('./test.component.html', './does-not-exist.html'),
+      ID,
+    );
+    expect(missing.resourceDependencies).toEqual([
+      path.join(FIXTURES, 'test.component.css'),
+    ]);
+  });
 });
