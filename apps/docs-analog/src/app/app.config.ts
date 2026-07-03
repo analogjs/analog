@@ -145,6 +145,12 @@ export const appConfig: ApplicationConfig = {
         { label: 'Discord', href: 'https://chat.analogjs.org' },
       ],
       footer: {
+        brand: {
+          logoSrc: '/img/logos/analog-logo.svg',
+          logoAlt: 'Analog logo',
+          copyright: `© 2022–${new Date().getFullYear()} Analog`,
+          tagline: $localize`:@@footer.license:Released under the MIT License`,
+        },
         columns: [
           {
             title: $localize`:@@footer.documentation:Documentation`,
@@ -193,7 +199,6 @@ export const appConfig: ApplicationConfig = {
             ],
           },
         ],
-        legalLine: `© 2022–${new Date().getFullYear()} Analog. Licensed under MIT.`,
       },
     })),
     provideAppInitializer(() => inject(ScrollRestorer).start()),

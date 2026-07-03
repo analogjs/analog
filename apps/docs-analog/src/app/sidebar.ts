@@ -23,6 +23,7 @@ export function getSidebar(): SidebarNode[] {
       id: 'getting-started',
       label: $localize`:@@sidebar.getting-started:Getting Started`,
     },
+    { kind: 'break' },
     {
       kind: 'category',
       label: $localize`:@@sidebar.core-concepts:Core Concepts`,
@@ -262,6 +263,7 @@ export function getSidebar(): SidebarNode[] {
         },
       ],
     },
+    { kind: 'break' },
     {
       kind: 'doc',
       id: 'contributors',
