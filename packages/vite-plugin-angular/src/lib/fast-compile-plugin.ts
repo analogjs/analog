@@ -530,6 +530,14 @@ export function fastCompilePlugin(
     code = inlined.code;
     const { styleExtensions } = inlined;
 
+    // Track inlined resources for HMR. `compile()` only reports resources it
+    // reads through its own fallback (a templateUrl/styleUrl the inliner did
+    // NOT already inline), so files inlined here must be recorded here or a
+    // later edit to them never invalidates the owning module.
+    for (const dep of inlined.resourceDependencies) {
+      resourceToSource.set(dep, id);
+    }
+
     // Single OXC parse of the post-inline source, shared by every AST
     // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
     // so its program can never be reused here.

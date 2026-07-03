@@ -16,6 +16,13 @@ export interface InlineResourceResult {
    * truly-inline `styles: [...]` template strings).
    */
   styleExtensions: Map<number, string>;
+  /**
+   * Absolute paths of every external resource file successfully read and
+   * inlined. Callers record these so a later edit to the resource file can
+   * invalidate the owning source module — the inlined copy is otherwise
+   * invisible to the module graph.
+   */
+  resourceDependencies: string[];
 }
 
 /** Whether a node is an inline style value (string literal or single-quasi template). */
@@ -59,7 +66,7 @@ export async function inlineResourceUrls(
   const styleExtensions = new Map<number, string>();
 
   if (!code.includes('templateUrl') && !code.includes('styleUrl')) {
-    return { code, styleExtensions };
+    return { code, styleExtensions, resourceDependencies: [] };
   }
 
   const { program } = parseSync(fileName, code);
@@ -349,7 +356,13 @@ export async function inlineResourceUrls(
     }
   }
 
-  return { code: changed ? ms.toString() : code, styleExtensions };
+  return {
+    code: changed ? ms.toString() : code,
+    styleExtensions,
+    resourceDependencies: [...pathsToRead].filter(
+      (p) => fileContents.get(p) !== undefined,
+    ),
+  };
 }
 
 /** Lower-cased file extension without the leading dot (e.g. `scss`), or `''`. */
