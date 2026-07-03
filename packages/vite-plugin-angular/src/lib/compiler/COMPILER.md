@@ -12,7 +12,7 @@ export default defineConfig({
 });
 ```
 
-Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
+Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
 
 ## Architecture
 
@@ -352,13 +352,17 @@ The registry scan uses OXC's native Rust parser for ~1.5x faster file scanning a
 
 The compiler detects the installed `@angular/compiler` version at startup and adapts:
 
-| Feature                    | Angular 19 | Angular 20+              | Angular 21+          |
-| -------------------------- | ---------- | ------------------------ | -------------------- |
-| `hasDirectiveDependencies` | Omitted    | Set when imports present | Same                 |
-| `externalStyles`           | Omitted    | Same                     | Available (not used) |
-| All other APIs             | Compatible | Compatible               | Compatible           |
+| Feature                    | Angular 19 | Angular 20+              | Angular 21+          | Angular 22+                       |
+| -------------------------- | ---------- | ------------------------ | -------------------- | --------------------------------- |
+| `hasDirectiveDependencies` | Omitted    | Set when imports present | Same                 | Same                              |
+| `externalStyles`           | Omitted    | Same                     | Available (not used) | Same                              |
+| `legacyOptionalChaining`   | N/A        | N/A                      | N/A                  | Omitted → `false` (ngtsc default) |
+| `foreignImports` (v22.1+)  | N/A        | N/A                      | N/A                  | Omitted → no foreign components   |
+| All other APIs             | Compatible | Compatible               | Compatible           | Compatible                        |
 
-Supported range: **Angular 17+** (with the v17 `@defer` runtime caveat noted above). Conformance tested against **Angular 17-21**, compatibility tested via per-version `pnpm.overrides` matrix on every PR.
+Angular 22 introduced `legacyOptionalChaining` on `R3ComponentMetadata` (external builds default to `false`, which an omitted field also produces) and 22.1 added `foreignImports: R3ForeignComponentMetadata[] | null` plus the `ɵɵforeignComponent`/`ɵɵforeignContent` instructions for the experimental foreign-components feature. `compileComponentFromMetadata` guards the field with a truthiness check (`foreignImports && foreignImports.length > 0`), so omitting it is runtime-safe; templates that use the new `@content` block / foreign components are not supported by the fast compiler.
+
+Supported range: **Angular 17+** (with the v17 `@defer` runtime caveat noted above). Conformance tested against **Angular 17-22**, compatibility tested via per-version `pnpm.overrides` matrix on every PR.
 
 ## Future Architecture (tsgo)
 
@@ -378,7 +382,7 @@ This compiler's architecture — single-file transforms using `@angular/compiler
 
 | File                            | Tests | Coverage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conformance.spec.ts`           | 167   | Angular compliance test suite (v17-v21, 87%+ Ivy instruction match)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `conformance.spec.ts`           | 167   | Angular compliance test suite (v17-v22, 87%+ Ivy instruction match)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `component.spec.ts`             | 114   | All `@Component` features, signals (incl. required), control flow, `@defer` (triggers + dependency import shape), pipes, content projection, external resources + OXC inline resource inlining, providers, source maps, cross-component input binding, constant pool ordering, assignment precedence in ternary, templateUrl inlining in metadata, template ref vars, two-way binding with `model()`, computed/safe navigation, `@if as` alias, multiple components per file, duplicate i0 prevention, arrow object literal wrapping, decorator/field preservation, non-Angular passthrough, template-level styles, member decorator removal, self-referencing components, TS syntax preservation, lazy dependency array emission, Ivy fields as static class members + TDZ hoisting, hostDirectives metadata extraction (bare/object/forwardRef), signal query R3QueryReference wrapping, `usesInheritance` for `extends`, host raw embedded quote preservation, signal query `read`/`descendants` options, `@ViewChild` decorator with `read` option (regression for v19 query refresh emission), `styleUrl`/`styleUrls` merges into an existing `styles: [...]` array without producing duplicate object literal keys or sparse elements (including trailing-comma and empty-array cases) |
 | `type-elision.spec.ts`          | 58    | Type-only import detection, elision passes, MagicString integration, sourcemap accuracy after elision, `TSAsExpression` value preservation, constant pool helpers survive elision, hoisted nested-template helpers survive elision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `jit-transform.spec.ts`         | 37    | Decorator conversion, member/parameter decorator removal, constructor DI, signal API downleveling, external resources, `ReflectionCapabilities` integration, nested class support, auto-import of decorator classes for signal API downleveling                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -407,17 +411,18 @@ The compiler is validated against Angular's official compliance test suite. A co
 
 #### Pass Rates by Angular Version
 
-| Angular            | Pass Rate | Tests |
-| ------------------ | --------- | ----- |
-| v17 (latest patch) | 93.2%     | 120   |
-| v18 (latest patch) | 82.9%     | 143   |
-| v19 (latest patch) | 83.5%     | 151   |
-| v20 (latest patch) | 91.5%     | 155   |
-| v21 (latest patch) | 91.8%     | 160   |
-| latest             | 91.8%     | 160   |
-| next (v22.0.0)     | 91.8%     | 160   |
+| Angular             | Pass Rate | Comparisons |
+| ------------------- | --------- | ----------- |
+| v17 (latest patch)  | 78.5%     | 409         |
+| v18 (latest patch)  | 77.8%     | 432         |
+| v19 (latest patch)  | 79.8%     | 445         |
+| v20 (latest patch)  | 88.2%     | 475         |
+| v21 (latest patch)  | 88.9%     | 504         |
+| v22 (latest patch)  | 88.7%     | 529         |
+| latest (v22.0.5)    | 88.7%     | 529         |
+| next (v22.1.0-next) | 88.7%     | 529         |
 
-Remaining soft-failures are output formatting differences (`@defer` multi-file deps, named function patterns), not functional issues. All versions produce 0 hard test failures.
+All rows compile the fixtures with the workspace-pinned `@angular/compiler` (currently 22.x), so older fixture sets naturally match at a lower rate — their expected output predates instruction-shape changes in newer majors. The failure set is byte-for-byte identical between `latest` and `next`, i.e. v22.1 introduces no new conformance regressions. Remaining soft-failures are output formatting differences (`@defer` multi-file deps, named function patterns), not functional issues. All versions produce 0 hard test failures. The CI gate is `ANGULAR_CONFORMANCE_MIN_PASS_RATE` (default 0.75).
 
 #### Category Drift Detection
 
@@ -446,20 +451,20 @@ bash packages/vite-plugin-angular/scripts/setup-conformance.sh next
 npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
 ```
 
-CI runs a matrix of Angular 17, 18, 19, 20, 21, latest, and next on every pull request via `.github/workflows/conformance.yml`.
+CI runs a matrix of Angular 17, 18, 19, 20, 21, 22, latest, and next on every pull request via `.github/workflows/conformance.yml`.
 
 ### Compatibility Testing
 
 Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/compiler-compat.yml` complements it by:
 
-1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported version (`17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, plus `next`) via `pnpm.overrides`.
+1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported version (`17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`, plus `next`) via `pnpm.overrides`.
 2. Running the regular `packages/vite-plugin-angular/src/lib/compiler/` test suite against the swapped version with `DEBUG=analog-fast-compile*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
 3. On a `push` to `beta`, auto-opening (or commenting on an existing) GitHub issue using the bug-report template's section structure when a numeric matrix slot fails. PR failures show in the PR check and don't open issues to avoid spam.
 
 The matrix mixes two version-pinning strategies:
 
 - **v17/v18 use the latest LTS patches** (`17.3.12`, `18.2.14`). These majors are in maintenance — the floor versions (`17.0.0`/`18.0.0`) predate the signal-input array shape and aren't worth supporting speculatively, so testing the LTS patches is a better signal for what users actually run.
-- **v19/v20/v21 use the floor of the major** (`19.0.0`, `20.0.0`, `21.0.0`). These majors are still receiving patches, so pinning the floor gives a deterministic CI signal — _"the lowest supported version of major N still works"_ — without forcing matrix bumps every time Angular ships a patch.
+- **v19 through v22 use the floor of the major** (`19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`). These majors are still receiving patches, so pinning the floor gives a deterministic CI signal — _"the lowest supported version of major N still works"_ — without forcing matrix bumps every time Angular ships a patch.
 - **`next`** tracks Angular's prerelease dist-tag and is allowed to fail (early warning when the next major lands a breaking change, without blocking the workflow).
 
 Known v17 limitation: components that use `@defer` at runtime are not supported on Angular 17. The v17 `@defer` ABI requires populated `meta.deferBlocks` and `meta.deferrableTypes` Maps that the compiler currently sets to empty. Non-`@defer` components compile cleanly. See `compile.ts` for the inline rationale.

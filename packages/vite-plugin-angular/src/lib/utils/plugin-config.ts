@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
 import { defaultClientConditions } from 'vite';
 
@@ -7,6 +7,10 @@ import {
   createCompilerPlugin,
   createRolldownCompilerPlugin,
 } from '../compiler-plugin.js';
+import {
+  createPersistentTransformCache,
+  resolveTransformCacheDir,
+} from './transform-cache.js';
 
 /**
  * TypeScript file extension regex
@@ -98,6 +102,14 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
     ...(opts.watchMode ? {} : { ngDevMode: 'false' }),
   };
 
+  // Persist linked dependency output across dep-optimizer runs. The
+  // transformer's own key covers file bytes + options, and the directory
+  // is namespaced by Angular version, so entries never go stale.
+  const transformCacheDir = resolveTransformCacheDir(dirname(opts.tsconfig));
+  const transformCache = transformCacheDir
+    ? createPersistentTransformCache(transformCacheDir)
+    : undefined;
+
   const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] = {
     plugins: [
       createRolldownCompilerPlugin(
@@ -110,6 +122,7 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
         },
         opts.isTest,
         !opts.isAstroIntegration,
+        transformCache,
       ),
     ],
   };
@@ -126,6 +139,7 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
         },
         opts.isTest,
         !opts.isAstroIntegration,
+        transformCache,
       ),
     ],
     define: defineOptions,

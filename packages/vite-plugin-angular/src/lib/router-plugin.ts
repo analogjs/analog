@@ -1,8 +1,28 @@
 import type { Plugin } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
+import {
+  createPersistentTransformCache,
+  resolveTransformCacheDir,
+  withMemoryLayer,
+  type TransformCacheStore,
+} from './utils/transform-cache.js';
 
 export function routerPlugin(): Plugin {
-  const javascriptTransformer = new JavaScriptTransformer({ jit: true }, 1);
+  const memoryCache = new Map<string, Uint8Array>();
+  const memoryOnly: TransformCacheStore = {
+    get: (key: string) => memoryCache.get(key),
+    put: (key: string, value: Uint8Array) => {
+      memoryCache.set(key, value);
+    },
+  };
+  const persistentDir = resolveTransformCacheDir(process.cwd());
+  const javascriptTransformer = new JavaScriptTransformer(
+    { jit: true },
+    1,
+    persistentDir
+      ? withMemoryLayer(createPersistentTransformCache(persistentDir))
+      : memoryOnly,
+  );
 
   /**
    * Transforms Angular packages the didn't get picked up by Vite's pre-optimization.
@@ -11,6 +31,9 @@ export function routerPlugin(): Plugin {
     name: 'analogjs-router-optimization',
     enforce: 'pre',
     apply: 'serve',
+    buildEnd() {
+      return javascriptTransformer.close();
+    },
     transform: {
       filter: {
         id: /fesm(.*?)\.mjs/,

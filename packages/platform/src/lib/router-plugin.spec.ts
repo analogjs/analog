@@ -84,10 +84,41 @@ describe('routerPlugin', () => {
     );
     expect(invalidateModule).toHaveBeenCalledWith(changedRouteModule);
     expect(invalidateModule).toHaveBeenCalledWith(pageImporter);
-    expect(invalidateModule).toHaveBeenCalledWith(analogModule);
-    expect(invalidateModule).toHaveBeenCalledWith(importer);
-    expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+    expect(invalidateModule).not.toHaveBeenCalledWith(analogModule);
+    expect(invalidateModule).not.toHaveBeenCalledWith(importer);
+    expect(send).not.toHaveBeenCalled();
   });
+
+  it.each(['add', 'unlink'])(
+    'invalidates analog modules and reloads when a route file is %sed',
+    (eventName) => {
+      const {
+        analogModule,
+        changedRouteModule,
+        importer,
+        pageImporter,
+        getModulesByFile,
+        invalidateModule,
+        send,
+        on,
+      } = configureServer();
+
+      const handler = on.mock.calls.find(([event]) => event === eventName)?.[1];
+
+      expect(handler).toBeTypeOf('function');
+
+      handler('/src/app/pages/hot-added.page.ts');
+
+      expect(getModulesByFile).toHaveBeenCalledWith(
+        '/src/app/pages/hot-added.page.ts',
+      );
+      expect(invalidateModule).toHaveBeenCalledWith(changedRouteModule);
+      expect(invalidateModule).toHaveBeenCalledWith(pageImporter);
+      expect(invalidateModule).toHaveBeenCalledWith(analogModule);
+      expect(invalidateModule).toHaveBeenCalledWith(importer);
+      expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+    },
+  );
 
   it('ignores unrelated file changes', () => {
     const { invalidateModule, send, on } = configureServer();

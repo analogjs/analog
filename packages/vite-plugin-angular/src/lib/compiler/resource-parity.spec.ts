@@ -18,16 +18,16 @@ import type { ComponentRegistry } from './registry';
 const FIXTURES = path.join(__dirname, '__fixtures__');
 const ID = path.join(FIXTURES, 'test.component.ts');
 
-function compileSource(src: string): string {
+async function compileSource(src: string): Promise<string> {
   const registry: ComponentRegistry = new Map();
-  return compile(inlineResourceUrls(src, ID).code, ID, {
+  return compile((await inlineResourceUrls(src, ID)).code, ID, {
     registry,
     useDefineForClassFields: true,
   }).code;
 }
 
 describe('resource inlining ↔ inline output parity', () => {
-  it('emits identical Ivy for external templateUrl/styleUrls and their inline form', () => {
+  it('emits identical Ivy for external templateUrl/styleUrls and their inline form', async () => {
     const html = fs.readFileSync(
       path.join(FIXTURES, 'test.component.html'),
       'utf-8',
@@ -55,13 +55,40 @@ export class ParityComponent {}
 export class ParityComponent {}
 `;
 
-    const externalOut = compileSource(external);
-    const inlineOut = compileSource(inline);
+    const externalOut = await compileSource(external);
+    const inlineOut = await compileSource(inline);
 
     // Guard against a vacuous pass: real Ivy must have been emitted for both.
     expect(externalOut).toContain('ɵcmp');
     expect(externalOut).toContain('ParityComponent');
 
     expect(externalOut).toBe(inlineOut);
+  });
+
+  it('reports every inlined resource path so HMR can invalidate the owning module', async () => {
+    const external = `import { Component } from '@angular/core';
+@Component({
+  selector: 'app-parity',
+  templateUrl: './test.component.html',
+  styleUrls: ['./test.component.css'],
+})
+export class ParityComponent {}
+`;
+
+    const result = await inlineResourceUrls(external, ID);
+
+    expect(result.resourceDependencies.sort()).toEqual([
+      path.join(FIXTURES, 'test.component.css'),
+      path.join(FIXTURES, 'test.component.html'),
+    ]);
+
+    // Unreadable resources are not reported (nothing was inlined for them).
+    const missing = await inlineResourceUrls(
+      external.replace('./test.component.html', './does-not-exist.html'),
+      ID,
+    );
+    expect(missing.resourceDependencies).toEqual([
+      path.join(FIXTURES, 'test.component.css'),
+    ]);
   });
 });

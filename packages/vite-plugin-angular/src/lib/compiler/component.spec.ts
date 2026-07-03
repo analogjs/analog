@@ -2196,8 +2196,8 @@ describe('OXC-based resource inlining', () => {
     return haystack.split(needle).length - 1;
   }
 
-  it('inlines templateUrl via AST rewriting', () => {
-    const { code: result } = inlineResourceUrls(
+  it('inlines templateUrl via AST rewriting', async () => {
+    const { code: result } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2213,8 +2213,8 @@ describe('OXC-based resource inlining', () => {
     expect(result).toContain('template:');
   });
 
-  it('inlines styleUrls via AST rewriting', () => {
-    const { code: result } = inlineResourceUrls(
+  it('inlines styleUrls via AST rewriting', async () => {
+    const { code: result } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2231,7 +2231,7 @@ describe('OXC-based resource inlining', () => {
     expect(result).toContain('styles:');
   });
 
-  it('returns original code when no resources to inline', () => {
+  it('returns original code when no resources to inline', async () => {
     const src = `
       import { Component } from '@angular/core';
       @Component({
@@ -2240,12 +2240,12 @@ describe('OXC-based resource inlining', () => {
       })
       export class InlineComponent {}
     `;
-    const { code: result } = inlineResourceUrls(src, 'inline.ts');
+    const { code: result } = await inlineResourceUrls(src, 'inline.ts');
     expect(result).toBe(src);
   });
 
-  it('merges styleUrl into existing inline styles array (no duplicate key)', () => {
-    const { code: result } = inlineResourceUrls(
+  it('merges styleUrl into existing inline styles array (no duplicate key)', async () => {
+    const { code: result } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2268,8 +2268,8 @@ describe('OXC-based resource inlining', () => {
     expect(result).toContain('.wrapper');
   });
 
-  it('merges styleUrls into existing inline styles array (no duplicate key)', () => {
-    const { code: result } = inlineResourceUrls(
+  it('merges styleUrls into existing inline styles array (no duplicate key)', async () => {
+    const { code: result } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2289,8 +2289,8 @@ describe('OXC-based resource inlining', () => {
     expect(result).toContain('.wrapper');
   });
 
-  it('merges styleUrl into an existing styles array with a trailing comma without producing a sparse element', () => {
-    const { code: result } = inlineResourceUrls(
+  it('merges styleUrl into an existing styles array with a trailing comma without producing a sparse element', async () => {
+    const { code: result } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2317,8 +2317,8 @@ describe('OXC-based resource inlining', () => {
     expect(() => rawCompile(result, 'ext.ts')).not.toThrow();
   });
 
-  it('merges styleUrl into an empty styles array without producing a sparse element', () => {
-    const { code: result } = inlineResourceUrls(
+  it('merges styleUrl into an empty styles array without producing a sparse element', async () => {
+    const { code: result } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2366,12 +2366,12 @@ describe('OXC-based resource inlining', () => {
     expect(styles[1]).toBe('p { margin: 0 }');
   });
 
-  it('reports the source extension of an inlined external styleUrl', () => {
+  it('reports the source extension of an inlined external styleUrl', async () => {
     // Regression: fastCompile must preprocess external `styleUrl`s by their own
     // file extension (e.g. `.scss`), independent of `inlineStylesExtension`.
     // `inlineResourceUrls` surfaces each inlined external style's extension at
     // the flat index that `extractInlineStyles`/`resolvedInlineStyles` use.
-    const { styleExtensions } = inlineResourceUrls(
+    const { styleExtensions } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2387,8 +2387,8 @@ describe('OXC-based resource inlining', () => {
     expect(styleExtensions.get(0)).toBe('scss');
   });
 
-  it('reports a css extension for plain external styleUrls', () => {
-    const { styleExtensions } = inlineResourceUrls(
+  it('reports a css extension for plain external styleUrls', async () => {
+    const { styleExtensions } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2404,10 +2404,10 @@ describe('OXC-based resource inlining', () => {
     expect(styleExtensions.get(0)).toBe('css');
   });
 
-  it('indexes an external styleUrl after pre-existing inline styles', () => {
+  it('indexes an external styleUrl after pre-existing inline styles', async () => {
     // Inline `styles: [...]` come first in the flat list; the external scss
     // styleUrl is appended after it, so it must map to index 1 (not 0).
-    const { styleExtensions } = inlineResourceUrls(
+    const { styleExtensions } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2425,12 +2425,12 @@ describe('OXC-based resource inlining', () => {
     expect(styleExtensions.get(1)).toBe('scss');
   });
 
-  it('reports the source extension for each preprocessable styleUrl type', () => {
+  it('reports the source extension for each preprocessable styleUrl type', async () => {
     // The fast-compile path preprocesses each external style by its own
     // extension, so every preprocessable style language must be surfaced
     // distinctly (not collapsed onto a single `inlineStylesExtension`).
     for (const ext of ['css', 'scss', 'less']) {
-      const { styleExtensions } = inlineResourceUrls(
+      const { styleExtensions } = await inlineResourceUrls(
         `
         import { Component } from '@angular/core';
         @Component({
@@ -2447,11 +2447,11 @@ describe('OXC-based resource inlining', () => {
     }
   });
 
-  it('merges a singular `styles` string with an external styleUrl without duplicating the key', () => {
+  it('merges a singular `styles` string with an external styleUrl without duplicating the key', async () => {
     // Regression: a non-array `styles` (single string/template) plus an
     // external `styleUrl` must collapse into one `styles` key, and the external
     // style must be indexed *after* the existing inline style (index 1).
-    const { code, styleExtensions } = inlineResourceUrls(
+    const { code, styleExtensions } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({

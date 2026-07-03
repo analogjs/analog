@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as realFs from 'node:fs';
 import { tmpdir } from 'node:os';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { normalizePath, preprocessCSS } from 'vite';
 
 vi.mock('vite', async () => {
@@ -13,11 +13,13 @@ vi.mock('vite', async () => {
 });
 
 import type ts from 'typescript';
+import * as tsModule from 'typescript';
 import {
   angular,
   collectEmittedDiagnostics,
   createFsWatcherCacheInvalidator,
   formatDiagnosticWithLocation,
+  getFileMetadata,
   groupDiagnosticsByFile,
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
@@ -425,7 +427,7 @@ describe('load virtual raw template imports', () => {
 });
 
 describe('createFsWatcherCacheInvalidator', () => {
-  it('clears fs and tsconfig caches before recompiling', async () => {
+  function setup(includeGlobs: string[] = []) {
     const invalidateFsCaches = vi.fn();
     const invalidateTsconfigCaches = vi.fn();
     const performCompilation = vi.fn().mockResolvedValue(undefined);
@@ -433,12 +435,110 @@ describe('createFsWatcherCacheInvalidator', () => {
       invalidateFsCaches,
       invalidateTsconfigCaches,
       performCompilation,
+      includeGlobs,
     );
 
-    await invalidate();
+    return {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('clears fs and tsconfig caches before recompiling', async () => {
+    const {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    } = setup();
+
+    invalidate('/project/src/app/new.component.ts');
 
     expect(invalidateFsCaches).toHaveBeenCalledOnce();
     expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    expect(performCompilation).not.toHaveBeenCalled();
+
+    await vi.runAllTimersAsync();
+
+    expect(performCompilation).toHaveBeenCalledOnce();
+  });
+
+  it('recompiles for component resources and tsconfig files', async () => {
+    const { performCompilation, invalidate } = setup();
+
+    invalidate('/project/src/app/app.component.html');
+    await vi.runAllTimersAsync();
+    invalidate('/project/src/app/app.component.scss');
+    await vi.runAllTimersAsync();
+    invalidate('/project/tsconfig.app.json');
+    await vi.runAllTimersAsync();
+
+    expect(performCompilation).toHaveBeenCalledTimes(3);
+  });
+
+  it('recompiles for files matched by include globs', async () => {
+    const { performCompilation, invalidate } = setup([
+      '/project/src/content/**/*.md',
+    ]);
+
+    invalidate('/project/src/content/post.md');
+    await vi.runAllTimersAsync();
+
+    expect(performCompilation).toHaveBeenCalledOnce();
+  });
+
+  it('ignores files that cannot affect the program', async () => {
+    const {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    } = setup();
+
+    invalidate('/project/src/assets/logo.png');
+    invalidate('/project/src/app/types.d.ts');
+    invalidate('/project/src/app/data.json');
+    await vi.runAllTimersAsync();
+
+    expect(invalidateFsCaches).not.toHaveBeenCalled();
+    expect(invalidateTsconfigCaches).not.toHaveBeenCalled();
+    expect(performCompilation).not.toHaveBeenCalled();
+  });
+
+  it('recompiles when a spec file is added so it joins the program', async () => {
+    const {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    } = setup();
+
+    invalidate('/project/src/app/app.component.spec.ts');
+    await vi.runAllTimersAsync();
+
+    expect(invalidateFsCaches).toHaveBeenCalledOnce();
+    expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    expect(performCompilation).toHaveBeenCalledOnce();
+  });
+
+  it('coalesces bursts of events into a single recompilation', async () => {
+    const { performCompilation, invalidate } = setup();
+
+    invalidate('/project/src/app/a.component.ts');
+    invalidate('/project/src/app/a.component.ts');
+    invalidate('/project/src/app/b.component.ts');
+    await vi.runAllTimersAsync();
+
     expect(performCompilation).toHaveBeenCalledOnce();
   });
 });
@@ -735,6 +835,83 @@ describe('collectEmittedDiagnostics', () => {
       errors: [],
       warnings: [],
     });
+  });
+});
+
+describe('getFileMetadata HMR memoization', () => {
+  const createProgram = (sourceFile: ts.SourceFile) =>
+    ({
+      getSourceFile: () => sourceFile,
+      getSyntacticDiagnostics: () => [],
+    }) as unknown as ts.BuilderProgram;
+
+  const createSourceFile = () =>
+    tsModule.createSourceFile(
+      '/src/app/foo.component.ts',
+      'export class FooComponent {}',
+      tsModule.ScriptTarget.Latest,
+      true,
+    );
+
+  it('emits the HMR update module once per source file identity', () => {
+    const sourceFile = createSourceFile();
+    const angularCompiler = {
+      emitHmrUpdateModule: vi.fn(() => 'hmr-update-code'),
+    };
+    const metadata = getFileMetadata(
+      createProgram(sourceFile),
+      angularCompiler as any,
+      true,
+      true,
+    );
+
+    const first = metadata('/src/app/foo.component.ts');
+    const second = metadata('/src/app/foo.component.ts');
+
+    expect(angularCompiler.emitHmrUpdateModule).toHaveBeenCalledOnce();
+    expect(first.hmrUpdateCode).toBe('hmr-update-code');
+    expect(first.hmrEligible).toBe(true);
+    expect(second.hmrUpdateCode).toBe('hmr-update-code');
+    expect(second.hmrEligible).toBe(true);
+  });
+
+  it('recomputes for a new source file identity', () => {
+    const angularCompiler = {
+      emitHmrUpdateModule: vi.fn(() => 'hmr-update-code'),
+    };
+
+    getFileMetadata(
+      createProgram(createSourceFile()),
+      angularCompiler as any,
+      true,
+      true,
+    )('/src/app/foo.component.ts');
+    getFileMetadata(
+      createProgram(createSourceFile()),
+      angularCompiler as any,
+      true,
+      true,
+    )('/src/app/foo.component.ts');
+
+    expect(angularCompiler.emitHmrUpdateModule).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not emit HMR update modules without liveReload', () => {
+    const angularCompiler = {
+      emitHmrUpdateModule: vi.fn(() => 'hmr-update-code'),
+    };
+    const metadata = getFileMetadata(
+      createProgram(createSourceFile()),
+      angularCompiler as any,
+      false,
+      true,
+    );
+
+    const result = metadata('/src/app/foo.component.ts');
+
+    expect(angularCompiler.emitHmrUpdateModule).not.toHaveBeenCalled();
+    expect(result.hmrUpdateCode).toBeUndefined();
+    expect(result.hmrEligible).toBe(false);
   });
 });
 
