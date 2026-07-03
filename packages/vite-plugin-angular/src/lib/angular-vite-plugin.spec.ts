@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import * as realFs from 'node:fs';
 import { tmpdir } from 'node:os';
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { normalizePath, preprocessCSS } from 'vite';
 
 vi.mock('vite', async () => {
@@ -425,7 +425,7 @@ describe('load virtual raw template imports', () => {
 });
 
 describe('createFsWatcherCacheInvalidator', () => {
-  it('clears fs and tsconfig caches before recompiling', async () => {
+  function setup(includeGlobs: string[] = []) {
     const invalidateFsCaches = vi.fn();
     const invalidateTsconfigCaches = vi.fn();
     const performCompilation = vi.fn().mockResolvedValue(undefined);
@@ -433,12 +433,95 @@ describe('createFsWatcherCacheInvalidator', () => {
       invalidateFsCaches,
       invalidateTsconfigCaches,
       performCompilation,
+      includeGlobs,
     );
 
-    await invalidate();
+    return {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('clears fs and tsconfig caches before recompiling', async () => {
+    const {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    } = setup();
+
+    invalidate('/project/src/app/new.component.ts');
 
     expect(invalidateFsCaches).toHaveBeenCalledOnce();
     expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    expect(performCompilation).not.toHaveBeenCalled();
+
+    await vi.runAllTimersAsync();
+
+    expect(performCompilation).toHaveBeenCalledOnce();
+  });
+
+  it('recompiles for component resources and tsconfig files', async () => {
+    const { performCompilation, invalidate } = setup();
+
+    invalidate('/project/src/app/app.component.html');
+    await vi.runAllTimersAsync();
+    invalidate('/project/src/app/app.component.scss');
+    await vi.runAllTimersAsync();
+    invalidate('/project/tsconfig.app.json');
+    await vi.runAllTimersAsync();
+
+    expect(performCompilation).toHaveBeenCalledTimes(3);
+  });
+
+  it('recompiles for files matched by include globs', async () => {
+    const { performCompilation, invalidate } = setup([
+      '/project/src/content/**/*.md',
+    ]);
+
+    invalidate('/project/src/content/post.md');
+    await vi.runAllTimersAsync();
+
+    expect(performCompilation).toHaveBeenCalledOnce();
+  });
+
+  it('ignores files that cannot affect the program', async () => {
+    const {
+      invalidateFsCaches,
+      invalidateTsconfigCaches,
+      performCompilation,
+      invalidate,
+    } = setup();
+
+    invalidate('/project/src/assets/logo.png');
+    invalidate('/project/src/app/app.component.spec.ts');
+    invalidate('/project/src/app/types.d.ts');
+    invalidate('/project/src/app/data.json');
+    await vi.runAllTimersAsync();
+
+    expect(invalidateFsCaches).not.toHaveBeenCalled();
+    expect(invalidateTsconfigCaches).not.toHaveBeenCalled();
+    expect(performCompilation).not.toHaveBeenCalled();
+  });
+
+  it('coalesces bursts of events into a single recompilation', async () => {
+    const { performCompilation, invalidate } = setup();
+
+    invalidate('/project/src/app/a.component.ts');
+    invalidate('/project/src/app/a.component.ts');
+    invalidate('/project/src/app/b.component.ts');
+    await vi.runAllTimersAsync();
+
     expect(performCompilation).toHaveBeenCalledOnce();
   });
 });

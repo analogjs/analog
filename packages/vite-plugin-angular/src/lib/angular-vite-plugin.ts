@@ -18,6 +18,7 @@ import { type createAngularCompilation as createAngularCompilationType } from '@
 import * as ngCompiler from '@angular/compiler';
 import { globSync } from 'tinyglobby';
 import {
+  createFilter,
   defaultClientConditions,
   ModuleNode,
   normalizePath,
@@ -343,6 +344,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           invalidateFsCaches,
           invalidateTsconfigCaches,
           () => performCompilation(resolvedConfig),
+          pluginOptions.include.map(
+            (glob) =>
+              `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
+          ),
         );
         server.watcher.on('add', invalidateCompilationOnFsChange);
         server.watcher.on('unlink', invalidateCompilationOnFsChange);
@@ -1504,15 +1509,44 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 }
 
+const COMPONENT_RESOURCE_EXT_REGEX = /\.(html|htm|css|scss|sass|less)$/;
+const EXCLUDED_TS_EXT_REGEX = /\.(spec|d)\.[cm]?ts$/;
+
 export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
   invalidateTsconfigCaches: () => void,
   performCompilation: () => Promise<void>,
+  includeGlobs: string[] = [],
+  debounceMs = 100,
 ) {
-  return async () => {
+  const includeFilter = includeGlobs.length
+    ? createFilter(includeGlobs)
+    : undefined;
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  return (file: string) => {
+    const affectsProgram =
+      (TS_EXT_REGEX.test(file) && !EXCLUDED_TS_EXT_REGEX.test(file)) ||
+      COMPONENT_RESOURCE_EXT_REGEX.test(file) ||
+      basename(file).includes('tsconfig') ||
+      !!includeFilter?.(file);
+
+    if (!affectsProgram) {
+      return;
+    }
+
     invalidateFsCaches();
     invalidateTsconfigCaches();
-    await performCompilation();
+
+    // Coalesce event bursts (atomic-save add+unlink pairs, git branch
+    // switches) into a single recompilation.
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    debounceTimer = setTimeout(() => {
+      debounceTimer = undefined;
+      void performCompilation();
+    }, debounceMs);
   };
 }
 
