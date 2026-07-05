@@ -112,35 +112,41 @@ This keeps fast builds during development while still failing on template and ty
 
 ### Nx workspaces
 
-In an Nx workspace, [`angular-typechecker`](https://www.npmjs.com/package/angular-typechecker) provides an Nx executor that runs the complete Angular type-check — TypeScript checks plus template type-checking and extended `NG8xxx` diagnostics — with no emit, decoupled from build and test, and cacheable per project.
+In an Nx workspace, [`angular-typechecker`](https://www.npmjs.com/package/angular-typechecker) provides an Nx executor that runs the complete Angular type-check: TypeScript checks, template type-checking, and the extended `NG8xxx` diagnostics. It emits nothing and runs separately from your build and tests. Nx caches the result per project.
 
-Install it:
+Add it with `nx add`, which installs the package and runs its `angular-typechecker:init` generator to seed a cacheable `angular-typechecker:typecheck` entry in `nx.json` under `targetDefaults`:
 
 ```bash
-npm install --save-dev angular-typechecker
+nx add angular-typechecker
 ```
 
-Then add an `angular-typecheck` target to the project you want to check:
+Then wire a `typecheck` target into the project you want to check:
 
-```jsonc
-// apps/my-app/project.json
-{
-  "targets": {
-    "angular-typecheck": {
-      "executor": "angular-typechecker:angular-typecheck",
-      "options": {
-        "tsConfig": "apps/my-app/tsconfig.app.json",
-        "includeDeps": true,
-      },
-    },
-  },
-}
+```bash
+nx g angular-typechecker:configuration my-app
 ```
 
 Run it:
 
 ```bash
-nx run my-app:angular-typecheck
+nx typecheck my-app
+```
+
+The generator writes this target. Add `includeDeps: true` to also report diagnostics from dependencies:
+
+```jsonc
+// apps/my-app/project.json
+{
+  "targets": {
+    "typecheck": {
+      "executor": "angular-typechecker:typecheck",
+      "options": {
+        "tsConfig": "apps/my-app/tsconfig.json",
+        "includeDeps": true,
+      },
+    },
+  },
+}
 ```
 
 ## Compatibility
