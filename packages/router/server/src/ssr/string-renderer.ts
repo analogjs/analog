@@ -1,10 +1,18 @@
 /**
- * String-based Renderer2 implementation for Angular SSR.
+ * String-based Renderer2 for SSR.
  *
- * Instead of building a live DOM tree, this renderer constructs a lightweight
- * token tree (tag name, attributes, children) that is serialized to an HTML
- * string at the end of the render pass. This avoids the overhead of full DOM
- * emulation libraries like Happy DOM or Domino.
+ * Builds a lightweight token tree instead of a real DOM, with a lean
+ * per-element representation to keep per-request allocation cost low:
+ *
+ *   - attrs: flat `string[]` of alternating [k, v, k, v]; lazy (undefined when empty)
+ *   - classNames: space-delimited string; lazy ('' when empty)
+ *   - styles: flat `string[]` of alternating [k, v, k, v]; lazy (undefined when empty)
+ *   - no prev/next sibling links — `nextSibling` is computed from `children`
+ *   - serialization writes to a `string[]` buffer joined once at the end
+ *   - HTML escape is single-pass with a no-op fast path
+ *
+ * Most components have zero inline styles and ≤3 classes, so empty
+ * containers would dominate — they're only allocated when used.
  */
 
 import {
@@ -12,38 +20,85 @@ import {
   RendererFactory2,
   RendererStyleFlags2,
   RendererType2,
+  ViewEncapsulation,
 } from '@angular/core';
 
 import { ShimDocument, ShimElement, ShimNode, ShimRaw } from './dom-shim';
 
 // ---------------------------------------------------------------------------
-// Token types — lightweight stand-ins for DOM nodes
+// View encapsulation helpers — mirror Angular's _dom_renderer-chunk
+//
+// Component styles ship with `%COMP%` as a placeholder for the component id.
+// At render time we substitute it for `${appId}-${component.id}`, and emit
+// matching `_ngcontent-${compId}` attributes on every element created by the
+// component's renderer + `_nghost-${compId}` on the host element.
+// ---------------------------------------------------------------------------
+
+const COMPONENT_REGEX = /%COMP%/g;
+const HOST_ATTR = `_nghost-%COMP%`;
+const CONTENT_ATTR = `_ngcontent-%COMP%`;
+
+function shimContentAttribute(compId: string): string {
+  return CONTENT_ATTR.replace(COMPONENT_REGEX, compId);
+}
+
+function shimHostAttribute(compId: string): string {
+  return HOST_ATTR.replace(COMPONENT_REGEX, compId);
+}
+
+function shimStylesContent(compId: string, styles: string[]): string[] {
+  return styles.map((s) => s.replace(COMPONENT_REGEX, compId));
+}
+
+/**
+ * Subset of @angular/platform-browser's SharedStylesHost that this factory
+ * uses. The default platform-browser implementation already speaks plain
+ * DOM, so it works directly with our shim — we just need to call
+ * addStyles/removeStyles on it.
+ */
+interface SharedStylesHostLike {
+  addStyles(styles: string[], urls?: string[]): void;
+  removeStyles(styles: string[], urls?: string[]): void;
+}
+
+// ---------------------------------------------------------------------------
+// Token types
 // ---------------------------------------------------------------------------
 
 const enum TokenType {
   Element = 1,
   Text = 3,
   Comment = 8,
-  /** Raw HTML pass-through — used for innerHTML and inert script/style content. */
   Raw = 99,
 }
 
 interface TokenBase {
   type: TokenType;
   parent: ElementToken | null;
-  nextSibling: Token | null;
-  prevSibling: Token | null;
 }
 
 export interface ElementToken extends TokenBase {
   type: TokenType.Element;
+  /** Lowercased tag, cached at create time so serialize doesn't re-lowercase. */
   tagName: string;
   namespace: string | null;
-  attributes: Map<string, string>;
-  classes: Set<string>;
-  styles: Map<string, string>;
+  /** Flat [k, v, k, v]; undefined when no attributes. */
+  attrs?: string[];
+  /**
+   * Space-delimited class string. Receives both `setAttribute('class', x)`
+   * (replaces) and `addClass(x)` (appends). '' when no classes.
+   */
+  classNames: string;
+  /**
+   * Pre-serialized style text (e.g. 'color: red; padding: 4px').
+   * `setAttribute('style', x)` replaces it; `setStyle/removeStyle` operate
+   * on the parsed `styles` array which is rendered after this string.
+   * '' when not set via setAttribute.
+   */
+  styleText: string;
+  /** Flat [k, v, k, v]; undefined when no inline styles set via setStyle. */
+  styles?: string[];
   children: Token[];
-  /** Whether this is a void element (br, img, input, etc.) */
   isVoid: boolean;
 }
 
@@ -64,10 +119,6 @@ export interface RawToken extends TokenBase {
 
 export type Token = ElementToken | TextToken | CommentToken | RawToken;
 
-// Elements whose content is parsed as raw text — must not be HTML-escaped
-const RAW_TEXT_ELEMENTS = new Set(['script', 'style']);
-
-// Void elements
 const VOID_ELEMENTS = new Set([
   'area',
   'base',
@@ -85,7 +136,6 @@ const VOID_ELEMENTS = new Set([
   'wbr',
 ]);
 
-// Properties that map to attributes
 const PROP_TO_ATTR: Record<string, string> = {
   className: 'class',
   htmlFor: 'for',
@@ -93,115 +143,54 @@ const PROP_TO_ATTR: Record<string, string> = {
   readOnly: 'readonly',
 };
 
-// Boolean attributes
-const BOOLEAN_ATTRS = new Set([
-  'allowfullscreen',
-  'async',
-  'autofocus',
-  'autoplay',
-  'checked',
-  'controls',
-  'default',
-  'defer',
-  'disabled',
-  'formnovalidate',
-  'hidden',
-  'inert',
-  'ismap',
-  'itemscope',
-  'loop',
-  'multiple',
-  'muted',
-  'nomodule',
-  'novalidate',
-  'open',
-  'playsinline',
-  'readonly',
-  'required',
-  'reversed',
-  'selected',
-]);
-
 // ---------------------------------------------------------------------------
-// Token creation helpers
+// Token factories
 // ---------------------------------------------------------------------------
 
 function createElementToken(
   tagName: string,
   namespace: string | null,
 ): ElementToken {
+  const tag = tagName.toLowerCase();
   return {
     type: TokenType.Element,
-    tagName,
+    tagName: tag,
     namespace,
-    attributes: new Map(),
-    classes: new Set(),
-    styles: new Map(),
+    classNames: '',
+    styleText: '',
     children: [],
     parent: null,
-    nextSibling: null,
-    prevSibling: null,
-    isVoid: VOID_ELEMENTS.has(tagName.toLowerCase()),
+    isVoid: VOID_ELEMENTS.has(tag),
   };
 }
 
 function createTextToken(value: string): TextToken {
-  return {
-    type: TokenType.Text,
-    value,
-    parent: null,
-    nextSibling: null,
-    prevSibling: null,
-  };
+  return { type: TokenType.Text, value, parent: null };
 }
 
 function createCommentToken(value: string): CommentToken {
-  return {
-    type: TokenType.Comment,
-    value,
-    parent: null,
-    nextSibling: null,
-    prevSibling: null,
-  };
+  return { type: TokenType.Comment, value, parent: null };
 }
 
 function createRawToken(value: string): RawToken {
-  return {
-    type: TokenType.Raw,
-    value,
-    parent: null,
-    nextSibling: null,
-    prevSibling: null,
-  };
+  return { type: TokenType.Raw, value, parent: null };
 }
 
 // ---------------------------------------------------------------------------
-// Tree manipulation helpers
+// Tree manipulation (no sibling links — looked up from `children` on demand)
 // ---------------------------------------------------------------------------
 
 function detachToken(token: Token): void {
-  if (!token.parent) return;
-  const siblings = token.parent.children;
-  const idx = siblings.indexOf(token);
-  if (idx !== -1) {
-    siblings.splice(idx, 1);
-    // Fix sibling links
-    if (token.prevSibling) token.prevSibling.nextSibling = token.nextSibling;
-    if (token.nextSibling) token.nextSibling.prevSibling = token.prevSibling;
-  }
+  const parent = token.parent;
+  if (!parent) return;
+  const idx = parent.children.indexOf(token);
+  if (idx !== -1) parent.children.splice(idx, 1);
   token.parent = null;
-  token.prevSibling = null;
-  token.nextSibling = null;
 }
 
 function appendToken(parent: ElementToken, child: Token): void {
   detachToken(child);
   child.parent = parent;
-  const last = parent.children[parent.children.length - 1] ?? null;
-  if (last) {
-    last.nextSibling = child;
-    child.prevSibling = last;
-  }
   parent.children.push(child);
 }
 
@@ -218,95 +207,201 @@ function insertTokenBefore(
   }
   newChild.parent = parent;
   parent.children.splice(idx, 0, newChild);
-  // Fix sibling links
-  newChild.nextSibling = refChild;
-  newChild.prevSibling = refChild.prevSibling;
-  if (refChild.prevSibling) refChild.prevSibling.nextSibling = newChild;
-  refChild.prevSibling = newChild;
 }
 
-function removeToken(parent: ElementToken, child: Token): void {
-  detachToken(child);
+function removeTokenChild(parent: ElementToken, child: Token): void {
+  if (child.parent === parent) detachToken(child);
+}
+
+function nextSiblingOf(token: Token): Token | null {
+  const parent = token.parent;
+  if (!parent) return null;
+  const idx = parent.children.indexOf(token);
+  return idx >= 0 && idx < parent.children.length - 1
+    ? parent.children[idx + 1]
+    : null;
+}
+
+// ---------------------------------------------------------------------------
+// Attribute / class / style helpers (flat-array storage)
+// ---------------------------------------------------------------------------
+
+function findAttrIndex(attrs: string[], name: string): number {
+  for (let i = 0; i < attrs.length; i += 2) {
+    if (attrs[i] === name) return i;
+  }
+  return -1;
+}
+
+function setAttrFlat(token: ElementToken, name: string, value: string): void {
+  const attrs = (token.attrs ??= []);
+  const idx = findAttrIndex(attrs, name);
+  if (idx === -1) {
+    attrs.push(name, value);
+  } else {
+    attrs[idx + 1] = value;
+  }
+}
+
+function removeAttrFlat(token: ElementToken, name: string): void {
+  const attrs = token.attrs;
+  if (!attrs) return;
+  const idx = findAttrIndex(attrs, name);
+  if (idx !== -1) attrs.splice(idx, 2);
+}
+
+function hasClassName(classNames: string, name: string): boolean {
+  if (!classNames || !name) return false;
+  let idx = 0;
+  while (idx <= classNames.length - name.length) {
+    const found = classNames.indexOf(name, idx);
+    if (found === -1) return false;
+    const before = found === 0 || classNames[found - 1] === ' ';
+    const afterPos = found + name.length;
+    const after =
+      afterPos === classNames.length || classNames[afterPos] === ' ';
+    if (before && after) return true;
+    idx = found + name.length;
+  }
+  return false;
+}
+
+function addClassName(token: ElementToken, name: string): void {
+  if (!name || hasClassName(token.classNames, name)) return;
+  token.classNames = token.classNames ? `${token.classNames} ${name}` : name;
+}
+
+function removeClassName(token: ElementToken, name: string): void {
+  if (!token.classNames || !name) return;
+  // Cheap path: only one class
+  if (token.classNames === name) {
+    token.classNames = '';
+    return;
+  }
+  const parts = token.classNames.split(' ');
+  let removed = false;
+  const out: string[] = [];
+  for (const p of parts) {
+    if (!removed && p === name) {
+      removed = true;
+      continue;
+    }
+    if (p) out.push(p);
+  }
+  token.classNames = out.join(' ');
+}
+
+function setStyleFlat(token: ElementToken, name: string, value: string): void {
+  const styles = (token.styles ??= []);
+  const idx = findAttrIndex(styles, name);
+  if (idx === -1) {
+    styles.push(name, value);
+  } else {
+    styles[idx + 1] = value;
+  }
+}
+
+function removeStyleFlat(token: ElementToken, name: string): void {
+  const styles = token.styles;
+  if (!styles) return;
+  const idx = findAttrIndex(styles, name);
+  if (idx !== -1) styles.splice(idx, 2);
 }
 
 // ---------------------------------------------------------------------------
 // Serialization
 // ---------------------------------------------------------------------------
 
+const ATTR_ESCAPE_RE = /[&"]/;
+const TEXT_ESCAPE_RE = /[&<>]/;
+
 function escapeAttr(str: string): string {
+  if (!ATTR_ESCAPE_RE.test(str)) return str;
   return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
 function escapeText(str: string): string {
+  if (!TEXT_ESCAPE_RE.test(str)) return str;
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-export function serializeToken(token: Token, parentTag?: string): string {
+function serializeElement(token: ElementToken): string {
+  const tag = token.tagName;
+  let s = '<' + tag;
+
+  // Plain attributes — class/style are routed to dedicated slots at
+  // setAttribute time, so this loop never sees them.
+  // Empty attributes are emitted as `name=""` (not the bare `name` HTML5
+  // shorthand) to match Domino's serialization output.
+  if (token.attrs) {
+    const a = token.attrs;
+    for (let i = 0; i < a.length; i += 2) {
+      const v = a[i + 1];
+      s += ' ' + a[i] + '="' + (v === '' ? '' : escapeAttr(v)) + '"';
+    }
+  }
+
+  if (token.classNames) {
+    s += ' class="' + escapeAttr(token.classNames) + '"';
+  }
+
+  // Build style attribute from styleText (set via setAttribute) and the
+  // styles array (set via setStyle). Either or both may be present.
+  if (token.styleText || token.styles) {
+    let styleStr = token.styleText;
+    const styles = token.styles;
+    if (styles && styles.length) {
+      for (let i = 0; i < styles.length; i += 2) {
+        const piece = styles[i] + ': ' + styles[i + 1];
+        styleStr = styleStr ? styleStr + '; ' + piece : piece;
+      }
+    }
+    if (styleStr) {
+      s += ' style="' + escapeAttr(styleStr) + '"';
+    }
+  }
+
+  if (token.isVoid) {
+    return s + '>';
+  }
+
+  s += '>';
+
+  for (const child of token.children) {
+    s += serializeNode(child, tag);
+  }
+
+  return s + '</' + tag + '>';
+}
+
+function serializeNode(token: Token, parentTag?: string): string {
   switch (token.type) {
     case TokenType.Text:
-      // Inside <script>/<style>, text is raw; everywhere else, escape it
-      // so user-supplied interpolation can never inject HTML.
-      if (parentTag && RAW_TEXT_ELEMENTS.has(parentTag)) {
+      // Inline raw-text check — `script` and `style` are the only HTML
+      // elements whose contents are not HTML-escaped.
+      if (parentTag === 'script' || parentTag === 'style') {
         return token.value;
       }
       return escapeText(token.value);
     case TokenType.Raw:
       return token.value;
     case TokenType.Comment:
-      return `<!--${token.value}-->`;
-    case TokenType.Element: {
-      const tag = token.tagName.toLowerCase();
-
-      // Build the final attribute set in a local map — never mutate the
-      // token, since the serializer can be invoked more than once.
-      const finalAttrs = new Map<string, string>(token.attributes);
-
-      if (token.classes.size > 0) {
-        const existing = finalAttrs.get('class');
-        const classStr = [...token.classes].join(' ');
-        finalAttrs.set(
-          'class',
-          existing ? `${existing} ${classStr}` : classStr,
-        );
-      }
-
-      if (token.styles.size > 0) {
-        const parts: string[] = [];
-        for (const [k, v] of token.styles) {
-          parts.push(`${k}: ${v}`);
-        }
-        const existing = finalAttrs.get('style');
-        const styleStr = parts.join('; ');
-        finalAttrs.set(
-          'style',
-          existing ? `${existing}; ${styleStr}` : styleStr,
-        );
-      }
-
-      let attrs = '';
-      for (const [k, v] of finalAttrs) {
-        attrs += v === '' ? ` ${k}` : ` ${k}="${escapeAttr(v)}"`;
-      }
-
-      if (token.isVoid) {
-        return `<${tag}${attrs}>`;
-      }
-
-      let childrenHTML = '';
-      for (const child of token.children) {
-        childrenHTML += serializeToken(child, tag);
-      }
-      return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
-    }
+      return '<!--' + token.value + '-->';
+    case TokenType.Element:
+      return serializeElement(token);
   }
 }
 
+export function serializeToken(token: Token, parentTag?: string): string {
+  return serializeNode(token, parentTag);
+}
+
 export function serializeTokenTree(root: ElementToken): string {
-  let html = '';
+  let s = '';
   for (const child of root.children) {
-    html += serializeToken(child);
+    s += serializeNode(child);
   }
-  return html;
+  return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -341,14 +436,10 @@ export class StringRenderer implements Renderer2 {
 
   appendChild(parent: any, newChild: Token): void {
     if (!newChild) return;
-
-    // If parent is a ShimElement (e.g., document.body from selectRootElement),
-    // use the root token instead
     if (parent instanceof ShimElement || parent instanceof ShimNode) {
       appendToken(this.rootToken, newChild);
       return;
     }
-
     if (parent && parent.type === TokenType.Element) {
       appendToken(parent as ElementToken, newChild);
     }
@@ -360,12 +451,10 @@ export class StringRenderer implements Renderer2 {
       this.appendChild(parent, newChild);
       return;
     }
-
     if (parent instanceof ShimElement || parent instanceof ShimNode) {
       insertTokenBefore(this.rootToken, newChild, refChild);
       return;
     }
-
     if (parent && parent.type === TokenType.Element) {
       insertTokenBefore(parent as ElementToken, newChild, refChild);
     }
@@ -373,24 +462,16 @@ export class StringRenderer implements Renderer2 {
 
   removeChild(parent: any, oldChild: Token): void {
     if (!oldChild) return;
-
     if (parent instanceof ShimElement || parent instanceof ShimNode) {
-      removeToken(this.rootToken, oldChild);
+      removeTokenChild(this.rootToken, oldChild);
       return;
     }
-
     if (parent && parent.type === TokenType.Element) {
-      removeToken(parent as ElementToken, oldChild);
+      removeTokenChild(parent as ElementToken, oldChild);
     }
   }
 
-  selectRootElement(
-    selectorOrNode: string | any,
-    preserveContent?: boolean,
-  ): any {
-    // When Angular bootstraps, it selects the root element.
-    // We return the app root from the shim document so Angular can find it,
-    // but our renderer will use the root token for actual rendering.
+  selectRootElement(selectorOrNode: string | any): any {
     if (typeof selectorOrNode === 'string') {
       const el = this.shimDocument.querySelector(selectorOrNode);
       return el || this.rootToken;
@@ -399,22 +480,14 @@ export class StringRenderer implements Renderer2 {
   }
 
   parentNode(node: any): any {
-    if (node && node.parent !== undefined) {
-      return node.parent;
-    }
-    if (node instanceof ShimNode) {
-      return node.parentNode;
-    }
+    if (node && node.parent !== undefined) return node.parent;
+    if (node instanceof ShimNode) return node.parentNode;
     return null;
   }
 
   nextSibling(node: any): any {
-    if (node && node.nextSibling !== undefined) {
-      return node.nextSibling;
-    }
-    if (node instanceof ShimNode) {
-      return node.nextSibling;
-    }
+    if (node && node.type !== undefined) return nextSiblingOf(node as Token);
+    if (node instanceof ShimNode) return node.nextSibling;
     return null;
   }
 
@@ -424,26 +497,56 @@ export class StringRenderer implements Renderer2 {
     value: string,
     namespace?: string | null,
   ): void {
+    // HTML attribute names are ASCII case-insensitive; Domino (the default
+    // server DOM) lowercases them on write, so to stay byte-for-byte
+    // compatible with `render()` we do the same. Namespaced attributes
+    // keep their original case.
+    const lowered = namespace ? name : name.toLowerCase();
     if (el instanceof ShimElement) {
-      el.setAttribute(namespace ? `${namespace}:${name}` : name, value);
+      el.setAttribute(namespace ? `${namespace}:${lowered}` : lowered, value);
       return;
     }
     if (el && el.type === TokenType.Element) {
       const token = el as ElementToken;
-      const attrName = namespace ? `${namespace}:${name}` : name;
-      token.attributes.set(attrName, value);
+      // Route 'class' and 'style' to dedicated slots so the serializer
+      // doesn't have to scan attrs for them on every element. Only the
+      // unprefixed names — namespaced attributes (e.g. xml:lang) keep
+      // their full key in the flat attrs array.
+      if (!namespace) {
+        if (lowered === 'class') {
+          token.classNames = value;
+          return;
+        }
+        if (lowered === 'style') {
+          token.styleText = value;
+          return;
+        }
+      }
+      const attrName = namespace ? `${namespace}:${lowered}` : lowered;
+      setAttrFlat(token, attrName, value);
     }
   }
 
   removeAttribute(el: any, name: string, namespace?: string | null): void {
+    const lowered = namespace ? name : name.toLowerCase();
     if (el instanceof ShimElement) {
-      el.removeAttribute(namespace ? `${namespace}:${name}` : name);
+      el.removeAttribute(namespace ? `${namespace}:${lowered}` : lowered);
       return;
     }
     if (el && el.type === TokenType.Element) {
       const token = el as ElementToken;
-      const attrName = namespace ? `${namespace}:${name}` : name;
-      token.attributes.delete(attrName);
+      if (!namespace) {
+        if (lowered === 'class') {
+          token.classNames = '';
+          return;
+        }
+        if (lowered === 'style') {
+          token.styleText = '';
+          return;
+        }
+      }
+      const attrName = namespace ? `${namespace}:${lowered}` : lowered;
+      removeAttrFlat(token, attrName);
     }
   }
 
@@ -453,7 +556,7 @@ export class StringRenderer implements Renderer2 {
       return;
     }
     if (el && el.type === TokenType.Element) {
-      (el as ElementToken).classes.add(name);
+      addClassName(el as ElementToken, name);
     }
   }
 
@@ -463,7 +566,7 @@ export class StringRenderer implements Renderer2 {
       return;
     }
     if (el && el.type === TokenType.Element) {
-      (el as ElementToken).classes.delete(name);
+      removeClassName(el as ElementToken, name);
     }
   }
 
@@ -479,9 +582,9 @@ export class StringRenderer implements Renderer2 {
       return;
     }
     if (el && el.type === TokenType.Element) {
-      const token = el as ElementToken;
       const important = flags && flags & RendererStyleFlags2.Important;
-      token.styles.set(
+      setStyleFlat(
+        el as ElementToken,
         style,
         important ? `${value} !important` : String(value),
       );
@@ -494,20 +597,16 @@ export class StringRenderer implements Renderer2 {
       return;
     }
     if (el && el.type === TokenType.Element) {
-      (el as ElementToken).styles.delete(style);
+      removeStyleFlat(el as ElementToken, style);
     }
   }
 
   setProperty(el: any, name: string, value: any): void {
     if (el instanceof ShimElement) {
-      // Map known DOM properties to attributes
       const attrName = PROP_TO_ATTR[name] || name;
       if (typeof value === 'boolean') {
-        if (value) {
-          el.setAttribute(attrName, '');
-        } else {
-          el.removeAttribute(attrName);
-        }
+        if (value) el.setAttribute(attrName, '');
+        else el.removeAttribute(attrName);
       } else if (name === 'innerHTML') {
         el.innerHTML = value ?? '';
       } else if (name === 'textContent') {
@@ -526,7 +625,6 @@ export class StringRenderer implements Renderer2 {
       const attrName = PROP_TO_ATTR[name] || name;
 
       if (name === 'innerHTML') {
-        // Clear children and add a raw HTML pass-through token
         token.children = [];
         if (value) {
           const raw = createRawToken(String(value));
@@ -539,21 +637,33 @@ export class StringRenderer implements Renderer2 {
       if (name === 'textContent') {
         token.children = [];
         if (value) {
-          const text = createTextToken(String(value));
-          text.parent = token;
-          token.children.push(text);
+          const t = createTextToken(String(value));
+          t.parent = token;
+          token.children.push(t);
         }
         return;
       }
 
+      // Route mapped 'class'/'style' (e.g. className/style props) to the
+      // dedicated slots, matching setAttribute semantics.
+      if (attrName === 'class') {
+        if (value == null || value === false) token.classNames = '';
+        else if (value === true) token.classNames = '';
+        else token.classNames = String(value);
+        return;
+      }
+      if (attrName === 'style') {
+        if (value == null || value === false) token.styleText = '';
+        else if (value === true) token.styleText = '';
+        else token.styleText = String(value);
+        return;
+      }
+
       if (typeof value === 'boolean') {
-        if (value) {
-          token.attributes.set(attrName, '');
-        } else {
-          token.attributes.delete(attrName);
-        }
+        if (value) setAttrFlat(token, attrName, '');
+        else removeAttrFlat(token, attrName);
       } else if (value != null) {
-        token.attributes.set(attrName, String(value));
+        setAttrFlat(token, attrName, String(value));
       }
     }
   }
@@ -571,53 +681,182 @@ export class StringRenderer implements Renderer2 {
   }
 
   listen(): () => void {
-    // No-op on server — return unlisten function
     return () => {};
   }
 }
 
 // ---------------------------------------------------------------------------
-// StringRendererFactory2
+// Encapsulation-aware renderers
+//
+// One renderer instance per component type — the factory caches by
+// `type.id`, mirroring DomRendererFactory2's behavior. Each variant builds
+// on the base StringRenderer and only specializes the bits the
+// encapsulation mode requires.
 // ---------------------------------------------------------------------------
+
+class NoneStringRenderer extends StringRenderer {
+  protected componentStyles: string[];
+  protected styleUrls: string[] | undefined;
+  private styles_applied = false;
+
+  constructor(
+    shimDocument: ShimDocument,
+    rootToken: ElementToken,
+    component: RendererType2,
+    private sharedStylesHost: SharedStylesHostLike | null,
+    compId?: string,
+  ) {
+    super(shimDocument, rootToken);
+    const styles = component.styles ?? [];
+    this.componentStyles = compId ? shimStylesContent(compId, styles) : styles;
+    // Angular's component def exposes external style URLs via a
+    // `getExternalStyles(compId?)` method on `RendererType2`. It's optional
+    // and only present in some compilation modes.
+    const getExternal = (component as any).getExternalStyles as
+      | ((compId?: string) => string[])
+      | undefined;
+    this.styleUrls = getExternal?.(compId);
+  }
+
+  applyStyles(): void {
+    if (this.styles_applied) return;
+    this.styles_applied = true;
+    this.sharedStylesHost?.addStyles(this.componentStyles, this.styleUrls);
+  }
+}
+
+class EmulatedStringRenderer extends NoneStringRenderer {
+  private contentAttr: string;
+  private hostAttr: string;
+
+  constructor(
+    shimDocument: ShimDocument,
+    rootToken: ElementToken,
+    component: RendererType2,
+    appId: string,
+    sharedStylesHost: SharedStylesHostLike | null,
+  ) {
+    const compId = `${appId}-${component.id}`;
+    super(shimDocument, rootToken, component, sharedStylesHost, compId);
+    this.contentAttr = shimContentAttribute(compId);
+    this.hostAttr = shimHostAttribute(compId);
+  }
+
+  override createElement(
+    name: string,
+    namespace?: string | null,
+  ): ElementToken {
+    const el = super.createElement(name, namespace);
+    super.setAttribute(el, this.contentAttr, '');
+    return el;
+  }
+
+  /**
+   * Called by the factory once per component instance, with the host
+   * element. Sets the `_nghost-${compId}` attribute and triggers style
+   * application — matching EmulatedEncapsulationDomRenderer2.
+   */
+  applyToHost(element: any): void {
+    this.applyStyles();
+    super.setAttribute(element, this.hostAttr, '');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Factory
+// ---------------------------------------------------------------------------
+
+export interface StringRendererFactory2Deps {
+  sharedStylesHost?: SharedStylesHostLike;
+  appId?: string;
+}
 
 export class StringRendererFactory2 implements RendererFactory2 {
   private shimDocument: ShimDocument;
   private rootToken: ElementToken;
-  private renderer: StringRenderer;
+  /**
+   * Used for renderers that aren't tied to a component (e.g. the renderer
+   * Angular asks for at app startup before any component is bootstrapped).
+   * Carries no encapsulation behaviour.
+   */
+  private defaultRenderer: StringRenderer;
+  private rendererByCompId = new Map<string, StringRenderer>();
+  private sharedStylesHost: SharedStylesHostLike | null;
+  private appId: string;
 
-  constructor(shimDocument: ShimDocument) {
+  constructor(
+    shimDocument: ShimDocument,
+    deps: StringRendererFactory2Deps = {},
+  ) {
     this.shimDocument = shimDocument;
     this.rootToken = createElementToken('__root__', null);
-    this.renderer = new StringRenderer(shimDocument, this.rootToken);
+    this.defaultRenderer = new StringRenderer(shimDocument, this.rootToken);
+    this.sharedStylesHost = deps.sharedStylesHost ?? null;
+    this.appId = deps.appId ?? 'ng';
   }
 
   createRenderer(hostElement: any, type: RendererType2 | null): Renderer2 {
-    // Angular may create multiple renderers for different components,
-    // but we use a single shared renderer since we're building one tree.
-    return this.renderer;
+    if (!hostElement || !type) {
+      return this.defaultRenderer;
+    }
+    // Server-side ShadowDom falls back to Emulated — same as
+    // DomRendererFactory2.
+    const encapsulation =
+      type.encapsulation === ViewEncapsulation.ShadowDom
+        ? ViewEncapsulation.Emulated
+        : type.encapsulation;
+    const renderer = this.getOrCreateRenderer(
+      type,
+      encapsulation ?? ViewEncapsulation.Emulated,
+    );
+    if (renderer instanceof EmulatedStringRenderer) {
+      renderer.applyToHost(hostElement);
+    } else if (renderer instanceof NoneStringRenderer) {
+      renderer.applyStyles();
+    }
+    return renderer;
+  }
+
+  private getOrCreateRenderer(
+    type: RendererType2,
+    encapsulation: ViewEncapsulation,
+  ): StringRenderer {
+    let renderer = this.rendererByCompId.get(type.id);
+    if (!renderer) {
+      switch (encapsulation) {
+        case ViewEncapsulation.Emulated:
+          renderer = new EmulatedStringRenderer(
+            this.shimDocument,
+            this.rootToken,
+            type,
+            this.appId,
+            this.sharedStylesHost,
+          );
+          break;
+        case ViewEncapsulation.None:
+          renderer = new NoneStringRenderer(
+            this.shimDocument,
+            this.rootToken,
+            type,
+            this.sharedStylesHost,
+          );
+          break;
+        default:
+          renderer = this.defaultRenderer;
+      }
+      this.rendererByCompId.set(type.id, renderer);
+    }
+    return renderer;
   }
 
   begin(): void {}
   end(): void {}
 
-  /**
-   * Serialize the token tree and attach it to the shim document's app
-   * root element as a raw-HTML node. Goes via ShimRaw rather than
-   * `innerHTML` so the rendered HTML isn't reparsed (the shim parser
-   * doesn't decode entities, which would double-escape on the next
-   * serialization).
-   *
-   * Must be called after Angular's render pass completes but before
-   * the document is serialized.
-   */
   injectIntoDocument(appRootSelector: string): void {
     const html = serializeTokenTree(this.rootToken);
     const target =
       this.shimDocument.querySelector(appRootSelector) ??
       this.shimDocument.body;
-
-    // Drop existing children, then attach the rendered HTML as a
-    // single raw-HTML node.
     for (const child of [...target.childNodes]) {
       target.removeChild(child);
     }
@@ -627,7 +866,6 @@ export class StringRendererFactory2 implements RendererFactory2 {
     }
   }
 
-  /** Get the serialized HTML from the token tree directly. */
   getRenderedHTML(): string {
     return serializeTokenTree(this.rootToken);
   }

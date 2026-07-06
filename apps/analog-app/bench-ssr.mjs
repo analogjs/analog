@@ -1,5 +1,5 @@
 /**
- * End-to-end SSR benchmark: render() vs renderToString() vs renderToStringFast()
+ * End-to-end SSR benchmark: render() vs renderToString()
  *
  * Boots a Vite dev server, loads each renderer entry point,
  * and measures real rendering times for the analog-app.
@@ -107,9 +107,6 @@ function printResults(results) {
     const experimental = results.find(
       (r) => r.name === 'renderToString()' && r.url === url,
     );
-    const fast = results.find(
-      (r) => r.name === 'renderToStringFast()' && r.url === url,
-    );
     const compareTo = (other, label) => {
       if (!baseline || !other) return;
       const diff = ((baseline.mean - other.mean) / baseline.mean) * 100;
@@ -119,7 +116,6 @@ function printResults(results) {
       );
     };
     compareTo(experimental, 'renderToString()');
-    compareTo(fast, 'renderToStringFast()');
     if (baseline) {
       console.log(
         `    render():               ${formatMs(baseline.mean)} (median ${formatMs(baseline.median)})`,
@@ -128,11 +124,6 @@ function printResults(results) {
     if (experimental) {
       console.log(
         `    renderToString():       ${formatMs(experimental.mean)} (median ${formatMs(experimental.median)})`,
-      );
-    }
-    if (fast) {
-      console.log(
-        `    renderToStringFast():   ${formatMs(fast.mean)} (median ${formatMs(fast.median)})`,
       );
     }
   }
@@ -165,10 +156,6 @@ async function main() {
         '~analog/entry-server-string': resolve(
           APP_ROOT,
           'src/main.server.string.ts',
-        ),
-        '~analog/entry-server-fast': resolve(
-          APP_ROOT,
-          'src/main.server.fast.ts',
         ),
       },
     },
@@ -227,24 +214,6 @@ async function main() {
       } catch (err) {
         console.log = origLog;
         console.log('  renderToString() failed:', err.message);
-      }
-
-      console.log = origLog;
-      console.log('  renderToStringFast() ...');
-      console.log = quietConsole(origLog);
-
-      try {
-        const fast = await benchmarkRenderer(
-          viteServer,
-          '~analog/entry-server-fast',
-          'renderToStringFast()',
-          template,
-          url,
-        );
-        results.push(fast);
-      } catch (err) {
-        console.log = origLog;
-        console.log('  renderToStringFast() failed:', err.message);
       }
 
       // Restore console

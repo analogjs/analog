@@ -76,6 +76,21 @@ describe('StringRenderer basic ops', () => {
     expect(out).toContain('style="color: red"');
   });
 
+  it('merges static class attribute with addClass calls', () => {
+    const { factory, renderer, doc } = setupRenderer();
+    const host = doc.querySelector('app-root');
+
+    const div = renderer.createElement('div', null);
+    renderer.setAttribute(div, 'class', 'static');
+    renderer.addClass(div, 'a');
+    renderer.addClass(div, 'b');
+    renderer.appendChild(host, div);
+
+    factory.injectIntoDocument('app-root');
+
+    expect(host?.innerHTML).toContain('class="static a b"');
+  });
+
   it('escapes attribute values', () => {
     const { factory, renderer, doc } = setupRenderer();
     const host = doc.querySelector('app-root');

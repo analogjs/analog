@@ -83,10 +83,6 @@ async function main() {
           APP_ROOT,
           'src/main.server.string.ts',
         ),
-        '~analog/entry-server-fast': resolve(
-          APP_ROOT,
-          'src/main.server.fast.ts',
-        ),
       },
     },
   });
@@ -111,29 +107,16 @@ async function main() {
       template,
       URL,
     );
-    const fastHtml = await loadAndRender(
-      viteServer,
-      '~analog/entry-server-fast',
-      template,
-      URL,
-    );
 
     console.error = origConsole.error;
     console.warn = origConsole.warn;
 
     writeFileSync('/tmp/render.html', baseHtml);
     writeFileSync('/tmp/renderToString.html', stringHtml);
-    writeFileSync('/tmp/renderToStringFast.html', fastHtml);
 
-    console.log('Wrote /tmp/render.html, /tmp/renderToString.html, /tmp/renderToStringFast.html');
+    console.log('Wrote /tmp/render.html, /tmp/renderToString.html');
     console.log('\n=== render() vs renderToString() ===');
     summarizeDiff(baseHtml, stringHtml, 'render()', 'renderToString()');
-
-    console.log('\n=== renderToString() vs renderToStringFast() ===');
-    summarizeDiff(stringHtml, fastHtml, 'renderToString()', 'renderToStringFast()');
-
-    console.log('\n=== render() vs renderToStringFast() ===');
-    summarizeDiff(baseHtml, fastHtml, 'render()', 'renderToStringFast()');
   } finally {
     await viteServer.close();
   }

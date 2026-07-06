@@ -13,12 +13,7 @@ import {
   parseHTML,
   serializeDocument,
 } from '../dom-shim';
-import {
-  StringRendererFactory2,
-  serializeToken,
-  serializeTokenTree,
-} from '../string-renderer';
-import { StringRendererFactory2V2 } from '../string-renderer-v2';
+import { StringRendererFactory2 } from '../string-renderer';
 
 // ---------------------------------------------------------------------------
 // Test data
@@ -188,16 +183,10 @@ function buildAndRenderRendererTree(factory: any): void {
   factory.injectIntoDocument('app-root');
 }
 
-describe('String renderer token operations — V1 vs V2', () => {
-  bench('V1 (Map/Set) full render cycle (50 components)', () => {
+describe('String renderer token operations', () => {
+  bench('full render cycle (50 components)', () => {
     const doc = createDocument(SIMPLE_HTML);
     const factory = new StringRendererFactory2(doc);
-    buildAndRenderRendererTree(factory);
-  });
-
-  bench('V2 (lazy strings) full render cycle (50 components)', () => {
-    const doc = createDocument(SIMPLE_HTML);
-    const factory = new StringRendererFactory2V2(doc);
     buildAndRenderRendererTree(factory);
   });
 });
@@ -231,36 +220,23 @@ function buildRendererTreeOnly(factory: any): void {
   }
 }
 
-describe('String renderer build-only (no serialize) — V1 vs V2', () => {
+describe('String renderer build-only (no serialize)', () => {
   const doc = createDocument(SIMPLE_HTML);
 
-  bench('V1 build-only', () => {
+  bench('build-only', () => {
     const factory = new StringRendererFactory2(doc);
-    buildRendererTreeOnly(factory);
-  });
-
-  bench('V2 build-only', () => {
-    const factory = new StringRendererFactory2V2(doc);
     buildRendererTreeOnly(factory);
   });
 });
 
-describe('String renderer serialize-only — V1 vs V2', () => {
-  // Pre-build the tree once per renderer; the bench measures pure serialize
-  const v1Doc = createDocument(SIMPLE_HTML);
-  const v1Factory = new StringRendererFactory2(v1Doc);
-  buildRendererTreeOnly(v1Factory);
+describe('String renderer serialize-only', () => {
+  // Pre-build the tree once; the bench measures pure serialize
+  const doc = createDocument(SIMPLE_HTML);
+  const factory = new StringRendererFactory2(doc);
+  buildRendererTreeOnly(factory);
 
-  const v2Doc = createDocument(SIMPLE_HTML);
-  const v2Factory = new StringRendererFactory2V2(v2Doc);
-  buildRendererTreeOnly(v2Factory);
-
-  bench('V1 serialize-only', () => {
-    v1Factory.getRenderedHTML();
-  });
-
-  bench('V2 serialize-only', () => {
-    v2Factory.getRenderedHTML();
+  bench('serialize-only', () => {
+    factory.getRenderedHTML();
   });
 });
 
