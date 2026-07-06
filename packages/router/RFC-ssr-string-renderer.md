@@ -65,8 +65,7 @@ layout is optimized for the write-only case:
   serialization byte-for-byte (`name=""` for empty attrs, lowercased
   attribute names)
 
-Tokens are classes so that a DOM-node-shaped surface lives on the
-prototype at zero per-element allocation cost. Angular's
+Tokens also expose a small DOM-node-shaped surface. Angular's
 `ɵannotateForHydration` probes renderer-created nodes directly —
 `isConnected` decides whether a node is part of the serialized output,
 and event-replay stamps `jsaction` attributes via
@@ -121,17 +120,16 @@ reimplemented explicitly:
 
 ### Files
 
-| File                                                  | Role                                                                                                                                                  |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/src/render-to-string.ts`                      | `renderToString` entry point, cached platform, reimplemented renderInternal pipeline                                                                  |
-| `server/src/ssr/string-renderer.ts`                   | Token classes, `StringRenderer`, encapsulation-aware renderers, `StringRendererFactory2`, serializer                                                  |
-| `server/src/ssr/dom-shim.ts`                          | `ShimDocument` and friends for document chrome                                                                                                        |
-| `server/src/ssr/server-styles-host.ts`                | In-memory styles host — currently **unwired** (the renderer uses platform-browser's `SharedStylesHost`); keep or delete when the styles story settles |
-| `server/src/utils/reset-component-def-tviews.ts`      | Shared `def.tView` reset (extracted from `render.ts`; both paths use it for `$localize` correctness)                                                  |
-| `server/src/ssr/__benchmarks__/ssr-renderer.bench.ts` | Vitest micro-benchmarks for shim + renderer                                                                                                           |
-| `apps/analog-app/bench-ssr.mjs`                       | End-to-end benchmark: `render()` vs `renderToString()`                                                                                                |
-| `apps/analog-app/parity-check.mjs`                    | HTML output diff between the two renderers                                                                                                            |
-| `apps/analog-app/src/main.server.string.ts`           | analog-app entry using `renderToString`                                                                                                               |
+| File                                                  | Role                                                                                                 |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `server/src/render-to-string.ts`                      | `renderToString` entry point, cached platform, reimplemented renderInternal pipeline                 |
+| `server/src/ssr/string-renderer.ts`                   | Token classes, `StringRenderer`, encapsulation-aware renderers, `StringRendererFactory2`, serializer |
+| `server/src/ssr/dom-shim.ts`                          | `ShimDocument` and friends for document chrome                                                       |
+| `server/src/utils/reset-component-def-tviews.ts`      | Shared `def.tView` reset (extracted from `render.ts`; both paths use it for `$localize` correctness) |
+| `server/src/ssr/__benchmarks__/ssr-renderer.bench.ts` | Vitest micro-benchmarks for shim + renderer                                                          |
+| `apps/analog-app/bench-ssr.mjs`                       | End-to-end benchmark: `render()` vs `renderToString()`                                               |
+| `apps/analog-app/parity-check.mjs`                    | HTML output diff between the two renderers                                                           |
+| `apps/analog-app/src/main.server.string.ts`           | analog-app entry using `renderToString`                                                              |
 
 ### Data flow
 
@@ -205,8 +203,6 @@ export default renderToString(AppComponent, config);
 - **Cosmetic parity**: inter-tag whitespace preservation in the shim
   parser and insertion-ordered `class` serialization, if byte-exactness
   with Domino ever matters.
-- **`server-styles-host.ts`**: wire it in as a leaner replacement for
-  platform-browser's `SharedStylesHost`, or delete it.
 - **Edge runtimes**: the renderer is Domino-free by design; validating on
   Cloudflare Workers / Deno Deploy is unproven.
 - **Default entry**: decide how `renderToString` is exposed in the
