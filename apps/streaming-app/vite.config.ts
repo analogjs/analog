@@ -25,6 +25,12 @@ export default defineConfig(() => {
         prerender: {
           routes: [],
         },
+        // Opt a route out of streaming — it falls back to a buffered render.
+        nitro: {
+          routeRules: {
+            '/buffered': { streaming: false },
+          },
+        },
       }),
       nxViteTsPaths(),
     ],
