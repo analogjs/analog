@@ -5,6 +5,7 @@ export {
   renderServerComponent,
 } from './server-component-render';
 export { render } from './render';
+export { renderStream } from './render-stream';
 export { renderToString, destroySharedPlatform } from './render-to-string';
 
 // Server Functions (issue #2422) — server authoring + dispatch runtime.
