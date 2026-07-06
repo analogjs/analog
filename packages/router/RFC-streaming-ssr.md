@@ -143,7 +143,11 @@ renderer selection and this plugin never disagree.
 ### 4. `ssrStreamRenderer` (`@analogjs/vite-plugin-nitro`)
 
 An h3 event handler that returns the `ReadableStream` with chunked transfer
-encoding, preserving the `x-analog-no-ssr` bypass. The buffered `ssrRenderer` is
+encoding, preserving the `x-analog-no-ssr` bypass. A `streaming: false` route
+rule sets an `x-analog-no-streaming` response header (mirroring how `ssr: false`
+becomes `x-analog-no-ssr`); `renderStream` then emits the buffered `render()`
+output and the handler returns it as a normal, non-chunked document — so a route
+can opt out of streaming while keeping SSR. The buffered `ssrRenderer` is
 unchanged.
 
 ### Runtime & concurrency
@@ -265,6 +269,21 @@ export default renderStream(App, config);
 // vite.config.ts
 export default defineConfig({
   plugins: [analog({ experimental: { streaming: true } })],
+});
+```
+
+Opt a route out of streaming (buffered render for that route) with a route rule,
+the same way `ssr: false` disables SSR:
+
+```ts
+// vite.config.ts
+analog({
+  experimental: { streaming: true },
+  nitro: {
+    routeRules: {
+      '/report': { streaming: false }, // buffered render, no streaming
+    },
+  },
 });
 ```
 
