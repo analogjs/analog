@@ -151,10 +151,11 @@ describe('DOM shim operations', () => {
 // Builds a synthetic Angular component tree against the given factory:
 // 50 outer components, each with text + comment + 3 span children.
 // ~250 elements total.
-function buildAndRenderRendererTree(factory: any): void {
+function buildAndRenderRendererTree(factory: any, doc: ShimDocument): void {
   const renderer = factory.createRenderer(null, null);
   const root = renderer.createElement('div', null);
   renderer.setAttribute(root, 'class', 'app-root');
+  renderer.appendChild(doc.querySelector('app-root'), root);
 
   for (let i = 0; i < 50; i++) {
     const component = renderer.createElement('div', null);
@@ -187,15 +188,16 @@ describe('String renderer token operations', () => {
   bench('full render cycle (50 components)', () => {
     const doc = createDocument(SIMPLE_HTML);
     const factory = new StringRendererFactory2(doc);
-    buildAndRenderRendererTree(factory);
+    buildAndRenderRendererTree(factory, doc);
   });
 });
 
 // Build phase only (no serialization) — isolates per-element allocation cost
-function buildRendererTreeOnly(factory: any): void {
+function buildRendererTreeOnly(factory: any, doc: ShimDocument): void {
   const renderer = factory.createRenderer(null, null);
   const root = renderer.createElement('div', null);
   renderer.setAttribute(root, 'class', 'app-root');
+  renderer.appendChild(doc.querySelector('app-root'), root);
 
   for (let i = 0; i < 50; i++) {
     const component = renderer.createElement('div', null);
@@ -225,7 +227,7 @@ describe('String renderer build-only (no serialize)', () => {
 
   bench('build-only', () => {
     const factory = new StringRendererFactory2(doc);
-    buildRendererTreeOnly(factory);
+    buildRendererTreeOnly(factory, doc);
   });
 });
 
@@ -233,7 +235,7 @@ describe('String renderer serialize-only', () => {
   // Pre-build the tree once; the bench measures pure serialize
   const doc = createDocument(SIMPLE_HTML);
   const factory = new StringRendererFactory2(doc);
-  buildRendererTreeOnly(factory);
+  buildRendererTreeOnly(factory, doc);
 
   bench('serialize-only', () => {
     factory.getRenderedHTML();
