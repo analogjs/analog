@@ -63,6 +63,18 @@ export interface Options {
    * prerendered HTML receives the appropriate `lang` attribute.
    */
   i18n?: I18nPrerenderOptions;
+
+  /**
+   * Opt-in experimental features that are not yet stable.
+   */
+  experimental?: {
+    /**
+     * Use the streaming SSR renderer (`ssrStreamRenderer`) so the server entry's
+     * `renderStream` default export streams the response. Requires the server
+     * entry to use `renderStream` from `@analogjs/router/server`.
+     */
+    streaming?: boolean;
+  };
 }
 
 export interface PrerenderOptions {

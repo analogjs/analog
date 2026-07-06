@@ -32,6 +32,7 @@ import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-file
 import { IncomingMessage, ServerResponse } from 'node:http';
 import {
   ssrRenderer,
+  ssrStreamRenderer,
   clientRenderer,
   apiMiddleware,
 } from './utils/renderers.js';
@@ -226,7 +227,9 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   },
                 },
           virtual: {
-            '#ANALOG_SSR_RENDERER': ssrRenderer,
+            '#ANALOG_SSR_RENDERER': options?.experimental?.streaming
+              ? ssrStreamRenderer
+              : ssrRenderer,
             '#ANALOG_CLIENT_RENDERER': clientRenderer,
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
             ...serverFnVirtual,
