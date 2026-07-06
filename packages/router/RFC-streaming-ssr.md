@@ -235,21 +235,30 @@ main downside of the additive-seam design.
 
 ## Validation
 
-- End-to-end (server `renderStream` + client runtime, jsdom): head/shell flush
-  before the tail; blocks flush out of document order before `whenStable`;
-  progressive paint in resolution order; assembled DOM byte-identical to a
-  buffered render (modulo `ng-server-context`); incremental hydration succeeds
-  with DOM node reuse and post-hydration interactivity. **10/10.**
-- Concurrency: two interleaved `renderStream` calls, blocks resolving at the
-  same time — each stream receives only its own app's blocks, no cross-talk.
-- `injectDeferStreamingHook` + `inspectAngularCoreModule` unit tests. **9/9.**
-- Real Vite/nitro app (`apps/streaming-app`) driven in Chromium: chunked HTTP
-  with head-first / out-of-order block / tail ordering; an eager component and
-  `@defer` blocks on `hydrate on immediate`, `httpResource`-backed data, and
-  `hydrate on interaction` all hydrate and stay interactive; a title/meta set
-  during render is reconciled onto the live head after the stream; a Googlebot
-  user-agent gets the buffered render with the resolved head and no streaming
-  scaffolding. Zero console errors.
+**End-to-end** — a real Vite/nitro app (`apps/streaming-app`) driven in Chromium:
+chunked HTTP with head-first / out-of-order block / tail ordering; an eager
+component and `@defer` blocks on `hydrate on immediate`, `httpResource`-backed
+data, and `hydrate on interaction` all hydrate and stay interactive; a
+title/meta set during render is reconciled onto the live head after the stream;
+a Googlebot user-agent gets the buffered render with the resolved head and no
+streaming scaffolding; a `streaming: false` route rule serves a buffered,
+non-chunked document. Zero console errors.
+
+**Unit tests**
+
+- `@analogjs/platform`: the Angular-core patch transform and drift inspection
+  (`injectDeferStreamingHook`, `inspectAngularCoreModule`), the version gate
+  (`streamingSupportedOnAngular`), and the `streaming: false` → header route-rule
+  transform.
+- `@analogjs/router/server`: the document-slicing helpers (`headInner`,
+  `bodyInner`, `afterBodyOpen`), the buffered-fallback request checks
+  (`isLikelyBot`, `streamingDisabledByRoute`), and the client reconcile runtime
+  (`__analogPaint`, `__analogReconcileHead`, `__analogFinalize`) exercised
+  against a DOM.
+
+**Concurrency** — per-render `@defer` capture is routed through
+`AsyncLocalStorage` (see _Runtime & concurrency_), so interleaved renders in one
+process cannot enqueue into each other's streams.
 
 The prototype's single seam is the plugin-applied Angular patch; everything else
 is standard Analog/Angular.
