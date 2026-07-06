@@ -52,7 +52,39 @@ resolves, which is the point of server rendering heavy/expensive subtrees behind
 
 ## Design
 
-Four pieces.
+Four pieces. How they interact over the lifetime of one request:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant B as Browser
+    participant R as "renderStream (server)"
+    participant A as "@angular/core (SSR, patched)"
+
+    B->>R: GET /
+    Note over R: crawlers (bot user-agent) take the buffered render()<br/>path with a fully-resolved head instead of streaming
+    Note over R: platformServer + bootstrapApplication<br/>drives the platform directly
+    R-->>B: chunk 1 — document head + reconcile runtime<br/>+ empty stream region
+    Note over B: browser starts fetching CSS/JS at once<br/>— TTFB no longer waits on the slowest block
+
+    loop each @defer (hydrate) block, as it resolves — out of order
+        A->>R: __analogSsrDeferCapture(lContainer)
+        Note over R: serialize the block subtree one macrotask later,<br/>after change detection fills interpolations
+        R-->>B: data-analog-defer="sN" template + __analogPaint("sN")
+        Note over B: paints the block into the live region<br/>(progressive, resolution order)
+    end
+
+    Note over R: await whenStable() — all blocks resolved
+    Note over R: ɵrenderInternal → authoritative document<br/>(whole-document hydration annotation)
+    R-->>B: data-analog-head + data-analog-authoritative templates<br/>+ __analogReconcileHead() + __analogFinalize()
+    Note over B: apply the app-set title/meta to the live head,<br/>then swap body to the authoritative DOM
+    Note over B: Angular incremental hydration boots<br/>against the finalized DOM
+```
+
+The head flushes before the app has rendered, each `@defer` block flushes the
+moment it resolves (out of order), and the authoritative document — the only
+thing hydration runs against — is the tail. The rest of this section covers each
+piece in turn.
 
 ### 1. `renderStream` (`@analogjs/router/server`)
 
@@ -66,17 +98,22 @@ flushes with rendering. The `start()` of the returned `ReadableStream`:
   filled interpolations) and flushes it as a `<template>` + paint script;
 - after `whenStable()`, calls `ɵrenderInternal(platformRef, appRef)` to produce
   the authoritative, hydration-annotated document (byte-identical to a buffered
-  render) and flushes it as the tail;
-- falls back to a single buffered chunk for server-component requests or when the
-  streaming primitive is absent, so output matches the classic path.
+  render) and flushes both its `<head>` (in a `<template data-analog-head>`) and
+  its body as the tail;
+- falls back to a single buffered chunk for server-component requests, for
+  **crawlers** (bot user-agents, so they index a fully-resolved head — see
+  _Head & title_ below), or when the streaming primitive is absent, so output
+  matches the classic path.
 
 ### 2. Client reconcile runtime (`defer-reconcile-runtime.ts`)
 
 A tiny inlined script exposing `window.__analogPaint(id)` (paints a streamed
-block into the live region as it arrives — progressive, out of order) and
-`window.__analogFinalize()` (swaps the whole body to the authoritative document
-before hydration boots, so the reconciled DOM matches a buffered render
-byte-for-byte).
+block into the live region as it arrives — progressive, out of order),
+`window.__analogReconcileHead()` (applies the authoritative `<head>`'s
+title/meta/link to the live document — idempotent, so unchanged shell tags are
+left alone), and `window.__analogFinalize()` (swaps the whole body to the
+authoritative document before hydration boots, so the reconciled DOM matches a
+buffered render byte-for-byte).
 
 ### 3. `deferStreamingPlugin` — the additive Angular seam (`@analogjs/platform`)
 
@@ -132,6 +169,31 @@ The blocks are effectively sent twice (progressive preview during render +
 authoritative copy in the tail); this is the byte cost measured below, and the
 target of the "Future work" section.
 
+### Head & title
+
+Because the shell `<head>` is flushed **before** the app renders, a title or
+meta set _during_ render (`Title`/`Meta` services, route meta) is not yet known
+when the head goes out. Two mechanisms keep this correct, mirroring how Nuxt
+handles the identical problem in its streaming renderer:
+
+1. **Finalize-time reconcile (interactive clients).** The authoritative `<head>`
+   is streamed in the tail (`<template data-analog-head>`) and
+   `__analogReconcileHead()` applies its title/meta/link to the live document
+   before hydration boots. This is the same "inject the resolved head late"
+   strategy Nuxt uses — Nuxt flushes a head _shell_ then streams
+   `renderSSRHeadSuspenseChunk` `<script>` patches as Suspense boundaries
+   resolve; Analog's whole-document model needs only a single patch at the tail,
+   since the authoritative head is known in one shot at `whenStable`.
+2. **Buffered path for crawlers.** A late `<script>` reconcile does not help a
+   bot that doesn't execute it, so crawlers (matched by user-agent) are routed
+   to the buffered `render()` path, whose `<head>` is fully resolved and
+   byte-identical to the classic render. Nuxt does the same — its `prefersStream`
+   check excludes bot user-agents from streaming.
+
+Net: JS clients get the correct dynamic head (with a brief shell-title interval
+before finalize), and crawlers get a fully-resolved head with no streaming
+scaffolding. A static `<title>` in `index.html` is correct on every path.
+
 ## Benchmarks
 
 In-process (no network), dev-mode Angular, synthetic per-block dependency
@@ -167,6 +229,13 @@ main downside of the additive-seam design.
 - Concurrency: two interleaved `renderStream` calls, blocks resolving at the
   same time — each stream receives only its own app's blocks, no cross-talk.
 - `injectDeferStreamingHook` + `inspectAngularCoreModule` unit tests. **9/9.**
+- Real Vite/nitro app (`apps/streaming-app`) driven in Chromium: chunked HTTP
+  with head-first / out-of-order block / tail ordering; an eager component and
+  `@defer` blocks on `hydrate on immediate`, `httpResource`-backed data, and
+  `hydrate on interaction` all hydrate and stay interactive; a title/meta set
+  during render is reconciled onto the live head after the stream; a Googlebot
+  user-agent gets the buffered render with the resolved head and no streaming
+  scaffolding. Zero console errors.
 
 The prototype's single seam is the plugin-applied Angular patch; everything else
 is standard Analog/Angular.
