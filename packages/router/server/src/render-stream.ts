@@ -48,6 +48,8 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { provideServerContext } from './provide-server-context';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
+import { afterBodyOpen, bodyInner, headInner } from './utils/stream-html';
+import { isLikelyBot, streamingDisabledByRoute } from './utils/stream-request';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
 
 if (import.meta.env.PROD) {
@@ -122,55 +124,6 @@ function warnMissingPrimitiveOnce(): void {
       '`experimental.streaming` in your Analog config; if it already is, your ' +
       'installed Angular version may be incompatible with the streaming patch.',
   );
-}
-
-/** Byte offset just after the opening `<body>` tag, or 0 if none. */
-function afterBodyOpen(html: string): number {
-  const m = /<body[^>]*>/i.exec(html);
-  return m ? m.index + m[0].length : 0;
-}
-
-/** Inner HTML of `<body>` from a fully rendered document string. */
-function bodyInner(html: string): string {
-  const start = afterBodyOpen(html);
-  const end = html.lastIndexOf('</body>');
-  return html.slice(start, end > -1 ? end : html.length);
-}
-
-/** Inner HTML of `<head>` from a fully rendered document string. */
-function headInner(html: string): string {
-  const open = /<head[^>]*>/i.exec(html);
-  if (!open) return '';
-  const start = open.index + open[0].length;
-  const end = html.indexOf('</head>', start);
-  return html.slice(start, end > -1 ? end : start);
-}
-
-/**
- * User agents that receive a fully buffered render (with a resolved `<head>`)
- * instead of the streamed shell. Streaming flushes the head before the app has
- * set a dynamic title/meta and reconciles it via a finalize script; a crawler
- * that does not run that script would index the shell's static head. Mirrors
- * Nuxt's bot bypass — streaming targets interactive clients, bots get the
- * buffered path whose head is byte-identical to the classic `render()`.
- */
-const SSR_BOT_RE =
-  /bot|crawl|spider|slurp|mediapartners|facebookexternalhit|embedly|quora link preview|outbrain|pinterest|vkshare|w3c_validator|whatsapp|telegrambot|lighthouse|google-inspectiontool|headlesschrome|bingpreview/i;
-
-function isLikelyBot(serverContext: ServerContext): boolean {
-  const ua = serverContext?.req?.headers?.['user-agent'];
-  return typeof ua === 'string' && SSR_BOT_RE.test(ua);
-}
-
-/**
- * Whether streaming is disabled for this request by a `streaming: false` route
- * rule. The platform plugin translates that rule into an `x-analog-no-streaming`
- * response header (mirroring how `ssr: false` becomes `x-analog-no-ssr`); when
- * present, `renderStream` produces the buffered `render()` output for this
- * route instead of streaming.
- */
-function streamingDisabledByRoute(serverContext: ServerContext): boolean {
-  return serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true';
 }
 
 /**
