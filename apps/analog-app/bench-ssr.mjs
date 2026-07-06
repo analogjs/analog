@@ -226,12 +226,21 @@ async function main() {
     if (results.length > 0) {
       printResults(results);
     }
+
+    // The cached platform keeps event-loop handles alive; destroy it so
+    // the process can exit.
+    const routerServer = await viteServer.ssrLoadModule(
+      '@analogjs/router/server',
+    );
+    await routerServer.destroySharedPlatform();
   } finally {
     await viteServer.close();
   }
 }
 
-main().catch((err) => {
-  console.error('Benchmark failed:', err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Benchmark failed:', err);
+    process.exit(1);
+  });

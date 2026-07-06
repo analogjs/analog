@@ -95,21 +95,24 @@ async function main() {
     console.error = () => {};
     console.warn = () => {};
 
-    const baseHtml = await loadAndRender(
-      viteServer,
-      '~analog/entry-server',
-      template,
-      URL,
-    );
-    const stringHtml = await loadAndRender(
-      viteServer,
-      '~analog/entry-server-string',
-      template,
-      URL,
-    );
-
-    console.error = origConsole.error;
-    console.warn = origConsole.warn;
+    let baseHtml, stringHtml;
+    try {
+      baseHtml = await loadAndRender(
+        viteServer,
+        '~analog/entry-server',
+        template,
+        URL,
+      );
+      stringHtml = await loadAndRender(
+        viteServer,
+        '~analog/entry-server-string',
+        template,
+        URL,
+      );
+    } finally {
+      console.error = origConsole.error;
+      console.warn = origConsole.warn;
+    }
 
     writeFileSync('/tmp/render.html', baseHtml);
     writeFileSync('/tmp/renderToString.html', stringHtml);
@@ -117,12 +120,21 @@ async function main() {
     console.log('Wrote /tmp/render.html, /tmp/renderToString.html');
     console.log('\n=== render() vs renderToString() ===');
     summarizeDiff(baseHtml, stringHtml, 'render()', 'renderToString()');
+
+    // The cached platform keeps event-loop handles alive; destroy it so
+    // the process can exit.
+    const routerServer = await viteServer.ssrLoadModule(
+      '@analogjs/router/server',
+    );
+    await routerServer.destroySharedPlatform();
   } finally {
     await viteServer.close();
   }
 }
 
-main().catch((err) => {
-  console.error('Parity check failed:', err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('Parity check failed:', err);
+    process.exit(1);
+  });
