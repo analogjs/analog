@@ -39,12 +39,12 @@ import {
 import {
   renderApplication,
   platformServer,
-  PlatformState,
   INITIAL_CONFIG,
   ɵrenderInternal as renderInternal,
 } from '@angular/platform-server';
 import type { PlatformRef, ApplicationRef } from '@angular/core';
 import type { ServerContext } from '@analogjs/router/tokens';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { provideServerContext } from './provide-server-context';
 import {
@@ -60,10 +60,12 @@ if (import.meta.env.PROD) {
 
 /**
  * Shape of the upstream Angular streaming primitive we consume, published on
- * `globalThis` by the streaming-enabled platform-server build (see the
+ * `globalThis` by the streaming-enabled `@angular/core` build (see the
  * `deferStreamingPlugin` in `@analogjs/platform`):
- *   - `__analogSsrDeferCapture` — set by us; Angular invokes it once per resolved
- *     `@defer` block on the server, passing the block's live `lContainer`.
+ *   - `__analogSsrDeferCapture` — the patched core invokes it once per resolved
+ *     `@defer` block on the server, passing the block's live `lContainer`. We
+ *     install a stable dispatcher here that routes to the current render (see
+ *     `installCaptureDispatcher`).
  *   - `__analogSsrInternals.collectNativeNodesInLContainer` — collects a block's
  *     rendered root nodes so we can serialize them via domino `outerHTML`.
  */
@@ -84,6 +86,45 @@ function streamingPrimitiveAvailable(): boolean {
   const g = globalThis as unknown as SsrStreamingGlobals;
   return (
     typeof g.__analogSsrInternals?.collectNativeNodesInLContainer === 'function'
+  );
+}
+
+type DeferCaptureEvent = { ssrUniqueId: string | null; lContainer: unknown };
+type DeferCaptureHandler = (ev: DeferCaptureEvent) => void;
+
+/**
+ * Per-render capture handlers live in async-local storage, not a single shared
+ * global slot, so concurrent renders in one process do not clobber each other.
+ * `globalThis.__analogSsrDeferCapture` is a stable dispatcher installed once; it
+ * routes each resolved `@defer` block to the handler of the render whose async
+ * context it fired in. A block that resolves outside any render (no store) is a
+ * no-op.
+ */
+const captureStore = new AsyncLocalStorage<DeferCaptureHandler>();
+
+function installCaptureDispatcher(): void {
+  const g = globalThis as unknown as {
+    __analogSsrDeferCapture?: DeferCaptureHandler & {
+      __analogDispatcher?: boolean;
+    };
+  };
+  if (g.__analogSsrDeferCapture?.__analogDispatcher) return;
+  const dispatch = ((ev: DeferCaptureEvent) => {
+    captureStore.getStore()?.(ev);
+  }) as DeferCaptureHandler & { __analogDispatcher?: boolean };
+  dispatch.__analogDispatcher = true;
+  g.__analogSsrDeferCapture = dispatch;
+}
+
+let warnedMissingPrimitive = false;
+function warnMissingPrimitiveOnce(): void {
+  if (warnedMissingPrimitive || !import.meta.env.DEV) return;
+  warnedMissingPrimitive = true;
+  console.warn(
+    '[@analogjs/router] renderStream: the streaming hook was not found on ' +
+      '@angular/core, so rendering falls back to buffered. Enable ' +
+      '`experimental.streaming` in your Analog config; if it already is, your ' +
+      'installed Angular version may be incompatible with the streaming patch.',
   );
 }
 
@@ -155,6 +196,11 @@ export function renderStream(
       serverComponentRequest(serverContext) ||
       !streamingPrimitiveAvailable()
     ) {
+      // Reached here without a server-component request means the streaming
+      // primitive is absent — surface it in dev instead of silently buffering.
+      if (!serverComponentRequest(serverContext)) {
+        warnMissingPrimitiveOnce();
+      }
       const html = serverComponentRequest(serverContext)
         ? await renderServerComponent(url, serverContext)
         : await renderApplication(
@@ -178,7 +224,7 @@ export function renderStream(
 
     resetComponentDefTViews();
 
-    const g = globalThis as unknown as SsrStreamingGlobals;
+    installCaptureDispatcher();
     const encoder = new TextEncoder();
 
     // The stream is returned immediately; `start` fills it as the render
@@ -188,26 +234,14 @@ export function renderStream(
       async start(controller) {
         const enqueue = (s: string) => controller.enqueue(encoder.encode(s));
 
-        const platformRef = platformServer([
-          { provide: INITIAL_CONFIG, useValue: { document, url } },
-          provideServerContext(serverContext),
-          platformProviders,
-        ]);
-
-        // 1. Flush the head + reconcile runtime immediately (before the app is
-        //    rendered), then open the live streaming region.
-        enqueue(
-          document.slice(0, afterBodyOpen(document)) +
-            `<script>${DEFER_RECONCILE_RUNTIME}</script>` +
-            `<div data-analog-stream></div>`,
-        );
-
-        // The capture hook fires once per @defer block as it resolves. The
+        // The capture handler fires once per @defer block as it resolves. The
         // block's DOM is not filled until the next change-detection tick, so we
         // serialize + flush it a macrotask later — flushing DURING the render.
+        // It is scoped to this render via async-local storage (see
+        // installCaptureDispatcher) so concurrent renders never cross-talk.
         let blockIndex = 0;
         const pendingFlushes: Promise<void>[] = [];
-        g.__analogSsrDeferCapture = (ev) => {
+        const onBlockResolved: DeferCaptureHandler = (ev) => {
           const id = `s${blockIndex++}`;
           pendingFlushes.push(
             new Promise<void>((resolve) => {
@@ -223,29 +257,46 @@ export function renderStream(
           );
         };
 
-        let appRef: ApplicationRef | undefined;
-        try {
-          // 2. Bootstrap + render. Blocks resolve out of order during this
-          //    phase and flush via the capture hook above.
-          appRef = await bootstrap({ platformRef } as BootstrapContext);
-          await appRef.whenStable();
-          g.__analogSsrDeferCapture = undefined;
-          await Promise.all(pendingFlushes);
+        // Run the whole render inside the async-local context so every
+        // change-detection tick and @defer resolution it schedules routes back
+        // to THIS render's handler.
+        await captureStore.run(onBlockResolved, async () => {
+          const platformRef = platformServer([
+            { provide: INITIAL_CONFIG, useValue: { document, url } },
+            provideServerContext(serverContext),
+            platformProviders,
+          ]);
 
-          // 3. Flush the authoritative, fully hydration-annotated document as
-          //    the tail. Carried in a <template> (its inert `ng-state` script
-          //    survives) that the runtime swaps in before hydration boots.
-          const authoritative = await renderInternal(platformRef, appRef);
+          // 1. Flush the head + reconcile runtime immediately (before the app is
+          //    rendered), then open the live streaming region.
           enqueue(
-            `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +
-              `<script>window.__analogFinalize&&window.__analogFinalize()</script>` +
-              `</body></html>`,
+            document.slice(0, afterBodyOpen(document)) +
+              `<script>${DEFER_RECONCILE_RUNTIME}</script>` +
+              `<div data-analog-stream></div>`,
           );
-        } finally {
-          g.__analogSsrDeferCapture = undefined;
-          await asyncDestroyPlatform(platformRef);
-          controller.close();
-        }
+
+          let appRef: ApplicationRef | undefined;
+          try {
+            // 2. Bootstrap + render. Blocks resolve out of order during this
+            //    phase and flush via the capture handler above.
+            appRef = await bootstrap({ platformRef } as BootstrapContext);
+            await appRef.whenStable();
+            await Promise.all(pendingFlushes);
+
+            // 3. Flush the authoritative, fully hydration-annotated document as
+            //    the tail. Carried in a <template> (its inert `ng-state` script
+            //    survives) that the runtime swaps in before hydration boots.
+            const authoritative = await renderInternal(platformRef, appRef);
+            enqueue(
+              `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +
+                `<script>window.__analogFinalize&&window.__analogFinalize()</script>` +
+                `</body></html>`,
+            );
+          } finally {
+            await asyncDestroyPlatform(platformRef);
+            controller.close();
+          }
+        });
       },
     });
   };
