@@ -240,8 +240,15 @@ export function renderStream(
         // It is scoped to this render via async-local storage (see
         // installCaptureDispatcher) so concurrent renders never cross-talk.
         let blockIndex = 0;
+        let capturing = true;
+        const seen = new Set<unknown>();
         const pendingFlushes: Promise<void>[] = [];
         const onBlockResolved: DeferCaptureHandler = (ev) => {
+          // A block can reach `Complete` more than once during a render; only
+          // stream each container once. Also ignore any resolution that fires
+          // after the render has moved on to serializing the authoritative tail.
+          if (!capturing || seen.has(ev.lContainer)) return;
+          seen.add(ev.lContainer);
           const id = `s${blockIndex++}`;
           pendingFlushes.push(
             new Promise<void>((resolve) => {
@@ -282,6 +289,9 @@ export function renderStream(
             appRef = await bootstrap({ platformRef } as BootstrapContext);
             await appRef.whenStable();
             await Promise.all(pendingFlushes);
+            // Stop capturing before serializing the tail so late resolutions
+            // triggered by the hydration pass are not streamed as extra blocks.
+            capturing = false;
 
             // 3. Flush the authoritative, fully hydration-annotated document as
             //    the tail. Carried in a <template> (its inert `ng-state` script
