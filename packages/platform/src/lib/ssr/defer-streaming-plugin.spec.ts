@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { injectDeferStreamingHook } from './defer-streaming-plugin.js';
+import {
+  injectDeferStreamingHook,
+  inspectAngularCoreModule,
+} from './defer-streaming-plugin.js';
 
 describe('injectDeferStreamingHook', () => {
   // A minimal stand-in for the two anchors the real @angular/core defer module
@@ -49,5 +52,48 @@ describe('injectDeferStreamingHook', () => {
     expect(out).toContain('function applyDeferBlockState(');
     expect(out).toContain('profiler(ProfilerEvent.DeferBlockStateEnd);');
     expect(out.length).toBeGreaterThan(bundle.length);
+  });
+});
+
+describe('inspectAngularCoreModule', () => {
+  const bundle = [
+    'function applyDeferBlockState(newState, lDetails, lContainer, tNode, hostLView) {',
+    '  profiler(ProfilerEvent.DeferBlockStateEnd);',
+    '}',
+    'function collectNativeNodesInLContainer(lContainer, result) {}',
+  ].join('\n');
+
+  it('reports patchable when all anchors are present', () => {
+    expect(inspectAngularCoreModule(bundle)).toEqual({ kind: 'patchable' });
+  });
+
+  it('reports not-target for unrelated core modules', () => {
+    expect(inspectAngularCoreModule('export const x = 1;')).toEqual({
+      kind: 'not-target',
+    });
+  });
+
+  it('reports drift when the defer module lost the profiler anchor', () => {
+    const drifted = bundle.replace(
+      'profiler(ProfilerEvent.DeferBlockStateEnd);',
+      'profiler(ProfilerEvent.DeferBlockRenamed);',
+    );
+    const info = inspectAngularCoreModule(drifted);
+    expect(info.kind).toBe('drifted');
+    expect(info.kind === 'drifted' && info.reason).toContain(
+      'DeferBlockStateEnd',
+    );
+  });
+
+  it('reports drift when the subtree collector is gone', () => {
+    const drifted = bundle.replace(
+      'function collectNativeNodesInLContainer(lContainer, result) {}',
+      '',
+    );
+    const info = inspectAngularCoreModule(drifted);
+    expect(info.kind).toBe('drifted');
+    expect(info.kind === 'drifted' && info.reason).toContain(
+      'collectNativeNodesInLContainer',
+    );
   });
 });

@@ -45,14 +45,47 @@ export function injectDeferStreamingHook(code: string): string | null {
 }
 
 /**
+ * Classify an `@angular/core` module for the streaming patch. The patch anchors
+ * on internal symbol names, so when Angular changes those the transform would
+ * otherwise become a silent no-op and streaming would degrade to buffered with
+ * no signal. This distinguishes "not the target module" (skip quietly) from
+ * "this IS the `@defer` runtime module but the anchors drifted" (worth warning).
+ */
+export function inspectAngularCoreModule(
+  code: string,
+):
+  | { kind: 'not-target' }
+  | { kind: 'patchable' }
+  | { kind: 'drifted'; reason: string } {
+  if (!code.includes('function applyDeferBlockState(')) {
+    return { kind: 'not-target' };
+  }
+  const missing: string[] = [];
+  if (!code.includes('profiler(ProfilerEvent.DeferBlockStateEnd);')) {
+    missing.push('DeferBlockStateEnd profiler anchor');
+  }
+  if (!code.includes('function collectNativeNodesInLContainer(')) {
+    missing.push('collectNativeNodesInLContainer');
+  }
+  return missing.length === 0
+    ? { kind: 'patchable' }
+    : { kind: 'drifted', reason: `missing ${missing.join(', ')}` };
+}
+
+/**
  * Vite plugin that applies {@link injectDeferStreamingHook} to `@angular/core`
  * during SSR builds, so `@analogjs/router`'s `renderStream` can flush `@defer`
  * blocks as they resolve on the server — without hand-patching node_modules.
  *
  * Only active for SSR. Mirrors the enforce/filter/ssr-gate shape of
- * `i18nDefRegistryPlugin`.
+ * `i18nDefRegistryPlugin`. If the `@defer` runtime module is found but its
+ * anchors have drifted (Angular changed internals), or if it is never
+ * encountered at all, the plugin warns rather than silently producing a build
+ * that falls back to buffered rendering.
  */
 export function deferStreamingPlugin(): Plugin {
+  let applied = false;
+  let warnedDrift = false;
   return {
     name: 'analogjs-defer-streaming',
     enforce: 'post',
@@ -62,9 +95,35 @@ export function deferStreamingPlugin(): Plugin {
       },
       handler(code, _id, options) {
         if (!options?.ssr) return;
+        const info = inspectAngularCoreModule(code);
+        if (info.kind === 'not-target') return;
+        if (info.kind === 'drifted') {
+          if (!warnedDrift) {
+            warnedDrift = true;
+            this.warn(
+              `experimental streaming SSR: found @angular/core's @defer runtime ` +
+                `but could not apply the resolution hook (${info.reason}). The ` +
+                `installed Angular version likely changed internals the patch ` +
+                `depends on; streaming will fall back to buffered rendering.`,
+            );
+          }
+          return;
+        }
         const out = injectDeferStreamingHook(code);
-        return out ? { code: out } : undefined;
+        if (!out) return;
+        applied = true;
+        return { code: out };
       },
+    },
+    buildEnd() {
+      if (!applied && !warnedDrift) {
+        this.warn(
+          `experimental streaming SSR is enabled but @angular/core's @defer ` +
+            `runtime module was never encountered during the SSR build, so the ` +
+            `resolution hook was not injected. Streaming will fall back to ` +
+            `buffered rendering.`,
+        );
+      }
     },
   };
 }
