@@ -12,10 +12,6 @@ import { renderApplication } from '@angular/platform-server';
 import type { ServerContext } from '@analogjs/router/tokens';
 
 import { provideServerContext } from './provide-server-context';
-import {
-  serverComponentRequest,
-  renderServerComponent,
-} from './server-component-render';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
 
 // Optional chaining: the server-function dispatch endpoint imports this entry
@@ -47,10 +43,6 @@ export function render(
     document: string,
     serverContext: ServerContext,
   ) {
-    if (serverComponentRequest(serverContext)) {
-      return await renderServerComponent(url, serverContext);
-    }
-
     resetComponentDefTViews();
 
     const html = await renderApplication(bootstrap, {

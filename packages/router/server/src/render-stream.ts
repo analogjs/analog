@@ -47,10 +47,6 @@ import type { ServerContext } from '@analogjs/router/tokens';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { provideServerContext } from './provide-server-context';
-import {
-  serverComponentRequest,
-  renderServerComponent,
-} from './server-component-render';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
 
@@ -228,35 +224,30 @@ export function renderStream(
   ): Promise<ReadableStream<Uint8Array>> {
     // Fall back to a single buffered chunk so output matches the classic path
     // for:
-    //   - server-component requests (unchanged classic behaviour);
     //   - crawlers, which may not run the finalize script that reconciles a
     //     dynamic <head>, so they get a buffered render with a resolved head;
     //   - routes with a `streaming: false` rule (opt out per route);
     //   - a missing streaming primitive.
-    const isServerComponent = serverComponentRequest(serverContext);
     const primitiveAvailable = streamingPrimitiveAvailable();
     const bot = isLikelyBot(serverContext);
     const routeDisabled = streamingDisabledByRoute(serverContext);
-    if (isServerComponent || bot || routeDisabled || !primitiveAvailable) {
-      // Warn only when the primitive is genuinely absent — the server-component,
-      // bot, and route-opt-out paths fall back to buffered by design, not by
-      // degradation.
-      if (!isServerComponent && !bot && !routeDisabled && !primitiveAvailable) {
+    if (bot || routeDisabled || !primitiveAvailable) {
+      // Warn only when the primitive is genuinely absent — the bot and
+      // route-opt-out paths fall back to buffered by design, not by degradation.
+      if (!bot && !routeDisabled && !primitiveAvailable) {
         warnMissingPrimitiveOnce();
       }
-      const html = isServerComponent
-        ? await renderServerComponent(url, serverContext)
-        : await renderApplication(
-            (context) => bootstrapApplication(rootComponent, config, context),
-            {
-              document,
-              url,
-              platformProviders: [
-                provideServerContext(serverContext),
-                platformProviders,
-              ],
-            },
-          );
+      const html = await renderApplication(
+        (context) => bootstrapApplication(rootComponent, config, context),
+        {
+          document,
+          url,
+          platformProviders: [
+            provideServerContext(serverContext),
+            platformProviders,
+          ],
+        },
+      );
       return new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(html as string));
