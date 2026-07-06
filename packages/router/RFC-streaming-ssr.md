@@ -130,6 +130,16 @@ The transform is exported as a pure function (`injectDeferStreamingHook`) and
 unit-tested against a bundle string. It is registered only when
 `ssr && experimental.streaming`, so default builds are untouched.
 
+**Angular version floor.** Streaming is gated on **Angular ≥ 21**. Incremental
+hydration is a stable public API from v20 (`withIncrementalHydration`,
+`@publicApi 20.0`), but v20's compiled FESM inlines the `DeferBlockStateEnd`
+profiler event to its numeric ordinal, while v21+ keeps the symbolic
+`ProfilerEvent.DeferBlockStateEnd` the anchor matches on — verified by checking
+the published `@angular/core` FESM for v20/v21/v22. The gate lives in
+`@analogjs/platform`: below the floor it warns and disables streaming (falling
+back to buffered), and the value is reflected onto the options so the nitro
+renderer selection and this plugin never disagree.
+
 ### 4. `ssrStreamRenderer` (`@analogjs/vite-plugin-nitro`)
 
 An h3 event handler that returns the `ReadableStream` with chunked transfer
