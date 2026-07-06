@@ -141,6 +141,31 @@ function bodyInner(html: string): string {
   return html.slice(start, end > -1 ? end : html.length);
 }
 
+/** Inner HTML of `<head>` from a fully rendered document string. */
+function headInner(html: string): string {
+  const open = /<head[^>]*>/i.exec(html);
+  if (!open) return '';
+  const start = open.index + open[0].length;
+  const end = html.indexOf('</head>', start);
+  return html.slice(start, end > -1 ? end : start);
+}
+
+/**
+ * User agents that receive a fully buffered render (with a resolved `<head>`)
+ * instead of the streamed shell. Streaming flushes the head before the app has
+ * set a dynamic title/meta and reconciles it via a finalize script; a crawler
+ * that does not run that script would index the shell's static head. Mirrors
+ * Nuxt's bot bypass — streaming targets interactive clients, bots get the
+ * buffered path whose head is byte-identical to the classic `render()`.
+ */
+const SSR_BOT_RE =
+  /bot|crawl|spider|slurp|mediapartners|facebookexternalhit|embedly|quora link preview|outbrain|pinterest|vkshare|w3c_validator|whatsapp|telegrambot|lighthouse|google-inspectiontool|headlesschrome|bingpreview/i;
+
+function isLikelyBot(serverContext: ServerContext): boolean {
+  const ua = serverContext?.req?.headers?.['user-agent'];
+  return typeof ua === 'string' && SSR_BOT_RE.test(ua);
+}
+
 /**
  * Serialize a `@defer` block's live domino subtree to HTML. Called a macrotask
  * after the block resolves, by which point change detection has filled in the
@@ -190,18 +215,22 @@ export function renderStream(
     document: string,
     serverContext: ServerContext,
   ): Promise<ReadableStream<Uint8Array>> {
-    // Server components + the no-streaming-primitive case fall back to a single
-    // buffered chunk so output matches the classic path.
-    if (
-      serverComponentRequest(serverContext) ||
-      !streamingPrimitiveAvailable()
-    ) {
-      // Reached here without a server-component request means the streaming
-      // primitive is absent — surface it in dev instead of silently buffering.
-      if (!serverComponentRequest(serverContext)) {
+    // Fall back to a single buffered chunk so output matches the classic path
+    // for:
+    //   - server-component requests (unchanged classic behaviour);
+    //   - crawlers, which may not run the finalize script that reconciles a
+    //     dynamic <head>, so they get a buffered render with a resolved head;
+    //   - a missing streaming primitive.
+    const isServerComponent = serverComponentRequest(serverContext);
+    const primitiveAvailable = streamingPrimitiveAvailable();
+    const bot = isLikelyBot(serverContext);
+    if (isServerComponent || bot || !primitiveAvailable) {
+      // Warn only when the primitive is genuinely absent — the server-component
+      // and bot paths fall back to buffered by design, not by degradation.
+      if (!isServerComponent && !bot && !primitiveAvailable) {
         warnMissingPrimitiveOnce();
       }
-      const html = serverComponentRequest(serverContext)
+      const html = isServerComponent
         ? await renderServerComponent(url, serverContext)
         : await renderApplication(
             (context) => bootstrapApplication(rootComponent, config, context),
@@ -294,12 +323,18 @@ export function renderStream(
             capturing = false;
 
             // 3. Flush the authoritative, fully hydration-annotated document as
-            //    the tail. Carried in a <template> (its inert `ng-state` script
-            //    survives) that the runtime swaps in before hydration boots.
+            //    the tail. Carried in <template>s (their inert `ng-state`
+            //    script survives). The app's resolved <head> ships alongside so
+            //    a dynamically-set title/meta — set during render, after the
+            //    shell head was already flushed — is reconciled onto the live
+            //    document before the runtime swaps in the body and hydration
+            //    boots.
             const authoritative = await renderInternal(platformRef, appRef);
             enqueue(
-              `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +
-                `<script>window.__analogFinalize&&window.__analogFinalize()</script>` +
+              `<template data-analog-head>${headInner(authoritative)}</template>` +
+                `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +
+                `<script>window.__analogReconcileHead&&window.__analogReconcileHead();` +
+                `window.__analogFinalize&&window.__analogFinalize()</script>` +
                 `</body></html>`,
             );
           } finally {

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
 
 import { FastA } from '../blocks/fast-a.component';
 import { SlowB } from '../blocks/slow-b.component';
@@ -42,4 +43,16 @@ import { TriggerC } from '../blocks/trigger-c.component';
     }
   `,
 })
-export default class IndexPage {}
+export default class IndexPage {
+  // Set the head dynamically *during* render. The streaming shell head was
+  // already flushed by this point, so this exercises the finalize-time head
+  // reconcile (see __analogReconcileHead): the title/meta below must appear in
+  // the live document even though they were unknown when the head streamed.
+  constructor() {
+    inject(Title).setTitle('Streamed dynamically — Analog SSR');
+    inject(Meta).updateTag({
+      name: 'description',
+      content: 'Head set during render, reconciled after the stream.',
+    });
+  }
+}
