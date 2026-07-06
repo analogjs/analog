@@ -123,6 +123,12 @@ const sidebars = {
               label: 'Overview',
               key: 'server-side-rendering-overview',
             },
+            {
+              type: 'doc',
+              id: 'features/server/streaming-ssr',
+              label: 'Streaming SSR',
+              key: 'streaming-ssr',
+            },
           ],
         },
         {
