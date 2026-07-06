@@ -2,7 +2,29 @@ import { describe, expect, it } from 'vitest';
 import {
   injectDeferStreamingHook,
   inspectAngularCoreModule,
+  streamingSupportedOnAngular,
+  MIN_STREAMING_ANGULAR_MAJOR,
 } from './defer-streaming-plugin.js';
+
+describe('streamingSupportedOnAngular', () => {
+  it('supports the floor version and above', () => {
+    expect(streamingSupportedOnAngular(MIN_STREAMING_ANGULAR_MAJOR)).toBe(true);
+    expect(streamingSupportedOnAngular(MIN_STREAMING_ANGULAR_MAJOR + 1)).toBe(
+      true,
+    );
+  });
+
+  it('rejects versions below the floor (v20 inlines the profiler anchor)', () => {
+    expect(streamingSupportedOnAngular(MIN_STREAMING_ANGULAR_MAJOR - 1)).toBe(
+      false,
+    );
+    expect(streamingSupportedOnAngular(19)).toBe(false);
+  });
+
+  it('does not block when the version is undetectable', () => {
+    expect(streamingSupportedOnAngular(null)).toBe(true);
+  });
+});
 
 describe('injectDeferStreamingHook', () => {
   // A minimal stand-in for the two anchors the real @angular/core defer module

@@ -1,6 +1,27 @@
 import type { Plugin } from 'vite';
 
 /**
+ * Minimum Angular major whose compiled `@angular/core` FESM matches the
+ * streaming patch anchors. Incremental hydration is a stable public API from
+ * v20 (`withIncrementalHydration`, `@publicApi 20.0`), but v20's FESM inlines
+ * the injection anchor's `DeferBlockStateEnd` profiler event to its numeric
+ * ordinal, whereas v21+ keeps the symbolic `ProfilerEvent.DeferBlockStateEnd`
+ * form the anchor matches on. Keying on the literal ordinal would be fragile
+ * (enum values shift between versions), so v21 is the floor.
+ */
+export const MIN_STREAMING_ANGULAR_MAJOR = 21;
+
+/**
+ * Whether the streaming SSR patch can be applied to the installed Angular.
+ * A `null` major (version undetectable) returns `true`: don't block on a failed
+ * detection — the plugin's anchor-drift detection catches a real mismatch at
+ * build time and falls back to buffered rendering.
+ */
+export function streamingSupportedOnAngular(major: number | null): boolean {
+  return major === null || major >= MIN_STREAMING_ANGULAR_MAJOR;
+}
+
+/**
  * Pure transform that injects the streaming-SSR per-block resolution hook into
  * `@angular/core`'s compiled output. It is the same class of transform as
  * `i18nDefRegistryPlugin` in ./ssr-build-plugin — a string patch of Angular's
