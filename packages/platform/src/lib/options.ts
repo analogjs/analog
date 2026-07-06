@@ -144,6 +144,19 @@ export interface Options {
    * the LOCALE injection token.
    */
   i18n?: I18nOptions;
+  /**
+   * Opt-in experimental features that are not yet stable.
+   */
+  experimental?: {
+    /**
+     * Opt into progressive streaming SSR. When enabled, the SSR build patches
+     * `@angular/core` with a per-`@defer` block resolution hook so
+     * `@analogjs/router`'s `renderStream` can flush the document head first and
+     * each `@defer (hydrate …)` block as it resolves on the server. Has no
+     * effect unless the server entry uses `renderStream`.
+     */
+    streaming?: boolean;
+  };
 }
 
 export { PrerenderContentDir, PrerenderContentFile };

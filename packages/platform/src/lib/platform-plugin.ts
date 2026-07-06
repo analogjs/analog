@@ -8,6 +8,7 @@ import {
   ssrBuildPlugin,
   i18nDefRegistryPlugin,
 } from './ssr/ssr-build-plugin.js';
+import { deferStreamingPlugin } from './ssr/defer-streaming-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
 import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
@@ -50,6 +51,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   return [
     ...viteNitroPlugin(platformOptions, nitroOptions),
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
+    ...(platformOptions.ssr && platformOptions.experimental?.streaming
+      ? [deferStreamingPlugin()]
+      : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
