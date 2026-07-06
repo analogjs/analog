@@ -43,6 +43,24 @@ export default eventHandler(async (event) => {
   });
 
   setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
+
+  // A \`streaming: false\` route rule sets this header; renderStream then emits
+  // the buffered render() output as a single chunk. Collect it into a string so
+  // the response is a normal buffered document (content-length), not chunked.
+  const noStreaming = getResponseHeader(event, 'x-analog-no-streaming');
+  if (noStreaming === 'true') {
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    let html = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+    }
+    html += decoder.decode();
+    return html;
+  }
+
   setResponseHeader(event, 'transfer-encoding', 'chunked');
 
   return stream;

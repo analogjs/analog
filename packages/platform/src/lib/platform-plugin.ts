@@ -84,6 +84,8 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
                 ...config[curr].headers,
                 'x-analog-no-ssr':
                   config[curr]?.ssr === false ? 'true' : undefined,
+                'x-analog-no-streaming':
+                  config[curr]?.streaming === false ? 'true' : undefined,
               } as any,
             },
           };

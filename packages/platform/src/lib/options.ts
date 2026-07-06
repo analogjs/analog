@@ -12,10 +12,16 @@ import { ContentPluginOptions } from './content-plugin.js';
 declare module 'nitropack' {
   interface NitroRouteConfig {
     ssr?: boolean;
+    /**
+     * Disable progressive streaming SSR for matching routes (falls back to a
+     * buffered render). Only meaningful when `experimental.streaming` is on.
+     */
+    streaming?: boolean;
   }
 
   interface NitroRouteRules {
     ssr?: boolean;
+    streaming?: boolean;
   }
 }
 

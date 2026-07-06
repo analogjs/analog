@@ -167,6 +167,17 @@ function isLikelyBot(serverContext: ServerContext): boolean {
 }
 
 /**
+ * Whether streaming is disabled for this request by a `streaming: false` route
+ * rule. The platform plugin translates that rule into an `x-analog-no-streaming`
+ * response header (mirroring how `ssr: false` becomes `x-analog-no-ssr`); when
+ * present, `renderStream` produces the buffered `render()` output for this
+ * route instead of streaming.
+ */
+function streamingDisabledByRoute(serverContext: ServerContext): boolean {
+  return serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true';
+}
+
+/**
  * Serialize a `@defer` block's live domino subtree to HTML. Called a macrotask
  * after the block resolves, by which point change detection has filled in the
  * block's interpolations.
@@ -220,14 +231,17 @@ export function renderStream(
     //   - server-component requests (unchanged classic behaviour);
     //   - crawlers, which may not run the finalize script that reconciles a
     //     dynamic <head>, so they get a buffered render with a resolved head;
+    //   - routes with a `streaming: false` rule (opt out per route);
     //   - a missing streaming primitive.
     const isServerComponent = serverComponentRequest(serverContext);
     const primitiveAvailable = streamingPrimitiveAvailable();
     const bot = isLikelyBot(serverContext);
-    if (isServerComponent || bot || !primitiveAvailable) {
-      // Warn only when the primitive is genuinely absent — the server-component
-      // and bot paths fall back to buffered by design, not by degradation.
-      if (!isServerComponent && !bot && !primitiveAvailable) {
+    const routeDisabled = streamingDisabledByRoute(serverContext);
+    if (isServerComponent || bot || routeDisabled || !primitiveAvailable) {
+      // Warn only when the primitive is genuinely absent — the server-component,
+      // bot, and route-opt-out paths fall back to buffered by design, not by
+      // degradation.
+      if (!isServerComponent && !bot && !routeDisabled && !primitiveAvailable) {
         warnMissingPrimitiveOnce();
       }
       const html = isServerComponent
