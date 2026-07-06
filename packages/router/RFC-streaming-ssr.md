@@ -99,6 +99,29 @@ An h3 event handler that returns the `ReadableStream` with chunked transfer
 encoding, preserving the `x-analog-no-ssr` bypass. The buffered `ssrRenderer` is
 unchanged.
 
+### Runtime & concurrency
+
+The per-`@defer` resolution signal is a process-global entry point (the patched
+`@angular/core` can only call one `globalThis` function), so `renderStream`
+installs a **stable dispatcher once** and routes each resolved block to the
+render that owns it using `AsyncLocalStorage` (`node:async_hooks`). Concurrent
+renders in one process are therefore isolated — a block resolving in render A is
+never enqueued into render B's stream.
+
+Runtime portability is delegated to **Nitro**: Analog does not shim runtimes.
+`node:async_hooks` is provided across Nitro's deployment presets (native Node,
+and non-Node targets via `nodejs_compat` / unenv), so `renderStream` depends on
+it directly rather than carrying its own edge fallbacks.
+
+### Resilience to Angular drift
+
+Because the patch anchors on internal symbol names, `deferStreamingPlugin`
+classifies each `@angular/core` module: it warns if it finds the `@defer`
+runtime but the anchors have drifted (Angular changed internals), and at
+`buildEnd` if that module was never encountered — instead of silently producing
+a build that falls back to buffered. `renderStream` likewise warns in dev when
+the streaming primitive is absent at request time.
+
 ### Honest boundary
 
 Angular's hydration annotation is **whole-document** — the root component's `ngh`
@@ -141,7 +164,9 @@ main downside of the additive-seam design.
   progressive paint in resolution order; assembled DOM byte-identical to a
   buffered render (modulo `ng-server-context`); incremental hydration succeeds
   with DOM node reuse and post-hydration interactivity. **10/10.**
-- `injectDeferStreamingHook` unit tests. **5/5.**
+- Concurrency: two interleaved `renderStream` calls, blocks resolving at the
+  same time — each stream receives only its own app's blocks, no cross-talk.
+- `injectDeferStreamingHook` + `inspectAngularCoreModule` unit tests. **9/9.**
 
 The prototype's single seam is the plugin-applied Angular patch; everything else
 is standard Analog/Angular.
