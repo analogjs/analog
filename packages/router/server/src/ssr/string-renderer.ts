@@ -72,13 +72,48 @@ const enum TokenType {
   Raw = 99,
 }
 
-interface TokenBase {
-  type: TokenType;
-  parent: ElementToken | null;
+const ROOT_TAG = '__root__';
+
+/**
+ * Base class for tokens. Angular's hydration annotation
+ * (ɵannotateForHydration) inspects renderer-created nodes through a
+ * small DOM-shaped surface — `isConnected` to decide whether a node will
+ * be part of the serialized output, `nodeType`/`getAttribute`/
+ * `setAttribute` to stamp `jsaction` event-replay attributes, and
+ * sibling/parent navigation to compute node paths. Tokens expose that
+ * surface as prototype members so per-element allocation cost stays zero.
+ */
+abstract class TokenBase {
+  abstract readonly type: TokenType;
+  parent: ElementToken | null = null;
+
+  /** DOM nodeType — TokenType values mirror Node.*_NODE constants. */
+  get nodeType(): number {
+    return this.type;
+  }
+
+  /**
+   * A token is "connected" when its topmost ancestor is the factory's
+   * root token: everything under it is serialized into the document by
+   * injectIntoDocument, even though annotation runs before that.
+   */
+  get isConnected(): boolean {
+    let node: TokenBase = this;
+    while (node.parent) node = node.parent;
+    return node instanceof ElementToken && node.tagName === ROOT_TAG;
+  }
+
+  get parentNode(): ElementToken | null {
+    return this.parent;
+  }
+
+  get nextSibling(): Token | null {
+    return nextSiblingOf(this as unknown as Token);
+  }
 }
 
-export interface ElementToken extends TokenBase {
-  type: TokenType.Element;
+export class ElementToken extends TokenBase {
+  override readonly type = TokenType.Element;
   /** Lowercased tag, cached at create time so serialize doesn't re-lowercase. */
   tagName: string;
   namespace: string | null;
@@ -88,33 +123,91 @@ export interface ElementToken extends TokenBase {
    * Space-delimited class string. Receives both `setAttribute('class', x)`
    * (replaces) and `addClass(x)` (appends). '' when no classes.
    */
-  classNames: string;
+  classNames = '';
   /**
    * Pre-serialized style text (e.g. 'color: red; padding: 4px').
    * `setAttribute('style', x)` replaces it; `setStyle/removeStyle` operate
    * on the parsed `styles` array which is rendered after this string.
    * '' when not set via setAttribute.
    */
-  styleText: string;
+  styleText = '';
   /** Flat [k, v, k, v]; undefined when no inline styles set via setStyle. */
   styles?: string[];
-  children: Token[];
+  children: Token[] = [];
   isVoid: boolean;
+
+  constructor(tagName: string, namespace: string | null) {
+    super();
+    const tag = tagName.toLowerCase();
+    this.tagName = tag;
+    this.namespace = namespace;
+    this.isVoid = VOID_ELEMENTS.has(tag);
+  }
+
+  get firstChild(): Token | null {
+    return this.children[0] ?? null;
+  }
+
+  getAttribute(name: string): string | null {
+    const lowered = name.toLowerCase();
+    if (lowered === 'class') return this.classNames || null;
+    if (lowered === 'style') return this.styleText || null;
+    const attrs = this.attrs;
+    if (!attrs) return null;
+    const idx = findAttrIndex(attrs, lowered);
+    return idx === -1 ? null : attrs[idx + 1];
+  }
+
+  hasAttribute(name: string): boolean {
+    return this.getAttribute(name) !== null;
+  }
+
+  removeAttribute(name: string): void {
+    const lowered = name.toLowerCase();
+    if (lowered === 'class') {
+      this.classNames = '';
+      return;
+    }
+    if (lowered === 'style') {
+      this.styleText = '';
+      return;
+    }
+    removeAttrFlat(this, lowered);
+  }
+
+  setAttribute(name: string, value: string): void {
+    const lowered = name.toLowerCase();
+    if (lowered === 'class') {
+      this.classNames = value;
+      return;
+    }
+    if (lowered === 'style') {
+      this.styleText = value;
+      return;
+    }
+    setAttrFlat(this, lowered, value);
+  }
 }
 
-export interface TextToken extends TokenBase {
-  type: TokenType.Text;
-  value: string;
+export class TextToken extends TokenBase {
+  override readonly type = TokenType.Text;
+  constructor(public value: string) {
+    super();
+  }
 }
 
-export interface CommentToken extends TokenBase {
-  type: TokenType.Comment;
-  value: string;
+export class CommentToken extends TokenBase {
+  override readonly type = TokenType.Comment;
+  constructor(public value: string) {
+    super();
+  }
 }
 
-export interface RawToken extends TokenBase {
-  type: TokenType.Raw;
-  value: string;
+export class RawToken extends TokenBase {
+  override readonly type = TokenType.Raw;
+  constructor(public value: string) {
+    super();
+  }
 }
 
 export type Token = ElementToken | TextToken | CommentToken | RawToken;
@@ -151,29 +244,19 @@ function createElementToken(
   tagName: string,
   namespace: string | null,
 ): ElementToken {
-  const tag = tagName.toLowerCase();
-  return {
-    type: TokenType.Element,
-    tagName: tag,
-    namespace,
-    classNames: '',
-    styleText: '',
-    children: [],
-    parent: null,
-    isVoid: VOID_ELEMENTS.has(tag),
-  };
+  return new ElementToken(tagName, namespace);
 }
 
 function createTextToken(value: string): TextToken {
-  return { type: TokenType.Text, value, parent: null };
+  return new TextToken(value);
 }
 
 function createCommentToken(value: string): CommentToken {
-  return { type: TokenType.Comment, value, parent: null };
+  return new CommentToken(value);
 }
 
 function createRawToken(value: string): RawToken {
-  return { type: TokenType.Raw, value, parent: null };
+  return new RawToken(value);
 }
 
 // ---------------------------------------------------------------------------

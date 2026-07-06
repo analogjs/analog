@@ -128,6 +128,52 @@ describe('serializeTokenTree (no mutation)', () => {
   });
 });
 
+describe('DOM surface for hydration annotation', () => {
+  it('reports isConnected only once attached under the root', () => {
+    const { renderer, doc } = setupRenderer();
+    const host = doc.querySelector('app-root');
+
+    const div = renderer.createElement('div', null);
+    expect(div.isConnected).toBe(false);
+
+    renderer.appendChild(host, div);
+    expect(div.isConnected).toBe(true);
+
+    const child = renderer.createText('hi');
+    renderer.appendChild(div, child);
+    expect(child.isConnected).toBe(true);
+
+    renderer.removeChild(host, div);
+    expect(div.isConnected).toBe(false);
+    expect(child.isConnected).toBe(false);
+  });
+
+  it('exposes nodeType matching DOM constants', () => {
+    const { renderer } = setupRenderer();
+    expect(renderer.createElement('div', null).nodeType).toBe(1);
+    expect(renderer.createText('x').nodeType).toBe(3);
+    expect(renderer.createComment('x').nodeType).toBe(8);
+  });
+
+  it('supports direct attribute access like jsaction annotation uses', () => {
+    const { factory, renderer, doc } = setupRenderer();
+    const host = doc.querySelector('app-root');
+
+    const a = renderer.createElement('a', null);
+    renderer.appendChild(host, a);
+
+    expect(a.hasAttribute('jsaction')).toBe(false);
+    expect(a.getAttribute('jsaction')).toBeNull();
+
+    a.setAttribute('jsaction', 'click:;');
+    expect(a.hasAttribute('jsaction')).toBe(true);
+    expect(a.getAttribute('jsaction')).toBe('click:;');
+
+    factory.injectIntoDocument('app-root');
+    expect(host?.innerHTML).toContain('jsaction="click:;"');
+  });
+});
+
 describe('void elements', () => {
   it('serializes without closing tags', () => {
     const { factory, renderer, doc } = setupRenderer();
