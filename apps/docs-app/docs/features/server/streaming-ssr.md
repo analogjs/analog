@@ -1,10 +1,12 @@
 # Streaming SSR
 
-Progressive streaming SSR flushes the response to the browser **during** the
-render instead of buffering the whole document until it is complete. The
-document head is sent immediately, each `@defer (hydrate …)` block is sent the
-moment it resolves on the server, and the authoritative document arrives last —
-so a slow block never holds back the rest of the page.
+Analog supports progressive streaming server-side rendering, flushing the
+response to the browser as the app renders instead of buffering the whole
+document until it is complete.
+
+The document head is sent immediately, each `@defer (hydrate …)` block is sent
+the moment it resolves on the server, and the authoritative document arrives
+last — so a slow block never holds back the rest of the page.
 
 :::info Experimental
 
@@ -65,7 +67,7 @@ Content that should stream progressively goes in a `@defer` block with a
 `hydrate` trigger. Each block is rendered eagerly on the server, streamed as it
 resolves, and hydrated on the client when its trigger fires:
 
-```angular-html
+```markup
 <h1>Dashboard</h1>
 
 @defer (hydrate on immediate) {
