@@ -175,6 +175,11 @@ export function renderStream(
     document: string,
     serverContext: ServerContext,
   ): Promise<ReadableStream<Uint8Array>> {
+    // Reset before every render — both the buffered fallback below and the
+    // streaming path — so a prior render's locale/consts are not frozen for the
+    // process lifetime (parity with render.ts).
+    resetComponentDefTViews();
+
     // Fall back to a single buffered chunk so output matches the classic path
     // for:
     //   - crawlers, which may not run the finalize script that reconciles a
@@ -208,8 +213,6 @@ export function renderStream(
         },
       });
     }
-
-    resetComponentDefTViews();
 
     installCaptureDispatcher();
     const encoder = new TextEncoder();
@@ -270,6 +273,7 @@ export function renderStream(
           );
 
           let appRef: ApplicationRef | undefined;
+          let errored = false;
           try {
             // 2. Bootstrap + render. Blocks resolve out of order during this
             //    phase and flush via the capture handler above.
@@ -295,9 +299,20 @@ export function renderStream(
                 `window.__analogFinalize&&window.__analogFinalize()</script>` +
                 `</body></html>`,
             );
+          } catch (err) {
+            // The head + runtime were already flushed, so the status/headers are
+            // committed; error the stream (a no-op silent close would hand the
+            // client a truncated, non-hydratable 200) and log with block context.
+            errored = true;
+            console.error(
+              `[@analogjs/router] renderStream failed for ${url} after ` +
+                `${blockIndex} block(s); response truncated.`,
+              err,
+            );
+            controller.error(err);
           } finally {
             await asyncDestroyPlatform(platformRef);
-            controller.close();
+            if (!errored) controller.close();
           }
         });
       },
