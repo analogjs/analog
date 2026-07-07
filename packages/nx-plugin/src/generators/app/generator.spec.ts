@@ -10,7 +10,7 @@ import { lt } from 'semver';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
-import { checkAndCleanWithSemver } from '@nx/devkit/src/utils/semver';
+import { checkAndCleanWithSemver } from '@nx/devkit/internal';
 
 describe('nx-plugin generator', () => {
   const setup = async (

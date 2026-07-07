@@ -1,3 +1,35 @@
+## [2.6.3-beta.5](https://github.com/analogjs/analog/compare/v2.6.3-beta.4...v2.6.3-beta.5) (2026-07-03)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** persist dependency transform output across dep-optimizer runs ([#2416](https://github.com/analogjs/analog/issues/2416)) ([c7fe67b](https://github.com/analogjs/analog/commit/c7fe67b379cdc913e916aa1d220dffb62fda4226))
+
+## [2.6.3-beta.4](https://github.com/analogjs/analog/compare/v2.6.3-beta.3...v2.6.3-beta.4) (2026-07-03)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** track inlined resources for HMR invalidation in fast compile ([#2414](https://github.com/analogjs/analog/issues/2414)) ([db3d366](https://github.com/analogjs/analog/commit/db3d3667e81b41db632932badcefc29a1ea21a9d))
+
+## [2.6.3-beta.3](https://github.com/analogjs/analog/compare/v2.6.3-beta.2...v2.6.3-beta.3) (2026-07-03)
+
+### Performance Improvements
+
+- **platform:** scope route invalidation to add/unlink and enable router fesm transform cache ([#2410](https://github.com/analogjs/analog/issues/2410)) ([120407c](https://github.com/analogjs/analog/commit/120407cd7f8b374c9f6620c0cd0456d108d1cfec))
+- **vite-plugin-angular:** dedupe emits, filter watcher invalidation, and memoize HMR metadata ([#2412](https://github.com/analogjs/analog/issues/2412)) ([1d9e6fe](https://github.com/analogjs/analog/commit/1d9e6fe2b2d8ba7b349ee33ae297030725a0778b))
+- **vite-plugin-angular:** reduce redundant parsing, fs work, and blocking reads in fastCompile ([#2411](https://github.com/analogjs/analog/issues/2411)) ([f7f1fb2](https://github.com/analogjs/analog/commit/f7f1fb24dff32ec5f32b9d609116f17ba7ec9303))
+
+## [2.6.3-beta.2](https://github.com/analogjs/analog/compare/v2.6.3-beta.1...v2.6.3-beta.2) (2026-06-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** be more selective with potential angular code detection ([#2394](https://github.com/analogjs/analog/issues/2394)) ([f257d10](https://github.com/analogjs/analog/commit/f257d10023de32b5fa0a86d42cbd0a23a73207bb))
+
+## [2.6.3-beta.1](https://github.com/analogjs/analog/compare/v2.6.2...v2.6.3-beta.1) (2026-06-28)
+
+### Bug Fixes
+
+- support and migrate to Nx 23 ([#2393](https://github.com/analogjs/analog/issues/2393)) ([b4e9140](https://github.com/analogjs/analog/commit/b4e9140706baef2fb1507974534f3e85a92463c4))
+
 ## [2.6.2](https://github.com/analogjs/analog/compare/v2.6.1...v2.6.2) (2026-06-25)
 
 ### Bug Fixes

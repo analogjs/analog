@@ -1,4 +1,4 @@
-import { checkAndCleanWithSemver } from '@nx/devkit/src/utils/semver';
+import { checkAndCleanWithSemver } from '@nx/devkit/internal';
 import { getTailwindDependencies } from '../versions/tailwind-dependencies';
 import { lt } from 'semver';
 import {

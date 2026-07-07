@@ -1,0 +1,42 @@
+name: ci-windows-full
+
+# Comprehensive Windows build of every project. Kept off the per-PR path: PRs
+# get the fast, scoped blog-app smoke build in ci.yml, while this broad `--all`
+# build runs nightly (and on demand), where latency matters less and the extra
+# Windows coverage is worth it.
+on:
+  schedule:
+    - cron: '0 8 * * *' # nightly, 08:00 UTC
+  workflow_dispatch: {}
+
+env:
+  NODE_OPTIONS: --max-old-space-size=16384
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows-full:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      # `--skip-nx-cache` forces an actual Windows compile rather than restoring
+      # the OS-independent cache the linux agents populated, so this genuinely
+      # exercises the build on Windows. Mirrors the old `pnpm build` filters.
+      - name: Build
+        run: pnpm exec nx run-many --target build --all --parallel=1 --exclude=astro-app --skip-nx-cache
+      - name: Verify
+        run: more dist\apps\blog-app\analog\public\index.html

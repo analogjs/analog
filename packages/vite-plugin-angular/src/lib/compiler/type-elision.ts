@@ -48,11 +48,14 @@ const TYPE_NODE_TYPES = new Set([
  * Internal helper: parse code and return both the AST and the set of
  * type-only imported names. Avoids double-parsing when both are needed.
  */
-function analyzeTypeOnlyImports(code: string): {
+function analyzeTypeOnlyImports(
+  code: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): {
   ast: any;
   typeOnlyNames: Set<string>;
 } {
-  const ast = parseSync('file.ts', code).program;
+  const ast = program ?? parseSync('file.ts', code).program;
 
   // Step 1 – collect all value-imported names (skip `import type` / `{ type X }`)
   // Namespace imports (`import * as ns`) are intentionally skipped — they are
@@ -256,8 +259,11 @@ function collectTypeReferenceNames(
  *
  * Uses oxc-parser for fast, Rust-based AST analysis — no type-checker needed.
  */
-export function detectTypeOnlyImportNames(code: string): Set<string> {
-  return analyzeTypeOnlyImports(code).typeOnlyNames;
+export function detectTypeOnlyImportNames(
+  code: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): Set<string> {
+  return analyzeTypeOnlyImports(code, program).typeOnlyNames;
 }
 
 /**
@@ -360,13 +366,17 @@ export function elideTypeOnlyImports(code: string): string {
  *
  * Detects type-only names from `ms.toString()` (the fully-mutated code),
  * but reads import positions from `ms.original` (the coordinate system
- * MagicString expects).
+ * MagicString expects). `originalProgram`, when provided, must be a parse
+ * of `ms.original` — never of the mutated text.
  */
-export function elideTypeOnlyImportsMagicString(ms: MagicString): void {
+export function elideTypeOnlyImportsMagicString(
+  ms: MagicString,
+  originalProgram?: ReturnType<typeof parseSync>['program'],
+): void {
   const typeOnlyNames = detectTypeOnlyImportNames(ms.toString());
   if (typeOnlyNames.size === 0) return;
 
   // Parse the original source to get positions in MagicString's coordinate system
-  const ast = parseSync('file.ts', ms.original).program;
+  const ast = originalProgram ?? parseSync('file.ts', ms.original).program;
   applyElisionEdits(ms, ast, ms.original, typeOnlyNames);
 }
