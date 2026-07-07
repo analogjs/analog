@@ -233,6 +233,52 @@ the progressive preview and the authoritative tail. The overhead is smaller in
 relative terms with more/larger blocks (shell overhead amortizes) but is the
 main downside of the additive-seam design.
 
+### Core Web Vitals (over HTTP, throttled)
+
+The in-process numbers above deliberately exclude the network. To measure the
+client-perceived shape, `apps/streaming-app` was built for production, served
+over HTTP, and driven in Chromium under Lighthouse-style throttling (Slow-4G,
+4× CPU). The same route (`/`) was measured both ways — a browser user-agent
+streams, a Googlebot user-agent takes the buffered fallback — so the page,
+bundle, and ~600 ms `httpResource` dependency are identical and only the render
+strategy differs. Median of 9 runs (reproduce with
+[`tools/cwv-bench.mjs`](../../apps/streaming-app/tools/cwv-bench.mjs)):
+
+| Metric       | Streamed   | Buffered | Note                                |
+| ------------ | ---------- | -------- | ----------------------------------- |
+| TTFB         | **3 ms**   | 608 ms   | head flushes before the app renders |
+| FCP          | **200 ms** | 648 ms   | first `@defer` block paints early   |
+| LCP          | 660 ms     | 648 ms   | wash — see below                    |
+| CLS          | 0.006      | 0.000    | finalize body-swap; both "good"     |
+| Fully loaded | 1996 ms    | 2434 ms  | assets fetch during the defer wait  |
+
+**TTFB and FCP are the wins**, and they are large: buffered blocks the first
+byte on the full render (which waits on the 600 ms data), while streaming
+flushes the head immediately and paints the first resolved block at ~200 ms.
+
+**LCP is a wash, and the reason is instructive.** The largest element here is the
+static shell paragraph, and in this implementation the eager app shell (the
+non-`@defer` chrome: `<h1>`, intro copy, eager components) renders in the
+**authoritative tail**, flushed only once the app is stable (~600 ms) — only
+`@defer` blocks stream early. So the LCP element is gated behind the same wait as
+the buffered path. **Streaming improves LCP only when the LCP element streams
+early** — i.e. lives in an early `@defer` block, or in a shell that is itself
+streamed (see [Stream the eager shell early](#stream-the-eager-shell-early)).
+
+**CLS is a small, real regression** (0.006 vs a perfect 0.000). `__analogFinalize`
+replaces the whole body in one `replaceChildren`, so the progressively-painted
+preview is torn down and rebuilt; that swap registers as a shift. It is well
+within the "good" bar (< 0.1) for this app but scales with above-the-fold content.
+
+**INP is equivalent by construction** — both paths ship the identical client
+bundle with `withIncrementalHydration()`, so server render strategy does not
+change interaction cost (measured interactions stayed at/under the ~16 ms
+event-timing floor on both).
+
+Caveats: localhost, one small route, one machine, the bot-UA fallback standing in
+for buffered. Absolute values are optimistic versus the field; the **deltas** are
+what transfer.
+
 ## Validation
 
 **End-to-end** — a real Vite/nitro app (`apps/streaming-app`) driven in Chromium:
@@ -349,9 +395,22 @@ with per-block hydration annotation. The Analog prototype demonstrates the desig
 and quantifies the payoff; the durable form is an upstream API, not a patch a
 framework maintains against private symbols.
 
+### Stream the eager shell early
+
+The [Core Web Vitals](#core-web-vitals-over-http-throttled) measurement shows LCP
+is not improved, because the eager app shell (the non-`@defer` chrome) ships only
+in the authoritative tail — today the first flush is just the head plus an empty
+stream region, and only `@defer` blocks stream before the tail. Streaming the
+eager shell in the first flush, into its final document position, would let the
+LCP element paint at ~FCP time rather than at `whenStable`; and because the shell
+would arrive already in place rather than being swapped in at finalize, it would
+also shrink the small CLS cost the body-swap introduces. This is the
+highest-leverage CWV follow-up and pairs naturally with progressive-paint
+positioning below.
+
 ### Other
 
 - Progressive-paint positioning (mount blocks into their document position as they
-  arrive, rather than a preview region) — orthogonal to bytes.
-- Real over-HTTP / browser benchmarks (blocked in the current sandbox).
+  arrive, rather than a preview region) — orthogonal to bytes, and a prerequisite
+  for streaming the eager shell in place.
 - A `create-analog` template and nitro config flag once the primitive stabilizes.
