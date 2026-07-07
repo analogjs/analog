@@ -89,3 +89,4 @@ gradle.properties
 *.tsbuildinfo
 .nx/polygraph
 .nx/self-healing
+.nx/migrate-runs

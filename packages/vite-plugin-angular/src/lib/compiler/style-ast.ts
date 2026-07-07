@@ -70,9 +70,13 @@ export function extractStyleUrls(code: string, fileName: string): string[] {
 /**
  * Extract inline style strings from Angular @Component decorators.
  */
-export function extractInlineStyles(code: string, fileName: string): string[] {
+export function extractInlineStyles(
+  code: string,
+  fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): string[] {
   const styles: string[] = [];
-  const { program } = parseSync(fileName, code);
+  program ??= parseSync(fileName, code).program;
 
   for (const node of program.body) {
     const decl = getClassDeclaration(node);

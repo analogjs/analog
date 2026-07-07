@@ -259,6 +259,87 @@ describe('component-resolvers', () => {
     });
   });
 
+  describe('caching', () => {
+    it('should return the cached style urls for identical code', () => {
+      const code = `
+        @Component({
+          styleUrls: ['./app.component.css']
+        })
+        export class MyComponent {}
+      `;
+
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const first = styleUrlsResolver.resolve(code, id);
+      const second = styleUrlsResolver.resolve(code, id);
+
+      expect(second).toBe(first);
+    });
+
+    it('should re-resolve style urls when the code changes', () => {
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const first = styleUrlsResolver.resolve(
+        `
+        @Component({
+          styleUrls: ['./app.component.css']
+        })
+        export class MyComponent {}
+      `,
+        id,
+      );
+      const second = styleUrlsResolver.resolve(
+        `
+        @Component({
+          styleUrls: ['./other.component.css']
+        })
+        export class MyComponent {}
+      `,
+        id,
+      );
+
+      expect(first).toMatchNormalizedPaths([
+        './app.component.css|/path/to/src/app.component.css',
+      ]);
+      expect(second).toMatchNormalizedPaths([
+        './other.component.css|/path/to/src/other.component.css',
+      ]);
+    });
+
+    it('should return the cached template urls for identical code', () => {
+      const code = `
+        @Component({
+          templateUrl: './app.component.html'
+        })
+        export class MyComponent {}
+      `;
+
+      const templateUrlsResolver = new TemplateUrlsResolver();
+      const first = templateUrlsResolver.resolve(code, id);
+      const second = templateUrlsResolver.resolve(code, id);
+
+      expect(second).toBe(first);
+    });
+
+    it('should resolve template and style urls from the same code', () => {
+      const code = `
+        @Component({
+          templateUrl: './app.component.html',
+          styleUrls: ['./app.component.css']
+        })
+        export class MyComponent {}
+      `;
+
+      const templateUrls = new TemplateUrlsResolver().resolve(code, id);
+      const styleUrls = new StyleUrlsResolver().resolve(code, id);
+
+      expect(templateUrls).toMatchNormalizedPaths([
+        './app.component.html|/path/to/src/app.component.html',
+      ]);
+      expect(styleUrls).toMatchNormalizedPaths([
+        './app.component.css|/path/to/src/app.component.css',
+      ]);
+    });
+  });
+
   describe('component-resolvers templateUrl', () => {
     const id = '/path/to/src/app.component.ts';
 

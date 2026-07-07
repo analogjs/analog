@@ -1,3 +1,3 @@
-import { vitestExecutor } from '@nx/vite/executors';
+import { vitestExecutor } from '@nx/vitest/executors';
 
 export default vitestExecutor;

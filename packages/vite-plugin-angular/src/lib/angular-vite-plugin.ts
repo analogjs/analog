@@ -52,6 +52,7 @@ import type {
 
 import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
+import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   templateClassBindingGuardPlugin,
   removeActiveGraphMetadata,
@@ -1348,6 +1349,15 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
+          // When the Angular Compilation API path is active the transform hook
+          // receives already-analyzed code, so files without Angular decorators
+          // have nothing to do here — skip them before any further work.
+          if (pluginOptions.useAngularCompilationAPI) {
+            if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
+              return;
+            }
+          }
+
           /**
            * Skip transforming content files
            */
@@ -1396,14 +1406,17 @@ export function angular(options?: PluginOptions): Plugin[] {
             codeLength: code.length,
             hasComponent,
           });
-          const templateUrls = hasComponent
+          // Resource URLs are only consumed for watch-file registration and
+          // JIT rewrites, so skip resolution entirely in prod AOT builds.
+          const resolveResourceUrls = hasComponent && (watchMode || jit);
+          const templateUrls = resolveResourceUrls
             ? templateUrlsResolver.resolve(code, id)
             : [];
-          const styleUrls = hasComponent
+          const styleUrls = resolveResourceUrls
             ? styleUrlsResolver.resolve(code, id)
             : [];
 
-          if (hasComponent && watchMode) {
+          if (resolveResourceUrls && watchMode) {
             for (const urlSet of [...templateUrls, ...styleUrls]) {
               // `urlSet` is a string where a relative path is joined with an
               // absolute path using the `|` symbol.
