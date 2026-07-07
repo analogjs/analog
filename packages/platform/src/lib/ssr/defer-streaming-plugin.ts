@@ -49,11 +49,14 @@ export function injectDeferStreamingHook(code: string): string | null {
     return null;
   }
 
+  // Wrap the entire guard — not just the call — so a drifted Angular runtime
+  // that still matches the anchors but renamed these locals fails as a silent
+  // no-op instead of throwing a ReferenceError inside applyDeferBlockState.
   const capture =
-    `if (newState === DeferBlockState.Complete && ` +
+    `try { if (newState === DeferBlockState.Complete && ` +
     `typeof ngServerMode !== 'undefined' && ngServerMode && ` +
     `typeof globalThis.__analogSsrDeferCapture === 'function') { ` +
-    `try { globalThis.__analogSsrDeferCapture({ ssrUniqueId: lDetails[SSR_UNIQUE_ID], lContainer, hostLView }); } catch (e) {} }\n  `;
+    `globalThis.__analogSsrDeferCapture({ ssrUniqueId: lDetails[SSR_UNIQUE_ID], lContainer, hostLView }); } } catch (e) {}\n  `;
 
   let out = code.replace(END_ANCHOR, capture + END_ANCHOR);
 

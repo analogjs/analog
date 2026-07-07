@@ -24,14 +24,14 @@ import { serverModePlugin } from '../server-mode-plugin.js';
 import { i18nExtractPlugin } from './i18n-extract-plugin.js';
 
 /**
- * The installed `@angular/core` major version, resolved from the project root
+ * The installed `@angular/core` major version, resolved from the workspace root
  * (where the app's Angular is installed). Returns `null` when it cannot be
  * detected, in which case streaming is not blocked and the build-time
  * anchor-drift detection is relied on instead.
  */
-function getAngularCoreMajor(): number | null {
+function getAngularCoreMajor(workspaceRoot: string): number | null {
   try {
-    const req = createRequire(join(process.cwd(), 'noop.js'));
+    const req = createRequire(join(workspaceRoot, 'noop.js'));
     const { version } = req('@angular/core/package.json') as {
       version: string;
     };
@@ -55,7 +55,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   // selection and the deferStreamingPlugin registration below stay consistent —
   // never select the streaming renderer without applying the patch.
   if (platformOptions.ssr && platformOptions.experimental?.streaming) {
-    const major = getAngularCoreMajor();
+    const major = getAngularCoreMajor(
+      platformOptions.workspaceRoot ?? process.cwd(),
+    );
     if (!streamingSupportedOnAngular(major)) {
       console.warn(
         `[@analogjs/platform] experimental.streaming requires Angular ` +

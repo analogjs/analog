@@ -55,6 +55,13 @@ describe('injectDeferStreamingHook', () => {
     expect(out).toContain('ngServerMode');
   });
 
+  it('wraps the whole guard in try/catch so drifted internals no-op', () => {
+    const out = injectDeferStreamingHook(bundle)!;
+    expect(out).toMatch(
+      /try\s*\{\s*if \(newState === DeferBlockState\.Complete/,
+    );
+  });
+
   it('exposes collectNativeNodesInLContainer on __analogSsrInternals', () => {
     const out = injectDeferStreamingHook(bundle)!;
     expect(out).toContain(
