@@ -61,8 +61,8 @@ export default eventHandler(async (event) => {
     return html;
   }
 
-  setResponseHeader(event, 'transfer-encoding', 'chunked');
-
+  // Let the runtime frame the response (h3 sets chunked TE for the Node preset;
+  // HTTP/2 and edge runtimes forbid an explicit Transfer-Encoding header).
   return stream;
 });`;
 
