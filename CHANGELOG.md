@@ -1,3 +1,9 @@
+# [3.0.0-alpha.61](https://github.com/analogjs/analog/compare/v3.0.0-alpha.60...v3.0.0-alpha.61) (2026-07-08)
+
+### Bug Fixes
+
+- **platform:** keep library routes opt-in ([#2421](https://github.com/analogjs/analog/issues/2421)) ([48b69ab](https://github.com/analogjs/analog/commit/48b69ab056f176fa1d90ea1576762001b9f4b704))
+
 # [3.0.0-alpha.60](https://github.com/analogjs/analog/compare/v3.0.0-alpha.59...v3.0.0-alpha.60) (2026-07-08)
 
 ### Bug Fixes
