@@ -240,7 +240,7 @@ export function getInlineTemplates(code: string): string[] {
 // ---------------------------------------------------------------------------
 
 interface StyleUrlsCacheEntry {
-  matchedStyleUrls: string[];
+  code: string;
   styleUrls: string[];
 }
 
@@ -252,23 +252,18 @@ export class StyleUrlsResolver {
   private readonly styleUrlsCache = new Map<string, StyleUrlsCacheEntry>();
 
   resolve(code: string, id: string): string[] {
-    const matchedStyleUrls = getStyleUrls(code);
     const entry = this.styleUrlsCache.get(id);
-    // We're using `matchedStyleUrls` as a key because the code may be changing continuously,
-    // resulting in the resolver being called multiple times. While the code changes, the
-    // `styleUrls` may remain constant, which means we should always return the previously
-    // resolved style URLs.
-    if (entry && entry.matchedStyleUrls === matchedStyleUrls) {
+    if (entry?.code === code) {
       return entry.styleUrls;
     }
 
-    const styleUrls = matchedStyleUrls.map((styleUrlPath) => {
+    const styleUrls = getStyleUrls(code).map((styleUrlPath) => {
       return `${styleUrlPath}|${normalizePath(
         resolve(dirname(id), styleUrlPath),
       )}`;
     });
 
-    this.styleUrlsCache.set(id, { styleUrls, matchedStyleUrls });
+    this.styleUrlsCache.set(id, { code, styleUrls });
     return styleUrls;
   }
 }

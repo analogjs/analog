@@ -99,6 +99,11 @@ export interface CompileOptions {
    *   Partial output is version-stable and linked at application build time.
    */
   compilationMode?: 'full' | 'partial';
+  /**
+   * Pre-parsed OXC program of `sourceCode`, so callers that already parsed
+   * the identical string can avoid a re-parse. Treated as read-only.
+   */
+  oxcProgram?: ReturnType<typeof parseSync>['program'];
 }
 
 type CompileMetadata = ReturnType<typeof extractMetadata>;
@@ -122,6 +127,27 @@ function hasExportModifier(node: ts.Node): boolean {
       .getModifiers(node)
       ?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true
   );
+}
+
+/**
+ * Normalize a `providers` / `viewProviders` metadata value into the single
+ * `o.Expression` Angular's injector/host emitters expect.
+ *
+ * `extractMetadata` stores these as an array of `WrappedNodeExpr` when the
+ * source used an inline array literal (`providers: [A, B]`) — those get
+ * wrapped in a `LiteralArrayExpr`. When the source referenced a const,
+ * spread, or call instead (`providers: safeProviders`), it stores the raw
+ * expression, which is emitted by value. Returns `null` when there is
+ * nothing to emit so callers skip the feature entirely.
+ */
+function providersToExpr(
+  value: o.Expression[] | o.Expression | undefined | null,
+): o.Expression | null {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    return value.length ? new o.LiteralArrayExpr(value) : null;
+  }
+  return value;
 }
 
 /**
@@ -205,10 +231,10 @@ export function compile(
     fileName,
     sourceCode,
     ts.ScriptTarget.Latest,
-    true,
+    false,
   );
   // OXC parse for metadata extraction (faster than TS for decorator/signal analysis)
-  const { program: oxcProgram } = parseSync(fileName, sourceCode);
+  const oxcProgram = opts.oxcProgram ?? parseSync(fileName, sourceCode).program;
   const oxcClassMap = new Map<string, any>();
   for (const stmt of oxcProgram.body) {
     const decl =
@@ -234,7 +260,7 @@ export function compile(
   const parseFile = new ParseSourceFile(sourceCode, fileName);
   const parseLoc = new ParseLocation(parseFile, 0, 0, 0);
   const typeSourceSpan = new ParseSourceSpan(parseLoc, parseLoc);
-  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode);
+  const typeOnlyImports = detectTypeOnlyImportNames(sourceCode, oxcProgram);
   const importSpecifierByName = new Map<string, string>();
   const importedNames = new Set<string>();
 
@@ -610,6 +636,100 @@ export function compile(
             });
           }
 
+          // Non-standalone components get their directive/pipe scope from the
+          // @NgModule that declares them. Whole-program ngtsc resolves this; a
+          // per-file engine can't read the module from the component file, but the
+          // project-wide registry (populated at buildStart) records every module's
+          // declarations + imports. We resolve the owning module's transitive scope
+          // here and inline it into the component's own `dependencies` — matching
+          // ngtsc, and surviving tree-shaking (unlike a separate, droppable
+          // `ɵɵsetComponentScope` call).
+          //
+          // The real "non-standalone" signal is the owning-module lookup below:
+          // a component listed in an @NgModule's `declarations` is non-standalone
+          // by definition (Angular forbids declaring a standalone component). The
+          // `meta.standalone` flag can't be trusted to detect this — the metadata
+          // default is `true`, so an *omitted* flag (the common pre-v19 form,
+          // where it defaulted to false) is indistinguishable from explicit
+          // `true`. So gate cheaply: on v19+ a declared component must set
+          // `standalone: false`, so only run the lookup for those; pre-v19 the
+          // flag is unreliable, so run it for every component (the lookup itself
+          // filters out genuinely standalone ones — they aren't declared).
+          const mightBeNonStandalone =
+            meta.standalone === false || ANGULAR_MAJOR < 19;
+          if (!isPartial && mightBeNonStandalone && registry) {
+            let owningModule:
+              | { declarations?: string[]; imports?: string[] }
+              | undefined;
+            for (const entry of registry.values()) {
+              if (
+                entry.kind === 'ngmodule' &&
+                entry.declarations?.includes(className)
+              ) {
+                owningModule = entry;
+                break;
+              }
+            }
+            if (owningModule) {
+              // Transitive scope = the module's own declarations + the exported
+              // declarations of every imported module (recursively) + tuple members.
+              const scopeNames = new Set<string>();
+              const addExportsOf = (modName: string, visited: Set<string>) => {
+                if (visited.has(modName)) return;
+                visited.add(modName);
+                const e = registry.get(modName);
+                if (!e) return;
+                if (e.kind === 'ngmodule') {
+                  for (const exp of e.exports ?? []) addExportsOf(exp, visited);
+                } else if (e.kind === 'tuple') {
+                  for (const m of e.members ?? []) scopeNames.add(m);
+                } else {
+                  scopeNames.add(modName);
+                }
+              };
+              for (const d of owningModule.declarations ?? [])
+                scopeNames.add(d);
+              for (const imp of owningModule.imports ?? [])
+                addExportsOf(imp, new Set());
+
+              for (const name of scopeNames) {
+                if (seenDeclarationNames.has(name)) continue;
+                const entry = registry.get(name);
+                if (
+                  !entry ||
+                  entry.kind === 'ngmodule' ||
+                  entry.kind === 'tuple'
+                )
+                  continue;
+                if (!importedNames.has(name)) {
+                  const spec = resolveSyntheticImportSpecifier(
+                    fileName,
+                    entry,
+                    importSpecifierByName.get(name),
+                  );
+                  if (spec) syntheticImports.set(name, spec);
+                }
+                const kind = entry.kind === 'pipe' ? 1 : 0;
+                const decl: CompileDeclaration = {
+                  type: new o.WrappedNodeExpr(name),
+                  selector: entry.selector || `_unresolved-${name}`,
+                  kind,
+                  ...(kind === 1 ? { name: entry.pipeName } : {}),
+                };
+                if (entry.inputs) {
+                  decl.inputs = Object.values(entry.inputs).map(
+                    (i) => i.bindingPropertyName,
+                  );
+                }
+                if (entry.outputs) {
+                  decl.outputs = Object.values(entry.outputs) as string[];
+                }
+                seenDeclarationNames.add(name);
+                declarations.push(decl);
+              }
+            }
+          }
+
           let templateContent = meta.template || '';
           if (!templateContent && meta.templateUrl) {
             try {
@@ -728,12 +848,8 @@ export function compile(
             changeDetection: meta.changeDetection ?? (isPartial ? null : 1),
             encapsulation: meta.encapsulation ?? 0,
             exportAs: meta.exportAs,
-            providers: meta.providers?.length
-              ? new o.LiteralArrayExpr(meta.providers)
-              : null,
-            viewProviders: meta.viewProviders?.length
-              ? new o.LiteralArrayExpr(meta.viewProviders)
-              : null,
+            providers: providersToExpr(meta.providers),
+            viewProviders: providersToExpr(meta.viewProviders),
             animations: meta.animations?.length
               ? new o.LiteralArrayExpr(meta.animations)
               : null,
@@ -885,16 +1001,13 @@ export function compile(
             queries: [...fields.contentQueries, ...sigs.contentQueries],
             // Angular's compiler treats `providers` as an Expression and
             // emits `ɵɵProvidersFeature(<expr>)` whenever it is truthy.
-            // Passing the bare JS array of WrappedNodeExpr from
-            // extractMetadata causes the emitter to lower it to `null`,
-            // which then crashes Angular at runtime in `resolveProvider`
-            // because it tries to read `.provide` on `null`. Wrap into a
-            // LiteralArrayExpr (matching the Component branch) so it
-            // emits a real array literal — and pass `null` when there are
-            // no providers so Angular skips the feature entirely.
-            providers: meta.providers?.length
-              ? new o.LiteralArrayExpr(meta.providers)
-              : null,
+            // `providersToExpr` lowers an inline array literal to a
+            // LiteralArrayExpr (matching the Component branch) and passes a
+            // const/spread reference through by value — returning `null`
+            // when there are no providers so Angular skips the feature
+            // entirely. Passing the bare JS array would otherwise be lowered
+            // to `null` and crash Angular at runtime in `resolveProvider`.
+            providers: providersToExpr(meta.providers),
             exportAs: meta.exportAs,
             isStandalone: meta.standalone,
             lifecycle: { usesOnChanges: false },
@@ -962,6 +1075,9 @@ export function compile(
           if (meta.useFactory) injectableMeta.useFactory = meta.useFactory;
           if (meta.useExisting) injectableMeta.useExisting = meta.useExisting;
           if (meta.useValue) injectableMeta.useValue = meta.useValue;
+          // Dependency list for `useFactory` / `useClass`; without it the
+          // emitted factory is invoked with no arguments.
+          if (meta.deps) injectableMeta.deps = meta.deps;
           if (isPartial) {
             const inj = compileDeclareInjectableFromMetadata(injectableMeta);
             ivyCode.push(
@@ -1054,9 +1170,7 @@ export function compile(
           const injectorMeta = {
             name: className,
             type: classRef,
-            providers: meta.providers
-              ? new o.LiteralArrayExpr(meta.providers)
-              : null,
+            providers: providersToExpr(meta.providers),
             imports: ngModuleImports.map((e: o.WrappedNodeExpr<any>) => e),
           };
           if (isPartial) {
@@ -1484,7 +1598,7 @@ export function compile(
   //    implements, generics, etc.).  Without this pass, single-file transpilers
   //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
   //    and will leave the import in the output, causing runtime errors.
-  elideTypeOnlyImportsMagicString(ms);
+  elideTypeOnlyImportsMagicString(ms, oxcProgram);
 
   const map = ms.generateMap({
     source: fileName,

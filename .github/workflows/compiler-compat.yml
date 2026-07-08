@@ -87,21 +87,28 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
 
-      - name: Pin @angular/compiler and @angular/compiler-cli via pnpm.overrides
+      - name: Pin @angular/compiler and @angular/compiler-cli via pnpm overrides
+        # pnpm 11 reads `overrides` from pnpm-workspace.yaml, not from the
+        # root package.json `pnpm` field — so the matrix pin must be injected
+        # there. Insert the two entries under the existing `overrides:` block
+        # (appending a fresh block if one isn't present).
         run: |
           node -e "
           const fs = require('fs');
-          const p = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-          p.pnpm = p.pnpm || {};
-          p.pnpm.overrides = p.pnpm.overrides || {};
-          p.pnpm.overrides['@angular/compiler'] = '${{ matrix.angular-version }}';
-          p.pnpm.overrides['@angular/compiler-cli'] = '${{ matrix.angular-version }}';
-          fs.writeFileSync('package.json', JSON.stringify(p, null, 2));
-          console.log('Overrides set:', p.pnpm.overrides);
+          const f = 'pnpm-workspace.yaml';
+          const v = '${{ matrix.angular-version }}';
+          const lines = fs.readFileSync(f, 'utf-8').split('\n');
+          let i = lines.findIndex(l => l.trim() === 'overrides:');
+          if (i < 0) { lines.push('overrides:'); i = lines.length - 1; }
+          lines.splice(i + 1, 0,
+            \"  '@angular/compiler': '\" + v + \"'\",
+            \"  '@angular/compiler-cli': '\" + v + \"'\");
+          fs.writeFileSync(f, lines.join('\n'));
+          console.log(lines.join('\n'));
           "
 
       - name: Install with overridden Angular
-        # --no-frozen-lockfile because we just modified package.json above.
+        # --no-frozen-lockfile because we just modified pnpm-workspace.yaml above.
         # --prefer-offline still hits the cache for everything else.
         run: pnpm install --no-frozen-lockfile --prefer-offline
 

@@ -13,7 +13,19 @@ Analog supports deployment to many providers with little or no additional config
 
 Analog supports deploying both static and server-side rendered apps to [Zerops](https://zerops.io) with a simple configuration file.
 
-> One Zerops project can contain multiple Analog projects. See example repositories for [static](https://github.com/zeropsio/recipe-analog-static) and [server-side rendered](https://github.com/zeropsio/recipe-analog-nodejs) Analog apps for a quick start.
+> One Zerops project can contain multiple Analog projects.
+
+### Deploy with one click
+
+The fastest way to get started. Zerops has ready-to-deploy Analog recipes with the correct infrastructure and configuration already set up.
+
+Go to [app.zerops.io/recipes?lf=analog](https://app.zerops.io/recipes?lf=analog) and pick the variant that matches your app:
+
+- **Analog SSR Hello World**: Node.js + PostgreSQL, server-side rendered
+- **Analog Static Hello World**: Static site compiled by Vite, served by Nginx
+  Hit **Deploy**. If you don't have a Zerops account yet, it gets created in the same step.
+
+---
 
 ### Static (SSG) Analog app
 
@@ -23,7 +35,7 @@ If your project is not SSG Ready, set up your project for [Static Site Generatio
 
 Projects and services can be added either through a [Project add](https://app.zerops.io/dashboard/project-add) wizard or imported using a YAML structure:
 
-```yml
+```yaml
 project:
   name: recipe-analog
 services:
@@ -33,15 +45,15 @@ services:
 
 This creates a project called `recipe-analog` with a Zerops Static service called `app`.
 
-#### 2. Add zerops.yml configuration
+#### 2. Add zerops.yaml configuration
 
-To tell Zerops how to build and run your site, add a `zerops.yml` to your repository:
+To tell Zerops how to build and run your site, add a `zerops.yaml` to your repository:
 
-```yml
+```yaml
 zerops:
   - setup: app
     build:
-      base: nodejs@20
+      base: nodejs@22
       buildCommands:
         - pnpm i
         - pnpm build
@@ -62,34 +74,32 @@ If your project is not SSR Ready, set up your project for [Server Side Rendering
 
 Projects and services can be added either through a [Project add](https://app.zerops.io/dashboard/project-add) wizard or imported using a YAML structure:
 
-```yml
+```yaml
 project:
   name: recipe-analog
 services:
   - hostname: app
-    type: nodejs@20
+    type: nodejs@22
 ```
 
 This creates a project called `recipe-analog` with a Zerops Node.js service called `app`.
 
-#### 2. Add zerops.yml configuration
+#### 2. Add zerops.yaml configuration
 
-To tell Zerops how to build and run your site, add a `zerops.yml` to your repository:
+To tell Zerops how to build and run your site, add a `zerops.yaml` to your repository:
 
-```yml
+```yaml
 zerops:
   - setup: app
     build:
-      base: nodejs@20
+      base: nodejs@22
       buildCommands:
         - pnpm i
         - pnpm build
       deployFiles:
-        - public
-        - node_modules
         - dist
     run:
-      base: nodejs@20
+      base: nodejs@22
       ports:
         - port: 3000
           httpSupport: true
@@ -102,15 +112,15 @@ zerops:
 
 ### Build & deploy your code
 
-#### Trigger the pipeline by connecting the service with your GitHub / GitLab repository
+#### Connect your GitHub / GitLab repository
 
-Your code can be deployed automatically on each commit or a new tag by connecting the service with your GitHub / GitLab repository. This connection can be set up in the service detail.
+Your code deploys automatically on every commit or tag. Connect your repository in the service detail - see [GitHub Integration](https://docs.zerops.io/references/github-integration) / [GitLab Integration](https://docs.zerops.io/references/gitlab-integration) for more.
 
-#### Trigger the pipeline using Zerops CLI (zcli)
+#### Trigger a deploy with Zerops CLI (zcli)
 
-You can also trigger the pipeline manually from your terminal or your existing CI/CD by using Zerops CLI.
+You can also trigger deploys manually from your terminal or existing CI/CD.
 
-1. Install the Zerops CLI.
+1. Install the Zerops CLI:
 
 ```bash
 # To download the zcli binary directly,
@@ -119,22 +129,17 @@ npm i -g @zerops/zcli
 ```
 
 2. Open [Settings > Access Token Management](https://app.zerops.io/settings/token-management) in the Zerops app and generate a new access token.
-
-3. Log in using your access token with the following command:
+3. Log in using your access token:
 
 ```bash
 zcli login <token>
 ```
 
-4. Navigate to the root of your app (where `zerops.yml` is located) and run the following command to trigger the deploy:
+4. Navigate to the root of your app (where `zerops.yaml` is located) and run:
 
 ```bash
 zcli push
 ```
-
-#### Trigger the pipeline using GitHub / Gitlab
-
-You can also check out [Github Integration](https://docs.zerops.io/references/github-integration) / [Gitlab Integration](https://docs.zerops.io/references/gitlab-integration) in [Zerops Docs](https://docs.zerops.io/) for git integration.
 
 ## Netlify
 

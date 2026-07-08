@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 let mockRolldownVersion: string | undefined;
 const mockTransformWithOxc = vi.fn();
 const mockTransformWithEsbuild = vi.fn();
+const mockPreprocessCSS = vi.fn();
 
 vi.mock('vite', async () => {
   const actual = await vi.importActual<typeof import('vite')>('vite');
@@ -17,6 +18,7 @@ vi.mock('vite', async () => {
     transformWithOxc: (...args: unknown[]) => mockTransformWithOxc(...args),
     transformWithEsbuild: (...args: unknown[]) =>
       mockTransformWithEsbuild(...args),
+    preprocessCSS: (...args: unknown[]) => mockPreprocessCSS(...args),
   };
 });
 
@@ -267,6 +269,69 @@ export class XComponent {}
       ([, , opts]: any[]) => opts?.sourcemap === true,
     );
     expect(sawBypassCall).toBe(false);
+  });
+
+  it('does not run the bypass strip when the file has only @Service', async () => {
+    // Regression: Angular v22's `@Service` decorator must be detected as an
+    // Angular file so it takes the full compile path (emitting ɵfac/ɵprov)
+    // rather than the strip-only bypass. When skipped, the class is left
+    // without Ivy defs and falls back to the JIT compiler at runtime.
+    const plugin = buildPlugin();
+    const handler = getTransformHandler(plugin);
+
+    const code = `
+import { Service, inject } from '@angular/core';
+@Service({ autoProvided: false })
+export class MyService {
+  private dep = inject(Object);
+}
+`;
+    try {
+      await handler.call(
+        { addWatchFile: () => undefined },
+        code,
+        '/src/app/my.service.ts',
+      );
+    } catch {
+      // The full compile path may throw under the mocked OXC return value;
+      // we only care that the bypass branch was not taken.
+    }
+
+    const sawBypassCall = mockTransformWithOxc.mock.calls.some(
+      ([, , opts]: any[]) => opts?.sourcemap === true,
+    );
+    expect(sawBypassCall).toBe(false);
+  });
+
+  it('preprocesses an external .scss styleUrl by its own extension when inlineStylesExtension is css', async () => {
+    // Regression: external `.scss` styleUrls must be run through the Sass
+    // preprocessor based on their own file extension — even with the default
+    // `inlineStylesExtension: 'css'`. Without this the inlined SCSS is scoped
+    // but never compiled, so nested rules / `&` silently fail to apply.
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+
+    const plugin = buildPlugin(); // inlineStylesExtension: 'css'
+    const handler = getTransformHandler(plugin);
+
+    const id = `${__dirname}/compiler/__fixtures__/ext.component.ts`;
+    const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.scss' })
+export class ExtComponent {}
+`;
+    try {
+      await handler.call({ addWatchFile: () => undefined }, code, id);
+    } catch {
+      // The full compile path may throw under the mocked transforms; we only
+      // assert the external scss was sent to the preprocessor as `.scss`.
+    }
+
+    const scssCall = mockPreprocessCSS.mock.calls.find(
+      ([, fakePath]: any[]) =>
+        typeof fakePath === 'string' && fakePath.endsWith('.scss'),
+    );
+    expect(scssCall).toBeDefined();
   });
 });
 

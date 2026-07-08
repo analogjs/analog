@@ -43,7 +43,11 @@ jobs:
         run: pnpm install --frozen-lockfile --prefer-offline
       - name: Download Angular ${{ matrix.angular-major }} compliance fixtures
         run: bash packages/vite-plugin-angular/scripts/setup-conformance.sh ${{ matrix.angular-major }}
-      - name: Run conformance tests
+      - name: Run conformance and upstream-drift tests
         env:
           ANGULAR_SOURCE_DIR: .angular-conformance
-        run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
+        run: >-
+          pnpm exec vitest run
+          packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
+          packages/vite-plugin-angular/src/lib/compiler/decorator-coverage.spec.ts
+          packages/vite-plugin-angular/src/lib/compiler/signal-api-coverage.spec.ts

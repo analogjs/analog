@@ -218,6 +218,11 @@ const sidebars = {
           type: 'doc',
         },
         {
+          type: 'doc',
+          id: 'guides/angular-compilation',
+          label: 'Angular Compilation',
+        },
+        {
           id: 'guides/compatibility',
           label: 'Version Compatibilty',
           type: 'doc',

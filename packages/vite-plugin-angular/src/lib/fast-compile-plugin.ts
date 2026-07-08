@@ -1,5 +1,6 @@
 import { promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
+import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -11,12 +12,14 @@ import {
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
+  collectAllImports,
   jitTransform,
   inlineResourceUrls,
   extractInlineStyles,
   generateHmrCode,
   debugCompile,
   debugRegistry,
+  ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
 } from './compiler/index.js';
 
@@ -86,17 +89,25 @@ export function fastCompilePlugin(
    * The `visited` set prevents infinite recursion within a single
    * top-level call. Each fresh scan should pass an empty set (so HMR
    * re-scans aren't blocked by buildStart's earlier visits).
+   *
+   * `fileContents`/`scanResults` are cold-start dedup caches scoped to a
+   * single `initFastCompile` call. HMR/watcher callers must omit them so
+   * an edited file is always re-read from disk.
    */
   async function scanBarrelExports(
     file: string,
     visited: Set<string> = new Set(),
     overwrite = false,
+    fileContents?: Map<string, string>,
+    scanResults?: Map<string, ReturnType<typeof scanFile>>,
   ): Promise<void> {
     if (visited.has(file)) return;
     visited.add(file);
     let code: string;
     try {
-      code = await fsPromises.readFile(file, 'utf-8');
+      code =
+        fileContents?.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+      fileContents?.set(file, code);
     } catch (e) {
       if (debugRegistry.enabled) {
         debugRegistry(
@@ -107,7 +118,21 @@ export function fastCompilePlugin(
       }
       return;
     }
-    const entries = scanFile(code, file);
+    // Single parse shared by scanFile and collectRelativeReExports. On a
+    // parse error each consumer re-parses on its own, preserving their
+    // individual failure semantics (scanFile throws past its pre-filter;
+    // collectRelativeReExports swallows and returns []).
+    let program: ReturnType<typeof parseSync>['program'] | undefined;
+    try {
+      program = parseSync(file, code).program;
+    } catch {
+      program = undefined;
+    }
+    let entries = scanResults?.get(file);
+    if (!entries) {
+      entries = scanFile(code, file, program);
+      scanResults?.set(file, entries);
+    }
     for (const entry of entries) {
       // At buildStart we want stable registry entries (don't overwrite
       // an earlier scan with a barrel re-scan); HMR explicitly asks
@@ -122,7 +147,7 @@ export function fastCompilePlugin(
     // silently skip half of an outer barrel's re-exports, which
     // previously left directives like `HlmRadioGroup` unregistered).
     const dir = dirname(file);
-    for (const rel of collectRelativeReExports(code, file)) {
+    for (const rel of collectRelativeReExports(code, file, program)) {
       // NodeNext-style libraries write `export * from './foo.js'`
       // even though the source is `./foo.ts`. Strip the ESM
       // extension before probing or the candidates would be
@@ -136,7 +161,13 @@ export function fastCompilePlugin(
       for (const candidate of reExportCandidates) {
         try {
           await fsPromises.access(candidate);
-          await scanBarrelExports(candidate, visited, overwrite);
+          await scanBarrelExports(
+            candidate,
+            visited,
+            overwrite,
+            fileContents,
+            scanResults,
+          );
           resolved = true;
           break;
         } catch {
@@ -177,6 +208,11 @@ export function fastCompilePlugin(
     const candidates = new Set<string>(config.rootNames);
     const tsPaths = config.options?.paths;
     const baseUrl = (config.options?.baseUrl ?? projectRoot) as string;
+    // Cold-start dedup caches shared by the three scan phases below
+    // (candidates scan, walkImports, scanBarrelExports). Scoped to this
+    // init call only — HMR/watcher re-scans must hit disk fresh.
+    const fileContents = new Map<string, string>();
+    const scanResults = new Map<string, ReturnType<typeof scanFile>>();
     if (tsPaths) {
       for (const targets of Object.values(tsPaths)) {
         for (const target of targets as string[]) {
@@ -191,7 +227,10 @@ export function fastCompilePlugin(
       Array.from(candidates).map(async (file) => {
         try {
           const code = await fsPromises.readFile(file, 'utf-8');
-          return scanFile(code, file);
+          fileContents.set(file, code);
+          const entries = scanFile(code, file);
+          scanResults.set(file, entries);
+          return entries;
         } catch (e) {
           if (debugRegistry.enabled) {
             debugRegistry(
@@ -211,6 +250,150 @@ export function fastCompilePlugin(
       }
     }
 
+    // Walk the transitive import graph from the root files so the registry also
+    // contains declarations that live in files not directly in tsconfig
+    // `files`/`include` (transitively-imported app sources) and in workspace
+    // libraries reached through wildcard `paths` (e.g. `@bitwarden/*`). Without
+    // this, a non-standalone component's owning module can't classify its
+    // declarations and `ɵɵsetComponentScope` is never emitted for it. Only
+    // relative imports and `paths`-mapped (project/workspace) bare specifiers are
+    // followed; true `node_modules` packages are left to the lazy `.d.ts` scanner.
+    // Return *all* candidate base paths a bare specifier maps to. A `paths`
+    // entry can list several fallback targets (e.g. a built `dist` path first
+    // and the workspace `src` second); the caller probes them in order.
+    const resolvePathSpecifier = (spec: string): string[] => {
+      if (!tsPaths) return [];
+      for (const [key, targets] of Object.entries(tsPaths)) {
+        const list = targets as string[];
+        if (key.endsWith('/*')) {
+          const prefix = key.slice(0, -1);
+          if (spec.startsWith(prefix)) {
+            // `split('*').join(...)` substitutes the single tsconfig `*`
+            // wildcard without `String.replace`'s first-match-only behavior or
+            // `$`-pattern interpretation of the replacement.
+            return list.map((t) =>
+              resolve(baseUrl, t.split('*').join(spec.slice(prefix.length))),
+            );
+          }
+        } else if (key === spec) {
+          return list.map((t) => resolve(baseUrl, t));
+        }
+      }
+      return [];
+    };
+    const probeToSource = async (base: string): Promise<string | null> => {
+      const candidates = base.endsWith('.ts')
+        ? [base]
+        : [base + '.ts', resolve(base, 'index.ts')];
+      for (const candidate of candidates) {
+        try {
+          await fsPromises.access(candidate);
+          return candidate;
+        } catch {
+          // try next candidate
+        }
+      }
+      return null;
+    };
+    // Memoize fs probes per absolute base path. The cache stores the
+    // Promise (not the settled value) so concurrent walks racing on the
+    // same base collapse into a single probe.
+    const baseResolveCache = new Map<string, Promise<string | null>>();
+    const resolveToSource = (base: string): Promise<string | null> => {
+      let probe = baseResolveCache.get(base);
+      if (!probe) {
+        probe = probeToSource(base);
+        baseResolveCache.set(base, probe);
+      }
+      return probe;
+    };
+    // Probe each `paths` target in order; first one that resolves to source wins.
+    const resolveFirstSource = async (
+      bases: string[],
+    ): Promise<string | null> => {
+      for (const base of bases) {
+        const resolved = await resolveToSource(base);
+        if (resolved) return resolved;
+      }
+      return null;
+    };
+    const importWalkVisited = new Set<string>();
+    // Paths-mapped resolution doesn't depend on the importer, so bare
+    // specifiers can be memoized by their raw text. Relative specifiers
+    // must NOT be — the same './foo' resolves differently per directory.
+    const bareSpecResolveCache = new Map<string, Promise<string | null>>();
+    const walkImports = async (file: string): Promise<void> => {
+      if (importWalkVisited.has(file)) return;
+      importWalkVisited.add(file);
+      let code: string;
+      try {
+        code =
+          fileContents.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+        fileContents.set(file, code);
+      } catch {
+        return;
+      }
+      // Single parse shared by scanFile, collectImportedPackages, and
+      // collectAllImports. On a parse error each consumer re-parses on
+      // its own, preserving their individual failure semantics.
+      let program: ReturnType<typeof parseSync>['program'] | undefined;
+      try {
+        program = parseSync(file, code).program;
+      } catch {
+        program = undefined;
+      }
+      let entries = scanResults.get(file);
+      if (!entries) {
+        entries = scanFile(code, file, program);
+        scanResults.set(file, entries);
+      }
+      for (const entry of entries) {
+        if (!registry.has(entry.className))
+          registry.set(entry.className, entry);
+      }
+      // Pre-scan the `.d.ts` of every external package this file imports (and,
+      // transitively, packages those packages' NgModules re-export — e.g.
+      // BrowserModule → CommonModule → NgIf). Doing this at buildStart means the
+      // registry is complete before any component transforms, so non-standalone
+      // component scope resolves regardless of file transform order.
+      for (const pkg of collectImportedPackages(code, file, program)) {
+        if (scannedDtsPackages.has(pkg)) continue;
+        scannedDtsPackages.add(pkg);
+        try {
+          for (const entry of scanPackageDts(
+            pkg,
+            projectRoot,
+            scannedDtsPackages,
+          )) {
+            if (!registry.has(entry.className))
+              registry.set(entry.className, entry);
+          }
+        } catch {
+          // Package may not have .d.ts or not be Angular
+        }
+      }
+      const dir = dirname(file);
+      const targets = await Promise.all(
+        collectAllImports(code, file, program).map((spec) => {
+          if (spec.startsWith('.')) {
+            return resolveToSource(
+              resolve(dir, spec.replace(/\.(?:js|mjs)$/u, '')),
+            );
+          }
+          let resolved = bareSpecResolveCache.get(spec);
+          if (!resolved) {
+            resolved = resolveFirstSource(resolvePathSpecifier(spec));
+            bareSpecResolveCache.set(spec, resolved);
+          }
+          return resolved;
+        }),
+      );
+      await Promise.all(
+        targets.filter((t): t is string => !!t).map((t) => walkImports(t)),
+      );
+    };
+    await Promise.all(config.rootNames.map((file) => walkImports(file)));
+
     // Library barrels typically `export * from './lib/...'` rather than
     // declaring directives directly, so the entry file alone gives us
     // the tuple consts but not the directive classes they reference.
@@ -228,7 +411,15 @@ export function fastCompilePlugin(
         }
       }
       await Promise.all(
-        barrelCandidates.map((c) => scanBarrelExports(c, buildStartVisited)),
+        barrelCandidates.map((c) =>
+          scanBarrelExports(
+            c,
+            buildStartVisited,
+            false,
+            fileContents,
+            scanResults,
+          ),
+        ),
       );
     }
     debugRegistry(
@@ -238,13 +429,17 @@ export function fastCompilePlugin(
     );
   }
 
-  function ensureDtsRegistryForSource(code: string, id: string) {
-    for (const pkg of collectImportedPackages(code, id)) {
+  function ensureDtsRegistryForSource(
+    code: string,
+    id: string,
+    program?: ReturnType<typeof parseSync>['program'],
+  ) {
+    for (const pkg of collectImportedPackages(code, id, program)) {
       if (scannedDtsPackages.has(pkg)) continue;
       scannedDtsPackages.add(pkg);
 
       try {
-        const dtsEntries = scanPackageDts(pkg, projectRoot);
+        const dtsEntries = scanPackageDts(pkg, projectRoot, scannedDtsPackages);
         for (const entry of dtsEntries) {
           if (!registry.has(entry.className)) {
             registry.set(entry.className, entry);
@@ -260,7 +455,7 @@ export function fastCompilePlugin(
     code: string,
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
-    if (!/(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code)) {
+    if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
       // Non-Angular file — strip TS-only syntax ourselves so barrels
       // like `export { Foo, type Bar } from './x'` and other TS-only
       // forms don't leak unstripped to Rolldown. In rolldown-vite the
@@ -321,24 +516,49 @@ export function fastCompilePlugin(
       return { code: stripped.code, map: stripped.map };
     }
 
-    // Inline external templateUrl/styleUrl(s) into the source before compilation
-    code = inlineResourceUrls(code, id);
+    // Inline external templateUrl/styleUrl(s) into the source before compilation.
+    // `styleExtensions` carries the source extension of each inlined external
+    // style so it can be preprocessed by its own file type (e.g. an external
+    // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
+    const inlined = await inlineResourceUrls(code, id);
+    code = inlined.code;
+    const { styleExtensions } = inlined;
 
-    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less)
+    // Track inlined resources for HMR. `compile()` only reports resources it
+    // reads through its own fallback (a templateUrl/styleUrl the inliner did
+    // NOT already inline), so files inlined here must be recorded here or a
+    // later edit to them never invalidates the owning module.
+    for (const dep of inlined.resourceDependencies) {
+      resourceToSource.set(dep, id);
+    }
+
+    // Single OXC parse of the post-inline source, shared by every AST
+    // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
+    // so its program can never be reused here.
+    const { program: oxcProgram } = parseSync(id, code);
+
+    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
+    // whenever a style needs a non-`css` preprocessor — either the configured
+    // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
+    // own extension.
     let resolvedStyles: Map<string, string> | undefined;
     let resolvedInlineStyles: Map<number, string> | undefined;
 
-    if (pluginOptions.inlineStylesExtension !== 'css') {
-      const styleStrings = extractInlineStyles(code, id);
+    const inlineExt = pluginOptions.inlineStylesExtension;
+    const styleNeedsPreprocess = (ext: string) => ext !== '' && ext !== 'css';
+
+    if (styleNeedsPreprocess(inlineExt) || styleExtensions.size > 0) {
+      const styleStrings = extractInlineStyles(code, id, oxcProgram);
 
       if (styleStrings.length > 0) {
         resolvedInlineStyles = new Map();
         for (let i = 0; i < styleStrings.length; i++) {
+          // External styleUrls are preprocessed by their own extension; truly
+          // inline `styles: [...]` fall back to `inlineStylesExtension`.
+          const ext = styleExtensions.get(i) ?? inlineExt;
+          if (!styleNeedsPreprocess(ext)) continue;
           try {
-            const fakePath = id.replace(
-              /\.ts$/,
-              `.inline-${i}.${pluginOptions.inlineStylesExtension}`,
-            );
+            const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
             const processed = await preprocessCSS(
               styleStrings[i],
               fakePath,
@@ -361,7 +581,7 @@ export function fastCompilePlugin(
       }
     }
 
-    ensureDtsRegistryForSource(code, id);
+    ensureDtsRegistryForSource(code, id, oxcProgram);
 
     // Merge entries from the shared external-registry global into this
     // compile's lookup view. Convention: out-of-tree compilers populate
@@ -384,6 +604,7 @@ export function fastCompilePlugin(
       resolvedInlineStyles,
       useDefineForClassFields,
       compilationMode: pluginOptions.fastCompileMode,
+      oxcProgram,
     });
 
     // Track resource dependencies for HMR

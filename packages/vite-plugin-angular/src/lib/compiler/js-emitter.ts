@@ -272,10 +272,16 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   visitInvokeFunctionExpr(ast: o.InvokeFunctionExpr) {
     const fn = ast.fn.visitExpression(this, null);
     const args = ast.args.map((a: any) => this.emitExpr(a)).join(', ');
-    // Wrap arrow/function expressions in parens for valid IIFE syntax
+    // Wrap arrow/function expressions in parens for valid IIFE syntax. A
+    // `WrappedNodeExpr` callee is a raw user expression (e.g. an
+    // `@Injectable({ useFactory: (a, b) => … })` arrow); without parens the
+    // argument list binds to the arrow's *body* (`… => new X(a, b)(args)`)
+    // instead of invoking the arrow. Parenthesizing any wrapped callee is
+    // always semantically safe.
     if (
       ast.fn instanceof o.ArrowFunctionExpr ||
-      ast.fn instanceof o.FunctionExpr
+      ast.fn instanceof o.FunctionExpr ||
+      ast.fn instanceof o.WrappedNodeExpr
     ) {
       return '(' + fn + ')(' + args + ')';
     }

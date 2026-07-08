@@ -1,0 +1,62 @@
+# Nx Agents launch template for the `ci` workflow.
+#
+# A single template is used because every distributed target family (lint,
+# build, test, e2e) can land on any agent, and `test`/`e2e` both need browsers.
+# Each agent is sized to mirror the old single GitHub-hosted `ubuntu-latest`
+# runner (16 GB) so the existing `--max-old-space-size=16384` heap and the
+# per-command `--parallel` values keep the same machine-local semantics.
+launch-templates:
+  analog-linux:
+    # `large` is chosen to match the ~16 GB memory of the old ubuntu-latest
+    # runner that the 16 GB Node heap was tuned for. Verify the exact memory of
+    # this resource class in your Nx Cloud account and adjust if it differs.
+    resource-class: 'docker_linux_amd64/large'
+    image: 'ubuntu22.04-node24.14-v1'
+    env:
+      # The old jobs ran with a 16 GB heap; agents now execute that work, so the
+      # same heap must be set here (the coordinator env does not reach agents).
+      NODE_OPTIONS: '--max-old-space-size=16384'
+    init-steps:
+      - name: Checkout
+        # Checks out the exact commit recorded by `start-ci-run`, keeping agents
+        # and the coordinator on the same SHA.
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/checkout/main.yaml'
+
+      - name: Install Node
+        # Reads `.node-version` (24.11.0). The base image ships Node 24.14, so we
+        # install the pinned version to preserve the old `node-version-file`
+        # behavior. Verify this reusable step picks up `.node-version`; if not,
+        # pass the version explicitly via its inputs.
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-node/main.yaml'
+
+      - name: Enable Corepack and pnpm
+        # Mirrors the old jobs' `npm i -g corepack@0.31.0 && corepack enable`.
+        # The pinned corepack version is intentional and must not be bumped here.
+        script: |
+          npm install --global corepack@0.31.0
+          corepack enable
+          pnpm --version
+
+      - name: Restore node_modules cache
+        # Best-effort dependency cache; the install step below is still
+        # authoritative. Verify the key/paths inputs against your Nx Cloud
+        # cache step version before relying on it.
+        uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/cache/main.yaml'
+        inputs:
+          key: 'pnpm-lock.yaml'
+          paths: |
+            node_modules
+          base-branch: 'beta'
+
+      - name: Install dependencies
+        script: |
+          pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Install browsers
+        # Agents run both `test` (Vitest + Chromium shell) and `e2e` (Playwright
+        # + Cypress) tasks, so the full browser superset is installed once. This
+        # is heavier than either old job alone but is required because any agent
+        # may receive either task family.
+        script: |
+          pnpm playwright install --with-deps
+          pnpm cypress install
