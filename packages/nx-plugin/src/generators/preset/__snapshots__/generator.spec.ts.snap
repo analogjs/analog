@@ -30,13 +30,14 @@ exports[`preset generator > should match project.json 1`] = `
   "targets": {
     "build": {
       "executor": "@analogjs/platform:vite",
+      "defaultConfiguration": "production",
+      "outputs": ["{workspaceRoot}/dist/apps/my-app"],
       "options": {
         "configFile": "my-app/vite.config.ts",
         "main": "my-app/src/main.ts",
         "outputPath": "dist/my-app/client",
         "tsConfig": "my-app/tsconfig.app.json"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -45,8 +46,7 @@ exports[`preset generator > should match project.json 1`] = `
           "sourcemap": false,
           "mode": "production"
         }
-      },
-      "outputs": ["{workspaceRoot}/dist/apps/my-app"]
+      }
     },
     "serve": {
       "executor": "@analogjs/platform:vite-dev-server",

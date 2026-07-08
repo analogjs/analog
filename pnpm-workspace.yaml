@@ -38,17 +38,17 @@ catalog:
   '@astrojs/markdown-component': ^1.0.5
   '@astrojs/react': ^5.0.2
   '@mdx-js/react': 3.1.1
-  '@nx/angular': 22.7.0-beta.12
-  '@nx/devkit': 22.7.0-beta.12
-  '@nx/eslint': 22.7.0-beta.12
-  '@nx/eslint-plugin': 22.7.0-beta.12
-  '@nx/js': 22.7.0-beta.12
-  '@nx/playwright': 22.7.0-beta.12
-  '@nx/plugin': 22.7.0-beta.12
-  '@nx/storybook': 22.7.0-beta.12
-  '@nx/vite': 22.7.0-beta.12
-  '@nx/vitest': 22.7.0-beta.12
-  '@nx/web': 22.7.0-beta.12
+  '@nx/angular': 23.0.1
+  '@nx/devkit': 23.0.1
+  '@nx/eslint': 23.0.1
+  '@nx/eslint-plugin': 23.0.1
+  '@nx/js': 23.0.1
+  '@nx/playwright': 23.0.1
+  '@nx/plugin': 23.0.1
+  '@nx/storybook': 23.0.1
+  '@nx/vite': 23.0.1
+  '@nx/vitest': 23.0.1
+  '@nx/web': 23.0.1
   '@oxc-angular/vite': ^0.0.23
   '@oxc-project/runtime': ^0.124.0
   '@playwright/test': ^1.58.2
@@ -140,7 +140,7 @@ catalog:
   minimist: ^1.2.8
   ng-packagr: 22.0.0
   nitro: 3.0.260522-beta
-  nx: 22.7.0-beta.12
+  nx: 23.0.1
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
   oxc-parser: ^0.124.0
@@ -224,9 +224,9 @@ catalogs:
     '@angular/platform-browser': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0
     '@angular/platform-server': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0
     '@angular/router': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0
-    '@nx/angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-    '@nx/devkit': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
-    '@nx/vite': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^22
+    '@nx/angular': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23
+    '@nx/devkit': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23
+    '@nx/vite': ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23
     rxjs: ^6.5.0 || ^7.5.0
     vite: ^6.0.0 || ^7.0.0 || ^8.0.0
   peerAngularBuilders:
