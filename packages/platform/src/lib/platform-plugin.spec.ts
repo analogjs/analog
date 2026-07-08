@@ -10,7 +10,6 @@ const {
   contentPluginSpy,
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
-  discoverLibraryRoutesSpy,
   resolveStylePipelinePluginsSpy,
   stylePipelineFactorySpy,
   stylePipelinePluginSpy,
@@ -24,11 +23,6 @@ const {
   contentPluginSpy: vi.fn(() => []),
   serverModePluginSpy: vi.fn(() => []),
   clearClientPageEndpointsPluginSpy: vi.fn(() => []),
-  discoverLibraryRoutesSpy: vi.fn(() => ({
-    additionalPagesDirs: [],
-    additionalContentDirs: [],
-    additionalAPIDirs: [],
-  })),
   resolveStylePipelinePluginsSpy: vi.fn(() => []),
   stylePipelineFactorySpy: vi.fn(),
   stylePipelinePluginSpy: { name: 'community-style-pipeline' },
@@ -60,9 +54,6 @@ vi.mock('../server-mode-plugin.js', () => ({
 }));
 vi.mock('./clear-client-page-endpoint.js', () => ({
   clearClientPageEndpointsPlugin: clearClientPageEndpointsPluginSpy,
-}));
-vi.mock('./discover-library-routes.js', () => ({
-  discoverLibraryRoutes: discoverLibraryRoutesSpy,
 }));
 vi.mock('./style-pipeline.js', () => ({
   resolveStylePipelinePlugins:
@@ -118,16 +109,14 @@ describe('platformPlugin', () => {
     expect(injectHTMLPluginSpy).not.toHaveBeenCalled();
   });
 
-  it('merges discovered library routes when discoverRoutes is true', () => {
-    discoverLibraryRoutesSpy.mockReturnValue({
+  it('passes through explicit additional route dirs when discoverRoutes is true', () => {
+    platformPlugin({
+      discoverRoutes: true,
       additionalPagesDirs: ['/libs/shared/feature'],
       additionalContentDirs: ['/libs/shared/feature/src/content'],
       additionalAPIDirs: ['/libs/shared/feature/src/api'],
     });
 
-    platformPlugin({ discoverRoutes: true });
-
-    expect(discoverLibraryRoutesSpy).toHaveBeenCalled();
     expect(routerPluginSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         additionalPagesDirs: ['/libs/shared/feature'],
@@ -144,31 +133,6 @@ describe('platformPlugin', () => {
         additionalContentDirs: ['/libs/shared/feature/src/content'],
       }),
     );
-  });
-
-  it('deduplicates explicit and discovered dirs', () => {
-    discoverLibraryRoutesSpy.mockReturnValue({
-      additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
-      additionalContentDirs: [],
-      additionalAPIDirs: [],
-    });
-
-    platformPlugin({
-      discoverRoutes: true,
-      additionalPagesDirs: ['/libs/shared/feature'],
-    });
-
-    expect(routerPluginSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
-      }),
-    );
-  });
-
-  it('does not call discoverLibraryRoutes when discoverRoutes is not set', () => {
-    platformPlugin();
-
-    expect(discoverLibraryRoutesSpy).not.toHaveBeenCalled();
   });
 
   it('wires experimental style-pipeline plugins when configured', () => {
