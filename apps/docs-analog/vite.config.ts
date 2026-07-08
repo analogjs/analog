@@ -12,7 +12,7 @@ import {
   llmsTxtPlugin,
   mdxTabsExtension,
   sitemapPlugin,
-} from '@analogjs/content/vite';
+} from './vite/index';
 
 const REPO_ROOT = resolve(__dirname, '../..');
 const CONTENT_DIR = resolve(__dirname, 'src/content');

@@ -1,7 +1,7 @@
 import { DOCUMENT, inject, Injectable } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { injectContentFilesMap } from '@analogjs/content';
-import { flattenSidebar } from '@analogjs/content/docs';
+import { flattenSidebar } from './docs';
 import { SUPPORTED_LOCALES } from './locale';
 import { getSidebar } from './sidebar';
 

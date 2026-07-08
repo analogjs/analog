@@ -7,7 +7,7 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { SidebarDrawer } from '@analogjs/content/docs';
+import { SidebarDrawer } from '../../docs';
 
 @Component({
   imports: [RouterOutlet, SidebarDrawer],

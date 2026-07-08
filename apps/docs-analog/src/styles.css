@@ -1,12 +1,5 @@
 @import 'tailwindcss';
 
-/* Tailwind v4 excludes node_modules by default; opt the
-   @analogjs/content/docs FESM bundle in so utility classes used only
-   in package components get generated. Tailwind v4's @source takes a
-   path/glob (no bare-package resolution), so this is relative to
-   styles.css and breaks if the workspace node_modules layout changes. */
-@source '../../../node_modules/@analogjs/content/fesm2022';
-
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Design tokens — light defaults, overridden under .dark on <html>.

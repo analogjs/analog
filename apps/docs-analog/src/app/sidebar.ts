@@ -1,4 +1,4 @@
-import type { SidebarNode } from '@analogjs/content/docs';
+import type { SidebarNode } from './docs';
 
 /**
  * Hand-curated navigation tree, ported verbatim from

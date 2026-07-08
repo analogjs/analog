@@ -38,14 +38,6 @@
         "./node_modules/@analogjs/platform",
         "packages/platform/src/index.ts"
       ],
-      "@analogjs/content/docs": [
-        "./node_modules/@analogjs/content/docs",
-        "packages/content/docs/src/index.ts"
-      ],
-      "@analogjs/content/vite": [
-        "./node_modules/@analogjs/content/vite",
-        "packages/content/vite/src/index.ts"
-      ],
       "@analogjs/router": [
         "./node_modules/@analogjs/router",
         "packages/router/src/index.ts"

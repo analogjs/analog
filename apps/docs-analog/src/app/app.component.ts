@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Footer, Header } from '@analogjs/content/docs';
+import { Footer, Header } from './docs';
 
 @Component({
   selector: 'docs-root',

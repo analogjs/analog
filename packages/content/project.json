@@ -13,20 +13,11 @@
         "commands": [
           "nx build-package content",
           "nx build content-plugin",
-          "nx run content:build-vite",
-          "node packages/content/scripts/patch-vite-export.mjs",
           "npx rimraf node_modules/@analogjs/content/.npmignore"
         ],
         "parallel": false
       },
       "dependsOn": ["^build"]
-    },
-    "build-vite": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/content/vite"],
-      "options": {
-        "command": "tsc -p packages/content/vite/tsconfig.json"
-      }
     },
     "build-package": {
       "executor": "@angular-devkit/build-angular:ng-packagr",

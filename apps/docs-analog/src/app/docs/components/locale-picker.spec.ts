@@ -48,9 +48,9 @@ describe('LocalePicker', () => {
     trigger.click();
     fixture.detectChanges();
 
-    const items = fixture.nativeElement.querySelectorAll<HTMLButtonElement>(
-      'ul[role="menu"] button',
-    );
+    const items = (
+      fixture.nativeElement as HTMLElement
+    ).querySelectorAll<HTMLButtonElement>('ul[role="menu"] button');
     expect(items.length).toBe(2);
     items[1].click();
     expect(switchLocale).toHaveBeenCalledWith('es');
