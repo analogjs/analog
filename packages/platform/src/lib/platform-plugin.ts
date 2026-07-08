@@ -1,5 +1,4 @@
 import { Plugin } from 'vite';
-import { union } from 'es-toolkit';
 
 import { Options } from './options.js';
 import {
@@ -7,7 +6,6 @@ import {
   applyDebugOption,
   debugPlatform,
 } from './utils/debug.js';
-import { discoverLibraryRoutes } from './discover-library-routes.js';
 import { routerPlugin } from './router-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
@@ -28,25 +26,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ssr: true,
     ...opts,
   };
-  if (platformOptions.discoverRoutes) {
-    const workspaceRoot =
-      platformOptions.workspaceRoot ??
-      process.env['NX_WORKSPACE_ROOT'] ??
-      process.cwd();
-    const discovered = discoverLibraryRoutes(workspaceRoot);
-    platformOptions.additionalPagesDirs = union(
-      platformOptions.additionalPagesDirs ?? [],
-      discovered.additionalPagesDirs,
-    );
-    platformOptions.additionalContentDirs = union(
-      platformOptions.additionalContentDirs ?? [],
-      discovered.additionalContentDirs,
-    );
-    platformOptions.additionalAPIDirs = union(
-      platformOptions.additionalAPIDirs ?? [],
-      discovered.additionalAPIDirs,
-    );
-  }
 
   debugPlatform('experimental options resolved', {
     typedRouter: platformOptions.experimental?.typedRouter,

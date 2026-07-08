@@ -120,12 +120,12 @@ export interface Options {
    */
   additionalAPIDirs?: string[];
   /**
-   * Automatically discover route directories (pages, content, API) in
-   * workspace libraries by scanning `libs/**` directories directly.
+   * Generate routes from the app's route directories.
    *
-   * Discovered directories are merged with any explicit
-   * `additionalPagesDirs`, `additionalContentDirs`, and
-   * `additionalAPIDirs` values.
+   * Workspace library route directories are opt-in. Use
+   * `discoverLibraryRoutes()` and pass its result to `additionalPagesDirs`,
+   * `additionalContentDirs`, and `additionalAPIDirs` when an app should
+   * include routes from shared libraries.
    *
    * @default false
    */
