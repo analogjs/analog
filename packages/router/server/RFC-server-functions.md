@@ -94,7 +94,11 @@ This RFC composes those into `serverFn`.
 - **One client primitive** — `injectServerFn` covers both reactive reads (a
   `ResourceRef`) and imperative calls (a bound callable), in the `injectLoad`
   helper family; no separate hook per mode.
-- Server code and its dependencies never enter the client bundle.
+- Server code and its dependencies never enter the client bundle. On the client,
+  a `.server.ts` is rewritten to only its tree-shakeable `serverFn` proxies;
+  every other export and its server-only imports are scrubbed and tree-shaken.
+- **`serverFn` is supported in existing `.server.ts` files**, coexisting with the
+  `load` / `action` in the same module.
 - `load` / `action` become expressible as thin sugar over `serverFn`.
 
 ## Non-Goals
@@ -346,17 +350,17 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                 | Change                                                                                                                                                                                                                   |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                |
-| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                          |
-| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                      |
-| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`                                                                                                                              |
-| `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                         |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`), broadened beyond `src/app/pages/`                                                                                                         |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                                                                                                                                                       |
-| `packages/platform/src/lib/clear-client-page-endpoint.ts`            | generalize the existing client scrub: for a `.server.ts` exporting `serverFn`s, emit named proxy exports (`{ __serverFn, url, method }`) instead of `export default undefined;`, and match the broadened server-fn scope |
+| File                                                                 | Change                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                                                                    |
+| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                                                                              |
+| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                                                                          |
+| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`                                                                                                                                                                                  |
+| `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                                                                    |
+| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                                                                             |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`), broadened beyond `src/app/pages/`                                                                                                                                                             |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                                                                                                                                                                                                           |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`            | generalize the client scrub: rewrite a `.server.ts` to only its tree-shakeable named `serverFn` proxies (`{ __serverFn, url, method }`); scrub every other export (`load`/`action`/helpers) so it tree-shakes out; `serverFn` coexists with `load`/`action`; broadened scope |
 
 ### Data flow
 
@@ -378,8 +382,8 @@ flowchart TB
 
   subgraph clientGraph["Client build — platform (clear-client-page-endpoint)"]
     direction TB
-    proxy["clearClientPageEndpointsPlugin (generalized)<br/>emit named proxies { __serverFn, url, method }"]
-    elim["handler body + server-only imports eliminated"]
+    proxy["clearClientPageEndpointsPlugin (generalized)<br/>emit tree-shakeable proxies { __serverFn, url, method }"]
+    elim["scrub every non-serverFn export (load / action / helpers)<br/>server-only imports tree-shaken out"]
     proxy --> elim
   end
 
@@ -389,11 +393,15 @@ flowchart TB
 
 `stableHash = hash(fileId + exportName)`. The client scrub is done by the
 platform package's `clearClientPageEndpointsPlugin`, not `vite-plugin-angular`.
-Today it replaces a page `.server.ts` with `export default undefined;`; for a
-module exporting `serverFn`s it must instead emit one typed proxy per export so
-the client import still resolves. Because the transform runs after type-checking,
-the consumer type-checks against the real `ServerFn<In, Out>` type while the
-runtime value is the proxy — inference holds end to end.
+Today it replaces a page `.server.ts` with a single `export default undefined;`.
+Generalized, it instead **rewrites the module to only its client-safe surface**:
+one tree-shakeable named proxy per `serverFn` export, and nothing else — every
+other export (`load`, `action`, server-only helpers) and its imports are scrubbed
+so they tree-shake out of the client graph. `serverFn` is therefore supported in
+the same `.server.ts` files that already hold `load`/`action`; the two coexist,
+and each unused proxy drops on its own. Because the transform runs after
+type-checking, the consumer type-checks against the real `ServerFn<In, Out>`
+type while the runtime value is the proxy — inference holds end to end.
 
 **Runtime.** `injectServerFn` drives an `httpResource` (or a bound callable) that
 goes through `HttpClient`; the request lands on the generated endpoint, which
@@ -527,7 +535,3 @@ export default class CheckoutPage {
   scoped to `src/app/pages/**`. Server functions live in any `*.server.ts`, so
   both must broaden. Do we glob all `*.server.ts` under `src/`, or gate server-fn
   discovery to a configured root to avoid scanning the whole tree?
-- Mixed modules: if a page `.server.ts` exports both a `load`/`action` and a
-  `serverFn`, the generalized client scrub emits proxies for the `serverFn`
-  exports and drops the rest. Do we allow that mix, or require server functions
-  to live in their own `*.server.ts` files?
