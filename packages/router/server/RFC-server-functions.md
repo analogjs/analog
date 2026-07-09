@@ -86,6 +86,9 @@ This RFC composes those into `serverFn`.
 - **Idiomatic client consumption**: the reactive form is an `httpResource`, so
   it inherits client `HttpInterceptorFn`s, `TransferState` SSR caching, and
   `HttpTestingController` testing with no bespoke machinery.
+- **One client primitive** — `injectServerFn` covers both reactive reads (a
+  `ResourceRef`) and imperative calls (a bound callable), in the `injectLoad`
+  helper family; no separate hook per mode.
 - Server code and its dependencies never enter the client bundle.
 - `load` / `action` become expressible as thin sugar over `serverFn`.
 
@@ -225,22 +228,57 @@ during SSR, transferred, no refetch on the client — the same channel
 `injectStaticOutputs` uses today), signal state (`value`/`status`/`error`/
 `reload`), and `HttpTestingController` in tests.
 
-Imperative form, for resolvers / effects / `load`, stays DI-correct (goes
-through the injected client, so interceptors + transfer state still apply):
+`injectServerFn` is the **single client primitive**, with two forms selected by
+overload. It must run in an injection context (it `inject()`s the transport),
+guarded by `assertInInjectionContext` exactly like `injectLoad` and
+`injectStaticProps` — the same inject-helper family it belongs to.
 
 ```ts
+export declare function injectServerFn<In, Out>( // reactive read → resource
+  fn: ServerFn<In, Out>,
+  args: () => NoInfer<In>,
+): ResourceRef<Out>;
+
+export declare function injectServerFn<In, Out>( // bound imperative callable
+  fn: ServerFn<In, Out>,
+): (input: In) => Promise<Out>;
+```
+
+**Reactive read** — given a signal-reading args factory, returns a
+`ResourceRef<Out>` backed by `httpResource`. It refetches when the read signals
+change, and its `value` is a writable signal, so optimistic updates are a
+`.value.set(...)` followed by `.reload()`. (The `ProductCard` example above.)
+
+**Bound callable** — given no args factory, returns a DI-bound `(input) =>
+Promise<Out>` for mutations, resolvers, effects, and `load`:
+
+```ts
+@Component({
+  /* … */
+})
+export class Checkout {
+  private place = injectServerFn(placeOrder); // POST serverFn → callable
+  async submit(sku: string, qty: number) {
+    const { orderId } = await this.place({ sku, qty });
+  }
+}
+
 export const load = async () => {
-  const call = inject(ServerFnClient);
-  return { product: await call(getProduct, { id: 'p_1' }) };
+  const loadProduct = injectServerFn(getProduct);
+  return { product: await loadProduct({ id: 'p_1' }) };
 };
 ```
 
-During SSR, `ServerFnClient` short-circuits the HTTP round-trip and invokes the
-handler in-process within the request injector; HTTP is only the browser
-transport.
+Both forms go through the same injected transport, so client interceptors and
+`TransferState` apply either way. During SSR the transport short-circuits the
+HTTP round-trip and invokes the handler in-process within the request injector;
+HTTP is only the browser transport.
 
-`injectServerFn` and `ServerFnClient` are **client-safe** and therefore live in
-the main `@analogjs/router` entry, not `/server` (see Entry-Point Boundary).
+`ServerFnClient` is the lower-level injectable the callable form is built on
+(`inject(ServerFnClient).call(fn, input)`); reach for it only when you need the
+transport outside an injection context. Prefer `injectServerFn`. Both are
+**client-safe** and live in the main `@analogjs/router` entry, not `/server`
+(see Entry-Point Boundary).
 
 ### 6. Errors
 
@@ -351,16 +389,16 @@ export const placeOrder = serverFn(
 
 ```ts
 // checkout.page.ts
-import { injectServerFn, ServerFnClient } from '@analogjs/router';
+import { injectServerFn } from '@analogjs/router';
 import { placeOrder } from './orders.server';
 
 @Component({
   /* … */
 })
 export default class CheckoutPage {
-  private call = inject(ServerFnClient);
+  private place = injectServerFn(placeOrder); // bound callable form
   async submit(sku: string, qty: number) {
-    const { orderId } = await this.call(placeOrder, { sku, qty });
+    const { orderId } = await this.place({ sku, qty });
     // navigate to confirmation…
   }
 }
