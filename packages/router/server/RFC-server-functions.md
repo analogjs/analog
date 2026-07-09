@@ -30,7 +30,8 @@ export const getProduct = serverFn(
 
 A server function is an `async` function whose body executes **inside the same
 request-scoped injection context Analog already builds for SSR**, and whose
-client half is a first-class Angular `httpResource`. It generalizes the existing
+client half is a first-class Angular `resource()`, hydrated the same way `load`
+is. It generalizes the existing
 route-bound `load` / `action` mechanism into an arbitrary, colocated,
 type-inferred RPC callable — without introducing a new DI story, a bespoke
 client cache, or a non-idiomatic builder API.
@@ -72,9 +73,10 @@ into a general primitive:
   (`packages/platform/src/lib/clear-client-page-endpoint.ts`) already replaces a
   `.server.ts` module with `export default undefined;` on the client build. It is
   scoped to `src/app/pages/` and today discards all exports.
-- **Server→client hydration** — Angular's HttpClient transfer cache, enabled by
-  default with `provideClientHydration()`, which `httpResource` GET requests
-  participate in automatically. No Analog-specific transfer channel is involved.
+- **Server→client hydration** — the `TransferState`-based transfer Analog already
+  uses for `load`: a value resolved during SSR is serialized into the page and
+  rehydrated on the client with no refetch, independent of HTTP method. Uses
+  Angular-core `TransferState`, so no HTTP transfer-cache configuration.
 
 This RFC composes those into `serverFn`.
 
@@ -88,9 +90,10 @@ This RFC composes those into `serverFn`.
   services alike.
 - **Middleware as functional interceptors**, composed through DI in the same
   shape as `provideHttpClient(withInterceptors([...]))`.
-- **Idiomatic client consumption**: the reactive form is an `httpResource`, so
-  it inherits client `HttpInterceptorFn`s, HttpClient transfer-cache SSR
-  hydration, and `HttpTestingController` testing with no bespoke machinery.
+- **Idiomatic client consumption**: the reactive form is a `resource()` whose
+  loader rides `HttpClient` (via `ServerFnClient`), so it inherits client
+  `HttpInterceptorFn`s and `HttpTestingController` testing, and hydrates via
+  `TransferState` with no HTTP transfer-cache configuration.
 - **One client primitive** — `injectServerFn` covers both reactive reads (a
   `ResourceRef`) and imperative calls (a bound callable), in the `injectLoad`
   helper family; no separate hook per mode.
@@ -107,8 +110,8 @@ This RFC composes those into `serverFn`.
   closure out of the component" model). v1 is file-scoped to `*.server.ts`,
   which sidesteps closure hoisting entirely because the module is already
   server-only. Inline authoring is deferred (see Future Work).
-- A new client data cache. We reuse `httpResource` and Angular's HttpClient
-  transfer cache.
+- A new client data cache. We reuse Angular's `resource()`, `HttpClient` (via
+  `ServerFnClient`), and `TransferState`.
 - A central procedure registry / "router" object. Server functions are grouped
   by module colocation (`*.server.ts`), not a single typed router. Consumers
   import the exact exports they use; there is no root type to assemble. This is
@@ -240,11 +243,12 @@ zod and arktype also conform). It runs server-side before the
 handler. The same schema may optionally run client-side for early feedback,
 which is free because Standard Schema is isomorphic.
 
-### 5. Client consumption — the transport _is_ `httpResource`
+### 5. Client consumption — a `resource()` hydrated from `TransferState`
 
-The reactive form returns a `ResourceRef<Out>` backed by `httpResource`
-(`packages/common/http/src/resource.ts`). This is the load-bearing idiomatic
-decision: the client half of every server function is a normal Angular resource.
+The reactive form returns a `ResourceRef<Out>` from Angular's `resource()`
+(`packages/core/src/resource/resource.ts`) whose loader calls `ServerFnClient` —
+so requests still ride `HttpClient` and its interceptors. This is the client half
+of every server function: a normal Angular resource.
 
 ```ts
 @Component({
@@ -261,19 +265,19 @@ export class ProductCard {
 <error-banner [err]="product.error()" /> } @else { <spinner /> }
 ```
 
-Because it is `httpResource` over `HttpClient`, a server function automatically
-gets: client `HttpInterceptorFn`s, **SSR hydration via Angular's HttpClient
-transfer cache**, signal state (`value`/`status`/`error`/`reload`), and
+A read automatically gets: client `HttpInterceptorFn`s (via `ServerFnClient` /
+`HttpClient`), signal state (`value`/`status`/`error`/`reload`), and
 `HttpTestingController` in tests.
 
-Hydration interacts with the require-POST transport: an **input-less GET** read
-resolved during SSR is replayed from the transfer cache on the client with no
-refetch (default behavior). A **parameterized read is POST**, which the default
-transfer cache does not store, so it re-fetches once on hydration unless the app
-opts POST endpoints into the cache via `provideClientHydration` with
-`withHttpTransferCacheOptions({ includePostRequests: true, filter })`. A future
-idempotent-read flag could let a parameterized read use a cacheable transport
-(see Future Work).
+**Hydration is method-independent and needs no configuration.** Reads hydrate the
+same way `load` does — not through the HttpClient transfer cache. When the
+resource resolves during SSR, its value is serialized into the page under a
+`TransferState` key derived from the function id and serialized input; on the
+client the resource takes that seeded value as its first result with no request,
+then fetches normally on later reactive changes. This uses Angular-core
+`TransferState` directly, so **no `provideClientHydration` /
+`withHttpTransferCacheOptions` / `includePostRequests` setup is required, and a
+POST read (any input-bearing read) hydrates exactly like a GET.**
 
 `injectServerFn` is the **single client primitive**, with two forms selected by
 overload. It must run in an injection context (it `inject()`s the transport),
@@ -292,8 +296,8 @@ export declare function injectServerFn<In, Out>( // bound imperative callable
 ```
 
 **Reactive read** — given a signal-reading args factory, returns a
-`ResourceRef<Out>` backed by `httpResource`. It refetches when the read signals
-change, and its `value` is a writable signal, so optimistic updates are a
+`ResourceRef<Out>` from `resource()`. It refetches when the read signals change,
+and its `value` is a writable signal, so optimistic updates are a
 `.value.set(...)` followed by `.reload()`. (The `ProductCard` example above.)
 
 **Bound callable** — given no args factory, returns a DI-bound `(input) =>
@@ -332,8 +336,9 @@ transport outside an injection context. Prefer `injectServerFn`. Both are
 
 Handlers and interceptors signal failure with the existing `fail(status,
 errors)` helper, which already tags responses with `X-Analog-Errors`. On the
-client, `httpResource` surfaces these as `HttpErrorResponse` in `.error()`, and
-`redirect()` is honored by the transport.
+client, the resource surfaces these as `HttpErrorResponse` (thrown by
+`HttpClient` through `ServerFnClient`) in `.error()`, and `redirect()` is honored
+by the transport.
 
 ### 7. Relationship to `load` / `action`
 
@@ -349,17 +354,16 @@ not a prerequisite, to keep the first cut additive and low-risk.
 
 ## Version requirements
 
-The client half depends on `httpResource`, which first shipped (experimental) in
-**Angular 19.2** and became stable API in Angular 22.0. `serverFn` therefore
-requires **`@angular/core` / `@angular/common` ≥ 19.2**, consuming the
-experimental resource APIs on 19.2–21 and the stable API on 22+. (`resource()` /
-`ResourceRef` alone date to 19.0, but `httpResource` sets the 19.2 floor.)
+The client half uses Angular's `resource()` (first shipped experimental in
+**Angular 19.0**, stable API in 22.0), `HttpClient`, and `TransferState`. It does
+**not** depend on `httpResource`, so the floor is **`@angular/core` /
+`@angular/common` ≥ 19.0** — consuming the experimental `resource()` API on
+19.0–21 and the stable API on 22+.
 
 This is a higher floor than `@analogjs/router`'s current peer range
-(`^17 || … || ^22`), so `serverFn` is gated to 19.2+ rather than lowering the
-whole package's support. Consuming an experimental API means tracking its
-changes across minors (e.g. `HttpResourceOptions.map` was renamed to `parse`
-after introduction).
+(`^17 || … || ^22`), so `serverFn` is gated to 19.0+ rather than lowering the
+whole package's support. Consuming an experimental API means tracking its changes
+across minors.
 
 ## Entry-Point Boundary (import safety)
 
@@ -384,7 +388,7 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 | `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                                                                                      |
 | `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                                                                                                |
 | `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                                                                                            |
-| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`                                                                                                                                                                                                    |
+| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (`resource()`-based, `TransferState` hydration), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                                                                                                                                                      |
 | `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                                                                                      |
 | `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                                                                                               |
 | `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`); globs `<projectRoot>/src/**/*.server.ts` by default                                                                                                                                                             |
@@ -432,7 +436,7 @@ and each unused proxy drops on its own. Because the transform runs after
 type-checking, the consumer type-checks against the real `ServerFn<In, Out>`
 type while the runtime value is the proxy — inference holds end to end.
 
-**Runtime.** `injectServerFn` drives an `httpResource` (or a bound callable) that
+**Runtime.** `injectServerFn` drives a `resource()` (or a bound callable) that
 goes through `HttpClient`; the request lands on the generated endpoint, which
 builds the per-request injector, runs interceptors, and invokes the handler in
 that injection context.
@@ -441,8 +445,8 @@ that injection context.
 sequenceDiagram
   autonumber
   participant Cmp as Component / load
-  participant Res as injectServerFn (httpResource)
-  participant Http as HttpClient<br/>(interceptors + transfer cache)
+  participant Res as injectServerFn (resource)
+  participant Http as ServerFnClient / HttpClient<br/>(interceptors)
   participant Ep as Nitro /_analog/fn/{hash}
   participant Inj as Request injector<br/>(provideServerContext)
   participant Mw as Interceptor chain
@@ -463,11 +467,11 @@ sequenceDiagram
   Res-->>Cmp: signals (value / status / error)
 ```
 
-During SSR the `Http → Ep` hop is in-process, not a network call. An input-less
-GET resolved during SSR is carried to the browser by the HttpClient transfer
-cache (on by default with hydration), so the client replays it with no refetch;
-a parameterized POST read re-fetches on hydration unless POST caching is enabled
-(see Client consumption).
+During SSR the `Http → Ep` hop is in-process, not a network call. A read resolved
+during SSR seeds its value into `TransferState` (keyed by function id + input);
+on the client the resource takes that seed as its first value with no refetch,
+independent of HTTP method and with no transfer-cache configuration (see Client
+consumption).
 
 ## Test coverage (planned)
 
@@ -528,8 +532,14 @@ export default class CheckoutPage {
   Start style). Rejected as non-idiomatic; DI-provided functional interceptors
   and a plain `(config, handler)` signature fit Angular conventions and keep
   middleware out of every call site.
-- **Bespoke client cache.** Rejected in favor of `httpResource`, which already
-  gives interceptors, transfer-cache hydration, and testing.
+- **Bespoke client cache.** Rejected in favor of Angular's `resource()` +
+  `HttpClient` (via `ServerFnClient`) + `TransferState`, which give interceptors,
+  hydration, and testing with no new cache.
+- **Hydrate via the HttpClient transfer cache.** Rejected: it is request-keyed
+  and GET-only by default, so parameterized (POST) reads would need
+  `provideClientHydration(withHttpTransferCacheOptions({ includePostRequests }))`
+  configuration. Seeding `TransferState` by key (like `load`) hydrates any read
+  with zero configuration and independent of method.
 - **New top-level package** (`@analogjs/server-fn`). Rejected; the feature is a
   generalization of router `load`/`action` and shares its server context and
   transform, so it belongs in `@analogjs/router` (`/server`).
@@ -544,9 +554,6 @@ export default class CheckoutPage {
 - **Re-express `load`/`action`** on top of the shared endpoint transform.
 - **Client interceptor leg** for `ServerFnInterceptorFn` (a `.client()`-style
   phase), matching HTTP interceptors more fully.
-- **Idempotent-read flag** — let a parameterized read opt into a cacheable
-  transport so it participates in the transfer cache on hydration instead of
-  re-fetching, without weakening the require-POST default for mutations.
 - **Streaming / async-iterable returns** for progressive results.
 - **Schematic** to scaffold a `*.server.ts` with a `serverFn` and its consumer.
 - **tRPC migration guide + codemod** — map each `@analogjs/trpc` procedure to a
