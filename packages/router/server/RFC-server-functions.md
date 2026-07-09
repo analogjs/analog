@@ -148,7 +148,7 @@ export default defineEventHandler(async (event) => {
   const injector = createRequestInjector([
     ...provideServerContext({ req: event.node.req, res: event.node.res }),
     ...appServerProviders, // app.config.server.ts
-    ...serverFnInterceptorProviders, // provideServerFns(withInterceptors(...))
+    ...serverFnInterceptorProviders, // provideServerFns(withServerFnInterceptors(...))
   ]);
   const input = await decodeAndValidate(event, fn.config);
   return runInInjectionContext(injector, () =>
@@ -185,9 +185,17 @@ export const authInterceptor: ServerFnInterceptorFn = (ctx, next) => {
 ```ts
 // app.config.server.ts — mirrors provideHttpClient(withInterceptors(...))
 provideServerFns(
-  withInterceptors([authInterceptor, tenantInterceptor, loggingInterceptor]),
+  withServerFnInterceptors([
+    authInterceptor,
+    tenantInterceptor,
+    loggingInterceptor,
+  ]),
 ),
 ```
+
+The feature builder is `withServerFnInterceptors`, not `withInterceptors`, to
+avoid colliding with the `withInterceptors` already exported for
+`provideHttpClient`. It follows the same `provide*(with*())` shape.
 
 `ServerFnInterceptorFn = (ctx: ServerFnContext, next: ServerFnHandler) =>
 Promise<Response | unknown>`. The `ctx.with({...})` helper threads a typed
@@ -199,7 +207,7 @@ helpers verbatim.
 ### 4. Validation
 
 `config.input` is any Standard Schema validator (valibot is the Analog default;
-`@snyder-tech/schema` and zod/arktype conform). It runs server-side before the
+zod and arktype also conform). It runs server-side before the
 handler. The same schema may optionally run client-side for early feedback,
 which is free because Standard Schema is isomorphic.
 
@@ -306,10 +314,10 @@ not a prerequisite, to keep the first cut additive and low-risk.
 
 This is a deliberate design constraint, not an accident of layout:
 
-| Symbol                                                                      | Entry                     | Why                                                          |
-| --------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
-| `serverFn`, `ServerFnInterceptorFn`, `provideServerFns`, `withInterceptors` | `@analogjs/router/server` | Server-only; authored in `*.server.ts`, stripped from client |
-| `injectServerFn`, `ServerFnClient`, `provideServerFnClient`                 | `@analogjs/router` (main) | Client-safe; must be importable from components              |
+| Symbol                                                                              | Entry                     | Why                                                          |
+| ----------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
+| `serverFn`, `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors` | `@analogjs/router/server` | Server-only; authored in `*.server.ts`, stripped from client |
+| `injectServerFn`, `ServerFnClient`, `provideServerFnClient`                         | `@analogjs/router` (main) | Client-safe; must be importable from components              |
 
 A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 `injectServerFn` from the root entry and references the _same exported symbol_
@@ -320,17 +328,17 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                 | Change                                                                                      |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                   |
-| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withInterceptors`, chain runner     |
-| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                         |
-| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient` |
-| `packages/router/src/index.ts`                                       | export the client surface                                                                   |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                            |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`)               |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                          |
-| `packages/vite-plugin-angular/src/lib/*`                             | client-graph transform: replace `serverFn` impl with RPC proxy                              |
+| File                                                                 | Change                                                                                          |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                       |
+| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner |
+| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                             |
+| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`     |
+| `packages/router/src/index.ts`                                       | export the client surface                                                                       |
+| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`)                   |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                              |
+| `packages/vite-plugin-angular/src/lib/*`                             | client-graph transform: replace `serverFn` impl with RPC proxy                                  |
 
 ### Data flow
 
