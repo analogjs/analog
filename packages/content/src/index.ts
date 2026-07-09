@@ -20,6 +20,10 @@ export {
   MarkedContentHighlighter,
   withHighlighter,
 } from './lib/marked-content-highlighter';
+export {
+  MarkedContentImages,
+  MarkedImageToken,
+} from './lib/marked-content-images';
 export { injectContentFilesMap } from './lib/inject-content-files';
 export {
   injectContentListLoader,

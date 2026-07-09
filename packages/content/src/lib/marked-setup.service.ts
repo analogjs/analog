@@ -7,6 +7,7 @@ import { marked } from 'marked';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
 import { mangle } from 'marked-mangle';
 import { MarkedContentHighlighter } from './marked-content-highlighter';
+import { MarkedContentImages } from './marked-content-images';
 
 @Injectable()
 export class MarkedSetupService {
@@ -14,9 +15,17 @@ export class MarkedSetupService {
   private readonly highlighter = inject(MarkedContentHighlighter, {
     optional: true,
   });
+  private readonly images = inject(MarkedContentImages, {
+    optional: true,
+  });
 
   constructor() {
     const renderer = new marked.Renderer();
+    if (this.images) {
+      const images = this.images;
+      renderer.image = ({ href, title, text }) =>
+        images.renderImage({ href, title: title ?? null, text });
+    }
     renderer.code = ({ text, lang }) => {
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
