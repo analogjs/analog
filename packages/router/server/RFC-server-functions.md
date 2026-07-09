@@ -333,21 +333,31 @@ does not:
   duplicate route; a stray `id` in the config is overwritten by the transform.
 
 This is defense-in-depth on top of — not a replacement for — the interceptor/auth
-layer. The generated transport is same-origin by default. Client proxies call
-relative `/_analog/fn/{hash}` URLs, and the framework does not add CORS headers
-for server functions. Cross-origin access must be enabled explicitly by user
-Nitro middleware if an app wants that behavior.
+layer. Client proxies only ever call relative `/_analog/fn/{hash}` URLs of their
+own app, so the transport is same-origin RPC by design.
+
+**Same-origin is enforced out of the box.** Because server functions may be
+cookie-authenticated, a cross-origin page must not be able to invoke one against
+a logged-in user (a CSRF-shaped attack). The generated transport therefore
+**rejects cross-origin browser calls with `403` by default, with no per-app
+configuration** — `isServerFnOriginAllowed` in `@analogjs/router/server` runs at
+the very top of `dispatchServerFn`, before the registry lookup, so the id space
+is not even probeable from another origin (a cross-origin request to an unknown
+id is `403`, not `404`). It uses the browser-set, unforgeable `Sec-Fetch-Site`
+signal (`same-origin`/`none` pass; `same-site`/`cross-site` do not), falling back
+to an `Origin`-vs-host comparison when that header is absent. Non-browser callers
+(server-to-server, curl) and the in-process SSR path send neither header and are
+unaffected — the guard blocks exactly the cross-origin browser request it exists
+to stop. The guard is gated on the transport passing the request `method`, so
+trusted in-process callers (which omit it) are exempt. The framework does not add
+permissive CORS headers for server functions; an app that genuinely needs
+cross-origin access opts in explicitly via `allowedOrigins` (a list of permitted
+origins, or `'*'` to disable the check), not by default.
 
 Input-bearing server functions use `POST` with a JSON body. The endpoint rejects
 unsupported content types for JSON server function calls with `415`, rejects
 schema-invalid input with a 4xx `fail(...)`, and does not execute the handler
 until decoding and validation succeed.
-
-Because server functions may be cookie-authenticated, CSRF is treated as an app
-security concern but the framework reserves a hook for it: a built-in interceptor
-or endpoint guard can verify `Origin` / `Referer` for unsafe methods when those
-headers are present. Apps with custom requirements can replace or augment this
-behavior with server function interceptors.
 
 ### 6. Client consumption — a `resource()` hydrated from `TransferState`
 
@@ -500,25 +510,26 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                     | Change                                                                                                                                                                                                                                                         |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/router/server/src/server-fn/server-fn.ts`                      | **new** — `serverFn`, three authoring forms (`handler` → GET, `schema, handler` → POST, `config, handler`) normalized via `normalizeArgs`; self-registers and delegates ref construction to `createServerFnRef`                                                |
-| `packages/router/server/src/server-fn/interceptors.ts`                   | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, `SERVER_FN_INTERCEPTORS`, chain runner + `ctx.with`                                                                                                                         |
-| `packages/router/server/src/server-fn/dispatch.ts`                       | **new** — `dispatchServerFn(id, input, event, { parent?, providers?, method? })`: lookup → method-enforce (405) → validate → per-request child of `parent` (REQUEST/RESPONSE only) → interceptors → `runInInjectionContext(handler)`; `Response` short-circuit |
-| `packages/router/server/src/server-fn/registry.ts`                       | **new** — id-keyed `serverFnRegistry` populated by `serverFn` at import time                                                                                                                                                                                   |
-| `packages/router/server/src/index.ts`                                    | export the server authoring + dispatch surface                                                                                                                                                                                                                 |
-| `packages/router/src/lib/server-fn/types.ts`                             | **new** — client-safe shared types (`ServerFn`, `ServerFnConfig`, `ServerFnContext`, `StandardSchemaV1`, …)                                                                                                                                                    |
-| `packages/router/src/lib/server-fn/server-fn-ref.ts`                     | **new** — `createServerFnRef` factory shared by the server `serverFn` and the client scrub proxy (identical `{ __serverFn, id, url, method }` refs)                                                                                                            |
-| `packages/router/src/lib/server-fn/inject-server-fn.ts`                  | **new** — `injectServerFn` (reactive read → `resource()`, `TransferState` hydration, idle on `undefined` args), `injectServerFnMutation` (imperative write → bound callable), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                    |
-| `packages/router/src/index.ts`                                           | export the client surface + `createServerFnRef`                                                                                                                                                                                                                |
-| `packages/vite-plugin-nitro/src/lib/utils/derive-server-fn-id.ts`        | **new** — `deriveServerFnId` (`hash(fileId+export)`) + `serverFnFileId`; dependency-light single source of truth, exported as `@analogjs/vite-plugin-nitro/server-fn-id`                                                                                       |
-| `packages/vite-plugin-nitro/src/lib/utils/inject-server-fn-ids.ts`       | **new** — `oxc`/`magic-string` server transform: stamp the derived `id` into each `serverFn` config, keeping the handler; overwrite any stray author id                                                                                                        |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-id-plugin.ts`      | **new** — Nitro-build plugin applying `injectServerFnIds` to `*.server.ts`                                                                                                                                                                                     |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts`     | **new** — discovers `<projectRoot>/src/**/*.server.ts` modules (+ `additionalServerFnDirs`), excludes SSR config, de-duped + sorted                                                                                                                            |
-| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set; builds the app `Injector` once and dispatches with `{ parent: appInjector, method: event.method }`                |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + providers-module convention                                                                                                           |
-| `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })` with the **derived** id, dropping handler + imports                                                                          |
-| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client build → scrub to proxies; SSR build → `injectServerFnIds` (keep handlers); else page `export default undefined;`; `<projectRoot>/src/**` scope                                                                                                          |
+| File                                                                     | Change                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/router/server/src/server-fn/server-fn.ts`                      | **new** — `serverFn`, three authoring forms (`handler` → GET, `schema, handler` → POST, `config, handler`) normalized via `normalizeArgs`; self-registers and delegates ref construction to `createServerFnRef`                                                                                           |
+| `packages/router/server/src/server-fn/interceptors.ts`                   | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, `SERVER_FN_INTERCEPTORS`, chain runner + `ctx.with`                                                                                                                                                                    |
+| `packages/router/server/src/server-fn/dispatch.ts`                       | **new** — `dispatchServerFn(id, input, event, { parent?, providers?, method?, allowedOrigins? })`: same-origin guard (403) → lookup → method-enforce (405) → validate → per-request child of `parent` (REQUEST/RESPONSE only) → interceptors → `runInInjectionContext(handler)`; `Response` short-circuit |
+| `packages/router/server/src/server-fn/same-origin.ts`                    | **new** — `isServerFnOriginAllowed`: `Sec-Fetch-Site`-first, `Origin`-vs-host fallback same-origin predicate; `allowedOrigins` (incl. `'*'`) opt-in; used by dispatch for out-of-the-box cross-origin rejection                                                                                           |
+| `packages/router/server/src/server-fn/registry.ts`                       | **new** — id-keyed `serverFnRegistry` populated by `serverFn` at import time                                                                                                                                                                                                                              |
+| `packages/router/server/src/index.ts`                                    | export the server authoring + dispatch surface                                                                                                                                                                                                                                                            |
+| `packages/router/src/lib/server-fn/types.ts`                             | **new** — client-safe shared types (`ServerFn`, `ServerFnConfig`, `ServerFnContext`, `StandardSchemaV1`, …)                                                                                                                                                                                               |
+| `packages/router/src/lib/server-fn/server-fn-ref.ts`                     | **new** — `createServerFnRef` factory shared by the server `serverFn` and the client scrub proxy (identical `{ __serverFn, id, url, method }` refs)                                                                                                                                                       |
+| `packages/router/src/lib/server-fn/inject-server-fn.ts`                  | **new** — `injectServerFn` (reactive read → `resource()`, `TransferState` hydration, idle on `undefined` args), `injectServerFnMutation` (imperative write → bound callable), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                                                               |
+| `packages/router/src/index.ts`                                           | export the client surface + `createServerFnRef`                                                                                                                                                                                                                                                           |
+| `packages/vite-plugin-nitro/src/lib/utils/derive-server-fn-id.ts`        | **new** — `deriveServerFnId` (`hash(fileId+export)`) + `serverFnFileId`; dependency-light single source of truth, exported as `@analogjs/vite-plugin-nitro/server-fn-id`                                                                                                                                  |
+| `packages/vite-plugin-nitro/src/lib/utils/inject-server-fn-ids.ts`       | **new** — `oxc`/`magic-string` server transform: stamp the derived `id` into each `serverFn` config, keeping the handler; overwrite any stray author id                                                                                                                                                   |
+| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-id-plugin.ts`      | **new** — Nitro-build plugin applying `injectServerFnIds` to `*.server.ts`                                                                                                                                                                                                                                |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts`     | **new** — discovers `<projectRoot>/src/**/*.server.ts` modules (+ `additionalServerFnDirs`), excludes SSR config, de-duped + sorted                                                                                                                                                                       |
+| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set; builds the app `Injector` once and dispatches with `{ parent: appInjector, method: event.method }`                                                           |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + providers-module convention                                                                                                                                                      |
+| `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })` with the **derived** id, dropping handler + imports                                                                                                                     |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client build → scrub to proxies; SSR build → `injectServerFnIds` (keep handlers); else page `export default undefined;`; `<projectRoot>/src/**` scope                                                                                                                                                     |
 
 ### Data flow
 
@@ -609,6 +620,11 @@ consumption).
 
 **Unit specs.**
 
+- **Same-origin guard** (`same-origin.spec.ts`, 10): same-origin/`none`
+  `Sec-Fetch-Site` pass; `cross-site`/`same-site` rejected unless allow-listed;
+  no-origin-signal (non-browser) passes; `Origin`-vs-host fallback both ways;
+  `X-Forwarded-Host` precedence; `'*'` disables; array-valued headers; malformed
+  `Origin` rejected.
 - **Id derivation** (`derive-server-fn-id.spec.ts`, 5): stable 16-hex digest,
   opaque (not the export name), collision-free across export names and files, and
   independent of absolute checkout location for the same project-relative path.
@@ -639,7 +655,10 @@ event.method }` while propagating response headers.
   validation, 401 interceptor short-circuit, 404 unknown fn.
 - `validate-http-server-fn.ts` — the same parent-injector path over a real HTTP
   round-trip; also asserts method enforcement (405 + `Allow`), the guessed export
-  name (`/_analog/fn/getProducts`) 404s, and `fail()` headers survive.
+  name (`/_analog/fn/getProducts`) 404s, `fail()` headers survive, and the
+  same-origin guard: a cross-origin (`Sec-Fetch-Site: cross-site`) call is `403`,
+  a same-origin call is `200`, and a cross-origin probe of an unknown id is `403`
+  (not `404` — no existence leak).
 - `validate-client-proxy-server-fn.ts` — scrubs the real `products.server.ts`
   through the built platform transform and imports the emitted module, asserting
   the **client proxy id equals the server-derived id**, both opaque, and that no
@@ -699,6 +718,19 @@ export default class CheckoutPage {
   `provideClientHydration(withHttpTransferCacheOptions({ includePostRequests }))`
   configuration. Seeding `TransferState` by key (like `load`) hydrates any read
   with zero configuration and independent of method.
+- **Gate cross-origin via Nitro `routeRules`** (e.g. `'/_analog/fn/**': { cors:
+… }`). Rejected — it cannot provide the security property. `routeRules` `cors`
+  only _sets response headers_ (and, if anything, loosens access); CORS headers
+  merely tell the browser whether to expose the _response_ to JS, they do not
+  stop the request from reaching the handler and running. A fire-and-forget
+  cross-origin `POST` still executes with the user's cookies regardless of any
+  CORS header — exactly the CSRF-shaped attack we care about. Rejecting the
+  request requires a server-side predicate on `Origin`/`Sec-Fetch-Site` _before_
+  the handler runs, which `routeRules` cannot express. The same logic could live
+  in a generated Nitro middleware scoped to `/_analog/fn/**` instead of inside
+  `dispatchServerFn`; it is kept in dispatch so the whole security decision path
+  (origin → method → validation → auth interceptors) is one auditable,
+  harness-testable function rather than split across Nitro config and runtime.
 - **New top-level package** (`@analogjs/server-fn`). Rejected; the feature is a
   generalization of router `load`/`action` and shares its server context and
   transform, so it belongs in `@analogjs/router` (`/server`).
