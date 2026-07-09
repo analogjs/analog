@@ -1,4 +1,4 @@
-# RFC: Server Functions (`serverFn`)
+# RFC: Introduce Analog Server Functions
 
 **Status:** Proposed (`feat/server-functions-rfc` branch)
 **Author:** Brandon Roberts
