@@ -12,6 +12,7 @@ import {
   AnalogImageConfig,
   IMAGE_CONFIG_DEFAULTS,
   buildImageUrl,
+  isOptimizableSrc,
 } from './image-config';
 
 @Injectable()
@@ -19,9 +20,7 @@ export class OptimizedMarkedImages extends MarkedContentImages {
   private readonly config = inject(ANALOG_IMAGE_CONFIG);
 
   renderImage({ href, title, text }: MarkedImageToken): string {
-    // Only local images go through the optimizer; remote and data URLs
-    // are emitted as-is (still lazy) unless the endpoint allows remotes.
-    if (!href.startsWith('/')) {
+    if (!isOptimizableSrc(this.config, href)) {
       return `<img src="${escapeAttr(href)}" alt="${escapeAttr(text)}"${
         title ? ` title="${escapeAttr(title)}"` : ''
       } loading="lazy" decoding="async">`;

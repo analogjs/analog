@@ -6,6 +6,7 @@ import {
   AnalogImageConfig,
   IMAGE_CONFIG_DEFAULTS,
   buildImageUrl,
+  isOptimizableSrc,
 } from './image-config';
 
 /**
@@ -13,8 +14,13 @@ import {
  * component) that resolves images through the Analog image optimization
  * endpoint.
  *
+ * Only local absolute paths and remote images from allowlisted `domains`
+ * are routed through the endpoint; all other sources are left untouched.
+ *
  * ```ts
- * providers: [provideImageLoader({ path: '/api/_image' })]
+ * providers: [
+ *   provideImageLoader({ domains: ['images.unsplash.com'] }),
+ * ]
  * ```
  */
 export function provideImageLoader(
@@ -27,7 +33,9 @@ export function provideImageLoader(
     {
       provide: IMAGE_LOADER,
       useValue: (loaderConfig: ImageLoaderConfig) =>
-        buildImageUrl(config, loaderConfig.src, loaderConfig.width),
+        isOptimizableSrc(config, loaderConfig.src)
+          ? buildImageUrl(config, loaderConfig.src, loaderConfig.width)
+          : loaderConfig.src,
     },
   ];
 }

@@ -9,6 +9,12 @@ export interface MarkdownImagesOptions {
   widths?: number[];
   /** Quality passed to the endpoint (1-100). */
   quality?: number;
+  /**
+   * Remote hosts routed through the endpoint. Must mirror the handler's
+   * `domains` allowlist. Remote images from other hosts are left
+   * untouched.
+   */
+  domains?: string[];
 }
 
 const MARKDOWN_IMAGES_DEFAULTS = {
@@ -39,7 +45,7 @@ export function markdownImages(
   return {
     renderer: {
       image({ href, title, text }) {
-        if (!href.startsWith('/')) {
+        if (!isOptimizable(config, href)) {
           return `<img src="${escapeAttr(href)}" alt="${escapeAttr(text)}"${
             title ? ` title="${escapeAttr(title)}"` : ''
           } loading="lazy" decoding="async">`;
@@ -61,6 +67,20 @@ export function markdownImages(
       },
     },
   };
+}
+
+function isOptimizable(config: { domains?: string[] }, src: string): boolean {
+  if (src.startsWith('/')) {
+    return true;
+  }
+  if (/^https?:\/\//.test(src)) {
+    try {
+      return !!config.domains?.includes(new URL(src).hostname);
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }
 
 function buildUrl(

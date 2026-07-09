@@ -56,7 +56,7 @@ describe('provideOptimizedMarkdownImages', () => {
     expect(html).toContain('title="A title"');
   });
 
-  it('passes remote images through untouched', () => {
+  it('passes non-allowlisted remote images through untouched', () => {
     const html = renderImage({
       href: 'https://example.com/x.png',
       title: null,
@@ -66,6 +66,18 @@ describe('provideOptimizedMarkdownImages', () => {
     expect(html).toContain('src="https://example.com/x.png"');
     expect(html).not.toContain('srcset');
     expect(html).toContain('loading="lazy"');
+  });
+
+  it('optimizes allowlisted remote images', () => {
+    const html = renderImage(
+      { href: 'https://images.example.com/x.png', title: null, text: 'x' },
+      { domains: ['images.example.com'], widths: [640] },
+    );
+
+    expect(html).toContain(
+      'src="/api/_image?src=https%3A%2F%2Fimages.example.com%2Fx.png&amp;w=640"',
+    );
+    expect(html).toContain('srcset');
   });
 
   it('escapes attribute values', () => {
