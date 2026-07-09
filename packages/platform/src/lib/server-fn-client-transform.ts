@@ -67,7 +67,7 @@ export function scrubServerFnModule(
         continue;
       }
       proxies.push(
-        toProxy(declarator.id.name, declarator.init.arguments?.[0], fileId),
+        toProxy(declarator.id.name, declarator.init.arguments ?? [], fileId),
       );
     }
   }
@@ -121,42 +121,63 @@ function collectServerFnLocalNames(body: any[]): Set<string> {
   return names;
 }
 
-function toProxy(name: string, configArg: any, fileId: string): ServerFnProxy {
-  if (configArg?.type !== 'ObjectExpression') {
-    throw new Error(
-      `[analog] serverFn "${name}" in ${fileId} must be called with an inline config object so the client proxy can be generated.`,
-    );
-  }
-
-  let method: 'GET' | 'POST' | undefined;
-  let hasInput = false;
-
-  for (const prop of configArg.properties ?? []) {
-    if (prop.type !== 'Property') continue;
-    const key =
-      prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
-    if (key === 'method' && isStringLiteral(prop.value)) {
-      method = prop.value.value as 'GET' | 'POST';
-    } else if (key === 'input') {
-      hasInput = true;
-    }
-  }
-
-  // GET carries no body, so it can never receive validated input — reject at
-  // build time rather than silently dropping the input on the client.
-  if (method === 'GET' && hasInput) {
-    throw new Error(
-      `[analog] serverFn "${name}" in ${fileId} declares method: 'GET' with an input schema; GET carries no body. Use POST or drop the input.`,
-    );
-  }
-
+function toProxy(name: string, args: any[], fileId: string): ServerFnProxy {
+  const method = methodForCall(name, args, fileId);
   // The id is derived, never read from source — same algorithm the server
   // registration uses, so client proxy and server route always match.
-  return {
-    name,
-    id: deriveServerFnId(fileId, name),
-    method: method ?? (hasInput ? 'POST' : 'GET'),
-  };
+  return { name, id: deriveServerFnId(fileId, name), method };
+}
+
+/**
+ * Resolve the HTTP method from the call shape, matching the runtime overloads:
+ * `serverFn(handler)` ⇒ GET, `serverFn(schema, handler)` ⇒ POST,
+ * `serverFn(config, handler)` ⇒ config-driven.
+ */
+function methodForCall(
+  name: string,
+  args: any[],
+  fileId: string,
+): 'GET' | 'POST' {
+  const arg0 = args[0];
+
+  // serverFn(handler) — input-less GET.
+  if (isFunctionNode(arg0)) return 'GET';
+
+  // serverFn(config, handler) — read method/input off the object.
+  if (arg0?.type === 'ObjectExpression') {
+    let method: 'GET' | 'POST' | undefined;
+    let hasInput = false;
+    for (const prop of arg0.properties ?? []) {
+      if (prop.type !== 'Property') continue;
+      const key =
+        prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
+      if (key === 'method' && isStringLiteral(prop.value)) {
+        method = prop.value.value as 'GET' | 'POST';
+      } else if (key === 'input') {
+        hasInput = true;
+      }
+    }
+    if (method === 'GET' && hasInput) {
+      throw new Error(
+        `[analog] serverFn "${name}" in ${fileId} declares method: 'GET' with an input schema; GET carries no body. Use POST or drop the input.`,
+      );
+    }
+    return method ?? (hasInput ? 'POST' : 'GET');
+  }
+
+  // serverFn(schema, handler) — a schema ⇒ POST + input.
+  if (arg0 && args.length >= 2) return 'POST';
+
+  throw new Error(
+    `[analog] serverFn "${name}" in ${fileId} must be called as serverFn(handler), serverFn(schema, handler), or serverFn(config, handler).`,
+  );
+}
+
+function isFunctionNode(node: any): boolean {
+  return (
+    node?.type === 'ArrowFunctionExpression' ||
+    node?.type === 'FunctionExpression'
+  );
 }
 
 function isStringLiteral(

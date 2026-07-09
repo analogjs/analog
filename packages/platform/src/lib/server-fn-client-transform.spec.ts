@@ -83,6 +83,29 @@ describe('scrubServerFnModule', () => {
     expect(proxies.map((p) => p.method)).toEqual(['GET', 'POST']);
   });
 
+  it('maps the handler-only shape serverFn(handler) to GET', () => {
+    const src = `
+      import { serverFn } from '@analogjs/router/server';
+      export const getProducts = serverFn(async () => []);
+    `;
+    const { proxies } = scrubServerFnModule(src, FILE_ID)!;
+    expect(proxies).toEqual([
+      {
+        name: 'getProducts',
+        id: deriveServerFnId(FILE_ID, 'getProducts'),
+        method: 'GET',
+      },
+    ]);
+  });
+
+  it('maps the schema-first shape serverFn(schema, handler) to POST', () => {
+    const src = `
+      import { serverFn } from '@analogjs/router/server';
+      export const getProduct = serverFn(object({ id: string() }), async (i) => i);
+    `;
+    expect(scrubServerFnModule(src, FILE_ID)!.proxies[0].method).toBe('POST');
+  });
+
   it('honors an explicit method for an input-less function', () => {
     const src = `
       import { serverFn } from '@analogjs/router/server';

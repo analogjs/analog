@@ -55,14 +55,26 @@ export function injectServerFnIds(
       const id = deriveServerFnId(fileId, name);
       ids.push({ name, id });
 
-      const configArg = declarator.init.arguments?.[0];
-      if (configArg?.type !== 'ObjectExpression') {
+      const args = declarator.init.arguments ?? [];
+      const arg0 = args[0];
+      const idProp = `id: ${JSON.stringify(id)}`;
+
+      if (arg0?.type === 'ObjectExpression') {
+        // serverFn({ … }, handler) — inject the id into the config object.
+        assertMethodInputCompatible(arg0, name, fileId);
+        injectId(magic, arg0, id);
+      } else if (isFunctionNode(arg0)) {
+        // serverFn(handler) — synthesize a config: `{ id }, handler`.
+        magic.appendLeft(arg0.start, `{ ${idProp} }, `);
+      } else if (arg0 && args.length >= 2) {
+        // serverFn(schema, handler) — wrap the schema into `{ id, input: <schema> }`.
+        magic.appendLeft(arg0.start, `{ ${idProp}, input: `);
+        magic.appendRight(arg0.end, ` }`);
+      } else {
         throw new Error(
-          `[analog] serverFn "${name}" in ${fileId} must be called with an inline config object.`,
+          `[analog] serverFn "${name}" in ${fileId} must be called as serverFn(handler), serverFn(schema, handler), or serverFn(config, handler).`,
         );
       }
-      assertMethodInputCompatible(configArg, name, fileId);
-      injectId(magic, configArg, id);
     }
   }
 
@@ -125,6 +137,13 @@ function assertMethodInputCompatible(
       `[analog] serverFn "${name}" in ${fileId} declares method: 'GET' with an input schema; GET carries no body. Use POST (the default when input is present) or drop the input.`,
     );
   }
+}
+
+function isFunctionNode(node: any): boolean {
+  return (
+    node?.type === 'ArrowFunctionExpression' ||
+    node?.type === 'FunctionExpression'
+  );
 }
 
 function collectServerFnLocalNames(body: any[]): Set<string> {

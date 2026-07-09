@@ -41,6 +41,32 @@ export const fn = serverFn({ id: 'guessable', method: 'GET' }, async () => 1);
     expect(result.code).toContain(`id: "${deriveServerFnId(FILE_ID, 'fn')}"`);
   });
 
+  it('synthesizes a config for the handler-only shape serverFn(handler)', () => {
+    const src = `
+import { serverFn } from '@analogjs/router/server';
+export const getProducts = serverFn(async () => list());
+`;
+    const result = injectServerFnIds(src, FILE_ID)!;
+    const id = deriveServerFnId(FILE_ID, 'getProducts');
+    expect(result.ids).toEqual([{ name: 'getProducts', id }]);
+    expect(result.code).toContain(
+      `serverFn({ id: "${id}" }, async () => list())`,
+    );
+  });
+
+  it('wraps the schema for the schema-first shape serverFn(schema, handler)', () => {
+    const src = `
+import { serverFn } from '@analogjs/router/server';
+export const getProduct = serverFn(object({ id: string() }), async (i) => find(i.id));
+`;
+    const result = injectServerFnIds(src, FILE_ID)!;
+    const id = deriveServerFnId(FILE_ID, 'getProduct');
+    expect(result.ids).toEqual([{ name: 'getProduct', id }]);
+    expect(result.code).toContain(
+      `serverFn({ id: "${id}", input: object({ id: string() }) }, async (i) => find(i.id))`,
+    );
+  });
+
   it("rejects method: 'GET' with an input schema at build time", () => {
     const src = `
 import { serverFn } from '@analogjs/router/server';
