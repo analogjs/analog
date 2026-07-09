@@ -38,6 +38,11 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
   });
   private mermaid: typeof import('mermaid') | undefined;
 
+  // Must be initialized before `contentSource` — its initializer
+  // subscribes synchronously and calls `renderContent`, which reads
+  // this field.
+  contentRenderer = inject(ContentRenderer);
+
   private contentSource: Signal<SafeHtml | string | undefined> = toSignal(
     this.getContentSource(),
   );
@@ -52,8 +57,6 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
   });
   readonly content = input<string | object | null>();
   readonly classes = input('analog-markdown');
-
-  contentRenderer = inject(ContentRenderer);
 
   constructor() {
     if (isPlatformBrowser(this.platformId) && this.mermaidImport) {
