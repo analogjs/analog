@@ -1,7 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
 
-import { injectServerFn } from '../server-fn/inject-server-fn';
+import { injectServerFn } from '@analogjs/router';
 import { getProduct, getProducts } from '../server-fns/products.server';
 
 /**

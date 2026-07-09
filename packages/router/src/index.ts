@@ -18,3 +18,19 @@ export { FormAction } from './lib/form-action.directive';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
 export { ServerOnly } from './lib/server.component';
+
+// Server Functions (issue #2422) — client transport + shared type surface.
+export {
+  injectServerFn,
+  provideServerFnClient,
+  ServerFnClient,
+} from './lib/server-fn/inject-server-fn';
+export type {
+  ServerFn,
+  ServerFnConfig,
+  ServerFnContext,
+  ServerFnDef,
+  ServerFnHandler,
+  ServerFnMethod,
+  StandardSchemaV1,
+} from './lib/server-fn/types';

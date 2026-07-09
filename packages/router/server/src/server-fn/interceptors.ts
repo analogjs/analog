@@ -1,6 +1,6 @@
 import { InjectionToken, type Provider } from '@angular/core';
 
-import type { ServerFnContext } from './types';
+import type { ServerFnContext } from '@analogjs/router';
 
 /** Context threaded through the interceptor chain and handed to the handler. */
 export interface ServerFnInterceptorContext {

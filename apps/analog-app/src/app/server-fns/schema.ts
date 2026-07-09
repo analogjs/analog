@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from './types';
+import type { StandardSchemaV1 } from '@analogjs/router';
 
 // Minimal Standard-Schema validators so the prototype needs no extra dependency.
 // The real design uses valibot; any Standard-Schema library drops in unchanged.

@@ -5,8 +5,8 @@ import {
   provideServerFns,
   withServerFnInterceptors,
   type ServerFnInterceptorFn,
-} from '../server-fn/interceptors';
-import { fail } from '../server-fn/response';
+} from '@analogjs/router/server';
+import { fail } from '@analogjs/router/server/actions';
 import { CatalogService } from './catalog.service';
 
 // Import server function modules for their registration side effects. A real

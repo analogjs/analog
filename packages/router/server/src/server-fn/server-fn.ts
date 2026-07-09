@@ -1,17 +1,19 @@
-import { serverFnRegistry } from './registry';
 import type {
   ServerFn,
   ServerFnConfig,
   ServerFnHandler,
   ServerFnMethod,
-} from './types';
+} from '@analogjs/router';
+
+import { serverFnRegistry } from './registry';
 
 /**
  * Define a server function. Authored in a `*.server.ts` module.
  *
- * Prototype note: this is isomorphic and self-registering. The promoted design
- * replaces the body on the client with a proxy via the build transform; here we
- * keep handlers dependency-light so the (unused) client copy is harmless.
+ * On the server the function self-registers and its handler runs via
+ * `dispatchServerFn`. On the client the build transform replaces the body with
+ * a proxy that calls the `/_analog/fn/<id>` endpoint; the reference still
+ * carries `id`/`url`/`method` so `injectServerFn`/`ServerFnClient` can dispatch.
  */
 export function serverFn<In, Out>(
   config: ServerFnConfig<In>,

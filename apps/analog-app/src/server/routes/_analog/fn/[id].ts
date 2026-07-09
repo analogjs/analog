@@ -1,6 +1,6 @@
 import { eventHandler, getRouterParam, readBody } from 'h3';
 
-import { dispatchServerFn } from '../../../../app/server-fn/dispatch';
+import { dispatchServerFn } from '@analogjs/router/server';
 import { serverFnAppProviders } from '../../../../app/server-fns';
 
 /**

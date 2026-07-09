@@ -1,4 +1,4 @@
-import type { ServerFnDef } from './types';
+import type { ServerFnDef } from '@analogjs/router';
 
 /**
  * Server-side registry of server functions, keyed by id. A `.server.ts` module

@@ -1,8 +1,9 @@
 import { inject } from '@angular/core';
 import { REQUEST } from '@analogjs/router/tokens';
 
-import { serverFn } from '../server-fn';
-import { object, string } from '../server-fn/schema';
+import { serverFn } from '@analogjs/router/server';
+
+import { object, string } from './schema';
 import { CatalogService, type Product } from './catalog.service';
 
 /** GET (input-less read) — proves DI (`inject`) inside a server function. */

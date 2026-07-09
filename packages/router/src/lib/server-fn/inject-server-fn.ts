@@ -74,14 +74,14 @@ export function injectServerFn<In, Out>(
   }
 
   return resource<Out | undefined, In>({
-    request: () => args(),
-    loader: async ({ request }) => {
+    params: () => args(),
+    loader: async ({ params }) => {
       // Hydrate from the SSR seed on first client render; else fetch and (on
       // the server) seed for the client.
-      const seeded = client.readSeed(fn as ServerFn<unknown, Out>, request);
+      const seeded = client.readSeed(fn as ServerFn<unknown, Out>, params);
       if (seeded !== undefined) return seeded;
-      const value = await client.call(fn, request);
-      client.writeSeed(fn as ServerFn<unknown, Out>, request, value);
+      const value = await client.call(fn, params);
+      client.writeSeed(fn as ServerFn<unknown, Out>, params, value);
       return value;
     },
   });

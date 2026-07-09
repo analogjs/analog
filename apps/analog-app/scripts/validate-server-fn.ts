@@ -4,8 +4,14 @@
  * against the demo `products.server.ts`, proving the server-side design without
  * the app's vite/nitro bootstrap. Run: `bun apps/analog-app/scripts/validate-server-fn.ts`
  */
-import { dispatchServerFn } from '../src/app/server-fn/dispatch';
-import { serverFnAppProviders } from '../src/app/server-fns';
+// The built @analogjs/router/server is a partially-compiled Angular library.
+// Consuming it outside the app's AOT/Linker build needs the JIT compiler.
+import '@angular/compiler';
+
+// Run via: bun --preload ./apps/analog-app/scripts/_vite-glob-stub.ts <file>
+// (the preload neutralizes a Vite-only macro in a sibling barrel export).
+const { dispatchServerFn } = await import('@analogjs/router/server');
+const { serverFnAppProviders } = await import('../src/app/server-fns');
 
 function fakeEvent(headers: Record<string, string> = {}) {
   return { node: { req: { headers }, res: {} } } as any;

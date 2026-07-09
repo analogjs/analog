@@ -1,6 +1,7 @@
-// Prototype of the Analog Server Functions RFC (issue #2422), built inline in
-// analog-app for end-to-end validation. Runtime primitives that would live in
-// @analogjs/router (`/server` + client entries) once promoted.
+// Analog Server Functions (issue #2422) — shared, client-safe type surface.
+// These types are imported by both the client entry (`injectServerFn`) and the
+// server entry (`serverFn`/`dispatchServerFn`), so they live in the primary,
+// client-safe `@analogjs/router` entry and carry no runtime code.
 
 /** Minimal Standard Schema shape (valibot/zod/arktype conform). */
 export interface StandardSchemaV1<In = unknown> {
@@ -24,8 +25,8 @@ export type ServerFnMethod = 'GET' | 'POST';
 export interface ServerFnConfig<In> {
   /**
    * Stable id used for the endpoint route `/_analog/fn/<id>`.
-   * In the promoted version the build transform derives this from
-   * `hash(fileId + exportName)`; the prototype takes it explicitly.
+   * The build transform derives this from `hash(fileId + exportName)`; callers
+   * may also provide it explicitly.
    */
   id: string;
   /** Defaults to 'POST' when `input` is present, otherwise 'GET'. */
