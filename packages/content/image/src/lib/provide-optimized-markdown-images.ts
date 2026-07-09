@@ -1,5 +1,11 @@
 import { Injectable, Provider, inject } from '@angular/core';
-import { MarkedContentImages, MarkedImageToken } from '@analogjs/content';
+import {
+  ContentRenderer,
+  MarkdownContentRendererService,
+  MarkedContentImages,
+  MarkedImageToken,
+  MarkedSetupService,
+} from '@analogjs/content';
 
 import {
   ANALOG_IMAGE_CONFIG,
@@ -38,20 +44,17 @@ export class OptimizedMarkedImages extends MarkedContentImages {
 }
 
 /**
- * Renders markdown images (`![alt](src)`) as responsive `<img>` tags
- * served through the Analog image optimization endpoint, with `srcset`,
- * lazy loading, and async decoding.
+ * Provides runtime markdown rendering with images (`![alt](src)`)
+ * rendered as responsive `<img>` tags served through the Analog image
+ * optimization endpoint, with `srcset`, lazy loading, and async decoding.
  *
- * Provide it alongside the runtime markdown renderer in the component
- * that renders the content:
+ * Self-contained — provide it in the component that renders the content:
  *
  * ```ts
  * @Component({
  *   imports: [MarkdownComponent],
  *   providers: [
- *     { provide: ContentRenderer, useClass: MarkdownContentRendererService },
- *     MarkedSetupService,
- *     provideOptimizedImages({ sizes: '(max-width: 768px) 100vw, 768px' }),
+ *     provideOptimizedMarkdownImages({ sizes: '(max-width: 768px) 100vw, 768px' }),
  *   ],
  *   template: `<analog-markdown />`,
  * })
@@ -61,7 +64,7 @@ export class OptimizedMarkedImages extends MarkedContentImages {
  * should use the `markdownImages()` extension from
  * `@analogjs/content/image/server` instead.
  */
-export function provideOptimizedImages(
+export function provideOptimizedMarkdownImages(
   options: Partial<AnalogImageConfig> = {},
 ): Provider[] {
   return [
@@ -70,6 +73,8 @@ export function provideOptimizedImages(
       useValue: { ...IMAGE_CONFIG_DEFAULTS, ...options },
     },
     { provide: MarkedContentImages, useClass: OptimizedMarkedImages },
+    MarkedSetupService,
+    { provide: ContentRenderer, useClass: MarkdownContentRendererService },
   ];
 }
 

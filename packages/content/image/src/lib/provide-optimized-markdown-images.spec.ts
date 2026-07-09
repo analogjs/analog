@@ -1,20 +1,34 @@
 import { TestBed } from '@angular/core/testing';
-import { MarkedContentImages } from '@analogjs/content';
+import { ContentRenderer, MarkedContentImages } from '@analogjs/content';
 import { describe, expect, it } from 'vitest';
 
-import { provideOptimizedImages } from './provide-optimized-images';
+import { provideOptimizedMarkdownImages } from './provide-optimized-markdown-images';
 
 function renderImage(
   token: { href: string; title: string | null; text: string },
-  options?: Parameters<typeof provideOptimizedImages>[0],
+  options?: Parameters<typeof provideOptimizedMarkdownImages>[0],
 ): string {
   TestBed.configureTestingModule({
-    providers: [provideOptimizedImages(options)],
+    providers: [provideOptimizedMarkdownImages(options)],
   });
   return TestBed.inject(MarkedContentImages).renderImage(token);
 }
 
-describe('provideOptimizedImages', () => {
+describe('provideOptimizedMarkdownImages', () => {
+  it('provides a working markdown renderer on its own', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideOptimizedMarkdownImages({ widths: [640] })],
+    });
+
+    const renderer = TestBed.inject(ContentRenderer);
+    const { content } = await renderer.render('![Cover](/images/cover.png)');
+
+    expect(content).toContain(
+      'src="/api/_image?src=%2Fimages%2Fcover.png&amp;w=640"',
+    );
+    expect(content).toContain('loading="lazy"');
+  });
+
   it('renders local images with srcset through the endpoint', () => {
     const html = renderImage(
       { href: '/images/cover.png', title: null, text: 'Cover' },

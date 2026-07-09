@@ -1,10 +1,5 @@
-import {
-  ContentRenderer,
-  MarkdownComponent,
-  MarkdownContentRendererService,
-  MarkedSetupService,
-} from '@analogjs/content';
-import { provideOptimizedImages } from '@analogjs/content/image';
+import { MarkdownComponent } from '@analogjs/content';
+import { provideOptimizedMarkdownImages } from '@analogjs/content/image';
 import { RouteMeta } from '@analogjs/router';
 import { Component } from '@angular/core';
 
@@ -24,9 +19,9 @@ This content is rendered at runtime through the markdown renderer.
   standalone: true,
   imports: [MarkdownComponent],
   providers: [
-    { provide: ContentRenderer, useClass: MarkdownContentRendererService },
-    MarkedSetupService,
-    provideOptimizedImages({ sizes: '(max-width: 768px) 100vw, 768px' }),
+    provideOptimizedMarkdownImages({
+      sizes: '(max-width: 768px) 100vw, 768px',
+    }),
   ],
   template: `<analog-markdown />`,
 })
