@@ -25,6 +25,10 @@ export {
   provideServerFnClient,
   ServerFnClient,
 } from './lib/server-fn/inject-server-fn';
+export {
+  createServerFnRef,
+  type ServerFnRefConfig,
+} from './lib/server-fn/server-fn-ref';
 export type {
   ServerFn,
   ServerFnConfig,

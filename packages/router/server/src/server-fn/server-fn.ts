@@ -1,8 +1,8 @@
+import { createServerFnRef } from '@analogjs/router';
 import type {
   ServerFn,
   ServerFnConfig,
   ServerFnHandler,
-  ServerFnMethod,
 } from '@analogjs/router';
 
 import { serverFnRegistry } from './registry';
@@ -19,27 +19,14 @@ export function serverFn<In, Out>(
   config: ServerFnConfig<In>,
   handler: ServerFnHandler<In, Out>,
 ): ServerFn<In, Out> {
-  const method: ServerFnMethod =
-    config.method ?? (config.input ? 'POST' : 'GET');
-  const url = `/_analog/fn/${config.id}`;
+  const ref = createServerFnRef<In, Out>(config);
 
   serverFnRegistry.set(config.id, {
     id: config.id,
-    method,
+    method: ref.method,
     config: config as ServerFnConfig<unknown>,
     handler: handler as ServerFnHandler<unknown, unknown>,
   });
 
-  const ref = (() => {
-    throw new Error(
-      `serverFn "${config.id}" must be called via injectServerFn/ServerFnClient`,
-    );
-  }) as unknown as ServerFn<In, Out>;
-
-  return Object.assign(ref, {
-    __serverFn: true as const,
-    id: config.id,
-    url,
-    method,
-  });
+  return ref;
 }
