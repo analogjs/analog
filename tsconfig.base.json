@@ -23,6 +23,14 @@
         "packages/content/src/index.ts"
       ],
       "@analogjs/content-plugin": ["packages/content-plugin/src/index.ts"],
+      "@analogjs/content/image": [
+        "./node_modules/@analogjs/content/image",
+        "packages/content/image/src/index.ts"
+      ],
+      "@analogjs/content/image/server": [
+        "./node_modules/@analogjs/content/image/server",
+        "packages/content/image/server/src/index.ts"
+      ],
       "@analogjs/content/prism-highlighter": [
         "packages/content/prism-highlighter/src/index.ts"
       ],
