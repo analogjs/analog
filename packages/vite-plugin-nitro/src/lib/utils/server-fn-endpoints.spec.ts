@@ -62,8 +62,13 @@ describe('buildServerFnDispatchModule', () => {
     );
     expect(src).toContain(`const id = getRouterParam(event, 'id');`);
     expect(src).toContain('await dispatchServerFn(');
-    // Request method is passed for server-side enforcement.
-    expect(src).toContain('event.method,');
+    // App injector built once; request method passed for server-side enforcement.
+    expect(src).toContain(`import { Injector } from '@angular/core';`);
+    expect(src).toContain(
+      'const appInjector = Injector.create({ providers: serverFnAppProviders });',
+    );
+    expect(src).toContain('parent: appInjector,');
+    expect(src).toContain('method: event.method,');
     expect(src).toContain('event.node.res.statusCode = status;');
     // Response headers (redirect Location, Set-Cookie, X-Analog-Errors) are set.
     expect(src).toContain('const { status, body, headers }');

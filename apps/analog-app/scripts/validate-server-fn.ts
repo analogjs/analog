@@ -8,9 +8,15 @@
 // Consuming it outside the app's AOT/Linker build needs the JIT compiler.
 import '@angular/compiler';
 
+import { Injector } from '@angular/core';
 import { dispatchServerFn } from '@analogjs/router/server';
 import { serverFnAppProviders } from '../src/app/server-fns';
 import { ids, registerServerFns } from './_server-fn-harness';
+
+// The app injector is built ONCE (as the generated Nitro handler does). Each
+// dispatch passes only `{ parent }` — no per-request providers — so the handler
+// resolving CatalogService + interceptors proves they come from the parent.
+const appInjector = Injector.create({ providers: serverFnAppProviders });
 
 function fakeEvent(headers: Record<string, string> = {}) {
   return { node: { req: { headers }, res: {} } } as any;
@@ -40,7 +46,7 @@ async function main() {
     ids.getProducts,
     undefined,
     fakeEvent({ 'user-agent': 'harness' }),
-    serverFnAppProviders,
+    { parent: appInjector },
   );
   check(
     'GET getProducts returns 3 products',
@@ -55,7 +61,7 @@ async function main() {
     ids.getProduct,
     { id: 'p2' },
     fakeEvent(),
-    serverFnAppProviders,
+    { parent: appInjector },
   );
   check(
     'POST getProduct {id:p2} returns Phone Mini',
@@ -68,7 +74,7 @@ async function main() {
     ids.getProduct,
     { id: 123 },
     fakeEvent(),
-    serverFnAppProviders,
+    { parent: appInjector },
   );
   check(
     'POST getProduct invalid input -> 400',
@@ -81,7 +87,7 @@ async function main() {
     ids.getProduct,
     { id: 'nope' },
     fakeEvent(),
-    serverFnAppProviders,
+    { parent: appInjector },
   );
   check(
     'POST getProduct unknown id -> notFound',
@@ -94,7 +100,7 @@ async function main() {
     ids.getProducts,
     undefined,
     fakeEvent({ 'x-demo-deny': '1' }),
-    serverFnAppProviders,
+    { parent: appInjector },
   );
   check(
     'interceptor denies -> 401',
@@ -103,12 +109,9 @@ async function main() {
   );
 
   // Unknown function -> 404
-  const unknown = await dispatchServerFn(
-    'nope',
-    undefined,
-    fakeEvent(),
-    serverFnAppProviders,
-  );
+  const unknown = await dispatchServerFn('nope', undefined, fakeEvent(), {
+    parent: appInjector,
+  });
   check('unknown fn -> 404', unknown.status === 404, unknown);
 
   console.log(`\n${failures === 0 ? 'ALL PASSED' : failures + ' FAILURE(S)'}`);

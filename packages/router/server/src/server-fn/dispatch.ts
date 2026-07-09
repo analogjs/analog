@@ -16,6 +16,20 @@ export interface DispatchResult {
   headers?: Record<string, string>;
 }
 
+export interface DispatchServerFnOptions {
+  /**
+   * The app's environment injector. The per-request injector is created as its
+   * child, so handlers resolve app services (and `providedIn: 'root'` services,
+   * when this is the app's bootstrapped injector) and registered interceptors
+   * without re-listing them per request.
+   */
+  parent?: Injector;
+  /** Extra per-request providers, for direct callers without an app injector. */
+  providers?: StaticProvider[];
+  /** Request HTTP method; enforced against the function's configured method. */
+  method?: string;
+}
+
 /**
  * Server-side dispatch for a server function call.
  *
@@ -29,17 +43,18 @@ export interface DispatchResult {
  * 6. a `Response` returned by an interceptor/handler (`fail`/`redirect`)
  *    short-circuits with its status AND headers
  *
- * `method` is the request's HTTP method; when provided it is enforced against
- * the function's configured method. Transports (the generated Nitro handler)
- * always pass it; trusted in-process callers may omit it.
+ * `options.method` is the request's HTTP method; when provided it is enforced
+ * against the function's configured method. Transports (the generated Nitro
+ * handler) always pass it; trusted in-process callers may omit it.
  */
 export async function dispatchServerFn(
   id: string,
   rawInput: unknown,
   event: Pick<H3Event, 'node'>,
-  appProviders: StaticProvider[] = [],
-  method?: string,
+  options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
+  const { parent, providers = [], method } = options;
+
   const def = serverFnRegistry.get(id);
   if (!def) {
     return { status: 404, body: { message: `Unknown server function: ${id}` } };
@@ -64,11 +79,14 @@ export async function dispatchServerFn(
     input = (result as { value: unknown }).value;
   }
 
+  // Child of the app injector: only REQUEST/RESPONSE are per-request; app
+  // services + interceptors resolve up the parent chain.
   const injector = Injector.create({
+    parent,
     providers: [
       { provide: REQUEST, useValue: event.node.req },
       { provide: RESPONSE, useValue: event.node.res },
-      ...appProviders,
+      ...providers,
     ],
   });
 

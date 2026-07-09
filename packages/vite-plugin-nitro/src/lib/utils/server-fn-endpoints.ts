@@ -63,6 +63,7 @@ export function buildServerFnDispatchModule({
     : `const serverFnAppProviders = [];`;
 
   return `import { eventHandler, getRouterParam, readBody } from 'h3';
+import { Injector } from '@angular/core';
 import { dispatchServerFn } from '@analogjs/router/server';
 
 // Discovered server-function modules (registration side-effects).
@@ -70,17 +71,17 @@ ${registrationImports}
 
 ${providers}
 
+// The app injector is built once; each request gets a child with REQUEST/RESPONSE.
+const appInjector = Injector.create({ providers: serverFnAppProviders });
+
 export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   const input = event.method === 'GET' ? undefined : await readBody(event);
 
-  const { status, body, headers } = await dispatchServerFn(
-    id,
-    input,
-    event,
-    serverFnAppProviders,
-    event.method,
-  );
+  const { status, body, headers } = await dispatchServerFn(id, input, event, {
+    parent: appInjector,
+    method: event.method,
+  });
 
   event.node.res.statusCode = status;
   if (headers) {

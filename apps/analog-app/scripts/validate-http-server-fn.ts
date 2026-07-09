@@ -9,11 +9,16 @@
 // Consuming it outside the app's AOT/Linker build needs the JIT compiler.
 import '@angular/compiler';
 
+import { Injector } from '@angular/core';
 import { dispatchServerFn } from '@analogjs/router/server';
 import { serverFnAppProviders } from '../src/app/server-fns';
 import { ids, registerServerFns } from './_server-fn-harness';
 
 await registerServerFns();
+
+// The app injector is built ONCE, exactly as the generated Nitro handler does;
+// each request dispatches with only `{ parent, method }`.
+const appInjector = Injector.create({ providers: serverFnAppProviders });
 
 const server = Bun.serve({
   port: 0,
@@ -30,13 +35,10 @@ const server = Bun.serve({
       status,
       body,
       headers: outHeaders,
-    } = await dispatchServerFn(
-      id,
-      input,
-      event,
-      serverFnAppProviders,
-      req.method,
-    );
+    } = await dispatchServerFn(id, input, event, {
+      parent: appInjector,
+      method: req.method,
+    });
     return new Response(JSON.stringify(body), {
       status,
       headers: { 'Content-Type': 'application/json', ...(outHeaders ?? {}) },
