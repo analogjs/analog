@@ -172,7 +172,7 @@ export default defineEventHandler(async (event) => {
   ]);
   const input = await decodeAndValidate(event, fn.config);
   return runInInjectionContext(injector, () =>
-    runInterceptors(injector, { input, event }, (ctx) =>
+    runInterceptors(injector, { input }, (ctx) =>
       fn.handler(ctx.input, ctx.context),
     ),
   );
@@ -183,6 +183,12 @@ So inside a handler: `inject(REQUEST)`, `inject(RESPONSE)`, `inject(LOCALE)`
 (all from `@analogjs/router/tokens`) and any provided service resolve exactly as
 they do inside a component during SSR. Request-scoped providers work because it
 is a real per-request child injector, not a singleton.
+
+**The surface is strictly DI.** The raw `H3Event` is used only internally to
+build the injector and decode input — it is never handed to interceptors or
+handlers. All request/response access goes through the `REQUEST` / `RESPONSE` /
+`BASE_URL` / `LOCALE` tokens. This keeps handlers portable across the h3 runtime
+and testable by overriding those tokens in `TestBed`, with no `event` to mock.
 
 ### 3. Middleware = functional interceptors, provided via DI
 
@@ -550,12 +556,10 @@ export default class CheckoutPage {
 
 ## Open questions
 
-- Do we expose the raw `H3Event` at all, or keep the surface strictly DI
-  (`REQUEST`/`RESPONSE` tokens) and treat direct `event` access as an escape
-  hatch?
+None — all resolved and folded into Design:
 
-Resolved and folded into Design:
-
+- **Request/response surface** → strictly DI (`REQUEST`/`RESPONSE`/`BASE_URL`/
+  `LOCALE` tokens). The raw `H3Event` is never exposed to user code.
 - **Interceptor context** → passed to the handler as a second argument
   (`ServerFnContext`), not injected.
 - **Input encoding** → require POST for any input; GET is reserved for input-less
