@@ -310,6 +310,20 @@ client, `httpResource` surfaces these as `HttpErrorResponse` in `.error()`, and
 transform, collapsing two code paths into one. This is proposed as a follow-up,
 not a prerequisite, to keep the first cut additive and low-risk.
 
+## Version requirements
+
+The client half depends on `httpResource`, which first shipped (experimental) in
+**Angular 19.2** and became stable API in Angular 22.0. `serverFn` therefore
+requires **`@angular/core` / `@angular/common` ≥ 19.2**, consuming the
+experimental resource APIs on 19.2–21 and the stable API on 22+. (`resource()` /
+`ResourceRef` alone date to 19.0, but `httpResource` sets the 19.2 floor.)
+
+This is a higher floor than `@analogjs/router`'s current peer range
+(`^17 || … || ^22`), so `serverFn` is gated to 19.2+ rather than lowering the
+whole package's support. Consuming an experimental API means tracking its
+changes across minors (e.g. `HttpResourceOptions.map` was renamed to `parse`
+after introduction).
+
 ## Entry-Point Boundary (import safety)
 
 This is a deliberate design constraint, not an accident of layout:
