@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // Built platform transform, imported from node_modules by relative path.
 import { scrubServerFnModule } from '../../../node_modules/@analogjs/platform/src/lib/server-fn-client-transform.js';
+import { FILE_ID, ids } from './_server-fn-harness';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const serverSource = readFileSync(
@@ -31,12 +32,26 @@ function check(name: string, cond: boolean, detail: unknown) {
   );
 }
 
-const scrubbed = scrubServerFnModule(serverSource, 'products.server.ts');
+const scrubbed = scrubServerFnModule(serverSource, FILE_ID);
 check('transform produced a client module', scrubbed !== null, {
   proxies: scrubbed?.proxies,
 });
 
 const code = scrubbed!.code;
+
+// SECURITY INVARIANT: the client proxy derives the exact same opaque id the
+// server registration uses (shared deriveServerFnId over the project-relative
+// path), and it is a digest, not the author name.
+const proxyById = Object.fromEntries(
+  scrubbed!.proxies.map((p) => [p.name, p.id]),
+);
+check(
+  'client proxy id === server-derived id, and is opaque',
+  proxyById['getProducts'] === ids.getProducts &&
+    proxyById['getProduct'] === ids.getProduct &&
+    /^[0-9a-f]{16}$/.test(ids.getProducts),
+  { proxyById, serverIds: ids },
+);
 
 // No server code survives into the client module.
 for (const forbidden of [
@@ -61,20 +76,20 @@ try {
 
   const products = mod.getProducts;
   check(
-    'getProducts proxy: GET /_analog/fn/getProducts',
+    'getProducts proxy: GET /_analog/fn/<hash>',
     products?.__serverFn === true &&
-      products.id === 'getProducts' &&
-      products.url === '/_analog/fn/getProducts' &&
+      products.id === ids.getProducts &&
+      products.url === `/_analog/fn/${ids.getProducts}` &&
       products.method === 'GET',
     { id: products?.id, url: products?.url, method: products?.method },
   );
 
   const product = mod.getProduct;
   check(
-    'getProduct proxy: POST /_analog/fn/getProduct (input -> POST)',
+    'getProduct proxy: POST /_analog/fn/<hash> (input -> POST)',
     product?.__serverFn === true &&
-      product.id === 'getProduct' &&
-      product.url === '/_analog/fn/getProduct' &&
+      product.id === ids.getProduct &&
+      product.url === `/_analog/fn/${ids.getProduct}` &&
       product.method === 'POST',
     { id: product?.id, url: product?.url, method: product?.method },
   );

@@ -10,6 +10,7 @@ import '@angular/compiler';
 
 import { dispatchServerFn } from '@analogjs/router/server';
 import { serverFnAppProviders } from '../src/app/server-fns';
+import { ids, registerServerFns } from './_server-fn-harness';
 
 function fakeEvent(headers: Record<string, string> = {}) {
   return { node: { req: { headers }, res: {} } } as any;
@@ -23,9 +24,20 @@ function check(name: string, cond: boolean, detail: unknown) {
 }
 
 async function main() {
+  // Register via the real id-injection transform, then address the derived,
+  // opaque routes — never the human names.
+  await registerServerFns();
+  check(
+    'ids are opaque 16-hex digests, not author names',
+    /^[0-9a-f]{16}$/.test(ids.getProducts) &&
+      /^[0-9a-f]{16}$/.test(ids.getProduct) &&
+      ids.getProducts !== ids.getProduct,
+    ids,
+  );
+
   // GET (input-less read) — DI (inject) inside handler
   const get = await dispatchServerFn(
-    'getProducts',
+    ids.getProducts,
     undefined,
     fakeEvent({ 'user-agent': 'harness' }),
     serverFnAppProviders,
@@ -40,7 +52,7 @@ async function main() {
 
   // POST (input) — valid, validated + found
   const post = await dispatchServerFn(
-    'getProduct',
+    ids.getProduct,
     { id: 'p2' },
     fakeEvent(),
     serverFnAppProviders,
@@ -53,7 +65,7 @@ async function main() {
 
   // POST — invalid input (wrong type) rejected before handler
   const invalid = await dispatchServerFn(
-    'getProduct',
+    ids.getProduct,
     { id: 123 },
     fakeEvent(),
     serverFnAppProviders,
@@ -66,7 +78,7 @@ async function main() {
 
   // POST — not found path
   const missing = await dispatchServerFn(
-    'getProduct',
+    ids.getProduct,
     { id: 'nope' },
     fakeEvent(),
     serverFnAppProviders,
@@ -79,7 +91,7 @@ async function main() {
 
   // Interceptor short-circuit via DI-read header
   const denied = await dispatchServerFn(
-    'getProducts',
+    ids.getProducts,
     undefined,
     fakeEvent({ 'x-demo-deny': '1' }),
     serverFnAppProviders,

@@ -8,7 +8,7 @@ import { CatalogService, type Product } from './catalog.service';
 
 /** GET (input-less read) — proves DI (`inject`) inside a server function. */
 export const getProducts = serverFn(
-  { id: 'getProducts', method: 'GET' },
+  { method: 'GET' },
   async (): Promise<Product[]> => {
     const catalog = inject(CatalogService);
     const req = inject(REQUEST); // request-scoped token resolves
@@ -19,7 +19,7 @@ export const getProducts = serverFn(
 
 /** POST (input) — validated with valibot Standard Schema. */
 export const getProduct = serverFn(
-  { id: 'getProduct', input: object({ id: string() }) },
+  { input: object({ id: string() }) },
   async (input): Promise<Product | { notFound: true }> => {
     const catalog = inject(CatalogService);
     return catalog.find(input.id) ?? { notFound: true };

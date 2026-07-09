@@ -17,6 +17,7 @@ import {
   PrerenderSitemapConfig,
 } from './options.js';
 import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
+import { serverFnIdPlugin } from './plugins/server-fn-id-plugin.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
 import { getServerFnHandlers } from './utils/get-server-fn-handlers.js';
 import {
@@ -181,7 +182,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
-            plugins: [pageEndpointsPlugin()],
+            plugins: [
+              pageEndpointsPlugin(),
+              serverFnIdPlugin(normalizePath(resolve(workspaceRoot, rootDir))),
+            ],
           },
           handlers: [
             ...(hasAPIDir

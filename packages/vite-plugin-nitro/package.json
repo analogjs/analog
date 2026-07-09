@@ -6,6 +6,7 @@
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
+    "./server-fn-id": "./src/lib/utils/derive-server-fn-id.js",
     "./package.json": "./package.json"
   },
   "keywords": [

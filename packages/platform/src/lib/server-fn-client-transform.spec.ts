@@ -1,6 +1,9 @@
+import { deriveServerFnId } from '@analogjs/vite-plugin-nitro/server-fn-id';
 import { describe, expect, it } from 'vitest';
 
 import { scrubServerFnModule } from './server-fn-client-transform';
+
+const FILE_ID = 'src/app/server-fns/products.server.ts';
 
 const PRODUCTS_SERVER = `
 import { inject } from '@angular/core';
@@ -10,7 +13,7 @@ import { object, string } from './schema';
 import { CatalogService, type Product } from './catalog.service';
 
 export const getProducts = serverFn(
-  { id: 'getProducts', method: 'GET' },
+  { method: 'GET' },
   async (): Promise<Product[]> => {
     const catalog = inject(CatalogService);
     inject(REQUEST);
@@ -19,7 +22,7 @@ export const getProducts = serverFn(
 );
 
 export const getProduct = serverFn(
-  { id: 'getProduct', input: object({ id: string() }) },
+  { input: object({ id: string() }) },
   async (input) => inject(CatalogService).find(input.id),
 );
 `;
@@ -35,18 +38,10 @@ describe('scrubServerFnModule', () => {
   });
 
   it('replaces server handlers with client proxies, dropping server imports', () => {
-    const result = scrubServerFnModule(PRODUCTS_SERVER, 'products.server.ts');
+    const result = scrubServerFnModule(PRODUCTS_SERVER, FILE_ID);
     expect(result).not.toBeNull();
     const code = result!.code;
 
-    // Proxies keep id + resolved method.
-    expect(code).toContain(
-      `export const getProducts = createServerFnRef({ id: "getProducts", method: "GET" });`,
-    );
-    expect(code).toContain(
-      `export const getProduct = createServerFnRef({ id: "getProduct", method: "POST" });`,
-    );
-    // Single client-safe import; no server code survives.
     expect(code).toContain(
       `import { createServerFnRef } from '@analogjs/router';`,
     );
@@ -58,51 +53,66 @@ describe('scrubServerFnModule', () => {
     expect(code).not.toContain('async');
   });
 
-  it('derives POST from an input schema and GET without one', () => {
-    const { proxies } = scrubServerFnModule(PRODUCTS_SERVER)!;
+  it('derives the id from the file path + export name (never the source)', () => {
+    const { proxies } = scrubServerFnModule(PRODUCTS_SERVER, FILE_ID)!;
     expect(proxies).toEqual([
-      { name: 'getProducts', id: 'getProducts', method: 'GET' },
-      { name: 'getProduct', id: 'getProduct', method: 'POST' },
+      {
+        name: 'getProducts',
+        id: deriveServerFnId(FILE_ID, 'getProducts'),
+        method: 'GET',
+      },
+      {
+        name: 'getProduct',
+        id: deriveServerFnId(FILE_ID, 'getProduct'),
+        method: 'POST',
+      },
     ]);
+    // Opaque digest, not the author name.
+    expect(proxies[0].id).not.toBe('getProducts');
+    expect(proxies[0].id).toMatch(/^[0-9a-f]{16}$/);
+  });
+
+  it('gives different files the same export name different ids', () => {
+    const a = scrubServerFnModule(PRODUCTS_SERVER, 'src/a.server.ts')!;
+    const b = scrubServerFnModule(PRODUCTS_SERVER, 'src/b.server.ts')!;
+    expect(a.proxies[0].id).not.toBe(b.proxies[0].id);
+  });
+
+  it('derives POST from an input schema and GET without one', () => {
+    const { proxies } = scrubServerFnModule(PRODUCTS_SERVER, FILE_ID)!;
+    expect(proxies.map((p) => p.method)).toEqual(['GET', 'POST']);
   });
 
   it('honors an explicit method over the input-based default', () => {
     const src = `
       import { serverFn } from '@analogjs/router/server';
       export const search = serverFn(
-        { id: 'search', method: 'GET', input: someSchema },
+        { method: 'GET', input: someSchema },
         async () => [],
       );
     `;
-    expect(scrubServerFnModule(src)!.proxies[0].method).toBe('GET');
+    expect(scrubServerFnModule(src, FILE_ID)!.proxies[0].method).toBe('GET');
   });
 
   it('resolves the local name when serverFn is aliased', () => {
     const src = `
       import { serverFn as sf } from '@analogjs/router/server';
-      export const ping = sf({ id: 'ping' }, async () => 'pong');
+      export const ping = sf({}, async () => 'pong');
     `;
-    const { proxies } = scrubServerFnModule(src)!;
-    expect(proxies).toEqual([{ name: 'ping', id: 'ping', method: 'GET' }]);
+    const { proxies } = scrubServerFnModule(src, FILE_ID)!;
+    expect(proxies[0].name).toBe('ping');
+    expect(proxies[0].id).toBe(deriveServerFnId(FILE_ID, 'ping'));
   });
 
   it('preserves the load shim when a page file also hosts a server function', () => {
     const src = `
       import { serverFn } from '@analogjs/router/server';
-      export const getData = serverFn({ id: 'getData' }, async () => ({}));
+      export const getData = serverFn({}, async () => ({}));
       export default async function load() { return { ok: true }; }
     `;
-    const result = scrubServerFnModule(src)!;
+    const result = scrubServerFnModule(src, FILE_ID)!;
     expect(result.hadDefaultExport).toBe(true);
     expect(result.code).toContain('export default undefined;');
     expect(result.code).toContain('export const getData = createServerFnRef(');
-  });
-
-  it('throws when a server function has no static id', () => {
-    const src = `
-      import { serverFn } from '@analogjs/router/server';
-      export const bad = serverFn({ method: 'GET' }, async () => 1);
-    `;
-    expect(() => scrubServerFnModule(src)).toThrow(/static string .id./);
   });
 });

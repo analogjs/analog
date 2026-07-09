@@ -24,11 +24,12 @@ export type ServerFnMethod = 'GET' | 'POST';
 
 export interface ServerFnConfig<In> {
   /**
-   * Stable id used for the endpoint route `/_analog/fn/<id>`.
-   * The build transform derives this from `hash(fileId + exportName)`; callers
-   * may also provide it explicitly.
+   * Opaque route id `/_analog/fn/<id>`. **Build-injected, not author-supplied:**
+   * the Analog transform derives `hash(fileId + exportName)` and stamps it into
+   * both the server registration and the client proxy, so authors never choose a
+   * route. Absent at runtime means the transform did not run — `serverFn` throws.
    */
-  id: string;
+  id?: string;
   /** Defaults to 'POST' when `input` is present, otherwise 'GET'. */
   method?: ServerFnMethod;
   input?: StandardSchemaV1<In>;

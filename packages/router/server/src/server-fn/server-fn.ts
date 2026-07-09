@@ -19,10 +19,12 @@ export function serverFn<In, Out>(
   config: ServerFnConfig<In>,
   handler: ServerFnHandler<In, Out>,
 ): ServerFn<In, Out> {
+  // `createServerFnRef` throws if the build-derived id is missing, so `ref.id`
+  // is the authoritative route key here.
   const ref = createServerFnRef<In, Out>(config);
 
-  serverFnRegistry.set(config.id, {
-    id: config.id,
+  serverFnRegistry.set(ref.id, {
+    id: ref.id,
     method: ref.method,
     config: config as ServerFnConfig<unknown>,
     handler: handler as ServerFnHandler<unknown, unknown>,

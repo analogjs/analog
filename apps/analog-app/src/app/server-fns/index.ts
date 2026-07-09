@@ -9,9 +9,10 @@ import {
 import { fail } from '@analogjs/router/server/actions';
 import { CatalogService } from './catalog.service';
 
-// Import server function modules for their registration side effects. A real
-// build transform would generate this from the discovered `*.server.ts` files.
-import './products.server';
+// Registration of `*.server.ts` modules is the build transform's job (the
+// generated Nitro dispatch handler imports the discovered modules, and the
+// transform stamps each serverFn with its derived id). This module only wires
+// the app + interceptor providers made available inside handlers.
 
 // Demo interceptor: reads a request header via DI and can short-circuit, or
 // threads a value into the handler context.
@@ -30,5 +31,3 @@ export const serverFnAppProviders: StaticProvider[] = [
     withServerFnInterceptors([authInterceptor]),
   ) as StaticProvider[]),
 ];
-
-export * from './products.server';

@@ -11,6 +11,9 @@ import '@angular/compiler';
 
 import { dispatchServerFn } from '@analogjs/router/server';
 import { serverFnAppProviders } from '../src/app/server-fns';
+import { ids, registerServerFns } from './_server-fn-harness';
+
+await registerServerFns();
 
 const server = Bun.serve({
   port: 0,
@@ -45,30 +48,30 @@ function check(name: string, cond: boolean, detail: unknown) {
   );
 }
 
-// GET over HTTP
-const getRes = await fetch(`${base}/_analog/fn/getProducts`);
+// GET over HTTP — the route is the derived opaque id
+const getRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`);
 const getBody = await getRes.json();
 check(
-  'HTTP GET /_analog/fn/getProducts -> 200, 3 products',
+  'HTTP GET /_analog/fn/<getProducts hash> -> 200, 3 products',
   getRes.status === 200 && Array.isArray(getBody) && getBody.length === 3,
   { status: getRes.status, count: getBody?.length },
 );
 
 // POST over HTTP
-const postRes = await fetch(`${base}/_analog/fn/getProduct`, {
+const postRes = await fetch(`${base}/_analog/fn/${ids.getProduct}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ id: 'p3' }),
 });
 const postBody = await postRes.json();
 check(
-  'HTTP POST /_analog/fn/getProduct {id:p3} -> Phone Standard',
+  'HTTP POST /_analog/fn/<getProduct hash> {id:p3} -> Phone Standard',
   postRes.status === 200 && postBody?.name === 'Phone Standard',
   { status: postRes.status, body: postBody },
 );
 
 // POST invalid input over HTTP
-const badRes = await fetch(`${base}/_analog/fn/getProduct`, {
+const badRes = await fetch(`${base}/_analog/fn/${ids.getProduct}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ id: 42 }),
@@ -77,8 +80,14 @@ check('HTTP POST invalid input -> 400', badRes.status === 400, {
   status: badRes.status,
 });
 
+// Guessing the human name must NOT resolve (non-enumerable routes).
+const guessRes = await fetch(`${base}/_analog/fn/getProducts`);
+check('HTTP GET guessed name "getProducts" -> 404', guessRes.status === 404, {
+  status: guessRes.status,
+});
+
 // Interceptor deny over HTTP
-const denyRes = await fetch(`${base}/_analog/fn/getProducts`, {
+const denyRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`, {
   headers: { 'x-demo-deny': '1' },
 });
 check('HTTP GET with deny header -> 401', denyRes.status === 401, {

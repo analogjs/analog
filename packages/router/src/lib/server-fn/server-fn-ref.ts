@@ -1,7 +1,7 @@
 import type { ServerFn, ServerFnMethod } from './types';
 
 export interface ServerFnRefConfig {
-  id: string;
+  id?: string;
   method?: ServerFnMethod;
   /**
    * Only its presence matters here: when `method` is omitted, a config with an
@@ -26,6 +26,11 @@ export interface ServerFnRefConfig {
 export function createServerFnRef<In, Out>(
   config: ServerFnRefConfig,
 ): ServerFn<In, Out> {
+  if (!config.id) {
+    throw new Error(
+      '[analog] serverFn is missing its build-derived id. Server functions require the Analog build transform (@analogjs/platform / @analogjs/vite-plugin-nitro); a raw import without it is not supported.',
+    );
+  }
   const method: ServerFnMethod =
     config.method ?? (config.input ? 'POST' : 'GET');
   const url = `/_analog/fn/${config.id}`;

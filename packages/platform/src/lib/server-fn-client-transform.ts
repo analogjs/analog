@@ -1,4 +1,7 @@
 import { parseSync } from 'oxc-parser';
+// Light subpath (no vite/nitro barrel): the built scrub is loaded outside a
+// build too, so it must not pull the plugin graph in.
+import { deriveServerFnId } from '@analogjs/vite-plugin-nitro/server-fn-id';
 
 /**
  * Client-build scrub + proxy generation for server functions.
@@ -31,14 +34,14 @@ const SERVER_FN_SOURCE = '@analogjs/router/server';
 
 export function scrubServerFnModule(
   code: string,
-  filename = 'file.ts',
+  fileId = 'file.ts',
 ): ScrubResult | null {
   // Cheap bail-out before parsing: no `serverFn` token, nothing to do.
   if (!code.includes('serverFn')) {
     return null;
   }
 
-  const { program } = parseSync(filename, code);
+  const { program } = parseSync(fileId, code);
   const body = (program as { body: any[] }).body;
 
   const serverFnLocalNames = collectServerFnLocalNames(body);
@@ -64,7 +67,7 @@ export function scrubServerFnModule(
         continue;
       }
       proxies.push(
-        toProxy(declarator.id.name, declarator.init.arguments?.[0], filename),
+        toProxy(declarator.id.name, declarator.init.arguments?.[0], fileId),
       );
     }
   }
@@ -118,18 +121,13 @@ function collectServerFnLocalNames(body: any[]): Set<string> {
   return names;
 }
 
-function toProxy(
-  name: string,
-  configArg: any,
-  filename: string,
-): ServerFnProxy {
+function toProxy(name: string, configArg: any, fileId: string): ServerFnProxy {
   if (configArg?.type !== 'ObjectExpression') {
     throw new Error(
-      `[analog] serverFn "${name}" in ${filename} must be called with an inline config object so the client proxy can be generated.`,
+      `[analog] serverFn "${name}" in ${fileId} must be called with an inline config object so the client proxy can be generated.`,
     );
   }
 
-  let id: string | undefined;
   let method: 'GET' | 'POST' | undefined;
   let hasInput = false;
 
@@ -137,22 +135,20 @@ function toProxy(
     if (prop.type !== 'Property') continue;
     const key =
       prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
-    if (key === 'id' && isStringLiteral(prop.value)) {
-      id = prop.value.value;
-    } else if (key === 'method' && isStringLiteral(prop.value)) {
+    if (key === 'method' && isStringLiteral(prop.value)) {
       method = prop.value.value as 'GET' | 'POST';
     } else if (key === 'input') {
       hasInput = true;
     }
   }
 
-  if (!id) {
-    throw new Error(
-      `[analog] serverFn "${name}" in ${filename} needs a static string \`id\` to generate a client proxy.`,
-    );
-  }
-
-  return { name, id, method: method ?? (hasInput ? 'POST' : 'GET') };
+  // The id is derived, never read from source — same algorithm the server
+  // registration uses, so client proxy and server route always match.
+  return {
+    name,
+    id: deriveServerFnId(fileId, name),
+    method: method ?? (hasInput ? 'POST' : 'GET'),
+  };
 }
 
 function isStringLiteral(
