@@ -134,8 +134,8 @@ makes top-level `inject()` inside it legal.
 
 > **Injection-context rule.** `inject()` is valid _inside the handler body_
 > (invoked in an injection context at call time), not at module scope where
-> `serverFn(...)` is declared. This matches `injectStaticProps`'
-> `assertInInjectionContext` guard and every other Analog inject-helper.
+> `serverFn(...)` is declared. This matches the `assertInInjectionContext` guard
+> on `injectLoad` and every other Analog inject-helper.
 
 ### 2. DI-aware execution — reuse `provideServerContext`
 
@@ -232,8 +232,8 @@ the client with no refetch — no Analog-specific channel involved), signal stat
 
 `injectServerFn` is the **single client primitive**, with two forms selected by
 overload. It must run in an injection context (it `inject()`s the transport),
-guarded by `assertInInjectionContext` exactly like `injectLoad` and
-`injectStaticProps` — the same inject-helper family it belongs to.
+guarded by `assertInInjectionContext` exactly like `injectLoad` — the same
+inject-helper family it belongs to.
 
 ```ts
 export declare function injectServerFn<In, Out>( // reactive read → resource
