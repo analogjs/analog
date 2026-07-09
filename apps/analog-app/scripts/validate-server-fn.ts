@@ -8,10 +8,8 @@
 // Consuming it outside the app's AOT/Linker build needs the JIT compiler.
 import '@angular/compiler';
 
-// Run via: bun --preload ./apps/analog-app/scripts/_vite-glob-stub.ts <file>
-// (the preload neutralizes a Vite-only macro in a sibling barrel export).
-const { dispatchServerFn } = await import('@analogjs/router/server');
-const { serverFnAppProviders } = await import('../src/app/server-fns');
+import { dispatchServerFn } from '@analogjs/router/server';
+import { serverFnAppProviders } from '../src/app/server-fns';
 
 function fakeEvent(headers: Record<string, string> = {}) {
   return { node: { req: { headers }, res: {} } } as any;

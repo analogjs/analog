@@ -39,9 +39,16 @@ export function serverComponentRequest(serverContext: ServerContext) {
   return serverComponentId;
 }
 
-const components = import.meta.glob([
-  '/src/server/components/**/*.{ts,analog,ag}',
-]);
+// Deferred so the module can be imported outside a Vite context (e.g. by the
+// Nitro server-function dispatch path, or tooling) without eagerly evaluating
+// the Vite-only `import.meta.glob` macro at load time. Vite still statically
+// rewrites the macro; it is just invoked lazily on first server-component render.
+let _components: Record<string, () => Promise<unknown>> | undefined;
+function serverComponents(): Record<string, () => Promise<unknown>> {
+  return (_components ??= import.meta.glob([
+    '/src/server/components/**/*.{ts,analog,ag}',
+  ]));
+}
 
 export async function renderServerComponent(
   url: string,
@@ -130,6 +137,7 @@ function getComponentLoader(componentReqId: string): {
   let componentLoader: ComponentLoader | undefined = undefined;
   let componentId = _componentId;
 
+  const components = serverComponents();
   if (components[`${_componentId}.ts`]) {
     componentId = `${_componentId}.ts`;
     componentLoader = components[componentId] as ComponentLoader;
