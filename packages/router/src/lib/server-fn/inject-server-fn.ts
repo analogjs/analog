@@ -54,37 +54,60 @@ export function provideServerFnClient() {
   return [] as const;
 }
 
-// Overloads: reactive read -> ResourceRef; no args -> bound callable.
-export function injectServerFn<In, Out>(
-  fn: ServerFn<In, Out>,
-  args: () => In,
+// Stable sentinel for the input-less read: `resource()` treats an `undefined`
+// params value as "idle, don't load", so an input-less read must yield a
+// defined-but-ignored params. It is never sent — the call uses `undefined`.
+const NO_INPUT = Symbol('analog.serverFn.noInput');
+
+/**
+ * Reactive read of a server function as an Angular `resource()`.
+ *
+ * `args` is optional: omit it for an input-less read (the resource loads once);
+ * provide it for an input-bearing read (returning `undefined` from `args` leaves
+ * the resource idle until inputs are ready, the standard resource pattern). For
+ * imperative calls (mutations, event handlers) use `injectServerFnMutation`.
+ */
+export function injectServerFn<Out>(
+  fn: ServerFn<void, Out>,
 ): ResourceRef<Out | undefined>;
 export function injectServerFn<In, Out>(
   fn: ServerFn<In, Out>,
-): (input: In) => Promise<Out>;
+  args: () => In | undefined,
+): ResourceRef<Out | undefined>;
 export function injectServerFn<In, Out>(
   fn: ServerFn<In, Out>,
-  args?: () => In,
-) {
+  args?: () => In | undefined,
+): ResourceRef<Out | undefined> {
   assertInInjectionContext(injectServerFn);
   const client = inject(ServerFnClient);
 
-  if (!args) {
-    return (input: In) => client.call(fn, input);
-  }
-
-  return resource<Out | undefined, In>({
-    params: () => args(),
+  return resource<Out | undefined, unknown>({
+    params: () => (args ? args() : NO_INPUT),
     loader: async ({ params }) => {
+      const input = (params === NO_INPUT ? undefined : params) as In;
       // Hydrate from the SSR seed on first client render; else fetch and (on
       // the server) seed for the client.
-      const seeded = client.readSeed(fn as ServerFn<unknown, Out>, params);
+      const seeded = client.readSeed(fn as ServerFn<unknown, Out>, input);
       if (seeded !== undefined) return seeded;
-      const value = await client.call(fn, params);
-      client.writeSeed(fn as ServerFn<unknown, Out>, params, value);
+      const value = await client.call(fn, input);
+      client.writeSeed(fn as ServerFn<unknown, Out>, input, value);
       return value;
     },
   });
+}
+
+/**
+ * Imperative binding of a server function: returns a callable that dispatches
+ * the call through `HttpClient` (so client interceptors apply) and resolves the
+ * result. Use for mutations and event-driven calls; use `injectServerFn` for
+ * reactive reads.
+ */
+export function injectServerFnMutation<In, Out>(
+  fn: ServerFn<In, Out>,
+): (input: In) => Promise<Out> {
+  assertInInjectionContext(injectServerFnMutation);
+  const client = inject(ServerFnClient);
+  return (input: In) => client.call(fn, input);
 }
 
 function stableInput(input: unknown): string {

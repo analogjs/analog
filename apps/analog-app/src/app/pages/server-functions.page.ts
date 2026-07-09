@@ -1,7 +1,7 @@
 import { JsonPipe } from '@angular/common';
 import { Component, signal } from '@angular/core';
 
-import { injectServerFn } from '@analogjs/router';
+import { injectServerFn, injectServerFnMutation } from '@analogjs/router';
 import { getProduct, getProducts } from '../server-fns/products.server';
 
 /**
@@ -43,14 +43,11 @@ import { getProduct, getProducts } from '../server-fns/products.server';
   `,
 })
 export default class ServerFunctionsPage {
-  // GET: input-less read, hydrated from TransferState on first paint.
-  protected readonly products = injectServerFn(
-    getProducts,
-    () => undefined as unknown as void,
-  );
+  // GET: input-less reactive read, hydrated from TransferState on first paint.
+  protected readonly products = injectServerFn(getProducts);
 
-  // POST: bound imperative callable for the mutation-style read.
-  private readonly callGetProduct = injectServerFn(getProduct);
+  // POST: imperative binding for the on-demand lookup.
+  private readonly callGetProduct = injectServerFnMutation(getProduct);
 
   protected readonly productId = signal('p1');
   protected readonly selected = signal<unknown>(null);

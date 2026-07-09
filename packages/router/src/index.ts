@@ -22,6 +22,7 @@ export { ServerOnly } from './lib/server.component';
 // Server Functions (issue #2422) — client transport + shared type surface.
 export {
   injectServerFn,
+  injectServerFnMutation,
   provideServerFnClient,
   ServerFnClient,
 } from './lib/server-fn/inject-server-fn';
