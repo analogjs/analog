@@ -19,13 +19,16 @@ import { REQUEST } from '@analogjs/router/tokens';
 import * as v from 'valibot';
 
 export const getProduct = serverFn(
-  { method: 'POST', input: v.object({ id: v.string() }) }, // input ⇒ POST
+  v.object({ id: v.string() }), // a schema ⇒ validated POST (shorthand)
   async (input) => {
     const catalog = inject(CatalogService); // runs in the SSR request injector
     const req = inject(REQUEST); // Analog's request-scoped token
     return catalog.find(input.id, req.headers['accept-language']);
   },
 );
+
+// an input-less read is just a handler ⇒ GET
+export const getProducts = serverFn(() => inject(CatalogService).all());
 ```
 
 A server function is an `async` function whose body executes **inside the same
@@ -94,9 +97,10 @@ This RFC composes those into `serverFn`.
   loader rides `HttpClient` (via `ServerFnClient`), so it inherits client
   `HttpInterceptorFn`s and `HttpTestingController` testing, and hydrates via
   `TransferState` with no HTTP transfer-cache configuration.
-- **One client primitive** — `injectServerFn` covers both reactive reads (a
-  `ResourceRef`) and imperative calls (a bound callable), in the `injectLoad`
-  helper family; no separate hook per mode.
+- **Intent-named client helpers** — `injectServerFn` for reactive reads (a
+  `ResourceRef`) and `injectServerFnMutation` for imperative writes (a bound
+  callable), both in the `injectLoad` helper family; the read/write intent is in
+  the helper name, not implied by whether an args factory was passed.
 - Server code and its dependencies never enter the client bundle. On the client,
   a `.server.ts` is rewritten to only its tree-shakeable `serverFn` proxies;
   every other export and its server-only imports are scrubbed and tree-shaken.
@@ -135,11 +139,37 @@ export interface ServerFnConfig<In> {
   // No `id`: the route id is build-derived (see Security), never author-chosen.
 }
 
-export declare function serverFn<In, Out>(
+// Three authoring forms, normalized to `(config, handler)` internally.
+export declare function serverFn<Out>( // input-less read → GET
+  handler: (context: ServerFnContext) => Promise<Out> | Out,
+): ServerFn<void, Out>;
+
+export declare function serverFn<In, Out>( // schema-first → POST
+  input: StandardSchemaV1<In>,
+  handler: (input: In, context: ServerFnContext) => Promise<Out> | Out,
+): ServerFn<In, Out>;
+
+export declare function serverFn<In, Out>( // full control
   config: ServerFnConfig<In>,
   handler: (input: In, context: ServerFnContext) => Promise<Out> | Out,
 ): ServerFn<In, Out>;
 ```
+
+The **config-object form is the base**; the other two are shorthands for the
+common cases, so the boilerplate scales with the complexity of the function
+rather than being paid up front:
+
+- **`serverFn(handler)`** — a handler alone is an input-less **GET** read. No
+  `{ method: 'GET' }` ceremony for the most common read shape.
+- **`serverFn(schema, handler)`** — a Standard-Schema validator followed by a
+  handler is an input-bearing **POST**. The `input:` wrapper and the `method:
+'POST'` (already the default) both disappear; passing the schema _is_ the
+  declaration that the function takes validated input.
+- **`serverFn(config, handler)`** — the full form, needed only when overriding a
+  default (e.g. an input-less `GET` that must be a `POST`, or extending config
+  later). `normalizeArgs` detects the schema form by the Standard-Schema
+  `~standard` marker and a bare handler by `typeof arg === 'function'`, so the
+  three never collide.
 
 `ServerFn<In, Out>` is a branded callable whose **type** is `(input: In) =>
 Promise<Out>`. On the server it is the real handler; on the client the build
@@ -170,47 +200,58 @@ an `input` schema is a build-time error.
 The generated endpoint runs the handler inside the request injector Analog
 already assembles for SSR. Conceptually:
 
-**Provider source.** Server function endpoints must run with the same application
-server providers used by SSR. The implementation introduces a generated virtual
-server module that imports the app's SSR entry (`src/main.server.ts`) and exposes
-the merged server `ApplicationConfig` providers used by `render(...)`. Generated
-server function handlers build a per-request child injector from:
-
-1. `provideServerContext({ req, res })`
-2. the app server providers from the SSR entry
-3. `provideServerFns(...)` interceptor providers registered in
-   `app.config.server.ts`
-
-This keeps server functions aligned with SSR without asking users to configure a
-second provider graph. If the SSR entry does not expose provider metadata in a
-usable form, the build emits a clear error explaining that server functions
-require the standard Analog `render(AppComponent, config)` server entry shape.
-
-The endpoint does not reuse a singleton app injector across requests. It creates
-a request-scoped injector per call so `REQUEST`, `RESPONSE`, `BASE_URL`,
-`LOCALE`, and request-scoped app services resolve to the current request.
+**Provider source — one app injector, per-request children.** Server function
+endpoints must run with the same application server providers used by SSR, but
+those providers should be built **once**, not re-listed on every request. The
+generated dispatch handler constructs a single app-level `Injector` at module
+load from the app's `serverFnAppProviders` (the SSR provider set plus
+`provideServerFns(...)`), then passes it to `dispatchServerFn` as the **parent**
+of a small per-request child injector:
 
 ```ts
-// generated per endpoint (see page-endpoints.ts analogue)
-export default defineEventHandler(async (event) => {
-  const injector = createRequestInjector([
-    ...provideServerContext({ req: event.node.req, res: event.node.res }),
-    ...appServerProviders, // extracted from the standard Analog SSR entry/config
-    ...serverFnInterceptorProviders, // provideServerFns(withServerFnInterceptors(...))
-  ]);
-  const input = await decodeAndValidate(event, fn.config);
-  return runInInjectionContext(injector, () =>
-    runInterceptors(injector, { input }, (ctx) =>
-      fn.handler(ctx.input, ctx.context),
-    ),
-  );
+// generated /_analog/fn/:id handler
+const appInjector = Injector.create({ providers: serverFnAppProviders });
+
+export default eventHandler(async (event) => {
+  const id = getRouterParam(event, 'id');
+  const input = event.method === 'GET' ? undefined : await readBody(event);
+  const { status, body, headers } = await dispatchServerFn(id, input, event, {
+    parent: appInjector, // app services + interceptors resolve up this chain
+    method: event.method, // enforced against the function's configured method
+  });
+  // …set status + response headers, return body
 });
 ```
 
-So inside a handler: `inject(REQUEST)`, `inject(RESPONSE)`, `inject(LOCALE)`
-(all from `@analogjs/router/tokens`) and any provided service resolve exactly as
-they do inside a component during SSR. Request-scoped providers work because it
-is a real per-request child injector, not a singleton.
+`dispatchServerFn` takes an **options object** (`{ parent?, providers?, method?
+}`) rather than positional arguments, and creates the per-request injector as a
+**child of `parent`**:
+
+```ts
+const injector = Injector.create({
+  parent, // the app injector — app services + interceptors live here
+  providers: [
+    { provide: REQUEST, useValue: event.node.req }, // only these two are
+    { provide: RESPONSE, useValue: event.node.res }, // genuinely per-request
+    ...providers, // extra providers for direct callers without an app injector
+  ],
+});
+```
+
+So only `REQUEST`/`RESPONSE` are rebuilt per call; `inject(SessionService)`,
+registered interceptors, and everything else resolve **up the parent chain** to
+the app injector without being re-listed on each request. `inject(REQUEST)`,
+`inject(RESPONSE)`, `inject(LOCALE)` (all from `@analogjs/router/tokens`) and any
+app service resolve exactly as they do inside a component during SSR, and
+request-scoped tokens still resolve to the current request because the injector
+is a real per-request child.
+
+> A `providedIn: 'root'` service resolves through this chain only when `parent`
+> is the app's **bootstrapped** environment injector; a plain
+> `Injector.create({ providers })` parent resolves explicitly-listed providers
+> (the validated mechanism) but not tree-shakeable `root` providers. Wiring the
+> parent to the SSR entry's bootstrapped injector — so `providedIn: 'root'`
+> services resolve with zero enumeration — is env-gated on a live Analog build.
 
 **The surface is strictly DI.** The raw `H3Event` is used only internally to
 build the injector and decode input — it is never handed to interceptors or
@@ -344,48 +385,59 @@ then fetches normally on later reactive changes. This uses Angular-core
 `withHttpTransferCacheOptions` / `includePostRequests` setup is required, and a
 POST read (any input-bearing read) hydrates exactly like a GET.**
 
-`injectServerFn` is the **single client primitive**, with two forms selected by
-overload. It must run in an injection context (it `inject()`s the transport),
-guarded by `assertInInjectionContext` exactly like `injectLoad` — the same
-inject-helper family it belongs to.
+Reads and writes are **two intent-named client helpers** rather than one
+overload whose behavior flips on whether an args factory is passed. Both must run
+in an injection context (they `inject()` the transport), guarded by
+`assertInInjectionContext` exactly like `injectLoad` — the same inject-helper
+family they belong to.
 
 ```ts
-export declare function injectServerFn<In, Out>( // reactive read → resource
-  fn: ServerFn<In, Out>,
-  args: () => NoInfer<In>,
-): ResourceRef<Out>;
+export declare function injectServerFn<Out>( // input-less reactive read
+  fn: ServerFn<void, Out>,
+): ResourceRef<Out | undefined>;
 
-export declare function injectServerFn<In, Out>( // bound imperative callable
+export declare function injectServerFn<In, Out>( // parameterized reactive read
+  fn: ServerFn<In, Out>,
+  args: () => In | undefined,
+): ResourceRef<Out | undefined>;
+
+export declare function injectServerFnMutation<In, Out>( // imperative write
   fn: ServerFn<In, Out>,
 ): (input: In) => Promise<Out>;
 ```
 
-**Reactive read** — given a signal-reading args factory, returns a
-`ResourceRef<Out>` from `resource()`. It refetches when the read signals change,
-and its `value` is a writable signal, so optimistic updates are a
-`.value.set(...)` followed by `.reload()`. (The `ProductCard` example above.)
+**`injectServerFn` — reactive read.** Returns a `ResourceRef<Out | undefined>`
+from `resource()`. With no args factory it is an input-less read that runs once
+and hydrates from `TransferState`; with a signal-reading args factory it
+refetches when the read signals change. Its `value` is a writable signal, so
+optimistic updates are a `.value.set(...)` followed by `.reload()`. When the args
+factory returns `undefined` the resource stays idle (no call), so a read gated on
+a not-yet-available input is expressed by returning `undefined`, not by
+conditionally calling the helper.
 
-**Bound callable** — given no args factory, returns a DI-bound `(input) =>
-Promise<Out>` for mutations, resolvers, effects, and `load`:
+**`injectServerFnMutation` — imperative write.** Returns a DI-bound `(input) =>
+Promise<Out>` for mutations, resolvers, effects, and `load`. Splitting it out of
+the read overload means a mutation is never accidentally created by forgetting an
+args factory, and the call site reads as what it is — a write:
 
 ```ts
 @Component({
   /* … */
 })
 export class Checkout {
-  private place = injectServerFn(placeOrder); // POST serverFn → callable
+  private place = injectServerFnMutation(placeOrder); // POST serverFn → callable
   async submit(sku: string, qty: number) {
     const { orderId } = await this.place({ sku, qty });
   }
 }
 
 export const load = async () => {
-  const loadProduct = injectServerFn(getProduct);
+  const loadProduct = injectServerFnMutation(getProduct);
   return { product: await loadProduct({ id: 'p_1' }) };
 };
 ```
 
-Both forms go through the same injected transport, so client interceptors apply
+Both helpers go through the same injected transport, so client interceptors apply
 either way. During SSR
 the transport short-circuits the
 HTTP round-trip and invokes the handler in-process within the request injector;
@@ -434,10 +486,10 @@ across minors.
 
 This is a deliberate design constraint, not an accident of layout:
 
-| Symbol                                                                              | Entry                     | Why                                                          |
-| ----------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
-| `serverFn`, `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors` | `@analogjs/router/server` | Server-only; authored in `*.server.ts`, stripped from client |
-| `injectServerFn`, `ServerFnClient`, `provideServerFnClient`                         | `@analogjs/router` (main) | Client-safe; must be importable from components              |
+| Symbol                                                                                | Entry                     | Why                                                          |
+| ------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------ |
+| `serverFn`, `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`   | `@analogjs/router/server` | Server-only; authored in `*.server.ts`, stripped from client |
+| `injectServerFn`, `injectServerFnMutation`, `ServerFnClient`, `provideServerFnClient` | `@analogjs/router` (main) | Client-safe; must be importable from components              |
 
 A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 `injectServerFn` from the root entry and references the _same exported symbol_
@@ -448,25 +500,25 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                     | Change                                                                                                                                                                                |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/router/server/src/server-fn/server-fn.ts`                      | **new** — `serverFn`, authored in `*.server.ts`; self-registers and delegates ref construction to `createServerFnRef`                                                                 |
-| `packages/router/server/src/server-fn/interceptors.ts`                   | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, `SERVER_FN_INTERCEPTORS`, chain runner + `ctx.with`                                                |
-| `packages/router/server/src/server-fn/dispatch.ts`                       | **new** — `dispatchServerFn`: lookup → validate → per-request injector → interceptors → `runInInjectionContext(handler)`; `Response` short-circuit                                    |
-| `packages/router/server/src/server-fn/registry.ts`                       | **new** — id-keyed `serverFnRegistry` populated by `serverFn` at import time                                                                                                          |
-| `packages/router/server/src/index.ts`                                    | export the server authoring + dispatch surface                                                                                                                                        |
-| `packages/router/src/lib/server-fn/types.ts`                             | **new** — client-safe shared types (`ServerFn`, `ServerFnConfig`, `ServerFnContext`, `StandardSchemaV1`, …)                                                                           |
-| `packages/router/src/lib/server-fn/server-fn-ref.ts`                     | **new** — `createServerFnRef` factory shared by the server `serverFn` and the client scrub proxy (identical `{ __serverFn, id, url, method }` refs)                                   |
-| `packages/router/src/lib/server-fn/inject-server-fn.ts`                  | **new** — `injectServerFn` (`resource()`-based, `TransferState` hydration), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                                             |
-| `packages/router/src/index.ts`                                           | export the client surface + `createServerFnRef`                                                                                                                                       |
-| `packages/vite-plugin-nitro/src/lib/utils/derive-server-fn-id.ts`        | **new** — `deriveServerFnId` (`hash(fileId+export)`) + `serverFnFileId`; dependency-light single source of truth, exported as `@analogjs/vite-plugin-nitro/server-fn-id`              |
-| `packages/vite-plugin-nitro/src/lib/utils/inject-server-fn-ids.ts`       | **new** — `oxc`/`magic-string` server transform: stamp the derived `id` into each `serverFn` config, keeping the handler; overwrite any stray author id                               |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-id-plugin.ts`      | **new** — Nitro-build plugin applying `injectServerFnIds` to `*.server.ts`                                                                                                            |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts`     | **new** — discovers `<projectRoot>/src/**/*.server.ts` modules (+ `additionalServerFnDirs`), excludes SSR config, de-duped + sorted                                                   |
-| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set                                           |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + providers-module convention                                  |
-| `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })` with the **derived** id, dropping handler + imports |
-| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client build → scrub to proxies; SSR build → `injectServerFnIds` (keep handlers); else page `export default undefined;`; `<projectRoot>/src/**` scope                                 |
+| File                                                                     | Change                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/router/server/src/server-fn/server-fn.ts`                      | **new** — `serverFn`, three authoring forms (`handler` → GET, `schema, handler` → POST, `config, handler`) normalized via `normalizeArgs`; self-registers and delegates ref construction to `createServerFnRef`                                                |
+| `packages/router/server/src/server-fn/interceptors.ts`                   | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, `SERVER_FN_INTERCEPTORS`, chain runner + `ctx.with`                                                                                                                         |
+| `packages/router/server/src/server-fn/dispatch.ts`                       | **new** — `dispatchServerFn(id, input, event, { parent?, providers?, method? })`: lookup → method-enforce (405) → validate → per-request child of `parent` (REQUEST/RESPONSE only) → interceptors → `runInInjectionContext(handler)`; `Response` short-circuit |
+| `packages/router/server/src/server-fn/registry.ts`                       | **new** — id-keyed `serverFnRegistry` populated by `serverFn` at import time                                                                                                                                                                                   |
+| `packages/router/server/src/index.ts`                                    | export the server authoring + dispatch surface                                                                                                                                                                                                                 |
+| `packages/router/src/lib/server-fn/types.ts`                             | **new** — client-safe shared types (`ServerFn`, `ServerFnConfig`, `ServerFnContext`, `StandardSchemaV1`, …)                                                                                                                                                    |
+| `packages/router/src/lib/server-fn/server-fn-ref.ts`                     | **new** — `createServerFnRef` factory shared by the server `serverFn` and the client scrub proxy (identical `{ __serverFn, id, url, method }` refs)                                                                                                            |
+| `packages/router/src/lib/server-fn/inject-server-fn.ts`                  | **new** — `injectServerFn` (reactive read → `resource()`, `TransferState` hydration, idle on `undefined` args), `injectServerFnMutation` (imperative write → bound callable), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                    |
+| `packages/router/src/index.ts`                                           | export the client surface + `createServerFnRef`                                                                                                                                                                                                                |
+| `packages/vite-plugin-nitro/src/lib/utils/derive-server-fn-id.ts`        | **new** — `deriveServerFnId` (`hash(fileId+export)`) + `serverFnFileId`; dependency-light single source of truth, exported as `@analogjs/vite-plugin-nitro/server-fn-id`                                                                                       |
+| `packages/vite-plugin-nitro/src/lib/utils/inject-server-fn-ids.ts`       | **new** — `oxc`/`magic-string` server transform: stamp the derived `id` into each `serverFn` config, keeping the handler; overwrite any stray author id                                                                                                        |
+| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-id-plugin.ts`      | **new** — Nitro-build plugin applying `injectServerFnIds` to `*.server.ts`                                                                                                                                                                                     |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts`     | **new** — discovers `<projectRoot>/src/**/*.server.ts` modules (+ `additionalServerFnDirs`), excludes SSR config, de-duped + sorted                                                                                                                            |
+| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set; builds the app `Injector` once and dispatches with `{ parent: appInjector, method: event.method }`                |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + providers-module convention                                                                                                           |
+| `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })` with the **derived** id, dropping handler + imports                                                                          |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client build → scrub to proxies; SSR build → `injectServerFnIds` (keep handlers); else page `export default undefined;`; `<projectRoot>/src/**` scope                                                                                                          |
 
 ### Data flow
 
@@ -567,9 +619,11 @@ consumption).
   incl. page files, excludes SSR config + non-`.server.ts`, deterministic sorted
   de-duped output, `additionalServerFnDirs`.
 - **Endpoint generation** (`server-fn-endpoints.spec.ts`, 7): the `/_analog/fn/:id`
-  registration + `/api` prefix, and the generated virtual module — module
-  registration imports, provider wiring vs. empty fallback, dispatch by router
-  param.
+  registration (never `/api`-prefixed), and the generated virtual module — module
+  registration imports, provider wiring vs. empty fallback, and dispatch by router
+  param that builds the app injector once (`Injector.create({ providers:
+serverFnAppProviders })`) and passes `{ parent: appInjector, method:
+event.method }` while propagating response headers.
 - **Client scrub** (`server-fn-client-transform.spec.ts`, 8): null for
   non-`serverFn` modules; proxies carry the **derived** id (opaque, differs per
   file) with all server imports dropped; POST-from-`input` vs. GET default vs.
@@ -578,11 +632,14 @@ consumption).
 
 **Runtime harnesses** (execute the built `node_modules` packages under bun):
 
-- `validate-server-fn.ts` — registers via the real `injectServerFnIds` transform,
-  then dispatches by the opaque id: GET/POST, DI (`inject`) in the handler, 400
+- `validate-server-fn.ts` — builds the app injector once and dispatches with
+  `{ parent: appInjector }` (the generated handler's exact shape): registers via
+  the real `injectServerFnIds` transform, then dispatches by the opaque id —
+  GET/POST, DI (`inject`) resolved from the parent injector in the handler, 400
   validation, 401 interceptor short-circuit, 404 unknown fn.
-- `validate-http-server-fn.ts` — the same over a real HTTP round-trip; also
-  asserts the guessed export name (`/_analog/fn/getProducts`) 404s.
+- `validate-http-server-fn.ts` — the same parent-injector path over a real HTTP
+  round-trip; also asserts method enforcement (405 + `Allow`), the guessed export
+  name (`/_analog/fn/getProducts`) 404s, and `fail()` headers survive.
 - `validate-client-proxy-server-fn.ts` — scrubs the real `products.server.ts`
   through the built platform transform and imports the emitted module, asserting
   the **client proxy id equals the server-derived id**, both opaque, and that no
@@ -613,14 +670,14 @@ export const placeOrder = serverFn(
 
 ```ts
 // checkout.page.ts
-import { injectServerFn } from '@analogjs/router';
+import { injectServerFnMutation } from '@analogjs/router';
 import { placeOrder } from './orders.server';
 
 @Component({
   /* … */
 })
 export default class CheckoutPage {
-  private place = injectServerFn(placeOrder); // bound callable form
+  private place = injectServerFnMutation(placeOrder); // imperative write form
   async submit(sku: string, qty: number) {
     const { orderId } = await this.place({ sku, qty });
     // navigate to confirmation…
