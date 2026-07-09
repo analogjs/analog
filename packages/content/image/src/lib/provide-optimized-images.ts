@@ -38,18 +38,30 @@ export class OptimizedMarkedImages extends MarkedContentImages {
 }
 
 /**
- * Content feature that renders markdown images (`![alt](src)`) as
- * responsive `<img>` tags served through the Analog image optimization
- * endpoint, with `srcset`, lazy loading, and async decoding.
+ * Renders markdown images (`![alt](src)`) as responsive `<img>` tags
+ * served through the Analog image optimization endpoint, with `srcset`,
+ * lazy loading, and async decoding.
+ *
+ * Provide it alongside the runtime markdown renderer in the component
+ * that renders the content:
  *
  * ```ts
- * provideContent(
- *   withMarkdownRenderer(),
- *   withImageOptimization({ sizes: '(max-width: 768px) 100vw, 768px' }),
- * )
+ * @Component({
+ *   imports: [MarkdownComponent],
+ *   providers: [
+ *     { provide: ContentRenderer, useClass: MarkdownContentRendererService },
+ *     MarkedSetupService,
+ *     provideOptimizedImages({ sizes: '(max-width: 768px) 100vw, 768px' }),
+ *   ],
+ *   template: `<analog-markdown />`,
+ * })
  * ```
+ *
+ * Apps that render content at build time through the vite content plugin
+ * should use the `markdownImages()` extension from
+ * `@analogjs/content/image/server` instead.
  */
-export function withImageOptimization(
+export function provideOptimizedImages(
   options: Partial<AnalogImageConfig> = {},
 ): Provider[] {
   return [

@@ -2,19 +2,19 @@ import { TestBed } from '@angular/core/testing';
 import { MarkedContentImages } from '@analogjs/content';
 import { describe, expect, it } from 'vitest';
 
-import { withImageOptimization } from './with-image-optimization';
+import { provideOptimizedImages } from './provide-optimized-images';
 
 function renderImage(
   token: { href: string; title: string | null; text: string },
-  options?: Parameters<typeof withImageOptimization>[0],
+  options?: Parameters<typeof provideOptimizedImages>[0],
 ): string {
   TestBed.configureTestingModule({
-    providers: [withImageOptimization(options)],
+    providers: [provideOptimizedImages(options)],
   });
   return TestBed.inject(MarkedContentImages).renderImage(token);
 }
 
-describe('withImageOptimization', () => {
+describe('provideOptimizedImages', () => {
   it('renders local images with srcset through the endpoint', () => {
     const html = renderImage(
       { href: '/images/cover.png', title: null, text: 'Cover' },

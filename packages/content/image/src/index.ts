@@ -1,9 +1,9 @@
 export { Image } from './lib/image.component';
 export { provideImageLoader } from './lib/image-loader';
 export {
-  withImageOptimization,
+  provideOptimizedImages,
   OptimizedMarkedImages,
-} from './lib/with-image-optimization';
+} from './lib/provide-optimized-images';
 export {
   ANALOG_IMAGE_CONFIG,
   AnalogImageConfig,
