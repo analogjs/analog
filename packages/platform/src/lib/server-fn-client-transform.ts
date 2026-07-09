@@ -142,6 +142,14 @@ function toProxy(name: string, configArg: any, fileId: string): ServerFnProxy {
     }
   }
 
+  // GET carries no body, so it can never receive validated input — reject at
+  // build time rather than silently dropping the input on the client.
+  if (method === 'GET' && hasInput) {
+    throw new Error(
+      `[analog] serverFn "${name}" in ${fileId} declares method: 'GET' with an input schema; GET carries no body. Use POST or drop the input.`,
+    );
+  }
+
   // The id is derived, never read from source — same algorithm the server
   // registration uses, so client proxy and server route always match.
   return {

@@ -61,6 +61,7 @@ export function injectServerFnIds(
           `[analog] serverFn "${name}" in ${fileId} must be called with an inline config object.`,
         );
       }
+      assertMethodInputCompatible(configArg, name, fileId);
       injectId(magic, configArg, id);
     }
   }
@@ -96,6 +97,34 @@ function injectId(magic: MagicString, configArg: any, id: string): void {
 
   // Insert as the first property, right after the opening brace.
   magic.appendRight(configArg.start + 1, ` id: ${JSON.stringify(id)},`);
+}
+
+/**
+ * Reject `method: 'GET'` alongside an `input` schema at build time: GET carries
+ * no body, so a GET function can never receive validated input.
+ */
+function assertMethodInputCompatible(
+  configArg: any,
+  name: string,
+  fileId: string,
+): void {
+  let method: string | undefined;
+  let hasInput = false;
+  for (const prop of configArg.properties ?? []) {
+    if (prop.type !== 'Property') continue;
+    const key =
+      prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
+    if (key === 'method' && prop.value?.type === 'Literal') {
+      method = prop.value.value;
+    } else if (key === 'input') {
+      hasInput = true;
+    }
+  }
+  if (method === 'GET' && hasInput) {
+    throw new Error(
+      `[analog] serverFn "${name}" in ${fileId} declares method: 'GET' with an input schema; GET carries no body. Use POST (the default when input is present) or drop the input.`,
+    );
+  }
 }
 
 function collectServerFnLocalNames(body: any[]): Set<string> {

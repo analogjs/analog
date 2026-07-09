@@ -83,15 +83,22 @@ describe('scrubServerFnModule', () => {
     expect(proxies.map((p) => p.method)).toEqual(['GET', 'POST']);
   });
 
-  it('honors an explicit method over the input-based default', () => {
+  it('honors an explicit method for an input-less function', () => {
     const src = `
       import { serverFn } from '@analogjs/router/server';
-      export const search = serverFn(
-        { method: 'GET', input: someSchema },
-        async () => [],
-      );
+      export const trigger = serverFn({ method: 'POST' }, async () => []);
     `;
-    expect(scrubServerFnModule(src, FILE_ID)!.proxies[0].method).toBe('GET');
+    expect(scrubServerFnModule(src, FILE_ID)!.proxies[0].method).toBe('POST');
+  });
+
+  it("rejects method: 'GET' with an input schema at build time", () => {
+    const src = `
+      import { serverFn } from '@analogjs/router/server';
+      export const bad = serverFn({ method: 'GET', input: schema }, async () => 1);
+    `;
+    expect(() => scrubServerFnModule(src, FILE_ID)).toThrow(
+      /GET carries no body/,
+    );
   });
 
   it('resolves the local name when serverFn is aliased', () => {

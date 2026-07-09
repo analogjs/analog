@@ -126,9 +126,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           sourceRoot,
         );
         const serverFnHandlers =
-          serverFnModules.length > 0
-            ? [getServerFnDispatchHandler(hasAPIDir)]
-            : [];
+          serverFnModules.length > 0 ? [getServerFnDispatchHandler()] : [];
         const serverFnVirtual =
           serverFnModules.length > 0
             ? {

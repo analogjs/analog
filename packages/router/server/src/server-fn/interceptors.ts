@@ -61,7 +61,15 @@ function makeCtx(
   };
 }
 
-/** Run the interceptor chain, then the handler, threading the context. */
+/**
+ * Run the interceptor chain, then the handler, threading the context.
+ *
+ * `runInCtx` re-establishes the DI injection context around each interceptor
+ * and the handler individually. This is what keeps `inject()` working in a
+ * handler even when an upstream interceptor `await`s before calling `next`
+ * (which would otherwise resume outside Angular's synchronous injection
+ * context). It defaults to a pass-through for non-DI callers/tests.
+ */
 export async function runInterceptors(
   interceptors: ServerFnInterceptorFn[],
   input: unknown,
@@ -69,14 +77,15 @@ export async function runInterceptors(
     input: unknown,
     context: ServerFnContext,
   ) => Promise<unknown> | unknown,
+  runInCtx: <T>(fn: () => T) => T = (fn) => fn(),
 ): Promise<unknown> {
   let i = -1;
   const dispatch: ServerFnNext = async (ctx) => {
     i += 1;
     if (i < interceptors.length) {
-      return interceptors[i](ctx, dispatch);
+      return runInCtx(() => interceptors[i](ctx, dispatch));
     }
-    return handler(ctx.input, ctx.context);
+    return runInCtx(() => handler(ctx.input, ctx.context));
   };
   return dispatch(makeCtx(input, {} as ServerFnContext));
 }

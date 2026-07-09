@@ -26,15 +26,20 @@ const server = Bun.serve({
     const input =
       req.method === 'GET' ? undefined : await req.json().catch(() => ({}));
     const event = { node: { req: { headers }, res: {} } } as any;
-    const { status, body } = await dispatchServerFn(
+    const {
+      status,
+      body,
+      headers: outHeaders,
+    } = await dispatchServerFn(
       id,
       input,
       event,
       serverFnAppProviders,
+      req.method,
     );
     return new Response(JSON.stringify(body), {
       status,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(outHeaders ?? {}) },
     });
   },
 });
@@ -86,13 +91,37 @@ check('HTTP GET guessed name "getProducts" -> 404', guessRes.status === 404, {
   status: guessRes.status,
 });
 
-// Interceptor deny over HTTP
+// Method enforcement: POSTing a GET-only function is rejected with 405 + Allow.
+const wrongMethodRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: '{}',
+});
+check(
+  'HTTP POST to a GET function -> 405 + Allow: GET',
+  wrongMethodRes.status === 405 &&
+    wrongMethodRes.headers.get('Allow') === 'GET',
+  { status: wrongMethodRes.status, allow: wrongMethodRes.headers.get('Allow') },
+);
+
+// GETting a POST-only function is likewise rejected.
+const getPostFnRes = await fetch(`${base}/_analog/fn/${ids.getProduct}`);
+check('HTTP GET to a POST function -> 405', getPostFnRes.status === 405, {
+  status: getPostFnRes.status,
+});
+
+// Interceptor deny over HTTP — and its fail() headers survive.
 const denyRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`, {
   headers: { 'x-demo-deny': '1' },
 });
-check('HTTP GET with deny header -> 401', denyRes.status === 401, {
-  status: denyRes.status,
-});
+check(
+  'HTTP GET with deny header -> 401 + X-Analog-Errors header preserved',
+  denyRes.status === 401 && denyRes.headers.get('X-Analog-Errors') === 'true',
+  {
+    status: denyRes.status,
+    xAnalogErrors: denyRes.headers.get('X-Analog-Errors'),
+  },
+);
 
 server.stop();
 console.log(`\n${failures === 0 ? 'ALL PASSED' : failures + ' FAILURE(S)'}`);

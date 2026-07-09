@@ -9,7 +9,7 @@ import {
 
 describe('getServerFnDispatchHandler', () => {
   it('registers the single dispatch route pointing at the virtual module', () => {
-    const handler = getServerFnDispatchHandler(false);
+    const handler = getServerFnDispatchHandler();
     expect(handler).toEqual({
       route: SERVER_FN_DISPATCH_ROUTE,
       handler: SERVER_FN_DISPATCH_VIRTUAL,
@@ -17,10 +17,8 @@ describe('getServerFnDispatchHandler', () => {
     });
   });
 
-  it('prefixes the route with /api when an API dir is present', () => {
-    expect(getServerFnDispatchHandler(true).route).toBe(
-      `/api${SERVER_FN_DISPATCH_ROUTE}`,
-    );
+  it('never /api-prefixes the route (client refs call /_analog/fn/:id absolutely)', () => {
+    expect(getServerFnDispatchHandler().route).toBe('/_analog/fn/:id');
   });
 });
 
@@ -57,14 +55,19 @@ describe('buildServerFnDispatchModule', () => {
     expect(src).not.toContain('import { serverFnAppProviders }');
   });
 
-  it('dispatches by router param through dispatchServerFn', () => {
+  it('dispatches by router param, enforces method, and propagates headers', () => {
     const src = buildServerFnDispatchModule({ modules });
     expect(src).toContain(
       `import { dispatchServerFn } from '@analogjs/router/server';`,
     );
     expect(src).toContain(`const id = getRouterParam(event, 'id');`);
     expect(src).toContain('await dispatchServerFn(');
+    // Request method is passed for server-side enforcement.
+    expect(src).toContain('event.method,');
     expect(src).toContain('event.node.res.statusCode = status;');
+    // Response headers (redirect Location, Set-Cookie, X-Analog-Errors) are set.
+    expect(src).toContain('const { status, body, headers }');
+    expect(src).toContain('event.node.res.setHeader(key, value);');
   });
 
   it('emits posix-style import specifiers unchanged', () => {

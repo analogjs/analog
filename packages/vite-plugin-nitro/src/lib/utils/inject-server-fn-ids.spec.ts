@@ -41,6 +41,16 @@ export const fn = serverFn({ id: 'guessable', method: 'GET' }, async () => 1);
     expect(result.code).toContain(`id: "${deriveServerFnId(FILE_ID, 'fn')}"`);
   });
 
+  it("rejects method: 'GET' with an input schema at build time", () => {
+    const src = `
+import { serverFn } from '@analogjs/router/server';
+export const bad = serverFn({ method: 'GET', input: schema }, async () => 1);
+`;
+    expect(() => injectServerFnIds(src, FILE_ID)).toThrow(
+      /GET carries no body/,
+    );
+  });
+
   it('resolves an aliased serverFn import', () => {
     const src = `
 import { serverFn as sf } from '@analogjs/router/server';

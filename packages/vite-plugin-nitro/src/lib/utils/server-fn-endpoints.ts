@@ -16,12 +16,14 @@ export const SERVER_FN_DISPATCH_ROUTE = '/_analog/fn/:id';
  * The Nitro handler registration for the server-function dispatch route.
  * Unlike page endpoints (one handler per file), every server function shares
  * this one `/_analog/fn/:id` route; the id selects the function at runtime.
+ *
+ * The route is fixed and NOT `/api`-prefixed: client proxies always call the
+ * absolute `/_analog/fn/:id` URL, so an `/api` prefix (as page endpoints use)
+ * would leave the handler unreachable in apps that have an API directory.
  */
-export function getServerFnDispatchHandler(
-  hasAPIDir: boolean,
-): NitroEventHandler {
+export function getServerFnDispatchHandler(): NitroEventHandler {
   return {
-    route: `${hasAPIDir ? '/api' : ''}${SERVER_FN_DISPATCH_ROUTE}`,
+    route: SERVER_FN_DISPATCH_ROUTE,
     handler: SERVER_FN_DISPATCH_VIRTUAL,
     lazy: true,
   };
@@ -72,14 +74,20 @@ export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   const input = event.method === 'GET' ? undefined : await readBody(event);
 
-  const { status, body } = await dispatchServerFn(
+  const { status, body, headers } = await dispatchServerFn(
     id,
     input,
     event,
     serverFnAppProviders,
+    event.method,
   );
 
   event.node.res.statusCode = status;
+  if (headers) {
+    for (const [key, value] of Object.entries(headers)) {
+      event.node.res.setHeader(key, value);
+    }
+  }
   return body;
 });
 `;
