@@ -8,6 +8,7 @@ import type { H3Event } from 'h3';
 
 import { serverFnRegistry } from './registry';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
+import { isServerFnOriginAllowed } from './same-origin';
 
 export interface DispatchResult {
   status: number;
@@ -28,24 +29,34 @@ export interface DispatchServerFnOptions {
   providers?: StaticProvider[];
   /** Request HTTP method; enforced against the function's configured method. */
   method?: string;
+  /**
+   * Origins permitted beyond same-origin. The transport is same-origin by
+   * default (cross-origin browser calls are rejected with 403); list additional
+   * origins to allow, or `'*'` to disable the check entirely. Only consulted for
+   * HTTP-transport calls (those that pass `method`).
+   */
+  allowedOrigins?: string[];
 }
 
 /**
  * Server-side dispatch for a server function call.
  *
- * 1. look up the function by id
- * 2. enforce the configured HTTP method (405 on mismatch)
- * 3. validate `input` against the Standard-Schema (4xx on failure)
- * 4. build a per-request injector (REQUEST/RESPONSE + app providers)
- * 5. run the interceptor chain, then the handler, re-entering
+ * 1. reject cross-origin browser calls (403), unless allow-listed — HTTP
+ *    transport only (in-process callers omit `method` and are exempt)
+ * 2. look up the function by id
+ * 3. enforce the configured HTTP method (405 on mismatch)
+ * 4. validate `input` against the Standard-Schema (4xx on failure)
+ * 5. build a per-request injector (REQUEST/RESPONSE + app providers)
+ * 6. run the interceptor chain, then the handler, re-entering
  *    `runInInjectionContext` at every hop so `inject()` works even after an
  *    interceptor `await`s before calling `next`
- * 6. a `Response` returned by an interceptor/handler (`fail`/`redirect`)
+ * 7. a `Response` returned by an interceptor/handler (`fail`/`redirect`)
  *    short-circuits with its status AND headers
  *
  * `options.method` is the request's HTTP method; when provided it is enforced
- * against the function's configured method. Transports (the generated Nitro
- * handler) always pass it; trusted in-process callers may omit it.
+ * against the function's configured method AND it turns on the same-origin
+ * guard. Transports (the generated Nitro handler) always pass it; trusted
+ * in-process callers may omit it, which also exempts them from the origin guard.
  */
 export async function dispatchServerFn(
   id: string,
@@ -53,7 +64,21 @@ export async function dispatchServerFn(
   event: Pick<H3Event, 'node'>,
   options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
-  const { parent, providers = [], method } = options;
+  const { parent, providers = [], method, allowedOrigins = [] } = options;
+
+  // Same-origin guard runs first — before we even confirm the function exists —
+  // so a cross-origin page cannot probe which ids are registered. Gated on
+  // `method` so only HTTP-transport calls are checked; in-process callers omit
+  // it. The signals (`Origin`/`Sec-Fetch-Site`) are browser-set and unforgeable.
+  if (
+    method &&
+    !isServerFnOriginAllowed(event.node.req.headers ?? {}, allowedOrigins)
+  ) {
+    return {
+      status: 403,
+      body: { message: 'Cross-origin server function call rejected' },
+    };
+  }
 
   const def = serverFnRegistry.get(id);
   if (!def) {

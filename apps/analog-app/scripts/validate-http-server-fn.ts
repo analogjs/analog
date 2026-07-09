@@ -112,6 +112,37 @@ check('HTTP GET to a POST function -> 405', getPostFnRes.status === 405, {
   status: getPostFnRes.status,
 });
 
+// Same-origin guard: a cross-origin browser call is rejected out of the box.
+const crossOriginRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`, {
+  headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' },
+});
+check(
+  'HTTP cross-origin GET -> 403 (same-origin by default)',
+  crossOriginRes.status === 403,
+  { status: crossOriginRes.status },
+);
+
+// A same-origin browser call (Sec-Fetch-Site: same-origin) is allowed.
+const sameOriginRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`, {
+  headers: { origin: base, 'sec-fetch-site': 'same-origin' },
+});
+check(
+  'HTTP same-origin GET -> 200 (guard allows own origin)',
+  sameOriginRes.status === 200,
+  { status: sameOriginRes.status },
+);
+
+// Guessing an unknown id cross-origin is rejected as 403 BEFORE 404, so the
+// registry is not probeable from another origin.
+const crossOriginProbeRes = await fetch(`${base}/_analog/fn/deleteAccount`, {
+  headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' },
+});
+check(
+  'HTTP cross-origin probe of unknown id -> 403 (not 404, no existence leak)',
+  crossOriginProbeRes.status === 403,
+  { status: crossOriginProbeRes.status },
+);
+
 // Interceptor deny over HTTP — and its fail() headers survive.
 const denyRes = await fetch(`${base}/_analog/fn/${ids.getProducts}`, {
   headers: { 'x-demo-deny': '1' },

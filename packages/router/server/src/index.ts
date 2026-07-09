@@ -8,7 +8,15 @@ export { render } from './render';
 
 // Server Functions (issue #2422) — server authoring + dispatch runtime.
 export { serverFn } from './server-fn/server-fn';
-export { dispatchServerFn, type DispatchResult } from './server-fn/dispatch';
+export {
+  dispatchServerFn,
+  type DispatchResult,
+  type DispatchServerFnOptions,
+} from './server-fn/dispatch';
+export {
+  isServerFnOriginAllowed,
+  type HeaderBag,
+} from './server-fn/same-origin';
 export {
   provideServerFns,
   withServerFnInterceptors,
