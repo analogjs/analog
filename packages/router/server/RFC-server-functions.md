@@ -68,8 +68,9 @@ into a general primitive:
   globs `*.server.ts` and registers Nitro routes.
 - **Response helpers** — `json` / `redirect` / `fail`
   (`packages/router/server/actions/src/actions.ts`).
-- **Server→client hydration** — `injectStaticOutputs` +
-  `TransferState` (`packages/router/server/src/tokens.ts`).
+- **Server→client hydration** — Angular's HttpClient transfer cache, enabled by
+  default with `provideClientHydration()`, which `httpResource` GET requests
+  participate in automatically. No Analog-specific transfer channel is involved.
 
 This RFC composes those into `serverFn`.
 
@@ -84,8 +85,8 @@ This RFC composes those into `serverFn`.
 - **Middleware as functional interceptors**, composed through DI in the same
   shape as `provideHttpClient(withInterceptors([...]))`.
 - **Idiomatic client consumption**: the reactive form is an `httpResource`, so
-  it inherits client `HttpInterceptorFn`s, `TransferState` SSR caching, and
-  `HttpTestingController` testing with no bespoke machinery.
+  it inherits client `HttpInterceptorFn`s, HttpClient transfer-cache SSR
+  hydration, and `HttpTestingController` testing with no bespoke machinery.
 - **One client primitive** — `injectServerFn` covers both reactive reads (a
   `ResourceRef`) and imperative calls (a bound callable), in the `injectLoad`
   helper family; no separate hook per mode.
@@ -98,7 +99,8 @@ This RFC composes those into `serverFn`.
   closure out of the component" model). v1 is file-scoped to `*.server.ts`,
   which sidesteps closure hoisting entirely because the module is already
   server-only. Inline authoring is deferred (see Future Work).
-- A new client data cache. We reuse `httpResource` / `TransferState`.
+- A new client data cache. We reuse `httpResource` and Angular's HttpClient
+  transfer cache.
 - A central procedure registry / "router" object. Server functions are grouped
   by module colocation (`*.server.ts`), not a single typed router. Consumers
   import the exact exports they use; there is no root type to assemble. This is
@@ -223,10 +225,10 @@ export class ProductCard {
 ```
 
 Because it is `httpResource` over `HttpClient`, a server function automatically
-gets: client `HttpInterceptorFn`s, **`TransferState` SSR hydration** (resolved
-during SSR, transferred, no refetch on the client — the same channel
-`injectStaticOutputs` uses today), signal state (`value`/`status`/`error`/
-`reload`), and `HttpTestingController` in tests.
+gets: client `HttpInterceptorFn`s, **SSR hydration via Angular's HttpClient
+transfer cache** (a GET resolved during SSR is replayed from transfer state on
+the client with no refetch — no Analog-specific channel involved), signal state
+(`value`/`status`/`error`/`reload`), and `HttpTestingController` in tests.
 
 `injectServerFn` is the **single client primitive**, with two forms selected by
 overload. It must run in an injection context (it `inject()`s the transport),
@@ -269,8 +271,9 @@ export const load = async () => {
 };
 ```
 
-Both forms go through the same injected transport, so client interceptors and
-`TransferState` apply either way. During SSR the transport short-circuits the
+Both forms go through the same injected transport, so client interceptors apply
+either way and GET reads hydrate from the HttpClient transfer cache. During SSR
+the transport short-circuits the
 HTTP round-trip and invokes the handler in-process within the request injector;
 HTTP is only the browser transport.
 
@@ -347,9 +350,10 @@ the browser build with a proxy `{ __serverFn: true, url, method }`. Handler
 body + server-only imports are eliminated (module is `*.server.ts`).
 
 **Runtime** 6. `injectServerFn(fn, argsFactory)` → `httpResource(() => ({ url: fn.url,
-   method: fn.method, body|params: args }))`. SSR resolves in-process via
-`ServerFnClient` and stores to `TransferState`; the browser reads transfer
-state, then owns the resource.
+   method: fn.method, body|params: args }))`. During SSR the transport resolves
+in-process; a GET is carried to the browser by the HttpClient transfer cache (on
+by default with hydration), so the client replays it with no refetch and then
+owns the resource.
 
 ## Test coverage (planned)
 
@@ -363,8 +367,8 @@ state, then owns the resource.
   app-provided service under `TestBed.runInInjectionContext`; overrideable via
   `TestBed.overrideProvider`.
 - **Client** (`inject-server-fn.spec.ts`): `provideHttpClientTesting()` +
-  `HttpTestingController.expectOne('/_analog/fn/…')`; TransferState hit avoids a
-  second request after hydration.
+  `HttpTestingController.expectOne('/_analog/fn/…')`; the HttpClient transfer
+  cache avoids a second request after hydration.
 - **Validation**: invalid input rejected server-side with a 4xx `fail`.
 
 ## Example usage (end to end)
@@ -411,7 +415,7 @@ export default class CheckoutPage {
   and a plain `(config, handler)` signature fit Angular conventions and keep
   middleware out of every call site.
 - **Bespoke client cache.** Rejected in favor of `httpResource`, which already
-  gives interceptors, TransferState, and testing.
+  gives interceptors, transfer-cache hydration, and testing.
 - **New top-level package** (`@analogjs/server-fn`). Rejected; the feature is a
   generalization of router `load`/`action` and shares its server context and
   transform, so it belongs in `@analogjs/router` (`/server`).
