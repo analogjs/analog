@@ -48,7 +48,9 @@ That covers page data and form posts, but not the common case of _"call this
 one typed, validated server operation from anywhere — a component, an effect, a
 resolver — and get the result back with DI on the server."_ Today that requires
 hand-writing a Nitro API route + a client `fetch`/`HttpClient` call + manual
-typing on both ends, or reaching for the `@analogjs/trpc` integration.
+typing on both ends. `serverFn` is the typed client/server RPC primitive for
+Analog; it supersedes the `@analogjs/trpc` integration, which is no longer a
+recommended path.
 
 The pieces to do better already exist in the tree; they are just not composed
 into a general primitive:
@@ -93,10 +95,12 @@ This RFC composes those into `serverFn`.
   closure out of the component" model). v1 is file-scoped to `*.server.ts`,
   which sidesteps closure hoisting entirely because the module is already
   server-only. Inline authoring is deferred (see Future Work).
-- Replacing `@analogjs/trpc`. tRPC remains the choice for a large,
-  procedure-oriented API surface; `serverFn` is for colocated, per-feature
-  operations.
 - A new client data cache. We reuse `httpResource` / `TransferState`.
+- A central procedure registry / "router" object. Server functions are grouped
+  by module colocation (`*.server.ts`), not a single typed router. Consumers
+  import the exact exports they use; there is no root type to assemble. This is
+  the deliberate replacement for the tRPC router model — larger surfaces are
+  many colocated `serverFn` exports, not one procedure tree.
 
 ## Design
 
@@ -373,8 +377,9 @@ export default class CheckoutPage {
 - **New top-level package** (`@analogjs/server-fn`). Rejected; the feature is a
   generalization of router `load`/`action` and shares its server context and
   transform, so it belongs in `@analogjs/router` (`/server`).
-- **Push everyone to `@analogjs/trpc`.** Heavier ceremony for the colocated,
-  per-feature case this targets.
+- **Keep `@analogjs/trpc` as the RPC story.** No longer an option — tRPC is
+  being retired; `serverFn` is its replacement, so the RFC does not position the
+  two as coexisting choices.
 
 ## Future work
 
@@ -385,6 +390,10 @@ export default class CheckoutPage {
   phase), matching HTTP interceptors more fully.
 - **Streaming / async-iterable returns** for progressive results.
 - **Schematic** to scaffold a `*.server.ts` with a `serverFn` and its consumer.
+- **tRPC migration guide + codemod** — map each `@analogjs/trpc` procedure to a
+  colocated `serverFn` (query → `method: 'GET'`, mutation → `method: 'POST'`,
+  router grouping → module colocation) so existing consumers have a mechanical
+  path off the retired integration.
 
 ## Open questions
 
