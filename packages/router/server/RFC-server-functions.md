@@ -1,9 +1,9 @@
 # RFC: Introduce Analog Server Functions
 
-**Status:** Proposed (`feat/server-functions-rfc` branch)
+**Status:** Implemented (`feat/server-functions-rfc` branch)
 **Author:** Brandon Roberts
 **Date:** 2026-07-09
-**Packages:** `@analogjs/router` (`/server` entry) · `@analogjs/vite-plugin-nitro`
+**Packages:** `@analogjs/router` (`/server` + client entries) · `@analogjs/vite-plugin-nitro` · `@analogjs/platform`
 
 ---
 
@@ -130,6 +130,9 @@ entry — it already depends on `@angular/platform-server`).
 
 ```ts
 export interface ServerFnConfig<In> {
+  id: string; // stable id → route /_analog/fn/<id>. Required today; the
+  // transform will derive hash(fileId + exportName) later (Future Work), at
+  // which point the illustrative examples below become literal.
   method?: 'GET' | 'POST'; // default 'POST'. GET is only valid with no input.
   input?: StandardSchemaV1<In>; // valibot/zod/arktype via Standard Schema
 }
@@ -430,23 +433,29 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                 | Change                                                                                                                                                                                                                                                                                         |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                                                                                      |
-| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                                                                                                |
-| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                                                                                            |
-| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (`resource()`-based, `TransferState` hydration), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                                                                                                                                                      |
-| `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                                                                                      |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                                                                                               |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`); globs `<projectRoot>/src/**/*.server.ts` by default                                                                                                                                                             |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                                                                                                                                                                                                                             |
-| `packages/platform/src/lib/clear-client-page-endpoint.ts`            | generalize the client scrub: rewrite a `.server.ts` to only its tree-shakeable named `serverFn` proxies (`{ __serverFn, url, method }`); scrub every other export (`load`/`action`/helpers) so it tree-shakes out; `serverFn` coexists with `load`/`action`; same `<projectRoot>/src/**` scope |
+| File                                                                     | Change                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/router/server/src/server-fn/server-fn.ts`                      | **new** — `serverFn`, authored in `*.server.ts`; self-registers and delegates ref construction to `createServerFnRef`                                         |
+| `packages/router/server/src/server-fn/interceptors.ts`                   | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, `SERVER_FN_INTERCEPTORS`, chain runner + `ctx.with`                        |
+| `packages/router/server/src/server-fn/dispatch.ts`                       | **new** — `dispatchServerFn`: lookup → validate → per-request injector → interceptors → `runInInjectionContext(handler)`; `Response` short-circuit            |
+| `packages/router/server/src/server-fn/registry.ts`                       | **new** — id-keyed `serverFnRegistry` populated by `serverFn` at import time                                                                                  |
+| `packages/router/server/src/index.ts`                                    | export the server authoring + dispatch surface                                                                                                                |
+| `packages/router/src/lib/server-fn/types.ts`                             | **new** — client-safe shared types (`ServerFn`, `ServerFnConfig`, `ServerFnContext`, `StandardSchemaV1`, …)                                                   |
+| `packages/router/src/lib/server-fn/server-fn-ref.ts`                     | **new** — `createServerFnRef` factory shared by the server `serverFn` and the client scrub proxy (identical `{ __serverFn, id, url, method }` refs)           |
+| `packages/router/src/lib/server-fn/inject-server-fn.ts`                  | **new** — `injectServerFn` (`resource()`-based, `TransferState` hydration), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                     |
+| `packages/router/src/index.ts`                                           | export the client surface + `createServerFnRef`                                                                                                               |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts`     | **new** — discovers `<projectRoot>/src/**/*.server.ts` modules (+ `additionalServerFnDirs`), excludes SSR config, de-duped + sorted                           |
+| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set                   |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) when server fns exist; add `additionalServerFnDirs` + providers-module convention         |
+| `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })`, dropping handler + imports |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | run the server-fn scrub first, else fall back to the page `export default undefined;`; `serverFn` coexists with `load`/`action`; `<projectRoot>/src/**` scope |
 
 ### Data flow
 
-**Build.** One `*.server.ts` module is compiled two ways: the server graph turns
-each `serverFn` export into a Nitro endpoint; the client graph replaces it with a
-transport proxy and strips the handler body.
+**Build.** One `*.server.ts` module is compiled two ways: the server graph
+imports every discovered module so its `serverFn`s register into an id-keyed
+registry behind a single dispatch route; the client graph replaces the module
+with transport proxies and strips the handler bodies.
 
 ```mermaid
 flowchart TB
@@ -454,10 +463,10 @@ flowchart TB
 
   subgraph serverGraph["Server build — vite-plugin-nitro"]
     direction TB
-    scan["server-fn-endpoints.ts<br/>esbuild scan finds serverFn exports"]
-    wrap["wrap each export in defineEventHandler<br/>decode + validate → interceptors → runInInjectionContext"]
-    reg["get-server-fn-handlers.ts<br/>register route /_analog/fn/{stableHash}"]
-    scan --> wrap --> reg
+    scan["get-server-fn-handlers.ts<br/>glob src/**/*.server.ts (excl. SSR config)"]
+    gen["server-fn-endpoints.ts<br/>generate one /_analog/fn/:id virtual handler<br/>importing the modules (registration) + providers"]
+    reg["dispatchServerFn<br/>registry lookup → validate → interceptors → runInInjectionContext"]
+    scan --> gen --> reg
   end
 
   subgraph clientGraph["Client build — platform (clear-client-page-endpoint)"]
@@ -471,8 +480,12 @@ flowchart TB
   src --> proxy
 ```
 
-`stableHash = hash(fileId + exportName)`. The client scrub is done by the
-platform package's `clearClientPageEndpointsPlugin`, not `vite-plugin-angular`.
+All server functions share one `/_analog/fn/:id` transport route; the `id`
+selects the function from the registry at request time. Ids are authored
+explicitly on the config today — deriving `id = hash(fileId + exportName)` in the
+transform (so authors omit it) is deferred (see Future Work). The client scrub is
+done by the platform package's `clearClientPageEndpointsPlugin`, not
+`vite-plugin-angular`.
 Today it replaces a page `.server.ts` with a single `export default undefined;`.
 Generalized, it instead **rewrites the module to only its client-safe surface**:
 one tree-shakeable named proxy per `serverFn` export, and nothing else — every
@@ -494,7 +507,7 @@ sequenceDiagram
   participant Cmp as Component / load
   participant Res as injectServerFn (resource)
   participant Http as ServerFnClient / HttpClient<br/>(interceptors)
-  participant Ep as Nitro /_analog/fn/{hash}
+  participant Ep as Nitro /_analog/fn/:id
   participant Inj as Request injector<br/>(provideServerContext)
   participant Mw as Interceptor chain
   participant Fn as serverFn handler
@@ -520,21 +533,35 @@ on the client the resource takes that seed as its first value with no refetch,
 independent of HTTP method and with no transfer-cache configuration (see Client
 consumption).
 
-## Test coverage (planned)
+## Test coverage
 
-- **Transform** (`server-fn-endpoints.spec.ts`): given a `*.server.ts` exporting
-  one/many `serverFn`s, assert generated handler shape, method dispatch, route
-  hashing, and that a non-`serverFn` export is untouched.
-- **Interceptors** (`server-fn-interceptors.spec.ts`): ordering, context
-  threading via `ctx.with`, short-circuit on `fail`/`redirect`, DI inside an
-  interceptor.
-- **DI execution**: handler resolves `REQUEST`/`RESPONSE`/`LOCALE` and an
-  app-provided service under `TestBed.runInInjectionContext`; overrideable via
-  `TestBed.overrideProvider`.
-- **Client** (`inject-server-fn.spec.ts`): `provideHttpClientTesting()` +
-  `HttpTestingController.expectOne('/_analog/fn/…')`; the HttpClient transfer
-  cache avoids a second request after hydration.
-- **Validation**: invalid input rejected server-side with a 4xx `fail`.
+**Unit specs.**
+
+- **Discovery** (`get-server-fn-handlers.spec.ts`, 4): globs `src/**/*.server.ts`
+  incl. page files, excludes SSR config + non-`.server.ts`, deterministic sorted
+  de-duped output, `additionalServerFnDirs`.
+- **Endpoint generation** (`server-fn-endpoints.spec.ts`, 7): the `/_analog/fn/:id`
+  registration + `/api` prefix, and the generated virtual module — module
+  registration imports, provider wiring vs. empty fallback, dispatch by router
+  param.
+- **Client scrub** (`server-fn-client-transform.spec.ts`, 7): null for
+  non-`serverFn` modules; proxies keep `id` + method with all server imports
+  dropped; POST-from-`input` vs. GET default vs. explicit method; aliased
+  `serverFn` import; `load` shim preserved when a page file also hosts a fn;
+  throws on a non-static `id`.
+
+**Runtime harnesses** (execute the built `node_modules` packages under bun):
+
+- `validate-server-fn.ts` — in-process dispatch: GET/POST, DI (`inject`) in the
+  handler, 400 validation, 401 interceptor short-circuit, 404 unknown fn.
+- `validate-http-server-fn.ts` — the same over a real HTTP round-trip.
+- `validate-client-proxy-server-fn.ts` — scrubs the real `products.server.ts`
+  through the built platform transform and imports the emitted module, asserting
+  GET `/_analog/fn/getProducts` + POST `/_analog/fn/getProduct` proxy refs with
+  no server code.
+
+**Deferred** (need a live Angular build/serve): `TestBed.runInInjectionContext`
+DI-execution specs and `provideHttpClientTesting()` client specs.
 
 ## Example usage (end to end)
 
@@ -596,6 +623,11 @@ export default class CheckoutPage {
 
 ## Future work
 
+- **Derive `id`** as `hash(fileId + exportName)` in the scrub/discovery transform
+  so authors omit it (today the config carries an explicit `id`).
+- **Non-inline export forms** in the client scrub: the transform matches inline
+  `export const NAME = serverFn(...)`; `const x = serverFn(...); export { x }` is
+  not yet rewritten.
 - **Inline `serverFn`** in client route files via closure extraction in
   `vite-plugin-angular` (the genuinely novel piece; v2).
 - **Re-express `load`/`action`** on top of the shared endpoint transform.
