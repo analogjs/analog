@@ -19,7 +19,7 @@ import { REQUEST } from '@analogjs/router/tokens';
 import * as v from 'valibot';
 
 export const getProduct = serverFn(
-  { method: 'GET', input: v.object({ id: v.string() }) },
+  { method: 'POST', input: v.object({ id: v.string() }) }, // input ⇒ POST
   async (input) => {
     const catalog = inject(CatalogService); // runs in the SSR request injector
     const req = inject(REQUEST); // Analog's request-scoped token
@@ -124,13 +124,13 @@ entry — it already depends on `@angular/platform-server`).
 
 ```ts
 export interface ServerFnConfig<In> {
-  method?: 'GET' | 'POST'; // default 'POST'
+  method?: 'GET' | 'POST'; // default 'POST'. GET is only valid with no input.
   input?: StandardSchemaV1<In>; // valibot/zod/arktype via Standard Schema
 }
 
 export declare function serverFn<In, Out>(
   config: ServerFnConfig<In>,
-  handler: (input: In) => Promise<Out> | Out,
+  handler: (input: In, context: ServerFnContext) => Promise<Out> | Out,
 ): ServerFn<In, Out>;
 ```
 
@@ -139,6 +139,18 @@ Promise<Out>`. On the server it is the real handler; on the client the build
 replaces the implementation with an RPC proxy while preserving that type (see
 Data Flow). The handler body runs via `runInInjectionContext`, which is what
 makes top-level `inject()` inside it legal.
+
+The interceptor-accumulated context is passed to the handler as its **second
+argument** (`ServerFnContext`), not injected — a parameter is explicit and
+discoverable. `ServerFnContext` is an interface apps extend by declaration
+merging; because interceptors are registered through DI at runtime, the
+per-handler context type cannot be inferred from them statically, so
+augmentation is the typing seam.
+
+**Transport.** Input-bearing functions are **POST**, with `input` in the request
+body; we do not query-serialize. `method: 'GET'` is reserved for input-less
+reads, which stay cacheable (see Hydration). A `GET` config that also declares an
+`input` schema is a build-time error.
 
 > **Injection-context rule.** `inject()` is valid _inside the handler body_
 > (invoked in an injection context at call time), not at module scope where
@@ -160,7 +172,9 @@ export default defineEventHandler(async (event) => {
   ]);
   const input = await decodeAndValidate(event, fn.config);
   return runInInjectionContext(injector, () =>
-    runInterceptors(injector, { input, event }, (ctx) => fn.handler(ctx.input)),
+    runInterceptors(injector, { input, event }, (ctx) =>
+      fn.handler(ctx.input, ctx.context),
+    ),
   );
 });
 ```
@@ -208,7 +222,8 @@ avoid colliding with the `withInterceptors` already exported for
 `ServerFnInterceptorFn = (ctx: ServerFnContext, next: ServerFnHandler) =>
 Promise<Response | unknown>`. The `ctx.with({...})` helper threads a typed
 context object down the chain; the accumulated type is visible to later
-interceptors and (optionally) to the handler. Returning a `Response` (via
+interceptors and is delivered to the handler as its second argument. Returning a
+`Response` (via
 `fail` / `redirect` / `json`) short-circuits — reusing the existing action
 helpers verbatim.
 
@@ -242,9 +257,17 @@ export class ProductCard {
 
 Because it is `httpResource` over `HttpClient`, a server function automatically
 gets: client `HttpInterceptorFn`s, **SSR hydration via Angular's HttpClient
-transfer cache** (a GET resolved during SSR is replayed from transfer state on
-the client with no refetch — no Analog-specific channel involved), signal state
-(`value`/`status`/`error`/`reload`), and `HttpTestingController` in tests.
+transfer cache**, signal state (`value`/`status`/`error`/`reload`), and
+`HttpTestingController` in tests.
+
+Hydration interacts with the require-POST transport: an **input-less GET** read
+resolved during SSR is replayed from the transfer cache on the client with no
+refetch (default behavior). A **parameterized read is POST**, which the default
+transfer cache does not store, so it re-fetches once on hydration unless the app
+opts POST endpoints into the cache via `provideClientHydration` with
+`withHttpTransferCacheOptions({ includePostRequests: true, filter })`. A future
+idempotent-read flag could let a parameterized read use a cacheable transport
+(see Future Work).
 
 `injectServerFn` is the **single client primitive**, with two forms selected by
 overload. It must run in an injection context (it `inject()`s the transport),
@@ -288,7 +311,7 @@ export const load = async () => {
 ```
 
 Both forms go through the same injected transport, so client interceptors apply
-either way and GET reads hydrate from the HttpClient transfer cache. During SSR
+either way. During SSR
 the transport short-circuits the
 HTTP round-trip and invokes the handler in-process within the request injector;
 HTTP is only the browser transport.
@@ -350,17 +373,17 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                 | Change                                                                                                                                                                                                                                                                       |
-| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                                                                    |
-| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                                                                              |
-| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                                                                          |
-| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`                                                                                                                                                                                  |
-| `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                                                                    |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                                                                             |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`), broadened beyond `src/app/pages/`                                                                                                                                                             |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                                                                                                                                                                                                           |
-| `packages/platform/src/lib/clear-client-page-endpoint.ts`            | generalize the client scrub: rewrite a `.server.ts` to only its tree-shakeable named `serverFn` proxies (`{ __serverFn, url, method }`); scrub every other export (`load`/`action`/helpers) so it tree-shakes out; `serverFn` coexists with `load`/`action`; broadened scope |
+| File                                                                 | Change                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                                                                                      |
+| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                                                                                                |
+| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                                                                                            |
+| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`                                                                                                                                                                                                    |
+| `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                                                                                      |
+| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                                                                                               |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`); globs `<projectRoot>/src/**/*.server.ts` by default                                                                                                                                                             |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                                                                                                                                                                                                                             |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`            | generalize the client scrub: rewrite a `.server.ts` to only its tree-shakeable named `serverFn` proxies (`{ __serverFn, url, method }`); scrub every other export (`load`/`action`/helpers) so it tree-shakes out; `serverFn` coexists with `load`/`action`; same `<projectRoot>/src/**` scope |
 
 ### Data flow
 
@@ -434,10 +457,11 @@ sequenceDiagram
   Res-->>Cmp: signals (value / status / error)
 ```
 
-During SSR the `Http → Ep` hop is in-process, not a network call; a GET resolved
-during SSR is carried to the browser by the HttpClient transfer cache (on by
-default with hydration), so the client replays it with no refetch and then owns
-the resource.
+During SSR the `Http → Ep` hop is in-process, not a network call. An input-less
+GET resolved during SSR is carried to the browser by the HttpClient transfer
+cache (on by default with hydration), so the client replays it with no refetch;
+a parameterized POST read re-fetches on hydration unless POST caching is enabled
+(see Client consumption).
 
 ## Test coverage (planned)
 
@@ -514,6 +538,9 @@ export default class CheckoutPage {
 - **Re-express `load`/`action`** on top of the shared endpoint transform.
 - **Client interceptor leg** for `ServerFnInterceptorFn` (a `.client()`-style
   phase), matching HTTP interceptors more fully.
+- **Idempotent-read flag** — let a parameterized read opt into a cacheable
+  transport so it participates in the transfer cache on hydration instead of
+  re-fetching, without weakening the require-POST default for mutations.
 - **Streaming / async-iterable returns** for progressive results.
 - **Schematic** to scaffold a `*.server.ts` with a `serverFn` and its consumer.
 - **tRPC migration guide + codemod** — map each `@analogjs/trpc` procedure to a
@@ -523,15 +550,15 @@ export default class CheckoutPage {
 
 ## Open questions
 
-- Should the accumulated interceptor context be injectable inside the handler
-  (e.g. `inject(SERVER_FN_CONTEXT)`) or passed as a second handler argument?
-  Injection is more idiomatic; a parameter is more discoverable.
-- GET payload encoding: query-serialize `input`, with an automatic POST fallback
-  above a size threshold — or require POST for any non-trivial input?
 - Do we expose the raw `H3Event` at all, or keep the surface strictly DI
   (`REQUEST`/`RESPONSE` tokens) and treat direct `event` access as an escape
   hatch?
-- Scope: `get-page-handlers.ts` and `clearClientPageEndpointsPlugin` are both
-  scoped to `src/app/pages/**`. Server functions live in any `*.server.ts`, so
-  both must broaden. Do we glob all `*.server.ts` under `src/`, or gate server-fn
-  discovery to a configured root to avoid scanning the whole tree?
+
+Resolved and folded into Design:
+
+- **Interceptor context** → passed to the handler as a second argument
+  (`ServerFnContext`), not injected.
+- **Input encoding** → require POST for any input; GET is reserved for input-less
+  reads. No query-serialization.
+- **Discovery scope** → glob `<projectRoot>/src/**/*.server.ts` by default (both
+  endpoint discovery and the client scrub).
