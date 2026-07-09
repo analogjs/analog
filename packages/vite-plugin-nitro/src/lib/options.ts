@@ -39,6 +39,11 @@ export interface Options {
    * Additional API paths to include
    */
   additionalAPIDirs?: string[];
+  /**
+   * Additional directories to scan for `*.server.ts` server-function modules,
+   * beyond `<sourceRoot>`. Paths are relative to the workspace root.
+   */
+  additionalServerFnDirs?: string[];
   apiPrefix?: string;
 
   /**
