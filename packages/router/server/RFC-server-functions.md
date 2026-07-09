@@ -152,8 +152,9 @@ augmentation is the typing seam.
 
 **Transport.** Input-bearing functions are **POST**, with `input` in the request
 body; we do not query-serialize. `method: 'GET'` is reserved for input-less
-reads, which stay cacheable (see Hydration). A `GET` config that also declares an
-`input` schema is a build-time error.
+reads (its only benefit is runtime HTTP/CDN cacheability — hydration does not
+depend on the method; see Client consumption). A `GET` config that also declares
+an `input` schema is a build-time error.
 
 > **Injection-context rule.** `inject()` is valid _inside the handler body_
 > (invoked in an injection context at call time), not at module scope where
