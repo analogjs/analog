@@ -68,6 +68,10 @@ into a general primitive:
   globs `*.server.ts` and registers Nitro routes.
 - **Response helpers** — `json` / `redirect` / `fail`
   (`packages/router/server/actions/src/actions.ts`).
+- **Client scrub** — `clearClientPageEndpointsPlugin`
+  (`packages/platform/src/lib/clear-client-page-endpoint.ts`) already replaces a
+  `.server.ts` module with `export default undefined;` on the client build. It is
+  scoped to `src/app/pages/` and today discards all exports.
 - **Server→client hydration** — Angular's HttpClient transfer cache, enabled by
   default with `provideClientHydration()`, which `httpResource` GET requests
   participate in automatically. No Analog-specific transfer channel is involved.
@@ -342,17 +346,17 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Files changed / added
 
-| File                                                                 | Change                                                                                          |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                       |
-| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner |
-| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                             |
-| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`     |
-| `packages/router/src/index.ts`                                       | export the client surface                                                                       |
-| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                |
-| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`)                   |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                              |
-| `packages/vite-plugin-angular/src/lib/*`                             | client-graph transform: replace `serverFn` impl with RPC proxy                                  |
+| File                                                                 | Change                                                                                                                                                                                                                   |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/router/server/src/server-fn.ts`                            | **new** — `serverFn`, `ServerFnConfig`, `ServerFn`, context/`with` helper                                                                                                                                                |
+| `packages/router/server/src/server-fn-interceptors.ts`               | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, chain runner                                                                                                                          |
+| `packages/router/server/src/index.ts`                                | export the server authoring surface                                                                                                                                                                                      |
+| `packages/router/src/lib/inject-server-fn.ts`                        | **new** — `injectServerFn` (httpResource-backed), `ServerFnClient`, `provideServerFnClient`                                                                                                                              |
+| `packages/router/src/index.ts`                                       | export the client surface                                                                                                                                                                                                |
+| `packages/vite-plugin-nitro/src/lib/plugins/server-fn-endpoints.ts`  | **new** — generalized transform (sibling of `page-endpoints.ts`)                                                                                                                                                         |
+| `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts` | **new** — endpoint discovery/registration (sibling of `get-page-handlers.ts`), broadened beyond `src/app/pages/`                                                                                                         |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts`            | register the new plugin + handlers                                                                                                                                                                                       |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`            | generalize the existing client scrub: for a `.server.ts` exporting `serverFn`s, emit named proxy exports (`{ __serverFn, url, method }`) instead of `export default undefined;`, and match the broadened server-fn scope |
 
 ### Data flow
 
@@ -372,9 +376,9 @@ flowchart TB
     scan --> wrap --> reg
   end
 
-  subgraph clientGraph["Client build — vite-plugin-angular"]
+  subgraph clientGraph["Client build — platform (clear-client-page-endpoint)"]
     direction TB
-    proxy["replace impl with proxy<br/>{ __serverFn, url, method }"]
+    proxy["clearClientPageEndpointsPlugin (generalized)<br/>emit named proxies { __serverFn, url, method }"]
     elim["handler body + server-only imports eliminated"]
     proxy --> elim
   end
@@ -383,8 +387,13 @@ flowchart TB
   src --> proxy
 ```
 
-`stableHash = hash(fileId + exportName)`. The client proxy keeps the exported
-symbol's type; only the implementation is swapped, so inference holds end to end.
+`stableHash = hash(fileId + exportName)`. The client scrub is done by the
+platform package's `clearClientPageEndpointsPlugin`, not `vite-plugin-angular`.
+Today it replaces a page `.server.ts` with `export default undefined;`; for a
+module exporting `serverFn`s it must instead emit one typed proxy per export so
+the client import still resolves. Because the transform runs after type-checking,
+the consumer type-checks against the real `ServerFn<In, Out>` type while the
+runtime value is the proxy — inference holds end to end.
 
 **Runtime.** `injectServerFn` drives an `httpResource` (or a bound callable) that
 goes through `HttpClient`; the request lands on the generated endpoint, which
@@ -514,3 +523,11 @@ export default class CheckoutPage {
 - Do we expose the raw `H3Event` at all, or keep the surface strictly DI
   (`REQUEST`/`RESPONSE` tokens) and treat direct `event` access as an escape
   hatch?
+- Scope: `get-page-handlers.ts` and `clearClientPageEndpointsPlugin` are both
+  scoped to `src/app/pages/**`. Server functions live in any `*.server.ts`, so
+  both must broaden. Do we glob all `*.server.ts` under `src/`, or gate server-fn
+  discovery to a configured root to avoid scanning the whole tree?
+- Mixed modules: if a page `.server.ts` exports both a `load`/`action` and a
+  `serverFn`, the generalized client scrub emits proxies for the `serverFn`
+  exports and drops the rest. Do we allow that mix, or require server functions
+  to live in their own `*.server.ts` files?
