@@ -103,6 +103,9 @@ This RFC composes those into `serverFn`.
 - **`serverFn` is supported in existing `.server.ts` files**, coexisting with the
   `load` / `action` in the same module.
 - `load` / `action` become expressible as thin sugar over `serverFn`.
+- Server functions do not bypass normal app authorization. The primitive provides
+  validation, same-origin transport, and interceptor hooks; apps still decide
+  which users can call which operations.
 
 ## Non-Goals
 
@@ -166,12 +169,32 @@ an `input` schema is a build-time error.
 The generated endpoint runs the handler inside the request injector Analog
 already assembles for SSR. Conceptually:
 
+**Provider source.** Server function endpoints must run with the same application
+server providers used by SSR. The implementation introduces a generated virtual
+server module that imports the app's SSR entry (`src/main.server.ts`) and exposes
+the merged server `ApplicationConfig` providers used by `render(...)`. Generated
+server function handlers build a per-request child injector from:
+
+1. `provideServerContext({ req, res })`
+2. the app server providers from the SSR entry
+3. `provideServerFns(...)` interceptor providers registered in
+   `app.config.server.ts`
+
+This keeps server functions aligned with SSR without asking users to configure a
+second provider graph. If the SSR entry does not expose provider metadata in a
+usable form, the build emits a clear error explaining that server functions
+require the standard Analog `render(AppComponent, config)` server entry shape.
+
+The endpoint does not reuse a singleton app injector across requests. It creates
+a request-scoped injector per call so `REQUEST`, `RESPONSE`, `BASE_URL`,
+`LOCALE`, and request-scoped app services resolve to the current request.
+
 ```ts
 // generated per endpoint (see page-endpoints.ts analogue)
 export default defineEventHandler(async (event) => {
   const injector = createRequestInjector([
     ...provideServerContext({ req: event.node.req, res: event.node.res }),
-    ...appServerProviders, // app.config.server.ts
+    ...appServerProviders, // extracted from the standard Analog SSR entry/config
     ...serverFnInterceptorProviders, // provideServerFns(withServerFnInterceptors(...))
   ]);
   const input = await decodeAndValidate(event, fn.config);
@@ -244,7 +267,30 @@ zod and arktype also conform). It runs server-side before the
 handler. The same schema may optionally run client-side for early feedback,
 which is free because Standard Schema is isomorphic.
 
-### 5. Client consumption — a `resource()` hydrated from `TransferState`
+### 5. Security boundary
+
+Server functions are HTTP endpoints and use the same trust model as Analog's
+existing server endpoints: validation protects input shape, not authorization or
+intent. Authentication and authorization belong in app-provided
+`ServerFnInterceptorFn`s or in the handler itself.
+
+The generated transport is same-origin by default. Client proxies call relative
+`/_analog/fn/{hash}` URLs, and the framework does not add CORS headers for
+server functions. Cross-origin access must be enabled explicitly by user Nitro
+middleware if an app wants that behavior.
+
+Input-bearing server functions use `POST` with a JSON body. The endpoint rejects
+unsupported content types for JSON server function calls with `415`, rejects
+schema-invalid input with a 4xx `fail(...)`, and does not execute the handler
+until decoding and validation succeed.
+
+Because server functions may be cookie-authenticated, CSRF is treated as an app
+security concern but the framework reserves a hook for it: a built-in interceptor
+or endpoint guard can verify `Origin` / `Referer` for unsafe methods when those
+headers are present. Apps with custom requirements can replace or augment this
+behavior with server function interceptors.
+
+### 6. Client consumption — a `resource()` hydrated from `TransferState`
 
 The reactive form returns a `ResourceRef<Out>` from Angular's `resource()`
 (`packages/core/src/resource/resource.ts`) whose loader calls `ServerFnClient` —
@@ -333,7 +379,7 @@ transport outside an injection context. Prefer `injectServerFn`. Both are
 **client-safe** and live in the main `@analogjs/router` entry, not `/server`
 (see Entry-Point Boundary).
 
-### 6. Errors
+### 7. Errors
 
 Handlers and interceptors signal failure with the existing `fail(status,
 errors)` helper, which already tags responses with `X-Analog-Errors`. On the
@@ -341,7 +387,7 @@ client, the resource surfaces these as `HttpErrorResponse` (thrown by
 `HttpClient` through `ServerFnClient`) in `.error()`, and `redirect()` is honored
 by the transport.
 
-### 7. Relationship to `load` / `action`
+### 8. Relationship to `load` / `action`
 
 `load` and `action` become sugar:
 
