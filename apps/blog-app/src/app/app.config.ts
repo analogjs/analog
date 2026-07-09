@@ -1,4 +1,8 @@
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import {
+  provideImageLoader,
+  withImageOptimization,
+} from '@analogjs/content/image';
 import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 import { provideFileRouter } from '@analogjs/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -18,7 +22,11 @@ export const appConfig: ApplicationConfig = {
         loadMermaid: !import.meta.env.SSR ? () => import('mermaid') : undefined,
       }),
       withShikiHighlighter(),
+      withImageOptimization({
+        sizes: '(max-width: 768px) 100vw, 768px',
+      }),
     ),
+    provideImageLoader(),
     provideFileRouter(
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
       withEnabledBlockingInitialNavigation(),

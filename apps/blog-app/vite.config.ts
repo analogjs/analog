@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 
+import { markdownImages } from '@analogjs/content/image/server';
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
@@ -38,6 +39,11 @@ export default defineConfig(() => {
             highlighter: {
               additionalLangs: ['mermaid'],
             },
+          },
+          markedOptions: {
+            extensions: [
+              markdownImages({ sizes: '(max-width: 768px) 100vw, 768px' }),
+            ],
           },
         },
         prerender: {
