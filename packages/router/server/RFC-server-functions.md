@@ -356,26 +356,71 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 
 ### Data flow
 
-**Build — server graph**
+**Build.** One `*.server.ts` module is compiled two ways: the server graph turns
+each `serverFn` export into a Nitro endpoint; the client graph replaces it with a
+transport proxy and strips the handler body.
 
-1. `server-fn-endpoints.ts` `transform` hook fires on `*.server.ts`.
-2. esbuild metafile scan finds exports whose initializer is `serverFn(...)`
-   (same technique `page-endpoints.ts` uses for `load`/`action`).
-3. Each export is wrapped in a `defineEventHandler` that decodes+validates input,
-   builds the request injector (`provideServerContext` + app + interceptors),
-   runs the interceptor chain, and `runInInjectionContext(injector, handler)`.
-4. `get-server-fn-handlers.ts` registers routes at `/_analog/fn/<stableHash>`
-   where `stableHash = hash(fileId + exportName)`.
+```mermaid
+flowchart TB
+  src["users.server.ts<br/>export const getProduct = serverFn(config, handler)"]
 
-**Build — client graph** 5. The `vite-plugin-angular` transform replaces each `serverFn(...)` export on
-the browser build with a proxy `{ __serverFn: true, url, method }`. Handler
-body + server-only imports are eliminated (module is `*.server.ts`).
+  subgraph serverGraph["Server build — vite-plugin-nitro"]
+    direction TB
+    scan["server-fn-endpoints.ts<br/>esbuild scan finds serverFn exports"]
+    wrap["wrap each export in defineEventHandler<br/>decode + validate → interceptors → runInInjectionContext"]
+    reg["get-server-fn-handlers.ts<br/>register route /_analog/fn/{stableHash}"]
+    scan --> wrap --> reg
+  end
 
-**Runtime** 6. `injectServerFn(fn, argsFactory)` → `httpResource(() => ({ url: fn.url,
-   method: fn.method, body|params: args }))`. During SSR the transport resolves
-in-process; a GET is carried to the browser by the HttpClient transfer cache (on
-by default with hydration), so the client replays it with no refetch and then
-owns the resource.
+  subgraph clientGraph["Client build — vite-plugin-angular"]
+    direction TB
+    proxy["replace impl with proxy<br/>{ __serverFn, url, method }"]
+    elim["handler body + server-only imports eliminated"]
+    proxy --> elim
+  end
+
+  src --> scan
+  src --> proxy
+```
+
+`stableHash = hash(fileId + exportName)`. The client proxy keeps the exported
+symbol's type; only the implementation is swapped, so inference holds end to end.
+
+**Runtime.** `injectServerFn` drives an `httpResource` (or a bound callable) that
+goes through `HttpClient`; the request lands on the generated endpoint, which
+builds the per-request injector, runs interceptors, and invokes the handler in
+that injection context.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Cmp as Component / load
+  participant Res as injectServerFn (httpResource)
+  participant Http as HttpClient<br/>(interceptors + transfer cache)
+  participant Ep as Nitro /_analog/fn/{hash}
+  participant Inj as Request injector<br/>(provideServerContext)
+  participant Mw as Interceptor chain
+  participant Fn as serverFn handler
+
+  Cmp->>Res: read args() signal
+  Res->>Http: request { url, method, body or params }
+  Note over Http,Ep: browser → HTTP · SSR → in-process (same injector)
+  Http->>Ep: dispatch
+  Ep->>Ep: decode + validate input
+  Ep->>Inj: build per-request injector
+  Inj->>Mw: run interceptors (accumulate typed context)
+  Mw->>Fn: runInInjectionContext(handler)
+  Fn-->>Mw: result — or fail() / redirect()
+  Mw-->>Ep: Response
+  Ep-->>Http: JSON / status
+  Http-->>Res: value — or HttpErrorResponse
+  Res-->>Cmp: signals (value / status / error)
+```
+
+During SSR the `Http → Ep` hop is in-process, not a network call; a GET resolved
+during SSR is carried to the browser by the HttpClient transfer cache (on by
+default with hydration), so the client replays it with no refetch and then owns
+the resource.
 
 ## Test coverage (planned)
 
