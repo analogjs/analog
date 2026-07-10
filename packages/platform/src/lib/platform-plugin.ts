@@ -38,10 +38,10 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     // before requests reach nitro, while apps with a routes/api dir
     // serve the full path — register both forms.
     const routes = new Set([
-      publicPath,
+      `${publicPath}/**`,
       publicPath.startsWith(`${apiPrefix}/`)
-        ? publicPath.slice(apiPrefix.length)
-        : publicPath,
+        ? `${publicPath.slice(apiPrefix.length)}/**`
+        : `${publicPath}/**`,
     ]);
 
     nitroOptions = {

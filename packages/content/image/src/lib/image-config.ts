@@ -79,17 +79,24 @@ export function injectImageConfig(): AnalogImageConfig {
   return inject(ANALOG_IMAGE_CONFIG);
 }
 
+/**
+ * Builds a path-encoded variant URL: `<path>/<modifiers>/<src>`, e.g.
+ * `/api/_image/w_640/images/hero.png`. Paths (not query strings) are
+ * used so prerendered variants map to real files on static hosts.
+ */
 export function buildImageUrl(
   config: AnalogImageConfig,
   src: string,
   width?: number,
 ): string {
-  const params = new URLSearchParams({ src });
-  if (width) {
-    params.set('w', String(width));
-  }
-  if (config.quality) {
-    params.set('q', String(config.quality));
-  }
-  return `${config.path}?${params.toString()}`;
+  const modifiers = [
+    width ? `w_${width}` : '',
+    config.quality ? `q_${config.quality}` : '',
+  ]
+    .filter(Boolean)
+    .join(',');
+  const source = src.startsWith('/')
+    ? src.split('/').map(encodeURIComponent).join('/')
+    : `/${encodeURIComponent(src)}`;
+  return `${config.path}/${modifiers || '_'}${source}`;
 }

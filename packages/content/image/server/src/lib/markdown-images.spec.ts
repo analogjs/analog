@@ -17,10 +17,8 @@ describe('markdownImages', () => {
       { widths: [640, 1280], sizes: '100vw' },
     );
 
-    expect(html).toContain(
-      'src="/api/_image?src=%2Fimages%2Fcover.png&amp;w=1280"',
-    );
-    expect(html).toContain('w=640 640w');
+    expect(html).toContain('src="/api/_image/w_1280/images/cover.png"');
+    expect(html).toContain('w_640/images/cover.png 640w');
     expect(html).toContain('sizes="100vw"');
     expect(html).toContain('loading="lazy"');
   });

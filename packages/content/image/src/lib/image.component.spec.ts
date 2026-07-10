@@ -32,11 +32,9 @@ describe('Image component', () => {
     const img = element.querySelector('img');
 
     expect(img).toBeTruthy();
-    expect(img!.getAttribute('src')).toBe(
-      '/api/_image?src=%2Fimages%2Fhero.png',
-    );
-    expect(img!.getAttribute('srcset')).toContain('w=1200 1x');
-    expect(img!.getAttribute('srcset')).toContain('w=2400 2x');
+    expect(img!.getAttribute('src')).toBe('/api/_image/_/images/hero.png');
+    expect(img!.getAttribute('srcset')).toContain('w_1200/images/hero.png 1x');
+    expect(img!.getAttribute('srcset')).toContain('w_2400/images/hero.png 2x');
     expect(img!.getAttribute('width')).toBe('1200');
     expect(img!.getAttribute('height')).toBe('630');
     expect(img!.getAttribute('loading')).toBe('lazy');

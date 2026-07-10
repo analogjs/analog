@@ -88,12 +88,13 @@ function buildUrl(
   src: string,
   width: number,
 ): string {
-  const params = new URLSearchParams({ src });
-  params.set('w', String(width));
-  if (config.quality) {
-    params.set('q', String(config.quality));
-  }
-  return `${config.path}?${params.toString()}`;
+  const modifiers = [`w_${width}`, config.quality ? `q_${config.quality}` : '']
+    .filter(Boolean)
+    .join(',');
+  const source = src.startsWith('/')
+    ? src.split('/').map(encodeURIComponent).join('/')
+    : `/${encodeURIComponent(src)}`;
+  return `${config.path}/${modifiers}${source}`;
 }
 
 function escapeAttr(value: string): string {

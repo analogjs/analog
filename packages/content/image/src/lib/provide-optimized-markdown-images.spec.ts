@@ -23,9 +23,7 @@ describe('provideOptimizedMarkdownImages', () => {
     const renderer = TestBed.inject(ContentRenderer);
     const { content } = await renderer.render('![Cover](/images/cover.png)');
 
-    expect(content).toContain(
-      'src="/api/_image?src=%2Fimages%2Fcover.png&amp;w=640"',
-    );
+    expect(content).toContain('src="/api/_image/w_640/images/cover.png"');
     expect(content).toContain('loading="lazy"');
   });
 
@@ -35,11 +33,9 @@ describe('provideOptimizedMarkdownImages', () => {
       { widths: [640, 1280] },
     );
 
-    expect(html).toContain(
-      'src="/api/_image?src=%2Fimages%2Fcover.png&amp;w=1280"',
-    );
-    expect(html).toContain('w=640 640w');
-    expect(html).toContain('w=1280 1280w');
+    expect(html).toContain('src="/api/_image/w_1280/images/cover.png"');
+    expect(html).toContain('w_640/images/cover.png 640w');
+    expect(html).toContain('w_1280/images/cover.png 1280w');
     expect(html).toContain('alt="Cover"');
     expect(html).toContain('loading="lazy"');
     expect(html).toContain('decoding="async"');
@@ -51,7 +47,7 @@ describe('provideOptimizedMarkdownImages', () => {
       { path: '/custom', sizes: '100vw', widths: [640] },
     );
 
-    expect(html).toContain('src="/custom?src=%2Fa.png&amp;w=640"');
+    expect(html).toContain('src="/custom/w_640/a.png"');
     expect(html).toContain('sizes="100vw"');
     expect(html).toContain('title="A title"');
   });
@@ -75,7 +71,7 @@ describe('provideOptimizedMarkdownImages', () => {
     );
 
     expect(html).toContain(
-      'src="/api/_image?src=https%3A%2F%2Fimages.example.com%2Fx.png&amp;w=640"',
+      'src="/api/_image/w_640/https%3A%2F%2Fimages.example.com%2Fx.png"',
     );
     expect(html).toContain('srcset');
   });

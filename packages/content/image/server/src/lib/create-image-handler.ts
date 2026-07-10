@@ -2,9 +2,9 @@ import {
   H3Event,
   createError,
   defineEventHandler,
-  getQuery,
   getRequestHeader,
   getRequestURL,
+  getRouterParam,
   setHeader,
 } from 'h3';
 import sharp from 'sharp';
@@ -38,7 +38,7 @@ export function createImageHandler(options: ImageHandlerOptions = {}) {
   return defineEventHandler(async (event) => {
     let request;
     try {
-      request = parseImageRequest(getQuery(event), config);
+      request = parseImageRequest(getRouterParam(event, '_') ?? '', config);
     } catch (e) {
       throw createError({
         statusCode: (e as { statusCode?: number }).statusCode ?? 400,
@@ -50,10 +50,9 @@ export function createImageHandler(options: ImageHandlerOptions = {}) {
       ? await fetchRemote(request.src)
       : await fetchLocal(event, request.src);
 
-    const format = negotiateFormat(
-      getRequestHeader(event, 'accept'),
-      config.formats,
-    );
+    const format =
+      request.format ??
+      negotiateFormat(getRequestHeader(event, 'accept'), config.formats);
 
     let pipeline = sharp(source);
     if (request.width) {
@@ -78,7 +77,10 @@ export function createImageHandler(options: ImageHandlerOptions = {}) {
       'Cache-Control',
       'public, immutable, no-transform, max-age=31536000',
     );
-    setHeader(event, 'Vary', 'Accept');
+    if (!request.format) {
+      // Response only varies by Accept when the format was negotiated
+      setHeader(event, 'Vary', 'Accept');
+    }
 
     return data;
   });

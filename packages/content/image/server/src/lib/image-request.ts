@@ -16,6 +16,8 @@ export interface ImageRequest {
   remote: boolean;
   width?: number;
   quality: number;
+  /** Format fixed in the URL (`f_webp`), bypassing Accept negotiation. */
+  format?: ImageFormat;
 }
 
 export const IMAGE_HANDLER_DEFAULTS: Required<ImageHandlerOptions> = {
@@ -25,58 +27,94 @@ export const IMAGE_HANDLER_DEFAULTS: Required<ImageHandlerOptions> = {
   quality: 80,
 };
 
+const MODIFIERS_RE = /^(_|[wqf]_[a-z0-9]+(,[wqf]_[a-z0-9]+)*)$/i;
+
 /**
- * Validates raw query parameters into an image request.
- * Throws an Error with a `statusCode` property on invalid input.
+ * Parses the path-encoded form `<modifiers>/<src>`, e.g.
+ * `w_640,f_webp/images/hero.png` or
+ * `w_640/https%3A%2F%2Fimages.example.com%2Fx.png`.
+ *
+ * Paths (not query strings) are used so prerendered variants map to
+ * real files on static hosts. Throws an Error with a `statusCode`
+ * property on invalid input.
  */
 export function parseImageRequest(
-  query: Record<string, unknown>,
+  path: string,
   options: Required<ImageHandlerOptions>,
 ): ImageRequest {
-  const src = typeof query['src'] === 'string' ? query['src'] : '';
-  if (!src) {
+  const normalized = path.replace(/^\/+/, '');
+  const slash = normalized.indexOf('/');
+  if (slash === -1) {
+    throw badRequest('expected <modifiers>/<src>');
+  }
+
+  const modifiersSegment = normalized.slice(0, slash);
+  const rawSrc = normalized.slice(slash + 1);
+  if (!MODIFIERS_RE.test(modifiersSegment)) {
+    throw badRequest('invalid modifiers');
+  }
+  if (!rawSrc) {
     throw badRequest('src is required');
   }
 
+  let src: string;
   let remote = false;
-  if (/^https?:\/\//.test(src)) {
+  const decodedSrc = safeDecode(rawSrc);
+  if (/^https?:\/\//.test(decodedSrc)) {
     let host: string;
     try {
-      host = new URL(src).hostname;
+      host = new URL(decodedSrc).hostname;
     } catch {
       throw badRequest('invalid src URL');
     }
     if (!options.domains.includes(host)) {
       throw badRequest('remote host not allowed');
     }
+    src = decodedSrc;
     remote = true;
   } else {
-    if (!src.startsWith('/')) {
-      throw badRequest('src must be an absolute path or an allowed URL');
-    }
-    if (src.split('/').some((segment) => segment === '..')) {
+    const segments = rawSrc.split('/').map(safeDecode);
+    if (segments.some((segment) => segment === '..' || segment === '')) {
       throw badRequest('invalid src path');
     }
+    src = '/' + segments.join('/');
   }
 
   let width: number | undefined;
-  if (query['w'] !== undefined) {
-    width = Number(query['w']);
-    if (!Number.isInteger(width) || width <= 0) {
-      throw badRequest('w must be a positive integer');
-    }
-    width = Math.min(width, options.maxWidth);
-  }
-
   let quality = options.quality;
-  if (query['q'] !== undefined) {
-    quality = Number(query['q']);
-    if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
-      throw badRequest('q must be an integer between 1 and 100');
+  let format: ImageFormat | undefined;
+
+  if (modifiersSegment !== '_') {
+    for (const modifier of modifiersSegment.split(',')) {
+      const value = modifier.slice(2);
+      switch (modifier[0]) {
+        case 'w': {
+          width = Number(value);
+          if (!Number.isInteger(width) || width <= 0) {
+            throw badRequest('w must be a positive integer');
+          }
+          width = Math.min(width, options.maxWidth);
+          break;
+        }
+        case 'q': {
+          quality = Number(value);
+          if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+            throw badRequest('q must be an integer between 1 and 100');
+          }
+          break;
+        }
+        case 'f': {
+          if (value !== 'avif' && value !== 'webp') {
+            throw badRequest('f must be avif or webp');
+          }
+          format = value;
+          break;
+        }
+      }
     }
   }
 
-  return { src, remote, width, quality };
+  return { src, remote, width, quality, format };
 }
 
 /**
@@ -94,6 +132,14 @@ export function negotiateFormat(
     }
   }
   return null;
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    throw badRequest('invalid encoding');
+  }
 }
 
 function badRequest(message: string): Error {

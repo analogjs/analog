@@ -14,7 +14,7 @@ function loader(
 describe('provideImageLoader', () => {
   it('routes local absolute paths through the endpoint', () => {
     expect(loader()({ src: '/images/hero.png', width: 640 })).toBe(
-      '/api/_image?src=%2Fimages%2Fhero.png&w=640',
+      '/api/_image/w_640/images/hero.png',
     );
   });
 
@@ -23,7 +23,9 @@ describe('provideImageLoader', () => {
       src: 'https://images.example.com/x.png',
       width: 640,
     });
-    expect(url).toContain('/api/_image?src=https%3A%2F%2Fimages.example.com');
+    expect(url).toBe(
+      '/api/_image/w_640/https%3A%2F%2Fimages.example.com%2Fx.png',
+    );
   });
 
   it('passes non-allowlisted remote hosts through untouched', () => {
