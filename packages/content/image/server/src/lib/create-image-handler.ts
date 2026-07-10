@@ -95,23 +95,27 @@ async function fetchRemote(src: string): Promise<Buffer> {
 }
 
 async function fetchLocal(event: H3Event, src: string): Promise<Buffer> {
-  // Production: Nitro serves the app's public assets itself.
-  try {
-    const { useNitroApp } = await import('nitropack/runtime');
-    const response = await useNitroApp().localFetch(src, { method: 'GET' });
+  // event.fetch is bound to the nitro app's internal fetch and serves
+  // the app's public assets in production and during prerendering.
+  const eventFetch = (event as { fetch?: (url: string) => Promise<Response> })
+    .fetch;
+  if (eventFetch) {
+    const response = await eventFetch(src);
     if (response.ok) {
       return Buffer.from(await response.arrayBuffer());
     }
-  } catch {
-    // no nitro runtime available — fall through to the origin fetch
   }
 
   // Development: static assets are served by the dev server, not the
   // nitro instance handling this request.
-  const { origin } = getRequestURL(event);
-  const response = await fetch(new URL(src, origin));
-  if (!response.ok) {
-    throw createError({ statusCode: 404, statusMessage: 'not found' });
+  try {
+    const { origin } = getRequestURL(event);
+    const response = await fetch(new URL(src, origin));
+    if (response.ok) {
+      return Buffer.from(await response.arrayBuffer());
+    }
+  } catch {
+    // no origin server (e.g. prerendering) — treat as not found
   }
-  return Buffer.from(await response.arrayBuffer());
+  throw createError({ statusCode: 404, statusMessage: 'not found' });
 }

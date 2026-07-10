@@ -53,11 +53,27 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
           handler: '#ANALOG_IMAGE_HANDLER',
         })),
       ],
+      modules: [
+        ...(nitroOptions?.modules ?? []),
+        {
+          name: 'analog-images',
+          setup: (nitro) => {
+            // Virtual plugin ids must be pushed after nitro's option
+            // resolution — the `plugins` config resolves entries as
+            // file paths against srcDir.
+            nitro.options.plugins.push('#ANALOG_IMAGE_PRERENDER');
+          },
+        },
+      ],
       virtual: {
         ...nitroOptions?.virtual,
         '#ANALOG_IMAGE_HANDLER': [
           `import { createImageHandler } from '@analogjs/content/image/server';`,
           `export default createImageHandler(${JSON.stringify(imagesOptions)});`,
+        ].join('\n'),
+        '#ANALOG_IMAGE_PRERENDER': [
+          `import { createImagePrerenderPlugin } from '@analogjs/content/image/server';`,
+          `export default createImagePrerenderPlugin(${JSON.stringify({ path: publicPath })});`,
         ].join('\n'),
       },
     };
