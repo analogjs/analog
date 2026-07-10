@@ -15,6 +15,12 @@ export interface MarkdownImagesOptions {
    * untouched.
    */
   domains?: string[];
+  /**
+   * Format fixed into srcset URLs instead of Accept negotiation.
+   * Required for static hosting. The base `src` keeps the source format
+   * as a fallback for browsers without srcset support.
+   */
+  format?: 'avif' | 'webp';
 }
 
 const MARKDOWN_IMAGES_DEFAULTS = {
@@ -25,17 +31,9 @@ const MARKDOWN_IMAGES_DEFAULTS = {
 /**
  * Marked extension that renders markdown images as responsive `<img>`
  * tags served through the image optimization endpoint. Build-time
- * counterpart of `withImageOptimization()` for apps that render content
- * through the vite content plugin.
- *
- * ```ts
- * // vite.config.ts
- * analog({
- *   content: {
- *     markedOptions: { extensions: [markdownImages({ sizes: '100vw' })] },
- *   },
- * })
- * ```
+ * counterpart of `provideOptimizedMarkdownImages()` for apps that render
+ * content through the vite content plugin. Registered automatically by
+ * the Analog platform plugin's `content.images` option.
  */
 export function markdownImages(
   options: MarkdownImagesOptions = {},
@@ -53,8 +51,9 @@ export function markdownImages(
 
         const widths = config.widths;
         const srcset = widths
-          .map((w) => `${buildUrl(config, href, w)} ${w}w`)
+          .map((w) => `${buildUrl(config, href, w, config.format)} ${w}w`)
           .join(', ');
+        // The base src keeps the source format as the srcset-less fallback
         const src = buildUrl(config, href, widths[widths.length - 1]);
 
         return (
@@ -87,8 +86,13 @@ function buildUrl(
   config: { path: string; quality?: number },
   src: string,
   width: number,
+  format?: 'avif' | 'webp',
 ): string {
-  const modifiers = [`w_${width}`, config.quality ? `q_${config.quality}` : '']
+  const modifiers = [
+    `w_${width}`,
+    config.quality ? `q_${config.quality}` : '',
+    format ? `f_${format}` : '',
+  ]
     .filter(Boolean)
     .join(',');
   const source = src.startsWith('/')

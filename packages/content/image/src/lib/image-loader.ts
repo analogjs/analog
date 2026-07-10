@@ -34,7 +34,14 @@ export function provideImageLoader(
       provide: IMAGE_LOADER,
       useValue: (loaderConfig: ImageLoaderConfig) =>
         isOptimizableSrc(config, loaderConfig.src)
-          ? buildImageUrl(config, loaderConfig.src, loaderConfig.width)
+          ? buildImageUrl(
+              config,
+              loaderConfig.src,
+              loaderConfig.width,
+              // NgOptimizedImage requests the base src without a width;
+              // that URL stays in the source format as the fallback.
+              loaderConfig.width ? config.format : undefined,
+            )
           : loaderConfig.src,
     },
   ];

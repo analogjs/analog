@@ -34,6 +34,11 @@ export type ContentImagesOptions = {
   quality?: number;
   /** Maximum width a client may request. */
   maxWidth?: number;
+  /**
+   * Format fixed into srcset URLs instead of Accept negotiation.
+   * Required for static hosting.
+   */
+  format?: 'avif' | 'webp';
 };
 
 export type ContentPluginOptions = {

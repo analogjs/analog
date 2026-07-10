@@ -34,6 +34,16 @@ describe('provideImageLoader', () => {
     );
   });
 
+  it('fixes the format into width variants only', () => {
+    const load = loader({ format: 'webp' });
+    expect(load({ src: '/images/hero.png', width: 640 })).toBe(
+      '/api/_image/w_640,f_webp/images/hero.png',
+    );
+    expect(load({ src: '/images/hero.png' })).toBe(
+      '/api/_image/_/images/hero.png',
+    );
+  });
+
   it('passes data URLs and relative paths through untouched', () => {
     const load = loader();
     expect(load({ src: 'data:image/png;base64,xyz' })).toBe(

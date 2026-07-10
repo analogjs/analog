@@ -28,8 +28,12 @@ export class OptimizedMarkedImages extends MarkedContentImages {
 
     const widths = this.config.widths;
     const srcset = widths
-      .map((w) => `${buildImageUrl(this.config, href, w)} ${w}w`)
+      .map(
+        (w) =>
+          `${buildImageUrl(this.config, href, w, this.config.format)} ${w}w`,
+      )
       .join(', ');
+    // The base src keeps the source format as the srcset-less fallback
     const src = buildImageUrl(this.config, href, widths[widths.length - 1]);
 
     return (

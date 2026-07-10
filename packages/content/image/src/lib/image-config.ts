@@ -10,6 +10,13 @@ export interface AnalogImageConfig {
   /** Default quality passed to the endpoint (1-100). */
   quality?: number;
   /**
+   * Format fixed into variant (srcset) URLs instead of Accept
+   * negotiation. Required for static hosting, where no server is
+   * present to negotiate. The base `src` keeps the source format as a
+   * fallback for browsers without srcset support.
+   */
+  format?: 'avif' | 'webp';
+  /**
    * Remote hosts routed through the endpoint. Must mirror the handler's
    * `domains` allowlist. Remote images from other hosts are left
    * untouched.
@@ -88,10 +95,12 @@ export function buildImageUrl(
   config: AnalogImageConfig,
   src: string,
   width?: number,
+  format?: 'avif' | 'webp',
 ): string {
   const modifiers = [
     width ? `w_${width}` : '',
     config.quality ? `q_${config.quality}` : '',
+    format ? `f_${format}` : '',
   ]
     .filter(Boolean)
     .join(',');

@@ -42,6 +42,7 @@ export default defineConfig(() => {
           images: {
             domains: ['images.unsplash.com'],
             sizes: '(max-width: 768px) 100vw, 768px',
+            format: 'webp',
           },
         },
         prerender: {

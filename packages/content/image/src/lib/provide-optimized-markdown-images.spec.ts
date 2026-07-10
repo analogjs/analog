@@ -76,6 +76,17 @@ describe('provideOptimizedMarkdownImages', () => {
     expect(html).toContain('srcset');
   });
 
+  it('fixes the format into srcset but keeps the src fallback unformatted', () => {
+    const html = renderImage(
+      { href: '/a.png', title: null, text: 'a' },
+      { widths: [640, 1280], format: 'webp' },
+    );
+
+    expect(html).toContain('w_640,f_webp/a.png 640w');
+    expect(html).toContain('w_1280,f_webp/a.png 1280w');
+    expect(html).toContain('src="/api/_image/w_1280/a.png"');
+  });
+
   it('escapes attribute values', () => {
     const html = renderImage({
       href: '/a.png',
