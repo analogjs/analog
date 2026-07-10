@@ -27,11 +27,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   const imagesOptions = platformOptions?.content?.images;
   if (imagesOptions) {
-    // Single source of truth for the image optimization config: the
-    // client-side loader and markdown renderers read it back from
-    // VITE_ANALOG_IMAGES.
-    process.env['VITE_ANALOG_IMAGES'] = JSON.stringify(imagesOptions);
-
     const apiPrefix = `/${platformOptions.apiPrefix || 'api'}`;
     const publicPath = imagesOptions.path ?? `${apiPrefix}/_image`;
     // The api middleware (and the dev server) strip the api prefix
@@ -102,6 +97,25 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
+    // Single source of truth for the image optimization config: the
+    // client-side loader and markdown renderers read it back from
+    // import.meta.env.VITE_ANALOG_IMAGES.
+    ...(imagesOptions
+      ? [
+          {
+            name: 'analog-content-images-config',
+            config() {
+              return {
+                define: {
+                  'import.meta.env.VITE_ANALOG_IMAGES': JSON.stringify(
+                    JSON.stringify(imagesOptions),
+                  ),
+                },
+              };
+            },
+          } satisfies Plugin,
+        ]
+      : []),
     ...viteNitroPlugin(platformOptions, nitroOptions),
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),

@@ -1,4 +1,13 @@
+/// <reference types="vite/client" />
+
 import { InjectionToken, inject } from '@angular/core';
+
+declare global {
+  interface ImportMetaEnv {
+    /** Serialized `content.images` config from the Analog vite plugin. */
+    readonly VITE_ANALOG_IMAGES?: string;
+  }
+}
 
 export interface AnalogImageConfig {
   /** Path to the image optimization endpoint. */
@@ -30,19 +39,14 @@ export const IMAGE_CONFIG_DEFAULTS: AnalogImageConfig = {
 };
 
 /**
- * Config serialized by the Analog vite plugin's `content.images` option
- * into `VITE_ANALOG_IMAGES`, so client and server share one source of
- * truth. Read via import.meta.env in bundled code and process.env in
- * externalized SSR modules.
+ * Config defined by the Analog vite plugin's `content.images` option as
+ * `import.meta.env.VITE_ANALOG_IMAGES`, so client and server share one
+ * source of truth. The dot-access below is replaced at build time;
+ * outside vite it evaluates to undefined.
  */
 export function envImageConfig(): Partial<AnalogImageConfig> {
   try {
-    const raw =
-      (import.meta as { env?: Record<string, string> }).env?.[
-        'VITE_ANALOG_IMAGES'
-      ] ??
-      (globalThis as { process?: { env?: Record<string, string> } }).process
-        ?.env?.['VITE_ANALOG_IMAGES'];
+    const raw = import.meta.env.VITE_ANALOG_IMAGES;
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
