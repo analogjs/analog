@@ -10,9 +10,8 @@ import {
 } from './image-config';
 
 /**
- * Provides an `IMAGE_LOADER` for `NgOptimizedImage` (and the `<Image />`
- * component) that resolves images through the Analog image optimization
- * endpoint.
+ * Provides an `IMAGE_LOADER` for `NgOptimizedImage` that resolves
+ * images through the Analog image optimization endpoint.
  *
  * Only local absolute paths and remote images from allowlisted `domains`
  * are routed through the endpoint; all other sources are left untouched.

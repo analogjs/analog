@@ -1,13 +1,13 @@
+import { NgOptimizedImage } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Image } from '@analogjs/content/image';
 import { contentFilesResource } from '@analogjs/content/resources';
 
 import { PostAttributes } from './models';
 
 @Component({
   standalone: true,
-  imports: [RouterLink, Image],
+  imports: [RouterLink, NgOptimizedImage],
   template: `
     <h1>Blog</h1>
 
@@ -16,8 +16,8 @@ import { PostAttributes } from './models';
         <li>
           <a [routerLink]="post.slug"> {{ post.attributes.title }}</a>
           @if (post.attributes.coverImage) {
-            <Image
-              [src]="post.attributes.coverImage"
+            <img
+              [ngSrc]="post.attributes.coverImage"
               [alt]="post.attributes.title"
               width="464"
               height="309"
