@@ -39,8 +39,25 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
         : `${publicPath}/**`,
     ]);
 
+    // Same-origin by default: no CORS sharing, and
+    // Cross-Origin-Resource-Policy blocks cross-origin embedding.
+    // Explicit routeRules for the same key override these.
+    const imageRouteRules = Object.fromEntries(
+      [...routes].map((route) => [
+        route,
+        {
+          cors: false,
+          headers: { 'Cross-Origin-Resource-Policy': 'same-origin' },
+        },
+      ]),
+    );
+
     nitroOptions = {
       ...nitroOptions,
+      routeRules: {
+        ...imageRouteRules,
+        ...nitroOptions?.routeRules,
+      },
       handlers: [
         ...(nitroOptions?.handlers ?? []),
         ...[...routes].map((route) => ({
