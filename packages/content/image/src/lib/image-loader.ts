@@ -4,9 +4,9 @@ import { Provider } from '@angular/core';
 import {
   ANALOG_IMAGE_CONFIG,
   AnalogImageConfig,
-  IMAGE_CONFIG_DEFAULTS,
   buildImageUrl,
   isOptimizableSrc,
+  mergedImageConfig,
 } from './image-config';
 
 /**
@@ -26,7 +26,7 @@ import {
 export function provideImageLoader(
   options: Partial<AnalogImageConfig> = {},
 ): Provider[] {
-  const config: AnalogImageConfig = { ...IMAGE_CONFIG_DEFAULTS, ...options };
+  const config: AnalogImageConfig = mergedImageConfig(options);
 
   return [
     { provide: ANALOG_IMAGE_CONFIG, useValue: config },

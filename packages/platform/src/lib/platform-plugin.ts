@@ -25,6 +25,44 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   let nitroOptions = platformOptions?.nitro;
 
+  const imagesOptions = platformOptions?.content?.images;
+  if (imagesOptions) {
+    // Single source of truth for the image optimization config: the
+    // client-side loader and markdown renderers read it back from
+    // VITE_ANALOG_IMAGES.
+    process.env['VITE_ANALOG_IMAGES'] = JSON.stringify(imagesOptions);
+
+    const apiPrefix = `/${platformOptions.apiPrefix || 'api'}`;
+    const publicPath = imagesOptions.path ?? `${apiPrefix}/_image`;
+    // The api middleware (and the dev server) strip the api prefix
+    // before requests reach nitro, while apps with a routes/api dir
+    // serve the full path — register both forms.
+    const routes = new Set([
+      publicPath,
+      publicPath.startsWith(`${apiPrefix}/`)
+        ? publicPath.slice(apiPrefix.length)
+        : publicPath,
+    ]);
+
+    nitroOptions = {
+      ...nitroOptions,
+      handlers: [
+        ...(nitroOptions?.handlers ?? []),
+        ...[...routes].map((route) => ({
+          route,
+          handler: '#ANALOG_IMAGE_HANDLER',
+        })),
+      ],
+      virtual: {
+        ...nitroOptions?.virtual,
+        '#ANALOG_IMAGE_HANDLER': [
+          `import { createImageHandler } from '@analogjs/content/image/server';`,
+          `export default createImageHandler(${JSON.stringify(imagesOptions)});`,
+        ].join('\n'),
+      },
+    };
+  }
+
   if (nitroOptions?.routeRules) {
     nitroOptions = {
       ...nitroOptions,

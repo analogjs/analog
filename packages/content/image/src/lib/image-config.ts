@@ -23,6 +23,32 @@ export const IMAGE_CONFIG_DEFAULTS: AnalogImageConfig = {
 };
 
 /**
+ * Config serialized by the Analog vite plugin's `content.images` option
+ * into `VITE_ANALOG_IMAGES`, so client and server share one source of
+ * truth. Read via import.meta.env in bundled code and process.env in
+ * externalized SSR modules.
+ */
+export function envImageConfig(): Partial<AnalogImageConfig> {
+  try {
+    const raw =
+      (import.meta as { env?: Record<string, string> }).env?.[
+        'VITE_ANALOG_IMAGES'
+      ] ??
+      (globalThis as { process?: { env?: Record<string, string> } }).process
+        ?.env?.['VITE_ANALOG_IMAGES'];
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function mergedImageConfig(
+  options: Partial<AnalogImageConfig>,
+): AnalogImageConfig {
+  return { ...IMAGE_CONFIG_DEFAULTS, ...envImageConfig(), ...options };
+}
+
+/**
  * Whether a `src` should be routed through the optimization endpoint:
  * local absolute paths always; remote URLs only when the host is
  * allowlisted; everything else (data/blob URLs, relative paths) never.

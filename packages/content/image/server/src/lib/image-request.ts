@@ -1,6 +1,4 @@
 export interface ImageHandlerOptions {
-  /** Directory local images are served from, relative to the server cwd. */
-  dir?: string;
   /** Allowlisted remote hosts. Empty (default) disables remote images. */
   domains?: string[];
   /** Maximum width a client may request. */
@@ -21,7 +19,6 @@ export interface ImageRequest {
 }
 
 export const IMAGE_HANDLER_DEFAULTS: Required<ImageHandlerOptions> = {
-  dir: 'public',
   domains: [],
   maxWidth: 2048,
   formats: ['avif', 'webp'],

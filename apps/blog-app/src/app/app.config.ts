@@ -17,7 +17,7 @@ export const appConfig: ApplicationConfig = {
       }),
       withShikiHighlighter(),
     ),
-    provideImageLoader({ domains: ['images.unsplash.com'] }),
+    provideImageLoader(),
     provideFileRouter(withInMemoryScrolling({ anchorScrolling: 'enabled' })),
   ],
 };

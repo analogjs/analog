@@ -15,11 +15,33 @@ interface Content {
   attributes: string;
 }
 
+/**
+ * Image optimization options. Must be JSON-serializable — they are
+ * inlined into the generated nitro handler and serialized into
+ * `VITE_ANALOG_IMAGES` for the client-side loader and markdown
+ * renderers. Requires `@analogjs/content` and `sharp` to be installed.
+ */
+export type ContentImagesOptions = {
+  /** Path to the image optimization endpoint. */
+  path?: string;
+  /** Allowlisted remote hosts. Empty (default) disables remote images. */
+  domains?: string[];
+  /** Widths emitted in markdown `srcset` attributes. */
+  widths?: number[];
+  /** Default `sizes` attribute for markdown-rendered images. */
+  sizes?: string;
+  /** Quality passed to the endpoint (1-100). */
+  quality?: number;
+  /** Maximum width a client may request. */
+  maxWidth?: number;
+};
+
 export type ContentPluginOptions = {
   highlighter?: 'shiki' | 'prism';
   markedOptions?: WithMarkedOptions;
   shikiOptions?: WithShikiHighlighterOptions;
   prismOptions?: WithPrismHighlighterOptions;
+  images?: ContentImagesOptions;
 };
 
 /**
@@ -38,6 +60,7 @@ export function contentPlugin(
     markedOptions,
     shikiOptions,
     prismOptions,
+    images,
   }: ContentPluginOptions = {},
   options?: Options,
 ): Plugin[] {
@@ -258,8 +281,26 @@ export function contentPlugin(
 
         // parse markdown and highlight
         const { getMarkedSetup } = await import('./content/marked/index.js');
+        let imagesExtensions: WithMarkedOptions['extensions'] = [];
+        if (images) {
+          const { markdownImages } = await import(
+            /* @vite-ignore */ '@analogjs/content/image/server'
+          ).catch(() => {
+            throw new Error(
+              '[Analog] `content.images` requires @analogjs/content and sharp to be installed',
+            );
+          });
+          imagesExtensions = [markdownImages(images)];
+        }
         const markedSetupService = getMarkedSetup(
-          { mangle: true, ...(markedOptions || {}) },
+          {
+            mangle: true,
+            ...(markedOptions || {}),
+            extensions: [
+              ...(markedOptions?.extensions || []),
+              ...imagesExtensions,
+            ],
+          },
           markedHighlighter,
         );
         const mdContent = (await markedSetupService

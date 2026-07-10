@@ -10,9 +10,9 @@ import {
 import {
   ANALOG_IMAGE_CONFIG,
   AnalogImageConfig,
-  IMAGE_CONFIG_DEFAULTS,
   buildImageUrl,
   isOptimizableSrc,
+  mergedImageConfig,
 } from './image-config';
 
 @Injectable()
@@ -69,7 +69,7 @@ export function provideOptimizedMarkdownImages(
   return [
     {
       provide: ANALOG_IMAGE_CONFIG,
-      useValue: { ...IMAGE_CONFIG_DEFAULTS, ...options },
+      useValue: mergedImageConfig(options),
     },
     { provide: MarkedContentImages, useClass: OptimizedMarkedImages },
     MarkedSetupService,
