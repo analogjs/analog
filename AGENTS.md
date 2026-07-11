@@ -2,13 +2,46 @@
 
 This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
+## Navigation (Router)
+
+Start here, then jump to the right resource. This file is the entry point; it routes
+you to skills, docs, tools, and governance rather than duplicating them.
+
+**Skills** (`.agents/skills/`):
+
+- `.agents/skills/review-pr.md` — review a PR for functional concerns; produces a verdict table.
+- `.agents/skills/pr-description.md` — generate a PR description that fills the PR template.
+
+**Docs & conventions:**
+
+- `CONTRIBUTING.md` — source of truth for base branch (`beta`), PR/commit conventions, supported types/scopes, dev/build/test commands.
+- `MAINTAINER.md` — maintainer-facing guidance (merge strategy, release).
+- `.github/PULL_REQUEST_TEMPLATE.md` — required PR body structure.
+- `apps/docs-app/docs/` — the Docusaurus documentation tree (getting-started, features, guides, integrations, packages).
+- `apps/docs-app/docs/features/testing/` — how testing works in Analog (e.g. `vitest.md`).
+- `apps/docs-app/docs/integrations/ai/index.md` — the published `llms.txt` / `llms-full.txt` AI-ingestion indexes.
+- `AGENTIC_WORKFLOW_AUDIT.md` — audit + roadmap for this repo's agentic tooling; read it before extending the agent workflow.
+
+**Tools** (`tools/`):
+
+- `tools/publish.sh`, `tools/scripts/publish.mjs` — release/publish scripts (used by CI).
+
+**Governance & review config:**
+
+- `.github/pr-scope-map.json` + `.github/workflows/pr-scope-governance.yml` — file-prefix → label/scope mapping and the action that applies it.
+- `.coderabbit.yaml` — CodeRabbit AI review config, with per-package-scope instructions.
+- `.github/instructions/nx.instructions.md` — how to use the Nx MCP server (`nx_workspace`, `nx_generators`, CI-fix tools).
+- `commitlint.config.cjs` — enforced commit `type`/`scope` enums.
+
+For per-package commit scopes, use the **Packages → Commit Scopes** table below.
+
 ## Overview
 
 - **Monorepo** managed by [Nx](https://nx.dev) and [pnpm](https://pnpm.io/)
 - Main framework: **AnalogJS** (meta-framework for Angular, powered by Vite)
 - Contains multiple apps (Angular, Astro, blog, docs, trpc, etc.) and libraries (shared, card, top-bar, etc.)
 - Key packages: `@analogjs/platform`, `@analogjs/vite-plugin-angular`, `@analogjs/vitest-angular`, `@analogjs/vite-plugin-nitro`, `@analogjs/router`, etc.
-- Node engines: `^22.0.0 || ^24.0.0`, pnpm `^10.0.0`
+- Node engines: `^22.22.3 || ^24.15.0 || ^26.0.0`, pnpm `^11.0.0` (see `package.json`)
 
 ## Key Files
 
