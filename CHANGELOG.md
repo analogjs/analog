@@ -1,3 +1,9 @@
+## [2.6.4-beta.1](https://github.com/analogjs/analog/compare/v2.6.3...v2.6.4-beta.1) (2026-07-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip vmThreads pool default in browser mode ([#2423](https://github.com/analogjs/analog/issues/2423)) ([9cb7dc1](https://github.com/analogjs/analog/commit/9cb7dc1fd97facf531870c1d73458ea2ee1d9f2c)), closes [#2222](https://github.com/analogjs/analog/issues/2222)
+
 ## [2.6.3](https://github.com/analogjs/analog/compare/v2.6.2...v2.6.3) (2026-07-07)
 
 ### Bug Fixes
