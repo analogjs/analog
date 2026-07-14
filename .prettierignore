@@ -6,6 +6,7 @@
 .docusaurus/
 pnpm-lock.yaml
 /.nx/cache
+packages/vite-plugin-angular/tcb-vendor
 .angular
 /.nx/workspace-data
 /packages/create-analog/template-*

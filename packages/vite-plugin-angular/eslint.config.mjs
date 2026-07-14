@@ -2,7 +2,9 @@ import baseConfig from '../../eslint.config.mjs';
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc'],
+    // `tcb-vendor/` is a verbatim upstream snapshot (see tcb-vendor/VENDORING.md);
+    // never lint or reformat it, so refreshes stay diff-clean against Angular.
+    ignores: ['**/dist', '**/out-tsc', 'tcb-vendor/**'],
   },
   ...baseConfig,
   {
