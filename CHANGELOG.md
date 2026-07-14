@@ -1,3 +1,9 @@
+## [2.6.4-beta.2](https://github.com/analogjs/analog/compare/v2.6.4-beta.1...v2.6.4-beta.2) (2026-07-14)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure @nx/eslint is installed when applying the preset ([#2424](https://github.com/analogjs/analog/issues/2424)) ([2a9ab32](https://github.com/analogjs/analog/commit/2a9ab3286068b85478b29c4e0be81788913ca30e))
+
 ## [2.6.4-beta.1](https://github.com/analogjs/analog/compare/v2.6.3...v2.6.4-beta.1) (2026-07-11)
 
 ### Bug Fixes
