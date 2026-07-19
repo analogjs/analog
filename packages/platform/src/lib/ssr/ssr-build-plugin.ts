@@ -1,13 +1,7 @@
-import { createRequire } from 'node:module';
 import * as vite from 'vite';
 
 /**
  * SSR build patches for Angular platform-server, Zone.js, and Domino.
- *
- * Returns an array of Vite plugins because under Vite 8+ (Rolldown) we
- * append Rolldown's built-in `replacePlugin` for an AST-safe
- * `global → globalThis` rewrite that avoids false positives inside string
- * literals and comments.
  *
  * **Why each patch exists:**
  * - zone-node: removes a `const global = globalThis` alias that shadows the
@@ -49,17 +43,15 @@ export function ssrBuildPlugin(): vite.Plugin[] {
               'new (xhr2.default.XMLHttpRequest || xhr2.default)',
             );
 
-            // Under Vite 8+ the appended `replacePlugin` handles
-            // global → globalThis via AST-aware replacement (scoped to
-            // platform-server by `withFilter`).  For Vite ≤7 we fall back
-            // to text-based replaceAll — imprecise but sufficient for the
-            // known occurrences in @angular/platform-server bundles.
-            if (!vite.rolldownVersion) {
-              result = result
-                .replaceAll('global.', 'globalThis.')
-                .replaceAll('global,', 'globalThis,')
-                .replaceAll(' global[', ' globalThis[');
-            }
+            // Narrowly scoped text replacement of the bare `global`
+            // identifier. Matching `global.`, `global,` and ` global[`
+            // targets the known occurrences in the @angular/platform-server
+            // bundle while leaving strings, comments and asset paths that
+            // merely contain the word `global` untouched (see #2426).
+            result = result
+              .replaceAll('global.', 'globalThis.')
+              .replaceAll('global,', 'globalThis,')
+              .replaceAll(' global[', ' globalThis[');
 
             return { code: result };
           }
@@ -85,30 +77,6 @@ export function ssrBuildPlugin(): vite.Plugin[] {
       },
     },
   ];
-
-  // Under Vite 8+ (Rolldown), append Rolldown's built-in `replacePlugin`
-  // for AST-aware `global → globalThis` rewriting scoped to platform-server.
-  //
-  // `createRequire` is used instead of dynamic `import()` because this code
-  // runs synchronously during plugin construction (not inside an async hook).
-  // Rolldown is guaranteed to be installed when `vite.rolldownVersion` is truthy.
-  if (vite.rolldownVersion) {
-    const require = createRequire(import.meta.url);
-    const { replacePlugin } =
-      require('rolldown/plugins') as typeof import('rolldown/plugins');
-    const { withFilter } =
-      require('rolldown/filter') as typeof import('rolldown/filter');
-
-    plugins.push(
-      withFilter(
-        replacePlugin(
-          { global: 'globalThis' },
-          { preventAssignment: true, objectGuards: true },
-        ),
-        { transform: { id: /platform-server/ } },
-      ) as unknown as vite.Plugin,
-    );
-  }
 
   return plugins;
 }
