@@ -1,3 +1,9 @@
+# [3.0.0-alpha.62](https://github.com/analogjs/analog/compare/v3.0.0-alpha.61...v3.0.0-alpha.62) (2026-07-19)
+
+### Bug Fixes
+
+- **platform:** remove Rolldown replacePlugin from SSR build patch ([#2427](https://github.com/analogjs/analog/issues/2427)) ([1342874](https://github.com/analogjs/analog/commit/13428740fba30e8f55bc784c3611c4c936e6507f))
+
 # [3.0.0-alpha.61](https://github.com/analogjs/analog/compare/v3.0.0-alpha.60...v3.0.0-alpha.61) (2026-07-08)
 
 ### Bug Fixes
