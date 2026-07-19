@@ -360,7 +360,16 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          await performCompilation(resolvedConfig);
+          // Assign `pendingCompilation` before awaiting so the guard in
+          // `transform` serializes concurrent transforms against this initial
+          // build-mode compilation. Rollup runs `buildStart` hooks in parallel,
+          // so a plugin that pulls modules through the pipeline from its own
+          // `buildStart` (e.g. `@module-federation/vite` emitting its exposed
+          // chunks) can otherwise reach `transform` before `fileEmitter` has
+          // output, and the Angular files silently fall through to esbuild
+          // without AOT. (#2425)
+          pendingCompilation = performCompilation(resolvedConfig);
+          await pendingCompilation;
           pendingCompilation = null;
 
           initialCompilation = true;
