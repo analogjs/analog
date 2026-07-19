@@ -90,6 +90,30 @@ describe('SSR build plugin patches', () => {
     });
   });
 
+  it('leaves `global` inside strings and asset paths untouched', () => {
+    // Regression for #2426: the word `global` in string literals and asset
+    // paths must never be rewritten, including under Vite 8+ (Rolldown).
+    mockRolldownVersion = '1.1.4';
+    const handler = getTransformHandler();
+
+    const result = handler(
+      [
+        'const text = "global leader";',
+        'const asset = "global-map.svg";',
+        'global.fetch();',
+      ].join('\n'),
+      '/node_modules/@angular/platform-server/fesm2022/platform-server.mjs',
+    );
+
+    expect(result).toEqual({
+      code: [
+        'const text = "global leader";',
+        'const asset = "global-map.svg";',
+        'globalThis.fetch();',
+      ].join('\n'),
+    });
+  });
+
   it('patches xhr2 node-specific process and os accesses', () => {
     const handler = getTransformHandler();
 
