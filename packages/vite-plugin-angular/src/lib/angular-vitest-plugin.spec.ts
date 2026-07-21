@@ -30,4 +30,25 @@ describe(angularVitestPlugin.name, () => {
     );
     expect(config.test?.pool).toBe('threads');
   });
+
+  /* In browser mode a Node pool is a no-op for execution but disables
+   * per-file isolation (`isolate` has no effect under VM pools, and browser
+   * isolation inherits it since Vitest 4.0.7), leaking global state such as
+   * fake timers across spec files. The plugin must not force a pool then.
+   * Cf. https://github.com/analogjs/analog/issues/2222 */
+  it('should not force a pool when browser mode is enabled', async () => {
+    const config = await resolveConfig(
+      defineConfig({
+        plugins: [angularVitestPlugin()],
+        test: {
+          browser: {
+            enabled: true,
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      }),
+      'serve',
+    );
+    expect(config.test?.pool).toBeUndefined();
+  });
 });
