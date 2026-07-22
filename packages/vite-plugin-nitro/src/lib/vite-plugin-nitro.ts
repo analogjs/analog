@@ -23,6 +23,7 @@ import { getServerFnHandlers } from './utils/get-server-fn-handlers.js';
 import {
   buildServerFnDispatchModule,
   getServerFnDispatchHandler,
+  SERVER_FN_DISPATCH_PREFIX,
   SERVER_FN_DISPATCH_VIRTUAL,
 } from './utils/server-fn-endpoints.js';
 import { buildSitemap } from './build-sitemap.js';
@@ -65,6 +66,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
+  let hasServerFns = false;
   const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
@@ -125,8 +127,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           rootDir,
           sourceRoot,
         );
-        const serverFnHandlers =
-          serverFnModules.length > 0 ? [getServerFnDispatchHandler()] : [];
+        hasServerFns = serverFnModules.length > 0;
+        const serverFnHandlers = hasServerFns
+          ? [getServerFnDispatchHandler()]
+          : [];
         const serverFnVirtual =
           serverFnModules.length > 0
             ? {
@@ -171,6 +175,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           imports: {
             autoImport: false,
           },
+          // The dispatch module's imports are all bare side-effect imports —
+          // the JIT compiler it needs, and each `*.server.ts` whose import is
+          // what registers its functions. Nitro treeshakes those away unless
+          // the modules are declared side-effectful, which would leave every
+          // call 404ing against an empty registry.
+          ...(hasServerFns
+            ? {
+                moduleSideEffects: [
+                  '@angular/compiler',
+                  ...serverFnModules.map((m) => normalizePath(m.file)),
+                ],
+              }
+            : {}),
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -392,7 +409,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ...nitroConfig.externals,
                 external: ['rxjs', 'node-fetch-native/dist/polyfill'],
               },
-              moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
+              moduleSideEffects: [
+                'zone.js/node',
+                'zone.js/fesm2015/zone-node',
+                ...(nitroConfig.moduleSideEffects ?? []),
+              ],
               handlers: [
                 ...(hasAPIDir
                   ? []
@@ -514,6 +535,27 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           const server = createDevServer(nitro);
           await build(nitro);
           const apiHandler = toNodeListener(server.app as unknown as App);
+
+          // Server functions dispatch through `/_analog/fn/:id`, outside the
+          // API prefix the Nitro dev server is mounted under, so route them
+          // explicitly — otherwise a call falls through to the SSR catch-all
+          // and the client gets HTML back instead of its result.
+          if (hasServerFns) {
+            viteServer.middlewares.use(
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (error?: unknown) => void,
+              ) => {
+                if (req.url?.startsWith(SERVER_FN_DISPATCH_PREFIX)) {
+                  apiHandler(req, res);
+                  return;
+                }
+
+                next();
+              },
+            );
+          }
 
           if (hasAPIDir) {
             viteServer.middlewares.use(

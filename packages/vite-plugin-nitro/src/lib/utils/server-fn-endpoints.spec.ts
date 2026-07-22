@@ -38,6 +38,16 @@ describe('buildServerFnDispatchModule', () => {
     );
   });
 
+  it('loads the Angular JIT compiler, which the linker never reaches here', () => {
+    const src = buildServerFnDispatchModule({ modules });
+
+    // Must be first: the partially-compiled Angular imports below it are
+    // evaluated in order, and they need the compiler already registered.
+    expect(src.trimStart().startsWith(`import '@angular/compiler';`)).toBe(
+      true,
+    );
+  });
+
   it('imports app providers when a providers module is given', () => {
     const src = buildServerFnDispatchModule({
       modules,

@@ -12,6 +12,9 @@ export const SERVER_FN_DISPATCH_VIRTUAL = '#ANALOG_SERVER_FN_DISPATCH';
 /** The single transport route all server functions dispatch through. */
 export const SERVER_FN_DISPATCH_ROUTE = '/_analog/fn/:id';
 
+/** URL prefix of that route, for matching requests before the id is known. */
+export const SERVER_FN_DISPATCH_PREFIX = '/_analog/fn/';
+
 /**
  * The Nitro handler registration for the server-function dispatch route.
  * Unlike page endpoints (one handler per file), every server function shares
@@ -62,7 +65,11 @@ export function buildServerFnDispatchModule({
       )};`
     : `const serverFnAppProviders = [];`;
 
-  return `import { eventHandler, getRouterParam, readBody } from 'h3';
+  // `@analogjs/router/server` is a partially-compiled Angular library, and this
+  // module is bundled by Nitro rather than by the app's Angular pipeline, so the
+  // linker never runs over it. Loading the compiler gives it the JIT fallback.
+  return `import '@angular/compiler';
+import { eventHandler, getRouterParam, readBody } from 'h3';
 import { Injector } from '@angular/core';
 import { dispatchServerFn } from '@analogjs/router/server';
 
