@@ -5,10 +5,10 @@ import { scrubServerFnModule } from './server-fn-client-transform.js';
 
 export function clearClientPageEndpointsPlugin(): Plugin {
   let projectRoot = process.cwd();
+  let isBuild = true;
 
   return {
     name: 'analogjs-platform-clear-client-page-endpoint',
-    apply: 'build',
     config() {
       return {
         build: {
@@ -27,6 +27,7 @@ export function clearClientPageEndpointsPlugin(): Plugin {
     },
     configResolved(config) {
       projectRoot = config.root;
+      isBuild = config.command === 'build';
     },
     transform(code, id, options) {
       if (!id.endsWith('.server.ts')) {
@@ -51,11 +52,17 @@ export function clearClientPageEndpointsPlugin(): Plugin {
       // tree-shake away.
       const scrubbed = scrubServerFnModule(code, fileId);
       if (scrubbed) {
-        return { code: scrubbed.code, map: null };
+        // An empty mapping, not `null`: a null map lets the original module —
+        // handlers and all — survive in `sourcesContent` further down the
+        // pipeline, which would ship the server code to the browser after the
+        // scrub went to the trouble of removing it.
+        return { code: scrubbed.code, map: { mappings: '' } };
       }
 
-      // Page load/action endpoints carry no client-consumable exports.
-      if (id.includes(normalizePath('src/app/pages'))) {
+      // Page load/action endpoints carry no client-consumable exports. Only the
+      // client build empties them; the dev server never pulls them into the
+      // browser graph, and emptying them there would break the SSR request.
+      if (isBuild && id.includes(normalizePath('src/app/pages'))) {
         return {
           code: 'export default undefined;',
           map: null,
