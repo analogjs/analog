@@ -3,9 +3,10 @@ import {
   runInInjectionContext,
   type StaticProvider,
 } from '@angular/core';
-import { REQUEST, RESPONSE } from '@analogjs/router/tokens';
+import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
 import type { H3Event } from 'h3';
 
+import { detectLocale, getBaseUrl } from '../provide-server-context';
 import { serverFnRegistry } from './registry';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
 import {
@@ -17,8 +18,13 @@ import {
 export interface DispatchResult {
   status: number;
   body: unknown;
-  /** Headers from a returned `Response` (`fail`/`redirect`): Location, Set-Cookie, … */
-  headers?: Record<string, string>;
+  /**
+   * Headers from a returned `Response` (`fail`/`redirect`): Location, … The
+   * value is an array when the header legitimately repeats, which is why
+   * `Set-Cookie` is read separately below — collapsing several cookies into one
+   * comma-joined value corrupts them.
+   */
+  headers?: Record<string, string | string[]>;
 }
 
 export interface DispatchServerFnOptions {
@@ -124,13 +130,19 @@ export async function dispatchServerFn(
     input = (result as { value: unknown }).value;
   }
 
-  // Child of the app injector: only REQUEST/RESPONSE are per-request; app
-  // services + interceptors resolve up the parent chain.
+  // Child of the app injector: only the request tokens are per-request; app
+  // services + interceptors resolve up the parent chain. All four are provided
+  // here so a handler resolves them the same way it would inside a component
+  // during SSR, whether it was reached over HTTP or in-process.
+  const req = event.node.req as Parameters<typeof getBaseUrl>[0];
+  const locale = detectLocale(req);
   const injector = Injector.create({
     parent,
     providers: [
       { provide: REQUEST, useValue: event.node.req },
       { provide: RESPONSE, useValue: event.node.res },
+      { provide: BASE_URL, useValue: getBaseUrl(req) },
+      ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
       ...providers,
     ],
   });
@@ -150,10 +162,18 @@ export async function dispatchServerFn(
   if (outcome instanceof Response) {
     const text = await outcome.text();
     const body = text ? safeJson(text) : null;
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string | string[]> = {};
     outcome.headers.forEach((value, key) => {
-      headers[key] = value;
+      if (key.toLowerCase() !== 'set-cookie') {
+        headers[key] = value;
+      }
     });
+    // `Headers.forEach` yields cookies comma-joined into a single value, which
+    // is not a valid way to send more than one; `getSetCookie` keeps them apart.
+    const setCookie = outcome.headers.getSetCookie?.() ?? [];
+    if (setCookie.length) {
+      headers['set-cookie'] = setCookie;
+    }
     return {
       status: outcome.status,
       body,

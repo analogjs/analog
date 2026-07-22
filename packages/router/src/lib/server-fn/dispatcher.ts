@@ -10,10 +10,16 @@ import type { ServerFn } from './types';
  * render instead of making an HTTP request back into the app. Absent in the
  * browser, where `ServerFnClient` falls back to `HttpClient`.
  *
- * `injector` is the caller's injector, passed rather than captured because
- * `provideServerContext` is applied as platform providers: the app's
- * `providedIn: 'root'` services live below that, in the injector the caller
- * resolves from.
+ * `injector` is the **app environment injector** — `ServerFnClient` is
+ * `providedIn: 'root'`, and SSR bootstraps a fresh application per request, so
+ * its injector is both per-request and the right scope for a handler to resolve
+ * from. It is passed rather than captured from the token because
+ * `provideServerContext` is applied as *platform* providers, which sit above
+ * the app's `providedIn: 'root'` services.
+ *
+ * Deliberately not a component's node injector: a handler resolves app-level
+ * services, and making that depend on which component happened to call it would
+ * be surprising and unportable.
  */
 export type ServerFnDispatcher = <In, Out>(
   fn: ServerFn<In, Out>,

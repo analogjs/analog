@@ -1,5 +1,5 @@
 import { Injectable, Injector, inject } from '@angular/core';
-import { REQUEST } from '@analogjs/router/tokens';
+import { BASE_URL, LOCALE, REQUEST } from '@analogjs/router/tokens';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { dispatchServerFn } from './dispatch';
@@ -55,6 +55,43 @@ describe('dispatchServerFn', () => {
     );
 
     expect(result).toEqual({ status: 200, body: 'hello ada from localhost' });
+  });
+
+  it('provides the request tokens a component would see during SSR', async () => {
+    serverFn({ id: 'tokens' }, async () => ({
+      baseUrl: inject(BASE_URL),
+      locale: inject(LOCALE, { optional: true }),
+    }));
+
+    const result = await dispatchServerFn(
+      'tokens',
+      undefined,
+      eventFor({ host: 'example.com', 'accept-language': 'fr-CA,fr;q=0.9' }),
+      { method: 'GET' },
+    );
+
+    expect(result.body).toEqual({
+      baseUrl: 'http://example.com',
+      locale: 'fr-CA',
+    });
+  });
+
+  it('keeps each Set-Cookie separate instead of comma-joining them', async () => {
+    serverFn({ id: 'cookies' }, async () => {
+      const headers = new Headers();
+      headers.append('set-cookie', 'a=1; Path=/');
+      headers.append('set-cookie', 'b=2; Path=/');
+      return new Response(null, { status: 204, headers });
+    });
+
+    const result = await dispatchServerFn('cookies', undefined, eventFor(), {
+      method: 'GET',
+    });
+
+    expect(result.headers?.['set-cookie']).toEqual([
+      'a=1; Path=/',
+      'b=2; Path=/',
+    ]);
   });
 
   it('404s an unknown function', async () => {
