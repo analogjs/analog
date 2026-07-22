@@ -32,15 +32,31 @@ export default eventHandler(async () => {
 `;
 
 export const apiMiddleware = `
-import { eventHandler, proxyRequest } from 'h3';
+import { createError, eventHandler, proxyRequest } from 'h3';
 import { useRuntimeConfig } from '#imports';
 
 export default eventHandler(async (event) => {
   const prefix = useRuntimeConfig().prefix;
   const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
 
-  if (event.node.req.url?.startsWith(apiPrefix)) {
-    const reqUrl = event.node.req.url?.replace(apiPrefix, '');
+  const url = event.node.req.url || '';
+
+  // only match the prefix on a path boundary, otherwise a URL such as
+  // '/apihttp://internal-host' would pass startsWith() and be forwarded verbatim
+  if (
+    url === apiPrefix ||
+    url.startsWith(\`\${apiPrefix}/\`) ||
+    url.startsWith(\`\${apiPrefix}?\`)
+  ) {
+    let reqUrl = url.slice(apiPrefix.length);
+    if (reqUrl === '' || reqUrl.startsWith('?')) {
+      reqUrl = \`/\${reqUrl}\`;
+    }
+
+    // reject absolute and protocol-relative targets to prevent SSRF
+    if (!reqUrl.startsWith('/') || reqUrl.startsWith('//')) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid API route' });
+    }
 
     if (
       event.node.req.method === 'GET' &&
