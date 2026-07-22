@@ -1,4 +1,8 @@
-import { StaticProvider, ɵresetCompiledComponents } from '@angular/core';
+import {
+  Injector,
+  StaticProvider,
+  ɵresetCompiledComponents,
+} from '@angular/core';
 import { ɵSERVER_CONTEXT as SERVER_CONTEXT } from '@angular/platform-server';
 
 import {
@@ -9,6 +13,9 @@ import {
   ServerRequest,
   ServerResponse,
 } from '@analogjs/router/tokens';
+import { SERVER_FN_DISPATCHER } from '@analogjs/router';
+
+import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 
 export function provideServerContext({
   req,
@@ -29,6 +36,13 @@ export function provideServerContext({
     { provide: REQUEST, useValue: req },
     { provide: RESPONSE, useValue: res },
     { provide: BASE_URL, useValue: baseUrl },
+    // Server functions called while rendering run in-process, in this injector.
+    {
+      provide: SERVER_FN_DISPATCHER,
+      useFactory: (injector: Injector) =>
+        createServerFnDispatcher(req, res, injector),
+      deps: [Injector],
+    },
     ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
   ];
 }

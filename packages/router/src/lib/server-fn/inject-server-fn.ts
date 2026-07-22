@@ -11,17 +11,33 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import type { ServerFn } from './types';
+import { SERVER_FN_DISPATCHER } from './dispatcher';
 
 /**
- * Client transport for server functions. Goes through Angular `HttpClient`, so
- * client `HttpInterceptorFn`s apply. Lives in the client entry (client-safe).
+ * Client transport for server functions. In the browser it goes through Angular
+ * `HttpClient`, so client `HttpInterceptorFn`s apply. During SSR the dispatcher
+ * token is provided, and the call short-circuits the HTTP round-trip: the
+ * handler runs in-process in the current request injector. Lives in the client
+ * entry (client-safe).
  */
 @Injectable({ providedIn: 'root' })
 export class ServerFnClient {
   private readonly http = inject(HttpClient);
   private readonly transferState = inject(TransferState);
+  private readonly dispatcher = inject(SERVER_FN_DISPATCHER, {
+    optional: true,
+  });
+
+  /** True while rendering on the server (the in-process dispatcher is provided). */
+  get isServer(): boolean {
+    return !!this.dispatcher;
+  }
 
   async call<In, Out>(fn: ServerFn<In, Out>, input: In): Promise<Out> {
+    if (this.dispatcher) {
+      return this.dispatcher(fn, input);
+    }
+
     const request$ =
       fn.method === 'GET'
         ? this.http.get<Out>(fn.url)
@@ -90,7 +106,9 @@ export function injectServerFn<In, Out>(
       const seeded = client.readSeed(fn as ServerFn<unknown, Out>, input);
       if (seeded !== undefined) return seeded;
       const value = await client.call(fn, input);
-      client.writeSeed(fn as ServerFn<unknown, Out>, input, value);
+      if (client.isServer) {
+        client.writeSeed(fn as ServerFn<unknown, Out>, input, value);
+      }
       return value;
     },
   });

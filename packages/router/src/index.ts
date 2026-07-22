@@ -30,6 +30,10 @@ export {
   createServerFnRef,
   type ServerFnRefConfig,
 } from './lib/server-fn/server-fn-ref';
+export {
+  SERVER_FN_DISPATCHER,
+  type ServerFnDispatcher,
+} from './lib/server-fn/dispatcher';
 export type {
   ServerFn,
   ServerFnConfig,
