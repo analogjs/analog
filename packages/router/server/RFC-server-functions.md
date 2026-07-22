@@ -351,8 +351,10 @@ unaffected — the guard blocks exactly the cross-origin browser request it exis
 to stop. The guard is gated on the transport passing the request `method`, so
 trusted in-process callers (which omit it) are exempt. The framework does not add
 permissive CORS headers for server functions; an app that genuinely needs
-cross-origin access opts in explicitly via `allowedOrigins` (a list of permitted
-origins, or `'*'` to disable the check), not by default.
+cross-origin access opts in explicitly via
+`provideServerFns(withAllowedOrigins([...]))` (a list of permitted origins, or
+`'*'` to disable the check), not by default. Dispatch reads the allow-list off
+the app injector before the registry lookup, so the guard still runs first.
 
 Input-bearing server functions use `POST` with a JSON body. The endpoint rejects
 unsupported content types for JSON server function calls with `415`, rejects
@@ -451,7 +453,12 @@ Both helpers go through the same injected transport, so client interceptors appl
 either way. During SSR
 the transport short-circuits the
 HTTP round-trip and invokes the handler in-process within the request injector;
-HTTP is only the browser transport.
+HTTP is only the browser transport. The seam is a DI token: `provideServerContext`
+provides `SERVER_FN_DISPATCHER`, which `ServerFnClient` prefers when present and
+which is simply absent in the browser. The caller's injector is passed to the
+dispatcher rather than captured with the token, because `provideServerContext` is
+applied as _platform_ providers — above the app's `providedIn: 'root'` services,
+which a handler must be able to resolve.
 
 `ServerFnClient` is the lower-level injectable the callable form is built on
 (`inject(ServerFnClient).call(fn, input)`); reach for it only when you need the
@@ -520,6 +527,9 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 | `packages/router/server/src/index.ts`                                    | export the server authoring + dispatch surface                                                                                                                                                                                                                                                            |
 | `packages/router/src/lib/server-fn/types.ts`                             | **new** — client-safe shared types (`ServerFn`, `ServerFnConfig`, `ServerFnContext`, `StandardSchemaV1`, …)                                                                                                                                                                                               |
 | `packages/router/src/lib/server-fn/server-fn-ref.ts`                     | **new** — `createServerFnRef` factory shared by the server `serverFn` and the client scrub proxy (identical `{ __serverFn, id, url, method }` refs)                                                                                                                                                       |
+| `packages/router/src/lib/server-fn/dispatcher.ts`                        | **new** — `SERVER_FN_DISPATCHER`, the client-safe token `ServerFnClient` uses to run a call in-process instead of over HTTP                                                                                                                                                                               |
+| `packages/router/server/src/server-fn/ssr-dispatcher.ts`                 | **new** — `createServerFnDispatcher(req, res)`: the SSR leg, dispatching with the caller's injector as parent and no `method` (a trusted in-process caller), surfacing non-2xx as `HttpErrorResponse`                                                                                                     |
+| `packages/router/server/src/provide-server-context.ts`                   | provide `SERVER_FN_DISPATCHER` alongside the request tokens                                                                                                                                                                                                                                               |
 | `packages/router/src/lib/server-fn/inject-server-fn.ts`                  | **new** — `injectServerFn` (reactive read → `resource()`, `TransferState` hydration, idle on `undefined` args), `injectServerFnMutation` (imperative write → bound callable), `ServerFnClient` (over `HttpClient`), `provideServerFnClient`                                                               |
 | `packages/router/src/index.ts`                                           | export the client surface + `createServerFnRef`                                                                                                                                                                                                                                                           |
 | `packages/vite-plugin-nitro/src/lib/utils/derive-server-fn-id.ts`        | **new** — `deriveServerFnId` (`hash(fileId+export)`) + `serverFnFileId`; dependency-light single source of truth, exported as `@analogjs/vite-plugin-nitro/server-fn-id`                                                                                                                                  |
@@ -529,7 +539,7 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 | `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set; builds the app `Injector` once and dispatches with `{ parent: appInjector, method: event.method }`                                                           |
 | `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + providers-module convention                                                                                                                                                      |
 | `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })` with the **derived** id, dropping handler + imports                                                                                                                     |
-| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client build → scrub to proxies; SSR build → `injectServerFnIds` (keep handlers); else page `export default undefined;`; `<projectRoot>/src/**` scope                                                                                                                                                     |
+| `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client → scrub to proxies (empty sourcemap, so the original module cannot ride along in `sourcesContent`); SSR → `injectServerFnIds` (keep handlers); else page `export default undefined;` on the build only. Runs in `serve` as well as `build` — dev SSR needs the ids too                             |
 
 ### Data flow
 
@@ -631,15 +641,30 @@ consumption).
 - **Server id injection** (`inject-server-fn-ids.spec.ts`, 4): stamps the derived
   id into each config while keeping the handler, overwrites a stray author id,
   resolves an aliased `serverFn`, null when none present.
-- **Discovery** (`get-server-fn-handlers.spec.ts`, 4): globs `src/**/*.server.ts`
-  incl. page files, excludes SSR config + non-`.server.ts`, deterministic sorted
-  de-duped output, `additionalServerFnDirs`.
-- **Endpoint generation** (`server-fn-endpoints.spec.ts`, 7): the `/_analog/fn/:id`
+- **Discovery** (`get-server-fn-handlers.spec.ts`, 6): globs `src/**/*.server.ts`
+  incl. page files, excludes SSR config + non-`.server.ts`, excludes the SSR
+  entries at the top of the source root (`main.server.ts`) while keeping a page
+  of the same name, deterministic sorted de-duped output,
+  `additionalServerFnDirs`.
+- **Endpoint generation** (`server-fn-endpoints.spec.ts`, 8): the `/_analog/fn/:id`
   registration (never `/api`-prefixed), and the generated virtual module — module
   registration imports, provider wiring vs. empty fallback, and dispatch by router
   param that builds the app injector once (`Injector.create({ providers:
 serverFnAppProviders })`) and passes `{ parent: appInjector, method:
-event.method }` while propagating response headers.
+event.method }` while propagating response headers; the Angular JIT compiler
+  loaded first, since the linker never runs over a Nitro-bundled module.
+- **Dispatch** (`dispatch.spec.ts`, 9): `inject()` in a handler resolving from the
+  parent app injector, 404/405/415/400 rejections, interceptor `Response`
+  short-circuit with headers, the cross-origin 403 landing before the registry
+  lookup, DI-registered allowed origins, and the in-process caller exemption.
+- **Client transport** (`inject-server-fn.spec.ts`, 5): the resource read over
+  `HttpTestingController`, idle while the args factory returns `undefined`,
+  `TransferState` hydration with no request issued, the mutation POST, and the
+  SSR dispatcher short-circuit.
+- **Build transforms** (`clear-client-page-endpoint.spec.ts`, 5): ids stamped for
+  SSR in both `serve` and `build`, the client scrub emitting proxies with an
+  empty sourcemap (a `null` map leaks the original module through
+  `sourcesContent`), and the page-endpoint emptying scoped to the build.
 - **Client scrub** (`server-fn-client-transform.spec.ts`, 8): null for
   non-`serverFn` modules; proxies carry the **derived** id (opaque, differs per
   file) with all server imports dropped; POST-from-`input` vs. GET default vs.
@@ -664,8 +689,12 @@ event.method }` while propagating response headers.
   the **client proxy id equals the server-derived id**, both opaque, and that no
   server code survives.
 
-**Deferred** (need a live Angular build/serve): `TestBed.runInInjectionContext`
-DI-execution specs and `provideHttpClientTesting()` client specs.
+**Live app** (`apps/analog-app`, dev server and production build): the demo page
+server-renders its data through the in-process dispatcher, seeds `TransferState`,
+and serves `/_analog/fn/:id` over HTTP with the full guard matrix (403
+cross-origin, 405 method, 415 content type, 400 validation, 401 interceptor, 404
+guessed name). The production client bundle contains the opaque proxies and none
+of the server module — no handler, service, or `@analogjs/router/server` import.
 
 ## Example usage (end to end)
 
