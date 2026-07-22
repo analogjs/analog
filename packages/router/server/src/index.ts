@@ -15,6 +15,8 @@ export {
 } from './server-fn/dispatch';
 export {
   isServerFnOriginAllowed,
+  withAllowedOrigins,
+  SERVER_FN_ALLOWED_ORIGINS,
   type HeaderBag,
 } from './server-fn/same-origin';
 export {

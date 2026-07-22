@@ -8,7 +8,11 @@ import type { H3Event } from 'h3';
 
 import { serverFnRegistry } from './registry';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
-import { isServerFnOriginAllowed } from './same-origin';
+import {
+  SERVER_FN_ALLOWED_ORIGINS,
+  isServerFnOriginAllowed,
+  type HeaderBag,
+} from './same-origin';
 
 export interface DispatchResult {
   status: number;
@@ -30,10 +34,11 @@ export interface DispatchServerFnOptions {
   /** Request HTTP method; enforced against the function's configured method. */
   method?: string;
   /**
-   * Origins permitted beyond same-origin. The transport is same-origin by
-   * default (cross-origin browser calls are rejected with 403); list additional
-   * origins to allow, or `'*'` to disable the check entirely. Only consulted for
-   * HTTP-transport calls (those that pass `method`).
+   * Origins permitted beyond same-origin, merged with any registered through DI
+   * (`provideServerFns(withAllowedOrigins([...]))`). The transport is
+   * same-origin by default (cross-origin browser calls are rejected with 403);
+   * `'*'` disables the check entirely. Only consulted for HTTP-transport calls
+   * (those that pass `method`).
    */
   allowedOrigins?: string[];
 }
@@ -45,12 +50,13 @@ export interface DispatchServerFnOptions {
  *    transport only (in-process callers omit `method` and are exempt)
  * 2. look up the function by id
  * 3. enforce the configured HTTP method (405 on mismatch)
- * 4. validate `input` against the Standard-Schema (4xx on failure)
- * 5. build a per-request injector (REQUEST/RESPONSE + app providers)
- * 6. run the interceptor chain, then the handler, re-entering
+ * 4. require a JSON body on input-bearing calls (415 otherwise)
+ * 5. validate `input` against the Standard-Schema (4xx on failure)
+ * 6. build a per-request injector (REQUEST/RESPONSE + app providers)
+ * 7. run the interceptor chain, then the handler, re-entering
  *    `runInInjectionContext` at every hop so `inject()` works even after an
  *    interceptor `await`s before calling `next`
- * 7. a `Response` returned by an interceptor/handler (`fail`/`redirect`)
+ * 8. a `Response` returned by an interceptor/handler (`fail`/`redirect`)
  *    short-circuits with its status AND headers
  *
  * `options.method` is the request's HTTP method; when provided it is enforced
@@ -65,19 +71,23 @@ export async function dispatchServerFn(
   options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
   const { parent, providers = [], method, allowedOrigins = [] } = options;
+  const headers = (event.node.req.headers ?? {}) as HeaderBag;
 
   // Same-origin guard runs first — before we even confirm the function exists —
   // so a cross-origin page cannot probe which ids are registered. Gated on
   // `method` so only HTTP-transport calls are checked; in-process callers omit
   // it. The signals (`Origin`/`Sec-Fetch-Site`) are browser-set and unforgeable.
-  if (
-    method &&
-    !isServerFnOriginAllowed(event.node.req.headers ?? {}, allowedOrigins)
-  ) {
-    return {
-      status: 403,
-      body: { message: 'Cross-origin server function call rejected' },
-    };
+  if (method) {
+    const allowed = [
+      ...allowedOrigins,
+      ...(parent?.get(SERVER_FN_ALLOWED_ORIGINS, []) ?? []),
+    ];
+    if (!isServerFnOriginAllowed(headers, allowed)) {
+      return {
+        status: 403,
+        body: { message: 'Cross-origin server function call rejected' },
+      };
+    }
   }
 
   const def = serverFnRegistry.get(id);
@@ -92,6 +102,16 @@ export async function dispatchServerFn(
       status: 405,
       body: { message: `Method ${method} not allowed for ${id}` },
       headers: { Allow: def.method },
+    };
+  }
+
+  // Input travels as a JSON body. Reject anything else before decoding, so a
+  // form post from a cross-origin page (which cannot set a JSON content type
+  // without a CORS preflight) never reaches a handler. HTTP transport only.
+  if (method && def.method === 'POST' && !isJsonContentType(headers)) {
+    return {
+      status: 415,
+      body: { message: 'Server functions accept an application/json body' },
     };
   }
 
@@ -142,6 +162,16 @@ export async function dispatchServerFn(
   }
 
   return { status: 200, body: outcome };
+}
+
+function isJsonContentType(headers: HeaderBag): boolean {
+  const contentType = headers['content-type'];
+  const value = Array.isArray(contentType) ? contentType[0] : contentType;
+  if (!value) {
+    return false;
+  }
+  const mediaType = value.split(';')[0].trim().toLowerCase();
+  return mediaType === 'application/json' || mediaType.endsWith('+json');
 }
 
 function safeJson(text: string): unknown {

@@ -13,8 +13,37 @@
  * guard blocks the cross-origin browser attack it is meant to, and nothing else.
  */
 
+import { InjectionToken } from '@angular/core';
+
+import type { ServerFnsFeature } from './interceptors';
+
 /** Node/h3 header bag shape (`IncomingHttpHeaders`). */
 export type HeaderBag = Record<string, string | string[] | undefined>;
+
+/**
+ * Origins permitted beyond the app's own, registered through DI:
+ * `provideServerFns(withAllowedOrigins([...]))`. Empty by default — the
+ * transport is same-origin unless an app opts out explicitly.
+ */
+export const SERVER_FN_ALLOWED_ORIGINS = new InjectionToken<string[]>(
+  'SERVER_FN_ALLOWED_ORIGINS',
+);
+
+/**
+ * `withAllowedOrigins([...])` — permit cross-origin browser calls from the
+ * listed origins, or pass `'*'` to disable the same-origin guard entirely.
+ * Server functions are frequently cookie-authenticated, so this is an explicit
+ * opt-out of CSRF protection: allow-list the exact origins you control.
+ */
+export function withAllowedOrigins(origins: string[]): ServerFnsFeature {
+  return {
+    providers: origins.map((origin) => ({
+      provide: SERVER_FN_ALLOWED_ORIGINS,
+      useValue: origin,
+      multi: true,
+    })),
+  };
+}
 
 function firstHeader(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
