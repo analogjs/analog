@@ -72,6 +72,19 @@ export function scrubServerFnModule(
     }
   }
 
+  // Every `serverFn(...)` call in the module must have become a proxy. If one
+  // did not, the module uses a shape this transform cannot rewrite (e.g.
+  // `const fn = serverFn(...); export { fn };`) and returning `null` would leave
+  // it untouched — shipping the handler and its server imports to the browser.
+  // Fail the build instead: a scrub that silently opts out is a code leak.
+  const callCount = countServerFnCalls(program, serverFnLocalNames);
+  if (callCount > proxies.length) {
+    throw new Error(
+      `[analog] ${fileId}: found ${callCount} serverFn call(s) but could only rewrite ${proxies.length} for the client build. ` +
+        `Server functions must be declared as a directly exported const — \`export const name = serverFn(…)\` — so the handler can be stripped from the browser bundle.`,
+    );
+  }
+
   if (proxies.length === 0) {
     return null;
   }
@@ -184,4 +197,34 @@ function isStringLiteral(
   node: any,
 ): node is { type: 'Literal'; value: string } {
   return node?.type === 'Literal' && typeof node.value === 'string';
+}
+
+/** Every `serverFn(...)` call anywhere in the module, not just exported ones. */
+function countServerFnCalls(node: unknown, names: Set<string>): number {
+  if (!node || typeof node !== 'object') {
+    return 0;
+  }
+  if (Array.isArray(node)) {
+    return node.reduce(
+      (total, child) => total + countServerFnCalls(child, names),
+      0,
+    );
+  }
+
+  const record = node as Record<string, unknown> & { type?: string };
+  let count = 0;
+  if (record.type === 'CallExpression') {
+    const callee = record['callee'] as { type?: string; name?: string };
+    if (
+      callee?.type === 'Identifier' &&
+      callee.name &&
+      names.has(callee.name)
+    ) {
+      count += 1;
+    }
+  }
+  for (const key of Object.keys(record)) {
+    count += countServerFnCalls(record[key], names);
+  }
+  return count;
 }

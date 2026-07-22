@@ -146,3 +146,35 @@ describe('scrubServerFnModule', () => {
     expect(result.code).toContain('export const getData = createServerFnRef(');
   });
 });
+
+describe('scrubServerFnModule — unrewritable shapes', () => {
+  it('throws rather than leaving a non-inline export untouched', () => {
+    // Returning null here would leave the module unscrubbed on the client
+    // build, shipping the handler and its server imports to the browser.
+    const code = `
+      import { serverFn } from '@analogjs/router/server';
+      import { CatalogService } from './catalog.service';
+
+      const getProducts = serverFn(async () => inject(CatalogService).list());
+      export { getProducts };
+    `;
+
+    expect(() => scrubServerFnModule(code, 'products.server.ts')).toThrow(
+      /could only rewrite 0/,
+    );
+  });
+
+  it('throws when only some of the calls are rewritable', () => {
+    const code = `
+      import { serverFn } from '@analogjs/router/server';
+
+      export const getProducts = serverFn(async () => []);
+      const internal = serverFn(async () => 'secret');
+      export { internal };
+    `;
+
+    expect(() => scrubServerFnModule(code, 'products.server.ts')).toThrow(
+      /serverFn call/,
+    );
+  });
+});
