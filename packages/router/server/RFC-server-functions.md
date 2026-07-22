@@ -252,12 +252,24 @@ request because the injector is a real per-request child.
 provided when a locale can be detected from the URL prefix or `Accept-Language`,
 so handlers should read it with `{ optional: true }`.
 
-> A `providedIn: 'root'` service resolves through this chain only when `parent`
-> is the app's **bootstrapped** environment injector; a plain
-> `Injector.create({ providers })` parent resolves explicitly-listed providers
-> (the validated mechanism) but not tree-shakeable `root` providers. Wiring the
-> parent to the SSR entry's bootstrapped injector — so `providedIn: 'root'`
-> services resolve with zero enumeration — is env-gated on a live Analog build.
+> **Known limitation — DI parity between the two transports.** A
+> `providedIn: 'root'` service resolves through this chain only when `parent` is
+> a **bootstrapped** environment injector. That is the case for the in-process
+> SSR leg, whose parent is the application's own injector, but not for the HTTP
+> endpoint, whose parent is a plain `Injector.create({ providers:
+serverFnAppProviders })` — that resolves explicitly-listed providers and not
+> tree-shakeable `root` ones.
+>
+> So the supported contract for an HTTP-dispatched handler is: the request
+> tokens, plus whatever `serverFnAppProviders` lists. Services must be listed
+> there to be reachable over HTTP, which the guide documents. Verified on a live
+> build and pinned by a spec (`dispatch.spec.ts`).
+>
+> Closing the gap means giving the generated endpoint a bootstrapped
+> `EnvironmentInjector` rather than a constructed one, so `providedIn: 'root'`
+> resolves with zero enumeration and both legs behave identically. That is a
+> real architectural change — it means standing up an Angular application inside
+> the Nitro handler — so it is Future Work rather than part of this cut.
 
 **The surface is strictly DI.** The raw `H3Event` is used only internally to
 build the injector and decode input — it is never handed to interceptors or
@@ -785,6 +797,10 @@ export default class CheckoutPage {
 
 ## Future work
 
+- **Bootstrapped injector for the HTTP endpoint**, so `providedIn: 'root'`
+  services resolve in a handler reached over HTTP exactly as they do during SSR,
+  removing the enumeration requirement in `serverFnAppProviders` (see the DI
+  parity note in Design §2).
 - **Salt the id hash** with a per-build secret shared between the client and
   server builds, so route ids are unpredictable even to an attacker who can read
   the source (today `hash(fileId + exportName)` is opaque and collision-free but

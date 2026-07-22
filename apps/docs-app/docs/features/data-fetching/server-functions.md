@@ -131,6 +131,12 @@ export const serverFnAppProviders: StaticProvider[] = [
 ];
 ```
 
+:::caution
+List every service a handler injects here, **including `providedIn: 'root'` services**.
+
+When a server function is called over HTTP, its handler resolves against this provider set — a tree-shakeable `providedIn: 'root'` service is not reachable from it unless it is listed. During server-side rendering the same handler runs against the application's own injector, where `providedIn: 'root'` does resolve, so a handler that only lists its dependencies implicitly can appear to work while rendering and fail when called from the browser.
+:::
+
 ## Adding Interceptors
 
 Interceptors are functional, provided through DI, and apply to every server function in registration order — the same model as `HttpInterceptorFn`. Use them for authentication, tenancy, and logging.
