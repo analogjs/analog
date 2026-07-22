@@ -2,6 +2,8 @@
 
 Data fetching in Analog builds on top of concepts in Angular, such as using `HttpClient` for making API requests.
 
+To call typed server-side code directly instead of writing an API route and a client request for it, see [Server Functions](/docs/features/data-fetching/server-functions).
+
 ## Using HttpClient
 
 Using `HttpClient` is the recommended way to make API requests for internal and external endpoints. The context for the request is provided by the `provideServerContext` function for any request that uses `HttpClient` and begins with a `/`.
