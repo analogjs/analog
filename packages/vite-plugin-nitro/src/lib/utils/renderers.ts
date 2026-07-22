@@ -115,15 +115,31 @@ export default defineHandler(async (event) => {
  * SSR code makes relative API requests.
  */
 export const apiMiddleware = `
-import { defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';
+import { createError, defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';
 import { useRuntimeConfig } from 'nitro/runtime-config';
 
 export default defineHandler(async (event) => {
   const prefix = useRuntimeConfig().prefix;
   const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
 
-  if (event.path?.startsWith(apiPrefix)) {
-    const reqUrl = event.path?.replace(apiPrefix, '');
+  const path = event.path || '';
+
+  // only match the prefix on a path boundary, otherwise a URL such as
+  // '/apihttp://internal-host' would pass startsWith() and be forwarded verbatim
+  if (
+    path === apiPrefix ||
+    path.startsWith(\`\${apiPrefix}/\`) ||
+    path.startsWith(\`\${apiPrefix}?\`)
+  ) {
+    let reqUrl = path.slice(apiPrefix.length);
+    if (reqUrl === '' || reqUrl.startsWith('?')) {
+      reqUrl = \`/\${reqUrl}\`;
+    }
+
+    // reject absolute and protocol-relative targets to prevent SSRF
+    if (!reqUrl.startsWith('/') || reqUrl.startsWith('//')) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid API route' });
+    }
 
     if (
       event.method === 'GET' &&
