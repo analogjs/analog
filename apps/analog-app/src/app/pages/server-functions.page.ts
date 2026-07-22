@@ -10,7 +10,7 @@ import { getProduct, getProducts } from '../server-fns/products.server';
  * - POST (input) via the imperative `injectServerFnMutation(fn)` form.
  */
 @Component({
-  selector: 'app-server-functions',
+  selector: 'analogjs-server-functions',
   standalone: true,
   imports: [JsonPipe],
   template: `

@@ -14,7 +14,9 @@ import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// Built platform transform, imported from node_modules by relative path.
+// Built platform transform reached by relative path: it is not a public package
+// export, so this standalone bun harness imports the built file directly.
+// eslint-disable-next-line @nx/enforce-module-boundaries
 import { scrubServerFnModule } from '../../../node_modules/@analogjs/platform/src/lib/server-fn-client-transform.js';
 import { FILE_ID, ids } from './_server-fn-harness';
 

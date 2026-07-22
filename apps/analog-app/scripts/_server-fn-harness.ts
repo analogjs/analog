@@ -12,9 +12,13 @@ import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// Built transform utilities from node_modules (relative path bypasses exports).
+// Built transform utilities reached by relative path into node_modules: these
+// internals are not public package exports, and the barrel that would export
+// them pulls in vite/nitro, which this standalone bun harness cannot load.
+/* eslint-disable @nx/enforce-module-boundaries */
 import { injectServerFnIds } from '../../../node_modules/@analogjs/vite-plugin-nitro/src/lib/utils/inject-server-fn-ids.js';
 import { deriveServerFnId } from '../../../node_modules/@analogjs/vite-plugin-nitro/src/lib/utils/derive-server-fn-id.js';
+/* eslint-enable @nx/enforce-module-boundaries */
 
 const here = dirname(fileURLToPath(import.meta.url));
 const serverFnsDir = join(here, '../src/app/server-fns');
