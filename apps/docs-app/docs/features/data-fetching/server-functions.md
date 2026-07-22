@@ -116,7 +116,7 @@ export const getGreeting = serverFn(async () => {
 });
 ```
 
-`REQUEST`, `RESPONSE`, `BASE_URL`, and `LOCALE` are all available. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
+`REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
 
 Services and interceptors used by handlers are provided from `src/app/server-fns/index.ts` (or `src/app/server-fns.ts`), which exports a `serverFnAppProviders` array:
 
@@ -194,7 +194,7 @@ Server functions are HTTP endpoints, and validation checks the shape of the inpu
 
 Two protections are built in:
 
-- **Route ids are derived at build time** from the file and export name, not chosen by you. Each function is served from an opaque `/_analog/fn/<hash>` route, so ids cannot collide and the endpoint surface cannot be enumerated by guessing export names.
+- **Route ids are derived at build time** from the file and export name, not chosen by you. Each function is served from an opaque `/_analog/fn/<hash>` route, so two functions sharing a name cannot collide, and the endpoint surface cannot be enumerated by guessing export names. Treat the id as an opaque address rather than a secret — it is reproducible from the source and present in the client bundle, so it is not an authorization boundary.
 - **Calls are same-origin by default.** Because server functions are often cookie-authenticated, cross-origin browser calls are rejected with a `403` before the function is even looked up, and input-bearing calls must send a JSON body.
 
 If an app genuinely needs to be called from another origin, opt in explicitly:

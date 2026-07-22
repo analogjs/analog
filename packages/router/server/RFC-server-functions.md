@@ -141,7 +141,7 @@ export interface ServerFnConfig<In> {
 
 // Three authoring forms, normalized to `(config, handler)` internally.
 export declare function serverFn<Out>( // input-less read → GET
-  handler: (context: ServerFnContext) => Promise<Out> | Out,
+  handler: (input: void, context: ServerFnContext) => Promise<Out> | Out,
 ): ServerFn<void, Out>;
 
 export declare function serverFn<In, Out>( // schema-first → POST
@@ -231,20 +231,26 @@ export default eventHandler(async (event) => {
 const injector = Injector.create({
   parent, // the app injector — app services + interceptors live here
   providers: [
-    { provide: REQUEST, useValue: event.node.req }, // only these two are
-    { provide: RESPONSE, useValue: event.node.res }, // genuinely per-request
+    { provide: REQUEST, useValue: event.node.req }, // derived from the
+    { provide: RESPONSE, useValue: event.node.res }, // request, so rebuilt
+    { provide: BASE_URL, useValue: getBaseUrl(req) }, // per call
+    ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
     ...providers, // extra providers for direct callers without an app injector
   ],
 });
 ```
 
-So only `REQUEST`/`RESPONSE` are rebuilt per call; `inject(SessionService)`,
+So only the request tokens are rebuilt per call; `inject(SessionService)`,
 registered interceptors, and everything else resolve **up the parent chain** to
 the app injector without being re-listed on each request. `inject(REQUEST)`,
-`inject(RESPONSE)`, `inject(LOCALE)` (all from `@analogjs/router/tokens`) and any
-app service resolve exactly as they do inside a component during SSR, and
-request-scoped tokens still resolve to the current request because the injector
-is a real per-request child.
+`inject(RESPONSE)`, `inject(BASE_URL)`, `inject(LOCALE)` (all from
+`@analogjs/router/tokens`) and any app service resolve exactly as they do inside
+a component during SSR, and request-scoped tokens still resolve to the current
+request because the injector is a real per-request child.
+
+`LOCALE` is the one conditional token: like `provideServerContext`, it is only
+provided when a locale can be detected from the URL prefix or `Accept-Language`,
+so handlers should read it with `{ optional: true }`.
 
 > A `providedIn: 'root'` service resolves through this chain only when `parent`
 > is the app's **bootstrapped** environment injector; a plain
@@ -322,13 +328,17 @@ The same function derives the id on both the server registration and the client
 proxy, so they always agree, and it gives three properties that a hand-picked id
 does not:
 
-- **Collision-free.** Two functions can never resolve to the same route and
-  hijack each other's dispatch — a real hazard when two authors independently
-  pick `getUser`. Uniqueness is a pure function of `(file, export)`.
-- **Non-enumerable.** The public route is an opaque digest
-  (`/_analog/fn/740e2a761e159c4c`), not a guessable verb like
-  `/_analog/fn/deleteAccount`, so the endpoint surface is not discoverable by
-  reading route names. Guessing the export name 404s.
+- **Collision-resistant.** The id is a pure function of `(file, export)`, so two
+  functions that both happen to be named `getUser` cannot hijack each other's
+  dispatch the way a hand-picked id would. A 64-bit digest is not a proof of
+  uniqueness — collisions are astronomically unlikely, not impossible — so this
+  removes a practical hazard rather than guaranteeing an invariant.
+- **Not guessable from the route.** The public route is an opaque digest
+  (`/_analog/fn/740e2a761e159c4c`), not a verb like `/_analog/fn/deleteAccount`,
+  so the surface is not discoverable by guessing export names. It is _not_
+  secret: the hash is reproducible from the source, so anyone who can read the
+  repository (or the client bundle, which carries the ids) can compute it. Treat
+  it as an opaque address, never as an authorization or enumeration boundary.
 - **Not author-controlled.** Authors cannot accidentally expose a meaningful or
   duplicate route; a stray `id` in the config is overwritten by the transform.
 
@@ -393,9 +403,11 @@ resource resolves during SSR, its value is serialized into the page under a
 `TransferState` key derived from the function id and serialized input; on the
 client the resource takes that seeded value as its first result with no request,
 then fetches normally on later reactive changes. This uses Angular-core
-`TransferState` directly, so **no `provideClientHydration` /
+`TransferState` directly, so **no
 `withHttpTransferCacheOptions` / `includePostRequests` setup is required, and a
-POST read (any input-bearing read) hydrates exactly like a GET.**
+POST read (any input-bearing read) hydrates exactly like a GET.** An app still
+sets up Angular DOM hydration (`provideClientHydration`) as it normally would;
+what it does not need is any _transfer-cache_ configuration.
 
 Reads and writes are **two intent-named client helpers** rather than one
 overload whose behavior flips on whether an args factory is passed. Both must run
@@ -474,17 +486,21 @@ client, the resource surfaces these as `HttpErrorResponse` (thrown by
 `HttpClient` through `ServerFnClient`) in `.error()`, and `redirect()` is honored
 by the transport.
 
-### 8. Relationship to `load` / `action`
+### 8. Relationship to `load` / `action` (future design)
 
-`load` and `action` become sugar:
+Nothing in this section ships with this RFC — `load` and `action` keep their
+existing implementation, and `serverFn` sits alongside them. It is recorded here
+because it is the direction the two mechanisms should converge on:
+
+`load` and `action` could become sugar:
 
 - a page `load` ≡ a `serverFn({ method: 'GET' })` auto-bound to the route and
   consumed by `injectLoad`;
 - an `action` ≡ a `serverFn({ method: 'POST' })` consumed by `FormAction`.
 
-`page-endpoints.ts` can be re-expressed on top of the general endpoint
-transform, collapsing two code paths into one. This is proposed as a follow-up,
-not a prerequisite, to keep the first cut additive and low-risk.
+`page-endpoints.ts` could then be re-expressed on top of the general endpoint
+transform, collapsing two code paths into one. Deliberately left as follow-up so
+the first cut stays additive and low-risk.
 
 ## Version requirements
 

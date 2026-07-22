@@ -6,8 +6,8 @@ import { getProduct, getProducts } from '../server-fns/products.server';
 
 /**
  * End-to-end demo of the Server Functions prototype (issue #2422).
- * - GET (input-less read) via the reactive `injectServerFn(fn, args)` form.
- * - POST (input) via the bound-callable `injectServerFn(fn)` form.
+ * - GET (input-less read) via the reactive `injectServerFn(fn)` form.
+ * - POST (input) via the imperative `injectServerFnMutation(fn)` form.
  */
 @Component({
   selector: 'app-server-functions',
