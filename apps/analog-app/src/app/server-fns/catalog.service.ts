@@ -13,7 +13,7 @@ const PRODUCTS: Product[] = [
 ];
 
 /** A plain DI service used by the server functions to prove `inject()` works. */
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CatalogService {
   list(): Product[] {
     return PRODUCTS;

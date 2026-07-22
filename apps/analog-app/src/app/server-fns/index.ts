@@ -7,7 +7,6 @@ import {
   type ServerFnInterceptorFn,
 } from '@analogjs/router/server';
 import { fail } from '@analogjs/router/server/actions';
-import { CatalogService } from './catalog.service';
 
 // Registration of `*.server.ts` modules is the build transform's job (the
 // generated Nitro dispatch handler imports the discovered modules, and the
@@ -27,8 +26,9 @@ const authInterceptor: ServerFnInterceptorFn = async (ctx, next) => {
 };
 
 /** App + interceptor providers made available inside server function handlers. */
+// CatalogService is `providedIn: 'root'`, so it resolves from the bootstrapped
+// app injector without being listed — the same way it would during SSR.
 export const serverFnAppProviders: StaticProvider[] = [
-  { provide: CatalogService, useClass: CatalogService, deps: [] },
   ...(provideServerFns(
     withServerFnInterceptors([authInterceptor]),
   ) as StaticProvider[]),

@@ -8,9 +8,13 @@
 // The built @analogjs/router/server is a partially-compiled Angular library.
 // Consuming it outside the app's AOT/Linker build needs the JIT compiler.
 import '@angular/compiler';
+import 'zone.js/node';
+import '@angular/platform-server/init';
 
-import { Injector } from '@angular/core';
-import { dispatchServerFn } from '@analogjs/router/server';
+import {
+  dispatchServerFn,
+  createServerFnAppInjector,
+} from '@analogjs/router/server';
 import { serverFnAppProviders } from '../src/app/server-fns';
 import { ids, registerServerFns } from './_server-fn-harness';
 
@@ -18,7 +22,9 @@ await registerServerFns();
 
 // The app injector is built ONCE, exactly as the generated Nitro handler does;
 // each request dispatches with only `{ parent, method }`.
-const appInjector = Injector.create({ providers: serverFnAppProviders });
+// Bootstrapped app injector, exactly as the generated Nitro handler builds it,
+// so a `providedIn: 'root'` service (CatalogService) resolves without listing.
+const appInjector = await createServerFnAppInjector(serverFnAppProviders);
 
 const server = Bun.serve({
   port: 0,

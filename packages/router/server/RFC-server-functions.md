@@ -209,8 +209,8 @@ load from the app's `serverFnAppProviders` (the SSR provider set plus
 of a small per-request child injector:
 
 ```ts
-// generated /_analog/fn/:id handler
-const appInjector = Injector.create({ providers: serverFnAppProviders });
+// generated /_analog/fn/:id handler — built once, awaited per request
+const appInjector = createServerFnAppInjector(serverFnAppProviders);
 
 export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
@@ -252,24 +252,22 @@ request because the injector is a real per-request child.
 provided when a locale can be detected from the URL prefix or `Accept-Language`,
 so handlers should read it with `{ optional: true }`.
 
-> **Known limitation — DI parity between the two transports.** A
-> `providedIn: 'root'` service resolves through this chain only when `parent` is
-> a **bootstrapped** environment injector. That is the case for the in-process
-> SSR leg, whose parent is the application's own injector, but not for the HTTP
-> endpoint, whose parent is a plain `Injector.create({ providers:
-serverFnAppProviders })` — that resolves explicitly-listed providers and not
-> tree-shakeable `root` ones.
+> **DI parity between the two transports.** A `providedIn: 'root'` service
+> resolves through this chain only when `parent` is a **bootstrapped**
+> environment injector, not a plain `Injector.create({ providers })` (which
+> resolves explicitly-listed providers but not tree-shakeable `root` ones). The
+> in-process SSR leg already has one — the application's own injector. So the
+> HTTP endpoint bootstraps a real application to match: `createServerFnAppInjector`
+> (`@analogjs/router/server`) runs `createApplication({ providers:
+serverFnAppProviders }, { platformRef: platformServer() })` **once** at module
+> load and uses `appRef.injector` as the parent. No root component is
+> bootstrapped, so nothing renders and no change detection runs — it is a DI
+> container with the app's providers.
 >
-> So the supported contract for an HTTP-dispatched handler is: the request
-> tokens, plus whatever `serverFnAppProviders` lists. Services must be listed
-> there to be reachable over HTTP, which the guide documents. Verified on a live
-> build and pinned by a spec (`dispatch.spec.ts`).
->
-> Closing the gap means giving the generated endpoint a bootstrapped
-> `EnvironmentInjector` rather than a constructed one, so `providedIn: 'root'`
-> resolves with zero enumeration and both legs behave identically. That is a
-> real architectural change — it means standing up an Angular application inside
-> the Nitro handler — so it is Future Work rather than part of this cut.
+> The result is that a `providedIn: 'root'` service resolves in a handler reached
+> over HTTP exactly as it does during SSR, with zero enumeration in
+> `serverFnAppProviders`. Verified on a live dev server and a production build,
+> and pinned by specs (`app-injector.spec.ts`, `server-fn-endpoints.spec.ts`).
 
 **The surface is strictly DI.** The raw `H3Event` is used only internally to
 build the injector and decode input — it is never handed to interceptors or
@@ -549,6 +547,7 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/router/server/src/server-fn/server-fn.ts`                      | **new** — `serverFn`, three authoring forms (`handler` → GET, `schema, handler` → POST, `config, handler`) normalized via `normalizeArgs`; self-registers and delegates ref construction to `createServerFnRef`                                                                                           |
 | `packages/router/server/src/server-fn/interceptors.ts`                   | **new** — `ServerFnInterceptorFn`, `provideServerFns`, `withServerFnInterceptors`, `SERVER_FN_INTERCEPTORS`, chain runner + `ctx.with`                                                                                                                                                                    |
+| `packages/router/server/src/server-fn/app-injector.ts`                   | **new** — `createServerFnAppInjector`: bootstraps a server application (`createApplication` + `platformServer`) so the HTTP endpoint's parent injector resolves `providedIn: 'root'` services, matching SSR                                                                                               |
 | `packages/router/server/src/server-fn/dispatch.ts`                       | **new** — `dispatchServerFn(id, input, event, { parent?, providers?, method?, allowedOrigins? })`: same-origin guard (403) → lookup → method-enforce (405) → validate → per-request child of `parent` (REQUEST/RESPONSE only) → interceptors → `runInInjectionContext(handler)`; `Response` short-circuit |
 | `packages/router/server/src/server-fn/same-origin.ts`                    | **new** — `isServerFnOriginAllowed`: `Sec-Fetch-Site`-first, `Origin`-vs-host fallback same-origin predicate; `allowedOrigins` (incl. `'*'`) opt-in; used by dispatch for out-of-the-box cross-origin rejection                                                                                           |
 | `packages/router/server/src/server-fn/registry.ts`                       | **new** — id-keyed `serverFnRegistry` populated by `serverFn` at import time                                                                                                                                                                                                                              |
@@ -701,11 +700,12 @@ event.method }` while propagating response headers; the Angular JIT compiler
 
 **Runtime harnesses** (execute the built `node_modules` packages under bun):
 
-- `validate-server-fn.ts` — builds the app injector once and dispatches with
-  `{ parent: appInjector }` (the generated handler's exact shape): registers via
-  the real `injectServerFnIds` transform, then dispatches by the opaque id —
-  GET/POST, DI (`inject`) resolved from the parent injector in the handler, 400
-  validation, 401 interceptor short-circuit, 404 unknown fn.
+- `validate-server-fn.ts` — bootstraps the app injector with
+  `createServerFnAppInjector` and dispatches with `{ parent: appInjector }` (the
+  generated handler's exact shape): registers via the real `injectServerFnIds`
+  transform, then dispatches by the opaque id — GET/POST, a `providedIn: 'root'`
+  service resolved from the bootstrapped injector in the handler, 400 validation,
+  401 interceptor short-circuit, 404 unknown fn.
 - `validate-http-server-fn.ts` — the same parent-injector path over a real HTTP
   round-trip; also asserts method enforcement (405 + `Allow`), the guessed export
   name (`/_analog/fn/getProducts`) 404s, `fail()` headers survive, and the
@@ -797,10 +797,6 @@ export default class CheckoutPage {
 
 ## Future work
 
-- **Bootstrapped injector for the HTTP endpoint**, so `providedIn: 'root'`
-  services resolve in a handler reached over HTTP exactly as they do during SSR,
-  removing the enumeration requirement in `serverFnAppProviders` (see the DI
-  parity note in Design §2).
 - **Salt the id hash** with a per-build secret shared between the client and
   server builds, so route ids are unpredictable even to an attacker who can read
   the source (today `hash(fileId + exportName)` is opaque and collision-free but

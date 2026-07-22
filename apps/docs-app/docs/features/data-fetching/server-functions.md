@@ -124,18 +124,13 @@ Services and interceptors used by handlers are provided from `src/app/server-fns
 // src/app/server-fns/index.ts
 import type { StaticProvider } from '@angular/core';
 
-import { CatalogService } from './catalog.service';
-
 export const serverFnAppProviders: StaticProvider[] = [
-  { provide: CatalogService, useClass: CatalogService, deps: [] },
+  // Only providers that are not otherwise discoverable go here — e.g. a token
+  // bound to a value, or a class you want to override.
 ];
 ```
 
-:::caution
-List every service a handler injects here, **including `providedIn: 'root'` services**.
-
-When a server function is called over HTTP, its handler resolves against this provider set — a tree-shakeable `providedIn: 'root'` service is not reachable from it unless it is listed. During server-side rendering the same handler runs against the application's own injector, where `providedIn: 'root'` does resolve, so a handler that only lists its dependencies implicitly can appear to work while rendering and fail when called from the browser.
-:::
+A `providedIn: 'root'` service does not need to be listed. The dispatch endpoint runs handlers against a bootstrapped application injector, so a root-provided service resolves the same way it would inside a component — whether the function is called during server-side rendering or over HTTP from the browser. Use `serverFnAppProviders` for providers that are not `providedIn: 'root'`: a token bound to a value, or an override.
 
 ## Adding Interceptors
 
