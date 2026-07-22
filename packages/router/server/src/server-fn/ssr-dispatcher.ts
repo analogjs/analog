@@ -23,11 +23,14 @@ import { dispatchServerFn } from './dispatch';
 export function createServerFnDispatcher(
   req: ServerRequest,
   res: ServerResponse,
-  injector: Injector,
 ): ServerFnDispatcher {
   const event = { node: { req, res } } as unknown as Pick<H3Event, 'node'>;
 
-  return async <In, Out>(fn: ServerFn<In, Out>, input: In): Promise<Out> => {
+  return async <In, Out>(
+    fn: ServerFn<In, Out>,
+    input: In,
+    injector: Injector,
+  ): Promise<Out> => {
     const { status, body } = await dispatchServerFn(fn.id, input, event, {
       parent: injector,
     });

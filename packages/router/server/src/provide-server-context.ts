@@ -1,8 +1,4 @@
-import {
-  Injector,
-  StaticProvider,
-  ɵresetCompiledComponents,
-} from '@angular/core';
+import { StaticProvider, ɵresetCompiledComponents } from '@angular/core';
 import { ɵSERVER_CONTEXT as SERVER_CONTEXT } from '@angular/platform-server';
 
 import {
@@ -39,9 +35,7 @@ export function provideServerContext({
     // Server functions called while rendering run in-process, in this injector.
     {
       provide: SERVER_FN_DISPATCHER,
-      useFactory: (injector: Injector) =>
-        createServerFnDispatcher(req, res, injector),
-      deps: [Injector],
+      useValue: createServerFnDispatcher(req, res),
     },
     ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
   ];

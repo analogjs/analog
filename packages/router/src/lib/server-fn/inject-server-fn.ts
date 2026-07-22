@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Injector,
   assertInInjectionContext,
   inject,
   makeStateKey,
@@ -24,6 +25,7 @@ import { SERVER_FN_DISPATCHER } from './dispatcher';
 export class ServerFnClient {
   private readonly http = inject(HttpClient);
   private readonly transferState = inject(TransferState);
+  private readonly injector = inject(Injector);
   private readonly dispatcher = inject(SERVER_FN_DISPATCHER, {
     optional: true,
   });
@@ -35,7 +37,7 @@ export class ServerFnClient {
 
   async call<In, Out>(fn: ServerFn<In, Out>, input: In): Promise<Out> {
     if (this.dispatcher) {
-      return this.dispatcher(fn, input);
+      return this.dispatcher(fn, input, this.injector);
     }
 
     const request$ =

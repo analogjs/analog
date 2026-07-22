@@ -17,7 +17,9 @@ import {
   renderServerComponent,
 } from './server-component-render';
 
-if (import.meta.env.PROD) {
+// Optional chaining: the server-function dispatch endpoint imports this entry
+// from a Nitro bundle, where `import.meta.env` is not defined at all.
+if (import.meta.env?.PROD) {
   enableProdMode();
 }
 
