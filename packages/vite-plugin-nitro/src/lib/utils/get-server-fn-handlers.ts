@@ -18,6 +18,11 @@ export type ServerFnHandlerModule = {
 /**
  * `*.server.ts` files that are matched by the glob but are never server-function
  * hosts, so importing them for registration side-effects would be wrong.
+ *
+ * The SSR entries (`main.server.ts`, `main-cf.server.ts`, …) sit at the top of
+ * the source root and bootstrap the whole Angular application; importing one
+ * would pull the entire app into the dispatch bundle. They are matched by
+ * directory rather than by name so a page named `main.server.ts` still counts.
  */
 const EXCLUDED_SERVER_FILES: RegExp[] = [/\/app\.config\.server\.ts$/];
 
@@ -56,9 +61,15 @@ export function getServerFnHandlers({
     { dot: true, absolute: true },
   ).map((file) => normalizePath(file));
 
+  const sourceRootDir = `${root}/${sourceRoot}/`;
   const seen = new Set<string>();
   return files
     .filter((file) => !EXCLUDED_SERVER_FILES.some((re) => re.test(file)))
+    .filter(
+      (file) =>
+        !file.startsWith(sourceRootDir) ||
+        file.slice(sourceRootDir.length).includes('/'),
+    )
     .filter((file) => (seen.has(file) ? false : (seen.add(file), true)))
     .sort()
     .map((file) => ({ file }));

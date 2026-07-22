@@ -33,6 +33,16 @@ describe('getServerFnHandlers', () => {
       join(workspaceRoot, 'src/app/app.config.server.ts'),
       `export const config = {};`,
     );
+    // SSR bootstrap entries: matched by the glob, but importing one would pull
+    // the whole Angular app into the dispatch bundle.
+    writeFileSync(
+      join(workspaceRoot, 'src/main.server.ts'),
+      `export default async function render() { return ''; }`,
+    );
+    writeFileSync(
+      join(workspaceRoot, 'src/main-cf.server.ts'),
+      `export default async function render() { return ''; }`,
+    );
     // A non-server sibling that must never be picked up.
     writeFileSync(
       join(workspaceRoot, 'src/app/server-fns/catalog.service.ts'),
@@ -73,6 +83,34 @@ describe('getServerFnHandlers', () => {
 
     expect(files.some((f) => f.endsWith('app.config.server.ts'))).toBe(false);
     expect(files.some((f) => f.endsWith('catalog.service.ts'))).toBe(false);
+  });
+
+  it('excludes SSR entries sitting at the top of the source root', () => {
+    const files = getServerFnHandlers({
+      workspaceRoot,
+      sourceRoot,
+      rootDir,
+    }).map((h) => h.file);
+
+    expect(files.some((f) => f.endsWith('src/main.server.ts'))).toBe(false);
+    expect(files.some((f) => f.endsWith('src/main-cf.server.ts'))).toBe(false);
+  });
+
+  it('keeps a page named main.server.ts, which is not an SSR entry', () => {
+    writeFileSync(
+      join(workspaceRoot, 'src/app/pages/main.server.ts'),
+      `export const load = async () => ({});`,
+    );
+
+    const files = getServerFnHandlers({
+      workspaceRoot,
+      sourceRoot,
+      rootDir,
+    }).map((h) => h.file);
+
+    expect(files.some((f) => f.endsWith('app/pages/main.server.ts'))).toBe(
+      true,
+    );
   });
 
   it('returns deterministic, de-duplicated, sorted output', () => {
