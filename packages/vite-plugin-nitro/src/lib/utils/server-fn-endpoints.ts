@@ -68,18 +68,23 @@ export function buildServerFnDispatchModule({
   // `@analogjs/router/server` is a partially-compiled Angular library, and this
   // module is bundled by Nitro rather than by the app's Angular pipeline, so the
   // linker never runs over it. Loading the compiler gives it the JIT fallback.
+  // `zone.js` and the server platform init match the SSR entry, so bootstrapping
+  // the app injector below runs in the same environment a render would.
   return `import '@angular/compiler';
+import 'zone.js/node';
+import '@angular/platform-server/init';
 import { eventHandler, getRouterParam, readBody } from 'h3';
-import { Injector } from '@angular/core';
-import { dispatchServerFn } from '@analogjs/router/server';
+import { dispatchServerFn, createServerFnAppInjector } from '@analogjs/router/server';
 
 // Discovered server-function modules (registration side-effects).
 ${registrationImports}
 
 ${providers}
 
-// The app injector is built once; each request gets a child with REQUEST/RESPONSE.
-const appInjector = Injector.create({ providers: serverFnAppProviders });
+// Built once and reused: a bootstrapped application root injector, so a handler
+// resolves \`providedIn: 'root'\` services exactly as it does during SSR. Only
+// REQUEST/RESPONSE are rebuilt per call, in the child dispatch creates.
+const appInjector = createServerFnAppInjector(serverFnAppProviders);
 
 export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
@@ -97,7 +102,7 @@ export default eventHandler(async (event) => {
   }
 
   const { status, body, headers } = await dispatchServerFn(id, input, event, {
-    parent: appInjector,
+    parent: await appInjector,
     method: event.method,
   });
 

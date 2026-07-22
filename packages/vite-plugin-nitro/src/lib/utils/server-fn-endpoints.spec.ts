@@ -76,16 +76,16 @@ describe('buildServerFnDispatchModule', () => {
   it('dispatches by router param, enforces method, and propagates headers', () => {
     const src = buildServerFnDispatchModule({ modules });
     expect(src).toContain(
-      `import { dispatchServerFn } from '@analogjs/router/server';`,
+      `import { dispatchServerFn, createServerFnAppInjector } from '@analogjs/router/server';`,
     );
     expect(src).toContain(`const id = getRouterParam(event, 'id');`);
     expect(src).toContain('await dispatchServerFn(');
-    // App injector built once; request method passed for server-side enforcement.
-    expect(src).toContain(`import { Injector } from '@angular/core';`);
+    // The app injector is a bootstrapped root injector (so providedIn: 'root'
+    // resolves), built once and awaited per request.
     expect(src).toContain(
-      'const appInjector = Injector.create({ providers: serverFnAppProviders });',
+      'const appInjector = createServerFnAppInjector(serverFnAppProviders);',
     );
-    expect(src).toContain('parent: appInjector,');
+    expect(src).toContain('parent: await appInjector,');
     expect(src).toContain('method: event.method,');
     expect(src).toContain('event.node.res.statusCode = status;');
     // Response headers (redirect Location, Set-Cookie, X-Analog-Errors) are set.

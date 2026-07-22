@@ -94,26 +94,30 @@ describe('dispatchServerFn', () => {
     ]);
   });
 
-  it('resolves only what the parent injector actually provides', async () => {
-    // Pins the DI contract for the HTTP transport, where the parent is a plain
-    // `Injector.create` over `serverFnAppProviders`. Such an injector resolves
-    // explicitly-listed providers but NOT tree-shakeable `providedIn: 'root'`
-    // ones, so those must be listed to be reachable over HTTP. The in-process
-    // SSR leg has a bootstrapped environment injector as its parent and does
-    // resolve them — see the DI note in the server functions guide.
-    @Injectable({ providedIn: 'root' })
-    class RootOnlyService {}
+  it('resolves whatever the parent injector provides', async () => {
+    // `dispatchServerFn` resolves against the parent it is handed and nothing
+    // more. A plain `Injector.create` resolves only listed providers, not
+    // tree-shakeable `providedIn: 'root'` ones — which is exactly why the
+    // generated endpoint hands it a *bootstrapped* app injector
+    // (`createServerFnAppInjector`) rather than a constructed one, so `root`
+    // services resolve over HTTP the same as during SSR.
+    @Injectable()
+    class ListedService {
+      value = 'listed';
+    }
 
-    serverFn({ id: 'root-di' }, async () =>
-      inject(RootOnlyService, { optional: true }) ? 'resolved' : 'unavailable',
-    );
+    serverFn({ id: 'listed-di' }, async () => inject(ListedService).value);
 
-    const result = await dispatchServerFn('root-di', undefined, eventFor(), {
-      parent: Injector.create({ providers: [] }),
+    const result = await dispatchServerFn('listed-di', undefined, eventFor(), {
+      parent: Injector.create({
+        providers: [
+          { provide: ListedService, useClass: ListedService, deps: [] },
+        ],
+      }),
       method: 'GET',
     });
 
-    expect(result.body).toBe('unavailable');
+    expect(result.body).toBe('listed');
   });
 
   it('404s an unknown function', async () => {

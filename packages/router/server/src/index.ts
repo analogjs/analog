@@ -8,6 +8,7 @@ export { render } from './render';
 
 // Server Functions (issue #2422) — server authoring + dispatch runtime.
 export { serverFn } from './server-fn/server-fn';
+export { createServerFnAppInjector } from './server-fn/app-injector';
 export {
   dispatchServerFn,
   type DispatchResult,
