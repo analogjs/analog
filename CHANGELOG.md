@@ -1,3 +1,9 @@
+# [3.0.0-alpha.63](https://github.com/analogjs/analog/compare/v3.0.0-alpha.62...v3.0.0-alpha.63) (2026-07-22)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** enforce path boundary in generated API middleware ([3a4f218](https://github.com/analogjs/analog/commit/3a4f218ce59dc658560926889e9eb44fb403846a))
+
 # [3.0.0-alpha.62](https://github.com/analogjs/analog/compare/v3.0.0-alpha.61...v3.0.0-alpha.62) (2026-07-19)
 
 ### Bug Fixes
