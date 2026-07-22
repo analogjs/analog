@@ -48,6 +48,14 @@ describe('buildServerFnDispatchModule', () => {
     );
   });
 
+  it("answers a malformed body with the JSON error contract, not h3's", () => {
+    const src = buildServerFnDispatchModule({ modules });
+
+    expect(src).toContain('try {');
+    expect(src).toContain('statusCode = 400');
+    expect(src).toContain('Malformed request body');
+  });
+
   it('imports app providers when a providers module is given', () => {
     const src = buildServerFnDispatchModule({
       modules,

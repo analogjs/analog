@@ -35,7 +35,9 @@
     "xmlbuilder2": "^4.0.3",
     "esbuild": "^0.27.3",
     "radix3": "^1.1.2",
-    "defu": "^6.1.4"
+    "defu": "^6.1.4",
+    "magic-string": "^0.30.21",
+    "oxc-parser": "^0.121.0"
   },
   "ng-update": {
     "packageGroup": [

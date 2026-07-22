@@ -83,7 +83,18 @@ const appInjector = Injector.create({ providers: serverFnAppProviders });
 
 export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
-  const input = event.method === 'GET' ? undefined : await readBody(event);
+
+  // h3 parses the body before dispatch gets a say, and its parse error is an
+  // HTML/500-shaped response rather than the JSON contract callers expect.
+  let input;
+  if (event.method !== 'GET') {
+    try {
+      input = await readBody(event);
+    } catch {
+      event.node.res.statusCode = 400;
+      return { message: 'Malformed request body' };
+    }
+  }
 
   const { status, body, headers } = await dispatchServerFn(id, input, event, {
     parent: appInjector,
