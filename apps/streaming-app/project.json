@@ -51,7 +51,10 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "PORT=3211 node dist/apps/streaming-app/analog/server/index.mjs"
+        "env": {
+          "PORT": "3211"
+        },
+        "command": "node dist/apps/streaming-app/analog/server/index.mjs"
       },
       "dependsOn": ["build"]
     }
