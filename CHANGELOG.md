@@ -1,3 +1,9 @@
+## [2.6.4-beta.4](https://github.com/analogjs/analog/compare/v2.6.4-beta.3...v2.6.4-beta.4) (2026-07-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** ensure compatibility with NodeNext resolution ([#2434](https://github.com/analogjs/analog/issues/2434)) ([50126d4](https://github.com/analogjs/analog/commit/50126d424f9b52415a6c938b6bf83b5c2e59c865))
+
 ## [2.6.4-beta.3](https://github.com/analogjs/analog/compare/v2.6.4-beta.2...v2.6.4-beta.3) (2026-07-22)
 
 ### Bug Fixes
