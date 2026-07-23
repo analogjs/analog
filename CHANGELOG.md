@@ -1,3 +1,9 @@
+# [2.7.0-beta.1](https://github.com/analogjs/analog/compare/v2.6.4...v2.7.0-beta.1) (2026-07-23)
+
+### Features
+
+- **router:** add support for Server Functions ([#2433](https://github.com/analogjs/analog/issues/2433)) ([d567090](https://github.com/analogjs/analog/commit/d567090e595d2811fe96728b2457b328da217f33)), closes [#2422](https://github.com/analogjs/analog/issues/2422)
+
 ## [2.6.4](https://github.com/analogjs/analog/compare/v2.6.3...v2.6.4) (2026-07-23)
 
 ### Bug Fixes
