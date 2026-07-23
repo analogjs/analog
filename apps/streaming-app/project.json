@@ -46,6 +46,17 @@
           "buildTarget": "streaming-app:build:production"
         }
       }
+    },
+    "serve-nitro": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "",
+        "env": {
+          "PORT": "3211"
+        },
+        "command": "node dist/apps/streaming-app/analog/server/index.mjs"
+      },
+      "dependsOn": ["build"]
     }
   }
 }

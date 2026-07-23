@@ -29,6 +29,7 @@ export default defineConfig(() => {
         nitro: {
           routeRules: {
             '/buffered': { streaming: false },
+            '/fn-buffered': { streaming: false },
           },
         },
       }),
