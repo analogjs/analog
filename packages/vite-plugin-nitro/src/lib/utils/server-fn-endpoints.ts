@@ -74,50 +74,27 @@ export function buildServerFnDispatchModule({
   // linker never runs over it. Loading the compiler gives it the JIT fallback.
   // `zone.js` and the server platform init match the SSR entry, so bootstrapping
   // the app injector below runs in the same environment a render would.
+  //
+  // The transport itself — id decoding, the malformed-body contract, dispatch,
+  // and response writing — lives in `createServerFnEventHandler`, so this module
+  // is only wiring: bootstrap the app injector from the app's server config, and
+  // hand it to that handler.
   return `import '@angular/compiler';
 import 'zone.js/node';
 import '@angular/platform-server/init';
-import { eventHandler, getRouterParam, readBody } from 'h3';
-import { dispatchServerFn, createServerFnAppInjector } from '@analogjs/router/server';
+import { createServerFnAppInjector, createServerFnEventHandler } from '@analogjs/router/server';
 
 // Discovered server-function modules (registration side-effects).
 ${registrationImports}
 
 ${appConfig}
 
-// Built once and reused: the app is bootstrapped from its own server config, so
-// a handler resolves the same DI as an SSR render (\`providedIn: 'root'\` and
-// listed providers alike). No component is bootstrapped, so nothing renders and
-// the router never navigates. Only REQUEST/RESPONSE are rebuilt per call.
-const appInjector = createServerFnAppInjector(serverFnAppConfig);
-
-export default eventHandler(async (event) => {
-  const id = getRouterParam(event, 'id');
-
-  // h3 parses the body before dispatch gets a say, and its parse error is an
-  // HTML/500-shaped response rather than the JSON contract callers expect.
-  let input;
-  if (event.method !== 'GET') {
-    try {
-      input = await readBody(event);
-    } catch {
-      event.node.res.statusCode = 400;
-      return { message: 'Malformed request body' };
-    }
-  }
-
-  const { status, body, headers } = await dispatchServerFn(id, input, event, {
-    parent: await appInjector,
-    method: event.method,
-  });
-
-  event.node.res.statusCode = status;
-  if (headers) {
-    for (const [key, value] of Object.entries(headers)) {
-      event.node.res.setHeader(key, value);
-    }
-  }
-  return body;
-});
+// Bootstrapped once from the app's own server config, so a handler resolves the
+// same DI as an SSR render (\`providedIn: 'root'\` and listed providers alike).
+// No component is bootstrapped, so nothing renders and the router never
+// navigates. Only REQUEST/RESPONSE are rebuilt per call.
+export default createServerFnEventHandler(
+  createServerFnAppInjector(serverFnAppConfig),
+);
 `;
 }

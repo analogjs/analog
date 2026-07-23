@@ -10,6 +10,10 @@ export { render } from './render';
 export { serverFn } from './server-fn/server-fn';
 export { createServerFnAppInjector } from './server-fn/app-injector';
 export {
+  createServerFnEventHandler,
+  handleServerFnRequest,
+} from './server-fn/event-handler';
+export {
   dispatchServerFn,
   type DispatchResult,
   type DispatchServerFnOptions,

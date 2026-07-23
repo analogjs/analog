@@ -48,14 +48,6 @@ describe('buildServerFnDispatchModule', () => {
     );
   });
 
-  it("answers a malformed body with the JSON error contract, not h3's", () => {
-    const src = buildServerFnDispatchModule({ modules });
-
-    expect(src).toContain('try {');
-    expect(src).toContain('statusCode = 400');
-    expect(src).toContain('Malformed request body');
-  });
-
   it('bootstraps against the app server config when one is given', () => {
     const src = buildServerFnDispatchModule({
       modules,
@@ -73,24 +65,19 @@ describe('buildServerFnDispatchModule', () => {
     expect(src).not.toContain('import { config as serverFnAppConfig }');
   });
 
-  it('dispatches by router param, enforces method, and propagates headers', () => {
+  it('wires the app injector into the runtime event handler', () => {
     const src = buildServerFnDispatchModule({ modules });
+    // The transport logic lives in `createServerFnEventHandler`
+    // (unit-tested in the router package); this module only wires it up, so it
+    // must not re-inline dispatch or h3 request handling.
     expect(src).toContain(
-      `import { dispatchServerFn, createServerFnAppInjector } from '@analogjs/router/server';`,
+      `import { createServerFnAppInjector, createServerFnEventHandler } from '@analogjs/router/server';`,
     );
-    expect(src).toContain(`const id = getRouterParam(event, 'id');`);
-    expect(src).toContain('await dispatchServerFn(');
-    // The app injector is a bootstrapped root injector (so providedIn: 'root'
-    // resolves), built once and awaited per request.
     expect(src).toContain(
-      'const appInjector = createServerFnAppInjector(serverFnAppConfig);',
+      'export default createServerFnEventHandler(\n  createServerFnAppInjector(serverFnAppConfig),\n);',
     );
-    expect(src).toContain('parent: await appInjector,');
-    expect(src).toContain('method: event.method,');
-    expect(src).toContain('event.node.res.statusCode = status;');
-    // Response headers (redirect Location, Set-Cookie, X-Analog-Errors) are set.
-    expect(src).toContain('const { status, body, headers }');
-    expect(src).toContain('event.node.res.setHeader(key, value);');
+    expect(src).not.toContain('dispatchServerFn');
+    expect(src).not.toContain('event.node.res');
   });
 
   it('emits posix-style import specifiers unchanged', () => {
