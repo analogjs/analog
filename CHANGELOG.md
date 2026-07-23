@@ -1,3 +1,9 @@
+# [2.7.0-beta.2](https://github.com/analogjs/analog/compare/v2.7.0-beta.1...v2.7.0-beta.2) (2026-07-23)
+
+### Features
+
+- **router:** add support for Streaming SSR ([#2419](https://github.com/analogjs/analog/issues/2419)) ([572becd](https://github.com/analogjs/analog/commit/572becd419a24cce505f8597c15af753e4871046))
+
 # [2.7.0-beta.1](https://github.com/analogjs/analog/compare/v2.6.4...v2.7.0-beta.1) (2026-07-23)
 
 ### Features
