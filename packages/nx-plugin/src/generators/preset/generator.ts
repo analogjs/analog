@@ -7,6 +7,7 @@ export default async function (
 ): Promise<() => void> {
   ensurePackage('@nx/angular', NX_VERSION);
   ensurePackage('@nx/vite', NX_VERSION);
+  ensurePackage('@nx/eslint', NX_VERSION);
   ensurePackage('@angular-devkit/core', 'latest');
   ensurePackage('rxjs', 'latest');
 

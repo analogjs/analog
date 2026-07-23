@@ -2605,6 +2605,9 @@ function findStyleOwnerModules(
   return [...modules.values()];
 }
 
+/**
+ * @internal
+ */
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],

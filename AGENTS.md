@@ -66,6 +66,13 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 | `packages/trpc`                | `@analogjs/trpc`                | `trpc`                |
 | `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
 
+## Agent Skills
+
+Reusable agent workflows live in `.agents/skills/`:
+
+- [`fix-issue`](.agents/skills/fix-issue/SKILL.md) - end-to-end flow for resolving a GitHub issue: fetch and understand the issue, create a feature branch off `beta`, implement and verify the fix, then hand off to `open-pr`.
+- [`open-pr`](.agents/skills/open-pr/SKILL.md) - commit the current work, push the feature branch, and open a GitHub PR against `beta` filled out from the PR template.
+
 ## Contribution Policy
 
 - Use `CONTRIBUTING.md` as the source of truth for base branch, PR requirements, title and commit conventions, supported types/scopes, breaking change notes, and submission expectations.
