@@ -17,7 +17,15 @@ import {
   PrerenderSitemapConfig,
 } from './options.js';
 import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
+import { serverFnIdPlugin } from './plugins/server-fn-id-plugin.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
+import { getServerFnHandlers } from './utils/get-server-fn-handlers.js';
+import {
+  buildServerFnDispatchModule,
+  getServerFnDispatchHandler,
+  SERVER_FN_DISPATCH_PREFIX,
+  SERVER_FN_DISPATCH_VIRTUAL,
+} from './utils/server-fn-endpoints.js';
 import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
@@ -58,6 +66,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
   let hasAPIDir = false;
+  let hasServerFns = false;
   const routeSitemaps: Record<
     string,
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig)
@@ -103,6 +112,35 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           hasAPIDir,
         });
 
+        // Server functions: discover every `*.server.ts` module, then register a
+        // single `/_analog/fn/:id` dispatch handler backed by a generated Nitro
+        // virtual module that imports those modules (registration side-effects)
+        // and the app provider set. Only wired when server functions exist.
+        const serverFnModules = getServerFnHandlers({
+          workspaceRoot,
+          sourceRoot,
+          rootDir,
+          additionalServerFnDirs: options?.additionalServerFnDirs,
+        });
+        const serverFnAppConfigModule = resolveServerFnAppConfigModule(
+          workspaceRoot,
+          rootDir,
+          sourceRoot,
+        );
+        hasServerFns = serverFnModules.length > 0;
+        const serverFnHandlers = hasServerFns
+          ? [getServerFnDispatchHandler()]
+          : [];
+        const serverFnVirtual =
+          serverFnModules.length > 0
+            ? {
+                [SERVER_FN_DISPATCH_VIRTUAL]: buildServerFnDispatchModule({
+                  modules: serverFnModules,
+                  appConfigModule: serverFnAppConfigModule,
+                }),
+              }
+            : {};
+
         nitroConfig = {
           rootDir,
           preset: buildPreset,
@@ -137,6 +175,19 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           imports: {
             autoImport: false,
           },
+          // The dispatch module's imports are all bare side-effect imports —
+          // the JIT compiler it needs, and each `*.server.ts` whose import is
+          // what registers its functions. Nitro treeshakes those away unless
+          // the modules are declared side-effectful, which would leave every
+          // call 404ing against an empty registry.
+          ...(hasServerFns
+            ? {
+                moduleSideEffects: [
+                  '@angular/compiler',
+                  ...serverFnModules.map((m) => normalizePath(m.file)),
+                ],
+              }
+            : {}),
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -146,7 +197,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
-            plugins: [pageEndpointsPlugin()],
+            plugins: [
+              pageEndpointsPlugin(),
+              serverFnIdPlugin(normalizePath(resolve(workspaceRoot, rootDir))),
+            ],
           },
           handlers: [
             ...(hasAPIDir
@@ -160,6 +214,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                   ]
                 : []),
             ...pageHandlers,
+            ...serverFnHandlers,
           ],
           routeRules: hasAPIDir
             ? undefined
@@ -174,6 +229,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             '#ANALOG_SSR_RENDERER': ssrRenderer,
             '#ANALOG_CLIENT_RENDERER': clientRenderer,
             ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
+            ...serverFnVirtual,
           },
         };
 
@@ -353,7 +409,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ...nitroConfig.externals,
                 external: ['rxjs', 'node-fetch-native/dist/polyfill'],
               },
-              moduleSideEffects: ['zone.js/node', 'zone.js/fesm2015/zone-node'],
+              moduleSideEffects: [
+                'zone.js/node',
+                'zone.js/fesm2015/zone-node',
+                ...(nitroConfig.moduleSideEffects ?? []),
+              ],
               handlers: [
                 ...(hasAPIDir
                   ? []
@@ -366,6 +426,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                       ]
                     : []),
                 ...pageHandlers,
+                ...serverFnHandlers,
               ],
             };
           }
@@ -474,6 +535,27 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           const server = createDevServer(nitro);
           await build(nitro);
           const apiHandler = toNodeListener(server.app as unknown as App);
+
+          // Server functions dispatch through `/_analog/fn/:id`, outside the
+          // API prefix the Nitro dev server is mounted under, so route them
+          // explicitly — otherwise a call falls through to the SSR catch-all
+          // and the client gets HTML back instead of its result.
+          if (hasServerFns) {
+            viteServer.middlewares.use(
+              (
+                req: IncomingMessage,
+                res: ServerResponse,
+                next: (error?: unknown) => void,
+              ) => {
+                if (req.url?.startsWith(SERVER_FN_DISPATCH_PREFIX)) {
+                  apiHandler(req, res);
+                  return;
+                }
+
+                next();
+              },
+            );
+          }
 
           if (hasAPIDir) {
             viteServer.middlewares.use(
@@ -668,6 +750,22 @@ const withAppHostingOutput = (nitroConfig: NitroConfig) => {
     },
   };
 };
+
+function resolveServerFnAppConfigModule(
+  workspaceRoot: string,
+  rootDir: string,
+  sourceRoot: string,
+): string | undefined {
+  // The app's server config (the one `main.server.ts` renders with), exporting
+  // `config`. Server-function handlers bootstrap against it, so they resolve the
+  // same DI as SSR with no separate provider list to maintain.
+  const root = normalizePath(resolve(workspaceRoot, rootDir));
+  const candidates = [
+    `${root}/${sourceRoot}/app/app.config.server.ts`,
+    `${root}/${sourceRoot}/app.config.server.ts`,
+  ];
+  return candidates.find((candidate) => existsSync(candidate));
+}
 
 const isNetlifyPreset = (buildPreset: string | undefined) =>
   process.env['NETLIFY'] ||

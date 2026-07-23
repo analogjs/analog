@@ -9,6 +9,9 @@ import {
   ServerRequest,
   ServerResponse,
 } from '@analogjs/router/tokens';
+import { SERVER_FN_DISPATCHER } from '@analogjs/router';
+
+import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 
 export function provideServerContext({
   req,
@@ -20,7 +23,8 @@ export function provideServerContext({
   const baseUrl = getBaseUrl(req);
   const locale = detectLocale(req);
 
-  if (import.meta.env.DEV) {
+  // Optional chaining: a Nitro-bundled caller has no `import.meta.env` at all.
+  if (import.meta.env?.DEV) {
     ɵresetCompiledComponents();
   }
 
@@ -29,6 +33,11 @@ export function provideServerContext({
     { provide: REQUEST, useValue: req },
     { provide: RESPONSE, useValue: res },
     { provide: BASE_URL, useValue: baseUrl },
+    // Server functions called while rendering run in-process, in this injector.
+    {
+      provide: SERVER_FN_DISPATCHER,
+      useValue: createServerFnDispatcher(req, res),
+    },
     ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
   ];
 }
@@ -92,7 +101,10 @@ export function parseAcceptLanguage(
 
 export function getBaseUrl(req: ServerRequest) {
   const protocol = getRequestProtocol(req);
-  const { originalUrl, headers } = req;
+  const { headers } = req;
+  // Node's `IncomingMessage` has no `originalUrl`, and a server function
+  // endpoint is reached with a plain request, so fall back before dereferencing.
+  const originalUrl = req.originalUrl || req.url || '/';
   const parsedUrl = new URL(
     '',
     `${protocol}://${headers.host}${
