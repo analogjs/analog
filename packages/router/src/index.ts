@@ -17,8 +17,6 @@ export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
 export { FormAction } from './lib/form-action.directive';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
-export { ServerOnly } from './lib/server.component';
-
 // Server Functions (issue #2422) — client transport + shared type surface.
 export {
   injectServerFn,

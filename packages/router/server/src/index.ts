@@ -1,10 +1,6 @@
 export { provideServerContext } from './provide-server-context';
-export { injectStaticProps, injectStaticOutputs } from './tokens';
-export {
-  serverComponentRequest,
-  renderServerComponent,
-} from './server-component-render';
 export { render } from './render';
+export { renderStream } from './render-stream';
 
 // Server Functions (issue #2422) — server authoring + dispatch runtime.
 export { serverFn } from './server-fn/server-fn';
