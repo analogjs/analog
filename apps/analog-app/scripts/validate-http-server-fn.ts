@@ -14,17 +14,22 @@ import '@angular/platform-server/init';
 import {
   dispatchServerFn,
   createServerFnAppInjector,
+  provideServerFns,
+  withServerFnInterceptors,
 } from '@analogjs/router/server';
-import { serverFnAppProviders } from '../src/app/server-fns';
+import { authInterceptor } from '../src/app/server-fns/auth.interceptor';
 import { ids, registerServerFns } from './_server-fn-harness';
 
 await registerServerFns();
 
 // The app injector is built ONCE, exactly as the generated Nitro handler does;
 // each request dispatches with only `{ parent, method }`.
-// Bootstrapped app injector, exactly as the generated Nitro handler builds it,
-// so a `providedIn: 'root'` service (CatalogService) resolves without listing.
-const appInjector = await createServerFnAppInjector(serverFnAppProviders);
+// Bootstrapped app injector, as the generated Nitro handler builds it from the
+// app's server config: a `providedIn: 'root'` service (CatalogService) resolves
+// without listing, and the interceptor comes from the config's providers.
+const appInjector = await createServerFnAppInjector([
+  ...provideServerFns(withServerFnInterceptors([authInterceptor])),
+]);
 
 const server = Bun.serve({
   port: 0,

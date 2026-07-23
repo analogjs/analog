@@ -118,19 +118,7 @@ export const getGreeting = serverFn(async () => {
 
 `REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
 
-Services and interceptors used by handlers are provided from `src/app/server-fns/index.ts` (or `src/app/server-fns.ts`), which exports a `serverFnAppProviders` array:
-
-```ts
-// src/app/server-fns/index.ts
-import type { StaticProvider } from '@angular/core';
-
-export const serverFnAppProviders: StaticProvider[] = [
-  // Only providers that are not otherwise discoverable go here — e.g. a token
-  // bound to a value, or a class you want to override.
-];
-```
-
-A `providedIn: 'root'` service does not need to be listed. The dispatch endpoint runs handlers against a bootstrapped application injector, so a root-provided service resolves the same way it would inside a component — whether the function is called during server-side rendering or over HTTP from the browser. Use `serverFnAppProviders` for providers that are not `providedIn: 'root'`: a token bound to a value, or an override.
+Handlers resolve dependencies from **your app's own server config** — there is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
 
 ## Adding Interceptors
 
@@ -153,21 +141,29 @@ export const authInterceptor: ServerFnInterceptorFn = (ctx, next) => {
 };
 ```
 
-Register them with `provideServerFns`:
+Register them in your server config with `provideServerFns` — the same file the handlers bootstrap from:
 
 ```ts
-// src/app/server-fns/index.ts
+// src/app/app.config.server.ts
+import { mergeApplicationConfig } from '@angular/core';
+import { provideServerRendering } from '@angular/platform-server';
 import {
   provideServerFns,
   withServerFnInterceptors,
 } from '@analogjs/router/server';
 
-export const serverFnAppProviders: StaticProvider[] = [
-  ...(provideServerFns(
-    withServerFnInterceptors([authInterceptor]),
-  ) as StaticProvider[]),
-];
+import { appConfig } from './app.config';
+import { authInterceptor } from './server-fns/auth.interceptor';
+
+export const config = mergeApplicationConfig(appConfig, {
+  providers: [
+    provideServerRendering(),
+    provideServerFns(withServerFnInterceptors([authInterceptor])),
+  ],
+});
 ```
+
+`provideServerFns` is server-only, so it belongs in `app.config.server.ts`, not the shared `app.config.ts`. Register the same way with `withAllowedOrigins([...])` when you need cross-origin access.
 
 `ctx.with({ ... })` accumulates a context object down the chain and delivers it to the handler as its second argument. Extend the `ServerFnContext` interface by declaration merging to type what your interceptors add.
 
@@ -198,14 +194,15 @@ Two protections are built in:
 - **Route ids are derived at build time** from the file and export name, not chosen by you. Each function is served from an opaque `/_analog/fn/<hash>` route, so two functions sharing a name cannot collide, and the endpoint surface cannot be enumerated by guessing export names. Treat the id as an opaque address rather than a secret — it is reproducible from the source and present in the client bundle, so it is not an authorization boundary.
 - **Calls are same-origin by default.** Because server functions are often cookie-authenticated, cross-origin browser calls are rejected with a `403` before the function is even looked up, and input-bearing calls must send a JSON body.
 
-If an app genuinely needs to be called from another origin, opt in explicitly:
+If an app genuinely needs to be called from another origin, opt in explicitly in `app.config.server.ts`:
 
 ```ts
 import { provideServerFns, withAllowedOrigins } from '@analogjs/router/server';
 
-export const serverFnAppProviders: StaticProvider[] = [
-  ...(provideServerFns(
-    withAllowedOrigins(['https://admin.example.com']),
-  ) as StaticProvider[]),
-];
+export const config = mergeApplicationConfig(appConfig, {
+  providers: [
+    provideServerRendering(),
+    provideServerFns(withAllowedOrigins(['https://admin.example.com'])),
+  ],
+});
 ```

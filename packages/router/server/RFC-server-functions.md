@@ -200,17 +200,22 @@ an `input` schema is a build-time error.
 The generated endpoint runs the handler inside the request injector Analog
 already assembles for SSR. Conceptually:
 
-**Provider source — one app injector, per-request children.** Server function
-endpoints must run with the same application server providers used by SSR, but
-those providers should be built **once**, not re-listed on every request. The
-generated dispatch handler constructs a single app-level `Injector` at module
-load from the app's `serverFnAppProviders` (the SSR provider set plus
-`provideServerFns(...)`), then passes it to `dispatchServerFn` as the **parent**
-of a small per-request child injector:
+**Provider source — one config, one app injector, per-request children.** Server
+function endpoints run with the **same application providers SSR uses**, sourced
+from the app's own server config (`app.config.server.ts` — the `ApplicationConfig`
+`main.server.ts` renders with), not a second provider list. The generated
+dispatch handler bootstraps that config **once** at module load via
+`createServerFnAppInjector`, and passes the resulting root injector to
+`dispatchServerFn` as the **parent** of a small per-request child injector. So a
+handler resolves whatever the app configured — `providedIn: 'root'` services,
+`useValue` tokens, and server-function interceptors (registered in the server
+config with `provideServerFns(withServerFnInterceptors([...]))`) — exactly as a
+component would during SSR.
 
 ```ts
 // generated /_analog/fn/:id handler — built once, awaited per request
-const appInjector = createServerFnAppInjector(serverFnAppProviders);
+import { config } from './app/app.config.server';
+const appInjector = createServerFnAppInjector(config);
 
 export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');
@@ -252,22 +257,27 @@ request because the injector is a real per-request child.
 provided when a locale can be detected from the URL prefix or `Accept-Language`,
 so handlers should read it with `{ optional: true }`.
 
-> **DI parity between the two transports.** A `providedIn: 'root'` service
-> resolves through this chain only when `parent` is a **bootstrapped**
-> environment injector, not a plain `Injector.create({ providers })` (which
-> resolves explicitly-listed providers but not tree-shakeable `root` ones). The
-> in-process SSR leg already has one — the application's own injector. So the
-> HTTP endpoint bootstraps a real application to match: `createServerFnAppInjector`
-> (`@analogjs/router/server`) runs `createApplication({ providers:
-serverFnAppProviders }, { platformRef: platformServer() })` **once** at module
-> load and uses `appRef.injector` as the parent. No root component is
-> bootstrapped, so nothing renders and no change detection runs — it is a DI
-> container with the app's providers.
+> **DI parity between the two transports.** Handlers must resolve DI the same way
+> whether reached in-process during SSR or over HTTP. Two things make that hold:
 >
-> The result is that a `providedIn: 'root'` service resolves in a handler reached
-> over HTTP exactly as it does during SSR, with zero enumeration in
-> `serverFnAppProviders`. Verified on a live dev server and a production build,
-> and pinned by specs (`app-injector.spec.ts`, `server-fn-endpoints.spec.ts`).
+> 1. **A bootstrapped parent, not a constructed one.** A `providedIn: 'root'`
+>    service resolves only through a **bootstrapped** environment injector, not a
+>    plain `Injector.create({ providers })` (which resolves listed providers but
+>    not tree-shakeable `root` ones). `createServerFnAppInjector` runs
+>    `createApplication(config, { platformRef: platformServer() })` **once** at
+>    module load and uses `appRef.injector` as the parent. No root component is
+>    bootstrapped, so nothing renders, no change detection runs, and the router
+>    registers but never navigates — it is a DI container with the app's providers.
+> 2. **The app's own config, not a second list.** `config` is the app's server
+>    `ApplicationConfig` (`app.config.server.ts`), the same one SSR renders with.
+>    So the endpoint's provider set _is_ the app's provider set — services,
+>    tokens, and interceptors — with nothing to keep in sync.
+>
+> The result: `providedIn: 'root'` services, `useValue` tokens, and app providers
+> all resolve in an HTTP-dispatched handler exactly as during SSR, with no
+> server-function-specific provider list. Verified on a live dev server and a
+> production build, and pinned by specs (`app-injector.spec.ts`,
+> `server-fn-endpoints.spec.ts`).
 
 **The surface is strictly DI.** The raw `H3Event` is used only internally to
 build the injector and decode input — it is never handed to interceptors or
@@ -563,8 +573,8 @@ A user's `*.server.ts` imports `serverFn` from `/server`; a component imports
 | `packages/vite-plugin-nitro/src/lib/utils/inject-server-fn-ids.ts`       | **new** — `oxc`/`magic-string` server transform: stamp the derived `id` into each `serverFn` config, keeping the handler; overwrite any stray author id                                                                                                                                                   |
 | `packages/vite-plugin-nitro/src/lib/plugins/server-fn-id-plugin.ts`      | **new** — Nitro-build plugin applying `injectServerFnIds` to `*.server.ts`                                                                                                                                                                                                                                |
 | `packages/vite-plugin-nitro/src/lib/utils/get-server-fn-handlers.ts`     | **new** — discovers `<projectRoot>/src/**/*.server.ts` modules (+ `additionalServerFnDirs`), excludes SSR config, de-duped + sorted                                                                                                                                                                       |
-| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + provider set; builds the app `Injector` once and dispatches with `{ parent: appInjector, method: event.method }`                                                           |
-| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + providers-module convention                                                                                                                                                      |
+| `packages/vite-plugin-nitro/src/lib/utils/server-fn-endpoints.ts`        | **new** — generates the single `/_analog/fn/:id` Nitro dispatch handler as a virtual module importing the discovered modules + the app server config; bootstraps the app injector once (`createServerFnAppInjector`) and dispatches with `{ parent: await appInjector, method: event.method }`            |
+| `packages/vite-plugin-nitro/src/lib/vite-plugin-nitro.ts` · `options.ts` | register the dispatch handler + virtual module (both config blocks) + `serverFnIdPlugin`; add `additionalServerFnDirs` + resolve the app server config (`app.config.server.ts`) the handler bootstraps                                                                                                    |
 | `packages/platform/src/lib/server-fn-client-transform.ts`                | **new** — `oxc-parser` scrub: rewrite each `export const NAME = serverFn(config, handler)` to `createServerFnRef({ id, method })` with the **derived** id, dropping handler + imports                                                                                                                     |
 | `packages/platform/src/lib/clear-client-page-endpoint.ts`                | client → scrub to proxies (empty sourcemap, so the original module cannot ride along in `sourcesContent`); SSR → `injectServerFnIds` (keep handlers); else page `export default undefined;` on the build only. Runs in `serve` as well as `build` — dev SSR needs the ids too                             |
 
@@ -675,15 +685,19 @@ consumption).
   `additionalServerFnDirs`.
 - **Endpoint generation** (`server-fn-endpoints.spec.ts`, 8): the `/_analog/fn/:id`
   registration (never `/api`-prefixed), and the generated virtual module — module
-  registration imports, provider wiring vs. empty fallback, and dispatch by router
-  param that builds the app injector once (`Injector.create({ providers:
-serverFnAppProviders })`) and passes `{ parent: appInjector, method:
+  registration imports, bootstrapping against the app server config
+  (`createServerFnAppInjector(serverFnAppConfig)`) vs. the empty-config fallback,
+  and dispatch by router param passing `{ parent: await appInjector, method:
 event.method }` while propagating response headers; the Angular JIT compiler
   loaded first, since the linker never runs over a Nitro-bundled module.
-- **Dispatch** (`dispatch.spec.ts`, 9): `inject()` in a handler resolving from the
-  parent app injector, 404/405/415/400 rejections, interceptor `Response`
-  short-circuit with headers, the cross-origin 403 landing before the registry
-  lookup, DI-registered allowed origins, and the in-process caller exemption.
+- **App injector** (`app-injector.spec.ts`, 2): a bootstrapped root injector
+  resolves `providedIn: 'root'` services without listing them, and explicitly
+  listed providers too.
+- **Dispatch** (`dispatch.spec.ts`, 12): `inject()` in a handler resolving from the
+  parent injector, the request tokens (`BASE_URL`/`LOCALE`), separate `Set-Cookie`
+  headers, 404/405/415/400 rejections, interceptor `Response` short-circuit with
+  headers, the cross-origin 403 landing before the registry lookup, DI-registered
+  allowed origins, and the in-process caller exemption.
 - **Client transport** (`inject-server-fn.spec.ts`, 5): the resource read over
   `HttpTestingController`, idle while the args factory returns `undefined`,
   `TransferState` hydration with no request issued, the mutation POST, and the
