@@ -13,6 +13,15 @@ export function angularVitestPlugin(): Plugin {
     apply: 'serve',
     enforce: 'post',
     config(userConfig) {
+      // The `vmThreads` pool default only applies to the Node/JSDOM runner.
+      // In Vitest browser mode a Node pool is a no-op for execution, but it
+      // still poisons isolation: `isolate` has no effect under VM pools
+      // (https://vitest.dev/config/isolate), and since Vitest 4.0.7 browser
+      // isolation inherits that resolution — so forcing `vmThreads` disables
+      // per-file isolation and leaks global state (e.g. fake timers) between
+      // spec files. Leave the pool untouched when browser mode is enabled.
+      const browserEnabled = (userConfig as any).test?.browser?.enabled;
+
       return {
         optimizeDeps: {
           include: ['tslib'],
@@ -24,9 +33,13 @@ export function angularVitestPlugin(): Plugin {
             /fesm2015/,
           ],
         },
-        test: {
-          pool: (userConfig as any).test?.pool ?? 'vmThreads',
-        },
+        ...(browserEnabled
+          ? {}
+          : {
+              test: {
+                pool: (userConfig as any).test?.pool ?? 'vmThreads',
+              },
+            }),
       };
     },
     async transform(_code, id) {

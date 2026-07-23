@@ -1,3 +1,27 @@
+## [2.6.4-beta.4](https://github.com/analogjs/analog/compare/v2.6.4-beta.3...v2.6.4-beta.4) (2026-07-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** ensure compatibility with NodeNext resolution ([#2434](https://github.com/analogjs/analog/issues/2434)) ([50126d4](https://github.com/analogjs/analog/commit/50126d424f9b52415a6c938b6bf83b5c2e59c865))
+
+## [2.6.4-beta.3](https://github.com/analogjs/analog/compare/v2.6.4-beta.2...v2.6.4-beta.3) (2026-07-22)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** enforce path boundary in generated API middleware ([#2428](https://github.com/analogjs/analog/issues/2428)) ([0960098](https://github.com/analogjs/analog/commit/0960098e4eab22b73f77e6b5ee3ca071f02439b1))
+
+## [2.6.4-beta.2](https://github.com/analogjs/analog/compare/v2.6.4-beta.1...v2.6.4-beta.2) (2026-07-14)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure @nx/eslint is installed when applying the preset ([#2424](https://github.com/analogjs/analog/issues/2424)) ([2a9ab32](https://github.com/analogjs/analog/commit/2a9ab3286068b85478b29c4e0be81788913ca30e))
+
+## [2.6.4-beta.1](https://github.com/analogjs/analog/compare/v2.6.3...v2.6.4-beta.1) (2026-07-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** skip vmThreads pool default in browser mode ([#2423](https://github.com/analogjs/analog/issues/2423)) ([9cb7dc1](https://github.com/analogjs/analog/commit/9cb7dc1fd97facf531870c1d73458ea2ee1d9f2c)), closes [#2222](https://github.com/analogjs/analog/issues/2222)
+
 ## [2.6.3](https://github.com/analogjs/analog/compare/v2.6.2...v2.6.3) (2026-07-07)
 
 ### Bug Fixes
