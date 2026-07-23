@@ -122,7 +122,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           rootDir,
           additionalServerFnDirs: options?.additionalServerFnDirs,
         });
-        const serverFnProvidersModule = resolveServerFnProvidersModule(
+        const serverFnAppConfigModule = resolveServerFnAppConfigModule(
           workspaceRoot,
           rootDir,
           sourceRoot,
@@ -136,7 +136,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             ? {
                 [SERVER_FN_DISPATCH_VIRTUAL]: buildServerFnDispatchModule({
                   modules: serverFnModules,
-                  providersModule: serverFnProvidersModule,
+                  appConfigModule: serverFnAppConfigModule,
                 }),
               }
             : {};
@@ -751,22 +751,18 @@ const withAppHostingOutput = (nitroConfig: NitroConfig) => {
   };
 };
 
-/**
- * Resolves the conventional module that exports `serverFnAppProviders`
- * (the app + interceptor `StaticProvider[]` made available inside server
- * function handlers): `<sourceRoot>/app/server-fns/index.ts` or
- * `<sourceRoot>/app/server-fns.ts`. Returns `undefined` when neither exists,
- * in which case handlers run with no app providers.
- */
-function resolveServerFnProvidersModule(
+function resolveServerFnAppConfigModule(
   workspaceRoot: string,
   rootDir: string,
   sourceRoot: string,
 ): string | undefined {
+  // The app's server config (the one `main.server.ts` renders with), exporting
+  // `config`. Server-function handlers bootstrap against it, so they resolve the
+  // same DI as SSR with no separate provider list to maintain.
   const root = normalizePath(resolve(workspaceRoot, rootDir));
   const candidates = [
-    `${root}/${sourceRoot}/app/server-fns/index.ts`,
-    `${root}/${sourceRoot}/app/server-fns.ts`,
+    `${root}/${sourceRoot}/app/app.config.server.ts`,
+    `${root}/${sourceRoot}/app.config.server.ts`,
   ];
   return candidates.find((candidate) => existsSync(candidate));
 }

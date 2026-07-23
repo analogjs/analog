@@ -56,21 +56,21 @@ describe('buildServerFnDispatchModule', () => {
     expect(src).toContain('Malformed request body');
   });
 
-  it('imports app providers when a providers module is given', () => {
+  it('bootstraps against the app server config when one is given', () => {
     const src = buildServerFnDispatchModule({
       modules,
-      providersModule: '/ws/app/src/app/server-fns/index.ts',
+      appConfigModule: '/ws/app/src/app/app.config.server.ts',
     });
     expect(src).toContain(
-      `import { serverFnAppProviders } from "/ws/app/src/app/server-fns/index.ts";`,
+      `import { config as serverFnAppConfig } from "/ws/app/src/app/app.config.server.ts";`,
     );
-    expect(src).not.toContain('const serverFnAppProviders = []');
+    expect(src).not.toContain('const serverFnAppConfig = { providers: [] }');
   });
 
-  it('falls back to empty providers when none is given', () => {
+  it('falls back to an empty config when the app has none', () => {
     const src = buildServerFnDispatchModule({ modules });
-    expect(src).toContain('const serverFnAppProviders = [];');
-    expect(src).not.toContain('import { serverFnAppProviders }');
+    expect(src).toContain('const serverFnAppConfig = { providers: [] };');
+    expect(src).not.toContain('import { config as serverFnAppConfig }');
   });
 
   it('dispatches by router param, enforces method, and propagates headers', () => {
@@ -83,7 +83,7 @@ describe('buildServerFnDispatchModule', () => {
     // The app injector is a bootstrapped root injector (so providedIn: 'root'
     // resolves), built once and awaited per request.
     expect(src).toContain(
-      'const appInjector = createServerFnAppInjector(serverFnAppProviders);',
+      'const appInjector = createServerFnAppInjector(serverFnAppConfig);',
     );
     expect(src).toContain('parent: await appInjector,');
     expect(src).toContain('method: event.method,');
@@ -96,9 +96,9 @@ describe('buildServerFnDispatchModule', () => {
   it('emits posix-style import specifiers unchanged', () => {
     const src = buildServerFnDispatchModule({
       modules: [{ file: '/ws/app/src/app/a.server.ts' }],
-      providersModule: '/ws/app/src/app/server-fns/index.ts',
+      appConfigModule: '/ws/app/src/app/app.config.server.ts',
     });
     expect(src).toContain('import "/ws/app/src/app/a.server.ts";');
-    expect(src).toContain(`from "/ws/app/src/app/server-fns/index.ts";`);
+    expect(src).toContain(`from "/ws/app/src/app/app.config.server.ts";`);
   });
 });

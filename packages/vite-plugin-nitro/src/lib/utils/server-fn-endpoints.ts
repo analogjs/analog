@@ -36,34 +36,38 @@ export type BuildServerFnDispatchModuleArgs = {
   /** Discovered `*.server.ts` modules, imported for registration side-effects. */
   modules: ServerFnHandlerModule[];
   /**
-   * Absolute path to a module exporting `serverFnAppProviders`
-   * (`StaticProvider[]`) that are made available inside handlers. When absent,
-   * handlers run with no app providers.
+   * Absolute path to the app's server config module (`app.config.server.ts`),
+   * which exports the `ApplicationConfig` (as `config`) that `main.server.ts`
+   * renders with. Handlers bootstrap against it, so they see the same DI the
+   * app configured. When absent, handlers run with only `providedIn: 'root'`.
    */
-  providersModule?: string;
+  appConfigModule?: string;
 };
 
 /**
  * Generates the source of the Nitro dispatch handler.
  *
  * The handler imports every discovered `*.server.ts` module so each
- * `serverFn(...)` registers itself, imports the app provider set (if any), then
- * on each request looks up the function by id and runs it via `dispatchServerFn`
- * — the same call path the validation harnesses exercise.
+ * `serverFn(...)` registers itself, imports the app's server config, then on
+ * each request looks up the function by id and runs it via `dispatchServerFn` —
+ * the same call path the validation harnesses exercise.
  */
 export function buildServerFnDispatchModule({
   modules,
-  providersModule,
+  appConfigModule,
 }: BuildServerFnDispatchModuleArgs): string {
   const registrationImports = modules
     .map((m) => `import ${JSON.stringify(normalizePath(m.file))};`)
     .join('\n');
 
-  const providers = providersModule
-    ? `import { serverFnAppProviders } from ${JSON.stringify(
-        normalizePath(providersModule),
+  // Bootstrap against the app's own server config so a handler resolves exactly
+  // the services, tokens, and interceptors the app configured — one config, no
+  // second provider list. Fall back to an empty config when the app has none.
+  const appConfig = appConfigModule
+    ? `import { config as serverFnAppConfig } from ${JSON.stringify(
+        normalizePath(appConfigModule),
       )};`
-    : `const serverFnAppProviders = [];`;
+    : `const serverFnAppConfig = { providers: [] };`;
 
   // `@analogjs/router/server` is a partially-compiled Angular library, and this
   // module is bundled by Nitro rather than by the app's Angular pipeline, so the
@@ -79,12 +83,13 @@ import { dispatchServerFn, createServerFnAppInjector } from '@analogjs/router/se
 // Discovered server-function modules (registration side-effects).
 ${registrationImports}
 
-${providers}
+${appConfig}
 
-// Built once and reused: a bootstrapped application root injector, so a handler
-// resolves \`providedIn: 'root'\` services exactly as it does during SSR. Only
-// REQUEST/RESPONSE are rebuilt per call, in the child dispatch creates.
-const appInjector = createServerFnAppInjector(serverFnAppProviders);
+// Built once and reused: the app is bootstrapped from its own server config, so
+// a handler resolves the same DI as an SSR render (\`providedIn: 'root'\` and
+// listed providers alike). No component is bootstrapped, so nothing renders and
+// the router never navigates. Only REQUEST/RESPONSE are rebuilt per call.
+const appInjector = createServerFnAppInjector(serverFnAppConfig);
 
 export default eventHandler(async (event) => {
   const id = getRouterParam(event, 'id');

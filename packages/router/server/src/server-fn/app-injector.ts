@@ -1,4 +1,8 @@
-import { Injector, type StaticProvider } from '@angular/core';
+import {
+  type ApplicationConfig,
+  Injector,
+  type StaticProvider,
+} from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import {
   platformServer,
@@ -20,18 +24,28 @@ import {
  * returned `appRef.injector` is a root environment injector, so both listed
  * providers and `providedIn: 'root'` services resolve, matching SSR.
  *
- * No root component is bootstrapped (`createApplication`, not
- * `bootstrapApplication`), so nothing renders and no change detection runs — it
- * is a DI container with the app's providers, built once and reused for the
- * process, with only `REQUEST`/`RESPONSE` rebuilt per call in the child.
+ * The generated endpoint passes the app's own server `ApplicationConfig` (the
+ * one `main.server.ts` renders with), so a handler sees exactly the DI the app
+ * configured — services, tokens, and interceptors alike — with no second
+ * provider list to keep in sync. No root component is bootstrapped
+ * (`createApplication`, not `bootstrapApplication`), so nothing renders, no
+ * change detection runs, and the router registers but never navigates. It is a
+ * DI container with the app's providers, built once and reused for the process,
+ * with only `REQUEST`/`RESPONSE` rebuilt per call in the child.
+ *
+ * A bare provider array is also accepted (direct callers and tests without an
+ * app config); it is wrapped with `provideServerRendering` so the server tokens
+ * resolve the same way.
  */
 export async function createServerFnAppInjector(
-  providers: StaticProvider[] = [],
+  configOrProviders: ApplicationConfig | StaticProvider[] = [],
 ): Promise<Injector> {
-  const platformRef = platformServer();
-  const appRef = await createApplication(
-    { providers: [provideServerRendering(), ...providers] },
-    { platformRef },
-  );
+  const config: ApplicationConfig = Array.isArray(configOrProviders)
+    ? { providers: [provideServerRendering(), ...configOrProviders] }
+    : configOrProviders;
+
+  const appRef = await createApplication(config, {
+    platformRef: platformServer(),
+  });
   return appRef.injector;
 }
