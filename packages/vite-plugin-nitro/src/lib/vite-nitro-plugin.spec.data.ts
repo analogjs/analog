@@ -47,7 +47,8 @@ export const mockNitroConfig: NitroConfig = {
     apiPrefix: 'api',
   },
   virtual: {
-    '#ANALOG_API_MIDDLEWARE': expect.anything(),
+    '#ANALOG_SSR_RENDERER': expect.anything(),
+    '#ANALOG_CLIENT_RENDERER': expect.anything(),
   },
 };
 

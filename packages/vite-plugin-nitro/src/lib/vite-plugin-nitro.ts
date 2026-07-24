@@ -1,4 +1,4 @@
-import type { NitroConfig, NitroEventHandler, RollupConfig } from 'nitro/types';
+import type { NitroConfig, RollupConfig } from 'nitro/types';
 import { build, createDevServer, createNitro } from 'nitro/builder';
 import * as vite from 'vite';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
@@ -26,11 +26,7 @@ import {
   writeWebResponseToNode,
 } from './utils/node-web-bridge.js';
 import { getMatchingContentFilesWithFrontMatter } from './utils/get-content-files.js';
-import {
-  ssrRenderer,
-  clientRenderer,
-  apiMiddleware,
-} from './utils/renderers.js';
+import { ssrRenderer, clientRenderer } from './utils/renderers.js';
 import { getBundleOptionsKey, isRolldown } from './utils/rolldown.js';
 import { debugNitro, debugSsr } from './utils/debug.js';
 
@@ -164,14 +160,6 @@ function cloneUserConfig(userConfig: UserConfig): UserConfig {
           : resolve.alias,
     },
   } as UserConfig;
-}
-
-function createNitroMiddlewareHandler(handler: string): NitroEventHandler {
-  return {
-    route: '/**',
-    handler,
-    middleware: true,
-  };
 }
 
 /**
@@ -629,10 +617,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const baseURL = process.env['NITRO_APP_BASE_URL'] || '';
   const prefix = baseURL ? baseURL.substring(0, baseURL.length - 1) : '';
   const apiPrefix = `/${options?.apiPrefix || 'api'}`;
-  const useAPIMiddleware =
-    typeof options?.useAPIMiddleware !== 'undefined'
-      ? options?.useAPIMiddleware
-      : true;
   const viteRolldownOutput = options?.vite?.build?.rolldownOptions?.output;
   // Vite's native build typing allows `output` to be either a single object or
   // an array. Analog only forwards `codeSplitting` into the client environment
@@ -649,7 +633,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let config: UserConfig;
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
-  let hasAPIDir = false;
   let clientOutputPath = '';
   let clientIndexHtml: string | undefined;
   let legacyClientSubBuild = false;
@@ -701,13 +684,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           ? resolve(workspaceRoot, config.root)
           : workspaceRoot;
         rootDir = relative(workspaceRoot, resolvedConfigRoot) || '.';
-        hasAPIDir = existsSync(
-          resolve(
-            workspaceRoot,
-            rootDir,
-            `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
-          ),
-        );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined) ??
@@ -718,7 +694,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           sourceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
-          hasAPIDir,
         });
         const resolvedClientOutputPath = resolveClientOutputPath(
           clientOutputPath,
@@ -798,27 +773,11 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             },
             plugins: [pageEndpointsPlugin()],
           },
-          handlers: [
-            ...(hasAPIDir
-              ? []
-              : useAPIMiddleware
-                ? [createNitroMiddlewareHandler('#ANALOG_API_MIDDLEWARE')]
-                : []),
-            ...pageHandlers,
-          ],
-          routeRules: hasAPIDir
-            ? undefined
-            : useAPIMiddleware
-              ? undefined
-              : {
-                  [`${prefix}${apiPrefix}/**`]: {
-                    proxy: { to: '/**' },
-                  },
-                },
+          handlers: [...pageHandlers],
+          routeRules: undefined,
           virtual: {
             '#ANALOG_SSR_RENDERER': ssrRenderer(),
             '#ANALOG_CLIENT_RENDERER': clientRenderer(),
-            ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
           },
         };
 
@@ -1064,11 +1023,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             nitroConfig = {
               ...nitroConfig,
               handlers: [
-                ...(hasAPIDir
-                  ? []
-                  : useAPIMiddleware
-                    ? [createNitroMiddlewareHandler('#ANALOG_API_MIDDLEWARE')]
-                    : []),
                 ...pageHandlers,
                 // Preserve the renderer catch-all handler added above
                 {
@@ -1427,33 +1381,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             await writeWebResponseToNode(res, response);
           };
 
-          if (hasAPIDir) {
-            viteServer.middlewares.use(
-              (
-                req: IncomingMessage,
-                res: ServerResponse,
-                next: (error?: unknown) => void,
-              ) => {
-                if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
-                  void apiHandler(req, res).catch((error) => next(error));
-                  return;
-                }
-
-                next();
-              },
-            );
-          } else {
-            viteServer.middlewares.use(
-              apiPrefix,
-              (
-                req: IncomingMessage,
-                res: ServerResponse,
-                next: (error?: unknown) => void,
-              ) => {
+          viteServer.middlewares.use(
+            (
+              req: IncomingMessage,
+              res: ServerResponse,
+              next: (error?: unknown) => void,
+            ) => {
+              if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
                 void apiHandler(req, res).catch((error) => next(error));
-              },
-            );
-          }
+                return;
+              }
+
+              next();
+            },
+          );
 
           viteServer.httpServer?.once('listening', () => {
             process.env['ANALOG_HOST'] = !viteServer.config.server.host

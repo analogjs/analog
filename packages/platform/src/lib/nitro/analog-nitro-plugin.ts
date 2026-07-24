@@ -420,20 +420,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           },
         );
 
-        const hasAPIDir = existsSync(
-          resolve(
-            context.workspaceRoot,
-            context.rootDir,
-            `${context.sourceRoot}/server/routes/api`,
-          ),
-        );
-
         const pageHandlers: NitroEventHandler[] = getPageHandlers({
           workspaceRoot: context.workspaceRoot,
           sourceRoot: context.sourceRoot,
           rootDir: context.rootDir,
           additionalPagesDirs: options.additionalPagesDirs,
-          hasAPIDir,
         });
         nitro.options.handlers.push(...pageHandlers);
 

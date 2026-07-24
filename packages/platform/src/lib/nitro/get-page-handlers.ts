@@ -9,7 +9,6 @@ type GetHandlersArgs = {
   sourceRoot: string;
   rootDir: string;
   additionalPagesDirs?: string[];
-  hasAPIDir?: boolean;
 };
 
 /**
@@ -17,20 +16,19 @@ type GetHandlersArgs = {
  *
  * Discovers all `.server.ts` files under `app/pages/**` and any additional
  * pages directories, then maps each file to a Nitro route pattern under
- * `/_analog/pages/...` (prefixed with `/api` when the project has an API dir).
+ * `/api/_analog/pages/...`.
  *
  * Route transformation examples:
- * - index.server.ts → /_analog/pages/index
- * - users/[id].server.ts → /_analog/pages/users/:id
- * - products/[...slug].server.ts → /_analog/pages/products/**:slug
- * - (auth)/login.server.ts → /_analog/pages/-auth-/login
+ * - index.server.ts → /api/_analog/pages/index
+ * - users/[id].server.ts → /api/_analog/pages/users/:id
+ * - products/[...slug].server.ts → /api/_analog/pages/products/**:slug
+ * - (auth)/login.server.ts → /api/_analog/pages/-auth-/login
  */
 export function getPageHandlers({
   workspaceRoot,
   sourceRoot,
   rootDir,
   additionalPagesDirs,
-  hasAPIDir,
 }: GetHandlersArgs): NitroEventHandler[] {
   const root = normalizePath(resolve(workspaceRoot, rootDir));
 
@@ -61,7 +59,7 @@ export function getPageHandlers({
 
     return {
       handler: endpointFile,
-      route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
+      route: `/api/_analog${route}`,
       lazy: true,
     };
   });

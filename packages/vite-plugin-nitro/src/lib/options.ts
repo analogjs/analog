@@ -41,17 +41,6 @@ export interface Options {
    */
   additionalAPIDirs?: string[];
   apiPrefix?: string;
-
-  /**
-   * Toggles internal API middleware.
-   * If disabled, a proxy request is used to route /api
-   * requests to / in the production server build.
-   *
-   * @deprecated
-   * Use the src/server/routes/api folder
-   * for API routes.
-   */
-  useAPIMiddleware?: boolean;
   /**
    * Vite-native build passthrough. Rolldown-only options such as
    * `build.rolldownOptions.output.codeSplitting` are forwarded when present.

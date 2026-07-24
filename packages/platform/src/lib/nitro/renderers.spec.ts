@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiMiddleware, clientRenderer, ssrRenderer } from './renderers';
+import { clientRenderer, ssrRenderer } from './renderers';
 
 describe('renderers virtual modules', () => {
   it('emits an SSR renderer that serves HTML responses', () => {
@@ -29,13 +29,5 @@ describe('renderers virtual modules', () => {
     expect(moduleSource).toContain(
       "event.res.headers.set('content-type', 'text/html; charset=utf-8');",
     );
-  });
-
-  it('uses event-bound forwarding for API middleware', () => {
-    expect(apiMiddleware).toContain(
-      "import { defineHandler, fetchWithEvent, proxyRequest } from 'nitro/h3';",
-    );
-    expect(apiMiddleware).toContain('return fetchWithEvent(event, reqUrl');
-    expect(apiMiddleware).toContain('return proxyRequest(event, reqUrl);');
   });
 });
