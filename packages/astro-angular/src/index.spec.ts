@@ -63,4 +63,42 @@ describe('angularVitePlugin', () => {
       expect(plugin.configEnvironment('ssr')).toBeUndefined();
     });
   });
+
+  describe('analogjs-astro-server-optimize-deps plugin', () => {
+    function getPlugin() {
+      return getVitePlugins().find(
+        (p) => (p as Plugin).name === 'analogjs-astro-server-optimize-deps',
+      ) as Plugin & {
+        configEnvironment: (
+          name: string,
+        ) => { optimizeDeps: { exclude: string[] } } | undefined;
+      };
+    }
+
+    // Regression for analogjs/analog#2438: top-level `optimizeDeps` only seeds
+    // the client environment, so adapters that run SSR in their own
+    // environment (`@astrojs/cloudflare` on `workerd`) pre-bundled Angular's
+    // server entrypoints and the renderer failed.
+    it('should exclude the server entrypoints for server environments', () => {
+      const exclude =
+        getPlugin().configEnvironment('ssr')?.optimizeDeps.exclude;
+
+      expect(exclude).toEqual([
+        '@angular/platform-server',
+        '@analogjs/astro-angular/server.js',
+        '@analogjs/astro-angular/server-ngh.js',
+        '@angular/core',
+      ]);
+    });
+
+    // Pre-bundling `@angular/core` on the server yields a second Angular
+    // runtime, so components render against a different runtime than the one
+    // they registered in — empty SSR output plus NG0912 ID collisions.
+    it('should exclude @angular/core on the server but keep it optimized on the client', () => {
+      expect(
+        getPlugin().configEnvironment('ssr')?.optimizeDeps.exclude,
+      ).toContain('@angular/core');
+      expect(getPlugin().configEnvironment('client')).toBeUndefined();
+    });
+  });
 });
