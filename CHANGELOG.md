@@ -1,3 +1,9 @@
+# [2.7.0-beta.3](https://github.com/analogjs/analog/compare/v2.7.0-beta.2...v2.7.0-beta.3) (2026-07-24)
+
+### Bug Fixes
+
+- **astro-angular:** keep Angular server deps out of the optimizer per environment ([#2439](https://github.com/analogjs/analog/issues/2439)) ([cde7fc9](https://github.com/analogjs/analog/commit/cde7fc939aea8159203199651b3d251d3a9ed47e))
+
 # [2.7.0-beta.2](https://github.com/analogjs/analog/compare/v2.7.0-beta.1...v2.7.0-beta.2) (2026-07-23)
 
 ### Features
