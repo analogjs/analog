@@ -311,6 +311,7 @@ const CATEGORIES = [
   'r3_view_compiler_di',
   'r3_view_compiler_arrow_functions',
   'r3_view_compiler_providers',
+  'r3_view_compiler_dom_only', // v22+ DOM-only instruction set fast path
   'r3_view_compiler',
   'r3_compiler_compliance',
   'signal_inputs', // v17-v18 category name
