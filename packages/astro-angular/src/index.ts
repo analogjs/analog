@@ -30,6 +30,21 @@ function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
   };
 }
 
+const SERVER_ENTRYPOINTS = [
+  '@angular/platform-server',
+  '@analogjs/astro-angular/server.js',
+  '@analogjs/astro-angular/server-ngh.js',
+];
+
+/**
+ * Modules the dependency optimizer must leave alone on the server.
+ * `@angular/core` is excluded on top of the server entrypoints because
+ * pre-bundling it produces a second copy of the Angular runtime, so components
+ * render against a different runtime than the one they were registered in —
+ * surfacing as empty SSR output plus `NG0912` component ID collisions.
+ */
+const SERVER_OPTIMIZE_DEPS_EXCLUDE = [...SERVER_ENTRYPOINTS, '@angular/core'];
+
 function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
   return {
     esbuild: {
@@ -43,11 +58,7 @@ function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
           ? '@analogjs/astro-angular/client-ngh.js'
           : '@analogjs/astro-angular/client.js',
       ],
-      exclude: [
-        '@angular/platform-server',
-        '@analogjs/astro-angular/server.js',
-        '@analogjs/astro-angular/server-ngh.js',
-      ],
+      exclude: SERVER_ENTRYPOINTS,
     },
 
     plugins: [
@@ -81,6 +92,25 @@ function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
           }
 
           return undefined;
+        },
+      },
+      {
+        // Top-level `optimizeDeps` only seeds the client environment. Adapters
+        // that run SSR in their own environment — `@astrojs/cloudflare`, which
+        // serves the `ssr` environment on `workerd` — get none of the excludes
+        // above, so Angular's server entrypoints are pre-bundled there and the
+        // renderer breaks. Re-declare them per server environment.
+        name: 'analogjs-astro-server-optimize-deps',
+        configEnvironment(name: string) {
+          if (name === 'client') {
+            return undefined;
+          }
+
+          return {
+            optimizeDeps: {
+              exclude: SERVER_OPTIMIZE_DEPS_EXCLUDE,
+            },
+          };
         },
       },
     ],
