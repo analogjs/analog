@@ -295,6 +295,12 @@ In the v3 line, deployment docs emphasize:
 - setting `VITE_ANALOG_PUBLIC_BASE_URL` during CI builds for server-side data fetching
 - setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
 
+### The `useAPIMiddleware` option was removed
+
+The deprecated `useAPIMiddleware` option and the generated `/api` proxy middleware it enabled are removed in v3. API routes are now served exclusively through Nitro's native file-based routing.
+
+If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config.
+
 ### Removed first-party packages and current compiler gaps
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
