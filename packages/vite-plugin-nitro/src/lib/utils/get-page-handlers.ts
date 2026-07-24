@@ -9,7 +9,6 @@ type GetHandlersArgs = {
   sourceRoot: string;
   rootDir: string;
   additionalPagesDirs?: string[];
-  hasAPIDir?: boolean;
 };
 
 /**
@@ -25,7 +24,6 @@ type GetHandlersArgs = {
  * @param sourceRoot The source directory path (e.g., 'src')
  * @param rootDir The project root directory relative to workspace
  * @param additionalPagesDirs Optional array of additional pages directories to scan
- * @param hasAPIDir Whether the project has an API directory (affects route prefixing)
  * @returns Array of NitroEventHandler objects with handler paths and route patterns
  *
  * Example usage:
@@ -34,7 +32,6 @@ type GetHandlersArgs = {
  *   sourceRoot: 'src',
  *   rootDir: 'apps/my-app',
  *   additionalPagesDirs: ['/libs/shared/pages'],
- *   hasAPIDir: true
  * });
  *
  * Sample discovered file paths:
@@ -44,10 +41,10 @@ type GetHandlersArgs = {
  * - /workspace/apps/my-app/src/app/pages/(auth)/login.server.ts
  *
  * Route transformation examples:
- * - index.server.ts → /_analog/pages/index
- * - users/[id].server.ts → /_analog/pages/users/:id
- * - products/[...slug].server.ts → /_analog/pages/products/**:slug
- * - (auth)/login.server.ts → /_analog/pages/-auth-/login
+ * - index.server.ts → /api/_analog/pages/index
+ * - users/[id].server.ts → /api/_analog/pages/users/:id
+ * - products/[...slug].server.ts → /api/_analog/pages/products/**:slug
+ * - (auth)/login.server.ts → /api/_analog/pages/-auth-/login
  *
  * tinyglobby vs fast-glob comparison:
  * - Both support the same glob patterns for file discovery
@@ -62,14 +59,13 @@ type GetHandlersArgs = {
  * 3. Converts [...param] to **:param for catch-all routes
  * 4. Converts (group) to -group- for route groups
  * 5. Converts dots to forward slashes
- * 6. Prefixes with /_analog/pages and optionally /api
+ * 6. Prefixes with /api/_analog/pages
  */
 export function getPageHandlers({
   workspaceRoot,
   sourceRoot,
   rootDir,
   additionalPagesDirs,
-  hasAPIDir,
 }: GetHandlersArgs): NitroEventHandler[] {
   // Normalize the project root path for consistent path handling
   const root = normalizePath(resolve(workspaceRoot, rootDir));
@@ -103,7 +99,7 @@ export function getPageHandlers({
     // Return Nitro event handler with absolute handler path and transformed route
     return {
       handler: endpointFile,
-      route: `${hasAPIDir ? '/api' : ''}/_analog${route}`,
+      route: `/api/_analog${route}`,
       lazy: true,
     };
   });
