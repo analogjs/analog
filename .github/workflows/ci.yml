@@ -5,7 +5,7 @@ on:
 
 env:
   NODE_OPTIONS: --max-old-space-size=16384
-  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN || 'NDRkYzdkYmMtNDI3NS00MDI0LWFkMGQtMmI0Zjc2MTY2YzU0fHJlYWQtb25seQ==' }}
   NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
   # Lets the coordinator keep handing tasks to already-running agents across the
   # sequential nx commands below instead of re-provisioning between them.
