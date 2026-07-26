@@ -63,7 +63,6 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 | `packages/nx-plugin`           | `@analogjs/nx-plugin`           | `nx-plugin`           |
 | `packages/create-analog`       | `create-analog`                 | `create-analog`       |
 | `packages/storybook-angular`   | `@analogjs/storybook-angular`   | `storybook-angular`   |
-| `packages/trpc`                | `@analogjs/trpc`                | `trpc`                |
 | `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
 
 ## Agent Skills
