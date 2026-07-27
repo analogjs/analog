@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import type { Plugin, UserConfig } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
 
@@ -8,6 +8,39 @@ function createPlugin(): Plugin {
     jit: false,
   });
 }
+
+describe('buildOptimizerPlugin apply()', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+  afterEach(() => {
+    process.env['NODE_ENV'] = originalNodeEnv;
+  });
+
+  function apply(command: 'build' | 'serve'): boolean {
+    const fn = createPlugin().apply as (
+      c: UserConfig,
+      env: { command: 'build' | 'serve' },
+    ) => boolean;
+    return fn({}, { command });
+  }
+
+  it('applies during build', () => {
+    process.env['NODE_ENV'] = 'development';
+    expect(apply('build')).toBe(true);
+  });
+
+  it('applies in a serve-style pipeline under production NODE_ENV (#2438)', () => {
+    // Astro's Cloudflare integration transforms SSR modules through a
+    // serve-style `workerd` runner during `astro build` (which sets a
+    // production NODE_ENV). The linker must run there.
+    process.env['NODE_ENV'] = 'production';
+    expect(apply('serve')).toBe(true);
+  });
+
+  it('stays off for a regular development serve (unchanged behavior)', () => {
+    process.env['NODE_ENV'] = 'development';
+    expect(apply('serve')).toBe(false);
+  });
+});
 
 describe('buildOptimizerPlugin config()', () => {
   it('should set ngServerMode to true for production SSR builds', () => {

@@ -21,7 +21,19 @@ export function buildOptimizerPlugin({
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
-    apply: 'build',
+    // Normally build-only. Astro's Cloudflare integration (`@astrojs/cloudflare`)
+    // transforms SSR modules through a serve-style `workerd` runner *during*
+    // `astro build`; an `apply: 'build'` plugin is excluded from that pipeline,
+    // so the Angular linker never runs on the worker's partially-compiled
+    // packages and they fall back to the JIT compiler. Also apply under a
+    // production `NODE_ENV` (which `astro build` sets) so the linker runs in
+    // that runner too. Regular Analog dev servers run with a development
+    // `NODE_ENV`, so their behavior is unchanged.
+    apply(_config, env) {
+      return (
+        env.command === 'build' || process.env['NODE_ENV'] === 'production'
+      );
+    },
     config(userConfig) {
       isProd =
         userConfig.mode === 'production' ||
