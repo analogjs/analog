@@ -107,16 +107,6 @@ reviews:
       instructions: >-
         Review as the storybook-angular package scope. Prioritize integration correctness,
         example validity, and compatibility with Storybook and Angular tooling.
-    - path: 'packages/trpc/**'
-      instructions: >-
-        Review as the trpc package scope. Focus on runtime integration, API compatibility,
-        and targeted verification for behavior changes.
-    - path: 'apps/trpc-app/**'
-      instructions: >-
-        Treat this app as part of the trpc scope and review changes with the package behavior they validate.
-    - path: 'apps/trpc-app-e2e-playwright/**'
-      instructions: >-
-        Treat this test app as part of the trpc scope. Prioritize reliability and whether the tests validate the intended behavior change.
     - path: 'packages/nx-plugin/**'
       instructions: >-
         Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
@@ -195,7 +185,7 @@ reviews:
       requirements: >-
         Prefer Conventional Commit style PR titles. Use type(scope): summary when a supported package scope applies.
         Supported package scopes are vite-plugin-angular, vite-plugin-nitro, vitest-angular, create-analog,
-        astro-angular, router, storybook-angular, platform, content, content-plugin, nx-plugin, and trpc.
+        astro-angular, router, storybook-angular, platform, content, content-plugin, and nx-plugin.
         For repo, docs, or CI-only changes, concise unscoped titles like docs: or ci: are acceptable.
     description:
       mode: warning
