@@ -1,3 +1,9 @@
+# [2.7.0-beta.4](https://github.com/analogjs/analog/compare/v2.7.0-beta.3...v2.7.0-beta.4) (2026-07-28)
+
+### Features
+
+- ship agent context for create-analog and the Nx preset ([#2448](https://github.com/analogjs/analog/issues/2448)) ([b2a0b81](https://github.com/analogjs/analog/commit/b2a0b81623117f6160960a9a93acb72a551a3c45))
+
 # [2.7.0-beta.3](https://github.com/analogjs/analog/compare/v2.7.0-beta.2...v2.7.0-beta.3) (2026-07-24)
 
 ### Bug Fixes
