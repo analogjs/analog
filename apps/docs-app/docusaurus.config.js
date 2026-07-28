@@ -63,6 +63,7 @@ const config = {
           const { siteDir } = context;
           const contentDir = path.join(siteDir, 'docs');
           const allMdx = [];
+          const mdPages = [];
 
           // recursive function to get all mdx files
           const getMdFiles = async (dir) => {
@@ -85,45 +86,103 @@ const config = {
                 // Get the relative path for URL construction
                 const relativePath = path.relative(contentDir, fullPath);
 
-                // Convert file path to URL path by:
-                // 1. Removing numeric prefixes (like 100-, 01-, etc.)
-                // 2. Removing the .md extension
-                const urlPath = relativePath
-                  .replace(/^\d+-/, '')
-                  .replace(/\/\d+-/g, '/')
-                  .replace(/index\.md$/, '')
-                  .replace(/\.md$/, '');
-
-                // Construct the full URL
-                const fullUrl = `https://analogjs.org/docs/${urlPath}`;
-
                 // strip frontmatter
+                const frontmatterMatch = content.match(
+                  /^---\n([\s\S]*?)\n---\n/,
+                );
+                const frontmatter = frontmatterMatch ? frontmatterMatch[1] : '';
                 const contentWithoutFrontmatter = content.replace(
                   /^---\n[\s\S]*?\n---\n/,
                   '',
                 );
 
-                // combine title and content with URL
+                // Convert file path to URL path by:
+                // 1. Honoring an explicit frontmatter `slug`
+                // 2. Removing numeric prefixes (like 100-, 01-, etc.)
+                // 3. Removing the index/.md suffix and any trailing slash
+                const slugMatch = frontmatter.match(/^slug:\s*(\S+)\s*$/m);
+                const urlPath = (
+                  slugMatch
+                    ? slugMatch[1]
+                    : relativePath
+                        .replace(/^\d+-/, '')
+                        .replace(/\/\d+-/g, '/')
+                        .replace(/index\.md$/, '')
+                        .replace(/\.md$/, '')
+                )
+                  .replace(/^\//, '')
+                  .replace(/\/$/, '');
+
+                // Construct the full URL (pages are served without a trailing
+                // slash, e.g. /docs/integrations/ai)
+                const fullUrl = urlPath
+                  ? `https://analogjs.org/docs/${urlPath}`
+                  : 'https://analogjs.org/docs/';
+
+                // combine title and content with URL, dropping the source H1
+                // the title was derived from so it isn't emitted twice
+                const body = title
+                  ? contentWithoutFrontmatter
+                      .replace(/^#\s.*\r?\n/m, '')
+                      .trimStart()
+                  : contentWithoutFrontmatter;
                 const contentWithTitle = title
-                  ? `# ${title}\n\nURL: ${fullUrl}\n${contentWithoutFrontmatter}`
+                  ? `# ${title}\n\nURL: ${fullUrl}\n\n${body}`
                   : contentWithoutFrontmatter;
 
                 allMdx.push(contentWithTitle);
+
+                // Mirror the page as raw Markdown at its `.md` URL so agents can
+                // fetch a single page (e.g. /docs/features/routing/overview.md)
+                const mdOutputPath = urlPath
+                  ? path.join('docs', `${urlPath}.md`)
+                  : 'docs.md';
+
+                mdPages.push({
+                  outputPath: mdOutputPath,
+                  content: contentWithTitle,
+                });
               }
             }
           };
 
           await getMdFiles(contentDir);
-          return { allMdx };
+          return { allMdx, mdPages };
         },
         postBuild: async ({ content, routes, outDir }) => {
-          const { allMdx } = content;
+          const { allMdx, mdPages } = content;
 
           // Write concatenated MDX content
           const concatenatedPath = path.join(outDir, 'llms-full.txt');
           await fs.promises.writeFile(
             concatenatedPath,
             allMdx.join('\n---\n\n'),
+          );
+
+          // Write per-page Markdown files alongside the built HTML so each docs
+          // page is retrievable as raw Markdown at its `.md` URL.
+          const outputRoot = path.resolve(outDir);
+          await Promise.all(
+            mdPages.map(async ({ outputPath, content: pageContent }) => {
+              const fullPath = path.resolve(outputRoot, outputPath);
+
+              // Guard against a frontmatter `slug` escaping the build output
+              const relativeOutputPath = path.relative(outputRoot, fullPath);
+              if (
+                relativeOutputPath === '..' ||
+                relativeOutputPath.startsWith(`..${path.sep}`) ||
+                path.isAbsolute(relativeOutputPath)
+              ) {
+                throw new Error(
+                  `Refusing to write outside build output: ${outputPath}`,
+                );
+              }
+
+              await fs.promises.mkdir(path.dirname(fullPath), {
+                recursive: true,
+              });
+              await fs.promises.writeFile(fullPath, pageContent);
+            }),
           );
 
           // we need to dig down several layers:
