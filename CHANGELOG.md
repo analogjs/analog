@@ -1,3 +1,9 @@
+# [2.7.0-beta.5](https://github.com/analogjs/analog/compare/v2.7.0-beta.4...v2.7.0-beta.5) (2026-07-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** link Angular packages for Astro + Cloudflare (`workerd`) builds ([#2443](https://github.com/analogjs/analog/issues/2443)) ([89f4400](https://github.com/analogjs/analog/commit/89f4400b5a8c33a1c17d320de2c08819f06cad00)), closes [#2438](https://github.com/analogjs/analog/issues/2438)
+
 # [2.7.0-beta.4](https://github.com/analogjs/analog/compare/v2.7.0-beta.3...v2.7.0-beta.4) (2026-07-28)
 
 ### Features
