@@ -146,19 +146,51 @@ const config = {
           const currentVersionDocsRoutes =
             allDocsRouteConfig.props.version.docs;
 
-          // for every single docs route we now parse a path (which is the key) and a title
-          const docsRecords = Object.entries(currentVersionDocsRoutes)
-            .filter(([path, rec]) => !!rec.title && !!path)
-            .map(([path, record]) => {
-              return `- [${record.title}](${url}${DOCUSAURUS_BASE_URL}/${path.replace('/index', '')}): ${record.description || record.title}`;
-            });
+          // for every single docs route we now parse a path (which is the key)
+          // and a title, grouping records by their top-level section
+          const docsRecords = [];
+          const sectionRecords = {};
+          for (const [routePath, record] of Object.entries(
+            currentVersionDocsRoutes,
+          )) {
+            if (!record.title || !routePath) {
+              continue;
+            }
 
-          // Build up llms.txt file
+            const line = `- [${record.title}](${url}${DOCUSAURUS_BASE_URL}/${routePath.replace('/index', '')}): ${record.description || record.title}`;
+            docsRecords.push(line);
+
+            const section = routePath.split('/')[0];
+            (sectionRecords[section] ??= []).push(line);
+          }
+
+          // Build up the top-level llms.txt file
           const llmsTxt = `# ${context.siteConfig.title}\n\n## Docs\n\n${docsRecords.join('\n')}\n`;
 
           // Write llms.txt file
           const llmsTxtPath = path.join(outDir, 'llms.txt');
           await fs.promises.writeFile(llmsTxtPath, llmsTxt);
+
+          // Write a scoped llms.txt for each multi-page section so a retrieval
+          // pipeline can pull just the relevant section (e.g.
+          // /docs/features/llms.txt)
+          await Promise.all(
+            Object.entries(sectionRecords)
+              .filter(([, records]) => records.length > 1)
+              .map(async ([section, records]) => {
+                const sectionTxt = `# ${context.siteConfig.title}\n\n## ${section}\n\n${records.join('\n')}\n`;
+                const sectionPath = path.join(
+                  outDir,
+                  'docs',
+                  section,
+                  'llms.txt',
+                );
+                await fs.promises.mkdir(path.dirname(sectionPath), {
+                  recursive: true,
+                });
+                await fs.promises.writeFile(sectionPath, sectionTxt);
+              }),
+          );
         },
       };
     },
