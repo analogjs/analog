@@ -67,7 +67,7 @@ Content that should stream progressively goes in a `@defer` block with a
 `hydrate` trigger. Each block is rendered eagerly on the server, streamed as it
 resolves, and hydrated on the client when its trigger fires:
 
-```markup
+```xml
 <h1>Dashboard</h1>
 
 @defer (hydrate on immediate) {
