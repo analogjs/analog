@@ -57,6 +57,15 @@ describe('preset generator', () => {
     expect(packageJson['devDependencies']['@nx/vite']).toBeDefined();
   });
 
+  it('should generate agent context wired to @analogjs/platform', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' });
+
+    expect(tree.read('/AGENTS.md').toString()).toContain(
+      'node_modules/@analogjs/platform/AGENTS.md',
+    );
+    expect(tree.read('/CLAUDE.md').toString()).toContain('@AGENTS.md');
+  });
+
   it('should use vitest 3 for Nx < 22.3.0', async () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
 

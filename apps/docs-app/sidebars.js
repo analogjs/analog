@@ -94,6 +94,11 @@ const sidebars = {
               id: 'features/data-fetching/server-side-data-fetching',
               label: 'Server-Side Data Fetching',
             },
+            {
+              type: 'doc',
+              id: 'features/data-fetching/server-functions',
+              label: 'Server Functions',
+            },
           ],
         },
         {
@@ -117,6 +122,12 @@ const sidebars = {
               id: 'features/server/server-side-rendering',
               label: 'Overview',
               key: 'server-side-rendering-overview',
+            },
+            {
+              type: 'doc',
+              id: 'features/server/streaming-ssr',
+              label: 'Streaming SSR',
+              key: 'streaming-ssr',
             },
           ],
         },

@@ -1,3 +1,54 @@
+# [2.7.0-beta.5](https://github.com/analogjs/analog/compare/v2.7.0-beta.4...v2.7.0-beta.5) (2026-07-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** link Angular packages for Astro + Cloudflare (`workerd`) builds ([#2443](https://github.com/analogjs/analog/issues/2443)) ([89f4400](https://github.com/analogjs/analog/commit/89f4400b5a8c33a1c17d320de2c08819f06cad00)), closes [#2438](https://github.com/analogjs/analog/issues/2438)
+
+# [2.7.0-beta.4](https://github.com/analogjs/analog/compare/v2.7.0-beta.3...v2.7.0-beta.4) (2026-07-28)
+
+### Features
+
+- ship agent context for create-analog and the Nx preset ([#2448](https://github.com/analogjs/analog/issues/2448)) ([b2a0b81](https://github.com/analogjs/analog/commit/b2a0b81623117f6160960a9a93acb72a551a3c45))
+
+# [2.7.0-beta.3](https://github.com/analogjs/analog/compare/v2.7.0-beta.2...v2.7.0-beta.3) (2026-07-24)
+
+### Bug Fixes
+
+- **astro-angular:** keep Angular server deps out of the optimizer per environment ([#2439](https://github.com/analogjs/analog/issues/2439)) ([cde7fc9](https://github.com/analogjs/analog/commit/cde7fc939aea8159203199651b3d251d3a9ed47e))
+
+# [2.7.0-beta.2](https://github.com/analogjs/analog/compare/v2.7.0-beta.1...v2.7.0-beta.2) (2026-07-23)
+
+### Features
+
+- **router:** add support for Streaming SSR ([#2419](https://github.com/analogjs/analog/issues/2419)) ([572becd](https://github.com/analogjs/analog/commit/572becd419a24cce505f8597c15af753e4871046))
+
+# [2.7.0-beta.1](https://github.com/analogjs/analog/compare/v2.6.4...v2.7.0-beta.1) (2026-07-23)
+
+### Features
+
+- **router:** add support for Server Functions ([#2433](https://github.com/analogjs/analog/issues/2433)) ([d567090](https://github.com/analogjs/analog/commit/d567090e595d2811fe96728b2457b328da217f33)), closes [#2422](https://github.com/analogjs/analog/issues/2422)
+
+## [2.6.4](https://github.com/analogjs/analog/compare/v2.6.3...v2.6.4) (2026-07-23)
+
+### Bug Fixes
+
+- **nx-plugin:** ensure @nx/eslint is installed when applying the preset ([#2424](https://github.com/analogjs/analog/issues/2424)) ([2a9ab32](https://github.com/analogjs/analog/commit/2a9ab3286068b85478b29c4e0be81788913ca30e))
+- **vite-plugin-angular:** ensure compatibility with NodeNext resolution ([#2434](https://github.com/analogjs/analog/issues/2434)) ([50126d4](https://github.com/analogjs/analog/commit/50126d424f9b52415a6c938b6bf83b5c2e59c865))
+- **vite-plugin-angular:** skip vmThreads pool default in browser mode ([#2423](https://github.com/analogjs/analog/issues/2423)) ([9cb7dc1](https://github.com/analogjs/analog/commit/9cb7dc1fd97facf531870c1d73458ea2ee1d9f2c)), closes [#2222](https://github.com/analogjs/analog/issues/2222)
+- **vite-plugin-nitro:** enforce path boundary in generated API middleware ([#2428](https://github.com/analogjs/analog/issues/2428)) ([0960098](https://github.com/analogjs/analog/commit/0960098e4eab22b73f77e6b5ee3ca071f02439b1))
+
+## [2.6.4-beta.4](https://github.com/analogjs/analog/compare/v2.6.4-beta.3...v2.6.4-beta.4) (2026-07-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** ensure compatibility with NodeNext resolution ([#2434](https://github.com/analogjs/analog/issues/2434)) ([50126d4](https://github.com/analogjs/analog/commit/50126d424f9b52415a6c938b6bf83b5c2e59c865))
+
+## [2.6.4-beta.3](https://github.com/analogjs/analog/compare/v2.6.4-beta.2...v2.6.4-beta.3) (2026-07-22)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** enforce path boundary in generated API middleware ([#2428](https://github.com/analogjs/analog/issues/2428)) ([0960098](https://github.com/analogjs/analog/commit/0960098e4eab22b73f77e6b5ee3ca071f02439b1))
+
 ## [2.6.4-beta.2](https://github.com/analogjs/analog/compare/v2.6.4-beta.1...v2.6.4-beta.2) (2026-07-14)
 
 ### Bug Fixes

@@ -1764,6 +1764,9 @@ const hmrMetadataCache = new WeakMap<
   }
 >();
 
+/**
+ * @internal
+ */
 export function getFileMetadata(
   program: ts.BuilderProgram,
   angularCompiler?: NgtscProgram['compiler'],

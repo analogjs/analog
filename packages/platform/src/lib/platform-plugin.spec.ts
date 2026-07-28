@@ -48,4 +48,24 @@ describe('platformPlugin', () => {
     expect(viteNitroPluginSpy).toHaveBeenCalledWith({ ssr: false }, undefined);
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
   });
+
+  it('emits the x-analog-no-streaming header for routes with streaming: false', async () => {
+    const { viteNitroPluginSpy, platformPlugin } = await setup();
+    platformPlugin({
+      nitro: {
+        routeRules: {
+          '/buffered': { streaming: false },
+          '/streamed': {},
+        },
+      },
+    });
+
+    const [, nitroOptions] = viteNitroPluginSpy.mock.calls[0];
+    expect(
+      nitroOptions.routeRules['/buffered'].headers['x-analog-no-streaming'],
+    ).toBe('true');
+    expect(
+      nitroOptions.routeRules['/streamed'].headers['x-analog-no-streaming'],
+    ).toBeUndefined();
+  });
 });
