@@ -1010,6 +1010,14 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsCompilerOptions['isolatedModules'] = false;
         }
 
+        // Mirror the legacy `readConfiguration` path (#2322): `@angular/build`'s
+        // `loadConfiguration()` forces `sourceMap`/`declarationMap` off but does
+        // not clear an inherited `mapRoot`/`sourceRoot`, so a monorepo base
+        // tsconfig that sets either trips TS5069 here. Sourcemaps are already
+        // off in this path, so clearing them is safe. See #2449.
+        tsCompilerOptions['mapRoot'] = '';
+        tsCompilerOptions['sourceRoot'] = '';
+
         if (isTest) {
           // Allow `TestBed.overrideXXX()` APIs.
           tsCompilerOptions['supportTestBed'] = true;
