@@ -1,5 +1,11 @@
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { resolve, relative } from 'node:path';
+import {
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname, resolve, relative } from 'node:path';
 import type { Plugin } from 'vite';
 
 export interface LlmsTxtOptions {
@@ -110,7 +116,36 @@ export function llmsTxtPlugin(options: LlmsTxtOptions): Plugin {
         .join('\n---\n\n');
       writeFileSync(resolve(distDir, 'llms-full.txt'), fullEntries, 'utf8');
 
-      this.info?.(`llms.txt: indexed ${docs.length} docs`);
+      // Section-scoped indexes: one llms.txt per multi-page top-level section
+      // (e.g. /docs/features/llms.txt) so a retrieval pipeline can pull just
+      // the relevant section instead of the whole corpus.
+      const sections = new Map<string, typeof docs>();
+      for (const doc of docs) {
+        const section = doc.slug.split('/')[0];
+        const group = sections.get(section);
+        if (group) group.push(doc);
+        else sections.set(section, [doc]);
+      }
+
+      let sectionCount = 0;
+      for (const [section, sectionDocs] of sections) {
+        if (sectionDocs.length < 2) continue;
+        const entries = sectionDocs
+          .map(
+            (d) =>
+              `- [${d.title}](${siteUrl}/docs/${d.slug}): ${d.description ?? d.title}`,
+          )
+          .join('\n');
+        const sectionTxt = `# ${siteName}\n\n## ${section}\n\n${entries}\n`;
+        const outPath = resolve(distDir, 'docs', section, 'llms.txt');
+        mkdirSync(dirname(outPath), { recursive: true });
+        writeFileSync(outPath, sectionTxt, 'utf8');
+        sectionCount++;
+      }
+
+      this.info?.(
+        `llms.txt: indexed ${docs.length} docs, ${sectionCount} section indexes`,
+      );
     },
   };
 }

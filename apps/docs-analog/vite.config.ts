@@ -53,6 +53,9 @@ export default defineConfig(({ mode }) => ({
               if (!tail) return false;
               return locale ? `/${locale}/docs/${tail}` : `/docs/${tail}`;
             },
+            // Emit the source Markdown beside each prerendered route so every
+            // docs page is retrievable as raw Markdown at its `.md` URL.
+            outputSourceFile: (file) => file.content,
           },
         ],
       },
