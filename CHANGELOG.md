@@ -1,3 +1,9 @@
+# [2.7.0-beta.6](https://github.com/analogjs/analog/compare/v2.7.0-beta.5...v2.7.0-beta.6) (2026-07-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** serve AOT output for oxc-lowered components on rolldown ([#2452](https://github.com/analogjs/analog/issues/2452)) ([884ce60](https://github.com/analogjs/analog/commit/884ce60df1c548b8fc3eb6a3803297ff712f4200)), closes [#2450](https://github.com/analogjs/analog/issues/2450)
+
 # [2.7.0-beta.5](https://github.com/analogjs/analog/compare/v2.7.0-beta.4...v2.7.0-beta.5) (2026-07-28)
 
 ### Bug Fixes
