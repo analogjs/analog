@@ -21,6 +21,7 @@ import {
   formatDiagnosticWithLocation,
   getFileMetadata,
   groupDiagnosticsByFile,
+  isAngularCompilationFile,
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
@@ -92,6 +93,32 @@ describe('isTestWatchMode', () => {
     const result = isTestWatchMode(['--watch', 'false']);
 
     expect(result).toBeFalsy();
+  });
+});
+
+describe('isAngularCompilationFile', () => {
+  const rawComponent = `@Component({ selector: 'app-x', templateUrl: './x.component.html' })
+export class XComponent {}`;
+
+  // How rolldown's built-in oxc transform lowers the decorator before this
+  // plugin's transform hook runs — the literal `@Component(` is gone.
+  const loweredComponent = `XComponent = __decorate([Component({ selector: 'app-x', templateUrl: './x.component.html' })], XComponent);`;
+
+  it('matches raw Angular source via the decorator fast-path (no emit yet)', () => {
+    expect(isAngularCompilationFile(rawComponent, false)).toBe(true);
+  });
+
+  it('serves oxc-lowered components using emitted output (#2450)', () => {
+    // The regex alone cannot see the lowered decorator...
+    expect(isAngularCompilationFile(loweredComponent, false)).toBe(false);
+    // ...but program membership rescues it, so the AOT output is served.
+    expect(isAngularCompilationFile(loweredComponent, true)).toBe(true);
+  });
+
+  it('skips non-Angular files that produced no emit', () => {
+    expect(isAngularCompilationFile('export const answer = 42;', false)).toBe(
+      false,
+    );
   });
 });
 

@@ -630,9 +630,15 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (pluginOptions.useAngularCompilationAPI) {
-            const isAngular = ANGULAR_DECORATOR_CALL_RE.test(code);
+            // Query-suffixed ids (e.g. `foo.ts?component`) are keyed in
+            // `outputFiles` by their bare path, so strip the query before
+            // looking up the emit result.
+            const emittedId = id.includes('.ts?')
+              ? id.replace(/\?(.*)/, '')
+              : id;
+            const hasEmittedContent = fileEmitter(emittedId)?.content != null;
 
-            if (!isAngular) {
+            if (!isAngularCompilationFile(code, hasEmittedContent)) {
               return;
             }
           }
@@ -1894,6 +1900,26 @@ function getComponentStyleSheetMeta(id: string): {
  */
 function getFilenameFromPath(id: string): string {
   return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
+}
+
+/**
+ * Decides whether a file on the `useAngularCompilationAPI` path should be
+ * served from the Angular compilation's emitted output.
+ *
+ * A source-text regex alone is unreliable here: on rolldown the built-in oxc
+ * transform runs before this plugin's `transform` hook, lowering
+ * `@Component(...)` so the literal decorator no longer appears in `code` even
+ * though the file is an AOT-compiled component. Treating such a file as
+ * non-Angular discards its emitted output and leaves the raw decorator in the
+ * bundle, forcing Angular to JIT at runtime (#2450). Program membership
+ * (`hasEmittedContent`) is the source of truth; the regex is a cheap fast-path
+ * for the raw-source case.
+ */
+export function isAngularCompilationFile(
+  code: string,
+  hasEmittedContent: boolean,
+): boolean {
+  return hasEmittedContent || ANGULAR_DECORATOR_CALL_RE.test(code);
 }
 
 /**
