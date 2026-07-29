@@ -1,3 +1,9 @@
+# [2.7.0-beta.7](https://github.com/analogjs/analog/compare/v2.7.0-beta.6...v2.7.0-beta.7) (2026-07-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** clear mapRoot/sourceRoot in Compilation API path (TS5069) ([#2451](https://github.com/analogjs/analog/issues/2451)) ([bd0007b](https://github.com/analogjs/analog/commit/bd0007bcc47fd80f8aa605684799b2969d809092)), closes [#2449](https://github.com/analogjs/analog/issues/2449)
+
 # [2.7.0-beta.6](https://github.com/analogjs/analog/compare/v2.7.0-beta.5...v2.7.0-beta.6) (2026-07-29)
 
 ### Bug Fixes
