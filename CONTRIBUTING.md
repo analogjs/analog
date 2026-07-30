@@ -51,12 +51,10 @@ pnpm test
 
 Source code for the Analog docs and the analogjs.org website exists under the `apps/docs-analog` project folder. To contribute documentation or website content, locate the relevant source code in one of the sub-folders:
 
-- `blog` - Blog (unused).
-- `docs` - Documentation pages with React MDX support.
-- `src/components` - React components.
-- `src/css` - Global styles.
-- `src/pages` - React page components.
-- `static` - Images and other static assets.
+- `src/content` - Documentation and website content in Markdown, with translations under `src/content/<locale>`.
+- `src/app` - Angular pages, components, and docs chrome.
+- `src/styles.css` - Global styles.
+- `public` - Images and other static assets.
 
 ### Setup
 
