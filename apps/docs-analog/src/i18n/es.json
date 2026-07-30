@@ -47,6 +47,8 @@
   "sidebar.og-image-generation": "Generación de imágenes OG",
   "sidebar.data-fetching": "Obtención de datos",
   "sidebar.server-side-data-fetching": "Obtención de datos del lado del servidor",
+  "sidebar.server-functions": "Funciones de servidor",
+  "sidebar.streaming-ssr": "Streaming SSR",
   "sidebar.ssg": "Generación de sitio estático",
   "sidebar.ssr": "Renderizado del lado del servidor",
   "sidebar.i18n": "Internacionalización (i18n)",

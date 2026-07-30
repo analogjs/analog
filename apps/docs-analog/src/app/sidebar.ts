@@ -89,6 +89,11 @@ export function getSidebar(): SidebarNode[] {
               id: 'features/data-fetching/server-side-data-fetching',
               label: $localize`:@@sidebar.server-side-data-fetching:Server-Side Data Fetching`,
             },
+            {
+              kind: 'doc',
+              id: 'features/data-fetching/server-functions',
+              label: $localize`:@@sidebar.server-functions:Server Functions`,
+            },
           ],
         },
         {
@@ -110,6 +115,11 @@ export function getSidebar(): SidebarNode[] {
               kind: 'doc',
               id: 'features/server/server-side-rendering',
               label: $localize`:@@sidebar.overview:Overview`,
+            },
+            {
+              kind: 'doc',
+              id: 'features/server/streaming-ssr',
+              label: $localize`:@@sidebar.streaming-ssr:Streaming SSR`,
             },
           ],
         },

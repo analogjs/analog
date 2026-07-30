@@ -47,6 +47,8 @@
   "sidebar.og-image-generation": "OG 图像生成",
   "sidebar.data-fetching": "数据获取",
   "sidebar.server-side-data-fetching": "服务端数据获取",
+  "sidebar.server-functions": "服务端函数",
+  "sidebar.streaming-ssr": "流式 SSR",
   "sidebar.ssg": "静态站点生成",
   "sidebar.ssr": "服务端渲染",
   "sidebar.i18n": "国际化 (i18n)",
