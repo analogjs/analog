@@ -2,8 +2,8 @@ import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { resolve, posix } from 'node:path';
 import type { Plugin } from 'vite';
 
-const HREF_PATTERN = /\bhref="(\/[^"#]*)"/g;
-const SRC_PATTERN = /\bsrc="(\/[^"#]*)"/g;
+const HREF_PATTERN = /\bhref="(\/[^"]*)"/g;
+const SRC_PATTERN = /\bsrc="(\/[^"]*)"/g;
 
 export interface BrokenLinksOptions {
   /**
@@ -27,7 +27,7 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 function targetExists(distRoot: string, href: string): boolean {
-  const cleaned = href.split('?')[0];
+  const cleaned = href.split('#')[0].split('?')[0];
   if (/\.[a-zA-Z0-9]+$/.test(cleaned)) {
     return existsSync(resolve(distRoot, '.' + cleaned));
   }

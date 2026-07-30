@@ -26,4 +26,11 @@ describe('extractHeadings', () => {
   it('returns an empty array when no headings are present', () => {
     expect(extractHeadings('<p>nothing here</p>')).toEqual([]);
   });
+
+  it('strips embedded script markup out of heading text', () => {
+    const html = `<h2 id="x">Safe<script>alert(1)</script>Text</h2>`;
+    const [heading] = extractHeadings(html);
+    expect(heading.text).toBe('Safealert(1)Text');
+    expect(heading.text).not.toContain('<');
+  });
 });

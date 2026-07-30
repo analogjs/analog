@@ -27,9 +27,24 @@ export function extractHeadings(html: string): Heading[] {
   const out: Heading[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
-    const text = m[3].replace(/<[^>]*>/g, '').trim();
+    const text = stripTags(m[3]).trim();
     if (text) out.push({ level: Number(m[1]), text, id: m[2] });
   }
+  return out;
+}
+
+/**
+ * Strip HTML tags repeatedly until stable so partial/nested tags left
+ * behind by a single pass (e.g. `<<b>b>`) can't smuggle markup into the
+ * extracted heading text.
+ */
+function stripTags(html: string): string {
+  let prev: string;
+  let out = html;
+  do {
+    prev = out;
+    out = out.replace(/<[^>]*>/g, '');
+  } while (out !== prev);
   return out;
 }
 

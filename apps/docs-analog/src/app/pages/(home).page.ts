@@ -107,7 +107,7 @@ const SPONSORS: Sponsor[] = [
             class="mx-auto mb-6 h-20 w-20 sm:h-24 sm:w-24 lg:mx-0"
           />
           <h1
-            class="bg-gradient-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-4xl font-bold leading-[1.05] tracking-tight text-transparent sm:text-6xl lg:text-7xl"
+            class="bg-linear-to-br from-rose-600 via-fuchsia-600 to-violet-600 bg-clip-text text-4xl font-bold leading-[1.05] tracking-tight text-transparent sm:text-6xl lg:text-7xl"
             style="letter-spacing: -0.02em"
             i18n="@@home.hero.title"
           >

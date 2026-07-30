@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import {
   Component,
   computed,
@@ -24,11 +23,11 @@ interface DocAttributes {
 }
 
 @Component({
-  imports: [AsyncPipe, MarkdownComponent, DocFooter, EnhanceCode, Toc],
+  imports: [MarkdownComponent, DocFooter, EnhanceCode, Toc],
   template: `
     <div class="flex gap-8">
       <div #article docsEnhanceCode class="flex-1 min-w-0 min-h-screen">
-        @if (doc$ | async; as doc) {
+        @if (doc(); as doc) {
           <header class="mb-6">
             @if (doc.attributes.title) {
               <h1
@@ -82,7 +81,7 @@ interface DocAttributes {
   `,
 })
 export default class DocPage {
-  protected readonly doc$ = injectContent<DocAttributes>('slug');
+  private readonly doc$ = injectContent<DocAttributes>('slug');
   protected readonly articleRef =
     viewChild.required<ElementRef<HTMLElement>>('article');
   protected readonly slug = toSignal(
@@ -92,7 +91,7 @@ export default class DocPage {
     ),
   );
 
-  private readonly doc = toSignal(this.doc$);
+  protected readonly doc = toSignal(this.doc$);
   protected readonly headings = computed(() => {
     const c = this.doc()?.content;
     return typeof c === 'string' ? extractHeadings(c) : [];

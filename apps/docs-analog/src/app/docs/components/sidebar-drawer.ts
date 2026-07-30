@@ -1,12 +1,14 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
   Component,
+  DestroyRef,
   effect,
   inject,
   input,
   PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Sidebar } from './sidebar';
@@ -71,7 +73,10 @@ export class SidebarDrawer {
 
   constructor() {
     this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd))
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(inject(DestroyRef)),
+      )
       .subscribe(() => this.open.set(false));
 
     if (isPlatformBrowser(this.platformId)) {
@@ -79,11 +84,18 @@ export class SidebarDrawer {
         if (e.key === 'Escape') this.open.set(false);
       };
       document.addEventListener('keydown', onKey);
-    }
 
-    effect(() => {
-      if (!isPlatformBrowser(this.platformId)) return;
-      document.body.style.overflow = this.open() ? 'hidden' : '';
-    });
+      const previousOverflow = document.body.style.overflow;
+      inject(DestroyRef).onDestroy(() => {
+        document.removeEventListener('keydown', onKey);
+        document.body.style.overflow = previousOverflow;
+      });
+
+      effect(() => {
+        document.body.style.overflow = this.open()
+          ? 'hidden'
+          : previousOverflow;
+      });
+    }
   }
 }

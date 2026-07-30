@@ -1,6 +1,7 @@
 import { Component, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { injectDocsConfig } from '../config';
+import { useLocaleSignal } from '../locale';
 
 @Component({
   selector: 'docs-footer',
@@ -43,7 +44,7 @@ import { injectDocsConfig } from '../config';
                   <li>
                     @if (item.routerLink) {
                       <a
-                        [routerLink]="item.routerLink"
+                        [routerLink]="localizedLink(item.routerLink)"
                         class="hover:underline"
                         >{{ item.label }}</a
                       >
@@ -76,9 +77,17 @@ import { injectDocsConfig } from '../config';
 })
 export class Footer {
   private readonly config = injectDocsConfig();
+  private readonly locale = useLocaleSignal();
   protected readonly brand = computed(() => this.config.footer?.brand);
   protected readonly columns = computed(
     () => this.config.footer?.columns ?? [],
   );
   protected readonly legalLine = computed(() => this.config.footer?.legalLine);
+
+  /** Prefix internal routes with the active locale so non-default readers
+   * stay in their language instead of jumping to the English route. */
+  protected localizedLink(link: string): string {
+    const loc = this.locale();
+    return loc && link.startsWith('/') ? `/${loc}${link}` : link;
+  }
 }
