@@ -24,6 +24,7 @@ export {
 } from './sidebar';
 
 export { useLocaleSignal } from './locale';
+export { DocsLayoutShell, redirectDocsRoot } from './docs-layout';
 
 export { DocFooter } from './components/doc-footer';
 export { EnhanceCode } from './components/enhance-code';
