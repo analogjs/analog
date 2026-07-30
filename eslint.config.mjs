@@ -13,7 +13,7 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc'],
+    ignores: ['**/dist', '**/out-tsc', '**/apps/docs-analog/src/test-setup.ts'],
   },
   { plugins: { '@nx': nxEslintPlugin } },
   {

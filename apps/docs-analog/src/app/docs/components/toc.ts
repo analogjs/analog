@@ -168,7 +168,7 @@ export class Toc implements AfterViewInit, OnDestroy {
 
   private watchHeadings(article: HTMLElement): void {
     this.intersectionObserver?.disconnect();
-    this.intersectionObserver = new IntersectionObserver(
+    const observer = new IntersectionObserver(
       (entries) => {
         const top = entries
           .filter((e) => e.isIntersecting)
@@ -179,9 +179,10 @@ export class Toc implements AfterViewInit, OnDestroy {
       },
       { rootMargin: '0px 0px -60% 0px', threshold: [0, 1] },
     );
+    this.intersectionObserver = observer;
     article
       .querySelectorAll<HTMLElement>(HEADING_SELECTOR)
-      .forEach((h) => this.intersectionObserver!.observe(h));
+      .forEach((h) => observer.observe(h));
   }
 }
 
