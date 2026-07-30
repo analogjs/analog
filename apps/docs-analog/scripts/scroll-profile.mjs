@@ -59,7 +59,9 @@ await page.waitForTimeout(1500);
 
 const start = Date.now();
 const before = await cdp.send('Performance.getMetrics');
-const beforeMap = Object.fromEntries(before.metrics.map((m) => [m.name, m.value]));
+const beforeMap = Object.fromEntries(
+  before.metrics.map((m) => [m.name, m.value]),
+);
 
 for (let i = 0; i < opts.iters; i++) {
   await page.mouse.wheel(0, opts.delta);
@@ -71,7 +73,9 @@ for (let i = 0; i < opts.iters; i++) {
 }
 
 const after = await cdp.send('Performance.getMetrics');
-const afterMap = Object.fromEntries(after.metrics.map((m) => [m.name, m.value]));
+const afterMap = Object.fromEntries(
+  after.metrics.map((m) => [m.name, m.value]),
+);
 
 const elapsed = Date.now() - start;
 console.log('elapsed (ms):', elapsed);

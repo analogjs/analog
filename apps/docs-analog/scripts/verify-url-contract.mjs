@@ -19,15 +19,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const baseUrl = (process.argv[2] ?? 'http://localhost:5173').replace(/\/$/, '');
 const contentDir = resolve(__dirname, '../src/content');
-const LOCALES = new Set([
-  'de',
-  'es',
-  'fr',
-  'ko',
-  'pt-br',
-  'tr',
-  'zh-hans',
-]);
+const LOCALES = new Set(['de', 'es', 'fr', 'ko', 'pt-br', 'tr', 'zh-hans']);
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
