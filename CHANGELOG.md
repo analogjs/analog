@@ -1,3 +1,9 @@
+# [2.7.0-beta.8](https://github.com/analogjs/analog/compare/v2.7.0-beta.7...v2.7.0-beta.8) (2026-07-31)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** replace ts-morph with oxc-parser in component resolvers ([#2456](https://github.com/analogjs/analog/issues/2456)) ([f93c4cc](https://github.com/analogjs/analog/commit/f93c4cc7634d3f5c75b75122a2b5ce19914f359f)), closes [#2455](https://github.com/analogjs/analog/issues/2455)
+
 # [2.7.0-beta.7](https://github.com/analogjs/analog/compare/v2.7.0-beta.6...v2.7.0-beta.7) (2026-07-29)
 
 ### Bug Fixes
