@@ -250,6 +250,21 @@ describe('component-resolvers', () => {
 
       expect(resolvedPaths).toMatchNormalizedPaths(expectedPaths);
     });
+
+    it('should ignore style urls that are not static strings', () => {
+      const code = `
+        @Component({
+          styleUrl: STYLE_URL,
+          styleUrls: [\`./\${name}.css\`]
+        })
+        export class MyComponent {}
+      `;
+
+      const styleUrlsResolver = new StyleUrlsResolver();
+      const resolvedPaths = styleUrlsResolver.resolve(code, id);
+
+      expect(resolvedPaths).toHaveLength(0);
+    });
   });
 
   describe('caching', () => {
@@ -455,6 +470,24 @@ describe('component-resolvers', () => {
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
         expect(resolvedTemplateUrls).toMatchNormalizedPaths([expectedUrl]);
+      });
+
+      it('should ignore templateUrls inside string literals', () => {
+        const code = `
+        const snippet = "templateUrl: './not-a-real-template.html'";
+
+        @Component({
+          templateUrl: './app.component.html'
+        })
+        export class MyComponent {}
+      `;
+
+        const templateUrlsResolver = new TemplateUrlsResolver();
+        const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
+
+        expect(resolvedTemplateUrls).toMatchNormalizedPaths([
+          './app.component.html|/path/to/src/app.component.html',
+        ]);
       });
     });
   });
