@@ -28,7 +28,7 @@ function getContentFile<
   const normalizedFiles: Record<string, () => Promise<string>> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
-      .replace(/^(?:.*)\/content/, '/src/content')
+      .replace(/^(?:.*?)\/content(?=\/)/, '/src/content')
       .replace(/\/{2,}/g, '/');
     normalizedFiles[normalizedKey] = resolver as () => Promise<string>;
   }

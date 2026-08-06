@@ -1,0 +1,392 @@
+# Usando Vitest con un Proyecto Angular
+
+[Vitest](https://vitest.dev) puede ser añadido a **_cualquier_** proyecto Angular existente con unos pocos pasos.
+
+## Configuración Automatizada Usando un Schematic/Generator
+
+Vitest puede ser instalado y configurado usando un schematic/generator para Angular CLI o espacios de trabajo Nx.
+
+Primero, instala el paquete `@analogjs/vitest-angular`:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install @analogjs/vitest-angular --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add @analogjs/vitest-angular --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w @analogjs/vitest-angular --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+A continuación, ejecuta el schematic para configurar la configuración de Vite, archivos de configuración de pruebas y actualizar la configuración de pruebas.
+
+```shell
+ng g @analogjs/vitest-angular:setup-vitest --project [your-project-name]
+```
+
+### Opciones del Schematic
+
+| Opción        | Tipo    | Predeterminado | Descripción                                                               |
+| ------------- | ------- | -------------- | ------------------------------------------------------------------------- |
+| `project`     | string  | -              | El nombre del proyecto a configurar (requerido)                           |
+| `browserMode` | boolean | `false`        | Configurar Vitest para ejecutar pruebas en un navegador usando Playwright |
+
+Para habilitar el modo navegador durante la configuración:
+
+```shell
+ng g @analogjs/vitest-angular:setup --project [nombre-de-tu-proyecto] --browserMode
+```
+
+Esto instala automáticamente las dependencias de Playwright y configura Vitest para pruebas en navegador. Consulta [Configuración para Ejecutar las Pruebas en el Navegador](#setup-for-running-tests-in-the-browser) para más detalles.
+
+Si usas el modo navegador, ejecuta `npx playwright install` después del schematic para asegurar que playwright está instalado y configurado.
+
+Luego, ve a [ejecutando pruebas](#running-tests)
+
+## Instalación Manual
+
+Para añadir Vitest manualmente, instala los paquetes necesarios:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w @analogjs/vite-plugin-angular @analogjs/vitest-angular jsdom --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+## Configuración para Ejecutar las Pruebas en Node
+
+Para configurar Vitest, crea un archivo `vite.config.ts` en la raíz de tu proyecto:
+
+```ts
+/// <reference types="vitest" />
+export default defineConfig(({ mode }) => ({
+  plugins: [angular()],
+  test: {
+    globals: true,
+    setupFiles: ['src/test-setup.ts'],
+    environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    reporters: ['default'],
+  },
+}));
+```
+
+Luego, crea un archivo `src/test-setup.ts` para configurar el `TestBed`:
+
+### Soporte Zoneless
+
+Como desde Angular v21, `Zoneless` es la opción por defecto para la detección de cambios en proyectos nuevos.
+
+Utilice la siguiente configuración:
+
+```ts
+setupTestBed();
+```
+
+### Configuración de Zone.js
+
+Si estás usando `Zone.js` para la detección de cambios, importa el script `setup-zone`. Este script incluye automáticamente soporte para configurar pruebas de snapshots.
+
+```ts
+setupTestBed({
+  zoneless: false,
+});
+```
+
+### Opciones de Configuración
+
+La función `setupTestBed()` acepta un objecto de configuración opcional con las siguientes propiedades:
+
+- `zoneless` (boolean): Si se debe utilizar la detección de cambios zoneless (predeterminado: `true`)
+- `providers` (`Type<any>[]`): Proveedores adicionales para incluir en el entorno de prueba (predeterminado: `[]`)
+- `teardown.destroyAfterEach` (boolean): Si se debe destruir el entorno de prueba después de cada prueba. Establece a `false` para mantener el componente renderizado, permitiéndote inspeccionar su estado final. (predeterminado: `true`)
+
+**Ejemplo con opciones:**
+
+```ts
+setupTestBed({
+  zoneless: true,
+  providers: [],
+  teardown: { destroyAfterEach: false },
+});
+```
+
+A continuación, actualiza la propiedad `test` en el archivo `angular.json` para usar el constructor `@analogjs/vitest-angular:test`:
+
+```json
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "your-project": {
+      "projectType": "application",
+      "architect": {
+        "build": ...,
+        "serve": ...,
+        "extract-i18n": ...,
+        "test": {
+          "builder": "@analogjs/vitest-angular:test"
+        }
+      }
+    }
+  }
+}
+```
+
+> También puedes agregar una nueva propiedad denominada `vitest` para que se ejecute junto a tu objetivo `test`.
+
+Por último, añade `src/test-setup.ts` al arreglo `files` en el archivo `tsconfig.spec.json` en la raíz del proyecto, y actualiza la propiedad `types`.
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "target": "es2022",
+    "types": ["vitest/globals", "node"]
+  },
+  "files": ["src/test-setup.ts"],
+  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+}
+```
+
+Luego, ve a [ejecutando pruebas](#running-tests)
+
+## Configuración para Ejecutar las Pruebas en el Navegador
+
+Si prefieres ejecutar tus pruebas en un navegador, Vitest ofrece soporte experimental para ello.
+
+Primero, sigue los pasos para [ejecutar pruebas en node](#setup-for-running-tests-for-node).
+
+Luego, instala los paquetes necesarios para ejecutar pruebas en el navegador:
+
+<Tabs groupId="package-manager-browser">
+  <TabItem value="npm">
+
+```shell
+npm install @vitest/browser-playwright playwright --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add @vitest/browser-playwright playwright --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w @vitest/browser-playwright playwright
+```
+
+  </TabItem>
+</Tabs>
+
+Actualiza el objeto `test` en el archivo `vite.config.ts`.
+
+- Elimina la propiedad `environment: 'jsdom'`.
+- Añade una configuración `browser` para Vitest.
+
+```ts
+/// <reference types="vitest" />
+export default defineConfig(({ mode }) => ({
+  plugins: [angular()],
+  test: {
+    globals: true,
+    setupFiles: ['src/test-setup.ts'],
+    // environment: 'jsdom',
+    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    reporters: ['default'],
+    // Vitest browser config
+    browser: {
+      enabled: true,
+      headless: false, // set to true in CI
+      provider: playwright(),
+      instances: [{ browser: 'chromium' }],
+    },
+  },
+}));
+```
+
+Cuando se ejecutan las pruebas con el modo de navegador con interfaz gráfica, probablemente quieras actualizar tu `src/test-setup.ts` para mantener el componente renderizado:
+
+```ts
+setupTestBed({
+  teardown: { destroyAfterEach: false }, // Enables visual test preview
+});
+```
+
+Esto mantiene el componente dibujado luego que la prueba se complate, permitiendote inspeccionar visualmente el estado final en el navegador.
+
+## Ejecutando las Pruebas
+
+Para ejecutar pruebas unitarias, utiliza el comando `test`:
+
+<Tabs groupId="package-manager-node">
+  <TabItem value="npm">
+
+```shell
+npm run test
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn test
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm test
+```
+
+  </TabItem>
+</Tabs>
+
+> El comando `npx vitest` también puede ser usado directamente.
+
+<strong>¿Quieres aprender más? Consulta el [curso en video](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7) de Younes Jaaidi sobre testing en Angular.</strong>
+
+[![Curso de testing en Angular](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
+
+## Pruebas de Snapshots
+
+Para pruebas de snapshots puedes usar `toMatchSnapshot` de la API `expect`.
+
+A continuación, se muestra un pequeño ejemplo de cómo escribir una prueba de snapshot:
+
+```ts
+// card.component.spec.ts
+describe('CardComponent', () => {
+  let fixture: ComponentFixture<CardComponent>;
+  let component: CardComponent;
+
+  beforeEach(() =>
+    TestBed.configureTestingModule({
+      imports: [CardComponent],
+    }),
+  );
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(CardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create the app', () => {
+    expect(fixture).toMatchSnapshot();
+  });
+});
+```
+
+Después de ejecutar la prueba, se crea un archivo `card.component.spec.ts.snap` en la carpeta `__snapshots__` con el siguiente contenido:
+
+```ts
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CardComponent > should create the app 1`] = `
+  <component-code>
+`;
+```
+
+Los snapshots generados deben ser revisados y añadidos al control de versiones.
+
+## Usando Alias de Path en la Configuración de TypeScript
+
+Si estás usando `paths` en tu `tsconfig.json`, el soporte para esos alias puede ser añadido a la configuración de `vite.config.ts`.
+
+### Con Angular CLI
+
+Primero, instala el paquete `vite-tsconfig-paths`.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-tsconfig-paths --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-tsconfig-paths --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-tsconfig-paths --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+Luego, añade el plugin al arreglo `plugins` en el archivo `vite.config.ts` con `root` establecido como la ruta relativa a la raíz del proyecto.
+
+```ts
+/// <reference types="vitest" />
+export default defineConfig(({ mode }) => ({
+  plugins: [angular(), viteTsConfigPaths()],
+}));
+```
+
+### Con Nx
+
+Para espacios de trabajo Nx, importa y usa el plugin `nxViteTsPaths` del paquete `@nx/vite`.
+
+```ts
+/// <reference types="vitest" />
+export default defineConfig(({ mode }) => ({
+  plugins: [angular(), nxViteTsPaths()],
+}));
+```

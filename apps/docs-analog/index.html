@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Analog</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+    <!-- Resolve theme before first paint to avoid a light->dark flash on load. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('docs-theme');
+          if (
+            t === 'dark' ||
+            (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          ) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          /* localStorage unavailable */
+        }
+      })();
+    </script>
+    <link href="/src/styles.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@docsearch/css@3"
+    />
+    <!-- Google Analytics (matches apps/docs-app's gtag.trackingID) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-8S6ZF9V3Q6"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'G-8S6ZF9V3Q6', { anonymize_ip: true });
+    </script>
+  </head>
+  <body>
+    <docs-root></docs-root>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

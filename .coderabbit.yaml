@@ -121,10 +121,10 @@ reviews:
       instructions: >-
         Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
         and template files because changes can affect downstream generated workspaces.
-    - path: 'apps/docs-app/**'
+    - path: 'apps/docs-analog/**'
       instructions: >-
         Review as docs scope. Bias feedback toward documentation accuracy, command correctness,
-        broken links/examples, and Docusaurus build impact rather than package-release strictness.
+        broken links/examples, and Analog build impact rather than package-release strictness.
     - path: '.github/workflows/**'
       instructions: >-
         Review as ci scope. Focus on workflow safety, branch behavior, cache correctness,

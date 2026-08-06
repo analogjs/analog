@@ -1,14 +1,14 @@
 zerops:
-  - setup: docs0
+  - setup: static
     build:
       base: nodejs@22
       envVariables:
         CI: true
       buildCommands:
         - pnpm i
-        - pnpm exec nx build docs-app
+        - pnpm exec nx build docs-analog
       deployFiles:
-        - dist/apps/docs-app/~
+        - dist/apps/docs-analog/analog/public/~
       cache:
         - node_modules
     run:
