@@ -67,6 +67,23 @@ The docs site generates these files automatically during its build:
 
 That means the files stay aligned with the published docs instead of requiring a separate export step.
 
+## Framework conventions for coding agents
+
+`@analogjs/platform` ships its own guidance for AI coding assistants, so it tracks the version you have installed instead of drifting from a copy checked into your project.
+
+- `node_modules/@analogjs/platform/AGENTS.md` — Markdown guidance for any client that reads `AGENTS.md`. Generated apps include a root `AGENTS.md` that points here.
+- `node_modules/@analogjs/platform/plugin.json` — an [Agent Plugins v1.0.0](https://github.com/agentplugins/agent-plugins-spec) manifest, with the same guidance as a discoverable skill at `skills/analogjs/SKILL.md`.
+
+Both cover file-based routing, server and API routes, data fetching, content routes, and the modern Angular style Analog expects.
+
+Agent Plugins v1 has no discovery mechanism for plugins installed in `node_modules`, so register the plugin root with your client by hand:
+
+```text
+node_modules/@analogjs/platform
+```
+
+The `AGENTS.md` pointer keeps working with no setup either way.
+
 ## Example workflows
 
 ### Point an assistant at the docs index
