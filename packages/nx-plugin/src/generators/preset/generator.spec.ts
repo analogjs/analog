@@ -64,6 +64,8 @@ describe('preset generator', () => {
       'node_modules/@analogjs/platform/AGENTS.md',
     );
     expect(tree.read('/CLAUDE.md').toString()).toContain('@AGENTS.md');
+    expect(tree.exists('/my-app/AGENTS.md')).toBe(false);
+    expect(tree.exists('/my-app/CLAUDE.md')).toBe(false);
   });
 
   it('should use vitest 3 for Nx < 22.3.0', async () => {

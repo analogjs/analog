@@ -197,5 +197,32 @@ describe('nx-plugin generator', () => {
       verifyHomePageExists(tree, analogAppName);
       verifyTagsArePopulated(config, ['tag1', 'tag2', 'type:app']);
     });
+
+    it('generates agent context in the app wired to @analogjs/platform', async () => {
+      const analogAppName = 'agents-app';
+      const { tree } = await setup({ analogAppName });
+
+      expect(tree.read(`apps/${analogAppName}/AGENTS.md`).toString()).toContain(
+        'node_modules/@analogjs/platform/AGENTS.md',
+      );
+      expect(tree.read(`apps/${analogAppName}/CLAUDE.md`).toString()).toContain(
+        '@AGENTS.md',
+      );
+    });
+
+    it('does not overwrite existing agent context in the app', async () => {
+      const analogAppName = 'existing-agents-app';
+      const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+
+      addDependenciesToPackageJson(tree, {}, { nx: '21.0.0' });
+      tree.write(`apps/${analogAppName}/AGENTS.md`, '# Custom guidance');
+
+      await generator(tree, { analogAppName });
+
+      expect(tree.read(`apps/${analogAppName}/AGENTS.md`).toString()).toContain(
+        '# Custom guidance',
+      );
+      expect(tree.exists(`apps/${analogAppName}/CLAUDE.md`)).toBe(true);
+    });
   });
 });

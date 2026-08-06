@@ -10,12 +10,17 @@ export default async function (tree: Tree, options: PresetGeneratorSchema) {
   ensurePackage('rxjs', 'latest');
 
   const appTask = await import('../app/generator').then(({ appGenerator }) =>
-    appGenerator(tree, options),
+    appGenerator(tree, { ...options, skipAgentContext: true }),
   );
 
   // Seed agent context at the workspace root so AI coding assistants pick up
   // Analog conventions (see node_modules/@analogjs/platform/AGENTS.md).
-  generateFiles(tree, join(__dirname, 'files'), '.', options);
+  generateFiles(
+    tree,
+    join(__dirname, '..', 'app', 'files', 'agents'),
+    '.',
+    options,
+  );
 
   return appTask;
 }
