@@ -83,3 +83,9 @@ Next, use the application generator to scaffold a new application:
 ```shell
 npx nx g @analogjs/platform:application analog-app
 ```
+
+## Agent Context
+
+Both the preset and the application generator scaffold `AGENTS.md` and `CLAUDE.md` files that point AI coding assistants at the framework conventions shipped in `node_modules/@analogjs/platform/AGENTS.md`.
+
+The preset writes them at the workspace root, since the workspace is created for Analog. The application generator writes them in the application folder, such as `apps/analog-app`, so the guidance stays scoped to the Analog application in a workspace that may contain other projects. Existing `AGENTS.md` and `CLAUDE.md` files are never overwritten.
