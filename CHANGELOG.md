@@ -1,3 +1,9 @@
+# [2.7.0-beta.9](https://github.com/analogjs/analog/compare/v2.7.0-beta.8...v2.7.0-beta.9) (2026-08-06)
+
+### Features
+
+- **nx-plugin:** emit AGENTS.md and CLAUDE.md from the app generator ([#2465](https://github.com/analogjs/analog/issues/2465)) ([28ca452](https://github.com/analogjs/analog/commit/28ca4520dff30ce1b49e6df511fffb4c16114279))
+
 # [2.7.0-beta.8](https://github.com/analogjs/analog/compare/v2.7.0-beta.7...v2.7.0-beta.8) (2026-07-31)
 
 ### Bug Fixes
