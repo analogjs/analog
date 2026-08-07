@@ -53,14 +53,12 @@ pnpm test
 
 ### Struktur der Verzeichnisse
 
-Der Quellcode für die Analog-Dokumentation und die analogjs.org Website befindet sich im Projektordner `apps/docs-app`. Um Dokumentation oder Website-Inhalte beizusteuern, suchen den entsprechenden Quellcode in einem der Unterordner:
+Der Quellcode für die Analog-Dokumentation und die analogjs.org Website befindet sich im Projektordner `apps/docs-analog`. Um Dokumentation oder Website-Inhalte beizusteuern, suchen den entsprechenden Quellcode in einem der Unterordner:
 
-- `blog` - Blog (ungenutzt).
-- `docs` - Dokumentationsseiten mit React MDX-Unterstützung.
-- `src/components` - React-Komponenten.
-- `src/css` - Global Styles.
-- `src/pages` - React-Seitenkomponenten.
-- `static` - Bilder und andere statische Elemente.
+- `src/content` - Dokumentations- und Website-Inhalte in Markdown, mit Übersetzungen unter `src/content/<locale>`.
+- `src/app` - Angular-Seiten, -Komponenten und die Docs-Oberfläche.
+- `src/styles.css` - Global Styles.
+- `public` - Bilder und andere statische Elemente.
 
 ### Einrichtung
 
@@ -74,7 +72,7 @@ pnpm i
 
 ### Lokaler Betrieb
 
-Analog verwendet [Docusaurus](https://docusaurus.io/) zur Entwicklung der Dokumentation und der analogjs.org Website. Führe den folgenden Befehl aus dem Ordner `apps/docs-app` aus, um die Website bereitzustellen:
+Analog nutzt sich selbst, um die Dokumentation und die analogjs.org Website zu entwickeln. Führe den folgenden Befehl aus dem Ordner `apps/docs-analog` aus, um die Website bereitzustellen:
 
 ```shell
 pnpm nx serve
@@ -83,14 +81,14 @@ pnpm nx serve
 oder führe alternativ diesen Befehl vom Stammverzeichnis aus:
 
 ```shell
-pnpm nx serve docs-app
+pnpm nx serve docs-analog
 ```
 
 Sobald der Entwicklungsserver in Betrieb ist, kann die Dokumentation und die Website unter [http://localhost:3000](http://localhost:3000) eingesehen werden.
 
 ### Bauen
 
-Analog verwendet [Nx](https://nx.dev), um die Docs und die analogjs.org-Website zu erstellen. Um die Website lokal zu erstellen, führe den folgenden Befehl aus dem Ordner `apps/docs-app` aus:
+Analog verwendet [Nx](https://nx.dev), um die Docs und die analogjs.org-Website zu erstellen. Um die Website lokal zu erstellen, führe den folgenden Befehl aus dem Ordner `apps/docs-analog` aus:
 
 ```shell
 pnpm nx build
@@ -99,12 +97,12 @@ pnpm nx build
 oder führe alternativ diesen Befehl vom Stammverzeichnis aus:
 
 ```shell
-pnpm nx build docs-app
+pnpm nx build docs-analog
 ```
 
 ### Statische Website lokal bereitstellen
 
-Um die generierte statische Website lokal bereitzustellen, führe den folgenden Befehl aus dem Ordner `apps/docs-app` aus:
+Um die generierte statische Website lokal bereitzustellen, führe den folgenden Befehl aus dem Ordner `apps/docs-analog` aus:
 
 ```shell
 pnpm nx serve-static
@@ -113,7 +111,7 @@ pnpm nx serve-static
 oder führe alternativ diesen Befehl vom Stammverzeichnis aus:
 
 ```shell
-pnpm nx serve-static docs-app
+pnpm nx serve-static docs-analog
 ```
 
 ## Einreichen von Pull-Requests

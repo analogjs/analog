@@ -31,12 +31,12 @@ Analog 文档站点会在站点根目录发布两个面向 AI 的索引文件：
 
 ## Analog 如何生成这些文件
 
-文档应用会在 `apps/docs-app/docusaurus.config.js` 中自动生成这两个文件。
+文档应用会通过 `apps/docs-analog/vite/llms-txt.ts` 中的 Vite 插件自动生成这两个文件。
 
 在文档构建期间：
 
 - `llms.txt` 基于当前文档路由记录生成
-- `llms-full.txt` 通过拼接 `apps/docs-app/docs` 下的 Markdown 源文件生成
+- `llms-full.txt` 通过拼接 `apps/docs-analog/src/content` 下的 Markdown 源文件生成
 
 这意味着这些文件会和已发布的文档保持同步，而不需要额外的导出步骤。
 
