@@ -31,12 +31,12 @@ Estos archivos facilitan integrar la documentación en flujos de trabajo asistid
 
 ## Cómo genera Analog estos archivos
 
-La app de documentación genera ambos archivos automáticamente en `apps/docs-app/docusaurus.config.js`.
+La app de documentación genera ambos archivos automáticamente mediante el plugin de Vite en `apps/docs-analog/vite/llms-txt.ts`.
 
 Durante la compilación de la documentación:
 
 - `llms.txt` se genera a partir de los registros actuales de rutas de la documentación
-- `llms-full.txt` se genera concatenando los archivos Markdown bajo `apps/docs-app/docs`
+- `llms-full.txt` se genera concatenando los archivos Markdown bajo `apps/docs-analog/src/content`
 
 Eso mantiene ambos archivos alineados con la documentación publicada sin requerir un paso de exportación separado.
 

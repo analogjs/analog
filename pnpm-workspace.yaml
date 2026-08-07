@@ -1,5 +1,4 @@
 packages:
-  - 'apps/docs-app'
   - 'apps/docs-analog'
 allowBuilds:
   '@compodoc/compodoc': true

@@ -1,6 +1,11 @@
 # Rebuilding docs-app with Analog
 
-Design plan for replacing the current Docusaurus-based `apps/docs-app` with an
+> **Status: complete.** Kept as a historical design record. `apps/docs-analog`
+> ships the site and `apps/docs-app` has been removed — descriptions of the
+> Docusaurus app below are written in the present tense as of the original
+> plan and no longer describe the repository.
+
+Design plan for replacing the Docusaurus-based `apps/docs-app` with an
 Analog-based equivalent at `apps/docs-analog`.
 
 ## Goals & non-goals

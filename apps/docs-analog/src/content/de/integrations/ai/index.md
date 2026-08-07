@@ -31,12 +31,12 @@ Verwende die Datei, wenn du Folgendes möchtest:
 
 ## Wie Analog diese Dateien erzeugt
 
-Die Docs-App erzeugt beide Dateien automatisch in `apps/docs-app/docusaurus.config.js`.
+Die Docs-App erzeugt beide Dateien automatisch über das Vite-Plugin in `apps/docs-analog/vite/llms-txt.ts`.
 
 Während des Docs-Builds:
 
 - wird `llms.txt` aus den aktuellen Docs-Routen erzeugt
-- wird `llms-full.txt` durch das Zusammenführen der Markdown-Quelldateien unter `apps/docs-app/docs` erzeugt
+- wird `llms-full.txt` durch das Zusammenführen der Markdown-Quelldateien unter `apps/docs-analog/src/content` erzeugt
 
 Dadurch bleiben die Dateien mit der veröffentlichten Dokumentation synchron, ohne einen separaten Export-Schritt zu benötigen.
 

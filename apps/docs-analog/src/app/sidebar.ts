@@ -1,8 +1,7 @@
 import type { SidebarNode } from './docs';
 
 /**
- * Hand-curated navigation tree, ported verbatim from
- * apps/docs-app/sidebars.js. Order is intentional and deliberately
+ * Hand-curated navigation tree. Order is intentional and deliberately
  * diverges from the on-disk directory layout (e.g. Form Actions sits
  * under Core Concepts but the file lives in guides/, and Integrations
  * mixes integrations/ with packages/).

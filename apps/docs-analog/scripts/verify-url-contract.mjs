@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 /**
- * Cutover URL-contract verifier.
+ * URL-contract verifier.
  *
- * Walks src/content/ to enumerate every URL the legacy Docusaurus
- * docs-app would have published, then HEAD-checks each against the
- * dev or static server. Fails on any non-2xx so the cutover doesn't
- * silently break inbound links / SEO.
+ * Walks src/content/ to enumerate every URL the site publishes, then
+ * HEAD-checks each against the dev or static server. Fails on any
+ * non-2xx so changes don't silently break inbound links / SEO.
  *
  * Usage:
  *   node apps/docs-analog/scripts/verify-url-contract.mjs http://localhost:5173
