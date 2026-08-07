@@ -1,3 +1,9 @@
+# [2.7.0-beta.11](https://github.com/analogjs/analog/compare/v2.7.0-beta.10...v2.7.0-beta.11) (2026-08-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** hash JIT inline style virtual module ids ([#2470](https://github.com/analogjs/analog/issues/2470)) ([dc2216e](https://github.com/analogjs/analog/commit/dc2216e686f104547e4b8cb467be2d2a4d957003)), closes [#2459](https://github.com/analogjs/analog/issues/2459)
+
 # [2.7.0-beta.10](https://github.com/analogjs/analog/compare/v2.7.0-beta.9...v2.7.0-beta.10) (2026-08-07)
 
 ### Features
