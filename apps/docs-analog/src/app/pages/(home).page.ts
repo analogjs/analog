@@ -234,8 +234,8 @@ const SPONSORS: Sponsor[] = [
             i18n="@@home.fullstack.p2"
           >
             The page
-            <strong style="color: var(--fg)">imports the load type</strong>
-            — no separate API client, no manual fetch.
+            <strong style="color: var(--fg)">imports the load type</strong>. No
+            separate API client, no manual fetch.
           </p>
         </div>
         <docs-full-stack-example />
@@ -262,8 +262,8 @@ const SPONSORS: Sponsor[] = [
           style="color: var(--fg-muted)"
           i18n="@@home.ecosystem.p"
         >
-          Analog plugs into the tools your team already trusts. No fork, no shim
-          — the same plugins, the same configuration.
+          Analog plugs into the tools your team already trusts. No fork, no
+          shim. The same plugins, the same configuration.
         </p>
         <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
           @for (tool of ecosystem; track tool.name) {
