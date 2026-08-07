@@ -888,6 +888,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsConfigResolutionContext!.isProd,
       isTest,
       tsConfigResolutionContext!.isLib,
+      pluginOptions.workspaceRoot,
     );
   }
 
