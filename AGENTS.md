@@ -72,6 +72,7 @@ Reusable agent workflows live in `.agents/skills/`:
 
 - [`fix-issue`](.agents/skills/fix-issue/SKILL.md) - end-to-end flow for resolving a GitHub issue: fetch and understand the issue, create a feature branch off `beta`, implement and verify the fix, then hand off to `open-pr`.
 - [`open-pr`](.agents/skills/open-pr/SKILL.md) - commit the current work, push the feature branch, and open a GitHub PR against `beta` filled out from the PR template.
+- [`handhold-pr`](.agents/skills/handhold-pr/SKILL.md) - watch a PR's CI, pull the real failure logs, separate genuine failures from Nx DTE flakes and pre-existing base breakage, and iterate until the PR is green.
 
 ## Contribution Policy
 
