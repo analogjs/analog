@@ -1,3 +1,9 @@
+# [2.7.0-beta.12](https://github.com/analogjs/analog/compare/v2.7.0-beta.11...v2.7.0-beta.12) (2026-08-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fall back to workspaceRoot when resolving tsconfig ([#2471](https://github.com/analogjs/analog/issues/2471)) ([7d073e3](https://github.com/analogjs/analog/commit/7d073e3fc39969f70b0bba9422bdae76ac58d4b6))
+
 # [2.7.0-beta.11](https://github.com/analogjs/analog/compare/v2.7.0-beta.10...v2.7.0-beta.11) (2026-08-07)
 
 ### Bug Fixes
