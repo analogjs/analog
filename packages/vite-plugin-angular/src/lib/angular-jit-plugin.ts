@@ -1,5 +1,8 @@
-import { createHash } from 'node:crypto';
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
+import {
+  JIT_INLINE_STYLE_PREFIX,
+  getJitInlineStyles,
+} from './utils/jit-inline-styles.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -21,16 +24,16 @@ export function jitPlugin({
       return;
     },
     async load(id: string) {
-      if (id.includes('virtual:angular:jit:style:inline;')) {
-        const styleId = id.split('style:inline;')[1];
-        // styleId may exceed 255 bytes of base64-encoded content, limit to 16
-        const styleIdHash = createHash('sha256')
-          .update(styleId)
-          .digest('hex')
-          .slice(0, 16);
+      if (id.includes(JIT_INLINE_STYLE_PREFIX)) {
+        const styleIdHash = id.split('style:inline;')[1];
+        const encodedStyles = getJitInlineStyles(styleIdHash);
+
+        if (encodedStyles === undefined) {
+          return;
+        }
 
         const decodedStyles = Buffer.from(
-          decodeURIComponent(styleId),
+          decodeURIComponent(encodedStyles),
           'base64',
         ).toString();
 
