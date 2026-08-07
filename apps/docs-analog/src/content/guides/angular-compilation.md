@@ -2,8 +2,8 @@
 
 The AnalogJS Vite Plugin (`@analogjs/vite-plugin-angular`) compiles your Angular components, directives, and pipes to Ivy definitions during the Vite build. It provides two compilation paths:
 
-- **Default compilation** — Angular's own compiler (`ngtsc`), with full compile-time type checking.
-- **Fast compile** — an in-tree single-pass compiler that produces the same Ivy output much faster.
+- **Default compilation**: Angular's own compiler (`ngtsc`), with full compile-time type checking.
+- **Fast compile**: an in-tree single-pass compiler that produces the same Ivy output much faster.
 
 Both emit identical Ivy code and identical runtime behavior, because both ultimately call the same `@angular/compiler` lowering APIs.
 
@@ -13,7 +13,7 @@ For background on why compilation, type-checking, and build times are in tension
 
 ## Default compilation
 
-This is what you get out of the box — no configuration required:
+This is what you get out of the box with no configuration required:
 
 ```ts
 // vite.config.ts
@@ -25,7 +25,7 @@ export default defineConfig({
 });
 ```
 
-The default path runs Angular's compiler through the Angular Compilation API. It performs **full TypeScript and template type checking** (including `strictTemplates`), emits declaration files, and supports i18n message extraction. Use it when you want compile-time safety — wrong template bindings, missing inputs, and type mismatches fail the build.
+The default path runs Angular's compiler through the Angular Compilation API. It performs **full TypeScript and template type checking** (including `strictTemplates`), emits declaration files, and supports i18n message extraction. Use it when you want compile-time safety: wrong template bindings, missing inputs, and type mismatches fail the build.
 
 ## Fast compile
 
@@ -50,7 +50,7 @@ export default defineConfig({
 ```
 
 :::note
-In an Analog application, configure the plugin through `@analogjs/platform` instead — its `analog()` plugin forwards the same `fastCompile` option:
+In an Analog application, configure the plugin through `@analogjs/platform` instead. Its `analog()` plugin forwards the same `fastCompile` option:
 
 ```ts
 import analog from '@analogjs/platform';
@@ -108,7 +108,7 @@ Add it as a script and run it alongside your build:
 }
 ```
 
-This keeps fast builds during development while still failing on template and type errors before you ship — and the Angular Language Service surfaces the same errors live in your editor.
+This keeps fast builds during development while still failing on template and type errors before you ship, and the Angular Language Service surfaces the same errors live in your editor.
 
 ### Nx workspaces
 
@@ -163,7 +163,7 @@ For overall Angular/Analog/Vite version support, see [Version Compatibility](/do
 | ----------------------------------- | ----------------------- | ------------------------------------- |
 | Ivy output                          | Full                    | Identical                             |
 | Cold build / hot rebuild            | Standard                | Significantly faster                  |
-| Compile-time template type checking | Yes (`strictTemplates`) | No — use the Angular Language Service |
+| Compile-time template type checking | Yes (`strictTemplates`) | No (use the Angular Language Service) |
 | i18n message extraction             | Yes                     | `$localize` emitted                   |
 | Library / partial builds            | Yes                     | Yes (`fastCompileMode: 'partial'`)    |
 
@@ -172,7 +172,7 @@ For overall Angular/Analog/Vite version support, see [Version Compatibility](/do
 :::caution
 Fast compile trades compile-time safety for speed.
 
-**No compile-time template type checking.** Fast compile emits identical Ivy output and identical runtime behavior, but it does not validate template bindings, inputs, or types at build time. Run the **Angular Language Service** in your editor to catch these errors as you type — they appear as editor squiggles instead of failing the build.
+**No compile-time template type checking.** Fast compile emits identical Ivy output and identical runtime behavior, but it does not validate template bindings, inputs, or types at build time. Run the **Angular Language Service** in your editor to catch these errors as you type; they appear as editor squiggles instead of failing the build.
 
 If you need template type errors to fail your build (for example in CI), add the [type-checking step](#type-checking) or use the default compilation path.
 :::

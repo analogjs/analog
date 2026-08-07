@@ -223,7 +223,7 @@ Hello World
 
 To get a list using the list of content files in the `src/content` folder, use the `injectContentFiles<Attributes>(filterFn?: InjectContentFilesFilterFunction<Attributes>)` function from the `@analogjs/content` package in your component. To narrow the files, you can use the `filterFn` predicate function as an argument. You can use the `InjectContentFilesFilterFunction<T>` type to set up your predicate.
 
-> `injectContentFiles` returns metadata only — `filename`, `slug`, and `attributes`. The `content` body is not loaded; reading it from the returned items yields `undefined`. Use `injectContent` to load and render an individual file's body.
+> `injectContentFiles` returns metadata only: `filename`, `slug`, and `attributes`. The `content` body is not loaded; reading it from the returned items yields `undefined`. Use `injectContent` to load and render an individual file's body.
 
 ```ts
 export interface PostAttributes {
@@ -450,7 +450,7 @@ export default class DocComponent {
 }
 ```
 
-A request for `/docs/getting-started/welcome` resolves to `src/content/docs/getting-started/welcome.md`. Frontmatter `slug` is optional in this layout — when omitted, the file is keyed by its on-disk path. If a file does specify a `slug` containing path separators, that slug is interpreted relative to its top-level subdirectory (e.g. `slug: getting-started/welcome` on a file under `src/content/docs/` resolves to `src/content/docs/getting-started/welcome`).
+A request for `/docs/getting-started/welcome` resolves to `src/content/docs/getting-started/welcome.md`. Frontmatter `slug` is optional in this layout; when omitted, the file is keyed by its on-disk path. If a file does specify a `slug` containing path separators, that slug is interpreted relative to its top-level subdirectory (e.g. `slug: getting-started/welcome` on a file under `src/content/docs/` resolves to `src/content/docs/getting-started/welcome`).
 
 ## Loading Custom Content
 

@@ -37,8 +37,8 @@ Use it when you want:
 
 Every docs page is also published as raw Markdown at its `.md` URL. Append `.md` to any docs page URL to fetch a clean, chrome-free Markdown version of just that page:
 
-- `https://analogjs.org/docs/features/routing/overview` — the rendered page
-- `https://analogjs.org/docs/features/routing/overview.md` — the raw Markdown
+- `https://analogjs.org/docs/features/routing/overview`: the rendered page
+- `https://analogjs.org/docs/features/routing/overview.md`: the raw Markdown
 
 Use it when you want:
 
@@ -54,15 +54,15 @@ In addition to the site-wide `llms.txt`, each multi-page docs section publishes 
 - `https://analogjs.org/docs/integrations/llms.txt`
 - `https://analogjs.org/docs/packages/llms.txt`
 
-Use a section index when you only need part of the docs — for example, pointing an assistant at the integrations docs without pulling in the entire corpus.
+Use a section index when you only need part of the docs, for example pointing an assistant at the integrations docs without pulling in the entire corpus.
 
 ## How Analog generates these files
 
 The docs site generates these files automatically during its build:
 
-- `llms.txt` — an index of the docs pages under `src/content`
+- `llms.txt`: an index of the docs pages under `src/content`
 - a scoped `llms.txt` for each multi-page section, from the same content
-- `llms-full.txt` — the Markdown bodies of those pages concatenated into one file
+- `llms-full.txt`: the Markdown bodies of those pages concatenated into one file
 - a per-page `.md` file emitted alongside each prerendered route, via Analog's `outputSourceFile` prerender option
 
 That means the files stay aligned with the published docs instead of requiring a separate export step.
