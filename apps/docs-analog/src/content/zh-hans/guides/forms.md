@@ -2,8 +2,8 @@
 
 Analog 支持服务器端处理表单提交和验证。
 
-<div className="video-container">
-  <div className="video-responsive-wrapper">
+<div class="video-container">
+  <div class="video-responsive-wrapper">
     <iframe
       width="560"
       height="315"

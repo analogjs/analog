@@ -2,8 +2,8 @@
 
 Analog admite el manejo en el lado del servidor de los envíos y la validación de formularios.
 
-<div className="video-container">
-  <div className="video-responsive-wrapper">
+<div class="video-container">
+  <div class="video-responsive-wrapper">
     <iframe
       width="560"
       height="315"

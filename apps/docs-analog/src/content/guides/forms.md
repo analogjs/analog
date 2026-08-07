@@ -2,8 +2,8 @@
 
 Analog supports server-side handling of form submissions and validation.
 
-<div className="video-container">
-  <div className="video-responsive-wrapper">
+<div class="video-container">
+  <div class="video-responsive-wrapper">
     <iframe
       width="560"
       height="315"

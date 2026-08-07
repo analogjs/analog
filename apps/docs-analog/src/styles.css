@@ -288,6 +288,23 @@ body {
   display: none;
 }
 
+/* Responsive video embeds (raw HTML in markdown) */
+.video-container {
+  width: 100%;
+  max-width: 750px;
+  margin: 1.5rem auto;
+}
+.video-responsive-wrapper {
+  aspect-ratio: 16 / 9;
+}
+.video-responsive-wrapper iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: var(--radius-lg);
+}
+
 /* Markdown table */
 .analog-markdown table {
   border-collapse: collapse;

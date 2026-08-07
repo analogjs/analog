@@ -2,8 +2,8 @@
 
 O Analog suporta manipulação do lado do servidor para envios e validação de formulários.
 
-<div className="video-container">
-  <div className="video-responsive-wrapper">
+<div class="video-container">
+  <div class="video-responsive-wrapper">
     <iframe
       width="560"
       height="315"
