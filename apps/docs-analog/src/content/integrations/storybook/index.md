@@ -476,9 +476,9 @@ test: {
 
 ### Monorepo configuration
 
-In a monorepo, a story often imports a shared library from another project through its package/barrel entry point (for example `@my-org/ui`). When coverage is configured to include those dependent-project sources, Vite pre-bundles the barrel and serves it from `node_modules/.vite/deps`. Browser-mode V8 coverage ignores any module served from `node_modules`, so the dependency is reported with **0 hits at its source path even though it executed** — and merging that report with your unit-test report double-counts the file and drags the overall percentage down.
+In a monorepo, a story often imports a shared library from another project through its package/barrel entry point (for example `@my-org/ui`). When coverage is configured to include those dependent-project sources, Vite pre-bundles the barrel and serves it from `node_modules/.vite/deps`. Browser-mode V8 coverage ignores any module served from `node_modules`, so the dependency is reported with **0 hits at its source path even though it executed**. Merging that report with your unit-test report double-counts the file and drags the overall percentage down.
 
-To collect real coverage for those dependencies, keep them out of Vite's dependency pre-bundling so they are served — and instrumented — from source. Add them to `optimizeDeps.exclude` in your `.storybook/main.ts` via `viteFinal`:
+To collect real coverage for those dependencies, keep them out of Vite's dependency pre-bundling so they are served and instrumented from source. Add them to `optimizeDeps.exclude` in your `.storybook/main.ts` via `viteFinal`:
 
 ```ts
 import { UserConfig, mergeConfig } from 'vite';

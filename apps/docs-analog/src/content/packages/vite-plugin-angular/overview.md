@@ -64,7 +64,7 @@ export default defineConfig({
 });
 ```
 
-When `fastCompile` is enabled, template and input type errors will not surface during compilation — run `ngc -p tsconfig.app.json --noEmit` as a separate step in your build script to keep full type safety:
+When `fastCompile` is enabled, template and input type errors will not surface during compilation. Run `ngc -p tsconfig.app.json --noEmit` as a separate step in your build script to keep full type safety:
 
 ```json
 {

@@ -79,10 +79,10 @@ pnpm run test
 
 ## 已知限制
 
-- Zone.js 仅修补了全局变量。这意味着，如果您直接从 `vitest` 导入 `it`、`describe` 等，您将无法运行 `fakeAsync`。相反，请使用这些函数（`it`、`describe` 等，就像您在 Jest/Jasmine 中使用的方式一样——不要在测试文件中导入这些函数）。
+- Zone.js 仅修补了全局变量。这意味着，如果您直接从 `vitest` 导入 `it`、`describe` 等，您将无法运行 `fakeAsync`。相反，请使用这些函数（`it`、`describe` 等，就像您在 Jest/Jasmine 中使用的方式一样，不要在测试文件中导入这些函数）。
 - 使用了 `vmThreads`。这可能会导致潜在的内存泄漏，默认使用它是为了提供更接近带有 JSDOM 的 Jest 环境。更多详情您可以阅读 [这里](https://github.com/vitest-dev/vitest/issues/4685)。
 
-  要更改此设置——请调整您的 `vite.config.mts`：
+  要更改此设置，请调整您的 `vite.config.mts`：
 
   ```typescript
   export default defineConfig(({ mode }) => {

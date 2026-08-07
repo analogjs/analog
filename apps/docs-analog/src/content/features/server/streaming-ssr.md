@@ -6,7 +6,7 @@ document until it is complete.
 
 The document head is sent immediately, each `@defer (hydrate …)` block is sent
 the moment it resolves on the server, and the authoritative document arrives
-last — so a slow block never holds back the rest of the page.
+last, so a slow block never holds back the rest of the page.
 
 :::info Experimental
 

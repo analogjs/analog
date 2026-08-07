@@ -69,8 +69,8 @@ Analog detects the user's locale automatically in both SSR and client-only modes
 
 During SSR, the locale is detected from the incoming request using two strategies, in order of priority:
 
-1. **URL path prefix** — A locale prefix in the URL path (e.g., `/fr/about` resolves to `fr`)
-2. **`Accept-Language` header** — The browser's preferred language from the request headers
+1. **URL path prefix**: a locale prefix in the URL path (e.g., `/fr/about` resolves to `fr`)
+2. **`Accept-Language` header**: the browser's preferred language from the request headers
 
 ### Client-Only Mode
 
@@ -260,19 +260,19 @@ src/content/
 With this setup, `injectContentFiles()` and `injectContent()` automatically resolve to the correct locale:
 
 ```ts
-// Blog list — returns only posts for the active locale
+// Blog list: returns only posts for the active locale
 const posts = injectContentFiles<PostAttributes>((file) =>
   file.filename.includes('/blog/'),
 );
 
-// Blog detail — resolves /content/fr/blog/my-post.md when locale is 'fr'
+// Blog detail: resolves /content/fr/blog/my-post.md when locale is 'fr'
 const post$ = injectContent<PostAttributes>({
   param: 'slug',
   subdirectory: 'blog',
 });
 ```
 
-No locale-specific code is needed in components — the content APIs handle it internally.
+No locale-specific code is needed in components; the content APIs handle it internally.
 
 ### Frontmatter Locale Attribute
 
@@ -320,9 +320,9 @@ analog({
 
 During development, the Analog dev server provides full i18n support:
 
-- **`<html lang>` injection** — The `lang` attribute on the `<html>` tag is set automatically based on the detected locale for each request.
-- **Translation file HMR** — Editing translation files in `i18n/` directories (`.json`, `.xlf`, `.xmb`, `.arb`) triggers an automatic page reload so changes are reflected immediately.
-- **Locale-prefixed routes** — URLs like `http://localhost:5173/fr/about` work out of the box. The SSR middleware detects the locale and loads the correct translations.
+- **`<html lang>` injection**: the `lang` attribute on the `<html>` tag is set automatically based on the detected locale for each request.
+- **Translation file HMR**: editing translation files in `i18n/` directories (`.json`, `.xlf`, `.xmb`, `.arb`) triggers an automatic page reload so changes are reflected immediately.
+- **Locale-prefixed routes**: URLs like `http://localhost:5173/fr/about` work out of the box. The SSR middleware detects the locale and loads the correct translations.
 
 ## Prerendering
 
@@ -350,9 +350,9 @@ export default defineConfig(({ mode }) => ({
 
 This configuration will:
 
-1. **Expand routes** — Each route is prerendered for every locale: `/en/about`, `/fr/about`, `/de/about`, etc. The unprefixed routes are also kept for the default locale.
-2. **Set `<html lang>`** — Each prerendered page receives the correct `lang` attribute (e.g., `<html lang="fr">`).
-3. **Generate hreflang links in the sitemap** — The sitemap includes `<xhtml:link rel="alternate" hreflang="...">` entries for each locale variant, plus an `x-default` entry pointing to the default locale.
+1. **Expand routes.** Each route is prerendered for every locale: `/en/about`, `/fr/about`, `/de/about`, etc. The unprefixed routes are also kept for the default locale.
+2. **Set `<html lang>`.** Each prerendered page receives the correct `lang` attribute (e.g., `<html lang="fr">`).
+3. **Generate hreflang links in the sitemap.** The sitemap includes `<xhtml:link rel="alternate" hreflang="...">` entries for each locale variant, plus an `x-default` entry pointing to the default locale.
 
 ## Platform Configuration
 

@@ -1,6 +1,6 @@
 # Server Functions
 
-Server functions are typed, validated operations that run on the server and are called from anywhere in your app — a component, an effect, a route resolver — with full type inference on both ends. They are defined in a `.server.ts` file, so their code and dependencies never reach the browser bundle.
+Server functions are typed, validated operations that run on the server and are called from anywhere in your app (a component, an effect, a route resolver) with full type inference on both ends. They are defined in a `.server.ts` file, so their code and dependencies never reach the browser bundle.
 
 Where `load` fetches data for one page and `action` handles one form post, a server function is an arbitrary operation you can call by name.
 
@@ -43,7 +43,7 @@ export const search = serverFn(
 );
 ```
 
-The `input` schema is any [Standard Schema](https://standardschema.dev) validator — valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected without the handler ever running.
+The `input` schema is any [Standard Schema](https://standardschema.dev) validator; valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected without the handler ever running.
 
 Input travels in the request body, so any server function that takes input uses `POST`. `GET` is reserved for input-less reads, where it buys HTTP and CDN cacheability.
 
@@ -103,7 +103,7 @@ During server-side rendering, calls skip HTTP entirely and run in-process in the
 
 ## Using Dependency Injection
 
-A server function handler runs inside the request injector Analog builds for server-side rendering, so `inject()` works at the top of the handler body — for your own services and for Analog's request tokens.
+A server function handler runs inside the request injector Analog builds for server-side rendering, so `inject()` works at the top of the handler body, for your own services and for Analog's request tokens.
 
 ```ts
 import { serverFn } from '@analogjs/router/server';
@@ -118,11 +118,11 @@ export const getGreeting = serverFn(async () => {
 
 `REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
 
-Handlers resolve dependencies from **your app's own server config** — there is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
+Handlers resolve dependencies from **your app's own server config**. There is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
 
 ## Adding Interceptors
 
-Interceptors are functional, provided through DI, and apply to every server function in registration order — the same model as `HttpInterceptorFn`. Use them for authentication, tenancy, and logging.
+Interceptors are functional, provided through DI, and apply to every server function in registration order, the same model as `HttpInterceptorFn`. Use them for authentication, tenancy, and logging.
 
 ```ts
 // src/app/server-fns/auth.interceptor.ts
@@ -141,7 +141,7 @@ export const authInterceptor: ServerFnInterceptorFn = (ctx, next) => {
 };
 ```
 
-Register them in your server config with `provideServerFns` — the same file the handlers bootstrap from:
+Register them in your server config with `provideServerFns`, the same file the handlers bootstrap from:
 
 ```ts
 // src/app/app.config.server.ts
@@ -191,7 +191,7 @@ Server functions are HTTP endpoints, and validation checks the shape of the inpu
 
 Two protections are built in:
 
-- **Route ids are derived at build time** from the file and export name, not chosen by you. Each function is served from an opaque `/_analog/fn/<hash>` route, so two functions sharing a name cannot collide, and the endpoint surface cannot be enumerated by guessing export names. Treat the id as an opaque address rather than a secret — it is reproducible from the source and present in the client bundle, so it is not an authorization boundary.
+- **Route ids are derived at build time** from the file and export name, not chosen by you. Each function is served from an opaque `/_analog/fn/<hash>` route, so two functions sharing a name cannot collide, and the endpoint surface cannot be enumerated by guessing export names. Treat the id as an opaque address rather than a secret. It is reproducible from the source and present in the client bundle, so it is not an authorization boundary.
 - **Calls are same-origin by default.** Because server functions are often cookie-authenticated, cross-origin browser calls are rejected with a `403` before the function is even looked up, and input-bearing calls must send a JSON body.
 
 If an app genuinely needs to be called from another origin, opt in explicitly in `app.config.server.ts`:
