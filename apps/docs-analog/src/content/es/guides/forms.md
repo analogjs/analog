@@ -2,12 +2,14 @@
 
 Analog admite el manejo en el lado del servidor de los envíos y la validación de formularios.
 
-<div className="video-container">
-  <div className="video-responsive-wrapper">
+<div class="video-container">
+  <div class="video-responsive-wrapper">
     <iframe
       width="560"
       height="315"
-      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0">
+      title="Acciones del Servidor para Formularios en Analog"
+      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0"
+      allowfullscreen>
     </iframe>
   </div>
 </div>
