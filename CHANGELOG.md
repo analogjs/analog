@@ -1,3 +1,9 @@
+# [2.7.0-beta.10](https://github.com/analogjs/analog/compare/v2.7.0-beta.9...v2.7.0-beta.10) (2026-08-07)
+
+### Features
+
+- **docs:** add Open Graph image and social card metadata ([452739f](https://github.com/analogjs/analog/commit/452739f6708085b487110565f1238206fb287977))
+
 # [2.7.0-beta.9](https://github.com/analogjs/analog/compare/v2.7.0-beta.8...v2.7.0-beta.9) (2026-08-06)
 
 ### Features
