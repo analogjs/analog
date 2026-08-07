@@ -7,7 +7,9 @@ Analog supports server-side handling of form submissions and validation.
     <iframe
       width="560"
       height="315"
-      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0">
+      title="Form Server Actions in Analog"
+      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0"
+      allowfullscreen>
     </iframe>
   </div>
 </div>

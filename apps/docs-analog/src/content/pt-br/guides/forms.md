@@ -7,7 +7,9 @@ O Analog suporta manipulação do lado do servidor para envios e validação de 
     <iframe
       width="560"
       height="315"
-      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0">
+      title="Ações de Formulários no Servidor no Analog"
+      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0"
+      allowfullscreen>
     </iframe>
   </div>
 </div>

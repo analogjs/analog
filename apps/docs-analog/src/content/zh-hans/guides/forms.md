@@ -7,7 +7,9 @@ Analog 支持服务器端处理表单提交和验证。
     <iframe
       width="560"
       height="315"
-      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0">
+      title="Analog 中的表单服务器操作"
+      src="https://www.youtube.com/embed/4pFPO1OpD4Q?si=HcESaJI03LgEljpQ&amp;controls=0"
+      allowfullscreen>
     </iframe>
   </div>
 </div>
