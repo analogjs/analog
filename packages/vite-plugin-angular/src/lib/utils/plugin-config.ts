@@ -38,6 +38,7 @@ export function getTsConfigPath(
   isProd: boolean,
   isTest: boolean,
   isLib: boolean,
+  workspaceRoot?: string,
 ) {
   if (tsconfig && isAbsolute(tsconfig)) {
     if (!existsSync(tsconfig)) {
@@ -67,11 +68,30 @@ export function getTsConfigPath(
 
   const resolvedPath = resolve(root, tsconfigFilePath);
 
-  if (!existsSync(resolvedPath)) {
-    console.error(
-      `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-    );
+  if (existsSync(resolvedPath)) {
+    return resolvedPath;
   }
+
+  // Callers such as Storybook's Angular builder document their `tsConfig` as
+  // workspace-relative while setting the Vite root to the project directory,
+  // so the path joins onto the project root twice. Fall back to the workspace
+  // root before failing.
+  const workspacePath = workspaceRoot
+    ? resolve(workspaceRoot, tsconfigFilePath)
+    : undefined;
+
+  if (workspacePath && existsSync(workspacePath)) {
+    return workspacePath;
+  }
+
+  const attemptedPaths =
+    workspacePath && workspacePath !== resolvedPath
+      ? `${resolvedPath} or ${workspacePath}`
+      : resolvedPath;
+
+  console.error(
+    `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${attemptedPaths}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
+  );
 
   return resolvedPath;
 }

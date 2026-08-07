@@ -653,6 +653,7 @@ export function fastCompilePlugin(
       isProd,
       pluginOptions.isTest,
       isLib,
+      pluginOptions.workspaceRoot,
     );
   }
 

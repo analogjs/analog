@@ -70,6 +70,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 Reusable agent workflows live in `.agents/skills/`:
 
+- [`investigate-issue`](.agents/skills/investigate-issue/SKILL.md) - triage a GitHub issue: reproduce the reporter's repo or snippet in an isolated sandbox outside the monorepo, trace the root cause, and draft a reply for the maintainer to confirm before posting.
 - [`fix-issue`](.agents/skills/fix-issue/SKILL.md) - end-to-end flow for resolving a GitHub issue: fetch and understand the issue, create a feature branch off `beta`, implement and verify the fix, then hand off to `open-pr`.
 - [`open-pr`](.agents/skills/open-pr/SKILL.md) - commit the current work, push the feature branch, and open a GitHub PR against `beta` filled out from the PR template.
 - [`handhold-pr`](.agents/skills/handhold-pr/SKILL.md) - watch a PR's CI, pull the real failure logs, separate genuine failures from Nx DTE flakes and pre-existing base breakage, and iterate until the PR is green.
