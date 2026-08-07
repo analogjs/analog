@@ -6,6 +6,29 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+    <!-- Social card defaults. `DocSeo` overrides og:title/og:description/og:url
+         per page during prerender; the image is shared across the site. -->
+    <meta
+      name="description"
+      content="Analog is the fullstack meta-framework for Angular. Vite-based, with file-based routing, API routes, SSR and SSG."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Analog" />
+    <meta property="og:url" content="https://analogjs.org/" />
+    <meta property="og:title" content="Analog" />
+    <meta
+      property="og:description"
+      content="Analog is the fullstack meta-framework for Angular. Vite-based, with file-based routing, API routes, SSR and SSG."
+    />
+    <meta property="og:image" content="https://analogjs.org/img/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Analog — the fullstack Angular meta-framework"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <!-- Resolve theme before first paint to avoid a light->dark flash on load. -->
     <script>
       (function () {

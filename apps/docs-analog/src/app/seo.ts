@@ -70,6 +70,8 @@ export class DocSeo {
       head.appendChild(canonical);
     }
     canonical.href = canonicalHref;
+
+    this.meta.updateTag({ property: 'og:url', content: canonicalHref });
   }
 
   private appendAlternate(hreflang: string, href: string): void {
