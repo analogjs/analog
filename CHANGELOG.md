@@ -1,3 +1,9 @@
+# [2.7.0-beta.14](https://github.com/analogjs/analog/compare/v2.7.0-beta.13...v2.7.0-beta.14) (2026-08-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** await initial compilation in transform ([#2474](https://github.com/analogjs/analog/issues/2474)) ([30e0293](https://github.com/analogjs/analog/commit/30e02931d03d58e953eab64f9876b3101403bc91))
+
 # [2.7.0-beta.13](https://github.com/analogjs/analog/compare/v2.7.0-beta.12...v2.7.0-beta.13) (2026-08-10)
 
 ### Features
