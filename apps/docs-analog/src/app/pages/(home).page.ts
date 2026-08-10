@@ -133,7 +133,7 @@ const SPONSORS: Sponsor[] = [
               Read the Docs
             </a>
             <a
-              href="https://stackblitz.com/edit/github-vsxw5h?file=src%2Fapp%2Fapp.config.ts"
+              href="/new"
               target="_blank"
               rel="noopener"
               class="inline-flex items-center gap-2 rounded-md border px-5 py-2.5 text-sm font-semibold hover:bg-[var(--bg-subtle)] sm:px-6 sm:py-3 sm:text-base"
