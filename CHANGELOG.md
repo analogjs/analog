@@ -1,3 +1,9 @@
+# [2.7.0-beta.13](https://github.com/analogjs/analog/compare/v2.7.0-beta.12...v2.7.0-beta.13) (2026-08-10)
+
+### Features
+
+- **platform:** ship an Agent Plugins v1.0.0 conformant plugin ([#2466](https://github.com/analogjs/analog/issues/2466)) ([ba7dd54](https://github.com/analogjs/analog/commit/ba7dd54dd2f0083ef3ceee3897ebf1de515c170c))
+
 # [2.7.0-beta.12](https://github.com/analogjs/analog/compare/v2.7.0-beta.11...v2.7.0-beta.12) (2026-08-07)
 
 ### Bug Fixes
