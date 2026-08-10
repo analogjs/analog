@@ -26,6 +26,20 @@ import {
  */
 export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
 
+/**
+ * Resolves whether Angular should be compiled for production. An explicit
+ * `development` mode wins over an ambient production `NODE_ENV` (e.g. set by
+ * `storybook build` at CLI entry), so a build can opt into Angular's
+ * development compilation. See #2458 and #2462.
+ */
+export function isProdMode(mode: string | undefined): boolean {
+  if (mode === 'development') {
+    return false;
+  }
+
+  return mode === 'production' || process.env['NODE_ENV'] === 'production';
+}
+
 export interface TsConfigResolutionContext {
   root: string;
   isProd: boolean;

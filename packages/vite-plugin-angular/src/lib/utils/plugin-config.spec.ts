@@ -1,8 +1,43 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { getTsConfigPath, TS_EXT_REGEX } from './plugin-config.js';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import { getTsConfigPath, isProdMode, TS_EXT_REGEX } from './plugin-config.js';
+
+describe('isProdMode', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+  afterEach(() => {
+    process.env['NODE_ENV'] = originalNodeEnv;
+  });
+
+  it('is true for an explicit production mode regardless of NODE_ENV', () => {
+    process.env['NODE_ENV'] = 'development';
+    expect(isProdMode('production')).toBe(true);
+  });
+
+  it('is false for an explicit development mode even under production NODE_ENV (#2462)', () => {
+    process.env['NODE_ENV'] = 'production';
+    expect(isProdMode('development')).toBe(false);
+  });
+
+  it('falls back to NODE_ENV for other modes (unchanged behavior)', () => {
+    process.env['NODE_ENV'] = 'production';
+    expect(isProdMode(undefined)).toBe(true);
+    expect(isProdMode('staging')).toBe(true);
+
+    process.env['NODE_ENV'] = 'development';
+    expect(isProdMode(undefined)).toBe(false);
+    expect(isProdMode('staging')).toBe(false);
+  });
+});
 
 describe('TS_EXT_REGEX', () => {
   describe('matches genuine TypeScript files', () => {
