@@ -1,3 +1,9 @@
+# [2.7.0-beta.15](https://github.com/analogjs/analog/compare/v2.7.0-beta.14...v2.7.0-beta.15) (2026-08-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** give explicit build mode precedence over NODE_ENV ([#2475](https://github.com/analogjs/analog/issues/2475)) ([4daf0ce](https://github.com/analogjs/analog/commit/4daf0ce6207d929293a9e285971ddb48398d5238))
+
 # [2.7.0-beta.14](https://github.com/analogjs/analog/compare/v2.7.0-beta.13...v2.7.0-beta.14) (2026-08-10)
 
 ### Bug Fixes
