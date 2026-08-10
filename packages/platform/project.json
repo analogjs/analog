@@ -14,7 +14,13 @@
         "tsConfig": "packages/platform/tsconfig.lib.json",
         "assets": [
           "packages/platform/*.md",
-          "packages/platform/migrations/migration.json"
+          "packages/platform/plugin.json",
+          "packages/platform/migrations/migration.json",
+          {
+            "input": "./packages/platform/skills",
+            "glob": "**/*",
+            "output": "./skills"
+          }
         ],
         "updateBuildableProjectDepsInPackageJson": false
       },
