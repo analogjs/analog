@@ -43,6 +43,36 @@ describe('buildOptimizerPlugin apply()', () => {
 });
 
 describe('buildOptimizerPlugin config()', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+  afterEach(() => {
+    process.env['NODE_ENV'] = originalNodeEnv;
+  });
+
+  it('should not set defines for an explicit development mode build under production NODE_ENV (#2462)', () => {
+    // `storybook build` sets NODE_ENV=production at CLI entry; an explicit
+    // `mode: 'development'` opts the build into Angular's development
+    // compilation so the debug API (e.g. `window.ng.getComponent`) survives.
+    process.env['NODE_ENV'] = 'production';
+    const plugin = createPlugin();
+    const config = (
+      plugin as Plugin & { config: (c: UserConfig) => UserConfig }
+    ).config({ mode: 'development' });
+
+    expect(config.define).toEqual({});
+  });
+
+  it('should set defines under production NODE_ENV without an explicit mode', () => {
+    process.env['NODE_ENV'] = 'production';
+    const plugin = createPlugin();
+    const config = (
+      plugin as Plugin & { config: (c: UserConfig) => UserConfig }
+    ).config({});
+
+    expect(config.define).toEqual(
+      expect.objectContaining({ ngDevMode: 'false' }),
+    );
+  });
+
   it('should set ngServerMode to true for production SSR builds', () => {
     const plugin = createPlugin();
     const config = (

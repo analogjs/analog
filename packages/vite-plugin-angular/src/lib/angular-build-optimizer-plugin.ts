@@ -1,6 +1,7 @@
 import type { Plugin, UserConfig } from 'vite';
 import * as vite from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
+import { isProdMode } from './utils/plugin-config.js';
 
 export function buildOptimizerPlugin({
   jit,
@@ -8,15 +9,7 @@ export function buildOptimizerPlugin({
   supportedBrowsers: string[];
   jit: boolean;
 }): Plugin {
-  const javascriptTransformer = new JavaScriptTransformer(
-    {
-      sourcemap: false,
-      thirdPartySourcemaps: false,
-      advancedOptimizations: true,
-      jit: true,
-    },
-    1,
-  );
+  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
   let isProd = false;
 
   return {
@@ -35,9 +28,18 @@ export function buildOptimizerPlugin({
       );
     },
     config(userConfig) {
-      isProd =
-        userConfig.mode === 'production' ||
-        process.env['NODE_ENV'] === 'production';
+      isProd = isProdMode(userConfig.mode);
+      // Advanced optimizations paired with dev-mode defines would strip
+      // dev-only code the debug API needs, so both key off `isProd`.
+      javascriptTransformer ??= new JavaScriptTransformer(
+        {
+          sourcemap: false,
+          thirdPartySourcemaps: false,
+          advancedOptimizations: isProd,
+          jit: true,
+        },
+        1,
+      );
 
       return {
         define: isProd

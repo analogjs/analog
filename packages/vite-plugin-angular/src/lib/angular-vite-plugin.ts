@@ -70,6 +70,7 @@ import {
   createTsConfigGetter,
   getTsConfigPath,
   createDepOptimizerConfig,
+  isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
@@ -269,9 +270,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-        isProd =
-          config.mode === 'production' ||
-          process.env['NODE_ENV'] === 'production';
+        isProd = isProdMode(config.mode);
 
         // Store the config context for later resolution in configResolved
         tsConfigResolutionContext = {

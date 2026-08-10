@@ -453,6 +453,27 @@ npm run test-storybook
 
 You can also run tests directly in the Storybook UI. Start Storybook and use the "Run Tests" button in the sidebar, or navigate to a story to see interaction tests run automatically in the Interactions panel.
 
+## Building with Angular in Development Mode
+
+`storybook build` produces a production build, compiling Angular with optimizations and without its development debug API (for example `window.ng.getComponent`). If tooling runs against the built Storybook and needs that API, such as Playwright component tests, opt the build into Angular's development compilation by setting the Vite `mode` in `viteFinal`:
+
+```ts
+import { UserConfig } from 'vite';
+
+import type { StorybookConfig } from '@analogjs/storybook-angular';
+
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return { ...config, mode: 'development' };
+  },
+};
+
+export default config;
+```
+
+An explicit `mode` takes precedence over the production `NODE_ENV` that the Storybook CLI sets.
+
 ## Code Coverage
 
 To collect coverage while running your stories, enable the V8 provider on the `storybook` test project:
