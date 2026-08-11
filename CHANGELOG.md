@@ -1,3 +1,9 @@
+# [2.7.0-beta.19](https://github.com/analogjs/analog/compare/v2.7.0-beta.18...v2.7.0-beta.19) (2026-08-11)
+
+### Bug Fixes
+
+- **vitest-angular:** skip zone patching when setup re-executes in a reused worker ([#2484](https://github.com/analogjs/analog/issues/2484)) ([a8cdc2e](https://github.com/analogjs/analog/commit/a8cdc2e38de92b0ba4cc77cba2dcad7fdbacb2f6))
+
 # [2.7.0-beta.18](https://github.com/analogjs/analog/compare/v2.7.0-beta.17...v2.7.0-beta.18) (2026-08-11)
 
 ### Bug Fixes
