@@ -89,4 +89,21 @@ describe('requestContextInterceptor', () => {
     );
     expect(notRestored).toBe('from network');
   });
+
+  it('should restore the transferred response for a relative endpoint URL', async () => {
+    setup();
+
+    await firstValueFrom(
+      intercept(new HttpRequest('GET', `${endpoint}?level=middle`)),
+    );
+
+    delete (global as any).$fetch;
+
+    const restored = await firstValueFrom(
+      intercept(
+        new HttpRequest('GET', '/api/_analog/pages/index?level=middle'),
+      ),
+    );
+    expect(restored).toBeInstanceOf(HttpResponse);
+  });
 });

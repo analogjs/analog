@@ -82,10 +82,9 @@ export function requestContextInterceptor(
     (req.url.startsWith('/') || req.url.includes('/_analog/'))
   ) {
     // /_analog/ requests are full URLs
-    const toAbsoluteUrl = (url: string) =>
-      url.includes('/_analog/') ? url : `${window.location.origin}${url}`;
-    const requestUrl = toAbsoluteUrl(req.url);
-    const { pathname, search } = new URL(toAbsoluteUrl(req.urlWithParams));
+    const toAbsoluteUrl = (url: string) => new URL(url, window.location.origin);
+    const requestUrl = toAbsoluteUrl(req.url).href;
+    const { pathname, search } = toAbsoluteUrl(req.urlWithParams);
     const cacheKey = makeCacheKey(req, `${pathname}${search}`);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const cacheRestoreResponse = transferState.get(storeKey, null);
