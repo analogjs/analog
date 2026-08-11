@@ -4,11 +4,9 @@ import { JavaScriptTransformer } from './utils/devkit.js';
 
 export function buildOptimizerPlugin({
   jit,
-  vendorSourcemaps,
 }: {
   supportedBrowsers: string[];
   jit: boolean;
-  vendorSourcemaps: boolean;
 }): Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     {
@@ -20,6 +18,7 @@ export function buildOptimizerPlugin({
     1,
   );
   let isProd = false;
+  let preserveVendorMaps = false;
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
@@ -62,6 +61,9 @@ export function buildOptimizerPlugin({
         },
       } as UserConfig;
     },
+    configResolved(config) {
+      preserveVendorMaps = !!config.build.sourcemap;
+    },
     transform: {
       filter: {
         // Allow an optional `?query` after the extension. Some environments
@@ -84,10 +86,10 @@ export function buildOptimizerPlugin({
           // what makes that map unreachable, so it only runs when discarding.
           return {
             code:
-              isProd && !vendorSourcemaps
+              isProd && !preserveVendorMaps
                 ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
                 : code,
-            map: vendorSourcemaps ? null : { mappings: '' },
+            map: preserveVendorMaps ? null : { mappings: '' },
           };
         }
 

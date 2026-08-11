@@ -78,29 +78,18 @@ The fast compile path currently passes ~91% of Angular's conformance suite. Beha
 
 ## Vendor Sourcemaps
 
-By default, the plugin discards the sourcemaps of dependencies and prebuilt libraries, so stack traces from `node_modules` resolve to the bundled output rather than the original sources.
-
-Set `vendorSourcemaps` to `true` to keep them in the sourcemap chain, similar in intent to the Angular CLI's `sourceMap.vendor` option.
+The sourcemaps of dependencies and prebuilt libraries are preserved whenever `build.sourcemap` is enabled.
 
 ```ts
 export default defineConfig({
-  plugins: [angular({ vendorSourcemaps: true })],
+  plugins: [angular()],
   build: { sourcemap: true },
 });
 ```
 
-In an Analog application, pass it through the `vite` option:
+Expect larger sourcemap files, since they now include the mappings for dependency code. The application bundles are unchanged, and builds without `build.sourcemap` are unaffected.
 
-```ts
-export default defineConfig({
-  plugins: [analog({ vite: { vendorSourcemaps: true } })],
-  build: { sourcemap: true },
-});
-```
-
-`build.sourcemap` must also be enabled, since no sourcemaps are emitted otherwise. Expect larger sourcemap files, as they now include the mappings for dependency code. The application bundles are unchanged.
-
-Angular's own packages are compiled through a separate path that always discards their sourcemaps, so this option does not restore mappings for `@angular/*`.
+Angular's own packages are compiled through a separate path that always discards their sourcemaps, so mappings are not restored for `@angular/*`.
 
 ## Setting up the TypeScript config
 

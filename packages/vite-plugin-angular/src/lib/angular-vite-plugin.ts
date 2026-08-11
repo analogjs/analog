@@ -116,14 +116,6 @@ export interface PluginOptions {
    */
   fastCompile?: boolean;
   /**
-   * Preserve the sourcemaps of dependencies and prebuilt libraries instead of
-   * discarding them. Requires `build.sourcemap`, and produces larger
-   * sourcemaps. Angular's own packages are compiled through a path that always
-   * discards their sourcemaps and are unaffected.
-   * Defaults to `false`.
-   */
-  vendorSourcemaps?: boolean;
-  /**
    * Compilation output mode used when `fastCompile` is enabled.
    * - `'full'` (default): Emit final Ivy definitions for application builds.
    * - `'partial'`: Emit partial declarations for library publishing.
@@ -183,7 +175,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
-    vendorSourcemaps: options?.vendorSourcemaps ?? false,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -867,7 +858,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     buildOptimizerPlugin({
       supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
-      vendorSourcemaps: pluginOptions.vendorSourcemaps,
     }),
     routerPlugin(),
     angularFullVersion < 190004 && pendingTasksPlugin(),

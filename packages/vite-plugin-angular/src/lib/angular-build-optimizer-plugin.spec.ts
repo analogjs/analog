@@ -2,11 +2,10 @@ import { afterEach, describe, it, expect } from 'vitest';
 import type { Plugin, UserConfig } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
 
-function createPlugin(vendorSourcemaps = false): Plugin {
+function createPlugin(): Plugin {
   return buildOptimizerPlugin({
     supportedBrowsers: [],
     jit: false,
-    vendorSourcemaps,
   });
 }
 
@@ -117,7 +116,7 @@ describe('buildOptimizerPlugin transform filter', () => {
   });
 });
 
-describe('buildOptimizerPlugin vendorSourcemaps', () => {
+describe('buildOptimizerPlugin vendor sourcemaps', () => {
   const originalNodeEnv = process.env['NODE_ENV'];
   afterEach(() => {
     process.env['NODE_ENV'] = originalNodeEnv;
@@ -131,18 +130,23 @@ describe('buildOptimizerPlugin vendorSourcemaps', () => {
     return (plugin.transform as any).handler.call({}, code, id);
   }
 
-  function configure(plugin: Plugin, mode: 'production' | 'development'): void {
+  function configure(
+    plugin: Plugin,
+    mode: 'production' | 'development',
+    sourcemap: boolean | 'inline' | 'hidden',
+  ): void {
     process.env['NODE_ENV'] = mode;
     (plugin as Plugin & { config: (c: UserConfig) => UserConfig }).config({
       mode,
     });
+    (plugin.configResolved as any).call({}, { build: { sourcemap } });
   }
 
   const sourceWithMapUrl = 'const a = 1;\n//# sourceMappingURL=vendor.js.map\n';
 
-  it('discards vendor sourcemaps by default in development (unchanged behavior)', async () => {
+  it('discards vendor sourcemaps without build.sourcemap in development', async () => {
     const plugin = createPlugin();
-    configure(plugin, 'development');
+    configure(plugin, 'development', false);
 
     const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
 
@@ -151,9 +155,9 @@ describe('buildOptimizerPlugin vendorSourcemaps', () => {
     expect(result?.code).toBe(sourceWithMapUrl);
   });
 
-  it('discards vendor sourcemaps by default in production, stripping the map comment', async () => {
+  it('discards vendor sourcemaps without build.sourcemap in production, stripping the map comment', async () => {
     const plugin = createPlugin();
-    configure(plugin, 'production');
+    configure(plugin, 'production', false);
 
     const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
 
@@ -161,9 +165,11 @@ describe('buildOptimizerPlugin vendorSourcemaps', () => {
     expect(result?.code).not.toContain('sourceMappingURL');
   });
 
-  it('preserves vendor sourcemaps when enabled in development', async () => {
-    const plugin = createPlugin(true);
-    configure(plugin, 'development');
+  it('preserves vendor sourcemaps when build.sourcemap is enabled, keeping the map comment', async () => {
+    // The prod-only `sourceMappingURL` strip would make the preserved map
+    // unreachable, so it must not run once sourcemaps are requested.
+    const plugin = createPlugin();
+    configure(plugin, 'production', true);
 
     const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
 
@@ -171,11 +177,10 @@ describe('buildOptimizerPlugin vendorSourcemaps', () => {
     expect(result?.code).toBe(sourceWithMapUrl);
   });
 
-  it('preserves vendor sourcemaps when enabled in production, keeping the map comment', async () => {
-    // The prod-only `sourceMappingURL` strip would make the map unreachable,
-    // so it must not run while the option is enabled.
-    const plugin = createPlugin(true);
-    configure(plugin, 'production');
+  it('treats non-boolean build.sourcemap values as enabled', async () => {
+    // `build.sourcemap` also accepts 'inline' | 'hidden'.
+    const plugin = createPlugin();
+    configure(plugin, 'production', 'hidden');
 
     const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
 
