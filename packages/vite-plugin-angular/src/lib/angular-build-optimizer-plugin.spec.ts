@@ -2,10 +2,11 @@ import { afterEach, describe, it, expect } from 'vitest';
 import type { Plugin, UserConfig } from 'vite';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
 
-function createPlugin(): Plugin {
+function createPlugin(vendorSourcemaps = false): Plugin {
   return buildOptimizerPlugin({
     supportedBrowsers: [],
     jit: false,
+    vendorSourcemaps,
   });
 }
 
@@ -113,5 +114,72 @@ describe('buildOptimizerPlugin transform filter', () => {
     expect(re.test('/x/foo.json')).toBe(false);
     expect(re.test('/x/foo.ts')).toBe(false);
     expect(re.test('/x/foo.css?v=1')).toBe(false);
+  });
+});
+
+describe('buildOptimizerPlugin vendorSourcemaps', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+  afterEach(() => {
+    process.env['NODE_ENV'] = originalNodeEnv;
+  });
+
+  async function transform(
+    plugin: Plugin,
+    code: string,
+    id: string,
+  ): Promise<{ code: string; map?: unknown } | null | undefined> {
+    return (plugin.transform as any).handler.call({}, code, id);
+  }
+
+  function configure(plugin: Plugin, mode: 'production' | 'development'): void {
+    process.env['NODE_ENV'] = mode;
+    (plugin as Plugin & { config: (c: UserConfig) => UserConfig }).config({
+      mode,
+    });
+  }
+
+  const sourceWithMapUrl = 'const a = 1;\n//# sourceMappingURL=vendor.js.map\n';
+
+  it('discards vendor sourcemaps by default in development (unchanged behavior)', async () => {
+    const plugin = createPlugin();
+    configure(plugin, 'development');
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toEqual({ mappings: '' });
+    // The `sourceMappingURL` comment is only stripped in production.
+    expect(result?.code).toBe(sourceWithMapUrl);
+  });
+
+  it('discards vendor sourcemaps by default in production, stripping the map comment', async () => {
+    const plugin = createPlugin();
+    configure(plugin, 'production');
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toEqual({ mappings: '' });
+    expect(result?.code).not.toContain('sourceMappingURL');
+  });
+
+  it('preserves vendor sourcemaps when enabled in development', async () => {
+    const plugin = createPlugin(true);
+    configure(plugin, 'development');
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toBeNull();
+    expect(result?.code).toBe(sourceWithMapUrl);
+  });
+
+  it('preserves vendor sourcemaps when enabled in production, keeping the map comment', async () => {
+    // The prod-only `sourceMappingURL` strip would make the map unreachable,
+    // so it must not run while the option is enabled.
+    const plugin = createPlugin(true);
+    configure(plugin, 'production');
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toBeNull();
+    expect(result?.code).toBe(sourceWithMapUrl);
   });
 });

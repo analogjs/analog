@@ -4,9 +4,11 @@ import { JavaScriptTransformer } from './utils/devkit.js';
 
 export function buildOptimizerPlugin({
   jit,
+  vendorSourcemaps,
 }: {
   supportedBrowsers: string[];
   jit: boolean;
+  vendorSourcemaps: boolean;
 }): Plugin {
   const javascriptTransformer = new JavaScriptTransformer(
     {
@@ -77,13 +79,15 @@ export function buildOptimizerPlugin({
         const angularPackage = /fesm20/.test(cleanId);
 
         if (!angularPackage) {
+          // `{ mappings: '' }` declares zero segments, dropping the module's own
+          // map from the chain; `null` keeps it. Removing `sourceMappingURL` is
+          // what makes that map unreachable, so it only runs when discarding.
           return {
-            code: isProd
-              ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
-              : code,
-            map: {
-              mappings: '',
-            },
+            code:
+              isProd && !vendorSourcemaps
+                ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : code,
+            map: vendorSourcemaps ? null : { mappings: '' },
           };
         }
 
