@@ -1,3 +1,9 @@
+# [2.7.0-beta.18](https://github.com/analogjs/analog/compare/v2.7.0-beta.17...v2.7.0-beta.18) (2026-08-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve vendor sourcemaps when build.sourcemap is enabled ([#2477](https://github.com/analogjs/analog/issues/2477)) ([0e31e9d](https://github.com/analogjs/analog/commit/0e31e9d39856c585c5d12018682d80e33d950aff))
+
 # [2.7.0-beta.17](https://github.com/analogjs/analog/compare/v2.7.0-beta.16...v2.7.0-beta.17) (2026-08-11)
 
 ### Features
