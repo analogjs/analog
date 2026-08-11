@@ -1,3 +1,9 @@
+# [2.7.0-beta.17](https://github.com/analogjs/analog/compare/v2.7.0-beta.16...v2.7.0-beta.17) (2026-08-11)
+
+### Features
+
+- **vitest-angular:** add errorOnUnknownElements/errorOnUnknownProperties to setupTestBed ([#2481](https://github.com/analogjs/analog/issues/2481)) ([d22c1b7](https://github.com/analogjs/analog/commit/d22c1b74d91844eea3104cfebb04c2a617580dd1))
+
 # [2.7.0-beta.16](https://github.com/analogjs/analog/compare/v2.7.0-beta.15...v2.7.0-beta.16) (2026-08-11)
 
 ### Bug Fixes
