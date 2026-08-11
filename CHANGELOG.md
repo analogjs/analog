@@ -1,3 +1,9 @@
+# [2.7.0-beta.16](https://github.com/analogjs/analog/compare/v2.7.0-beta.15...v2.7.0-beta.16) (2026-08-11)
+
+### Bug Fixes
+
+- **router:** forward query params to server load requests during SSR ([#2480](https://github.com/analogjs/analog/issues/2480)) ([ec4e872](https://github.com/analogjs/analog/commit/ec4e8723ca077c3bdaaedb643b88f6aabdbf46f6)), closes [#2479](https://github.com/analogjs/analog/issues/2479)
+
 # [2.7.0-beta.15](https://github.com/analogjs/analog/compare/v2.7.0-beta.14...v2.7.0-beta.15) (2026-08-10)
 
 ### Bug Fixes
