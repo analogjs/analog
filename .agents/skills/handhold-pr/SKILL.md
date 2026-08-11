@@ -1,6 +1,6 @@
 ---
 name: handhold-pr
-description: Watch a PR's CI, diagnose every failing check, fix what's actually broken, and keep iterating until the PR is green. Use when the user says "handhold the PR", "check CI", "get CI green", "resolve any issues until green", or asks why a PR's checks are failing.
+description: Watch a PR's CI, diagnose every failing check, fix what's actually broken, resolve CodeRabbit's major findings, and keep iterating until the PR is green. Use when the user says "handhold the PR", "check CI", "get CI green", "resolve any issues until green", or asks why a PR's checks are failing.
 ---
 
 Take a pull request from "checks failing" to "all green". This skill owns **watching CI, diagnosing failures, deciding whether a failure is yours, and driving fixes** until every required check passes.
@@ -48,10 +48,20 @@ For each failure, answer: **is this caused by the diff on this branch?**
   (run it with `run_in_background`, then read the output file when notified).
 - After each run completes, go back to step 1. Keep looping until every non-skipping check passes or you hit something the user has to decide.
 
-## 6. Report
+## 6. Resolve CodeRabbit's major findings
+
+Green CI isn't done. CodeRabbit reports as a **passing check even when it has posted actionable inline comments**, so its review has to be read separately.
+
+- `gh pr view <n> --json reviews` for the summary (it states how many actionable comments it posted), and `gh api repos/<owner>/<repo>/pulls/<n>/comments` for the inline findings. Each is tagged with a severity — `🟠 Major`, `🟡 Minor`, and so on.
+- **Verify every finding against the current code before acting** — CodeRabbit is wrong often enough that you should reproduce the claim first. Where the finding is a real code path, add a test and confirm it fails without the fix.
+- Fix the still-valid **major** findings on the branch, with their own commit. Lesser findings are a judgment call — apply the cheap correct ones, and say which you skipped and why rather than silently dropping them.
+- Note when a finding is pre-existing (the same defect exists on the base branch) — it's still worth fixing if it sits in code the PR touches, but say so.
+- Pushing the fix restarts CI, so go back to step 1 and wait for the new run.
+
+## 7. Report
 
 - State the final status plainly: green, or still red with what's left and why.
-- For each failure you handled, give one line: what failed, root cause, what you did (fixed / re-ran as flake / left alone as pre-existing).
+- For each failure you handled, give one line: what failed, root cause, what you did (fixed / re-ran as flake / left alone as pre-existing). Do the same for each CodeRabbit finding (fixed / skipped with reason).
 - Don't claim green without having seen the checks pass — quote the actual `gh pr checks` result.
 - Flag latent problems you noticed but didn't fix (e.g. a flake worth its own issue) instead of silently absorbing them.
 
