@@ -45,7 +45,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
           !!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] &&
           (globalThis as any).$fetch
         ) {
-          return (globalThis as any).$fetch(url.pathname);
+          return (globalThis as any).$fetch(`${url.pathname}${url.search}`);
         }
 
         return firstValueFrom(http.get(`${url.href}`));
