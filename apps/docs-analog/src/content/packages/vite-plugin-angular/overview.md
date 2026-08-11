@@ -76,6 +76,21 @@ When `fastCompile` is enabled, template and input type errors will not surface d
 
 The fast compile path currently passes ~91% of Angular's conformance suite. Behavior and output may change between minor releases.
 
+## Vendor Sourcemaps
+
+The sourcemaps of dependencies and prebuilt libraries are preserved whenever `build.sourcemap` is enabled.
+
+```ts
+export default defineConfig({
+  plugins: [angular()],
+  build: { sourcemap: true },
+});
+```
+
+Expect larger sourcemap files, since they now include the mappings for dependency code. The application bundles are unchanged, and builds without `build.sourcemap` are unaffected.
+
+Angular's own packages are compiled through a separate path that always discards their sourcemaps, so mappings are not restored for `@angular/*`.
+
 ## Setting up the TypeScript config
 
 The integration needs a `tsconfig.app.json` at the root of the project for compilation.

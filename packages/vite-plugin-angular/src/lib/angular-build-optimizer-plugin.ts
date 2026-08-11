@@ -11,6 +11,7 @@ export function buildOptimizerPlugin({
 }): Plugin {
   let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
   let isProd = false;
+  let preserveVendorMaps = false;
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
@@ -62,6 +63,9 @@ export function buildOptimizerPlugin({
         },
       } as UserConfig;
     },
+    configResolved(config) {
+      preserveVendorMaps = !!config.build.sourcemap;
+    },
     transform: {
       filter: {
         // Allow an optional `?query` after the extension. Some environments
@@ -79,13 +83,15 @@ export function buildOptimizerPlugin({
         const angularPackage = /fesm20/.test(cleanId);
 
         if (!angularPackage) {
+          // `{ mappings: '' }` declares zero segments, dropping the module's own
+          // map from the chain; `null` keeps it. Removing `sourceMappingURL` is
+          // what makes that map unreachable, so it only runs when discarding.
           return {
-            code: isProd
-              ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
-              : code,
-            map: {
-              mappings: '',
-            },
+            code:
+              isProd && !preserveVendorMaps
+                ? code.replace(/^\/\/# sourceMappingURL=[^\r\n]*/gm, '')
+                : code,
+            map: preserveVendorMaps ? null : { mappings: '' },
           };
         }
 

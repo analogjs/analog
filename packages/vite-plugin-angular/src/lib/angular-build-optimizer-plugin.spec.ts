@@ -145,3 +145,76 @@ describe('buildOptimizerPlugin transform filter', () => {
     expect(re.test('/x/foo.css?v=1')).toBe(false);
   });
 });
+
+describe('buildOptimizerPlugin vendor sourcemaps', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+  afterEach(() => {
+    process.env['NODE_ENV'] = originalNodeEnv;
+  });
+
+  async function transform(
+    plugin: Plugin,
+    code: string,
+    id: string,
+  ): Promise<{ code: string; map?: unknown } | null | undefined> {
+    return (plugin.transform as any).handler.call({}, code, id);
+  }
+
+  function configure(
+    plugin: Plugin,
+    mode: 'production' | 'development',
+    sourcemap: boolean | 'inline' | 'hidden',
+  ): void {
+    process.env['NODE_ENV'] = mode;
+    (plugin as Plugin & { config: (c: UserConfig) => UserConfig }).config({
+      mode,
+    });
+    (plugin.configResolved as any).call({}, { build: { sourcemap } });
+  }
+
+  const sourceWithMapUrl = 'const a = 1;\n//# sourceMappingURL=vendor.js.map\n';
+
+  it('discards vendor sourcemaps without build.sourcemap in development', async () => {
+    const plugin = createPlugin();
+    configure(plugin, 'development', false);
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toEqual({ mappings: '' });
+    // The `sourceMappingURL` comment is only stripped in production.
+    expect(result?.code).toBe(sourceWithMapUrl);
+  });
+
+  it('discards vendor sourcemaps without build.sourcemap in production, stripping the map comment', async () => {
+    const plugin = createPlugin();
+    configure(plugin, 'production', false);
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toEqual({ mappings: '' });
+    expect(result?.code).not.toContain('sourceMappingURL');
+  });
+
+  it('preserves vendor sourcemaps when build.sourcemap is enabled, keeping the map comment', async () => {
+    // The prod-only `sourceMappingURL` strip would make the preserved map
+    // unreachable, so it must not run once sourcemaps are requested.
+    const plugin = createPlugin();
+    configure(plugin, 'production', true);
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toBeNull();
+    expect(result?.code).toBe(sourceWithMapUrl);
+  });
+
+  it('treats non-boolean build.sourcemap values as enabled', async () => {
+    // `build.sourcemap` also accepts 'inline' | 'hidden'.
+    const plugin = createPlugin();
+    configure(plugin, 'production', 'hidden');
+
+    const result = await transform(plugin, sourceWithMapUrl, '/x/vendor.js');
+
+    expect(result?.map).toBeNull();
+    expect(result?.code).toBe(sourceWithMapUrl);
+  });
+});
