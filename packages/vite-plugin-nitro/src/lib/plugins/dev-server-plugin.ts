@@ -15,6 +15,7 @@ import { defu } from 'defu';
 import type { NitroRouteRules } from 'nitro/types';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
+import { registerI18nWatcher } from '../utils/register-i18n-watcher.js';
 import { writeWebResponseToNode } from '../utils/node-web-bridge.js';
 import { Options } from '../options.js';
 import { detectLocaleFromRoute, setHtmlLang } from '../utils/i18n-prerender.js';

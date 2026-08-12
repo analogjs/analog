@@ -15,6 +15,11 @@
       "import": "./dist/src/lib/utils/debug.js",
       "default": "./dist/src/lib/utils/debug.js"
     },
+    "./server-fn-id": {
+      "types": "./dist/src/lib/utils/derive-server-fn-id.d.ts",
+      "import": "./dist/src/lib/utils/derive-server-fn-id.js",
+      "default": "./dist/src/lib/utils/derive-server-fn-id.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [

@@ -4,6 +4,7 @@ import { create } from 'xmlbuilder2';
 import { XMLBuilder } from 'xmlbuilder2/lib/interfaces';
 import { UserConfig } from 'vite';
 import {
+  I18nPrerenderOptions,
   PrerenderSitemapConfig,
   SitemapConfig,
   SitemapEntry,

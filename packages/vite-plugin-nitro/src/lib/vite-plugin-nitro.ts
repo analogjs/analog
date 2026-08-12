@@ -641,6 +641,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let config: UserConfig;
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
+  let hasServerFns = false;
   let clientOutputPath = '';
   let clientIndexHtml: string | undefined;
   let legacyClientSubBuild = false;
