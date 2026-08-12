@@ -1,5 +1,6 @@
 import type { Plugin, UserConfig } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
+import { isProdMode } from './utils/plugin-config.js';
 import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function buildOptimizerPlugin({
@@ -28,9 +29,7 @@ export function buildOptimizerPlugin({
       );
     },
     config(userConfig) {
-      isProd =
-        userConfig.mode === 'production' ||
-        process.env['NODE_ENV'] === 'production';
+      isProd = isProdMode(userConfig.mode);
       const jsTransformConfigKey = getJsTransformConfigKey();
 
       return {

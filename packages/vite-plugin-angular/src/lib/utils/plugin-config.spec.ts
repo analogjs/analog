@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest';
-import { TS_EXT_REGEX, createDepOptimizerConfig } from './plugin-config.js';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import {
+  TS_EXT_REGEX,
+  createDepOptimizerConfig,
+  getTsConfigPath,
+} from './plugin-config.js';
 
 describe('createDepOptimizerConfig', () => {
   // Regression: an earlier shape returned `{ optimizeDeps, resolve: {

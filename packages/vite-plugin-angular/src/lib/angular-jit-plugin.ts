@@ -1,4 +1,8 @@
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
+import {
+  JIT_INLINE_STYLE_PREFIX,
+  getJitInlineStyles,
+} from './utils/jit-inline-styles.js';
 import { debugStyles } from './utils/debug.js';
 import { isTailwindReferenceError } from './utils/tailwind-reference.js';
 

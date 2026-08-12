@@ -10,6 +10,7 @@ vi.mock('vite', async () => {
 
 import { preprocessCSS } from 'vite';
 import { jitPlugin } from './angular-jit-plugin.js';
+import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TailwindReferenceError } from './utils/tailwind-reference.js';
 
 describe('jitPlugin', () => {
@@ -25,13 +26,15 @@ describe('jitPlugin', () => {
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
     plugin.configResolved?.({ test: { css: true } } as any);
 
-    const encoded = encodeURIComponent(
-      Buffer.from('.demo { color: red; }').toString('base64'),
+    const id = toJitInlineStyleId(
+      encodeURIComponent(
+        Buffer.from('.demo { color: red; }').toString('base64'),
+      ),
     );
 
-    await expect(
-      plugin.load?.(`virtual:angular:jit:style:inline;${encoded}`),
-    ).rejects.toThrow('comment-masked @reference');
+    await expect(plugin.load?.(id)).rejects.toThrow(
+      'comment-masked @reference',
+    );
   });
 
   it('soft-fails ordinary preprocessCSS errors', async () => {
@@ -43,13 +46,13 @@ describe('jitPlugin', () => {
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
     plugin.configResolved?.({ test: { css: true } } as any);
 
-    const encoded = encodeURIComponent(
-      Buffer.from('.demo { color: red; }').toString('base64'),
+    const id = toJitInlineStyleId(
+      encodeURIComponent(
+        Buffer.from('.demo { color: red; }').toString('base64'),
+      ),
     );
 
-    await expect(
-      plugin.load?.(`virtual:angular:jit:style:inline;${encoded}`),
-    ).resolves.toContain('export default');
+    await expect(plugin.load?.(id)).resolves.toContain('export default');
     expect(warn).toHaveBeenCalled();
 
     warn.mockRestore();

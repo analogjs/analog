@@ -156,7 +156,11 @@ export function angularVitestSourcemapPlugin(
           return;
         }
 
-        if (vite.transformWithOxc) {
+        // Keep this in step with `getJsTransformConfigKey()`, which picks the
+        // `oxc`/`esbuild` config key off the same signal. Vite 8 ships
+        // `transformWithOxc` even on the esbuild path, so feature detection
+        // alone would transform with OXC under an `esbuild` config key.
+        if (isRolldown() && vite.transformWithOxc) {
           const result = await vite.transformWithOxc(code, id, {
             lang: /\.tsx(\?|$)/.test(bareId) ? 'tsx' : 'ts',
           });

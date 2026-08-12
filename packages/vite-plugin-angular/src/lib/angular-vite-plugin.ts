@@ -94,9 +94,11 @@ import {
 import {
   createTsConfigGetter,
   getTsConfigPath,
+  isProdMode,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { cssExtensionStyleResolverPlugin } from './utils/css-extension-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
@@ -790,6 +792,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
           debugHmr('resource file changed', { file: ctx.file });
           fileTransformMap.delete(ctx.file.split('?')[0]);
+          // Angular component resources frequently enter HMR with incomplete
+          // watcher context. In practice `ctx.modules` may only contain the
+          // source file, only the `?direct` module, or nothing at all after a
+          // TS-driven component refresh. Resolve the full live module set from
+          // Vite's module graph and our stylesheet registry before deciding how
+          // to hot update the resource.
+          const fileModules = await getModulesForChangedFile(
+            ctx.server,
+            ctx.file,
+            ctx.modules,
+            stylesheetRegistry,
+          );
           /**
            * Check to see if this was a direct request
            * for an external resource (styles, html).
