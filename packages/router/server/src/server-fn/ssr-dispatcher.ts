@@ -2,7 +2,7 @@ import { Injector } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import type { ServerRequest, ServerResponse } from '@analogjs/router/tokens';
 import type { ServerFn, ServerFnDispatcher } from '@analogjs/router';
-import type { H3Event } from 'h3';
+import type { H3Event } from 'nitro/h3';
 
 import { dispatchServerFn } from './dispatch';
 

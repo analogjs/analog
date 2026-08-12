@@ -42,7 +42,7 @@ export function render(
     url: string,
     document: string,
     serverContext: ServerContext,
-  ) {
+  ): Promise<string> {
     resetComponentDefTViews();
 
     const html = await renderApplication(bootstrap, {

@@ -27,6 +27,7 @@ export type ServerFnDispatcher = <In, Out>(
   injector: Injector,
 ) => Promise<Out>;
 
-export const SERVER_FN_DISPATCHER = new InjectionToken<ServerFnDispatcher>(
-  '@analogjs/router Server Function Dispatcher',
-);
+export const SERVER_FN_DISPATCHER: InjectionToken<ServerFnDispatcher> =
+  new InjectionToken<ServerFnDispatcher>(
+    '@analogjs/router Server Function Dispatcher',
+  );

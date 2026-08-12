@@ -30,6 +30,31 @@ export {
 } from './lib/validation-errors';
 export type { ValidationFieldErrors } from './lib/validation-errors';
 
+// Server Functions (issue #2422) — client transport + shared type surface.
+export {
+  injectServerFn,
+  injectServerFnMutation,
+  provideServerFnClient,
+  ServerFnClient,
+} from './lib/server-fn/inject-server-fn';
+export {
+  createServerFnRef,
+  type ServerFnRefConfig,
+} from './lib/server-fn/server-fn-ref';
+export {
+  SERVER_FN_DISPATCHER,
+  type ServerFnDispatcher,
+} from './lib/server-fn/dispatcher';
+export type {
+  ServerFn,
+  ServerFnConfig,
+  ServerFnContext,
+  ServerFnDef,
+  ServerFnHandler,
+  ServerFnMethod,
+  StandardSchemaV1,
+} from './lib/server-fn/types';
+
 // Typed file routes
 export type {
   AnalogRouteTable,

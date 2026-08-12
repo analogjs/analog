@@ -4,10 +4,11 @@ import {
   type StaticProvider,
 } from '@angular/core';
 import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
-import type { H3Event } from 'h3';
+import type { H3Event } from 'nitro/h3';
 
 import { detectLocale, getBaseUrl } from '../provide-server-context';
 import { serverFnRegistry } from './registry';
+import { assertNodeContext } from './node-context';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
 import {
   SERVER_FN_ALLOWED_ORIGINS,
@@ -77,7 +78,8 @@ export async function dispatchServerFn(
   options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
   const { parent, providers = [], method, allowedOrigins = [] } = options;
-  const headers = (event.node.req.headers ?? {}) as HeaderBag;
+  const node = assertNodeContext(event);
+  const headers = (node.req.headers ?? {}) as HeaderBag;
 
   // Same-origin guard runs first — before we even confirm the function exists —
   // so a cross-origin page cannot probe which ids are registered. Gated on
@@ -134,13 +136,13 @@ export async function dispatchServerFn(
   // services + interceptors resolve up the parent chain. All four are provided
   // here so a handler resolves them the same way it would inside a component
   // during SSR, whether it was reached over HTTP or in-process.
-  const req = event.node.req as Parameters<typeof getBaseUrl>[0];
+  const req = node.req as Parameters<typeof getBaseUrl>[0];
   const locale = detectLocale(req);
   const injector = Injector.create({
     parent,
     providers: [
-      { provide: REQUEST, useValue: event.node.req },
-      { provide: RESPONSE, useValue: event.node.res },
+      { provide: REQUEST, useValue: node.req },
+      { provide: RESPONSE, useValue: node.res },
       { provide: BASE_URL, useValue: getBaseUrl(req) },
       ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
       ...providers,

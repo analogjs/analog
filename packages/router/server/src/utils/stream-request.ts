@@ -14,7 +14,7 @@ import type { ServerContext } from '@analogjs/router/tokens';
  * Nuxt's bot bypass — streaming targets interactive clients, bots get the
  * buffered path whose head is byte-identical to the classic `render()`.
  */
-export const SSR_BOT_RE =
+export const SSR_BOT_RE: RegExp =
   /bot|crawl|spider|slurp|mediapartners|facebookexternalhit|embedly|quora link preview|outbrain|pinterest|vkshare|w3c_validator|whatsapp|telegrambot|lighthouse|google-inspectiontool|headlesschrome|bingpreview/i;
 
 export function isLikelyBot(serverContext: ServerContext): boolean {
