@@ -64,7 +64,10 @@ export default defineConfig({
         'tslib',
         'h3',
         /^nitro\/.*/,
-        'node:stream/consumers',
+        // Server entries reach for Node builtins. Bundling them lets Vite
+        // swap in its browser stubs, so `node:async_hooks` resolved to an
+        // object with no `AsyncLocalStorage` and SSR failed at first render.
+        /^node:/,
       ],
       output: {
         chunkFileNames: 'fesm2022/[name].mjs',
