@@ -87,8 +87,10 @@ export function requestContextInterceptor(
       req.url.startsWith(`/${apiPrefix}`))
   ) {
     const requestUrl = new URL(req.urlWithParams, baseUrl);
-    const fetchUrl = `${requestUrl.pathname}${requestUrl.search}`;
-    const cacheKey = makeCacheKey(req, fetchUrl);
+    const cacheKey = makeCacheKey(
+      req,
+      `${requestUrl.pathname}${requestUrl.search}`,
+    );
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const fetchUrl = requestUrl.pathname;
     const fetchParams = mergeFetchParams(requestUrl, req);
