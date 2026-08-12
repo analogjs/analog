@@ -27,7 +27,7 @@ if (import.meta.env?.PROD) {
  * @param rootComponent
  * @param config
  * @param platformProviders
- * @returns Promise<string | Reponse>
+ * @returns Promise<string>
  */
 export function render(
   rootComponent: Type<unknown>,
@@ -42,11 +42,7 @@ export function render(
     url: string,
     document: string,
     serverContext: ServerContext,
-  ): Promise<string | Response> {
-    if (serverComponentRequest(serverContext)) {
-      return await renderServerComponent(url, serverContext);
-    }
-
+  ) {
     resetComponentDefTViews();
 
     const html = await renderApplication(bootstrap, {

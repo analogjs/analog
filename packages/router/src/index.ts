@@ -22,7 +22,6 @@ export { FormAction } from './lib/form-action.directive';
 export type { FormActionState } from './lib/form-action.directive';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
-export { ServerOnly } from './lib/server.component';
 export type { AnalogJsonLdDocument } from './lib/json-ld';
 export {
   issuesToFieldErrors,
