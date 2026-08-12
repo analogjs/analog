@@ -68,7 +68,7 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
-    '/server': {
+    '/server-functions': {
       params: Record<string, never>;
       paramsOutput: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -168,7 +168,7 @@ export interface AnalogFileRoutesById {
   "/newsletter": AnalogGeneratedRouteRecord<"/newsletter", "newsletter", "/newsletter", null, readonly []>;
   "/package": AnalogGeneratedRouteRecord<"/package", "package", "/package", null, readonly []>;
   "/search": AnalogGeneratedRouteRecord<"/search", "search", "/search", null, readonly []>;
-  "/server/(server)": AnalogGeneratedRouteRecord<"/server/(server)", "server", "/server", null, readonly []>;
+  "/server-functions": AnalogGeneratedRouteRecord<"/server-functions", "server-functions", "/server-functions", null, readonly []>;
   "/shared-test": AnalogGeneratedRouteRecord<"/shared-test", "shared-test", "/shared-test", null, readonly []>;
   "/shipping/index": AnalogGeneratedRouteRecord<"/shipping/index", "shipping", "/shipping", null, readonly ["/shipping/[...slug]"]>;
   "/(auth)/sign-up": AnalogGeneratedRouteRecord<"/(auth)/sign-up", "sign-up", "/sign-up", "/(auth)", readonly []>;
@@ -191,7 +191,7 @@ export interface AnalogFileRoutesByFullPath {
   "/newsletter": AnalogFileRoutesById["/newsletter"];
   "/package": AnalogFileRoutesById["/package"];
   "/search": AnalogFileRoutesById["/search"];
-  "/server": AnalogFileRoutesById["/server/(server)"];
+  "/server-functions": AnalogFileRoutesById["/server-functions"];
   "/shared-test": AnalogFileRoutesById["/shared-test"];
   "/shipping": AnalogFileRoutesById["/shipping/index"];
   "/sign-up": AnalogFileRoutesById["/(auth)/sign-up"];
@@ -384,22 +384,22 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/search"],
-    "/server/(server)": {
-      id: "/server/(server)",
-      path: "server",
-      fullPath: "/server",
+    "/server-functions": {
+      id: "/server-functions",
+      path: "server-functions",
+      fullPath: "/server-functions",
       parentId: null,
       children: [] as const,
-      sourceFile: "/src/app/pages/server/(server).page.ts",
+      sourceFile: "/src/app/pages/server-functions.page.ts",
       kind: "page",
       hasParamsSchema: false,
       hasQuerySchema: false,
       hasJsonLd: false,
       isIndex: false,
-      isGroup: true,
+      isGroup: false,
       isCatchAll: false,
       isOptionalCatchAll: false,
-    } satisfies AnalogFileRoutesById["/server/(server)"],
+    } satisfies AnalogFileRoutesById["/server-functions"],
     "/shared-test": {
       id: "/shared-test",
       path: "shared-test",
@@ -556,7 +556,7 @@ export const analogRouteTree = {
     "/newsletter": "/newsletter",
     "/package": "/package",
     "/search": "/search",
-    "/server": "/server/(server)",
+    "/server-functions": "/server-functions",
     "/shared-test": "/shared-test",
     "/shipping": "/shipping/index",
     "/sign-up": "/(auth)/sign-up",
