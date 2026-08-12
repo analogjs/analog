@@ -70,6 +70,7 @@ import {
   createTsConfigGetter,
   getTsConfigPath,
   createDepOptimizerConfig,
+  isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
@@ -78,6 +79,7 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
+import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -268,9 +270,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       name: '@analogjs/vite-plugin-angular',
       async config(config, { command }) {
         watchMode = command === 'serve';
-        isProd =
-          config.mode === 'production' ||
-          process.env['NODE_ENV'] === 'production';
+        isProd = isProdMode(config.mode);
 
         // Store the config context for later resolution in configResolved
         tsConfigResolutionContext = {
@@ -360,7 +360,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          await performCompilation(resolvedConfig);
+          pendingCompilation = performCompilation(resolvedConfig);
+          await pendingCompilation;
           pendingCompilation = null;
 
           initialCompilation = true;
@@ -630,9 +631,15 @@ export function angular(options?: PluginOptions): Plugin[] {
           }
 
           if (pluginOptions.useAngularCompilationAPI) {
-            const isAngular = ANGULAR_DECORATOR_CALL_RE.test(code);
+            // Query-suffixed ids (e.g. `foo.ts?component`) are keyed in
+            // `outputFiles` by their bare path, so strip the query before
+            // looking up the emit result.
+            const emittedId = id.includes('.ts?')
+              ? id.replace(/\?(.*)/, '')
+              : id;
+            const hasEmittedContent = fileEmitter(emittedId)?.content != null;
 
-            if (!isAngular) {
+            if (!isAngularCompilationFile(code, hasEmittedContent)) {
               return;
             }
           }
@@ -757,9 +764,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           let data = typescriptResult.content ?? '';
 
           if (jit && data.includes('angular:jit:')) {
+            // The emitted id carries the base64 of the entire stylesheet,
+            // and the bundler derives chunk names from it — hash it so a
+            // large inline style can't produce an over-long filename (#2459).
             data = data.replace(
-              /angular:jit:style:inline;/g,
-              'virtual:angular:jit:style:inline;',
+              /angular:jit:style:inline;([A-Za-z0-9+/=]*)/g,
+              (_match, encodedStyles) => toJitInlineStyleId(encodedStyles),
             );
 
             // Templates use virtual ids (no extension) so Vite's asset/CSS
@@ -878,6 +888,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsConfigResolutionContext!.isProd,
       isTest,
       tsConfigResolutionContext!.isLib,
+      pluginOptions.workspaceRoot,
     );
   }
 
@@ -1009,6 +1020,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (!isTest) {
           tsCompilerOptions['isolatedModules'] = false;
         }
+
+        // Mirror the legacy `readConfiguration` path (#2322): `@angular/build`'s
+        // `loadConfiguration()` forces `sourceMap`/`declarationMap` off but does
+        // not clear an inherited `mapRoot`/`sourceRoot`, so a monorepo base
+        // tsconfig that sets either trips TS5069 here. Sourcemaps are already
+        // off in this path, so clearing them is safe. See #2449.
+        tsCompilerOptions['mapRoot'] = '';
+        tsCompilerOptions['sourceRoot'] = '';
 
         if (isTest) {
           // Allow `TestBed.overrideXXX()` APIs.
@@ -1894,6 +1913,26 @@ function getComponentStyleSheetMeta(id: string): {
  */
 function getFilenameFromPath(id: string): string {
   return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
+}
+
+/**
+ * Decides whether a file on the `useAngularCompilationAPI` path should be
+ * served from the Angular compilation's emitted output.
+ *
+ * A source-text regex alone is unreliable here: on rolldown the built-in oxc
+ * transform runs before this plugin's `transform` hook, lowering
+ * `@Component(...)` so the literal decorator no longer appears in `code` even
+ * though the file is an AOT-compiled component. Treating such a file as
+ * non-Angular discards its emitted output and leaves the raw decorator in the
+ * bundle, forcing Angular to JIT at runtime (#2450). Program membership
+ * (`hasEmittedContent`) is the source of truth; the regex is a cheap fast-path
+ * for the raw-source case.
+ */
+export function isAngularCompilationFile(
+  code: string,
+  hasEmittedContent: boolean,
+): boolean {
+  return hasEmittedContent || ANGULAR_DECORATOR_CALL_RE.test(code);
 }
 
 /**

@@ -27,6 +27,8 @@ type TestBedSetupOptions = {
   teardown?: {
     destroyAfterEach: boolean;
   };
+  errorOnUnknownElements?: boolean;
+  errorOnUnknownProperties?: boolean;
 };
 
 export function setupTestBed({
@@ -34,6 +36,8 @@ export function setupTestBed({
   providers = [],
   browserMode = false,
   teardown,
+  errorOnUnknownElements,
+  errorOnUnknownProperties,
 }: TestBedSetupOptions = {}) {
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
@@ -57,6 +61,8 @@ export function setupTestBed({
           ...{ destroyAfterEach: !browserMode },
           ...teardown,
         },
+        errorOnUnknownElements,
+        errorOnUnknownProperties,
       },
     );
   }

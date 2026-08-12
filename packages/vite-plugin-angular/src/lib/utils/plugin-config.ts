@@ -26,6 +26,20 @@ import {
  */
 export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
 
+/**
+ * Resolves whether Angular should be compiled for production. An explicit
+ * `development` mode wins over an ambient production `NODE_ENV` (e.g. set by
+ * `storybook build` at CLI entry), so a build can opt into Angular's
+ * development compilation. See #2458 and #2462.
+ */
+export function isProdMode(mode: string | undefined): boolean {
+  if (mode === 'development') {
+    return false;
+  }
+
+  return mode === 'production' || process.env['NODE_ENV'] === 'production';
+}
+
 export interface TsConfigResolutionContext {
   root: string;
   isProd: boolean;
@@ -38,6 +52,7 @@ export function getTsConfigPath(
   isProd: boolean,
   isTest: boolean,
   isLib: boolean,
+  workspaceRoot?: string,
 ) {
   if (tsconfig && isAbsolute(tsconfig)) {
     if (!existsSync(tsconfig)) {
@@ -67,11 +82,30 @@ export function getTsConfigPath(
 
   const resolvedPath = resolve(root, tsconfigFilePath);
 
-  if (!existsSync(resolvedPath)) {
-    console.error(
-      `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${resolvedPath}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
-    );
+  if (existsSync(resolvedPath)) {
+    return resolvedPath;
   }
+
+  // Callers such as Storybook's Angular builder document their `tsConfig` as
+  // workspace-relative while setting the Vite root to the project directory,
+  // so the path joins onto the project root twice. Fall back to the workspace
+  // root before failing.
+  const workspacePath = workspaceRoot
+    ? resolve(workspaceRoot, tsconfigFilePath)
+    : undefined;
+
+  if (workspacePath && existsSync(workspacePath)) {
+    return workspacePath;
+  }
+
+  const attemptedPaths =
+    workspacePath && workspacePath !== resolvedPath
+      ? `${resolvedPath} or ${workspacePath}`
+      : resolvedPath;
+
+  console.error(
+    `[@analogjs/vite-plugin-angular]: Unable to resolve tsconfig at ${attemptedPaths}. This causes compilation issues. Check the path or set the "tsconfig" property with an absolute path.`,
+  );
 
   return resolvedPath;
 }

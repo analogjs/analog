@@ -1,5 +1,43 @@
-import { describe, expect, it } from 'vitest';
-import { TS_EXT_REGEX } from './plugin-config.js';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import { getTsConfigPath, isProdMode, TS_EXT_REGEX } from './plugin-config.js';
+
+describe('isProdMode', () => {
+  const originalNodeEnv = process.env['NODE_ENV'];
+  afterEach(() => {
+    process.env['NODE_ENV'] = originalNodeEnv;
+  });
+
+  it('is true for an explicit production mode regardless of NODE_ENV', () => {
+    process.env['NODE_ENV'] = 'development';
+    expect(isProdMode('production')).toBe(true);
+  });
+
+  it('is false for an explicit development mode even under production NODE_ENV (#2462)', () => {
+    process.env['NODE_ENV'] = 'production';
+    expect(isProdMode('development')).toBe(false);
+  });
+
+  it('falls back to NODE_ENV for other modes (unchanged behavior)', () => {
+    process.env['NODE_ENV'] = 'production';
+    expect(isProdMode(undefined)).toBe(true);
+    expect(isProdMode('staging')).toBe(true);
+
+    process.env['NODE_ENV'] = 'development';
+    expect(isProdMode(undefined)).toBe(false);
+    expect(isProdMode('staging')).toBe(false);
+  });
+});
 
 describe('TS_EXT_REGEX', () => {
   describe('matches genuine TypeScript files', () => {
@@ -53,5 +91,95 @@ describe('TS_EXT_REGEX', () => {
     ])('%s', (id) => {
       expect(TS_EXT_REGEX.test(id)).toBe(false);
     });
+  });
+});
+
+describe('getTsConfigPath', () => {
+  // Mirrors the Nx/Storybook layout: workspace root with a project below it,
+  // where the Vite root is the project directory.
+  let workspaceRoot: string;
+  let projectRoot: string;
+  const projectRelativeTsConfig = 'features/x/.storybook/tsconfig.json';
+
+  beforeAll(() => {
+    workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-tsconfig-'));
+    projectRoot = join(workspaceRoot, 'features/x');
+    mkdirSync(join(workspaceRoot, projectRelativeTsConfig, '..'), {
+      recursive: true,
+    });
+    writeFileSync(join(workspaceRoot, projectRelativeTsConfig), '{}', 'utf-8');
+    writeFileSync(join(projectRoot, 'tsconfig.app.json'), '{}', 'utf-8');
+  });
+
+  afterAll(() => {
+    rmSync(workspaceRoot, { recursive: true, force: true });
+  });
+
+  it('resolves a project-relative tsconfig against the vite root', () => {
+    expect(
+      getTsConfigPath(
+        projectRoot,
+        './.storybook/tsconfig.json',
+        false,
+        false,
+        false,
+        workspaceRoot,
+      ),
+    ).toBe(resolve(workspaceRoot, projectRelativeTsConfig));
+  });
+
+  it('falls back to the workspace root when the vite root misses', () => {
+    expect(
+      getTsConfigPath(
+        projectRoot,
+        projectRelativeTsConfig,
+        false,
+        false,
+        false,
+        workspaceRoot,
+      ),
+    ).toBe(resolve(workspaceRoot, projectRelativeTsConfig));
+  });
+
+  it('returns an absolute tsconfig untouched', () => {
+    const absolute = join(workspaceRoot, projectRelativeTsConfig);
+
+    expect(
+      getTsConfigPath(
+        projectRoot,
+        absolute,
+        false,
+        false,
+        false,
+        workspaceRoot,
+      ),
+    ).toBe(absolute);
+  });
+
+  it('reports both attempted paths when neither exists', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const resolved = getTsConfigPath(
+        projectRoot,
+        'missing/tsconfig.json',
+        false,
+        false,
+        false,
+        workspaceRoot,
+      );
+
+      expect(resolved).toBe(resolve(projectRoot, 'missing/tsconfig.json'));
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `${resolve(projectRoot, 'missing/tsconfig.json')} or ${resolve(
+            workspaceRoot,
+            'missing/tsconfig.json',
+          )}`,
+        ),
+      );
+    } finally {
+      error.mockRestore();
+    }
   });
 });

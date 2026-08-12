@@ -1,0 +1,13 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "analogjs",
+  "description": "AnalogJS framework conventions for AI coding assistants — file-based routing, server and API routes, data fetching, and content routes.",
+  "author": {
+    "name": "Brandon Roberts",
+    "email": "robertsbt@gmail.com"
+  },
+  "homepage": "https://analogjs.org",
+  "repository": "https://github.com/analogjs/analog",
+  "license": "MIT",
+  "keywords": ["analog", "angular", "vite", "meta-framework"]
+}

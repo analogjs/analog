@@ -14,3 +14,32 @@ TestBed.initTestEnvironment(
   BrowserDynamicTestingModule,
   platformBrowserDynamicTesting(),
 );
+
+// jsdom doesn't ship these; docs/ui components (ThemeToggle's
+// prefers-color-scheme listener, Toc's scroll-spy) need them to mount.
+if (!('IntersectionObserver' in globalThis)) {
+  class IntersectionObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  }
+  (
+    globalThis as unknown as { IntersectionObserver: unknown }
+  ).IntersectionObserver = IntersectionObserverStub;
+}
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}

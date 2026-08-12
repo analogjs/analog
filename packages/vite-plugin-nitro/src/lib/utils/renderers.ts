@@ -20,6 +20,52 @@ export default eventHandler(async (event) => {
   return html;
 });`;
 
+export const ssrStreamRenderer = `
+import { eventHandler, getResponseHeader, setResponseHeader } from 'h3';
+// @ts-ignore
+import renderer from '#analog/ssr';
+// @ts-ignore
+import template from '#analog/index';
+
+export default eventHandler(async (event) => {
+  const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+
+  if (noSSR === 'true') {
+    return template;
+  }
+
+  // renderer (main.server.ts default export via renderStream) returns a
+  // ReadableStream that flushes the head first, then each @defer block as it
+  // resolves. Returning the stream from the handler streams it to the client.
+  const stream = await renderer(event.node.req.url, template, {
+    req: event.node.req,
+    res: event.node.res,
+  });
+
+  setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
+
+  // A \`streaming: false\` route rule sets this header; renderStream then emits
+  // the buffered render() output as a single chunk. Collect it into a string so
+  // the response is a normal buffered document (content-length), not chunked.
+  const noStreaming = getResponseHeader(event, 'x-analog-no-streaming');
+  if (noStreaming === 'true') {
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    let html = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+    }
+    html += decoder.decode();
+    return html;
+  }
+
+  // Let the runtime frame the response (h3 sets chunked TE for the Node preset;
+  // HTTP/2 and edge runtimes forbid an explicit Transfer-Encoding header).
+  return stream;
+});`;
+
 export const clientRenderer = `
 import { eventHandler } from 'h3';
 

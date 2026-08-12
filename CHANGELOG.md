@@ -1,3 +1,117 @@
+# [2.7.0-beta.19](https://github.com/analogjs/analog/compare/v2.7.0-beta.18...v2.7.0-beta.19) (2026-08-11)
+
+### Bug Fixes
+
+- **vitest-angular:** skip zone patching when setup re-executes in a reused worker ([#2484](https://github.com/analogjs/analog/issues/2484)) ([a8cdc2e](https://github.com/analogjs/analog/commit/a8cdc2e38de92b0ba4cc77cba2dcad7fdbacb2f6))
+
+# [2.7.0-beta.18](https://github.com/analogjs/analog/compare/v2.7.0-beta.17...v2.7.0-beta.18) (2026-08-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve vendor sourcemaps when build.sourcemap is enabled ([#2477](https://github.com/analogjs/analog/issues/2477)) ([0e31e9d](https://github.com/analogjs/analog/commit/0e31e9d39856c585c5d12018682d80e33d950aff))
+
+# [2.7.0-beta.17](https://github.com/analogjs/analog/compare/v2.7.0-beta.16...v2.7.0-beta.17) (2026-08-11)
+
+### Features
+
+- **vitest-angular:** add errorOnUnknownElements/errorOnUnknownProperties to setupTestBed ([#2481](https://github.com/analogjs/analog/issues/2481)) ([d22c1b7](https://github.com/analogjs/analog/commit/d22c1b74d91844eea3104cfebb04c2a617580dd1))
+
+# [2.7.0-beta.16](https://github.com/analogjs/analog/compare/v2.7.0-beta.15...v2.7.0-beta.16) (2026-08-11)
+
+### Bug Fixes
+
+- **router:** forward query params to server load requests during SSR ([#2480](https://github.com/analogjs/analog/issues/2480)) ([ec4e872](https://github.com/analogjs/analog/commit/ec4e8723ca077c3bdaaedb643b88f6aabdbf46f6)), closes [#2479](https://github.com/analogjs/analog/issues/2479)
+
+# [2.7.0-beta.15](https://github.com/analogjs/analog/compare/v2.7.0-beta.14...v2.7.0-beta.15) (2026-08-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** give explicit build mode precedence over NODE_ENV ([#2475](https://github.com/analogjs/analog/issues/2475)) ([4daf0ce](https://github.com/analogjs/analog/commit/4daf0ce6207d929293a9e285971ddb48398d5238))
+
+# [2.7.0-beta.14](https://github.com/analogjs/analog/compare/v2.7.0-beta.13...v2.7.0-beta.14) (2026-08-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** await initial compilation in transform ([#2474](https://github.com/analogjs/analog/issues/2474)) ([30e0293](https://github.com/analogjs/analog/commit/30e02931d03d58e953eab64f9876b3101403bc91))
+
+# [2.7.0-beta.13](https://github.com/analogjs/analog/compare/v2.7.0-beta.12...v2.7.0-beta.13) (2026-08-10)
+
+### Features
+
+- **platform:** ship an Agent Plugins v1.0.0 conformant plugin ([#2466](https://github.com/analogjs/analog/issues/2466)) ([ba7dd54](https://github.com/analogjs/analog/commit/ba7dd54dd2f0083ef3ceee3897ebf1de515c170c))
+
+# [2.7.0-beta.12](https://github.com/analogjs/analog/compare/v2.7.0-beta.11...v2.7.0-beta.12) (2026-08-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fall back to workspaceRoot when resolving tsconfig ([#2471](https://github.com/analogjs/analog/issues/2471)) ([7d073e3](https://github.com/analogjs/analog/commit/7d073e3fc39969f70b0bba9422bdae76ac58d4b6))
+
+# [2.7.0-beta.11](https://github.com/analogjs/analog/compare/v2.7.0-beta.10...v2.7.0-beta.11) (2026-08-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** hash JIT inline style virtual module ids ([#2470](https://github.com/analogjs/analog/issues/2470)) ([dc2216e](https://github.com/analogjs/analog/commit/dc2216e686f104547e4b8cb467be2d2a4d957003)), closes [#2459](https://github.com/analogjs/analog/issues/2459)
+
+# [2.7.0-beta.10](https://github.com/analogjs/analog/compare/v2.7.0-beta.9...v2.7.0-beta.10) (2026-08-07)
+
+### Features
+
+- **docs:** add Open Graph image and social card metadata ([452739f](https://github.com/analogjs/analog/commit/452739f6708085b487110565f1238206fb287977))
+
+# [2.7.0-beta.9](https://github.com/analogjs/analog/compare/v2.7.0-beta.8...v2.7.0-beta.9) (2026-08-06)
+
+### Features
+
+- **nx-plugin:** emit AGENTS.md and CLAUDE.md from the app generator ([#2465](https://github.com/analogjs/analog/issues/2465)) ([28ca452](https://github.com/analogjs/analog/commit/28ca4520dff30ce1b49e6df511fffb4c16114279))
+
+# [2.7.0-beta.8](https://github.com/analogjs/analog/compare/v2.7.0-beta.7...v2.7.0-beta.8) (2026-07-31)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** replace ts-morph with oxc-parser in component resolvers ([#2456](https://github.com/analogjs/analog/issues/2456)) ([f93c4cc](https://github.com/analogjs/analog/commit/f93c4cc7634d3f5c75b75122a2b5ce19914f359f)), closes [#2455](https://github.com/analogjs/analog/issues/2455)
+
+# [2.7.0-beta.7](https://github.com/analogjs/analog/compare/v2.7.0-beta.6...v2.7.0-beta.7) (2026-07-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** clear mapRoot/sourceRoot in Compilation API path (TS5069) ([#2451](https://github.com/analogjs/analog/issues/2451)) ([bd0007b](https://github.com/analogjs/analog/commit/bd0007bcc47fd80f8aa605684799b2969d809092)), closes [#2449](https://github.com/analogjs/analog/issues/2449)
+
+# [2.7.0-beta.6](https://github.com/analogjs/analog/compare/v2.7.0-beta.5...v2.7.0-beta.6) (2026-07-29)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** serve AOT output for oxc-lowered components on rolldown ([#2452](https://github.com/analogjs/analog/issues/2452)) ([884ce60](https://github.com/analogjs/analog/commit/884ce60df1c548b8fc3eb6a3803297ff712f4200)), closes [#2450](https://github.com/analogjs/analog/issues/2450)
+
+# [2.7.0-beta.5](https://github.com/analogjs/analog/compare/v2.7.0-beta.4...v2.7.0-beta.5) (2026-07-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** link Angular packages for Astro + Cloudflare (`workerd`) builds ([#2443](https://github.com/analogjs/analog/issues/2443)) ([89f4400](https://github.com/analogjs/analog/commit/89f4400b5a8c33a1c17d320de2c08819f06cad00)), closes [#2438](https://github.com/analogjs/analog/issues/2438)
+
+# [2.7.0-beta.4](https://github.com/analogjs/analog/compare/v2.7.0-beta.3...v2.7.0-beta.4) (2026-07-28)
+
+### Features
+
+- ship agent context for create-analog and the Nx preset ([#2448](https://github.com/analogjs/analog/issues/2448)) ([b2a0b81](https://github.com/analogjs/analog/commit/b2a0b81623117f6160960a9a93acb72a551a3c45))
+
+# [2.7.0-beta.3](https://github.com/analogjs/analog/compare/v2.7.0-beta.2...v2.7.0-beta.3) (2026-07-24)
+
+### Bug Fixes
+
+- **astro-angular:** keep Angular server deps out of the optimizer per environment ([#2439](https://github.com/analogjs/analog/issues/2439)) ([cde7fc9](https://github.com/analogjs/analog/commit/cde7fc939aea8159203199651b3d251d3a9ed47e))
+
+# [2.7.0-beta.2](https://github.com/analogjs/analog/compare/v2.7.0-beta.1...v2.7.0-beta.2) (2026-07-23)
+
+### Features
+
+- **router:** add support for Streaming SSR ([#2419](https://github.com/analogjs/analog/issues/2419)) ([572becd](https://github.com/analogjs/analog/commit/572becd419a24cce505f8597c15af753e4871046))
+
+# [2.7.0-beta.1](https://github.com/analogjs/analog/compare/v2.6.4...v2.7.0-beta.1) (2026-07-23)
+
+### Features
+
+- **router:** add support for Server Functions ([#2433](https://github.com/analogjs/analog/issues/2433)) ([d567090](https://github.com/analogjs/analog/commit/d567090e595d2811fe96728b2457b328da217f33)), closes [#2422](https://github.com/analogjs/analog/issues/2422)
+
 ## [2.6.4](https://github.com/analogjs/analog/compare/v2.6.3...v2.6.4) (2026-07-23)
 
 ### Bug Fixes
