@@ -15,6 +15,11 @@
       "import": "./dist/fesm2022/analogjs-router-content.mjs",
       "default": "./dist/fesm2022/analogjs-router-content.mjs"
     },
+    "./i18n": {
+      "types": "./dist/types/i18n/src/index.d.ts",
+      "import": "./dist/fesm2022/analogjs-router-i18n.mjs",
+      "default": "./dist/fesm2022/analogjs-router-i18n.mjs"
+    },
     "./tanstack-query": {
       "types": "./dist/types/tanstack-query/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-router-tanstack-query.mjs",
