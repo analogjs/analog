@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
 import { Plugin } from 'vite';
 
 import { Options } from './options.js';
@@ -72,6 +74,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
     ...serverModePlugin(),
-    ...clearClientPageEndpointsPlugin(),
+    clearClientPageEndpointsPlugin(),
   ];
 }

@@ -22,7 +22,9 @@ const {
   routeGenerationPluginSpy: vi.fn(() => ({ name: 'analog-route-generation' })),
   contentPluginSpy: vi.fn(() => []),
   serverModePluginSpy: vi.fn(() => []),
-  clearClientPageEndpointsPluginSpy: vi.fn(() => []),
+  clearClientPageEndpointsPluginSpy: vi.fn(() => ({
+    name: 'analogjs-platform-clear-client-page-endpoint',
+  })),
   resolveStylePipelinePluginsSpy: vi.fn(() => []),
   stylePipelineFactorySpy: vi.fn(),
   stylePipelinePluginSpy: { name: 'community-style-pipeline' },
@@ -85,7 +87,9 @@ describe('platformPlugin', () => {
     });
     contentPluginSpy.mockReturnValue([]);
     serverModePluginSpy.mockReturnValue([]);
-    clearClientPageEndpointsPluginSpy.mockReturnValue([]);
+    clearClientPageEndpointsPluginSpy.mockReturnValue({
+      name: 'analogjs-platform-clear-client-page-endpoint',
+    });
     resolveStylePipelinePluginsSpy.mockClear();
   });
 
@@ -152,25 +156,5 @@ describe('platformPlugin', () => {
       '/workspace',
     );
     expect(stylePipelineFactorySpy).not.toHaveBeenCalled();
-  });
-
-  it('emits the x-analog-no-streaming header for routes with streaming: false', async () => {
-    const { viteNitroPluginSpy, platformPlugin } = await setup();
-    platformPlugin({
-      nitro: {
-        routeRules: {
-          '/buffered': { streaming: false },
-          '/streamed': {},
-        },
-      },
-    });
-
-    const [, nitroOptions] = viteNitroPluginSpy.mock.calls[0];
-    expect(
-      nitroOptions.routeRules['/buffered'].headers['x-analog-no-streaming'],
-    ).toBe('true');
-    expect(
-      nitroOptions.routeRules['/streamed'].headers['x-analog-no-streaming'],
-    ).toBeUndefined();
   });
 });

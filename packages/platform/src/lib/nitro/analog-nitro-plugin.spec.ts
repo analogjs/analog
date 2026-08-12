@@ -3,7 +3,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { analogNitroPlugin } from './analog-nitro-plugin';
+import {
+  analogNitroPlugin,
+  injectAnalogRouteRuleHeaders,
+} from './analog-nitro-plugin';
 
 function callConfig(plugin: any, root: string) {
   const hook = plugin.config;
@@ -140,5 +143,27 @@ describe('analogNitroPlugin', () => {
     expect(nitroMock.options.handlers).toHaveLength(1);
     expect(nitroMock.options.handlers[0].route).toContain('/_analog/pages');
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
+  });
+
+  it('stamps route rule headers for ssr and streaming opt-outs', () => {
+    const nitroMock: any = {
+      options: {
+        routeRules: {
+          '/buffered': { streaming: false },
+          '/no-ssr': { ssr: false },
+          '/default': {},
+        },
+      },
+    };
+
+    injectAnalogRouteRuleHeaders(nitroMock);
+
+    expect(nitroMock.options.routeRules['/buffered'].headers).toEqual({
+      'x-analog-no-streaming': 'true',
+    });
+    expect(nitroMock.options.routeRules['/no-ssr'].headers).toEqual({
+      'x-analog-no-ssr': 'true',
+    });
+    expect(nitroMock.options.routeRules['/default'].headers).toBeUndefined();
   });
 });

@@ -648,19 +648,31 @@ function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
 
 /**
  * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
- * any rule with `ssr: false`. Kept as a response-header hint for downstream
+ * any rule with `ssr: false`, and `x-analog-no-streaming: true` onto any rule
+ * with `streaming: false`. Kept as response-header hints for downstream
  * consumers (CDN, edge logic); the actual SSR short-circuit happens inside
- * the SSR renderer virtual above.
+ * the SSR renderer virtual above, and the router falls back to a buffered
+ * render when it sees the streaming hint.
  */
-function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
+export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   const routeRules = nitro.options.routeRules as
-    | Record<string, { ssr?: boolean; headers?: Record<string, string> }>
+    | Record<
+        string,
+        {
+          ssr?: boolean;
+          streaming?: boolean;
+          headers?: Record<string, string>;
+        }
+      >
     | undefined;
   if (!routeRules) return;
 
   for (const rule of Object.values(routeRules)) {
     if (rule?.ssr === false) {
       rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    }
+    if (rule?.streaming === false) {
+      rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
     }
   }
 }
