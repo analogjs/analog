@@ -3,7 +3,7 @@ import 'zone.js/plugins/sync-test';
 import 'zone.js/plugins/proxy';
 import 'zone.js/testing';
 
-import { createAngularFixtureSnapshotSerializer } from './snapshot-serializers.js';
+import './setup-snapshots.js';
 /**
  * Patch Vitest's describe/test/beforeEach/afterEach functions so test code
  * always runs in a testZone (ProxyZone).
@@ -23,60 +23,15 @@ if ((globalThis as any)['__vitest_zone_patch__'] !== true) {
   const SyncTestZoneSpec = Zone['SyncTestZoneSpec'];
   const ProxyZoneSpec = Zone['ProxyZoneSpec'];
 
-(globalThis as any)['__vitest_zone_patch__'] = true;
-const SyncTestZoneSpec = Zone['SyncTestZoneSpec'];
-const ProxyZoneSpec = Zone['ProxyZoneSpec'];
-
-if (SyncTestZoneSpec === undefined) {
-  throw new Error('Missing: SyncTestZoneSpec (zone.js/plugins/sync-test)');
-}
-if (ProxyZoneSpec === undefined) {
-  throw new Error('Missing: ProxyZoneSpec (zone.js/plugins/proxy.js)');
-}
-
-const env = globalThis as any;
-const ambientZone = Zone.current;
-
-const originalExpect = env['expect'];
-if (originalExpect) {
-  originalExpect.addSnapshotSerializer(
-    createAngularFixtureSnapshotSerializer(),
-  );
-}
-
-// Create a synchronous-only zone in which to run `describe` blocks in order to
-// raise an error if any asynchronous operations are attempted
-// inside of a `describe` but outside of a `beforeEach` or `it`.
-const syncZone = ambientZone.fork(new SyncTestZoneSpec('vitest.describe'));
-function wrapDescribeInZone(describeBody: any) {
-  return function (...args: any) {
-    return syncZone.run(describeBody, null, args);
-  };
-}
-
-// Create a proxy zone in which to run `test` blocks so that the tests function
-// can retroactively install different zones.
-const testProxyZone = ambientZone.fork(new ProxyZoneSpec());
-function wrapTestInZone(testBody: string | any[] | undefined) {
-  if (testBody === undefined) {
-    return;
+  if (SyncTestZoneSpec === undefined) {
+    throw new Error('Missing: SyncTestZoneSpec (zone.js/plugins/sync-test)');
+  }
+  if (ProxyZoneSpec === undefined) {
+    throw new Error('Missing: ProxyZoneSpec (zone.js/plugins/proxy.js)');
   }
 
-  const wrappedFunc = function (...args: any[]) {
-    return testProxyZone.run(testBody, null, args);
-  };
-  try {
-    Object.defineProperty(wrappedFunc, 'length', {
-      configurable: true,
-      writable: true,
-      enumerable: false,
-    });
-    wrappedFunc.length = testBody.length;
-  } catch (e) {
-    return testBody.length === 0
-      ? () => testProxyZone.run(testBody, null)
-      : (done: any) => testProxyZone.run(testBody, null, [done]);
-  }
+  const env = globalThis as any;
+  const ambientZone = Zone.current;
 
   // Create a synchronous-only zone in which to run `describe` blocks in order to
   // raise an error if any asynchronous operations are attempted
@@ -170,7 +125,7 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
     env[methodName] = function (...args: any[]) {
       args[1] = wrapDescribeInZone(args[1]);
 
-      return originalVitestFn.apply(self, eachArgs).apply(self, args);
+      return originalvitestFn.apply(this, args);
     };
     env[methodName].each = bindDescribe(
       originalvitestFn,
@@ -193,7 +148,7 @@ function wrapTestInZone(testBody: string | any[] | undefined) {
     env[methodName] = function (...args: any[]) {
       args[1] = wrapTestInZone(args[1]);
 
-      return originalVitestFn.apply(self, eachArgs).apply(self, args);
+      return originalvitestFn.apply(this, args);
     };
     env[methodName].each = bindTest(originalvitestFn, originalvitestFn.each);
     env[methodName].only = bindTest(originalvitestFn, originalvitestFn.only);

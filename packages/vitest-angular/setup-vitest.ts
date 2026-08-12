@@ -29,21 +29,8 @@ if ((globalThis as any)['__vitest_zone_patch__'] !== true) {
     throw new Error('Missing: ProxyZoneSpec (zone.js/plugins/proxy.js)');
   }
 
-  const wrappedFunc = function (...args: unknown[]) {
-    return testProxyZone.run(testBody, null, args);
-  };
-  try {
-    Object.defineProperty(wrappedFunc, 'length', {
-      configurable: true,
-      writable: true,
-      enumerable: false,
-    });
-    wrappedFunc.length = testBody.length;
-  } catch (e) {
-    return testBody.length === 0
-      ? () => testProxyZone.run(testBody, null)
-      : (done: any) => testProxyZone.run(testBody, null, [done]);
-  }
+  const env = globalThis as any;
+  const ambientZone = Zone.current;
 
   // Create a synchronous-only zone in which to run `describe` blocks in order to
   // raise an error if any asynchronous operations are attempted
@@ -137,8 +124,7 @@ if ((globalThis as any)['__vitest_zone_patch__'] !== true) {
     env[methodName] = function (...args: any[]) {
       args[1] = wrapDescribeInZone(args[1]);
 
-      // @ts-expect-error - dynamic vitest function binding
-      return originalVitestFn.apply(self, eachArgs).apply(self, args);
+      return originalvitestFn.apply(this, args);
     };
     env[methodName].each = bindDescribe(
       originalvitestFn,
@@ -161,8 +147,7 @@ if ((globalThis as any)['__vitest_zone_patch__'] !== true) {
     env[methodName] = function (...args: any[]) {
       args[1] = wrapTestInZone(args[1]);
 
-      // @ts-expect-error - dynamic vitest function binding
-      return originalVitestFn.apply(self, eachArgs).apply(self, args);
+      return originalvitestFn.apply(this, args);
     };
     env[methodName].each = bindTest(originalvitestFn, originalvitestFn.each);
     env[methodName].only = bindTest(originalvitestFn, originalvitestFn.only);

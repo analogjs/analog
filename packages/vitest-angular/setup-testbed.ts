@@ -36,6 +36,8 @@ export function setupTestBed({
   providers = [],
   browserMode = false,
   teardown,
+  errorOnUnknownElements,
+  errorOnUnknownProperties,
 }: TestBedSetupOptions = {}): void {
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
