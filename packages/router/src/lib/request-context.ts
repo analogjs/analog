@@ -86,8 +86,9 @@ export function requestContextInterceptor(
       req.url.startsWith(baseUrl) ||
       req.url.startsWith(`/${apiPrefix}`))
   ) {
-    const requestUrl = new URL(req.url, baseUrl);
-    const cacheKey = makeCacheKey(req, new URL(requestUrl).pathname);
+    const requestUrl = new URL(req.urlWithParams, baseUrl);
+    const fetchUrl = `${requestUrl.pathname}${requestUrl.search}`;
+    const cacheKey = makeCacheKey(req, fetchUrl);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const fetchUrl = requestUrl.pathname;
     const fetchParams = mergeFetchParams(requestUrl, req);
@@ -131,10 +132,10 @@ export function requestContextInterceptor(
     (req.url.startsWith('/') || req.url.includes('/_analog/'))
   ) {
     // /_analog/ requests are full URLs
-    const requestUrl = req.url.includes('/_analog/')
-      ? req.url
-      : `${window.location.origin}${req.url}`;
-    const cacheKey = makeCacheKey(req, new URL(requestUrl).pathname);
+    const toAbsoluteUrl = (url: string) => new URL(url, window.location.origin);
+    const requestUrl = toAbsoluteUrl(req.url).href;
+    const { pathname, search } = toAbsoluteUrl(req.urlWithParams);
+    const cacheKey = makeCacheKey(req, `${pathname}${search}`);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const cacheRestoreResponse = transferState.get(storeKey, null);
 

@@ -45,11 +45,7 @@ function getViteConfiguration(pluginOptions?: AngularOptions) {
           ? '@analogjs/astro-angular/client-ngh.js'
           : '@analogjs/astro-angular/client.js',
       ],
-      exclude: [
-        '@angular/platform-server',
-        '@analogjs/astro-angular/server.js',
-        '@analogjs/astro-angular/server-ngh.js',
-      ],
+      exclude: SERVER_ENTRYPOINTS,
     },
 
     plugins: [
@@ -83,6 +79,25 @@ function getViteConfiguration(pluginOptions?: AngularOptions) {
           }
 
           return undefined;
+        },
+      },
+      {
+        // Top-level `optimizeDeps` only seeds the client environment. Adapters
+        // that run SSR in their own environment — `@astrojs/cloudflare`, which
+        // serves the `ssr` environment on `workerd` — get none of the excludes
+        // above, so Angular's server entrypoints are pre-bundled there and the
+        // renderer breaks. Re-declare them per server environment.
+        name: 'analogjs-astro-server-optimize-deps',
+        configEnvironment(name: string) {
+          if (name === 'client') {
+            return undefined;
+          }
+
+          return {
+            optimizeDeps: {
+              exclude: SERVER_OPTIMIZE_DEPS_EXCLUDE,
+            },
+          };
         },
       },
     ],

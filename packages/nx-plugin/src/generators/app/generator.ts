@@ -18,6 +18,7 @@ import { belowMinimumSupportedNxVersion } from './versions/minimum-supported-ver
 import { addAngularApp } from './lib/add-angular-app';
 import setupAnalogGenerator from '../init/generator';
 import { addFiles } from './lib/add-files';
+import { addAgentContext } from './lib/add-agent-context';
 import { addTailwindConfig } from './lib/add-tailwind-config';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
@@ -143,6 +144,10 @@ async function appGenerator(
   }
 
   addHomePage(tree, normalizedOptions, majorAngularVersion);
+
+  if (!normalizedOptions.skipAgentContext) {
+    addAgentContext(tree, normalizedOptions.projectRoot);
+  }
 
   cleanupFiles(tree, normalizedOptions);
 

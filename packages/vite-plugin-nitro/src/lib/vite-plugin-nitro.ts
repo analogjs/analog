@@ -18,7 +18,15 @@ import {
   PrerenderSitemapConfig,
 } from './options.js';
 import { pageEndpointsPlugin } from './plugins/page-endpoints.js';
+import { serverFnIdPlugin } from './plugins/server-fn-id-plugin.js';
 import { getPageHandlers } from './utils/get-page-handlers.js';
+import { getServerFnHandlers } from './utils/get-server-fn-handlers.js';
+import {
+  buildServerFnDispatchModule,
+  getServerFnDispatchHandler,
+  SERVER_FN_DISPATCH_PREFIX,
+  SERVER_FN_DISPATCH_VIRTUAL,
+} from './utils/server-fn-endpoints.js';
 import { buildSitemap } from './build-sitemap.js';
 import { devServerPlugin } from './plugins/dev-server-plugin.js';
 import {
@@ -723,6 +731,35 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               : undefined,
         });
 
+        // Server functions: discover every `*.server.ts` module, then register a
+        // single `/_analog/fn/:id` dispatch handler backed by a generated Nitro
+        // virtual module that imports those modules (registration side-effects)
+        // and the app provider set. Only wired when server functions exist.
+        const serverFnModules = getServerFnHandlers({
+          workspaceRoot,
+          sourceRoot,
+          rootDir,
+          additionalServerFnDirs: options?.additionalServerFnDirs,
+        });
+        const serverFnAppConfigModule = resolveServerFnAppConfigModule(
+          workspaceRoot,
+          rootDir,
+          sourceRoot,
+        );
+        hasServerFns = serverFnModules.length > 0;
+        const serverFnHandlers = hasServerFns
+          ? [getServerFnDispatchHandler()]
+          : [];
+        const serverFnVirtual =
+          serverFnModules.length > 0
+            ? {
+                [SERVER_FN_DISPATCH_VIRTUAL]: buildServerFnDispatchModule({
+                  modules: serverFnModules,
+                  appConfigModule: serverFnAppConfigModule,
+                }),
+              }
+            : {};
+
         nitroConfig = {
           rootDir: normalizePath(rootDir),
           preset: buildPreset,
@@ -771,7 +808,10 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 return;
               }
             },
-            plugins: [pageEndpointsPlugin()],
+            plugins: [
+              pageEndpointsPlugin(),
+              serverFnIdPlugin(normalizePath(resolve(workspaceRoot, rootDir))),
+            ],
           },
           handlers: [...pageHandlers],
           routeRules: undefined,
@@ -1659,6 +1699,22 @@ const withAppHostingOutput = (nitroConfig: NitroConfig) => {
     },
   };
 };
+
+function resolveServerFnAppConfigModule(
+  workspaceRoot: string,
+  rootDir: string,
+  sourceRoot: string,
+): string | undefined {
+  // The app's server config (the one `main.server.ts` renders with), exporting
+  // `config`. Server-function handlers bootstrap against it, so they resolve the
+  // same DI as SSR with no separate provider list to maintain.
+  const root = normalizePath(resolve(workspaceRoot, rootDir));
+  const candidates = [
+    `${root}/${sourceRoot}/app/app.config.server.ts`,
+    `${root}/${sourceRoot}/app.config.server.ts`,
+  ];
+  return candidates.find((candidate) => existsSync(candidate));
+}
 
 const isNetlifyPreset = (buildPreset: string | undefined) =>
   process.env['NETLIFY'] ||

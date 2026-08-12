@@ -31,7 +31,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Lint:** `nx lint <project>`
 - **Check formatting:** `nx format:check`
 - **Storybook:** `nx storybook <project>`
-- **Docs site:** `pnpm nx serve docs-app` (Docusaurus)
+- **Docs site:** `pnpm nx serve docs-analog` (Analog)
 - **E2E:** `nx e2e <project>` (Cypress/Playwright)
 
 ## Testing a Specific Package
@@ -43,7 +43,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 ## Project Structure & Conventions
 
-- **Apps:** in `apps/` (e.g., `analog-app`, `astro-app`, `docs-app`, `blog-app`, etc.)
+- **Apps:** in `apps/` (e.g., `analog-app`, `astro-app`, `docs-analog`, `blog-app`, etc.)
 - **Libraries:** in `packages/` (shared code, features, platform, plugins)
 - **TypeScript path aliases:** defined in `tsconfig.base.json`
 - **Vite config:** each app has its own `vite.config.ts` (see `apps/analog-app/vite.config.ts` for advanced AnalogJS/Vite usage)
@@ -69,8 +69,10 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 Reusable agent workflows live in `.agents/skills/`:
 
+- [`investigate-issue`](.agents/skills/investigate-issue/SKILL.md) - triage a GitHub issue: reproduce the reporter's repo or snippet in an isolated sandbox outside the monorepo, trace the root cause, and draft a reply for the maintainer to confirm before posting.
 - [`fix-issue`](.agents/skills/fix-issue/SKILL.md) - end-to-end flow for resolving a GitHub issue: fetch and understand the issue, create a feature branch off `beta`, implement and verify the fix, then hand off to `open-pr`.
 - [`open-pr`](.agents/skills/open-pr/SKILL.md) - commit the current work, push the feature branch, and open a GitHub PR against `beta` filled out from the PR template.
+- [`handhold-pr`](.agents/skills/handhold-pr/SKILL.md) - watch a PR's CI, pull the real failure logs, separate genuine failures from Nx DTE flakes and pre-existing base breakage, resolve CodeRabbit's major findings, and iterate until the PR is green.
 
 ## Contribution Policy
 
@@ -130,7 +132,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 - Avoid custom code that replicates Angular framework functionality.
 - Don't be overly verbose with comments.
 - Keep tests lightweight and targeted to critical functionality testing.
-- Add concise documentation with descriptive sections to the appropriate guides in the `docs-app` app.
+- Add concise documentation with descriptive sections to the appropriate guides in the `docs-analog` app.
 - Maintain compatibility with Vite versions 6-8, with progressive fallbacks.
 - Use other projects as inspiration, but do not directly copy their APIs.
 - See `CONTRIBUTING.md` file for more contribution guidelines.
@@ -172,7 +174,7 @@ When a PR has failing GitHub Actions checks, use this workflow to diagnose and f
 
 - **Vite**: All apps use Vite for build/dev, with custom plugins for Angular and Nitro
 - **Nitro**: Used for SSR, SSG, and API routes (see `vite.config.ts` and `server.mjs`)
-- **Docusaurus**: Docs site in `apps/docs-app`
+- **Analog**: Docs site in `apps/docs-analog`
 - **Storybook**: For Angular components, see `@analogjs/storybook-angular`
 - **CI/CD**: Release and publish via semantic-release and custom scripts
 
@@ -180,4 +182,4 @@ When a PR has failing GitHub Actions checks, use this workflow to diagnose and f
 
 - **Add a new Angular app:** `nx g @nx/angular:application <name>`
 - **Run tests for a lib:** `nx test <lib-name>`
-- **Build docs site:** `pnpm nx build docs-app`
+- **Build docs site:** `pnpm nx build docs-analog`

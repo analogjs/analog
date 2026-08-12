@@ -32,12 +32,21 @@ async function viteBuilder(
     browserBuilderName,
   );
 
+  // Explicit build options and the requested configuration win over an
+  // ambient NODE_ENV, so `build:production` cannot silently produce a
+  // development build when NODE_ENV happens to be set. See #2458.
+  const mode = (buildOptions.mode ?? configuration) as string;
+
+  if (process.env.NODE_ENV && process.env.NODE_ENV !== mode) {
+    context.logger.warn(
+      `NODE_ENV is set to "${process.env.NODE_ENV}" but is ignored because the build resolved mode "${mode}" from the build options and configuration.`,
+    );
+  }
+
   const buildConfig: InlineConfig = {
     configFile: options.configFile,
     root: projectConfig.root as string,
-    mode: (process.env.NODE_ENV ??
-      buildOptions.mode ??
-      configuration) as string,
+    mode,
     build: {
       outDir: options.outputPath,
       sourcemap: !!buildOptions.sourcemap,

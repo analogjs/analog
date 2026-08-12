@@ -1,4 +1,7 @@
 import { Plugin, normalizePath } from 'vite';
+import { injectServerFnIds, serverFnFileId } from '@analogjs/vite-plugin-nitro';
+
+import { scrubServerFnModule } from './server-fn-client-transform.js';
 
 export function clearClientPageEndpointsPlugin(): Plugin[] {
   return [

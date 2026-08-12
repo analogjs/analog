@@ -21,10 +21,16 @@ export type {
 declare module 'nitro/types' {
   interface NitroRouteConfig {
     ssr?: boolean;
+    /**
+     * Disable progressive streaming SSR for matching routes (falls back to a
+     * buffered render). Only meaningful when `experimental.streaming` is on.
+     */
+    streaming?: boolean;
   }
 
   interface NitroRouteRules {
     ssr?: boolean;
+    streaming?: boolean;
   }
 }
 

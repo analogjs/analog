@@ -78,3 +78,93 @@ describe('TS_EXT_REGEX', () => {
     });
   });
 });
+
+describe('getTsConfigPath', () => {
+  // Mirrors the Nx/Storybook layout: workspace root with a project below it,
+  // where the Vite root is the project directory.
+  let workspaceRoot: string;
+  let projectRoot: string;
+  const projectRelativeTsConfig = 'features/x/.storybook/tsconfig.json';
+
+  beforeAll(() => {
+    workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-tsconfig-'));
+    projectRoot = join(workspaceRoot, 'features/x');
+    mkdirSync(join(workspaceRoot, projectRelativeTsConfig, '..'), {
+      recursive: true,
+    });
+    writeFileSync(join(workspaceRoot, projectRelativeTsConfig), '{}', 'utf-8');
+    writeFileSync(join(projectRoot, 'tsconfig.app.json'), '{}', 'utf-8');
+  });
+
+  afterAll(() => {
+    rmSync(workspaceRoot, { recursive: true, force: true });
+  });
+
+  it('resolves a project-relative tsconfig against the vite root', () => {
+    expect(
+      getTsConfigPath(
+        projectRoot,
+        './.storybook/tsconfig.json',
+        false,
+        false,
+        false,
+        workspaceRoot,
+      ),
+    ).toBe(resolve(workspaceRoot, projectRelativeTsConfig));
+  });
+
+  it('falls back to the workspace root when the vite root misses', () => {
+    expect(
+      getTsConfigPath(
+        projectRoot,
+        projectRelativeTsConfig,
+        false,
+        false,
+        false,
+        workspaceRoot,
+      ),
+    ).toBe(resolve(workspaceRoot, projectRelativeTsConfig));
+  });
+
+  it('returns an absolute tsconfig untouched', () => {
+    const absolute = join(workspaceRoot, projectRelativeTsConfig);
+
+    expect(
+      getTsConfigPath(
+        projectRoot,
+        absolute,
+        false,
+        false,
+        false,
+        workspaceRoot,
+      ),
+    ).toBe(absolute);
+  });
+
+  it('reports both attempted paths when neither exists', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const resolved = getTsConfigPath(
+        projectRoot,
+        'missing/tsconfig.json',
+        false,
+        false,
+        false,
+        workspaceRoot,
+      );
+
+      expect(resolved).toBe(resolve(projectRoot, 'missing/tsconfig.json'));
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `${resolve(projectRoot, 'missing/tsconfig.json')} or ${resolve(
+            workspaceRoot,
+            'missing/tsconfig.json',
+          )}`,
+        ),
+      );
+    } finally {
+      error.mockRestore();
+    }
+  });
+});

@@ -128,6 +128,8 @@ The `setupTestBed()` function accepts an optional configuration object with the 
 - `zoneless` (boolean): Whether to use zoneless change detection (default: `true`)
 - `providers` (`Type<any>[]`): Additional providers to include in the test environment (default: `[]`)
 - `teardown.destroyAfterEach` (boolean): Whether to destroy the test environment after each test. Set to `false` to keep the component rendered, allowing you to inspect its final state. (default: `true`)
+- `errorOnUnknownElements` (boolean): Whether to throw when unknown elements are present in a component's template. Set to `false` (default) to log the error instead of throwing.
+- `errorOnUnknownProperties` (boolean): Whether to throw when unknown properties are present in a component's template. Set to `false` (default) to log the error instead of throwing.
 
 **Example with options:**
 
@@ -136,6 +138,8 @@ setupTestBed({
   zoneless: true,
   providers: [],
   teardown: { destroyAfterEach: false },
+  errorOnUnknownElements: true,
+  errorOnUnknownProperties: true,
 });
 ```
 

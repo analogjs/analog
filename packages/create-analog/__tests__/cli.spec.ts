@@ -198,3 +198,35 @@ test('strips the vite/vitest overrides with --skipViteOverrides', () => {
   const pkg = readJsonSync(join(genPath, 'package.json'));
   expect(pkg.overrides).toBeUndefined();
 });
+
+test('templates wire up the agent context chain', () => {
+  // CLAUDE.md -> @AGENTS.md -> node_modules/@analogjs/platform/AGENTS.md
+  for (const template of ['latest', 'blog', 'minimal']) {
+    const dir = join(CLI_PATH, `template-${template}`);
+    expect(readFileSync(join(dir, 'CLAUDE.md'), 'utf-8')).toContain(
+      '@AGENTS.md',
+    );
+    expect(readFileSync(join(dir, 'AGENTS.md'), 'utf-8')).toContain(
+      'node_modules/@analogjs/platform/AGENTS.md',
+    );
+  }
+});
+
+test('platform AGENTS.md documents current Analog APIs', () => {
+  const agents = readFileSync(
+    join(CLI_PATH, '..', 'platform', 'AGENTS.md'),
+    'utf-8',
+  );
+  for (const api of [
+    'RouteMeta',
+    'inject(ActivatedRoute)',
+    'defineEventHandler',
+    'injectLoad',
+    'injectContent',
+  ]) {
+    expect(agents).toContain(api);
+  }
+  // deprecated APIs must not be reintroduced
+  expect(agents).not.toContain('defineRouteMeta');
+  expect(agents).not.toContain('injectActivatedRoute');
+});

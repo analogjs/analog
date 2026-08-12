@@ -1,7 +1,10 @@
 name: pr-scope-governance
 
+# pull_request_target so the GITHUB_TOKEN keeps write permissions on fork PRs.
+# Safe because the job only checks out the trusted base sha and never runs PR
+# code — it reads changed filenames from the API and applies labels/comments.
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, edited, synchronize, ready_for_review]
 
 permissions:

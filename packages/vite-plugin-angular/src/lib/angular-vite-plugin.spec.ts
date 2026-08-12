@@ -1757,3 +1757,108 @@ describe('hasComponent detection behavior docs', () => {
     expect(compiledJs.includes('@Component')).toBe(false);
   });
 });
+
+describe('buildStart initial compilation', () => {
+  // Rollup runs `buildStart` hooks in parallel, so a plugin registered before
+  // this one (e.g. `@module-federation/vite`) can pull modules through
+  // `transform` while the initial compilation is still running. `buildStart`
+  // has to publish its compilation promise so `transform` waits for the file
+  // emitter instead of falling through to esbuild without AOT. (#2425)
+  const fixtureDir = path.resolve(
+    import.meta.dirname,
+    '../../../..',
+    'tmp',
+    'vpa-buildstart-race',
+  );
+  const componentPath = normalizePath(
+    path.join(fixtureDir, 'src', 'app.component.ts'),
+  );
+
+  beforeEach(() => {
+    realFs.rmSync(fixtureDir, { recursive: true, force: true });
+    realFs.mkdirSync(path.join(fixtureDir, 'src'), { recursive: true });
+    realFs.writeFileSync(
+      path.join(fixtureDir, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      componentPath,
+      `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  template: '<h1>hello</h1>',
+})
+export class AppComponent {}
+`,
+      'utf-8',
+    );
+  });
+
+  afterEach(() => {
+    realFs.rmSync(fixtureDir, { recursive: true, force: true });
+  });
+
+  // The plugin reads these at creation time to pick the AOT/JIT path, so an
+  // app build has to be simulated by clearing Vitest's own markers.
+  function createAppBuildPlugin() {
+    const { VITEST, NODE_ENV } = process.env;
+    delete process.env['VITEST'];
+    delete process.env['NODE_ENV'];
+
+    try {
+      return angular({
+        tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+        workspaceRoot: fixtureDir,
+      }).find((p) => p.name === '@analogjs/vite-plugin-angular') as any;
+    } finally {
+      process.env['VITEST'] = VITEST as string;
+      if (NODE_ENV) {
+        process.env['NODE_ENV'] = NODE_ENV;
+      }
+    }
+  }
+
+  it('waits for the initial compilation before emitting a transform result', async () => {
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    mainPlugin.configResolved({
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+    });
+
+    const ctx = { warn: vi.fn(), error: vi.fn(), addWatchFile: vi.fn() };
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+
+    // Deliberately don't await `buildStart` — this is the racing plugin's view.
+    const buildStart = mainPlugin.buildStart.call(ctx);
+    const result = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+    await buildStart;
+
+    expect(result?.code).toContain('ɵcmp');
+    expect(ctx.warn).not.toHaveBeenCalled();
+  }, 60_000);
+});

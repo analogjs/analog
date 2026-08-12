@@ -54,7 +54,8 @@ export function provideServerContext({
   const baseUrl = getBaseUrl(req);
   const locale = detectLocale(req);
 
-  if (import.meta.env.DEV) {
+  // Optional chaining: a Nitro-bundled caller has no `import.meta.env` at all.
+  if (import.meta.env?.DEV) {
     ɵresetCompiledComponents();
   }
 

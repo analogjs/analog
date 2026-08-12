@@ -5,6 +5,9 @@ on:
 
 env:
   NODE_OPTIONS: --max-old-space-size=16384
+  # Fork PRs get no secrets; they run tokenless and authenticate through the
+  # workspace's nxCloudId + connected GitHub repository as untrusted runs with
+  # an isolated cache.
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   NX_VERBOSE_LOGGING: ${{ vars.NX_VERBOSE_LOGGING }}
   # Lets the coordinator keep handing tasks to already-running agents across the

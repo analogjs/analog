@@ -562,9 +562,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       async config(config, { command }) {
         activateDeferredDebug(command);
         watchMode = command === 'serve';
-        isProd =
-          config.mode === 'production' ||
-          process.env['NODE_ENV'] === 'production';
+        isProd = isProdMode(config.mode);
 
         // Store the config context for later resolution in configResolved
         tsConfigResolutionContext = {
@@ -713,7 +711,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          await performCompilation(resolvedConfig);
+          pendingCompilation = performCompilation(resolvedConfig);
+          await pendingCompilation;
           pendingCompilation = null;
 
           initialCompilation = true;
@@ -1481,9 +1480,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           });
 
           if (jit && data.includes('angular:jit:')) {
+            // The emitted id carries the base64 of the entire stylesheet,
+            // and the bundler derives chunk names from it — hash it so a
+            // large inline style can't produce an over-long filename (#2459).
             data = data.replace(
-              /angular:jit:style:inline;/g,
-              'virtual:angular:jit:style:inline;',
+              /angular:jit:style:inline;([A-Za-z0-9+/=]*)/g,
+              (_match, encodedStyles) => toJitInlineStyleId(encodedStyles),
             );
 
             // Templates use virtual ids (no extension) so Vite's asset/CSS
@@ -1643,6 +1645,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsConfigResolutionContext!.isProd,
       isTest,
       tsConfigResolutionContext!.isLib,
+      pluginOptions.workspaceRoot,
     );
   }
 

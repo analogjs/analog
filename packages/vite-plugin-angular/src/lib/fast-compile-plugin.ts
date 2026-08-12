@@ -27,6 +27,7 @@ import {
   TS_EXT_REGEX,
   getTsConfigPath,
   createDepOptimizerConfig,
+  isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
@@ -647,6 +648,7 @@ export function fastCompilePlugin(
       isProd,
       pluginOptions.isTest,
       isLib,
+      pluginOptions.workspaceRoot,
     );
   }
 
@@ -655,9 +657,7 @@ export function fastCompilePlugin(
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';
-      const isProd =
-        config.mode === 'production' ||
-        process.env['NODE_ENV'] === 'production';
+      const isProd = isProdMode(config.mode);
 
       tsConfigResolutionContext = {
         root: config.root || '.',

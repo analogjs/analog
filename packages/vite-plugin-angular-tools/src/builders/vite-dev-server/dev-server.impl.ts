@@ -34,8 +34,10 @@ async function viteDevServerBuilder(
   const serverConfig: InlineConfig = {
     configFile: buildOptions.configFile as string,
     root: projectConfig.root as string,
-    mode: (process.env.NODE_ENV ??
-      buildOptions.mode ??
+    // An explicit mode from the build options wins over an ambient NODE_ENV.
+    // See #2458.
+    mode: (buildOptions.mode ??
+      process.env.NODE_ENV ??
       'development') as string,
     build: {
       sourcemap: !!buildOptions.sourcemap,

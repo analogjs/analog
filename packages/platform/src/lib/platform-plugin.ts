@@ -18,6 +18,25 @@ import { resolveStylePipelinePlugins } from './style-pipeline.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
 import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
 
+/**
+ * The installed `@angular/core` major version, resolved from the workspace root
+ * (where the app's Angular is installed). Returns `null` when it cannot be
+ * detected, in which case streaming is not blocked and the build-time
+ * anchor-drift detection is relied on instead.
+ */
+function getAngularCoreMajor(workspaceRoot: string): number | null {
+  try {
+    const req = createRequire(join(workspaceRoot, 'noop.js'));
+    const { version } = req('@angular/core/package.json') as {
+      version: string;
+    };
+    const major = Number.parseInt(version.split('.')[0], 10);
+    return Number.isNaN(major) ? null : major;
+  } catch {
+    return null;
+  }
+}
+
 export function platformPlugin(opts: Options = {}): Plugin[] {
   applyDebugOption(opts.debug, opts.workspaceRoot);
 
