@@ -1,4 +1,11 @@
-import { ensurePackage, NX_VERSION, Tree, updateJson } from '@nx/devkit';
+import {
+  ensurePackage,
+  generateFiles,
+  NX_VERSION,
+  Tree,
+  updateJson,
+} from '@nx/devkit';
+import { join } from 'node:path';
 import { PresetGeneratorSchema } from './schema';
 
 export default async function (
@@ -15,7 +22,19 @@ export default async function (
   const appGenerator =
     'default' in generatorModule ? generatorModule.default : generatorModule;
 
-  const installTask = await appGenerator(tree, options);
+  const installTask = await appGenerator(tree, {
+    ...options,
+    skipAgentContext: true,
+  });
+
+  // Seed agent context at the workspace root so AI coding assistants pick up
+  // Analog conventions (see node_modules/@analogjs/platform/AGENTS.md).
+  generateFiles(
+    tree,
+    join(__dirname, '..', 'app', 'files', 'agents'),
+    '.',
+    options,
+  );
 
   if (tree.exists('/tsconfig.base.json')) {
     updateJson<{
