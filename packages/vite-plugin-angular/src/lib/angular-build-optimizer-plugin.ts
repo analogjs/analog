@@ -30,6 +30,17 @@ export function buildOptimizerPlugin({
     },
     config(userConfig) {
       isProd = isProdMode(userConfig.mode);
+      // Advanced optimizations paired with dev-mode defines would strip
+      // dev-only code the debug API needs, so both key off `isProd`.
+      javascriptTransformer ??= new JavaScriptTransformer(
+        {
+          sourcemap: false,
+          thirdPartySourcemaps: false,
+          advancedOptimizations: isProd,
+          jit: true,
+        },
+        1,
+      );
       const jsTransformConfigKey = getJsTransformConfigKey();
 
       return {
