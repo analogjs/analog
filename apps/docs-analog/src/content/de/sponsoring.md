@@ -1,10 +1,3 @@
----
-sidebar_position: 5
----
-
-import GithubSponsorsLogo from '@site/static/img/logos/github-sponsors-logo.svg';
-import GithubLogo from '@site/static/img/logos/github-logo.svg';
-
 # Förderungen und Kooperationen
 
 Analog ist ein vom MIT lizenziertes Open-Source-Projekt und kann kostenlos genutzt werden. Der kontinuierliche Aufwand, der für die Aufrechterhaltung dieses Projekts erforderlich ist, wird durch die finanzielle Unterstützung unserer Partner und Sponsoren gedeckt.

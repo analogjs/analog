@@ -84,9 +84,6 @@
       "path": "./apps/blog-app"
     },
     {
-      "path": "./apps/docs-app"
-    },
-    {
       "path": "./libs/top-bar"
     },
     {

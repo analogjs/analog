@@ -2,7 +2,7 @@
 
 This document is for maintainers and contributors working inside the Analog monorepo.
 
-For consumer-facing debug flags and scope reference, see the public guide in `apps/docs-app/docs/guides/debugging.md`.
+For consumer-facing debug flags and scope reference, see the public guide in `apps/docs-analog/src/content/guides/debugging.md`.
 
 This repo-local file covers the monorepo-specific workflow that does not belong in the public docs site.
 
@@ -18,7 +18,7 @@ DEBUG=analog:* pnpm dev
 DEBUG=analog:platform:routes,analog:angular:compiler pnpm build
 
 # Serve a specific app target through Nx
-DEBUG=analog:platform:* pnpm nx serve docs-app
+DEBUG=analog:platform:* pnpm nx serve docs-analog
 ```
 
 ## Package Development

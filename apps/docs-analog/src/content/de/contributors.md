@@ -1,11 +1,3 @@
----
-sidebar_position: 3
----
-
-import GithubLogo from '@site/static/img/logos/github-logo.svg';
-import GithubSponsorsLogo from '@site/static/img/logos/github-sponsors-logo.svg';
-import styles from './contributors.module.css';
-
 # Mitwirkende
 
 ## Analoges Kernteam
