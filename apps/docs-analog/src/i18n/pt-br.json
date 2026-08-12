@@ -72,6 +72,8 @@
   "sidebar.angular-material": "Angular Material",
   "sidebar.ionic": "Ionic Framework",
   "sidebar.storybook": "Storybook",
+  "sidebar.tailwind": "Tailwind CSS",
+  "sidebar.tanstack-query": "TanStack Query",
   "sidebar.ai": "IA",
   "sidebar.contributors": "Colaboradores",
   "sidebar.support": "Suporte"

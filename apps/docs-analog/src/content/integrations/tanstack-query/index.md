@@ -1,10 +1,3 @@
----
-sidebar_position: 5
----
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # TanStack Query Integration with Analog
 
 Analog provides a first-class [TanStack Query](https://tanstack.com/query/latest/docs/framework/angular/overview) integration for managing server state with SSR hydration support.
