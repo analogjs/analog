@@ -1,4 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+import type { Plugin } from 'vite';
+
+import astroPlugin from './index';
 
 vi.mock('@analogjs/vite-plugin-angular', () => ({
   default: () => ({ name: 'angular-mock' }),
@@ -22,6 +25,25 @@ function registerMocks(rolldownVersion?: string) {
   vi.doMock('vite', () => ({
     rolldownVersion,
   }));
+}
+
+function getVitePlugins(): Plugin[] {
+  const integration = astroPlugin();
+  let plugins: Plugin[] = [];
+
+  const setup = integration.hooks['astro:config:setup'] as (args: {
+    addRenderer: () => void;
+    updateConfig: (cfg: { vite: { plugins?: Plugin[] } }) => void;
+  }) => void;
+
+  setup({
+    addRenderer: () => undefined,
+    updateConfig: (cfg) => {
+      plugins = cfg.vite.plugins ?? [];
+    },
+  });
+
+  return plugins;
 }
 
 describe('astro-angular plugin', () => {

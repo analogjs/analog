@@ -31,6 +31,21 @@ function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
   };
 }
 
+const SERVER_ENTRYPOINTS = [
+  '@angular/platform-server',
+  '@analogjs/astro-angular/server.js',
+  '@analogjs/astro-angular/server-ngh.js',
+];
+
+/**
+ * Modules the dependency optimizer must leave alone on the server.
+ * `@angular/core` is excluded on top of the server entrypoints because
+ * pre-bundling it produces a second copy of the Angular runtime, so components
+ * render against a different runtime than the one they were registered in —
+ * surfacing as empty SSR output plus `NG0912` component ID collisions.
+ */
+const SERVER_OPTIMIZE_DEPS_EXCLUDE = [...SERVER_ENTRYPOINTS, '@angular/core'];
+
 function getViteConfiguration(pluginOptions?: AngularOptions) {
   const isRolldown = !!vite.rolldownVersion;
   return {
