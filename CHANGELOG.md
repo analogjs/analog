@@ -1,3 +1,15 @@
+# [3.0.0-alpha.66](https://github.com/analogjs/analog/compare/v3.0.0-alpha.65...v3.0.0-alpha.66) (2026-08-13)
+
+### Bug Fixes
+
+- **platform:** prerender the root route again ([14dbb1e](https://github.com/analogjs/analog/commit/14dbb1eeb2b66543edd2b25e8b996c5a6090a5bc))
+- **router:** strip route groups from every page endpoint segment ([9d69dea](https://github.com/analogjs/analog/commit/9d69dead865b2632435a674ece99a61e476c0b11))
+- **vite-plugin-angular:** keep optional chaining when emitting expressions ([ff4cdea](https://github.com/analogjs/analog/commit/ff4cdeaf66480916e96123ec7112c00fe42ba896))
+
+### Reverts
+
+- Revert "refactor: take the analog-app demo from the 2.x branch" ([e2bb5e0](https://github.com/analogjs/analog/commit/e2bb5e0b7668c08c083aae5bd0fbc2e48f5fbac2))
+
 # [3.0.0-alpha.65](https://github.com/analogjs/analog/compare/v3.0.0-alpha.64...v3.0.0-alpha.65) (2026-08-13)
 
 ### Bug Fixes
