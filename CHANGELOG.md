@@ -1,3 +1,13 @@
+# [3.0.0-alpha.67](https://github.com/analogjs/analog/compare/v3.0.0-alpha.66...v3.0.0-alpha.67) (2026-08-13)
+
+### Bug Fixes
+
+- **platform:** build the client environment and render around its output ([1fa842f](https://github.com/analogjs/analog/commit/1fa842f29279d2bd218c4a0d753a343fa84de274))
+
+### Reverts
+
+- **platform:** stop preferring the built shell as the SSR template ([ae4b279](https://github.com/analogjs/analog/commit/ae4b279d9be1d52373714d0c34602cd45d87bd84))
+
 # [3.0.0-alpha.66](https://github.com/analogjs/analog/compare/v3.0.0-alpha.65...v3.0.0-alpha.66) (2026-08-13)
 
 ### Bug Fixes
