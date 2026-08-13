@@ -1,11 +1,12 @@
 import type { PageServerLoad } from '@analogjs/router';
+import { getQuery } from 'nitro/h3';
 
 export async function load({ event }: PageServerLoad) {
-  const searchTerm = event.url.searchParams.get('search') ?? '';
-  console.log('loaded search', searchTerm);
+  const query = getQuery(event);
+  console.log('loaded search', query['search']);
 
   return {
     loaded: true,
-    searchTerm,
+    searchTerm: `${query['search'] || ''}`,
   };
 }

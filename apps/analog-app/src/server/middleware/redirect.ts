@@ -1,10 +1,15 @@
-import { defineHandler, redirect } from 'nitro/h3';
+import { eventHandler, sendRedirect, setHeaders } from 'nitro/h3';
 
-export default defineHandler((event) => {
-  if (event.path === '/checkout') {
-    event.res.headers.set('x-analog-test', 'true');
-    return redirect('/cart', 302);
+export default eventHandler((event) => {
+  const pathname = new URL(event.req.url).pathname;
+
+  if (pathname === '/checkout') {
+    setHeaders(event, {
+      'x-analog-test': 'true',
+    });
+
+    return sendRedirect(event, '/cart', 302);
   }
 
-  return undefined;
+  return;
 });

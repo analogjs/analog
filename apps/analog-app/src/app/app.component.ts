@@ -8,9 +8,9 @@ import { TopBarComponent } from '@analogjs/top-bar';
   imports: [TopBarComponent, RouterOutlet],
   template: `
     <analogjs-top-bar />
-    <main class="container">
+    <div class="container">
       <router-outlet />
-    </main>
+    </div>
   `,
 })
 export class AppComponent {}

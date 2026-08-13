@@ -1,11 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
+import { TopBarComponent } from '@analogjs/top-bar';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RouterTestingModule.withRoutes([]), AppComponent],
+      imports: [
+        RouterTestingModule,
+        AppComponent,
+        TopBarComponent,
+        RouterTestingModule.withRoutes([]),
+      ],
+      declarations: [],
     }).compileComponents();
   });
 
@@ -15,7 +22,7 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the current title', () => {
+  it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
