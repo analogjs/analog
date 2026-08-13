@@ -1,3 +1,9 @@
+# [3.0.0-alpha.68](https://github.com/analogjs/analog/compare/v3.0.0-alpha.67...v3.0.0-alpha.68) (2026-08-13)
+
+### Bug Fixes
+
+- **platform:** declare vite-plugin-nitro as a build prerequisite ([de59629](https://github.com/analogjs/analog/commit/de5962948da42ab330721413ab725eb344417568))
+
 # [3.0.0-alpha.67](https://github.com/analogjs/analog/compare/v3.0.0-alpha.66...v3.0.0-alpha.67) (2026-08-13)
 
 ### Bug Fixes
