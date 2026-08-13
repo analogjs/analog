@@ -67,7 +67,6 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   };
   let ssrEntryMarkerPath = '';
   let userPublicDir: string | undefined;
-  let isServe = false;
 
   function refreshContext(viteRoot: string | undefined) {
     const root = viteRoot ?? process.cwd();
@@ -83,30 +82,23 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     );
   }
 
-  function readIndexHtml(dev: boolean): string {
+  function readIndexHtml(): string {
     const indexFile = options.index ?? 'index.html';
-    const source = resolve(context.workspaceRoot, context.rootDir, indexFile);
-    const built = resolve(
-      context.workspaceRoot,
-      'dist',
-      context.rootDir,
-      'client',
-      indexFile,
-    );
-
-    // The source document points at the unbundled entry, which only resolves
-    // while Vite is serving. A build has to render around the client output
-    // instead, or every server-rendered document asks for a module the
-    // server answers with HTML, and the app never starts. Dev keeps reading
-    // the source so Vite can transform it and inject its own client.
-    const candidates = dev ? [source, built] : [built, source];
-
+    const candidates = [
+      resolve(context.workspaceRoot, context.rootDir, indexFile),
+      resolve(
+        context.workspaceRoot,
+        'dist',
+        context.rootDir,
+        'client',
+        indexFile,
+      ),
+    ];
     for (const candidate of candidates) {
       if (existsSync(candidate)) {
         return readFileSync(candidate, 'utf-8');
       }
     }
-
     return '<!doctype html><html><body><div id="app"></div></body></html>';
   }
 
@@ -127,8 +119,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     name: '@analogjs/nitro',
     enforce: 'pre',
 
-    config(userConfig, env) {
-      isServe = env?.command === 'serve';
+    config(userConfig) {
       refreshContext(userConfig.root);
 
       // Capture the user's Vite `publicDir` so the nitro `setup()` hook can
@@ -228,10 +219,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 
     load(id) {
       if (id !== SSR_ENTRY_VIRTUAL_ID) return null;
-      return generateSsrEntryWrapper(
-        resolveEntryServer(),
-        readIndexHtml(isServe),
-      );
+      return generateSsrEntryWrapper(resolveEntryServer(), readIndexHtml());
     },
 
     nitro: {
@@ -497,7 +485,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           nitro.options.virtual['#analog/ssr'] = () =>
             generateSsrServiceVirtual(nitro);
           nitro.options.virtual['#analog/ssr-renderer'] =
-            generateSsrRendererVirtual(readIndexHtml(nitro.options.dev));
+            generateSsrRendererVirtual(readIndexHtml());
           nitro.options.renderer ??= {};
           nitro.options.renderer.handler = '#analog/ssr-renderer';
           delete nitro.options.renderer.template;
