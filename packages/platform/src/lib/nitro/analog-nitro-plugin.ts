@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, relative, resolve } from 'node:path';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
@@ -67,6 +67,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   };
   let ssrEntryMarkerPath = '';
   let userPublicDir: string | undefined;
+  let isServe = false;
 
   function refreshContext(viteRoot: string | undefined) {
     const root = viteRoot ?? process.cwd();
@@ -82,23 +83,30 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     );
   }
 
-  function readIndexHtml(): string {
+  function readIndexHtml(dev: boolean): string {
     const indexFile = options.index ?? 'index.html';
-    const candidates = [
-      resolve(context.workspaceRoot, context.rootDir, indexFile),
-      resolve(
-        context.workspaceRoot,
-        'dist',
-        context.rootDir,
-        'client',
-        indexFile,
-      ),
-    ];
+    const source = resolve(context.workspaceRoot, context.rootDir, indexFile);
+    const built = resolve(
+      context.workspaceRoot,
+      'dist',
+      context.rootDir,
+      'client',
+      indexFile,
+    );
+
+    // The source document points at the unbundled entry, which only resolves
+    // while Vite is serving. A build has to render around the client output
+    // instead, or every server-rendered document asks for a module the
+    // server answers with HTML, and the app never starts. Dev keeps reading
+    // the source so Vite can transform it and inject its own client.
+    const candidates = dev ? [source, built] : [built, source];
+
     for (const candidate of candidates) {
       if (existsSync(candidate)) {
         return readFileSync(candidate, 'utf-8');
       }
     }
+
     return '<!doctype html><html><body><div id="app"></div></body></html>';
   }
 
@@ -119,7 +127,8 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     name: '@analogjs/nitro',
     enforce: 'pre',
 
-    config(userConfig) {
+    config(userConfig, env) {
+      isServe = env?.command === 'serve';
       refreshContext(userConfig.root);
 
       // Capture the user's Vite `publicDir` so the nitro `setup()` hook can
@@ -219,7 +228,10 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 
     load(id) {
       if (id !== SSR_ENTRY_VIRTUAL_ID) return null;
-      return generateSsrEntryWrapper(resolveEntryServer(), readIndexHtml());
+      return generateSsrEntryWrapper(
+        resolveEntryServer(),
+        readIndexHtml(isServe),
+      );
     },
 
     nitro: {
@@ -485,7 +497,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           nitro.options.virtual['#analog/ssr'] = () =>
             generateSsrServiceVirtual(nitro);
           nitro.options.virtual['#analog/ssr-renderer'] =
-            generateSsrRendererVirtual(readIndexHtml());
+            generateSsrRendererVirtual(readIndexHtml(nitro.options.dev));
           nitro.options.renderer ??= {};
           nitro.options.renderer.handler = '#analog/ssr-renderer';
           delete nitro.options.renderer.template;
@@ -839,6 +851,31 @@ async function wirePrerender(
   nitroPrerender.routes.push(...expanded);
   if (prerender?.discover ?? false) {
     nitroPrerender.crawlLinks = true;
+  }
+
+  // The client build emits an `index.html` shell, and copying the public
+  // assets puts it in the output directory before anything is prerendered.
+  // Nitro answers from the public assets ahead of the renderer, so the
+  // prerenderer's own request for `/` is served that shell and writes it
+  // straight back out — the route never reaches the renderer at all. Drop it
+  // once the assets are in place and before the first route is rendered, so
+  // the prerendered document takes its place.
+  const prerendersRoot = (nitroPrerender.routes as string[]).some(
+    (route) => route === '/',
+  );
+
+  if ((options.ssr ?? true) && prerendersRoot) {
+    nitro.hooks.hook('prerender:init', () => {
+      const publicDir = resolve(nitro.options.output.publicDir);
+
+      for (const extension of ['', '.br', '.gz']) {
+        const indexFile = resolve(publicDir, `index.html${extension}`);
+
+        if (existsSync(indexFile)) {
+          unlinkSync(indexFile);
+        }
+      }
+    });
   }
 
   if (prerender?.postRenderingHooks?.length) {
