@@ -8,11 +8,23 @@ import {
   injectAnalogRouteRuleHeaders,
 } from './analog-nitro-plugin';
 
-function callConfig(plugin: any, root: string) {
+function callConfig(plugin: any, root: string, command = 'build') {
   const hook = plugin.config;
+  const env = {
+    command,
+    mode: command === 'build' ? 'production' : 'development',
+  };
   return typeof hook === 'function'
-    ? hook({ root }, { command: 'build', mode: 'production' })
-    : hook?.handler({ root }, { command: 'build', mode: 'production' });
+    ? hook({ root }, env)
+    : hook?.handler({ root }, env);
+}
+
+function callWriteBundle(plugin: any, envName: string, bundle: any) {
+  const hook = plugin.writeBundle;
+  const ctx = { environment: { name: envName } };
+  return typeof hook === 'function'
+    ? hook.call(ctx, {} as any, bundle)
+    : hook?.handler.call(ctx, {} as any, bundle);
 }
 
 function callResolveId(plugin: any, id: string) {
@@ -86,7 +98,19 @@ describe('analogNitroPlugin', () => {
     const overrides: any = callConfig(plugin, projectRoot);
 
     expect(overrides.experimental).toBeUndefined();
-    expect(overrides.environments).toBeUndefined();
+    expect(overrides.environments.ssr).toBeUndefined();
+  });
+
+  it('gives the client environment an input, ahead of ssr', () => {
+    const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
+    const overrides: any = callConfig(plugin, projectRoot);
+
+    expect(overrides.environments.client.build.rollupOptions.input).toBe(
+      join(workspaceRoot, 'index.html'),
+    );
+    // The SSR bundle inlines the document it renders around, so the client
+    // environment has to build first.
+    expect(Object.keys(overrides.environments)).toEqual(['client', 'ssr']);
   });
 
   it('resolves the SSR entry marker path to the virtual id', () => {
@@ -100,18 +124,44 @@ describe('analogNitroPlugin', () => {
     expect(callResolveId(plugin, '/some/other/path.ts')).toBeNull();
   });
 
-  it('emits a wrapper that imports the user main.server.ts and inlines the template', () => {
+  it('emits a wrapper that imports the user main.server.ts and inlines the built template', () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
     callConfig(plugin, projectRoot);
+    callWriteBundle(plugin, 'client', {
+      'index.html': {
+        type: 'asset',
+        source:
+          '<!doctype html><html><body><script src="/assets/main-abc.js"></script></body></html>',
+      },
+    });
 
     const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry');
     expect(typeof code).toBe('string');
     expect(code).toContain('main.server.ts');
     expect(code).toContain('export default {');
     expect(code).toContain('fetch(req)');
-    // Template is JSON.stringified into the wrapper, so quotes are escaped.
-    expect(code).toContain('id=\\"app\\"');
+    // The built document, not the source: rendering around the source would
+    // ship markup pointing at an entry that a build does not emit.
+    expect(code).toContain('/assets/main-abc.js');
+    expect(code).not.toContain('id=\\"app\\"');
     expect(code).toContain("'x-analog-no-ssr'");
+  });
+
+  it('fails loudly when a build produced no client document', () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot);
+
+    expect(() =>
+      callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry'),
+    ).toThrow(/client build produced no index\.html/);
+  });
+
+  it('renders around the source document in dev', () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+
+    const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry');
+    expect(code).toContain('id=\\"app\\"');
   });
 
   it('registers page handlers and the page-endpoints rollup plugin in nitro setup', async () => {

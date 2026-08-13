@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, relative, resolve } from 'node:path';
+import { basename, dirname, relative, resolve } from 'node:path';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { Plugin, UserConfig } from 'vite';
 
@@ -67,6 +67,12 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   };
   let ssrEntryMarkerPath = '';
   let userPublicDir: string | undefined;
+  let isBuild = false;
+  // The document the client environment emitted for this build, captured in
+  // `writeBundle` below. A build must render around this rather than the
+  // source document: the source points at the unbundled entry, which only
+  // resolves while Vite is serving.
+  let builtIndexHtml: string | undefined;
 
   function refreshContext(viteRoot: string | undefined) {
     const root = viteRoot ?? process.cwd();
@@ -82,24 +88,32 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     );
   }
 
+  function indexHtmlPath(): string {
+    return resolve(
+      context.workspaceRoot,
+      context.rootDir,
+      options.index ?? 'index.html',
+    );
+  }
+
   function readIndexHtml(): string {
-    const indexFile = options.index ?? 'index.html';
-    const candidates = [
-      resolve(context.workspaceRoot, context.rootDir, indexFile),
-      resolve(
-        context.workspaceRoot,
-        'dist',
-        context.rootDir,
-        'client',
-        indexFile,
-      ),
-    ];
-    for (const candidate of candidates) {
-      if (existsSync(candidate)) {
-        return readFileSync(candidate, 'utf-8');
-      }
+    // Dev reads the source document so Vite can transform it and serve the
+    // entry it points at.
+    if (!isBuild) {
+      const source = indexHtmlPath();
+      return existsSync(source)
+        ? readFileSync(source, 'utf-8')
+        : '<!doctype html><html><body><div id="app"></div></body></html>';
     }
-    return '<!doctype html><html><body><div id="app"></div></body></html>';
+    if (builtIndexHtml === undefined) {
+      throw new Error(
+        `[analog] The client build produced no ${basename(indexHtmlPath())}, ` +
+          `so there is no document to server-render around. Rendering around ` +
+          `the source document instead would ship markup pointing at the ` +
+          `unbundled entry, which does not exist in a build.`,
+      );
+    }
+    return builtIndexHtml;
   }
 
   function resolveEntryServer(): string {
@@ -119,8 +133,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     name: '@analogjs/nitro',
     enforce: 'pre',
 
-    config(userConfig) {
+    config(userConfig, configEnv) {
       refreshContext(userConfig.root);
+      isBuild = configEnv?.command === 'build';
 
       // Capture the user's Vite `publicDir` so the nitro `setup()` hook can
       // register it as a Nitro `publicAssets` source. nitro/vite forces the
@@ -167,6 +182,23 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             allow: [context.workspaceRoot],
           },
         },
+        // nitro/vite defaults the client environment's input to
+        // `renderer.template` (vite.mjs:240). We install our own renderer
+        // handler and delete that template — Nitro's template-serving
+        // renderer just returns the raw document — which leaves the client
+        // environment with no input, and an environment without one is
+        // skipped (vite.mjs:78). The build then emits no browser bundles at
+        // all and the client never boots. Point it at the source document
+        // ourselves.
+        //
+        // Declared ahead of `ssr` so it builds first: the SSR bundle inlines
+        // the document it renders around, so the client output has to exist
+        // by the time that bundle is built.
+        environments: {
+          client: {
+            build: { rollupOptions: { input: indexHtmlPath() } },
+          },
+        } as UserConfig['environments'],
       };
 
       if (ssr) {
@@ -184,27 +216,25 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             },
           },
         };
-        overrides.environments = {
-          ssr: {
-            build: {
-              outDir: resolve(
-                context.workspaceRoot,
-                'dist',
-                context.rootDir,
-                'ssr',
-              ),
-              rollupOptions: {
-                input: { index: ssrEntryMarkerPath },
-              },
-            },
-            optimizeDeps: {
-              include: ANGULAR_SSR_DEPS,
-              rolldownOptions: {
-                plugins: [angularLinkerPlugin()],
-              },
+        (overrides.environments as Record<string, unknown>)['ssr'] = {
+          build: {
+            outDir: resolve(
+              context.workspaceRoot,
+              'dist',
+              context.rootDir,
+              'ssr',
+            ),
+            rollupOptions: {
+              input: { index: ssrEntryMarkerPath },
             },
           },
-        } as UserConfig['environments'];
+          optimizeDeps: {
+            include: ANGULAR_SSR_DEPS,
+            rolldownOptions: {
+              plugins: [angularLinkerPlugin()],
+            },
+          },
+        };
       }
 
       return overrides;
@@ -220,6 +250,31 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     load(id) {
       if (id !== SSR_ENTRY_VIRTUAL_ID) return null;
       return generateSsrEntryWrapper(resolveEntryServer(), readIndexHtml());
+    },
+
+    // Take the rendered-around document from the client environment's own
+    // output rather than guessing where it landed. A guessed path can name a
+    // leftover from an earlier build, which serves pages an application bundle
+    // that no longer matches the markup around it.
+    //
+    // `writeBundle` rather than `generateBundle`: this plugin is
+    // `enforce: 'pre'`, so its `generateBundle` runs before `vite:build-html`
+    // emits the document. `writeBundle` runs once every `generateBundle` has.
+    writeBundle(_outputOptions, bundle) {
+      if (
+        (this as { environment?: { name?: string } }).environment?.name !==
+        'client'
+      ) {
+        return;
+      }
+      const emitted = bundle[basename(indexHtmlPath())];
+      if (emitted?.type === 'asset') {
+        const { source } = emitted;
+        builtIndexHtml =
+          typeof source === 'string'
+            ? source
+            : new TextDecoder().decode(source);
+      }
     },
 
     nitro: {
@@ -484,7 +539,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // `__nitro_vite_envs__` unset in the prerender bundle.
           nitro.options.virtual['#analog/ssr'] = () =>
             generateSsrServiceVirtual(nitro);
-          nitro.options.virtual['#analog/ssr-renderer'] =
+          // Lazy: `setup()` runs before any environment builds, so reading
+          // the template here would read it before the client has emitted
+          // one. Nitro resolves this virtual when it bundles — the prerender
+          // pass and the final server build, both after the client build.
+          nitro.options.virtual['#analog/ssr-renderer'] = () =>
             generateSsrRendererVirtual(readIndexHtml());
           nitro.options.renderer ??= {};
           nitro.options.renderer.handler = '#analog/ssr-renderer';
