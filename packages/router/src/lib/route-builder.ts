@@ -214,9 +214,14 @@ function toRoutes<TFile>(
           .replace(/\[\.{3}.+\]/, '**')
           .replace(/^(.*?)\/pages/, '/pages');
 
+        // Strip the route group syntax from every segment, matching how the
+        // page handlers are mounted. Anchoring this to the last segment left
+        // the parens in place for a route like `(auth)/sign-up`, so the
+        // request went to a path no handler answered and the load resolved
+        // to an empty object.
         const endpoint = (rawEndpoint || '')
           .replace(/\./g, '/')
-          .replace(/\/\((.*?)\)$/, '/-$1-');
+          .replace(/\/\(([^/]+)\)/g, '/-$1-');
 
         analogMeta = {
           endpoint,

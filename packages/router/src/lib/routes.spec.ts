@@ -7,6 +7,7 @@ import { createRoutes } from './routes';
 import { createRoutes as createBaseRoutes } from './route-builder';
 import { Files } from './route-files';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
+import { ANALOG_META_KEY } from './endpoints';
 
 describe('routes', () => {
   class RouteComponent {}
@@ -1128,6 +1129,71 @@ describe('routes', () => {
 
       expect(spy).not.toHaveBeenCalledWith(
         expect.stringContaining('resolve to the same route path'),
+      );
+    });
+  });
+
+  describe('page endpoints for grouped routes', () => {
+    async function endpointFor(filename: string) {
+      const files: Files = {
+        [filename]: () => Promise.resolve<RouteExport>({ default: class {} }),
+      };
+
+      // The metadata lands on the routes `loadChildren` resolves to, so walk
+      // the tree and load every branch until one reports an endpoint.
+      const findEndpoint = async (
+        candidates: Route[],
+      ): Promise<string | undefined> => {
+        for (const route of candidates) {
+          const endpoint = (
+            route as Route & {
+              [ANALOG_META_KEY]?: { endpoint: string };
+            }
+          )[ANALOG_META_KEY]?.endpoint;
+
+          if (endpoint) {
+            return endpoint;
+          }
+
+          if (route.loadChildren) {
+            const loaded = (await route.loadChildren()) as Route[];
+            const fromLoaded = await findEndpoint(loaded);
+            if (fromLoaded) {
+              return fromLoaded;
+            }
+          }
+
+          if (route.children) {
+            const fromChildren = await findEndpoint(route.children);
+            if (fromChildren) {
+              return fromChildren;
+            }
+          }
+        }
+
+        return undefined;
+      };
+
+      return findEndpoint(
+        createBaseRoutes(
+          files,
+          (_filename, fileLoader) => fileLoader as () => Promise<RouteExport>,
+        ),
+      );
+    }
+
+    it('should strip a group in the last segment', async () => {
+      expect(await endpointFor('/src/app/pages/(home).page.ts')).toBe(
+        '/pages/-home-',
+      );
+    });
+
+    // The handlers are mounted with every group stripped, so a group before
+    // the last segment has to be stripped here too or the request lands on a
+    // path nothing answers.
+    it('should strip a group before the last segment', async () => {
+      expect(await endpointFor('/src/app/pages/(auth)/sign-up.page.ts')).toBe(
+        '/pages/-auth-/sign-up',
       );
     });
   });
