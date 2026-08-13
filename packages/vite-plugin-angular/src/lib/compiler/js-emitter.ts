@@ -278,14 +278,16 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     // argument list binds to the arrow's *body* (`… => new X(a, b)(args)`)
     // instead of invoking the arrow. Parenthesizing any wrapped callee is
     // always semantically safe.
+    const call = ast.isOptional ? '?.(' : '(';
+
     if (
       ast.fn instanceof o.ArrowFunctionExpr ||
       ast.fn instanceof o.FunctionExpr ||
       ast.fn instanceof o.WrappedNodeExpr
     ) {
-      return '(' + fn + ')(' + args + ')';
+      return '(' + fn + ')' + call + args + ')';
     }
-    return fn + '(' + args + ')';
+    return fn + call + args + ')';
   }
   visitReadVarExpr(ast: o.ReadVarExpr) {
     if (ast.name === 'this') return 'this';
@@ -294,13 +296,17 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitReadPropExpr(ast: o.ReadPropExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
-    return emitReceiverForMemberAccess(ast.receiver, receiver) + '.' + ast.name;
+    return (
+      emitReceiverForMemberAccess(ast.receiver, receiver) +
+      (ast.isOptional ? '?.' : '.') +
+      ast.name
+    );
   }
   visitReadKeyExpr(ast: o.ReadKeyExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
     return (
       emitReceiverForMemberAccess(ast.receiver, receiver) +
-      '[' +
+      (ast.isOptional ? '?.[' : '[') +
       ast.index.visitExpression(this, null) +
       ']'
     );

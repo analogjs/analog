@@ -255,3 +255,45 @@ describe('JSEmitter – operator precedence', () => {
     });
   });
 });
+
+describe('JSEmitter – optional chaining', () => {
+  it('emits an optional property read', () => {
+    const expr = new o.ReadPropExpr(v('a'), 'b', null, null, [], true);
+
+    expect(emitAngularExpr(expr)).toBe('a?.b');
+  });
+
+  it('emits a plain property read when the access is not optional', () => {
+    expect(emitAngularExpr(new o.ReadPropExpr(v('a'), 'b'))).toBe('a.b');
+  });
+
+  it('emits an optional keyed read', () => {
+    const expr = new o.ReadKeyExpr(v('a'), lit(0), null, null, [], true);
+
+    expect(emitAngularExpr(expr)).toBe('a?.[0]');
+  });
+
+  it('emits an optional call', () => {
+    const expr = new o.InvokeFunctionExpr(
+      v('a'),
+      [],
+      null,
+      null,
+      false,
+      [],
+      true,
+    );
+
+    expect(emitAngularExpr(expr)).toBe('a?.()');
+  });
+
+  // The shape behind `{{ user()?.name }}`: reading a property off a call
+  // result. Dropping the operator here reads the property off whatever the
+  // call returned, so a null result threw instead of short-circuiting.
+  it('keeps the operator when reading a property off a call result', () => {
+    const call = new o.InvokeFunctionExpr(v('user'), []);
+    const expr = new o.ReadPropExpr(call, 'name', null, null, [], true);
+
+    expect(emitAngularExpr(expr)).toBe('user()?.name');
+  });
+});
