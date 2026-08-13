@@ -71,6 +71,7 @@ export default defineConfig(async ({ mode, command }) => {
             '/',
             '/cart',
             '/shipping',
+            '/client',
             '/404.html',
             {
               route: '/newsletter',
