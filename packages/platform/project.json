@@ -4,22 +4,12 @@
   "sourceRoot": "packages/platform/src",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": ["vite-plugin-angular", "vite-plugin-nitro"],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
-    "assert-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "node tools/scripts/assert-project-dependency.mts platform build-self vite-plugin-angular:build vite-plugin-nitro:build"
-      }
-    },
     "build-self": {
       "executor": "nx:run-commands",
       "cache": false,
-      "dependsOn": [
-        "assert-deps",
-        "vite-plugin-angular:build",
-        "vite-plugin-nitro:build"
-      ],
+      "dependsOn": ["vite-plugin-angular:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
         "commands": [

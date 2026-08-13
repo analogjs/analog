@@ -1466,9 +1466,6 @@ importers:
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../vite-plugin-angular
-      '@analogjs/vite-plugin-nitro':
-        specifier: workspace:*
-        version: link:../vite-plugin-nitro
       '@babel/core':
         specifier: 'catalog:'
         version: 7.29.0
@@ -1487,6 +1484,9 @@ importers:
       front-matter:
         specifier: 'catalog:'
         version: 4.0.2
+      magic-string:
+        specifier: 'catalog:'
+        version: 0.30.21
       marked:
         specifier: 'catalog:'
         version: 18.0.0
