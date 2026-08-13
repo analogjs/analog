@@ -1,3 +1,9 @@
+# [3.0.0-alpha.69](https://github.com/analogjs/analog/compare/v3.0.0-alpha.68...v3.0.0-alpha.69) (2026-08-13)
+
+### Bug Fixes
+
+- **platform:** make the server-fn transforms self-contained ([78c3bb5](https://github.com/analogjs/analog/commit/78c3bb56eec4fec881ec7e707ee11612bf84fc16))
+
 # [3.0.0-alpha.68](https://github.com/analogjs/analog/compare/v3.0.0-alpha.67...v3.0.0-alpha.68) (2026-08-13)
 
 ### Bug Fixes
