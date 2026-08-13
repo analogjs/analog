@@ -230,6 +230,23 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           refreshContext(nitro.options.rootDir);
         }
 
+        // Nitro's default dev runner answers from a worker, and the response
+        // does not survive the trip back: the server adapter receives a value
+        // it cannot read headers from, so every request Nitro handles hangs
+        // without a status. Run the environment in process until that path is
+        // fixed upstream. An explicit `devServer.runner` or `NITRO_DEV_RUNNER`
+        // still wins.
+        if (
+          nitro.options.dev &&
+          !process.env['NITRO_DEV_RUNNER'] &&
+          !nitro.options.devServer?.runner
+        ) {
+          nitro.options.devServer = {
+            ...nitro.options.devServer,
+            runner: 'self',
+          };
+        }
+
         // Preserve the legacy `@analogjs/vite-plugin-nitro` final output
         // layout so downstream tooling (deploy scripts, docs, the
         // `dist/analog/server` start command) keeps working. nitro/vite's
@@ -541,8 +558,20 @@ function generateSsrServiceVirtual(nitro: Nitro): string {
     return `
 import { fetchViteEnv } from 'nitro/vite/runtime';
 export default {
+  // The dev runner answers from a worker, and a rejection there comes back as
+  // something Nitro cannot turn into a response, so the request hangs with no
+  // status and no message. Answer with the failure instead.
   async fetch(req) {
-    return fetchViteEnv('ssr', req);
+    try {
+      return await fetchViteEnv('ssr', req);
+    } catch (err) {
+      console.error('[analog ssr]', err);
+      const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
+      return new Response(message, {
+        status: 500,
+        headers: { 'content-type': 'text/plain; charset=utf-8' },
+      });
+    }
   },
 };
 `;
