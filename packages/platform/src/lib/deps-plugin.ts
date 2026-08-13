@@ -37,6 +37,19 @@ export function depsPlugin(options?: Options): Plugin[] {
               '@taiga-ui/**',
               '@tanstack/angular-query-experimental',
             ],
+            // The server pre-bundle is resolved separately from the client
+            // one, so a secondary entry point left out of it loads its own
+            // copy of `@angular/core`. `inject()` then runs against a runtime
+            // with no active injection context and SSR fails with NG0203.
+            optimizeDeps: {
+              include: [
+                '@angular/common',
+                '@angular/common/http',
+                ...(Number(VERSION.major) > 15
+                  ? ['@angular/core/rxjs-interop']
+                  : []),
+              ],
+            },
           },
           optimizeDeps: {
             include: [
