@@ -977,8 +977,12 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           return stylesheetResult?.code || '';
         },
-        processWebWorker(workerFile, containingFile) {
-          return '';
+        // Angular's worker transformer only rewrites the `new URL()` specifier
+        // when the returned path differs from the input, so returning it
+        // unchanged opts out and lets Vite handle the worker natively.
+        // Returning '' rewrote every worker URL to `new URL('', import.meta.url)`.
+        processWebWorker(workerFile) {
+          return workerFile;
         },
       },
       (tsCompilerOptions) => {
