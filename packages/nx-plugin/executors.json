@@ -29,16 +29,6 @@
       "implementation": "./src/executors/vitest/vitest.impl",
       "schema": "./src/executors/vitest/schema.json",
       "description": "Test with Vitest"
-    },
-    "application": {
-      "implementation": "../esbuild/application.impl",
-      "schema": "../esbuild/application.schema.json",
-      "description": "Builds an Angular application with Analog file-based routes using the esbuild-based application builder"
-    },
-    "dev-server": {
-      "implementation": "../esbuild/dev-server.impl",
-      "schema": "../esbuild/dev-server.schema.json",
-      "description": "Serves an Angular application with Analog file-based routes using the esbuild-based dev server"
     }
   }
 }

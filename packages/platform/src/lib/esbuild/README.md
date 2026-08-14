@@ -1,9 +1,29 @@
 # Analog file-based routes on the Angular application builder (sketch)
 
-Status: **proof-of-concept sketch.** Covers file-based routing, markdown
-content routes, and SSR/SSG through `@angular/ssr`. The Nitro server
-features — API routes, `.server.ts` page endpoints, form actions, server
-functions, and streaming SSR — are intentionally out of scope.
+Status: **proof-of-concept sketch.** The builders are registered in a
+package-root `builders.json` (see Verification for why) and validated
+against a real Angular v22 build through two fixtures:
+`.esbuild-fixture/` drives `buildApplication` directly via the architect
+testing host, and `apps/esbuild-app` resolves the builders by name
+through Nx (`nx build esbuild-app` / `nx serve esbuild-app`). Covers
+file-based routing, markdown content routes, and SSR/SSG through
+`@angular/ssr`. The Nitro server features — API routes, `.server.ts`
+page endpoints, form actions, server functions, and streaming SSR — are
+intentionally out of scope.
+
+Validated end-to-end with `apps/esbuild-app`:
+
+- Pages compile under AOT through the tsconfig `include`, and each
+  page, the markdown route, and `@analogjs/content` land as separate
+  lazy chunks. The Angular linker processes the Analog FESMs normally —
+  the plugins do not interfere with the CLI's JS transform pipeline.
+- `nx build --watch` rebuilds on file edits, and adding or removing a
+  page triggers a rebuild within a few seconds — plugin `watchDirs` are
+  honored — with route/content discovery re-running on every rebuild
+  (the virtual modules are not stale-cached).
+- `nx serve` serves the app with both plugins active. Rebuild-on-edit
+  did not propagate through the dev server in the validation container
+  even though plain `build --watch` rebuilds fine; see open items.
 
 ## Design
 
@@ -233,19 +253,25 @@ in the nx-plugin's `executors.json` (which sits a directory away from
 the esbuild output). The builders are declared in a package-root
 `builders.json` instead, with `package.json#builders` pointing at it
 and the existing string aliases carried over; `package.json#executors`
-still points at the nx manifest for Nx.
+still points at the nx manifest for Nx. Nx-side resolution has its own
+gotcha, found via `apps/esbuild-app`: the entries must not appear under
+an `executors` manifest key, or Nx loads the architect `Builder` object
+as a plain Nx executor and fails with "implementation is not a
+function".
 
 Not yet exercised: booting the built app in a browser (only bundle
-contents are asserted), and the dev server actually serving.
+contents are asserted).
 
 ## Open items
 
+- Investigate dev-server rebuild propagation: file edits did not reach
+  the served bundles in the validation container even though plain
+  `build --watch` rebuilds (including `watchDirs`), so the gap is in
+  the dev-server layer — possibly this workspace's Vite 8 override
+  meeting `@angular/build`'s expected Vite version. Verify in a
+  standard CLI workspace.
 - Add `@angular-devkit/architect` / `@angular/build` as optional peer
   dependencies.
-- Decide whether the Nx `executors.json` entries should stay (their
-  `../esbuild/…` paths are fine for Nx but rejected by Angular's host,
-  which is why the root `builders.json` exists) or be dropped in favor
-  of the root manifest alone.
 - The package `exports` map does not expose `./src/lib/esbuild/*`, so
   the plugins cannot be imported directly for custom esbuild setups.
   Builder resolution is unaffected (it resolves by file path).
