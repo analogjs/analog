@@ -90,19 +90,26 @@ jobs:
       - name: Pin @angular/compiler and @angular/compiler-cli via pnpm overrides
         # pnpm 11 reads `overrides` from pnpm-workspace.yaml, not from the
         # root package.json `pnpm` field — so the matrix pin must be injected
-        # there. Insert the two entries under the existing `overrides:` block
-        # (appending a fresh block if one isn't present).
+        # there. Replace the two entries in the existing `overrides:` block
+        # (appending a fresh block if one isn't present) — the workspace already
+        # pins them, and a repeated key is a YAML duplicate-mapping-key error.
         run: |
           node -e "
           const fs = require('fs');
           const f = 'pnpm-workspace.yaml';
           const v = '${{ matrix.angular-version }}';
+          const pinned = ['@angular/compiler', '@angular/compiler-cli'];
           const lines = fs.readFileSync(f, 'utf-8').split('\n');
           let i = lines.findIndex(l => l.trim() === 'overrides:');
           if (i < 0) { lines.push('overrides:'); i = lines.length - 1; }
-          lines.splice(i + 1, 0,
+          let end = i + 1;
+          while (end < lines.length && (lines[end].trim() === '' || /^\s/.test(lines[end]))) end++;
+          const kept = lines.slice(i + 1, end).filter(
+            l => !pinned.includes(l.split(':')[0].trim().replace(/['\"]/g, '')));
+          lines.splice(i + 1, end - i - 1,
             \"  '@angular/compiler': '\" + v + \"'\",
-            \"  '@angular/compiler-cli': '\" + v + \"'\");
+            \"  '@angular/compiler-cli': '\" + v + \"'\",
+            ...kept);
           fs.writeFileSync(f, lines.join('\n'));
           console.log(lines.join('\n'));
           "
