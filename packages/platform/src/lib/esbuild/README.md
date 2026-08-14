@@ -105,12 +105,51 @@ export const appConfig = {
 };
 ```
 
+## Verification
+
+`.esbuild-fixture/` is a minimal Angular app driven through the real
+`buildApplication` (Angular v22) via `@angular-devkit/architect`'s
+testing host — `run-build.ts` for a one-shot build, `run-watch.ts` for
+watch mode. Bundle each with esbuild and run on node (the builder's
+dynamic `import('@angular/build')` does not survive a VM-based TS
+loader):
+
+```sh
+cd .esbuild-fixture
+../node_modules/.bin/esbuild run-build.ts --bundle --format=esm \
+  --platform=node --packages=external --outfile=run-build.mjs
+node run-build.mjs
+```
+
+Confirmed against a real build:
+
+- **Plugin ordering** — `codePlugins` resolve `analog:route-files` and
+  `analog:content-files`, and load `.md`, without interference from
+  Angular's own compiler plugin.
+- **AOT** — pages are compiled by the Angular compiler as part of the
+  TS program (`ɵɵdefineComponent` in the output), so `.page.ts` files
+  need no separate compile step.
+- **Code splitting** — Angular reports lazy chunks named `index-page`,
+  `[productId]-page`, and `about-md`, one per route file.
+- **Markdown parity** — the emitted content chunk preserves front
+  matter and contains HTML rendered at build time with prism
+  highlighting applied, matching the Vite `?analog-content-file=true`
+  output shape.
+- **Watch** — adding a page file that nothing imports triggers a
+  rebuild and is picked up, so `watchDirs` drives the add-a-page DX.
+
+Not yet exercised: builder resolution through the Angular CLI /
+Nx by name (`@analogjs/platform:application`), and booting the built
+app in a browser against `withRouteFiles` / `provideContentFiles`.
+Those need a workspace-matched install of the built packages; the DI
+bridges themselves are covered by unit tests in their own packages.
+
 ## Open items
 
-- Register the builders in the published package (merge
-  `builders.json` into the platform builders file emitted at build
-  time) and add `@angular-devkit/architect` / `@angular/build` as
-  optional peer dependencies.
+- Verify the builder registration in `packages/nx-plugin/executors.json`
+  resolves by name from the published layout, and add
+  `@angular-devkit/architect` / `@angular/build` as optional peer
+  dependencies.
 - Ship the ambient `declare module 'analog:*'` declarations in the
   packages instead of asking apps to hand-write them.
 - Pass through marked/shiki/prism options (`markedOptions`,
