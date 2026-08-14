@@ -2,27 +2,27 @@
 
 Status: **proof-of-concept sketch.** The builders are registered in the
 platform package manifest (`packages/nx-plugin/executors.json`) and
-validated end-to-end against a real CLI build via `apps/esbuild-app`
-(`nx build esbuild-app`). Scope is client-side file routing only — the
-Nitro server features (API routes, `.server.ts` page endpoints, form
-actions, server functions, SSR/SSG) are intentionally out of scope.
+validated against a real Angular v22 build through two fixtures:
+`.esbuild-fixture/` drives `buildApplication` directly via the architect
+testing host, and `apps/esbuild-app` resolves the builders by name
+through Nx (`nx build esbuild-app` / `nx serve esbuild-app`). Scope is
+client-side file routing only — the Nitro server features (API routes,
+`.server.ts` page endpoints, form actions, server functions, SSR/SSG)
+are intentionally out of scope.
 
-Validated against `@angular/build` v22 with the `esbuild-app` fixture:
+Validated end-to-end with `apps/esbuild-app`:
 
 - Pages compile under AOT through the tsconfig `include`, and each
   page, the markdown route, and `@analogjs/content` land as separate
   lazy chunks. The Angular linker processes the Analog FESMs normally —
   the plugins do not interfere with the CLI's JS transform pipeline.
-- `nx build --watch` rebuilds on file edits, and route/content
-  discovery re-runs on every rebuild (the virtual modules are not
-  stale-cached), so added/removed pages appear on the next rebuild.
-- `nx serve` serves the app with both plugins active.
-
-Known watch limitations found during validation (open items below):
-adding a new page does not itself trigger a rebuild — the CLI drives
-rebuilds from its own file watcher over known build inputs and ignores
-esbuild plugin `watchDirs` — and dev-server rebuild propagation could
-not be confirmed in the validation sandbox.
+- `nx build --watch` rebuilds on file edits, and adding or removing a
+  page triggers a rebuild within a few seconds — plugin `watchDirs` are
+  honored — with route/content discovery re-running on every rebuild
+  (the virtual modules are not stale-cached).
+- `nx serve` serves the app with both plugins active. Rebuild-on-edit
+  did not propagate through the dev server in the validation container
+  even though plain `build --watch` rebuilds fine; see open items.
 
 ## Design
 
@@ -124,15 +124,58 @@ export const appConfig = {
 };
 ```
 
+## Verification
+
+`.esbuild-fixture/` is a minimal Angular app driven through the real
+`buildApplication` (Angular v22) via `@angular-devkit/architect`'s
+testing host — `run-build.ts` for a one-shot build, `run-watch.ts` for
+watch mode. Bundle each with esbuild and run on node (the builder's
+dynamic `import('@angular/build')` does not survive a VM-based TS
+loader):
+
+```sh
+cd .esbuild-fixture
+../node_modules/.bin/esbuild run-build.ts --bundle --format=esm \
+  --platform=node --packages=external --outfile=run-build.mjs
+node run-build.mjs
+```
+
+Confirmed against a real build:
+
+- **Plugin ordering** — `codePlugins` resolve `analog:route-files` and
+  `analog:content-files`, and load `.md`, without interference from
+  Angular's own compiler plugin.
+- **AOT** — pages are compiled by the Angular compiler as part of the
+  TS program (`ɵɵdefineComponent` in the output), so `.page.ts` files
+  need no separate compile step.
+- **Code splitting** — Angular reports lazy chunks named `index-page`,
+  `[productId]-page`, and `about-md`, one per route file.
+- **Markdown parity** — the emitted content chunk preserves front
+  matter and contains HTML rendered at build time with prism
+  highlighting applied, matching the Vite `?analog-content-file=true`
+  output shape.
+- **Watch** — adding a page file that nothing imports triggers a
+  rebuild and is picked up, so `watchDirs` drives the add-a-page DX.
+
+Builder resolution by name (`@analogjs/platform:application`) is
+exercised by `apps/esbuild-app` through Nx. One manifest gotcha found
+doing so: the entries must live only under the `builders` key of the
+manifest — duplicating them under `executors` makes Nx load the
+architect `Builder` object as an Nx executor and fail with
+"implementation is not a function".
+
+Not yet exercised: booting the built app in a browser against
+`withRouteFiles` / `provideContentFiles`. The DI bridges themselves are
+covered by unit tests in their own packages.
+
 ## Open items
 
-- Watch the page/content directories from the builder wrappers (e.g. a
-  small chokidar watcher that nudges the build) so adding or removing a
-  page triggers a rebuild — the CLI's watcher ignores esbuild plugin
-  `watchDirs`. Until then, any subsequent rebuild picks new pages up.
-- Investigate dev-server rebuild propagation with a custom buildTarget
-  builder name (the dev-server special-cases known application
-  builders); confirmed locally that plain `build --watch` rebuilds.
+- Investigate dev-server rebuild propagation: file edits did not reach
+  the served bundles in the validation container even though plain
+  `build --watch` rebuilds (including `watchDirs`), so the gap is in
+  the dev-server layer — possibly this workspace's Vite 8 override
+  meeting `@angular/build`'s expected Vite version. Verify in a
+  standard CLI workspace.
 - Add `@angular-devkit/architect` / `@angular/build` as optional peer
   dependencies of the platform package.
 - Ship the ambient `declare module 'analog:*'` declarations in the
