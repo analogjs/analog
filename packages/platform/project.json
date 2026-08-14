@@ -20,6 +20,11 @@
             "input": "./packages/platform/skills",
             "glob": "**/*",
             "output": "./skills"
+          },
+          {
+            "input": "./packages/platform/src/lib/esbuild",
+            "glob": "*.json",
+            "output": "./src/lib/esbuild"
           }
         ],
         "updateBuildableProjectDepsInPackageJson": false

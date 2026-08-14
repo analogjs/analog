@@ -1,9 +1,28 @@
 # Analog file-based routes on the Angular application builder (sketch)
 
-Status: **proof-of-concept sketch, not wired into the published package.**
-Scope is client-side file routing only — the Nitro server features
-(API routes, `.server.ts` page endpoints, form actions, server
-functions, SSR/SSG) are intentionally out of scope.
+Status: **proof-of-concept sketch.** The builders are registered in the
+platform package manifest (`packages/nx-plugin/executors.json`) and
+validated end-to-end against a real CLI build via `apps/esbuild-app`
+(`nx build esbuild-app`). Scope is client-side file routing only — the
+Nitro server features (API routes, `.server.ts` page endpoints, form
+actions, server functions, SSR/SSG) are intentionally out of scope.
+
+Validated against `@angular/build` v22 with the `esbuild-app` fixture:
+
+- Pages compile under AOT through the tsconfig `include`, and each
+  page, the markdown route, and `@analogjs/content` land as separate
+  lazy chunks. The Angular linker processes the Analog FESMs normally —
+  the plugins do not interfere with the CLI's JS transform pipeline.
+- `nx build --watch` rebuilds on file edits, and route/content
+  discovery re-runs on every rebuild (the virtual modules are not
+  stale-cached), so added/removed pages appear on the next rebuild.
+- `nx serve` serves the app with both plugins active.
+
+Known watch limitations found during validation (open items below):
+adding a new page does not itself trigger a rebuild — the CLI drives
+rebuilds from its own file watcher over known build inputs and ignores
+esbuild plugin `watchDirs` — and dev-server rebuild propagation could
+not be confirmed in the validation sandbox.
 
 ## Design
 
@@ -107,10 +126,15 @@ export const appConfig = {
 
 ## Open items
 
-- Register the builders in the published package (merge
-  `builders.json` into the platform builders file emitted at build
-  time) and add `@angular-devkit/architect` / `@angular/build` as
-  optional peer dependencies.
+- Watch the page/content directories from the builder wrappers (e.g. a
+  small chokidar watcher that nudges the build) so adding or removing a
+  page triggers a rebuild — the CLI's watcher ignores esbuild plugin
+  `watchDirs`. Until then, any subsequent rebuild picks new pages up.
+- Investigate dev-server rebuild propagation with a custom buildTarget
+  builder name (the dev-server special-cases known application
+  builders); confirmed locally that plain `build --watch` rebuilds.
+- Add `@angular-devkit/architect` / `@angular/build` as optional peer
+  dependencies of the platform package.
 - Ship the ambient `declare module 'analog:*'` declarations in the
   packages instead of asking apps to hand-write them.
 - Pass through marked/shiki/prism options (`markedOptions`,

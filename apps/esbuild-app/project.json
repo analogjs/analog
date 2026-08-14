@@ -1,0 +1,28 @@
+{
+  "name": "esbuild-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/esbuild-app/src",
+  "tags": [],
+  "implicitDependencies": ["platform", "router", "content"],
+  "targets": {
+    "build": {
+      "executor": "@analogjs/platform:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/esbuild-app",
+        "index": "apps/esbuild-app/src/index.html",
+        "browser": "apps/esbuild-app/src/main.ts",
+        "tsConfig": "apps/esbuild-app/tsconfig.app.json",
+        "optimization": false,
+        "outputHashing": "none"
+      }
+    },
+    "serve": {
+      "executor": "@analogjs/platform:dev-server",
+      "options": {
+        "buildTarget": "esbuild-app:build"
+      }
+    }
+  }
+}

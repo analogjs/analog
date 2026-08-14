@@ -2,7 +2,17 @@
   "builders": {
     "vite-dev-server": "@analogjs/vite-plugin-angular:vite-dev-server",
     "vite": "@analogjs/vite-plugin-angular:vite",
-    "vitest": "@analogjs/vitest-angular:test"
+    "vitest": "@analogjs/vitest-angular:test",
+    "application": {
+      "implementation": "../esbuild/application.impl",
+      "schema": "../esbuild/application.schema.json",
+      "description": "Builds an Angular application with Analog file-based routes using the esbuild-based application builder"
+    },
+    "dev-server": {
+      "implementation": "../esbuild/dev-server.impl",
+      "schema": "../esbuild/dev-server.schema.json",
+      "description": "Serves an Angular application with Analog file-based routes using the esbuild-based dev server"
+    }
   },
   "executors": {
     "vite-dev-server": {
