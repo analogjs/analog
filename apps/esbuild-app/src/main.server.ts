@@ -10,6 +10,7 @@ import {
   type ServerRoute,
 } from '@angular/ssr';
 import { createServerRoutePaths } from '@analogjs/router';
+import { provideServerRequestContext } from '@analogjs/router/ssr';
 import routeFiles from 'analog:route-files';
 
 import { AppComponent } from './app/app.component';
@@ -36,7 +37,10 @@ export default function bootstrap(context: BootstrapContext) {
   return bootstrapApplication(
     AppComponent,
     mergeApplicationConfig(appConfig, {
-      providers: [provideServerRendering(withRoutes(serverRoutes))],
+      providers: [
+        provideServerRendering(withRoutes(serverRoutes)),
+        provideServerRequestContext(),
+      ],
     }),
     context,
   );

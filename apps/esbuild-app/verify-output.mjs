@@ -46,9 +46,9 @@ const checks = [
     browserJs.some((c) => c.includes('ɵɵdefineComponent')),
   ],
   [
-    'markdown rendered to HTML at build time with highlighting',
+    'markdown rendered to HTML at build time with shiki highlighting',
     browserJs.some(
-      (c) => c.includes('<h1 id="about">') && c.includes('token keyword'),
+      (c) => c.includes('<h1 id="about">') && c.includes('class="shiki'),
     ),
   ],
   [
@@ -64,7 +64,7 @@ const checks = [
   [
     'ssr renders markdown content',
     aboutHtml.includes('<h1 id="about">About</h1>') &&
-      aboutHtml.includes('class="token keyword"'),
+      aboutHtml.includes('class="shiki'),
   ],
   [
     'ssr applies the front matter title',
@@ -116,6 +116,13 @@ async function checkServer() {
         'server renders a parameterized route per request',
         dynamic.includes('ng-server-context="ssr"') &&
           dynamic.includes('<h1>Product 42</h1>'),
+      ],
+      [
+        // provideServerRequestContext bridges BASE_URL from the Angular
+        // request; prerendered pages have no request, so only the
+        // per-request render carries it.
+        'ssr bridges BASE_URL from the Angular request',
+        dynamic.includes('data-base-url') && dynamic.includes(`>${base}</p>`),
       ],
       [
         'server serves prerendered routes as static output',

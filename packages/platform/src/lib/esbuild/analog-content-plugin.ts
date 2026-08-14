@@ -34,6 +34,7 @@ export interface AnalogContentPluginOptions {
   additionalContentDirs?: string[];
   /**
    * Syntax highlighter used when rendering markdown at build time.
+   * Defaults to 'shiki'.
    */
   highlighter?: 'shiki' | 'prism';
 }
@@ -219,7 +220,7 @@ export function analogContentPlugin(
 
       build.onLoad({ filter: /\.md$/ }, async (args) => {
         markedHighlighter ??= createHighlighter(
-          options?.highlighter ?? 'prism',
+          options?.highlighter ?? 'shiki',
         );
 
         return {

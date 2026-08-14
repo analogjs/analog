@@ -175,7 +175,12 @@ const serverRoutes: ServerRoute[] = createServerRoutePaths(routeFiles).map(
 export default function bootstrap(context: BootstrapContext) {
   return bootstrapApplication(
     AppComponent,
-    { providers: [provideServerRendering(withRoutes(serverRoutes)) /* … */] },
+    {
+      providers: [
+        provideServerRendering(withRoutes(serverRoutes)),
+        provideServerRequestContext(), // from '@analogjs/router/ssr'
+      ],
+    },
     context,
   );
 }
@@ -205,13 +210,22 @@ Notes:
 - `@angular/ssr` rejects requests whose `Host` header is not listed in
   `security.allowedHosts`, so a served app needs its hostnames there.
 
+Analog's `REQUEST` / `RESPONSE` / `BASE_URL` tokens are populated by
+`provideServerRequestContext()` from the `@analogjs/router/ssr` entry
+point, added to the server config's providers. It adapts the web
+`Request` and `ResponseInit` that `@angular/ssr` exposes through
+`@angular/core`'s `REQUEST` / `RESPONSE_INIT` tokens into the
+node-flavored shapes Analog's consumers read — request url/method/
+headers, response status and headers (written through to the
+`ResponseInit` Angular uses to build the response), and the request
+origin as `BASE_URL`. Each token resolves to null outside a server
+request; prerendered pages have no request, so only per-request renders
+carry the context. The entry point lives outside the main entries
+because `@angular/core`'s `REQUEST` token only exists in Angular v19+,
+which the rest of the router does not require.
+
 Still Nitro-only, so unavailable here: `injectLoad` and `.server.ts`
 page endpoints, form actions, server functions, and streaming SSR.
-Analog's `REQUEST` / `RESPONSE` tokens are also unpopulated — they are
-typed against `node:http` for Nitro/h3, whereas `@angular/ssr` exposes a
-web `Request` through `@angular/core`'s own `REQUEST` token. Nothing in
-the supported surface reads them (the cookie interceptor only acts on
-`/_analog/` endpoint requests), so a bridge was left out for now.
 
 ## Verification
 
@@ -289,14 +303,10 @@ contents are asserted).
   standard CLI workspace.
 - Pass through marked/shiki/prism options (`markedOptions`,
   `shikiOptions`, `additionalLangs`) to the content plugin's build-time
-  rendering; only the highlighter choice is exposed for now.
+  rendering; only the highlighter choice (default `shiki`) is exposed
+  for now.
 - Agnostic/mermaid renderer parity for content beyond the default
   markdown renderer path.
 - SSR remaining work:
-  - a bridge populating Analog's `REQUEST` / `RESPONSE` / `BASE_URL`
-    from `@angular/core`'s `REQUEST`, once something in the supported
-    surface needs it; note it cannot be imported unconditionally,
-    since the token does not exist in the older Angular versions the
-    router still supports
   - hydration is asserted only through the transferred state in the
     markup; nothing exercises a browser
