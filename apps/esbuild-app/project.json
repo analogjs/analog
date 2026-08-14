@@ -14,11 +14,13 @@
         "index": "apps/esbuild-app/src/index.html",
         "browser": "apps/esbuild-app/src/main.ts",
         "server": "apps/esbuild-app/src/main.server.ts",
-        "ssr": true,
+        "outputMode": "server",
+        "ssr": { "entry": "apps/esbuild-app/src/server.ts" },
         "prerender": true,
         "tsConfig": "apps/esbuild-app/tsconfig.app.json",
         "optimization": false,
-        "outputHashing": "none"
+        "outputHashing": "none",
+        "security": { "allowedHosts": ["localhost"] }
       }
     },
     "verify": {

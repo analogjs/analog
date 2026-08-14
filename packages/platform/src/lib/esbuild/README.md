@@ -132,10 +132,24 @@ export const appConfig = {
 
 ## SSR and prerendering
 
-SSR runs on `@angular/ssr`, not Nitro. Add `server`, `ssr` and (for SSG)
-`prerender` to the builder options, put the server entry in the
-TypeScript program, and build the server route configuration from the
-same route files:
+SSR runs on `@angular/ssr`, not Nitro. Point `server` at the bootstrap
+entry, `ssr.entry` at a request handler, set `outputMode` to `server`
+(add `prerender` for SSG), list both entries in the TypeScript program,
+and build the server route configuration from the same route files:
+
+```jsonc
+// project.json / angular.json build options
+"server": "src/main.server.ts",
+"outputMode": "server",
+"ssr": { "entry": "src/server.ts" },
+"prerender": true,
+"security": { "allowedHosts": ["localhost"] }
+```
+
+`src/server.ts` is an ordinary `@angular/ssr/node` handler — the same
+one the Angular CLI scaffolds — so nothing Analog-specific is needed
+there. See `apps/esbuild-app/src/server.ts` for a dependency-free
+version built on `node:http` rather than Express.
 
 ```ts
 // src/main.server.ts
@@ -184,6 +198,8 @@ Notes:
 - Type `serverRoutes` as `ServerRoute[]` and build each entry in its own
   branch; a single object literal with a computed `renderMode` widens to
   `RenderMode` and fails to match the discriminated union.
+- `@angular/ssr` rejects requests whose `Host` header is not listed in
+  `security.allowedHosts`, so a served app needs its hostnames there.
 
 Still Nitro-only, so unavailable here: `injectLoad` and `.server.ts`
 page endpoints, form actions, server functions, and streaming SSR.
@@ -239,6 +255,10 @@ Confirmed against a real build:
   route (with highlighting), the front-matter title applied by
   `provideFileRouter`'s meta-tag initializer, and the content TOC
   transferred through `ng-state` for hydration.
+- **Serving** — `nx verify` boots the built server entry and requests a
+  `RenderMode.Server` route, which comes back rendered per request
+  (`ng-server-context="ssr"`, route parameter resolved), while
+  prerendered paths are served as `ssg`.
 
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
@@ -284,7 +304,7 @@ contents are asserted).
     surface needs it; note it cannot be imported unconditionally,
     since the token does not exist in the older Angular versions the
     router still supports
-  - serving through a running server (only prerendered output and
-    bundle contents are asserted)
+  - hydration is asserted only through the transferred state in the
+    markup; nothing exercises a browser
 - Version-gate against Angular majors (v18+ only; v17 used
   `@angular-devkit/build-angular` internals).

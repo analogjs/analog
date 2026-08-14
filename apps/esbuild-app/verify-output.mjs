@@ -5,6 +5,7 @@
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { spawn } from 'node:child_process';
 
 const outDir = new URL('../../dist/apps/esbuild-app/', import.meta.url)
   .pathname;
@@ -77,6 +78,49 @@ const checks = [
       aboutHtml.includes('<h1 id="about">'),
   ],
 ];
+
+/**
+ * Boots the built server entry and requests a route configured as
+ * RenderMode.Server, which can only be produced per request.
+ */
+async function checkServer() {
+  const port = 4173;
+  const server = spawn(process.execPath, [join(outDir, 'server/server.mjs')], {
+    env: { ...process.env, PORT: String(port) },
+    stdio: 'ignore',
+  });
+
+  try {
+    const base = `http://localhost:${port}`;
+    for (let attempt = 0; attempt < 40; attempt++) {
+      try {
+        await fetch(base);
+        break;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+    }
+
+    const dynamic = await (await fetch(`${base}/products/42`)).text();
+    const prerendered = await (await fetch(`${base}/about`)).text();
+
+    return [
+      [
+        'server renders a parameterized route per request',
+        dynamic.includes('ng-server-context="ssr"') &&
+          dynamic.includes('<h1>Product 42</h1>'),
+      ],
+      [
+        'server serves prerendered routes as static output',
+        prerendered.includes('ng-server-context="ssg"'),
+      ],
+    ];
+  } finally {
+    server.kill();
+  }
+}
+
+checks.push(...(await checkServer()));
 
 let failed = 0;
 for (const [name, ok] of checks) {
