@@ -11,23 +11,27 @@ function getSlug(filename: string) {
   return base === 'index' ? '' : base;
 }
 
+export function toContentFilesList(
+  contentFiles: Record<string, Record<string, any>>,
+): ContentFile[] {
+  return Object.keys(contentFiles).map((filename) => {
+    const attributes = contentFiles[filename];
+    const slug = attributes['slug'];
+
+    return {
+      filename,
+      attributes,
+      slug: slug ? encodeURI(slug) : encodeURI(getSlug(filename)),
+    };
+  });
+}
+
 export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
   '@analogjs/content Content Files List',
   {
     providedIn: 'root',
     factory() {
-      const contentFiles = getContentFilesList();
-
-      return Object.keys(contentFiles).map((filename) => {
-        const attributes = contentFiles[filename];
-        const slug = attributes['slug'];
-
-        return {
-          filename,
-          attributes,
-          slug: slug ? encodeURI(slug) : encodeURI(getSlug(filename)),
-        };
-      });
+      return toContentFilesList(getContentFilesList());
     },
   },
 );

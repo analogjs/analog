@@ -7,6 +7,7 @@ import type {
 import type { JsonObject } from '@angular-devkit/core';
 import { resolve } from 'node:path';
 
+import { analogContentPlugin } from './analog-content-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
 
 /**
@@ -32,6 +33,10 @@ export async function* serveAnalogApplication(
   yield* executeDevServerBuilder(options as never, context, {
     buildPlugins: [
       analogRouterPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+      }),
+      analogContentPlugin({
         workspaceRoot: context.workspaceRoot,
         projectRoot,
       }),

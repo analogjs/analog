@@ -3,6 +3,8 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
+import { discoverContentFiles } from './analog-content-plugin.js';
+
 /**
  * Module specifier applications import to receive the discovered
  * route files map:
@@ -30,6 +32,11 @@ export interface AnalogRouterPluginOptions {
    * to scan for page routes.
    */
   additionalPagesDirs?: string[];
+  /**
+   * Additional directories relative to the workspace root
+   * to scan for markdown content routes.
+   */
+  additionalContentDirs?: string[];
 }
 
 function normalizeSlashes(path: string): string {
@@ -72,7 +79,12 @@ export function createRouteFilesModule(
 ): string {
   const entries = routeFiles.map((file) => {
     const key = file.startsWith(root) ? file.replace(root, '') : file;
-    return `  "${key}": () => import('${file}')`;
+    // Markdown route modules resolve to the raw content string, matching
+    // the Vite ?analog-content-file=true import shape that createRoutes
+    // hands to toMarkdownModule.
+    return file.endsWith('.md')
+      ? `  "${key}": () => import('${file}').then((m) => m.default)`
+      : `  "${key}": () => import('${file}')`;
   });
 
   return `export default {\n${entries.join(',\n')}\n};\n`;
@@ -116,19 +128,31 @@ export function analogRouterPlugin(
       }));
 
       build.onLoad({ filter: /.*/, namespace: ROUTE_FILES_NAMESPACE }, () => {
-        const routeFiles = discoverRouteFiles(
-          root,
-          workspaceRoot,
-          options?.additionalPagesDirs,
-        );
+        const routeFiles = [
+          ...discoverRouteFiles(
+            root,
+            workspaceRoot,
+            options?.additionalPagesDirs,
+          ),
+          // Markdown content routes merge into the same map, mirroring
+          // ANALOG_CONTENT_ROUTE_FILES in the Vite router plugin. Loading
+          // .md imports requires analogContentPlugin to be registered.
+          ...discoverContentFiles(
+            root,
+            workspaceRoot,
+            options?.additionalContentDirs,
+          ),
+        ];
 
         const watchDirs = [
           `${root}/app/routes`,
           `${root}/src/app/routes`,
           `${root}/src/app/pages`,
-          ...(options?.additionalPagesDirs || []).map(
-            (dir) => `${workspaceRoot}${dir}`,
-          ),
+          `${root}/src/content`,
+          ...[
+            ...(options?.additionalPagesDirs || []),
+            ...(options?.additionalContentDirs || []),
+          ].map((dir) => `${workspaceRoot}${dir}`),
         ].filter((dir) => existsSync(dir));
 
         return {

@@ -12,6 +12,10 @@ export {
   withMarkdownRenderer,
   MERMAID_IMPORT_TOKEN,
 } from './lib/provide-content';
+export {
+  provideContentFiles,
+  ContentFilesInput,
+} from './lib/provide-content-files';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';
 export { parseRawContentFile } from './lib/parse-raw-content-file';

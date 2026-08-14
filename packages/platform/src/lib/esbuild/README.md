@@ -22,12 +22,41 @@ linker), route files are surfaced through a virtual module:
    array is empty outside of Vite, so the file routes are the effective
    route table, and all `provideFileRouter` features (meta tags, cookie
    interceptor, API prefix) keep working.
-3. Builder wrappers pass the plugin to `@angular/build` (v18+) through
+3. Builder wrappers pass the plugins to `@angular/build` (v18+) through
    the public extension points: `buildApplication(options, context,
 { codePlugins })` and `executeDevServerBuilder(options, context,
 { buildPlugins })`. `routerDefine` replaces the whole
    `import.meta.env` object so `DEV`/`SSR`/bracket-access reads in the
    router runtime are statically defined.
+
+Markdown content follows the same shape:
+
+4. `analogContentPlugin` (esbuild) resolves `analog:content-files` to
+   two maps: `contentFilesList` (front matter attributes parsed at build
+   time — the `?analog-content-list=true` equivalent) and `contentFiles`
+   (lazy raw content — the `?analog-content-file=true` equivalent). It
+   also loads `.md` files as text with the markdown body pre-rendered to
+   HTML at build time via the same shared marked + shiki/prism setup the
+   Vite content plugin uses, front matter preserved.
+5. `provideContentFiles({ list, files })` (new public API in
+   `@analogjs/content`) overrides the glob-backed
+   `CONTENT_FILES_LIST_TOKEN` / `CONTENT_FILES_TOKEN` factories with the
+   supplied maps — pure DI, no module patching — so `injectContent`,
+   `injectContentFiles`, and the content loaders work unchanged.
+6. Markdown route files merge into the `analog:route-files` map (values
+   resolve to the raw content string), so `createRoutes` turns them into
+   routes through the existing `toMarkdownModule` path. The router
+   plugin's `.md` imports rely on `analogContentPlugin` being registered
+   alongside it, which the builder wrappers always do.
+
+Virtual modules and the type system: the `analog:*` imports typecheck
+only because of the ambient `declare module` declarations below — the
+Angular build runs a real TypeScript program that would otherwise fail
+with TS2307, while at bundle time the plugins' `onResolve` intercepts
+the specifiers before any filesystem resolution. This is the same
+pattern as `vite/client`'s ambient types for `import.meta.glob`; a
+published version should ship these declarations in the packages so
+apps reference them from tsconfig `types` instead of hand-writing them.
 
 ## App wiring
 
@@ -48,15 +77,31 @@ declare module 'analog:route-files' {
   const files: import('@analogjs/router').Files;
   export default files;
 }
+
+declare module 'analog:content-files' {
+  export const contentFilesList: Record<string, Record<string, unknown>>;
+  export const contentFiles: Record<string, () => Promise<string>>;
+}
 ```
 
 ```ts
 // app.config.ts
 import { provideFileRouter, withRouteFiles } from '@analogjs/router';
+import {
+  provideContent,
+  provideContentFiles,
+  withMarkdownRenderer,
+} from '@analogjs/content';
 import routeFiles from 'analog:route-files';
+import { contentFilesList, contentFiles } from 'analog:content-files';
 
 export const appConfig = {
-  providers: [provideFileRouter(withRouteFiles(routeFiles))],
+  providers: [
+    provideFileRouter(withRouteFiles(routeFiles)),
+    // Only needed when using markdown content
+    provideContent(withMarkdownRenderer()),
+    provideContentFiles({ list: contentFilesList, files: contentFiles }),
+  ],
 };
 ```
 
@@ -66,9 +111,13 @@ export const appConfig = {
   `builders.json` into the platform builders file emitted at build
   time) and add `@angular-devkit/architect` / `@angular/build` as
   optional peer dependencies.
-- Markdown content routes (`?analog-content-file=true` pipeline) are
-  not handled; needs a text-loader resolve/load pair plus runtime
-  rendering wiring.
+- Ship the ambient `declare module 'analog:*'` declarations in the
+  packages instead of asking apps to hand-write them.
+- Pass through marked/shiki/prism options (`markedOptions`,
+  `shikiOptions`, `additionalLangs`) to the content plugin's build-time
+  rendering; only the highlighter choice is exposed for now.
+- Agnostic/mermaid renderer parity for content beyond the default
+  markdown renderer path.
 - `DEV` in `routerDefine` is flipped via build configurations for now;
   the dev-server wrapper cannot override the build target's `define`.
 - Per-bundle `SSR` define (browser vs. server) once `@angular/ssr`

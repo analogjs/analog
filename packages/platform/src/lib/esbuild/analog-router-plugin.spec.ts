@@ -23,6 +23,8 @@ describe('analogRouterPlugin', () => {
       'export {};',
     );
     writeFileSync(join(root, 'src/app/pages/not-a-page.ts'), 'export {};');
+    mkdirSync(join(root, 'src/content'), { recursive: true });
+    writeFileSync(join(root, 'src/content/about.md'), '# About\n');
   });
 
   afterAll(() => {
@@ -71,5 +73,9 @@ describe('analogRouterPlugin', () => {
     expect(loaded.contents).toContain('/src/app/pages/index.page.ts');
     expect(loaded.resolveDir).toBe(root);
     expect(loaded.watchDirs).toContain(`${root}/src/app/pages`);
+    expect(loaded.watchDirs).toContain(`${root}/src/content`);
+    expect(loaded.contents).toContain(
+      `"/src/content/about.md": () => import('${root}/src/content/about.md').then((m) => m.default)`,
+    );
   });
 });
