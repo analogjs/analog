@@ -15,6 +15,7 @@
         "assets": [
           "packages/platform/*.md",
           "packages/platform/plugin.json",
+          "packages/platform/builders.json",
           "packages/platform/migrations/migration.json",
           {
             "input": "./packages/platform/skills",

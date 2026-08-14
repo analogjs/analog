@@ -138,18 +138,40 @@ Confirmed against a real build:
 - **Watch** — adding a page file that nothing imports triggers a
   rebuild and is picked up, so `watchDirs` drives the add-a-page DX.
 
-Not yet exercised: builder resolution through the Angular CLI /
-Nx by name (`@analogjs/platform:application`), and booting the built
-app in a browser against `withRouteFiles` / `provideContentFiles`.
-Those need a workspace-matched install of the built packages; the DI
-bridges themselves are covered by unit tests in their own packages.
+`run-cli.ts` goes further: it reads `angular.json` and resolves the
+builder by name through the same `WorkspaceNodeModulesArchitectHost`
+the Angular CLI uses, against the **built** `@analogjs/platform`, with
+the fixture app wiring routes and content through the public DI
+bridges. Confirmed there:
+
+- **Name resolution** — `@analogjs/platform:application` and
+  `:dev-server` both resolve to the built implementations.
+- **DI bridges in a real bundle** — `provideFileRouter(withRouteFiles(…))`
+  plus `provideContentFiles(…)` compile and bundle, emitting per-route
+  chunks alongside lazy `@analogjs/router` / `@analogjs/content` chunks.
+
+That check found a packaging bug: Angular's host rejects builder
+implementation paths starting with `..`, so the entries could not live
+in the nx-plugin's `executors.json` (which sits a directory away from
+the esbuild output). The builders are declared in a package-root
+`builders.json` instead, with `package.json#builders` pointing at it
+and the existing string aliases carried over; `package.json#executors`
+still points at the nx manifest for Nx.
+
+Not yet exercised: booting the built app in a browser (only bundle
+contents are asserted), and the dev server actually serving.
 
 ## Open items
 
-- Verify the builder registration in `packages/nx-plugin/executors.json`
-  resolves by name from the published layout, and add
-  `@angular-devkit/architect` / `@angular/build` as optional peer
+- Add `@angular-devkit/architect` / `@angular/build` as optional peer
   dependencies.
+- Decide whether the Nx `executors.json` entries should stay (their
+  `../esbuild/…` paths are fine for Nx but rejected by Angular's host,
+  which is why the root `builders.json` exists) or be dropped in favor
+  of the root manifest alone.
+- The package `exports` map does not expose `./src/lib/esbuild/*`, so
+  the plugins cannot be imported directly for custom esbuild setups.
+  Builder resolution is unaffected (it resolves by file path).
 - Ship the ambient `declare module 'analog:*'` declarations in the
   packages instead of asking apps to hand-write them.
 - Pass through marked/shiki/prism options (`markedOptions`,
