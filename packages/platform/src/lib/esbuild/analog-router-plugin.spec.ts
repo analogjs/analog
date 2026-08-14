@@ -51,12 +51,49 @@ describe('analogRouterPlugin', () => {
     expect(code).toContain('"/src/app/pages/products/[productId].page.ts"');
   });
 
+  it.each([
+    ['browser', { ngServerMode: 'false' }, false],
+    ['server via ngServerMode', { ngServerMode: 'true' }, true],
+  ])('defines import.meta.env per bundle (%s)', (_name, define, expected) => {
+    const initialOptions: Record<string, unknown> = { define: { ...define } };
+    const build = {
+      initialOptions,
+      onResolve: () => undefined,
+      onLoad: () => undefined,
+    } as unknown as PluginBuild;
+
+    analogRouterPlugin({ workspaceRoot: root, dev: true }).setup(build);
+
+    const env = JSON.parse(
+      (initialOptions['define'] as Record<string, string>)['import.meta.env'],
+    );
+    expect(env.SSR).toBe(expected);
+    expect(env.DEV).toBe(true);
+  });
+
+  it('treats a node platform bundle as the server bundle', () => {
+    const initialOptions: Record<string, unknown> = { platform: 'node' };
+    const build = {
+      initialOptions,
+      onResolve: () => undefined,
+      onLoad: () => undefined,
+    } as unknown as PluginBuild;
+
+    analogRouterPlugin({ workspaceRoot: root }).setup(build);
+
+    const env = JSON.parse(
+      (initialOptions['define'] as Record<string, string>)['import.meta.env'],
+    );
+    expect(env).toEqual({ DEV: false, SSR: true });
+  });
+
   it('resolves and loads the virtual route files module', async () => {
     const hooks: {
       resolve?: [unknown, (args: unknown) => unknown];
       load?: [unknown, (args: unknown) => OnLoadResult];
     } = {};
     const build = {
+      initialOptions: {},
       onResolve: (opts: unknown, cb: never) => (hooks.resolve = [opts, cb]),
       onLoad: (opts: unknown, cb: never) => (hooks.load = [opts, cb]),
     } as unknown as PluginBuild;

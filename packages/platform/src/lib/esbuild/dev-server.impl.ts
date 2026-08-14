@@ -35,6 +35,7 @@ export async function* serveAnalogApplication(
       analogRouterPlugin({
         workspaceRoot: context.workspaceRoot,
         projectRoot,
+        dev: true,
       }),
       analogContentPlugin({
         workspaceRoot: context.workspaceRoot,

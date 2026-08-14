@@ -25,9 +25,15 @@ linker), route files are surfaced through a virtual module:
 3. Builder wrappers pass the plugins to `@angular/build` (v18+) through
    the public extension points: `buildApplication(options, context,
 { codePlugins })` and `executeDevServerBuilder(options, context,
-{ buildPlugins })`. `routerDefine` replaces the whole
-   `import.meta.env` object so `DEV`/`SSR`/bracket-access reads in the
-   router runtime are statically defined.
+{ buildPlugins })`. `import.meta.env` is replaced as a whole object so
+   `DEV`/`SSR`/bracket-access reads in the router runtime are statically
+   defined. The builder emits a browser and a server bundle from one set
+   of options, and `define` is shared between them, so the plugin sets
+   `import.meta.env` from inside `setup()` — which runs once per esbuild
+   build — detecting the server bundle the same way Angular does, via
+   its `ngServerMode` override. `SSR` must be right per bundle:
+   `request-context.ts` reads `window` behind a `!SSR` guard, and the
+   content package uses `SSR` to await content and transfer the TOC.
 
 Markdown content follows the same shape:
 
@@ -149,6 +155,9 @@ bridges. Confirmed there:
 - **DI bridges in a real bundle** — `provideFileRouter(withRouteFiles(…))`
   plus `provideContentFiles(…)` compile and bundle, emitting per-route
   chunks alongside lazy `@analogjs/router` / `@analogjs/content` chunks.
+- **Per-bundle env** — with `ssr: true` the browser bundle gets
+  `{ DEV: false, SSR: false }` and the server bundle
+  `{ DEV: false, SSR: true }`.
 
 That check found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
@@ -179,9 +188,17 @@ contents are asserted), and the dev server actually serving.
   rendering; only the highlighter choice is exposed for now.
 - Agnostic/mermaid renderer parity for content beyond the default
   markdown renderer path.
-- `DEV` in `routerDefine` is flipped via build configurations for now;
-  the dev-server wrapper cannot override the build target's `define`.
-- Per-bundle `SSR` define (browser vs. server) once `@angular/ssr`
-  support is explored.
+- SSR beyond the env flags is unfinished. What is missing:
+  - a `analog:server-routes` bridge producing `ServerRoute[]` with
+    `RenderMode` (and `getPrerenderParams` for `[param]` routes) for
+    `@angular/ssr`; Analog expresses this through Nitro's
+    `PrerenderOptions` today, which does not apply here
+  - an adapter supplying `REQUEST` / `RESPONSE` / `BASE_URL` from
+    Angular's request context, since `provideServerContext` is typed
+    against `node:http` and wired for Nitro/h3
+  - the fixture only writes the server bundle; nothing renders through
+    it yet
+  - `injectLoad` and `.server.ts` page endpoints stay Nitro-only, so
+    this path server-renders without Analog's page data loading
 - Version-gate against Angular majors (v18+ only; v17 used
   `@angular-devkit/build-angular` internals).

@@ -79,18 +79,39 @@ const devServer = await architectHost.resolveBuilder(
   '@analogjs/platform:dev-server',
 );
 
+// import.meta.env is applied per bundle, so SSR must differ between the
+// browser and server outputs.
+function envOf(dir: string): string | undefined {
+  const bundleDir = join(fixtureRoot, 'dist-cli', dir);
+  for (const f of readdirSync(bundleDir)) {
+    if (!f.endsWith('.js') && !f.endsWith('.mjs')) continue;
+    const match = readFileSync(join(bundleDir, f), 'utf8').match(
+      /define_import_meta_env_default = (\{[^}]*\})/,
+    );
+    if (match) return match[1];
+  }
+  return undefined;
+}
+
+const browserEnv = envOf('browser');
+const serverEnv = envOf('server');
+
 console.log('=== assertions');
 console.log('resolved by name from built package:', !!info?.import);
 console.log('router markdown route path bundled:', usesFileRouter);
 console.log('content files bundled:', usesContentFiles);
 console.log('route chunks emitted:', lazyPages.length);
 console.log('dev-server builder resolves by name:', !!devServer?.import);
+console.log('browser import.meta.env:', browserEnv);
+console.log('server  import.meta.env:', serverEnv);
 
 const ok =
   !!info?.import &&
   !!devServer?.import &&
   usesFileRouter &&
   usesContentFiles &&
-  lazyPages.length >= 3;
+  lazyPages.length >= 3 &&
+  browserEnv?.includes('SSR: false') === true &&
+  serverEnv?.includes('SSR: true') === true;
 console.log('=== ALL ASSERTIONS PASS:', ok);
 process.exit(ok ? 0 : 1);
