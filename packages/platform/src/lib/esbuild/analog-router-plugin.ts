@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
 import { discoverContentFiles } from './analog-content-plugin.js';
+import { setupDiscoveryManifest } from './discovery-manifest.js';
 
 /**
  * Module specifier applications import to receive the discovered
@@ -129,9 +130,9 @@ function isServerBundle(initialOptions: {
 /**
  * Esbuild plugin that resolves the `analog:route-files` virtual module
  * to a map of lazily imported route files. The route file map is
- * regenerated on rebuilds, and the page directories are registered as
- * watch directories so adding or removing a page triggers a rebuild
- * in watch mode.
+ * regenerated on rebuilds, and a discovery manifest kept fresh by a
+ * filesystem watcher makes adding or removing a route file trigger a
+ * rebuild in watch mode and the dev server.
  */
 export function analogRouterPlugin(
   options?: AnalogRouterPluginOptions,
@@ -142,6 +143,16 @@ export function analogRouterPlugin(
   const root = normalizeSlashes(
     resolve(workspaceRoot, options?.projectRoot ?? '.'),
   );
+  const watchDirs = [
+    `${root}/app/routes`,
+    `${root}/src/app/routes`,
+    `${root}/src/app/pages`,
+    `${root}/src/content`,
+    ...[
+      ...(options?.additionalPagesDirs || []),
+      ...(options?.additionalContentDirs || []),
+    ].map((dir) => `${workspaceRoot}${dir}`),
+  ];
 
   return {
     name: 'analog-router',
@@ -156,6 +167,24 @@ export function analogRouterPlugin(
           ...options?.env,
         }),
       };
+
+      // Not under a dot-directory: the Angular watcher ignores those.
+      const manifestImport = setupDiscoveryManifest(
+        `${workspaceRoot}/node_modules/@analogjs/esbuild-manifests/route-files.json`,
+        watchDirs,
+        () => [
+          ...discoverRouteFiles(
+            root,
+            workspaceRoot,
+            options?.additionalPagesDirs,
+          ),
+          ...discoverContentFiles(
+            root,
+            workspaceRoot,
+            options?.additionalContentDirs,
+          ),
+        ],
+      );
 
       build.onResolve({ filter: /^analog:route-files$/ }, () => ({
         path: ROUTE_FILES_ID,
@@ -179,22 +208,14 @@ export function analogRouterPlugin(
           ),
         ];
 
-        const watchDirs = [
-          `${root}/app/routes`,
-          `${root}/src/app/routes`,
-          `${root}/src/app/pages`,
-          `${root}/src/content`,
-          ...[
-            ...(options?.additionalPagesDirs || []),
-            ...(options?.additionalContentDirs || []),
-          ].map((dir) => `${workspaceRoot}${dir}`),
-        ].filter((dir) => existsSync(dir));
-
         return {
-          contents: createRouteFilesModule(routeFiles, root),
+          // The manifest import makes route discovery a watchable build
+          // input, so adding or removing a route file rebuilds.
+          contents: manifestImport + createRouteFilesModule(routeFiles, root),
           loader: 'js',
           resolveDir: root,
-          watchDirs,
+          // For esbuild's native watch mode.
+          watchDirs: watchDirs.filter((dir) => existsSync(dir)),
         };
       });
     },

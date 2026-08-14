@@ -16,13 +16,18 @@ Validated end-to-end with `apps/esbuild-app`:
   page, the markdown route, and `@analogjs/content` land as separate
   lazy chunks. The Angular linker processes the Analog FESMs normally —
   the plugins do not interfere with the CLI's JS transform pipeline.
-- `nx build --watch` rebuilds on file edits, and adding or removing a
-  page triggers a rebuild within a few seconds — plugin `watchDirs` are
-  honored — with route/content discovery re-running on every rebuild
-  (the virtual modules are not stale-cached).
-- `nx serve` serves the app with both plugins active. Rebuild-on-edit
-  did not propagate through the dev server in the validation container
-  even though plain `build --watch` rebuilds fine; see open items.
+- `nx build --watch` and `nx serve` rebuild on file edits, and adding
+  or removing a page rebuilds within a few seconds and updates the
+  route map — driven by a discovery manifest (see Design), since the
+  Angular builder's watcher sees neither plugin `watchDirs` nor
+  directories in general (a directory listed as a watch file fires once
+  and goes dead).
+- `nx serve` serves the app with both plugins active, with rebuilds
+  reaching the served bundles and live reload on. Watching and
+  `liveReload` are defaulted by the builder wrapper: Angular's dev
+  server takes those defaults from its JSON schema, which the
+  pass-through schema does not provide — without them the inner build
+  ran unwatched and rebuilds never propagated.
 
 ## Design
 
@@ -32,9 +37,16 @@ linker), route files are surfaced through a virtual module:
 
 1. `analogRouterPlugin` (esbuild) resolves `analog:route-files` to a
    generated module mapping route file keys to `() => import(...)`
-   entries. esbuild code-splits each page into a lazy chunk. Page
-   directories are registered as `watchDirs` so adding/removing a page
-   triggers a rebuild in watch mode.
+   entries. esbuild code-splits each page into a lazy chunk. The module
+   also imports a discovery manifest — a JSON file listing the
+   discovered route files, kept fresh by a recursive `fs.watch` on the
+   route/content directories — which makes discovery a watchable build
+   input: the Angular builder's watcher tracks only plain input files
+   (plugin `watchDirs`/`watchFiles` never reach it, and a directory
+   listed as a watch file fires once and goes dead), so a changed
+   manifest is what makes adding or removing a page rebuild in watch
+   mode and the dev server. The watchers are unref'd so one-shot builds
+   still exit.
 2. `withRouteFiles(routeFiles)` (new public API in `@analogjs/router`)
    feeds that map into `createRoutes` via the `ROUTES` multi-provider —
    the same mechanism as `withExtraRoutes`. The glob-based `routes`
@@ -234,9 +246,10 @@ by name and builds through the real `buildApplication` (Angular v22).
 `nx verify esbuild-app` builds it and asserts the output:
 
 ```sh
-nx build esbuild-app           # or: nx serve esbuild-app
-nx verify esbuild-app          # builds, then checks the emitted bundles and HTML
-nx verify-browser esbuild-app  # boots the server and drives Chromium via Playwright
+nx build esbuild-app             # or: nx serve esbuild-app
+nx verify esbuild-app            # builds, then checks the emitted bundles and HTML
+nx verify-browser esbuild-app    # boots the server and drives Chromium via Playwright
+nx verify-dev-server esbuild-app # serves, then edits and adds pages and polls the served bundles
 ```
 
 Confirmed against a real build:
@@ -254,11 +267,12 @@ Confirmed against a real build:
 - **Code splitting** — Angular reports lazy chunks named `index-page`,
   `[productId]-page`, and `about-md`, one per route file.
 - **Markdown parity** — the emitted content chunk preserves front
-  matter and contains HTML rendered at build time with prism
+  matter and contains HTML rendered at build time with shiki
   highlighting applied, matching the Vite `?analog-content-file=true`
   output shape.
-- **Watch** — adding a page file that nothing imports triggers a
-  rebuild and is picked up, so `watchDirs` drives the add-a-page DX.
+- **Watch** — file edits rebuild, and adding or removing a page file
+  that nothing imports rebuilds and updates the route map, in both
+  `build --watch` and the dev server, driven by the discovery manifest.
 - **DI bridges in a real bundle** — `provideFileRouter(withRouteFiles(…))`
   plus `provideContentFiles(…)` compile and bundle, emitting per-route
   chunks alongside lazy `@analogjs/router` / `@analogjs/content` chunks.
@@ -305,12 +319,6 @@ markup.
 
 ## Open items
 
-- Investigate dev-server rebuild propagation: file edits did not reach
-  the served bundles in the validation container even though plain
-  `build --watch` rebuilds (including `watchDirs`), so the gap is in
-  the dev-server layer — possibly this workspace's Vite 8 override
-  meeting `@angular/build`'s expected Vite version. Verify in a
-  standard CLI workspace.
 - Pass through marked/shiki/prism options (`markedOptions`,
   `shikiOptions`, `additionalLangs`) to the content plugin's build-time
   rendering; only the highlighter choice (default `shiki`) is exposed

@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
 import type { MarkedContentHighlighter } from '../content/marked/marked-content-highlighter.js';
+import { setupDiscoveryManifest } from './discovery-manifest.js';
 
 /**
  * Module specifier applications import to receive the discovered
@@ -191,6 +192,18 @@ export function analogContentPlugin(
   return {
     name: 'analog-content',
     setup(build) {
+      // Not under a dot-directory: the Angular watcher ignores those.
+      const manifestImport = setupDiscoveryManifest(
+        `${workspaceRoot}/node_modules/@analogjs/esbuild-manifests/content-files.json`,
+        contentDirs(root, workspaceRoot, options?.additionalContentDirs),
+        () =>
+          discoverContentFiles(
+            root,
+            workspaceRoot,
+            options?.additionalContentDirs,
+          ),
+      );
+
       build.onResolve({ filter: /^analog:content-files$/ }, () => ({
         path: CONTENT_FILES_ID,
         namespace: CONTENT_FILES_NAMESPACE,
@@ -206,9 +219,14 @@ export function analogContentPlugin(
           );
 
           return {
-            contents: await createContentFilesModule(contentFiles, root),
+            // The manifest import makes content discovery a watchable
+            // build input, so adding or removing content rebuilds.
+            contents:
+              manifestImport +
+              (await createContentFilesModule(contentFiles, root)),
             loader: 'js',
             resolveDir: root,
+            // For esbuild's native watch mode.
             watchDirs: contentDirs(
               root,
               workspaceRoot,
