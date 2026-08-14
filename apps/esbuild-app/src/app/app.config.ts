@@ -1,4 +1,7 @@
-import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  ApplicationConfig,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { provideFileRouter, withRouteFiles } from '@analogjs/router';
 import {
   provideContent,
@@ -8,12 +11,11 @@ import {
 import routeFiles from 'analog:route-files';
 import { contentFilesList, contentFiles } from 'analog:content-files';
 
-import { AppComponent } from './app/app.component';
-
-bootstrapApplication(AppComponent, {
+export const appConfig: ApplicationConfig = {
   providers: [
-    provideFileRouter(withRouteFiles(routeFiles as never)),
+    provideZonelessChangeDetection(),
+    provideFileRouter(withRouteFiles(routeFiles)),
     provideContent(withMarkdownRenderer()),
     provideContentFiles({ list: contentFilesList, files: contentFiles }),
   ],
-});
+};

@@ -2,14 +2,13 @@
 
 Status: **proof-of-concept sketch.** The builders are registered in a
 package-root `builders.json` (see Verification for why) and validated
-against a real Angular v22 build through two fixtures:
-`.esbuild-fixture/` drives `buildApplication` directly via the architect
-testing host, and `apps/esbuild-app` resolves the builders by name
-through Nx (`nx build esbuild-app` / `nx serve esbuild-app`). Covers
-file-based routing, markdown content routes, and SSR/SSG through
-`@angular/ssr`. The Nitro server features — API routes, `.server.ts`
-page endpoints, form actions, server functions, and streaming SSR — are
-intentionally out of scope.
+against a real Angular v22 build by `apps/esbuild-app`, which resolves
+them by name (`nx build esbuild-app` / `nx serve esbuild-app`, with
+`nx verify esbuild-app` asserting the output). Covers file-based
+routing, markdown content routes, and SSR/SSG through `@angular/ssr`.
+The Nitro server features — API routes, `.server.ts` page endpoints,
+form actions, server functions, and streaming SSR — are intentionally
+out of scope.
 
 Validated end-to-end with `apps/esbuild-app`:
 
@@ -196,21 +195,20 @@ the supported surface reads them (the cookie interceptor only acts on
 
 ## Verification
 
-`.esbuild-fixture/` is a minimal Angular app driven through the real
-`buildApplication` (Angular v22) via `@angular-devkit/architect`'s
-testing host — `run-build.ts` for a one-shot build, `run-watch.ts` for
-watch mode. Bundle each with esbuild and run on node (the builder's
-dynamic `import('@angular/build')` does not survive a VM-based TS
-loader):
+`apps/esbuild-app` is a minimal Angular app that resolves the builders
+by name and builds through the real `buildApplication` (Angular v22).
+`nx verify esbuild-app` builds it and asserts the output:
 
 ```sh
-cd .esbuild-fixture
-../node_modules/.bin/esbuild run-build.ts --bundle --format=esm \
-  --platform=node --packages=external --outfile=run-build.mjs
-node run-build.mjs
+nx build esbuild-app     # or: nx serve esbuild-app
+nx verify esbuild-app    # builds, then checks the emitted bundles and HTML
 ```
 
 Confirmed against a real build:
+
+- **Name resolution** — `@analogjs/platform:application` and
+  `:dev-server` resolve from the built package through Nx and the
+  Angular CLI's own resolution path.
 
 - **Plugin ordering** — `codePlugins` resolve `analog:route-files` and
   `analog:content-files`, and load `.md`, without interference from
@@ -226,18 +224,13 @@ Confirmed against a real build:
   output shape.
 - **Watch** — adding a page file that nothing imports triggers a
   rebuild and is picked up, so `watchDirs` drives the add-a-page DX.
-
-`run-cli.ts` goes further: it reads `angular.json` and resolves the
-builder by name through the same `WorkspaceNodeModulesArchitectHost`
-the Angular CLI uses, against the **built** `@analogjs/platform`, with
-the fixture app wiring routes and content through the public DI
-bridges. Confirmed there:
-
-- **Name resolution** — `@analogjs/platform:application` and
-  `:dev-server` both resolve to the built implementations.
 - **DI bridges in a real bundle** — `provideFileRouter(withRouteFiles(…))`
   plus `provideContentFiles(…)` compile and bundle, emitting per-route
   chunks alongside lazy `@analogjs/router` / `@analogjs/content` chunks.
+- **Stable heading ids** — the marked heading-id slugger is stateful and
+  the setup is a module singleton, so the content plugin resets it per
+  render; otherwise a file rendered for both bundles gets different ids
+  in each, and the client would disagree with the SSR output.
 - **Per-bundle env** — with `ssr: true` the browser bundle gets
   `{ DEV: false, SSR: false }` and the server bundle
   `{ DEV: false, SSR: true }`.
@@ -247,7 +240,7 @@ bridges. Confirmed there:
   `provideFileRouter`'s meta-tag initializer, and the content TOC
   transferred through `ng-state` for hydration.
 
-That check found a packaging bug: Angular's host rejects builder
+Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
 in the nx-plugin's `executors.json` (which sits a directory away from
 the esbuild output). The builders are declared in a package-root

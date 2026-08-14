@@ -13,9 +13,19 @@
         "outputPath": "dist/apps/esbuild-app",
         "index": "apps/esbuild-app/src/index.html",
         "browser": "apps/esbuild-app/src/main.ts",
+        "server": "apps/esbuild-app/src/main.server.ts",
+        "ssr": true,
+        "prerender": true,
         "tsConfig": "apps/esbuild-app/tsconfig.app.json",
         "optimization": false,
         "outputHashing": "none"
+      }
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node apps/esbuild-app/verify-output.mjs"
       }
     },
     "serve": {

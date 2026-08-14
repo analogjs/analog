@@ -141,6 +141,13 @@ export async function renderContentFile(
 
   const { getMarkedSetup } = await import('../content/marked/index.js');
   const markedSetup = getMarkedSetup({ mangle: true }, highlighter);
+
+  // The marked setup is a singleton and its heading-id slugger keeps
+  // state, so a file rendered for both the browser and the server bundle
+  // would otherwise get different heading ids in each.
+  const { resetHeadings } = await import('marked-gfm-heading-id');
+  resetHeadings();
+
   const mdContent = (await markedSetup
     .getMarkedInstance()
     .parse(body)) as unknown as string;

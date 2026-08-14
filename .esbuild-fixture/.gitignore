@@ -1,5 +1,0 @@
-dist/
-dist-cli/
-dist-watch/
-*.mjs
-.angular/
