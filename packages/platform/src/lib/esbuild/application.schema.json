@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "Analog application builder",
+  "description": "All options are forwarded to the @angular/build:application builder.",
+  "type": "object",
+  "additionalProperties": true
+}

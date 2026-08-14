@@ -7,7 +7,7 @@ import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
 import { API_PREFIX } from '@analogjs/router/tokens';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 
-import { routes } from './routes';
+import { routes, createRoutes, Files } from './routes';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
 import { cookieInterceptor } from './cookie-interceptor';
 
@@ -61,5 +61,20 @@ export function withExtraRoutes(routes: Routes): RouterFeatures {
   return {
     ɵkind: 100 as number,
     ɵproviders: [{ provide: ROUTES, useValue: routes, multi: true }],
+  };
+}
+
+/**
+ * Provides file-based routes from an explicitly supplied files map,
+ * for build integrations that cannot inject the route file glob into
+ * this package's module graph (e.g. esbuild-based builds), where the
+ * glob-derived `routes` array resolves to an empty array.
+ */
+export function withRouteFiles(files: Files): RouterFeatures {
+  return {
+    ɵkind: 101 as number,
+    ɵproviders: [
+      { provide: ROUTES, useValue: createRoutes(files), multi: true },
+    ],
   };
 }

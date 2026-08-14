@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "Analog dev-server builder",
+  "description": "All options are forwarded to the @angular/build:dev-server builder.",
+  "type": "object",
+  "additionalProperties": true
+}
