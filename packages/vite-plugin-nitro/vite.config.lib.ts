@@ -38,9 +38,17 @@ export default defineConfig({
     minify: false,
     emptyOutDir: false,
     lib: {
+      // One entry per package.json export subpath. The key becomes the chunk
+      // [name], so the emitted path matches the export target on every
+      // platform — non-entry modules fall back to preserveModulesRoot, which
+      // drops the leading `src/` segment on Windows.
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
         'src/lib/utils/debug': resolve(pkgDir, 'src/lib/utils/debug.ts'),
+        'src/lib/utils/derive-server-fn-id': resolve(
+          pkgDir,
+          'src/lib/utils/derive-server-fn-id.ts',
+        ),
       },
       formats: ['es' as const],
     },
