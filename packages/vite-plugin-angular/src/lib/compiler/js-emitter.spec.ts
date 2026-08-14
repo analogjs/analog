@@ -15,6 +15,12 @@ const HAS_EXPONENTIATION =
   'number';
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
+// `isOptional` reached the output AST in v22. Before that the constructor
+// argument is ignored and safe navigation is lowered before it gets here, so
+// the operator has nothing to round-trip through.
+const HAS_OPTIONAL_CHAINING =
+  'isOptional' in
+  new o.ReadPropExpr(new o.ReadVarExpr('a'), 'b', null, null, [], true);
 
 function bin(op: o.BinaryOperator, lhs: o.Expression, rhs: o.Expression) {
   return new o.BinaryOperatorExpr(op, lhs, rhs);
@@ -256,7 +262,7 @@ describe('JSEmitter – operator precedence', () => {
   });
 });
 
-describe('JSEmitter – optional chaining', () => {
+describe.skipIf(!HAS_OPTIONAL_CHAINING)('JSEmitter – optional chaining', () => {
   it('emits an optional property read', () => {
     const expr = new o.ReadPropExpr(v('a'), 'b', null, null, [], true);
 
