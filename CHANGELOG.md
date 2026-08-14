@@ -1,3 +1,9 @@
+# [3.0.0-alpha.70](https://github.com/analogjs/analog/compare/v3.0.0-alpha.69...v3.0.0-alpha.70) (2026-08-14)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** emit the server-fn-id export as a build entry ([d7dc36a](https://github.com/analogjs/analog/commit/d7dc36a4e4163a0f3b0c70c5969beb0d72024659))
+
 # [3.0.0-alpha.69](https://github.com/analogjs/analog/compare/v3.0.0-alpha.68...v3.0.0-alpha.69) (2026-08-13)
 
 ### Bug Fixes
