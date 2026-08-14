@@ -6,11 +6,23 @@ import {
 } from '@angular/ssr/node';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createServer } from 'node:http';
-import { join } from 'node:path';
+import { extname, join } from 'node:path';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const angularApp = new AngularNodeAppEngine();
+
+// Browsers enforce strict MIME checking for module scripts, so assets
+// must be served with a real content type.
+const MIME_TYPES: Record<string, string> = {
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.css': 'text/css',
+  '.html': 'text/html',
+  '.json': 'application/json',
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain',
+};
 
 async function handler(
   req: IncomingMessage,
@@ -22,7 +34,9 @@ async function handler(
 
   // Serve built assets directly; anything else is rendered by Angular.
   if (pathname !== '/' && existsSync(asset) && statSync(asset).isFile()) {
-    res.writeHead(200);
+    res.writeHead(200, {
+      'content-type': MIME_TYPES[extname(asset)] ?? 'application/octet-stream',
+    });
     createReadStream(asset).pipe(res);
     return;
   }

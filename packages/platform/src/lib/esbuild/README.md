@@ -234,8 +234,9 @@ by name and builds through the real `buildApplication` (Angular v22).
 `nx verify esbuild-app` builds it and asserts the output:
 
 ```sh
-nx build esbuild-app     # or: nx serve esbuild-app
-nx verify esbuild-app    # builds, then checks the emitted bundles and HTML
+nx build esbuild-app           # or: nx serve esbuild-app
+nx verify esbuild-app          # builds, then checks the emitted bundles and HTML
+nx verify-browser esbuild-app  # boots the server and drives Chromium via Playwright
 ```
 
 Confirmed against a real build:
@@ -290,8 +291,17 @@ an `executors` manifest key, or Nx loads the architect `Builder` object
 as a plain Nx executor and fails with "implementation is not a
 function".
 
-Not yet exercised: booting the built app in a browser (only bundle
-contents are asserted).
+`nx verify-browser esbuild-app` closes the loop in a real browser: it
+boots the built server and drives Chromium (Playwright) to assert that
+served pages carry hydration annotations and hydrate cleanly under
+`provideClientHydration()` (zero console errors — a mismatch would emit
+NG05xx), that client-side navigation lazy-loads both a page route and a
+markdown content route without a full reload, and that the bridged
+`BASE_URL` survives client takeover via `TransferState`. Two things the
+browser run forced on the fixture: assets must be served with real MIME
+types (module scripts are rejected otherwise), and any server-only
+value rendered into the DOM must be transferred so hydration sees equal
+markup.
 
 ## Open items
 
@@ -307,6 +317,3 @@ contents are asserted).
   for now.
 - Agnostic/mermaid renderer parity for content beyond the default
   markdown renderer path.
-- SSR remaining work:
-  - hydration is asserted only through the transferred state in the
-    markup; nothing exercises a browser

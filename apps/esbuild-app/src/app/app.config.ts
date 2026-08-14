@@ -2,6 +2,7 @@ import {
   ApplicationConfig,
   provideZonelessChangeDetection,
 } from '@angular/core';
+import { provideClientHydration } from '@angular/platform-browser';
 import { provideFileRouter, withRouteFiles } from '@analogjs/router';
 import {
   provideContent,
@@ -14,6 +15,7 @@ import { contentFilesList, contentFiles } from 'analog:content-files';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    provideClientHydration(),
     provideFileRouter(withRouteFiles(routeFiles)),
     provideContent(withMarkdownRenderer()),
     provideContentFiles({ list: contentFilesList, files: contentFiles }),

@@ -30,6 +30,13 @@
         "command": "node apps/esbuild-app/verify-output.mjs"
       }
     },
+    "verify-browser": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node apps/esbuild-app/verify-browser.mjs"
+      }
+    },
     "serve": {
       "executor": "@analogjs/platform:dev-server",
       "options": {
