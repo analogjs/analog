@@ -35,6 +35,13 @@ export interface DefaultRouteMeta extends Omit<
   resolve?: { [key: string | symbol]: ResolveFn<unknown> };
   title?: string | ResolveFn<string>;
   meta?: MetaTag[] | ResolveFn<MetaTag[]>;
+  /**
+   * Returns the parameter sets to prerender for a parameterized route
+   * when server routes are built with createServerRoutePaths.
+   */
+  getPrerenderParams?: () =>
+    | Promise<Record<string, string>[]>
+    | Record<string, string>[];
 }
 
 export interface RedirectRouteMeta {

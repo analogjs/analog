@@ -24,7 +24,7 @@
           },
           {
             "input": "./packages/platform/src/lib/esbuild",
-            "glob": "*.json",
+            "glob": "*.{json,d.ts}",
             "output": "./src/lib/esbuild"
           }
         ],

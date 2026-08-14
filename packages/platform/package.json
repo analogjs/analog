@@ -6,6 +6,13 @@
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
+    "./esbuild": {
+      "types": "./src/lib/esbuild/index.d.ts",
+      "default": "./src/lib/esbuild/index.js"
+    },
+    "./esbuild-env": {
+      "types": "./src/lib/esbuild/env.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -35,6 +42,8 @@
     "vitefu": "^1.1.2"
   },
   "peerDependencies": {
+    "@angular-devkit/architect": ">=0.1800.0",
+    "@angular/build": ">=18.0.0",
     "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23",
     "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23",
     "@nx/vite": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23",
@@ -52,6 +61,12 @@
     }
   },
   "peerDependenciesMeta": {
+    "@angular-devkit/architect": {
+      "optional": true
+    },
+    "@angular/build": {
+      "optional": true
+    },
     "@nx/angular": {
       "optional": true
     },

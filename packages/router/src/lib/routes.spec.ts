@@ -2,7 +2,12 @@ import { Route, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { expect, vi } from 'vitest';
 import { RouteExport, RouteMeta } from './models';
-import { createRoutePaths, createRoutes, Files } from './routes';
+import {
+  createRoutePaths,
+  createRoutes,
+  createServerRoutePaths,
+  Files,
+} from './routes';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
 describe('routes', () => {
@@ -782,6 +787,62 @@ Testing nested markdown routes.
       };
 
       expect(createRoutePaths(files)).toEqual(['about']);
+    });
+  });
+
+  describe('createServerRoutePaths', () => {
+    it('marks dynamic paths and loads prerender params from routeMeta', async () => {
+      const files: Files = {
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({} as RouteExport),
+        '/src/app/pages/products/[productId].page.ts': () =>
+          Promise.resolve({
+            routeMeta: {
+              getPrerenderParams: () => [
+                { productId: '1' },
+                { productId: '2' },
+              ],
+            },
+          } as unknown as RouteExport),
+      };
+
+      const entries = createServerRoutePaths(files);
+      const about = entries.find((e) => e.path === 'about')!;
+      const product = entries.find((e) => e.path === 'products/:productId')!;
+
+      expect(about.isDynamic).toBe(false);
+      expect(about.getPrerenderParams).toBeUndefined();
+      expect(product.isDynamic).toBe(true);
+      expect(await product.getPrerenderParams!()).toEqual([
+        { productId: '1' },
+        { productId: '2' },
+      ]);
+    });
+
+    it('resolves to an empty params list when routeMeta does not define one', async () => {
+      const files: Files = {
+        '/src/app/pages/products/[productId].page.ts': () =>
+          Promise.resolve({} as RouteExport),
+      };
+
+      const product = createServerRoutePaths(files).find(
+        (e) => e.path === 'products/:productId',
+      )!;
+
+      expect(await product.getPrerenderParams!()).toEqual([]);
+    });
+
+    it('gives dynamic markdown routes no params loader', () => {
+      const files: Files = {
+        '/src/content/[slug].md': () => Promise.resolve('' as never),
+      };
+
+      const entry = createServerRoutePaths(files).find(
+        (e) => e.path === ':slug',
+      )!;
+
+      expect(entry.isDynamic).toBe(true);
+      expect(entry.getPrerenderParams).toBeUndefined();
     });
   });
 });

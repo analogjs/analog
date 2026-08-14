@@ -130,8 +130,26 @@ async function createHighlighter(
  * Renders a markdown file the same way as the Vite
  * `?analog-content-file=true` transform: front matter is preserved and
  * the body is rendered to HTML at build time.
+ *
+ * Renders are serialized: the browser and server bundles build
+ * concurrently, and the marked setup is a singleton whose heading-id
+ * slugger keeps module-level state — an interleaved reset and parse
+ * would give the same file different heading ids in each bundle.
  */
-export async function renderContentFile(
+export function renderContentFile(
+  path: string,
+  highlighter: MarkedContentHighlighter,
+): Promise<string> {
+  const result = renderQueue.then(() =>
+    renderContentFileUnlocked(path, highlighter),
+  );
+  renderQueue = result.catch(() => undefined);
+  return result;
+}
+
+let renderQueue: Promise<unknown> = Promise.resolve();
+
+async function renderContentFileUnlocked(
   path: string,
   highlighter: MarkedContentHighlighter,
 ): Promise<string> {
@@ -142,9 +160,6 @@ export async function renderContentFile(
   const { getMarkedSetup } = await import('../content/marked/index.js');
   const markedSetup = getMarkedSetup({ mangle: true }, highlighter);
 
-  // The marked setup is a singleton and its heading-id slugger keeps
-  // state, so a file rendered for both the browser and the server bundle
-  // would otherwise get different heading ids in each.
   const { resetHeadings } = await import('marked-gfm-heading-id');
   resetHeadings();
 

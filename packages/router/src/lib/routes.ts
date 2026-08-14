@@ -173,6 +173,75 @@ export function createRoutePaths(files: Files): string[] {
   return [...new Set(paths)];
 }
 
+export type ServerRoutePath = {
+  path: string;
+  /**
+   * True when the path contains a parameter or wildcard segment, so its
+   * concrete URLs are not known at build time.
+   */
+  isDynamic: boolean;
+  /**
+   * For dynamic paths backed by a page module, loads the parameter sets
+   * to prerender from the module's routeMeta.getPrerenderParams,
+   * resolving to an empty list when the module does not define it — the
+   * shape @angular/ssr expects for a prerendered route with parameters,
+   * where an empty list falls back to per-request rendering.
+   */
+  getPrerenderParams?: () => Promise<Record<string, string>[]>;
+};
+
+/**
+ * Builds server route path entries from the files map for use with
+ * @angular/ssr's server route configuration. Returns the same paths as
+ * createRoutePaths, with dynamic module-backed paths carrying a
+ * getPrerenderParams loader wired to the route's routeMeta.
+ */
+export function createServerRoutePaths(files: Files): ServerRoutePath[] {
+  const moduleByPath = new Map<string, () => Promise<RouteExport>>();
+
+  for (const filename of Object.keys(files)) {
+    // Markdown routeMeta comes from front matter and cannot define a
+    // params function.
+    if (filename.endsWith('.md')) {
+      continue;
+    }
+
+    const path = toRawPath(filename)
+      .split('/')
+      .map(toSegment)
+      .filter((segment) => segment !== '')
+      .join('/');
+
+    moduleByPath.set(path, files[filename] as () => Promise<RouteExport>);
+  }
+
+  return createRoutePaths(files).map((path) => {
+    const isDynamic = path.includes(':') || path.includes('*');
+    const module = moduleByPath.get(path);
+
+    if (!isDynamic || !module) {
+      return { path, isDynamic };
+    }
+
+    return {
+      path,
+      isDynamic,
+      getPrerenderParams: async () => {
+        const m = await module();
+        const routeMeta = m.routeMeta as
+          | {
+              getPrerenderParams?: () =>
+                | Promise<Record<string, string>[]>
+                | Record<string, string>[];
+            }
+          | undefined;
+
+        return (await routeMeta?.getPrerenderParams?.()) ?? [];
+      },
+    };
+  });
+}
+
 function createOptionalCatchAllMatcher(paramName: string): UrlMatcher {
   return (segments) => {
     if (segments.length === 0) {

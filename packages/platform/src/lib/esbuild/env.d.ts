@@ -1,3 +1,9 @@
+/**
+ * Ambient declarations for the analog:* virtual modules resolved by the
+ * Analog esbuild plugins. Reference from an application tsconfig with:
+ *
+ *   "types": ["@analogjs/platform/esbuild-env"]
+ */
 declare module 'analog:route-files' {
   const files: import('@analogjs/router').Files;
   export default files;

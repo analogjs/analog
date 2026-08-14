@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": []
+    "types": ["@analogjs/platform/esbuild-env"]
   },
   "files": ["src/main.ts", "src/main.server.ts", "src/server.ts"],
   "include": ["src/**/*.d.ts", "src/app/pages/**/*.page.ts"]

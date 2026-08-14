@@ -79,9 +79,11 @@ only because of the ambient `declare module` declarations below — the
 Angular build runs a real TypeScript program that would otherwise fail
 with TS2307, while at bundle time the plugins' `onResolve` intercepts
 the specifiers before any filesystem resolution. This is the same
-pattern as `vite/client`'s ambient types for `import.meta.glob`; a
-published version should ship these declarations in the packages so
-apps reference them from tsconfig `types` instead of hand-writing them.
+pattern as `vite/client`'s ambient types for `import.meta.glob`. The
+declarations ship with the package: apps add
+`"types": ["@analogjs/platform/esbuild-env"]` to their tsconfig. The
+plugins themselves are also importable from `@analogjs/platform/esbuild`
+for custom esbuild setups.
 
 ## App wiring
 
@@ -92,21 +94,12 @@ apps reference them from tsconfig `types` instead of hand-writing them.
 ```
 
 ```jsonc
-// tsconfig.app.json — pages must be part of the TypeScript program
+// tsconfig.app.json — pages must be part of the TypeScript program,
+// and the shipped analog:* declarations must be referenced
+"compilerOptions": {
+  "types": ["@analogjs/platform/esbuild-env"]
+},
 "include": ["src/**/*.d.ts", "src/**/*.page.ts"]
-```
-
-```ts
-// src/analog-routes.d.ts
-declare module 'analog:route-files' {
-  const files: import('@analogjs/router').Files;
-  export default files;
-}
-
-declare module 'analog:content-files' {
-  export const contentFilesList: Record<string, Record<string, unknown>>;
-  export const contentFiles: Record<string, () => Promise<string>>;
-}
 ```
 
 ```ts
@@ -159,19 +152,24 @@ import {
   RenderMode,
   type ServerRoute,
 } from '@angular/ssr';
-import {
-  createRoutePaths,
-  provideFileRouter,
-  withRouteFiles,
-} from '@analogjs/router';
+import { createServerRoutePaths } from '@analogjs/router';
 import routeFiles from 'analog:route-files';
 
-// Static paths prerender; paths with parameters or wildcards render per
-// request, since their values are not known at build time.
-const serverRoutes: ServerRoute[] = createRoutePaths(routeFiles).map((path) =>
-  path.includes(':') || path.includes('*')
-    ? { path, renderMode: RenderMode.Server }
-    : { path, renderMode: RenderMode.Prerender },
+// Static paths prerender. Dynamic module-backed paths prerender the
+// parameter sets their routeMeta.getPrerenderParams provides and fall
+// back to per-request rendering for anything else; dynamic paths with
+// no module render per request.
+const serverRoutes: ServerRoute[] = createServerRoutePaths(routeFiles).map(
+  (route) =>
+    !route.isDynamic
+      ? { path: route.path, renderMode: RenderMode.Prerender }
+      : route.getPrerenderParams
+        ? {
+            path: route.path,
+            renderMode: RenderMode.Prerender,
+            getPrerenderParams: route.getPrerenderParams,
+          }
+        : { path: route.path, renderMode: RenderMode.Server },
 );
 
 export default function bootstrap(context: BootstrapContext) {
@@ -183,11 +181,17 @@ export default function bootstrap(context: BootstrapContext) {
 }
 ```
 
-`createRoutePaths` (new in `@analogjs/router`) returns the full path of
-every route file using the same filename rules as `createRoutes`,
-including intermediate parent paths — nested route files produce a
-parent route even with no layout file for that segment, and Angular
-rejects a server configuration that omits it.
+`createServerRoutePaths` (new in `@analogjs/router`, alongside the
+string-only `createRoutePaths`) returns the full path of every route
+file using the same filename rules as `createRoutes`, including
+intermediate parent paths — nested route files produce a parent route
+even with no layout file for that segment, and Angular rejects a server
+configuration that omits it. Dynamic module-backed entries carry a
+`getPrerenderParams` loader that reads the page's
+`routeMeta.getPrerenderParams` (new optional `RouteMeta` field),
+resolving to an empty list when the page does not define one —
+`@angular/ssr`'s default `PrerenderFallback.Server` then renders those
+paths per request.
 
 Notes:
 
@@ -283,22 +287,12 @@ contents are asserted).
   the dev-server layer — possibly this workspace's Vite 8 override
   meeting `@angular/build`'s expected Vite version. Verify in a
   standard CLI workspace.
-- Add `@angular-devkit/architect` / `@angular/build` as optional peer
-  dependencies.
-- The package `exports` map does not expose `./src/lib/esbuild/*`, so
-  the plugins cannot be imported directly for custom esbuild setups.
-  Builder resolution is unaffected (it resolves by file path).
-- Ship the ambient `declare module 'analog:*'` declarations in the
-  packages instead of asking apps to hand-write them.
 - Pass through marked/shiki/prism options (`markedOptions`,
   `shikiOptions`, `additionalLangs`) to the content plugin's build-time
   rendering; only the highlighter choice is exposed for now.
 - Agnostic/mermaid renderer parity for content beyond the default
   markdown renderer path.
 - SSR remaining work:
-  - `getPrerenderParams` for `[param]` routes, so they can be
-    prerendered instead of only server rendered; the render-mode choice
-    is currently the app's to make, and could be read from `routeMeta`
   - a bridge populating Analog's `REQUEST` / `RESPONSE` / `BASE_URL`
     from `@angular/core`'s `REQUEST`, once something in the supported
     surface needs it; note it cannot be imported unconditionally,
@@ -306,5 +300,3 @@ contents are asserted).
     router still supports
   - hydration is asserted only through the transferred state in the
     markup; nothing exercises a browser
-- Version-gate against Angular majors (v18+ only; v17 used
-  `@angular-devkit/build-angular` internals).

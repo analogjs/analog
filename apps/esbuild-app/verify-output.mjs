@@ -30,6 +30,7 @@ function envOf(dir) {
 const browserJs = jsFiles(browserDir).map((f) => read(browserDir, f));
 const indexHtml = read(browserDir, 'index.html');
 const aboutHtml = read(join(browserDir, 'about'), 'index.html');
+const productOneHtml = read(join(browserDir, 'products/1'), 'index.html');
 
 const checks = [
   [
@@ -70,6 +71,12 @@ const checks = [
     aboutHtml.includes('<title>About</title>'),
   ],
   ['ssr transfers state for hydration', aboutHtml.includes('id="ng-state"')],
+  [
+    // routeMeta.getPrerenderParams on [productId].page.ts lists 1 and 2,
+    // surfaced through createServerRoutePaths.
+    'parameterized route prerenders params from routeMeta',
+    productOneHtml.includes('<h1>Product 1</h1>'),
+  ],
   [
     // The marked heading-id slugger is stateful; without a reset per
     // render the same file gets different ids in each bundle.

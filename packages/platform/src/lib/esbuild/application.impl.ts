@@ -9,6 +9,7 @@ import { resolve } from 'node:path';
 
 import { analogContentPlugin } from './analog-content-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
+import { loadAngularBuild } from './load-angular-build.js';
 
 type ApplicationBuilderOptions = JsonObject & {
   define?: Record<string, string>;
@@ -24,9 +25,7 @@ export async function* buildAnalogApplication(
   options: ApplicationBuilderOptions,
   context: BuilderContext,
 ): AsyncIterable<BuilderOutput> {
-  const { buildApplication } = await (Function(
-    'return import("@angular/build")',
-  )() as Promise<typeof import('@angular/build')>);
+  const { buildApplication } = await loadAngularBuild();
 
   const projectMetadata = await context.getProjectMetadata(context.target!);
   const projectRoot = resolve(
