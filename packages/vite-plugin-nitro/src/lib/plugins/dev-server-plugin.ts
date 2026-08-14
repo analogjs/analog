@@ -10,13 +10,13 @@ import {
 } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { createEvent, sendWebResponse } from 'h3';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
-import { NitroRouteRules } from 'nitropack';
+import type { NitroRouteRules } from 'nitro/types';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { registerI18nWatcher } from '../utils/register-i18n-watcher.js';
+import { writeWebResponseToNode } from '../utils/node-web-bridge.js';
 import { Options } from '../options.js';
 import { detectLocaleFromRoute, setHtmlLang } from '../utils/i18n-prerender.js';
 
@@ -37,6 +37,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       isTest = isTest ? isTest : mode === 'test';
       return {
+        appType: 'custom',
         resolve: {
           alias: {
             '~analog/entry-server':
@@ -94,7 +95,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             }
 
             if (result instanceof Response) {
-              sendWebResponse(createEvent(req, res), result);
+              await writeWebResponseToNode(res, result);
               return;
             }
 
@@ -147,6 +148,7 @@ function remove_html_middlewares(server: ViteDevServer['middlewares']) {
     'viteIndexHtmlMiddleware',
     'vite404Middleware',
     'viteSpaFallbackMiddleware',
+    'viteHtmlFallbackMiddleware',
   ];
   for (let i = server.stack.length - 1; i > 0; i--) {
     const handler = server.stack[i]?.handle;

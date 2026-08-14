@@ -4,6 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.32.0",
   "dependencies": {
+    "@analogjs/content": "workspace:*",
+    "@analogjs/platform": "workspace:*",
+    "@analogjs/router": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*",
     "tailwindcss": "^4.2.2"
   }
 }

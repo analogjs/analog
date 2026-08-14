@@ -22,9 +22,8 @@ export type ServerFnInterceptorFn = (
   next: ServerFnNext,
 ) => Promise<unknown> | unknown;
 
-export const SERVER_FN_INTERCEPTORS = new InjectionToken<
-  ServerFnInterceptorFn[]
->('SERVER_FN_INTERCEPTORS');
+export const SERVER_FN_INTERCEPTORS: InjectionToken<ServerFnInterceptorFn[]> =
+  new InjectionToken<ServerFnInterceptorFn[]>('SERVER_FN_INTERCEPTORS');
 
 export interface ServerFnsFeature {
   providers: Provider[];

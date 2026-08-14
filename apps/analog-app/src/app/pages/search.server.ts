@@ -1,12 +1,11 @@
 import type { PageServerLoad } from '@analogjs/router';
-import { getQuery } from 'h3';
 
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search'] || ''}`,
+    searchTerm,
   };
 }

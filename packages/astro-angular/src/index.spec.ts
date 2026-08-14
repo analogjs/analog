@@ -1,5 +1,31 @@
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import type { Plugin } from 'vite';
+
 import astroPlugin from './index';
+
+vi.mock('@analogjs/vite-plugin-angular', () => ({
+  default: () => ({ name: 'angular-mock' }),
+}));
+
+vi.mock('@angular/core', () => ({
+  enableProdMode: vi.fn(),
+}));
+
+vi.mock('vite', () => ({
+  rolldownVersion: undefined,
+}));
+
+function registerMocks(rolldownVersion?: string) {
+  vi.doMock('@analogjs/vite-plugin-angular', () => ({
+    default: () => ({ name: 'angular-mock' }),
+  }));
+  vi.doMock('@angular/core', () => ({
+    enableProdMode: vi.fn(),
+  }));
+  vi.doMock('vite', () => ({
+    rolldownVersion,
+  }));
+}
 
 function getVitePlugins(): Plugin[] {
   const integration = astroPlugin();
@@ -20,47 +46,61 @@ function getVitePlugins(): Plugin[] {
   return plugins;
 }
 
-describe('angularVitePlugin', () => {
-  it('should return astro configurations', () => {
-    expect(astroPlugin().name).toEqual('@analogjs/astro-angular');
-    expect(astroPlugin().hooks).toStrictEqual({
+describe('astro-angular plugin', () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it('should return astro configurations', async () => {
+    registerMocks();
+    const mod = await import('./index');
+
+    expect(mod.default().name).toEqual('@analogjs/astro-angular');
+    expect(mod.default().hooks).toStrictEqual({
       'astro:config:setup': expect.anything(),
       'astro:config:done': expect.anything(),
     });
   });
 
-  describe('analogjs-astro-client-ngservermode plugin', () => {
-    it('should set ngServerMode to false for the client environment', () => {
-      const plugins = getVitePlugins();
-      const plugin = plugins.find(
-        (p) => (p as Plugin).name === 'analogjs-astro-client-ngservermode',
-      ) as Plugin & {
-        configEnvironment: (
-          name: string,
-        ) => Record<string, unknown> | undefined;
+  describe('vite configuration', () => {
+    it('should use esbuild config key when rolldownVersion is not available', async () => {
+      registerMocks();
+      const mod = await import('./index');
+      const plugin = mod.default();
+
+      let viteConfig: any;
+      const mockSetup = {
+        addRenderer: vi.fn(),
+        updateConfig: vi.fn(function (config: any) {
+          viteConfig = config.vite;
+        }),
       };
 
-      expect(plugin).toBeDefined();
+      plugin.hooks['astro:config:setup'](mockSetup);
 
-      const result = plugin.configEnvironment('client');
-
-      expect(result).toEqual({
-        define: { ngServerMode: 'false' },
-      });
+      expect(viteConfig).toHaveProperty('esbuild');
+      expect(viteConfig).not.toHaveProperty('oxc');
+      expect(viteConfig.esbuild.jsxDev).toBe(true);
     });
 
-    it('should return undefined for non-client environments', () => {
-      const plugins = getVitePlugins();
-      const plugin = plugins.find(
-        (p) => (p as Plugin).name === 'analogjs-astro-client-ngservermode',
-      ) as Plugin & {
-        configEnvironment: (
-          name: string,
-        ) => Record<string, unknown> | undefined;
+    it('should use oxc config key when rolldownVersion is available', async () => {
+      registerMocks('1.0.0');
+      const mod = await import('./index');
+      const plugin = mod.default();
+
+      let viteConfig: any;
+      const mockSetup = {
+        addRenderer: vi.fn(),
+        updateConfig: vi.fn(function (config: any) {
+          viteConfig = config.vite;
+        }),
       };
 
-      expect(plugin.configEnvironment('server')).toBeUndefined();
-      expect(plugin.configEnvironment('ssr')).toBeUndefined();
+      plugin.hooks['astro:config:setup'](mockSetup);
+
+      expect(viteConfig).toHaveProperty('oxc');
+      expect(viteConfig).not.toHaveProperty('esbuild');
+      expect(viteConfig.oxc.jsx).toEqual({ development: true });
     });
   });
 

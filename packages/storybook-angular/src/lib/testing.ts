@@ -8,12 +8,12 @@ import {
 } from 'storybook/internal/types';
 import * as configAnnotations from '@storybook/angular/client/config';
 
-export const render = configAnnotations.render;
+export const render: typeof configAnnotations.render = configAnnotations.render;
 
 export async function renderToCanvas(
   context: RenderContext<AngularRenderer>,
   element: HTMLElement,
-) {
+): Promise<void> {
   element.id = context.id;
   await configAnnotations.renderToCanvas(context, element);
 }

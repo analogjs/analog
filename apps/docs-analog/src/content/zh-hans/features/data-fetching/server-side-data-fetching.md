@@ -19,6 +19,33 @@ Analog 支持在加载页面之前从服务端数据获取。通过在当前页�
 
 ```ts
 // src/app/pages/index.page.ts
+import { Component } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { injectLoad } from '@analogjs/router';
+
+import { load } from './index.server'; // not included in client build
+
+@Component({
+  template: `
+    <h2>Home</h2>
+
+    Loaded: {{ data().loaded }}
+  `,
+})
+export default class BlogComponent {
+  data = toSignal(injectLoad<typeof load>(), { requireSync: true });
+}
+```
+
+通过组件的 Input 和 Angular 路由配置的组件 Input 绑定也可以访问这些数据。要配置 `Component Input Bindings`，请在 `app.config.ts` 的 `provideFileRouter()` 中添加 `withComponentInputBinding()` 参数。
+
+```ts
+import { provideHttpClient } from '@angular/common/http';
+import { ApplicationConfig } from '@angular/core';
+import { provideClientHydration } from '@angular/platform-browser';
+import { provideFileRouter } from '@analogjs/router';
+import { withNavigationErrorHandler } from '@angular/router';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(
@@ -35,6 +62,33 @@ export const appConfig: ApplicationConfig = {
 
 ```ts
 // src/app/pages/index.page.ts
+import { Component } from '@angular/core';
+import { LoadResult } from '@analogjs/router';
+
+import { load } from './index.server'; // not included in client build
+
+@Component({
+  template: `
+    <h2>Home</h2>
+    Loaded: {{ data.loaded }}
+  `,
+})
+export default class BlogComponent {
+  @Input() load(data: LoadResult<typeof load>) {
+    this.data = data;
+  }
+
+  data!: LoadResult<typeof load>;
+}
+```
+
+## 访问服务端加载的数据
+
+要从 `RouteMeta` 解析器访问服务器端加载的数据，可以通过 `@analogjs/router` 包提供的 `getLoadResolver` 函数。
+
+```ts
+import { getLoadResolver } from '@analogjs/router';
+
 export const routeMeta: RouteMeta = {
   resolve: {
     data: async (route) => {

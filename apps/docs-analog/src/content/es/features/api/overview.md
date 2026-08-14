@@ -7,7 +7,9 @@ Analog admite la definición de rutas de API que se pueden utilizar para servir 
 Las rutas API se definen en el directorio `src/server/routes`. Las rutas API también se basan en el sistema de ficheros y se exponen bajo el prefijo `/api` predeterminado en el desarrollo.
 
 ```ts
-export default defineEventHandler(() => ({ message: 'Hello World' }));
+import { defineHandler } from 'h3';
+
+export default defineHandler(() => ({ message: 'Hello World' }));
 ```
 
 ## Definiendo contenido XML
@@ -16,7 +18,9 @@ Para crear un feed RSS para su sitio, establezca el `content-type` en `text/xml`
 
 ```ts
 //server/routes/api/rss.xml.ts
-export default defineEventHandler((event) => {
+
+import { defineHandler, setHeader } from 'h3';
+export default defineHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 </rss>
@@ -54,7 +58,9 @@ Las rutas API dinámicas se definen usando el nombre de fichero como la ruta de 
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-export default defineEventHandler(
+import { defineHandler } from 'h3';
+
+export default defineHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
@@ -63,7 +69,9 @@ Otra manera de acceder a los parámetros de la ruta es usando la función `getRo
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-export default defineEventHandler((event) => {
+import { defineHandler, getRouterParam } from 'h3';
+
+export default defineHandler((event) => {
   const name = getRouterParam(event, 'name');
   return `Hello, ${name}!`;
 });
@@ -77,7 +85,9 @@ Los nombres de fichero se pueden sufijar con `.get`, `.post`, `.put`, `.delete`,
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, getRouterParam } from 'h3';
+
+export default defineHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   // TODO: fetch user by id
   return `User profile of ${id}!`;
@@ -88,7 +98,9 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, readBody } from 'h3';
+
+export default defineHandler(async (event) => {
   const body = await readBody(event);
   // TODO: Handle body and add user
   return { updated: true };
@@ -103,8 +115,11 @@ Solicitud de ejemplo `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
 // routes/api/v1/query.ts
-export default defineEventHandler((event) => {
-  const { param1, param2 } = getQuery(event);
+import { defineHandler } from 'h3';
+
+export default defineHandler((event) => {
+  const param1 = event.url.searchParams.get('param1') ?? '';
+  const param2 = event.url.searchParams.get('param2') ?? '';
   return `Hello, ${param1} and ${param2}!`;
 });
 ```
@@ -115,7 +130,9 @@ Las rutas Atrapa-todo (Catch-all) son útiles para el manejo de rutas de fallbac
 
 ```ts
 // routes/api/[...].ts
-export default defineEventHandler((event) => `Default page`);
+import { defineHandler } from 'h3';
+
+export default defineHandler(() => `Default page`);
 ```
 
 ## Manejo de Errores
@@ -125,7 +142,9 @@ Para retornar otros códigos de error, lance una excepción con `createError`
 
 ```ts
 // routes/api/v1/[id].ts
-export default defineEventHandler((event) => {
+import { defineHandler, getRouterParam, createError } from 'h3';
+
+export default defineHandler((event) => {
   const param = getRouterParam(event, 'id');
   const id = parseInt(param ? param : '');
   if (!Number.isInteger(id)) {
@@ -146,6 +165,17 @@ Analog permite establecer y leer cookies en las llamadas del lado del servidor.
 
 ```ts
 //(home).server.ts
+import { PageServerLoad } from '@analogjs/router';
+import { setCookie } from 'h3';
+
+import { Product } from '../products';
+
+export const load = async ({ fetch, event }: PageServerLoad) => {
+  setCookie(event, 'products', 'loaded', {
+    path: '/',
+  });
+  const products = await fetch<Product[]>('/api/v1/products');
+
   return {
     products: products,
   };
@@ -156,7 +186,13 @@ Analog permite establecer y leer cookies en las llamadas del lado del servidor.
 
 ```ts
 //index.server.ts
-  console.log('products cookie', cookies['products']);
+import { PageServerLoad } from '@analogjs/router';
+import { getCookie } from 'h3';
+
+export const load = async ({ event }: PageServerLoad) => {
+  const productsCookie = getCookie(event, 'products');
+
+  console.log('products cookie', productsCookie);
 
   return {
     shipping: true,

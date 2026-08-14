@@ -1,9 +1,6 @@
 /// <reference types="vitest" />
 
 import angular from '@analogjs/vite-plugin-angular';
-<% if (addNxPaths) { %>
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-<% } %>
 import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
@@ -11,9 +8,6 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       angular(),
-      <% if (addNxPaths) { %>
-        nxViteTsPaths()
-      <% } %>
     ],
     test: {
       globals: true,

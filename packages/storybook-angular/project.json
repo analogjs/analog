@@ -3,39 +3,29 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "tags": ["type:release"],
-  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
-      "dependsOn": ["^build"],
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build", "vite-plugin-angular:build"],
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "node_modules/@analogjs/storybook-angular",
-        "main": "packages/storybook-angular/src/index.ts",
-        "tsConfig": "packages/storybook-angular/tsconfig.lib.json",
-        "clean": true,
-        "assets": [
-          "packages/storybook-angular/*.md",
-          {
-            "input": "./packages/storybook-angular/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/storybook-angular/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/storybook-angular",
-            "glob": "preset.js",
-            "output": "./"
-          }
-        ]
+        "commands": [
+          "vite build -c packages/storybook-angular/vite.config.lib.ts",
+          "node tools/scripts/verify-package-artifacts.mts storybook-angular"
+        ],
+        "parallel": false
       }
     },
     "test": {
-      "dependsOn": ["^build"],
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["vite-plugin-angular:build", "vitest-angular:build"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/storybook-angular",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

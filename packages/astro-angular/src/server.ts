@@ -36,7 +36,7 @@ function check(
   Component: ComponentType<unknown>,
   _props: Record<string, unknown>,
   _children: unknown,
-) {
+): boolean {
   return !!reflectComponentType(Component);
 }
 
@@ -84,7 +84,7 @@ async function renderToStaticMarkup(
   },
   props: Record<string, unknown>,
   _children: unknown,
-) {
+): Promise<{ html: string }> {
   const mirror = reflectComponentType(Component);
   const appId =
     mirror?.selector.split(',')[0] || Component.name.toString().toLowerCase();
@@ -132,7 +132,11 @@ async function renderToStaticMarkup(
   return { html: correctedHtml };
 }
 
-export default {
-  check,
-  renderToStaticMarkup,
+const renderer: {
+  check: typeof check;
+  renderToStaticMarkup: typeof renderToStaticMarkup;
+} = {
+  check: check,
+  renderToStaticMarkup: renderToStaticMarkup,
 };
+export default renderer;

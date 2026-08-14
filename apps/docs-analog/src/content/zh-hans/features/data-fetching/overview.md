@@ -10,7 +10,7 @@ title: 数据获取
 
 推荐使用 `HttpClient` 来调用内部或者外部的 API。任何使用 `HttpClient` 并且以 `/` 打头的请求上下文由 `provideServerContext` 函数提供。
 
-## 服务端请求上下文
+## 服务端请求上下文 {#server-request-context}
 
 在服务端，使用 `main.server.ts` 中 Analog 路由的 `provideServerContext` 函数。
 
@@ -51,7 +51,7 @@ class MyService {
 }
 ```
 
-## 请求上下文拦截器
+## 请求上下文拦截器 {#request-context-interceptor}
 
 Analog 同样为 HttpClient 提供了 `requestContextInterceptor` 以在服务端，客户端或者渲染阶段将任何以 `/` 打头的 URL 转换成完整 URL 路径。
 
@@ -80,7 +80,9 @@ export const appConfig: ApplicationConfig = {
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-export default eventHandler(async () => {
+import { defineHandler } from 'h3';
+
+export default defineHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
 

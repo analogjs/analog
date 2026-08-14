@@ -3,22 +3,53 @@ import { ɵSERVER_CONTEXT as SERVER_CONTEXT } from '@angular/platform-server';
 
 import {
   BASE_URL,
+  INTERNAL_FETCH,
   LOCALE,
   REQUEST,
   RESPONSE,
+  ServerInternalFetch,
   ServerRequest,
   ServerResponse,
-} from '@analogjs/router/tokens';
-import { SERVER_FN_DISPATCHER } from '@analogjs/router';
+} from '../../tokens/src/index.js';
 
-import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
+function getHeaderValue(
+  value: string | string[] | undefined,
+): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function getRequestHeader(
+  req: ServerRequest,
+  name: string,
+): string | undefined {
+  const headers = (req as { headers?: unknown }).headers;
+
+  if (!headers) {
+    return undefined;
+  }
+
+  if (
+    typeof headers === 'object' &&
+    headers !== null &&
+    'get' in headers &&
+    typeof headers.get === 'function'
+  ) {
+    return headers.get(name) ?? undefined;
+  }
+
+  return getHeaderValue(
+    (headers as Record<string, string | string[] | undefined>)[name],
+  );
+}
 
 export function provideServerContext({
   req,
   res,
+  fetch,
 }: {
   req: ServerRequest;
   res: ServerResponse;
+  fetch?: ServerInternalFetch;
 }): StaticProvider[] {
   const baseUrl = getBaseUrl(req);
   const locale = detectLocale(req);
@@ -33,13 +64,46 @@ export function provideServerContext({
     { provide: REQUEST, useValue: req },
     { provide: RESPONSE, useValue: res },
     { provide: BASE_URL, useValue: baseUrl },
-    // Server functions called while rendering run in-process, in this injector.
-    {
-      provide: SERVER_FN_DISPATCHER,
-      useValue: createServerFnDispatcher(req, res),
-    },
+    { provide: INTERNAL_FETCH, useValue: fetch },
     ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
   ];
+}
+
+export function getBaseUrl(req: ServerRequest): string {
+  const protocol = getRequestProtocol(req);
+  const host =
+    getRequestHeader(req, 'x-forwarded-host') ??
+    getRequestHeader(req, 'host') ??
+    'localhost';
+  const originalUrl = req.originalUrl || req.url || '/';
+  const parsedUrl = new URL(
+    '',
+    `${protocol}://${host}${
+      originalUrl.endsWith('/')
+        ? originalUrl.substring(0, originalUrl.length - 1)
+        : originalUrl
+    }`,
+  );
+  const baseUrl = parsedUrl.origin;
+
+  return baseUrl;
+}
+
+export function getRequestProtocol(
+  req: ServerRequest,
+  opts: { xForwardedProto?: boolean } = {},
+): string {
+  const forwardedProto = getRequestHeader(req, 'x-forwarded-proto')
+    ?.split(',')[0]
+    ?.trim();
+
+  if (opts.xForwardedProto !== false && forwardedProto === 'https') {
+    return 'https';
+  }
+
+  return (req.connection as { encrypted?: boolean })?.encrypted
+    ? 'https'
+    : 'http';
 }
 
 /**
@@ -53,7 +117,7 @@ export function detectLocale(req: ServerRequest): string | undefined {
     return localeFromUrl;
   }
 
-  return parseAcceptLanguage(req.headers['accept-language']);
+  return parseAcceptLanguage(getRequestHeader(req, 'accept-language'));
 }
 
 /**
@@ -69,7 +133,6 @@ export function extractLocaleFromUrl(url: string): string | undefined {
 
   const firstSegment = segments[0];
   // Match BCP 47 language tags: 2-letter language code with optional region/script
-  // e.g. 'en', 'en-US', 'zh-Hans', 'zh-Hans-CN'
   if (/^[a-z]{2}(-[a-zA-Z]{2,4})?(-[a-zA-Z]{2}|\d{3})?$/.test(firstSegment)) {
     return firstSegment;
   }
@@ -97,37 +160,4 @@ export function parseAcceptLanguage(
     .sort((a, b) => b.q - a.q);
 
   return locales[0]?.locale || undefined;
-}
-
-export function getBaseUrl(req: ServerRequest) {
-  const protocol = getRequestProtocol(req);
-  const { headers } = req;
-  // Node's `IncomingMessage` has no `originalUrl`, and a server function
-  // endpoint is reached with a plain request, so fall back before dereferencing.
-  const originalUrl = req.originalUrl || req.url || '/';
-  const parsedUrl = new URL(
-    '',
-    `${protocol}://${headers.host}${
-      originalUrl.endsWith('/')
-        ? originalUrl.substring(0, originalUrl.length - 1)
-        : originalUrl
-    }`,
-  );
-  const baseUrl = parsedUrl.origin;
-
-  return baseUrl;
-}
-
-export function getRequestProtocol(
-  req: ServerRequest,
-  opts: { xForwardedProto?: boolean } = {},
-) {
-  if (
-    opts.xForwardedProto !== false &&
-    req.headers['x-forwarded-proto'] === 'https'
-  ) {
-    return 'https';
-  }
-
-  return (req.connection as any)?.encrypted ? 'https' : 'http';
 }

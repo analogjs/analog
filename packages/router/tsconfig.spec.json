@@ -5,7 +5,8 @@
     "module": "preserve",
     "types": ["node", "vitest/globals"],
     "moduleResolution": "bundler",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "composite": false
   },
   "files": ["src/test-setup.ts"],
   "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts"]

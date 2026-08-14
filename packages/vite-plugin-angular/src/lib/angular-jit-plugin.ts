@@ -3,6 +3,8 @@ import {
   JIT_INLINE_STYLE_PREFIX,
   getJitInlineStyles,
 } from './utils/jit-inline-styles.js';
+import { debugStyles } from './utils/debug.js';
+import { isTailwindReferenceError } from './utils/tailwind-reference.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -47,7 +49,19 @@ export function jitPlugin({
           );
           styles = compiled?.code;
         } catch (e) {
-          console.error(`${e}`);
+          if (isTailwindReferenceError(e)) {
+            throw e;
+          }
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          debugStyles('jit css compilation error', {
+            styleIdHash,
+            error: errorMessage,
+          });
+          console.warn(
+            '[@analogjs/vite-plugin-angular]: Failed to preprocess inline JIT stylesheet %s. Returning an empty stylesheet instead. %s',
+            styleIdHash,
+            errorMessage,
+          );
         }
 
         return `export default \`${styles}\``;

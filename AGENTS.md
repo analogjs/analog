@@ -6,7 +6,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 
 - **Monorepo** managed by [Nx](https://nx.dev) and [pnpm](https://pnpm.io/)
 - Main framework: **AnalogJS** (meta-framework for Angular, powered by Vite)
-- Contains multiple apps (Angular, Astro, blog, docs, trpc, etc.) and libraries (shared, card, top-bar, etc.)
+- Contains multiple apps (Angular, Astro, blog, docs, etc.) and libraries (shared, card, top-bar, etc.)
 - Key packages: `@analogjs/platform`, `@analogjs/vite-plugin-angular`, `@analogjs/vitest-angular`, `@analogjs/vite-plugin-nitro`, `@analogjs/router`, etc.
 - Node engines: `^22.0.0 || ^24.0.0`, pnpm `^10.0.0`
 
@@ -15,7 +15,7 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - `tsconfig.base.json` - TypeScript path aliases for all packages
 - `nx.json` - Nx workspace configuration
 - `pnpm-workspace.yaml` - pnpm workspace definition
-- `release.config.cjs` - semantic-release configuration
+- `release.config.ts` - semantic-release configuration
 - `.github/workflows/` - CI/CD workflows
 - `.githooks/` - git hooks (commit-msg, pre-commit)
 - `CONTRIBUTING.md` - full contribution guidelines
@@ -47,9 +47,9 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 - **Libraries:** in `packages/` (shared code, features, platform, plugins)
 - **TypeScript path aliases:** defined in `tsconfig.base.json`
 - **Vite config:** each app has its own `vite.config.ts` (see `apps/analog-app/vite.config.ts` for advanced AnalogJS/Vite usage)
-- **Release:** Automated with semantic-release through CI, see `release.config.cjs` and `tools/publish.sh`
+- **Release:** Automated with semantic-release through CI, see `release.config.ts` and `tools/publish.sh`
 
-## Packages → Commit Scopes
+## Packages
 
 | Directory                      | npm Package                     | Commit Scope          |
 | ------------------------------ | ------------------------------- | --------------------- |
@@ -63,7 +63,6 @@ This is the monorepo that contains all the code and infrastructure for AnalogJS.
 | `packages/nx-plugin`           | `@analogjs/nx-plugin`           | `nx-plugin`           |
 | `packages/create-analog`       | `create-analog`                 | `create-analog`       |
 | `packages/storybook-angular`   | `@analogjs/storybook-angular`   | `storybook-angular`   |
-| `packages/trpc`                | `@analogjs/trpc`                | `trpc`                |
 | `packages/astro-angular`       | `@analogjs/astro-angular`       | `astro-angular`       |
 
 ## Agent Skills
@@ -79,6 +78,14 @@ Reusable agent workflows live in `.agents/skills/`:
 
 - Use `CONTRIBUTING.md` as the source of truth for base branch, PR requirements, title and commit conventions, supported types/scopes, breaking change notes, and submission expectations.
 - Use `.github/PULL_REQUEST_TEMPLATE.md` for PR body structure, including affected scope, test plan, and maintainer-facing merge-strategy recommendations.
+
+## GitHub Markdown Formatting
+
+When writing PR descriptions, PR comments, or issue references, always use the cross-repository `owner/repo#number` format (e.g., `analogjs/analog#2202`) so links render correctly regardless of context. For maximum clarity, use manual Markdown links with descriptive titles:
+
+- **Preferred:** `[Split content routing into @analogjs/router/content analogjs/analog#2202](https://github.com/analogjs/analog/issues/2202)`
+- **Acceptable:** `analogjs/analog#2202`
+- **Avoid:** bare `#2202` — this only resolves within the same repository and is ambiguous in forks, external tools, and copied text
 
 ## Commit Review Workflow
 
@@ -98,6 +105,18 @@ Reusable agent workflows live in `.agents/skills/`:
 - Project-specific config in `apps/*/project.json` and `libs/*/project.json`.
 - Nx plugins and generators are in `packages/nx-plugin`.
 
+## Caching
+
+Nx task caching is **enabled by default** for all targets. Disable it selectively with `"cache": false` in a target's `project.json` only when the output location makes caching unreliable (e.g., outputs inside `node_modules/`). Prefer outputting to `dist/` so Nx can reliably cache and restore build artifacts.
+
+When adding a new build target that writes into `node_modules/`, set `"cache": false` to avoid stale cache hits in CI (Dagger mounts a persistent Nx cache volume while `node_modules/` is rebuilt each run).
+
+Projects with caching explicitly disabled (`"cache": false` on their build target):
+
+- `router` — outputs to `node_modules/@analogjs/router`
+- `content` — outputs to `node_modules/@analogjs/content`
+- `my-package` — explicitly opted out of build caching
+
 ## Contribution Patterns & Best Practices
 
 - Always open an issue before a pull request for review by the maintainers. This ensures alignment on implementation of features.
@@ -105,6 +124,7 @@ Reusable agent workflows live in `.agents/skills/`:
 - Backward compatibility is critical for new features, allowing progressive adoption.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
 - Always scan existing codebase for examples and patterns for implementation.
+- When writing code, analyze all touched code paths up front, including Analog experimental Vite options, their disabled branches, and compatibility fallbacks. Do not treat experimental features as exempt from behavioral review, regression analysis, or targeted tests.
 - Prefer using existing Angular APIs, with wrappers where needed.
 - Strongly prefer AST parsing instead of regex for complex file manipulation and traversal.
 - Always use modern Angular syntax including dependency injection with inject, control flow, signal APIs, and standalone components.
@@ -120,6 +140,7 @@ Reusable agent workflows live in `.agents/skills/`:
 ## Do NOT
 
 - Add Angular SFC references to features or docs
+- Reference or recommend `.agx` files — they are a removed experiment and no longer supported
 - Create new abstractions for one-time operations
 - Add verbose comments, docstrings, or type annotations to code you didn't change
 - Add error handling or validation for scenarios that can't happen
@@ -129,9 +150,25 @@ Reusable agent workflows live in `.agents/skills/`:
 ## Common Pitfalls
 
 - Always run `pnpm i` before building if `pnpm-lock.yaml` has changed
-- The `astro-app` is excluded from the main build (`--exclude=astro-app`)
 - Git hooks are in `.githooks/` (not `.husky/`), configured via `git config core.hookspath .githooks`
 - The `prepare` script sets up git hooks — runs automatically after `pnpm i`
+
+## CI Failure Debugging
+
+When a PR has failing GitHub Actions checks, use this workflow to diagnose and fix:
+
+1. **Find the failed run** — given a PR URL (e.g., `https://github.com/analogjs/analog/pull/NUMBER`), fetch the PR checks page to identify failing workflow runs and their run IDs:
+   - WebFetch `https://github.com/analogjs/analog/pull/NUMBER/checks` to find run IDs
+   - WebFetch `https://github.com/analogjs/analog/actions/runs/RUN_ID` to list job names and statuses
+   - WebFetch `https://github.com/analogjs/analog/actions/runs/RUN_ID/job/JOB_ID` to get error details from a specific failed job
+
+2. **Reproduce locally** — run the failing target locally to get full error output:
+   - Lint: `pnpm nx run-many -t lint`
+   - Unit tests: `pnpm nx run-many -t test` or `pnpm nx run <project>:test` for a specific project
+   - Build: `pnpm nx run-many -t build`
+   - E2E: `pnpm nx run <project>:e2e`
+
+3. **Fix and verify** — after fixing, re-run the specific failing targets locally before pushing.
 
 ## Integration Points
 

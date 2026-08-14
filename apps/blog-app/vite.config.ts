@@ -1,11 +1,13 @@
 /// <reference types="vitest" />
 
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 // Only run in Netlify CI
-let base = process.env['URL'] || 'http://localhost:3000';
+let base = process.env['URL'] || 'http://localhost:43010';
 if (process.env['NETLIFY'] === 'true') {
   if (process.env['CONTEXT'] === 'deploy-preview') {
     base = `${process.env['DEPLOY_PRIME_URL']}/`;
@@ -21,17 +23,16 @@ export default defineConfig(() => {
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],
+      // Keep workspace Angular libraries on the source-transform path so Analog
+      // can compile external templates/styles instead of Vite prebundling them.
+      exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     build: {
-      outDir: '../../dist/apps/blog-app/client',
       reportCompressedSize: true,
       target: ['es2020'],
     },
     plugins: [
       analog({
-        liveReload: true,
-        additionalPagesDirs: ['/libs/shared/feature'],
-        additionalContentDirs: ['/libs/shared/feature/src/content'],
         content: {
           highlighter: 'shiki',
           shikiOptions: {
@@ -57,7 +58,9 @@ export default defineConfig(() => {
               },
               '/blog/my-second-post',
               '/about-me',
-              '/about-you',
+              // '/about-you' removed — the source file uses .page.analog
+              // which is not matched by route discovery (*.page.ts only),
+              // so no route is registered and prerendering fails with NG04002.
               {
                 contentDir: '/src/content/archived',
                 transform: (file: PrerenderContentFile) => {
@@ -80,24 +83,27 @@ export default defineConfig(() => {
             host: 'https://analog-blog.netlify.app',
           },
         },
-        nitro: {
-          prerender: {
-            failOnError: true,
-          },
-          externals: {
-            // `sharp` lists `@img/sharp-wasm32` as an optional dependency.
-            // pnpm leaves a dangling symlink for it on non-wasm platforms
-            // (the package is never fetched), and nitro's external file
-            // trace calls `realpath()` on every traced file — throwing
-            // ENOENT on that dangling link. Exclude it from the trace; the
-            // wasm32 fallback is never used when a native binary is present.
-            traceOptions: {
-              ignore: (path: string) => path.includes('@img/sharp-wasm32'),
-            },
+      }),
+      angular({
+        liveReload: true,
+      }),
+      nitro({
+        prerender: {
+          autoSubfolderIndex: false,
+          failOnError: true,
+        },
+        externals: {
+          // `sharp` lists `@img/sharp-wasm32` as an optional dependency.
+          // pnpm leaves a dangling symlink for it on non-wasm platforms
+          // (the package is never fetched), and nitro's external file
+          // trace calls `realpath()` on every traced file — throwing
+          // ENOENT on that dangling link. Exclude it from the trace; the
+          // wasm32 fallback is never used when a native binary is present.
+          traceOptions: {
+            ignore: (path: string) => path.includes('@img/sharp-wasm32'),
           },
         },
       }),
-      nxViteTsPaths(),
     ],
   };
 });

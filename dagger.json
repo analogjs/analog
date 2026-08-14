@@ -1,0 +1,8 @@
+{
+  "name": "analog-ci",
+  "engineVersion": "v0.20.5",
+  "sdk": {
+    "source": "typescript"
+  },
+  "source": ".dagger"
+}

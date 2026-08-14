@@ -9,15 +9,17 @@ export class ProductListPage {
 
   getShareButtonByName(name: RegExp) {
     return this.page
-      .getByRole('heading', { name, level: 3 })
-      .locator('..')
+      .locator('article', {
+        has: this.page.getByRole('heading', { name, level: 3 }),
+      })
       .getByRole('button', { name: /share/i });
   }
 
   getNotifyButtonByName(name: RegExp) {
     return this.page
-      .getByRole('heading', { name, level: 3 })
-      .locator('..')
+      .locator('article', {
+        has: this.page.getByRole('heading', { name, level: 3 }),
+      })
       .getByRole('button', { name: /notify/i });
   }
 

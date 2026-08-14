@@ -1,16 +1,59 @@
 import { TransferState, inject, makeStateKey } from '@angular/core';
 import {
+  HttpEvent,
   HttpHandlerFn,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
 
-import { from, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 
-import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+import type { HTTPMethod } from 'nitro/h3';
+
+import {
+  injectBaseURL,
+  injectAPIPrefix,
+  injectInternalServerFetch,
+  type ServerInternalFetch,
+} from '../../tokens/src/index.js';
 
 import { makeCacheKey } from './cache-key';
+
+function mergeFetchParams(
+  requestUrl: URL,
+  request: HttpRequest<unknown>,
+): Record<string, string | string[]> | undefined {
+  const merged = new Map<string, string[]>();
+
+  for (const key of requestUrl.searchParams.keys()) {
+    const values = requestUrl.searchParams.getAll(key);
+
+    if (values.length > 0) {
+      merged.set(key, values);
+    }
+  }
+
+  for (const key of request.params.keys()) {
+    const values = request.params.getAll(key);
+
+    if (values?.length) {
+      merged.set(key, values);
+    }
+  }
+
+  if (merged.size === 0) {
+    return undefined;
+  }
+
+  return [...merged.entries()].reduce<Record<string, string | string[]>>(
+    (params, [key, values]) => {
+      params[key] = values.length === 1 ? values[0] : values;
+      return params;
+    },
+    {},
+  );
+}
 
 /**
  * Interceptor that is server-aware when making HttpClient requests.
@@ -25,47 +68,56 @@ import { makeCacheKey } from './cache-key';
 export function requestContextInterceptor(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
-) {
+): Observable<HttpEvent<unknown>> {
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
+  const nitroGlobal = globalThis as typeof globalThis & {
+    $fetch?: ServerInternalFetch;
+  };
+  const internalFetch = injectInternalServerFetch();
+  const serverFetch = internalFetch ?? nitroGlobal.$fetch;
 
   // during prerendering with Nitro
   if (
-    typeof global !== 'undefined' &&
-    global.$fetch &&
+    serverFetch &&
     baseUrl &&
     (req.url.startsWith('/') ||
       req.url.startsWith(baseUrl) ||
       req.url.startsWith(`/${apiPrefix}`))
   ) {
     const requestUrl = new URL(req.urlWithParams, baseUrl);
-    const fetchUrl = `${requestUrl.pathname}${requestUrl.search}`;
-    const cacheKey = makeCacheKey(req, fetchUrl);
+    const cacheKey = makeCacheKey(
+      req,
+      `${requestUrl.pathname}${requestUrl.search}`,
+    );
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
+    const fetchUrl = requestUrl.pathname;
+    const fetchParams = mergeFetchParams(requestUrl, req);
 
     const responseType =
       req.responseType === 'arraybuffer' ? 'arrayBuffer' : req.responseType;
 
-    return from(
-      global.$fetch
+    return from<Promise<HttpResponse<unknown>>>(
+      serverFetch
         .raw(fetchUrl, {
-          method: req.method as any,
+          method: req.method as HTTPMethod,
           body: req.body ? req.body : undefined,
+          params: fetchParams,
           responseType,
-          headers: req.headers.keys().reduce((hdrs, current) => {
-            return {
-              ...hdrs,
-              [current]: req.headers.get(current),
-            };
-          }, {}),
+          headers: req.headers
+            .keys()
+            .reduce((hdrs: Record<string, string>, current: string) => {
+              const value = req.headers.get(current);
+              return value != null ? { ...hdrs, [current]: value } : hdrs;
+            }, {}),
         })
         .then((res) => {
           const cacheResponse = {
             body: res._data,
             headers: new HttpHeaders(res.headers),
-            status: 200,
-            statusText: 'OK',
+            status: res.status ?? 200,
+            statusText: res.statusText ?? 'OK',
             url: fetchUrl,
           };
           const transferResponse = new HttpResponse(cacheResponse);

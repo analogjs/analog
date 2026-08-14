@@ -89,7 +89,7 @@ occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim 
 ### Links
 
 - [Home](/)
-- [Blog](http://localhost:3000/blog)
+- [Blog](http://localhost:43010/blog)
 - [About](/about)
 - [My First Post](./2022-12-27-my-first-post)
 - [Analog Repo](https://github.com/analogjs/analog)

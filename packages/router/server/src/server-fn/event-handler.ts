@@ -1,7 +1,14 @@
 import type { Injector } from '@angular/core';
-import { eventHandler, getRouterParam, readBody, type H3Event } from 'h3';
+import {
+  eventHandler,
+  getRouterParam,
+  readBody,
+  type EventHandler,
+  type H3Event,
+} from 'nitro/h3';
 
 import { dispatchServerFn } from './dispatch';
+import { assertNodeContext } from './node-context';
 
 /**
  * The h3 request/response layer for the server-function dispatch route.
@@ -18,7 +25,7 @@ import { dispatchServerFn } from './dispatch';
  */
 export function createServerFnEventHandler(
   appInjector: Injector | Promise<Injector>,
-) {
+): EventHandler {
   return eventHandler((event) => handleServerFnRequest(event, appInjector));
 }
 
@@ -31,6 +38,7 @@ export async function handleServerFnRequest(
   event: H3Event,
   appInjector: Injector | Promise<Injector>,
 ): Promise<unknown> {
+  const node = assertNodeContext(event);
   const id = getRouterParam(event, 'id') ?? '';
 
   // h3 parses the body before dispatch gets a say, and its parse error is an
@@ -40,7 +48,7 @@ export async function handleServerFnRequest(
     try {
       input = await readBody(event);
     } catch {
-      event.node.res.statusCode = 400;
+      node.res.statusCode = 400;
       return { message: 'Malformed request body' };
     }
   }
@@ -50,10 +58,10 @@ export async function handleServerFnRequest(
     method: event.method,
   });
 
-  event.node.res.statusCode = status;
+  node.res.statusCode = status;
   if (headers) {
     for (const [key, value] of Object.entries(headers)) {
-      event.node.res.setHeader(key, value);
+      node.res.setHeader(key, value);
     }
   }
   return body;

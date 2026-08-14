@@ -1,12 +1,16 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as angularPreset from '@storybook/angular/preset';
 import { fileURLToPath } from 'node:url';
+import type { Plugin, UserConfig } from 'vite';
 import * as vite from 'vite';
+import angular from '@analogjs/vite-plugin-angular';
+import { debugStyles } from './debug';
 
 export const previewAnnotations = async (
   entries: string[] = [],
   options: any,
-) => {
+): Promise<string[]> => {
   const config = fileURLToPath(
     import.meta.resolve('@storybook/angular/client/config'),
   );
@@ -30,7 +34,7 @@ export const previewAnnotations = async (
   return annotations;
 };
 
-export const core = async (config: any, options: any) => {
+export const core = async (config: any, options: any): Promise<any> => {
   const presetCore =
     typeof angularPreset.core === 'function'
       ? await angularPreset.core(config, options)
@@ -67,24 +71,28 @@ async function resolveExperimentalZoneless(
   }
 }
 
-export const viteFinal = async (config: vite.InlineConfig, options: any) => {
-  // Remove any loaded analogjs plugins from a vite.config.(m)ts file
+export const viteFinal = async (config: any, options: any): Promise<any> => {
+  // Remove any loaded analogjs plugins from a vite.config.(m)ts file.
+  // Anonymous plugin entries (no `name` property) and falsy entries from
+  // conditional plugin arrays must pass through untouched — only filter
+  // plugins whose name explicitly contains "analogjs".
   config.plugins = (config.plugins ?? [])
     .flat()
-    .filter(
-      (plugin) => !(plugin as vite.Plugin)?.name?.includes('analogjs'),
-    ) as vite.InlineConfig['plugins'];
+    .filter((plugin: any) => !plugin?.name?.includes?.('analogjs'));
 
-  // Merge custom configuration into the default config
-  const { mergeConfig, normalizePath } = await import('vite');
-  const { default: angular } = await import('@analogjs/vite-plugin-angular');
-  // @ts-ignore
+  // @ts-expect-error - untyped storybook presets API
   const framework = await options.presets.apply('framework');
+  const { hmr: _removedHmrOption, ...frameworkOptions } =
+    framework.options ?? {};
   const experimentalZoneless = await resolveExperimentalZoneless(
-    framework.options,
+    frameworkOptions,
     options?.angularBuilderOptions,
   );
-  return mergeConfig(config, {
+  const liveReload =
+    typeof frameworkOptions.liveReload !== 'undefined'
+      ? frameworkOptions.liveReload
+      : false;
+  return vite.mergeConfig(config, {
     // Add dependencies to pre-optimization
     optimizeDeps: {
       include: [
@@ -97,26 +105,31 @@ export const viteFinal = async (config: vite.InlineConfig, options: any) => {
         ...(experimentalZoneless ? [] : ['zone.js']),
       ],
     },
+    resolve: {
+      alias: {
+        '@storybook/globalThis': '@storybook/global',
+      },
+    },
     plugins: [
       angular({
         jit:
-          typeof framework.options?.jit !== 'undefined'
-            ? framework.options?.jit
+          typeof frameworkOptions.jit !== 'undefined'
+            ? frameworkOptions.jit
             : true,
-        liveReload:
-          typeof framework.options?.liveReload !== 'undefined'
-            ? framework.options?.liveReload
-            : false,
+        liveReload,
         tsconfig:
-          typeof framework.options?.tsconfig !== 'undefined'
-            ? framework.options?.tsconfig
+          typeof frameworkOptions.tsconfig !== 'undefined'
+            ? frameworkOptions.tsconfig
             : (options?.tsConfig ?? './.storybook/tsconfig.json'),
         inlineStylesExtension:
-          typeof framework.options?.inlineStylesExtension !== 'undefined'
-            ? framework.options?.inlineStylesExtension
+          typeof frameworkOptions.inlineStylesExtension !== 'undefined'
+            ? frameworkOptions.inlineStylesExtension
             : 'css',
       }),
-      angularOptionsPlugin(options, { normalizePath, experimentalZoneless }),
+      angularOptionsPlugin(options, {
+        normalizePath: vite.normalizePath,
+        experimentalZoneless,
+      }),
       storybookTransformConfigPlugin(),
     ],
     define: {
@@ -132,15 +145,45 @@ function angularOptionsPlugin(
   {
     normalizePath,
     experimentalZoneless,
-  }: {
-    normalizePath: typeof vite.normalizePath;
-    experimentalZoneless: boolean;
-  },
-): vite.Plugin {
-  let resolvedConfig: vite.UserConfig | undefined;
+  }: { normalizePath: (path: string) => string; experimentalZoneless: boolean },
+): Plugin {
+  let resolvedConfig: UserConfig | undefined;
+
+  const resolveStyleImport = (
+    extraImport: string,
+    projectRoot: string,
+    workspaceRoot: string,
+  ) => {
+    const resolvedProjectImport = resolve(projectRoot, extraImport);
+    const resolvedWorkspaceImport = resolve(workspaceRoot, extraImport);
+
+    if (
+      extraImport.startsWith('.') ||
+      extraImport.startsWith('src') ||
+      existsSync(resolvedProjectImport)
+    ) {
+      return {
+        specifier: resolvedProjectImport,
+        source: 'project',
+      } as const;
+    }
+
+    if (existsSync(resolvedWorkspaceImport)) {
+      return {
+        specifier: resolvedWorkspaceImport,
+        source: 'workspace',
+      } as const;
+    }
+
+    return {
+      specifier: extraImport,
+      source: 'bare',
+    } as const;
+  };
+
   return {
     name: 'analogjs-storybook-options-plugin',
-    config(userConfig: vite.UserConfig) {
+    config(userConfig: UserConfig) {
       resolvedConfig = userConfig;
       const loadPaths =
         options?.angularBuilderOptions?.stylePreprocessorOptions?.loadPaths;
@@ -152,14 +195,24 @@ function angularOptionsPlugin(
           options.angularBuilderContext?.workspaceRoot ??
           userConfig?.root ??
           process.cwd();
+        const resolvedLoadPaths = loadPaths.map(
+          (loadPath) => `${resolve(workspaceRoot, loadPath)}`,
+        );
+
+        debugStyles('resolved SCSS load paths', {
+          configDir: options.configDir,
+          workspaceRoot,
+          projectRoot: userConfig?.root ?? process.cwd(),
+          loadPaths,
+          resolvedLoadPaths,
+        });
+
         return {
           css: {
             preprocessorOptions: {
               scss: {
                 ...sassOptions,
-                loadPaths: loadPaths.map(
-                  (loadPath) => `${resolve(workspaceRoot, loadPath)}`,
-                ),
+                loadPaths: resolvedLoadPaths,
               },
             },
           },
@@ -176,8 +229,17 @@ function angularOptionsPlugin(
       ) {
         const imports = [];
         const styles = options?.angularBuilderOptions?.styles;
+        const workspaceRoot =
+          options?.angularBuilderContext?.workspaceRoot ?? process.cwd();
 
         if (Array.isArray(styles)) {
+          debugStyles('injecting Storybook global styles', {
+            configDir: options.configDir,
+            workspaceRoot,
+            projectRoot: resolvedConfig?.root ?? process.cwd(),
+            styles,
+          });
+
           styles.forEach((style) => {
             imports.push(style);
           });
@@ -195,16 +257,19 @@ function angularOptionsPlugin(
           code: `
             ${imports
               .map((extraImport) => {
-                if (
-                  extraImport.startsWith('.') ||
-                  extraImport.startsWith('src')
-                ) {
-                  // relative to root
-                  return `import '${resolve(projectRoot, extraImport)}';`;
-                }
+                const resolved = resolveStyleImport(
+                  extraImport,
+                  projectRoot,
+                  workspaceRoot,
+                );
 
-                // absolute import
-                return `import '${extraImport}';`;
+                debugStyles('resolved Storybook style import', {
+                  input: extraImport,
+                  source: resolved.source,
+                  specifier: resolved.specifier,
+                });
+
+                return `import '${resolved.specifier}';`;
               })
               .join('\n')}
             ${code}
@@ -236,4 +301,3 @@ function storybookTransformConfigPlugin() {
 }
 
 export { addons } from '@storybook/angular/preset';
-//# sourceMappingURL=preset.js.map

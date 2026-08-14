@@ -1,4 +1,5 @@
 import { createBuilder } from '@angular-devkit/architect';
+import { createRequire } from 'node:module';
 import * as path from 'path';
 import type { Vitest } from 'vitest/node';
 import type { Plugin, UserConfig } from 'vite';
@@ -7,8 +8,10 @@ import { globSync } from 'tinyglobby';
 
 import { VitestSchema } from './schema';
 import { createAngularMemoryPlugin } from './plugins/angular-memory-plugin';
-import { esbuildDownlevelPlugin } from './plugins/esbuild-downlevel-plugin';
+import { downlevelPlugin } from './plugins/downlevel-plugin';
 import { getBuildApplicationFunction } from './devkit';
+
+const _require = createRequire(import.meta.url);
 
 export enum ResultKind {
   Failure,
@@ -79,7 +82,7 @@ async function* vitestApplicationBuilder(
         workspaceRoot,
         outputFiles,
       })) as Plugin,
-      await esbuildDownlevelPlugin(),
+      downlevelPlugin(),
     ],
   };
 
@@ -194,7 +197,7 @@ function findIncludes(options: {
   include: string[];
   exclude: string[];
 }) {
-  const { normalizePath } = require('vite');
+  const { normalizePath } = _require('vite');
 
   // Normalize project root path to ensure consistent path separators across platforms
   const projectRoot = normalizePath(

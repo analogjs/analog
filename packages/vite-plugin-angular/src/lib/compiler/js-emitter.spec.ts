@@ -15,6 +15,12 @@ const HAS_EXPONENTIATION =
   'number';
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
+// `isOptional` reached the output AST in v22. Before that the constructor
+// argument is ignored and safe navigation is lowered before it gets here, so
+// the operator has nothing to round-trip through.
+const HAS_OPTIONAL_CHAINING =
+  'isOptional' in
+  new o.ReadPropExpr(new o.ReadVarExpr('a'), 'b', null, null, [], true);
 
 function bin(op: o.BinaryOperator, lhs: o.Expression, rhs: o.Expression) {
   return new o.BinaryOperatorExpr(op, lhs, rhs);
@@ -253,5 +259,47 @@ describe('JSEmitter – operator precedence', () => {
       );
       expect(emitAngularExpr(expr)).toBe('(a + b)[0]');
     });
+  });
+});
+
+describe.skipIf(!HAS_OPTIONAL_CHAINING)('JSEmitter – optional chaining', () => {
+  it('emits an optional property read', () => {
+    const expr = new o.ReadPropExpr(v('a'), 'b', null, null, [], true);
+
+    expect(emitAngularExpr(expr)).toBe('a?.b');
+  });
+
+  it('emits a plain property read when the access is not optional', () => {
+    expect(emitAngularExpr(new o.ReadPropExpr(v('a'), 'b'))).toBe('a.b');
+  });
+
+  it('emits an optional keyed read', () => {
+    const expr = new o.ReadKeyExpr(v('a'), lit(0), null, null, [], true);
+
+    expect(emitAngularExpr(expr)).toBe('a?.[0]');
+  });
+
+  it('emits an optional call', () => {
+    const expr = new o.InvokeFunctionExpr(
+      v('a'),
+      [],
+      null,
+      null,
+      false,
+      [],
+      true,
+    );
+
+    expect(emitAngularExpr(expr)).toBe('a?.()');
+  });
+
+  // The shape behind `{{ user()?.name }}`: reading a property off a call
+  // result. Dropping the operator here reads the property off whatever the
+  // call returned, so a null result threw instead of short-circuiting.
+  it('keeps the operator when reading a property off a call result', () => {
+    const call = new o.InvokeFunctionExpr(v('user'), []);
+    const expr = new o.ReadPropExpr(call, 'name', null, null, [], true);
+
+    expect(emitAngularExpr(expr)).toBe('user()?.name');
   });
 });

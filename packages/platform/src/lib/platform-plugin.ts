@@ -1,27 +1,24 @@
-import { Plugin } from 'vite';
 import { createRequire } from 'node:module';
 import { join } from 'node:path';
-import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
-import angular from '@analogjs/vite-plugin-angular';
+import { Plugin } from 'vite';
 
 import { Options } from './options.js';
+import {
+  activateDeferredDebug,
+  applyDebugOption,
+  debugPlatform,
+} from './utils/debug.js';
 import { routerPlugin } from './router-plugin.js';
-import {
-  ssrBuildPlugin,
-  i18nDefRegistryPlugin,
-} from './ssr/ssr-build-plugin.js';
-import {
-  deferStreamingPlugin,
-  streamingSupportedOnAngular,
-  MIN_STREAMING_ANGULAR_MAJOR,
-} from './ssr/defer-streaming-plugin.js';
+import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
-import { ssrXhrBuildPlugin } from './ssr/ssr-xhr-plugin.js';
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
-import { i18nExtractPlugin } from './i18n-extract-plugin.js';
+import { routeGenerationPlugin } from './route-generation-plugin.js';
+import { resolveStylePipelinePlugins } from './style-pipeline.js';
+import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
+import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
 
 /**
  * The installed `@angular/core` major version, resolved from the workspace root
@@ -43,95 +40,40 @@ function getAngularCoreMajor(workspaceRoot: string): number | null {
 }
 
 export function platformPlugin(opts: Options = {}): Plugin[] {
+  applyDebugOption(opts.debug, opts.workspaceRoot);
+
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const { ...platformOptions } = {
     ssr: true,
     ...opts,
   };
 
-  // Gate experimental streaming SSR on an Angular version whose compiled
-  // @angular/core matches the patch anchors (see MIN_STREAMING_ANGULAR_MAJOR).
-  // Reflect the gated value back onto platformOptions so the nitro renderer
-  // selection and the deferStreamingPlugin registration below stay consistent —
-  // never select the streaming renderer without applying the patch.
-  if (platformOptions.ssr && platformOptions.experimental?.streaming) {
-    const major = getAngularCoreMajor(
-      platformOptions.workspaceRoot ?? process.cwd(),
-    );
-    if (!streamingSupportedOnAngular(major)) {
-      console.warn(
-        `[@analogjs/platform] experimental.streaming requires Angular ` +
-          `${MIN_STREAMING_ANGULAR_MAJOR}+ (detected v${major}); streaming is ` +
-          `disabled and rendering falls back to buffered SSR.`,
-      );
-      platformOptions.experimental = {
-        ...platformOptions.experimental,
-        streaming: false,
-      };
-    }
-  }
-
-  let nitroOptions = platformOptions?.nitro;
-
-  if (nitroOptions?.routeRules) {
-    nitroOptions = {
-      ...nitroOptions,
-      routeRules: Object.keys(nitroOptions.routeRules).reduce(
-        (config, curr) => {
-          return {
-            ...config,
-            [curr]: {
-              ...config[curr],
-              headers: {
-                ...config[curr].headers,
-                'x-analog-no-ssr':
-                  config[curr]?.ssr === false ? 'true' : undefined,
-                'x-analog-no-streaming':
-                  config[curr]?.streaming === false ? 'true' : undefined,
-              } as any,
-            },
-          };
-        },
-        nitroOptions.routeRules,
-      ),
-    };
-  }
+  debugPlatform('experimental options resolved', {
+    typedRouter: platformOptions.experimental?.typedRouter,
+    stylePipeline: !!platformOptions.experimental?.stylePipeline,
+  });
 
   return [
-    ...viteNitroPlugin(platformOptions, nitroOptions),
-    ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
-    ...(platformOptions.ssr && platformOptions.experimental?.streaming
-      ? [deferStreamingPlugin()]
+    {
+      name: 'analogjs-debug-activate',
+      config(_, { command }) {
+        activateDeferredDebug(command);
+      },
+    },
+    analogNitroPlugin(platformOptions),
+    ...(platformOptions.ssr
+      ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
+    ...resolveStylePipelinePlugins(
+      platformOptions.experimental?.stylePipeline,
+      platformOptions.workspaceRoot,
+    ),
     ...routerPlugin(platformOptions),
+    routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
-    ...((opts?.vite === false
-      ? []
-      : angular({
-          jit: platformOptions.jit,
-          workspaceRoot: platformOptions.workspaceRoot,
-          disableTypeChecking: platformOptions.disableTypeChecking ?? false,
-          include: [
-            ...(platformOptions.include ?? []),
-            ...(platformOptions.additionalPagesDirs ?? []).map(
-              (pageDir) => `${pageDir}/**/*.page.ts`,
-            ),
-          ],
-          additionalContentDirs: platformOptions.additionalContentDirs,
-          liveReload: platformOptions.liveReload,
-          inlineStylesExtension: platformOptions.inlineStylesExtension,
-          fileReplacements: platformOptions.fileReplacements,
-          fastCompile: platformOptions.fastCompile,
-          fastCompileMode: platformOptions.fastCompileMode,
-          ...(opts?.vite ?? {}),
-        })) as any),
-    serverModePlugin(),
-    ssrXhrBuildPlugin() as Plugin,
-    clearClientPageEndpointsPlugin() as Plugin,
-    ...(platformOptions.i18n ? [i18nDefRegistryPlugin()] : []),
-    ...(platformOptions.i18n?.extract
-      ? [i18nExtractPlugin(platformOptions.i18n)]
-      : []),
+    ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
+    ...serverModePlugin(),
+    clearClientPageEndpointsPlugin(),
   ];
 }

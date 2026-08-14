@@ -1,13 +1,14 @@
 /// <reference types="vitest" />
 
-import analog from '@analogjs/platform';
-import { visualizer } from 'rollup-plugin-visualizer';
+import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
+import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import inspect from 'vite-plugin-inspect';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 // Only run in Netlify CI
-let base = process.env['URL'] || 'http://localhost:3000';
+let base = process.env['URL'] || 'http://localhost:43000';
 if (process.env['NETLIFY'] === 'true') {
   if (process.env['CONTEXT'] === 'deploy-preview') {
     base = `${process.env['DEPLOY_PRIME_URL']}/`;
@@ -15,7 +16,8 @@ if (process.env['NETLIFY'] === 'true') {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode, command }) => {
+  const useBuiltWorkspaceLibs = command === 'build';
   const fileReplacements =
     mode === 'production'
       ? [
@@ -37,23 +39,33 @@ export default defineConfig(({ mode }) => {
           },
         ];
 
+  const discoveredLibs = discoverLibraryRoutes(resolve(__dirname, '../..'));
+  const explicitLibPages = useBuiltWorkspaceLibs
+    ? []
+    : ['/libs/my-package/src/**/*.ts', '/libs/top-bar/src/**/*.ts'];
+
   return {
     root: __dirname,
     publicDir: 'src/public',
     build: {
-      outDir: '../../dist/apps/analog-app/client',
       reportCompressedSize: true,
       target: ['es2020'],
     },
     optimizeDeps: {
       include: ['@angular/forms'],
+      // Keep workspace Angular libraries on the source-transform path so Analog
+      // can compile external templates/styles instead of Vite prebundling them.
+      exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     plugins: [
       analog({
         apiPrefix: 'api',
-        additionalPagesDirs: ['/libs/shared/feature'],
-        additionalAPIDirs: ['/libs/shared/feature/src/api'],
-        fileReplacements,
+        content: {
+          highlighter: 'prism',
+        },
+        additionalPagesDirs: discoveredLibs.additionalPagesDirs,
+        additionalContentDirs: discoveredLibs.additionalContentDirs,
+        additionalAPIDirs: discoveredLibs.additionalAPIDirs,
         prerender: {
           routes: [
             '/',
@@ -70,33 +82,47 @@ export default defineConfig(({ mode }) => {
             host: base,
           },
         },
-        vite: {
-          inlineStylesExtension: 'scss',
-          fastCompile: true,
-          experimental: {
-            useAngularCompilationAPI: false,
-          },
-        },
-        liveReload: true,
-        nitro: {
-          routeRules: {
-            '/cart/**': {
-              ssr: false,
-            },
-            '/404.html': {
-              ssr: false,
-            },
-          },
+        experimental: {
+          typedRouter: true,
         },
       }),
-      nxViteTsPaths(),
-      visualizer() as PluginOption,
-      // !isSsrBuild &&
-      //   inspect({
-      //     build: true,
-      //     outputDir: '../../.vite-inspect/analog-app',
-      //   }),
+      angular({
+        include: [
+          ...explicitLibPages,
+          ...pageGlobs(discoveredLibs.additionalPagesDirs),
+        ],
+        additionalContentDirs: discoveredLibs.additionalContentDirs,
+        inlineStylesExtension: 'scss',
+        fileReplacements,
+        fastCompile: true,
+      }),
+      nitro({
+        routeRules: {
+          '/client': { ssr: false },
+          '/cart/**': { ssr: false },
+          '/404.html': { ssr: false },
+        },
+      }),
+      {
+        ...((
+          await import('rollup-plugin-visualizer')
+        ).visualizer() as PluginOption),
+      },
     ],
+    resolve: useBuiltWorkspaceLibs
+      ? {
+          alias: {
+            '@analogjs/my-package': resolve(
+              __dirname,
+              '../../dist/libs/my-package/fesm2022/my-package.js',
+            ),
+            '@analogjs/top-bar': resolve(
+              __dirname,
+              '../../dist/libs/top-bar/fesm2022/top-bar.js',
+            ),
+          },
+        }
+      : undefined,
     test: {
       reporters: ['default'],
       coverage: {

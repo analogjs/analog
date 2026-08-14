@@ -1,6 +1,7 @@
-import { MarkedContentHighlighter } from '@analogjs/content';
 import { Injectable } from '@angular/core';
 import { markedHighlight } from 'marked-highlight';
+
+import { MarkedContentHighlighter } from '../../../src/lib/marked-content-highlighter';
 
 declare const Prism: typeof import('prismjs');
 
@@ -18,7 +19,7 @@ export class PrismHighlighter extends MarkedContentHighlighter {
     return `<pre class="${classes}"><code class="${classes}">${code}</code></pre>`;
   }
 
-  override getHighlightExtension(): HighlightExtension {
+  override getHighlightExtension(): import('marked').MarkedExtension {
     return markedHighlight({
       async: true,
       highlight: (code: string, lang: string) => {

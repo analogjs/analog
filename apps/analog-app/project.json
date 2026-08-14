@@ -5,22 +5,16 @@
   "sourceRoot": "apps/analog-app/src",
   "prefix": "analogjs",
   "tags": [],
-  "implicitDependencies": [
-    "vitest-angular",
-    "storybook-angular",
-    "platform",
-    "router",
-    "content"
-  ],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/analog-app/.nitro",
-        "{workspaceRoot}/dist/apps/analog-app/ssr",
-        "{workspaceRoot}/dist/apps/analog-app/analog"
+      "executor": "@analogjs/platform:vite",
+      "dependsOn": [
+        "platform:build",
+        "router:build",
+        "my-package:build",
+        "top-bar:build"
       ],
+      "outputs": ["{workspaceRoot}/dist/apps/analog-app/analog"],
       "options": {
         "configFile": "apps/analog-app/vite.config.ts",
         "outputPath": "dist/apps/analog-app/client"
@@ -38,10 +32,12 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "dependsOn": ["platform:build", "router:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "analog-app:build",
-        "port": 3000
+        "buildLibsFromSource": true,
+        "port": 43000
       },
       "configurations": {
         "development": {
@@ -56,8 +52,11 @@
     "serve-nitro": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "",
-        "command": "PORT=3000 node dist/apps/analog-app/analog/server/index.mjs"
+        "cwd": "dist/apps/analog-app/analog",
+        "command": "node --unhandled-rejections=throw ./server/index.mjs",
+        "env": {
+          "PORT": "43000"
+        }
       },
       "dependsOn": ["build"]
     },
@@ -72,8 +71,8 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "outputs": ["{projectRoot}/coverage"],
-      "dependsOn": ["^build"]
+      "dependsOn": ["platform:build", "router:build"],
+      "outputs": ["{projectRoot}/coverage"]
     },
     "storybook": {
       "executor": "@analogjs/storybook-angular:start-storybook",
@@ -82,7 +81,7 @@
         "configDir": "apps/analog-app/.storybook",
         "compodoc": false,
         "compodocArgs": ["-e", "json", "-d", "."],
-        "port": 6006,
+        "port": 43050,
         "styles": ["apps/analog-app/src/styles.css"],
         "stylePreprocessorOptions": {
           "loadPaths": []
@@ -100,6 +99,13 @@
         "stylePreprocessorOptions": {
           "loadPaths": []
         }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
       }
     }
   }

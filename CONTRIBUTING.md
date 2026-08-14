@@ -80,7 +80,7 @@ or alternatively run this command from the root folder:
 pnpm nx serve docs-analog
 ```
 
-Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:3000](http://localhost:3000).
+Once the development server is up and running, you can preview the docs and website by visiting [http://localhost:43020](http://localhost:43020).
 
 ### Build
 
@@ -166,7 +166,6 @@ The following is the list of currently supported scopes:
 - **platform**
 - **router**
 - **storybook-angular**
-- **trpc**
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**

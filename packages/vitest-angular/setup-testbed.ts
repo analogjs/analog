@@ -38,7 +38,7 @@ export function setupTestBed({
   teardown,
   errorOnUnknownElements,
   errorOnUnknownProperties,
-}: TestBedSetupOptions = {}) {
+}: TestBedSetupOptions = {}): void {
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
 

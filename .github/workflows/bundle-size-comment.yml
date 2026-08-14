@@ -1,0 +1,141 @@
+name: bundle-size-comment
+
+on:
+  pull_request_target:
+    types:
+      - closed
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    env:
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
+      MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Checkout alpha
+        if: ${{ github.event.pull_request.base.ref != 'alpha' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}
+          ref: alpha
+          path: refs/alpha
+
+      - name: Create baseline worktree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git worktree add refs/base "${MERGE_SHA}^1"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          pnpm --version
+
+      - name: Setup Node.js cache
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: '**/pnpm-lock.yaml'
+
+      - name: Generate merged report
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          snapshot_checkout() {
+            local label="$1"
+            local directory="$2"
+
+            (
+              cd "${directory}"
+              pnpm install --frozen-lockfile --prefer-offline
+              node tools/scripts/bundle-size-analysis.mts \
+                --skip-build \
+                --label "${label}" \
+                --git-branch "${label}" \
+                --json-output "tmp/bundle-size/${label}/snapshot.json"
+            )
+          }
+
+          snapshot_checkout "merged" "${GITHUB_WORKSPACE}"
+          snapshot_checkout "${BASE_REF}" "${GITHUB_WORKSPACE}/refs/base"
+
+          compare_args=(
+            --current "tmp/bundle-size/merged/snapshot.json"
+            --baseline "${BASE_REF}=refs/base/tmp/bundle-size/${BASE_REF}/snapshot.json"
+            --markdown-output "tmp/bundle-size/comment.md"
+            --json-output "tmp/bundle-size/compare.json"
+          )
+
+          if [[ "${BASE_REF}" != "alpha" ]]; then
+            snapshot_checkout "alpha" "${GITHUB_WORKSPACE}/refs/alpha"
+            compare_args+=(
+              --baseline "alpha=refs/alpha/tmp/bundle-size/alpha/snapshot.json"
+            )
+          fi
+
+          node tools/scripts/bundle-size-compare.mts "${compare_args[@]}"
+
+      - name: Update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+
+            const artifactDir = path.join(process.env.GITHUB_WORKSPACE, 'tmp/bundle-size');
+            const body = fs
+              .readFileSync(path.join(artifactDir, 'comment.md'), 'utf8')
+              .trim();
+            const prNumber = Number(process.env.PR_NUMBER);
+
+            const marker = '<!-- bundle-size-report -->';
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+              },
+            );
+
+            const existingComment = comments.find(
+              (comment) =>
+                comment.user?.type === 'Bot' && comment.body?.includes(marker),
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });

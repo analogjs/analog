@@ -6,35 +6,14 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["vite-plugin-angular:build-self"],
+      "outputs": [
+        "{workspaceRoot}/packages/vite-plugin-angular/dist/src/lib/tools"
+      ],
       "options": {
-        "outputPath": "node_modules/@analogjs/vite-plugin-angular/src/lib/tools",
-        "main": "packages/vite-plugin-angular-tools/src/index.ts",
-        "tsConfig": "packages/vite-plugin-angular-tools/tsconfig.lib.json",
-        "clean": true,
-        "assets": [
-          "packages/vite-plugin-angular-tools/*.md",
-          {
-            "input": "./packages/vite-plugin-angular-tools/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vite-plugin-angular-tools/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vite-plugin-angular-tools",
-            "glob": "generators.json",
-            "output": "."
-          },
-          {
-            "input": "./packages/vite-plugin-angular-tools",
-            "glob": "builders.json",
-            "output": "."
-          }
-        ]
+        "command": "vite build -c packages/vite-plugin-angular-tools/vite.config.lib.ts"
       }
     },
     "lint": {
@@ -43,6 +22,13 @@
     },
     "test": {
       "executor": "@nx/vitest:test"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/vite-plugin-angular-tools",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

@@ -9,7 +9,7 @@ function sortAndConcatParams(params: HttpParams | URLSearchParams): string {
 }
 
 export function makeCacheKey(
-  request: HttpRequest<any>,
+  request: HttpRequest<unknown>,
   mappedRequestUrl: string,
 ): StateKey<unknown> {
   // make the params encoded same as a url so it's easy to identify
@@ -39,7 +39,7 @@ export function makeCacheKey(
 function generateHash(str: string) {
   let hash = 0;
   for (let i = 0, len = str.length; i < len; i++) {
-    let chr = str.charCodeAt(i);
+    const chr = str.charCodeAt(i);
     hash = (hash << 5) - hash + chr;
     hash |= 0; // Convert to 32bit integer
   }

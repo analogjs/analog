@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "outputCapture": "direct-nodejs",
+  "title": "Vite Prod Builder",
+  "cli": "nx",
+  "description": "Builds a Vite.js application for production.",
+  "type": "object",
+  "properties": {
+    "outputPath": {
+      "type": "string",
+      "description": "The output path of the generated files.",
+      "x-completion-type": "directory",
+      "x-priority": "important"
+    },
+    "configFile": {
+      "type": "string",
+      "description": "The name of the Vite.js configuration file.",
+      "x-completion-type": "file",
+      "x-completion-glob": "vite.config.@(js|ts)"
+    },
+    "sourcemap": {
+      "description": "Output sourcemaps. Use 'hidden' for use with error reporting tools without generating sourcemap comment.",
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "mode": {
+      "type": "string",
+      "description": "Mode to run the build in."
+    }
+  },
+  "definitions": {},
+  "required": ["outputPath"]
+}

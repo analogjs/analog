@@ -6,8 +6,18 @@
     "declarationMap": true,
     "inlineSources": true,
     "types": [],
-    "allowJs": true
+    "isolatedDeclarations": true,
+    "rootDir": ".",
+    "composite": false
   },
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/test-setup.ts",
+    "oxlint.config.ts",
+    "vite.config.lib.ts",
+    "vite.config.ts",
+    "src/lib/devtools/content-devtools-client.ts"
+  ],
   "include": ["**/*.ts"]
 }

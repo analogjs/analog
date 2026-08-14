@@ -87,8 +87,15 @@ En la acción del servidor, puedes acceder a variables de entorno (environment v
 
 ```ts
 // src/app/pages/newsletter.server.ts
+import {
+  type PageServerAction,
+  redirect,
+  json,
+  fail,
+} from '@analogjs/router/server/actions';
+
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -128,7 +135,7 @@ En la acción del servidor, usa el valor `action`.
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -175,13 +182,15 @@ El parámetro de consulta puede ser accedido a través de la acción del formula
 
 ```ts
 // src/app/pages/search.server.ts
+import type { PageServerLoad } from '@analogjs/router';
+
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm,
   };
 }
 ```

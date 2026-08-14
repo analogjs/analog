@@ -1,11 +1,24 @@
 {
   "name": "@analogjs/platform",
-  "version": "2.7.0",
+  "version": "3.0.0-alpha.70",
   "description": "The fullstack meta-framework for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./style-pipeline": {
+      "types": "./dist/src/style-pipeline.d.ts",
+      "import": "./dist/src/style-pipeline.js",
+      "default": "./dist/src/style-pipeline.js"
+    },
+    "./style-preprocessor": {
+      "types": "./dist/src/style-preprocessor.d.ts",
+      "import": "./dist/src/style-preprocessor.js",
+      "default": "./dist/src/style-preprocessor.js"
+    },
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -28,28 +41,31 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "dependencies": {
-    "nitropack": "^2.13.1",
-    "@analogjs/vite-plugin-angular": "^2.7.0",
-    "@analogjs/vite-plugin-nitro": "^2.7.0",
-    "oxc-parser": "^0.121.0",
-    "vitefu": "^1.1.2"
+    "front-matter": "catalog:",
+    "es-toolkit": "catalog:",
+    "tinyglobby": "catalog:",
+    "nitro": "catalog:",
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@babel/core": "catalog:",
+    "ofetch": "catalog:",
+    "oxc-parser": "catalog:",
+    "magic-string": "catalog:",
+    "rolldown": "catalog:",
+    "obug": "catalog:",
+    "vitefu": "catalog:",
+    "xmlbuilder2": "catalog:"
   },
   "peerDependencies": {
-    "@nx/angular": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23",
-    "@nx/devkit": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23",
-    "@nx/vite": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0 || ^23.0.0 || ^23",
-    "marked": "^15.0.12",
-    "marked-gfm-heading-id": "^4.1.3",
-    "marked-highlight": "^2.2.3",
-    "marked-mangle": "^1.1.12",
-    "marked-shiki": "^1.2.1",
-    "shiki": "^1.29.2",
-    "vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
-  },
-  "overrides": {
-    "@nx/vite": {
-      "vite": "$vite"
-    }
+    "@nx/angular": "catalog:peerCompat",
+    "@nx/devkit": "catalog:peerCompat",
+    "@nx/vite": "catalog:peerCompat",
+    "marked": "catalog:",
+    "marked-gfm-heading-id": "catalog:",
+    "marked-highlight": "catalog:",
+    "marked-mangle": "catalog:",
+    "marked-shiki": "catalog:",
+    "shiki": "catalog:",
+    "vite": "catalog:peerCompat"
   },
   "peerDependenciesMeta": {
     "@nx/angular": {
@@ -74,10 +90,10 @@
       "optional": true
     }
   },
-  "builders": "./src/lib/nx-plugin/executors.json",
-  "executors": "./src/lib/nx-plugin/executors.json",
-  "generators": "./src/lib/nx-plugin/generators.json",
-  "schematics": "./src/lib/nx-plugin/generators.json",
+  "builders": "./dist/src/lib/nx-plugin/builders.json",
+  "executors": "./dist/src/lib/nx-plugin/executors.json",
+  "generators": "./dist/src/lib/nx-plugin/generators.json",
+  "schematics": "./dist/src/lib/nx-plugin/generators.json",
   "ng-update": {
     "packageGroup": [
       "@analogjs/platform",

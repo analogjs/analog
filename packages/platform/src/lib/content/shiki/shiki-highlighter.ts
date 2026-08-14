@@ -19,7 +19,10 @@ export type ShikiHighlightOptions = Partial<
   Partial<CodeOptionsSingleTheme<BundledTheme>> &
   Partial<CodeOptionsMultipleThemes<BundledTheme>>;
 
-export const defaultHighlighterOptions = {
+export const defaultHighlighterOptions: {
+  langs: string[];
+  themes: string[];
+} = {
   langs: [
     'json',
     'ts',
@@ -44,7 +47,7 @@ function escapeHtml(code: string): string {
 }
 
 export class ShikiHighlighter extends MarkedContentHighlighter {
-  private readonly highlighter = createHighlighter(this.highlighterOptions);
+  private readonly highlighter: ReturnType<typeof createHighlighter>;
 
   constructor(
     private highlighterOptions: ShikiHighlighterOptions,
@@ -54,8 +57,9 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
     private skipLangs: string[] = [],
   ) {
     super();
+    this.highlighter = createHighlighter(this.highlighterOptions);
   }
-  getHighlightExtension() {
+  getHighlightExtension(): import('marked').MarkedExtension {
     return markedShiki({
       container: this.container,
       highlight: async (code, lang, props) => {

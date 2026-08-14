@@ -1,5 +1,4 @@
 import { Component, signal } from '@angular/core';
-
 import { FormAction } from '@analogjs/router';
 
 import { type NewsletterSubmitResponse } from './newsletter.server';
@@ -26,7 +25,6 @@ type FormErrors =
         method="post"
         (onSuccess)="onSuccess($any($event))"
         (onError)="onError($any($event))"
-        (onStateChange)="errors.set(undefined)"
       >
         <div>
           <label for="email"> Email </label>

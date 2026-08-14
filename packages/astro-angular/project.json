@@ -7,28 +7,22 @@
   "targets": {
     "build": {
       "dependsOn": ["^build"],
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
       "options": {
-        "outputPath": "node_modules/@analogjs/astro-angular",
-        "main": "packages/astro-angular/src/index.ts",
-        "tsConfig": "packages/astro-angular/tsconfig.lib.json",
-        "assets": [
-          "packages/astro-angular/*.md",
-          "packages/astro-angular/migrations/migration.json"
+        "commands": [
+          "vite build -c packages/astro-angular/vite.config.lib.ts",
+          "node tools/scripts/verify-package-artifacts.mts astro-angular"
         ],
-        "updateBuildableProjectDepsInPackageJson": false
+        "parallel": false
       }
     },
     "publish": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/publish.mjs astro-angular {args.ver} {args.tag}"
+        "command": "node tools/scripts/publish.mts astro-angular {args.ver} {args.tag}"
       },
-      "dependsOn": [
-        {
-          "target": "build"
-        }
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
@@ -42,6 +36,13 @@
       "options": {
         "preset": "conventional",
         "tagPrefix": "astro-angular@"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/astro-angular",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
       }
     }
   }

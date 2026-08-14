@@ -1,4 +1,3 @@
-import { ContentRenderer, NoopContentRenderer } from '@analogjs/content';
 import { Provider } from '@angular/core';
 import type {
   BundledLanguage,
@@ -8,6 +7,11 @@ import type {
   CodeOptionsSingleTheme,
   CodeToHastOptionsCommon,
 } from 'shiki';
+
+import {
+  ContentRenderer,
+  NoopContentRenderer,
+} from '../../src/lib/content-renderer';
 
 export type ShikiHighlightOptions = Partial<
   Omit<CodeToHastOptionsCommon<BundledLanguage>, 'lang'>

@@ -1,39 +1,35 @@
 import { VERSION } from '@angular/compiler-cli';
 import type { Plugin } from 'vite';
-import * as vite from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
+import { debugPlatform } from './utils/debug.js';
+import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot =
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd();
 
   return [
     {
       name: 'analogjs-deps-plugin',
       config() {
-        const useCompilationAPI =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI;
-        const fastCompile =
-          options?.fastCompile ||
-          (options?.vite !== false && options?.vite?.fastCompile);
-
-        const esbuild =
-          useCompilationAPI || fastCompile
-            ? {}
-            : { exclude: ['**/*.ts', '**/*.js'] };
-
-        const oxc =
-          useCompilationAPI || fastCompile
-            ? {}
-            : { exclude: ['**/*.ts', '**/*.js'] };
+        // Skip Vite's built-in ts/js transform so `@analogjs/vite-plugin-angular`
+        // (when the user includes it) owns Angular file compilation. Users who
+        // run an alternative compiler or compile through Angular's own
+        // compilation API can override this in their own Vite config.
+        const transformConfig = { exclude: ['**/*.ts', '**/*.js'] };
+        debugPlatform('deps transform config', {
+          jsTransformKey: getJsTransformConfigKey(),
+          transformExcluded: true,
+        });
 
         return {
-          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
+          [getJsTransformConfigKey()]: transformConfig,
           ssr: {
             noExternal: [
               '@analogjs/**',
+              'es-toolkit',
               'firebase/**',
               'firebase-admin/**',
               'rxfire',
@@ -41,6 +37,19 @@ export function depsPlugin(options?: Options): Plugin[] {
               '@taiga-ui/**',
               '@tanstack/angular-query-experimental',
             ],
+            // The server pre-bundle is resolved separately from the client
+            // one, so a secondary entry point left out of it loads its own
+            // copy of `@angular/core`. `inject()` then runs against a runtime
+            // with no active injection context and SSR fails with NG0203.
+            optimizeDeps: {
+              include: [
+                '@angular/common',
+                '@angular/common/http',
+                ...(Number(VERSION.major) > 15
+                  ? ['@angular/core/rxjs-interop']
+                  : []),
+              ],
+            },
           },
           optimizeDeps: {
             include: [

@@ -1,5 +1,6 @@
 import { Plugin, normalizePath } from 'vite';
-import { injectServerFnIds, serverFnFileId } from '@analogjs/vite-plugin-nitro';
+import { injectServerFnIds } from './inject-server-fn-ids.js';
+import { serverFnFileId } from './server-fn-id.js';
 
 import { scrubServerFnModule } from './server-fn-client-transform.js';
 

@@ -1,55 +1,62 @@
 /// <reference types='vitest' />
 import angular from '@analogjs/vite-plugin-angular';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 
-export default defineConfig(({ mode }) => ({
-  root: __dirname,
-  cacheDir: '../../node_modules/.vite/libs/my-package',
-  plugins: [
-    angular({ jit: false }),
-    nxViteTsPaths(),
-    nxCopyAssetsPlugin(['*.md', 'package.json']),
-  ],
-  resolve: {
-    mainFields: ['module'],
-  },
-  build: {
-    target: ['esnext'],
-    sourcemap: true,
-    lib: {
-      entry: 'src/index.ts',
-      fileName: `fesm2022/my-package`,
-      formats: ['es' as const],
+export default defineConfig(({ command }) => {
+  const tsconfig =
+    process.env['ANALOG_BUILD_LIB_TSCONFIG'] ??
+    (command === 'build'
+      ? `${__dirname}/tsconfig.lib.json`
+      : `${__dirname}/tsconfig.spec.json`);
+
+  return {
+    root: __dirname,
+    cacheDir: '../../node_modules/.vite/libs/my-package',
+    plugins: [
+      angular({ jit: false, tsconfig }),
+      nxCopyAssetsPlugin(['*.md', 'package.json']),
+    ],
+    resolve: {
+      mainFields: ['module'],
     },
-    rolldownOptions: {
-      external: [/^@angular\/.*/, 'rxjs', 'rxjs/operators'],
-      output: {
-        preserveModules: false,
+    build: {
+      target: ['esnext'],
+      sourcemap: true,
+      lib: {
+        entry: 'src/index.ts',
+        fileName: `fesm2022/my-package`,
+        formats: ['es' as const],
       },
+      rollupOptions: {
+        external: [/^@angular\/.*/, 'rxjs', 'rxjs/operators'],
+        output: {
+          preserveModules: false,
+        },
+      },
+      cssCodeSplit: false,
+      cssMinify: true,
+      minify: false,
     },
-    cssCodeSplit: false,
-    cssMinify: true,
-    minify: false,
-  },
-  test: {
-    reporters: ['default'],
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['src/test-setup.ts'],
-    include: ['**/*.spec.ts'],
-    cacheDir: '../../node_modules/.vitest',
-    isolate: false,
-    browser: {
-      enabled: true,
-      provider: playwright(),
-      instances: [{ browser: 'chromium' }],
+    test: {
+      reporters: ['default'],
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
+      cacheDir: '../../node_modules/.vitest',
+      isolate: false,
+      browser: {
+        enabled: true,
+        provider: playwright(),
+        instances: [{ browser: 'chromium' }],
+      },
+      watch: false,
+      teardownTimeout: 3000,
     },
-    watch: false,
-  },
-  define: {
-    'import.meta.vitest': mode !== 'production',
-  },
-}));
+    define: {
+      'import.meta.vitest': command !== 'build',
+    },
+  };
+});

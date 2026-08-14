@@ -15,6 +15,6 @@ export class ProductDetailsPage {
   }
 
   getPrice() {
-    return this.page.locator('h4');
+    return this.page.locator('p.price');
   }
 }

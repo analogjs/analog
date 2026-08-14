@@ -9,7 +9,7 @@ import { ImageResponseOptions } from './options';
 export const generateImage = async (
   element: string,
   options: ImageResponseOptions,
-) => {
+): Promise<Buffer> => {
   const elementHtml = toReactElement(element);
   const svg = await satori(elementHtml as any, {
     width: options.width || 1200,

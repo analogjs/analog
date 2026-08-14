@@ -1,15 +1,24 @@
-import type { PluginOptions } from '@analogjs/vite-plugin-angular';
-import type { NitroConfig, PrerenderRoute } from 'nitropack';
+import type { PrerenderRoute } from 'nitro/types';
 import type {
   SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
   PrerenderContentDir,
   PrerenderContentFile,
+  PrerenderSitemapConfig,
   PrerenderRouteConfig,
-} from '@analogjs/vite-plugin-nitro';
+} from './nitro/types.js';
 
-import { ContentPluginOptions } from './content-plugin.js';
+import type { ContentPluginOptions } from './content-plugin.js';
+import type { DebugOption } from './utils/debug.js';
+import type { StylePipelineOptions } from './style-pipeline.js';
 
-declare module 'nitropack' {
+declare module 'nitro/types' {
   interface NitroRouteConfig {
     ssr?: boolean;
     /**
@@ -76,32 +85,33 @@ export interface I18nOptions {
 
 export interface Options {
   ssr?: boolean;
-  ssrBuildDir?: string;
   /**
    * Prerender the static pages without producing the server output.
    */
   static?: boolean;
   prerender?: PrerenderOptions;
   entryServer?: string;
-  /**
-   * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
-   * plugin. Set to false to disable the internal vite plugin.
-   */
-  vite?: PluginOptions | false;
-  nitro?: NitroConfig;
   apiPrefix?: string;
-  jit?: boolean;
   index?: string;
   workspaceRoot?: string;
   content?: ContentPluginOptions;
   /**
-   * Extension applied for inline styles
+   * Enable debug logging for the `analog:platform:*` and `analog:nitro:*`
+   * scopes.
+   *
+   * - `true` → enables all platform + nitro scopes
+   * - `string[]` → enables listed namespaces
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
+   *
+   * Angular scopes (`analog:angular:*`) are owned by
+   * `@analogjs/vite-plugin-angular` — pass `debug` to `angular()` directly
+   * to enable them.
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
    */
-  inlineStylesExtension?: string;
-  /**
-   * Enables Angular's HMR during development
-   */
-  liveReload?: boolean;
+  debug?: DebugOption;
 
   /**
    * Additional page paths to include
@@ -116,34 +126,16 @@ export interface Options {
    */
   additionalAPIDirs?: string[];
   /**
-   * Additional files to include in compilation
+   * Generate routes from the app's route directories.
+   *
+   * Workspace library route directories are opt-in. Use
+   * `discoverLibraryRoutes()` and pass its result to `additionalPagesDirs`,
+   * `additionalContentDirs`, and `additionalAPIDirs` when an app should
+   * include routes from shared libraries.
+   *
+   * @default false
    */
-  include?: string[];
-  /**
-   * Toggles internal API middleware.
-   * If disabled, a proxy request is used to route /api
-   * requests to / in the production server build.
-   */
-  useAPIMiddleware?: boolean;
-  /**
-   * Disable type checking diagnostics by the Angular compiler
-   */
-  disableTypeChecking?: boolean;
-  /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
-   */
-  fastCompile?: boolean;
-  /**
-   * Compilation output mode used when `fastCompile` is enabled.
-   * - `'full'` (default): Emit final Ivy definitions for application builds.
-   * - `'partial'`: Emit partial declarations for library publishing.
-   */
-  fastCompileMode?: 'full' | 'partial';
-  /**
-   * File replacements
-   */
-  fileReplacements?: PluginOptions['fileReplacements'];
+  discoverRoutes?: boolean;
   /**
    * Configuration for runtime i18n support.
    * When set, enables locale detection on SSR and provides
@@ -151,18 +143,81 @@ export interface Options {
    */
   i18n?: I18nOptions;
   /**
-   * Opt-in experimental features that are not yet stable.
+   * Experimental features. These APIs are subject to change.
+   *
+   * `@analogjs/platform` is the default rollout and orchestration surface for
+   * Analog-owned experiments. These flags may delegate to dedicated feature
+   * plugins or forward options into lower-level integrations while preserving
+   * a single Analog-first authoring surface.
    */
   experimental?: {
     /**
-     * Opt into progressive streaming SSR. When enabled, the SSR build patches
-     * `@angular/core` with a per-`@defer` block resolution hook so
-     * `@analogjs/router`'s `renderStream` can flush the document head first and
-     * each `@defer (hydrate …)` block as it resolves on the server. Has no
-     * effect unless the server entry uses `renderStream`.
+     * Enable typed route table generation for type-safe navigation.
+     *
+     * When enabled, `@analogjs/platform` generates a single route module
+     * that augments `AnalogRouteTable` with typed params and query for each
+     * file-based route. JSON-LD manifest generation is configured on the same
+     * object so both codegen features share one generated file.
+     *
+     * - `true` — generates `src/routeTree.gen.ts` with `routeJsonLdManifest`
+     * - `TypedRouterOptions` — customize output path or disable just the
+     *   JSON-LD manifest piece
+     *
+     * Unlocks type-safe usage of:
+     * - `routePath()` — build route link objects for `[routerLink]`
+     * - `injectNavigate()` — typed navigation
+     * - `injectParams(from)` — typed params signal
+     * - `injectQuery(from)` — typed query signal
+     *
+     * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
      */
-    streaming?: boolean;
+    typedRouter?: boolean | TypedRouterOptions;
+
+    /**
+     * Experimental slot for community-maintained style-pipeline integrations.
+     *
+     * This keeps Analog's core surface intentionally narrow: community
+     * packages can register Vite plugins through an Analog-first config shape
+     * without requiring Analog itself to own design-token engines, library
+     * target contracts, or framework-specific theming semantics.
+     */
+    stylePipeline?: StylePipelineOptions | false;
   };
 }
 
-export { PrerenderContentDir, PrerenderContentFile };
+export interface TypedRouterOptions {
+  /**
+   * Output path for the single generated route module,
+   * relative to the app root.
+   *
+   * @default 'src/routeTree.gen.ts'
+   */
+  outFile?: string;
+  /**
+   * Include generated `routeJsonLdManifest` data in the generated route file.
+   *
+   * @default true
+   */
+  jsonLdManifest?: boolean;
+  /**
+   * Fail production builds after regenerating a stale checked-in route file.
+   * Development and watch mode continue to update the file automatically.
+   *
+   * @default true
+   */
+  verifyOnBuild?: boolean;
+}
+
+export type {
+  PrerenderContentDir,
+  PrerenderContentFile,
+  PrerenderSitemapConfig,
+  SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
+};

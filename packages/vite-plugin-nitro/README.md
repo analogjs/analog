@@ -81,9 +81,9 @@ and are exposed under the default `/api` prefix.
 
 ```ts
 // src/server/routes/api/v1/hello
-import { defineEventHandler } from 'h3';
+import { defineHandler } from 'h3';
 
-export default defineEventHandler(() => ({ message: 'Hello World' }));
+export default defineHandler(() => ({ message: 'Hello World' }));
 ```
 
 The API route can be accessed as `/api/v1/hello`.

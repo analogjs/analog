@@ -4,13 +4,7 @@ import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
-import {
-  defaultClientConditions,
-  normalizePath,
-  Plugin,
-  preprocessCSS,
-  ResolvedConfig,
-} from 'vite';
+import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 
 import {
   compile,
@@ -682,15 +676,14 @@ export function fastCompilePlugin(
         isAstroIntegration: pluginOptions.isAstroIntegration,
       });
 
+      // No `resolve.conditions` extension here: the `style` condition is
+      // scoped to `.css`-extension requests by
+      // `cssExtensionStyleResolverPlugin`, registered once at the
+      // `angular()` factory level (which is the only public entry point
+      // that wires this plugin in).
       return {
         ...(vite.rolldownVersion ? { oxc: {} as any } : { esbuild: false }),
         ...depOptimizer,
-        resolve: {
-          conditions: [
-            ...depOptimizer.resolve.conditions,
-            ...(config.resolve?.conditions || defaultClientConditions),
-          ],
-        },
       };
     },
     configResolved(config) {

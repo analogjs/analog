@@ -10,7 +10,7 @@ import { SetupVitestGeneratorSchema } from '../schema';
 export function updateTestTarget(
   tree: Tree,
   schema: SetupVitestGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   if (tree.exists(angularJsonPath)) {
@@ -31,12 +31,18 @@ export function updateTestTarget(
 
     const projectConfig = projects.get(schema.project);
 
-    if (projectConfig && projectConfig?.targets) {
-      projectConfig.targets.test = {
-        executor: '@analogjs/vitest-angular:test',
-      };
-
-      updateProjectConfiguration(tree, schema.project, projectConfig);
+    if (!projectConfig) {
+      throw new Error(`Project "${schema.project}" not found.`);
     }
+
+    if (!projectConfig.targets) {
+      throw new Error(`Project "${schema.project}" has no targets.`);
+    }
+
+    projectConfig.targets.test = {
+      executor: '@analogjs/vitest-angular:test',
+    };
+
+    updateProjectConfiguration(tree, schema.project, projectConfig);
   }
 }

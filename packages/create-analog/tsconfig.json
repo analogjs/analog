@@ -13,5 +13,10 @@
     "lib": ["dom", "es2022"]
   },
   "files": [],
-  "include": []
+  "include": [],
+  "references": [
+    {
+      "path": "../platform"
+    }
+  ]
 }

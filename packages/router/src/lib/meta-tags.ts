@@ -3,7 +3,7 @@ import { Meta, MetaDefinition as NgMetaTag } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-export const ROUTE_META_TAGS_KEY = Symbol(
+export const ROUTE_META_TAGS_KEY: unique symbol = Symbol(
   '@analogjs/router Route Meta Tags Key',
 );
 
@@ -48,15 +48,14 @@ type MetaTagSelector =
       | typeof ITEMPROP_KEY}="${string}"`;
 type MetaTagMap = Record<MetaTagSelector, MetaTag>;
 
-export function updateMetaTagsOnRouteChange(): void {
-  const router = inject(Router);
-  const metaService = inject(Meta);
-
+export function updateMetaTagsOnRouteChange(
+  router: Router = inject(Router),
+  metaService: Meta = inject(Meta),
+): void {
   router.events
     .pipe(filter((event) => event instanceof NavigationEnd))
     .subscribe(() => {
       const metaTagMap = getMetaTagMap(router.routerState.snapshot.root);
-
       for (const metaTagSelector in metaTagMap) {
         const metaTag = metaTagMap[
           metaTagSelector as MetaTagSelector

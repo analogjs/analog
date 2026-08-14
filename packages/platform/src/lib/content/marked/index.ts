@@ -12,7 +12,7 @@ let markedSetupInstance: MarkedSetupService;
 export function getMarkedSetup(
   options?: WithMarkedOptions,
   highlighter?: MarkedContentHighlighter,
-) {
+): MarkedSetupService {
   markedSetupInstance ??= new MarkedSetupService(options, highlighter);
   return markedSetupInstance;
 }

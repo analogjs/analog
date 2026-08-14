@@ -9,7 +9,21 @@ import { RouterLinkWithHref } from '@angular/router';
   selector: 'analogjs-top-bar',
   standalone: true,
   imports: [RouterLinkWithHref],
-  templateUrl: './template.html',
+  template: `
+    <style>
+      h1 {
+        margin: 8px 0;
+      }
+    </style>
+
+    <a routerLink="/">
+      <h1>My Store</h1>
+    </a>
+
+    <a routerLink="/cart" class="button fancy-button">
+      <i class="material-icons">shopping_cart</i>Checkout
+    </a>
+  `,
   encapsulation: ViewEncapsulation.Emulated,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,3 +1,4 @@
+import { EnvironmentProviders, Provider } from '@angular/core';
 import { ROUTES } from '@angular/router';
 
 /**
@@ -5,7 +6,10 @@ import { ROUTES } from '@angular/router';
  * pages for displaying and debugging
  * routes.
  */
-export function withDebugRoutes() {
+export function withDebugRoutes(): {
+  ɵkind: number;
+  ɵproviders: (Provider | EnvironmentProviders)[];
+} {
   const routes = [
     {
       path: '__analog/routes',

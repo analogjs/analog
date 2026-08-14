@@ -5,16 +5,11 @@
   "sourceRoot": "apps/blog-app/src",
   "prefix": "blog",
   "tags": [],
-  "implicitDependencies": ["platform", "router", "content"],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/blog-app/.nitro",
-        "{workspaceRoot}/dist/apps/blog-app/ssr",
-        "{workspaceRoot}/dist/apps/blog-app/analog"
-      ],
+      "executor": "@analogjs/platform:vite",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
+      "outputs": ["{workspaceRoot}/dist/apps/blog-app/analog"],
       "options": {
         "configFile": "apps/blog-app/vite.config.ts",
         "outputPath": "dist/apps/blog-app/client"
@@ -32,10 +27,12 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "continuous": true,
+      "dependsOn": ["platform:build", "router:build", "content:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "blog-app:build",
-        "port": 3000
+        "port": 43010
       },
       "configurations": {
         "development": {
@@ -51,9 +48,17 @@
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "blog-app:build",
+        "ext": "html",
         "parallel": true,
-        "port": 3000,
+        "port": 43010,
         "staticFilePath": "dist/apps/blog-app/analog/public"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/blog-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
       }
     }
   }

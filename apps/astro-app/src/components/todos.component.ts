@@ -1,4 +1,6 @@
-import { Component, type OnInit, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import type { OnInit } from '@angular/core';
+import { NgFor } from '@angular/common';
 import { provideHttpClient, HttpClient } from '@angular/common/http';
 
 interface Todo {

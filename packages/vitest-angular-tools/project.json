@@ -6,30 +6,12 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["vitest-angular:build-self"],
+      "outputs": ["{workspaceRoot}/packages/vitest-angular/dist/src/lib/tools"],
       "options": {
-        "outputPath": "node_modules/@analogjs/vitest-angular/src/lib/tools",
-        "main": "packages/vitest-angular-tools/src/index.ts",
-        "tsConfig": "packages/vitest-angular-tools/tsconfig.lib.json",
-        "clean": true,
-        "assets": [
-          "packages/vitest-angular-tools/*.md",
-          {
-            "input": "./packages/vitest-angular-tools/src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vitest-angular-tools/src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": "./packages/vitest-angular-tools",
-            "glob": "collection.json",
-            "output": "."
-          }
-        ]
+        "command": "vite build -c packages/vitest-angular-tools/vite.config.lib.ts"
       }
     },
     "lint": {
@@ -38,7 +20,14 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["build"]
+      "dependsOn": ["vitest-angular:build"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/vitest-angular-tools",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
+      }
     }
   }
 }

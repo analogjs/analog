@@ -76,7 +76,9 @@ Un ejemplo de ruta API que obtiene todos los todos.
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-export default eventHandler(async () => {
+import { defineHandler } from 'h3';
+
+export default defineHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
 

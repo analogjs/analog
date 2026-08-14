@@ -49,7 +49,7 @@ describe('injectContent', () => {
     flush();
   }));
 
-  it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between slug and files', fakeAsync(() => {
+  it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between slug and files', async () => {
     const routeParams = { slug: 'test' };
     const contentFiles = {
       '/src/content/dont-match.md': () =>
@@ -67,18 +67,18 @@ Test Content`),
       routeParams,
       contentFiles,
     });
-    injectContent().subscribe((c) => {
-      expect(c.content).toMatch('Test Content');
-      expect(c.attributes).toEqual({ slug: 'test' });
-      expect(c.filename).toEqual('/src/content/test');
-      expect(c.slug).toEqual('test');
-      expect(c.toc).toEqual([]);
-    });
-    flushMicrotasks();
-    flush();
-  }));
 
-  it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between custom param and files', fakeAsync(() => {
+    const c = await new Promise<any>((resolve) => {
+      injectContent().subscribe((val) => resolve(val));
+    });
+    expect(c.content).toMatch('Test Content');
+    expect(c.attributes).toEqual({ slug: 'test' });
+    expect(c.filename).toEqual('/src/content/test');
+    expect(c.slug).toEqual('test');
+    expect(c.toc).toEqual([]);
+  });
+
+  it('should return ContentFile object with correct filename, correct attributes, and the correct content of the file when match between custom param and files', async () => {
     const customParam = 'customSlug';
     const routeParams = { customSlug: 'custom-slug-test' };
     const contentFiles = {
@@ -98,17 +98,17 @@ Test Content`),
       routeParams,
       contentFiles,
     });
-    injectContent().subscribe((c) => {
-      expect(c.content).toMatch('Test Content');
-      expect(c.attributes).toEqual({ slug: 'custom-slug-test' });
-      expect(c.filename).toEqual('/src/content/custom-slug-test');
-      expect(c.slug).toEqual('custom-slug-test');
-    });
-    flushMicrotasks();
-    flush();
-  }));
 
-  it('should return ContentFile object when a custom param with prefix is provided', fakeAsync(() => {
+    const c = await new Promise<any>((resolve) => {
+      injectContent().subscribe((val) => resolve(val));
+    });
+    expect(c.content).toMatch('Test Content');
+    expect(c.attributes).toEqual({ slug: 'custom-slug-test' });
+    expect(c.filename).toEqual('/src/content/custom-slug-test');
+    expect(c.slug).toEqual('custom-slug-test');
+  });
+
+  it('should return ContentFile object when a custom param with prefix is provided', async () => {
     const customParam = { subdirectory: 'customPrefix', param: 'slug' };
     const routeParams = { slug: 'custom-prefix-slug-test' };
     const contentFiles = {
@@ -128,19 +128,19 @@ Test Content`),
       routeParams,
       contentFiles,
     });
-    injectContent().subscribe((c) => {
-      expect(c.content).toMatch('Test Content');
-      expect(c.attributes).toEqual({ slug: 'custom-prefix-slug-test' });
-      expect(c.filename).toEqual(
-        '/src/content/customPrefix/custom-prefix-slug-test',
-      );
-      expect(c.slug).toEqual('custom-prefix-slug-test');
-    });
-    flushMicrotasks();
-    flush();
-  }));
 
-  it('should return ContentFile object when a custom filename is provided', fakeAsync(() => {
+    const c = await new Promise<any>((resolve) => {
+      injectContent().subscribe((val) => resolve(val));
+    });
+    expect(c.content).toMatch('Test Content');
+    expect(c.attributes).toEqual({ slug: 'custom-prefix-slug-test' });
+    expect(c.filename).toEqual(
+      '/src/content/customPrefix/custom-prefix-slug-test',
+    );
+    expect(c.slug).toEqual('custom-prefix-slug-test');
+  });
+
+  it('should return ContentFile object when a custom filename is provided', async () => {
     const customParam = { customFilename: 'custom-filename-test' };
     const routeParams = {};
     const contentFiles = {
@@ -160,15 +160,15 @@ Test Content`),
       routeParams,
       contentFiles,
     });
-    injectContent().subscribe((c) => {
-      expect(c.content).toMatch('Test Content');
-      expect(c.attributes).toEqual({ slug: 'custom-filename-test-slug' });
-      expect(c.filename).toEqual('/src/content/custom-filename-test');
-      expect(c.slug).toEqual('custom-filename-test');
+
+    const c = await new Promise<any>((resolve) => {
+      injectContent().subscribe((val) => resolve(val));
     });
-    flushMicrotasks();
-    flush();
-  }));
+    expect(c.content).toMatch('Test Content');
+    expect(c.attributes).toEqual({ slug: 'custom-filename-test-slug' });
+    expect(c.filename).toEqual('/src/content/custom-filename-test');
+    expect(c.slug).toEqual('custom-filename-test');
+  });
 
   it('should finish the stream when content is resolved', async () => {
     const routeParams = {};
@@ -214,7 +214,7 @@ Test Content`),
     });
   });
 
-  it('should include toc entries when markdown headings are present', fakeAsync(() => {
+  it('should include toc entries when markdown headings are present', async () => {
     const routeParams = { slug: 'with-headings' };
     const contentFiles = {
       '/src/content/with-headings.md': () =>
@@ -230,17 +230,15 @@ Body content`),
       contentFiles,
     });
 
-    injectContent().subscribe((c) => {
-      expect(c.content).toMatch('# Heading One');
-      expect(c.toc).toEqual([
-        { id: 'heading-one', level: 1, text: 'Heading One' },
-        { id: 'heading-two', level: 2, text: 'Heading Two' },
-      ]);
+    const c = await new Promise<any>((resolve) => {
+      injectContent().subscribe((val) => resolve(val));
     });
-
-    flushMicrotasks();
-    flush();
-  }));
+    expect(c.content).toMatch('# Heading One');
+    expect(c.toc).toEqual([
+      { id: 'heading-one', level: 1, text: 'Heading One' },
+      { id: 'heading-two', level: 2, text: 'Heading Two' },
+    ]);
+  });
 
   function setup(
     args: Partial<{

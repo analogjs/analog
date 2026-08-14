@@ -5,7 +5,18 @@ import * as ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import {
+  normalizeStylesheetDependencies,
+  type StylePreprocessor,
+} from './style-preprocessor.js';
+import {
+  AnalogStylesheetRegistry,
+  preprocessStylesheetResult,
+  registerStylesheetContent,
+} from './stylesheet-registry.js';
+import { debugStyles } from './utils/debug.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
+import { isTailwindReferenceError } from './utils/tailwind-reference.js';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
@@ -17,17 +28,17 @@ export function augmentHostWithResources(
   options: {
     inlineStylesExtension: string;
     isProd?: boolean;
-    inlineComponentStyles?: Map<string, string>;
-    externalComponentStyles?: Map<string, string>;
+    stylesheetRegistry?: AnalogStylesheetRegistry;
     sourceFileCache?: SourceFileCache;
+    stylePreprocessor?: StylePreprocessor;
   },
-) {
+): void {
   const resourceHost = host as CompilerHost;
 
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
-    let content = (this as any).readFile(filePath);
+    const content = (this as any).readFile(filePath);
 
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);
@@ -46,57 +57,126 @@ export function augmentHostWithResources(
       return null;
     }
 
-    if (options.inlineComponentStyles) {
-      const id = createHash('sha256')
-        .update(context.containingFile)
-        .update(context.className)
-        .update(String(context.order))
-        .update(data)
-        .digest('hex');
-      const filename = id + '.' + options.inlineStylesExtension;
-      options.inlineComponentStyles.set(filename, data);
-      return { content: filename };
-    }
-
-    // Resource file only exists for external stylesheets
     const filename =
       context.resourceFile ??
       context.containingFile.replace(
         '.ts',
         `.${options?.inlineStylesExtension}`,
       );
+    const preprocessed = preprocessStylesheetResult(
+      data,
+      filename,
+      options.stylePreprocessor,
+      {
+        filename,
+        containingFile: context.containingFile,
+        resourceFile: context.resourceFile ?? undefined,
+        className: context.className,
+        order: context.order,
+        inline: !context.resourceFile,
+      },
+    );
 
+    // Externalized path: store preprocessed CSS for Vite's serve-time pipeline.
+    // CSS must NOT be transformed here — the load hook returns it into
+    // Vite's transform pipeline where PostCSS / Tailwind process it once.
+    if (options.stylesheetRegistry) {
+      const stylesheetId = registerStylesheetContent(
+        options.stylesheetRegistry,
+        {
+          code: preprocessed.code,
+          dependencies: normalizeStylesheetDependencies(
+            preprocessed.dependencies,
+          ),
+          diagnostics: preprocessed.diagnostics,
+          tags: preprocessed.tags,
+          containingFile: context.containingFile,
+          className: context.className,
+          order: context.order,
+          inlineStylesExtension: options.inlineStylesExtension,
+          resourceFile: context.resourceFile ?? undefined,
+        },
+      );
+      debugStyles('NgtscProgram: stylesheet deferred to Vite pipeline', {
+        stylesheetId,
+        resourceFile: context.resourceFile ?? '(inline)',
+        dependencies: preprocessed.dependencies,
+        diagnostics: preprocessed.diagnostics,
+        tags: preprocessed.tags,
+      });
+      return { content: stylesheetId };
+    }
+
+    // Non-externalized: CSS is returned directly to the Angular compiler
+    // and never re-enters Vite's pipeline, so transform eagerly.
+    debugStyles('NgtscProgram: stylesheet processed inline via transform', {
+      filename,
+      resourceFile: context.resourceFile ?? '(inline)',
+      dataLength: preprocessed.code.length,
+    });
     let stylesheetResult;
 
     try {
-      stylesheetResult = await transform(data, `${filename}?direct`);
+      stylesheetResult = await transform(
+        preprocessed.code,
+        `${filename}?direct`,
+      );
     } catch (e) {
-      console.error(`${e}`);
+      if (isTailwindReferenceError(e)) {
+        throw e;
+      }
+      debugStyles('NgtscProgram: stylesheet transform error', {
+        filename,
+        resourceFile: context.resourceFile ?? '(inline)',
+        error: String(e),
+      });
     }
 
-    return { content: stylesheetResult?.code || '' };
+    if (!stylesheetResult?.code) {
+      return null;
+    }
+
+    return { content: stylesheetResult.code };
   };
 
   resourceHost.resourceNameToFileName = function (
     resourceName,
     containingFile,
+    fallbackResolve,
   ) {
-    const resolvedPath = path.join(path.dirname(containingFile), resourceName);
+    // Angular's fallbackResolve callback expects (resourceUrl, containingFile),
+    // NOT (directory, resourceName). Use it correctly or fall back to
+    // path.join for simple relative paths.
+    let resolved: string | null = null;
+    if (fallbackResolve) {
+      resolved = fallbackResolve(path.dirname(containingFile), resourceName);
+    }
+    const resolvedPath = normalizePath(
+      resolved ?? path.join(path.dirname(containingFile), resourceName),
+    );
 
     // All resource names that have template file extensions are assumed to be templates
-    if (!options.externalComponentStyles || !hasStyleExtension(resolvedPath)) {
+    if (!options.stylesheetRegistry || !hasStyleExtension(resolvedPath)) {
       return resolvedPath;
     }
 
-    // For external stylesheets, create a unique identifier and store the mapping
-    let externalId = options.externalComponentStyles.get(resolvedPath);
-    externalId ??= createHash('sha256').update(resolvedPath).digest('hex');
-
+    // Register the hash-based external mapping so the resolveId hook can
+    // resolve Angular's compiled stylesheet references back to the source.
+    const externalId = createHash('sha256').update(resolvedPath).digest('hex');
     const filename = externalId + path.extname(resolvedPath);
 
-    options.externalComponentStyles.set(filename, resolvedPath);
+    options.stylesheetRegistry.registerExternalRequest(filename, resolvedPath);
+    debugStyles('NgtscProgram: external stylesheet ID mapped for resolveId', {
+      resourceName,
+      resolvedPath,
+      filename,
+    });
 
-    return filename;
+    // Return the real path so Angular can read the file during analysis.
+    // Previously, returning the hash-based filename caused "Could not find
+    // stylesheet file" errors because the hash doesn't exist on disk,
+    // preventing AOT compilation for any component with styleUrls. (#2293)
+    return resolvedPath;
   };
 }
 

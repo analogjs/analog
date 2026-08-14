@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`Angular Fixture Snapshot > create angular component componentRef fixture snapshot 1`] = `
-<app-test>
+<lib-test>
   <div>
     <a
       href="https://analogjs.org/"
@@ -40,11 +40,11 @@ exports[`Angular Fixture Snapshot > create angular component componentRef fixtur
       Analog documentation
     </a>
   </p>
-</app-test>
+</lib-test>
 `;
 
 exports[`Angular Fixture Snapshot > create angular fixture snapshot 1`] = `
-<app-test>
+<lib-test>
   <div>
     <a
       href="https://analogjs.org/"
@@ -83,5 +83,5 @@ exports[`Angular Fixture Snapshot > create angular fixture snapshot 1`] = `
       Analog documentation
     </a>
   </p>
-</app-test>
+</lib-test>
 `;

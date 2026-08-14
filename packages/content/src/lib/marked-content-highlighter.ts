@@ -6,12 +6,9 @@ import {
   Type,
 } from '@angular/core';
 
-export interface MarkedContentHighlighter {
-  augmentCodeBlock?(code: string, lang: string): string;
-}
-
 @Injectable()
 export abstract class MarkedContentHighlighter {
+  augmentCodeBlock?(code: string, lang: string): string;
   abstract getHighlightExtension(): import('marked').MarkedExtension;
 }
 

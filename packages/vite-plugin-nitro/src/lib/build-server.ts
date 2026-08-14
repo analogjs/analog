@@ -1,20 +1,49 @@
-import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
-import { createNitro, build, prepare } from 'nitropack';
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import type { NitroConfig } from 'nitro/types';
+import {
+  build,
+  copyPublicAssets,
+  createNitro,
+  prepare,
+  prerender,
+} from 'nitro/builder';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 
+export function isVercelPreset(preset: string | undefined): boolean {
+  return !!preset?.toLowerCase().includes('vercel');
+}
+
 export async function buildServer(
   options?: Options,
   nitroConfig?: NitroConfig,
   routeSourceFiles?: Record<string, string>,
-) {
+): Promise<void> {
+  // ── Force Rollup as the server bundler ────────────────────────────
+  //
+  // Nitro v3 defaults to Rolldown when available. Rolldown is faster,
+  // but its module resolver cannot resolve relative chunk imports
+  // (e.g. `./assets/core-DTazUigR.js`) from a rebundled SSR entry on
+  // Windows. The prerender build fails with:
+  //
+  //   [RESOLVE_ERROR] Could not resolve './assets/core-DTazUigR.js'
+  //     in ../../dist/apps/blog-app/ssr/main.server.js
+  //
+  // This is a known Rolldown limitation with cross-directory relative
+  // paths on Windows (backslash vs forward-slash normalisation).
+  // Rollup handles these paths correctly on all platforms.
+  //
+  // The dev server already uses `builder: 'rollup'` for the same
+  // reason. Default to Rollup here too until Rolldown's resolver
+  // matures. The caller can still opt in to Rolldown explicitly via
+  // nitroConfig.builder if their platform supports it.
   const nitro = await createNitro({
     dev: false,
     preset: process.env['BUILD_PRESET'],
     ...nitroConfig,
+    builder: nitroConfig?.builder ?? 'rollup',
   });
 
   if (options?.prerender?.postRenderingHooks) {
@@ -34,11 +63,12 @@ export async function buildServer(
 
     indexFileExts.forEach((fileExt) => {
       // Remove the root index.html(.br|.gz) files
-      const indexFilePath = `${nitroConfig?.output?.publicDir}/index.html${fileExt ? `${fileExt}` : ''}`;
+      const indexFilePath = join(
+        nitroConfig?.output?.publicDir ?? '',
+        `index.html${fileExt}`,
+      );
 
-      if (existsSync(indexFilePath)) {
-        unlinkSync(indexFilePath);
-      }
+      rmSync(indexFilePath, { force: true });
     });
   }
 
@@ -61,10 +91,7 @@ export async function buildServer(
     for (const [route, content] of Object.entries(routeSourceFiles)) {
       const outputPath = join(publicDir, `${route}.md`);
       const outputDir = dirname(outputPath);
-
-      if (!existsSync(outputDir)) {
-        mkdirSync(outputDir, { recursive: true });
-      }
+      mkdirSync(outputDir, { recursive: true });
 
       writeFileSync(outputPath, content, 'utf8');
     }

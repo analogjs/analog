@@ -218,7 +218,7 @@ export default defineConfig(({ mode }) => ({
 
 ## Sitemap Generation
 
-Analog also supports automatic sitemap generation. Analog generates a sitemap in the `dist/analog/public` directory when running a build if a sitemap configuration is provided.
+Analog also supports automatic sitemap generation for prerendered pages. When a sitemap configuration is provided, Analog writes `sitemap.xml` into Nitro's public output directory, which defaults to `dist/analog/public`.
 
 ```ts
 // https://vitejs.dev/config/
@@ -236,9 +236,15 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-To customize the sitemap definition, use the `sitemap` callback function to customize the `lastmod`, `changefreq`, and `priority` fields.
+Only canonical page routes are included by default. Internal helper endpoints such as Analog's static-data prerender routes are excluded automatically.
+
+Use `defaults`, `include`, `exclude`, and `transform` to customize the build-time sitemap output. Route-level `sitemap` callbacks still work for prerender route objects and content directory transforms.
 
 ```ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import type { SitemapEntry, PrerenderContentFile } from '@analogjs/platform';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   plugins: [
@@ -246,6 +252,30 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         sitemap: {
           host: 'https://analogjs.org',
+          defaults: {
+            changefreq: 'weekly',
+            priority: 0.7,
+          },
+          include: async () => [
+            '/changelog',
+            {
+              route: '/docs/hello world',
+              lastmod: '2024-01-01',
+            },
+          ],
+          exclude: ['/drafts/**', /^\/admin/],
+          transform: (entry: SitemapEntry) => {
+            if (entry.route.startsWith('/blog/')) {
+              return {
+                route: entry.route,
+                priority: 0.9,
+              };
+            }
+
+            return {
+              route: entry.route,
+            };
+          },
         },
         routes: async () => [
           '/',
@@ -275,7 +305,9 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
-As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a mapping of the pages' `<loc>`, `<lastmod>`, `<changefreq>`, and `<priority>` properties.
+If you do not provide `lastmod`, Analog omits it instead of generating a build date. This keeps sitemap metadata truthful and avoids signaling misleading freshness to crawlers.
+
+As long as prerender routes are provided, Analog generates a `sitemap.xml` file containing a mapping of the pages' `<loc>`, optional `<lastmod>`, optional `<changefreq>`, and optional `<priority>` properties.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -304,6 +336,10 @@ Analog supports the post-rendering hooks during the prerendering process. The us
 The sample code below shows how to use `postRenderingHooks` in your code:
 
 ```ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -332,6 +368,12 @@ Below is a small example where we can append a script to include Google Analytic
 
 ```ts
 /// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

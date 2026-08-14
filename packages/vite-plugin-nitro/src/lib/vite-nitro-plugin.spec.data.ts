@@ -1,4 +1,4 @@
-import { NitroConfig } from 'nitropack';
+import type { NitroConfig } from 'nitro/types';
 import { ConfigEnv, UserConfig, Plugin } from 'vite';
 import { vi } from 'vitest';
 import { resolve } from 'node:path';
@@ -13,7 +13,7 @@ export const mockViteDevServer = {
 export const mockNitroConfig: NitroConfig = {
   buildDir: resolve('./dist/.nitro'),
   preset: undefined,
-  compatibilityDate: '2024-11-19',
+  compatibilityDate: '2025-11-19',
   handlers: [],
   logLevel: 0,
   output: {
@@ -22,7 +22,7 @@ export const mockNitroConfig: NitroConfig = {
   },
   rootDir: '.',
   scanDirs: ['src/server'],
-  srcDir: 'src/server',
+  serverDir: 'src/server',
   prerender: {
     crawlLinks: undefined,
   },
@@ -47,7 +47,8 @@ export const mockNitroConfig: NitroConfig = {
     apiPrefix: 'api',
   },
   virtual: {
-    '#ANALOG_API_MIDDLEWARE': expect.anything(),
+    '#ANALOG_SSR_RENDERER': expect.anything(),
+    '#ANALOG_CLIENT_RENDERER': expect.anything(),
   },
 };
 

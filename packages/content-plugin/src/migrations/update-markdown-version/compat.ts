@@ -1,4 +1,7 @@
 import { convertNxGenerator } from '@nx/devkit';
 import updateMarkdownVersion from './update-markdown-version';
 
-export default convertNxGenerator(updateMarkdownVersion);
+const _default: ReturnType<typeof convertNxGenerator> = convertNxGenerator(
+  updateMarkdownVersion,
+);
+export default _default;

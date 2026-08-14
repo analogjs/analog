@@ -140,9 +140,10 @@ function setup() {
   }
 
   @Component({
-    standalone: true,
     imports: [AnchorNavigationDirective],
     hostDirectives: [PreventRealNavigationDirective],
+    selector: 'analog-test-anchor-navigation-host',
+    standalone: true,
     template: `
       <a id="out-of-scope-link" href="https://github.com">Out of Scope Link</a>
 

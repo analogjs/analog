@@ -54,7 +54,7 @@
       "description": "Adds marked dependency to support markdown rendering",
       "packages": {
         "marked": {
-          "version": "^15.0.7",
+          "version": "^18.0.0",
           "alwaysAddToPackageJson": true
         },
         "marked-mangle": {

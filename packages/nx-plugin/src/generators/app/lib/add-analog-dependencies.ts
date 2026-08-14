@@ -10,7 +10,7 @@ export async function addAnalogDependencies(
   tree: Tree,
   nxVersion: string,
   angularVersion: string,
-) {
+): Promise<void> {
   const dependencies = getAnalogDependencies(nxVersion, angularVersion);
   const devDependencies = getAnalogDevDependencies(nxVersion);
   // ensure previous @analogjs/platform version is removed, whether installed

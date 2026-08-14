@@ -1,7 +1,9 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';__TAILWIND_IMPORT__
+__TAILWIND_IMPORT__import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,8 +14,10 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog(),__TAILWIND_PLUGIN__
-  ],
+    analog(),
+    angular(),
+    nitro(),
+__TAILWIND_PLUGIN__  ],
   test: {
     globals: true,
     environment: 'jsdom',

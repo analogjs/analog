@@ -4,21 +4,28 @@
   "sourceRoot": "apps/astro-app-e2e-playwright/src",
   "projectType": "application",
   "tags": [],
-  "implicitDependencies": ["astro-app"],
   "targets": {
     "vitest": {
       "executor": "@nx/vitest:test"
     },
     "e2e": {
       "executor": "nx:run-commands",
+      "dependsOn": ["astro-angular:build"],
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve astro-app' http://localhost:4321 'nx run astro-app-e2e-playwright:vitest'"
+        "command": "start-server-and-test 'nx serve astro-app' http://localhost:43030 'nx run astro-app-e2e-playwright:vitest'"
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/astro-app-e2e-playwright",
+        "command": "pnpm exec tsgo -p tsconfig.json --noEmit"
+      }
     }
   }
 }

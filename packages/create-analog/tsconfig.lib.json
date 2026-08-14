@@ -6,14 +6,17 @@
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
+    "isolatedDeclarations": true,
     "types": [],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "composite": false
   },
   "include": ["**/*.ts"],
   "exclude": [
     "vite.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/test-setup.ts"
+    "src/test-setup.ts",
+    "template-*/**"
   ]
 }

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-about',
+  selector: 'lib-about',
   standalone: true,
   template: `<p>about me page</p>`,
 })

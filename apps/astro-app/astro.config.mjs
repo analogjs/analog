@@ -1,7 +1,45 @@
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import angular from '@analogjs/astro-angular';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
+
+// Some Astro integrations register renderer entrypoints as URL objects.
+// Astro/Vite later treats those as string module ids, so we normalize them
+// up front to keep dev middleware and SSR module loading stable.
+function normalizeRendererEntrypoints(integration) {
+  return {
+    ...integration,
+    hooks: {
+      ...integration.hooks,
+      'astro:config:setup': async (params) => {
+        const setup = integration.hooks?.['astro:config:setup'];
+        if (!setup) {
+          return;
+        }
+
+        // Preserve Astro's original hook helpers via the prototype chain.
+        // A spread copy drops non-enumerable helpers such as addPageExtension().
+        const normalizedParams = Object.create(params);
+        normalizedParams.addRenderer = (renderer) => {
+          params.addRenderer({
+            ...renderer,
+            clientEntrypoint:
+              renderer.clientEntrypoint instanceof URL
+                ? fileURLToPath(renderer.clientEntrypoint)
+                : renderer.clientEntrypoint,
+            serverEntrypoint:
+              renderer.serverEntrypoint instanceof URL
+                ? fileURLToPath(renderer.serverEntrypoint)
+                : renderer.serverEntrypoint,
+          });
+        };
+
+        return setup(normalizedParams);
+      },
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,7 +59,6 @@ export default defineConfig({
       useAngularHydration: true,
     }),
     react(),
-    mdx({ syntaxHighlight: 'prism' }),
     {
       name: 'focus-hydration',
       hooks: {
@@ -33,5 +70,7 @@ export default defineConfig({
         },
       },
     },
+    // MDX currently provides a renderer entrypoint as a file URL here.
+    normalizeRendererEntrypoints(mdx({ syntaxHighlight: 'prism' })),
   ],
 });

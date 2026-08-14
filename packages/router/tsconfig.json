@@ -4,6 +4,15 @@
   "include": [],
   "references": [
     {
+      "path": "../vitest-angular"
+    },
+    {
+      "path": "../vite-plugin-angular"
+    },
+    {
+      "path": "../content"
+    },
+    {
       "path": "./tsconfig.lib.json"
     },
     {

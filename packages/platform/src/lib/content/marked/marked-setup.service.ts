@@ -9,8 +9,8 @@ export class MarkedSetupService {
   private readonly marked: typeof marked;
 
   constructor(
-    private readonly options?: WithMarkedOptions,
-    private readonly highlighter?: MarkedContentHighlighter,
+    private readonly options?: WithMarkedOptions | undefined,
+    private readonly highlighter?: MarkedContentHighlighter | undefined,
   ) {
     const analogMarkedExtension: MarkedExtension = {
       pedantic: false,

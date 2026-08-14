@@ -8,6 +8,18 @@
   "include": [],
   "references": [
     {
+      "path": "../../packages/router"
+    },
+    {
+      "path": "../../packages/content"
+    },
+    {
+      "path": "../../packages/vite-plugin-angular"
+    },
+    {
+      "path": "../../packages/platform"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

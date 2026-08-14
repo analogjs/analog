@@ -8,7 +8,9 @@ API-Routen werden im Ordner `src/server/routes` definiert. API-Routen sind ebenf
 und werden in der Entwicklung unter dem Standard-Präfix `/api` bereitgestellt.
 
 ```ts
-export default defineEventHandler(() => ({ message: 'Hello World' }));
+import { defineHandler } from 'h3';
+
+export default defineHandler(() => ({ message: 'Hello World' }));
 ```
 
 ## Definieren von XML-Inhalten
@@ -17,7 +19,9 @@ Um einen RSS-Feed für Ihre Website zu erstellen, setzen Sie den `content-type` 
 
 ```ts
 //server/routes/rss.xml.ts
-export default defineEventHandler((event) => {
+
+import { defineHandler, setHeader } from 'h3';
+export default defineHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 </rss>
@@ -75,7 +79,9 @@ Dynamische API-Routen werden durch die Verwendung des Dateinamens als Routenpfad
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-export default defineEventHandler(
+import { defineHandler } from 'h3';
+
+export default defineHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
@@ -84,7 +90,9 @@ Eine weitere Möglichkeit, auf Routenparameter zuzugreifen, besteht in der Verwe
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-export default defineEventHandler((event) => {
+import { defineHandler, getRouterParam } from 'h3';
+
+export default defineHandler((event) => {
   const name = getRouterParam(event, 'name');
   return `Hello, ${name}!`;
 });
@@ -98,7 +106,9 @@ Dateinamen können mit dem Suffix `.get`, `.post`, `.put`, `.delete` usw. verseh
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, getRouterParam } from 'h3';
+
+export default defineHandler(async (event) => {
   const id = getRouterParam(event, 'id');
   // TODO: fetch user by id
   return `User profile of ${id}!`;
@@ -109,7 +119,9 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, readBody } from 'h3';
+
+export default defineHandler(async (event) => {
   const body = await readBody(event);
   // TODO: Handle body and add user
   return { updated: true };
@@ -124,8 +136,11 @@ Beispielabfrage `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
 // routes/v1/query.ts
-export default defineEventHandler((event) => {
-  const { param1, param2 } = getQuery(event);
+import { defineHandler } from 'h3';
+
+export default defineHandler((event) => {
+  const param1 = event.url.searchParams.get('param1') ?? '';
+  const param2 = event.url.searchParams.get('param2') ?? '';
   return `Hello, ${param1} and ${param2}!`;
 });
 ```
@@ -136,7 +151,9 @@ Sammelrouten sind hilfreich für die Handhabung von Ausweichrouten.
 
 ```ts
 // routes/[...].ts
-export default defineEventHandler((event) => `Default page`);
+import { defineHandler } from 'h3';
+
+export default defineHandler(() => `Default page`);
 ```
 
 ## Handhabung von Fehlern
@@ -146,7 +163,9 @@ Um andere Fehlercodes zurückzugeben, lösen Sie mit `createError` eine Ausnahme
 
 ```ts
 // routes/v1/[id].ts
-export default defineEventHandler((event) => {
+import { defineHandler, getRouterParam, createError } from 'h3';
+
+export default defineHandler((event) => {
   const param = getRouterParam(event, 'id');
   const id = parseInt(param ? param : '');
   if (!Number.isInteger(id)) {
@@ -167,6 +186,17 @@ Analog ermöglicht das Setzen und Lesen von Cookies in serverseitigen Aufrufen.
 
 ```ts
 //(home).server.ts
+import { PageServerLoad } from '@analogjs/router';
+import { setCookie } from 'h3';
+
+import { Product } from '../products';
+
+export const load = async ({ fetch, event }: PageServerLoad) => {
+  setCookie(event, 'products', 'loaded', {
+    path: '/',
+  });
+  const products = await fetch<Product[]>('/api/v1/products');
+
   return {
     products: products,
   };
@@ -177,7 +207,13 @@ Analog ermöglicht das Setzen und Lesen von Cookies in serverseitigen Aufrufen.
 
 ```ts
 //index.server.ts
-  console.log('products cookie', cookies['products']);
+import { PageServerLoad } from '@analogjs/router';
+import { getCookie } from 'h3';
+
+export const load = async ({ event }: PageServerLoad) => {
+  const productsCookie = getCookie(event, 'products');
+
+  console.log('products cookie', productsCookie);
 
   return {
     shipping: true,

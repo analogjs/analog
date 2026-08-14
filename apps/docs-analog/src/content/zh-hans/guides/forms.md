@@ -87,8 +87,15 @@ export default class NewsletterComponent {
 
 ```ts
 // src/app/pages/newsletter.server.ts
+import {
+  type PageServerAction,
+  redirect,
+  json,
+  fail,
+} from '@analogjs/router/server/actions';
+
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -128,7 +135,7 @@ export async function action({ event }: PageServerAction) {
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -175,13 +182,15 @@ export default class NewsletterComponent {
 
 ```ts
 // src/app/pages/search.server.ts
+import type { PageServerLoad } from '@analogjs/router';
+
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm,
   };
 }
 ```
