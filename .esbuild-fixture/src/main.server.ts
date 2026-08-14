@@ -1,4 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideServerRendering } from '@angular/platform-server';
 import { provideFileRouter, withRouteFiles } from '@analogjs/router';
 import {
   provideContent,
@@ -10,10 +11,13 @@ import { contentFilesList, contentFiles } from 'analog:content-files';
 
 import { AppComponent } from './app/app.component';
 
-bootstrapApplication(AppComponent, {
-  providers: [
-    provideFileRouter(withRouteFiles(routeFiles as never)),
-    provideContent(withMarkdownRenderer()),
-    provideContentFiles({ list: contentFilesList, files: contentFiles }),
-  ],
-});
+export default function bootstrap() {
+  return bootstrapApplication(AppComponent, {
+    providers: [
+      provideServerRendering(),
+      provideFileRouter(withRouteFiles(routeFiles as never)),
+      provideContent(withMarkdownRenderer()),
+      provideContentFiles({ list: contentFilesList, files: contentFiles }),
+    ],
+  });
+}

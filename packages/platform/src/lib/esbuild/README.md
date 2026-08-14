@@ -1,8 +1,8 @@
 # Analog file-based routes on the Angular application builder (sketch)
 
-Status: **proof-of-concept sketch.** The builders are registered in the
-platform package manifest (`packages/nx-plugin/executors.json`) and
-validated against a real Angular v22 build through two fixtures:
+Status: **proof-of-concept sketch.** The builders are registered in a
+package-root `builders.json` (see Verification for why) and validated
+against a real Angular v22 build through two fixtures:
 `.esbuild-fixture/` drives `buildApplication` directly via the architect
 testing host, and `apps/esbuild-app` resolves the builders by name
 through Nx (`nx build esbuild-app` / `nx serve esbuild-app`). Scope is
@@ -44,9 +44,15 @@ linker), route files are surfaced through a virtual module:
 3. Builder wrappers pass the plugins to `@angular/build` (v18+) through
    the public extension points: `buildApplication(options, context,
 { codePlugins })` and `executeDevServerBuilder(options, context,
-{ buildPlugins })`. `routerDefine` replaces the whole
-   `import.meta.env` object so `DEV`/`SSR`/bracket-access reads in the
-   router runtime are statically defined.
+{ buildPlugins })`. `import.meta.env` is replaced as a whole object so
+   `DEV`/`SSR`/bracket-access reads in the router runtime are statically
+   defined. The builder emits a browser and a server bundle from one set
+   of options, and `define` is shared between them, so the plugin sets
+   `import.meta.env` from inside `setup()` — which runs once per esbuild
+   build — detecting the server bundle the same way Angular does, via
+   its `ngServerMode` override. `SSR` must be right per bundle:
+   `request-context.ts` reads `window` behind a `!SSR` guard, and the
+   content package uses `SSR` to await content and transfer the TOC.
 
 Markdown content follows the same shape:
 
@@ -157,16 +163,35 @@ Confirmed against a real build:
 - **Watch** — adding a page file that nothing imports triggers a
   rebuild and is picked up, so `watchDirs` drives the add-a-page DX.
 
-Builder resolution by name (`@analogjs/platform:application`) is
-exercised by `apps/esbuild-app` through Nx. One manifest gotcha found
-doing so: the entries must live only under the `builders` key of the
-manifest — duplicating them under `executors` makes Nx load the
-architect `Builder` object as an Nx executor and fail with
-"implementation is not a function".
+`run-cli.ts` goes further: it reads `angular.json` and resolves the
+builder by name through the same `WorkspaceNodeModulesArchitectHost`
+the Angular CLI uses, against the **built** `@analogjs/platform`, with
+the fixture app wiring routes and content through the public DI
+bridges. Confirmed there:
 
-Not yet exercised: booting the built app in a browser against
-`withRouteFiles` / `provideContentFiles`. The DI bridges themselves are
-covered by unit tests in their own packages.
+- **Name resolution** — `@analogjs/platform:application` and
+  `:dev-server` both resolve to the built implementations.
+- **DI bridges in a real bundle** — `provideFileRouter(withRouteFiles(…))`
+  plus `provideContentFiles(…)` compile and bundle, emitting per-route
+  chunks alongside lazy `@analogjs/router` / `@analogjs/content` chunks.
+- **Per-bundle env** — with `ssr: true` the browser bundle gets
+  `{ DEV: false, SSR: false }` and the server bundle
+  `{ DEV: false, SSR: true }`.
+
+That check found a packaging bug: Angular's host rejects builder
+implementation paths starting with `..`, so the entries could not live
+in the nx-plugin's `executors.json` (which sits a directory away from
+the esbuild output). The builders are declared in a package-root
+`builders.json` instead, with `package.json#builders` pointing at it
+and the existing string aliases carried over; `package.json#executors`
+still points at the nx manifest for Nx. Nx-side resolution has its own
+gotcha, found via `apps/esbuild-app`: the entries must not appear under
+an `executors` manifest key, or Nx loads the architect `Builder` object
+as a plain Nx executor and fails with "implementation is not a
+function".
+
+Not yet exercised: booting the built app in a browser (only bundle
+contents are asserted).
 
 ## Open items
 
@@ -177,7 +202,10 @@ covered by unit tests in their own packages.
   meeting `@angular/build`'s expected Vite version. Verify in a
   standard CLI workspace.
 - Add `@angular-devkit/architect` / `@angular/build` as optional peer
-  dependencies of the platform package.
+  dependencies.
+- The package `exports` map does not expose `./src/lib/esbuild/*`, so
+  the plugins cannot be imported directly for custom esbuild setups.
+  Builder resolution is unaffected (it resolves by file path).
 - Ship the ambient `declare module 'analog:*'` declarations in the
   packages instead of asking apps to hand-write them.
 - Pass through marked/shiki/prism options (`markedOptions`,
@@ -185,9 +213,17 @@ covered by unit tests in their own packages.
   rendering; only the highlighter choice is exposed for now.
 - Agnostic/mermaid renderer parity for content beyond the default
   markdown renderer path.
-- `DEV` in `routerDefine` is flipped via build configurations for now;
-  the dev-server wrapper cannot override the build target's `define`.
-- Per-bundle `SSR` define (browser vs. server) once `@angular/ssr`
-  support is explored.
+- SSR beyond the env flags is unfinished. What is missing:
+  - a `analog:server-routes` bridge producing `ServerRoute[]` with
+    `RenderMode` (and `getPrerenderParams` for `[param]` routes) for
+    `@angular/ssr`; Analog expresses this through Nitro's
+    `PrerenderOptions` today, which does not apply here
+  - an adapter supplying `REQUEST` / `RESPONSE` / `BASE_URL` from
+    Angular's request context, since `provideServerContext` is typed
+    against `node:http` and wired for Nitro/h3
+  - the fixture only writes the server bundle; nothing renders through
+    it yet
+  - `injectLoad` and `.server.ts` page endpoints stay Nitro-only, so
+    this path server-renders without Analog's page data loading
 - Version-gate against Angular majors (v18+ only; v17 used
   `@angular-devkit/build-angular` internals).

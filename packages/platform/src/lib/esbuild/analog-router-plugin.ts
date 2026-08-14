@@ -37,6 +37,14 @@ export interface AnalogRouterPluginOptions {
    * to scan for markdown content routes.
    */
   additionalContentDirs?: string[];
+  /**
+   * Value of `import.meta.env.DEV` in the bundle. Defaults to false.
+   */
+  dev?: boolean;
+  /**
+   * Extra `import.meta.env` values, e.g. VITE_ANALOG_PUBLIC_BASE_URL.
+   */
+  env?: Record<string, unknown>;
 }
 
 function normalizeSlashes(path: string): string {
@@ -97,9 +105,25 @@ export function createRouteFilesModule(
  * with dotted access like import.meta.env.DEV.
  */
 export function routerDefine(
-  env: { DEV: boolean } & Record<string, unknown>,
+  env: { DEV: boolean; SSR: boolean } & Record<string, unknown>,
 ): Record<string, string> {
-  return { 'import.meta.env': JSON.stringify({ SSR: false, ...env }) };
+  return { 'import.meta.env': JSON.stringify(env) };
+}
+
+/**
+ * The application builder emits a browser and a server bundle from one
+ * set of options, so `SSR` cannot come from the shared `define`. Angular
+ * marks the server bundle by overriding `ngServerMode`, which is the
+ * same signal used here.
+ */
+function isServerBundle(initialOptions: {
+  define?: Record<string, string>;
+  platform?: string;
+}): boolean {
+  return (
+    initialOptions.define?.['ngServerMode'] === 'true' ||
+    initialOptions.platform === 'node'
+  );
 }
 
 /**
@@ -122,6 +146,17 @@ export function analogRouterPlugin(
   return {
     name: 'analog-router',
     setup(build) {
+      // setup() runs once per esbuild build, so the browser and server
+      // bundles each get their own import.meta.env.
+      build.initialOptions.define = {
+        ...build.initialOptions.define,
+        ...routerDefine({
+          DEV: options?.dev ?? false,
+          SSR: isServerBundle(build.initialOptions),
+          ...options?.env,
+        }),
+      };
+
       build.onResolve({ filter: /^analog:route-files$/ }, () => ({
         path: ROUTE_FILES_ID,
         namespace: ROUTE_FILES_NAMESPACE,

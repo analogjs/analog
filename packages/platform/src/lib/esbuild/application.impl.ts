@@ -8,7 +8,7 @@ import type { JsonObject } from '@angular-devkit/core';
 import { resolve } from 'node:path';
 
 import { analogContentPlugin } from './analog-content-plugin.js';
-import { analogRouterPlugin, routerDefine } from './analog-router-plugin.js';
+import { analogRouterPlugin } from './analog-router-plugin.js';
 
 type ApplicationBuilderOptions = JsonObject & {
   define?: Record<string, string>;
@@ -34,30 +34,20 @@ export async function* buildAnalogApplication(
     (projectMetadata['root'] as string) ?? '.',
   );
 
-  yield* buildApplication(
-    {
-      ...options,
-      define: {
-        // DEV is flipped through configurations, e.g. the development
-        // configuration can set "define": { "import.meta.env": "{\"DEV\":true,\"SSR\":false}" }
-        ...routerDefine({ DEV: false }),
-        ...options.define,
-      },
-    } as never,
-    context,
-    {
-      codePlugins: [
-        analogRouterPlugin({
-          workspaceRoot: context.workspaceRoot,
-          projectRoot,
-        }),
-        analogContentPlugin({
-          workspaceRoot: context.workspaceRoot,
-          projectRoot,
-        }),
-      ],
-    },
-  ) as AsyncIterable<BuilderOutput>;
+  // import.meta.env is applied per bundle by analogRouterPlugin, since
+  // the browser and server bundles need different SSR values.
+  yield* buildApplication(options as never, context, {
+    codePlugins: [
+      analogRouterPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+      }),
+      analogContentPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+      }),
+    ],
+  }) as AsyncIterable<BuilderOutput>;
 }
 
 export default createBuilder(
