@@ -13,6 +13,7 @@
             "browser": "src/main.ts",
             "server": "src/main.server.ts",
             "ssr": true,
+            "prerender": true,
             "index": "src/index.html",
             "tsConfig": "tsconfig.app.json",
             "outputPath": "dist-cli",

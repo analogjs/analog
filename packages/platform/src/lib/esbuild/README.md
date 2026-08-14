@@ -1,9 +1,9 @@
 # Analog file-based routes on the Angular application builder (sketch)
 
-Status: **proof-of-concept sketch, not wired into the published package.**
-Scope is client-side file routing only — the Nitro server features
-(API routes, `.server.ts` page endpoints, form actions, server
-functions, SSR/SSG) are intentionally out of scope.
+Status: **proof-of-concept sketch.** Covers file-based routing, markdown
+content routes, and SSR/SSG through `@angular/ssr`. The Nitro server
+features — API routes, `.server.ts` page endpoints, form actions, server
+functions, and streaming SSR — are intentionally out of scope.
 
 ## Design
 
@@ -111,6 +111,69 @@ export const appConfig = {
 };
 ```
 
+## SSR and prerendering
+
+SSR runs on `@angular/ssr`, not Nitro. Add `server`, `ssr` and (for SSG)
+`prerender` to the builder options, put the server entry in the
+TypeScript program, and build the server route configuration from the
+same route files:
+
+```ts
+// src/main.server.ts
+import {
+  provideServerRendering,
+  withRoutes,
+  RenderMode,
+  type ServerRoute,
+} from '@angular/ssr';
+import {
+  createRoutePaths,
+  provideFileRouter,
+  withRouteFiles,
+} from '@analogjs/router';
+import routeFiles from 'analog:route-files';
+
+// Static paths prerender; paths with parameters or wildcards render per
+// request, since their values are not known at build time.
+const serverRoutes: ServerRoute[] = createRoutePaths(routeFiles).map((path) =>
+  path.includes(':') || path.includes('*')
+    ? { path, renderMode: RenderMode.Server }
+    : { path, renderMode: RenderMode.Prerender },
+);
+
+export default function bootstrap(context: BootstrapContext) {
+  return bootstrapApplication(
+    AppComponent,
+    { providers: [provideServerRendering(withRoutes(serverRoutes)) /* … */] },
+    context,
+  );
+}
+```
+
+`createRoutePaths` (new in `@analogjs/router`) returns the full path of
+every route file using the same filename rules as `createRoutes`,
+including intermediate parent paths — nested route files produce a
+parent route even with no layout file for that segment, and Angular
+rejects a server configuration that omits it.
+
+Notes:
+
+- The server entry must be listed in `tsconfig.app.json` (`files` or
+  `include`), or it is bundled without type checking.
+- `bootstrapApplication` needs the `BootstrapContext` argument on the
+  server, otherwise route extraction fails with NG0401.
+- Type `serverRoutes` as `ServerRoute[]` and build each entry in its own
+  branch; a single object literal with a computed `renderMode` widens to
+  `RenderMode` and fails to match the discriminated union.
+
+Still Nitro-only, so unavailable here: `injectLoad` and `.server.ts`
+page endpoints, form actions, server functions, and streaming SSR.
+Analog's `REQUEST` / `RESPONSE` tokens are also unpopulated — they are
+typed against `node:http` for Nitro/h3, whereas `@angular/ssr` exposes a
+web `Request` through `@angular/core`'s own `REQUEST` token. Nothing in
+the supported surface reads them (the cookie interceptor only acts on
+`/_analog/` endpoint requests), so a bridge was left out for now.
+
 ## Verification
 
 `.esbuild-fixture/` is a minimal Angular app driven through the real
@@ -158,6 +221,11 @@ bridges. Confirmed there:
 - **Per-bundle env** — with `ssr: true` the browser bundle gets
   `{ DEV: false, SSR: false }` and the server bundle
   `{ DEV: false, SSR: true }`.
+- **SSR output** — with `prerender: true` the emitted HTML contains the
+  server-rendered page component, markdown rendered from a content
+  route (with highlighting), the front-matter title applied by
+  `provideFileRouter`'s meta-tag initializer, and the content TOC
+  transferred through `ng-state` for hydration.
 
 That check found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
@@ -188,17 +256,16 @@ contents are asserted), and the dev server actually serving.
   rendering; only the highlighter choice is exposed for now.
 - Agnostic/mermaid renderer parity for content beyond the default
   markdown renderer path.
-- SSR beyond the env flags is unfinished. What is missing:
-  - a `analog:server-routes` bridge producing `ServerRoute[]` with
-    `RenderMode` (and `getPrerenderParams` for `[param]` routes) for
-    `@angular/ssr`; Analog expresses this through Nitro's
-    `PrerenderOptions` today, which does not apply here
-  - an adapter supplying `REQUEST` / `RESPONSE` / `BASE_URL` from
-    Angular's request context, since `provideServerContext` is typed
-    against `node:http` and wired for Nitro/h3
-  - the fixture only writes the server bundle; nothing renders through
-    it yet
-  - `injectLoad` and `.server.ts` page endpoints stay Nitro-only, so
-    this path server-renders without Analog's page data loading
+- SSR remaining work:
+  - `getPrerenderParams` for `[param]` routes, so they can be
+    prerendered instead of only server rendered; the render-mode choice
+    is currently the app's to make, and could be read from `routeMeta`
+  - a bridge populating Analog's `REQUEST` / `RESPONSE` / `BASE_URL`
+    from `@angular/core`'s `REQUEST`, once something in the supported
+    surface needs it; note it cannot be imported unconditionally,
+    since the token does not exist in the older Angular versions the
+    router still supports
+  - serving through a running server (only prerendered output and
+    bundle contents are asserted)
 - Version-gate against Angular majors (v18+ only; v17 used
   `@angular-devkit/build-angular` internals).

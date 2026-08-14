@@ -2,7 +2,7 @@ import { Route, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { expect, vi } from 'vitest';
 import { RouteExport, RouteMeta } from './models';
-import { createRoutes, Files } from './routes';
+import { createRoutePaths, createRoutes, Files } from './routes';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 
 describe('routes', () => {
@@ -740,6 +740,48 @@ Testing nested markdown routes.
       expect(spy).not.toHaveBeenCalledWith(
         `[Analog] Missing default export at ${fileName}`,
       );
+    });
+  });
+
+  describe('createRoutePaths', () => {
+    it('returns the full path of each route file', () => {
+      const files: Files = {
+        '/src/app/pages/index.page.ts': () =>
+          Promise.resolve({} as RouteExport),
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({} as RouteExport),
+        '/src/app/pages/products/[productId].page.ts': () =>
+          Promise.resolve({} as RouteExport),
+        '/src/app/pages/[...not-found].page.ts': () =>
+          Promise.resolve({} as RouteExport),
+      };
+
+      expect(createRoutePaths(files)).toEqual([
+        '',
+        'about',
+        'products',
+        'products/:productId',
+        '**',
+      ]);
+    });
+
+    it('omits the root path when no index route exists', () => {
+      const files: Files = {
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({} as RouteExport),
+      };
+
+      expect(createRoutePaths(files)).toEqual(['about']);
+    });
+
+    it('includes markdown content routes and de-duplicates paths', () => {
+      const files: Files = {
+        '/src/content/about.md': () => Promise.resolve('' as never),
+        '/src/app/pages/about.page.ts': () =>
+          Promise.resolve({} as RouteExport),
+      };
+
+      expect(createRoutePaths(files)).toEqual(['about']);
     });
   });
 });

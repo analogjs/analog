@@ -140,6 +140,39 @@ function toSegment(rawSegment: string): string {
     .replace(/^\/+|\/+$/g, ''); // remove trailing slashes
 }
 
+/**
+ * Returns the full URL path of every route file, using the same
+ * filename-to-segment rules as `createRoutes`. Useful for building a
+ * server route configuration, where each route is addressed by its
+ * complete path rather than nested by segment.
+ *
+ * Intermediate paths are included, because nested route files also
+ * produce a parent route in the router configuration even when no
+ * layout file exists for that segment. A server route configuration
+ * has to account for those parents as well.
+ *
+ * @param files
+ * @returns Array of route paths, e.g. ['', 'about', 'products', 'products/:productId']
+ */
+export function createRoutePaths(files: Files): string[] {
+  const paths = Object.keys(files).flatMap((filename) => {
+    const segments = toRawPath(filename)
+      .split('/')
+      .map(toSegment)
+      .filter((segment) => segment !== '');
+
+    // an index file resolves to the root path, which has no segments
+    if (segments.length === 0) {
+      return [''];
+    }
+
+    // the route itself, plus each ancestor path leading to it
+    return segments.map((_, index) => segments.slice(0, index + 1).join('/'));
+  });
+
+  return [...new Set(paths)];
+}
+
 function createOptionalCatchAllMatcher(paramName: string): UrlMatcher {
   return (segments) => {
     if (segments.length === 0) {

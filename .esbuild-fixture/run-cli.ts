@@ -96,6 +96,21 @@ function envOf(dir: string): string | undefined {
 const browserEnv = envOf('browser');
 const serverEnv = envOf('server');
 
+// Prerendering runs the server bundle, so the emitted HTML shows what
+// SSR produces for file-based routes and markdown content.
+const html = (path: string) =>
+  readFileSync(join(fixtureRoot, 'dist-cli/browser', path), 'utf8');
+
+const indexHtml = html('index.html');
+const aboutHtml = html('about/index.html');
+
+const ssrRendersPage = indexHtml.includes('<app-home><h1>Home</h1></app-home>');
+const ssrRendersMarkdown =
+  aboutHtml.includes('<h1 id="about">About</h1>') &&
+  aboutHtml.includes('class="token keyword"');
+const ssrAppliesFrontMatter = aboutHtml.includes('<title>About Analog</title>');
+const ssrTransfersState = aboutHtml.includes('id="ng-state"');
+
 console.log('=== assertions');
 console.log('resolved by name from built package:', !!info?.import);
 console.log('router markdown route path bundled:', usesFileRouter);
@@ -104,6 +119,10 @@ console.log('route chunks emitted:', lazyPages.length);
 console.log('dev-server builder resolves by name:', !!devServer?.import);
 console.log('browser import.meta.env:', browserEnv);
 console.log('server  import.meta.env:', serverEnv);
+console.log('ssr renders page component:', ssrRendersPage);
+console.log('ssr renders markdown content:', ssrRendersMarkdown);
+console.log('ssr applies front matter title:', ssrAppliesFrontMatter);
+console.log('ssr transfers state to client:', ssrTransfersState);
 
 const ok =
   !!info?.import &&
@@ -112,6 +131,10 @@ const ok =
   usesContentFiles &&
   lazyPages.length >= 3 &&
   browserEnv?.includes('SSR: false') === true &&
-  serverEnv?.includes('SSR: true') === true;
+  serverEnv?.includes('SSR: true') === true &&
+  ssrRendersPage &&
+  ssrRendersMarkdown &&
+  ssrAppliesFrontMatter &&
+  ssrTransfersState;
 console.log('=== ALL ASSERTIONS PASS:', ok);
 process.exit(ok ? 0 : 1);
