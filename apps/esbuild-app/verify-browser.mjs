@@ -125,6 +125,17 @@ try {
     (await ssrPage.locator('[data-base-url]').textContent()) === base,
   ]);
 
+  // --- injectLoad data from a .server.ts page endpoint ---
+  const loadPage = await browser.newPage();
+  trackErrors(loadPage);
+  await loadPage.goto(`${base}/feedback`, { waitUntil: 'load' });
+  await waitFor(
+    loadPage,
+    () =>
+      document.querySelector('[data-load]')?.textContent === 'from-server-load',
+  );
+  checks.push(['injectLoad page hydrates with page endpoint data', true]);
+
   checks.push([
     'no console or page errors across the browser session',
     errors.length === 0,

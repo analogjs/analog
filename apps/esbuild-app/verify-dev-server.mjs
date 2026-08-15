@@ -81,6 +81,8 @@ try {
     await pollServed('dev-probe.page'),
   ]);
 
+  // With ssr.entry configured, dev requests forward to the app's own
+  // server entry, which mounts the API and page endpoint handlers.
   let apiBody = '';
   try {
     apiBody = JSON.stringify(await (await fetch(`${base}/api/hello`)).json());
@@ -88,8 +90,21 @@ try {
     // Leaves the check failing below.
   }
   checks.push([
-    'api route serves through dev middleware',
+    'api route serves through the app server entry in dev',
     apiBody === '{"message":"Hello Analog"}',
+  ]);
+
+  let endpointBody = '';
+  try {
+    endpointBody = JSON.stringify(
+      await (await fetch(`${base}/api/_analog/pages/feedback`)).json(),
+    );
+  } catch {
+    // Leaves the check failing below.
+  }
+  checks.push([
+    'page endpoint serves through the app server entry in dev',
+    endpointBody.includes('from-server-load'),
   ]);
 } finally {
   writeFileSync(indexPage, indexPageOriginal);

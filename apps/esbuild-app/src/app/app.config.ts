@@ -2,8 +2,13 @@ import {
   ApplicationConfig,
   provideZonelessChangeDetection,
 } from '@angular/core';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
-import { provideFileRouter, withRouteFiles } from '@analogjs/router';
+import {
+  provideFileRouter,
+  withPageEndpoints,
+  withRouteFiles,
+} from '@analogjs/router';
 import {
   provideContent,
   provideContentFiles,
@@ -11,12 +16,17 @@ import {
 } from '@analogjs/content';
 import routeFiles from 'analog:route-files';
 import { contentFilesList, contentFiles } from 'analog:content-files';
+import pageEndpoints from 'analog:page-endpoints';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideClientHydration(),
-    provideFileRouter(withRouteFiles(routeFiles)),
+    provideHttpClient(withFetch()),
+    provideFileRouter(
+      withRouteFiles(routeFiles),
+      withPageEndpoints(pageEndpoints),
+    ),
     provideContent(
       withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
     ),

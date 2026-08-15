@@ -18,3 +18,11 @@ declare module 'analog:api-routes' {
   const files: Record<string, () => Promise<{ default: unknown }>>;
   export default files;
 }
+
+declare module 'analog:page-endpoints' {
+  const endpoints: Record<
+    string,
+    true | (() => Promise<Record<string, unknown>>)
+  >;
+  export default endpoints;
+}

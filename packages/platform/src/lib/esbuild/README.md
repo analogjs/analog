@@ -294,14 +294,41 @@ if (api.matches(pathname)) {
 }
 ```
 
-- `ng serve` never runs the app's server entry, so the dev-server
-  wrapper serves the same handlers through dev middleware, bundling
-  them on demand with esbuild and rebuilding when a handler changes.
+- In dev, a configured server entry (`outputMode` + `ssr.entry`) is
+  used directly: Angular's dev server forwards requests to the entry's
+  `reqHandler`, so the same handler chain runs in dev and prod. Without
+  a server entry, the dev-server wrapper serves the handlers through
+  dev middleware, bundling them on demand with esbuild and rebuilding
+  when a handler changes.
 
-Still Nitro-only, so unavailable here: `injectLoad` and `.server.ts`
-page endpoints, form actions, server functions, and streaming SSR.
-The client-side module substitution those need is validated (see
-Verification), so the endpoint features are portable; streaming is not.
+## Page endpoints
+
+`.server.ts` page endpoints work with the Nitro path's semantics: GET
+runs the module's `load`, other methods run `action`, both receiving
+`{ params, req, res, fetch, event }`, served at
+`/api/_analog/pages/...`. Wiring on top of the API routes setup:
+
+- The `analog:page-endpoints` virtual module maps endpoint keys to lazy
+  imports in the server bundle and to `true` in the browser bundle —
+  enough for the router to know which routes fetch load data, with no
+  server code in the client.
+- `withPageEndpoints(pageEndpoints)` (a `provideFileRouter` feature)
+  hands the map to the router, replacing the Vite-only endpoint glob,
+  and `provideHttpClient(withFetch())` backs the load resolver's fetch.
+- The server entry mounts `createPageEndpointsHandler(pageEndpoints)`
+  ahead of the API routes handler.
+- Endpoint files join the TS program via
+  `"include": ["src/app/pages/**/*.server.ts"]`, and pages must import
+  their endpoint's types with `import type` only — there is no client
+  scrub, so a value import would pull server code into the browser
+  bundle.
+- Endpoint-backed pages need `RenderMode.Server`: the load resolver
+  fetches the live endpoint through the bridged `BASE_URL`, and during
+  prerendering there is no server to fetch from.
+
+Still Nitro-only, so unavailable here: form actions, server functions,
+and streaming SSR. The client-side module substitution the first two
+need is validated (see Verification); streaming is not portable.
 
 ## Verification
 
@@ -356,6 +383,13 @@ Confirmed against a real build:
   `RenderMode.Server` route, which comes back rendered per request
   (`ng-server-context="ssr"`, route parameter resolved), while
   prerendered paths are served as `ssg`.
+- **Page endpoints** — `GET /api/_analog/pages/feedback` runs the
+  fixture endpoint's `load`, `POST` runs its `action`, and the SSR
+  render of `/feedback` contains the load data — the resolver
+  self-fetched the endpoint through `HttpClient` and the bridged
+  `BASE_URL`. The browser run confirms the page hydrates with the same
+  data, and the dev-server run confirms both handlers serve through the
+  app's own server entry under `ng serve`.
 
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live

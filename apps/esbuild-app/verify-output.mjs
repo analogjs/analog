@@ -147,6 +147,30 @@ async function checkServer() {
           await (await fetch(`${base}/api/products/42`)).json(),
         ) === '{"id":"42"}',
       ],
+      [
+        // .server.ts page endpoints served at /api/_analog/pages/...
+        'page endpoint GET runs the load function',
+        (await (await fetch(`${base}/api/_analog/pages/feedback`)).json())
+          .loaded === 'from-server-load',
+      ],
+      [
+        'page endpoint POST runs the action function',
+        JSON.stringify(
+          await (
+            await fetch(`${base}/api/_analog/pages/feedback`, {
+              method: 'POST',
+            })
+          ).json(),
+        ) === '{"ok":true}',
+      ],
+      [
+        // The load resolver self-fetches the page endpoint through
+        // HttpClient and the bridged BASE_URL during SSR.
+        'ssr resolves injectLoad data from the page endpoint',
+        (await (await fetch(`${base}/feedback`)).text()).includes(
+          'from-server-load',
+        ),
+      ],
     ];
   } finally {
     server.kill();

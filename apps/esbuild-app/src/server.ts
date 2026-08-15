@@ -4,8 +4,12 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import { createApiRoutesHandler } from '@analogjs/router/api';
+import {
+  createApiRoutesHandler,
+  createPageEndpointsHandler,
+} from '@analogjs/router/api';
 import apiRoutes from 'analog:api-routes';
+import pageEndpoints from 'analog:page-endpoints';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createServer } from 'node:http';
 import { extname, join } from 'node:path';
@@ -14,6 +18,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const angularApp = new AngularNodeAppEngine();
 const api = createApiRoutesHandler(apiRoutes);
+const endpoints = createPageEndpointsHandler(pageEndpoints);
 
 // Browsers enforce strict MIME checking for module scripts, so assets
 // must be served with a real content type.
@@ -33,6 +38,11 @@ async function handler(
   next?: (err?: unknown) => void,
 ): Promise<void> {
   const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
+
+  if (endpoints.matches(pathname)) {
+    await endpoints.handler(req, res);
+    return;
+  }
 
   if (api.matches(pathname)) {
     await api.handler(req, res);

@@ -8,6 +8,7 @@
   "include": [
     "src/**/*.d.ts",
     "src/app/pages/**/*.page.ts",
+    "src/app/pages/**/*.server.ts",
     "src/server/**/*.ts"
   ]
 }

@@ -1,7 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { mkdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
@@ -9,6 +8,10 @@ import {
   createApiRoutesModule,
   discoverApiRoutes,
 } from './analog-api-plugin.js';
+import {
+  createPageEndpointsModule,
+  discoverPageEndpoints,
+} from './analog-page-endpoints-plugin.js';
 
 interface ApiRoutesHandler {
   matches(pathname: string): boolean;
@@ -16,11 +19,11 @@ interface ApiRoutesHandler {
 }
 
 /**
- * Dev-server middleware serving `src/server/routes` handlers during
- * `ng serve`, where the app's server entry does not run. Handlers are
- * bundled on demand with esbuild (packages external, so h3 resolves
- * from the workspace) and rebuilt whenever the discovered file set or
- * any handler's mtime changes.
+ * Dev-server middleware serving `src/server/routes` handlers and
+ * `.server.ts` page endpoints during `ng serve`, where the app's server
+ * entry does not run. Handlers are bundled on demand with esbuild
+ * (packages external, so h3 resolves from the workspace) and rebuilt
+ * whenever the discovered file set or any handler's mtime changes.
  */
 export function createAnalogApiMiddleware(
   workspaceRoot: string,
@@ -35,13 +38,15 @@ export function createAnalogApiMiddleware(
   const workspaceRequire = createRequire(`${workspaceRoot}/noop.js`);
 
   let cacheKey = '';
-  let cached: ApiRoutesHandler | undefined;
+  let cached: ApiRoutesHandler[] | undefined;
   let generation = 0;
 
-  const loadHandler = async (): Promise<ApiRoutesHandler | undefined> => {
-    const files = discoverApiRoutes(root);
+  const loadHandlers = async (): Promise<ApiRoutesHandler[]> => {
+    const apiFiles = discoverApiRoutes(root);
+    const endpointFiles = discoverPageEndpoints(root, workspaceRoot);
+    const files = [...apiFiles, ...endpointFiles];
     if (files.length === 0) {
-      return undefined;
+      return [];
     }
 
     const key = files
@@ -59,7 +64,15 @@ export function createAnalogApiMiddleware(
     mkdirSync(outDir, { recursive: true });
     const entryFile = `${outDir}/entry.mjs`;
     const bundleFile = `${outDir}/api-routes.mjs`;
-    writeFileSync(entryFile, createApiRoutesModule(files, root));
+    writeFileSync(
+      entryFile,
+      `export const apiRoutes = ${moduleObject(
+        createApiRoutesModule(apiFiles, root),
+      )};\n` +
+        `export const pageEndpoints = ${moduleObject(
+          createPageEndpointsModule(endpointFiles, root, false),
+        )};\n`,
+    );
 
     await esbuild.build({
       entryPoints: [entryFile],
@@ -74,15 +87,20 @@ export function createAnalogApiMiddleware(
     const routerApiUrl = pathToFileURL(
       workspaceRequire.resolve('@analogjs/router/api'),
     ).href;
-    const { createApiRoutesHandler } = (await import(routerApiUrl)) as {
-      createApiRoutesHandler: (files: unknown) => ApiRoutesHandler;
-    };
+    const { createApiRoutesHandler, createPageEndpointsHandler } =
+      (await import(routerApiUrl)) as {
+        createApiRoutesHandler: (files: unknown) => ApiRoutesHandler;
+        createPageEndpointsHandler: (files: unknown) => ApiRoutesHandler;
+      };
 
     generation += 1;
     const bundleUrl = `${pathToFileURL(bundleFile).href}?v=${generation}`;
-    const { default: routeFiles } = await import(bundleUrl);
+    const { apiRoutes, pageEndpoints } = await import(bundleUrl);
 
-    cached = createApiRoutesHandler(routeFiles);
+    cached = [
+      createApiRoutesHandler(apiRoutes),
+      createPageEndpointsHandler(pageEndpoints),
+    ];
     cacheKey = key;
     return cached;
   };
@@ -92,10 +110,11 @@ export function createAnalogApiMiddleware(
 
     void (async () => {
       try {
-        const api = await loadHandler();
-        if (api?.matches(pathname)) {
-          await api.handler(req, res);
-          return;
+        for (const api of await loadHandlers()) {
+          if (api.matches(pathname)) {
+            await api.handler(req, res);
+            return;
+          }
         }
         next();
       } catch (error) {
@@ -103,4 +122,12 @@ export function createAnalogApiMiddleware(
       }
     })();
   };
+}
+
+/**
+ * The module factories emit `export default {...};` sources; reuse them
+ * as object literals inside the combined dev entry.
+ */
+function moduleObject(moduleSource: string): string {
+  return moduleSource.replace(/^export default /, '').replace(/;\s*$/, '');
 }

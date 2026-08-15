@@ -14,6 +14,7 @@ import { createAnalogApiMiddleware } from './analog-api-middleware.js';
 import { analogApiPlugin } from './analog-api-plugin.js';
 import { analogContentPlugin } from './analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
+import { analogPageEndpointsPlugin } from './analog-page-endpoints-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
 import { loadAngularBuild } from './load-angular-build.js';
 
@@ -45,11 +46,22 @@ export async function* serveAnalogApplication(
 
   // Plugin settings live in the build target's `analog` option section.
   let analog: AnalogBuilderOptions = {};
+  let hasServerEntry = false;
   if (typeof serveOptions['buildTarget'] === 'string') {
     const buildTargetOptions = await context.getTargetOptions(
       targetFromTargetString(serveOptions['buildTarget']),
     );
     analog = (buildTargetOptions['analog'] as AnalogBuilderOptions) ?? {};
+
+    // With outputMode and an ssr.entry the dev server forwards requests
+    // to the app's own server entry (reqHandler), the same condition
+    // Angular uses to pick its external SSR middleware.
+    const ssr = buildTargetOptions['ssr'];
+    hasServerEntry =
+      !!buildTargetOptions['outputMode'] &&
+      typeof ssr === 'object' &&
+      ssr !== null &&
+      !!(ssr as JsonObject)['entry'];
   }
 
   yield* executeDevServerBuilder(serveOptions as never, context, {
@@ -72,10 +84,17 @@ export async function* serveAnalogApplication(
         workspaceRoot: context.workspaceRoot,
         projectRoot,
       }),
+      analogPageEndpointsPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+        additionalPagesDirs: analog.additionalPagesDirs,
+      }),
     ],
-    // ng serve never runs the app's server entry, so API routes are
-    // served by dev middleware instead.
-    middleware: [createAnalogApiMiddleware(context.workspaceRoot, projectRoot)],
+    // A configured server entry serves API routes and page endpoints
+    // itself in dev; without one they are served by dev middleware.
+    middleware: hasServerEntry
+      ? []
+      : [createAnalogApiMiddleware(context.workspaceRoot, projectRoot)],
   } as never) as AsyncIterable<BuilderOutput>;
 }
 

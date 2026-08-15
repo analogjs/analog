@@ -10,6 +10,7 @@ import { resolve } from 'node:path';
 import { analogApiPlugin } from './analog-api-plugin.js';
 import { analogContentPlugin } from './analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
+import { analogPageEndpointsPlugin } from './analog-page-endpoints-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
 import { loadAngularBuild } from './load-angular-build.js';
 
@@ -58,6 +59,11 @@ export async function* buildAnalogApplication(
       analogApiPlugin({
         workspaceRoot: context.workspaceRoot,
         projectRoot,
+      }),
+      analogPageEndpointsPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+        additionalPagesDirs: analog.additionalPagesDirs,
       }),
     ],
   }) as AsyncIterable<BuilderOutput>;
