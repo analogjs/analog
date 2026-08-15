@@ -209,17 +209,11 @@ export default (context: BootstrapContext) =>
 ```ts
 // src/server.ts
 import { createAnalogRequestHandler } from '@analogjs/router/api';
-import apiRoutes from 'analog:api-routes';
-import pageEndpoints from 'analog:page-endpoints';
-import serverFns from 'analog:server-fns';
 
 import { config } from './app/app.config.server';
 
 export const reqHandler = createAnalogRequestHandler({
-  apiRoutes,
-  pageEndpoints,
-  serverFns, // importing registered them; passing mounts the dispatch route
-  config, // dispatch handlers resolve the app's own DI
+  config, // server-fn dispatch resolves the app's own DI
   main: import.meta.url, // listens on PORT when run directly
 });
 ```
@@ -244,7 +238,14 @@ functions, page endpoints, and API routes ahead of Angular, static
 browser assets with real MIME types (strict module-script checking
 rejects assets without one), then `AngularNodeAppEngine` — falling
 through to `next()` under the dev server, and self-listening when the
-bundle is run directly.
+bundle is run directly. It consumes the `analog:*` maps itself, via
+literal dynamic imports the esbuild plugins resolve when the server
+entry is bundled; anywhere else (plain node, tests) those imports fail
+at runtime, are caught, and everything resolves empty — so the built
+package still loads outside the plugin pipeline. Explicit
+`apiRoutes` / `pageEndpoints` / `serverFns` options override the loaded
+maps for custom setups. The server-fn dispatch route is only mounted
+when server functions were discovered.
 
 Notes:
 
@@ -361,10 +362,10 @@ transform —
 Wiring on top of the API routes setup:
 
 - The `analog:server-fns` map holds every discovered module's namespace
-  — importing it registers each function by id, and passing it to
-  `createAnalogRequestHandler` makes that dependency explicit and
-  mounts the dispatch route (omitted, the route is not mounted). The
-  handler bootstraps the dispatch parent injector from `config`
+  — importing it registers each function by id.
+  `createAnalogRequestHandler` consumes it internally and mounts the
+  dispatch route only when functions were discovered, bootstrapping the
+  dispatch parent injector from `config`
   (`createServerFnAppInjector`); passing the app's own server config
   gives handlers the same DI as an SSR render.
 - `provideServerRequestContext()` provides the `SERVER_FN_DISPATCHER`,

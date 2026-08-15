@@ -1,3 +1,4 @@
+/// <reference path="./analog-modules.d.ts" />
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
@@ -247,16 +248,6 @@ const MIME_TYPES: Record<string, string> = {
 };
 
 export interface AnalogRequestHandlerOptions {
-  /** The `analog:api-routes` map, served ahead of Angular. */
-  apiRoutes?: ApiRouteFiles;
-  /** The `analog:page-endpoints` map, served at `/api/_analog/pages/...`. */
-  pageEndpoints?: PageEndpointFiles;
-  /**
-   * The `analog:server-fns` map. Importing it registered each module's
-   * functions by id; passing it here mounts the `/_analog/fn/:id`
-   * dispatch route for them. Omitted, the route is not mounted.
-   */
-  serverFns?: Record<string, Record<string, unknown>>;
   /**
    * Config the server-function dispatch injector bootstraps from —
    * typically the app's own server config, so handlers resolve the same
@@ -271,20 +262,53 @@ export interface AnalogRequestHandlerOptions {
   main?: string;
   /** Browser output directory; defaults to `../browser` beside the server bundle. */
   browserDistFolder?: string;
+  /** Overrides the `analog:api-routes` map (loaded automatically). */
+  apiRoutes?: ApiRouteFiles;
+  /** Overrides the `analog:page-endpoints` map (loaded automatically). */
+  pageEndpoints?: PageEndpointFiles;
+  /** Overrides the `analog:server-fns` map (loaded automatically). */
+  serverFns?: Record<string, Record<string, unknown>>;
+}
+
+/**
+ * Loads the analog:* virtual modules. Literal dynamic imports are
+ * resolved and bundled by the Analog esbuild plugins when the app's
+ * server entry is built; anywhere else (plain node, tests) they fail
+ * at runtime and everything resolves empty. Importing
+ * `analog:server-fns` also registers each server function by id.
+ */
+async function loadAnalogModules(): Promise<{
+  apiRoutes: ApiRouteFiles;
+  pageEndpoints: PageEndpointFiles;
+  serverFns: Record<string, Record<string, unknown>>;
+}> {
+  try {
+    const [apiRoutes, pageEndpoints, serverFns] = await Promise.all([
+      import('analog:api-routes'),
+      import('analog:page-endpoints'),
+      import('analog:server-fns'),
+    ]);
+    return {
+      apiRoutes: apiRoutes.default,
+      pageEndpoints: pageEndpoints.default,
+      serverFns: serverFns.default,
+    };
+  } catch {
+    return { apiRoutes: {}, pageEndpoints: {}, serverFns: {} };
+  }
 }
 
 /**
  * The complete request handler for a server entry on the esbuild
  * application builder: server functions, page endpoints, and API routes
  * ahead of Angular, static browser assets with real MIME types, then
- * Angular SSR — falling through to `next()` under the dev server.
+ * Angular SSR — falling through to `next()` under the dev server. The
+ * analog:* maps are consumed internally; the entry only supplies its
+ * url and the app's server config.
  *
  * ```ts
  * // server.ts
  * export const reqHandler = createAnalogRequestHandler({
- *   apiRoutes,
- *   pageEndpoints,
- *   serverFns,
  *   config,
  *   main: import.meta.url,
  * });
@@ -300,11 +324,22 @@ export function createAnalogRequestHandler(
       : join(process.cwd(), 'browser'));
 
   const angularApp = new AngularNodeAppEngine();
-  const handlers = [
-    ...(options.serverFns ? [createServerFnsHandler(options.config)] : []),
-    createPageEndpointsHandler(options.pageEndpoints ?? {}),
-    createApiRoutesHandler(options.apiRoutes ?? {}),
-  ];
+
+  let handlersPromise: Promise<ApiRoutesHandler[]> | undefined;
+  const getHandlers = () =>
+    (handlersPromise ??= (async () => {
+      const loaded = await loadAnalogModules();
+      const serverFns = options.serverFns ?? loaded.serverFns;
+      return [
+        ...(Object.keys(serverFns).length
+          ? [createServerFnsHandler(options.config)]
+          : []),
+        createPageEndpointsHandler(
+          options.pageEndpoints ?? loaded.pageEndpoints,
+        ),
+        createApiRoutesHandler(options.apiRoutes ?? loaded.apiRoutes),
+      ];
+    })());
 
   async function handler(
     req: IncomingMessage,
@@ -313,7 +348,7 @@ export function createAnalogRequestHandler(
   ): Promise<void> {
     const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
 
-    for (const api of handlers) {
+    for (const api of await getHandlers()) {
       if (api.matches(pathname)) {
         await api.handler(req, res);
         return;

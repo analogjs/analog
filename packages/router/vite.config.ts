@@ -7,6 +7,15 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     cacheDir: `../../node_modules/.vitest`,
+    resolve: {
+      // The analog:* virtual modules only exist under the esbuild
+      // plugins; stub them so import analysis of the api entry resolves.
+      alias: {
+        'analog:api-routes': `${__dirname}/api/src/analog-modules-stub.ts`,
+        'analog:page-endpoints': `${__dirname}/api/src/analog-modules-stub.ts`,
+        'analog:server-fns': `${__dirname}/api/src/analog-modules-stub.ts`,
+      },
+    },
     test: {
       reporters: ['default'],
       globals: true,
