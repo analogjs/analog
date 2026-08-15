@@ -8,10 +8,12 @@ import {
 
 import {
   BASE_URL,
+  LOCALE,
   REQUEST,
   RESPONSE,
   ServerRequest,
   ServerResponse,
+  detectLocale,
 } from '@analogjs/router/tokens';
 
 /**
@@ -71,12 +73,15 @@ function toServerResponse(init: ResponseInit): ServerResponse {
 }
 
 /**
- * Bridges Analog's REQUEST / RESPONSE / BASE_URL tokens from the web
- * Request and ResponseInit that @angular/ssr exposes through
+ * Bridges Analog's REQUEST / RESPONSE / BASE_URL / LOCALE tokens from
+ * the web Request and ResponseInit that @angular/ssr exposes through
  * @angular/core, for apps that server-render without Nitro (e.g. on the
- * esbuild application builder). Each token resolves to null outside of
- * a server request, matching the optional injection Analog's consumers
- * already use.
+ * esbuild application builder). The locale is detected the same way as
+ * the Nitro server context — URL path prefix first, then the
+ * Accept-Language header — and flows into locale-aware content via
+ * `withLocale({ loadLocale: injectLocale })`. Each token resolves to
+ * null outside of a server request, matching the optional injection
+ * Analog's consumers already use.
  *
  * This entry point requires Angular v19+, where @angular/core exposes
  * the REQUEST and RESPONSE_INIT tokens.
@@ -102,6 +107,15 @@ export function provideServerRequestContext(): EnvironmentProviders {
       useFactory: () => {
         const request = inject(ANGULAR_REQUEST, { optional: true });
         return request ? new URL(request.url).origin : null;
+      },
+    },
+    {
+      provide: LOCALE,
+      useFactory: () => {
+        const request = inject(ANGULAR_REQUEST, { optional: true });
+        return request
+          ? (detectLocale(toServerRequest(request)) ?? null)
+          : null;
       },
     },
   ]);

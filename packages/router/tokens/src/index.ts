@@ -46,3 +46,9 @@ export function injectLocale() {
   assertInInjectionContext(injectLocale);
   return inject(LOCALE, { optional: true });
 }
+
+export {
+  detectLocale,
+  extractLocaleFromUrl,
+  parseAcceptLanguage,
+} from './locale-detection';

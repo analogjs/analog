@@ -246,15 +246,19 @@ Notes:
 - `@angular/ssr` rejects requests whose `Host` header is not listed in
   `security.allowedHosts`, so a served app needs its hostnames there.
 
-Analog's `REQUEST` / `RESPONSE` / `BASE_URL` tokens are populated by
-`provideServerRequestContext()` from the `@analogjs/router/ssr` entry
-point, added to the server config's providers. It adapts the web
-`Request` and `ResponseInit` that `@angular/ssr` exposes through
-`@angular/core`'s `REQUEST` / `RESPONSE_INIT` tokens into the
-node-flavored shapes Analog's consumers read — request url/method/
-headers, response status and headers (written through to the
-`ResponseInit` Angular uses to build the response), and the request
-origin as `BASE_URL`. Each token resolves to null outside a server
+Analog's `REQUEST` / `RESPONSE` / `BASE_URL` / `LOCALE` tokens are
+populated by `provideServerRequestContext()` from the
+`@analogjs/router/ssr` entry point, added to the server config's
+providers. It adapts the web `Request` and `ResponseInit` that
+`@angular/ssr` exposes through `@angular/core`'s
+`REQUEST` / `RESPONSE_INIT` tokens into the node-flavored shapes
+Analog's consumers read — request url/method/headers, response status
+and headers (written through to the `ResponseInit` Angular uses to
+build the response), and the request origin as `BASE_URL`. The locale
+is detected the same way as the Nitro server context (URL path prefix,
+then `Accept-Language`), with the shared detection helpers now living
+in `@analogjs/router/tokens`; locale-aware content wires up through
+`withLocale({ loadLocale: injectLocale })` exactly as on Vite. Each token resolves to null outside a server
 request; prerendered pages have no request, so only per-request renders
 carry the context. The entry point lives outside the main entries
 because `@angular/core`'s `REQUEST` token only exists in Angular v19+,
