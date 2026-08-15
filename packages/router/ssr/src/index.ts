@@ -15,6 +15,8 @@ import {
   ServerResponse,
   detectLocale,
 } from '@analogjs/router/tokens';
+import { SERVER_FN_DISPATCHER } from '@analogjs/router';
+import { createServerFnDispatcher } from '@analogjs/router/server';
 
 /**
  * Adapts the web Request that @angular/ssr provides through
@@ -115,6 +117,21 @@ export function provideServerRequestContext(): EnvironmentProviders {
         const request = inject(ANGULAR_REQUEST, { optional: true });
         return request
           ? (detectLocale(toServerRequest(request)) ?? null)
+          : null;
+      },
+    },
+    // Server functions called while rendering dispatch in-process instead
+    // of an HTTP round-trip, same as the Nitro server context.
+    {
+      provide: SERVER_FN_DISPATCHER,
+      useFactory: () => {
+        const request = inject(ANGULAR_REQUEST, { optional: true });
+        const init = inject(RESPONSE_INIT, { optional: true });
+        return request
+          ? createServerFnDispatcher(
+              toServerRequest(request),
+              toServerResponse(init ?? {}),
+            )
           : null;
       },
     },

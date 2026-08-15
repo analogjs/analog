@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.js",
     "./server-fn-id": "./src/lib/utils/derive-server-fn-id.js",
+    "./server-fn-transform": "./src/lib/utils/inject-server-fn-ids.js",
     "./package.json": "./package.json"
   },
   "keywords": [

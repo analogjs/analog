@@ -1,4 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type {
+  ApplicationConfig,
+  Injector,
+  StaticProvider,
+} from '@angular/core';
 import {
   createApp,
   createRouter,
@@ -7,6 +12,11 @@ import {
   toNodeListener,
 } from 'h3';
 import { createRouter as createMatcher } from 'radix3';
+
+import {
+  createServerFnAppInjector,
+  handleServerFnRequest,
+} from '@analogjs/router/server';
 
 export type ApiRouteFiles = Record<string, () => Promise<{ default: unknown }>>;
 
@@ -181,6 +191,30 @@ export function createPageEndpointsHandler(
       }),
     ),
   );
+}
+
+/**
+ * Serves the server-function dispatch route `/_analog/fn/:id` from a
+ * server entry on the esbuild application builder. The registry is
+ * populated by importing `analog:server-fns` for its side effects; the
+ * dispatch parent injector is bootstrapped from the given config (or
+ * providers) on first call, so handlers resolve the app's DI the same
+ * way the Nitro dispatch endpoint does.
+ */
+export function createServerFnsHandler(
+  configOrProviders?: ApplicationConfig | StaticProvider[],
+): ApiRoutesHandler {
+  let appInjector: Promise<Injector> | undefined;
+
+  return toNodeHandler([
+    {
+      route: '/_analog/fn/:id',
+      handler: defineEventHandler((event) => {
+        appInjector ??= createServerFnAppInjector(configOrProviders);
+        return handleServerFnRequest(event, appInjector);
+      }),
+    },
+  ]);
 }
 
 function toNodeHandler(

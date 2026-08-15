@@ -14,6 +14,7 @@ export {
   type DispatchResult,
   type DispatchServerFnOptions,
 } from './server-fn/dispatch';
+export { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 export {
   isServerFnOriginAllowed,
   withAllowedOrigins,

@@ -1,10 +1,12 @@
 import { createServer } from 'node:http';
 import { defineEventHandler, getRouterParam } from 'h3';
+import { serverFn } from '@analogjs/router/server';
 
 import {
   apiRoutesFromFiles,
   createApiRoutesHandler,
   createPageEndpointsHandler,
+  createServerFnsHandler,
   pageEndpointRoutesFromFiles,
 } from './index';
 
@@ -121,6 +123,32 @@ describe('createPageEndpointsHandler', () => {
         })
       ).json();
       expect(acted).toEqual({ ok: true });
+    } finally {
+      server.close();
+    }
+  });
+});
+
+describe('createServerFnsHandler', () => {
+  it('dispatches a registered server function over HTTP', async () => {
+    // The id is normally build-derived; supplying it directly stands in
+    // for the transform here.
+    serverFn({ id: 'testfn0000000000' }, () => ({ hello: 'fn' }));
+    const handler = createServerFnsHandler();
+
+    expect(handler.matches('/_analog/fn/testfn0000000000')).toBe(true);
+    expect(handler.matches('/api/hello')).toBe(false);
+
+    const server = createServer((req, res) => void handler.handler(req, res));
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+
+    try {
+      const result = await (
+        await fetch(`http://localhost:${port}/_analog/fn/testfn0000000000`)
+      ).json();
+      expect(result).toEqual({ hello: 'fn' });
     } finally {
       server.close();
     }
