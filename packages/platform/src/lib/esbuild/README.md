@@ -6,9 +6,11 @@ against a real Angular v22 build by `apps/esbuild-app`, which resolves
 them by name (`nx build esbuild-app` / `nx serve esbuild-app`, with
 `nx verify esbuild-app` asserting the output). Covers file-based
 routing, markdown content routes, and SSR/SSG through `@angular/ssr`.
-The Nitro server features — API routes, `.server.ts` page endpoints,
-form actions, server functions, and streaming SSR — are intentionally
-out of scope.
+API routes from `src/server/routes` are served without Nitro (see API
+routes below). The remaining Nitro server features — `.server.ts` page
+endpoints, form actions, server functions, and streaming SSR — are not
+ported yet; streaming stays out of scope until Angular exposes a
+streaming render.
 
 Validated end-to-end with `apps/esbuild-app`:
 
@@ -264,8 +266,42 @@ carry the context. The entry point lives outside the main entries
 because `@angular/core`'s `REQUEST` token only exists in Angular v19+,
 which the rest of the router does not require.
 
+## API routes
+
+h3 handlers in `src/server/routes` are served with the same filename
+conventions as the Nitro path — nested directories, `[param]`,
+`[...slug]`, `index`, and `.get.ts`-style method suffixes. Discovery
+follows the manifest pattern, so adding or removing a handler rebuilds
+in watch mode. Wiring:
+
+- The `analog:api-routes` virtual module maps discovered files to lazy
+  imports (empty in browser bundles, so handler code never reaches the
+  client). Handler files must be in the TypeScript program:
+  `"include": ["src/server/**/*.ts"]`.
+- The server entry mounts them ahead of Angular via
+  `createApiRoutesHandler` from `@analogjs/router/api` (requires the
+  optional `h3` and `radix3` peers):
+
+```ts
+// src/server.ts
+import { createApiRoutesHandler } from '@analogjs/router/api';
+import apiRoutes from 'analog:api-routes';
+
+const api = createApiRoutesHandler(apiRoutes);
+// in the request handler, before assets/Angular:
+if (api.matches(pathname)) {
+  return api.handler(req, res);
+}
+```
+
+- `ng serve` never runs the app's server entry, so the dev-server
+  wrapper serves the same handlers through dev middleware, bundling
+  them on demand with esbuild and rebuilding when a handler changes.
+
 Still Nitro-only, so unavailable here: `injectLoad` and `.server.ts`
 page endpoints, form actions, server functions, and streaming SSR.
+The client-side module substitution those need is validated (see
+Verification), so the endpoint features are portable; streaming is not.
 
 ## Verification
 
@@ -332,6 +368,17 @@ gotcha, found via `apps/esbuild-app`: the entries must not appear under
 an `executors` manifest key, or Nx loads the architect `Builder` object
 as a plain Nx executor and fails with "implementation is not a
 function".
+
+A spike also validated the client-side module substitution the future
+`.server.ts` endpoint scrub needs: a custom `onResolve` can capture
+browser-bundle imports of server modules into a namespace and serve a
+scrubbed replacement, with the server bundle untouched. Two esbuild
+rules make it work: a namespace-less `onLoad` (like the Angular
+compiler plugin's TS loader) matches **all** namespaces, so the
+captured path must not match its filter — resolve to the extensionless
+specifier and read the file in the loader — and the original file can
+stay in the TypeScript program for type-checking, since the compiler
+plugin only errors on files it actually loads.
 
 `nx verify-browser esbuild-app` closes the loop in a real browser: it
 boots the built server and drives Chromium (Playwright) to assert that

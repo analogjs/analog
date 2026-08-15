@@ -10,6 +10,8 @@ import type {
 import type { JsonObject } from '@angular-devkit/core';
 import { resolve } from 'node:path';
 
+import { createAnalogApiMiddleware } from './analog-api-middleware.js';
+import { analogApiPlugin } from './analog-api-plugin.js';
 import { analogContentPlugin } from './analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
@@ -66,8 +68,15 @@ export async function* serveAnalogApplication(
         mermaid: analog.mermaid,
         additionalContentDirs: analog.additionalContentDirs,
       }),
+      analogApiPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+      }),
     ],
-  }) as AsyncIterable<BuilderOutput>;
+    // ng serve never runs the app's server entry, so API routes are
+    // served by dev middleware instead.
+    middleware: [createAnalogApiMiddleware(context.workspaceRoot, projectRoot)],
+  } as never) as AsyncIterable<BuilderOutput>;
 }
 
 export default createBuilder(serveAnalogApplication) as Builder<JsonObject>;

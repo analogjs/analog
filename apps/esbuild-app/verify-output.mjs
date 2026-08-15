@@ -135,6 +135,18 @@ async function checkServer() {
         'server serves prerendered routes as static output',
         prerendered.includes('ng-server-context="ssg"'),
       ],
+      [
+        // src/server/routes handlers served through @analogjs/router/api
+        'api route serves JSON from the server entry',
+        JSON.stringify(await (await fetch(`${base}/api/hello`)).json()) ===
+          '{"message":"Hello Analog"}',
+      ],
+      [
+        'api route resolves params with a method suffix',
+        JSON.stringify(
+          await (await fetch(`${base}/api/products/42`)).json(),
+        ) === '{"id":"42"}',
+      ],
     ];
   } finally {
     server.kill();

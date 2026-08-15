@@ -13,3 +13,8 @@ declare module 'analog:content-files' {
   export const contentFilesList: Record<string, Record<string, unknown>>;
   export const contentFiles: Record<string, () => Promise<string>>;
 }
+
+declare module 'analog:api-routes' {
+  const files: Record<string, () => Promise<{ default: unknown }>>;
+  export default files;
+}

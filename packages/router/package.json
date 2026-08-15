@@ -26,7 +26,9 @@
   "peerDependencies": {
     "@analogjs/content": "^2.7.0",
     "@angular/core": "^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
-    "@angular/router": "^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0"
+    "@angular/router": "^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0 || ^22.0.0",
+    "h3": "^1.8.0",
+    "radix3": "^1.0.0"
   },
   "dependencies": {
     "tslib": "^2.0.0"
@@ -46,5 +48,13 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
+  },
+  "peerDependenciesMeta": {
+    "h3": {
+      "optional": true
+    },
+    "radix3": {
+      "optional": true
+    }
   }
 }

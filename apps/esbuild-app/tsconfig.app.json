@@ -5,5 +5,9 @@
     "types": ["@analogjs/platform/esbuild-env"]
   },
   "files": ["src/main.ts", "src/main.server.ts", "src/server.ts"],
-  "include": ["src/**/*.d.ts", "src/app/pages/**/*.page.ts"]
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/pages/**/*.page.ts",
+    "src/server/**/*.ts"
+  ]
 }

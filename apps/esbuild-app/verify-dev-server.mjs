@@ -80,6 +80,17 @@ try {
     'adding a page rebuilds and joins the served route map',
     await pollServed('dev-probe.page'),
   ]);
+
+  let apiBody = '';
+  try {
+    apiBody = JSON.stringify(await (await fetch(`${base}/api/hello`)).json());
+  } catch {
+    // Leaves the check failing below.
+  }
+  checks.push([
+    'api route serves through dev middleware',
+    apiBody === '{"message":"Hello Analog"}',
+  ]);
 } finally {
   writeFileSync(indexPage, indexPageOriginal);
   rmSync(tempPage, { force: true });

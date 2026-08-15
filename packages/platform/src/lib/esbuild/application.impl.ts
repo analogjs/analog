@@ -7,6 +7,7 @@ import type {
 import type { JsonObject } from '@angular-devkit/core';
 import { resolve } from 'node:path';
 
+import { analogApiPlugin } from './analog-api-plugin.js';
 import { analogContentPlugin } from './analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
@@ -53,6 +54,10 @@ export async function* buildAnalogApplication(
         highlighter: analog.highlighter,
         mermaid: analog.mermaid,
         additionalContentDirs: analog.additionalContentDirs,
+      }),
+      analogApiPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
       }),
     ],
   }) as AsyncIterable<BuilderOutput>;
