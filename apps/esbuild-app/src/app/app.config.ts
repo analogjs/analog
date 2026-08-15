@@ -6,6 +6,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
 import {
   provideFileRouter,
+  withDebugRoutes,
   withPageEndpoints,
   withRouteFiles,
 } from '@analogjs/router';
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(
       withRouteFiles(routeFiles),
       withPageEndpoints(pageEndpoints),
+      withDebugRoutes(),
     ),
     provideContent(
       withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),

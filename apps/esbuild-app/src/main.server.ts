@@ -24,20 +24,24 @@ import { appConfig } from './app/app.config';
 // fn-demo's server function dispatches against the live request —
 // neither exists while prerendering.
 const perRequestPaths = new Set(['feedback', 'fn-demo']);
-const serverRoutes: ServerRoute[] = createServerRoutePaths(routeFiles).map(
-  (route) =>
-    perRequestPaths.has(route.path)
-      ? { path: route.path, renderMode: RenderMode.Server }
-      : !route.isDynamic
-        ? { path: route.path, renderMode: RenderMode.Prerender }
-        : route.getPrerenderParams
-          ? {
-              path: route.path,
-              renderMode: RenderMode.Prerender,
-              getPrerenderParams: route.getPrerenderParams,
-            }
-          : { path: route.path, renderMode: RenderMode.Server },
-);
+const serverRoutes: ServerRoute[] = [
+  ...createServerRoutePaths(routeFiles).map(
+    (route): ServerRoute =>
+      perRequestPaths.has(route.path)
+        ? { path: route.path, renderMode: RenderMode.Server }
+        : !route.isDynamic
+          ? { path: route.path, renderMode: RenderMode.Prerender }
+          : route.getPrerenderParams
+            ? {
+                path: route.path,
+                renderMode: RenderMode.Prerender,
+                getPrerenderParams: route.getPrerenderParams,
+              }
+            : { path: route.path, renderMode: RenderMode.Server },
+  ),
+  // withDebugRoutes adds this outside the file map.
+  { path: '__analog/routes', renderMode: RenderMode.Server },
+];
 
 export default function bootstrap(context: BootstrapContext) {
   return bootstrapApplication(

@@ -45,9 +45,14 @@ try {
   const errors = [];
   const trackErrors = (page) => {
     page.on('console', (msg) => {
-      // Failed favicon lookups surface as console errors; not under test.
+      // Failed favicon lookups surface as console errors; not under
+      // test. The 422 is the deliberate form-action failure submit.
       const source = msg.location()?.url ?? '';
-      if (msg.type() === 'error' && !source.includes('favicon')) {
+      if (
+        msg.type() === 'error' &&
+        !source.includes('favicon') &&
+        !msg.text().includes('status of 422')
+      ) {
         errors.push(`${msg.text()} (${source})`);
       }
     });
@@ -135,6 +140,24 @@ try {
       document.querySelector('[data-load]')?.textContent === 'from-server-load',
   );
   checks.push(['injectLoad page hydrates with page endpoint data', true]);
+
+  // --- FormAction directive posts to the page endpoint action ---
+  await loadPage.fill('input[name="comment"]', 'hi from browser');
+  await loadPage.click('button[type="submit"]');
+  await waitFor(
+    loadPage,
+    () =>
+      document.querySelector('[data-saved]')?.textContent === 'hi from browser',
+  );
+  checks.push(['form action submits and emits onSuccess', true]);
+
+  await loadPage.fill('input[name="comment"]', '');
+  await loadPage.click('button[type="submit"]');
+  await waitFor(
+    loadPage,
+    () => document.querySelector('[data-errors]')?.textContent === 'required',
+  );
+  checks.push(['form action failure emits onError with the errors', true]);
 
   // --- injectServerFn hydrates from the TransferState seed ---
   const fnPage = await browser.newPage();

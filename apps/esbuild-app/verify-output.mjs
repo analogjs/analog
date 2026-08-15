@@ -171,14 +171,37 @@ async function checkServer() {
           .loaded === 'from-server-load',
       ],
       [
-        'page endpoint POST runs the action function',
+        // The action reads the form body and answers with the json()
+        // helper (a web Response written through by h3).
+        'page endpoint action handles a form post',
         JSON.stringify(
           await (
             await fetch(`${base}/api/_analog/pages/feedback`, {
               method: 'POST',
+              headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+              },
+              body: 'comment=hi',
             })
           ).json(),
-        ) === '{"ok":true}',
+        ) === '{"saved":"hi"}',
+      ],
+      [
+        // fail(422, …) carries the X-Analog-Errors header the FormAction
+        // directive keys its error path on.
+        'page endpoint action fails with status and error header',
+        await (async () => {
+          const res = await fetch(`${base}/api/_analog/pages/feedback`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            body: 'other=1',
+          });
+          return (
+            res.status === 422 &&
+            res.headers.get('x-analog-errors') === 'true' &&
+            JSON.stringify(await res.json()) === '{"comment":"required"}'
+          );
+        })(),
       ],
       [
         // The load resolver self-fetches the page endpoint through
@@ -215,6 +238,17 @@ async function checkServer() {
         (await (await fetch(`${base}/fn-demo`)).text()).includes(
           'hello-from-server-fn',
         ),
+      ],
+      [
+        // withDebugRoutes reads the withRouteFiles map, so the debug
+        // page lists the discovered files on the esbuild path too.
+        'debug routes page lists discovered route files',
+        await (async () => {
+          const html = await (await fetch(`${base}/__analog/routes`)).text();
+          return (
+            html.includes('feedback.page') && html.includes('fn-demo.page')
+          );
+        })(),
       ],
     ];
   } finally {

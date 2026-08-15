@@ -325,6 +325,11 @@ runs the module's `load`, other methods run `action`, both receiving
 - Endpoint-backed pages need `RenderMode.Server`: the load resolver
   fetches the live endpoint through the bridged `BASE_URL`, and during
   prerendering there is no server to fetch from.
+- Form actions work on top of this: the `FormAction` directive posts to
+  the same endpoint route, the `action` reads the form body (e.g. h3's
+  `readFormData`), and the `@analogjs/router/server/actions` helpers
+  (`json`, `fail`, `redirect`) return web Responses that h3 writes
+  through — status, `X-Analog-Errors` header and all.
 
 ## Server functions
 
@@ -360,9 +365,14 @@ Wiring on top of the API routes setup:
 - Pages rendering server-function values need `RenderMode.Server`
   (dispatch needs a live request).
 
-Still Nitro-only, so unavailable here: form actions (the endpoint side
-is served; the directive flow is unexercised) and streaming SSR, which
-is not portable until Angular exposes a streaming render.
+Debug routes work too: `withDebugRoutes()` reads the same files map
+`withRouteFiles` provides (the `ROUTE_FILES` token), so
+`/__analog/routes` lists the discovered files. Give it a
+`RenderMode.Server` entry in the server routes, since it is not part of
+the file map.
+
+Still Nitro-only, so unavailable here: streaming SSR, which is not
+portable until Angular exposes a streaming render.
 
 ## Verification
 
@@ -432,6 +442,14 @@ Confirmed against a real build:
   (in-process dispatch); the browser run hydrates it from the
   `TransferState` seed with zero console errors; and the dev-server run
   dispatches through the app's server entry under `ng serve`.
+- **Form actions** — a form-encoded POST to the page endpoint runs the
+  `action` and returns the `json()` helper's Response; a missing field
+  comes back as `fail(422, …)` with the `X-Analog-Errors` header. In
+  Chromium the `FormAction` directive submits the form and emits
+  `onSuccess` with the saved value, then emits `onError` with the
+  validation errors on the failure submit.
+- **Debug routes** — the SSR render of `/__analog/routes` lists the
+  discovered route files, read from the `withRouteFiles` map.
 
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
