@@ -155,7 +155,7 @@ export const appConfig = {
 Mermaid parity matches the Vite path exactly, including its shape:
 diagrams render client-side through `<analog-markdown>`
 (`injectContent` pages, like the fixture's `blog/[slug].page.ts`), while
-markdown content *routes* pass the fences through as
+markdown content _routes_ pass the fences through as
 `<pre class="mermaid">` without rendering them — the route component has
 no mermaid wiring upstream on either build path.
 

@@ -1,4 +1,7 @@
-import { createBuilder, targetFromTargetString } from '@angular-devkit/architect';
+import {
+  createBuilder,
+  targetFromTargetString,
+} from '@angular-devkit/architect';
 import type {
   Builder,
   BuilderContext,
