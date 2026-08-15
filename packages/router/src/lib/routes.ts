@@ -1,3 +1,4 @@
+import { InjectionToken } from '@angular/core';
 import { UrlSegment } from '@angular/router';
 import type { Route } from '@angular/router';
 import type { UrlMatcher } from '@angular/router';
@@ -19,6 +20,15 @@ export let ANALOG_ROUTE_FILES = {};
 export let ANALOG_CONTENT_ROUTE_FILES = {};
 
 export type Files = Record<string, () => Promise<RouteExport | string>>;
+
+/**
+ * The route files map provided explicitly through `withRouteFiles`, for
+ * build integrations without the glob placeholders above. Consulted by
+ * debug routes so they reflect the same files the router was built from.
+ */
+export const ROUTE_FILES = new InjectionToken<Files>(
+  '@analogjs/router Route Files',
+);
 
 type RawRoute = {
   filename: string | null;

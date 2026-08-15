@@ -7,7 +7,7 @@ import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
 import { API_PREFIX } from '@analogjs/router/tokens';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 
-import { routes, createRoutes, Files } from './routes';
+import { routes, createRoutes, Files, ROUTE_FILES } from './routes';
 import { PAGE_ENDPOINTS } from './endpoints';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
 import { cookieInterceptor } from './cookie-interceptor';
@@ -76,6 +76,7 @@ export function withRouteFiles(files: Files): RouterFeatures {
     ɵkind: 101 as number,
     ɵproviders: [
       { provide: ROUTES, useValue: createRoutes(files), multi: true },
+      { provide: ROUTE_FILES, useValue: files },
     ],
   };
 }
