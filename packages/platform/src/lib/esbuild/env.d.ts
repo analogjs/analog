@@ -33,3 +33,8 @@ declare module 'analog:server-fns' {
   const modules: Record<string, Record<string, unknown>>;
   export default modules;
 }
+
+declare module 'analog:server-middleware' {
+  const files: Record<string, () => Promise<{ default: unknown }>>;
+  export default files;
+}

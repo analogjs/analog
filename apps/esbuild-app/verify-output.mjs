@@ -245,6 +245,25 @@ async function checkServer() {
         })(),
       ],
       [
+        // src/server/middleware runs globally ahead of everything, as
+        // under Nitro — here redirecting /checkout with a header.
+        'server middleware redirects with headers on a page path',
+        await (async () => {
+          const res = await fetch(`${base}/checkout`, { redirect: 'manual' });
+          return (
+            res.status === 302 &&
+            res.headers.get('location') === '/' &&
+            res.headers.get('x-analog-test') === 'true'
+          );
+        })(),
+      ],
+      [
+        // Context written by middleware is bridged into the API apps.
+        'middleware context reaches api handlers',
+        JSON.stringify(await (await fetch(`${base}/api/context`)).json()) ===
+          '{"context":"from-middleware"}',
+      ],
+      [
         // withDebugRoutes reads the withRouteFiles map, so the debug
         // page lists the discovered files on the esbuild path too.
         'debug routes page lists discovered route files',

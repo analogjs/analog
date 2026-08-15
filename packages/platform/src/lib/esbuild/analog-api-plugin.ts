@@ -17,7 +17,16 @@ import { setupDiscoveryManifest } from './discovery-manifest.js';
  */
 export const API_ROUTES_ID = 'analog:api-routes';
 
+/**
+ * Module specifier for the discovered `src/server/middleware` files —
+ * Nitro's global middleware convention. The map is consumed by
+ * `createAnalogRequestHandler`, which runs each file's default handler
+ * on every request ahead of everything else.
+ */
+export const SERVER_MIDDLEWARE_ID = 'analog:server-middleware';
+
 const API_ROUTES_NAMESPACE = 'analog-api-routes';
+const SERVER_MIDDLEWARE_NAMESPACE = 'analog-server-middleware';
 
 export interface AnalogApiPluginOptions {
   workspaceRoot?: string;
@@ -37,6 +46,19 @@ export function discoverApiRoutes(root: string): string[] {
     dot: true,
     absolute: true,
   }).map(normalizeSlashes);
+}
+
+export function serverMiddlewareDir(root: string): string {
+  return `${root}/src/server/middleware`;
+}
+
+export function discoverServerMiddleware(root: string): string[] {
+  return globSync([`${serverMiddlewareDir(root)}/**/*.ts`], {
+    dot: true,
+    absolute: true,
+  })
+    .map(normalizeSlashes)
+    .sort();
 }
 
 export function createApiRoutesModule(
@@ -92,6 +114,32 @@ export function analogApiPlugin(options?: AnalogApiPluginOptions): Plugin {
         resolveDir: root,
         watchDirs: [apiRoutesDir(root)].filter((dir) => existsSync(dir)),
       }));
+
+      const middlewareManifestImport = setupDiscoveryManifest(
+        `${workspaceRoot}/node_modules/@analogjs/esbuild-manifests/server-middleware.json`,
+        [serverMiddlewareDir(root)],
+        () => discoverServerMiddleware(root),
+      );
+
+      build.onResolve({ filter: /^analog:server-middleware$/ }, () => ({
+        path: SERVER_MIDDLEWARE_ID,
+        namespace: SERVER_MIDDLEWARE_NAMESPACE,
+      }));
+
+      build.onLoad(
+        { filter: /.*/, namespace: SERVER_MIDDLEWARE_NAMESPACE },
+        () => ({
+          contents: isBrowser
+            ? 'export default {};\n'
+            : middlewareManifestImport +
+              createApiRoutesModule(discoverServerMiddleware(root), root),
+          loader: 'js',
+          resolveDir: root,
+          watchDirs: [serverMiddlewareDir(root)].filter((dir) =>
+            existsSync(dir),
+          ),
+        }),
+      );
     },
   };
 }

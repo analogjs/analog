@@ -124,6 +124,18 @@ try {
     'server function dispatches through the app server entry in dev',
     fnBody === '{"greeting":"hello-from-server-fn"}',
   ]);
+
+  let middlewareStatus = 0;
+  try {
+    middlewareStatus = (await fetch(`${base}/checkout`, { redirect: 'manual' }))
+      .status;
+  } catch {
+    // Leaves the check failing below.
+  }
+  checks.push([
+    'server middleware redirects through the dev server',
+    middlewareStatus === 302,
+  ]);
 } finally {
   writeFileSync(indexPage, indexPageOriginal);
   rmSync(tempPage, { force: true });

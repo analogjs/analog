@@ -308,6 +308,24 @@ if (api.matches(pathname)) {
   dev middleware, bundling them on demand with esbuild and rebuilding
   when a handler changes.
 
+## Server middleware
+
+`src/server/middleware` follows Nitro's global-middleware convention:
+every file's default h3 event handler runs on **every** request — page
+renders and static assets included — in filename order, ahead of all
+other handlers. Middleware acts by ending the response (`sendRedirect`,
+`res.end`) or mutating `event.context`; return values are ignored. The
+`analog:server-middleware` map is consumed by
+`createAnalogRequestHandler` internally (discovery-manifest pattern, so
+add/remove rebuilds in watch), and context written by middleware is
+bridged into the API route, page endpoint, and server-function apps, so
+handlers read `event.context` the way they would under Nitro's shared
+app. One seam vs. Nitro: `event.context` does not flow into Angular
+page renders — the render reads the bridged Angular `REQUEST`, not the
+h3 event — so middleware affects pages via headers and redirects only.
+Requires a configured server entry (the no-entry dev middleware
+fallback does not run it).
+
 ## Page endpoints
 
 `.server.ts` page endpoints work with the Nitro path's semantics: GET
@@ -461,6 +479,10 @@ Confirmed against a real build:
   validation errors on the failure submit.
 - **Debug routes** — the SSR render of `/__analog/routes` lists the
   discovered route files, read from the `withRouteFiles` map.
+- **Server middleware** — `/checkout` comes back 302 with the
+  middleware's header on a page path (prod and dev alike), and
+  `/api/context` returns the value the middleware wrote to
+  `event.context`, proving the context bridge into the API apps.
 
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
