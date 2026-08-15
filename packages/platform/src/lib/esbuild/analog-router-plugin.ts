@@ -1,7 +1,8 @@
 import type { Plugin } from 'esbuild';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
+import { parseSync } from 'oxc-parser';
 
 import { discoverContentFiles } from './analog-content-plugin.js';
 import { setupDiscoveryManifest } from './discovery-manifest.js';
@@ -96,7 +97,65 @@ export function createRouteFilesModule(
       : `  "${key}": () => import('${file}')`;
   });
 
-  return `export default {\n${entries.join(',\n')}\n};\n`;
+  // Build-time route metadata: server route configuration is built
+  // eagerly at bootstrap, before any page module loads, so per-page
+  // settings it needs (routeMeta.prerender) are extracted here.
+  const metaEntries = routeFiles.flatMap((file) => {
+    if (file.endsWith('.md') || !routeMetaDisablesPrerender(file)) {
+      return [];
+    }
+    const key = file.startsWith(root) ? file.replace(root, '') : file;
+    return [`  "${key}": { prerender: false }`];
+  });
+
+  return (
+    `export default {\n${entries.join(',\n')}\n};\n\n` +
+    `export const routeFilesMeta = {\n${metaEntries.join(',\n')}\n};\n`
+  );
+}
+
+/**
+ * Whether a page file's routeMeta literally sets `prerender: false`.
+ * Read from the AST, not by executing the module — only a literal is
+ * honored, matching how the server-fn transforms read call shapes.
+ */
+export function routeMetaDisablesPrerender(file: string): boolean {
+  const code = readFileSync(file, 'utf8');
+  if (!code.includes('routeMeta') || !code.includes('prerender')) {
+    return false;
+  }
+
+  const { program } = parseSync(file, code);
+  for (const node of (program as { body: any[] }).body) {
+    if (
+      node.type !== 'ExportNamedDeclaration' ||
+      node.declaration?.type !== 'VariableDeclaration'
+    ) {
+      continue;
+    }
+    for (const declarator of node.declaration.declarations) {
+      if (
+        declarator.id?.type !== 'Identifier' ||
+        declarator.id.name !== 'routeMeta' ||
+        declarator.init?.type !== 'ObjectExpression'
+      ) {
+        continue;
+      }
+      for (const prop of declarator.init.properties ?? []) {
+        const key =
+          prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
+        if (
+          prop.type === 'Property' &&
+          key === 'prerender' &&
+          prop.value?.type === 'Literal' &&
+          prop.value.value === false
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /**

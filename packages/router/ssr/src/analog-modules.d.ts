@@ -6,6 +6,7 @@
 declare module 'analog:route-files' {
   const files: import('@analogjs/router').Files;
   export default files;
+  export const routeFilesMeta: Record<string, { prerender?: boolean }>;
 }
 
 declare module 'analog:page-endpoints' {

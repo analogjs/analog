@@ -1,4 +1,10 @@
 import { Component } from '@angular/core';
+import type { RouteMeta } from '@analogjs/router';
+
+// Streamed per request — must not be prerendered.
+export const routeMeta: RouteMeta = {
+  prerender: false,
+};
 
 @Component({
   template: `

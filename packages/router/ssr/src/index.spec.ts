@@ -99,7 +99,9 @@ describe('createAnalogServerRoutes', () => {
   it('derives render modes from files, endpoints, and server paths', async () => {
     const routes = createAnalogServerRoutes(files, {
       pageEndpoints: { '/src/app/pages/feedback.server.ts': true },
-      serverPaths: ['fn-demo'],
+      routeFilesMeta: {
+        '/src/app/pages/fn-demo.page.ts': { prerender: false },
+      },
       debugRoutes: true,
     });
 

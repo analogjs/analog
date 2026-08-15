@@ -6,7 +6,9 @@ import {
   REQUEST as ANGULAR_REQUEST,
   RESPONSE_INIT,
 } from '@angular/core';
-import routeFilesMap from 'analog:route-files';
+import routeFilesMap, {
+  routeFilesMeta as routeFilesMetaMap,
+} from 'analog:route-files';
 import pageEndpointsMap from 'analog:page-endpoints';
 import { contentFilesList as contentFilesListMap } from 'analog:content-files';
 import {
@@ -199,10 +201,10 @@ export interface AnalogServerRoutesOptions {
   /** Overrides the `analog:content-files` attribute map. */
   contentFilesList?: Record<string, Record<string, unknown>>;
   /**
-   * Extra paths to render per request — pages whose server dependency
-   * is not visible from filenames, e.g. ones calling server functions.
+   * Overrides the build-extracted route metadata map (pages declaring
+   * `routeMeta.prerender: false` render per request).
    */
-  serverPaths?: string[];
+  routeFilesMeta?: Record<string, { prerender?: boolean }>;
   /** Adds the `withDebugRoutes` page (`__analog/routes`). */
   debugRoutes?: boolean;
   /** Extra entries appended verbatim, for routes outside the file map. */
@@ -214,19 +216,19 @@ export interface AnalogServerRoutesOptions {
  * files map: static paths prerender, dynamic module-backed paths
  * prerender the parameter sets their routeMeta.getPrerenderParams
  * provides, and everything server-backed — endpoint-backed pages,
- * listed serverPaths, dynamic paths without params — renders per
- * request.
+ * pages declaring `routeMeta.prerender: false`, dynamic paths without
+ * params — renders per request.
  */
 export function createAnalogServerRoutes(
   files: Files,
   options: AnalogServerRoutesOptions = {},
 ): ServerRoute[] {
-  const serverPaths = new Set(options.serverPaths ?? []);
   const pageEndpoints = options.pageEndpoints ?? {};
   const prerenderContent = new Map(
     (options.prerenderContent ?? []).map((entry) => [entry.route, entry]),
   );
   const contentFilesList = options.contentFilesList ?? contentFilesListMap;
+  const routeFilesMeta = options.routeFilesMeta ?? routeFilesMetaMap;
 
   return [
     ...createServerRoutePaths(files).map((route): ServerRoute => {
@@ -235,7 +237,8 @@ export function createAnalogServerRoutes(
         '.server.ts',
       );
       if (
-        serverPaths.has(route.path) ||
+        (route.filename &&
+          routeFilesMeta[route.filename]?.prerender === false) ||
         (endpointKey && pageEndpoints[endpointKey])
       ) {
         return { path: route.path, renderMode: RenderMode.Server };

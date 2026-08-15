@@ -195,7 +195,6 @@ import { appConfig } from './app.config';
 export const config = mergeApplicationConfig(appConfig, {
   providers: [
     provideAnalogServerRendering({
-      serverPaths: [], // opt pages out of prerendering (per-request data)
       debugRoutes: true, // when using withDebugRoutes
     }),
   ],
@@ -230,10 +229,10 @@ module-backed paths prerender the parameter sets their
 `routeMeta.getPrerenderParams` provides (resolving empty falls back to
 per-request via `PrerenderFallback.Server`), and everything
 server-backed renders per request — pages with a `.server.ts` endpoint
-are detected from the `pageEndpoints` map, and `serverPaths` opts
-individual pages out of prerendering when their server data (e.g. a
-server-function value) must stay per-request. Intermediate parent
-paths are included, since
+are detected automatically, and a page opts itself out of prerendering
+with `routeMeta.prerender: false` (a literal, extracted at build time)
+when its server data must stay per-request — fresh server-function
+values, streaming. Intermediate parent paths are included, since
 nested route files produce a parent route Angular's server
 configuration must cover. It also installs
 `provideServerRequestContext()`.
@@ -408,7 +407,8 @@ Wiring on top of the API routes setup:
   round-trip — and seed `TransferState` for hydration. During
   prerendering dispatch runs against a synthetic request (as on Nitro),
   so server-function pages prerender with the values baked in; list a
-  page in `serverPaths` when its server data must stay per-request.
+  page opts out with `routeMeta.prerender: false` when its server data
+  must stay per-request.
 
 Debug routes work too: `withDebugRoutes()` reads the same files map
 `withRouteFiles` provides (the `ROUTE_FILES` token), so
@@ -434,10 +434,10 @@ status as on Vite. Three pieces:
   `renderStream` against the CSR index document, piping the stream to
   the response. Bots and `streaming: false` routes get the buffered
   fallback inside `renderStream`.
-- The app needs `withIncrementalHydration()` and per-request rendering
-  (`serverPaths`) for streamed pages; `@defer (hydrate …)` blocks flush
-  as they resolve, then the authoritative hydration-annotated document
-  arrives as the tail.
+- The app needs `withIncrementalHydration()`, and streamed pages
+  declare `routeMeta.prerender: false`; `@defer (hydrate …)` blocks
+  flush as they resolve, then the authoritative hydration-annotated
+  document arrives as the tail.
 
 With this, no Analog capability is Nitro-only — the streaming patch
 would still be better served by an upstream Angular per-block

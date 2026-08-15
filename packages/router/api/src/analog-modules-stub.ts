@@ -4,3 +4,4 @@
 export default {};
 export const contentFilesList = {};
 export const contentFiles = {};
+export const routeFilesMeta = {};

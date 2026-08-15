@@ -42,6 +42,12 @@ export interface DefaultRouteMeta extends Omit<
   getPrerenderParams?: () =>
     | Promise<Record<string, string>[]>
     | Record<string, string>[];
+  /**
+   * Set to `false` (a literal, read at build time) to render this page
+   * per request instead of prerendering — for pages that depend on the
+   * live request, e.g. fresh server-function data or streaming.
+   */
+  prerender?: boolean;
 }
 
 export interface RedirectRouteMeta {
