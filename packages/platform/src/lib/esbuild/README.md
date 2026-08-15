@@ -116,8 +116,13 @@ through to `@angular/build`:
 "analog": {
   "highlighter": "shiki", // or "prism"; shiki is the default
   "mermaid": true, // pass mermaid fences through for client rendering
+  "markedOptions": {}, // build-time marked setup, as on the Vite path
+  "shikiOptions": {}, // shiki themes/langs/container
+  "prismOptions": {}, // prism additionalLangs
   "additionalPagesDirs": [],
-  "additionalContentDirs": []
+  "additionalContentDirs": [],
+  "streaming": false, // EXPERIMENTAL streaming SSR patch
+  "sitemap": { "host": "https://example.com" } // emit sitemap.xml
 }
 ```
 
@@ -566,10 +571,11 @@ markup.
 
 ## Open items
 
-- Pass through fine-grained marked/shiki/prism options
-  (`markedOptions`, `shikiOptions`, `additionalLangs`) to the content
-  plugin's build-time rendering; the `analog` builder option section
-  covers highlighter choice, mermaid, and extra directories.
 - Mermaid rendering inside markdown content routes would need the
   upstream route component to gain mermaid wiring — it has none on the
   Vite path either.
+- Out of scope by decision: scaffolding, fine-grained HMR (rebuild +
+  live reload is the dev loop), and automatic `.env` loading (the
+  plugin `env` option covers explicit values). Declarative route rules
+  are covered imperatively by server middleware; deployment targets
+  beyond the Node server come from the @angular/ssr ecosystem.

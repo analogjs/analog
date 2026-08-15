@@ -1,3 +1,7 @@
+import type { WithMarkedOptions } from '../content/marked/index.js';
+import type { WithPrismHighlighterOptions } from '../content/prism/options.js';
+import type { WithShikiHighlighterOptions } from '../content/shiki/options.js';
+
 /**
  * Analog-specific settings read from the `analog` section of the build
  * target's options and handed to the esbuild plugins. Everything else
@@ -8,6 +12,12 @@ export interface AnalogBuilderOptions {
    * Build-time markdown highlighter. Defaults to 'shiki'.
    */
   highlighter?: 'shiki' | 'prism';
+  /** Options for the build-time marked setup, as on the Vite path. */
+  markedOptions?: WithMarkedOptions;
+  /** Options for the shiki highlighter (themes, langs, container). */
+  shikiOptions?: WithShikiHighlighterOptions;
+  /** Options for the prism highlighter (additional languages). */
+  prismOptions?: WithPrismHighlighterOptions;
   /**
    * Emit mermaid code fences for client-side rendering.
    */

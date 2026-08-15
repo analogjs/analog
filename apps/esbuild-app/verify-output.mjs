@@ -62,6 +62,13 @@ const checks = [
     ),
   ],
   [
+    // analog.shikiOptions passes through to the build-time highlighter;
+    // the container option wraps every highlighted block.
+    'shiki options pass through to build-time rendering',
+    browserJs.some((c) => c.includes('class="hl-wrap"')) &&
+      aboutHtml.includes('class="hl-wrap"'),
+  ],
+  [
     'front matter preserved in content output',
     browserJs.some((c) => c.includes('title: About')),
   ],

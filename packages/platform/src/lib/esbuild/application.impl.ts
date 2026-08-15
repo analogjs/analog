@@ -57,6 +57,9 @@ export async function* buildAnalogApplication(
         projectRoot,
         highlighter: analog.highlighter,
         mermaid: analog.mermaid,
+        markedOptions: analog.markedOptions,
+        shikiOptions: analog.shikiOptions,
+        prismOptions: analog.prismOptions,
         additionalContentDirs: analog.additionalContentDirs,
       }),
       analogApiPlugin({

@@ -4,6 +4,9 @@ import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
 import type { MarkedContentHighlighter } from '../content/marked/marked-content-highlighter.js';
+import type { WithMarkedOptions } from '../content/marked/index.js';
+import type { WithPrismHighlighterOptions } from '../content/prism/options.js';
+import type { WithShikiHighlighterOptions } from '../content/shiki/options.js';
 import { setupDiscoveryManifest } from './discovery-manifest.js';
 
 /**
@@ -45,6 +48,12 @@ export interface AnalogContentPluginOptions {
    * shiki highlighter — the prism path always passes mermaid through.
    */
   mermaid?: boolean;
+  /** Options for the build-time marked setup, as on the Vite path. */
+  markedOptions?: WithMarkedOptions;
+  /** Options for the shiki highlighter (themes, langs, container). */
+  shikiOptions?: WithShikiHighlighterOptions;
+  /** Options for the prism highlighter (additional languages). */
+  prismOptions?: WithPrismHighlighterOptions;
 }
 
 function normalizeSlashes(path: string): string {
@@ -114,15 +123,26 @@ export async function createContentFilesModule(
 }
 
 async function createHighlighter(
-  highlighter: 'shiki' | 'prism',
-  mermaid?: boolean,
+  options: AnalogContentPluginOptions,
 ): Promise<MarkedContentHighlighter> {
-  if (highlighter === 'shiki') {
+  if ((options.highlighter ?? 'shiki') === 'shiki') {
     const { getShikiHighlighter } = await import('../content/shiki/index.js');
+    const shikiOptions = options.shikiOptions ?? {};
     // getShikiHighlighter caches a singleton, so the first call decides
-    // mermaid support for the process.
+    // the options (mermaid support included) for the process.
     return getShikiHighlighter(
-      mermaid ? { highlighter: { additionalLangs: ['mermaid'] } } : {},
+      options.mermaid
+        ? {
+            ...shikiOptions,
+            highlighter: {
+              ...shikiOptions.highlighter,
+              additionalLangs: [
+                ...(shikiOptions.highlighter?.additionalLangs ?? []),
+                'mermaid' as never,
+              ],
+            },
+          }
+        : shikiOptions,
     );
   }
 
@@ -135,6 +155,7 @@ async function createHighlighter(
     'json',
     'markup',
     'typescript',
+    ...(options.prismOptions?.additionalLangs ?? []),
   ]);
 
   return getPrismHighlighter();
@@ -153,9 +174,10 @@ async function createHighlighter(
 export function renderContentFile(
   path: string,
   highlighter: MarkedContentHighlighter,
+  markedOptions?: WithMarkedOptions,
 ): Promise<string> {
   const result = renderQueue.then(() =>
-    renderContentFileUnlocked(path, highlighter),
+    renderContentFileUnlocked(path, highlighter, markedOptions),
   );
   renderQueue = result.catch(() => undefined);
   return result;
@@ -166,13 +188,17 @@ let renderQueue: Promise<unknown> = Promise.resolve();
 async function renderContentFileUnlocked(
   path: string,
   highlighter: MarkedContentHighlighter,
+  markedOptions?: WithMarkedOptions,
 ): Promise<string> {
   const fm: any = await import('front-matter');
   const frontmatterFn = fm.default || fm;
   const { body, frontmatter } = frontmatterFn(readFileSync(path, 'utf8'));
 
   const { getMarkedSetup } = await import('../content/marked/index.js');
-  const markedSetup = getMarkedSetup({ mangle: true }, highlighter);
+  const markedSetup = getMarkedSetup(
+    { mangle: true, ...(markedOptions || {}) },
+    highlighter,
+  );
 
   const { resetHeadings } = await import('marked-gfm-heading-id');
   resetHeadings();
@@ -249,13 +275,14 @@ export function analogContentPlugin(
       );
 
       build.onLoad({ filter: /\.md$/ }, async (args) => {
-        markedHighlighter ??= createHighlighter(
-          options?.highlighter ?? 'shiki',
-          options?.mermaid,
-        );
+        markedHighlighter ??= createHighlighter(options ?? {});
 
         return {
-          contents: await renderContentFile(args.path, await markedHighlighter),
+          contents: await renderContentFile(
+            args.path,
+            await markedHighlighter,
+            options?.markedOptions,
+          ),
           loader: 'text',
         };
       });

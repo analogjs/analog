@@ -24,7 +24,10 @@
         "analog": {
           "mermaid": true,
           "streaming": true,
-          "sitemap": { "host": "https://analog.example" }
+          "sitemap": { "host": "https://analog.example" },
+          "shikiOptions": {
+            "container": "<div class=\"hl-wrap\">%s</div>"
+          }
         }
       }
     },
