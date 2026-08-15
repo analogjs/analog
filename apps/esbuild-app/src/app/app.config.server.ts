@@ -12,6 +12,9 @@ export const config = mergeApplicationConfig(appConfig, {
     provideAnalogServerRendering({
       serverPaths: ['stream-demo'],
       debugRoutes: true,
+      // One prerendered page per content file: src/content/about.md
+      // becomes /blog/about.
+      prerenderContent: [{ contentDir: 'src/content', route: 'blog/:slug' }],
     }),
   ],
 });

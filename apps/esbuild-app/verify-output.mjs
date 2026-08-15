@@ -108,6 +108,27 @@ const checks = [
     !browserJs.some((c) => c.includes('hello-from-server-fn')) &&
       browserJs.some((c) => c.includes(GREETING_FN)),
   ],
+  [
+    // prerenderContent expands src/content into blog/:slug params, so
+    // the content-backed page is static output.
+    'content-dir route prerenders one page per content file',
+    read(join(browserDir, 'blog/about'), 'index.html').includes(
+      'ng-server-context="ssg"',
+    ),
+  ],
+  [
+    // analog.sitemap emits one entry per prerendered page.
+    'sitemap lists the prerendered pages',
+    (() => {
+      const sitemap = read(browserDir, 'sitemap.xml');
+      return (
+        sitemap.includes('<loc>https://analog.example/</loc>') &&
+        sitemap.includes('<loc>https://analog.example/about</loc>') &&
+        sitemap.includes('<loc>https://analog.example/blog/about</loc>') &&
+        !sitemap.includes('stream-demo')
+      );
+    })(),
+  ],
 ];
 
 /**

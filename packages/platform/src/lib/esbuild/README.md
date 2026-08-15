@@ -215,12 +215,12 @@ export const reqHandler = createAnalogRequestHandler({
 });
 ```
 
-`provideAnalogServerRendering` consumes `analog:route-files` and
-`analog:page-endpoints` itself — statically, since this entry only ever
-runs inside a server bundle built by these plugins — and derives the
-@angular/ssr server route configuration (via `createAnalogServerRoutes`,
-also exported for direct use with an explicit files map): static paths
-prerender, dynamic
+`provideAnalogServerRendering` consumes `analog:route-files`,
+`analog:page-endpoints`, and `analog:content-files` itself — statically,
+since this entry only ever runs inside a server bundle built by these
+plugins — and derives the @angular/ssr server route configuration (via
+`createAnalogServerRoutes`, also exported for direct use with an
+explicit files map): static paths prerender, dynamic
 module-backed paths prerender the parameter sets their
 `routeMeta.getPrerenderParams` provides (resolving empty falls back to
 per-request via `PrerenderFallback.Server`), and everything
@@ -232,6 +232,18 @@ paths are included, since
 nested route files produce a parent route Angular's server
 configuration must cover. It also installs
 `provideServerRequestContext()`.
+
+Content-backed dynamic routes prerender in batch through
+`prerenderContent`: each file under a content directory becomes a
+parameter set for the route (`src/content/blog/first.md` →
+`blog/:slug` as `{ slug: 'first' }` by default; a `transform` maps
+front-matter attributes onto parameters or skips files). This is the
+esbuild-native shape of Nitro's `PrerenderContentDir` — parameters
+instead of route strings, feeding `getPrerenderParams` — and unmatched
+parameters still render per request. Pair it with
+`analog.sitemap: { host }` in the builder options, which emits a
+`sitemap.xml` into the browser output after a successful prerendering
+build, one entry per prerendered page.
 
 `createAnalogRequestHandler` is the whole server entry: server
 functions, page endpoints, and API routes ahead of Angular, static
@@ -507,6 +519,9 @@ Confirmed against a real build:
   middleware's header on a page path (prod and dev alike), and
   `/api/context` returns the value the middleware wrote to
   `event.context`, proving the context bridge into the API apps.
+- **Content-dir prerender + sitemap** — `/blog/about` is static output
+  (`ssg`) expanded from `src/content`, and the emitted `sitemap.xml`
+  lists exactly the prerendered pages (per-request routes absent).
 - **Streaming SSR** — `/stream-demo` answers chunked with the shell,
   both `@defer` blocks as `data-analog-defer` templates, and the
   authoritative tail; a bot user-agent gets a buffered render with no

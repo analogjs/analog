@@ -14,6 +14,7 @@ import { analogDeferStreamingPlugin } from './analog-defer-streaming-plugin.js';
 import { analogPageEndpointsPlugin } from './analog-page-endpoints-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
 import { analogServerFnsPlugin } from './analog-server-fns-plugin.js';
+import { emitSitemap } from './build-sitemap.js';
 import { loadAngularBuild } from './load-angular-build.js';
 
 type ApplicationBuilderOptions = JsonObject & {
@@ -43,7 +44,7 @@ export async function* buildAnalogApplication(
 
   // import.meta.env is applied per bundle by analogRouterPlugin, since
   // the browser and server bundles need different SSR values.
-  yield* buildApplication(buildOptions as never, context, {
+  const results = buildApplication(buildOptions as never, context, {
     codePlugins: [
       analogRouterPlugin({
         workspaceRoot: context.workspaceRoot,
@@ -75,6 +76,24 @@ export async function* buildAnalogApplication(
       ...(analog.streaming ? [analogDeferStreamingPlugin()] : []),
     ],
   }) as AsyncIterable<BuilderOutput>;
+
+  let lastSuccess = false;
+  for await (const result of results) {
+    lastSuccess = result.success === true;
+    yield result;
+  }
+
+  // After a successful prerendering build, one sitemap entry per
+  // prerendered page in the browser output.
+  const outputPath = buildOptions['outputPath'];
+  const browserDir =
+    typeof outputPath === 'string'
+      ? resolve(context.workspaceRoot, outputPath, 'browser')
+      : undefined;
+  if (analog.sitemap?.host && lastSuccess && browserDir) {
+    const routes = emitSitemap(browserDir, analog.sitemap.host);
+    context.logger.info(`Emitted sitemap.xml with ${routes.length} routes.`);
+  }
 }
 
 export default createBuilder(

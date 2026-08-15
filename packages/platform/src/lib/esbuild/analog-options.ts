@@ -27,4 +27,9 @@ export interface AnalogBuilderOptions {
    * bundles so renderStream can flush blocks as they resolve.
    */
   streaming?: boolean;
+  /**
+   * Emit a sitemap.xml into the browser output after a prerendering
+   * build, one entry per prerendered page.
+   */
+  sitemap?: { host: string };
 }

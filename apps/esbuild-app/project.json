@@ -21,7 +21,11 @@
         "optimization": false,
         "outputHashing": "none",
         "security": { "allowedHosts": ["localhost"] },
-        "analog": { "mermaid": true, "streaming": true }
+        "analog": {
+          "mermaid": true,
+          "streaming": true,
+          "sitemap": { "host": "https://analog.example" }
+        }
       }
     },
     "verify": {
