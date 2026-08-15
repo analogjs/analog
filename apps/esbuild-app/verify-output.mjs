@@ -232,12 +232,17 @@ async function checkServer() {
         ) === '{"length":6}',
       ],
       [
-        // injectServerFn during SSR runs in-process through the
-        // SERVER_FN_DISPATCHER bridge, no HTTP round-trip.
-        'ssr resolves injectServerFn in-process',
-        (await (await fetch(`${base}/fn-demo`)).text()).includes(
-          'hello-from-server-fn',
-        ),
+        // injectServerFn dispatches in-process through the
+        // SERVER_FN_DISPATCHER bridge — against the synthetic request
+        // during prerendering, so the value is baked into static output.
+        'prerender resolves injectServerFn in-process',
+        await (async () => {
+          const html = await (await fetch(`${base}/fn-demo`)).text();
+          return (
+            html.includes('hello-from-server-fn') &&
+            html.includes('ng-server-context="ssg"')
+          );
+        })(),
       ],
       [
         // withDebugRoutes reads the withRouteFiles map, so the debug

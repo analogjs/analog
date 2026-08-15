@@ -9,14 +9,15 @@ import { scrubServerFnModule } from '../server-fn-client-transform.js';
 import { setupDiscoveryManifest } from './discovery-manifest.js';
 
 /**
- * Module specifier for server-function registration:
+ * Module specifier for the discovered server-function modules:
  *
- *   import 'analog:server-fns';
+ *   import serverFns from 'analog:server-fns';
  *
- * In the server bundle it imports every discovered `*.server.ts` module
- * for its registration side effects — each `serverFn(...)` call
- * registers itself — so `createServerFnsHandler` can dispatch by id.
- * In the browser bundle it is empty.
+ * In the server bundle the default export maps each discovered
+ * `*.server.ts` file to its module namespace; importing them registers
+ * every `serverFn(...)` by id, and passing the map to
+ * `createAnalogRequestHandler` makes that dependency explicit. In the
+ * browser bundle the map is empty.
  */
 export const SERVER_FNS_ID = 'analog:server-fns';
 
@@ -75,9 +76,10 @@ export function discoverServerFnFiles(
  *    `serverFn` config, so registration and the client proxy agree on
  *    the opaque `/_analog/fn/<id>` route.
  *
- * 2. Resolve `analog:server-fns`, the registration module the server
- *    entry imports for side effects, following the discovery-manifest
- *    pattern so adding or removing a `*.server.ts` rebuilds in watch.
+ * 2. Resolve `analog:server-fns`, the map of discovered server-function
+ *    modules the server entry passes to `createAnalogRequestHandler`,
+ *    following the discovery-manifest pattern so adding or removing a
+ *    `*.server.ts` rebuilds in watch.
  */
 export function analogServerFnsPlugin(
   options?: AnalogServerFnsPluginOptions,
@@ -125,10 +127,21 @@ export function analogServerFnsPlugin(
           options?.additionalPagesDirs,
         );
         const contents = isBrowser
-          ? 'export default undefined;\n'
+          ? 'export default {};\n'
           : manifestImport +
-            files.map((file) => `import '${file}';`).join('\n') +
-            '\n';
+            files
+              .map((file, i) => `import * as m${i} from '${file}';`)
+              .join('\n') +
+            '\nexport default {\n' +
+            files
+              .map((file, i) => {
+                const key = file.startsWith(root)
+                  ? file.replace(root, '')
+                  : file;
+                return `  "${key}": m${i}`;
+              })
+              .join(',\n') +
+            '\n};\n';
 
         return {
           contents,

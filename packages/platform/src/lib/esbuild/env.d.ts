@@ -28,7 +28,8 @@ declare module 'analog:page-endpoints' {
 }
 
 declare module 'analog:server-fns' {
-  // Imported for registration side effects only.
-  const nothing: undefined;
-  export default nothing;
+  // Importing registers each module's server functions by id; the map
+  // is passed to createAnalogRequestHandler to make that explicit.
+  const modules: Record<string, Record<string, unknown>>;
+  export default modules;
 }

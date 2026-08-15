@@ -5,14 +5,14 @@ import pageEndpoints from 'analog:page-endpoints';
 
 import { appConfig } from './app.config';
 
-// Endpoint-backed pages render per request automatically; fn-demo is
-// listed because its server-function dependency is not visible from
-// filenames.
+// Endpoint-backed pages render per request automatically. fn-demo
+// prerenders: its server function dispatches against the synthetic
+// prerender request and the value is baked in (list a path in
+// serverPaths instead when its server data must stay per-request).
 export const config = mergeApplicationConfig(appConfig, {
   providers: [
     provideAnalogServerRendering(routeFiles, {
       pageEndpoints,
-      serverPaths: ['fn-demo'],
       debugRoutes: true,
     }),
   ],

@@ -193,7 +193,7 @@ export const config = mergeApplicationConfig(appConfig, {
   providers: [
     provideAnalogServerRendering(routeFiles, {
       pageEndpoints, // endpoint-backed pages render per request
-      serverPaths: [], // pages with invisible server deps (server fns)
+      serverPaths: [], // opt pages out of prerendering (per-request data)
       debugRoutes: true, // when using withDebugRoutes
     }),
   ],
@@ -211,14 +211,15 @@ export default (context: BootstrapContext) =>
 import { createAnalogRequestHandler } from '@analogjs/router/api';
 import apiRoutes from 'analog:api-routes';
 import pageEndpoints from 'analog:page-endpoints';
-import 'analog:server-fns'; // registers server functions
+import serverFns from 'analog:server-fns';
 
 import { config } from './app/app.config.server';
 
 export const reqHandler = createAnalogRequestHandler({
   apiRoutes,
   pageEndpoints,
-  serverFns: config, // dispatch handlers resolve the app's own DI
+  serverFns, // importing registered them; passing mounts the dispatch route
+  config, // dispatch handlers resolve the app's own DI
   main: import.meta.url, // listens on PORT when run directly
 });
 ```
@@ -230,9 +231,10 @@ module-backed paths prerender the parameter sets their
 `routeMeta.getPrerenderParams` provides (resolving empty falls back to
 per-request via `PrerenderFallback.Server`), and everything
 server-backed renders per request — pages with a `.server.ts` endpoint
-are detected from the `pageEndpoints` map, pages whose server
-dependency is invisible from filenames (server-function callers) are
-listed in `serverPaths`. Intermediate parent paths are included, since
+are detected from the `pageEndpoints` map, and `serverPaths` opts
+individual pages out of prerendering when their server data (e.g. a
+server-function value) must stay per-request. Intermediate parent
+paths are included, since
 nested route files produce a parent route Angular's server
 configuration must cover. It also installs
 `provideServerRequestContext()`.
@@ -358,18 +360,19 @@ transform —
 
 Wiring on top of the API routes setup:
 
-- The server entry imports `analog:server-fns` for its side effects
-  (every discovered module registers its functions);
-  `createAnalogRequestHandler` mounts the dispatch route, bootstrapping
-  the parent injector from its `serverFns` config
-  (`createServerFnAppInjector`) so handlers resolve the app's DI —
-  passing the app's own server config gives them the same DI as an SSR
-  render.
+- The `analog:server-fns` map holds every discovered module's namespace
+  — importing it registers each function by id, and passing it to
+  `createAnalogRequestHandler` makes that dependency explicit and
+  mounts the dispatch route (omitted, the route is not mounted). The
+  handler bootstraps the dispatch parent injector from `config`
+  (`createServerFnAppInjector`); passing the app's own server config
+  gives handlers the same DI as an SSR render.
 - `provideServerRequestContext()` provides the `SERVER_FN_DISPATCHER`,
   so functions called during SSR dispatch in-process — no HTTP
-  round-trip — and seed `TransferState` for hydration.
-- Pages rendering server-function values need `RenderMode.Server`
-  (dispatch needs a live request).
+  round-trip — and seed `TransferState` for hydration. During
+  prerendering dispatch runs against a synthetic request (as on Nitro),
+  so server-function pages prerender with the values baked in; list a
+  page in `serverPaths` when its server data must stay per-request.
 
 Debug routes work too: `withDebugRoutes()` reads the same files map
 `withRouteFiles` provides (the `ROUTE_FILES` token), so
@@ -444,10 +447,11 @@ Confirmed against a real build:
   browser chunk while the derived id is present (the scrub shipped the
   proxy, not the implementation); `GET`/`POST /_analog/fn/<derived id>`
   dispatch over HTTP with the id computed independently by the verify
-  script; the SSR render of `/fn-demo` contains the function's value
-  (in-process dispatch); the browser run hydrates it from the
-  `TransferState` seed with zero console errors; and the dev-server run
-  dispatches through the app's server entry under `ng serve`.
+  script; `/fn-demo` prerenders as `ssg` with the function's value
+  baked in (in-process dispatch against the synthetic prerender
+  request); the browser run hydrates it from the `TransferState` seed
+  with zero console errors; and the dev-server run dispatches through
+  the app's server entry under `ng serve`.
 - **Form actions** — a form-encoded POST to the page endpoint runs the
   `action` and returns the `json()` helper's Response; a missing field
   comes back as `fail(422, …)` with the `X-Analog-Errors` header. In
