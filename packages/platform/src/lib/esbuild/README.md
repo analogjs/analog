@@ -177,64 +177,72 @@ and build the server route configuration from the same route files:
 "security": { "allowedHosts": ["localhost"] }
 ```
 
-`src/server.ts` is an ordinary `@angular/ssr/node` handler — the same
-one the Angular CLI scaffolds — so nothing Analog-specific is needed
-there. See `apps/esbuild-app/src/server.ts` for a dependency-free
-version built on `node:http` rather than Express.
+The three server files stay thin — the machinery lives in
+`@analogjs/router`:
+
+```ts
+// src/app/app.config.server.ts
+import { mergeApplicationConfig } from '@angular/core';
+import { provideAnalogServerRendering } from '@analogjs/router/ssr';
+import routeFiles from 'analog:route-files';
+import pageEndpoints from 'analog:page-endpoints';
+
+import { appConfig } from './app.config';
+
+export const config = mergeApplicationConfig(appConfig, {
+  providers: [
+    provideAnalogServerRendering(routeFiles, {
+      pageEndpoints, // endpoint-backed pages render per request
+      serverPaths: [], // pages with invisible server deps (server fns)
+      debugRoutes: true, // when using withDebugRoutes
+    }),
+  ],
+});
+```
 
 ```ts
 // src/main.server.ts
-import {
-  provideServerRendering,
-  withRoutes,
-  RenderMode,
-  type ServerRoute,
-} from '@angular/ssr';
-import { createServerRoutePaths } from '@analogjs/router';
-import routeFiles from 'analog:route-files';
-
-// Static paths prerender. Dynamic module-backed paths prerender the
-// parameter sets their routeMeta.getPrerenderParams provides and fall
-// back to per-request rendering for anything else; dynamic paths with
-// no module render per request.
-const serverRoutes: ServerRoute[] = createServerRoutePaths(routeFiles).map(
-  (route) =>
-    !route.isDynamic
-      ? { path: route.path, renderMode: RenderMode.Prerender }
-      : route.getPrerenderParams
-        ? {
-            path: route.path,
-            renderMode: RenderMode.Prerender,
-            getPrerenderParams: route.getPrerenderParams,
-          }
-        : { path: route.path, renderMode: RenderMode.Server },
-);
-
-export default function bootstrap(context: BootstrapContext) {
-  return bootstrapApplication(
-    AppComponent,
-    {
-      providers: [
-        provideServerRendering(withRoutes(serverRoutes)),
-        provideServerRequestContext(), // from '@analogjs/router/ssr'
-      ],
-    },
-    context,
-  );
-}
+export default (context: BootstrapContext) =>
+  bootstrapApplication(AppComponent, config, context);
 ```
 
-`createServerRoutePaths` (new in `@analogjs/router`, alongside the
-string-only `createRoutePaths`) returns the full path of every route
-file using the same filename rules as `createRoutes`, including
-intermediate parent paths — nested route files produce a parent route
-even with no layout file for that segment, and Angular rejects a server
-configuration that omits it. Dynamic module-backed entries carry a
-`getPrerenderParams` loader that reads the page's
-`routeMeta.getPrerenderParams` (new optional `RouteMeta` field),
-resolving to an empty list when the page does not define one —
-`@angular/ssr`'s default `PrerenderFallback.Server` then renders those
-paths per request.
+```ts
+// src/server.ts
+import { createAnalogRequestHandler } from '@analogjs/router/api';
+import apiRoutes from 'analog:api-routes';
+import pageEndpoints from 'analog:page-endpoints';
+import 'analog:server-fns'; // registers server functions
+
+import { config } from './app/app.config.server';
+
+export const reqHandler = createAnalogRequestHandler({
+  apiRoutes,
+  pageEndpoints,
+  serverFns: config, // dispatch handlers resolve the app's own DI
+  main: import.meta.url, // listens on PORT when run directly
+});
+```
+
+`provideAnalogServerRendering` derives the @angular/ssr server route
+configuration from the route files map (via `createAnalogServerRoutes`,
+also exported for direct use): static paths prerender, dynamic
+module-backed paths prerender the parameter sets their
+`routeMeta.getPrerenderParams` provides (resolving empty falls back to
+per-request via `PrerenderFallback.Server`), and everything
+server-backed renders per request — pages with a `.server.ts` endpoint
+are detected from the `pageEndpoints` map, pages whose server
+dependency is invisible from filenames (server-function callers) are
+listed in `serverPaths`. Intermediate parent paths are included, since
+nested route files produce a parent route Angular's server
+configuration must cover. It also installs
+`provideServerRequestContext()`.
+
+`createAnalogRequestHandler` is the whole server entry: server
+functions, page endpoints, and API routes ahead of Angular, static
+browser assets with real MIME types (strict module-script checking
+rejects assets without one), then `AngularNodeAppEngine` — falling
+through to `next()` under the dev server, and self-listening when the
+bundle is run directly.
 
 Notes:
 
@@ -278,15 +286,11 @@ in watch mode. Wiring:
   imports (empty in browser bundles, so handler code never reaches the
   client). Handler files must be in the TypeScript program:
   `"include": ["src/server/**/*.ts"]`.
-- The server entry mounts them ahead of Angular via
-  `createApiRoutesHandler` from `@analogjs/router/api` (requires the
-  optional `h3` and `radix3` peers):
+- `createAnalogRequestHandler` mounts them ahead of Angular (requires
+  the optional `h3` and `radix3` peers). For a custom server entry, the
+  underlying `createApiRoutesHandler` is exported too:
 
 ```ts
-// src/server.ts
-import { createApiRoutesHandler } from '@analogjs/router/api';
-import apiRoutes from 'analog:api-routes';
-
 const api = createApiRoutesHandler(apiRoutes);
 // in the request handler, before assets/Angular:
 if (api.matches(pathname)) {
@@ -315,8 +319,8 @@ runs the module's `load`, other methods run `action`, both receiving
 - `withPageEndpoints(pageEndpoints)` (a `provideFileRouter` feature)
   hands the map to the router, replacing the Vite-only endpoint glob,
   and `provideHttpClient(withFetch())` backs the load resolver's fetch.
-- The server entry mounts `createPageEndpointsHandler(pageEndpoints)`
-  ahead of the API routes handler.
+- `createAnalogRequestHandler` mounts the endpoint handler ahead of the
+  API routes handler (`createPageEndpointsHandler` for custom entries).
 - Endpoint files join the TS program via
   `"include": ["src/app/pages/**/*.server.ts"]`, and pages must import
   their endpoint's types with `import type` only — there is no client
@@ -355,10 +359,12 @@ transform —
 Wiring on top of the API routes setup:
 
 - The server entry imports `analog:server-fns` for its side effects
-  (every discovered module registers its functions) and mounts
-  `createServerFnsHandler(config)` ahead of Angular; the config
-  bootstraps the dispatch parent injector (`createServerFnAppInjector`)
-  so handlers resolve the app's DI.
+  (every discovered module registers its functions);
+  `createAnalogRequestHandler` mounts the dispatch route, bootstrapping
+  the parent injector from its `serverFns` config
+  (`createServerFnAppInjector`) so handlers resolve the app's DI —
+  passing the app's own server config gives them the same DI as an SSR
+  render.
 - `provideServerRequestContext()` provides the `SERVER_FN_DISPATCHER`,
   so functions called during SSR dispatch in-process — no HTTP
   round-trip — and seed `TransferState` for hydration.
