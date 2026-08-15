@@ -1,12 +1,13 @@
 /// <reference path="./analog-modules.d.ts" />
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type {
   ApplicationConfig,
   Injector,
   StaticProvider,
+  Type,
 } from '@angular/core';
 import {
   AngularNodeAppEngine,
@@ -29,7 +30,9 @@ import { createRouter as createMatcher } from 'radix3';
 import {
   createServerFnAppInjector,
   handleServerFnRequest,
+  renderStream,
 } from '@analogjs/router/server';
+import type { ServerContext } from '@analogjs/router/tokens';
 
 export type ApiRouteFiles = Record<string, () => Promise<{ default: unknown }>>;
 
@@ -326,6 +329,20 @@ export interface AnalogRequestHandlerOptions {
   serverFns?: Record<string, Record<string, unknown>>;
   /** Overrides the `analog:server-middleware` map (loaded automatically). */
   serverMiddleware?: ApiRouteFiles;
+  /**
+   * EXPERIMENTAL: render the listed pathnames through `renderStream`,
+   * flushing `@defer (hydrate …)` blocks as they resolve. Needs the
+   * `analog.streaming` builder option (which patches the `@defer`
+   * runtime in the server bundle), incremental hydration, and per
+   * request rendering for those paths. Bots and `streaming: false`
+   * routes fall back to a buffered render inside `renderStream`.
+   */
+  streaming?: {
+    /** Root component to bootstrap for streamed renders. */
+    component: Type<unknown>;
+    /** Exact pathnames rendered through the streaming renderer. */
+    paths: string[];
+  };
 }
 
 /**
@@ -418,6 +435,50 @@ export function createAnalogRequestHandler(
       };
     })());
 
+  // Streaming renders bypass AngularNodeAppEngine (which buffers): the
+  // shell document is the CSR index from the browser output, and the
+  // render bootstraps the given component against the same config.
+  let streamRender:
+    | ((
+        url: string,
+        document: string,
+        serverContext: ServerContext,
+      ) => Promise<ReadableStream<Uint8Array>>)
+    | undefined;
+  let streamDocument: string | undefined;
+  async function streamResponse(
+    req: IncomingMessage,
+    res: ServerResponse,
+  ): Promise<void> {
+    const streaming = options.streaming!;
+    const config = options.config;
+    streamRender ??= renderStream(
+      streaming.component,
+      Array.isArray(config)
+        ? { providers: config }
+        : (config ?? { providers: [] }),
+    );
+    streamDocument ??= ['index.csr.html', 'index.html']
+      .map((file) => join(browserDistFolder, file))
+      .filter((file) => existsSync(file))
+      .map((file) => readFileSync(file, 'utf8'))[0];
+    if (streamDocument === undefined) {
+      throw new Error(
+        `[analog] streaming: no index document found in ${browserDistFolder}`,
+      );
+    }
+
+    const stream = await streamRender(req.url ?? '/', streamDocument, {
+      req,
+      res,
+    } as ServerContext);
+    res.setHeader('content-type', 'text/html;charset=utf-8');
+    for await (const chunk of stream) {
+      res.write(chunk);
+    }
+    res.end();
+  }
+
   async function handler(
     req: IncomingMessage,
     res: ServerResponse,
@@ -437,6 +498,11 @@ export function createAnalogRequestHandler(
         await api.handler(req, res);
         return;
       }
+    }
+
+    if (options.streaming?.paths.includes(pathname)) {
+      await streamResponse(req, res);
+      return;
     }
 
     const asset = join(browserDistFolder, pathname);
