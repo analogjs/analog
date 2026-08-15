@@ -1,3 +1,4 @@
+/// <reference path="./analog-modules.d.ts" />
 import {
   EnvironmentProviders,
   inject,
@@ -5,6 +6,8 @@ import {
   REQUEST as ANGULAR_REQUEST,
   RESPONSE_INIT,
 } from '@angular/core';
+import routeFilesMap from 'analog:route-files';
+import pageEndpointsMap from 'analog:page-endpoints';
 import {
   provideServerRendering,
   withRoutes,
@@ -219,28 +222,36 @@ export function createAnalogServerRoutes(
   ];
 }
 
+export interface AnalogServerRenderingOptions extends AnalogServerRoutesOptions {
+  /** Overrides the `analog:route-files` map (loaded automatically). */
+  routeFiles?: Files;
+}
+
 /**
  * One-call server rendering setup for the esbuild application builder:
- * @angular/ssr server routes derived from the route files map plus the
- * Analog request context bridge (REQUEST/RESPONSE/BASE_URL/LOCALE and
- * the in-process server-function dispatcher).
+ * @angular/ssr server routes derived from the discovered route files
+ * (endpoint-backed pages render per request via the page endpoints map)
+ * plus the Analog request context bridge — REQUEST/RESPONSE/BASE_URL/
+ * LOCALE and the in-process server-function dispatcher.
  *
  * ```ts
  * // app.config.server.ts
  * export const config = mergeApplicationConfig(appConfig, {
- *   providers: [
- *     provideAnalogServerRendering(routeFiles, { pageEndpoints }),
- *   ],
+ *   providers: [provideAnalogServerRendering()],
  * });
  * ```
  */
 export function provideAnalogServerRendering(
-  files: Files,
-  options: AnalogServerRoutesOptions = {},
+  options: AnalogServerRenderingOptions = {},
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
     provideServerRendering(
-      withRoutes(createAnalogServerRoutes(files, options)),
+      withRoutes(
+        createAnalogServerRoutes(options.routeFiles ?? routeFilesMap, {
+          ...options,
+          pageEndpoints: options.pageEndpoints ?? pageEndpointsMap,
+        }),
+      ),
     ),
     provideServerRequestContext(),
   ]);

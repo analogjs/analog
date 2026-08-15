@@ -184,15 +184,12 @@ The three server files stay thin — the machinery lives in
 // src/app/app.config.server.ts
 import { mergeApplicationConfig } from '@angular/core';
 import { provideAnalogServerRendering } from '@analogjs/router/ssr';
-import routeFiles from 'analog:route-files';
-import pageEndpoints from 'analog:page-endpoints';
 
 import { appConfig } from './app.config';
 
 export const config = mergeApplicationConfig(appConfig, {
   providers: [
-    provideAnalogServerRendering(routeFiles, {
-      pageEndpoints, // endpoint-backed pages render per request
+    provideAnalogServerRendering({
       serverPaths: [], // opt pages out of prerendering (per-request data)
       debugRoutes: true, // when using withDebugRoutes
     }),
@@ -218,9 +215,12 @@ export const reqHandler = createAnalogRequestHandler({
 });
 ```
 
-`provideAnalogServerRendering` derives the @angular/ssr server route
-configuration from the route files map (via `createAnalogServerRoutes`,
-also exported for direct use): static paths prerender, dynamic
+`provideAnalogServerRendering` consumes `analog:route-files` and
+`analog:page-endpoints` itself — statically, since this entry only ever
+runs inside a server bundle built by these plugins — and derives the
+@angular/ssr server route configuration (via `createAnalogServerRoutes`,
+also exported for direct use with an explicit files map): static paths
+prerender, dynamic
 module-backed paths prerender the parameter sets their
 `routeMeta.getPrerenderParams` provides (resolving empty falls back to
 per-request via `PrerenderFallback.Server`), and everything
