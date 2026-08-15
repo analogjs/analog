@@ -5,7 +5,11 @@ import { firstValueFrom } from 'rxjs';
 
 import { RedirectRouteMeta, RouteConfig, RouteMeta } from './models';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
-import { ANALOG_PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
+import {
+  ANALOG_PAGE_ENDPOINTS,
+  ANALOG_META_KEY,
+  PAGE_ENDPOINTS,
+} from './endpoints';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 
 export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
@@ -37,7 +41,12 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
 
-      if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY].endpointKey]) {
+      // The glob-based map outside of Vite is empty; esbuild builds
+      // provide the endpoint keys through withPageEndpoints instead.
+      const pageEndpoints =
+        inject(PAGE_ENDPOINTS, { optional: true }) ?? ANALOG_PAGE_ENDPOINTS;
+
+      if (pageEndpoints[routeConfig[ANALOG_META_KEY].endpointKey]) {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
 

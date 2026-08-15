@@ -8,6 +8,7 @@ import { API_PREFIX } from '@analogjs/router/tokens';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 
 import { routes, createRoutes, Files } from './routes';
+import { PAGE_ENDPOINTS } from './endpoints';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
 import { cookieInterceptor } from './cookie-interceptor';
 
@@ -76,5 +77,20 @@ export function withRouteFiles(files: Files): RouterFeatures {
     ɵproviders: [
       { provide: ROUTES, useValue: createRoutes(files), multi: true },
     ],
+  };
+}
+
+/**
+ * Provides page endpoint keys from an explicitly supplied map, for
+ * build integrations that cannot inject the endpoint glob into this
+ * package's module graph (e.g. esbuild-based builds). Routes whose
+ * endpoint key is present fetch their server load data.
+ */
+export function withPageEndpoints(
+  endpoints: Record<string, unknown>,
+): RouterFeatures {
+  return {
+    ɵkind: 102 as number,
+    ɵproviders: [{ provide: PAGE_ENDPOINTS, useValue: endpoints }],
   };
 }

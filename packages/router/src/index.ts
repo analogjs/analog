@@ -16,6 +16,7 @@ export {
   provideFileRouter,
   withExtraRoutes,
   withRouteFiles,
+  withPageEndpoints,
 } from './lib/provide-file-router';
 export { MetaTag } from './lib/meta-tags';
 export { PageServerLoad, LoadResult } from './lib/route-types';

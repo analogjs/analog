@@ -2,12 +2,23 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   createApp,
   createRouter,
+  defineEventHandler,
   defineLazyEventHandler,
   toNodeListener,
 } from 'h3';
 import { createRouter as createMatcher } from 'radix3';
 
 export type ApiRouteFiles = Record<string, () => Promise<{ default: unknown }>>;
+
+/**
+ * The `analog:page-endpoints` virtual module maps endpoint keys to lazy
+ * imports in server bundles and to `true` in browser bundles, where the
+ * keys only mark which routes fetch server load data.
+ */
+export type PageEndpointFiles = Record<
+  string,
+  true | (() => Promise<Record<string, unknown>>)
+>;
 
 export interface ApiRoute {
   /**
@@ -89,20 +100,100 @@ export interface ApiRoutesHandler {
  * lazily imported on first hit.
  */
 export function createApiRoutesHandler(files: ApiRouteFiles): ApiRoutesHandler {
-  const routes = apiRoutesFromFiles(files);
+  return toNodeHandler(
+    apiRoutesFromFiles(files).map(({ route, method, filename }) => ({
+      route,
+      method,
+      handler: defineLazyEventHandler(async () => {
+        const module = await files[filename]();
+        return module.default as never;
+      }),
+    })),
+  );
+}
+
+/**
+ * Maps `.server.ts` page endpoint files (keyed the way createRoutes
+ * derives endpoint keys, e.g. `/src/app/pages/about.server.ts`) to the
+ * `/{apiPrefix}/_analog/pages/...` routes that injectRouteEndpointURL
+ * and the FormAction directive address.
+ */
+export function pageEndpointRoutesFromFiles(
+  files: PageEndpointFiles,
+  apiPrefix = 'api',
+): ApiRoute[] {
+  return Object.keys(files).map((filename) => {
+    const endpoint = filename
+      .replace(/\.server\.ts$/, '')
+      .replace(/\[\[\.{3}.+\]\]/, '**')
+      .replace(/\[\.{3}.+\]/, '**')
+      .replace(/^(.*?)\/pages/, '/pages')
+      .replace(/\./g, '/')
+      .replace(/\[([^\]]+)\]/g, ':$1');
+
+    return { route: `/${apiPrefix}/_analog${endpoint}`, filename };
+  });
+}
+
+/**
+ * Serves `.server.ts` page endpoints the way the Nitro path does: GET
+ * runs the module's `load`, other methods run `action`, both receiving
+ * `{ params, req, res, fetch, event }`. Mounted ahead of Angular in a
+ * server entry alongside createApiRoutesHandler.
+ */
+export function createPageEndpointsHandler(
+  files: PageEndpointFiles,
+  apiPrefix = 'api',
+): ApiRoutesHandler {
+  return toNodeHandler(
+    pageEndpointRoutesFromFiles(files, apiPrefix).map(
+      ({ route, filename }) => ({
+        route,
+        handler: defineLazyEventHandler(async () => {
+          const importEndpoint = files[filename];
+          if (importEndpoint === true) {
+            throw new Error(
+              `Page endpoint ${filename} has no server import; ` +
+                'createPageEndpointsHandler only runs in server bundles.',
+            );
+          }
+
+          const module = (await importEndpoint()) as {
+            load?: (context: unknown) => unknown;
+            action?: (context: unknown) => unknown;
+          };
+
+          return defineEventHandler((event) => {
+            const handler =
+              event.method === 'GET' ? module.load : module.action;
+
+            return (
+              handler?.({
+                params: event.context['params'] ?? {},
+                req: event.node.req,
+                res: event.node.res,
+                fetch: globalThis.fetch,
+                event,
+              }) ?? {}
+            );
+          }) as never;
+        }),
+      }),
+    ),
+  );
+}
+
+function toNodeHandler(
+  routes: { route: string; method?: string; handler: unknown }[],
+): ApiRoutesHandler {
   const router = createRouter();
   const matcher = createMatcher();
 
-  for (const { route, method, filename } of routes) {
-    const handler = defineLazyEventHandler(async () => {
-      const module = await files[filename]();
-      return module.default as never;
-    });
-
+  for (const { route, method, handler } of routes) {
     if (method) {
-      router.add(route, handler, method.toLowerCase() as never);
+      router.add(route, handler as never, method.toLowerCase() as never);
     } else {
-      router.use(route, handler);
+      router.use(route, handler as never);
     }
     matcher.insert(route, { route });
   }
