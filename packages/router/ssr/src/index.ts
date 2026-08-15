@@ -128,18 +128,28 @@ export function provideServerRequestContext(): EnvironmentProviders {
       },
     },
     // Server functions called while rendering dispatch in-process instead
-    // of an HTTP round-trip, same as the Nitro server context.
+    // of an HTTP round-trip, same as the Nitro server context. During
+    // prerendering there is no request, so dispatch runs against a
+    // synthetic one and the resolved values are baked into the page —
+    // Nitro's prerender behavior. Handlers reading request state see the
+    // empty synthetic request, the same trade an author accepts when
+    // prerendering such a page on the Nitro path.
     {
       provide: SERVER_FN_DISPATCHER,
       useFactory: () => {
         const request = inject(ANGULAR_REQUEST, { optional: true });
         const init = inject(RESPONSE_INIT, { optional: true });
-        return request
-          ? createServerFnDispatcher(
-              toServerRequest(request),
-              toServerResponse(init ?? {}),
-            )
-          : null;
+        return createServerFnDispatcher(
+          request
+            ? toServerRequest(request)
+            : ({
+                url: '/',
+                originalUrl: '/',
+                method: 'GET',
+                headers: { host: 'localhost' },
+              } as unknown as ServerRequest),
+          toServerResponse(init ?? {}),
+        );
       },
     },
   ]);

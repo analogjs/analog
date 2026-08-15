@@ -252,12 +252,17 @@ export interface AnalogRequestHandlerOptions {
   /** The `analog:page-endpoints` map, served at `/api/_analog/pages/...`. */
   pageEndpoints?: PageEndpointFiles;
   /**
+   * The `analog:server-fns` map. Importing it registered each module's
+   * functions by id; passing it here mounts the `/_analog/fn/:id`
+   * dispatch route for them. Omitted, the route is not mounted.
+   */
+  serverFns?: Record<string, Record<string, unknown>>;
+  /**
    * Config the server-function dispatch injector bootstraps from —
    * typically the app's own server config, so handlers resolve the same
-   * DI as an SSR render. The `/_analog/fn/:id` route is always mounted;
-   * without server functions it answers 404.
+   * DI as an SSR render.
    */
-  serverFns?: ApplicationConfig | StaticProvider[];
+  config?: ApplicationConfig | StaticProvider[];
   /**
    * The server entry's `import.meta.url`. When the entry is run
    * directly (`node server.mjs`), the handler listens on
@@ -279,7 +284,8 @@ export interface AnalogRequestHandlerOptions {
  * export const reqHandler = createAnalogRequestHandler({
  *   apiRoutes,
  *   pageEndpoints,
- *   serverFns: config,
+ *   serverFns,
+ *   config,
  *   main: import.meta.url,
  * });
  * ```
@@ -295,7 +301,7 @@ export function createAnalogRequestHandler(
 
   const angularApp = new AngularNodeAppEngine();
   const handlers = [
-    createServerFnsHandler(options.serverFns),
+    ...(options.serverFns ? [createServerFnsHandler(options.config)] : []),
     createPageEndpointsHandler(options.pageEndpoints ?? {}),
     createApiRoutesHandler(options.apiRoutes ?? {}),
   ];
