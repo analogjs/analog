@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
       // plugins; stub them so import analysis of the api entry resolves.
       alias: {
         'analog:route-files': `${__dirname}/api/src/analog-modules-stub.ts`,
+        'analog:content-files': `${__dirname}/api/src/analog-modules-stub.ts`,
         'analog:api-routes': `${__dirname}/api/src/analog-modules-stub.ts`,
         'analog:page-endpoints': `${__dirname}/api/src/analog-modules-stub.ts`,
         'analog:server-fns': `${__dirname}/api/src/analog-modules-stub.ts`,

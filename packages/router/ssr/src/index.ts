@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import routeFilesMap from 'analog:route-files';
 import pageEndpointsMap from 'analog:page-endpoints';
+import { contentFilesList as contentFilesListMap } from 'analog:content-files';
 import {
   provideServerRendering,
   withRoutes,
@@ -158,6 +159,34 @@ export function provideServerRequestContext(): EnvironmentProviders {
   ]);
 }
 
+/** A discovered content file, offered to prerenderContent transforms. */
+export interface PrerenderContentFile {
+  /** Project-relative path, e.g. `/src/content/blog/first.md`. */
+  path: string;
+  /** Basename without the extension. */
+  name: string;
+  extension: string;
+  /** Front-matter attributes. */
+  attributes: Record<string, unknown>;
+}
+
+/**
+ * Prerenders one page per content file for a dynamic route: each file
+ * under `contentDir` becomes a parameter set for `route`. The default
+ * mapping fills the route's single parameter with the file basename
+ * (e.g. `blog/first.md` -> `blog/:slug` as `{ slug: 'first' }`);
+ * `transform` customizes it or skips a file with `false`. Unmatched
+ * parameters still render per request via `PrerenderFallback.Server`.
+ */
+export interface PrerenderContentRoute {
+  /** Content directory relative to the project, e.g. `src/content/blog`. */
+  contentDir: string;
+  /** Dynamic route path receiving one prerender per file, e.g. `blog/:slug`. */
+  route: string;
+  /** Maps a file to route parameters; return `false` to skip the file. */
+  transform?: (file: PrerenderContentFile) => Record<string, string> | false;
+}
+
 export interface AnalogServerRoutesOptions {
   /**
    * The `analog:page-endpoints` map. Routes backed by a `.server.ts`
@@ -165,6 +194,10 @@ export interface AnalogServerRoutesOptions {
    * live endpoint, which prerendering does not have.
    */
   pageEndpoints?: Record<string, unknown>;
+  /** Prerender dynamic routes from content directories. */
+  prerenderContent?: PrerenderContentRoute[];
+  /** Overrides the `analog:content-files` attribute map. */
+  contentFilesList?: Record<string, Record<string, unknown>>;
   /**
    * Extra paths to render per request — pages whose server dependency
    * is not visible from filenames, e.g. ones calling server functions.
@@ -190,6 +223,10 @@ export function createAnalogServerRoutes(
 ): ServerRoute[] {
   const serverPaths = new Set(options.serverPaths ?? []);
   const pageEndpoints = options.pageEndpoints ?? {};
+  const prerenderContent = new Map(
+    (options.prerenderContent ?? []).map((entry) => [entry.route, entry]),
+  );
+  const contentFilesList = options.contentFilesList ?? contentFilesListMap;
 
   return [
     ...createServerRoutePaths(files).map((route): ServerRoute => {
@@ -202,6 +239,15 @@ export function createAnalogServerRoutes(
         (endpointKey && pageEndpoints[endpointKey])
       ) {
         return { path: route.path, renderMode: RenderMode.Server };
+      }
+      const contentRoute = prerenderContent.get(route.path);
+      if (contentRoute) {
+        return {
+          path: route.path,
+          renderMode: RenderMode.Prerender,
+          getPrerenderParams: async () =>
+            contentRouteParams(contentRoute, contentFilesList),
+        };
       }
       if (!route.isDynamic) {
         return { path: route.path, renderMode: RenderMode.Prerender };
@@ -220,6 +266,49 @@ export function createAnalogServerRoutes(
       : []),
     ...(options.serverRoutes ?? []),
   ];
+}
+
+function contentRouteParams(
+  contentRoute: PrerenderContentRoute,
+  contentFilesList: Record<string, Record<string, unknown>>,
+): Record<string, string>[] {
+  const dir = `/${contentRoute.contentDir.replace(/^\/+|\/+$/g, '')}/`;
+  const routeParams = [...contentRoute.route.matchAll(/:([^/]+)/g)].map(
+    (match) => match[1],
+  );
+  if (!contentRoute.transform && routeParams.length !== 1) {
+    throw new Error(
+      `[analog] prerenderContent: route '${contentRoute.route}' has ` +
+        `${routeParams.length} parameters; provide a transform to map ` +
+        `content files onto it.`,
+    );
+  }
+
+  const params: Record<string, string>[] = [];
+  for (const path of Object.keys(contentFilesList)) {
+    // Top level of the directory only, matching the Nitro default.
+    const base = path.startsWith(dir) ? path.slice(dir.length) : undefined;
+    if (!base || base.includes('/')) {
+      continue;
+    }
+
+    const extension = base.includes('.')
+      ? base.slice(base.lastIndexOf('.'))
+      : '';
+    const file: PrerenderContentFile = {
+      path,
+      name: base.slice(0, base.length - extension.length),
+      extension,
+      attributes: contentFilesList[path],
+    };
+    const fileParams = contentRoute.transform
+      ? contentRoute.transform(file)
+      : { [routeParams[0]]: file.name };
+    if (fileParams) {
+      params.push(fileParams);
+    }
+  }
+  return params;
 }
 
 export interface AnalogServerRenderingOptions extends AnalogServerRoutesOptions {
