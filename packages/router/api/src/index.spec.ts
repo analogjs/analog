@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { defineEventHandler, getRouterParam } from 'h3';
+import { defineEventHandler, eventHandler, getRouterParam } from 'h3';
 import { serverFn } from '@analogjs/router/server';
 
 import {
@@ -7,6 +7,7 @@ import {
   createApiRoutesHandler,
   createPageEndpointsHandler,
   createServerFnsHandler,
+  createServerMiddlewareHandler,
   pageEndpointRoutesFromFiles,
 } from './index';
 
@@ -149,6 +150,58 @@ describe('createServerFnsHandler', () => {
         await fetch(`http://localhost:${port}/_analog/fn/testfn0000000000`)
       ).json();
       expect(result).toEqual({ hello: 'fn' });
+    } finally {
+      server.close();
+    }
+  });
+});
+
+describe('createServerMiddlewareHandler', () => {
+  it('runs globally, ends the response on redirect, bridges context', async () => {
+    const middleware = createServerMiddlewareHandler({
+      '/src/server/middleware/test.ts': () =>
+        Promise.resolve({
+          default: eventHandler((event) => {
+            event.context['who'] = 'middleware';
+            if (event.node.req.url === '/blocked') {
+              event.node.res.statusCode = 302;
+              event.node.res.setHeader('location', '/');
+              event.node.res.end();
+            }
+          }),
+        }),
+    });
+    const api = createApiRoutesHandler({
+      '/src/server/routes/api/who.ts': () =>
+        Promise.resolve({
+          default: defineEventHandler((event) => ({
+            who: event.context['who'] ?? null,
+          })),
+        }),
+    });
+
+    const server = createServer(
+      (req, res) =>
+        void (async () => {
+          if (await middleware.run(req, res)) return;
+          await api.handler(req, res);
+        })(),
+    );
+    await new Promise<void>((resolve) => server.listen(0, resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+
+    try {
+      const blocked = await fetch(`http://localhost:${port}/blocked`, {
+        redirect: 'manual',
+      });
+      expect(blocked.status).toBe(302);
+      expect(blocked.headers.get('location')).toBe('/');
+
+      const who = await (
+        await fetch(`http://localhost:${port}/api/who`)
+      ).json();
+      expect(who).toEqual({ who: 'middleware' });
     } finally {
       server.close();
     }

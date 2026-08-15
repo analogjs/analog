@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
         'analog:api-routes': `${__dirname}/api/src/analog-modules-stub.ts`,
         'analog:page-endpoints': `${__dirname}/api/src/analog-modules-stub.ts`,
         'analog:server-fns': `${__dirname}/api/src/analog-modules-stub.ts`,
+        'analog:server-middleware': `${__dirname}/api/src/analog-modules-stub.ts`,
       },
     },
     test: {

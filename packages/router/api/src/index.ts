@@ -17,10 +17,12 @@ import {
 } from '@angular/ssr/node';
 import {
   createApp,
+  createEvent,
   createRouter,
   defineEventHandler,
   defineLazyEventHandler,
   toNodeListener,
+  type EventHandler,
 } from 'h3';
 import { createRouter as createMatcher } from 'radix3';
 
@@ -228,6 +230,60 @@ export function createServerFnsHandler(
   ]);
 }
 
+// Context written by global middleware, carried per request so the
+// separate h3 apps serving API routes and page endpoints see the same
+// event.context a Nitro handler would.
+const ANALOG_MIDDLEWARE_CONTEXT = Symbol('analog middleware context');
+
+export interface ServerMiddlewareHandler {
+  /**
+   * Runs every middleware in filename order against the request.
+   * Resolves true when one of them ended the response (e.g. a
+   * redirect), so the caller stops; otherwise the middleware context is
+   * stashed on the request for downstream handlers.
+   */
+  run(req: IncomingMessage, res: ServerResponse): Promise<boolean>;
+}
+
+/**
+ * Runs `src/server/middleware` handlers (the `analog:server-middleware`
+ * map) globally, matching Nitro's convention: every request, filename
+ * order, default h3 event handler exports. Return values are ignored —
+ * middleware acts by ending the response or mutating `event.context`.
+ */
+export function createServerMiddlewareHandler(
+  files: ApiRouteFiles,
+): ServerMiddlewareHandler {
+  let stack: Promise<EventHandler[]> | undefined;
+  const load = () =>
+    (stack ??= Promise.all(
+      Object.keys(files)
+        .sort()
+        .map(async (file) => (await files[file]()).default as EventHandler),
+    ));
+
+  return {
+    async run(req, res) {
+      if (Object.keys(files).length === 0) {
+        return false;
+      }
+
+      const event = createEvent(req, res);
+      for (const handler of await load()) {
+        await handler(event);
+        if (res.writableEnded) {
+          return true;
+        }
+      }
+
+      (req as IncomingMessage & Record<symbol, unknown>)[
+        ANALOG_MIDDLEWARE_CONTEXT
+      ] = event.context;
+      return false;
+    },
+  };
+}
+
 // Browsers enforce strict MIME checking for module scripts, so assets
 // must be served with a real content type.
 const MIME_TYPES: Record<string, string> = {
@@ -268,6 +324,8 @@ export interface AnalogRequestHandlerOptions {
   pageEndpoints?: PageEndpointFiles;
   /** Overrides the `analog:server-fns` map (loaded automatically). */
   serverFns?: Record<string, Record<string, unknown>>;
+  /** Overrides the `analog:server-middleware` map (loaded automatically). */
+  serverMiddleware?: ApiRouteFiles;
 }
 
 /**
@@ -281,20 +339,29 @@ async function loadAnalogModules(): Promise<{
   apiRoutes: ApiRouteFiles;
   pageEndpoints: PageEndpointFiles;
   serverFns: Record<string, Record<string, unknown>>;
+  serverMiddleware: ApiRouteFiles;
 }> {
   try {
-    const [apiRoutes, pageEndpoints, serverFns] = await Promise.all([
-      import('analog:api-routes'),
-      import('analog:page-endpoints'),
-      import('analog:server-fns'),
-    ]);
+    const [apiRoutes, pageEndpoints, serverFns, serverMiddleware] =
+      await Promise.all([
+        import('analog:api-routes'),
+        import('analog:page-endpoints'),
+        import('analog:server-fns'),
+        import('analog:server-middleware'),
+      ]);
     return {
       apiRoutes: apiRoutes.default,
       pageEndpoints: pageEndpoints.default,
       serverFns: serverFns.default,
+      serverMiddleware: serverMiddleware.default,
     };
   } catch {
-    return { apiRoutes: {}, pageEndpoints: {}, serverFns: {} };
+    return {
+      apiRoutes: {},
+      pageEndpoints: {},
+      serverFns: {},
+      serverMiddleware: {},
+    };
   }
 }
 
@@ -325,20 +392,30 @@ export function createAnalogRequestHandler(
 
   const angularApp = new AngularNodeAppEngine();
 
-  let handlersPromise: Promise<ApiRoutesHandler[]> | undefined;
+  let handlersPromise:
+    | Promise<{
+        middleware: ServerMiddlewareHandler;
+        apis: ApiRoutesHandler[];
+      }>
+    | undefined;
   const getHandlers = () =>
     (handlersPromise ??= (async () => {
       const loaded = await loadAnalogModules();
       const serverFns = options.serverFns ?? loaded.serverFns;
-      return [
-        ...(Object.keys(serverFns).length
-          ? [createServerFnsHandler(options.config)]
-          : []),
-        createPageEndpointsHandler(
-          options.pageEndpoints ?? loaded.pageEndpoints,
+      return {
+        middleware: createServerMiddlewareHandler(
+          options.serverMiddleware ?? loaded.serverMiddleware,
         ),
-        createApiRoutesHandler(options.apiRoutes ?? loaded.apiRoutes),
-      ];
+        apis: [
+          ...(Object.keys(serverFns).length
+            ? [createServerFnsHandler(options.config)]
+            : []),
+          createPageEndpointsHandler(
+            options.pageEndpoints ?? loaded.pageEndpoints,
+          ),
+          createApiRoutesHandler(options.apiRoutes ?? loaded.apiRoutes),
+        ],
+      };
     })());
 
   async function handler(
@@ -347,8 +424,15 @@ export function createAnalogRequestHandler(
     next?: (err?: unknown) => void,
   ): Promise<void> {
     const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
+    const { middleware, apis } = await getHandlers();
 
-    for (const api of await getHandlers()) {
+    // Global middleware first, on every request — page renders and
+    // static assets included, as under Nitro.
+    if (await middleware.run(req, res)) {
+      return;
+    }
+
+    for (const api of apis) {
       if (api.matches(pathname)) {
         await api.handler(req, res);
         return;
@@ -405,6 +489,18 @@ function toNodeHandler(
   }
 
   const app = createApp();
+  // Merge context written by global middleware into this app's events,
+  // so handlers read it the way they would under Nitro's shared app.
+  app.use(
+    defineEventHandler((event) => {
+      const context = (
+        event.node.req as IncomingMessage & Record<symbol, unknown>
+      )[ANALOG_MIDDLEWARE_CONTEXT];
+      if (context) {
+        Object.assign(event.context, context);
+      }
+    }),
+  );
   app.use(router);
   const listener = toNodeListener(app);
 
