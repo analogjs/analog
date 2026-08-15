@@ -19,12 +19,14 @@ import { appConfig } from './app/app.config';
 // Static paths prerender. Dynamic module-backed paths prerender the
 // parameter sets their routeMeta.getPrerenderParams provides and fall
 // back to per-request rendering for anything else; dynamic paths with
-// no module render per request. Endpoint-backed pages (feedback) render
-// per request — their load resolver fetches the live page endpoint,
-// which is unavailable while prerendering.
+// no module render per request. Server-backed pages render per request:
+// feedback's load resolver fetches the live page endpoint, and
+// fn-demo's server function dispatches against the live request —
+// neither exists while prerendering.
+const perRequestPaths = new Set(['feedback', 'fn-demo']);
 const serverRoutes: ServerRoute[] = createServerRoutePaths(routeFiles).map(
   (route) =>
-    route.path === 'feedback'
+    perRequestPaths.has(route.path)
       ? { path: route.path, renderMode: RenderMode.Server }
       : !route.isDynamic
         ? { path: route.path, renderMode: RenderMode.Prerender }

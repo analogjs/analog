@@ -136,6 +136,18 @@ try {
   );
   checks.push(['injectLoad page hydrates with page endpoint data', true]);
 
+  // --- injectServerFn hydrates from the TransferState seed ---
+  const fnPage = await browser.newPage();
+  trackErrors(fnPage);
+  await fnPage.goto(`${base}/fn-demo`, { waitUntil: 'load' });
+  await waitFor(
+    fnPage,
+    () =>
+      document.querySelector('[data-fn]')?.textContent ===
+      'hello-from-server-fn',
+  );
+  checks.push(['injectServerFn page hydrates with the server value', true]);
+
   checks.push([
     'no console or page errors across the browser session',
     errors.length === 0,

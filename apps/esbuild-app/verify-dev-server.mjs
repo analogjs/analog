@@ -5,6 +5,7 @@
  * `nx verify-dev-server esbuild-app`.
  */
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -105,6 +106,23 @@ try {
   checks.push([
     'page endpoint serves through the app server entry in dev',
     endpointBody.includes('from-server-load'),
+  ]);
+
+  const greetingFnId = createHash('sha256')
+    .update('src/app/lib/greeting.server.ts#getGreeting')
+    .digest('hex')
+    .slice(0, 16);
+  let fnBody = '';
+  try {
+    fnBody = JSON.stringify(
+      await (await fetch(`${base}/_analog/fn/${greetingFnId}`)).json(),
+    );
+  } catch {
+    // Leaves the check failing below.
+  }
+  checks.push([
+    'server function dispatches through the app server entry in dev',
+    fnBody === '{"greeting":"hello-from-server-fn"}',
   ]);
 } finally {
   writeFileSync(indexPage, indexPageOriginal);

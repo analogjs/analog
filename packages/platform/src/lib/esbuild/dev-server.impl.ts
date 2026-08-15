@@ -16,6 +16,7 @@ import { analogContentPlugin } from './analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
 import { analogPageEndpointsPlugin } from './analog-page-endpoints-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
+import { analogServerFnsPlugin } from './analog-server-fns-plugin.js';
 import { loadAngularBuild } from './load-angular-build.js';
 
 /**
@@ -85,6 +86,11 @@ export async function* serveAnalogApplication(
         projectRoot,
       }),
       analogPageEndpointsPlugin({
+        workspaceRoot: context.workspaceRoot,
+        projectRoot,
+        additionalPagesDirs: analog.additionalPagesDirs,
+      }),
+      analogServerFnsPlugin({
         workspaceRoot: context.workspaceRoot,
         projectRoot,
         additionalPagesDirs: analog.additionalPagesDirs,

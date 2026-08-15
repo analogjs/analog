@@ -4,8 +4,18 @@
  * builds first.
  */
 import { readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+
+// Same derivation the build transforms use: hash(projectRelativePath#export).
+const fnId = (fileId, exportName) =>
+  createHash('sha256')
+    .update(`${fileId}#${exportName}`)
+    .digest('hex')
+    .slice(0, 16);
+const GREETING_FN = fnId('src/app/lib/greeting.server.ts', 'getGreeting');
+const ECHO_FN = fnId('src/app/lib/greeting.server.ts', 'echoLength');
 
 const outDir = new URL('../../dist/apps/esbuild-app/', import.meta.url)
   .pathname;
@@ -91,6 +101,13 @@ const checks = [
     browserJs.some((c) => c.includes('<h1 id="about">')) &&
       aboutHtml.includes('<h1 id="about">'),
   ],
+  [
+    // The client scrub replaces serverFn modules with createServerFnRef
+    // proxies; the handler body must not reach the browser.
+    'server function handlers are scrubbed from the browser bundle',
+    !browserJs.some((c) => c.includes('hello-from-server-fn')) &&
+      browserJs.some((c) => c.includes(GREETING_FN)),
+  ],
 ];
 
 /**
@@ -169,6 +186,34 @@ async function checkServer() {
         'ssr resolves injectLoad data from the page endpoint',
         (await (await fetch(`${base}/feedback`)).text()).includes(
           'from-server-load',
+        ),
+      ],
+      [
+        // GET dispatch by the derived opaque id — registration (via
+        // analog:server-fns) and the client proxy agree on the route.
+        'server function dispatches over HTTP by derived id',
+        JSON.stringify(
+          await (await fetch(`${base}/_analog/fn/${GREETING_FN}`)).json(),
+        ) === '{"greeting":"hello-from-server-fn"}',
+      ],
+      [
+        'server function POST dispatch validates and returns JSON',
+        JSON.stringify(
+          await (
+            await fetch(`${base}/_analog/fn/${ECHO_FN}`, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ text: 'analog' }),
+            })
+          ).json(),
+        ) === '{"length":6}',
+      ],
+      [
+        // injectServerFn during SSR runs in-process through the
+        // SERVER_FN_DISPATCHER bridge, no HTTP round-trip.
+        'ssr resolves injectServerFn in-process',
+        (await (await fetch(`${base}/fn-demo`)).text()).includes(
+          'hello-from-server-fn',
         ),
       ],
     ];

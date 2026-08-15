@@ -4,12 +4,17 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideServerRendering } from '@angular/platform-server';
 import {
   createApiRoutesHandler,
   createPageEndpointsHandler,
+  createServerFnsHandler,
 } from '@analogjs/router/api';
 import apiRoutes from 'analog:api-routes';
 import pageEndpoints from 'analog:page-endpoints';
+// Registers every discovered *.server.ts server function by id.
+import 'analog:server-fns';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createServer } from 'node:http';
 import { extname, join } from 'node:path';
@@ -19,6 +24,9 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const angularApp = new AngularNodeAppEngine();
 const api = createApiRoutesHandler(apiRoutes);
 const endpoints = createPageEndpointsHandler(pageEndpoints);
+const serverFns = createServerFnsHandler({
+  providers: [provideServerRendering(), provideZonelessChangeDetection()],
+});
 
 // Browsers enforce strict MIME checking for module scripts, so assets
 // must be served with a real content type.
@@ -38,6 +46,11 @@ async function handler(
   next?: (err?: unknown) => void,
 ): Promise<void> {
   const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
+
+  if (serverFns.matches(pathname)) {
+    await serverFns.handler(req, res);
+    return;
+  }
 
   if (endpoints.matches(pathname)) {
     await endpoints.handler(req, res);

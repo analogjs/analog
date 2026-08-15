@@ -26,3 +26,9 @@ declare module 'analog:page-endpoints' {
   >;
   export default endpoints;
 }
+
+declare module 'analog:server-fns' {
+  // Imported for registration side effects only.
+  const nothing: undefined;
+  export default nothing;
+}

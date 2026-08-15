@@ -326,9 +326,43 @@ runs the module's `load`, other methods run `action`, both receiving
   fetches the live endpoint through the bridged `BASE_URL`, and during
   prerendering there is no server to fetch from.
 
-Still Nitro-only, so unavailable here: form actions, server functions,
-and streaming SSR. The client-side module substitution the first two
-need is validated (see Verification); streaming is not portable.
+## Server functions
+
+`serverFn` / `injectServerFn` work end to end, dispatched at the same
+opaque `/_analog/fn/<id>` routes as the Nitro path (ids derived as
+`hash(fileRelativePath#exportName)` by the shared algorithm). The
+enabling mechanism is whole-module substitution: the Angular compiler
+plugin owns TypeScript loads and cannot be chained, so
+`analogServerFnsPlugin` captures `*.server.ts` imports at resolve time
+into a private namespace (extensionless path, so the compiler plugin's
+namespace-less `.ts` loader cannot match) and serves a per-bundle
+transform —
+
+- **Browser bundles** get the client scrub: each
+  `export const fn = serverFn(…)` becomes a `createServerFnRef` proxy;
+  handlers and their server-only imports drop out of the bundle
+  entirely. Pure page endpoints under `pages/` are emptied, matching
+  the Vite client build.
+- **Server bundles** keep the real implementation with the derived id
+  stamped into each `serverFn` config, so registration and the client
+  proxy agree on the route.
+
+Wiring on top of the API routes setup:
+
+- The server entry imports `analog:server-fns` for its side effects
+  (every discovered module registers its functions) and mounts
+  `createServerFnsHandler(config)` ahead of Angular; the config
+  bootstraps the dispatch parent injector (`createServerFnAppInjector`)
+  so handlers resolve the app's DI.
+- `provideServerRequestContext()` provides the `SERVER_FN_DISPATCHER`,
+  so functions called during SSR dispatch in-process — no HTTP
+  round-trip — and seed `TransferState` for hydration.
+- Pages rendering server-function values need `RenderMode.Server`
+  (dispatch needs a live request).
+
+Still Nitro-only, so unavailable here: form actions (the endpoint side
+is served; the directive flow is unexercised) and streaming SSR, which
+is not portable until Angular exposes a streaming render.
 
 ## Verification
 
@@ -390,6 +424,14 @@ Confirmed against a real build:
   `BASE_URL`. The browser run confirms the page hydrates with the same
   data, and the dev-server run confirms both handlers serve through the
   app's own server entry under `ng serve`.
+- **Server functions** — the handler string is absent from every
+  browser chunk while the derived id is present (the scrub shipped the
+  proxy, not the implementation); `GET`/`POST /_analog/fn/<derived id>`
+  dispatch over HTTP with the id computed independently by the verify
+  script; the SSR render of `/fn-demo` contains the function's value
+  (in-process dispatch); the browser run hydrates it from the
+  `TransferState` seed with zero console errors; and the dev-server run
+  dispatches through the app's server entry under `ng serve`.
 
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
