@@ -399,8 +399,32 @@ Debug routes work too: `withDebugRoutes()` reads the same files map
 `RenderMode.Server` entry in the server routes, since it is not part of
 the file map.
 
-Still Nitro-only, so unavailable here: streaming SSR, which is not
-portable until Angular exposes a streaming render.
+## Streaming SSR (experimental)
+
+`renderStream` works on the esbuild path with the same experimental
+status as on Vite. Three pieces:
+
+- `analog.streaming: true` in the builder options enables
+  `analogDeferStreamingPlugin`, which applies the same
+  `injectDeferStreamingHook` string patch the Vite plugin uses to
+  `@angular/core`'s `@defer` runtime — delivered by resolve-time module
+  capture, since Angular's own JS loader owns module loads. Server
+  bundles only; drift in Angular's internals degrades to buffered with
+  a warning, same as Vite.
+- `createAnalogRequestHandler` takes
+  `streaming: { component, paths }`: the listed pathnames bypass
+  `AngularNodeAppEngine` (which buffers) and render through
+  `renderStream` against the CSR index document, piping the stream to
+  the response. Bots and `streaming: false` routes get the buffered
+  fallback inside `renderStream`.
+- The app needs `withIncrementalHydration()` and per-request rendering
+  (`serverPaths`) for streamed pages; `@defer (hydrate …)` blocks flush
+  as they resolve, then the authoritative hydration-annotated document
+  arrives as the tail.
+
+With this, no Analog capability is Nitro-only — the streaming patch
+would still be better served by an upstream Angular per-block
+resolution hook, which would delete the string patch on both paths.
 
 ## Verification
 
@@ -483,6 +507,12 @@ Confirmed against a real build:
   middleware's header on a page path (prod and dev alike), and
   `/api/context` returns the value the middleware wrote to
   `event.context`, proving the context bridge into the API apps.
+- **Streaming SSR** — `/stream-demo` answers chunked with the shell,
+  both `@defer` blocks as `data-analog-defer` templates, and the
+  authoritative tail; a bot user-agent gets a buffered render with no
+  streamed templates; and in Chromium (with a non-headless UA — the
+  headless UA matches the bot fallback) the streamed page settles with
+  both blocks and zero console errors.
 
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live

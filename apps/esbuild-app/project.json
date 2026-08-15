@@ -21,7 +21,7 @@
         "optimization": false,
         "outputHashing": "none",
         "security": { "allowedHosts": ["localhost"] },
-        "analog": { "mermaid": true }
+        "analog": { "mermaid": true, "streaming": true }
       }
     },
     "verify": {

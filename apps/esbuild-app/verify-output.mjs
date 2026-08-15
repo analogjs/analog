@@ -264,6 +264,39 @@ async function checkServer() {
           '{"context":"from-middleware"}',
       ],
       [
+        // renderStream flushes the shell, then each @defer block as a
+        // data-analog-defer template, then the authoritative tail.
+        'streaming route streams defer blocks and the authoritative tail',
+        await (async () => {
+          const res = await fetch(`${base}/stream-demo`);
+          const html = await res.text();
+          return (
+            res.headers.get('transfer-encoding') === 'chunked' &&
+            html.includes('data-analog-stream') &&
+            html.includes('data-analog-defer="s0"') &&
+            html.includes('data-analog-defer="s1"') &&
+            html.includes('data-analog-authoritative') &&
+            html.includes('alpha-block') &&
+            html.includes('beta-block')
+          );
+        })(),
+      ],
+      [
+        // Bots get the buffered fallback: same content, no streamed
+        // block templates, resolved head — byte-compatible with render().
+        'streaming route serves bots a buffered render',
+        await (async () => {
+          const html = await (
+            await fetch(`${base}/stream-demo`, {
+              headers: { 'user-agent': 'Googlebot/2.1' },
+            })
+          ).text();
+          return (
+            html.includes('alpha-block') && !html.includes('data-analog-defer=')
+          );
+        })(),
+      ],
+      [
         // withDebugRoutes reads the withRouteFiles map, so the debug
         // page lists the discovered files on the esbuild path too.
         'debug routes page lists discovered route files',

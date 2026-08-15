@@ -171,6 +171,24 @@ try {
   );
   checks.push(['injectServerFn page hydrates with the server value', true]);
 
+  // --- streamed page settles and hydrates its defer blocks ---
+  // Headless Chromium's default UA matches the bot fallback, so use a
+  // regular Chrome UA to exercise the actual streamed path.
+  const streamPage = await browser.newPage({
+    userAgent:
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+  });
+  trackErrors(streamPage);
+  await streamPage.goto(`${base}/stream-demo`, { waitUntil: 'load' });
+  await waitFor(
+    streamPage,
+    () =>
+      document.querySelector('[data-stream-a]')?.textContent ===
+        'alpha-block' &&
+      document.querySelector('[data-stream-b]')?.textContent === 'beta-block',
+  );
+  checks.push(['streamed page settles with both defer blocks', true]);
+
   checks.push([
     'no console or page errors across the browser session',
     errors.length === 0,

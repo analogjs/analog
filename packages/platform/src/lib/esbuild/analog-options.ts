@@ -22,4 +22,9 @@ export interface AnalogBuilderOptions {
    * markdown content.
    */
   additionalContentDirs?: string[];
+  /**
+   * EXPERIMENTAL: patch @angular/core's @defer runtime in server
+   * bundles so renderStream can flush blocks as they resolve.
+   */
+  streaming?: boolean;
 }
