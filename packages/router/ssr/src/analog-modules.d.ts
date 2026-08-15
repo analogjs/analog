@@ -16,8 +16,3 @@ declare module 'analog:page-endpoints' {
   >;
   export default endpoints;
 }
-
-declare module 'analog:content-files' {
-  export const contentFilesList: Record<string, Record<string, unknown>>;
-  export const contentFiles: Record<string, () => Promise<string>>;
-}

@@ -1,4 +1,9 @@
-import { InjectionToken } from '@angular/core';
+import {
+  inject,
+  InjectionToken,
+  Injector,
+  runInInjectionContext,
+} from '@angular/core';
 import { UrlSegment } from '@angular/router';
 import type { Route } from '@angular/router';
 import type { UrlMatcher } from '@angular/router';
@@ -255,6 +260,17 @@ export function createServerRoutePaths(files: Files): ServerRoutePath[] {
       isDynamic,
       filename,
       getPrerenderParams: async () => {
+        // Capture the injector before awaiting — the injection context
+        // @angular/ssr calls this in does not survive an await — so the
+        // page's getPrerenderParams can still inject() (fromContentDir
+        // does). Absent a context (direct calls in tests), run bare.
+        let injector: Injector | undefined;
+        try {
+          injector = inject(Injector);
+        } catch {
+          injector = undefined;
+        }
+
         const m = await module();
         const routeMeta = m.routeMeta as
           | {
@@ -264,7 +280,11 @@ export function createServerRoutePaths(files: Files): ServerRoutePath[] {
             }
           | undefined;
 
-        return (await routeMeta?.getPrerenderParams?.()) ?? [];
+        const call = () => routeMeta?.getPrerenderParams?.();
+        return (
+          (await (injector ? runInInjectionContext(injector, call) : call())) ??
+          []
+        );
       },
     };
   });

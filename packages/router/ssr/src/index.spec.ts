@@ -123,25 +123,4 @@ describe('createAnalogServerRoutes', () => {
     expect(byPath['blog/:slug'].renderMode).toBe(RenderMode.Prerender);
     expect(byPath['__analog/routes'].renderMode).toBe(RenderMode.Server);
   });
-
-  it('expands content files into params for prerenderContent routes', async () => {
-    const routes = createAnalogServerRoutes(files, {
-      prerenderContent: [{ contentDir: 'src/content', route: 'blog/:slug' }],
-      contentFilesList: {
-        '/src/content/first.md': { title: 'First' },
-        '/src/content/second.md': { title: 'Second' },
-        '/src/content/nested/deep.md': { title: 'Skipped (not top level)' },
-      },
-    });
-
-    const blog = routes.find((r) => r.path === 'blog/:slug') as {
-      renderMode: RenderMode;
-      getPrerenderParams?: () => Promise<unknown>;
-    };
-    expect(blog.renderMode).toBe(RenderMode.Prerender);
-    expect(await blog.getPrerenderParams?.()).toEqual([
-      { slug: 'first' },
-      { slug: 'second' },
-    ]);
-  });
 });

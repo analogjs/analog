@@ -237,17 +237,27 @@ nested route files produce a parent route Angular's server
 configuration must cover. It also installs
 `provideServerRequestContext()`.
 
-Content-backed dynamic routes prerender in batch through
-`prerenderContent`: each file under a content directory becomes a
-parameter set for the route (`src/content/blog/first.md` →
-`blog/:slug` as `{ slug: 'first' }` by default; a `transform` maps
-front-matter attributes onto parameters or skips files). This is the
-esbuild-native shape of Nitro's `PrerenderContentDir` — parameters
-instead of route strings, feeding `getPrerenderParams` — and unmatched
-parameters still render per request. Pair it with
-`analog.sitemap: { host }` in the builder options, which emits a
-`sitemap.xml` into the browser output after a successful prerendering
-build, one entry per prerendered page.
+Content-backed dynamic routes prerender in batch by declaring it in
+the page itself — `fromContentDir` builds a `getPrerenderParams` that
+yields one parameter set per content file (slug from front matter or
+the file basename; a `transform` maps files onto other parameters or
+skips them). It reads the content list from DI, so it runs anywhere
+server routes are extracted:
+
+```ts
+// blog/[slug].page.ts
+export const routeMeta: RouteMeta = {
+  getPrerenderParams: fromContentDir('src/content/blog'),
+};
+```
+
+This is the esbuild-native shape of Nitro's `PrerenderContentDir` —
+parameters instead of route strings, colocated with the page like every
+other per-page decision (`routeMeta.prerender: false` opts a page out
+of prerendering the same way). Unmatched parameters still render per
+request. Pair it with `analog.sitemap: { host }` in the builder
+options, which emits a `sitemap.xml` into the browser output after a
+successful prerendering build, one entry per prerendered page.
 
 `createAnalogRequestHandler` is the whole server entry: server
 functions, page endpoints, and API routes ahead of Angular, static
