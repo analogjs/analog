@@ -2,7 +2,9 @@ import { REQUEST as ANGULAR_REQUEST, RESPONSE_INIT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
 
-import { provideServerRequestContext } from './index';
+import { RenderMode } from '@angular/ssr';
+
+import { createAnalogServerRoutes, provideServerRequestContext } from './index';
 
 describe('provideServerRequestContext', () => {
   it('bridges the Angular request and response init into Analog tokens', () => {
@@ -79,5 +81,44 @@ describe('provideServerRequestContext', () => {
     expect(TestBed.inject(RESPONSE)).toBeNull();
     expect(TestBed.inject(BASE_URL)).toBeNull();
     expect(TestBed.inject(LOCALE)).toBeNull();
+  });
+});
+
+describe('createAnalogServerRoutes', () => {
+  const files = {
+    '/src/app/pages/index.page.ts': () => Promise.resolve({}) as never,
+    '/src/app/pages/feedback.page.ts': () => Promise.resolve({}) as never,
+    '/src/app/pages/fn-demo.page.ts': () => Promise.resolve({}) as never,
+    '/src/app/pages/products/[productId].page.ts': () =>
+      Promise.resolve({
+        routeMeta: { getPrerenderParams: () => [{ productId: '1' }] },
+      }) as never,
+    '/src/app/pages/blog/[slug].page.ts': () => Promise.resolve({}) as never,
+  };
+
+  it('derives render modes from files, endpoints, and server paths', async () => {
+    const routes = createAnalogServerRoutes(files, {
+      pageEndpoints: { '/src/app/pages/feedback.server.ts': true },
+      serverPaths: ['fn-demo'],
+      debugRoutes: true,
+    });
+
+    const byPath = Object.fromEntries(routes.map((r) => [r.path, r]));
+    expect(byPath[''].renderMode).toBe(RenderMode.Prerender);
+    expect(byPath['feedback'].renderMode).toBe(RenderMode.Server);
+    expect(byPath['fn-demo'].renderMode).toBe(RenderMode.Server);
+    expect(byPath['products/:productId'].renderMode).toBe(RenderMode.Prerender);
+    expect(
+      await (
+        byPath['products/:productId'] as {
+          getPrerenderParams?: () => Promise<unknown>;
+        }
+      ).getPrerenderParams?.(),
+    ).toEqual([{ productId: '1' }]);
+    // Dynamic module-backed paths prerender with a params loader that
+    // resolves empty when routeMeta defines none — @angular/ssr's
+    // per-request fallback shape.
+    expect(byPath['blog/:slug'].renderMode).toBe(RenderMode.Prerender);
+    expect(byPath['__analog/routes'].renderMode).toBe(RenderMode.Server);
   });
 });

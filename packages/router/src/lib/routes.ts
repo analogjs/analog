@@ -191,6 +191,12 @@ export type ServerRoutePath = {
    */
   isDynamic: boolean;
   /**
+   * The route file backing this path, when one maps to it directly —
+   * intermediate parent paths have none. Lets server route builders
+   * relate a path back to its file (e.g. to find a page endpoint).
+   */
+  filename?: string;
+  /**
    * For dynamic paths backed by a page module, loads the parameter sets
    * to prerender from the module's routeMeta.getPrerenderParams,
    * resolving to an empty list when the module does not define it — the
@@ -207,7 +213,10 @@ export type ServerRoutePath = {
  * getPrerenderParams loader wired to the route's routeMeta.
  */
 export function createServerRoutePaths(files: Files): ServerRoutePath[] {
-  const moduleByPath = new Map<string, () => Promise<RouteExport>>();
+  const moduleByPath = new Map<
+    string,
+    { filename: string; module: () => Promise<RouteExport> }
+  >();
 
   for (const filename of Object.keys(files)) {
     // Markdown routeMeta comes from front matter and cannot define a
@@ -222,20 +231,29 @@ export function createServerRoutePaths(files: Files): ServerRoutePath[] {
       .filter((segment) => segment !== '')
       .join('/');
 
-    moduleByPath.set(path, files[filename] as () => Promise<RouteExport>);
+    moduleByPath.set(path, {
+      filename,
+      module: files[filename] as () => Promise<RouteExport>,
+    });
   }
 
   return createRoutePaths(files).map((path) => {
     const isDynamic = path.includes(':') || path.includes('*');
-    const module = moduleByPath.get(path);
+    const entry = moduleByPath.get(path);
 
-    if (!isDynamic || !module) {
+    if (!entry) {
       return { path, isDynamic };
+    }
+
+    const { filename, module } = entry;
+    if (!isDynamic) {
+      return { path, isDynamic, filename };
     }
 
     return {
       path,
       isDynamic,
+      filename,
       getPrerenderParams: async () => {
         const m = await module();
         const routeMeta = m.routeMeta as

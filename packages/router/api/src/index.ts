@@ -1,9 +1,19 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import { createServer, IncomingMessage, ServerResponse } from 'node:http';
+import { createReadStream, existsSync, statSync } from 'node:fs';
+import { extname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type {
   ApplicationConfig,
   Injector,
   StaticProvider,
 } from '@angular/core';
+import {
+  AngularNodeAppEngine,
+  createNodeRequestHandler,
+  isMainModule,
+  writeResponseToNodeResponse,
+  type NodeRequestHandlerFunction,
+} from '@angular/ssr/node';
 import {
   createApp,
   createRouter,
@@ -215,6 +225,127 @@ export function createServerFnsHandler(
       }),
     },
   ]);
+}
+
+// Browsers enforce strict MIME checking for module scripts, so assets
+// must be served with a real content type.
+const MIME_TYPES: Record<string, string> = {
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.css': 'text/css',
+  '.html': 'text/html',
+  '.json': 'application/json',
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+};
+
+export interface AnalogRequestHandlerOptions {
+  /** The `analog:api-routes` map, served ahead of Angular. */
+  apiRoutes?: ApiRouteFiles;
+  /** The `analog:page-endpoints` map, served at `/api/_analog/pages/...`. */
+  pageEndpoints?: PageEndpointFiles;
+  /**
+   * Config the server-function dispatch injector bootstraps from —
+   * typically the app's own server config, so handlers resolve the same
+   * DI as an SSR render. The `/_analog/fn/:id` route is always mounted;
+   * without server functions it answers 404.
+   */
+  serverFns?: ApplicationConfig | StaticProvider[];
+  /**
+   * The server entry's `import.meta.url`. When the entry is run
+   * directly (`node server.mjs`), the handler listens on
+   * `PORT` (default 4000); under the dev server it stays a middleware.
+   */
+  main?: string;
+  /** Browser output directory; defaults to `../browser` beside the server bundle. */
+  browserDistFolder?: string;
+}
+
+/**
+ * The complete request handler for a server entry on the esbuild
+ * application builder: server functions, page endpoints, and API routes
+ * ahead of Angular, static browser assets with real MIME types, then
+ * Angular SSR — falling through to `next()` under the dev server.
+ *
+ * ```ts
+ * // server.ts
+ * export const reqHandler = createAnalogRequestHandler({
+ *   apiRoutes,
+ *   pageEndpoints,
+ *   serverFns: config,
+ *   main: import.meta.url,
+ * });
+ * ```
+ */
+export function createAnalogRequestHandler(
+  options: AnalogRequestHandlerOptions = {},
+): NodeRequestHandlerFunction {
+  const browserDistFolder =
+    options.browserDistFolder ??
+    (options.main
+      ? fileURLToPath(new URL('../browser', options.main))
+      : join(process.cwd(), 'browser'));
+
+  const angularApp = new AngularNodeAppEngine();
+  const handlers = [
+    createServerFnsHandler(options.serverFns),
+    createPageEndpointsHandler(options.pageEndpoints ?? {}),
+    createApiRoutesHandler(options.apiRoutes ?? {}),
+  ];
+
+  async function handler(
+    req: IncomingMessage,
+    res: ServerResponse,
+    next?: (err?: unknown) => void,
+  ): Promise<void> {
+    const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
+
+    for (const api of handlers) {
+      if (api.matches(pathname)) {
+        await api.handler(req, res);
+        return;
+      }
+    }
+
+    const asset = join(browserDistFolder, pathname);
+    if (pathname !== '/' && existsSync(asset) && statSync(asset).isFile()) {
+      res.writeHead(200, {
+        'content-type':
+          MIME_TYPES[extname(asset)] ?? 'application/octet-stream',
+      });
+      createReadStream(asset).pipe(res);
+      return;
+    }
+
+    const response = await angularApp.handle(req);
+    if (response) {
+      await writeResponseToNodeResponse(response, res);
+      return;
+    }
+
+    if (next) {
+      next();
+      return;
+    }
+
+    res.writeHead(404).end('Not found');
+  }
+
+  if (options.main && isMainModule(options.main)) {
+    const port = Number(process.env['PORT'] ?? 4000);
+    createServer((req, res) => handler(req, res)).listen(port, () =>
+      console.log(`Listening on http://localhost:${port}`),
+    );
+  }
+
+  return createNodeRequestHandler(handler);
 }
 
 function toNodeHandler(

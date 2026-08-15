@@ -5,6 +5,13 @@ import {
   REQUEST as ANGULAR_REQUEST,
   RESPONSE_INIT,
 } from '@angular/core';
+import {
+  provideServerRendering,
+  withRoutes,
+  RenderMode,
+  type ServerRoute,
+} from '@angular/ssr';
+import { createServerRoutePaths, type Files } from '@analogjs/router';
 
 import {
   BASE_URL,
@@ -135,5 +142,96 @@ export function provideServerRequestContext(): EnvironmentProviders {
           : null;
       },
     },
+  ]);
+}
+
+export interface AnalogServerRoutesOptions {
+  /**
+   * The `analog:page-endpoints` map. Routes backed by a `.server.ts`
+   * page endpoint render per request — their load resolver fetches the
+   * live endpoint, which prerendering does not have.
+   */
+  pageEndpoints?: Record<string, unknown>;
+  /**
+   * Extra paths to render per request — pages whose server dependency
+   * is not visible from filenames, e.g. ones calling server functions.
+   */
+  serverPaths?: string[];
+  /** Adds the `withDebugRoutes` page (`__analog/routes`). */
+  debugRoutes?: boolean;
+  /** Extra entries appended verbatim, for routes outside the file map. */
+  serverRoutes?: ServerRoute[];
+}
+
+/**
+ * Derives the @angular/ssr server route configuration from the route
+ * files map: static paths prerender, dynamic module-backed paths
+ * prerender the parameter sets their routeMeta.getPrerenderParams
+ * provides, and everything server-backed — endpoint-backed pages,
+ * listed serverPaths, dynamic paths without params — renders per
+ * request.
+ */
+export function createAnalogServerRoutes(
+  files: Files,
+  options: AnalogServerRoutesOptions = {},
+): ServerRoute[] {
+  const serverPaths = new Set(options.serverPaths ?? []);
+  const pageEndpoints = options.pageEndpoints ?? {};
+
+  return [
+    ...createServerRoutePaths(files).map((route): ServerRoute => {
+      const endpointKey = route.filename?.replace(
+        /\.page\.(ts|analog|ag)$/,
+        '.server.ts',
+      );
+      if (
+        serverPaths.has(route.path) ||
+        (endpointKey && pageEndpoints[endpointKey])
+      ) {
+        return { path: route.path, renderMode: RenderMode.Server };
+      }
+      if (!route.isDynamic) {
+        return { path: route.path, renderMode: RenderMode.Prerender };
+      }
+      if (route.getPrerenderParams) {
+        return {
+          path: route.path,
+          renderMode: RenderMode.Prerender,
+          getPrerenderParams: route.getPrerenderParams,
+        };
+      }
+      return { path: route.path, renderMode: RenderMode.Server };
+    }),
+    ...(options.debugRoutes
+      ? [{ path: '__analog/routes', renderMode: RenderMode.Server } as const]
+      : []),
+    ...(options.serverRoutes ?? []),
+  ];
+}
+
+/**
+ * One-call server rendering setup for the esbuild application builder:
+ * @angular/ssr server routes derived from the route files map plus the
+ * Analog request context bridge (REQUEST/RESPONSE/BASE_URL/LOCALE and
+ * the in-process server-function dispatcher).
+ *
+ * ```ts
+ * // app.config.server.ts
+ * export const config = mergeApplicationConfig(appConfig, {
+ *   providers: [
+ *     provideAnalogServerRendering(routeFiles, { pageEndpoints }),
+ *   ],
+ * });
+ * ```
+ */
+export function provideAnalogServerRendering(
+  files: Files,
+  options: AnalogServerRoutesOptions = {},
+): EnvironmentProviders {
+  return makeEnvironmentProviders([
+    provideServerRendering(
+      withRoutes(createAnalogServerRoutes(files, options)),
+    ),
+    provideServerRequestContext(),
   ]);
 }
