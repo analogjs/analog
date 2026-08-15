@@ -10,3 +10,9 @@ through the Analog file router on the esbuild application builder.
 ```ts
 const analog = 'esbuild';
 ```
+
+```mermaid
+graph LR
+  Router --> Content
+  Content --> SSR
+```

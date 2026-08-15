@@ -38,6 +38,13 @@ export interface AnalogContentPluginOptions {
    * Defaults to 'shiki'.
    */
   highlighter?: 'shiki' | 'prism';
+  /**
+   * Emit mermaid code fences as `<pre class="mermaid">` blocks instead
+   * of highlighting them, for client-side rendering through
+   * `withMarkdownRenderer({ loadMermaid })`. Only meaningful with the
+   * shiki highlighter — the prism path always passes mermaid through.
+   */
+  mermaid?: boolean;
 }
 
 function normalizeSlashes(path: string): string {
@@ -108,10 +115,15 @@ export async function createContentFilesModule(
 
 async function createHighlighter(
   highlighter: 'shiki' | 'prism',
+  mermaid?: boolean,
 ): Promise<MarkedContentHighlighter> {
   if (highlighter === 'shiki') {
     const { getShikiHighlighter } = await import('../content/shiki/index.js');
-    return getShikiHighlighter({});
+    // getShikiHighlighter caches a singleton, so the first call decides
+    // mermaid support for the process.
+    return getShikiHighlighter(
+      mermaid ? { highlighter: { additionalLangs: ['mermaid'] } } : {},
+    );
   }
 
   const { getPrismHighlighter } = await import('../content/prism/index.js');
@@ -239,6 +251,7 @@ export function analogContentPlugin(
       build.onLoad({ filter: /\.md$/ }, async (args) => {
         markedHighlighter ??= createHighlighter(
           options?.highlighter ?? 'shiki',
+          options?.mermaid,
         );
 
         return {

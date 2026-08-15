@@ -20,7 +20,8 @@
         "tsConfig": "apps/esbuild-app/tsconfig.app.json",
         "optimization": false,
         "outputHashing": "none",
-        "security": { "allowedHosts": ["localhost"] }
+        "security": { "allowedHosts": ["localhost"] },
+        "analog": { "mermaid": true }
       }
     },
     "verify": {

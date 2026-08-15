@@ -105,6 +105,20 @@ for custom esbuild setups.
 "serve": { "builder": "@analogjs/platform:dev-server", /* usual options */ }
 ```
 
+Analog-specific settings live in an `analog` section of the build
+options, read by both builders and stripped before the rest passes
+through to `@angular/build`:
+
+```jsonc
+// build options
+"analog": {
+  "highlighter": "shiki", // or "prism"; shiki is the default
+  "mermaid": true, // pass mermaid fences through for client rendering
+  "additionalPagesDirs": [],
+  "additionalContentDirs": []
+}
+```
+
 ```jsonc
 // tsconfig.app.json — pages must be part of the TypeScript program,
 // and the shipped analog:* declarations must be referenced
@@ -128,12 +142,22 @@ import { contentFilesList, contentFiles } from 'analog:content-files';
 export const appConfig = {
   providers: [
     provideFileRouter(withRouteFiles(routeFiles)),
-    // Only needed when using markdown content
-    provideContent(withMarkdownRenderer()),
+    // Only needed when using markdown content; loadMermaid only when
+    // rendering mermaid diagrams
+    provideContent(
+      withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
+    ),
     provideContentFiles({ list: contentFilesList, files: contentFiles }),
   ],
 };
 ```
+
+Mermaid parity matches the Vite path exactly, including its shape:
+diagrams render client-side through `<analog-markdown>`
+(`injectContent` pages, like the fixture's `blog/[slug].page.ts`), while
+markdown content *routes* pass the fences through as
+`<pre class="mermaid">` without rendering them — the route component has
+no mermaid wiring upstream on either build path.
 
 ## SSR and prerendering
 
@@ -319,9 +343,10 @@ markup.
 
 ## Open items
 
-- Pass through marked/shiki/prism options (`markedOptions`,
-  `shikiOptions`, `additionalLangs`) to the content plugin's build-time
-  rendering; only the highlighter choice (default `shiki`) is exposed
-  for now.
-- Agnostic/mermaid renderer parity for content beyond the default
-  markdown renderer path.
+- Pass through fine-grained marked/shiki/prism options
+  (`markedOptions`, `shikiOptions`, `additionalLangs`) to the content
+  plugin's build-time rendering; the `analog` builder option section
+  covers highlighter choice, mermaid, and extra directories.
+- Mermaid rendering inside markdown content routes would need the
+  upstream route component to gain mermaid wiring — it has none on the
+  Vite path either.

@@ -25,6 +25,13 @@ const manifestWatchers = new Set<string>();
  *
  * Watchers are unref'd so one-shot builds still exit, and deduplicated
  * per manifest path since setup() runs once per esbuild build.
+ *
+ * The manifest lives in its own scoped directory under node_modules
+ * rather than anywhere more conventional because every alternative
+ * fails a constraint: dot-directories (.angular, node_modules/.cache)
+ * match the watcher's hidden-path ignore glob, and installed package
+ * directories must not be written into — under pnpm they are symlinks
+ * into the content-addressed store shared across projects.
  */
 export function setupDiscoveryManifest(
   manifestPath: string,

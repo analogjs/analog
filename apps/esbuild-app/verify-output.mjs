@@ -56,6 +56,13 @@ const checks = [
     browserJs.some((c) => c.includes('title: About')),
   ],
   [
+    // With analog.mermaid, mermaid fences skip highlighting and emit
+    // as-is for client-side rendering.
+    'mermaid fences pass through as pre.mermaid blocks',
+    browserJs.some((c) => c.includes('<pre class="mermaid">')) &&
+      aboutHtml.includes('<pre class="mermaid">'),
+  ],
+  [
     'browser bundle env is SSR: false',
     envOf(browserDir)?.includes('SSR: false'),
   ],

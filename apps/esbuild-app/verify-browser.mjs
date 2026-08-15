@@ -100,6 +100,16 @@ try {
       (await page.locator('pre.shiki').count()) > 0,
   ]);
 
+  // --- mermaid renders through injectContent + MarkdownComponent ---
+  // Markdown ROUTES pass mermaid fences through without client
+  // rendering (same as the Vite path); diagrams render via
+  // <analog-markdown>, exercised by the blog page.
+  const blogPage = await browser.newPage();
+  trackErrors(blogPage);
+  await blogPage.goto(`${base}/blog/about`, { waitUntil: 'load' });
+  await waitFor(blogPage, () => !!document.querySelector('pre.mermaid svg'));
+  checks.push(['mermaid diagram renders through analog-markdown', true]);
+
   // --- per-request SSR page hydrates with the bridged base URL ---
   const ssrPage = await browser.newPage();
   trackErrors(ssrPage);

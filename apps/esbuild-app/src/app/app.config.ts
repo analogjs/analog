@@ -17,7 +17,9 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideClientHydration(),
     provideFileRouter(withRouteFiles(routeFiles)),
-    provideContent(withMarkdownRenderer()),
+    provideContent(
+      withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
+    ),
     provideContentFiles({ list: contentFilesList, files: contentFiles }),
   ],
 };
