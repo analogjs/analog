@@ -84,7 +84,7 @@ describe('analogRouterPlugin', () => {
     const env = JSON.parse(
       (initialOptions['define'] as Record<string, string>)['import.meta.env'],
     );
-    expect(env).toEqual({ DEV: false, SSR: true });
+    expect(env).toEqual({ PROD: true, DEV: false, SSR: true });
   });
 
   it('resolves and loads the virtual route files module', async () => {

@@ -29,6 +29,12 @@
             "container": "<div class=\"hl-wrap\">%s</div>"
           }
         }
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "outputHashing": "all"
+        }
       }
     },
     "verify": {
@@ -49,6 +55,17 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "node apps/esbuild-app/verify-dev-server.mjs"
+      }
+    },
+    "verify-prod": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm nx build esbuild-app --configuration production --skip-nx-cache",
+          "node apps/esbuild-app/verify-output.mjs",
+          "node apps/esbuild-app/verify-browser.mjs"
+        ],
+        "parallel": false
       }
     },
     "serve": {

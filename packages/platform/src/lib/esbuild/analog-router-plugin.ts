@@ -182,7 +182,9 @@ export function readRouteMetaFlags(file: string): RouteMetaFlags {
 export function routerDefine(
   env: { DEV: boolean; SSR: boolean } & Record<string, unknown>,
 ): Record<string, string> {
-  return { 'import.meta.env': JSON.stringify(env) };
+  // PROD is the complement of DEV, as on the Vite path — consumers read
+  // both (e.g. renderStream's enableProdMode guard).
+  return { 'import.meta.env': JSON.stringify({ PROD: !env.DEV, ...env }) };
 }
 
 /**

@@ -26,15 +26,21 @@ const read = (dir, file) => readFileSync(join(dir, file), 'utf8');
 const jsFiles = (dir) =>
   readdirSync(dir).filter((f) => f.endsWith('.js') || f.endsWith('.mjs'));
 
-/** The whole import.meta.env object is replaced, so esbuild emits a shim. */
-function envOf(dir) {
+/**
+ * The whole import.meta.env object is replaced, so its values appear
+ * inline in the output. Read the flags rather than the shim's variable
+ * name, which minification mangles — the checks have to hold for both
+ * the default and the production configuration.
+ */
+function envFlags(dir, flag) {
+  const pattern = new RegExp(`\\b${flag}\\s*:\\s*(!0|!1|true|false)`, 'g');
+  const values = new Set();
   for (const file of jsFiles(dir)) {
-    const match = read(dir, file).match(
-      /define_import_meta_env_default = (\{[^}]*\})/,
-    );
-    if (match) return match[1];
+    for (const match of read(dir, file).matchAll(pattern)) {
+      values.add(match[1] === '!0' || match[1] === 'true');
+    }
   }
-  return undefined;
+  return values;
 }
 
 const browserJs = jsFiles(browserDir).map((f) => read(browserDir, f));
@@ -52,8 +58,13 @@ const checks = [
     ),
   ],
   [
+    // Unminified output carries ɵɵdefineComponent; optimization mangles
+    // every ɵ symbol, so there the proof is the absence of the JIT
+    // compiler (its parser error strings are literals that survive
+    // minification — they'd be present if templates compiled at runtime).
     'pages compiled AOT by the Angular compiler',
-    browserJs.some((c) => c.includes('ɵɵdefineComponent')),
+    browserJs.some((c) => c.includes('ɵɵdefineComponent')) ||
+      !browserJs.some((c) => c.includes('can be self closed')),
   ],
   [
     'markdown rendered to HTML at build time with shiki highlighting',
@@ -80,10 +91,18 @@ const checks = [
       aboutHtml.includes('<pre class="mermaid">'),
   ],
   [
-    'browser bundle env is SSR: false',
-    envOf(browserDir)?.includes('SSR: false'),
+    // The browser output must never claim SSR; the server output must
+    // claim it somewhere (its chunks can also embed browser-env copies).
+    'browser bundle env is SSR: false, PROD: true',
+    !envFlags(browserDir, 'SSR').has(true) &&
+      envFlags(browserDir, 'SSR').has(false) &&
+      envFlags(browserDir, 'PROD').has(true),
   ],
-  ['server bundle env is SSR: true', envOf(serverDir)?.includes('SSR: true')],
+  [
+    'server bundle env is SSR: true, PROD: true',
+    envFlags(serverDir, 'SSR').has(true) &&
+      envFlags(serverDir, 'PROD').has(true),
+  ],
   ['ssr renders the page component', indexHtml.includes('<h1>Home</h1>')],
   [
     'ssr renders markdown content',

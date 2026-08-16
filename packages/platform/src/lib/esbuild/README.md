@@ -471,6 +471,7 @@ nx build esbuild-app             # or: nx serve esbuild-app
 nx verify esbuild-app            # builds, then checks the emitted bundles and HTML
 nx verify-browser esbuild-app    # boots the server and drives Chromium via Playwright
 nx verify-dev-server esbuild-app # serves, then edits and adds pages and polls the served bundles
+nx verify-prod esbuild-app       # production configuration (optimization + hashing), then both verifies
 ```
 
 Confirmed against a real build:
@@ -502,8 +503,16 @@ Confirmed against a real build:
   render; otherwise a file rendered for both bundles gets different ids
   in each, and the client would disagree with the SSR output.
 - **Per-bundle env** — with `ssr: true` the browser bundle gets
-  `{ DEV: false, SSR: false }` and the server bundle
-  `{ DEV: false, SSR: true }`.
+  `{ PROD: true, DEV: false, SSR: false }` and the server bundle
+  `{ PROD: true, DEV: false, SSR: true }`; `PROD` is the complement of
+  `DEV`, as on Vite.
+- **Production configuration** — `nx verify-prod` runs the same output
+  and browser suites against an optimized, hashed build. The env
+  values, the server-fn scrub, streaming, and the full browser pass all
+  hold under minification; the server boots without Angular's
+  dev-mode notice. Angular's optimizer mangles every `ɵ` symbol, so
+  the AOT assertion falls back to proving the JIT compiler is absent
+  from the browser output.
 - **SSR output** — with `prerender: true` the emitted HTML contains the
   server-rendered page component, markdown rendered from a content
   route (with highlighting), the front-matter title applied by
