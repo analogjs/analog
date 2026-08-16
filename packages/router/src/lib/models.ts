@@ -45,9 +45,16 @@ export interface DefaultRouteMeta extends Omit<
   /**
    * Set to `false` (a literal, read at build time) to render this page
    * per request instead of prerendering — for pages that depend on the
-   * live request, e.g. fresh server-function data or streaming.
+   * live request, e.g. fresh server-function data.
    */
   prerender?: boolean;
+  /**
+   * Set to `true` (a literal, read at build time) to render this page
+   * through the progressive streaming renderer, flushing
+   * `@defer (hydrate …)` blocks as they resolve. Implies
+   * `prerender: false` — streaming needs a live request.
+   */
+  streaming?: boolean;
 }
 
 export interface RedirectRouteMeta {

@@ -6,5 +6,7 @@ import { config } from './app/app.config.server';
 export const reqHandler = createAnalogRequestHandler({
   config,
   main: import.meta.url,
-  streaming: { component: AppComponent, paths: ['/stream-demo'] },
+  // Pages opt in with routeMeta.streaming; renderStream needs the root
+  // component because it drives the platform itself.
+  streaming: { component: AppComponent },
 });

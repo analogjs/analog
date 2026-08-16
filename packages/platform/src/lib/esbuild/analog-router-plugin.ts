@@ -97,15 +97,19 @@ export function createRouteFilesModule(
       : `  "${key}": () => import('${file}')`;
   });
 
-  // Build-time route metadata: server route configuration is built
-  // eagerly at bootstrap, before any page module loads, so per-page
-  // settings it needs (routeMeta.prerender) are extracted here.
+  // Build-time route metadata: the server route configuration and the
+  // request handler are both built before any page module loads, so the
+  // per-page settings they need are extracted here.
   const metaEntries = routeFiles.flatMap((file) => {
-    if (file.endsWith('.md') || !routeMetaDisablesPrerender(file)) {
+    if (file.endsWith('.md')) {
+      return [];
+    }
+    const meta = readRouteMetaFlags(file);
+    if (Object.keys(meta).length === 0) {
       return [];
     }
     const key = file.startsWith(root) ? file.replace(root, '') : file;
-    return [`  "${key}": { prerender: false }`];
+    return [`  "${key}": ${JSON.stringify(meta)}`];
   });
 
   return (
@@ -114,17 +118,27 @@ export function createRouteFilesModule(
   );
 }
 
+export interface RouteMetaFlags {
+  /** `routeMeta.prerender: false` — render this page per request. */
+  prerender?: boolean;
+  /** `routeMeta.streaming: true` — render through renderStream. */
+  streaming?: boolean;
+}
+
 /**
- * Whether a page file's routeMeta literally sets `prerender: false`.
- * Read from the AST, not by executing the module — only a literal is
- * honored, matching how the server-fn transforms read call shapes.
+ * Reads the boolean routeMeta flags the build needs from a page file's
+ * AST, rather than by executing the module — only literals are honored,
+ * matching how the server-fn transforms read call shapes. `streaming`
+ * implies `prerender: false`, since a streamed page needs a live
+ * request.
  */
-export function routeMetaDisablesPrerender(file: string): boolean {
+export function readRouteMetaFlags(file: string): RouteMetaFlags {
   const code = readFileSync(file, 'utf8');
-  if (!code.includes('routeMeta') || !code.includes('prerender')) {
-    return false;
+  if (!code.includes('routeMeta')) {
+    return {};
   }
 
+  const flags: RouteMetaFlags = {};
   const { program } = parseSync(file, code);
   for (const node of (program as { body: any[] }).body) {
     if (
@@ -144,18 +158,19 @@ export function routeMetaDisablesPrerender(file: string): boolean {
       for (const prop of declarator.init.properties ?? []) {
         const key =
           prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
-        if (
-          prop.type === 'Property' &&
-          key === 'prerender' &&
-          prop.value?.type === 'Literal' &&
-          prop.value.value === false
-        ) {
-          return true;
+        if (prop.type !== 'Property' || prop.value?.type !== 'Literal') {
+          continue;
+        }
+        if (key === 'prerender' && prop.value.value === false) {
+          flags.prerender = false;
+        } else if (key === 'streaming' && prop.value.value === true) {
+          flags.streaming = true;
+          flags.prerender = false;
         }
       }
     }
   }
-  return false;
+  return flags;
 }
 
 /**

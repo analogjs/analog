@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import type { RouteMeta } from '@analogjs/router';
 
-// Streamed per request — must not be prerendered.
+// Rendered through the streaming renderer (implies per-request).
 export const routeMeta: RouteMeta = {
-  prerender: false,
+  streaming: true,
 };
 
 @Component({

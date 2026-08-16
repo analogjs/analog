@@ -171,7 +171,7 @@ export interface AnalogServerRoutesOptions {
    * Overrides the build-extracted route metadata map (pages declaring
    * `routeMeta.prerender: false` render per request).
    */
-  routeFilesMeta?: Record<string, { prerender?: boolean }>;
+  routeFilesMeta?: Record<string, { prerender?: boolean; streaming?: boolean }>;
   /** Adds the `withDebugRoutes` page (`__analog/routes`). */
   debugRoutes?: boolean;
   /** Extra entries appended verbatim, for routes outside the file map. */
@@ -199,9 +199,12 @@ export function createAnalogServerRoutes(
         /\.page\.(ts|analog|ag)$/,
         '.server.ts',
       );
+      // A streamed page is per-request by definition, so it counts as
+      // an explicit prerender opt-out even without the flag.
+      const meta = route.filename ? routeFilesMeta[route.filename] : undefined;
       if (
-        (route.filename &&
-          routeFilesMeta[route.filename]?.prerender === false) ||
+        meta?.prerender === false ||
+        meta?.streaming === true ||
         (endpointKey && pageEndpoints[endpointKey])
       ) {
         return { path: route.path, renderMode: RenderMode.Server };

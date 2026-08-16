@@ -232,7 +232,8 @@ server-backed renders per request — pages with a `.server.ts` endpoint
 are detected automatically, and a page opts itself out of prerendering
 with `routeMeta.prerender: false` (a literal, extracted at build time)
 when its server data must stay per-request — fresh server-function
-values, streaming. Intermediate parent paths are included, since
+values (`routeMeta.streaming: true` implies it). Intermediate parent
+paths are included, since
 nested route files produce a parent route Angular's server
 configuration must cover. It also installs
 `provideServerRequestContext()`.
@@ -438,16 +439,22 @@ status as on Vite. Three pieces:
   capture, since Angular's own JS loader owns module loads. Server
   bundles only; drift in Angular's internals degrades to buffered with
   a warning, same as Vite.
-- `createAnalogRequestHandler` takes
-  `streaming: { component, paths }`: the listed pathnames bypass
-  `AngularNodeAppEngine` (which buffers) and render through
-  `renderStream` against the CSR index document, piping the stream to
-  the response. Bots and `streaming: false` routes get the buffered
+- A page opts in with `routeMeta.streaming: true` (a literal, extracted
+  at build time). It implies `prerender: false` — streaming needs a
+  live request — so that is the page's only declaration. Because the
+  opt-in is a route rather than a URL string, a dynamic route
+  (`blog/[slug]`) streams every URL it matches.
+- `createAnalogRequestHandler` takes `streaming: { component }`: it
+  derives the streamed routes from the pages themselves and bypasses
+  `AngularNodeAppEngine` (which buffers) for those, rendering through
+  `renderStream` against the CSR index document and piping the stream
+  to the response. The component is the one app-level piece —
+  `renderStream` drives the platform directly, so it needs a root to
+  bootstrap. Bots and `streaming: false` routes get the buffered
   fallback inside `renderStream`.
-- The app needs `withIncrementalHydration()`, and streamed pages
-  declare `routeMeta.prerender: false`; `@defer (hydrate …)` blocks
-  flush as they resolve, then the authoritative hydration-annotated
-  document arrives as the tail.
+- The app needs `withIncrementalHydration()`; `@defer (hydrate …)`
+  blocks flush as they resolve, then the authoritative
+  hydration-annotated document arrives as the tail.
 
 With this, no Analog capability is Nitro-only — the streaming patch
 would still be better served by an upstream Angular per-block

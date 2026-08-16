@@ -8,7 +8,10 @@ declare module 'analog:route-files' {
   const files: import('@analogjs/router').Files;
   export default files;
   /** Build-extracted per-page settings (routeMeta.prerender). */
-  export const routeFilesMeta: Record<string, { prerender?: boolean }>;
+  export const routeFilesMeta: Record<
+    string,
+    { prerender?: boolean; streaming?: boolean }
+  >;
 }
 
 declare module 'analog:content-files' {

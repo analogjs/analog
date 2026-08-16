@@ -32,6 +32,7 @@ import {
   handleServerFnRequest,
   renderStream,
 } from '@analogjs/router/server';
+import { createServerRoutePaths, type Files } from '@analogjs/router';
 import type { ServerContext } from '@analogjs/router/tokens';
 
 export type ApiRouteFiles = Record<string, () => Promise<{ default: unknown }>>;
@@ -330,19 +331,23 @@ export interface AnalogRequestHandlerOptions {
   /** Overrides the `analog:server-middleware` map (loaded automatically). */
   serverMiddleware?: ApiRouteFiles;
   /**
-   * EXPERIMENTAL: render the listed pathnames through `renderStream`,
-   * flushing `@defer (hydrate …)` blocks as they resolve. Needs the
-   * `analog.streaming` builder option (which patches the `@defer`
-   * runtime in the server bundle), incremental hydration, and per
-   * request rendering for those paths. Bots and `streaming: false`
-   * routes fall back to a buffered render inside `renderStream`.
+   * EXPERIMENTAL: enables the progressive streaming renderer. Pages
+   * opt in individually with `routeMeta.streaming: true`; this only
+   * supplies the root component, since `renderStream` drives the
+   * platform directly instead of going through the buffering engine.
+   * Also needs the `analog.streaming` builder option (which patches the
+   * `@defer` runtime in the server bundle) and incremental hydration.
+   * Bots and `streaming: false` routes fall back to a buffered render
+   * inside `renderStream`.
    */
   streaming?: {
     /** Root component to bootstrap for streamed renders. */
     component: Type<unknown>;
-    /** Exact pathnames rendered through the streaming renderer. */
-    paths: string[];
   };
+  /** Overrides the `analog:route-files` map (loaded automatically). */
+  routeFiles?: Files;
+  /** Overrides the build-extracted route metadata (loaded automatically). */
+  routeFilesMeta?: Record<string, { prerender?: boolean; streaming?: boolean }>;
 }
 
 /**
@@ -357,20 +362,25 @@ async function loadAnalogModules(): Promise<{
   pageEndpoints: PageEndpointFiles;
   serverFns: Record<string, Record<string, unknown>>;
   serverMiddleware: ApiRouteFiles;
+  routeFiles: Files;
+  routeFilesMeta: Record<string, { prerender?: boolean; streaming?: boolean }>;
 }> {
   try {
-    const [apiRoutes, pageEndpoints, serverFns, serverMiddleware] =
+    const [apiRoutes, pageEndpoints, serverFns, serverMiddleware, routeFiles] =
       await Promise.all([
         import('analog:api-routes'),
         import('analog:page-endpoints'),
         import('analog:server-fns'),
         import('analog:server-middleware'),
+        import('analog:route-files'),
       ]);
     return {
       apiRoutes: apiRoutes.default,
       pageEndpoints: pageEndpoints.default,
       serverFns: serverFns.default,
       serverMiddleware: serverMiddleware.default,
+      routeFiles: routeFiles.default,
+      routeFilesMeta: routeFiles.routeFilesMeta,
     };
   } catch {
     return {
@@ -378,8 +388,33 @@ async function loadAnalogModules(): Promise<{
       pageEndpoints: {},
       serverFns: {},
       serverMiddleware: {},
+      routeFiles: {},
+      routeFilesMeta: {},
     };
   }
+}
+
+/**
+ * The routes a page opted into streaming with
+ * `routeMeta.streaming: true`, as a matcher over their full URL paths —
+ * so a dynamic route (`blog/:slug`) streams every URL it matches, not
+ * just a literal pathname.
+ */
+function createStreamingMatcher(
+  routeFiles: Files,
+  routeFilesMeta: Record<string, { streaming?: boolean }>,
+): { matches(pathname: string): boolean } {
+  const matcher = createMatcher();
+  let empty = true;
+
+  for (const route of createServerRoutePaths(routeFiles)) {
+    if (route.filename && routeFilesMeta[route.filename]?.streaming) {
+      matcher.insert(`/${route.path}`, { streaming: true });
+      empty = false;
+    }
+  }
+
+  return { matches: (pathname) => !empty && !!matcher.lookup(pathname) };
 }
 
 /**
@@ -413,6 +448,7 @@ export function createAnalogRequestHandler(
     | Promise<{
         middleware: ServerMiddlewareHandler;
         apis: ApiRoutesHandler[];
+        streaming: { matches(pathname: string): boolean };
       }>
     | undefined;
   const getHandlers = () =>
@@ -432,6 +468,12 @@ export function createAnalogRequestHandler(
           ),
           createApiRoutesHandler(options.apiRoutes ?? loaded.apiRoutes),
         ],
+        streaming: options.streaming
+          ? createStreamingMatcher(
+              options.routeFiles ?? loaded.routeFiles,
+              options.routeFilesMeta ?? loaded.routeFilesMeta,
+            )
+          : { matches: () => false },
       };
     })());
 
@@ -485,7 +527,7 @@ export function createAnalogRequestHandler(
     next?: (err?: unknown) => void,
   ): Promise<void> {
     const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
-    const { middleware, apis } = await getHandlers();
+    const { middleware, apis, streaming } = await getHandlers();
 
     // Global middleware first, on every request — page renders and
     // static assets included, as under Nitro.
@@ -500,7 +542,7 @@ export function createAnalogRequestHandler(
       }
     }
 
-    if (options.streaming?.paths.includes(pathname)) {
+    if (streaming.matches(pathname)) {
       await streamResponse(req, res);
       return;
     }
