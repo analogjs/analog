@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideContentFiles } from '@analogjs/content';
+import { withContentFiles } from '@analogjs/content';
 
 import { fromContentDir } from './prerender-content';
 
@@ -7,7 +7,7 @@ describe('fromContentDir', () => {
   const run = <T>(fn: () => T): T => {
     TestBed.configureTestingModule({
       providers: [
-        provideContentFiles({
+        withContentFiles({
           list: {
             '/src/content/first.md': {},
             '/src/content/second.md': { category: 'news' },

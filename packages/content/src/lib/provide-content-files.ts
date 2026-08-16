@@ -1,8 +1,4 @@
-import {
-  EnvironmentProviders,
-  inject,
-  makeEnvironmentProviders,
-} from '@angular/core';
+import { inject, Provider } from '@angular/core';
 
 import {
   CONTENT_FILES_LIST_TOKEN,
@@ -28,12 +24,18 @@ export interface ContentFilesInput {
  * Provides content files from an explicitly supplied input, for build
  * integrations that cannot inject the content file glob into this
  * package's module graph (e.g. esbuild-based builds), where the
- * glob-backed token factories resolve to empty maps.
+ * glob-backed token factories resolve to empty maps. Used as a
+ * `provideContent` feature:
+ *
+ * ```ts
+ * provideContent(
+ *   withMarkdownRenderer(),
+ *   withContentFiles({ list: contentFilesList, files: contentFiles }),
+ * ),
+ * ```
  */
-export function provideContentFiles(
-  input: ContentFilesInput,
-): EnvironmentProviders {
-  return makeEnvironmentProviders([
+export function withContentFiles(input: ContentFilesInput): Provider {
+  return [
     {
       provide: CONTENT_FILES_LIST_TOKEN,
       useFactory: () => toContentFilesList(input.list),
@@ -43,5 +45,5 @@ export function provideContentFiles(
       useFactory: () =>
         toContentFilesRecord(input.files, inject(CONTENT_FILES_LIST_TOKEN)),
     },
-  ]);
+  ];
 }

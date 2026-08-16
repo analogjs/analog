@@ -13,7 +13,7 @@ export {
   MERMAID_IMPORT_TOKEN,
 } from './lib/provide-content';
 export {
-  provideContentFiles,
+  withContentFiles,
   ContentFilesInput,
 } from './lib/provide-content-files';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';

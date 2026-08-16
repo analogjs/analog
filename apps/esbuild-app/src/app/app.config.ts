@@ -15,7 +15,7 @@ import {
 } from '@analogjs/router';
 import {
   provideContent,
-  provideContentFiles,
+  withContentFiles,
   withMarkdownRenderer,
 } from '@analogjs/content';
 import routeFiles from 'analog:route-files';
@@ -34,7 +34,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideContent(
       withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
+      withContentFiles({ list: contentFilesList, files: contentFiles }),
     ),
-    provideContentFiles({ list: contentFilesList, files: contentFiles }),
   ],
 };

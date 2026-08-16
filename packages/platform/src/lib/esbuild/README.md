@@ -77,7 +77,7 @@ Markdown content follows the same shape:
    also loads `.md` files as text with the markdown body pre-rendered to
    HTML at build time via the same shared marked + shiki/prism setup the
    Vite content plugin uses, front matter preserved.
-5. `provideContentFiles({ list, files })` (new public API in
+5. `withContentFiles({ list, files })` (new `provideContent` feature in
    `@analogjs/content`) overrides the glob-backed
    `CONTENT_FILES_LIST_TOKEN` / `CONTENT_FILES_TOKEN` factories with the
    supplied maps — pure DI, no module patching — so `injectContent`,
@@ -140,7 +140,7 @@ through to `@angular/build`:
 import { provideFileRouter, withRouteFiles } from '@analogjs/router';
 import {
   provideContent,
-  provideContentFiles,
+  withContentFiles,
   withMarkdownRenderer,
 } from '@analogjs/content';
 import routeFiles from 'analog:route-files';
@@ -153,8 +153,8 @@ export const appConfig = {
     // rendering mermaid diagrams
     provideContent(
       withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
+      withContentFiles({ list: contentFilesList, files: contentFiles }),
     ),
-    provideContentFiles({ list: contentFilesList, files: contentFiles }),
   ],
 };
 ```
@@ -496,7 +496,7 @@ Confirmed against a real build:
   that nothing imports rebuilds and updates the route map, in both
   `build --watch` and the dev server, driven by the discovery manifest.
 - **DI bridges in a real bundle** — `provideFileRouter(withRouteFiles(…))`
-  plus `provideContentFiles(…)` compile and bundle, emitting per-route
+  plus `withContentFiles(…)` compile and bundle, emitting per-route
   chunks alongside lazy `@analogjs/router` / `@analogjs/content` chunks.
 - **Stable heading ids** — the marked heading-id slugger is stateful and
   the setup is a module singleton, so the content plugin resets it per

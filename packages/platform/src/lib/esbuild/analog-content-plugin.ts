@@ -15,7 +15,8 @@ import { setupDiscoveryManifest } from './discovery-manifest.js';
  *
  *   import { contentFilesList, contentFiles } from 'analog:content-files';
  *
- * Both maps are passed to `provideContentFiles({ list, files })`.
+ * Both maps are passed to `withContentFiles({ list, files })`,
+ * a `provideContent` feature.
  */
 export const CONTENT_FILES_ID = 'analog:content-files';
 
