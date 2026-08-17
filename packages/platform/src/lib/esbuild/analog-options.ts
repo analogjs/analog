@@ -33,6 +33,11 @@ export interface AnalogBuilderOptions {
    */
   additionalContentDirs?: string[];
   /**
+   * Additional directories relative to the workspace root whose
+   * `routes` subdirectory is scanned for API routes.
+   */
+  additionalAPIDirs?: string[];
+  /**
    * EXPERIMENTAL: patch @angular/core's @defer runtime in server
    * bundles so renderStream can flush blocks as they resolve.
    */

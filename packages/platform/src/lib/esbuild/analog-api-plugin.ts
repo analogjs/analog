@@ -31,6 +31,12 @@ const SERVER_MIDDLEWARE_NAMESPACE = 'analog-server-middleware';
 export interface AnalogApiPluginOptions {
   workspaceRoot?: string;
   projectRoot?: string;
+  /**
+   * Additional directories relative to the workspace root whose
+   * `routes` subdirectory is scanned for API routes, matching the Vite
+   * plugin's additionalAPIDirs.
+   */
+  additionalAPIDirs?: string[];
 }
 
 function normalizeSlashes(path: string): string {
@@ -41,11 +47,20 @@ export function apiRoutesDir(root: string): string {
   return `${root}/src/server/routes`;
 }
 
-export function discoverApiRoutes(root: string): string[] {
-  return globSync([`${apiRoutesDir(root)}/**/*.ts`], {
-    dot: true,
-    absolute: true,
-  }).map(normalizeSlashes);
+export function discoverApiRoutes(
+  root: string,
+  workspaceRoot: string,
+  additionalAPIDirs?: string[],
+): string[] {
+  return globSync(
+    [
+      `${apiRoutesDir(root)}/**/*.ts`,
+      ...(additionalAPIDirs || []).map(
+        (dir) => `${workspaceRoot}${dir}/routes/**/*.ts`,
+      ),
+    ],
+    { dot: true, absolute: true },
+  ).map(normalizeSlashes);
 }
 
 export function serverMiddlewareDir(root: string): string {
@@ -96,8 +111,14 @@ export function analogApiPlugin(options?: AnalogApiPluginOptions): Plugin {
 
       const manifestImport = setupDiscoveryManifest(
         `${workspaceRoot}/node_modules/@analogjs/esbuild-manifests/api-routes.json`,
-        [apiRoutesDir(root)],
-        () => discoverApiRoutes(root),
+        [
+          apiRoutesDir(root),
+          ...(options?.additionalAPIDirs || []).map(
+            (dir) => `${workspaceRoot}${dir}/routes`,
+          ),
+        ],
+        () =>
+          discoverApiRoutes(root, workspaceRoot, options?.additionalAPIDirs),
       );
 
       build.onResolve({ filter: /^analog:api-routes$/ }, () => ({
@@ -109,7 +130,14 @@ export function analogApiPlugin(options?: AnalogApiPluginOptions): Plugin {
         contents: isBrowser
           ? 'export default {};\n'
           : manifestImport +
-            createApiRoutesModule(discoverApiRoutes(root), root),
+            createApiRoutesModule(
+              discoverApiRoutes(
+                root,
+                workspaceRoot,
+                options?.additionalAPIDirs,
+              ),
+              root,
+            ),
         loader: 'js',
         resolveDir: root,
         watchDirs: [apiRoutesDir(root)].filter((dir) => existsSync(dir)),

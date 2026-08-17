@@ -121,6 +121,7 @@ through to `@angular/build`:
   "prismOptions": {}, // prism additionalLangs
   "additionalPagesDirs": [],
   "additionalContentDirs": [],
+  "additionalAPIDirs": [], // <dir>/routes scanned for API routes
   "streaming": false, // EXPERIMENTAL streaming SSR patch
   "sitemap": { "host": "https://example.com" } // emit sitemap.xml
 }
@@ -383,6 +384,9 @@ runs the module's `load`, other methods run `action`, both receiving
 - Endpoint-backed pages need `RenderMode.Server`: the load resolver
   fetches the live endpoint through the bridged `BASE_URL`, and during
   prerendering there is no server to fetch from.
+- The `fetch` handed to `load`/`action` has Nitro `$fetch` semantics:
+  relative URLs resolve against the request's own origin and the body
+  comes back parsed (JSON for JSON responses).
 - Form actions work on top of this: the `FormAction` directive posts to
   the same endpoint route, the `action` reads the form body (e.g. h3's
   `readFormData`), and the `@analogjs/router/server/actions` helpers

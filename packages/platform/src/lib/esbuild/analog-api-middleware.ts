@@ -42,7 +42,7 @@ export function createAnalogApiMiddleware(
   let generation = 0;
 
   const loadHandlers = async (): Promise<ApiRoutesHandler[]> => {
-    const apiFiles = discoverApiRoutes(root);
+    const apiFiles = discoverApiRoutes(root, workspaceRoot);
     const endpointFiles = discoverPageEndpoints(root, workspaceRoot);
     const files = [...apiFiles, ...endpointFiles];
     if (files.length === 0) {

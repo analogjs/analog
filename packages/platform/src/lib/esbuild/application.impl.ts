@@ -66,6 +66,7 @@ export async function* buildAnalogApplication(
       analogApiPlugin({
         workspaceRoot: context.workspaceRoot,
         projectRoot,
+        additionalAPIDirs: analog.additionalAPIDirs,
       }),
       analogPageEndpointsPlugin({
         workspaceRoot: context.workspaceRoot,
