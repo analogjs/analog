@@ -220,15 +220,39 @@ export default (context: BootstrapContext) =>
 ```
 
 ```ts
-// src/server.ts
+// src/server.ts — Angular's Express scaffold plus one `app.use`. The
+// developer owns static files, AngularNodeAppEngine, and listening;
+// Analog is one middleware mounted ahead of them.
 import { createAnalogRequestHandler } from '@analogjs/router/ssr';
 
 import { config } from './app/app.config.server';
 
-export const reqHandler = createAnalogRequestHandler({
-  config, // server-fn dispatch resolves the app's own DI
-  main: import.meta.url, // listens on PORT when run directly
+const browserDistFolder = join(import.meta.dirname, '../browser');
+
+const app = express();
+const angularApp = new AngularNodeAppEngine();
+
+// Analog's server surface: global middleware, server functions, page
+// endpoints, API routes, and streamed pages. Everything else falls
+// through to the scaffold's own layers below.
+app.use(createAnalogRequestHandler({ config }));
+
+app.use(express.static(browserDistFolder, { maxAge: '1y', index: false }));
+
+app.use((req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
 });
+
+if (isMainModule(import.meta.url)) {
+  app.listen(process.env['PORT'] || 4000);
+}
+
+export const reqHandler = createNodeRequestHandler(app);
 ```
 
 `provideAnalogServerRendering` reads the maps the injected boot module
@@ -273,12 +297,13 @@ request. Pair it with `analog.sitemap: { host }` in the builder
 options, which emits a `sitemap.xml` into the browser output after a
 successful prerendering build, one entry per prerendered page.
 
-`createAnalogRequestHandler` is the whole server entry: server
-functions, page endpoints, and API routes ahead of Angular, static
-browser assets with real MIME types (strict module-script checking
-rejects assets without one), then `AngularNodeAppEngine` — falling
-through to `next()` under the dev server, and self-listening when the
-bundle is run directly. It consumes the `analog:*` maps itself, via
+`createAnalogRequestHandler` handles Analog's server surface and
+nothing else: global middleware, server functions, page endpoints, API
+routes, and streamed pages. Unmatched requests fall through to
+`next()` (404 standalone; async errors are routed to `next(err)`), so
+static assets, `AngularNodeAppEngine`, and listening stay in the app's
+own server entry, exactly as in a standard Angular SSR setup. It
+consumes the `analog:*` maps itself, via
 literal dynamic imports the esbuild plugins resolve when the server
 entry is bundled; anywhere else (plain node, tests) those imports fail
 at runtime, are caught, and everything resolves empty — so the built
@@ -460,7 +485,8 @@ status as on Vite. Three pieces:
   live request — so that is the page's only declaration. Because the
   opt-in is a route rather than a URL string, a dynamic route
   (`blog/[slug]`) streams every URL it matches.
-- `createAnalogRequestHandler` takes `streaming: { component }`: it
+- `createAnalogRequestHandler` takes `streaming: { component }` (plus
+  `browserDistFolder`, where it finds the CSR index document): it
   derives the streamed routes from the pages themselves and bypasses
   `AngularNodeAppEngine` (which buffers) for those, rendering through
   `renderStream` against the CSR index document and piping the stream

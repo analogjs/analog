@@ -1,8 +1,7 @@
 /// <reference path="./analog-modules.d.ts" />
-import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
-import { extname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type {
   ApplicationConfig,
   Injector,
@@ -10,10 +9,7 @@ import type {
   Type,
 } from '@angular/core';
 import {
-  AngularNodeAppEngine,
   createNodeRequestHandler,
-  isMainModule,
-  writeResponseToNodeResponse,
   type NodeRequestHandlerFunction,
 } from '@angular/ssr/node';
 import {
@@ -334,25 +330,6 @@ export function createServerMiddlewareHandler(
   };
 }
 
-// Browsers enforce strict MIME checking for module scripts, so assets
-// must be served with a real content type.
-const MIME_TYPES: Record<string, string> = {
-  '.js': 'text/javascript',
-  '.mjs': 'text/javascript',
-  '.css': 'text/css',
-  '.html': 'text/html',
-  '.json': 'application/json',
-  '.ico': 'image/x-icon',
-  '.txt': 'text/plain',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-};
-
 export interface AnalogRequestHandlerOptions {
   /**
    * Config the server-function dispatch injector bootstraps from —
@@ -361,12 +338,9 @@ export interface AnalogRequestHandlerOptions {
    */
   config?: ApplicationConfig | StaticProvider[];
   /**
-   * The server entry's `import.meta.url`. When the entry is run
-   * directly (`node server.mjs`), the handler listens on
-   * `PORT` (default 4000); under the dev server it stays a middleware.
+   * Browser output directory. Only used by streaming, which renders
+   * against the CSR index document found there.
    */
-  main?: string;
-  /** Browser output directory; defaults to `../browser` beside the server bundle. */
   browserDistFolder?: string;
   /** Overrides the `analog:api-routes` map (loaded automatically). */
   apiRoutes?: ApiRouteFiles;
@@ -464,31 +438,32 @@ function createStreamingMatcher(
 }
 
 /**
- * The complete request handler for a server entry on the esbuild
- * application builder: server functions, page endpoints, and API routes
- * ahead of Angular, static browser assets with real MIME types, then
- * Angular SSR — falling through to `next()` under the dev server. The
- * analog:* maps are consumed internally; the entry only supplies its
- * url and the app's server config.
+ * Connect-style middleware handling Analog's server surface — global
+ * middleware, server functions, page endpoints, API routes, and
+ * streamed pages — and nothing else: unmatched requests fall through to
+ * `next()`, so static assets and Angular SSR stay in the app's own
+ * server entry, exactly as in a standard Angular SSR setup. The
+ * analog:* maps are consumed internally.
  *
  * ```ts
- * // server.ts
- * export const reqHandler = createAnalogRequestHandler({
- *   config,
- *   main: import.meta.url,
- * });
+ * // server.ts — standard Angular SSR shape
+ * const angularApp = new AngularNodeAppEngine();
+ * const analog = createAnalogRequestHandler({ config });
+ *
+ * app.use(analog);                 // Analog's routes
+ * app.use(express.static(browserDistFolder, { index: false }));
+ * app.use((req, res, next) =>
+ *   angularApp.handle(req).then((response) =>
+ *     response ? writeResponseToNodeResponse(response, res) : next(),
+ *   ),
+ * );
  * ```
  */
 export function createAnalogRequestHandler(
   options: AnalogRequestHandlerOptions = {},
 ): NodeRequestHandlerFunction {
   const browserDistFolder =
-    options.browserDistFolder ??
-    (options.main
-      ? fileURLToPath(new URL('../browser', options.main))
-      : join(process.cwd(), 'browser'));
-
-  const angularApp = new AngularNodeAppEngine();
+    options.browserDistFolder ?? join(process.cwd(), 'browser');
 
   let handlersPromise:
     | Promise<{
@@ -567,7 +542,7 @@ export function createAnalogRequestHandler(
     res.end();
   }
 
-  async function handler(
+  async function handle(
     req: IncomingMessage,
     res: ServerResponse,
     next?: (err?: unknown) => void,
@@ -596,22 +571,6 @@ export function createAnalogRequestHandler(
       return;
     }
 
-    const asset = join(browserDistFolder, pathname);
-    if (pathname !== '/' && existsSync(asset) && statSync(asset).isFile()) {
-      res.writeHead(200, {
-        'content-type':
-          MIME_TYPES[extname(asset)] ?? 'application/octet-stream',
-      });
-      createReadStream(asset).pipe(res);
-      return;
-    }
-
-    const response = await angularApp.handle(req);
-    if (response) {
-      await writeResponseToNodeResponse(response, res);
-      return;
-    }
-
     if (next) {
       next();
       return;
@@ -620,14 +579,16 @@ export function createAnalogRequestHandler(
     res.writeHead(404).end('Not found');
   }
 
-  if (options.main && isMainModule(options.main)) {
-    const port = Number(process.env['PORT'] ?? 4000);
-    createServer((req, res) => handler(req, res)).listen(port, () =>
-      console.log(`Listening on http://localhost:${port}`),
-    );
-  }
-
-  return createNodeRequestHandler(handler);
+  return createNodeRequestHandler((req, res, next) => {
+    handle(req, res, next).catch((error) => {
+      if (next) {
+        next(error);
+        return;
+      }
+      res.statusCode = 500;
+      res.end();
+    });
+  });
 }
 
 function toNodeHandler(
