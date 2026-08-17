@@ -58,10 +58,6 @@
         "./node_modules/@analogjs/router/ssr",
         "packages/router/ssr/src/index.ts"
       ],
-      "@analogjs/router/api": [
-        "./node_modules/@analogjs/router/api",
-        "packages/router/api/src/index.ts"
-      ],
       "@analogjs/top-bar": ["libs/top-bar/src/index.ts"],
       "@analogjs/trpc": ["packages/trpc/src/index.ts"],
       "@analogjs/vite-plugin-angular": [

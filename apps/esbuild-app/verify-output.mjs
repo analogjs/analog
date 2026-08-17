@@ -200,7 +200,7 @@ async function checkServer() {
         prerendered.includes('ng-server-context="ssg"'),
       ],
       [
-        // src/server/routes handlers served through @analogjs/router/api
+        // src/server/routes handlers served through @analogjs/router/ssr
         'api route serves JSON from the server entry',
         JSON.stringify(await (await fetch(`${base}/api/hello`)).json()) ===
           '{"message":"Hello Analog"}',
