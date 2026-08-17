@@ -1,18 +1,29 @@
 import {
   ENVIRONMENT_INITIALIZER,
   EnvironmentProviders,
+  inject,
   makeEnvironmentProviders,
 } from '@angular/core';
 import { provideRouter, RouterFeatures, ROUTES, Routes } from '@angular/router';
 import { API_PREFIX } from '@analogjs/router/tokens';
 import { ɵHTTP_ROOT_INTERCEPTOR_FNS as HTTP_ROOT_INTERCEPTOR_FNS } from '@angular/common/http';
 
+import { analogEsbuildMaps } from './analog-esbuild-globals';
 import { routes, createRoutes, Files, ROUTE_FILES } from './routes';
 import { PAGE_ENDPOINTS } from './endpoints';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
 import { cookieInterceptor } from './cookie-interceptor';
 
 declare const ANALOG_API_PREFIX: string;
+
+let esbuildRoutes: Routes | undefined;
+function foldedEsbuildRoutes(): Routes {
+  if (esbuildRoutes === undefined) {
+    const files = analogEsbuildMaps().routeFiles;
+    esbuildRoutes = files ? createRoutes(files) : [];
+  }
+  return esbuildRoutes;
+}
 
 /**
  * Sets up providers for the Angular router, and registers
@@ -31,6 +42,23 @@ export function provideFileRouter(
   return makeEnvironmentProviders([
     extraRoutesFeature.map((erf) => erf.ɵproviders),
     provideRouter(routes, ...routerFeatures),
+    // The glob-derived `routes` array is empty outside of Vite; esbuild
+    // builds publish the files map through the injected boot module, and
+    // this factory folds it in at DI time — unless withRouteFiles
+    // supplied an explicit map (it provides ROUTE_FILES). The folded
+    // array is memoized so every bootstrap in a server process shares
+    // one set of route objects, as on the Vite path — the router caches
+    // loaded components on the route object itself.
+    {
+      provide: ROUTES,
+      multi: true,
+      useFactory: () => {
+        if (routes.length || inject(ROUTE_FILES, { optional: true })) {
+          return [];
+        }
+        return foldedEsbuildRoutes();
+      },
+    },
     {
       provide: ENVIRONMENT_INITIALIZER,
       multi: true,

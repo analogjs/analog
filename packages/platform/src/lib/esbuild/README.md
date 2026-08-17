@@ -128,7 +128,8 @@ through to `@angular/build`:
 
 ```jsonc
 // tsconfig.app.json — pages must be part of the TypeScript program,
-// and the shipped analog:* declarations must be referenced
+// and the shipped analog:* declarations referenced when a file
+// imports them directly (the default wiring needs none)
 "compilerOptions": {
   "types": ["@analogjs/platform/esbuild-env"]
 },
@@ -136,28 +137,33 @@ through to `@angular/build`:
 ```
 
 ```ts
-// app.config.ts
-import { provideFileRouter, withRouteFiles } from '@analogjs/router';
-import {
-  provideContent,
-  withContentFiles,
-  withMarkdownRenderer,
-} from '@analogjs/content';
-import routeFiles from 'analog:route-files';
-import { contentFilesList, contentFiles } from 'analog:content-files';
+// app.config.ts — identical to a Vite app; no analog:* imports
+import { provideFileRouter } from '@analogjs/router';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 
 export const appConfig = {
   providers: [
-    provideFileRouter(withRouteFiles(routeFiles)),
+    provideFileRouter(),
     // Only needed when using markdown content; loadMermaid only when
     // rendering mermaid diagrams
     provideContent(
       withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
-      withContentFiles({ list: contentFilesList, files: contentFiles }),
     ),
   ],
 };
 ```
+
+The builders inject a boot module into every bundle that registers the
+discovered maps with the packages (via internal setters), and
+`provideFileRouter` / `provideContent` fold them in at DI time when the
+Vite globs are empty. `withRouteFiles`, `withPageEndpoints`, and
+`withContentFiles` remain as explicit overrides for tests and custom
+setups. The registration is per-graph module state, deliberately not a
+global: the Angular builder bundles the server entry and main.server as
+separate graphs, each with its own copies of the packages and app, and
+a process-wide global would hand one graph's component defs to the
+other graph's router (a cross-runtime NG0203 at outlet activation —
+found the hard way).
 
 Mermaid parity matches the Vite path exactly, including its shape:
 diagrams render client-side through `<analog-markdown>`

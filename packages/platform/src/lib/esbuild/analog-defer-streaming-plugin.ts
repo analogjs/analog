@@ -1,5 +1,5 @@
 import type { Plugin } from 'esbuild';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import {
@@ -42,7 +42,13 @@ export function analogDeferStreamingPlugin(): Plugin {
           return undefined;
         }
 
-        const absPath = resolve(args.resolveDir, args.path).replace(/\\/g, '/');
+        // Canonicalize: the same file is reachable through the
+        // node_modules symlink and the pnpm store realpath, and two
+        // captured paths would bundle @angular/core twice — two DI
+        // runtimes whose injection contexts don't see each other.
+        const absPath = realpathSync(
+          resolve(args.resolveDir, args.path),
+        ).replace(/\\/g, '/');
         let kind = inspected.get(absPath);
         if (kind === undefined) {
           const info = inspectAngularCoreModule(readFileSync(absPath, 'utf8'));

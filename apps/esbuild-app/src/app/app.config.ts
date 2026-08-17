@@ -7,34 +7,17 @@ import {
   provideClientHydration,
   withIncrementalHydration,
 } from '@angular/platform-browser';
-import {
-  provideFileRouter,
-  withDebugRoutes,
-  withPageEndpoints,
-  withRouteFiles,
-} from '@analogjs/router';
-import {
-  provideContent,
-  withContentFiles,
-  withMarkdownRenderer,
-} from '@analogjs/content';
-import routeFiles from 'analog:route-files';
-import { contentFilesList, contentFiles } from 'analog:content-files';
-import pageEndpoints from 'analog:page-endpoints';
+import { provideFileRouter, withDebugRoutes } from '@analogjs/router';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideClientHydration(withIncrementalHydration()),
     provideHttpClient(withFetch()),
-    provideFileRouter(
-      withRouteFiles(routeFiles),
-      withPageEndpoints(pageEndpoints),
-      withDebugRoutes(),
-    ),
+    provideFileRouter(withDebugRoutes()),
     provideContent(
       withMarkdownRenderer({ loadMermaid: () => import('mermaid') }),
-      withContentFiles({ list: contentFilesList, files: contentFiles }),
     ),
   ],
 };

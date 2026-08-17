@@ -15,6 +15,7 @@ import { analogApiPlugin } from './analog-api-plugin.js';
 import { analogContentPlugin } from './analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
 import { analogDeferStreamingPlugin } from './analog-defer-streaming-plugin.js';
+import { analogInitPlugin } from './analog-init-plugin.js';
 import { analogPageEndpointsPlugin } from './analog-page-endpoints-plugin.js';
 import { analogRouterPlugin } from './analog-router-plugin.js';
 import { analogServerFnsPlugin } from './analog-server-fns-plugin.js';
@@ -100,6 +101,7 @@ export async function* serveAnalogApplication(
         additionalPagesDirs: analog.additionalPagesDirs,
       }),
       ...(analog.streaming ? [analogDeferStreamingPlugin()] : []),
+      analogInitPlugin({ workspaceRoot: context.workspaceRoot }),
     ],
     // A configured server entry serves API routes and page endpoints
     // itself in dev; without one they are served by dev middleware.

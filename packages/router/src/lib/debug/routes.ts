@@ -1,6 +1,7 @@
 import { inject, InjectionToken } from '@angular/core';
 import { Route } from '@angular/router';
 
+import { analogEsbuildMaps } from '../analog-esbuild-globals';
 import {
   ANALOG_CONTENT_ROUTE_FILES,
   ANALOG_ROUTE_FILES,
@@ -14,11 +15,13 @@ export const DEBUG_ROUTES = new InjectionToken(
     providedIn: 'root',
     factory() {
       // The glob placeholders are empty outside of Vite; esbuild builds
-      // provide the same files map through withRouteFiles instead.
-      const files = inject(ROUTE_FILES, { optional: true }) ?? {
-        ...ANALOG_ROUTE_FILES,
-        ...ANALOG_CONTENT_ROUTE_FILES,
-      };
+      // publish the same files map through the injected boot module
+      // (withRouteFiles overrides both).
+      const files = inject(ROUTE_FILES, { optional: true }) ??
+        analogEsbuildMaps().routeFiles ?? {
+          ...ANALOG_ROUTE_FILES,
+          ...ANALOG_CONTENT_ROUTE_FILES,
+        };
       const debugRoutes = createRoutes(files, true);
 
       return debugRoutes as (Route & DebugRoute)[];

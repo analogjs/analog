@@ -26,6 +26,7 @@ export {
 } from './lib/marked-content-highlighter';
 export { injectContentFilesMap } from './lib/inject-content-files';
 export { CONTENT_FILES_LIST_TOKEN } from './lib/content-files-list-token';
+export { ɵsetAnalogEsbuildContentMaps } from './lib/analog-esbuild-globals';
 export {
   injectContentListLoader,
   withContentListLoader,

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+import { analogEsbuildMaps } from './analog-esbuild-globals';
 import { RedirectRouteMeta, RouteConfig, RouteMeta } from './models';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
 import {
@@ -42,9 +43,12 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
       };
 
       // The glob-based map outside of Vite is empty; esbuild builds
-      // provide the endpoint keys through withPageEndpoints instead.
+      // publish the endpoint keys through the injected boot module
+      // (withPageEndpoints overrides both).
       const pageEndpoints =
-        inject(PAGE_ENDPOINTS, { optional: true }) ?? ANALOG_PAGE_ENDPOINTS;
+        inject(PAGE_ENDPOINTS, { optional: true }) ??
+        analogEsbuildMaps().pageEndpoints ??
+        ANALOG_PAGE_ENDPOINTS;
 
       if (pageEndpoints[routeConfig[ANALOG_META_KEY].endpointKey]) {
         const http = inject(HttpClient);

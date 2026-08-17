@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import { analogEsbuildContentMaps } from './analog-esbuild-globals';
 import { ContentFile } from './content-file';
 import { getContentFilesList } from './get-content-files';
 
@@ -31,7 +32,14 @@ export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
   {
     providedIn: 'root',
     factory() {
-      return toContentFilesList(getContentFilesList());
+      const list = getContentFilesList();
+      // The glob is empty outside of Vite; esbuild builds publish the
+      // map through the injected boot module instead.
+      return toContentFilesList(
+        Object.keys(list).length
+          ? list
+          : (analogEsbuildContentMaps().contentFilesList ?? {}),
+      );
     },
   },
 );

@@ -20,12 +20,23 @@ const indexPageOriginal = readFileSync(indexPage, 'utf8');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const servedBundles = async () => {
-  const main = await (await fetch(`${base}/main.js`)).text();
-  const chunkNames = [...new Set(main.match(/chunk-[A-Z0-9]+\.js/g) ?? [])];
-  const chunks = await Promise.all(
-    chunkNames.map(async (name) => (await fetch(`${base}/${name}`)).text()),
-  );
-  return [main, ...chunks].join('\n');
+  // Follow chunk references transitively: the route-files map lives in
+  // a shared chunk (imported by the injected boot module), so page
+  // chunks are named there rather than in main.js.
+  const seen = new Set();
+  const sources = [];
+  const queue = ['main.js'];
+  while (queue.length) {
+    const name = queue.shift();
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const source = await (await fetch(`${base}/${name}`)).text();
+    sources.push(source);
+    for (const ref of source.match(/chunk-[A-Z0-9]+\.js/g) ?? []) {
+      if (!seen.has(ref)) queue.push(ref);
+    }
+  }
+  return sources.join('\n');
 };
 
 const pollServed = async (marker, attempts = 30) => {
