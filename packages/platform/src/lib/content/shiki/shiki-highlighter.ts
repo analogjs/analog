@@ -52,7 +52,7 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
       container: this.container,
       highlight: async (code, lang, props) => {
         if (this.hasLoadMermaid && lang === 'mermaid') {
-          return `<pre class="mermaid">${code}</pre>`;
+          return `<pre class="mermaid">${escapeHtml(code)}</pre>`;
         }
 
         if (this.skipLangs.includes(lang as string)) {
