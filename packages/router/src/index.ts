@@ -15,8 +15,8 @@ export { RouteMeta } from './lib/models';
 export {
   provideFileRouter,
   withExtraRoutes,
-  withRouteFiles,
-  withPageEndpoints,
+  withRouteFiles as ɵwithRouteFiles,
+  withPageEndpoints as ɵwithPageEndpoints,
 } from './lib/provide-file-router';
 export { MetaTag } from './lib/meta-tags';
 export { PageServerLoad, LoadResult } from './lib/route-types';

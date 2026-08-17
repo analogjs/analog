@@ -1,5 +1,8 @@
 import { inject } from '@angular/core';
-import { CONTENT_FILES_LIST_TOKEN, type ContentFile } from '@analogjs/content';
+import {
+  ɵCONTENT_FILES_LIST_TOKEN as CONTENT_FILES_LIST_TOKEN,
+  type ContentFile,
+} from '@analogjs/content';
 
 /**
  * Builds a `routeMeta.getPrerenderParams` function that prerenders one

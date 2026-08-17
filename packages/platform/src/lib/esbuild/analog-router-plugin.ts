@@ -13,7 +13,8 @@ import { setupDiscoveryManifest } from './discovery-manifest.js';
  *
  *   import routeFiles from 'analog:route-files';
  *
- * The map is passed to `provideFileRouter(withRouteFiles(routeFiles))`.
+ * The injected boot module registers the map for `provideFileRouter`
+ * to fold in at DI time.
  */
 export const ROUTE_FILES_ID = 'analog:route-files';
 

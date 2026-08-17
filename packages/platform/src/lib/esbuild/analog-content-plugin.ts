@@ -15,8 +15,8 @@ import { setupDiscoveryManifest } from './discovery-manifest.js';
  *
  *   import { contentFilesList, contentFiles } from 'analog:content-files';
  *
- * Both maps are passed to `withContentFiles({ list, files })`,
- * a `provideContent` feature.
+ * The injected boot module registers both maps for `provideContent`
+ * to fold in at DI time.
  */
 export const CONTENT_FILES_ID = 'analog:content-files';
 

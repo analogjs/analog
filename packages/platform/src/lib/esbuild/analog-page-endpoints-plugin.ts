@@ -12,7 +12,7 @@ import { setupDiscoveryManifest } from './discovery-manifest.js';
  *
  * Server bundles receive lazy imports for
  * `createPageEndpointsHandler`; browser bundles receive the same keys
- * mapped to `true` — enough for `withPageEndpoints` to mark which
+ * mapped to `true` — enough for the router to mark which
  * routes fetch server load data, with no server code in the client.
  */
 export const PAGE_ENDPOINTS_ID = 'analog:page-endpoints';

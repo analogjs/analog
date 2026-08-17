@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { withContentFiles } from '@analogjs/content';
+import { ɵwithContentFiles as withContentFiles } from '@analogjs/content';
 
 import { fromContentDir } from './prerender-content';
 

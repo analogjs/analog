@@ -49,12 +49,12 @@ linker), route files are surfaced through a virtual module:
    manifest is what makes adding or removing a page rebuild in watch
    mode and the dev server. The watchers are unref'd so one-shot builds
    still exit.
-2. `withRouteFiles(routeFiles)` (new public API in `@analogjs/router`)
-   feeds that map into `createRoutes` via the `ROUTES` multi-provider —
-   the same mechanism as `withExtraRoutes`. The glob-based `routes`
-   array is empty outside of Vite, so the file routes are the effective
-   route table, and all `provideFileRouter` features (meta tags, cookie
-   interceptor, API prefix) keep working.
+2. The injected boot module registers the map with `@analogjs/router`
+   (internal setter), and `provideFileRouter` folds it into the route
+   table through a `ROUTES` multi-provider factory when the Vite glob is
+   empty — so all `provideFileRouter` features (meta tags, cookie
+   interceptor, API prefix) keep working with no analog:\* imports in
+   app code. `ɵwithRouteFiles` remains as an internal override seam.
 3. Builder wrappers pass the plugins to `@angular/build` (v18+) through
    the public extension points: `buildApplication(options, context,
 { codePlugins })` and `executeDevServerBuilder(options, context,
@@ -77,11 +77,12 @@ Markdown content follows the same shape:
    also loads `.md` files as text with the markdown body pre-rendered to
    HTML at build time via the same shared marked + shiki/prism setup the
    Vite content plugin uses, front matter preserved.
-5. `withContentFiles({ list, files })` (new `provideContent` feature in
-   `@analogjs/content`) overrides the glob-backed
-   `CONTENT_FILES_LIST_TOKEN` / `CONTENT_FILES_TOKEN` factories with the
-   supplied maps — pure DI, no module patching — so `injectContent`,
-   `injectContentFiles`, and the content loaders work unchanged.
+5. The boot module likewise registers both content maps with
+   `@analogjs/content`, whose glob-backed
+   `CONTENT_FILES_LIST_TOKEN` / `CONTENT_FILES_TOKEN` factories fall
+   back to them — pure DI, no module patching — so `injectContent`,
+   `injectContentFiles`, and the content loaders work unchanged
+   (`ɵwithContentFiles` remains as an internal override seam).
 6. Markdown route files merge into the `analog:route-files` map (values
    resolve to the raw content string), so `createRoutes` turns them into
    routes through the existing `toMarkdownModule` path. The router
@@ -157,9 +158,11 @@ export const appConfig = {
 The builders inject a boot module into every bundle that registers the
 discovered maps with the packages (via internal setters), and
 `provideFileRouter` / `provideContent` fold them in at DI time when the
-Vite globs are empty. `withRouteFiles`, `withPageEndpoints`, and
-`withContentFiles` remain as explicit overrides for tests and custom
-setups. The registration is per-graph module state, deliberately not a
+Vite globs are empty. The former explicit bridges
+(`withRouteFiles`, `withPageEndpoints`, `withContentFiles`) are
+internal now (`ɵ`-prefixed) — overrides go through `withConfig`, and
+custom esbuild setups register `analogInitPlugin` alongside the other
+plugins instead. The registration is per-graph module state, deliberately not a
 global: the Angular builder bundles the server entry and main.server as
 separate graphs, each with its own copies of the packages and app, and
 a process-wide global would hand one graph's component defs to the
@@ -439,8 +442,8 @@ Wiring on top of the API routes setup:
   page opts out with `routeMeta.prerender: false` when its server data
   must stay per-request.
 
-Debug routes work too: `withDebugRoutes()` reads the same files map
-`withRouteFiles` provides (the `ROUTE_FILES` token), so
+Debug routes work too: `withDebugRoutes()` reads the same registered
+files map (or the `ROUTE_FILES` token when overridden), so
 `/__analog/routes` lists the discovered files. Give it a
 `RenderMode.Server` entry in the server routes, since it is not part of
 the file map.

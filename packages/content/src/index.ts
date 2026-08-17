@@ -13,7 +13,7 @@ export {
   MERMAID_IMPORT_TOKEN,
 } from './lib/provide-content';
 export {
-  withContentFiles,
+  withContentFiles as ɵwithContentFiles,
   ContentFilesInput,
 } from './lib/provide-content-files';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
@@ -25,7 +25,7 @@ export {
   withHighlighter,
 } from './lib/marked-content-highlighter';
 export { injectContentFilesMap } from './lib/inject-content-files';
-export { CONTENT_FILES_LIST_TOKEN } from './lib/content-files-list-token';
+export { CONTENT_FILES_LIST_TOKEN as ɵCONTENT_FILES_LIST_TOKEN } from './lib/content-files-list-token';
 export { ɵsetAnalogEsbuildContentMaps } from './lib/analog-esbuild-globals';
 export {
   injectContentListLoader,
