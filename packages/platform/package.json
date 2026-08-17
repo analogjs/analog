@@ -6,10 +6,6 @@
   "author": "Brandon Roberts <robertsbt@gmail.com>",
   "exports": {
     ".": "./src/index.js",
-    "./esbuild": {
-      "types": "./src/lib/esbuild/index.d.ts",
-      "default": "./src/lib/esbuild/index.js"
-    },
     "./esbuild-env": {
       "types": "./src/lib/esbuild/env.d.ts"
     },

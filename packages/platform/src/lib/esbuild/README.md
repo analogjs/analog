@@ -95,10 +95,10 @@ Angular build runs a real TypeScript program that would otherwise fail
 with TS2307, while at bundle time the plugins' `onResolve` intercepts
 the specifiers before any filesystem resolution. This is the same
 pattern as `vite/client`'s ambient types for `import.meta.glob`. The
-declarations ship with the package: apps add
-`"types": ["@analogjs/platform/esbuild-env"]` to their tsconfig. The
-plugins themselves are also importable from `@analogjs/platform/esbuild`
-for custom esbuild setups.
+declarations ship with the package: a file that imports `analog:*`
+directly adds `"types": ["@analogjs/platform/esbuild-env"]` to its
+tsconfig — the default wiring imports none. The builders are the only
+supported way to run the plugins; they are not exported individually.
 
 ## App wiring
 
@@ -129,12 +129,9 @@ through to `@angular/build`:
 ```
 
 ```jsonc
-// tsconfig.app.json — pages must be part of the TypeScript program,
-// and the shipped analog:* declarations referenced when a file
-// imports them directly (the default wiring needs none)
-"compilerOptions": {
-  "types": ["@analogjs/platform/esbuild-env"]
-},
+// tsconfig.app.json — pages must be part of the TypeScript program.
+// The default wiring imports no analog:* modules; a file that does
+// adds "types": ["@analogjs/platform/esbuild-env"].
 "include": ["src/**/*.d.ts", "src/**/*.page.ts"]
 ```
 
@@ -160,9 +157,7 @@ discovered maps with the packages (via internal setters), and
 `provideFileRouter` / `provideContent` fold them in at DI time when the
 Vite globs are empty. The former explicit bridges
 (`withRouteFiles`, `withPageEndpoints`, `withContentFiles`) are
-internal now (`ɵ`-prefixed) — overrides go through `withConfig`, and
-custom esbuild setups register `analogInitPlugin` alongside the other
-plugins instead. The registration is per-graph module state, deliberately not a
+internal now (`ɵ`-prefixed) — overrides go through `withConfig`. The registration is per-graph module state, deliberately not a
 global: the Angular builder bundles the server entry and main.server as
 separate graphs, each with its own copies of the packages and app, and
 a process-wide global would hand one graph's component defs to the
