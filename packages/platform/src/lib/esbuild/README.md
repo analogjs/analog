@@ -509,6 +509,19 @@ A stock `ng new --ssr` app (application builder + the Express
 deleted, each Analog surface is opt-in, and after the wiring steps the
 app builds and serves exactly as before.
 
+The `migrate-angular-ssr` schematic automates steps 1–6:
+
+```sh
+ng generate @analogjs/platform:migrate-angular-ssr
+```
+
+It is a plain Angular schematic — no Nx required — that swaps the
+builders, rewrites the three config files by AST (oxc), extends the
+TypeScript program, and adds the dependencies. Files that have
+diverged from the scaffold shape are left alone and reported as manual
+steps rather than guessed at; re-running is safe (already-migrated
+files pass through unchanged). The equivalent manual steps:
+
 1. **Install**: `@analogjs/platform`, `@analogjs/router`; `h3` +
    `radix3` for the server surface (API routes, endpoints, middleware);
    `@analogjs/content` + `marked` + `front-matter` only if using

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "AnalogMigrateAngularSsr",
+  "title": "Migrate a stock Angular SSR application to Analog",
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "string",
+      "description": "The Angular application project to migrate. Defaults to the first application project in angular.json.",
+      "$default": {
+        "$source": "projectName"
+      }
+    },
+    "skipInstall": {
+      "type": "boolean",
+      "description": "Skip installing the added dependencies.",
+      "default": false
+    }
+  }
+}

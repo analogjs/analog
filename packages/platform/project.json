@@ -16,6 +16,7 @@
           "packages/platform/*.md",
           "packages/platform/plugin.json",
           "packages/platform/builders.json",
+          "packages/platform/collection.json",
           "packages/platform/migrations/migration.json",
           {
             "input": "./packages/platform/skills",
@@ -24,7 +25,7 @@
           },
           {
             "input": "./packages/platform/src/lib/esbuild",
-            "glob": "*.{json,d.ts}",
+            "glob": "**/*.{json,d.ts}",
             "output": "./src/lib/esbuild"
           }
         ],

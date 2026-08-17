@@ -1,0 +1,33 @@
+{
+  "$schema": "../../node_modules/@angular-devkit/schematics/collection-schema.json",
+  "schematics": {
+    "application": {
+      "factory": "./src/lib/nx-plugin/src/generators/app/compat",
+      "schema": "./src/lib/nx-plugin/src/generators/app/schema.json",
+      "description": "Generates an Analog application",
+      "aliases": ["app"]
+    },
+    "page": {
+      "factory": "./src/lib/nx-plugin/src/generators/page/generator#analogPageGeneratorSchematic",
+      "schema": "./src/lib/nx-plugin/src/generators/page/schema.json",
+      "description": "Creates a new Analog page in the given or default project.",
+      "aliases": ["p"]
+    },
+    "setup-vitest": {
+      "factory": "./src/lib/nx-plugin/src/generators/setup-vitest/compat",
+      "schema": "./src/lib/nx-plugin/src/generators/setup-vitest/schema.json",
+      "description": "Setup the Vitest configuration."
+    },
+    "init": {
+      "factory": "./src/lib/nx-plugin/src/generators/init/compat",
+      "schema": "./src/lib/nx-plugin/src/generators/init/schema.json",
+      "description": "Migrate and configure an Angular SPA to use Analog.",
+      "aliases": ["migrate"]
+    },
+    "migrate-angular-ssr": {
+      "factory": "./src/lib/esbuild/schematics/migrate-angular-ssr/index",
+      "schema": "./src/lib/esbuild/schematics/migrate-angular-ssr/schema.json",
+      "description": "Migrate a stock Angular SSR application (application builder + Express server entry) to Analog on the esbuild path. Pure Angular schematic — no Nx required."
+    }
+  }
+}
