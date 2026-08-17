@@ -36,7 +36,7 @@ Analog today owns a parallel build pipeline: a Vite configuration, a set of
 Vite plugins, and Nitro for SSR/SSG and the server surface. That pipeline is
 also Analog's largest maintenance surface — Vite majors, Rollup/Rolldown
 churn, and Nitro internals all land on this repo first, and the Nitro-based
-server integration is already in maintenance mode for v3. Meanwhile
+server integration is already in maintenance mode. Meanwhile
 Angular's CLI has converged on the same primitives underneath: esbuild
 bundling, a Vite-based dev server, and `@angular/ssr`.
 
@@ -218,12 +218,12 @@ The full parity board (42 rows with per-row evidence) accompanies this RFC.
    preset matrix is not replicated; edge isolates would need a
    `fetch`-style handler built on `AngularAppEngine` (assessed, not built).
 
-## Integration into v3
+## Integration with the current codebase
 
-The prototype targets the current release line and integrates against
-v3's restructuring, verified by a test merge (97 files change, 19
-conflict, and the entire esbuild path merges clean — every conflict is an
-integration seam, not new code). Three structural items:
+The prototype integrates against the repo's recent restructuring,
+verified by a test merge (97 files change, 19 conflict, and the entire
+esbuild path merges clean — every conflict is an integration seam, not
+new code). Three structural items:
 
 1. **Router content-split (#2216)** — the boot-map fold transplants into
    the restructured `provide-file-router-base` / `routes.ts` and the
@@ -236,15 +236,15 @@ integration seam, not new code). Three structural items:
 
 vite-plugin-nitro's `server-fn-id` export still ships, so the
 shared-primitive move is planned work, not a blocker. Estimated at a
-focused day or two; the router-split seam drifts as v3 moves, so
-integrating early keeps it cheap.
+focused day or two; the router-split seam drifts as the codebase moves,
+so integrating early keeps it cheap.
 
 ## Rollout
 
-1. **v3 pre-releases:** ship as experimental. README-level docs, streaming
+1. **Pre-releases:** ship as experimental. README-level docs, streaming
    behind its flag, the Vite path remains the default and the documented
    path.
-2. **Gate to default:** v3 integration done; verify suites (including a
+2. **Gate to default:** codebase integration done; verify suites (including a
    Windows leg) wired into CI; Angular peer floor decided and enforced; a
    pre-release cycle of external apps; a stated deployment-targets
    position in the docs.
