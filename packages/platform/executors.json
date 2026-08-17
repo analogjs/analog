@@ -14,5 +14,22 @@
       "schema": "./src/lib/esbuild/dev-server.schema.json",
       "description": "Serves an Angular application with Analog file-based routes using the esbuild-based dev server"
     }
+  },
+  "executors": {
+    "vite-dev-server": {
+      "implementation": "./src/lib/nx-plugin/src/executors/vite-dev-server/vite-dev-server.impl",
+      "schema": "./src/lib/nx-plugin/src/executors/vite-dev-server/schema.json",
+      "description": "Vite dev server."
+    },
+    "vite": {
+      "implementation": "./src/lib/nx-plugin/src/executors/vite/vite.impl",
+      "schema": "./src/lib/nx-plugin/src/executors/vite/schema.json",
+      "description": "Build with Vite."
+    },
+    "vitest": {
+      "implementation": "./src/lib/nx-plugin/src/executors/vitest/vitest.impl",
+      "schema": "./src/lib/nx-plugin/src/executors/vitest/schema.json",
+      "description": "Test with Vitest"
+    }
   }
 }

@@ -89,8 +89,8 @@
       "optional": true
     }
   },
-  "builders": "./builders.json",
-  "executors": "./src/lib/nx-plugin/executors.json",
+  "builders": "./executors.json",
+  "executors": "./executors.json",
   "generators": "./src/lib/nx-plugin/generators.json",
   "schematics": "./collection.json",
   "ng-update": {

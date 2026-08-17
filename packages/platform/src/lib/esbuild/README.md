@@ -1,7 +1,7 @@
 # Analog file-based routes on the Angular application builder (sketch)
 
 Status: **proof-of-concept sketch.** The builders are registered in a
-package-root `builders.json` (see Verification for why) and validated
+package-root `executors.json` (see Verification for why) and validated
 against a real Angular v22 build by `apps/esbuild-app`, which resolves
 them by name (`nx build esbuild-app` / `nx serve esbuild-app`, with
 `nx verify esbuild-app` asserting the output). Covers file-based
@@ -658,14 +658,16 @@ Confirmed against a real build:
 Name resolution found a packaging bug: Angular's host rejects builder
 implementation paths starting with `..`, so the entries could not live
 in the nx-plugin's `executors.json` (which sits a directory away from
-the esbuild output). The builders are declared in a package-root
-`builders.json` instead, with `package.json#builders` pointing at it
-and the existing string aliases carried over; `package.json#executors`
-still points at the nx manifest for Nx. Nx-side resolution has its own
-gotcha, found via `apps/esbuild-app`: the entries must not appear under
-an `executors` manifest key, or Nx loads the architect `Builder` object
-as a plain Nx executor and fails with "implementation is not a
-function".
+the esbuild output). The manifest is hoisted to a package-root
+`executors.json` instead — the same single-source-of-truth shape as
+upstream, one directory up so every path is `..`-free — carrying the
+string aliases, the esbuild builders under `builders`, and the
+Nx-native executors under `executors`; both `package.json#builders`
+and `#executors` point at it. Nx-side resolution has its own gotcha,
+found via `apps/esbuild-app`: the builder entries must not appear
+under the `executors` manifest key, or Nx loads the architect
+`Builder` object as a plain Nx executor and fails with
+"implementation is not a function".
 
 A spike also validated the client-side module substitution the future
 `.server.ts` endpoint scrub needs: a custom `onResolve` can capture
