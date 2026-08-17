@@ -393,7 +393,8 @@ capability that belongs in Angular proper: a first-class streaming SSR entry
 point (e.g. `renderApplicationStream`) that emits `@defer` blocks progressively
 with per-block hydration annotation. The Analog prototype demonstrates the design
 and quantifies the payoff; the durable form is an upstream API, not a patch a
-framework maintains against private symbols.
+framework maintains against private symbols. The concrete proposal to Angular is
+drafted in [RFC: First-class streaming SSR primitives for Angular](./RFC-upstream-streaming-ssr.md).
 
 ### Stream the eager shell early
 
