@@ -502,6 +502,46 @@ With this, no Analog capability is Nitro-only — the streaming patch
 would still be better served by an upstream Angular per-block
 resolution hook, which would delete the string patch on both paths.
 
+## Migrating from Angular SSR
+
+A stock `ng new --ssr` app (application builder + the Express
+`server.ts` scaffold) migrates additively — nothing in the scaffold is
+deleted, each Analog surface is opt-in, and after the wiring steps the
+app builds and serves exactly as before.
+
+1. **Install**: `@analogjs/platform`, `@analogjs/router`; `h3` +
+   `radix3` for the server surface (API routes, endpoints, middleware);
+   `@analogjs/content` + `marked` + `front-matter` only if using
+   content.
+2. **Swap the builders** in `angular.json`:
+   `@angular/build:application` → `@analogjs/platform:application` and
+   `@angular/build:dev-server` → `@analogjs/platform:dev-server`. All
+   existing options pass through untouched. A `--ssr` app already has
+   the pair that matters (`server`, `outputMode: "server"`,
+   `ssr.entry`); add `prerender: true` for SSG and the app's hostnames
+   to `security.allowedHosts`.
+3. **Client config**: replace `provideRouter(routes)` with
+   `provideFileRouter(withExtraRoutes(routes))` — the existing
+   `app.routes.ts` keeps working, and routes move into
+   `src/app/pages/**` incrementally.
+4. **Server config**: replace `@angular/ssr`'s
+   `provideServerRendering(withRoutes(serverRoutes))` with
+   `provideAnalogServerRendering(withRoutes([...]))` from
+   `@analogjs/router/ssr`, listing only the paths still served by
+   `withExtraRoutes` — file-based pages derive their server routes
+   automatically, so the hand-maintained server-routes array shrinks as
+   pages migrate. `main.server.ts` stays as scaffolded.
+5. **`server.ts`**: one line, mounted before `express.static`:
+   `app.use(createAnalogRequestHandler({ config }))`.
+6. **TypeScript program**: add the new file kinds to
+   `tsconfig.app.json` — `src/app/pages/**/*.page.ts`,
+   `src/app/pages/**/*.server.ts`, `src/server/**/*.ts`.
+7. **Adopt surfaces as needed**: pages, API routes in
+   `src/server/routes` (replacing the scaffold's commented-out Express
+   endpoints), page endpoints, server functions, middleware, `routeMeta`
+   rendering control, content, sitemap, streaming — per the sections
+   above.
+
 ## Verification
 
 `apps/esbuild-app` is a minimal Angular app that resolves the builders
