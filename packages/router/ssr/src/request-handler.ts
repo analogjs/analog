@@ -81,8 +81,10 @@ const METHODS = new Set([
  */
 export function apiRoutesFromFiles(files: ApiRouteFiles): ApiRoute[] {
   return Object.keys(files).map((filename) => {
+    // Strip through the first `/routes` directory: `src/server/routes`
+    // for project handlers, `<additionalAPIDir>/routes` for shared ones.
     const withoutExtension = filename
-      .replace(/^.*?\/server\/routes/, '')
+      .replace(/^.*?\/routes(?=\/)/, '')
       .replace(/\.[^./]+$/, '');
 
     const segments = withoutExtension.split('/').filter(Boolean);
@@ -150,12 +152,16 @@ export function pageEndpointRoutesFromFiles(
   apiPrefix = 'api',
 ): ApiRoute[] {
   return Object.keys(files).map((filename) => {
+    // Mirrors the endpoint derivation in routes.ts, so the served route
+    // is exactly what injectRouteEndpointURL addresses — including the
+    // `(group)` -> `-group-` rewrite for pathless groups.
     const endpoint = filename
       .replace(/\.server\.ts$/, '')
       .replace(/\[\[\.{3}.+\]\]/, '**')
       .replace(/\[\.{3}.+\]/, '**')
       .replace(/^(.*?)\/pages/, '/pages')
       .replace(/\./g, '/')
+      .replace(/\/\((.*?)\)$/, '/-$1-')
       .replace(/\[([^\]]+)\]/g, ':$1');
 
     return { route: `/${apiPrefix}/_analog${endpoint}`, filename };
@@ -199,7 +205,7 @@ export function createPageEndpointsHandler(
                 params: event.context['params'] ?? {},
                 req: event.node.req,
                 res: event.node.res,
-                fetch: globalThis.fetch,
+                fetch: createEventFetch(event),
                 event,
               }) ?? {}
             );
@@ -208,6 +214,36 @@ export function createPageEndpointsHandler(
       }),
     ),
   );
+}
+
+/**
+ * The `fetch` handed to page endpoint load/action functions, with
+ * Nitro `$fetch` semantics: relative URLs resolve against the incoming
+ * request's own origin (endpoints call their app's API routes as
+ * `fetch('/api/…')`), and the body comes back parsed — JSON for JSON
+ * responses, text otherwise.
+ */
+function createEventFetch(event: {
+  node: { req: IncomingMessage };
+}): (input: string, init?: RequestInit) => Promise<unknown> {
+  return async (input, init) => {
+    let url = input;
+    if (url.startsWith('/')) {
+      const headers = event.node.req.headers;
+      const protocol =
+        headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+      url = `${protocol}://${headers.host}${url}`;
+    }
+
+    const response = await globalThis.fetch(url, init);
+    if (!response.ok) {
+      throw new Error(
+        `[analog] fetch ${input}: ${response.status} ${response.statusText}`,
+      );
+    }
+    const contentType = response.headers.get('content-type') ?? '';
+    return contentType.includes('json') ? response.json() : response.text();
+  };
 }
 
 /**
@@ -272,10 +308,20 @@ export function createServerMiddlewareHandler(
         return false;
       }
 
+      // Nitro sets originalUrl on the node request; middleware written
+      // for that path reads it, so mirror it here.
+      const request = req as IncomingMessage & { originalUrl?: string };
+      request.originalUrl ??= req.url;
       const event = createEvent(req, res);
       for (const handler of await load()) {
         await handler(event);
-        if (res.writableEnded) {
+        // h3's send/sendRedirect defer the actual write by one
+        // setImmediate; a middleware that fires a redirect without
+        // returning its promise (which Nitro tolerates) has only staged
+        // it by now. Yield one macrotask so a staged response lands,
+        // then check.
+        await new Promise((resolve) => setImmediate(resolve));
+        if (event.handled || res.writableEnded) {
           return true;
         }
       }
@@ -526,12 +572,15 @@ export function createAnalogRequestHandler(
     res: ServerResponse,
     next?: (err?: unknown) => void,
   ): Promise<void> {
+    // Nitro sets originalUrl on the node request; handlers written for
+    // that path read it, so mirror it for the whole chain.
+    (req as IncomingMessage & { originalUrl?: string }).originalUrl ??= req.url;
     const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
     const { middleware, apis, streaming } = await getHandlers();
 
     // Global middleware first, on every request — page renders and
     // static assets included, as under Nitro.
-    if (await middleware.run(req, res)) {
+    if ((await middleware.run(req, res)) || res.headersSent) {
       return;
     }
 
