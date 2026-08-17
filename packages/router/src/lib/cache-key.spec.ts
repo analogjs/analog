@@ -27,21 +27,40 @@ describe('makeCacheKey', () => {
   });
 
   it('produces SHA-256 digests, including for unicode and multi-block input', () => {
-    // Digests of the composed key string `GET|json|<url>||`, from an independent
-    // SHA-256, covering utf-8 encoding and more than one 64-byte padding block.
+    // Digests of the length-delimited composed key, from an independent SHA-256,
+    // covering utf-8 encoding and more than one 64-byte padding block.
     const unicode = makeCacheKey(
       new HttpRequest('GET', '/api/tôdôs'),
       '/api/tôdôs',
     );
     expect(unicode).toEqual(
-      'ba4bec59cdb7ceb3b8228e3c71e0aa49f6c6812c4a792ad963da1dbf0263e4b0',
+      'dee8a1da8cecc1aa25d6a788bb81edf94ca3872452a04601dcef5c916f6c0b61',
     );
 
     const longUrl = `/api/${'a'.repeat(100)}`;
     const long = makeCacheKey(new HttpRequest('GET', longUrl), longUrl);
     expect(long).toEqual(
-      '640396e812e78b5c8e1de7cf5fc2e2b6237aad36e3fca5fb26b7812a68d408fe',
+      '2b6caca02694b21b4395374edf234f16b85abdf66845060d4fdb4f367125d682',
     );
+  });
+
+  it('does not collide on ambiguous parameter serialization', () => {
+    // `?tag=x&tag=y` and `?tag=x,y` both stringify to `tag=x,y` under the old
+    // serialization, so distinct requests shared a cache slot.
+    const repeated = makeCacheKey(
+      new HttpRequest('GET', '/api', {
+        params: new HttpParams({ fromString: 'tag=x&tag=y' }),
+      }),
+      '/api',
+    );
+    const comma = makeCacheKey(
+      new HttpRequest('GET', '/api', {
+        params: new HttpParams({ fromString: 'tag=x,y' }),
+      }),
+      '/api',
+    );
+
+    expect(repeated).not.toEqual(comma);
   });
 
   it('keys on method, params, and body', () => {
