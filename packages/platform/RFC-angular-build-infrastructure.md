@@ -251,18 +251,6 @@ so integrating early keeps it cheap.
 3. **After default:** the Vite path remains supported for existing apps;
    new-app guidance points here.
 
-## Alternatives considered
-
-- **Keep Nitro and chase Vite majors** (#2035 direction): retains the
-  preset matrix but keeps Analog's largest maintenance surface alive and
-  depends on Nitro's own Vite/Rolldown timeline — the cost this RFC exists
-  to remove.
-- **Custom Vite SSR dev server without Nitro:** still owns a pipeline;
-  solves dev but not the production server or the maintenance transfer.
-- **Do nothing:** the Nitro server integration is already in maintenance
-  mode, so standing still leaves its whole feature surface without a
-  successor.
-
 ## Open questions
 
 1. Declarative route rules (headers/caching per route pattern) — covered
