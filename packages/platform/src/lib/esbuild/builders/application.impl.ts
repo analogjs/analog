@@ -7,14 +7,14 @@ import type {
 import type { JsonObject } from '@angular-devkit/core';
 import { resolve } from 'node:path';
 
-import { analogApiPlugin } from './analog-api-plugin.js';
-import { analogContentPlugin } from './analog-content-plugin.js';
+import { analogApiPlugin } from '../plugins/analog-api-plugin.js';
+import { analogContentPlugin } from '../plugins/analog-content-plugin.js';
 import type { AnalogBuilderOptions } from './analog-options.js';
-import { analogDeferStreamingPlugin } from './analog-defer-streaming-plugin.js';
-import { analogInitPlugin } from './analog-init-plugin.js';
-import { analogPageEndpointsPlugin } from './analog-page-endpoints-plugin.js';
-import { analogRouterPlugin } from './analog-router-plugin.js';
-import { analogServerFnsPlugin } from './analog-server-fns-plugin.js';
+import { analogDeferStreamingPlugin } from '../plugins/analog-defer-streaming-plugin.js';
+import { analogInitPlugin } from '../plugins/analog-init-plugin.js';
+import { analogPageEndpointsPlugin } from '../plugins/analog-page-endpoints-plugin.js';
+import { analogRouterPlugin } from '../plugins/analog-router-plugin.js';
+import { analogServerFnsPlugin } from '../plugins/analog-server-fns-plugin.js';
 import { emitSitemap } from './build-sitemap.js';
 import { loadAngularBuild } from './load-angular-build.js';
 

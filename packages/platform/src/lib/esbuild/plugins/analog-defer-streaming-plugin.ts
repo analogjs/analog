@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 import {
   injectDeferStreamingHook,
   inspectAngularCoreModule,
-} from '../ssr/defer-streaming-plugin.js';
+} from '../../ssr/defer-streaming-plugin.js';
 
 const DEFER_STREAMING_NAMESPACE = 'analog-defer-streaming';
 

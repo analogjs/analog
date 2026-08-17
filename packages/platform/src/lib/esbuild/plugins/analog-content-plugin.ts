@@ -3,10 +3,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
-import type { MarkedContentHighlighter } from '../content/marked/marked-content-highlighter.js';
-import type { WithMarkedOptions } from '../content/marked/index.js';
-import type { WithPrismHighlighterOptions } from '../content/prism/options.js';
-import type { WithShikiHighlighterOptions } from '../content/shiki/options.js';
+import type { MarkedContentHighlighter } from '../../content/marked/marked-content-highlighter.js';
+import type { WithMarkedOptions } from '../../content/marked/index.js';
+import type { WithPrismHighlighterOptions } from '../../content/prism/options.js';
+import type { WithShikiHighlighterOptions } from '../../content/shiki/options.js';
 import { setupDiscoveryManifest } from './discovery-manifest.js';
 
 /**
@@ -127,7 +127,8 @@ async function createHighlighter(
   options: AnalogContentPluginOptions,
 ): Promise<MarkedContentHighlighter> {
   if ((options.highlighter ?? 'shiki') === 'shiki') {
-    const { getShikiHighlighter } = await import('../content/shiki/index.js');
+    const { getShikiHighlighter } =
+      await import('../../content/shiki/index.js');
     const shikiOptions = options.shikiOptions ?? {};
     // getShikiHighlighter caches a singleton, so the first call decides
     // the options (mermaid support included) for the process.
@@ -147,7 +148,7 @@ async function createHighlighter(
     );
   }
 
-  const { getPrismHighlighter } = await import('../content/prism/index.js');
+  const { getPrismHighlighter } = await import('../../content/prism/index.js');
   const loadLanguages = await import('prismjs/components/index.js');
   (loadLanguages as unknown as { default: Function }).default([
     'bash',
@@ -195,7 +196,7 @@ async function renderContentFileUnlocked(
   const frontmatterFn = fm.default || fm;
   const { body, frontmatter } = frontmatterFn(readFileSync(path, 'utf8'));
 
-  const { getMarkedSetup } = await import('../content/marked/index.js');
+  const { getMarkedSetup } = await import('../../content/marked/index.js');
   const markedSetup = getMarkedSetup(
     { mangle: true, ...(markedOptions || {}) },
     highlighter,

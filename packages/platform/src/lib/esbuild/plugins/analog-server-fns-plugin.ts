@@ -5,7 +5,7 @@ import { globSync } from 'tinyglobby';
 import { serverFnFileId } from '@analogjs/vite-plugin-nitro/server-fn-id';
 import { injectServerFnIds } from '@analogjs/vite-plugin-nitro/server-fn-transform';
 
-import { scrubServerFnModule } from '../server-fn-client-transform.js';
+import { scrubServerFnModule } from '../../server-fn-client-transform.js';
 import { setupDiscoveryManifest } from './discovery-manifest.js';
 
 /**

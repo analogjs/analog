@@ -1,6 +1,6 @@
-import type { WithMarkedOptions } from '../content/marked/index.js';
-import type { WithPrismHighlighterOptions } from '../content/prism/options.js';
-import type { WithShikiHighlighterOptions } from '../content/shiki/options.js';
+import type { WithMarkedOptions } from '../../content/marked/index.js';
+import type { WithPrismHighlighterOptions } from '../../content/prism/options.js';
+import type { WithShikiHighlighterOptions } from '../../content/shiki/options.js';
 
 /**
  * Analog-specific settings read from the `analog` section of the build

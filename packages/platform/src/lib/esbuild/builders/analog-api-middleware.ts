@@ -7,11 +7,11 @@ import {
   apiRoutesDir,
   createApiRoutesModule,
   discoverApiRoutes,
-} from './analog-api-plugin.js';
+} from '../plugins/analog-api-plugin.js';
 import {
   createPageEndpointsModule,
   discoverPageEndpoints,
-} from './analog-page-endpoints-plugin.js';
+} from '../plugins/analog-page-endpoints-plugin.js';
 
 interface ApiRoutesHandler {
   matches(pathname: string): boolean;
