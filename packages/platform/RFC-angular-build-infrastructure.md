@@ -23,7 +23,7 @@ integration surface:
 
 Everything outside an `analog` option section passes through to
 `@angular/build` untouched. App config is identical to a Vite Analog app
-(`provideFileRouter()`, `provideContent()`, zero `analog:*` imports), the
+(`provideFileRouter()`, `provideContent()`, no generated imports), the
 server entry is Angular's Express scaffold plus one `app.use`, and every
 per-page rendering decision lives in the page's own `routeMeta`. Feature
 parity with the Vite + Nitro path is complete: 42 capabilities at parity,
@@ -35,10 +35,10 @@ HMR, automatic `VITE_*` env loading).
 Analog today owns a parallel build pipeline: a Vite configuration, a set of
 Vite plugins, and Nitro for SSR/SSG and the server surface. That pipeline is
 also Analog's largest maintenance surface — Vite majors, Rollup/Rolldown
-churn, and Nitro internals all land on this repo first. Meanwhile Angular's
-CLI converged on the same primitives underneath (esbuild bundling, Vite dev
-server, `@angular/ssr`), and v3 has already orphaned
-`@analogjs/vite-plugin-nitro` on `alpha`.
+churn, and Nitro internals all land on this repo first, and the Nitro-based
+server integration is already in maintenance mode for v3. Meanwhile
+Angular's CLI has converged on the same primitives underneath: esbuild
+bundling, a Vite-based dev server, and `@angular/ssr`.
 
 Running Analog's features on Angular's builder moves the burden where it
 belongs:
@@ -49,11 +49,11 @@ belongs:
 2. **Adoption cost collapses.** A stock `ng new --ssr` app is two config
    edits away from file-based routing, and one schematic away from the full
    surface. No `vite.config.ts`, no Nitro concepts, no new server model.
-3. **The escape from Nitro is complete, not partial.** Every Nitro-path
+3. **The replacement is complete, not partial.** Every Nitro-path
    capability — API routes, `.server.ts` page endpoints, server functions,
    middleware, content prerendering, sitemap, streaming — has an
-   esbuild-path equivalent, so the orphaning of vite-plugin-nitro does not
-   strand any feature.
+   esbuild-path equivalent, so retiring the Nitro server strands no
+   feature.
 
 ## Design
 
@@ -74,13 +74,13 @@ not appear under the `executors` manifest key or Nx misloads them).
 
 Esbuild plugins discover the app's file conventions — pages, markdown
 content, API routes in `src/server/routes`, `.server.ts` page endpoints,
-server functions, global middleware — and expose them as `analog:*` virtual
-modules. A discovery manifest makes adding or removing files rebuild in
-watch mode (Angular's watcher honors neither plugin `watchDirs` nor
-directory watches).
+server functions, global middleware — and bundle them into the build. A
+discovery manifest makes adding or removing files rebuild in watch mode
+(Angular's watcher honors neither plugin `watchDirs` nor directory
+watches).
 
-No app code imports `analog:*`. An injected boot module registers the
-discovered maps with the packages via internal setters, and
+App code never imports anything generated. An injected boot module
+registers the discovered maps with the packages via internal setters, and
 `provideFileRouter` / `provideContent` fold them in at DI time — the exact
 ergonomics of the Vite globs. Registration is per-graph module state,
 deliberately not a global: Angular bundles `main.server` and the `ssr.entry`
@@ -126,8 +126,9 @@ and page endpoints by bundling them on demand.
 `analog.plugins` is the escape hatch `vite.config.ts` provides on the Vite
 path: workspace-root-relative module paths default-exporting an esbuild
 `Plugin`, `Plugin[]`, or factory, loaded as ESM by both builders, appended
-after Analog's plugins (so `analog:*` stays authoritative), applied to both
-bundles. Esbuild plugins only; no Vite-plugin compatibility shim.
+after Analog's plugins (so route and content discovery stay
+authoritative), applied to both bundles. Esbuild plugins only; no
+Vite-plugin compatibility shim.
 
 ### Migration and adoption
 
@@ -200,49 +201,53 @@ The full parity board (42 rows with per-row evidence) accompanies this RFC.
    Mitigation: the verify matrix runs the real builder; an upstream
    per-`@defer`-block resolution hook would delete the streaming patch on
    both paths.
-2. **Shared server-fn primitives with an orphaned package.** Three symbols
-   (`deriveServerFnId`, `serverFnFileId`, `injectServerFnIds`) are imported
-   from `@analogjs/vite-plugin-nitro` subpaths. They must move into
-   `@analogjs/platform` during alpha reconciliation, and `deriveServerFnId`
-   must stay byte-compatible with the frozen copy while any Nitro-path app
-   pairs platform's client scrub with nitro's dispatch.
+2. **Shared server-fn primitives.** Three symbols (`deriveServerFnId`,
+   `serverFnFileId`, `injectServerFnIds`) currently live in
+   `@analogjs/vite-plugin-nitro` subpaths, shared by both paths as the
+   single source of truth for server-function ids. As the Nitro path
+   winds down they move into `@analogjs/platform`, and `deriveServerFnId`
+   must stay byte-compatible across the move while any Nitro-path app
+   pairs platform's client scrub with nitro's dispatch — diverging ids
+   break dispatch silently.
 3. **Single-environment validation.** One fixture plus the dogfood app, on
    macOS. Windows path handling and real-world app diversity (monorepos,
-   i18n builds, service workers) are unproven. Mitigation: CI legs and an
-   alpha cycle with external apps.
+   i18n builds, service workers) are unproven. Mitigation: CI legs and a
+   pre-release cycle with external apps.
 4. **Deployment targets.** The path emits a Node server (runs as-is on Bun
    and Deno; deploys fully static when everything prerenders). Nitro's
    preset matrix is not replicated; edge isolates would need a
    `fetch`-style handler built on `AngularAppEngine` (assessed, not built).
 
-## Reconciliation with alpha
+## Integration into v3
 
-A test merge into `alpha` (3.0.0-alpha.70) confirms the shape of the work:
-97 files change, 19 conflict, and the entire esbuild path merges clean —
-every conflict is an integration seam. Three structural items:
+The prototype targets the current release line and integrates against
+v3's restructuring, verified by a test merge (97 files change, 19
+conflict, and the entire esbuild path merges clean — every conflict is an
+integration seam, not new code). Three structural items:
 
-1. **Router content-split (#2216)** — the esbuild fold must be transplanted
-   into the restructured `provide-file-router-base` / `routes.ts` and the
-   new `/content` entry.
-2. **Rolldown packaging (#2120)** — the `router/ssr` entry joins alpha's
+1. **Router content-split (#2216)** — the boot-map fold transplants into
+   the restructured `provide-file-router-base` / `routes.ts` and the
+   `/content` entry.
+2. **Rolldown packaging (#2120)** — the `router/ssr` entry joins the
    `vite.config.lib.ts` entry map with `dist/fesm2022` exports, and
    platform's esbuild assets (manifest, schemas, schematics, env types)
    re-plumb into the Vite lib build.
 3. **oxlint (#2114)** — lint conformance for the new files.
 
-vite-plugin-nitro on alpha is frozen but present (its `server-fn-id` export
-still ships), so the shared-primitive move is planned work, not a blocker.
-Estimated at a focused day or two; the router-split seam drifts as alpha
-moves, so reconciling early keeps it cheap.
+vite-plugin-nitro's `server-fn-id` export still ships, so the
+shared-primitive move is planned work, not a blocker. Estimated at a
+focused day or two; the router-split seam drifts as v3 moves, so
+integrating early keeps it cheap.
 
 ## Rollout
 
-1. **v3 alphas:** ship as experimental. README-level docs, streaming behind
-   its flag, Vite path remains the default and the documented path.
-2. **Gate to default:** alpha reconciliation done; verify suites (including
-   a Windows leg) wired into CI; Angular peer floor decided and enforced;
-   an alpha cycle of external apps; a stated deployment-targets position in
-   the docs.
+1. **v3 pre-releases:** ship as experimental. README-level docs, streaming
+   behind its flag, the Vite path remains the default and the documented
+   path.
+2. **Gate to default:** v3 integration done; verify suites (including a
+   Windows leg) wired into CI; Angular peer floor decided and enforced; a
+   pre-release cycle of external apps; a stated deployment-targets
+   position in the docs.
 3. **After default:** the Vite path remains supported for existing apps;
    new-app guidance points here.
 
@@ -254,7 +259,9 @@ moves, so reconciling early keeps it cheap.
   to remove.
 - **Custom Vite SSR dev server without Nitro:** still owns a pipeline;
   solves dev but not the production server or the maintenance transfer.
-- **Do nothing:** the vite-plugin-nitro orphaning already forecloses this.
+- **Do nothing:** the Nitro server integration is already in maintenance
+  mode, so standing still leaves its whole feature surface without a
+  successor.
 
 ## Open questions
 
