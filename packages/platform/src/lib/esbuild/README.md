@@ -195,15 +195,22 @@ The three server files stay thin — the machinery lives in
 ```ts
 // src/app/app.config.server.ts
 import { mergeApplicationConfig } from '@angular/core';
-import { provideAnalogServerRendering } from '@analogjs/router/ssr';
+import {
+  provideAnalogServerRendering,
+  withConfig,
+  withRoutes,
+} from '@analogjs/router/ssr';
 
 import { appConfig } from './app.config';
 
 export const config = mergeApplicationConfig(appConfig, {
   providers: [
-    provideAnalogServerRendering({
-      debugRoutes: true, // when using withDebugRoutes
-    }),
+    provideAnalogServerRendering(
+      withConfig({ debugRoutes: true }), // when using withDebugRoutes
+      // server routes for paths outside the file map, e.g. covering a
+      // withExtraRoutes route from the app config
+      withRoutes([{ path: 'about', renderMode: RenderMode.Server }]),
+    ),
   ],
 });
 ```
@@ -226,12 +233,13 @@ export const reqHandler = createAnalogRequestHandler({
 });
 ```
 
-`provideAnalogServerRendering` consumes `analog:route-files`,
-`analog:page-endpoints`, and `analog:content-files` itself — statically,
-since this entry only ever runs inside a server bundle built by these
-plugins — and derives the @angular/ssr server route configuration (via
+`provideAnalogServerRendering` reads the maps the injected boot module
+registered and derives the @angular/ssr server route configuration (via
 `createAnalogServerRoutes`, also exported for direct use with an
-explicit files map): static paths prerender, dynamic
+explicit files map). It follows the `with*` feature convention:
+`withConfig` for the debug-routes flag and map overrides, `withRoutes`
+for server routes covering paths outside the file map. The derivation:
+static paths prerender, dynamic
 module-backed paths prerender the parameter sets their
 `routeMeta.getPrerenderParams` provides (resolving empty falls back to
 per-request via `PrerenderFallback.Server`), and everything

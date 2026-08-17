@@ -1,5 +1,5 @@
 import { mergeApplicationConfig } from '@angular/core';
-import { provideAnalogServerRendering } from '@analogjs/router/ssr';
+import { provideAnalogServerRendering, withConfig } from '@analogjs/router/ssr';
 
 import { appConfig } from './app.config';
 
@@ -8,5 +8,5 @@ import { appConfig } from './app.config';
 // live request (stream-demo), fromContentDir for content-driven
 // prerendering (blog/[slug]).
 export const config = mergeApplicationConfig(appConfig, {
-  providers: [provideAnalogServerRendering({ debugRoutes: true })],
+  providers: [provideAnalogServerRendering(withConfig({ debugRoutes: true }))],
 });

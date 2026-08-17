@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import {
   provideServerRendering,
-  withRoutes,
+  withRoutes as withSsrRoutes,
   RenderMode,
   type ServerRoute,
 } from '@angular/ssr';
@@ -231,9 +231,42 @@ export function createAnalogServerRoutes(
   ];
 }
 
-export interface AnalogServerRenderingOptions extends AnalogServerRoutesOptions {
+export interface AnalogServerRenderingConfig {
   /** Overrides the `analog:route-files` map (loaded automatically). */
   routeFiles?: Files;
+  /** Overrides the `analog:page-endpoints` map (loaded automatically). */
+  pageEndpoints?: Record<string, unknown>;
+  /** Overrides the build-extracted route metadata (loaded automatically). */
+  routeFilesMeta?: Record<string, { prerender?: boolean; streaming?: boolean }>;
+  /** Adds the `withDebugRoutes` page (`__analog/routes`). */
+  debugRoutes?: boolean;
+}
+
+export interface AnalogServerRenderingFeature {
+  ɵkind: 'config' | 'routes';
+  ɵconfig?: AnalogServerRenderingConfig;
+  ɵroutes?: ServerRoute[];
+}
+
+/**
+ * Configures `provideAnalogServerRendering` — the debug routes flag and
+ * the map overrides for tests and custom setups.
+ */
+export function withConfig(
+  config: AnalogServerRenderingConfig,
+): AnalogServerRenderingFeature {
+  return { ɵkind: 'config', ɵconfig: config };
+}
+
+/**
+ * Appends server routes for paths outside the file map — e.g. covering
+ * routes registered through `withExtraRoutes` in the app config, which
+ * @angular/ssr requires a render mode for.
+ */
+export function withRoutes(
+  routes: ServerRoute[],
+): AnalogServerRenderingFeature {
+  return { ɵkind: 'routes', ɵroutes: routes };
 }
 
 /**
@@ -246,19 +279,32 @@ export interface AnalogServerRenderingOptions extends AnalogServerRoutesOptions 
  * ```ts
  * // app.config.server.ts
  * export const config = mergeApplicationConfig(appConfig, {
- *   providers: [provideAnalogServerRendering()],
+ *   providers: [
+ *     provideAnalogServerRendering(
+ *       withConfig({ debugRoutes: true }),
+ *       withRoutes([{ path: 'about', renderMode: RenderMode.Server }]),
+ *     ),
+ *   ],
  * });
  * ```
  */
 export function provideAnalogServerRendering(
-  options: AnalogServerRenderingOptions = {},
+  ...features: AnalogServerRenderingFeature[]
 ): EnvironmentProviders {
+  const config = features
+    .filter((feature) => feature.ɵkind === 'config')
+    .reduce<AnalogServerRenderingConfig>(
+      (merged, feature) => ({ ...merged, ...feature.ɵconfig }),
+      {},
+    );
+  const serverRoutes = features.flatMap((feature) => feature.ɵroutes ?? []);
+
   return makeEnvironmentProviders([
     provideServerRendering(
-      withRoutes(
+      withSsrRoutes(
         createAnalogServerRoutes(
-          options.routeFiles ?? analogEsbuildMaps().routeFiles ?? {},
-          options,
+          config.routeFiles ?? analogEsbuildMaps().routeFiles ?? {},
+          { ...config, serverRoutes },
         ),
       ),
     ),

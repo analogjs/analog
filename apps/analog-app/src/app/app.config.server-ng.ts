@@ -1,7 +1,11 @@
 import type { ApplicationConfig } from '@angular/core';
 import { mergeApplicationConfig } from '@angular/core';
 import { RenderMode } from '@angular/ssr';
-import { provideAnalogServerRendering } from '@analogjs/router/ssr';
+import {
+  provideAnalogServerRendering,
+  withConfig,
+  withRoutes,
+} from '@analogjs/router/ssr';
 import {
   provideServerFns,
   withServerFnInterceptors,
@@ -16,13 +20,11 @@ import { authInterceptor } from './server-fns/auth.interceptor';
 // the extra routes app.config registers outside the file map.
 export const config: ApplicationConfig = mergeApplicationConfig(appConfig, {
   providers: [
-    provideAnalogServerRendering({
-      debugRoutes: true,
-      serverRoutes: [
-        // withExtraRoutes fallback in app.config.ts
-        { path: 'about', renderMode: RenderMode.Server },
-      ],
-    }),
+    provideAnalogServerRendering(
+      withConfig({ debugRoutes: true }),
+      // withExtraRoutes fallback in app.config.ts
+      withRoutes([{ path: 'about', renderMode: RenderMode.Server }]),
+    ),
     // Same server-function DI surface as the Nitro path's server config.
     provideServerFns(withServerFnInterceptors([authInterceptor])),
   ],
