@@ -39,9 +39,12 @@ each independently useful and each validated by the Analog prototype:
    `@angular/platform-server`** that composes tiers 1–2 into a supported
    renderer returning a `ReadableStream<Uint8Array>`.
 
-Tiers 1 and 2 are small, additive, and immediately consumable by
-meta-frameworks (Analog, and equally `@angular/ssr`'s own future streaming
-mode). Tier 3 can follow once the primitives have proven out.
+Tiers 1 and 2 are additive, and they are the same primitives an
+`@angular/ssr` streaming renderer would need internally — this RFC is offered
+as input to Angular's own streaming plans, not as a parallel track. They are
+most coherent landing together (Tier 1 in isolation blesses a double-send
+pattern; see the Tier 1 discussion), with Tier 3 following once the primitives
+have proven out.
 
 ## Motivation
 
@@ -72,13 +75,15 @@ resolves; completion time is unchanged (streaming adds negligible CPU).
 
 ### Ecosystem parity
 
-Every comparable framework ships a streaming server renderer as a first-class
-API: React (`renderToPipeableStream` / `renderToReadableStream`, out-of-order
+React (`renderToPipeableStream` / `renderToReadableStream`, out-of-order
 Suspense streaming since v18), Vue/Nuxt (`renderToWebStream` plus streamed head
-patches as Suspense boundaries resolve), Solid, Marko. Angular is the outlier,
-and — with `@defer` + incremental hydration — the one whose component model is
-_already_ shaped like streaming boundaries. The missing piece is small and
-server-side only.
+patches as Suspense boundaries resolve), Solid, and Marko all ship streaming
+server renderers as first-class API. Angular — with `@defer` + incremental
+hydration — is the framework whose component model is _already_ shaped like
+streaming boundaries, without a way to flush them. The change is confined
+entirely to the server side. Streaming SSR has also appeared on Angular's own
+public roadmap as an area of exploration; this proposal is intended to feed
+that work with a validated design and measurements, not to compete with it.
 
 ### The current workaround is the wrong long-term owner
 
@@ -107,6 +112,13 @@ contract, not a string transform.
 
 A server-only, opt-in hook that fires as each `@defer` block completes during
 SSR, with a supported handle for serializing the block's rendered subtree.
+
+**Scope.** The event exists only for blocks the server renders to completion —
+`@defer (hydrate …)` blocks under `withIncrementalHydration()`. A plain
+`@defer` block renders its placeholder on the server and never reaches
+`Complete` there, so it never fires; without incremental hydration enabled the
+feature is inert and buffered rendering is unaffected.
+
 Sketch (naming illustrative):
 
 ```ts
@@ -116,14 +128,14 @@ export interface DeferBlockSsrEvent {
   readonly id: string;
   /**
    * Serialized HTML of the block's rendered subtree. Resolves after the
-   * change-detection pass that fills the block's bindings (see Timing).
+   * render pass that fills the block's bindings (see Timing).
    */
   serialize(): Promise<string>;
 }
 
-export function withDeferBlockSsrEvents(
+export function provideDeferBlockSsrEvents(
   onBlockComplete: (event: DeferBlockSsrEvent) => void,
-): PlatformStreamingFeature;
+): Provider;
 
 // usage
 renderApplication(bootstrap, {
@@ -146,17 +158,32 @@ Design points, each learned the hard way in the prototype:
   class of bug — and works on runtimes without `node:async_hooks`.
 - **Timing contract: serialize after bindings are filled.** A block's DOM is
   not populated at the moment it reaches `Complete`; interpolations fill on the
-  following change-detection pass. The prototype serializes one macrotask
-  later. The API should own this ("`serialize()` resolves after the block's
-  content is rendered") rather than making every consumer rediscover it.
+  following change-detection pass. The prototype approximates this by
+  serializing one macrotask later — but a macrotask is a scheduler
+  implementation detail, not a contract, and is exactly the kind of timing that
+  shifts under the zoneless scheduler. The API should define the point against
+  the defer state machine itself: `serialize()` resolves after the render pass
+  that completes the block's transition to `Complete` — the same "after
+  render" point `afterNextRender` observes — so consumers never reason about
+  task queues.
 - **Fire once per block.** A block can re-enter `Complete` during a render; the
   event should be de-duplicated by the framework, not by every consumer.
 - **Zoneless-compatible.** The event derives from the defer state machine, not
   Zone.js; the prototype runs identically under zone and zoneless apps.
+- **No contract on the server DOM implementation.** `serialize()` promises
+  markup, not any particular DOM emulation — platform-server stays free to
+  change how the server DOM is produced (a live concern given domino's
+  maintenance status).
 
 Tier 1 alone enables real streaming: Analog's shipping prototype uses exactly
 this seam (plus a whole-document tail for hydration, see Tier 2) and delivers
-the TTFB/FCP numbers above.
+the TTFB/FCP numbers above. It is, however, also a pattern Angular may not
+want to bless in isolation: Tier 1 without Tier 2 means double-send plus a
+finalize body-swap, permanently, in every consumer. If that argues for landing
+Tiers 1 and 2 together — with plain `serialize()` perhaps never becoming
+public once `annotate()` exists — that ordering works equally well for
+meta-frameworks. The tiers are separated here to sequence the design
+discussion, not to demand three separate releases.
 
 ### Tier 2 — per-block hydration annotation with stable ids
 
@@ -195,6 +222,21 @@ the accumulated transfer state. Measured on the same benchmark: **+24%** over
 buffered instead of +100%, and the residual is fixed per-block scaffolding that
 amortizes as block content grows.
 
+One part of the contract deserves explicit specification rather than being
+left as an implementation detail: the root component's own annotation —
+serialized in the tail — must reference blocks that were annotated and
+streamed earlier. The exact shape of `SerializedDeferBlockState`, and the
+merge rule between per-block state, the root's tail annotation, and the
+document's single transfer-state script, are therefore part of Tier 2's API
+surface (see open questions).
+
+> **TODO (measurement):** the byte figures here and in the supporting material
+> are uncompressed. The double-send's second copy is near-identical to the
+> first and therefore compresses unusually well, so the wire-size gap between
+> +100% and +24% will be narrower under gzip/brotli than the raw numbers
+> suggest. Both designs should be re-measured with compression enabled before
+> the byte argument is treated as decisive.
+
 This tier necessarily edits the middle of core's hydration serialization — it
 is exactly the part that cannot reasonably live outside Angular, and the reason
 this RFC exists.
@@ -204,8 +246,8 @@ this RFC exists.
 Once tiers 1–2 exist, a first-class renderer in `@angular/platform-server`:
 
 ```ts
-export function renderApplicationStream<T>(
-  bootstrap: () => Promise<ApplicationRef>,
+export function renderApplicationStream(
+  bootstrap: (context: BootstrapContext) => Promise<ApplicationRef>,
   options: {
     document?: string;
     url?: string;
@@ -259,9 +301,12 @@ that should inform the upstream design:
   above core.
 - **Error semantics change after first flush.** Once the head is flushed, the
   status code is committed; a render error must error the stream (truncating
-  the response) rather than yield a clean 500. `renderApplicationStream` should
-  document this and optionally support a "wait for shell before committing"
-  knob, as React's streaming renderer does.
+  the response) rather than yield a clean 500. `renderApplicationStream`
+  should expose the trichotomy React's streaming renderer settled on rather
+  than only documenting the hazard: a shell-ready callback (safe to commit
+  status and begin flushing), an all-ready callback (a buffered-for-crawlers
+  mode atop the same renderer), and an error callback whose meaning differs
+  before and after the shell commits.
 - **Event replay interacts with streaming.** Blocks are interactive-looking
   before hydration; `withEventReplay`'s capture script belongs in the first
   flush so interactions during the stream are not lost. Tier 2's per-block
@@ -286,6 +331,15 @@ that should inform the upstream design:
   diagnostics channel as a rendering contract couples two unrelated stability
   guarantees. A dedicated, DI-scoped event (Tier 1) is barely more API and far
   cleaner.
+- **Tier 3 only — Angular ships the renderer, no public primitives.** A
+  legitimate position: it avoids committing to low-level API, keeps a single
+  blessed wire format, and keeps "my streaming broke" support load off
+  third-party renderers. The trade-offs are time and feedback: meta-frameworks
+  keep patching private symbols until a full renderer stabilizes, and core
+  freezes renderer policy without field experience of the primitives
+  underneath it. A middle path is to land Tiers 1–2 as experimental and
+  explicitly subject to change — patches can be deleted now, while Tier 3's
+  policy surface settles on top of proven primitives.
 - **Suspense-style streaming of arbitrary async boundaries.** A much larger
   redesign of the component model. `@defer` already gives Angular
   author-declared streaming boundaries with defined server semantics;
@@ -312,6 +366,16 @@ memoization activates only under streaming (buffered serialization is
 byte-identical to today — the prototype's e2e suite asserts this). Tier 3 is a
 new export. Existing SSR users see no behavioral change.
 
+**Content Security Policy.** Streaming as prototyped depends on small inline
+`<script>` chunks between blocks (paint/mount instructions, head reconcile,
+finalize). Angular already threads a nonce through `CSP_NONCE` / `ngCspNonce`;
+a streaming renderer must apply that nonce to every streamed script chunk, and
+Tier 1's documentation must state the requirement for consumers emitting their
+own chunks. For Tier 3 it is worth exploring a design that needs no per-chunk
+inline scripts at all — streamed inert `<template>`s driven by a single
+nonce'd runtime shipped in the first flush — so strict-CSP apps stream without
+`unsafe-inline`.
+
 The main risk is API commitment on serialization internals. The tier structure
 is designed to sequence that risk: Tier 1 commits only to "a block resolved,
 here's its HTML"; Tier 2 commits to per-block annotation shape; Tier 3 commits
@@ -335,6 +399,10 @@ lands.
 5. Interaction with `provideClientHydration(withHttpTransferCacheOptions)` —
    HTTP transfer cache entries resolve throughout the render; per-block
    streaming of those entries would pair with question 3.
+6. The exact shape of `SerializedDeferBlockState` and the merge rule between
+   per-block state, the root component's tail annotation, and the single
+   transfer-state script — the part of Tier 2 that most needs specification
+   from the hydration owners.
 
 ## Supporting material
 
@@ -347,3 +415,4 @@ lands.
   (`apps/streaming-app`).
 - Byte-cost comparison (same app, ~1.5 KB × 2 blocks): buffered 3716 B;
   Tier 2 single-send 4603 B (+24%); Tier 1 double-send 7439 B (+100%).
+  Uncompressed — see the measurement TODO in Tier 2.
