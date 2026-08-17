@@ -1,3 +1,12 @@
+## [2.7.1-beta.1](https://github.com/analogjs/analog/compare/v2.7.0...v2.7.1-beta.1) (2026-08-17)
+
+### Bug Fixes
+
+- **content:** escape html in the marked code renderer ([7c6febf](https://github.com/analogjs/analog/commit/7c6febf13456e488f5be0e2647fbb1446e7d75d4))
+- **content:** escape mermaid output and add sha-256 digest tests ([0688cb0](https://github.com/analogjs/analog/commit/0688cb0ba622a8594f1294acc66cfa728a794fbe))
+- **router:** serialize cache-key fields unambiguously ([5509aeb](https://github.com/analogjs/analog/commit/5509aeb5847ce40210c98e7b51a0e7061cd7e580))
+- **router:** use SHA-256 for TransferState cache keys ([76f54a6](https://github.com/analogjs/analog/commit/76f54a6fe56813dac024a00034249aff1656b950))
+
 # [2.7.0](https://github.com/analogjs/analog/compare/v2.6.4...v2.7.0) (2026-08-12)
 
 ### Bug Fixes
