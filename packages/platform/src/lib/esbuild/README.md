@@ -514,6 +514,36 @@ With this, no Analog capability is Nitro-only — the streaming patch
 would still be better served by an upstream Angular per-block
 resolution hook, which would delete the string patch on both paths.
 
+## Minimal adoption
+
+The full setup is not the entry price — the ladder is incremental, and
+each rung stands alone:
+
+- **File routing only, CSR.** Builder swap + `provideFileRouter()`,
+  nothing else: no `@angular/ssr`, no server config, no server entry.
+  Verified against a static file server with an SPA index fallback:
+  routes render, client navigation and deep links work, zero console
+  errors. `h3`, `radix3`, and `@angular/ssr` are optional peers of
+  `@analogjs/router`, so this installs clean. File routes, lazy
+  per-route chunks, client `routeMeta`, content routes (with
+  `provideContent`), debug routes, and `analog.plugins` all work. API
+  routes in `src/server/routes` are served by dev middleware under
+  `serve` but have no production home without a server — don't rely on
+  them for a static deploy.
+- **SSR with Angular's own wiring.** Builder swap +
+  `provideFileRouter(withExtraRoutes(routes))`, keeping stock
+  `provideServerRendering(withRoutes(serverRoutes))` and the untouched
+  scaffold `server.ts`. File routes join the router config on both
+  bundles, so the scaffold's `**` catch-all covers them and the engine
+  renders them. Render modes stay hand-managed in `serverRoutes`;
+  `.server.ts` endpoints, form actions, server functions, middleware,
+  and production API routes wait for the next rung.
+- **The full surface.** Add `provideAnalogServerRendering` for the
+  page-derived server routes (`routeMeta.prerender`,
+  `getPrerenderParams`, endpoint detection), and mount
+  `createAnalogRequestHandler` for the server surface — the shape the
+  migration below produces.
+
 ## Migrating from Angular SSR
 
 A stock `ng new --ssr` app (application builder + the Express
