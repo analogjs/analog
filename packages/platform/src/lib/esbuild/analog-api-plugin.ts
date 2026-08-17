@@ -12,7 +12,7 @@ import { setupDiscoveryManifest } from './discovery-manifest.js';
  *   import apiRoutes from 'analog:api-routes';
  *
  * The map is passed to `createApiRoutesHandler` from
- * `@analogjs/router/api`. Browser bundles resolve it to an empty map so
+ * `@analogjs/router/ssr`. Browser bundles resolve it to an empty map so
  * server handler code never reaches the client build.
  */
 export const API_ROUTES_ID = 'analog:api-routes';

@@ -9,7 +9,7 @@ import {
   createServerFnsHandler,
   createServerMiddlewareHandler,
   pageEndpointRoutesFromFiles,
-} from './index';
+} from './request-handler';
 
 describe('apiRoutesFromFiles', () => {
   it('maps filenames to routes, params, methods, and catch-alls', () => {

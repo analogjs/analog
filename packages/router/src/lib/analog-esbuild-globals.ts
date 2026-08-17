@@ -13,6 +13,7 @@ import type { Files } from './routes';
  */
 export interface AnalogEsbuildMaps {
   routeFiles?: Files;
+  routeFilesMeta?: Record<string, { prerender?: boolean; streaming?: boolean }>;
   pageEndpoints?: Record<string, unknown>;
 }
 

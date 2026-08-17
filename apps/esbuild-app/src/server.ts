@@ -1,4 +1,4 @@
-import { createAnalogRequestHandler } from '@analogjs/router/api';
+import { createAnalogRequestHandler } from '@analogjs/router/ssr';
 
 import { AppComponent } from './app/app.component';
 import { config } from './app/app.config.server';

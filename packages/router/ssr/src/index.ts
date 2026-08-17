@@ -1,4 +1,5 @@
-/// <reference path="./analog-modules.d.ts" />
+export * from './request-handler';
+
 import {
   EnvironmentProviders,
   inject,
@@ -6,17 +7,17 @@ import {
   REQUEST as ANGULAR_REQUEST,
   RESPONSE_INIT,
 } from '@angular/core';
-import routeFilesMap, {
-  routeFilesMeta as routeFilesMetaMap,
-} from 'analog:route-files';
-import pageEndpointsMap from 'analog:page-endpoints';
 import {
   provideServerRendering,
   withRoutes,
   RenderMode,
   type ServerRoute,
 } from '@angular/ssr';
-import { createServerRoutePaths, type Files } from '@analogjs/router';
+import {
+  createServerRoutePaths,
+  ɵanalogEsbuildMaps as analogEsbuildMaps,
+  type Files,
+} from '@analogjs/router';
 
 import {
   BASE_URL,
@@ -190,8 +191,10 @@ export function createAnalogServerRoutes(
   files: Files,
   options: AnalogServerRoutesOptions = {},
 ): ServerRoute[] {
-  const pageEndpoints = options.pageEndpoints ?? {};
-  const routeFilesMeta = options.routeFilesMeta ?? routeFilesMetaMap;
+  const pageEndpoints =
+    options.pageEndpoints ?? analogEsbuildMaps().pageEndpoints ?? {};
+  const routeFilesMeta =
+    options.routeFilesMeta ?? analogEsbuildMaps().routeFilesMeta ?? {};
 
   return [
     ...createServerRoutePaths(files).map((route): ServerRoute => {
@@ -253,10 +256,10 @@ export function provideAnalogServerRendering(
   return makeEnvironmentProviders([
     provideServerRendering(
       withRoutes(
-        createAnalogServerRoutes(options.routeFiles ?? routeFilesMap, {
-          ...options,
-          pageEndpoints: options.pageEndpoints ?? pageEndpointsMap,
-        }),
+        createAnalogServerRoutes(
+          options.routeFiles ?? analogEsbuildMaps().routeFiles ?? {},
+          options,
+        ),
       ),
     ),
     provideServerRequestContext(),

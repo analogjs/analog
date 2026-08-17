@@ -11,11 +11,11 @@ export default defineConfig(({ mode }) => {
       // The analog:* virtual modules only exist under the esbuild
       // plugins; stub them so import analysis of the api entry resolves.
       alias: {
-        'analog:route-files': `${__dirname}/api/src/analog-modules-stub.ts`,
-        'analog:api-routes': `${__dirname}/api/src/analog-modules-stub.ts`,
-        'analog:page-endpoints': `${__dirname}/api/src/analog-modules-stub.ts`,
-        'analog:server-fns': `${__dirname}/api/src/analog-modules-stub.ts`,
-        'analog:server-middleware': `${__dirname}/api/src/analog-modules-stub.ts`,
+        'analog:route-files': `${__dirname}/ssr/src/analog-modules-stub.ts`,
+        'analog:api-routes': `${__dirname}/ssr/src/analog-modules-stub.ts`,
+        'analog:page-endpoints': `${__dirname}/ssr/src/analog-modules-stub.ts`,
+        'analog:server-fns': `${__dirname}/ssr/src/analog-modules-stub.ts`,
+        'analog:server-middleware': `${__dirname}/ssr/src/analog-modules-stub.ts`,
       },
     },
     test: {

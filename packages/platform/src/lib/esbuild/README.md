@@ -215,7 +215,7 @@ export default (context: BootstrapContext) =>
 
 ```ts
 // src/server.ts
-import { createAnalogRequestHandler } from '@analogjs/router/api';
+import { createAnalogRequestHandler } from '@analogjs/router/ssr';
 
 import { config } from './app/app.config.server';
 

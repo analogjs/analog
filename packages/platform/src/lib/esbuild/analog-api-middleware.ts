@@ -84,8 +84,14 @@ export function createAnalogApiMiddleware(
       logLevel: 'silent',
     });
 
+    // Outside a linker-processed bundle, the partially-compiled Angular
+    // libraries the ssr entry pulls in fall back to JIT — load the
+    // compiler first (this is a dev-only code path).
+    await import(
+      pathToFileURL(workspaceRequire.resolve('@angular/compiler')).href
+    );
     const routerApiUrl = pathToFileURL(
-      workspaceRequire.resolve('@analogjs/router/api'),
+      workspaceRequire.resolve('@analogjs/router/ssr'),
     ).href;
     const { createApiRoutesHandler, createPageEndpointsHandler } =
       (await import(routerApiUrl)) as {
