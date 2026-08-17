@@ -113,4 +113,31 @@ describe('getShikiHighlighter', () => {
       '<pre class="mermaid">graph TD;</pre>',
     );
   });
+
+  it('escapes HTML in the mermaid render path', async () => {
+    const highlighter = getShikiHighlighter({
+      highlighter: {
+        additionalLangs: ['mermaid'],
+      },
+    });
+
+    const extension = highlighter.getHighlightExtension() as {
+      highlight: (
+        code: string,
+        lang: string,
+        props: string[],
+      ) => Promise<string>;
+    };
+
+    const result = await extension.highlight(
+      '</pre><img src=x onerror=alert(1)>',
+      'mermaid',
+      [],
+    );
+
+    expect(result).not.toContain('<img src=x onerror=');
+    expect(result).toBe(
+      '<pre class="mermaid">&lt;/pre&gt;&lt;img src=x onerror=alert(1)&gt;</pre>',
+    );
+  });
 });

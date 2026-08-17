@@ -76,6 +76,7 @@ Lorem ipsum 2....
       '```\n<img src=x onerror=alert(2)>\n```',
     );
     expect(noLang.content).not.toContain('<img src=x onerror=');
+    expect(noLang.content).toContain('&lt;img');
 
     const span = await service.render(
       'text `<img src=x onerror=alert(3)>` end',
