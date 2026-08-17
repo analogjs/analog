@@ -53,6 +53,63 @@
         }
       }
     },
+    "build-ng": {
+      "executor": "@analogjs/platform:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/analog-app-ng",
+        "index": "apps/analog-app/index-ng.html",
+        "browser": "apps/analog-app/src/main.ts",
+        "server": "apps/analog-app/src/main.server-ng.ts",
+        "outputMode": "server",
+        "ssr": {
+          "entry": "apps/analog-app/src/server-ng.ts"
+        },
+        "prerender": true,
+        "tsConfig": "apps/analog-app/tsconfig.app-ng.json",
+        "styles": ["apps/analog-app/src/styles.css"],
+        "assets": [
+          {
+            "glob": "favicon.ico",
+            "input": "apps/analog-app",
+            "output": "."
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/analog-app/src/public",
+            "output": "."
+          }
+        ],
+        "optimization": false,
+        "outputHashing": "none",
+        "security": {
+          "allowedHosts": ["localhost"]
+        },
+        "analog": {
+          "additionalPagesDirs": ["/libs/shared/feature"],
+          "additionalAPIDirs": ["/libs/shared/feature/src/api"]
+        }
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/analog-app/src/environments/environment.ts",
+              "with": "apps/analog-app/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve-ng": {
+      "executor": "@analogjs/platform:dev-server",
+      "options": {
+        "buildTarget": "analog-app:build-ng",
+        "port": 3001
+      }
+    },
     "serve-nitro": {
       "executor": "nx:run-commands",
       "options": {

@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.app.json",
+  "files": [
+    "src/main.ts",
+    "src/main.server-ng.ts",
+    "src/server-ng.ts",
+    "src/environments/environment.prod.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts",
+    "src/app/pages/**/*.page.ts",
+    "src/app/pages/**/*.server.ts",
+    "src/server/**/*.ts",
+    "../../libs/shared/feature/src/pages/**/*.page.ts",
+    "../../libs/shared/feature/src/pages/**/*.server.ts",
+    "../../libs/shared/feature/src/api/**/*.ts"
+  ]
+}
