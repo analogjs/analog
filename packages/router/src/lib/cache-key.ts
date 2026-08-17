@@ -1,18 +1,29 @@
 import { HttpParams, HttpRequest } from '@angular/common/http';
 import { StateKey, makeStateKey } from '@angular/core';
 
+// Length-prefix each atom (netstring style) so no field, parameter key, or
+// parameter value can be crafted to shift another's boundary. Without this a
+// hash over delimiter-joined fields still collides on ambiguous inputs, e.g.
+// `?tag=x&tag=y` and `?tag=x,y` both serialize to `tag=x,y`.
+function encodeAtom(value: string): string {
+  return `${value.length}:${value}`;
+}
+
 function sortAndConcatParams(params: HttpParams | URLSearchParams): string {
-  return [...params.keys()]
-    .sort()
-    .map((k) => `${k}=${params.getAll(k)}`)
-    .join('&');
+  const keys = [...new Set(params.keys())].sort();
+  const atoms: string[] = [];
+  for (const key of keys) {
+    for (const value of params.getAll(key) ?? []) {
+      atoms.push(encodeAtom(key), encodeAtom(value));
+    }
+  }
+  return atoms.join('');
 }
 
 export function makeCacheKey(
   request: HttpRequest<any>,
   mappedRequestUrl: string,
 ): StateKey<unknown> {
-  // make the params encoded same as a url so it's easy to identify
   const { params, method, responseType } = request;
   const encodedParams = sortAndConcatParams(params);
 
@@ -29,7 +40,9 @@ export function makeCacheKey(
     mappedRequestUrl,
     serializedBody,
     encodedParams,
-  ].join('|');
+  ]
+    .map(encodeAtom)
+    .join('');
 
   const hash = generateHash(key);
 
