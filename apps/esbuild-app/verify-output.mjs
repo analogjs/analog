@@ -181,6 +181,7 @@ async function checkServer() {
 
     const dynamic = await (await fetch(`${base}/products/42`)).text();
     const prerendered = await (await fetch(`${base}/about`)).text();
+    const home = await (await fetch(`${base}/`)).text();
 
     return [
       [
@@ -198,6 +199,12 @@ async function checkServer() {
       [
         'server serves prerendered routes as static output',
         prerendered.includes('ng-server-context="ssg"'),
+      ],
+      [
+        // analog.plugins: the app-supplied esbuild plugin serves
+        // virtual:build-info, rendered on the home page.
+        'app-supplied plugin (analog.plugins) resolves its virtual module',
+        home.includes('custom-esbuild-plugin'),
       ],
       [
         // src/server/routes handlers served through @analogjs/router/ssr

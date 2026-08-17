@@ -17,6 +17,7 @@ import { analogRouterPlugin } from '../plugins/analog-router-plugin.js';
 import { analogServerFnsPlugin } from '../plugins/analog-server-fns-plugin.js';
 import { emitSitemap } from './build-sitemap.js';
 import { loadAngularBuild } from './load-angular-build.js';
+import { loadUserPlugins } from './load-user-plugins.js';
 
 type ApplicationBuilderOptions = JsonObject & {
   define?: Record<string, string>;
@@ -80,6 +81,8 @@ export async function* buildAnalogApplication(
       }),
       ...(analog.streaming ? [analogDeferStreamingPlugin()] : []),
       analogInitPlugin({ workspaceRoot: context.workspaceRoot }),
+      // The app's own plugins come last, so analog:* stays authoritative.
+      ...(await loadUserPlugins(analog.plugins, context.workspaceRoot)),
     ],
   }) as AsyncIterable<BuilderOutput>;
 

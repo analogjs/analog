@@ -20,6 +20,7 @@ import { analogPageEndpointsPlugin } from '../plugins/analog-page-endpoints-plug
 import { analogRouterPlugin } from '../plugins/analog-router-plugin.js';
 import { analogServerFnsPlugin } from '../plugins/analog-server-fns-plugin.js';
 import { loadAngularBuild } from './load-angular-build.js';
+import { loadUserPlugins } from './load-user-plugins.js';
 
 /**
  * Wraps the Angular dev-server builder (@angular/build, v18+) and
@@ -103,6 +104,8 @@ export async function* serveAnalogApplication(
       }),
       ...(analog.streaming ? [analogDeferStreamingPlugin()] : []),
       analogInitPlugin({ workspaceRoot: context.workspaceRoot }),
+      // The app's own plugins come last, so analog:* stays authoritative.
+      ...(await loadUserPlugins(analog.plugins, context.workspaceRoot)),
     ],
     // A configured server entry serves API routes and page endpoints
     // itself in dev; without one they are served by dev middleware.

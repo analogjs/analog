@@ -15,19 +15,26 @@
         "browser": "apps/esbuild-app/src/main.ts",
         "server": "apps/esbuild-app/src/main.server.ts",
         "outputMode": "server",
-        "ssr": { "entry": "apps/esbuild-app/src/server.ts" },
+        "ssr": {
+          "entry": "apps/esbuild-app/src/server.ts"
+        },
         "prerender": true,
         "tsConfig": "apps/esbuild-app/tsconfig.app.json",
         "optimization": false,
         "outputHashing": "none",
-        "security": { "allowedHosts": ["localhost"] },
+        "security": {
+          "allowedHosts": ["localhost"]
+        },
         "analog": {
           "mermaid": true,
           "streaming": true,
-          "sitemap": { "host": "https://analog.example" },
+          "sitemap": {
+            "host": "https://analog.example"
+          },
           "shikiOptions": {
             "container": "<div class=\"hl-wrap\">%s</div>"
-          }
+          },
+          "plugins": ["apps/esbuild-app/build-info-plugin.mjs"]
         }
       },
       "configurations": {

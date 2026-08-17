@@ -124,9 +124,21 @@ through to `@angular/build`:
   "additionalContentDirs": [],
   "additionalAPIDirs": [], // <dir>/routes scanned for API routes
   "streaming": false, // EXPERIMENTAL streaming SSR patch
-  "sitemap": { "host": "https://example.com" } // emit sitemap.xml
+  "sitemap": { "host": "https://example.com" }, // emit sitemap.xml
+  "plugins": [] // app-supplied esbuild plugins (module paths)
 }
 ```
+
+`analog.plugins` is the escape hatch the Vite path gets from
+`vite.config.ts`: workspace-root-relative paths of modules
+default-exporting an esbuild `Plugin`, a `Plugin[]`, or a zero-argument
+factory returning either (`.mjs`/`.js` — they are imported as ESM at
+build time). They are appended after Analog's plugins, so the
+`analog:*` virtual modules and route discovery stay authoritative, and
+they apply to both the browser and server bundles — branch on
+`build.initialOptions` (e.g. Angular's `ngServerMode` define) for
+per-bundle behavior. esbuild plugins only; there is no Vite-plugin
+compatibility shim.
 
 ```jsonc
 // tsconfig.app.json — pages must be part of the TypeScript program.

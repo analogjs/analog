@@ -47,4 +47,10 @@ export interface AnalogBuilderOptions {
    * build, one entry per prerendered page.
    */
   sitemap?: { host: string };
+  /**
+   * Workspace-root-relative paths of modules default-exporting an
+   * esbuild `Plugin`, a `Plugin[]`, or a factory returning either.
+   * Appended after Analog's plugins in both bundles.
+   */
+  plugins?: string[];
 }
