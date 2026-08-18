@@ -1,3 +1,9 @@
+## [2.7.1-beta.2](https://github.com/analogjs/analog/compare/v2.7.1-beta.1...v2.7.1-beta.2) (2026-08-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** return worker path unchanged from processWebWorker ([#2488](https://github.com/analogjs/analog/issues/2488)) ([2851c69](https://github.com/analogjs/analog/commit/2851c698d8204735568330211ae6b81e833bc9d5))
+
 ## [2.7.1-beta.1](https://github.com/analogjs/analog/compare/v2.7.0...v2.7.1-beta.1) (2026-08-17)
 
 ### Bug Fixes
