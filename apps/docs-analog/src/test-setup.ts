@@ -1,4 +1,7 @@
 import '@analogjs/vitest-angular/setup-zone';
+// Defines globalThis.$localize (and its ambient type) so modules that tag
+// strings with $localize (sidebar.ts, app.config.ts) load under Vitest.
+import '@angular/localize/init';
 // Partial-compiled Angular libraries (e.g. PlatformNavigation) fall back
 // to JIT under Vitest unless the Angular Linker processes them. Importing
 // the compiler unlocks the JIT path so router-backed components compile

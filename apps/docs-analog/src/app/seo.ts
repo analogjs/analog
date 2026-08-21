@@ -83,6 +83,43 @@ export class DocSeo {
   }
 }
 
+/**
+ * SEO for the top-level static pages (/about, /contact, ...). Inject in the
+ * page component's constructor. Sets title, description, canonical, and the
+ * matching Open Graph tags; clears docs-only hreflang alternates.
+ */
+@Injectable({ providedIn: 'root' })
+export class StaticPageSeo {
+  private readonly meta = inject(Meta);
+  private readonly titleSvc = inject(Title);
+  private readonly doc = inject(DOCUMENT);
+
+  apply(path: string, title: string, description: string): void {
+    const pageTitle = `${title} | Analog`;
+    this.titleSvc.setTitle(pageTitle);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ property: 'og:title', content: pageTitle });
+    this.meta.updateTag({ property: 'og:description', content: description });
+
+    const head = this.doc.head;
+    head
+      .querySelectorAll('link[rel="alternate"][hreflang]')
+      .forEach((el) => el.remove());
+
+    const canonicalHref = `${SITE_URL}${path}`;
+    let canonical = head.querySelector<HTMLLinkElement>(
+      'link[rel="canonical"]',
+    );
+    if (!canonical) {
+      canonical = this.doc.createElement('link');
+      canonical.rel = 'canonical';
+      head.appendChild(canonical);
+    }
+    canonical.href = canonicalHref;
+    this.meta.updateTag({ property: 'og:url', content: canonicalHref });
+  }
+}
+
 function firstHeadingOf(content: string | undefined): string | undefined {
   if (!content) return undefined;
   const m = /^#\s+(.+)$/m.exec(content);

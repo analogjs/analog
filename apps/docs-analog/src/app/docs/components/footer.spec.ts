@@ -70,6 +70,32 @@ describe('Footer', () => {
     expect(href).toBe('/docs/intro');
   });
 
+  it('opens external href items in a new tab but internal ones in place', () => {
+    const fixture = setup({
+      brand: { name: 'Demo', logoSrc: '' },
+      footer: {
+        columns: [
+          {
+            title: 'More',
+            items: [
+              { label: 'GitHub', href: 'https://github.com' },
+              { label: 'About', href: '/about' },
+            ],
+          },
+        ],
+      },
+    });
+    const links = fixture.nativeElement.querySelectorAll('a[href]');
+    const external = links[0];
+    const internal = links[1];
+    expect(external.getAttribute('href')).toBe('https://github.com');
+    expect(external.getAttribute('target')).toBe('_blank');
+    expect(external.getAttribute('rel')).toBe('noopener');
+    expect(internal.getAttribute('href')).toBe('/about');
+    expect(internal.hasAttribute('target')).toBe(false);
+    expect(internal.hasAttribute('rel')).toBe(false);
+  });
+
   it('prefixes internal links with the active non-default locale', async () => {
     TestBed.configureTestingModule({
       providers: [

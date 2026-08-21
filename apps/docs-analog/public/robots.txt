@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://analogjs.org/sitemap.xml
+
+# Machine-readable resources for agents:
+#   https://analogjs.org/llms.txt        docs index + when-to-use guidance
+#   https://analogjs.org/llms-full.txt   full docs corpus in one file
+#   https://analogjs.org/openapi.json    OpenAPI 3.1 description of endpoints
+#   https://analogjs.org/api/v1/docs.json  JSON index of every docs page

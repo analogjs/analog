@@ -6,6 +6,8 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+    <!-- Overridden per page during prerender (DocSeo / StaticPageSeo). -->
+    <link rel="canonical" href="https://analogjs.org/" />
     <!-- Social card defaults. `DocSeo` overrides og:title/og:description/og:url
          per page during prerender; the image is shared across the site. -->
     <meta
@@ -29,6 +31,80 @@
       content="Analog — the fullstack Angular meta-framework"
     />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Identity for AI agents and search engines. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://analogjs.org/#software",
+            "name": "Analog",
+            "alternateName": "AnalogJS",
+            "description": "Analog is the fullstack meta-framework for Angular. Vite-based, with file-based routing, API routes, SSR and SSG.",
+            "url": "https://analogjs.org/",
+            "image": "https://analogjs.org/img/og-image.png",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Cross-platform (Node.js)",
+            "license": "https://github.com/analogjs/analog/blob/beta/LICENSE",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "installUrl": "https://analogjs.org/docs/getting-started",
+            "downloadUrl": "https://www.npmjs.com/package/create-analog",
+            "softwareHelp": "https://analogjs.org/docs/introduction",
+            "author": { "@id": "https://analogjs.org/#organization" },
+            "publisher": { "@id": "https://analogjs.org/#organization" },
+            "sameAs": [
+              "https://github.com/analogjs/analog",
+              "https://www.npmjs.com/package/@analogjs/platform",
+              "https://twitter.com/analogjs"
+            ]
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://analogjs.org/#organization",
+            "name": "Analog",
+            "alternateName": "AnalogJS",
+            "url": "https://analogjs.org/",
+            "logo": "https://analogjs.org/img/logos/analog-logo.svg",
+            "email": "brandon@analogjs.org",
+            "contactPoint": [
+              {
+                "@type": "ContactPoint",
+                "contactType": "customer support",
+                "email": "brandon@analogjs.org",
+                "url": "https://analogjs.org/contact",
+                "availableLanguage": ["English"]
+              },
+              {
+                "@type": "ContactPoint",
+                "contactType": "sales",
+                "email": "sponsor@analogjs.org",
+                "url": "https://analogjs.org/docs/sponsoring",
+                "availableLanguage": ["English"]
+              }
+            ],
+            "sameAs": [
+              "https://github.com/analogjs/analog",
+              "https://twitter.com/analogjs",
+              "https://chat.analogjs.org"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://analogjs.org/#website",
+            "name": "Analog",
+            "url": "https://analogjs.org/",
+            "description": "Documentation for Analog, the fullstack Angular meta-framework.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://analogjs.org/#organization" }
+          }
+        ]
+      }
+    </script>
     <!-- Resolve theme before first paint to avoid a light->dark flash on load. -->
     <script>
       (function () {

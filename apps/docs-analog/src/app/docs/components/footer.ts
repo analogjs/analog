@@ -51,8 +51,8 @@ import { useLocaleSignal } from '../locale';
                     } @else if (item.href) {
                       <a
                         [href]="item.href"
-                        target="_blank"
-                        rel="noopener"
+                        [attr.target]="isExternal(item.href) ? '_blank' : null"
+                        [attr.rel]="isExternal(item.href) ? 'noopener' : null"
                         class="hover:underline"
                         >{{ item.label }}</a
                       >
@@ -89,5 +89,11 @@ export class Footer {
   protected localizedLink(link: string): string {
     const loc = this.locale();
     return loc && link.startsWith('/') ? `/${loc}${link}` : link;
+  }
+
+  /** Site-relative hrefs (English-only pages like /about) open in the same
+   * tab; only truly external links get target="_blank". */
+  protected isExternal(href: string): boolean {
+    return !href.startsWith('/');
   }
 }

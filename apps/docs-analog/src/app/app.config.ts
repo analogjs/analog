@@ -163,6 +163,10 @@ export const appConfig: ApplicationConfig = {
                 label: $localize`:@@sidebar.getting-started:Getting Started`,
                 routerLink: '/docs/getting-started',
               },
+              {
+                label: $localize`:@@footer.developers:Developers`,
+                href: '/developers',
+              },
               { label: 'llms.txt', href: 'https://analogjs.org/llms.txt' },
               {
                 label: 'llms-full.txt',
@@ -195,6 +199,18 @@ export const appConfig: ApplicationConfig = {
               {
                 label: 'Stack Overflow',
                 href: 'https://stackoverflow.com/questions/tagged/analogjs',
+              },
+              {
+                label: $localize`:@@footer.about:About`,
+                href: '/about',
+              },
+              {
+                label: $localize`:@@footer.contact:Contact`,
+                href: '/contact',
+              },
+              {
+                label: $localize`:@@footer.privacy:Privacy`,
+                href: '/privacy',
               },
             ],
           },
