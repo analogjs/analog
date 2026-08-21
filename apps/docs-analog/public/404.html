@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Page not found | Analog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --fg: #1a1a2e;
+        --fg-muted: #55556d;
+        --bg: #ffffff;
+        --accent: #c026d3;
+        --border: #e5e5ef;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --fg: #ececf4;
+          --fg-muted: #a0a0b8;
+          --bg: #0f0f17;
+          --border: #2a2a3a;
+        }
+      }
+      body {
+        margin: 0;
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      main {
+        max-width: 34rem;
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 2rem;
+        margin: 1rem 0 0.5rem;
+      }
+      p {
+        color: var(--fg-muted);
+        line-height: 1.6;
+      }
+      ul {
+        padding-left: 1.2rem;
+        line-height: 1.9;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      code {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.1rem 0.35rem;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img
+        src="/img/logos/analog-logo.svg"
+        alt="Analog logo"
+        width="48"
+        height="48"
+      />
+      <h1>404 — Page not found</h1>
+      <p>
+        This path does not exist on analogjs.org. Nothing was moved silently:
+        unknown URLs on this site always return a real HTTP 404.
+      </p>
+      <ul>
+        <li><a href="/">Homepage</a></li>
+        <li><a href="/docs/introduction">Documentation</a></li>
+        <li><a href="/developers">Developer portal</a></li>
+        <li><a href="/sitemap.xml">Sitemap</a></li>
+      </ul>
+      <p>
+        Agents: the docs index lives at <a href="/llms.txt">/llms.txt</a>, the
+        API description at <a href="/openapi.json">/openapi.json</a>, and every
+        docs page is available as Markdown at its URL plus <code>.md</code>.
+      </p>
+    </main>
+  </body>
+</html>

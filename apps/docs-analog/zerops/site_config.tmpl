@@ -1,0 +1,90 @@
+# Nginx site config for analogjs.org, referenced from zerops.yaml via
+# `run.siteConfigPath`. Replaces the Zerops `static` preset so the site can:
+#
+#   - return real HTTP 404s for unknown paths (the static preset falls back
+#     to /index.html with a 200, which reads as "every path exists" to agents)
+#   - serve structured JSON errors for /api/* paths
+#   - content-negotiate `Accept: text/markdown` onto the prerendered `.md`
+#     mirrors, with `Vary: Accept` so CDNs cache the variants separately
+#
+# The site is fully prerendered (SSG) — every real route exists as an .html
+# file, so dropping the SPA fallback loses nothing.
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name _;
+    root {{.DocumentRoot}};
+
+    charset utf-8;
+    # text/html is always charset-tagged; list the extra machine formats.
+    charset_types text/markdown text/plain application/json text/xml application/xml;
+
+    # Site-wide 404 page (kept in apps/docs-analog/public/404.html).
+    error_page 404 /404.html;
+
+    access_log syslog:server=unix:/dev/log,facility=local1,tag=nginx,severity=info default_short;
+    error_log syslog:server=unix:/dev/log,facility=local1,tag=nginx,severity=error;
+
+    # Deploy artifacts that must never be served.
+    location ~ (^|/)\.|\.tmpl$ {
+        return 404;
+    }
+
+    # Machine-readable JSON API (static files generated at build time by the
+    # agentResourcesPlugin). Misses return a structured JSON error document.
+    location ^~ /api/ {
+        add_header Vary "Accept, Accept-Encoding" always;
+        add_header Access-Control-Allow-Origin "*" always;
+        error_page 404 /api/v1/errors/404.json;
+        try_files $uri $uri/index.json =404;
+    }
+
+    location = /openapi.json {
+        add_header Access-Control-Allow-Origin "*" always;
+        error_page 404 /api/v1/errors/404.json;
+        try_files $uri =404;
+    }
+
+    location ~ ^/llms(-full)?\.txt$ {
+        add_header Access-Control-Allow-Origin "*" always;
+        try_files $uri =404;
+    }
+
+    # Raw Markdown mirrors: /docs/<slug>.md, /<locale>/docs/<slug>.md and the
+    # top-level pages (/index.md, /about.md, ...). Misses get a Markdown 404.
+    location ~ \.md$ {
+        default_type text/markdown;
+        add_header Vary "Accept, Accept-Encoding" always;
+        add_header Access-Control-Allow-Origin "*" always;
+        error_page 404 /404.md;
+        try_files $uri =404;
+    }
+
+    # /docs has no index page of its own; send visitors to the first doc.
+    location = /docs {
+        return 302 /docs/introduction;
+    }
+    location = /docs/ {
+        return 302 /docs/introduction;
+    }
+
+    # Everything else: exact file, .html mirror, directory index — and a real
+    # 404 when none exists. No SPA fallback.
+    location / {
+        add_header Vary "Accept, Accept-Encoding" always;
+
+        # Markdown content negotiation (acceptmarkdown.com): agents sending
+        # `Accept: text/markdown` get the Markdown mirror of the page. Only
+        # paths that publish a mirror are rewritten; everything else keeps
+        # serving HTML (with Vary above so caches keep variants apart).
+        if ($http_accept ~* "text/markdown") {
+            rewrite ^/$ /index.md last;
+            rewrite ^(/(?:[a-z-]+/)?docs/[^.]+[^/.])$ $1.md last;
+            rewrite ^(/(?:about|contact|privacy|developers))$ $1.md last;
+        }
+
+        try_files $uri $uri.html $uri/index.html =404;
+    }
+}

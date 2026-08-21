@@ -9,7 +9,12 @@ zerops:
         - pnpm exec nx build docs-analog
       deployFiles:
         - dist/apps/docs-analog/analog/public/~
+        - apps/docs-analog/zerops/site_config.tmpl
       cache:
         - node_modules
     run:
-      base: static
+      # Full nginx runtime (instead of the `static` preset) so unknown paths
+      # return real 404s, /api/* misses return JSON errors, and
+      # `Accept: text/markdown` negotiates onto the prerendered .md mirrors.
+      base: nginx@latest
+      siteConfigPath: apps/docs-analog/zerops/site_config.tmpl

@@ -9,6 +9,11 @@
  * Usage:
  *   node apps/docs-analog/scripts/verify-url-contract.mjs http://localhost:5173
  *   node apps/docs-analog/scripts/verify-url-contract.mjs https://analogjs.org
+ *
+ * Pass --agent-surface to also verify the machine-readable contract (real
+ * 404s, JSON API + errors, markdown content negotiation with Vary: Accept).
+ * Only meaningful against the deployed nginx config or a matching server —
+ * the vite dev server does not implement these semantics.
  */
 
 import { readdirSync, statSync } from 'node:fs';
@@ -16,7 +21,11 @@ import { resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const baseUrl = (process.argv[2] ?? 'http://localhost:5173').replace(/\/$/, '');
+const args = process.argv.slice(2);
+const agentSurface = args.includes('--agent-surface');
+const baseUrl = (
+  args.find((a) => !a.startsWith('--')) ?? 'http://localhost:5173'
+).replace(/\/$/, '');
 const contentDir = resolve(__dirname, '../src/content');
 const LOCALES = new Set(['de', 'es', 'fr', 'ko', 'pt-br', 'tr', 'zh-hans']);
 
@@ -42,6 +51,28 @@ for (const file of walk(contentDir)) {
   }
 }
 
+// Static pages and machine-readable files that must always resolve.
+urls.push(
+  '/',
+  '/about',
+  '/contact',
+  '/developers',
+  '/privacy',
+  '/llms.txt',
+  '/llms-full.txt',
+  '/sitemap.xml',
+  '/robots.txt',
+  '/openapi.json',
+  '/api/v1/docs.json',
+  '/api/v1/docs/introduction.json',
+  '/docs/introduction.md',
+  '/index.md',
+  '/about.md',
+  '/contact.md',
+  '/developers.md',
+  '/privacy.md',
+);
+
 const failures = [];
 for (const url of urls) {
   const full = `${baseUrl}${url}`;
@@ -52,6 +83,66 @@ for (const url of urls) {
     }
   } catch (err) {
     failures.push(`ERR  ${url} (${err.message})`);
+  }
+}
+
+// Machine contract: real 404s, JSON errors, markdown negotiation.
+if (agentSurface) {
+  const checks = [
+    {
+      name: 'unknown path returns 404',
+      run: async () => {
+        const res = await fetch(`${baseUrl}/this-path-does-not-exist-xyz`);
+        if (res.status !== 404) return `expected 404, got ${res.status}`;
+        return null;
+      },
+    },
+    {
+      name: 'unknown /api/ path returns structured JSON 404',
+      run: async () => {
+        const res = await fetch(`${baseUrl}/api/v1/docs/nope-xyz.json`);
+        if (res.status !== 404) return `expected 404, got ${res.status}`;
+        const type = res.headers.get('content-type') ?? '';
+        if (!type.includes('application/json'))
+          return `expected JSON, got ${type}`;
+        const body = await res.json();
+        if (body?.error?.code !== 'not_found') return 'missing error.code';
+        return null;
+      },
+    },
+    {
+      name: 'Accept: text/markdown negotiates markdown with Vary: Accept',
+      run: async () => {
+        const res = await fetch(`${baseUrl}/docs/introduction`, {
+          headers: { accept: 'text/markdown' },
+        });
+        const type = res.headers.get('content-type') ?? '';
+        const vary = res.headers.get('vary') ?? '';
+        if (!type.includes('text/markdown'))
+          return `expected markdown, got ${type}`;
+        if (!/\baccept\b/i.test(vary)) return `Vary missing Accept: "${vary}"`;
+        return null;
+      },
+    },
+    {
+      name: 'markdown 404 body is markdown',
+      run: async () => {
+        const res = await fetch(`${baseUrl}/docs/nope-xyz.md`);
+        if (res.status !== 404) return `expected 404, got ${res.status}`;
+        const type = res.headers.get('content-type') ?? '';
+        if (!type.includes('text/markdown'))
+          return `expected markdown, got ${type}`;
+        return null;
+      },
+    },
+  ];
+  for (const check of checks) {
+    try {
+      const problem = await check.run();
+      if (problem) failures.push(`AGENT ${check.name}: ${problem}`);
+    } catch (err) {
+      failures.push(`AGENT ${check.name}: ${err.message}`);
+    }
   }
 }
 
