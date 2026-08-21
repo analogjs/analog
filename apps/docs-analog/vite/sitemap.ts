@@ -13,6 +13,11 @@ export interface SitemapOptions {
   defaultLocale?: string;
   /** Non-default locale codes served at `/<code>/docs/<slug>`. */
   locales: ReadonlyArray<string>;
+  /**
+   * Absolute paths of non-content pages to include (e.g. `/`, `/about`).
+   * Listed before the docs entries, without locale alternates.
+   */
+  extraRoutes?: ReadonlyArray<string>;
 }
 
 interface DocEntry {
@@ -42,6 +47,7 @@ export function sitemapPlugin(options: SitemapOptions): Plugin {
     distDir,
     defaultLocale = 'en',
     locales,
+    extraRoutes = [],
   } = options;
   const localeSet = new Set<string>(locales);
 
@@ -71,6 +77,10 @@ export function sitemapPlugin(options: SitemapOptions): Plugin {
       }
 
       const urls: string[] = [];
+      for (const route of extraRoutes) {
+        const loc = route === '/' ? `${siteUrl}/` : `${siteUrl}${route}`;
+        urls.push(`  <url>\n    <loc>${loc}</loc>\n  </url>`);
+      }
       for (const entry of entries.values()) {
         const localesInOrder = [
           ...(entry.locales.has(defaultLocale) ? [defaultLocale] : []),

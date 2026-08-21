@@ -14,6 +14,12 @@ export interface BrokenLinksOptions {
   distDir: string;
   /** Cap how many failures are printed before the "...and N more" line. */
   maxReported?: number;
+  /**
+   * Route paths (e.g. `/developers`) that only materialize as files during
+   * the later prerender stage, after this plugin runs against the client
+   * dist. Links to them are not treated as broken.
+   */
+  prerenderedRoutes?: ReadonlyArray<string>;
 }
 
 function walk(dir: string, out: string[] = []): string[] {
@@ -46,7 +52,8 @@ function targetExists(distRoot: string, href: string): boolean {
  * ignored.
  */
 export function brokenLinksPlugin(options: BrokenLinksOptions): Plugin {
-  const { distDir, maxReported = 30 } = options;
+  const { distDir, maxReported = 30, prerenderedRoutes = [] } = options;
+  const prerendered = new Set(prerenderedRoutes);
   return {
     name: '@analogjs/content:broken-links',
     apply: 'build',
@@ -64,6 +71,8 @@ export function brokenLinksPlugin(options: BrokenLinksOptions): Plugin {
           let m: RegExpExecArray | null;
           while ((m = pattern.exec(html)) !== null) {
             const href = m[1];
+            const cleaned = href.split('#')[0].split('?')[0];
+            if (prerendered.has(cleaned)) continue;
             if (!targetExists(distDir, href)) {
               broken.push({ file: file.replace(distDir, ''), href });
             }

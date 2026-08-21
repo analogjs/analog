@@ -1,3 +1,7 @@
+export {
+  agentResourcesPlugin,
+  type AgentResourcesOptions,
+} from './agent-resources.js';
 export { brokenLinksPlugin, type BrokenLinksOptions } from './broken-links.js';
 export {
   copyMarkdownPlugin,
