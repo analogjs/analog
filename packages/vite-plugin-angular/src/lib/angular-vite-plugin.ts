@@ -14,8 +14,6 @@ import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
-
-import * as ngCompiler from '@angular/compiler';
 import { globSync } from 'tinyglobby';
 import {
   createFilter,
@@ -53,6 +51,12 @@ const require = createRequire(import.meta.url);
 
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
+import {
+  encapsulateComponentStylesPlugin,
+  getComponentStyleSheetMeta,
+  getFilenameFromPath,
+  isComponentStyleSheet,
+} from './encapsulate-component-styles-plugin.js';
 import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
@@ -651,24 +655,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          /**
-           * Encapsulate component stylesheets that use emulated encapsulation
-           */
-          if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
-            const { encapsulation, componentId } =
-              getComponentStyleSheetMeta(id);
-            if (encapsulation === 'emulated' && componentId) {
-              const encapsulated = ngCompiler.encapsulateStyle(
-                code,
-                componentId,
-              );
-              return {
-                code: encapsulated,
-                map: null,
-              };
-            }
-          }
-
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
             // in case of a dynamically loaded file
@@ -848,6 +834,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     !pluginOptions.fastCompile &&
       pluginOptions.liveReload &&
       liveReloadPlugin({ classNames, fileEmitter }),
+    // Register from the caller-facing option so encapsulation still ships
+    // when tests/Angular version gates disable the HMR compilation flags.
+    options?.liveReload && encapsulateComponentStylesPlugin(),
     ...(isTest && !isStackBlitz
       ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
       : []),
@@ -1886,37 +1875,6 @@ function markModuleSelfAccepting(mod: ModuleNode): ModuleNode {
     ...mod,
     isSelfAccepting: true,
   } as ModuleNode;
-}
-
-function isComponentStyleSheet(id: string): boolean {
-  return id.includes('ngcomp=');
-}
-
-function getComponentStyleSheetMeta(id: string): {
-  componentId: string;
-  encapsulation: 'emulated' | 'shadow' | 'none';
-} {
-  const params = new URL(id, 'http://localhost').searchParams;
-  const encapsulationMapping = {
-    '0': 'emulated',
-    '2': 'none',
-    '3': 'shadow',
-  };
-  return {
-    componentId: params.get('ngcomp')!,
-    encapsulation: encapsulationMapping[
-      params.get('e') as keyof typeof encapsulationMapping
-    ] as 'emulated' | 'shadow' | 'none',
-  };
-}
-
-/**
- * Removes leading / and query string from a url path
- * e.g. /foo.scss?direct&ngcomp=ng-c3153525609&e=0 returns foo.scss
- * @param id
- */
-function getFilenameFromPath(id: string): string {
-  return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
 }
 
 /**
