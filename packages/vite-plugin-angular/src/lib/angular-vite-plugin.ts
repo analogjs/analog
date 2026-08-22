@@ -1165,6 +1165,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder = undefined;
       cachedHost = undefined;
       cachedHostKey = undefined;
+      angularCompilation?.close?.();
       angularCompilation = undefined;
     }
 
