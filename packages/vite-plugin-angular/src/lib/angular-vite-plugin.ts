@@ -14,8 +14,6 @@ import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
-
-import * as ngCompiler from '@angular/compiler';
 import { globSync } from 'tinyglobby';
 import {
   createFilter,
@@ -53,6 +51,17 @@ const require = createRequire(import.meta.url);
 
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
+import {
+  applyLiveReloadCompilerOptions,
+  shouldDiscardIncrementalProgram,
+  shouldEnableExternalRuntimeStyles,
+} from './live-reload-compiler-options.js';
+import {
+  encapsulateComponentStylesPlugin,
+  getComponentStyleSheetMeta,
+  getFilenameFromPath,
+  isComponentStyleSheet,
+} from './encapsulate-component-styles-plugin.js';
 import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
@@ -107,6 +116,13 @@ export interface PluginOptions {
    */
   include?: string[];
   additionalContentDirs?: string[];
+  /**
+   * Enable Angular component HMR in the Vite dev server.
+   *
+   * The first compilation inlines and encapsulates component styles so the
+   * initial page paint is correct. After that, Analog switches to external
+   * runtime styles (`<link>` URLs) so CSS can hot-update independently.
+   */
   liveReload?: boolean;
   disableTypeChecking?: boolean;
   fileReplacements?: FileReplacement[];
@@ -182,7 +198,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
   const ts = require('typescript');
-  let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+  let builder:
+    | ts.BuilderProgram
+    | ts.EmitAndSemanticDiagnosticsBuilderProgram
+    | undefined;
   let nextProgram: NgtscProgram | undefined;
   // Caches (always rebuild Angular program per user request)
   const tsconfigOptionsCache = new Map<
@@ -226,6 +245,14 @@ export function angular(options?: PluginOptions): Plugin[] {
     return outputFiles.get(normalizePath(file));
   };
   let initialCompilation = false;
+  // Set after the first successful watch compilation. External runtime
+  // styles stay off until then so first paint uses inlined CSS.
+  let liveReloadExternalStyles = false;
+  // The incremental NgtscProgram/host must be discarded once when
+  // `externalRuntimeStyles` flips on. Reusing the inlined first program
+  // keeps Angular's `externalRuntimeStyles: false` path, which preloads
+  // hash-remapped styleUrls and throws "Unable to locate component resource".
+  let liveReloadProgramHasExternalStyles = false;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
   let styleTransform: (
@@ -651,24 +678,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          /**
-           * Encapsulate component stylesheets that use emulated encapsulation
-           */
-          if (pluginOptions.liveReload && isComponentStyleSheet(id)) {
-            const { encapsulation, componentId } =
-              getComponentStyleSheetMeta(id);
-            if (encapsulation === 'emulated' && componentId) {
-              const encapsulated = ngCompiler.encapsulateStyle(
-                code,
-                componentId,
-              );
-              return {
-                code: encapsulated,
-                map: null,
-              };
-            }
-          }
-
           if (id.includes('.ts?')) {
             // Strip the query string off the ID
             // in case of a dynamically loaded file
@@ -848,6 +857,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     !pluginOptions.fastCompile &&
       pluginOptions.liveReload &&
       liveReloadPlugin({ classNames, fileEmitter }),
+    // Register from the caller-facing option so encapsulation still ships
+    // when tests/Angular version gates disable the HMR compilation flags.
+    options?.liveReload && encapsulateComponentStylesPlugin(),
     ...(isTest && !isStackBlitz
       ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
       : []),
@@ -947,7 +959,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           order,
           className,
         ) {
-          if (pluginOptions.liveReload) {
+          // Only emit external style filenames once the first (inlined)
+          // compilation has finished. Returning a filename here while
+          // `externalRuntimeStyles` is still off would leak the hash
+          // path into the component as if it were CSS.
+          if (pluginOptions.liveReload && liveReloadExternalStyles) {
             const id = createHash('sha256')
               .update(containingFile)
               .update(className as string)
@@ -986,13 +1002,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       (tsCompilerOptions) => {
-        if (pluginOptions.liveReload && watchMode) {
-          tsCompilerOptions['_enableHmr'] = true;
-          tsCompilerOptions['externalRuntimeStyles'] = true;
-          // Workaround for https://github.com/angular/angular/issues/59310
-          // Force extra instructions to be generated for HMR w/defer
-          tsCompilerOptions['supportTestBed'] = true;
-        }
+        applyLiveReloadCompilerOptions(tsCompilerOptions, {
+          liveReload: pluginOptions.liveReload,
+          watchMode,
+          initialCompilationDone: liveReloadExternalStyles,
+        });
 
         if (tsCompilerOptions.compilationMode === 'partial') {
           // These options can't be false in partial mode
@@ -1110,7 +1124,16 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
     try {
       await previousLock;
+      const usedExternalStyles = liveReloadExternalStyles;
       await _doPerformCompilation(config, ids);
+      // Flip after a successful compile so the *next* pass can emit
+      // external runtime styles. The emit that just finished stays inlined.
+      if (pluginOptions.liveReload && watchMode) {
+        liveReloadExternalStyles = true;
+      }
+      if (usedExternalStyles) {
+        liveReloadProgramHasExternalStyles = true;
+      }
     } finally {
       resolve!();
     }
@@ -1124,6 +1147,27 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Each pass creates a new builder/program, so previously emitted output
     // can go stale — only dedupe emits within a single pass.
     emittedIds = new Set<string>();
+
+    const discardIncrementalProgram = shouldDiscardIncrementalProgram({
+      externalRuntimeStylesNowEnabled: shouldEnableExternalRuntimeStyles({
+        liveReload: pluginOptions.liveReload,
+        watchMode,
+        initialCompilationDone: liveReloadExternalStyles,
+      }),
+      incrementalProgramUsesExternalRuntimeStyles:
+        liveReloadProgramHasExternalStyles,
+    });
+    if (discardIncrementalProgram) {
+      // First rebuild after first paint: drop the inlined program so Angular
+      // is created with `externalRuntimeStyles: true` instead of preloading
+      // hash-remapped styleUrls from the previous compile.
+      nextProgram = undefined;
+      builder = undefined;
+      cachedHost = undefined;
+      cachedHostKey = undefined;
+      angularCompilation?.close?.();
+      angularCompilation = undefined;
+    }
 
     // Forward `ids` (modified files) so the Compilation API path can do
     // incremental re-analysis instead of a full recompile on every change.
@@ -1184,13 +1228,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     const tsCompilerOptions = { ...cached.options };
     let rootNames = [...cached.rootNames];
 
-    if (pluginOptions.liveReload && watchMode) {
-      tsCompilerOptions['_enableHmr'] = true;
-      tsCompilerOptions['externalRuntimeStyles'] = true;
-      // Workaround for https://github.com/angular/angular/issues/59310
-      // Force extra instructions to be generated for HMR w/defer
-      tsCompilerOptions['supportTestBed'] = true;
-    }
+    applyLiveReloadCompilerOptions(tsCompilerOptions, {
+      liveReload: pluginOptions.liveReload,
+      watchMode,
+      initialCompilationDone: liveReloadExternalStyles,
+    });
 
     if (tsCompilerOptions['compilationMode'] === 'partial') {
       // These options can't be false in partial mode
@@ -1291,8 +1333,9 @@ export function angular(options?: PluginOptions): Plugin[] {
      */
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
-    const oldBuilder =
-      builder ?? ts.readBuilderProgram(tsCompilerOptions, host);
+    const oldBuilder = discardIncrementalProgram
+      ? undefined
+      : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1321,7 +1364,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
       );
 
-      typeScriptProgram = builder.getProgram();
+      typeScriptProgram = builder!.getProgram();
     }
 
     if (!watchMode) {
@@ -1330,6 +1373,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       builder = ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
     }
 
+    // Always assigned in the branches above; local alias narrows the
+    // optional field used when liveReload discards the previous program.
+    const emitBuilder = builder!;
+
     if (angularCompiler!) {
       await angularCompiler.analyzeAsync();
     }
@@ -1337,10 +1384,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     const beforeTransformers = jit
       ? [
           compilerCli.constructorParametersDownlevelTransform(
-            builder.getProgram(),
+            emitBuilder.getProgram(),
           ),
           createJitResourceTransformer(() =>
-            builder.getProgram().getTypeChecker(),
+            emitBuilder.getProgram().getTypeChecker(),
           ),
         ]
       : [];
@@ -1351,7 +1398,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     );
 
     const fileMetadata = getFileMetadata(
-      builder,
+      emitBuilder,
       angularCompiler!,
       pluginOptions.liveReload,
       pluginOptions.disableTypeChecking,
@@ -1425,7 +1472,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return;
       }
 
-      const sourceFile = builder.getSourceFile(id);
+      const sourceFile = emitBuilder.getSourceFile(id);
       if (!sourceFile) {
         return;
       }
@@ -1433,7 +1480,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       let content = '';
       let map: string | undefined;
       let mapFilename: string | undefined;
-      builder.emit(
+      emitBuilder.emit(
         sourceFile,
         (filename, data) => {
           if (/\.[cm]?js$/.test(filename)) {
@@ -1511,7 +1558,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           // TypeScript will loop until there are no more affected files in the program
           while (
             (
-              builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
+              emitBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram
             ).emitNextAffectedFile(
               writeFileCallback,
               undefined,
@@ -1886,37 +1933,6 @@ function markModuleSelfAccepting(mod: ModuleNode): ModuleNode {
     ...mod,
     isSelfAccepting: true,
   } as ModuleNode;
-}
-
-function isComponentStyleSheet(id: string): boolean {
-  return id.includes('ngcomp=');
-}
-
-function getComponentStyleSheetMeta(id: string): {
-  componentId: string;
-  encapsulation: 'emulated' | 'shadow' | 'none';
-} {
-  const params = new URL(id, 'http://localhost').searchParams;
-  const encapsulationMapping = {
-    '0': 'emulated',
-    '2': 'none',
-    '3': 'shadow',
-  };
-  return {
-    componentId: params.get('ngcomp')!,
-    encapsulation: encapsulationMapping[
-      params.get('e') as keyof typeof encapsulationMapping
-    ] as 'emulated' | 'shadow' | 'none',
-  };
-}
-
-/**
- * Removes leading / and query string from a url path
- * e.g. /foo.scss?direct&ngcomp=ng-c3153525609&e=0 returns foo.scss
- * @param id
- */
-function getFilenameFromPath(id: string): string {
-  return new URL(id, 'http://localhost').pathname.replace(/^\//, '');
 }
 
 /**
