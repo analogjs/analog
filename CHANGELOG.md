@@ -1,3 +1,10 @@
+## [2.7.1-beta.3](https://github.com/analogjs/analog/compare/v2.7.1-beta.2...v2.7.1-beta.3) (2026-08-23)
+
+### Bug Fixes
+
+- **router:** guard import.meta.env access in streaming SSR renderer ([#2495](https://github.com/analogjs/analog/issues/2495)) ([b18f2be](https://github.com/analogjs/analog/commit/b18f2be3a835ac06d57e074a2c2bb48f1e41d7f6))
+- **vite-plugin-angular:** fix hmr plus :host styles in .scss issue ([#2493](https://github.com/analogjs/analog/issues/2493)) ([a0e2115](https://github.com/analogjs/analog/commit/a0e21150a3fa20c2c177335d2385260331369621))
+
 ## [2.7.1-beta.2](https://github.com/analogjs/analog/compare/v2.7.1-beta.1...v2.7.1-beta.2) (2026-08-18)
 
 ### Bug Fixes
