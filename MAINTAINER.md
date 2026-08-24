@@ -63,7 +63,7 @@ return {
 };
 ```
 
-- For new packge make an entry into the return array
+- For new package make an entry into the return array
 
 ```ts
 // return latest 17.X deps for versions >= 17.0.0
