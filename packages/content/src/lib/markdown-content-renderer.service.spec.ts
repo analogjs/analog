@@ -64,6 +64,27 @@ Lorem ipsum 2....
     );
   });
 
+  it('escapes html in code blocks, code spans, and language names', async () => {
+    const { service } = setup();
+
+    const fence = await service.render(
+      '```html"><img src=x onerror=alert(1)>\nhello\n```',
+    );
+    expect(fence.content).not.toContain('<img src=x onerror=');
+
+    const noLang = await service.render(
+      '```\n<img src=x onerror=alert(2)>\n```',
+    );
+    expect(noLang.content).not.toContain('<img src=x onerror=');
+    expect(noLang.content).toContain('&lt;img');
+
+    const span = await service.render(
+      'text `<img src=x onerror=alert(3)>` end',
+    );
+    expect(span.content).not.toContain('<img src=x onerror=');
+    expect(span.content).toContain('&lt;img');
+  });
+
   it('should expose getContentHeadings for backward compatibility', () => {
     const { service } = setup();
     const toc = service.getContentHeadings(`# Hello\n## World`);

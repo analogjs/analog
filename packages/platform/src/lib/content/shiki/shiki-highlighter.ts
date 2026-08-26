@@ -10,6 +10,7 @@ import {
 } from 'shiki';
 
 import { MarkedContentHighlighter } from '../marked/marked-content-highlighter.js';
+import { escapeHtml } from '../utils/escape-html.js';
 
 export type ShikiHighlighterOptions = Parameters<typeof createHighlighter>[0];
 export type ShikiHighlightOptions = Partial<
@@ -34,15 +35,6 @@ export const defaultHighlighterOptions = {
   themes: ['github-dark', 'github-light'],
 };
 
-function escapeHtml(code: string): string {
-  return code
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 export class ShikiHighlighter extends MarkedContentHighlighter {
   private readonly highlighter = createHighlighter(this.highlighterOptions);
 
@@ -60,7 +52,7 @@ export class ShikiHighlighter extends MarkedContentHighlighter {
       container: this.container,
       highlight: async (code, lang, props) => {
         if (this.hasLoadMermaid && lang === 'mermaid') {
-          return `<pre class="mermaid">${code}</pre>`;
+          return `<pre class="mermaid">${escapeHtml(code)}</pre>`;
         }
 
         if (this.skipLangs.includes(lang as string)) {
