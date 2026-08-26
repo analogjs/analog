@@ -99,9 +99,11 @@ As of Angular v21, `Zoneless` change detection is the default for new projects.
 Use the following setup:
 
 ```ts
+// src/test-setup.ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
 import '@analogjs/vitest-angular/setup-serializers';
+
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed();
@@ -109,17 +111,23 @@ setupTestBed();
 
 ### Zone.js setup
 
-If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
+If you are using `Zone.js` for change detection, import the `setup-zone` script before setting up the `TestBed`. This script patches the test environment for `Zone.js` helpers such as `fakeAsync`, and automatically includes support for setting up snapshot tests.
 
 ```ts
+// src/test-setup.ts
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
+
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 setupTestBed({
   zoneless: false,
 });
 ```
+
+The side effect imports must come first. If your formatter sorts side effect imports below named imports, keep them in a separate import group with a blank line, or exclude `src/test-setup.ts` from import sorting.
+
+> **Note:** With `Zone.js`, use Vitest's global test functions, with `globals: true` set in the `vite.config.mts`, and `vitest/globals` added to the `types` array in the `tsconfig.spec.json`. Importing `describe`, `it`, `beforeEach`, and other functions from `vitest` directly bypasses the `Zone.js` patching, and `fakeAsync` fails with the error `Expected to be running in 'ProxyZone', but it was not found`. Zoneless tests have no such restriction — when migrating to zoneless change detection, you can switch back to importing the functions from `vitest`.
 
 ### Configuration Options
 
