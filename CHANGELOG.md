@@ -1,3 +1,15 @@
+## [2.7.1](https://github.com/analogjs/analog/compare/v2.7.0...v2.7.1) (2026-08-26)
+
+### Bug Fixes
+
+- **content:** escape html in the marked code renderer ([7c6febf](https://github.com/analogjs/analog/commit/7c6febf13456e488f5be0e2647fbb1446e7d75d4))
+- **content:** escape mermaid output and add sha-256 digest tests ([0688cb0](https://github.com/analogjs/analog/commit/0688cb0ba622a8594f1294acc66cfa728a794fbe))
+- **router:** guard import.meta.env access in streaming SSR renderer ([#2495](https://github.com/analogjs/analog/issues/2495)) ([b18f2be](https://github.com/analogjs/analog/commit/b18f2be3a835ac06d57e074a2c2bb48f1e41d7f6))
+- **router:** serialize cache-key fields unambiguously ([5509aeb](https://github.com/analogjs/analog/commit/5509aeb5847ce40210c98e7b51a0e7061cd7e580))
+- **router:** use SHA-256 for TransferState cache keys ([76f54a6](https://github.com/analogjs/analog/commit/76f54a6fe56813dac024a00034249aff1656b950))
+- **vite-plugin-angular:** fix hmr plus :host styles in .scss issue ([#2493](https://github.com/analogjs/analog/issues/2493)) ([a0e2115](https://github.com/analogjs/analog/commit/a0e21150a3fa20c2c177335d2385260331369621))
+- **vite-plugin-angular:** return worker path unchanged from processWebWorker ([#2488](https://github.com/analogjs/analog/issues/2488)) ([2851c69](https://github.com/analogjs/analog/commit/2851c698d8204735568330211ae6b81e833bc9d5))
+
 ## [2.7.1-beta.3](https://github.com/analogjs/analog/compare/v2.7.1-beta.2...v2.7.1-beta.3) (2026-08-23)
 
 ### Bug Fixes
