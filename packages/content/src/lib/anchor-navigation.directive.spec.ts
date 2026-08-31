@@ -118,6 +118,34 @@ describe('AnchorNavigationDirective', () => {
     expect(handleNavigation.mock.results[0].value).toEqual(false);
     expect(router.navigateByUrl).toBeCalledWith('/page?query=analog#section1');
   }));
+
+  it('navigates to a fragment-only anchor using the current page path and search when a <base> element is present', fakeAsync(() => {
+    // A <base> element makes the browser resolve a fragment-only href
+    // (e.g. href="#section1") against the base URL, not the current
+    // document -- so a naive read of `pathname`/`search` off the anchor
+    // resolves to the base's ("/"), not the page the link actually lives
+    // on. Reproduce that here with a real <base> element plus a pushState
+    // move to a nested path with a query string.
+    const baseEl = document.createElement('base');
+    baseEl.setAttribute('href', '/');
+    document.head.appendChild(baseEl);
+    window.history.pushState({}, '', '/blog/post?query=analog');
+
+    try {
+      const { router, handleNavigation, selectById } = setup();
+
+      selectById('fragment-only').click();
+      tick();
+
+      expect(handleNavigation.mock.results[0].value).toEqual(false);
+      expect(router.navigateByUrl).toBeCalledWith(
+        '/blog/post?query=analog#section1',
+      );
+    } finally {
+      document.head.removeChild(baseEl);
+      window.history.pushState({}, '', '/');
+    }
+  }));
 });
 
 function setup() {
@@ -172,6 +200,7 @@ function setup() {
         >
           Page with Search, Hash, and Trailing Slash
         </a>
+        <a id="fragment-only" href="#section1">Fragment Only</a>
       </div>
     `,
   })
