@@ -1,3 +1,9 @@
+## [2.7.2-beta.1](https://github.com/analogjs/analog/compare/v2.7.1...v2.7.2-beta.1) (2026-08-31)
+
+### Bug Fixes
+
+- **content:** resolve fragment-only anchor hrefs against the current document, not <base href> ([#2501](https://github.com/analogjs/analog/issues/2501)) ([83d299a](https://github.com/analogjs/analog/commit/83d299a4c111546ecc9ac658bf7269124e207215))
+
 ## [2.7.1](https://github.com/analogjs/analog/compare/v2.7.0...v2.7.1) (2026-08-26)
 
 ### Bug Fixes
