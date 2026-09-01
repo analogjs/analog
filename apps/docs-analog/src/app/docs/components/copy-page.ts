@@ -96,7 +96,7 @@ export function markdownForCopy(markdown: string, title?: string): string {
       @if (open()) {
         <ul
           role="menu"
-          class="absolute right-0 top-full z-10 mt-1 min-w-[13rem] rounded border py-1 shadow-lg"
+          class="absolute left-0 top-full z-10 mt-1 min-w-[13rem] rounded border py-1 shadow-lg"
           style="border-color: var(--border); background: var(--bg-elevated)"
         >
           <li>

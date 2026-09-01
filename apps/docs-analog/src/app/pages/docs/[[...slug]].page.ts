@@ -35,7 +35,7 @@ interface DocAttributes {
       <div #article docsEnhanceCode class="flex-1 min-w-0 min-h-screen">
         @if (doc(); as doc) {
           <header class="mb-6">
-            <div class="flex items-start justify-between gap-4">
+            <div class="flex items-start gap-4">
               @if (doc.attributes.title) {
                 <h1
                   class="text-5xl font-bold leading-tight tracking-tight"
@@ -46,7 +46,7 @@ interface DocAttributes {
               }
               @if (slug(); as s) {
                 <docs-copy-page
-                  class="ml-auto shrink-0 pt-2"
+                  class="shrink-0 pt-2"
                   [pageTitle]="doc.attributes.title"
                   [slug]="s"
                 />
