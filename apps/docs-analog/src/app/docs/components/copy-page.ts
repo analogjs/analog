@@ -2,21 +2,22 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { CONTENT_LOCALE } from '@analogjs/content';
 
 /**
- * Prepares the doc source for the clipboard. Content arrives with
- * frontmatter already stripped, so a leading H1 from the page title is
- * prepended unless the body brings its own (e.g. synced README pages).
+ * Prepares raw doc source for the clipboard: strips frontmatter and
+ * prepends an H1 from the page title unless the body brings its own
+ * (e.g. synced README pages).
  */
 export function markdownForCopy(markdown: string, title?: string): string {
-  return title && !markdown.startsWith('# ')
-    ? `# ${title}\n\n${markdown}`
-    : markdown;
+  const body = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n+/, '');
+  return title && !body.startsWith('# ') ? `# ${title}\n\n${body}` : body;
 }
 
 /**
  * "Copy page" split button shown next to the docs page title. The main
  * segment copies the page's raw Markdown to the clipboard; the dropdown
- * repeats that action and links to the page's `.md` URL (emitted at
- * prerender via the `outputSourceFile` option).
+ * repeats that action and links to the page's `.md` URL. Both are backed
+ * by the `.md` asset emitted at prerender via the `outputSourceFile`
+ * option (the runtime `doc.content` is already rendered HTML), so the
+ * copy action fetches that asset on first use.
  */
 @Component({
   selector: 'docs-copy-page',
@@ -126,7 +127,6 @@ export function markdownForCopy(markdown: string, title?: string): string {
   `,
 })
 export class CopyPage {
-  readonly markdown = input.required<string>();
   readonly pageTitle = input<string>();
   readonly slug = input.required<string>();
 
@@ -144,8 +144,13 @@ export class CopyPage {
 
   protected async copy(): Promise<void> {
     this.open.set(false);
+    const res = await fetch(this.mdUrl());
+    const text = res.ok ? await res.text() : '';
+    // The .md assets only exist in prerendered output; a dev server may
+    // answer with the SPA shell instead. Treat both as "nothing to copy".
+    if (!text || text.trimStart().startsWith('<')) return;
     await navigator.clipboard?.writeText(
-      markdownForCopy(this.markdown(), this.pageTitle()),
+      markdownForCopy(text, this.pageTitle()),
     );
     this.copied.set(true);
     clearTimeout(this.copiedTimer);

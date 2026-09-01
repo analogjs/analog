@@ -44,15 +44,12 @@ interface DocAttributes {
                   {{ doc.attributes.title }}
                 </h1>
               }
-              @if (markdown(); as md) {
-                @if (slug(); as s) {
-                  <docs-copy-page
-                    class="ml-auto shrink-0 pt-2"
-                    [markdown]="md"
-                    [pageTitle]="doc.attributes.title"
-                    [slug]="s"
-                  />
-                }
+              @if (slug(); as s) {
+                <docs-copy-page
+                  class="ml-auto shrink-0 pt-2"
+                  [pageTitle]="doc.attributes.title"
+                  [slug]="s"
+                />
               }
             </div>
             @if (doc.attributes.description) {
@@ -110,13 +107,9 @@ export default class DocPage {
   );
 
   protected readonly doc = toSignal(this.doc$);
-  protected readonly markdown = computed(() => {
-    const c = this.doc()?.content;
-    return typeof c === 'string' ? c : undefined;
-  });
   protected readonly headings = computed(() => {
-    const md = this.markdown();
-    return md ? extractHeadings(md) : [];
+    const c = this.doc()?.content;
+    return typeof c === 'string' ? extractHeadings(c) : [];
   });
   private readonly locale = inject(CONTENT_LOCALE, { optional: true });
   private readonly seo = inject(DocSeo);
