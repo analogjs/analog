@@ -155,16 +155,23 @@ export default defineConfig(({ mode }) => ({
 
 ## 复制资产
 
-默认情况下，`public` 目录中的静态资产会复制到构建输出目录。如果要复制该目录之外的其他资产，请使用 `nxCopyAssetsPlugin` Vite 插件。
+默认情况下，`public` 目录中的静态资产会复制到构建输出目录。如果要复制该目录之外的其他资产，请使用 `vite-plugin-static-copy` Vite 插件。
 
-导入插件并进行设置：
+安装插件，然后导入并进行设置：
 
 ```ts
 /// <reference types="vitest" />
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...
-  plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
+  plugins: [
+    analog(),
+    viteStaticCopy({
+      targets: [{ src: '*.md', dest: '.' }],
+    }),
+  ],
 }));
 ```
 
