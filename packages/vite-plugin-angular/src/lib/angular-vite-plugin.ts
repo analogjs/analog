@@ -35,7 +35,6 @@ import {
   createRolldownCompilerPlugin,
 } from './compiler-plugin.js';
 import {
-  getAngularComponentMetadata,
   StyleUrlsResolver,
   TemplateUrlsResolver,
 } from './component-resolvers.js';
@@ -53,14 +52,6 @@ import type {
 import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
-import {
-  templateClassBindingGuardPlugin,
-  removeActiveGraphMetadata,
-  removeStyleOwnerMetadata,
-  type ActiveGraphComponentRecord,
-  type StyleOwnerRecord,
-  type TemplateClassBindingGuardContext,
-} from './template-class-binding-guard-plugin.js';
 import {
   tailwindReferencePlugin,
   buildStylePreprocessor,
@@ -143,10 +134,6 @@ export {
   describeStylesheetContent,
   isTestWatchMode,
 } from './utils/compilation-shared.js';
-export {
-  findStaticClassAndBoundClassConflicts,
-  findBoundClassAndNgClassConflicts,
-} from './template-class-binding-guard-plugin.js';
 export { buildStylePreprocessor } from './tailwind-plugin.js';
 import {
   DiagnosticModes,
@@ -309,20 +296,14 @@ const classNames = new Map();
 export function evictDeletedFileMetadata(
   file: string,
   {
-    removeActiveGraphMetadata,
-    removeStyleOwnerMetadata,
     classNamesMap,
     fileTransformMap,
   }: {
-    removeActiveGraphMetadata: (file: string) => void;
-    removeStyleOwnerMetadata: (file: string) => void;
     classNamesMap: Map<string, string>;
     fileTransformMap: Map<string, string>;
   },
 ): void {
   const normalizedFile = normalizePath(file.split('?')[0]);
-  removeActiveGraphMetadata(normalizedFile);
-  removeStyleOwnerMetadata(normalizedFile);
   classNamesMap.delete(normalizedFile);
   fileTransformMap.delete(normalizedFile);
 }
@@ -398,18 +379,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
   let watchMode = false;
   let testWatchMode = isTestWatchMode();
-  // Dev-time component identity index for the currently active Vite graph.
-  // We intentionally populate this during the pre-transform pass instead of a
-  // workspace-wide scan so diagnostics stay tied to the app the developer is
-  // actually serving, and so they track hot-updated files incrementally.
-  const activeGraphComponentMetadata = new Map<
-    string,
-    ActiveGraphComponentRecord[]
-  >();
-  const selectorOwners = new Map<string, Set<string>>();
-  const classNameOwners = new Map<string, Set<string>>();
-  const transformedStyleOwnerMetadata = new Map<string, StyleOwnerRecord[]>();
-  const styleSourceOwners = new Map<string, Set<string>>();
 
   function hasViteHmrTransport(): boolean {
     return resolvedConfig ? resolvedConfig.server.hmr !== false : true;
@@ -470,14 +439,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   let viteServer: ViteDevServer | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
-  const guardContext: TemplateClassBindingGuardContext = {
-    styleUrlsResolver,
-    activeGraphComponentMetadata,
-    selectorOwners,
-    classNameOwners,
-    transformedStyleOwnerMetadata,
-    styleSourceOwners,
-  };
   const templateUrlsResolver = new TemplateUrlsResolver();
   let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
@@ -695,10 +656,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         server.watcher.on('add', invalidateCompilationOnFsChange);
         server.watcher.on('unlink', (file) => {
           evictDeletedFileMetadata(file, {
-            removeActiveGraphMetadata: (f) =>
-              removeActiveGraphMetadata(guardContext, f),
-            removeStyleOwnerMetadata: (f) =>
-              removeStyleOwnerMetadata(guardContext, f),
             classNamesMap: classNames as Map<string, string>,
             fileTransformMap,
           });
@@ -985,75 +942,6 @@ export function angular(options?: PluginOptions): Plugin[] {
                   trackedRequestIds:
                     stylesheetRegistry?.getRequestIdsForSource(ctx.file) ?? [],
                 });
-                const ownerModules = findStyleOwnerModules(
-                  ctx.server,
-                  ctx.file,
-                  styleSourceOwners,
-                );
-                debugHmrV('component stylesheet owner fallback lookup', {
-                  file: ctx.file,
-                  ownerCount: ownerModules.length,
-                  ownerIds: ownerModules.map((mod) => mod.id),
-                  ownerFiles: [
-                    ...(styleSourceOwners.get(normalizePath(ctx.file)) ?? []),
-                  ],
-                });
-
-                if (ownerModules.length > 0) {
-                  pendingCompilation = performCompilation(resolvedConfig, [
-                    ...ownerModules.map((mod) => mod.id).filter(Boolean),
-                  ]);
-                  await pendingCompilation;
-                  pendingCompilation = null;
-
-                  const updates = ownerModules
-                    .map((mod) => mod.id)
-                    .filter((id): id is string => !!id && !!classNames.get(id));
-                  const derivedUpdates = ownerModules
-                    .map((mod) => mod.id)
-                    .filter((id): id is string => !!id)
-                    .flatMap((ownerId) =>
-                      resolveComponentClassNamesForStyleOwner(
-                        ownerId,
-                        ctx.file,
-                      ).map((className) => ({
-                        ownerId,
-                        className,
-                        via: 'raw-component-metadata' as const,
-                      })),
-                    );
-                  debugHmrV('component stylesheet owner fallback compilation', {
-                    file: ctx.file,
-                    ownerIds: ownerModules.map((mod) => mod.id),
-                    updateIds: updates,
-                    classNames: updates.map((id) => ({
-                      id,
-                      className: classNames.get(id),
-                    })),
-                    derivedUpdates,
-                  });
-                  // Keep owner recompilation and metadata derivation as
-                  // diagnostics only.
-                  //
-                  // Value: the fallback log can still point at the affected
-                  // components.
-                  //
-                  // Guards against: treating a component-update as a safe
-                  // substitute for a missing wrapper module. Angular can
-                  // re-render the component without forcing the browser to
-                  // refresh the wrapper CSS, which leaves the UI visually stale.
-                  if (derivedUpdates.length > 0) {
-                    debugHmrV(
-                      'component stylesheet owner fallback derived updates',
-                      {
-                        file: ctx.file,
-                        updates: derivedUpdates,
-                        hint: 'Angular did not repopulate classNames during CSS-only owner recompilation, so Analog derived component identities from raw component metadata.',
-                      },
-                    );
-                  }
-                }
-
                 logComponentStylesheetHmrOutcome({
                   file: ctx.file,
                   encapsulation,
@@ -1061,14 +949,13 @@ export function angular(options?: PluginOptions): Plugin[] {
                   outcome: 'full-reload',
                   directModuleId: isDirect.id,
                   wrapperIds: wrapperModules.map((mod) => mod.id),
-                  ownerIds: ownerModules.map((mod) => mod.id),
                 });
                 sendFullReload(ctx.server, {
                   file: ctx.file,
                   encapsulation,
                   reason:
                     wrapperModules.length === 0
-                      ? 'missing-wrapper-module-and-no-owner-updates'
+                      ? 'missing-wrapper-module'
                       : 'shadow-encapsulation',
                   directId: isDirect.id,
                   trackedRequestIds:
@@ -1619,7 +1506,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     cssExtensionStyleResolverPlugin(),
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
-    templateClassBindingGuardPlugin(guardContext),
     pluginOptions.hasTailwindCss &&
       tailwindReferencePlugin({ tailwindCss: pluginOptions.tailwindCss }),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
@@ -2471,33 +2357,7 @@ function sendFullReload(
   server.ws.send({ type: 'full-reload' });
 }
 
-function resolveComponentClassNamesForStyleOwner(
-  ownerFile: string,
-  sourcePath: string,
-): string[] {
-  if (!existsSync(ownerFile)) {
-    return [];
-  }
-
-  const ownerCode = readFileSync(ownerFile, 'utf-8');
-  const components = getAngularComponentMetadata(ownerCode);
-  const normalizedSourcePath = normalizePath(sourcePath);
-
-  return components
-    .filter((component) =>
-      component.styleUrls.some(
-        (styleUrl) =>
-          normalizePath(resolve(dirname(ownerFile), styleUrl)) ===
-          normalizedSourcePath,
-      ),
-    )
-    .map((component) => component.className);
-}
-
-type ComponentStylesheetHmrOutcome =
-  | 'css-update'
-  | 'owner-component-update'
-  | 'full-reload';
+type ComponentStylesheetHmrOutcome = 'css-update' | 'full-reload';
 
 function logComponentStylesheetHmrOutcome(details: {
   file: string;
@@ -2506,8 +2366,6 @@ function logComponentStylesheetHmrOutcome(details: {
   outcome: ComponentStylesheetHmrOutcome;
   directModuleId?: string;
   wrapperIds?: string[];
-  ownerIds?: Array<string | undefined>;
-  updateIds?: string[];
 }) {
   const pitfalls: string[] = [];
   const rejectedPreferredPaths: string[] = [];
@@ -2516,7 +2374,6 @@ function logComponentStylesheetHmrOutcome(details: {
   if (details.encapsulation === 'shadow') {
     pitfalls.push('shadow-encapsulation');
     rejectedPreferredPaths.push('css-update');
-    rejectedPreferredPaths.push('owner-component-update');
     hints.push(
       'Shadow DOM styles cannot rely on Vite CSS patching because Angular applies them inside a shadow root.',
     );
@@ -2542,32 +2399,12 @@ function logComponentStylesheetHmrOutcome(details: {
     );
   }
 
-  if ((details.ownerIds?.filter(Boolean).length ?? 0) === 0) {
-    pitfalls.push('no-owner-modules');
-    if (details.outcome === 'full-reload') {
-      rejectedPreferredPaths.push('owner-component-update');
-      hints.push(
-        'No owning TS component modules were available in the module graph for owner-based fallback.',
-      );
-    }
-  } else if ((details.updateIds?.length ?? 0) === 0) {
-    pitfalls.push('owner-modules-without-class-identities');
-    if (details.outcome === 'full-reload') {
-      rejectedPreferredPaths.push('owner-component-update');
-      hints.push(
-        'Owner modules were found, but Angular did not expose component class identities after recompilation, so no targeted component update could be sent.',
-      );
-    }
-  }
-
   debugHmrV('component stylesheet hmr outcome', {
     file: details.file,
     outcome: details.outcome,
     encapsulation: details.encapsulation,
     directModuleId: details.directModuleId,
     wrapperIds: details.wrapperIds ?? [],
-    ownerIds: details.ownerIds ?? [],
-    updateIds: details.updateIds ?? [],
     preferredPath:
       details.encapsulation === 'shadow' ? 'full-reload' : 'css-update',
     rejectedPreferredPaths: [...new Set(rejectedPreferredPaths)],
@@ -2589,29 +2426,6 @@ export function findTemplateOwnerModules(
   const modules = new Map<string, ModuleNode>();
   for (const candidate of candidateTsFiles) {
     const owners = server.moduleGraph.getModulesByFile(candidate);
-    owners?.forEach((mod) => {
-      if (mod.id) {
-        modules.set(mod.id, mod);
-      }
-    });
-  }
-
-  return [...modules.values()];
-}
-
-function findStyleOwnerModules(
-  server: ViteDevServer,
-  resourceFile: string,
-  styleSourceOwners: Map<string, Set<string>>,
-): ModuleNode[] {
-  const normalizedResourceFile = normalizePath(resourceFile.split('?')[0]);
-  const candidateOwnerFiles = [
-    ...(styleSourceOwners.get(normalizedResourceFile) ?? []),
-  ];
-  const modules = new Map<string, ModuleNode>();
-
-  for (const ownerFile of candidateOwnerFiles) {
-    const owners = server.moduleGraph.getModulesByFile(ownerFile);
     owners?.forEach((mod) => {
       if (mod.id) {
         modules.set(mod.id, mod);

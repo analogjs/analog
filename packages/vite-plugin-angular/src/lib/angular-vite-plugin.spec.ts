@@ -27,8 +27,6 @@ import {
   buildStylePreprocessor,
   createFsWatcherCacheInvalidator,
   evictDeletedFileMetadata,
-  findBoundClassAndNgClassConflicts,
-  findStaticClassAndBoundClassConflicts,
   findTemplateOwnerModules,
   findComponentStylesheetWrapperModules,
   getModulesForChangedFile,
@@ -825,9 +823,7 @@ describe('createFsWatcherCacheInvalidator', () => {
 });
 
 describe('evictDeletedFileMetadata', () => {
-  it('removes component and stylesheet ownership for deleted files', () => {
-    const removeActiveGraphMetadata = vi.fn();
-    const removeStyleOwnerMetadata = vi.fn();
+  it('removes class name and transform entries for deleted files', () => {
     const classNamesMap = new Map<string, string>([
       ['/workspace/apps/demo/src/app/demo.component.ts', 'DemoComponent'],
     ]);
@@ -838,19 +834,11 @@ describe('evictDeletedFileMetadata', () => {
     evictDeletedFileMetadata(
       '/workspace/apps/demo/src/app/demo.component.ts?t=12345',
       {
-        removeActiveGraphMetadata,
-        removeStyleOwnerMetadata,
         classNamesMap,
         fileTransformMap,
       },
     );
 
-    expect(removeActiveGraphMetadata).toHaveBeenCalledWith(
-      '/workspace/apps/demo/src/app/demo.component.ts',
-    );
-    expect(removeStyleOwnerMetadata).toHaveBeenCalledWith(
-      '/workspace/apps/demo/src/app/demo.component.ts',
-    );
     expect(
       classNamesMap.has('/workspace/apps/demo/src/app/demo.component.ts'),
     ).toBe(false);
@@ -1048,280 +1036,6 @@ describe('findTemplateOwnerModules', () => {
     );
 
     expect(result).toEqual([]);
-  });
-});
-
-describe('findStaticClassAndBoundClassConflicts', () => {
-  it('detects an element that mixes static class and [class]', () => {
-    const template = `<section class="hero sa:bg-blue-500" [class]="'sa:text-' + align"></section>`;
-
-    expect(findStaticClassAndBoundClassConflicts(template)).toEqual([
-      expect.objectContaining({
-        line: 1,
-        snippet: `<section class="hero sa:bg-blue-500" [class]="'sa:text-' + align">`,
-      }),
-    ]);
-  });
-
-  it('does not flag static class with explicit [class.foo] bindings', () => {
-    const template = `<section class="hero" [class.sa:text-center]="isCentered"></section>`;
-
-    expect(findStaticClassAndBoundClassConflicts(template)).toEqual([]);
-  });
-
-  it('handles > inside quoted [class] expressions without truncating the tag', () => {
-    const template = `<section class="hero" [class]="isWide > isTall ? 'wide' : 'tall'"></section>`;
-
-    expect(findStaticClassAndBoundClassConflicts(template)).toEqual([
-      expect.objectContaining({
-        line: 1,
-        snippet: `<section class="hero" [class]="isWide > isTall ? 'wide' : 'tall'">`,
-      }),
-    ]);
-  });
-});
-
-describe('findBoundClassAndNgClassConflicts', () => {
-  it('detects an element that mixes [class] and [ngClass]', () => {
-    const template = `<section [class]="'hero'" [ngClass]="{ active: isActive }"></section>`;
-
-    expect(findBoundClassAndNgClassConflicts(template)).toEqual([
-      expect.objectContaining({
-        line: 1,
-        snippet: `<section [class]="'hero'" [ngClass]="{ active: isActive }">`,
-      }),
-    ]);
-  });
-
-  it('does not flag [class.foo] with [ngClass]', () => {
-    const template = `<section [class.hero]="isHero" [ngClass]="{ active: isActive }"></section>`;
-
-    expect(findBoundClassAndNgClassConflicts(template)).toEqual([]);
-  });
-});
-
-describe('template class binding guard plugin', () => {
-  it('throws for inline templates that mix static class and [class]', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-
-    expect(() =>
-      transform.call(
-        {} as any,
-        `
-          @Component({
-            template: \`<section class="hero sa:bg-blue-500" [class]="'sa:text-' + align"></section>\`
-          })
-          export class DemoComponent {}
-        `,
-        '/workspace/apps/demo/src/app/demo.component.ts',
-      ),
-    ).toThrow(/Invalid template class binding/);
-  });
-
-  it('throws for external html templates that mix static class and [class]', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-
-    expect(() =>
-      transform.call(
-        {} as any,
-        `<section class="hero sa:bg-blue-500" [class]="'sa:text-' + align"></section>`,
-        '/workspace/apps/demo/src/app/demo.component.html',
-      ),
-    ).toThrow(/Use `\[ngClass\]` or explicit `\[class\.foo\]` bindings/);
-  });
-
-  it('warns for external html templates that mix [class] and [ngClass]', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-    const warn = vi.fn();
-
-    transform.call(
-      { warn } as any,
-      `<section [class]="'hero'" [ngClass]="{ active: isActive }"></section>`,
-      '/workspace/apps/demo/src/app/demo.component.html',
-    );
-
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringMatching(/Conflicting class composition/),
-    );
-  });
-
-  it('throws for selectorless non-page components', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-    expect(() =>
-      transform.call(
-        { warn: vi.fn() } as any,
-        `
-          @Component({
-            template: '<section></section>'
-          })
-          export class DemoDialogComponent {}
-        `,
-        '/workspace/libs/demo/src/lib/demo-dialog.component.ts',
-      ),
-    ).toThrow(/Selectorless component detected/);
-  });
-
-  it('allows selectorless page components', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-
-    expect(() =>
-      transform.call(
-        { warn: vi.fn() } as any,
-        `
-          @Component({
-            template: '<section>Page</section>'
-          })
-          export default class DemoPageComponent {}
-        `,
-        '/workspace/apps/demo/src/app/pages/demo.page.ts',
-      ),
-    ).not.toThrow();
-  });
-
-  it('allows selectorless components inside pages directories', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-
-    expect(() =>
-      transform.call(
-        { warn: vi.fn() } as any,
-        `
-          @Component({
-            imports: [RouterOutlet],
-            template: '<router-outlet />'
-          })
-          export default class DemoShellComponent {}
-        `,
-        '/workspace/apps/demo/src/app/pages/(shell).ts',
-      ),
-    ).not.toThrow();
-  });
-
-  it('throws for duplicate selectors in the active graph', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-
-    transform.call(
-      { warn: vi.fn() } as any,
-      `
-        @Component({
-          selector: 'demo-card',
-          template: '<section></section>'
-        })
-        export class DemoCardComponent {}
-      `,
-      '/workspace/libs/demo/src/lib/demo-card.component.ts',
-    );
-
-    expect(() =>
-      transform.call(
-        { warn: vi.fn() } as any,
-        `
-          @Component({
-            selector: 'demo-card',
-            template: '<section></section>'
-          })
-          export class DemoCardCloneComponent {}
-        `,
-        '/workspace/libs/demo/src/lib/demo-card-clone.component.ts',
-      ),
-    ).toThrow(/Duplicate component selector detected/);
-  });
-
-  it('warns for duplicate component class names in the active graph', () => {
-    const plugin = angular().find(
-      (p) =>
-        p.name === '@analogjs/vite-plugin-angular:template-class-binding-guard',
-    ) as Plugin;
-
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-    const firstWarn = vi.fn();
-    const secondWarn = vi.fn();
-
-    transform.call(
-      { warn: firstWarn } as any,
-      `
-        @Component({
-          selector: 'demo-alpha',
-          template: '<section></section>'
-        })
-        export class DemoSharedComponent {}
-      `,
-      '/workspace/libs/demo/src/lib/demo-alpha.component.ts',
-    );
-
-    transform.call(
-      { warn: secondWarn } as any,
-      `
-        @Component({
-          selector: 'demo-beta',
-          template: '<section></section>'
-        })
-        export class DemoSharedComponent {}
-      `,
-      '/workspace/libs/demo/src/lib/demo-beta.component.ts',
-    );
-
-    expect(secondWarn).toHaveBeenCalledWith(
-      expect.stringMatching(/Duplicate component class name detected/),
-    );
   });
 });
 

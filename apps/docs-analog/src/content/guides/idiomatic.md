@@ -72,7 +72,7 @@ Non-page Angular components should declare an explicit, unique selector.
 export class ProductCardComponent {}
 ```
 
-Selectorless components render as `ng-component`, which makes SSR output, diagnostics, and collision debugging harder to interpret. Analog therefore treats selectorless non-page components as invalid during Vite builds, and the workspace lint rules enforce the same standard.
+Selectorless components render as `ng-component`, which makes SSR output, diagnostics, and collision debugging harder to interpret. The workspace lint rules enforce an explicit selector for non-page components.
 
 Page and layout route files are the exception. Components in `src/app/pages/**` or `*.page.ts` files may omit `selector` when they are only used as route entry points.
 
