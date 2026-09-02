@@ -435,4 +435,67 @@ describe('compilationAPIPlugin', () => {
     expect(result).toBeDefined();
     expect(result.code).toBe('compiled output');
   });
+
+  it('serves emitted output for TypeScript files without Angular decorators', async () => {
+    const configFile = join(tempRoot, 'src/app.config.ts');
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: vi.fn().mockResolvedValue({
+        externalStylesheets: new Map(),
+        templateUpdates: new Map(),
+      }),
+      update: vi.fn(),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi
+        .fn()
+        .mockResolvedValue([
+          { filename: configFile, contents: 'export const appConfig = {};' },
+        ]),
+    });
+
+    const { compilationAPIPlugin } =
+      await import('./compilation-api-plugin.js');
+    const plugin = compilationAPIPlugin({
+      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: true,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      hasTailwindCss: false,
+      isTest: false,
+      isAstroIntegration: false,
+      include: [],
+      additionalContentDirs: [],
+    });
+
+    await (plugin.config as any)(
+      { root: tempRoot, mode: 'development' },
+      { command: 'serve', mode: 'development' },
+    );
+    await (plugin.configResolved as any)({
+      cacheDir: join(tempRoot, '.vite'),
+      root: tempRoot,
+      mode: 'development',
+      build: {},
+      server: { hmr: true },
+      plugins: [],
+    });
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+
+    const warn = vi.fn();
+    const result = await (plugin.transform as any).handler.call(
+      { warn, error: vi.fn() },
+      `import type { ApplicationConfig } from '@angular/core';\nexport const appConfig: ApplicationConfig = {};`,
+      configFile,
+    );
+
+    expect(result.code).toBe('export const appConfig = {};');
+    expect(warn).not.toHaveBeenCalled();
+  });
 });

@@ -29,15 +29,18 @@ export function getComponentStyleSheetMeta(id: string): {
  * (enforce: 'pre') fully resolves @apply directives — including those
  * inside :host {} — before Angular's ShadowCss rewrites selectors.
  * (#2293)
+ *
+ * The `ngcomp=` query only appears on requests Angular's runtime makes for
+ * externalized component styles, so it is the only gate needed. This plugin
+ * is shared by the ngtsc and Angular Compilation API paths and must not
+ * depend on either path's private state.
  */
-export function encapsulationPlugin(
-  shouldExternalizeStyles: () => boolean,
-): Plugin {
+export function encapsulationPlugin(): Plugin {
   return {
     name: '@analogjs/vite-plugin-angular:encapsulation',
     enforce: 'post',
     transform(code: string, id: string) {
-      if (shouldExternalizeStyles() && isComponentStyleSheet(id)) {
+      if (isComponentStyleSheet(id)) {
         const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
         if (encapsulation === 'emulated' && componentId) {
           debugStylesV('applying emulated view encapsulation (post)', {

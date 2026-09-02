@@ -1544,7 +1544,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     routerPlugin(),
     angularFullVersion < 190004 && pendingTasksPlugin(),
     nxFolderPlugin(),
-    encapsulationPlugin(shouldExternalizeStyles),
+    encapsulationPlugin(),
   ].filter(Boolean) as Plugin[];
 
   function resolveTsConfigPath() {
