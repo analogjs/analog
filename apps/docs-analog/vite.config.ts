@@ -3,7 +3,7 @@
 import { resolve } from 'node:path';
 import analog from '@analogjs/platform';
 import tailwindcss from '@tailwindcss/vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
 import {
   admonitionExtension,
@@ -137,7 +137,7 @@ export default defineConfig(({ mode }) => ({
     }),
     brokenLinksPlugin({ distDir: CLIENT_DIST }),
     tailwindcss(),
-    nxViteTsPaths(),
+    viteTsConfigPaths(),
   ],
   test: {
     reporters: ['default'],
