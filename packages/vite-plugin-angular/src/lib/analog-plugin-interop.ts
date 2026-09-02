@@ -15,6 +15,14 @@ export interface AnalogPluginContext {
    * before it enters Vite's `preprocessCSS` pipeline.
    */
   registerStylePreprocessor(preprocessor: StylePreprocessor): void;
+  /**
+   * Requests that component styles are externalized in dev and watch mode so
+   * they run through Vite's CSS plugin pipeline (for example
+   * `@tailwindcss/vite`) instead of being inlined through `preprocessCSS`,
+   * which only runs PostCSS and CSS preprocessors. Production builds keep
+   * inlining component styles.
+   */
+  externalizeComponentStyles(): void;
 }
 
 export interface AnalogPluginHooks {
@@ -30,6 +38,7 @@ export type AnalogIntegrationPlugin = Plugin & { analog?: AnalogPluginHooks };
 
 export interface AnalogIntegrations {
   stylePreprocessor?: StylePreprocessor;
+  externalizeStyles: boolean;
 }
 
 const integrationsByConfig = new WeakMap<
@@ -56,6 +65,7 @@ export async function runAnalogSetupHooks(
   plugins: readonly Plugin[],
 ): Promise<AnalogIntegrations> {
   const preprocessors: StylePreprocessor[] = [];
+  let externalizeStyles = false;
 
   for (const plugin of plugins as readonly AnalogIntegrationPlugin[]) {
     if (typeof plugin.analog?.setup !== 'function') {
@@ -66,6 +76,9 @@ export async function runAnalogSetupHooks(
     const context: AnalogPluginContext = {
       registerStylePreprocessor(preprocessor) {
         preprocessors.push(wrapStylePreprocessor(plugin.name, preprocessor));
+      },
+      externalizeComponentStyles() {
+        externalizeStyles = true;
       },
     };
 
@@ -80,27 +93,34 @@ export async function runAnalogSetupHooks(
     debugStylePipeline('analog.setup() completed', {
       plugin: plugin.name,
       stylePreprocessors: preprocessors.length - registeredBefore,
+      externalizeStyles,
     });
   }
 
-  return { stylePreprocessor: composeStylePreprocessors(preprocessors) };
+  return {
+    stylePreprocessor: composeStylePreprocessors(preprocessors),
+    externalizeStyles,
+  };
 }
 
 /**
- * Resolves the stylesheet preprocessor a compilation path should use:
- * plugin-registered preprocessors first, then the chain configured through
- * `angular()` options (Tailwind reference injection, `stylePipeline`,
- * `stylePreprocessor`).
+ * Resolves what a compilation path needs from the discovered integrations:
+ * the stylesheet preprocessor chain (plugin-registered preprocessors first,
+ * then the chain configured through `angular()` options) and whether any
+ * plugin asked for externalized component styles.
  */
-export async function resolveStylePreprocessor(
+export async function resolveAnalogIntegrations(
   config: ResolvedConfig,
   configured?: StylePreprocessor,
-): Promise<StylePreprocessor | undefined> {
+): Promise<AnalogIntegrations> {
   const integrations = await discoverAnalogIntegrations(config);
-  return composeStylePreprocessors([
-    integrations.stylePreprocessor,
-    configured,
-  ]);
+  return {
+    stylePreprocessor: composeStylePreprocessors([
+      integrations.stylePreprocessor,
+      configured,
+    ]),
+    externalizeStyles: integrations.externalizeStyles,
+  };
 }
 
 function wrapStylePreprocessor(

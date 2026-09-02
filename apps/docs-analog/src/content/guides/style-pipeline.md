@@ -211,8 +211,15 @@ How the hook behaves:
   API, and JIT inline stylesheet paths.
 - A preprocessor error is rethrown with the plugin name and stylesheet path so
   the failing integration is easy to identify.
-- `AnalogPluginContext` only exposes `registerStylePreprocessor` today. It
-  grows when a concrete integration needs another seam.
+- `externalizeComponentStyles()` asks Analog to serve component styles as
+  Vite modules in dev and watch mode instead of inlining them through
+  `preprocessCSS`. Call it when your stylesheet output depends on a Vite CSS
+  plugin such as `@tailwindcss/vite` rather than PostCSS. Production builds
+  keep inlining component styles, and `tailwindCss` on `angular()` sets the
+  same flag.
+- `AnalogPluginContext` exposes `registerStylePreprocessor` and
+  `externalizeComponentStyles` today. It grows when a concrete integration
+  needs another seam.
 
 ## Scope
 

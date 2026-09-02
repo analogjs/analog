@@ -48,7 +48,7 @@ import type {
   StylePreprocessor,
   StylesheetDependency,
 } from './style-preprocessor.js';
-import { resolveStylePreprocessor } from './analog-plugin-interop.js';
+import { resolveAnalogIntegrations } from './analog-plugin-interop.js';
 
 import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
@@ -319,6 +319,9 @@ export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
   const configuredStylePreprocessor = buildStylePreprocessor(options);
+  // Set on each compilation when a Vite plugin's `analog.setup()` asked for
+  // externalized component styles.
+  let externalizeStylesRequested = false;
 
   /**
    * Normalize plugin options so defaults
@@ -416,7 +419,11 @@ export function angular(options?: PluginOptions): Plugin[] {
   function shouldExternalizeStyles(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
     if (!effectiveWatchMode) return false;
-    return !!(shouldEnableLiveReload() || pluginOptions.hasTailwindCss);
+    return !!(
+      shouldEnableLiveReload() ||
+      pluginOptions.hasTailwindCss ||
+      externalizeStylesRequested
+    );
   }
 
   function validateNoDuplicateAnalogPlugins(config: ResolvedConfig): void {
@@ -1561,10 +1568,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
     try {
       await previousLock;
-      pluginOptions.stylePreprocessor = await resolveStylePreprocessor(
+      const integrations = await resolveAnalogIntegrations(
         config,
         configuredStylePreprocessor,
       );
+      pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
+      externalizeStylesRequested = integrations.externalizeStyles;
       await _doPerformCompilation(config, ids);
     } finally {
       resolve!();
@@ -1609,6 +1618,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     debugCompiler('tsCompilerOptions (NgtscProgram path)', {
       liveReload: pluginOptions.liveReload,
       viteHmr: hasViteHmrTransport(),
+      externalizeStylesRequested,
       shouldExternalize: shouldExternalizeStyles(),
       externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
       hmrEnabled: !!tsCompilerOptions['_enableHmr'],

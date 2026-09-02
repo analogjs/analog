@@ -48,7 +48,7 @@ import {
 } from '../stylesheet-registry.js';
 import { normalizeStylesheetDependencies } from '../style-preprocessor.js';
 import type { StylePreprocessor } from '../style-preprocessor.js';
-import { resolveStylePreprocessor } from '../analog-plugin-interop.js';
+import { resolveAnalogIntegrations } from '../analog-plugin-interop.js';
 import {
   AngularStylePipelineOptions,
   configureStylePipelineRegistry,
@@ -101,6 +101,7 @@ export function compilationAPIPlugin(
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
   const configuredStylePreprocessor = pluginOptions.stylePreprocessor;
+  let externalizeStylesRequested = false;
 
   // Persistent compilation instance — kept alive across rebuilds so Angular
   // can diff prior state and emit `templateUpdates` for HMR.
@@ -143,7 +144,11 @@ export function compilationAPIPlugin(
   function shouldExternalizeStyles(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
     if (!effectiveWatchMode) return false;
-    return !!(shouldEnableLiveReload() || pluginOptions.hasTailwindCss);
+    return !!(
+      shouldEnableLiveReload() ||
+      pluginOptions.hasTailwindCss ||
+      externalizeStylesRequested
+    );
   }
 
   function resolveTsConfigPath() {
@@ -381,6 +386,7 @@ export function compilationAPIPlugin(
           liveReload: pluginOptions.liveReload,
           viteHmr: hasViteHmrTransport(),
           hasTailwindCss: pluginOptions.hasTailwindCss,
+          externalizeStylesRequested,
           watchMode,
           shouldExternalize: shouldExternalizeStyles(),
           externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
@@ -518,10 +524,12 @@ export function compilationAPIPlugin(
     });
     try {
       await previousLock;
-      pluginOptions.stylePreprocessor = await resolveStylePreprocessor(
+      const integrations = await resolveAnalogIntegrations(
         config,
         configuredStylePreprocessor,
       );
+      pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
+      externalizeStylesRequested = integrations.externalizeStyles;
       await performAngularCompilation(config, ids);
     } finally {
       resolve!();

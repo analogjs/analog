@@ -77,6 +77,8 @@ export function angularTailwind(
     analog: {
       setup(ctx) {
         ctx.registerStylePreprocessor((code) => inject(code) ?? code);
+        // `@tailwindcss/vite` only sees component styles served as modules.
+        ctx.externalizeComponentStyles();
       },
     },
 

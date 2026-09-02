@@ -3,7 +3,7 @@ import type { ResolvedConfig } from 'vite';
 import {
   type AnalogIntegrationPlugin,
   discoverAnalogIntegrations,
-  resolveStylePreprocessor,
+  resolveAnalogIntegrations,
   runAnalogSetupHooks,
 } from './analog-plugin-interop.js';
 
@@ -17,6 +17,22 @@ describe('analog plugin interop', () => {
     ]);
 
     expect(integrations.stylePreprocessor).toBeUndefined();
+    expect(integrations.externalizeStyles).toBe(false);
+  });
+
+  it('records a request to externalize component styles', async () => {
+    const integrations = await runAnalogSetupHooks([
+      {
+        name: 'plugin-a',
+        analog: {
+          setup(ctx) {
+            ctx.externalizeComponentStyles();
+          },
+        },
+      } as AnalogIntegrationPlugin,
+    ]);
+
+    expect(integrations.externalizeStyles).toBe(true);
   });
 
   it('composes registered preprocessors in Vite plugin order', async () => {
@@ -120,15 +136,17 @@ describe('analog plugin interop', () => {
       ],
     } as unknown as ResolvedConfig;
 
-    const stylePreprocessor = await resolveStylePreprocessor(
-      config,
-      (code) => `${code}\n/* configured */`,
-    );
+    const { stylePreprocessor, externalizeStyles } =
+      await resolveAnalogIntegrations(
+        config,
+        (code) => `${code}\n/* configured */`,
+      );
 
     expect(
       stylePreprocessor?.('.demo {}', '/project/demo.css', context),
     ).toMatchObject({
       code: '.demo {}\n/* plugin */\n/* configured */',
     });
+    expect(externalizeStyles).toBe(false);
   });
 });

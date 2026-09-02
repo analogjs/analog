@@ -5,7 +5,7 @@ import {
 } from './utils/jit-inline-styles.js';
 import { debugStyles } from './utils/debug.js';
 import { isTailwindReferenceError } from './utils/tailwind-reference.js';
-import { resolveStylePreprocessor } from './analog-plugin-interop.js';
+import { resolveAnalogIntegrations } from './analog-plugin-interop.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 
@@ -23,7 +23,8 @@ export function jitPlugin({
       config = _config;
     },
     async buildStart() {
-      stylePreprocessor = await resolveStylePreprocessor(config);
+      stylePreprocessor = (await resolveAnalogIntegrations(config))
+        .stylePreprocessor;
     },
     resolveId(id: string) {
       if (id.startsWith('virtual:angular')) {
