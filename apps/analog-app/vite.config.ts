@@ -3,7 +3,7 @@
 import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, PluginOption } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 import inspect from 'vite-plugin-inspect';
 
 // Only run in Netlify CI
@@ -89,7 +89,7 @@ export default defineConfig(({ mode }) => {
           },
         },
       }),
-      nxViteTsPaths(),
+      viteTsConfigPaths(),
       visualizer() as PluginOption,
       // !isSsrBuild &&
       //   inspect({

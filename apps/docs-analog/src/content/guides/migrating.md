@@ -151,16 +151,51 @@ export default defineConfig(({ mode }) => ({
 
 ## Copying Assets
 
-Static assets in the `public` directory are copied to the build output directory by default. If you want to copy additional assets outside of that directory, use the `nxCopyAssetsPlugin` Vite plugin.
+Static assets in the `public` directory are copied to the build output directory by default. If you want to copy additional assets outside of that directory, use the `vite-plugin-static-copy` Vite plugin.
 
-Import the plugin and set it up:
+First, install the `vite-plugin-static-copy` package.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-plugin-static-copy --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+Next, import the plugin and set it up:
 
 ```ts
 /// <reference types="vitest" />
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...
-  plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
+  plugins: [
+    analog(),
+    viteStaticCopy({
+      targets: [{ src: '*.md', dest: '.' }],
+    }),
+  ],
 }));
 ```
 

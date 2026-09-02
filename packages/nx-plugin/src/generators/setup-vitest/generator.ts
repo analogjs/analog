@@ -20,14 +20,12 @@ function addFiles(
   majorAngularVersion: number,
 ) {
   const projects = getProjects(tree);
-  const isNx = tree.exists('/nx.json');
 
   const projectConfig = projects.get(options.project)!;
 
   const templateOptions = {
     ...options,
     majorAngularVersion,
-    addNxPaths: isNx,
     template: '',
   };
 
