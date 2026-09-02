@@ -1,3 +1,9 @@
+# [3.0.0-alpha.73](https://github.com/analogjs/analog/compare/v3.0.0-alpha.72...v3.0.0-alpha.73) (2026-09-02)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix the Angular Compilation API dev path ([#2504](https://github.com/analogjs/analog/issues/2504)) ([2f875b5](https://github.com/analogjs/analog/commit/2f875b5f5ed932b231b977fc90dd98579f1cce7e))
+
 # [3.0.0-alpha.72](https://github.com/analogjs/analog/compare/v3.0.0-alpha.71...v3.0.0-alpha.72) (2026-09-02)
 
 ### Features
