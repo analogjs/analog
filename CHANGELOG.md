@@ -1,3 +1,9 @@
+# [3.0.0-alpha.72](https://github.com/analogjs/analog/compare/v3.0.0-alpha.71...v3.0.0-alpha.72) (2026-09-02)
+
+### Features
+
+- **vite-plugin-angular:** add externalizeComponentStyles to the analog.setup context ([740d351](https://github.com/analogjs/analog/commit/740d351d35687bed7a74c6f820f7a7de91a385a1))
+
 # [3.0.0-alpha.71](https://github.com/analogjs/analog/compare/v3.0.0-alpha.70...v3.0.0-alpha.71) (2026-09-02)
 
 ### Features
