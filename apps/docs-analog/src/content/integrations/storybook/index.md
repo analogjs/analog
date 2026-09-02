@@ -271,20 +271,7 @@ export default config;
 
 ### With Nx
 
-For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package. Add the plugin to the `plugins` array in the `.storybook/main.ts`.
-
-```ts
-const config: StorybookConfig = {
-  // ... other config, addons, etc.
-  async viteFinal(config: UserConfig) {
-    return mergeConfig(config, {
-      plugins: [nxViteTsPaths()],
-    });
-  },
-};
-
-export default config;
-```
+Nx workspaces use the same `vite-tsconfig-paths` plugin in the `.storybook/main.ts`. The `nxViteTsPaths` plugin from `@nx/vite` is deprecated and is removed in Nx 24, so replace it with `viteTsConfigPaths()`.
 
 ## Using File Replacements
 
