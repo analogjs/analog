@@ -812,15 +812,12 @@ export function compilationAPIPlugin(
           return;
         }
 
-        // Skip non-Angular files — in compilation API mode, Angular
-        // compiles TypeScript before this hook, so only Angular files
-        // need processing.
+        // Angular emits every file in the program, not only files with
+        // Angular decorators, and `@analogjs/platform` excludes `.ts` from
+        // Vite's own transform. So serve Angular's output for any emitted
+        // file; only the "not emitted" warning below is decorator-specific.
         const isAngular =
           /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
-        if (!isAngular) {
-          debugCompilationApi('transform skip (non-Angular file)', { id });
-          return;
-        }
 
         if (id.includes('?') && id.includes('analog-content-')) {
           return;
