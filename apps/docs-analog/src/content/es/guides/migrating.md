@@ -155,7 +155,35 @@ export default defineConfig(({ mode }) => ({
 
 Los archivos estáticos en la carpeta `public` son copiados al directorio de salida del build por defecto. Si deseas copiar archivos adicionales fuera de ese directorio, utiliza el plugin de Vite `vite-plugin-static-copy`.
 
-Instala el plugin, luego impórtalo y configúralo:
+Primero, instala el paquete `vite-plugin-static-copy`.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-plugin-static-copy --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+Luego, importa el plugin y configúralo:
 
 ```ts
 /// <reference types="vitest" />

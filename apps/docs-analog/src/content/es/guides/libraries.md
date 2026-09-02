@@ -147,7 +147,35 @@ Modificar el archivo `package.json` que está en la raíz del proyecto, y ajusta
 
 Los archivos estáticos en la carpeta `public` son copiados por defecto al directorio de salida del build. Si quieres copiar cualquier otro archivos fuera de este directorio, utilizar el plugin de Vite `vite-plugin-static-copy`.
 
-Instalar el plugin, luego importarlo y configurarlo:
+Primero, instalar el paquete `vite-plugin-static-copy`.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-plugin-static-copy --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+Luego, importar el plugin y configurarlo:
 
 ```ts
 /// <reference types="vitest" />
