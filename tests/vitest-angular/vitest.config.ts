@@ -1,4 +1,3 @@
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, Plugin } from 'vitest/config';
@@ -11,7 +10,7 @@ import sourcemapProject from './src/sourcemap/vitest.project';
 export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/tests/vitest-angular',
-  plugins: [viteTsConfigPaths(), nxCopyAssetsPlugin(['*.md'])] as Plugin[],
+  plugins: [viteTsConfigPaths()] as Plugin[],
   test: {
     watch: false,
     globals: true,
