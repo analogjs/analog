@@ -1,3 +1,9 @@
+# [3.0.0-alpha.71](https://github.com/analogjs/analog/compare/v3.0.0-alpha.70...v3.0.0-alpha.71) (2026-09-02)
+
+### Features
+
+- **vite-plugin-angular:** add analog.setup interop hook for Vite plugins ([8b9efb8](https://github.com/analogjs/analog/commit/8b9efb85220d88b4d30293bc8e3740cf20274531))
+
 # [3.0.0-alpha.70](https://github.com/analogjs/analog/compare/v3.0.0-alpha.69...v3.0.0-alpha.70) (2026-08-14)
 
 ### Bug Fixes
