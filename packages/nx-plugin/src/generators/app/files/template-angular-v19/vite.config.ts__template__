@@ -2,7 +2,7 @@
 
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 <% if (addTailwind) { %>
 // @ts-expect-error @tailwindcss/vite currently uses mts. TypeScript is complaining this, but it works as expected.
 import tailwindcss from '@tailwindcss/vite';
@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
       <% } else { %>
       analog(),
       <% } %>
-      nxViteTsPaths(),
+      viteTsConfigPaths(),
     ],
     test: {
       globals: true,
