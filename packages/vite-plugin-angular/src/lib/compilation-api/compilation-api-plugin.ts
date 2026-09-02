@@ -48,6 +48,7 @@ import {
 } from '../stylesheet-registry.js';
 import { normalizeStylesheetDependencies } from '../style-preprocessor.js';
 import type { StylePreprocessor } from '../style-preprocessor.js';
+import { resolveStylePreprocessor } from '../analog-plugin-interop.js';
 import {
   AngularStylePipelineOptions,
   configureStylePipelineRegistry,
@@ -99,6 +100,7 @@ export function compilationAPIPlugin(
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
+  const configuredStylePreprocessor = pluginOptions.stylePreprocessor;
 
   // Persistent compilation instance — kept alive across rebuilds so Angular
   // can diff prior state and emit `templateUpdates` for HMR.
@@ -516,6 +518,10 @@ export function compilationAPIPlugin(
     });
     try {
       await previousLock;
+      pluginOptions.stylePreprocessor = await resolveStylePreprocessor(
+        config,
+        configuredStylePreprocessor,
+      );
       await performAngularCompilation(config, ids);
     } finally {
       resolve!();

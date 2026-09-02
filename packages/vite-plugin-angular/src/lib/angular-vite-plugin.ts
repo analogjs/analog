@@ -48,6 +48,7 @@ import type {
   StylePreprocessor,
   StylesheetDependency,
 } from './style-preprocessor.js';
+import { resolveStylePreprocessor } from './analog-plugin-interop.js';
 
 import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
@@ -317,6 +318,7 @@ interface DeclarationFile {
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
+  const configuredStylePreprocessor = buildStylePreprocessor(options);
 
   /**
    * Normalize plugin options so defaults
@@ -350,7 +352,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     fastCompileMode: options?.fastCompileMode ?? 'full',
     hasTailwindCss: !!options?.tailwindCss,
     tailwindCss: options?.tailwindCss,
-    stylePreprocessor: buildStylePreprocessor(options),
+    // Replaced on each compilation with the chain that also includes
+    // preprocessors registered by Vite plugins through `analog.setup()`.
+    stylePreprocessor: configuredStylePreprocessor,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -1557,6 +1561,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
     try {
       await previousLock;
+      pluginOptions.stylePreprocessor = await resolveStylePreprocessor(
+        config,
+        configuredStylePreprocessor,
+      );
       await _doPerformCompilation(config, ids);
     } finally {
       resolve!();

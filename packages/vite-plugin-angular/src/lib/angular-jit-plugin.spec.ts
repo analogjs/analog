@@ -57,4 +57,43 @@ describe('jitPlugin', () => {
 
     warn.mockRestore();
   });
+
+  it('applies preprocessors registered through analog.setup before preprocessCSS', async () => {
+    vi.mocked(preprocessCSS).mockImplementation(async (code) => ({
+      code,
+      deps: new Set(),
+    }));
+
+    const plugin = jitPlugin({ inlineStylesExtension: 'css' });
+    plugin.configResolved?.({
+      plugins: [
+        {
+          name: 'vite-plugin-xyz',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerStylePreprocessor(
+                (code: string) => `${code}\n/* xyz */`,
+              );
+            },
+          },
+        },
+      ],
+    } as any);
+    await (plugin.buildStart as any)?.();
+
+    const id = toJitInlineStyleId(
+      encodeURIComponent(
+        Buffer.from('.demo { color: red; }').toString('base64'),
+      ),
+    );
+
+    await expect(plugin.load?.(id)).resolves.toContain(
+      '.demo { color: red; }\n/* xyz */',
+    );
+    expect(preprocessCSS).toHaveBeenCalledWith(
+      '.demo { color: red; }\n/* xyz */',
+      expect.stringMatching(/\.css\?direct$/),
+      expect.anything(),
+    );
+  });
 });

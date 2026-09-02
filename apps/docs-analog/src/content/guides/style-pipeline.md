@@ -159,6 +159,61 @@ Analog tracks that metadata in the live stylesheet registry so HMR diagnostics
 and community plugins can reason about which generated bridges, token manifests,
 or runtime theme resources a component stylesheet depends on.
 
+## Vite plugin interop with `analog.setup`
+
+A community package does not need Analog config to reach the Angular
+stylesheet seam. Any ordinary Vite plugin can expose an `analog` hook, and
+`@analogjs/vite-plugin-angular` discovers it from the resolved plugin list
+before the first Angular compilation. This follows the Nitro model: the Vite
+plugin stays the public extension unit, and Analog only owns the small setup
+context.
+
+```ts
+import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
+
+export function tokens(): AnalogIntegrationPlugin {
+  return {
+    name: 'vite-plugin-tokens',
+    transform(code, id) {
+      // regular Vite behavior
+    },
+    analog: {
+      setup(ctx) {
+        ctx.registerStylePreprocessor((code, filename, context) => {
+          if (context?.inline) {
+            return code;
+          }
+
+          return {
+            code: `@import "virtual:tokens.css";\n${code}`,
+            dependencies: [{ id: 'virtual:tokens.css', kind: 'bridge' }],
+          };
+        });
+      },
+    },
+  };
+}
+```
+
+Users add the plugin to `plugins: [...]` like any other Vite plugin. No extra
+`analog()` option is required.
+
+How the hook behaves:
+
+- Discovery is structural. Analog checks `plugin.analog?.setup` on each
+  resolved plugin; the exported types are optional.
+- Preprocessors run in Vite plugin order, so `enforce: 'pre'` and
+  `enforce: 'post'` decide the pipeline order. Plugin-registered preprocessors
+  run first, followed by the chain configured through `angular()` options
+  (`tailwindCss`, `stylePipeline.angularPlugins`, `stylePreprocessor`), and
+  then Vite's own `preprocessCSS` pipeline.
+- Plugin-registered preprocessors apply to the ngtsc, Angular Compilation
+  API, and JIT inline stylesheet paths.
+- A preprocessor error is rethrown with the plugin name and stylesheet path so
+  the failing integration is easy to identify.
+- `AnalogPluginContext` only exposes `registerStylePreprocessor` today. It
+  grows when a concrete integration needs another seam.
+
 ## Scope
 
 This API is intentionally generic. It does not make Analog responsible for:
@@ -182,5 +237,5 @@ DEBUG=analog:platform:style-pipeline,analog:angular:style-pipeline pnpm nx serve
 
 `analog:platform:style-pipeline` is the platform-side namespace for this
 integration surface.
-`analog:angular:style-pipeline` is reserved for Angular-side diagnostics if
-future integrations need them.
+`analog:angular:style-pipeline` covers Angular-side diagnostics, including
+which Vite plugins registered preprocessors through `analog.setup`.

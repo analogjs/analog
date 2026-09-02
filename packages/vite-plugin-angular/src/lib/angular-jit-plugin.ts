@@ -5,6 +5,9 @@ import {
 } from './utils/jit-inline-styles.js';
 import { debugStyles } from './utils/debug.js';
 import { isTailwindReferenceError } from './utils/tailwind-reference.js';
+import { resolveStylePreprocessor } from './analog-plugin-interop.js';
+import { preprocessStylesheet } from './stylesheet-registry.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -12,11 +15,15 @@ export function jitPlugin({
   inlineStylesExtension: string;
 }): Plugin {
   let config: ResolvedConfig;
+  let stylePreprocessor: StylePreprocessor | undefined;
 
   return {
     name: '@analogjs/vite-plugin-angular-jit',
     configResolved(_config) {
       config = _config;
+    },
+    async buildStart() {
+      stylePreprocessor = await resolveStylePreprocessor(config);
     },
     resolveId(id: string) {
       if (id.startsWith('virtual:angular')) {
@@ -38,13 +45,20 @@ export function jitPlugin({
           decodeURIComponent(encodedStyles),
           'base64',
         ).toString();
+        const filename = `${styleIdHash}.${inlineStylesExtension}`;
+        const preprocessed = preprocessStylesheet(
+          decodedStyles,
+          filename,
+          stylePreprocessor,
+          { filename, inline: true },
+        );
 
         let styles: string | undefined = '';
 
         try {
           const compiled = await preprocessCSS(
-            decodedStyles,
-            `${styleIdHash}.${inlineStylesExtension}?direct`,
+            preprocessed,
+            `${filename}?direct`,
             config,
           );
           styles = compiled?.code;
