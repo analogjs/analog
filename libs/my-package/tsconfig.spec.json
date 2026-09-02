@@ -6,5 +6,5 @@
     "isolatedModules": true
   },
   "files": ["src/test-setup.ts"],
-  "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]
+  "include": ["src/test-setup.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
 }
