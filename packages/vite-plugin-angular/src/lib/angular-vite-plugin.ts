@@ -44,20 +44,16 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import type {
-  StylePreprocessor,
-  StylesheetDependency,
+import {
+  composeStylePreprocessors,
+  type StylePreprocessor,
+  type StylesheetDependency,
 } from './style-preprocessor.js';
 import { resolveAnalogIntegrations } from './analog-plugin-interop.js';
 
 import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
-import {
-  tailwindReferencePlugin,
-  buildStylePreprocessor,
-  validateTailwindConfig,
-} from './tailwind-plugin.js';
 import {
   encapsulationPlugin,
   isComponentStyleSheet,
@@ -122,6 +118,7 @@ import {
 import {
   AngularStylePipelineOptions,
   configureStylePipelineRegistry,
+  stylePipelinePreprocessorFromPlugins,
 } from './style-pipeline.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
 
@@ -135,7 +132,6 @@ export {
   describeStylesheetContent,
   isTestWatchMode,
 } from './utils/compilation-shared.js';
-export { buildStylePreprocessor } from './tailwind-plugin.js';
 import {
   DiagnosticModes,
   injectViteIgnoreForHmrMetadata,
@@ -225,72 +221,6 @@ export interface PluginOptions {
    * standalone Vite plugin cannot own on its own.
    */
   stylePipeline?: AngularStylePipelineOptions;
-  /**
-   * First-class Tailwind CSS v4 integration for Angular component styles.
-   *
-   * Angular's compiler processes component CSS through Vite's `preprocessCSS()`,
-   * which runs `@tailwindcss/vite` — but each component stylesheet is processed
-   * in isolation without access to the root Tailwind configuration (prefix, @theme,
-   * @custom-variant, @plugin definitions). This causes errors like:
-   *
-   *   "Cannot apply utility class `sa:grid` because the `sa` variant does not exist"
-   *
-   * The `tailwindCss` option solves this by auto-injecting a `@reference` directive
-   * into every component CSS file that uses Tailwind utilities, pointing it to the
-   * root Tailwind stylesheet so `@tailwindcss/vite` can resolve the full configuration.
-   *
-   * @example Basic usage — reference a root Tailwind CSS file:
-   * ```ts
-   * import { resolve } from 'node:path';
-   *
-   * angular({
-   *   tailwindCss: {
-   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
-   *   },
-   * })
-   * ```
-   *
-   * @example With prefix detection — only inject for files using specific prefixes:
-   * ```ts
-   * angular({
-   *   tailwindCss: {
-   *     rootStylesheet: resolve(__dirname, 'src/styles/tailwind.css'),
-   *     // Only inject @reference into files that use these prefixed classes
-   *     prefixes: ['sa:', 'tw:'],
-   *   },
-   * })
-   * ```
-   *
-   * @example AnalogJS platform — passed through the `vite` option:
-   * ```ts
-   * analog({
-   *   vite: {
-   *     tailwindCss: {
-   *       rootStylesheet: resolve(__dirname, '../../../libs/meritos/tailwind.config.css'),
-   *     },
-   *   },
-   * })
-   * ```
-   */
-  tailwindCss?: {
-    /**
-     * Absolute path to the root Tailwind CSS file that contains `@import "tailwindcss"`,
-     * `@theme`, `@custom-variant`, and `@plugin` definitions.
-     *
-     * A `@reference` directive pointing to this file will be auto-injected into
-     * component CSS files that use Tailwind utilities.
-     */
-    rootStylesheet: string;
-    /**
-     * Optional list of class prefixes to detect (e.g. `['sa:', 'tw:']`).
-     * When provided, `@reference` is only injected into component CSS files that
-     * contain at least one of these prefixes. When omitted, `@reference` is injected
-     * into all component CSS files that contain `@apply` or `@` directives.
-     *
-     * @default undefined — inject into all component CSS files with `@apply`
-     */
-    prefixes?: string[];
-  };
 }
 
 const classNames = new Map();
@@ -318,7 +248,10 @@ interface DeclarationFile {
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
-  const configuredStylePreprocessor = buildStylePreprocessor(options);
+  const configuredStylePreprocessor = composeStylePreprocessors([
+    stylePipelinePreprocessorFromPlugins(options?.stylePipeline),
+    options?.stylePreprocessor,
+  ]);
   // Set on each compilation when a Vite plugin's `analog.setup()` asked for
   // externalized component styles.
   let externalizeStylesRequested = false;
@@ -353,8 +286,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
-    hasTailwindCss: !!options?.tailwindCss,
-    tailwindCss: options?.tailwindCss,
     // Replaced on each compilation with the chain that also includes
     // preprocessors registered by Vite plugins through `analog.setup()`.
     stylePreprocessor: configuredStylePreprocessor,
@@ -373,7 +304,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     workspaceRoot: pluginOptions.workspaceRoot,
     include: pluginOptions.include,
     liveReload: pluginOptions.liveReload,
-    hasTailwindCss: pluginOptions.hasTailwindCss,
     isTest,
   });
   function invalidateFsCaches() {
@@ -410,8 +340,8 @@ export function angular(options?: PluginOptions): Plugin[] {
    *
    * Required for TWO independent use-cases:
    *   1. HMR — Vite needs external modules for hot replacement
-   *   2. Tailwind CSS (hasTailwindCss) — styles must pass through Vite's
-   *      CSS pipeline so @tailwindcss/vite can resolve @apply directives
+   *   2. A Vite plugin asked for it through `analog.setup()` so its styles
+   *      pass through Vite's CSS pipeline (e.g. @tailwindcss/vite)
    *
    * In production builds (!watchMode), styles are NOT externalized — they
    * are inlined after preprocessCSS runs eagerly in transformStylesheet.
@@ -419,24 +349,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   function shouldExternalizeStyles(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
     if (!effectiveWatchMode) return false;
-    return !!(
-      shouldEnableLiveReload() ||
-      pluginOptions.hasTailwindCss ||
-      externalizeStylesRequested
-    );
-  }
-
-  function validateNoDuplicateAnalogPlugins(config: ResolvedConfig): void {
-    const analogInstances = (config.plugins ?? []).filter(
-      (p) => p.name === '@analogjs/vite-plugin-angular',
-    );
-    if (analogInstances.length > 1 && !config.build?.ssr) {
-      throw new Error(
-        `[@analogjs/vite-plugin-angular] analog() is registered ${analogInstances.length} times. ` +
-          `Each instance creates separate style maps, causing component ` +
-          `styles to be lost. Remove duplicate registrations.`,
-      );
-    }
+    return !!(shouldEnableLiveReload() || externalizeStylesRequested);
   }
 
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
@@ -522,7 +435,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       // Test mode: disable HMR because
       // Vitest's runner doesn't support Vite's WebSocket-based HMR.
       // This does NOT block style externalization — shouldExternalizeStyles()
-      // independently checks hasTailwindCss, so Tailwind utilities in
+      // independently checks externalizeStylesRequested, so plugin-driven
       // component styles still work in unit tests.
       pluginOptions.liveReload = false;
       debugHmr('hmr disabled', {
@@ -629,11 +542,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
             originalWarnOnce(msg, options);
           };
-        }
-
-        if (pluginOptions.hasTailwindCss) {
-          validateTailwindConfig(pluginOptions.tailwindCss, config, watchMode);
-          validateNoDuplicateAnalogPlugins(config);
         }
 
         if (!jit) {
@@ -1484,8 +1392,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         fileReplacements: pluginOptions.fileReplacements,
         stylePreprocessor: pluginOptions.stylePreprocessor,
         stylePipeline: options?.stylePipeline,
-        hasTailwindCss: pluginOptions.hasTailwindCss,
-        tailwindCss: pluginOptions.tailwindCss,
         isTest,
         isAstroIntegration,
         include: pluginOptions.include,
@@ -1517,8 +1423,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     cssExtensionStyleResolverPlugin(),
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
-    pluginOptions.hasTailwindCss &&
-      tailwindReferencePlugin({ tailwindCss: pluginOptions.tailwindCss }),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
     // `compilationPlugin` is either `angularPlugin()` or `fastCompilePlugin()`
     // depending on `pluginOptions.fastCompile`. When fastCompile is off the

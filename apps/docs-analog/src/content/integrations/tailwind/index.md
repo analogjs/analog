@@ -6,68 +6,23 @@ Analog does not replace Tailwind's installation guides. Start with one Tailwind 
 - [Install Tailwind with PostCSS](https://tailwindcss.com/docs/installation/using-postcss)
 - [Install Tailwind with Angular](https://tailwindcss.com/docs/installation/framework-guides/angular)
 
-Once Tailwind is installed, Analog adds the Angular-specific part: component stylesheet handling for `@apply` and Tailwind-aware `@reference` injection.
+Once Tailwind is installed, the Angular-specific part is making Tailwind utilities available inside component styles.
 
-## What Analog adds
+## Component Styles
 
-Use Analog's `tailwindCss.rootStylesheet` option when you want Tailwind utilities inside Angular component styles.
+Angular compiles component styles in isolation. When a component stylesheet uses `@apply` or other Tailwind utilities, Tailwind still needs access to the root stylesheet that defines your theme, prefixes, and plugins. Add a `@reference` to that root stylesheet at the top of the component stylesheet, as described in [Tailwind's Angular guide](https://tailwindcss.com/docs/installation/framework-guides/angular):
 
-That option lets Analog:
+```css
+@reference '../styles.css';
 
-- detect component stylesheets that use Tailwind utilities
-- inject the correct `@reference` to your root stylesheet
-- keep component styles aligned with your root Tailwind theme, prefixes, and plugins
-- avoid manual `@reference` directives in every component stylesheet
-
-If you only use Tailwind utilities in templates and a global stylesheet, you can follow Tailwind's install docs and keep your generated scaffold defaults without adding extra Analog configuration.
-
-## Component Styles Setup
-
-When you enable `tailwindCss.rootStylesheet`, keep Tailwind wired through Vite for the component stylesheet path:
-
-```ts
-/// <reference types="vitest" />
-
-import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-import tailwindcss from '@tailwindcss/vite';
-
-export default defineConfig(() => ({
-  plugins: [
-    analog({
-      vite: {
-        tailwindCss: {
-          rootStylesheet: resolve(__dirname, 'src/styles.css'),
-        },
-      },
-    }),
-    tailwindcss(),
-  ],
-}));
+.card {
+  @apply rounded-lg p-4;
+}
 ```
 
-If you are using `@analogjs/vite-plugin-angular` directly instead of `@analogjs/platform`, the same option lives on the Angular plugin:
+Use a path that resolves from the stylesheet file. Inline `styles` in the component decorator have no file location, so prefer external `styleUrl` files for component styles that use `@apply`.
 
-```ts
-import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
-import angular from '@analogjs/vite-plugin-angular';
-import tailwindcss from '@tailwindcss/vite';
-
-export default defineConfig(() => ({
-  plugins: [
-    angular({
-      tailwindCss: {
-        rootStylesheet: resolve(__dirname, 'src/styles.css'),
-      },
-    }),
-    tailwindcss(),
-  ],
-}));
-```
-
-List `analog()` before `tailwindcss()` in your Vite config. Current generators now scaffold that order.
+If you only use Tailwind utilities in templates and a global stylesheet, no `@reference` is needed.
 
 ## Root Stylesheet
 
@@ -89,36 +44,35 @@ You can keep your theme, `@source`, plugins, and prefixes there as well:
 }
 ```
 
-Use an absolute `rootStylesheet` path. Analog may serve component styles through virtual stylesheet ids during dev, so relative `@reference` paths are not reliable there.
+## Automating `@reference` injection
 
-## How Component Styles Work
-
-Angular compiles component styles in isolation. When a component stylesheet contains `@apply`, Tailwind still needs access to the root stylesheet that defines prefixes, theme values, and plugins.
-
-Analog handles that by:
-
-- detecting Tailwind usage in component CSS
-- injecting `@reference` to the configured root stylesheet
-- routing those component styles through the Vite CSS pipeline when needed
-
-That means you should not manually add `@reference` to every component stylesheet in the normal setup.
-
-## Prefixes
-
-If your component styles use custom-prefixed utilities, configure `prefixes` so Analog knows which stylesheets need Tailwind `@reference` injection:
+A Vite plugin can inject `@reference` into component styles for you through the `analog.setup()` hook. Register a style preprocessor that prepends the directive, and call `externalizeComponentStyles()` so `@tailwindcss/vite` processes those styles during development:
 
 ```ts
-analog({
-  vite: {
-    tailwindCss: {
-      rootStylesheet: resolve(__dirname, 'src/styles.css'),
-      prefixes: ['tw:'],
+import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
+
+export function angularTailwind(
+  rootStylesheet: string,
+): AnalogIntegrationPlugin {
+  const inject = (code: string) =>
+    code.includes('@apply') && !/^\s*@reference\b/m.test(code)
+      ? `@reference "${rootStylesheet}";\n${code}`
+      : code;
+
+  return {
+    name: 'angular-tailwind',
+    enforce: 'pre',
+    analog: {
+      setup(ctx) {
+        ctx.registerStylePreprocessor(inject);
+        ctx.externalizeComponentStyles();
+      },
     },
-  },
-});
+  };
+}
 ```
 
-Without `prefixes`, Analog falls back to its default Tailwind usage detection for component styles.
+Use an absolute `rootStylesheet` path here. Externalized component styles are served through virtual stylesheet ids during dev, so relative `@reference` paths are not reliable from a preprocessor. See the [Style Pipeline guide](/docs/guides/style-pipeline) for the full `analog.setup()` contract.
 
 ## HMR
 

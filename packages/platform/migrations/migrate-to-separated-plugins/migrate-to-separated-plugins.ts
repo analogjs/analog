@@ -305,7 +305,7 @@ export default function migrateToSeparatedPlugins(): Rule {
         context.logger.info(`  - ${file}`);
       }
       context.logger.info(
-        `Review the result — only \`vite\` and \`nitro\` were moved automatically. Other angular-passthrough options (\`liveReload\`, \`fastCompile\`, \`fileReplacements\`, \`tailwindCss\`, etc.) still need to be relocated by hand.\nSee ${MIGRATION_DOC_URL}`,
+        `Review the result — only \`vite\` and \`nitro\` were moved automatically. Other angular-passthrough options (\`liveReload\`, \`fastCompile\`, \`fileReplacements\`, etc.) still need to be relocated by hand.\nSee ${MIGRATION_DOC_URL}`,
       );
     }
 

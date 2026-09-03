@@ -184,30 +184,3 @@ export default defineConfig(({ mode }) => ({
   ],
 }));
 ```
-
-If you are also using Tailwind v4 for component styles, keep that configuration on the Analog side as well:
-
-```ts
-/// <reference types="vitest" />
-
-import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-import tailwindcss from '@tailwindcss/vite';
-
-export default defineConfig(() => ({
-  plugins: [
-    analog({
-      liveReload: true,
-      vite: {
-        tailwindCss: {
-          rootStylesheet: resolve(import.meta.dirname, 'src/styles.css'),
-        },
-      },
-    }),
-    tailwindcss(),
-  ],
-}));
-```
-
-This is the recommended setup for Analog v3: one root Tailwind stylesheet, `@tailwindcss/vite` in Vite, and Analog handling component stylesheet preprocessing.

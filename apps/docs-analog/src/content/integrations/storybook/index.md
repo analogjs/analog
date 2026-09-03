@@ -163,36 +163,6 @@ Use the `styles` array for actual global stylesheet files. Use `loadPaths` only 
 
 For third-party package styles, prefer bare package imports such as `katex/dist/katex.css` or `@angular/material/prebuilt-themes/deeppurple-amber.css` over `node_modules/...` paths when the package exports them.
 
-### Tailwind v4 in Storybook
-
-If your project uses Tailwind v4, keep Storybook aligned with the same opinionated Analog setup you use in the app:
-
-- one root stylesheet such as `src/styles.css`
-- `@import 'tailwindcss';` in that stylesheet
-- `framework.options.tailwindCss.rootStylesheet` pointing at that stylesheet
-- `framework.options.liveReload` for Angular reload behavior
-
-```ts
-import { resolve } from 'node:path';
-import type { StorybookConfig } from '@analogjs/storybook-angular';
-
-const config: StorybookConfig = {
-  framework: {
-    name: '@analogjs/storybook-angular',
-    options: {
-      liveReload: true,
-      tailwindCss: {
-        rootStylesheet: resolve(__dirname, '../src/styles.css'),
-      },
-    },
-  },
-};
-
-export default config;
-```
-
-This keeps Storybook on the same stylesheet pipeline as the app instead of relying on ad hoc per-story or per-component Tailwind wiring.
-
 ## Enabling Zoneless Change Detection
 
 To use zoneless change detection for the Storybook, add the `experimentalZoneless` flag to the `@analogjs/storybook-angular` builder options in the `angular.json` or `project.json`.

@@ -2,7 +2,6 @@ import { createDebug } from 'obug';
 import { createDebugHarness } from './debug-harness.js';
 
 // Normal — key decisions, once per startup or per component
-export const debugTailwind = createDebug('analog:angular:tailwind');
 export const debugHmr = createDebug('analog:angular:hmr');
 export const debugStyles = createDebug('analog:angular:styles');
 export const debugCompiler = createDebug('analog:angular:compiler');
@@ -13,21 +12,18 @@ export const debugEmit = createDebug('analog:angular:emit');
 export const debugStylePipeline = createDebug('analog:angular:style-pipeline');
 
 // Verbose — per-file detail, enable with :v suffix or parent:*
-export const debugTailwindV = createDebug('analog:angular:tailwind:v');
 export const debugHmrV = createDebug('analog:angular:hmr:v');
 export const debugStylesV = createDebug('analog:angular:styles:v');
 export const debugCompilerV = createDebug('analog:angular:compiler:v');
 export const debugEmitV = createDebug('analog:angular:emit:v');
 
 const angularDebugInstances = [
-  debugTailwind,
   debugHmr,
   debugStyles,
   debugCompiler,
   debugCompilationApi,
   debugEmit,
   debugStylePipeline,
-  debugTailwindV,
   debugHmrV,
   debugStylesV,
   debugCompilerV,
@@ -46,8 +42,6 @@ export type DebugScope =
   | 'analog:angular:emit'
   | 'analog:angular:emit:v'
   | 'analog:angular:style-pipeline'
-  | 'analog:angular:tailwind'
-  | 'analog:angular:tailwind:v'
   | (string & {});
 
 export type DebugMode = 'build' | 'dev';

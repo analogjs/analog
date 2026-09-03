@@ -225,7 +225,6 @@ The examples above include the full set of published Analog workspace packages t
 | `analog:angular:styles`          | Stylesheet processing, externalization, encapsulation                                    |
 | `analog:angular:compiler`        | TypeScript compilation, compiler options                                                 |
 | `analog:angular:compilation-api` | Experimental Angular Compilation API path selection, version checks, incremental updates |
-| `analog:angular:tailwind`        | Tailwind CSS `@reference` injection via the `tailwindCss` plugin option                  |
 | `analog:angular:style-pipeline`  | Reserved for Angular-side style-pipeline resource diagnostics                            |
 
 ### `@analogjs/vite-plugin-nitro`

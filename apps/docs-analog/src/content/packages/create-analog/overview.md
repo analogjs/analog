@@ -48,7 +48,7 @@ pnpm create analog
 
 If you only need Tailwind utilities in templates and global styles, keep the scaffold defaults.
 
-If you also want `@apply` inside Angular component styles, add Analog's `tailwindCss.rootStylesheet` option and follow the [Tailwind CSS guide](/docs/integrations/tailwind).
+If you also want `@apply` inside Angular component styles, add a `@reference` to your root stylesheet in those component stylesheets and follow the [Tailwind CSS guide](/docs/integrations/tailwind).
 
 If you do not want Tailwind in the generated app, pass `--skipTailwind true`. The default Tailwind v4 flow expects a plain CSS entry file for global styles.
 

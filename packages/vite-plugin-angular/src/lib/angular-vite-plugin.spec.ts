@@ -1,13 +1,4 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  it,
-  expect,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -24,7 +15,6 @@ vi.mock('vite', async () => {
 
 import {
   angular,
-  buildStylePreprocessor,
   createFsWatcherCacheInvalidator,
   evictDeletedFileMetadata,
   findTemplateOwnerModules,
@@ -1040,397 +1030,45 @@ describe('findTemplateOwnerModules', () => {
 });
 
 // =============================================================================
-// Tailwind CSS @reference injection
+// Encapsulation plugin ordering (#2293)
 //
-// Regression tests for the tailwind-reference Vite plugin and the
-// buildStylePreprocessor function that together ensure Angular component CSS
-// files receive `@reference` directives pointing to the root Tailwind
-// stylesheet. Without @reference, @tailwindcss/vite processes each component
-// CSS in isolation and can't resolve prefixed utilities like `sa:flex`.
-//
-// Background:
-//   - Angular component CSS (e.g. card.component.css) uses `@apply sa:flex`
-//   - Tailwind v4 needs `@import 'tailwindcss' prefix(sa)` or `@reference`
-//     to a file that has it, otherwise it treats `sa:` as an unknown variant
-//   - The `buildStylePreprocessor` injects @reference during Angular
-//     compilation (before Vite transforms)
-//   - The `tailwind-reference` plugin (enforce:"pre") acts as a Vite
-//     transform-level safety net
+// @tailwindcss/vite runs with enforce: 'pre', so Angular's encapsulation
+// (ShadowCss rewriting :host to [_nghost-xxx]) must run AFTER Tailwind
+// resolves @apply directives. Encapsulation is therefore placed in a
+// separate plugin with enforce: 'post'.
 // =============================================================================
 
-describe('tailwind-reference plugin', () => {
-  let rootCssDir = '';
-  let ROOT_CSS = '';
-
-  beforeAll(() => {
-    rootCssDir = mkdtempSync(join(tmpdir(), 'analog-tailwind-root-'));
-    ROOT_CSS = join(rootCssDir, 'tailwind.css');
-    // Use an actual Tailwind root file so the assertions stay focused on
-    // @reference injection behavior instead of missing-file warnings.
-    writeFileSync(ROOT_CSS, '@import "tailwindcss" prefix(sa);\n', 'utf-8');
-  });
-
-  afterAll(() => {
-    rmSync(rootCssDir, { recursive: true, force: true });
-  });
-
-  /**
-   * Helper: extract the tailwind-reference sub-plugin from the array
-   * returned by angular(). Returns undefined if tailwindCss is not configured.
-   */
-  function getTailwindReferencePlugin(
+describe('encapsulation plugin', () => {
+  function getEncapsulationPlugin(
     options?: Parameters<typeof angular>[0],
   ): Plugin | undefined {
     const plugins = angular(options);
     return plugins.find(
-      (p) => p.name === '@analogjs/vite-plugin-angular:tailwind-reference',
+      (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
     );
   }
 
-  /**
-   * Helper: call the plugin's transform hook with the given CSS code and id.
-   * Returns the transformed output (string or undefined if skipped).
-   */
-  function callTransform(
-    plugin: Plugin,
-    code: string,
-    id: string,
-  ): string | undefined {
-    const transform =
-      typeof plugin.transform === 'function'
-        ? plugin.transform
-        : (plugin.transform as any)?.handler;
-    // The transform is synchronous in this plugin
-    return transform?.call({} as any, code, id) as string | undefined;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Plugin creation
-  // ---------------------------------------------------------------------------
-
-  it('is included when tailwindCss option is provided', () => {
-    const plugin = getTailwindReferencePlugin({
-      tailwindCss: { rootStylesheet: ROOT_CSS },
-    });
+  it('is registered as a separate plugin with enforce: "post"', () => {
+    const plugin = getEncapsulationPlugin();
     expect(plugin).toBeDefined();
-    expect(plugin!.enforce).toBe('pre');
+    expect(plugin!.enforce).toBe('post');
   });
 
-  it('is NOT included when tailwindCss option is omitted', () => {
-    const plugin = getTailwindReferencePlugin();
-    expect(plugin).toBeUndefined();
+  it('has a transform hook', () => {
+    const plugin = getEncapsulationPlugin();
+    expect(plugin!.transform).toBeDefined();
   });
 
-  it('is NOT included when tailwindCss option is undefined', () => {
-    const plugin = getTailwindReferencePlugin({ tailwindCss: undefined });
-    expect(plugin).toBeUndefined();
-  });
-
-  // ---------------------------------------------------------------------------
-  // @reference injection via transform
-  // ---------------------------------------------------------------------------
-
-  describe('transform', () => {
-    let plugin: Plugin;
-
-    beforeEach(() => {
-      plugin = getTailwindReferencePlugin({
-        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
-      })!;
-    });
-
-    it('injects @reference into component CSS that uses the configured prefix', () => {
-      const css = '.demo { @apply sa:flex sa:gap-4; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
-    });
-
-    it('injects @reference for CSS served with ?direct&ngcomp query params', () => {
-      // Angular externalizes component CSS with these query params
-      const css = ':host { @apply sa:grid; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/card.component.css?direct&ngcomp=ng-c123&e=0',
-      );
-      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
-    });
-
-    it('skips non-CSS files', () => {
-      const result = callTransform(
-        plugin,
-        'import { Component } from "@angular/core";',
-        '/project/src/app/app.component.ts',
-      );
-      expect(result).toBeUndefined();
-    });
-
-    it('skips the root stylesheet itself', () => {
-      const result = callTransform(
-        plugin,
-        '@import "tailwindcss" prefix(sa);',
-        ROOT_CSS,
-      );
-      expect(result).toBeUndefined();
-    });
-
-    it('skips the root stylesheet even with query params', () => {
-      const result = callTransform(
-        plugin,
-        '@import "tailwindcss" prefix(sa);',
-        `${ROOT_CSS}?direct`,
-      );
-      expect(result).toBeUndefined();
-    });
-
-    it('skips CSS that already has @reference', () => {
-      const css = `@reference "${ROOT_CSS}";\n.demo { @apply sa:flex; }`;
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      expect(result).toBeUndefined();
-    });
-
-    it('throws a clear error when @reference only appears in comment text', () => {
-      const css =
-        '/* keep this comment away from @reference injection */\n.demo { @apply sa:flex; }';
-
-      expect(() =>
-        callTransform(plugin, css, '/project/src/app/demo.component.css'),
-      ).toThrowError(
-        /contains the text "@reference" but does not contain a real @reference directive/,
-      );
-    });
-
-    it('does not treat quoted comment markers as a collision', () => {
-      const css =
-        '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-
-      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
-    });
-
-    it('skips CSS that imports tailwindcss directly (double quotes)', () => {
-      const css =
-        '@import "tailwindcss" prefix(sa);\n.demo { @apply sa:flex; }';
-      const result = callTransform(plugin, css, '/project/src/app/global.css');
-      expect(result).toBeUndefined();
-    });
-
-    it('skips CSS that imports tailwindcss directly (single quotes)', () => {
-      const css =
-        "@import 'tailwindcss' prefix(sa);\n.demo { @apply sa:flex; }";
-      const result = callTransform(plugin, css, '/project/src/app/global.css');
-      expect(result).toBeUndefined();
-    });
-
-    it('skips CSS that references the root stylesheet by basename', () => {
-      const css = `@import './tailwind.css';\n.demo { @apply sa:flex; }`;
-      const result = callTransform(plugin, css, '/project/src/app/main.css');
-      expect(result).toBeUndefined();
-    });
-
-    it('skips CSS that does not use the configured prefix', () => {
-      // Plain CSS with no Tailwind utilities — should not get @reference
-      const css = '.demo { display: flex; gap: 1rem; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      expect(result).toBeUndefined();
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Prefix detection
-  // ---------------------------------------------------------------------------
-
-  describe('prefix detection', () => {
-    it('falls back to @apply detection when no prefixes are configured', () => {
-      const plugin = getTailwindReferencePlugin({
-        tailwindCss: { rootStylesheet: ROOT_CSS },
-      })!;
-
-      // Contains @apply but no specific prefix
-      const css = '.demo { @apply flex gap-4; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
-    });
-
-    it('does not inject for CSS without @apply when no prefixes configured', () => {
-      const plugin = getTailwindReferencePlugin({
-        tailwindCss: { rootStylesheet: ROOT_CSS },
-      })!;
-
-      const css = '.demo { display: flex; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      expect(result).toBeUndefined();
-    });
-
-    it('supports multiple configured prefixes', () => {
-      const plugin = getTailwindReferencePlugin({
-        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:', 'tw:'] },
-      })!;
-
-      // Uses tw: prefix (second in the list)
-      const css = '.demo { @apply tw:text-red-500; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      expect(result).toBe(`@reference "${ROOT_CSS}";\n${css}`);
-    });
-  });
-
-  describe('buildStylePreprocessor', () => {
-    it('throws a clear error when @reference only appears in comment text', () => {
-      const preprocessor = buildStylePreprocessor({
-        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
-      });
-
-      expect(() =>
-        preprocessor?.(
-          '/* keep this comment away from @reference injection */\n.demo { @apply sa:flex; }',
-          '/project/src/app/demo.component.css',
-        ),
-      ).toThrowError(
-        /contains the text "@reference" but does not contain a real @reference directive/,
-      );
-    });
-
-    it('does not treat quoted comment markers as a collision', () => {
-      const preprocessor = buildStylePreprocessor({
-        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
-      });
-      const css =
-        '.demo::before { content: "/* @reference */"; }\n.demo { @apply sa:flex; }';
-
-      expect(
-        preprocessor?.(css, '/project/src/app/demo.component.css')?.code,
-      ).toBe(`@reference "${ROOT_CSS}";\n${css}`);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Windows path normalization (#2293)
-  // ---------------------------------------------------------------------------
-
-  describe('Windows path normalization', () => {
-    it('normalizes backslash paths in buildStylePreprocessor @reference injection', () => {
-      // Simulate a Windows-style absolute path with backslashes.
-      // On non-Windows, existsSync will warn but the preprocessor still
-      // runs and injects @reference — we only care about the output format.
-      const winPath = 'D:\\projects\\libs\\styles\\tailwind.css';
-      const preprocessor = buildStylePreprocessor({
-        tailwindCss: { rootStylesheet: winPath, prefixes: ['sa:'] },
-      });
-
-      const css = '.demo { @apply sa:flex; }';
-      const result = preprocessor?.(css, '/project/src/app/demo.component.css');
-      // The injected @reference path must use forward slashes
-      expect(result?.code).toContain(
-        '@reference "D:/projects/libs/styles/tailwind.css"',
-      );
-      expect(result?.code).not.toContain('\\');
-    });
-
-    it('normalizes backslash paths in tailwind-reference pre-transform plugin', () => {
-      const winPath = 'D:\\projects\\libs\\styles\\tailwind.css';
-      const plugin = getTailwindReferencePlugin({
-        tailwindCss: { rootStylesheet: winPath, prefixes: ['sa:'] },
-      })!;
-
-      const css = '.demo { @apply sa:flex; }';
-      const result = callTransform(
-        plugin,
-        css,
-        '/project/src/app/demo.component.css',
-      );
-      // The injected @reference path must use forward slashes
-      expect(result).toContain(
-        '@reference "D:/projects/libs/styles/tailwind.css"',
-      );
-      expect(result).not.toContain('\\');
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Encapsulation plugin ordering (#2293)
-  //
-  // @tailwindcss/vite runs with enforce: 'pre', so Angular's encapsulation
-  // (ShadowCss rewriting :host to [_nghost-xxx]) must run AFTER Tailwind
-  // resolves @apply directives. Encapsulation is therefore placed in a
-  // separate plugin with enforce: 'post'.
-  // ---------------------------------------------------------------------------
-
-  describe('encapsulation plugin', () => {
-    function getEncapsulationPlugin(
-      options?: Parameters<typeof angular>[0],
-    ): Plugin | undefined {
-      const plugins = angular(options);
-      return plugins.find(
-        (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
-      );
-    }
-
-    it('is registered as a separate plugin with enforce: "post"', () => {
-      const plugin = getEncapsulationPlugin();
-      expect(plugin).toBeDefined();
-      expect(plugin!.enforce).toBe('post');
-    });
-
-    it('has a transform hook', () => {
-      const plugin = getEncapsulationPlugin();
-      expect(plugin!.transform).toBeDefined();
-    });
-
-    it('runs after the tailwind-reference plugin in the plugin array', () => {
-      const plugins = angular({
-        tailwindCss: { rootStylesheet: ROOT_CSS, prefixes: ['sa:'] },
-      });
-      const twIndex = plugins.findIndex(
-        (p) => p.name === '@analogjs/vite-plugin-angular:tailwind-reference',
-      );
-      const encapIndex = plugins.findIndex(
-        (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
-      );
-      // Both must exist and encapsulation must come after
-      expect(twIndex).toBeGreaterThanOrEqual(0);
-      expect(encapIndex).toBeGreaterThanOrEqual(0);
-      expect(encapIndex).toBeGreaterThan(twIndex);
-    });
-
-    it('runs after the main Angular plugin in the plugin array', () => {
-      const plugins = angular();
-      const mainIndex = plugins.findIndex(
-        (p) => p.name === '@analogjs/vite-plugin-angular',
-      );
-      const encapIndex = plugins.findIndex(
-        (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
-      );
-      expect(mainIndex).toBeGreaterThanOrEqual(0);
-      expect(encapIndex).toBeGreaterThan(mainIndex);
-    });
+  it('runs after the main Angular plugin in the plugin array', () => {
+    const plugins = angular();
+    const mainIndex = plugins.findIndex(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+    const encapIndex = plugins.findIndex(
+      (p) => p.name === '@analogjs/vite-plugin-angular:encapsulation',
+    );
+    expect(mainIndex).toBeGreaterThanOrEqual(0);
+    expect(encapIndex).toBeGreaterThan(mainIndex);
   });
 });
 

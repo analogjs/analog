@@ -11,11 +11,10 @@ import { createLogger, defineConfig, type Plugin } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 import { angularTailwind } from './tools/angular-tailwind.plugin';
 
-// TDBG_TAILWIND=plugin swaps the `tailwindCss` option for the standalone
-// `analog.setup()` plugin spike. TDBG_LIVE_RELOAD=false disables HMR-driven
-// style externalization so the plugin path is exercised without it.
+// Tailwind `@reference` injection runs through the standalone `analog.setup()`
+// plugin. TDBG_LIVE_RELOAD=false disables HMR-driven style externalization so
+// the plugin path is exercised without it.
 const TAILWIND_ROOT = resolve(__dirname, 'src/styles.css');
-const USE_TAILWIND_PLUGIN = process.env['TDBG_TAILWIND'] === 'plugin';
 const LIVE_RELOAD = process.env['TDBG_LIVE_RELOAD'] !== 'false';
 const USE_COMPILATION_API = process.env['TDBG_COMPILATION_API'] !== 'false';
 
@@ -24,7 +23,7 @@ function resolvedConfigProbe(): Plugin {
     name: 'tailwind-debug-app-config-probe',
     configResolved(config) {
       console.log(
-        `[tdbg] compilationApi=${USE_COMPILATION_API} liveReload=${LIVE_RELOAD} tailwind=${USE_TAILWIND_PLUGIN ? 'plugin' : 'option'} oxc=${JSON.stringify((config as any).oxc)} esbuild=${JSON.stringify(config.esbuild)}`,
+        `[tdbg] compilationApi=${USE_COMPILATION_API} liveReload=${LIVE_RELOAD} oxc=${JSON.stringify((config as any).oxc)} esbuild=${JSON.stringify(config.esbuild)}`,
       );
     },
   };
@@ -141,20 +140,11 @@ export default defineConfig(({ mode }) => ({
         // for style externalization.
         useAngularCompilationAPI: USE_COMPILATION_API,
       },
-      ...(USE_TAILWIND_PLUGIN
-        ? {}
-        : {
-            tailwindCss: {
-              prefixes: ['tdbg:'],
-              rootStylesheet: TAILWIND_ROOT,
-            },
-          }),
     }),
-    USE_TAILWIND_PLUGIN &&
-      angularTailwind({
-        prefixes: ['tdbg:'],
-        rootStylesheet: TAILWIND_ROOT,
-      }),
+    angularTailwind({
+      prefixes: ['tdbg:'],
+      rootStylesheet: TAILWIND_ROOT,
+    }),
     nitro({
       routeRules: {
         '/probe': {

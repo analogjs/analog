@@ -11,30 +11,10 @@ vi.mock('vite', async () => {
 import { preprocessCSS } from 'vite';
 import { jitPlugin } from './angular-jit-plugin.js';
 import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
-import { TailwindReferenceError } from './utils/tailwind-reference.js';
 
 describe('jitPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it('rethrows TailwindReferenceError from preprocessCSS', async () => {
-    vi.mocked(preprocessCSS).mockRejectedValue(
-      new TailwindReferenceError('comment-masked @reference'),
-    );
-
-    const plugin = jitPlugin({ inlineStylesExtension: 'css' });
-    plugin.configResolved?.({ test: { css: true } } as any);
-
-    const id = toJitInlineStyleId(
-      encodeURIComponent(
-        Buffer.from('.demo { color: red; }').toString('base64'),
-      ),
-    );
-
-    await expect(plugin.load?.(id)).rejects.toThrow(
-      'comment-masked @reference',
-    );
   });
 
   it('soft-fails ordinary preprocessCSS errors', async () => {

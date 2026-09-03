@@ -20,7 +20,6 @@ export interface TsconfigResolverOptions {
   workspaceRoot: string;
   include: string[];
   liveReload: boolean;
-  hasTailwindCss: boolean;
   isTest: boolean;
 }
 
@@ -207,7 +206,6 @@ export class TsconfigResolver {
       this.options.isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
       this.options.liveReload ? 'live-reload' : 'no-live-reload',
-      this.options.hasTailwindCss ? 'tw' : 'notw',
     ].join('|');
   }
 

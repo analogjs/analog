@@ -10,9 +10,9 @@ export interface AngularTailwindOptions {
 }
 
 /**
- * Debug-app spike: the `tailwindCss` option of `angular()` expressed as a
- * standalone Vite plugin that reaches Angular compilation through the
- * `analog.setup()` interop hook instead of framework config.
+ * Debug-app spike: Tailwind `@reference` injection as a standalone Vite
+ * plugin that reaches Angular compilation through the `analog.setup()`
+ * interop hook instead of framework config.
  */
 export function angularTailwind(
   options: AngularTailwindOptions,

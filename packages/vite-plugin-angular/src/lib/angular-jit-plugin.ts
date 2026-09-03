@@ -4,7 +4,6 @@ import {
   getJitInlineStyles,
 } from './utils/jit-inline-styles.js';
 import { debugStyles } from './utils/debug.js';
-import { isTailwindReferenceError } from './utils/tailwind-reference.js';
 import { resolveAnalogIntegrations } from './analog-plugin-interop.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
@@ -64,9 +63,6 @@ export function jitPlugin({
           );
           styles = compiled?.code;
         } catch (e) {
-          if (isTailwindReferenceError(e)) {
-            throw e;
-          }
           const errorMessage = e instanceof Error ? e.message : String(e);
           debugStyles('jit css compilation error', {
             styleIdHash,

@@ -34,7 +34,6 @@ import {
   type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
 import { TsconfigResolver } from '../utils/tsconfig-resolver.js';
-import { isTailwindReferenceError } from '../utils/tailwind-reference.js';
 import { isRolldown } from '../utils/rolldown.js';
 import {
   createCompilerPlugin,
@@ -82,11 +81,6 @@ export interface CompilationAPIPluginOptions {
   fileReplacements: FileReplacement[];
   stylePreprocessor?: StylePreprocessor;
   stylePipeline?: AngularStylePipelineOptions;
-  hasTailwindCss: boolean;
-  tailwindCss?: {
-    rootStylesheet: string;
-    prefixes?: string[];
-  };
   isTest: boolean;
   isAstroIntegration: boolean;
   include: string[];
@@ -122,7 +116,6 @@ export function compilationAPIPlugin(
     workspaceRoot: pluginOptions.workspaceRoot,
     include: pluginOptions.include,
     liveReload: pluginOptions.liveReload,
-    hasTailwindCss: pluginOptions.hasTailwindCss,
     isTest,
   });
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
@@ -144,11 +137,7 @@ export function compilationAPIPlugin(
   function shouldExternalizeStyles(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
     if (!effectiveWatchMode) return false;
-    return !!(
-      shouldEnableLiveReload() ||
-      pluginOptions.hasTailwindCss ||
-      externalizeStylesRequested
-    );
+    return !!(shouldEnableLiveReload() || externalizeStylesRequested);
   }
 
   function resolveTsConfigPath() {
@@ -356,9 +345,6 @@ export function compilationAPIPlugin(
               resolvedConfig,
             );
           } catch (e) {
-            if (isTailwindReferenceError(e)) {
-              throw e;
-            }
             debugStyles('preprocessCSS error', {
               filename,
               resourceFile: resourceFile ?? '(inline)',
@@ -385,7 +371,6 @@ export function compilationAPIPlugin(
         debugCompiler('tsCompilerOptions (compilation API)', {
           liveReload: pluginOptions.liveReload,
           viteHmr: hasViteHmrTransport(),
-          hasTailwindCss: pluginOptions.hasTailwindCss,
           externalizeStylesRequested,
           watchMode,
           shouldExternalize: shouldExternalizeStyles(),

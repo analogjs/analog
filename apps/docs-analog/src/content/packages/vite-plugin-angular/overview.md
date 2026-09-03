@@ -120,6 +120,6 @@ Create a `tsconfig.app.json` in the root of the project.
 
 ## Tailwind CSS v4
 
-For Angular component styles that use Tailwind utilities like `@apply`, configure `tailwindCss.rootStylesheet` and follow the Tailwind guide for Analog:
+For Angular component styles that use Tailwind utilities like `@apply`, add a `@reference` to your root stylesheet in those component stylesheets and follow the Tailwind guide for Analog:
 
 - https://analogjs.org/docs/integrations/tailwind
