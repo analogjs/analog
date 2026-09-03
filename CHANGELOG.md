@@ -1,3 +1,9 @@
+# [3.0.0-alpha.81](https://github.com/analogjs/analog/compare/v3.0.0-alpha.80...v3.0.0-alpha.81) (2026-09-03)
+
+### Features
+
+- **platform:** register the content transform filter through analog.setup ([c174d99](https://github.com/analogjs/analog/commit/c174d99e64a3e4bdbf5d3591082093f5e4b21559))
+
 # [3.0.0-alpha.80](https://github.com/analogjs/analog/compare/v3.0.0-alpha.79...v3.0.0-alpha.80) (2026-09-03)
 
 ### Features
