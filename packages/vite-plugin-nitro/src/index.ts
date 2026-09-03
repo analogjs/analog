@@ -29,8 +29,10 @@ export {
   type InjectServerFnIdsResult,
 } from './lib/utils/inject-server-fn-ids.js';
 
-declare module 'nitro/types' {
-  interface NitroRouteConfig {
+// Nitro's NitroRouteConfig and NitroRouteRules are aliases of h3's route rule
+// types, so custom rule names are declared on h3 as its docs describe.
+declare module 'h3/rules' {
+  interface RouteRuleConfig {
     ssr?: boolean;
     /**
      * Disable progressive streaming SSR for matching routes (falls back to a
@@ -39,7 +41,7 @@ declare module 'nitro/types' {
     streaming?: boolean;
   }
 
-  interface NitroRouteRules {
+  interface RouteRules {
     ssr?: boolean;
     streaming?: boolean;
   }

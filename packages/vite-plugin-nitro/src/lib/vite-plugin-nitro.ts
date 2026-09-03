@@ -784,9 +784,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           buildDir: normalizePath(
             resolve(workspaceRoot, 'dist', rootDir, '.nitro'),
           ),
-          typescript: {
-            generateTsConfig: false,
-          },
           runtimeConfig: {
             apiPrefix: apiPrefix.substring(1),
             prefix,
@@ -794,9 +791,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           // Analog provides its own renderer handler; prevent Nitro v3 from
           // auto-detecting index.html in rootDir and adding a conflicting one.
           renderer: false,
-          imports: {
-            autoImport: false,
-          },
           hooks: {
             'rollup:before': createRollupBeforeHook(rollupExternalEntries),
           },
