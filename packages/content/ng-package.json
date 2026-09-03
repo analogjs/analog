@@ -3,9 +3,5 @@
   "dest": "dist",
   "lib": {
     "entryFile": "src/index.ts"
-  },
-  "assets": [
-    "src/lib/devtools/content-devtools.styles.css",
-    "src/lib/devtools/content-devtools-client.ts"
-  ]
+  }
 }

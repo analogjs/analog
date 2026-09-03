@@ -40,10 +40,6 @@ export default defineConfig({
           import.meta.dirname,
           'md4x/src/index.ts',
         ),
-        'analogjs-content-devtools': resolve(
-          import.meta.dirname,
-          'devtools/src/index.ts',
-        ),
         'analogjs-content-resources': resolve(
           import.meta.dirname,
           'resources/src/index.ts',
