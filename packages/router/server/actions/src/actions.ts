@@ -1,5 +1,5 @@
 import type { H3Event, H3EventContext } from 'nitro/h3';
-import type { $Fetch } from 'nitro/types';
+import type { $Fetch } from 'ofetch';
 import type { NodeContext } from '../../../src/lib/route-types.js';
 
 export type PageServerAction = {

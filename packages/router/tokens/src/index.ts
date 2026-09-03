@@ -3,7 +3,7 @@ import {
   assertInInjectionContext,
   inject,
 } from '@angular/core';
-import type { $Fetch } from 'nitro/types';
+import type { $Fetch } from 'ofetch';
 import type {
   IncomingMessage,
   ServerResponse as NodeServerResponse,

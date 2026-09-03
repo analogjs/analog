@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { H3Event, H3EventContext } from 'nitro/h3';
-import type { $Fetch } from 'nitro/types';
+import type { $Fetch } from 'ofetch';
 import { fail } from './actions';
 import { parseRequestData } from './parse-request-data';
 import { validateWithSchema } from './validate';
