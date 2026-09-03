@@ -183,7 +183,7 @@ Example:
 ```
 feat(scope): commit message
 
-BREAKING CHANGES:
+BREAKING CHANGE:
 
 Describe breaking changes here
 
