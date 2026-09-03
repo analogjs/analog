@@ -138,6 +138,9 @@ describe('analogNitroPlugin', () => {
     const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry');
     expect(typeof code).toBe('string');
     expect(code).toContain('main.server.ts');
+    expect(code.indexOf('virtual:@analogjs/platform/server-mode')).toBeLessThan(
+      code.indexOf('main.server.ts'),
+    );
     expect(code).toContain('export default {');
     expect(code).toContain('fetch(req)');
     // The built document, not the source: rendering around the source would

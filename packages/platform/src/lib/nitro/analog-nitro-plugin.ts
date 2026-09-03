@@ -5,6 +5,7 @@ import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { Plugin, UserConfig } from 'vite';
 
 import type { Options } from '../options.js';
+import { SERVER_MODE_ID } from '../../server-mode-plugin.js';
 import type {
   PrerenderContentDir,
   PrerenderContentFile,
@@ -782,6 +783,10 @@ function generateSsrEntryWrapper(
 // reads \`globalThis.__nitro__.{default,prerender}\`, which the surrounding
 // Nitro server (prerender pass or production runtime) has already
 // populated with the real app + handlers.
+// Set \`ngServerMode\` before the Angular renderer and its app config evaluate,
+// otherwise \`provideClientHydration()\` registers browser-only features such
+// as event replay on the server.
+import ${JSON.stringify(SERVER_MODE_ID)};
 import { serverFetch as nitroServerFetch } from 'nitro';
 import { createFetch } from 'ofetch';
 import renderer from ${JSON.stringify(entryServer)};
