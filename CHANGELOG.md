@@ -1,3 +1,9 @@
+# [3.0.0-alpha.78](https://github.com/analogjs/analog/compare/v3.0.0-alpha.77...v3.0.0-alpha.78) (2026-09-03)
+
+### Features
+
+- **astro-angular:** add a transformFilter option registered through analog.setup ([a93e671](https://github.com/analogjs/analog/commit/a93e6715367f9fcdaf5409a46cf7a0e3eea12b03))
+
 # [3.0.0-alpha.77](https://github.com/analogjs/analog/compare/v3.0.0-alpha.76...v3.0.0-alpha.77) (2026-09-03)
 
 - feat(platform)!: remove the style preprocessor module and tailwindPreprocessor ([2f07506](https://github.com/analogjs/analog/commit/2f075063b44851871ef2431d2b280343a45eb8d7))
