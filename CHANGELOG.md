@@ -1,3 +1,11 @@
+# [3.0.0-alpha.84](https://github.com/analogjs/analog/compare/v3.0.0-alpha.83...v3.0.0-alpha.84) (2026-09-03)
+
+### Bug Fixes
+
+- **platform:** keep the virtual SSR renderer prerendering on nitro 3.0.260903-beta ([6c69681](https://github.com/analogjs/analog/commit/6c696811656514f0199d6348fce2f0591fd898f9))
+- **router:** import the $Fetch type from ofetch ([68653ae](https://github.com/analogjs/analog/commit/68653ae4b0e21eb23ea5d0cbf281e3bf4d4a6302))
+- **vite-plugin-nitro:** align with nitro 3.0.260903-beta ([09847cb](https://github.com/analogjs/analog/commit/09847cb3a4e1f2403c6228d7b200f65e1948861d))
+
 # [3.0.0-alpha.83](https://github.com/analogjs/analog/compare/v3.0.0-alpha.82...v3.0.0-alpha.83) (2026-09-03)
 
 ### Bug Fixes
