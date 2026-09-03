@@ -80,7 +80,6 @@ vite.config.*.timestamp*
 vitest.config.*.timestamp*
 
 .claude/worktrees
-.dagger/sdk
 .vercel/
 gradle.properties
 .cursor

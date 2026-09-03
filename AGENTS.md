@@ -109,7 +109,7 @@ When writing PR descriptions, PR comments, or issue references, always use the c
 
 Nx task caching is **enabled by default** for all targets. Disable it selectively with `"cache": false` in a target's `project.json` only when the output location makes caching unreliable (e.g., outputs inside `node_modules/`). Prefer outputting to `dist/` so Nx can reliably cache and restore build artifacts.
 
-When adding a new build target that writes into `node_modules/`, set `"cache": false` to avoid stale cache hits in CI (Dagger mounts a persistent Nx cache volume while `node_modules/` is rebuilt each run).
+When adding a new build target that writes into `node_modules/`, set `"cache": false` to avoid stale cache hits in CI, where the Nx cache persists across runs while `node_modules/` is rebuilt each run.
 
 Projects with caching explicitly disabled (`"cache": false` on their build target):
 

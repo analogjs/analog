@@ -18,7 +18,6 @@ export default defineConfig({
     '**/out-tsc',
     '**/node_modules',
     '**/packages/create-analog/template-*',
-    '.dagger',
   ],
   overrides: [
     {
