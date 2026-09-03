@@ -127,14 +127,14 @@ Add `@analogjs/vite-plugin-angular` and `nitro` to the app's `devDependencies`:
 
 These options used to live on `analog()`. Pass them to `angular()` or `nitro()` directly:
 
-| v2 location                                                                                                                                      | v3 location                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                           |
-| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                |
-| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })` |
-| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | `angular({ stylePipeline: { plugins: [...] } })`                |
-| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                      |
-| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                         |
+| v2 location                                                                                                                                      | v3 location                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                                                                 |
+| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })`                                       |
+| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                            |
+| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
 
 `analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`/`experimental.stylePipeline`.
 

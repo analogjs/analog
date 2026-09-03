@@ -44,12 +44,14 @@ import {
   augmentProgramWithVersioning,
   mergeTransformers,
 } from './host.js';
-import {
-  composeStylePreprocessors,
-  type StylePreprocessor,
-  type StylesheetDependency,
+import type {
+  StylePreprocessor,
+  StylesheetDependency,
 } from './style-preprocessor.js';
-import { resolveAnalogIntegrations } from './analog-plugin-interop.js';
+import {
+  resolveAnalogIntegrations,
+  type StylesheetRegistryConfigurator,
+} from './analog-plugin-interop.js';
 
 import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
@@ -115,11 +117,6 @@ import {
   preprocessStylesheet,
   rewriteRelativeCssImports,
 } from './stylesheet-registry.js';
-import {
-  AngularStylePipelineOptions,
-  configureStylePipelineRegistry,
-  stylePipelinePreprocessorFromPlugins,
-} from './style-pipeline.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
 
 export {
@@ -213,14 +210,6 @@ export interface PluginOptions {
    * @returns Transformed CSS string, or the original code if no transformation is needed
    */
   stylePreprocessor?: StylePreprocessor;
-  /**
-   * Experimental Angular stylesheet-resource hooks for community-maintained
-   * style-pipeline plugins.
-   *
-   * These hooks run inside the Angular resource pipeline, which is the seam a
-   * standalone Vite plugin cannot own on its own.
-   */
-  stylePipeline?: AngularStylePipelineOptions;
 }
 
 const classNames = new Map();
@@ -248,13 +237,10 @@ interface DeclarationFile {
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
-  const configuredStylePreprocessor = composeStylePreprocessors([
-    stylePipelinePreprocessorFromPlugins(options?.stylePipeline),
-    options?.stylePreprocessor,
-  ]);
-  // Set on each compilation when a Vite plugin's `analog.setup()` asked for
-  // externalized component styles.
+  const configuredStylePreprocessor = options?.stylePreprocessor;
+  // Set on each compilation from the Vite plugins' `analog.setup()` hooks.
   let externalizeStylesRequested = false;
+  let configureStylesheetRegistry: StylesheetRegistryConfigurator | undefined;
 
   /**
    * Normalize plugin options so defaults
@@ -1391,7 +1377,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         transformFilter: options?.transformFilter,
         fileReplacements: pluginOptions.fileReplacements,
         stylePreprocessor: pluginOptions.stylePreprocessor,
-        stylePipeline: options?.stylePipeline,
         isTest,
         isAstroIntegration,
         include: pluginOptions.include,
@@ -1478,6 +1463,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       );
       pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
       externalizeStylesRequested = integrations.externalizeStyles;
+      configureStylesheetRegistry = integrations.configureStylesheetRegistry;
       await _doPerformCompilation(config, ids);
     } finally {
       resolve!();
@@ -1594,13 +1580,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         ? new AnalogStylesheetRegistry()
         : undefined;
       if (stylesheetRegistry) {
-        configureStylePipelineRegistry(
-          pluginOptions.stylePipeline,
-          stylesheetRegistry,
-          {
-            workspaceRoot: pluginOptions.workspaceRoot,
-          },
-        );
+        configureStylesheetRegistry?.(stylesheetRegistry, {
+          workspaceRoot: pluginOptions.workspaceRoot,
+        });
       }
       debugStyles('stylesheet registry initialized (NgtscProgram path)', {
         externalizeStyles,

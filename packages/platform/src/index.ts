@@ -22,18 +22,12 @@ export type { DiscoveredLibraryRoutes } from './lib/discover-library-routes.js';
 export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
 export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
 export type {
-  AngularStylePipelineContext,
-  AngularStylePipelineOptions,
-  AngularStylePipelinePlugin,
   StylePipelineContext,
   StylePipelineOptions,
   StylePipelinePluginEntry,
   StylePipelinePluginFactory,
-  StylePipelineStylesheetRegistry,
 } from './lib/style-pipeline.js';
 export {
-  defineAngularStylePipeline,
-  defineAngularStylePipelinePlugins,
   defineStylePipeline,
   defineStylePipelinePlugins,
   resolveStylePipelinePlugins,

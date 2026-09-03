@@ -5,9 +5,14 @@ export type {
   AnalogIntegrationPlugin,
   AnalogPluginContext,
   AnalogPluginHooks,
+  StylesheetRegistryConfigurator,
+  StylesheetRegistryContext,
 } from './lib/analog-plugin-interop.js';
 export type {
   StylePreprocessor,
+  StylesheetDependency,
+  StylesheetDiagnostic,
+  StylesheetRegistryReader,
   StylesheetTransformContext,
   StylesheetTransformResult,
 } from './lib/style-preprocessor.js';

@@ -17,7 +17,60 @@ describe('analog plugin interop', () => {
     ]);
 
     expect(integrations.stylePreprocessor).toBeUndefined();
+    expect(integrations.configureStylesheetRegistry).toBeUndefined();
     expect(integrations.externalizeStyles).toBe(false);
+  });
+
+  it('runs registered stylesheet registry configurators in Vite plugin order', async () => {
+    const calls: string[] = [];
+    const registry = { getRequestIdsForSource: () => [] } as any;
+    const { configureStylesheetRegistry } = await runAnalogSetupHooks([
+      {
+        name: 'plugin-a',
+        analog: {
+          setup(ctx) {
+            ctx.configureStylesheetRegistry((reg, { workspaceRoot }) => {
+              calls.push(`a:${workspaceRoot}:${reg === registry}`);
+            });
+          },
+        },
+      },
+      {
+        name: 'plugin-b',
+        analog: {
+          setup(ctx) {
+            ctx.configureStylesheetRegistry(() => {
+              calls.push('b');
+            });
+          },
+        },
+      },
+    ] as AnalogIntegrationPlugin[]);
+
+    configureStylesheetRegistry?.(registry, { workspaceRoot: '/workspace' });
+
+    expect(calls).toEqual(['a:/workspace:true', 'b']);
+  });
+
+  it('names the failing plugin when a registry configurator throws', async () => {
+    const { configureStylesheetRegistry } = await runAnalogSetupHooks([
+      {
+        name: 'vite-plugin-xyz',
+        analog: {
+          setup(ctx) {
+            ctx.configureStylesheetRegistry(() => {
+              throw new Error('boom');
+            });
+          },
+        },
+      } as AnalogIntegrationPlugin,
+    ]);
+
+    expect(() =>
+      configureStylesheetRegistry?.({} as any, { workspaceRoot: '/workspace' }),
+    ).toThrow(
+      '[analog] Stylesheet registry configurator from plugin "vite-plugin-xyz" failed: boom',
+    );
   });
 
   it('records a request to externalize component styles', async () => {

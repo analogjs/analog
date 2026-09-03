@@ -199,6 +199,51 @@ describe('compilationAPIPlugin', () => {
     expect(emitAffectedFilesMock).toHaveBeenCalledOnce();
   });
 
+  it('hands the stylesheet registry to analog.setup configurators', async () => {
+    const configure = vi.fn();
+    const { compilationAPIPlugin } =
+      await import('./compilation-api-plugin.js');
+    const plugin = compilationAPIPlugin({
+      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      isTest: false,
+      isAstroIntegration: false,
+      include: [],
+      additionalContentDirs: [],
+    });
+
+    await (plugin.configResolved as any)({
+      cacheDir: join(tempRoot, '.vite'),
+      root: tempRoot,
+      mode: 'development',
+      build: {},
+      server: { hmr: true },
+      plugins: [
+        {
+          name: 'vite-plugin-xyz',
+          analog: {
+            setup(ctx: any) {
+              ctx.configureStylesheetRegistry(configure);
+            },
+          },
+        },
+      ],
+    });
+
+    expect(configure).toHaveBeenCalledWith(
+      expect.objectContaining({
+        getRequestIdsForSource: expect.any(Function),
+      }),
+      { workspaceRoot: tempRoot },
+    );
+  });
+
   it('externalizes component styles when a Vite plugin requests it through analog.setup', async () => {
     const containingFile = join(tempRoot, 'src/demo.component.ts');
     const resourceFile = join(tempRoot, 'src/demo.component.css');

@@ -31,14 +31,6 @@ export default defineConfig({
               configFile: 'style-pipeline.config.ts',
             }),
           ],
-          angularPlugins: [
-            {
-              name: 'community-style-pipeline-angular',
-              preprocessStylesheet(code, context) {
-                return code;
-              },
-            },
-          ],
         },
       },
     }),
@@ -85,88 +77,16 @@ analog({
 });
 ```
 
-## Angular stylesheet hooks
-
-`angularPlugins` is the framework-owned part of the contract.
-
-Use it when a community package needs to participate in:
-
-- Angular component stylesheet preprocessing
-- Angular resource-aware stylesheet HMR behavior
-- access to the live Angular stylesheet registry used for externalized styles
-
-That is the seam a standalone Vite plugin does not own on its own.
-
-```ts
-analog({
-  experimental: {
-    stylePipeline: {
-      angularPlugins: [
-        {
-          name: 'community-style-pipeline-angular',
-          preprocessStylesheet(code, context) {
-            if (context.inline) {
-              return code;
-            }
-
-            return {
-              code: `/* ${context.filename} */\n${code}`,
-              dependencies: [
-                {
-                  id: 'virtual:brandos/tailwind.css',
-                  kind: 'bridge',
-                },
-              ],
-              diagnostics: [
-                {
-                  severity: 'warning',
-                  code: 'tailwind-reference',
-                  message: 'Injected shared Tailwind bridge reference.',
-                },
-              ],
-              tags: ['tailwind'],
-            };
-          },
-          configureStylesheetRegistry(registry, { workspaceRoot }) {
-            void registry;
-            void workspaceRoot;
-          },
-        },
-      ],
-    },
-  },
-});
-```
-
-The stylesheet transform context is strongly typed and includes:
-
-- `filename`
-- `containingFile`
-- `resourceFile`
-- `className`
-- `order`
-- `inline`
-
-Angular-side preprocessors can return either a string or a structured result
-with:
-
-- `code`
-- `dependencies`
-- `diagnostics`
-- `tags`
-
-Analog tracks that metadata in the live stylesheet registry so HMR diagnostics
-and community plugins can reason about which generated bridges, token manifests,
-or runtime theme resources a component stylesheet depends on.
-
 ## Vite plugin interop with `analog.setup`
 
-A community package does not need Analog config to reach the Angular
-stylesheet seam. Any ordinary Vite plugin can expose an `analog` hook, and
-`@analogjs/vite-plugin-angular` discovers it from the resolved plugin list
-before the first Angular compilation. This follows the Nitro model: the Vite
-plugin stays the public extension unit, and Analog only owns the small setup
-context.
+The Angular stylesheet seam is the part of the contract a standalone Vite
+plugin cannot own on its own: component stylesheet preprocessing,
+resource-aware stylesheet HMR, and the live stylesheet registry used for
+externalized styles. Any ordinary Vite plugin reaches it by exposing an
+`analog` hook, and `@analogjs/vite-plugin-angular` discovers it from the
+resolved plugin list before the first Angular compilation. This follows the
+Nitro model: the Vite plugin stays the public extension unit, and Analog only
+owns the small setup context.
 
 ```ts
 import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
@@ -187,7 +107,18 @@ export function tokens(): AnalogIntegrationPlugin {
           return {
             code: `@import "virtual:tokens.css";\n${code}`,
             dependencies: [{ id: 'virtual:tokens.css', kind: 'bridge' }],
+            diagnostics: [
+              {
+                severity: 'warning',
+                code: 'tokens-bridge',
+                message: 'Injected the shared tokens bridge.',
+              },
+            ],
+            tags: ['tokens'],
           };
+        });
+        ctx.configureStylesheetRegistry((registry, { workspaceRoot }) => {
+          // registry.getDependenciesForSource(sourcePath), ...
         });
       },
     },
@@ -198,15 +129,34 @@ export function tokens(): AnalogIntegrationPlugin {
 Users add the plugin to `plugins: [...]` like any other Vite plugin. No extra
 `analog()` option is required.
 
+The stylesheet transform context is strongly typed and includes:
+
+- `filename`
+- `containingFile`
+- `resourceFile`
+- `className`
+- `order`
+- `inline`
+
+Preprocessors can return either a string or a structured result with:
+
+- `code`
+- `dependencies`
+- `diagnostics`
+- `tags`
+
+Analog tracks that metadata in the live stylesheet registry so HMR diagnostics
+and community plugins can reason about which generated bridges, token manifests,
+or runtime theme resources a component stylesheet depends on.
+
 How the hook behaves:
 
 - Discovery is structural. Analog checks `plugin.analog?.setup` on each
   resolved plugin; the exported types are optional.
 - Preprocessors run in Vite plugin order, so `enforce: 'pre'` and
   `enforce: 'post'` decide the pipeline order. Plugin-registered preprocessors
-  run first, followed by the chain configured through `angular()` options
-  (`stylePipeline.angularPlugins`, `stylePreprocessor`), and then Vite's own
-  `preprocessCSS` pipeline.
+  run first, followed by the `stylePreprocessor` configured on `angular()`,
+  and then Vite's own `preprocessCSS` pipeline.
 - Plugin-registered preprocessors apply to the ngtsc, Angular Compilation
   API, and JIT inline stylesheet paths.
 - A preprocessor error is rethrown with the plugin name and stylesheet path so
@@ -216,9 +166,12 @@ How the hook behaves:
   `preprocessCSS`. Call it when your stylesheet output depends on a Vite CSS
   plugin such as `@tailwindcss/vite` rather than PostCSS. Production builds
   keep inlining component styles.
-- `AnalogPluginContext` exposes `registerStylePreprocessor` and
-  `externalizeComponentStyles` today. It grows when a concrete integration
-  needs another seam.
+- `configureStylesheetRegistry()` receives the live stylesheet registry each
+  time a compilation creates one. The registry maps a component stylesheet
+  source to its served ids, request ids, dependencies, diagnostics, and tags.
+- `AnalogPluginContext` exposes `registerStylePreprocessor`,
+  `externalizeComponentStyles`, and `configureStylesheetRegistry` today. It
+  grows when a concrete integration needs another seam.
 
 ## Scope
 

@@ -2,8 +2,18 @@ import type { Plugin, ResolvedConfig } from 'vite';
 import {
   composeStylePreprocessors,
   type StylePreprocessor,
+  type StylesheetRegistryReader,
 } from './style-preprocessor.js';
 import { debugStylePipeline } from './utils/debug.js';
+
+export interface StylesheetRegistryContext {
+  workspaceRoot: string;
+}
+
+export type StylesheetRegistryConfigurator = (
+  registry: StylesheetRegistryReader,
+  context: StylesheetRegistryContext,
+) => void;
 
 /**
  * Narrow framework context handed to a Vite plugin's `analog.setup()` hook.
@@ -23,6 +33,12 @@ export interface AnalogPluginContext {
    * inlining component styles.
    */
   externalizeComponentStyles(): void;
+  /**
+   * Receives the live stylesheet registry for externalized component styles
+   * each time a compilation creates one, so the plugin can map component
+   * stylesheet sources to their served ids, dependencies, and diagnostics.
+   */
+  configureStylesheetRegistry(configure: StylesheetRegistryConfigurator): void;
 }
 
 export interface AnalogPluginHooks {
@@ -38,6 +54,7 @@ export type AnalogIntegrationPlugin = Plugin & { analog?: AnalogPluginHooks };
 
 export interface AnalogIntegrations {
   stylePreprocessor?: StylePreprocessor;
+  configureStylesheetRegistry?: StylesheetRegistryConfigurator;
   externalizeStyles: boolean;
 }
 
@@ -65,6 +82,7 @@ export async function runAnalogSetupHooks(
   plugins: readonly Plugin[],
 ): Promise<AnalogIntegrations> {
   const preprocessors: StylePreprocessor[] = [];
+  const registryConfigurators: StylesheetRegistryConfigurator[] = [];
   let externalizeStyles = false;
 
   for (const plugin of plugins as readonly AnalogIntegrationPlugin[]) {
@@ -80,6 +98,11 @@ export async function runAnalogSetupHooks(
       externalizeComponentStyles() {
         externalizeStyles = true;
       },
+      configureStylesheetRegistry(configure) {
+        registryConfigurators.push(
+          wrapRegistryConfigurator(plugin.name, configure),
+        );
+      },
     };
 
     try {
@@ -93,12 +116,20 @@ export async function runAnalogSetupHooks(
     debugStylePipeline('analog.setup() completed', {
       plugin: plugin.name,
       stylePreprocessors: preprocessors.length - registeredBefore,
+      registryConfigurators: registryConfigurators.length,
       externalizeStyles,
     });
   }
 
   return {
     stylePreprocessor: composeStylePreprocessors(preprocessors),
+    configureStylesheetRegistry: registryConfigurators.length
+      ? (registry, context) => {
+          for (const configure of registryConfigurators) {
+            configure(registry, context);
+          }
+        }
+      : undefined,
     externalizeStyles,
   };
 }
@@ -119,6 +150,7 @@ export async function resolveAnalogIntegrations(
       integrations.stylePreprocessor,
       configured,
     ]),
+    configureStylesheetRegistry: integrations.configureStylesheetRegistry,
     externalizeStyles: integrations.externalizeStyles,
   };
 }
@@ -133,6 +165,21 @@ function wrapStylePreprocessor(
     } catch (error) {
       throw new Error(
         `[analog] Style preprocessor from plugin "${pluginName}" failed for "${filename}": ${describeError(error)}`,
+      );
+    }
+  };
+}
+
+function wrapRegistryConfigurator(
+  pluginName: string,
+  configure: StylesheetRegistryConfigurator,
+): StylesheetRegistryConfigurator {
+  return (registry, context) => {
+    try {
+      configure(registry, context);
+    } catch (error) {
+      throw new Error(
+        `[analog] Stylesheet registry configurator from plugin "${pluginName}" failed: ${describeError(error)}`,
       );
     }
   };

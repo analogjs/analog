@@ -47,11 +47,10 @@ import {
 } from '../stylesheet-registry.js';
 import { normalizeStylesheetDependencies } from '../style-preprocessor.js';
 import type { StylePreprocessor } from '../style-preprocessor.js';
-import { resolveAnalogIntegrations } from '../analog-plugin-interop.js';
 import {
-  AngularStylePipelineOptions,
-  configureStylePipelineRegistry,
-} from '../style-pipeline.js';
+  discoverAnalogIntegrations,
+  resolveAnalogIntegrations,
+} from '../analog-plugin-interop.js';
 import { type FileReplacement } from '../plugins/file-replacements.plugin.js';
 import type { EmitFileResult } from '../models.js';
 import type { SourceFileCache as SourceFileCacheType } from '../utils/source-file-cache.js';
@@ -80,7 +79,6 @@ export interface CompilationAPIPluginOptions {
   transformFilter?: (code: string, id: string) => boolean;
   fileReplacements: FileReplacement[];
   stylePreprocessor?: StylePreprocessor;
-  stylePipeline?: AngularStylePipelineOptions;
   isTest: boolean;
   isAstroIntegration: boolean;
   include: string[];
@@ -630,15 +628,14 @@ export function compilationAPIPlugin(
         },
       };
     },
-    configResolved(config) {
+    async configResolved(config) {
       resolvedConfig = config;
 
       stylesheetRegistry = new AnalogStylesheetRegistry();
-      configureStylePipelineRegistry(
-        pluginOptions.stylePipeline,
-        stylesheetRegistry,
-        { workspaceRoot: pluginOptions.workspaceRoot },
-      );
+      const integrations = await discoverAnalogIntegrations(config);
+      integrations.configureStylesheetRegistry?.(stylesheetRegistry, {
+        workspaceRoot: pluginOptions.workspaceRoot,
+      });
       debugStyles('stylesheet registry initialized (Angular Compilation API)');
 
       if (isTest) {

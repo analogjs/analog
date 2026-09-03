@@ -37,12 +37,7 @@ async function setupLiveReloadPlugin(options: {
     filename: string,
     context?: unknown,
   ) => string;
-  stylePipeline?: {
-    plugins: Array<{
-      name: string;
-      preprocessStylesheet?: (code: string, context: unknown) => string;
-    }>;
-  };
+  plugins?: unknown[];
   tsconfig?: string;
   workspaceRoot?: string;
 }) {
@@ -136,7 +131,6 @@ async function setupLiveReloadPlugin(options: {
     tsconfig: resolvedTsconfig,
     inlineStylesExtension: 'css',
     stylePreprocessor: options.stylePreprocessor,
-    stylePipeline: options.stylePipeline,
     workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
@@ -158,7 +152,7 @@ async function setupLiveReloadPlugin(options: {
     mode: 'development',
     build: {},
     server: {},
-    plugins: [],
+    plugins: options.plugins ?? [],
   });
   await plugin.buildStart.call({
     addWatchFile: vi.fn(),
@@ -296,23 +290,25 @@ describe('angular hmr style preprocessing', () => {
   });
 
   it(
-    'runs style-pipeline preprocessors for inline styles in the compilation API path',
+    'runs analog.setup preprocessors for inline styles in the compilation API path',
     { timeout: 15_000 },
     async () => {
       const preprocessStylesheet = vi.fn(
-        (code: string, context: any) =>
+        (code: string, _filename: string, context: any) =>
           `/* ${context.filename} ${context.className} ${context.order} */\n${code}`,
       );
 
       const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
-        stylePipeline: {
-          plugins: [
-            {
-              name: 'pipeline-a',
-              preprocessStylesheet,
+        plugins: [
+          {
+            name: 'pipeline-a',
+            analog: {
+              setup(ctx: any) {
+                ctx.registerStylePreprocessor(preprocessStylesheet);
+              },
             },
-          ],
-        },
+          },
+        ],
       });
 
       const initialId = await transformStylesheet(
@@ -325,6 +321,7 @@ describe('angular hmr style preprocessing', () => {
 
       expect(preprocessStylesheet).toHaveBeenCalledWith(
         '.demo { color: red; }',
+        '/project/src/app/demo.component.css',
         {
           filename: '/project/src/app/demo.component.css',
           containingFile: '/project/src/app/demo.component.ts',
@@ -350,6 +347,7 @@ describe('angular hmr style preprocessing', () => {
 
       expect(preprocessStylesheet).toHaveBeenCalledWith(
         '.demo { color: blue; }',
+        '/project/src/app/demo.component.css',
         {
           filename: '/project/src/app/demo.component.css',
           containingFile: '/project/src/app/demo.component.ts',

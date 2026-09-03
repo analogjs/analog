@@ -26,7 +26,7 @@ export interface StylesheetTransformResult {
   tags?: string[];
 }
 
-export interface StylePipelineStylesheetRegistry {
+export interface StylesheetRegistryReader {
   getPublicIdsForSource(sourcePath: string): string[];
   getRequestIdsForSource(sourcePath: string): string[];
   getDependenciesForSource(sourcePath: string): StylesheetDependency[];
