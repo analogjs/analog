@@ -136,7 +136,7 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 | `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                            |
 | `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
 
-`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`/`experimental.stylePipeline`.
+`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`.
 
 #### Workspace library globs
 

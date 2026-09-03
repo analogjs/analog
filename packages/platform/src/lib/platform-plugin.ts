@@ -16,7 +16,6 @@ import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
 import { routeGenerationPlugin } from './route-generation-plugin.js';
-import { resolveStylePipelinePlugins } from './style-pipeline.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
 import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
 
@@ -50,7 +49,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
 
   debugPlatform('experimental options resolved', {
     typedRouter: platformOptions.experimental?.typedRouter,
-    stylePipeline: !!platformOptions.experimental?.stylePipeline,
   });
 
   return [
@@ -65,10 +63,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
-    ...resolveStylePipelinePlugins(
-      platformOptions.experimental?.stylePipeline,
-      platformOptions.workspaceRoot,
-    ),
     ...routerPlugin(platformOptions),
     routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),

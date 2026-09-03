@@ -10,9 +10,6 @@ const {
   contentPluginSpy,
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
-  resolveStylePipelinePluginsSpy,
-  stylePipelineFactorySpy,
-  stylePipelinePluginSpy,
 } = vi.hoisted(() => ({
   analogNitroPluginSpy: vi.fn(() => ({ name: '@analogjs/nitro' })),
   ssrBuildPluginSpy: vi.fn(() => []),
@@ -25,9 +22,6 @@ const {
   clearClientPageEndpointsPluginSpy: vi.fn(() => ({
     name: 'analogjs-platform-clear-client-page-endpoint',
   })),
-  resolveStylePipelinePluginsSpy: vi.fn(() => []),
-  stylePipelineFactorySpy: vi.fn(),
-  stylePipelinePluginSpy: { name: 'community-style-pipeline' },
 }));
 
 vi.mock('./nitro/analog-nitro-plugin.js', () => ({
@@ -57,20 +51,6 @@ vi.mock('../server-mode-plugin.js', () => ({
 vi.mock('./clear-client-page-endpoint.js', () => ({
   clearClientPageEndpointsPlugin: clearClientPageEndpointsPluginSpy,
 }));
-vi.mock('./style-pipeline.js', () => ({
-  resolveStylePipelinePlugins:
-    resolveStylePipelinePluginsSpy.mockImplementation((options) => {
-      if (!options) {
-        return [];
-      }
-      return [
-        ...(typeof options.plugins?.[0] === 'function'
-          ? [stylePipelineFactorySpy]
-          : []),
-        stylePipelinePluginSpy,
-      ];
-    }),
-}));
 
 import { platformPlugin } from './platform-plugin.js';
 
@@ -90,7 +70,6 @@ describe('platformPlugin', () => {
     clearClientPageEndpointsPluginSpy.mockReturnValue({
       name: 'analogjs-platform-clear-client-page-endpoint',
     });
-    resolveStylePipelinePluginsSpy.mockClear();
   });
 
   it('defaults ssr to true and passes that value to the composed plugins', () => {
@@ -137,24 +116,5 @@ describe('platformPlugin', () => {
         additionalContentDirs: ['/libs/shared/feature/src/content'],
       }),
     );
-  });
-
-  it('wires experimental style-pipeline plugins when configured', () => {
-    const options = {
-      plugins: [stylePipelineFactorySpy],
-    };
-
-    platformPlugin({
-      experimental: {
-        stylePipeline: options,
-      },
-      workspaceRoot: '/workspace',
-    });
-
-    expect(resolveStylePipelinePluginsSpy).toHaveBeenCalledWith(
-      options,
-      '/workspace',
-    );
-    expect(stylePipelineFactorySpy).not.toHaveBeenCalled();
   });
 });

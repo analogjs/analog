@@ -208,14 +208,13 @@ The examples above include the full set of published Analog workspace packages t
 
 ### `@analogjs/platform`
 
-| Scope                            | Area                                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------------------- |
-| `analog:platform`                | Platform plugin initialization, experimental option resolution, dependency transform config |
-| `analog:platform:routes`         | Route discovery and resolution                                                              |
-| `analog:platform:content`        | Content pipeline                                                                            |
-| `analog:platform:typed-router`   | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
-| `analog:platform:tailwind`       | Tailwind CSS `@reference` injection in component styles                                     |
-| `analog:platform:style-pipeline` | Community style-pipeline plugin registration and platform-level integration                 |
+| Scope                          | Area                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `analog:platform`              | Platform plugin initialization, experimental option resolution, dependency transform config |
+| `analog:platform:routes`       | Route discovery and resolution                                                              |
+| `analog:platform:content`      | Content pipeline                                                                            |
+| `analog:platform:typed-router` | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
+| `analog:platform:tailwind`     | Tailwind CSS `@reference` injection in component styles                                     |
 
 ### `@analogjs/vite-plugin-angular`
 

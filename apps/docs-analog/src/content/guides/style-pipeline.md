@@ -2,82 +2,17 @@
 title: 'Style Pipeline'
 ---
 
-Analog exposes a minimal `experimental.stylePipeline` surface so community
-packages can integrate generated CSS and design-token workflows without
-requiring Analog core to own those engines directly.
+Community packages integrate generated CSS and design-token workflows with
+Analog as ordinary Vite plugins. Analog does not own those engines directly.
 
 This is intentionally narrow:
 
-- Analog owns the top-level framework config surface
 - Analog owns the Angular stylesheet-resource seam
 - community packages own the actual Vite plugins and token engines
 - Tailwind, Panda, Tokiforge, Style Dictionary, and library-specific bridges
   stay outside `@analogjs/platform`
 
-## Configure Analog
-
-```ts
-import { defineConfig } from 'vite';
-import analog from '@analogjs/platform';
-import { stylePipeline } from '@snyder-tech/bdx-analog-style-pipeline-vite';
-
-export default defineConfig({
-  plugins: [
-    analog({
-      experimental: {
-        stylePipeline: {
-          plugins: [
-            stylePipeline({
-              configFile: 'style-pipeline.config.ts',
-            }),
-          ],
-        },
-      },
-    }),
-  ],
-});
-```
-
-## Strongly typed plugin lists
-
-Use `defineStylePipelinePlugins()` when you want a typed helper around the
-plugins you hand to Analog.
-
-```ts
-import { defineStylePipelinePlugins } from '@analogjs/platform';
-
-const plugins = defineStylePipelinePlugins([
-  stylePipeline({
-    configFile: 'style-pipeline.config.ts',
-  }),
-]);
-```
-
-## Plugin factories
-
-If a community plugin needs the resolved workspace root, pass a factory.
-Analog will call it with a small context object.
-
-```ts
-import analog from '@analogjs/platform';
-import { stylePipeline } from '@snyder-tech/bdx-analog-style-pipeline-vite';
-
-analog({
-  experimental: {
-    stylePipeline: {
-      plugins: [
-        ({ workspaceRoot }) =>
-          stylePipeline({
-            workspaceRoot,
-            configFile: 'style-pipeline.config.ts',
-          }),
-      ],
-    },
-  },
-});
-```
-
-## Vite plugin interop with `analog.setup`
+## Reach Angular through `analog.setup`
 
 The Angular stylesheet seam is the part of the contract a standalone Vite
 plugin cannot own on its own: component stylesheet preprocessing,
@@ -187,14 +122,12 @@ proves Analog needs a smaller generic hook.
 
 ## Debugging
 
-Use these debug scopes when experimenting with community style-pipeline
+Use this debug scope when experimenting with community style-pipeline
 integrations:
 
 ```sh
-DEBUG=analog:platform:style-pipeline,analog:angular:style-pipeline pnpm nx serve your-app
+DEBUG=analog:angular:style-pipeline pnpm nx serve your-app
 ```
 
-`analog:platform:style-pipeline` is the platform-side namespace for this
-integration surface.
 `analog:angular:style-pipeline` covers Angular-side diagnostics, including
 which Vite plugins registered preprocessors through `analog.setup`.
