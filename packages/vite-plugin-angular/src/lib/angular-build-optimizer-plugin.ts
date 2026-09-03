@@ -31,16 +31,6 @@ export function buildOptimizerPlugin({
       isProd = isProdMode(userConfig.mode);
       // Advanced optimizations paired with dev-mode defines would strip
       // dev-only code the debug API needs, so both key off `isProd`.
-      javascriptTransformer ??= new JavaScriptTransformer(
-        {
-          sourcemap: false,
-          thirdPartySourcemaps: false,
-          advancedOptimizations: isProd,
-          jit: true,
-        },
-        1,
-      );
-
       return {
         define: isProd
           ? {
@@ -54,6 +44,15 @@ export function buildOptimizerPlugin({
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
+      javascriptTransformer = new JavaScriptTransformer(
+        {
+          sourcemap: preserveVendorMaps,
+          thirdPartySourcemaps: preserveVendorMaps,
+          advancedOptimizations: isProd,
+          jit: true,
+        },
+        1,
+      );
     },
     transform: {
       filter: {
@@ -93,10 +92,26 @@ export function buildOptimizerPlugin({
           sideEffects,
         );
 
-        return {
-          code: Buffer.from(result).toString(),
-        };
+        const transformed = Buffer.from(result).toString();
+        return preserveVendorMaps
+          ? extractInlineSourceMap(transformed, cleanId)
+          : { code: transformed, map: { mappings: '' } };
       },
     },
+  };
+}
+
+export function extractInlineSourceMap(code: string, id: string) {
+  const sourceMapMatch = code.match(
+    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
+  );
+  if (!sourceMapMatch || sourceMapMatch.index === undefined) {
+    throw new Error(
+      `Angular optimizer did not generate a source map for ${id}`,
+    );
+  }
+  return {
+    code: code.slice(0, sourceMapMatch.index),
+    map: Buffer.from(sourceMapMatch[1]!, 'base64').toString(),
   };
 }
