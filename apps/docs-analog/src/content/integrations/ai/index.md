@@ -46,6 +46,8 @@ Use it when you want:
 - an addressable source an agent can fetch on demand
 - Markdown without the site navigation and other page chrome
 
+Every docs page also has a **Copy page** button next to its title that copies the page as Markdown to the clipboard — handy for pasting into an AI assistant with formatting intact — with a dropdown to view the raw Markdown at the page's `.md` URL.
+
 ## Section indexes
 
 In addition to the site-wide `llms.txt`, each multi-page docs section publishes its own scoped index at `llms.txt` under the section path, for example:
