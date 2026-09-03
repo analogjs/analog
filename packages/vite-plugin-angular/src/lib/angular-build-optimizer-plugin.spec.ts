@@ -73,6 +73,16 @@ describe('buildOptimizerPlugin config()', () => {
     );
   });
 
+  it('does not re-enable Vite TypeScript transforms', () => {
+    const plugin = createPlugin();
+    const config = (
+      plugin as Plugin & { config: (c: UserConfig) => UserConfig }
+    ).config({ mode: 'production' });
+
+    expect(config).not.toHaveProperty('oxc');
+    expect(config).not.toHaveProperty('esbuild');
+  });
+
   it('should set ngServerMode to true for production SSR builds', () => {
     const plugin = createPlugin();
     const config = (

@@ -1,5 +1,4 @@
 import type { Plugin, UserConfig } from 'vite';
-import * as vite from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 import { isProdMode } from './utils/plugin-config.js';
 
@@ -51,16 +50,6 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        [vite.rolldownVersion ? 'oxc' : 'esbuild']: {
-          define: isProd
-            ? {
-                ngDevMode: 'false',
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ngServerMode: `${!!userConfig.build?.ssr}`,
-              }
-            : undefined,
-        },
       } as UserConfig;
     },
     configResolved(config) {
