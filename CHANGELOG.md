@@ -1,3 +1,31 @@
+# [3.0.0-alpha.80](https://github.com/analogjs/analog/compare/v3.0.0-alpha.79...v3.0.0-alpha.80) (2026-09-03)
+
+### Features
+
+- **vite-plugin-angular:** remove the additionalContentDirs and advanced.tsTransformers options ([357e922](https://github.com/analogjs/analog/commit/357e9221cf84d81cb243faad9261df13d0107963))
+
+### BREAKING CHANGES
+
+- **vite-plugin-angular:** angular() no longer accepts additionalContentDirs or advanced.tsTransformers. Neither option had
+  any effect: additionalContentDirs was normalized but never read, and the custom TypeScript
+  transformers were never handed to the compiler on any compilation path. Content directories
+  belong to analog(); drop the other option.
+
+BEFORE:
+
+angular({
+additionalContentDirs: ['/libs/shared/content'],
+advanced: { tsTransformers: { before: [myTransformer] } },
+});
+
+AFTER:
+
+analog({ additionalContentDirs: ['/libs/shared/content'] });
+angular();
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.79](https://github.com/analogjs/analog/compare/v3.0.0-alpha.78...v3.0.0-alpha.79) (2026-09-03)
 
 - feat(platform)!: register library page globs with Angular through analog.setup ([88ee690](https://github.com/analogjs/analog/commit/88ee690742a3d66adcd65ae6ffcc71ea2f5a9452))
