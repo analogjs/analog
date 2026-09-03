@@ -817,7 +817,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           return {
             code: data,
-            map: typescriptResult.map ?? null,
+            map: typescriptResult.map
+              ? normalizeSourceMapSources(typescriptResult.map, id)
+              : null,
           };
         },
       },
@@ -834,6 +836,26 @@ export function angular(options?: PluginOptions): Plugin[] {
         angularCompilation = undefined;
       },
     };
+  }
+
+  function normalizeSourceMapSources(map: string, id: string): string {
+    const sourceMap = JSON.parse(map) as {
+      sources?: string[];
+      sourceRoot?: string;
+    };
+    const sourceDirectory = dirname(id);
+    const sourceRoot = sourceMap.sourceRoot ?? '';
+
+    sourceMap.sources = sourceMap.sources?.map((source) => {
+      if (isAbsolute(source) || /^[a-z][a-z\d+.-]*:/i.test(source)) {
+        return normalizePath(source);
+      }
+
+      return normalizePath(resolve(sourceDirectory, sourceRoot, source));
+    });
+    delete sourceMap.sourceRoot;
+
+    return JSON.stringify(sourceMap);
   }
 
   const compilationPlugin = pluginOptions.fastCompile
@@ -1177,6 +1199,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const isProd = config.mode === 'production';
+    // Analog historically forced sourceMap off in production. Honour Vite's
+    // `build.sourcemap` so production builds can emit maps for Sentry / etc.
+    const emitSourceMaps = !isProd || !!config.build.sourcemap;
     const modifiedFiles = new Set<string>(ids ?? []);
     sourceFileCache.invalidate(modifiedFiles);
 
@@ -1197,6 +1222,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       isProd ? 'prod' : 'dev',
       isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
+      emitSourceMaps ? 'maps' : 'nomaps',
     ].join('|');
     let cached = tsconfigOptionsCache.get(tsconfigKey);
 
@@ -1204,9 +1230,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
         suppressOutputPathCheck: true,
         outDir: undefined,
-        sourceMap: !isProd,
+        sourceMap: emitSourceMaps,
         inlineSourceMap: false,
-        inlineSources: !isProd,
+        inlineSources: emitSourceMaps,
         // Don't force-override `declaration`/`declarationMap` here — the
         // user's tsconfig value is respected below so that app builds running
         // through Vite's library mode (e.g. WXT entrypoints) can opt out of
