@@ -1,3 +1,45 @@
+# [3.0.0-alpha.77](https://github.com/analogjs/analog/compare/v3.0.0-alpha.76...v3.0.0-alpha.77) (2026-09-03)
+
+- feat(platform)!: remove the style preprocessor module and tailwindPreprocessor ([2f07506](https://github.com/analogjs/analog/commit/2f075063b44851871ef2431d2b280343a45eb8d7))
+
+### BREAKING CHANGES
+
+- @analogjs/platform no longer exports tailwindPreprocessor, TailwindPreprocessorMode,
+  TailwindPreprocessorOptions, StylePreprocessor, StylesheetDependency, StylesheetDiagnostic,
+  StylesheetTransformContext, StylesheetTransformResult, composeStylePreprocessors,
+  normalizeStylesheetDependencies, or normalizeStylesheetTransformResult, and the
+  @analogjs/platform/style-preprocessor subpath export is removed. Import the stylesheet types from
+  @analogjs/vite-plugin-angular and inject Tailwind @reference directives from a Vite plugin's
+  analog.setup() hook.
+
+BEFORE:
+
+import { tailwindPreprocessor } from '@analogjs/platform';
+import type { StylePreprocessor } from '@analogjs/platform/style-preprocessor';
+
+const preprocess: StylePreprocessor = tailwindPreprocessor({
+tailwindRootCss: resolve(\_\_dirname, 'src/styles.css'),
+});
+
+AFTER:
+
+import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
+
+const tailwind: AnalogIntegrationPlugin = {
+name: 'angular-tailwind',
+analog: {
+setup(ctx) {
+ctx.registerStylePreprocessor((code) =>
+code.includes('@apply') ? `@reference "${root}";\n${code}` : code,
+);
+ctx.externalizeComponentStyles();
+},
+},
+};
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.76](https://github.com/analogjs/analog/compare/v3.0.0-alpha.75...v3.0.0-alpha.76) (2026-09-03)
 
 ### Features
