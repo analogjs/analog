@@ -97,6 +97,7 @@
   "dependencies": {
     "@standard-schema/spec": "catalog:",
     "es-toolkit": "catalog:",
+    "ofetch": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {

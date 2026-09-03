@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "defu": "catalog:",
+    "h3": "catalog:",
     "nitro": "catalog:",
     "obug": "catalog:",
     "ofetch": "catalog:",
