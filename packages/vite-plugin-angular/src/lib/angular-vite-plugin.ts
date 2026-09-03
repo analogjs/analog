@@ -49,8 +49,9 @@ import type {
   StylesheetDependency,
 } from './style-preprocessor.js';
 import {
-  resolveAnalogIntegrations,
+  discoverAnalogIntegrations,
   type StylesheetRegistryConfigurator,
+  type TransformFilter,
 } from './analog-plugin-interop.js';
 
 import { compilationAPIPlugin } from './compilation-api/index.js';
@@ -154,7 +155,6 @@ export interface PluginOptions {
     tsTransformers?: ts.CustomTransformers;
   };
   supportedBrowsers?: string[];
-  transformFilter?: (code: string, id: string) => boolean;
   /**
    * Additional files to include in compilation
    */
@@ -200,16 +200,6 @@ export interface PluginOptions {
    * (browser), using the `obug` convention.
    */
   debug?: DebugOption;
-  /**
-   * Optional preprocessor that transforms component CSS before it enters Vite's
-   * preprocessCSS pipeline. Runs on every component stylesheet (both external
-   * `.component.css` files and inline `styles: [...]` blocks).
-   *
-   * @param code - Raw CSS content of the component stylesheet
-   * @param filename - Resolved file path of the stylesheet (or containing .ts file for inline styles)
-   * @returns Transformed CSS string, or the original code if no transformation is needed
-   */
-  stylePreprocessor?: StylePreprocessor;
 }
 
 const classNames = new Map();
@@ -237,10 +227,10 @@ interface DeclarationFile {
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
-  const configuredStylePreprocessor = options?.stylePreprocessor;
   // Set on each compilation from the Vite plugins' `analog.setup()` hooks.
   let externalizeStylesRequested = false;
   let configureStylesheetRegistry: StylesheetRegistryConfigurator | undefined;
+  let transformFilter: TransformFilter | undefined;
 
   /**
    * Normalize plugin options so defaults
@@ -272,9 +262,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
-    // Replaced on each compilation with the chain that also includes
-    // preprocessors registered by Vite plugins through `analog.setup()`.
-    stylePreprocessor: configuredStylePreprocessor,
+    // Set on each compilation from preprocessors registered by Vite plugins
+    // through `analog.setup()`.
+    stylePreprocessor: undefined as StylePreprocessor | undefined,
   };
 
   let resolvedConfig: ResolvedConfig;
@@ -1144,13 +1134,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           },
         },
         async handler(code, id) {
-          /**
-           * Check for options.transformFilter
-           */
-          if (
-            options?.transformFilter &&
-            !(options?.transformFilter(code, id) ?? true)
-          ) {
+          if (transformFilter && !transformFilter(code, id)) {
             return;
           }
 
@@ -1374,9 +1358,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         liveReload: pluginOptions.liveReload,
         disableTypeChecking: pluginOptions.disableTypeChecking,
         supportedBrowsers: pluginOptions.supportedBrowsers,
-        transformFilter: options?.transformFilter,
         fileReplacements: pluginOptions.fileReplacements,
-        stylePreprocessor: pluginOptions.stylePreprocessor,
         isTest,
         isAstroIntegration,
         include: pluginOptions.include,
@@ -1391,7 +1373,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           jit,
           liveReload: pluginOptions.liveReload,
           supportedBrowsers: pluginOptions.supportedBrowsers,
-          transformFilter: options?.transformFilter,
           isTest,
           isAstroIntegration,
           fastCompileMode: pluginOptions.fastCompileMode,
@@ -1457,13 +1438,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     });
     try {
       await previousLock;
-      const integrations = await resolveAnalogIntegrations(
-        config,
-        configuredStylePreprocessor,
-      );
+      const integrations = await discoverAnalogIntegrations(config);
       pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
       externalizeStylesRequested = integrations.externalizeStyles;
       configureStylesheetRegistry = integrations.configureStylesheetRegistry;
+      transformFilter = integrations.transformFilter;
       await _doPerformCompilation(config, ids);
     } finally {
       resolve!();

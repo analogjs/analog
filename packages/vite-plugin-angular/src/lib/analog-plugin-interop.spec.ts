@@ -3,7 +3,6 @@ import type { ResolvedConfig } from 'vite';
 import {
   type AnalogIntegrationPlugin,
   discoverAnalogIntegrations,
-  resolveAnalogIntegrations,
   runAnalogSetupHooks,
 } from './analog-plugin-interop.js';
 
@@ -18,7 +17,63 @@ describe('analog plugin interop', () => {
 
     expect(integrations.stylePreprocessor).toBeUndefined();
     expect(integrations.configureStylesheetRegistry).toBeUndefined();
+    expect(integrations.transformFilter).toBeUndefined();
+    expect(integrations.componentRegistries).toEqual([]);
     expect(integrations.externalizeStyles).toBe(false);
+  });
+
+  it('transforms a module only when every registered filter accepts it', async () => {
+    const { transformFilter } = await runAnalogSetupHooks([
+      {
+        name: 'plugin-a',
+        analog: {
+          setup(ctx) {
+            ctx.registerTransformFilter((_code, id) => id.includes('src/'));
+          },
+        },
+      },
+      {
+        name: 'plugin-b',
+        analog: {
+          setup(ctx) {
+            ctx.registerTransformFilter(
+              (_code, id) => !id.endsWith('.spec.ts'),
+            );
+          },
+        },
+      },
+    ] as AnalogIntegrationPlugin[]);
+
+    expect(transformFilter?.('', '/project/src/app.component.ts')).toBe(true);
+    expect(transformFilter?.('', '/project/src/app.component.spec.ts')).toBe(
+      false,
+    );
+    expect(transformFilter?.('', '/project/lib/app.component.ts')).toBe(false);
+  });
+
+  it('collects component registries in Vite plugin order', async () => {
+    const first = new Map([['A', { className: 'A' }]]);
+    const second = new Map([['B', { className: 'B' }]]);
+    const { componentRegistries } = await runAnalogSetupHooks([
+      {
+        name: 'plugin-a',
+        analog: {
+          setup(ctx) {
+            ctx.registerComponentRegistry(first as any);
+          },
+        },
+      },
+      {
+        name: 'plugin-b',
+        analog: {
+          setup(ctx) {
+            ctx.registerComponentRegistry(second as any);
+          },
+        },
+      },
+    ] as AnalogIntegrationPlugin[]);
+
+    expect(componentRegistries).toEqual([first, second]);
   });
 
   it('runs registered stylesheet registry configurators in Vite plugin order', async () => {
@@ -173,33 +228,5 @@ describe('analog plugin interop', () => {
     await discoverAnalogIntegrations(config);
 
     expect(setup).toHaveBeenCalledTimes(1);
-  });
-
-  it('runs plugin preprocessors before the configured chain', async () => {
-    const config = {
-      plugins: [
-        {
-          name: 'plugin-a',
-          analog: {
-            setup(ctx) {
-              ctx.registerStylePreprocessor((code) => `${code}\n/* plugin */`);
-            },
-          },
-        } satisfies AnalogIntegrationPlugin,
-      ],
-    } as unknown as ResolvedConfig;
-
-    const { stylePreprocessor, externalizeStyles } =
-      await resolveAnalogIntegrations(
-        config,
-        (code) => `${code}\n/* configured */`,
-      );
-
-    expect(
-      stylePreprocessor?.('.demo {}', '/project/demo.css', context),
-    ).toMatchObject({
-      code: '.demo {}\n/* plugin */\n/* configured */',
-    });
-    expect(externalizeStyles).toBe(false);
   });
 });

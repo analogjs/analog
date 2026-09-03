@@ -32,11 +32,6 @@ async function setupLiveReloadPlugin(options: {
     filename: string;
   }>;
   include?: string[];
-  stylePreprocessor?: (
-    code: string,
-    filename: string,
-    context?: unknown,
-  ) => string;
   plugins?: unknown[];
   tsconfig?: string;
   workspaceRoot?: string;
@@ -130,7 +125,6 @@ async function setupLiveReloadPlugin(options: {
     include: options.include,
     tsconfig: resolvedTsconfig,
     inlineStylesExtension: 'css',
-    stylePreprocessor: options.stylePreprocessor,
     workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
@@ -208,7 +202,16 @@ describe('angular hmr style preprocessing', () => {
       );
 
       const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
-        stylePreprocessor,
+        plugins: [
+          {
+            name: 'preprocessor-plugin',
+            analog: {
+              setup(ctx: any) {
+                ctx.registerStylePreprocessor(stylePreprocessor);
+              },
+            },
+          },
+        ],
       });
 
       // External stylesheet (resourceFile provided)
@@ -268,12 +271,21 @@ describe('angular hmr style preprocessing', () => {
     },
   );
 
-  it('prepends content via stylePreprocessor through the HMR stylesheet path', async () => {
+  it('prepends content via an analog.setup preprocessor through the HMR stylesheet path', async () => {
     const prepender = (code: string, _filename: string) =>
       `@reference "../styles/tailwind.css";\n${code}`;
 
     const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
-      stylePreprocessor: prepender,
+      plugins: [
+        {
+          name: 'prepender-plugin',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerStylePreprocessor(prepender);
+            },
+          },
+        },
+      ],
     });
     const stylesheetId = await transformStylesheet(
       '.demo { @apply sa:text-red-500; }',

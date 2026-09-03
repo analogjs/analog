@@ -5,9 +5,15 @@ export type {
   AnalogIntegrationPlugin,
   AnalogPluginContext,
   AnalogPluginHooks,
+  ComponentRegistryEntries,
   StylesheetRegistryConfigurator,
   StylesheetRegistryContext,
+  TransformFilter,
 } from './lib/analog-plugin-interop.js';
+export type {
+  RegistryEntry as ComponentRegistryEntry,
+  RegistryInput as ComponentRegistryInput,
+} from './lib/compiler/registry.js';
 export type {
   StylePreprocessor,
   StylesheetDependency,

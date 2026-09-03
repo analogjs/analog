@@ -49,7 +49,7 @@ import { normalizeStylesheetDependencies } from '../style-preprocessor.js';
 import type { StylePreprocessor } from '../style-preprocessor.js';
 import {
   discoverAnalogIntegrations,
-  resolveAnalogIntegrations,
+  type TransformFilter,
 } from '../analog-plugin-interop.js';
 import { type FileReplacement } from '../plugins/file-replacements.plugin.js';
 import type { EmitFileResult } from '../models.js';
@@ -76,9 +76,7 @@ export interface CompilationAPIPluginOptions {
   liveReload: boolean;
   disableTypeChecking: boolean;
   supportedBrowsers: string[];
-  transformFilter?: (code: string, id: string) => boolean;
   fileReplacements: FileReplacement[];
-  stylePreprocessor?: StylePreprocessor;
   isTest: boolean;
   isAstroIntegration: boolean;
   include: string[];
@@ -92,7 +90,8 @@ export function compilationAPIPlugin(
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
-  const configuredStylePreprocessor = pluginOptions.stylePreprocessor;
+  let stylePreprocessor: StylePreprocessor | undefined;
+  let transformFilter: TransformFilter | undefined;
   let externalizeStylesRequested = false;
 
   // Persistent compilation instance — kept alive across rebuilds so Angular
@@ -288,7 +287,7 @@ export function compilationAPIPlugin(
           const preprocessed = preprocessStylesheetResult(
             data,
             filename,
-            pluginOptions.stylePreprocessor,
+            stylePreprocessor,
             {
               filename,
               containingFile,
@@ -398,7 +397,7 @@ export function compilationAPIPlugin(
     // Preprocess external stylesheets for Tailwind CSS @reference
     debugStyles('external stylesheets from compilation API', {
       count: compilationResult.externalStylesheets?.size ?? 0,
-      hasPreprocessor: !!pluginOptions.stylePreprocessor,
+      hasPreprocessor: !!stylePreprocessor,
       hasInlineMap: !!stylesheetRegistry,
     });
     const preprocessStats = { total: 0, injected: 0, skipped: 0, errors: 0 };
@@ -407,17 +406,13 @@ export function compilationAPIPlugin(
       const angularHash = `${value}.css`;
       stylesheetRegistry?.registerExternalRequest(angularHash, key);
 
-      if (
-        stylesheetRegistry &&
-        pluginOptions.stylePreprocessor &&
-        existsSync(key)
-      ) {
+      if (stylesheetRegistry && stylePreprocessor && existsSync(key)) {
         try {
           const rawCss = readFileSync(key, 'utf-8');
           const preprocessed = preprocessStylesheetResult(
             rawCss,
             key,
-            pluginOptions.stylePreprocessor,
+            stylePreprocessor,
           );
           const servedCss = rewriteRelativeCssImports(preprocessed.code, key);
           stylesheetRegistry.registerServedStylesheet(
@@ -507,11 +502,9 @@ export function compilationAPIPlugin(
     });
     try {
       await previousLock;
-      const integrations = await resolveAnalogIntegrations(
-        config,
-        configuredStylePreprocessor,
-      );
-      pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
+      const integrations = await discoverAnalogIntegrations(config);
+      stylePreprocessor = integrations.stylePreprocessor;
+      transformFilter = integrations.transformFilter;
       externalizeStylesRequested = integrations.externalizeStyles;
       await performAngularCompilation(config, ids);
     } finally {
@@ -724,7 +717,7 @@ export function compilationAPIPlugin(
         refreshStylesheetRegistryForFile(
           ctx.file,
           stylesheetRegistry,
-          pluginOptions.stylePreprocessor,
+          stylePreprocessor,
         );
       }
 
@@ -787,10 +780,7 @@ export function compilationAPIPlugin(
         },
       },
       async handler(code, id) {
-        if (
-          pluginOptions.transformFilter &&
-          !(pluginOptions.transformFilter(code, id) ?? true)
-        ) {
+        if (transformFilter && !transformFilter(code, id)) {
           return;
         }
 

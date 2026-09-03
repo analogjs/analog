@@ -131,19 +131,26 @@ export default defineConfig({
 
 ### 过滤文件转换
 
-为了在与其他插件（如 [Starlight](https://starlight.astro.build)）集成时获得更好的兼容性，请将 Angular 组件放在特定文件夹中，并使用 `transformFilter` 回调函数仅转换这些文件。
+为了在与其他插件（如 [Starlight](https://starlight.astro.build)）集成时获得更好的兼容性，请将 Angular 组件放在特定文件夹中，并通过 Vite 插件的 `analog.setup()` 钩子注册转换过滤器，仅转换这些文件。
 
 ```js
 export default defineConfig({
-  integrations: [
-    angular({
-      vite: {
-        transformFilter: (_code, id) => {
-          return id.includes('src/components'); // <- only transform Angular TypeScript files
+  integrations: [angular()],
+  vite: {
+    plugins: [
+      {
+        name: 'angular-components-only',
+        analog: {
+          setup(ctx) {
+            // only transform Angular TypeScript files
+            ctx.registerTransformFilter((_code, id) =>
+              id.includes('src/components'),
+            );
+          },
         },
       },
-    }),
-  ],
+    ],
+  },
 });
 ```
 

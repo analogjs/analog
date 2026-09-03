@@ -90,8 +90,7 @@ How the hook behaves:
   resolved plugin; the exported types are optional.
 - Preprocessors run in Vite plugin order, so `enforce: 'pre'` and
   `enforce: 'post'` decide the pipeline order. Plugin-registered preprocessors
-  run first, followed by the `stylePreprocessor` configured on `angular()`,
-  and then Vite's own `preprocessCSS` pipeline.
+  run first, followed by Vite's own `preprocessCSS` pipeline.
 - Plugin-registered preprocessors apply to the ngtsc, Angular Compilation
   API, and JIT inline stylesheet paths.
 - A preprocessor error is rethrown with the plugin name and stylesheet path so
@@ -104,9 +103,17 @@ How the hook behaves:
 - `configureStylesheetRegistry()` receives the live stylesheet registry each
   time a compilation creates one. The registry maps a component stylesheet
   source to its served ids, request ids, dependencies, diagnostics, and tags.
+- `registerTransformFilter()` restricts which modules Angular compiles. A
+  module is transformed only when every registered filter accepts it, which
+  keeps Angular away from files owned by another framework integration.
+- `registerComponentRegistry()` hands the fast compiler directive, component,
+  pipe, and NgModule metadata keyed by class name for classes it cannot reach
+  through its own tsconfig scan, such as components compiled from another
+  source format. The map is read on every compile.
 - `AnalogPluginContext` exposes `registerStylePreprocessor`,
-  `externalizeComponentStyles`, and `configureStylesheetRegistry` today. It
-  grows when a concrete integration needs another seam.
+  `externalizeComponentStyles`, `configureStylesheetRegistry`,
+  `registerTransformFilter`, and `registerComponentRegistry` today. It grows
+  when a concrete integration needs another seam.
 
 ## Scope
 

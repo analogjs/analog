@@ -36,21 +36,11 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
-
-declare global {
-  /**
-   * Shared convention for out-of-tree compilers (e.g. `@tsrx/analog`) that
-   * produce Angular Ivy definitions from a non-TS source format. Populate
-   * this map with directive/component metadata for any class fastCompile
-   * can't reach through its own tsconfig-driven scan, and the per-compile
-   * registry lookup in `fastCompilePlugin` will merge those entries in —
-   * so TS `@Component({ imports: [X] })` references to such classes
-   * resolve statically instead of hitting the `_unresolved-${className}`
-   * sentinel.
-   */
-  // eslint-disable-next-line no-var
-  var __ANALOG_EXTERNAL_REGISTRY__: ComponentRegistry | undefined;
-}
+import {
+  discoverAnalogIntegrations,
+  type ComponentRegistryEntries,
+  type TransformFilter,
+} from './analog-plugin-interop.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -59,7 +49,6 @@ export interface FastCompilePluginOptions {
   jit: boolean;
   liveReload: boolean;
   supportedBrowsers: string[];
-  transformFilter?: (code: string, id: string) => boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
@@ -69,6 +58,8 @@ export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
 ): Plugin {
   let resolvedConfig: ResolvedConfig;
+  let transformFilter: TransformFilter | undefined;
+  let componentRegistries: ComponentRegistryEntries[] = [];
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
 
@@ -584,19 +575,19 @@ export function fastCompilePlugin(
 
     ensureDtsRegistryForSource(code, id, oxcProgram);
 
-    // Merge entries from the shared external-registry global into this
-    // compile's lookup view. Convention: out-of-tree compilers populate
-    // `globalThis.__ANALOG_EXTERNAL_REGISTRY__` with directive metadata
-    // for classes fastCompile can't reach through its tsconfig-driven
-    // scan (e.g. `.tsrx` files compiled by `@tsrx/analog`). Without this
-    // merge, a TS `@Component({ imports: [X] })` that references such a
-    // class hits `_unresolved-${className}` as its selector and the tag
-    // never matches at runtime.
+    // Merge registries contributed through `analog.setup()` into this
+    // compile's lookup view. Out-of-tree compilers register directive
+    // metadata for classes fastCompile can't reach through its
+    // tsconfig-driven scan (e.g. `.tsrx` files compiled by `@tsrx/analog`).
+    // Without this merge, a TS `@Component({ imports: [X] })` that
+    // references such a class hits `_unresolved-${className}` as its
+    // selector and the tag never matches at runtime.
     let compileRegistry: ComponentRegistry = registry;
-    const externalRegistry = globalThis.__ANALOG_EXTERNAL_REGISTRY__;
-    if (externalRegistry && externalRegistry.size > 0) {
+    if (componentRegistries.some((external) => external.size > 0)) {
       compileRegistry = new Map(registry);
-      for (const [k, v] of externalRegistry) compileRegistry.set(k, v);
+      for (const external of componentRegistries) {
+        for (const [k, v] of external) compileRegistry.set(k, v);
+      }
     }
 
     const result = compile(code, id, {
@@ -686,8 +677,11 @@ export function fastCompilePlugin(
         ...depOptimizer,
       };
     },
-    configResolved(config) {
+    async configResolved(config) {
       resolvedConfig = config;
+      const integrations = await discoverAnalogIntegrations(config);
+      transformFilter = integrations.transformFilter;
+      componentRegistries = integrations.componentRegistries;
     },
     configureServer(server) {
       // Watch for new .ts files and scan them into the registry. Use
@@ -798,10 +792,7 @@ export function fastCompilePlugin(
         },
       },
       async handler(code, id) {
-        if (
-          pluginOptions.transformFilter &&
-          !(pluginOptions.transformFilter(code, id) ?? true)
-        ) {
+        if (transformFilter && !transformFilter(code, id)) {
           return;
         }
 

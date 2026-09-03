@@ -4,7 +4,12 @@ import {
   type StylePreprocessor,
   type StylesheetRegistryReader,
 } from './style-preprocessor.js';
+import type { RegistryEntry } from './compiler/registry.js';
 import { debugStylePipeline } from './utils/debug.js';
+
+export type TransformFilter = (code: string, id: string) => boolean;
+
+export type ComponentRegistryEntries = ReadonlyMap<string, RegistryEntry>;
 
 export interface StylesheetRegistryContext {
   workspaceRoot: string;
@@ -39,6 +44,19 @@ export interface AnalogPluginContext {
    * stylesheet sources to their served ids, dependencies, and diagnostics.
    */
   configureStylesheetRegistry(configure: StylesheetRegistryConfigurator): void;
+  /**
+   * Restricts which modules Angular compiles. A module is transformed only
+   * when every registered filter returns `true` for it.
+   */
+  registerTransformFilter(filter: TransformFilter): void;
+  /**
+   * Contributes directive, component, pipe, and NgModule metadata keyed by
+   * class name for classes the fast compiler cannot reach through its own
+   * tsconfig-driven scan (for example components compiled from another
+   * source format). The map is read on every compile, so a plugin may keep
+   * filling it after setup.
+   */
+  registerComponentRegistry(entries: ComponentRegistryEntries): void;
 }
 
 export interface AnalogPluginHooks {
@@ -55,6 +73,8 @@ export type AnalogIntegrationPlugin = Plugin & { analog?: AnalogPluginHooks };
 export interface AnalogIntegrations {
   stylePreprocessor?: StylePreprocessor;
   configureStylesheetRegistry?: StylesheetRegistryConfigurator;
+  transformFilter?: TransformFilter;
+  componentRegistries: ComponentRegistryEntries[];
   externalizeStyles: boolean;
 }
 
@@ -83,6 +103,8 @@ export async function runAnalogSetupHooks(
 ): Promise<AnalogIntegrations> {
   const preprocessors: StylePreprocessor[] = [];
   const registryConfigurators: StylesheetRegistryConfigurator[] = [];
+  const transformFilters: TransformFilter[] = [];
+  const componentRegistries: ComponentRegistryEntries[] = [];
   let externalizeStyles = false;
 
   for (const plugin of plugins as readonly AnalogIntegrationPlugin[]) {
@@ -103,6 +125,12 @@ export async function runAnalogSetupHooks(
           wrapRegistryConfigurator(plugin.name, configure),
         );
       },
+      registerTransformFilter(filter) {
+        transformFilters.push(filter);
+      },
+      registerComponentRegistry(entries) {
+        componentRegistries.push(entries);
+      },
     };
 
     try {
@@ -117,6 +145,8 @@ export async function runAnalogSetupHooks(
       plugin: plugin.name,
       stylePreprocessors: preprocessors.length - registeredBefore,
       registryConfigurators: registryConfigurators.length,
+      transformFilters: transformFilters.length,
+      componentRegistries: componentRegistries.length,
       externalizeStyles,
     });
   }
@@ -130,28 +160,11 @@ export async function runAnalogSetupHooks(
           }
         }
       : undefined,
+    transformFilter: transformFilters.length
+      ? (code, id) => transformFilters.every((filter) => filter(code, id))
+      : undefined,
+    componentRegistries,
     externalizeStyles,
-  };
-}
-
-/**
- * Resolves what a compilation path needs from the discovered integrations:
- * the stylesheet preprocessor chain (plugin-registered preprocessors first,
- * then the chain configured through `angular()` options) and whether any
- * plugin asked for externalized component styles.
- */
-export async function resolveAnalogIntegrations(
-  config: ResolvedConfig,
-  configured?: StylePreprocessor,
-): Promise<AnalogIntegrations> {
-  const integrations = await discoverAnalogIntegrations(config);
-  return {
-    stylePreprocessor: composeStylePreprocessors([
-      integrations.stylePreprocessor,
-      configured,
-    ]),
-    configureStylesheetRegistry: integrations.configureStylesheetRegistry,
-    externalizeStyles: integrations.externalizeStyles,
   };
 }
 
