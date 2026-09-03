@@ -1,3 +1,21 @@
+# [3.0.0-alpha.76](https://github.com/analogjs/analog/compare/v3.0.0-alpha.75...v3.0.0-alpha.76) (2026-09-03)
+
+### Features
+
+- **vite-plugin-angular:** move transform filtering and the external registry to analog.setup ([c633a66](https://github.com/analogjs/analog/commit/c633a6605ab71e871211a0f7d92394dfed78128e))
+
+### BREAKING CHANGES
+
+- **vite-plugin-angular:** The transformFilter and stylePreprocessor options on angular() have been removed,
+  and the fast compiler no longer reads globalThis.**ANALOG_EXTERNAL_REGISTRY**. Register these from a
+  Vite plugin's analog.setup() hook instead: ctx.registerTransformFilter() replaces transformFilter,
+  ctx.registerStylePreprocessor() replaces stylePreprocessor, and ctx.registerComponentRegistry()
+  replaces the global registry. The @analogjs/astro-angular vite.transformFilter passthrough is gone
+  with it.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.75](https://github.com/analogjs/analog/compare/v3.0.0-alpha.74...v3.0.0-alpha.75) (2026-09-03)
 
 ### Features
