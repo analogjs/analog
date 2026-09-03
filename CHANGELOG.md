@@ -1,3 +1,30 @@
+# [3.0.0-alpha.82](https://github.com/analogjs/analog/compare/v3.0.0-alpha.81...v3.0.0-alpha.82) (2026-09-03)
+
+### Features
+
+- **content:** remove the content devtools entry point ([d09ddd7](https://github.com/analogjs/analog/commit/d09ddd7be824821c939b9a957090515e50d05540))
+
+### BREAKING CHANGES
+
+- **content:** The experimental @analogjs/content/devtools entry point is removed, along with
+  contentDevToolsPlugin, DevToolsContentRenderer, DEVTOOLS_INNER_RENDERER, and withContentDevTools.
+  Provide your content renderer directly.
+
+BEFORE:
+
+import { withContentDevTools } from '@analogjs/content/devtools';
+
+provideContent(withContentDevTools(MarkdownContentRenderer));
+
+AFTER:
+
+import { withMarkdownRenderer } from '@analogjs/content';
+
+provideContent(withMarkdownRenderer());
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.81](https://github.com/analogjs/analog/compare/v3.0.0-alpha.80...v3.0.0-alpha.81) (2026-09-03)
 
 ### Features
