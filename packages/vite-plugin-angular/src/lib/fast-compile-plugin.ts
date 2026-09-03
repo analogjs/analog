@@ -619,17 +619,25 @@ export function fastCompilePlugin(
       resourceToSource.set(dep, id);
     }
 
-    // Strip TypeScript-only syntax
+    // Strip TypeScript-only syntax and compose the compiler map with the
+    // final generated code so downstream breakpoints map back to the source.
     const stripped = vite.transformWithOxc
-      ? await vite.transformWithOxc(result.code, id, {
-          lang: 'ts',
-          sourcemap: false,
-          decorator: { legacy: false, emitDecoratorMetadata: false },
-        })
-      : await vite.transformWithEsbuild(result.code, id, {
-          loader: 'ts',
-          sourcemap: false,
-        });
+      ? await vite.transformWithOxc(
+          result.code,
+          id,
+          {
+            lang: 'ts',
+            sourcemap: true,
+            decorator: { legacy: false, emitDecoratorMetadata: false },
+          },
+          result.map,
+        )
+      : await vite.transformWithEsbuild(
+          result.code,
+          id,
+          { loader: 'ts', sourcemap: true },
+          result.map,
+        );
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
@@ -643,7 +651,7 @@ export function fastCompilePlugin(
       }
     }
 
-    return { code: outputCode, map: result.map };
+    return { code: outputCode, map: stripped.map };
   }
 
   function resolveTsConfigPath() {
