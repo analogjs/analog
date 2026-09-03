@@ -549,6 +549,17 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           nitro.options.renderer ??= {};
           nitro.options.renderer.handler = '#analog/ssr-renderer';
           delete nitro.options.renderer.template;
+
+          // Nitro resolves `renderer.handler` to a file on disk while it
+          // creates the prerender instance, which rejects the virtual id.
+          // Hide the renderer from that resolution and restore the virtual
+          // handler before the prerenderer syncs its routes.
+          nitro.hooks.hook('prerender:config', (prerendererConfig) => {
+            prerendererConfig.renderer = false;
+          });
+          nitro.hooks.hook('prerender:init', (prerenderer) => {
+            prerenderer.options.renderer = { handler: '#analog/ssr-renderer' };
+          });
         }
         // When ssr === false, Nitro's auto-detected template-serving
         // renderer is exactly what we want (serve the raw index.html for

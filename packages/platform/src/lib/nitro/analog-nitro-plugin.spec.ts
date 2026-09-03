@@ -198,6 +198,44 @@ describe('analogNitroPlugin', () => {
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
   });
 
+  it('hides the virtual renderer from prerender path resolution and restores it', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot);
+
+    const hookFn = vi.fn();
+    const nitroMock: any = {
+      options: {
+        rootDir: projectRoot,
+        buildDir: join(projectRoot, '.nitro'),
+        handlers: [],
+        scanDirs: [],
+        virtual: {},
+        renderer: {},
+        output: { publicDir: join(projectRoot, 'dist/public') },
+        dev: true,
+      },
+      hooks: { hook: hookFn },
+    };
+
+    await (plugin as any).nitro.setup(nitroMock);
+
+    expect(nitroMock.options.renderer.handler).toBe('#analog/ssr-renderer');
+
+    const hooksFor = (name: string) =>
+      hookFn.mock.calls
+        .filter((call) => call[0] === name)
+        .map((call) => call[1]);
+    const prerendererConfig: any = { renderer: nitroMock.options.renderer };
+    for (const hook of hooksFor('prerender:config')) hook(prerendererConfig);
+    expect(prerendererConfig.renderer).toBe(false);
+
+    const prerenderer: any = { options: { renderer: undefined } };
+    for (const hook of hooksFor('prerender:init')) hook(prerenderer);
+    expect(prerenderer.options.renderer).toEqual({
+      handler: '#analog/ssr-renderer',
+    });
+  });
+
   it('stamps route rule headers for ssr and streaming opt-outs', () => {
     const nitroMock: any = {
       options: {
