@@ -1,3 +1,20 @@
+# [3.0.0-alpha.75](https://github.com/analogjs/analog/compare/v3.0.0-alpha.74...v3.0.0-alpha.75) (2026-09-03)
+
+### Features
+
+- **platform:** drop the experimental.stylePipeline option ([6150440](https://github.com/analogjs/analog/commit/6150440e71c35f7e5189732f0d978ad64420f45d))
+
+### BREAKING CHANGES
+
+- **platform:** The experimental.stylePipeline option on analog() has been removed. Add community
+  style-pipeline plugins to the Vite plugins array directly. @analogjs/platform no longer exports
+  StylePipelineContext, StylePipelineOptions, StylePipelinePluginEntry, StylePipelinePluginFactory,
+  defineStylePipeline, defineStylePipelinePlugins, or resolveStylePipelinePlugins, and the
+  @analogjs/platform/style-pipeline subpath export is gone.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.74](https://github.com/analogjs/analog/compare/v3.0.0-alpha.73...v3.0.0-alpha.74) (2026-09-03)
 
 ### Features
