@@ -9,11 +9,6 @@
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
     },
-    "./style-preprocessor": {
-      "types": "./dist/src/style-preprocessor.d.ts",
-      "import": "./dist/src/style-preprocessor.js",
-      "default": "./dist/src/style-preprocessor.js"
-    },
     "./package.json": "./package.json"
   },
   "keywords": [

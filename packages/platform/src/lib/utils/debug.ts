@@ -6,14 +6,12 @@ export const debugPlatform = createDebug('analog:platform');
 export const debugRoutes = createDebug('analog:platform:routes');
 export const debugContent = createDebug('analog:platform:content');
 export const debugTypedRouter = createDebug('analog:platform:typed-router');
-export const debugTailwind = createDebug('analog:platform:tailwind');
 
 const platformDebugInstances = [
   debugPlatform,
   debugRoutes,
   debugContent,
   debugTypedRouter,
-  debugTailwind,
 ];
 
 export type DebugScope =
@@ -23,7 +21,6 @@ export type DebugScope =
   | 'analog:platform:routes'
   | 'analog:platform:content'
   | 'analog:platform:typed-router'
-  | 'analog:platform:tailwind'
   | 'analog:angular:*'
   | 'analog:angular:hmr'
   | 'analog:angular:styles'

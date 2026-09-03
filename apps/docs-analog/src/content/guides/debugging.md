@@ -214,7 +214,6 @@ The examples above include the full set of published Analog workspace packages t
 | `analog:platform:routes`       | Route discovery and resolution                                                              |
 | `analog:platform:content`      | Content pipeline                                                                            |
 | `analog:platform:typed-router` | Typed route generation, file discovery, collisions, watch-mode regeneration                 |
-| `analog:platform:tailwind`     | Tailwind CSS `@reference` injection in component styles                                     |
 
 ### `@analogjs/vite-plugin-angular`
 

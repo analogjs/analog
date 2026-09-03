@@ -20,21 +20,4 @@ export {
 } from './lib/discover-library-routes.js';
 export type { DiscoveredLibraryRoutes } from './lib/discover-library-routes.js';
 export { routeGenerationPlugin } from './lib/route-generation-plugin.js';
-export { tailwindPreprocessor } from './lib/tailwind-preprocessor.js';
-export type {
-  StylePreprocessor,
-  StylesheetDependency,
-  StylesheetDiagnostic,
-  StylesheetTransformContext,
-  StylesheetTransformResult,
-} from './lib/style-preprocessor.js';
-export {
-  composeStylePreprocessors,
-  normalizeStylesheetDependencies,
-  normalizeStylesheetTransformResult,
-} from './lib/style-preprocessor.js';
-export type {
-  TailwindPreprocessorMode,
-  TailwindPreprocessorOptions,
-} from './lib/tailwind-preprocessor.js';
 export default platformPlugin;

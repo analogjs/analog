@@ -45,7 +45,6 @@ const config: UserConfigExport = defineConfig({
     lib: {
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
-        'src/style-preprocessor': resolve(pkgDir, 'src/style-preprocessor.ts'),
       },
       formats: ['es' as const],
     },
