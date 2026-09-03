@@ -1,11 +1,21 @@
 import viteAngular from '@analogjs/vite-plugin-angular';
-import type { PluginOptions } from '@analogjs/vite-plugin-angular';
+import type {
+  AnalogIntegrationPlugin,
+  PluginOptions,
+  TransformFilter,
+} from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
 import * as vite from 'vite';
 
 interface AngularOptions {
   vite?: PluginOptions;
+  /**
+   * Restricts which modules Angular compiles. Return `false` to leave a
+   * module to other Astro integrations. Registered with Angular through the
+   * `analog.setup()` hook of an internal Vite plugin.
+   */
+  transformFilter?: TransformFilter;
   /**
    * Enable stricter rendering, which ensures Angular style tags are added to the document head instead of next to the
    * component in the body.
@@ -46,6 +56,19 @@ const SERVER_ENTRYPOINTS = [
  */
 const SERVER_OPTIMIZE_DEPS_EXCLUDE = [...SERVER_ENTRYPOINTS, '@angular/core'];
 
+function transformFilterPlugin(
+  filter: TransformFilter,
+): AnalogIntegrationPlugin {
+  return {
+    name: '@analogjs/astro-angular-transform-filter',
+    analog: {
+      setup(ctx) {
+        ctx.registerTransformFilter(filter);
+      },
+    },
+  };
+}
+
 function getViteConfiguration(pluginOptions?: AngularOptions) {
   const isRolldown = !!vite.rolldownVersion;
   return {
@@ -65,6 +88,9 @@ function getViteConfiguration(pluginOptions?: AngularOptions) {
 
     plugins: [
       viteAngular(pluginOptions?.vite),
+      ...(pluginOptions?.transformFilter
+        ? [transformFilterPlugin(pluginOptions.transformFilter)]
+        : []),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {

@@ -138,29 +138,20 @@ export default defineConfig({
 
 ### Filtering File Transforms
 
-For better compatibility when integrating with other plugins such as [Starlight](https://starlight.astro.build), put the Angular components in a specific folder and register a transform filter from a Vite plugin's `analog.setup()` hook so only those files are transformed.
+For better compatibility when integrating with other plugins such as [Starlight](https://starlight.astro.build), put the Angular components in a specific folder and use the `transformFilter` option to only transform those files. The integration registers the filter with Angular through the `analog.setup()` hook of an internal Vite plugin.
 
 ```js
 import { defineConfig } from 'astro/config';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [angular()],
-  vite: {
-    plugins: [
-      {
-        name: 'angular-components-only',
-        analog: {
-          setup(ctx) {
-            // only transform Angular TypeScript files
-            ctx.registerTransformFilter((_code, id) =>
-              id.includes('src/components'),
-            );
-          },
-        },
+  integrations: [
+    angular({
+      transformFilter: (_code, id) => {
+        return id.includes('src/components'); // <- only transform Angular TypeScript files
       },
-    ],
-  },
+    }),
+  ],
 });
 ```
 

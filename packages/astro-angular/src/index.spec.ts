@@ -104,6 +104,39 @@ describe('astro-angular plugin', () => {
     });
   });
 
+  describe('transformFilter option', () => {
+    function getPlugins(options?: Parameters<typeof astroPlugin>[0]) {
+      let plugins: any[] = [];
+      astroPlugin(options).hooks['astro:config:setup']!({
+        addRenderer: vi.fn(),
+        updateConfig: (cfg: any) => {
+          plugins = cfg.vite.plugins;
+        },
+      } as any);
+      return plugins;
+    }
+
+    it('registers the filter with Angular through analog.setup', () => {
+      const transformFilter = vi.fn(() => true);
+      const plugin = getPlugins({ transformFilter }).find(
+        (p) => p.name === '@analogjs/astro-angular-transform-filter',
+      );
+      const registerTransformFilter = vi.fn();
+
+      plugin.analog.setup({ registerTransformFilter });
+
+      expect(registerTransformFilter).toHaveBeenCalledWith(transformFilter);
+    });
+
+    it('adds no plugin when the option is omitted', () => {
+      expect(
+        getPlugins().some(
+          (p) => p.name === '@analogjs/astro-angular-transform-filter',
+        ),
+      ).toBe(false);
+    });
+  });
+
   describe('analogjs-astro-server-optimize-deps plugin', () => {
     function getPlugin() {
       return getVitePlugins().find(
