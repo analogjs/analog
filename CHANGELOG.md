@@ -1,3 +1,35 @@
+# [3.0.0-alpha.79](https://github.com/analogjs/analog/compare/v3.0.0-alpha.78...v3.0.0-alpha.79) (2026-09-03)
+
+- feat(platform)!: register library page globs with Angular through analog.setup ([88ee690](https://github.com/analogjs/analog/commit/88ee690742a3d66adcd65ae6ffcc71ea2f5a9452))
+
+### BREAKING CHANGES
+
+- pageGlobs() is no longer exported from @analogjs/platform. Apps no longer need to mirror
+  additionalPagesDirs into angular({ include }); the platform registers the library page globs with
+  Angular itself.
+
+BEFORE:
+
+import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+
+const libs = discoverLibraryRoutes(workspaceRoot);
+
+plugins: [
+analog({ additionalPagesDirs: libs.additionalPagesDirs }),
+angular({ include: pageGlobs(libs.additionalPagesDirs) }),
+];
+
+AFTER:
+
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
+
+const libs = discoverLibraryRoutes(workspaceRoot);
+
+plugins: [analog({ additionalPagesDirs: libs.additionalPagesDirs }), angular()];
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.78](https://github.com/analogjs/analog/compare/v3.0.0-alpha.77...v3.0.0-alpha.78) (2026-09-03)
 
 ### Features
