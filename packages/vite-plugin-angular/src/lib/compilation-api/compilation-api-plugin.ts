@@ -80,7 +80,6 @@ export interface CompilationAPIPluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   include: string[];
-  additionalContentDirs: string[];
   debug?: DebugOption;
 }
 

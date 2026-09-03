@@ -79,7 +79,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     expect(plugin.name).toBe('@analogjs/vite-plugin-angular-compilation-api');
@@ -101,7 +100,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     expect(plugin.config).toBeTypeOf('function');
@@ -130,7 +128,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     const result = await (plugin.config as any)(
@@ -173,7 +170,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     await (plugin.config as any)(
@@ -215,7 +211,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     await (plugin.configResolved as any)({
@@ -287,7 +282,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     await (plugin.config as any)(
@@ -366,7 +360,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     await (plugin.config as any)(
@@ -433,7 +426,6 @@ describe('compilationAPIPlugin', () => {
       isTest: false,
       isAstroIntegration: false,
       include: [],
-      additionalContentDirs: [],
     });
 
     await (plugin.config as any)(

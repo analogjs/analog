@@ -148,18 +148,11 @@ export interface PluginOptions {
   workspaceRoot?: string;
   inlineStylesExtension?: string;
   jit?: boolean;
-  advanced?: {
-    /**
-     * Custom TypeScript transformers that are run before Angular compilation
-     */
-    tsTransformers?: ts.CustomTransformers;
-  };
   supportedBrowsers?: string[];
   /**
    * Additional files to include in compilation
    */
   include?: string[];
-  additionalContentDirs?: string[];
   /**
    * Enables Analog's Angular live-reload/HMR pipeline during development/watch mode.
    *
@@ -243,18 +236,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       process.env['NX_WORKSPACE_ROOT'] ??
       process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
-    advanced: {
-      tsTransformers: {
-        before: options?.advanced?.tsTransformers?.before ?? [],
-        after: options?.advanced?.tsTransformers?.after ?? [],
-        afterDeclarations:
-          options?.advanced?.tsTransformers?.afterDeclarations ?? [],
-      },
-    },
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
     include: options?.include ?? [],
-    additionalContentDirs: options?.additionalContentDirs ?? [],
     liveReload,
     disableTypeChecking: options?.disableTypeChecking ?? true,
     fileReplacements: options?.fileReplacements ?? [],
@@ -1362,7 +1346,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         isTest,
         isAstroIntegration,
         include: pluginOptions.include,
-        additionalContentDirs: pluginOptions.additionalContentDirs,
         debug: options?.debug,
       })
     : pluginOptions.fastCompile

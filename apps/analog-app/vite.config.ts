@@ -88,7 +88,6 @@ export default defineConfig(async ({ mode, command }) => {
       }),
       angular({
         include: explicitLibPages,
-        additionalContentDirs: discoveredLibs.additionalContentDirs,
         inlineStylesExtension: 'scss',
         fileReplacements,
         fastCompile: true,
