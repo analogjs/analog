@@ -64,6 +64,17 @@ export function buildOptimizerPlugin({
         },
       } as UserConfig;
     },
+    // The top-level define keys `ngServerMode` off the legacy `build.ssr`
+    // flag. Environment API builds run the server through an environment
+    // with `consumer: 'server'` while `build.ssr` stays unset, so give that
+    // environment its own value; otherwise the guard compiles to `false`
+    // and browser-only hydration features run during SSR.
+    configEnvironment(_name, config) {
+      if (isProd && config.consumer === 'server') {
+        return { define: { ngServerMode: 'true' } };
+      }
+      return undefined;
+    },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
     },

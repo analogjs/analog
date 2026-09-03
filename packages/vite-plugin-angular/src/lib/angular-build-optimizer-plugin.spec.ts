@@ -95,6 +95,33 @@ describe('buildOptimizerPlugin config()', () => {
     );
   });
 
+  it('should set ngServerMode to true for a production server environment', () => {
+    const plugin = createPlugin() as Plugin & {
+      config: (c: UserConfig) => UserConfig;
+      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+    };
+    plugin.config({ mode: 'production' });
+
+    expect(plugin.configEnvironment('ssr', { consumer: 'server' })).toEqual({
+      define: { ngServerMode: 'true' },
+    });
+    expect(
+      plugin.configEnvironment('client', { consumer: 'client' }),
+    ).toBeUndefined();
+  });
+
+  it('should leave environment defines alone outside production', () => {
+    const plugin = createPlugin() as Plugin & {
+      config: (c: UserConfig) => UserConfig;
+      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+    };
+    plugin.config({ mode: 'development' });
+
+    expect(
+      plugin.configEnvironment('ssr', { consumer: 'server' }),
+    ).toBeUndefined();
+  });
+
   it('should set ngServerMode to false when build.ssr is undefined', () => {
     const plugin = createPlugin();
     const config = (
