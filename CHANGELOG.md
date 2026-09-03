@@ -1,3 +1,22 @@
+# [3.0.0-alpha.74](https://github.com/analogjs/analog/compare/v3.0.0-alpha.73...v3.0.0-alpha.74) (2026-09-03)
+
+### Features
+
+- **vite-plugin-angular:** fold the style pipeline into the analog.setup integration ([b55d4cf](https://github.com/analogjs/analog/commit/b55d4cfb4b762a9582cd9d0ec38d2375cc49fbea))
+
+### BREAKING CHANGES
+
+- **vite-plugin-angular:** The stylePipeline option on angular() has been removed. Register stylesheet
+  preprocessors and registry configurators from a Vite plugin's analog.setup() hook instead:
+  ctx.registerStylePreprocessor() replaces preprocessStylesheet and ctx.configureStylesheetRegistry()
+  replaces configureStylesheetRegistry. @analogjs/platform no longer exports
+  AngularStylePipelineContext, AngularStylePipelineOptions, AngularStylePipelinePlugin,
+  StylePipelineStylesheetRegistry, defineAngularStylePipeline, or defineAngularStylePipelinePlugins.
+  The experimental.stylePipeline.plugins list on analog() is unchanged.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
 # [3.0.0-alpha.73](https://github.com/analogjs/analog/compare/v3.0.0-alpha.72...v3.0.0-alpha.73) (2026-09-02)
 
 ### Bug Fixes
