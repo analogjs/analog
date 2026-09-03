@@ -195,7 +195,7 @@ export interface PluginOptions {
    * Enable debug logging for specific scopes.
    *
    * - `true` → enables all `analog:angular:*` scopes
-   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:tailwind']`)
+   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:hmr']`)
    * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
    *   to restrict output to a specific Vite command (omit for both)
    *
