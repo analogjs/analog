@@ -1,3 +1,10 @@
+# [3.0.0-alpha.83](https://github.com/analogjs/analog/compare/v3.0.0-alpha.82...v3.0.0-alpha.83) (2026-09-03)
+
+### Bug Fixes
+
+- **platform:** set ngServerMode before the SSR entry evaluates ([07404f4](https://github.com/analogjs/analog/commit/07404f42f96d2a444d9a86eed1bebbe9071f741b))
+- **vite-plugin-angular:** define ngServerMode for server environments ([813dad4](https://github.com/analogjs/analog/commit/813dad46ee3765f6d32257226fcd721a0e75767e))
+
 # [3.0.0-alpha.82](https://github.com/analogjs/analog/compare/v3.0.0-alpha.81...v3.0.0-alpha.82) (2026-09-03)
 
 ### Features
