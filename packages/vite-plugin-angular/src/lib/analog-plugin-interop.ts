@@ -57,6 +57,12 @@ export interface AnalogPluginContext {
    * filling it after setup.
    */
   registerComponentRegistry(entries: ComponentRegistryEntries): void;
+  /**
+   * Adds TypeScript include globs to the Angular compilation. Globs resolve
+   * against the same workspace root as `angular({ include })`, so a leading
+   * `/` means workspace-relative.
+   */
+  addInclude(globs: string[]): void;
 }
 
 export interface AnalogPluginHooks {
@@ -75,6 +81,7 @@ export interface AnalogIntegrations {
   configureStylesheetRegistry?: StylesheetRegistryConfigurator;
   transformFilter?: TransformFilter;
   componentRegistries: ComponentRegistryEntries[];
+  include: string[];
   externalizeStyles: boolean;
 }
 
@@ -105,6 +112,7 @@ export async function runAnalogSetupHooks(
   const registryConfigurators: StylesheetRegistryConfigurator[] = [];
   const transformFilters: TransformFilter[] = [];
   const componentRegistries: ComponentRegistryEntries[] = [];
+  const include: string[] = [];
   let externalizeStyles = false;
 
   for (const plugin of plugins as readonly AnalogIntegrationPlugin[]) {
@@ -131,6 +139,9 @@ export async function runAnalogSetupHooks(
       registerComponentRegistry(entries) {
         componentRegistries.push(entries);
       },
+      addInclude(globs) {
+        include.push(...globs);
+      },
     };
 
     try {
@@ -147,6 +158,7 @@ export async function runAnalogSetupHooks(
       registryConfigurators: registryConfigurators.length,
       transformFilters: transformFilters.length,
       componentRegistries: componentRegistries.length,
+      include: include.length,
       externalizeStyles,
     });
   }
@@ -164,6 +176,7 @@ export async function runAnalogSetupHooks(
       ? (code, id) => transformFilters.every((filter) => filter(code, id))
       : undefined,
     componentRegistries,
+    include,
     externalizeStyles,
   };
 }

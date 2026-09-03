@@ -19,7 +19,35 @@ describe('analog plugin interop', () => {
     expect(integrations.configureStylesheetRegistry).toBeUndefined();
     expect(integrations.transformFilter).toBeUndefined();
     expect(integrations.componentRegistries).toEqual([]);
+    expect(integrations.include).toEqual([]);
     expect(integrations.externalizeStyles).toBe(false);
+  });
+
+  it('accumulates include globs from every plugin', async () => {
+    const { include } = await runAnalogSetupHooks([
+      {
+        name: 'plugin-a',
+        analog: {
+          setup(ctx) {
+            ctx.addInclude(['/libs/a/**/*.page.ts']);
+          },
+        },
+      },
+      {
+        name: 'plugin-b',
+        analog: {
+          setup(ctx) {
+            ctx.addInclude(['/libs/b/**/*.page.ts', '/libs/c/**/*.page.ts']);
+          },
+        },
+      },
+    ] as AnalogIntegrationPlugin[]);
+
+    expect(include).toEqual([
+      '/libs/a/**/*.page.ts',
+      '/libs/b/**/*.page.ts',
+      '/libs/c/**/*.page.ts',
+    ]);
   });
 
   it('transforms a module only when every registered filter accepts it', async () => {

@@ -110,10 +110,13 @@ How the hook behaves:
   pipe, and NgModule metadata keyed by class name for classes it cannot reach
   through its own tsconfig scan, such as components compiled from another
   source format. The map is read on every compile.
+- `addInclude()` adds TypeScript include globs to the Angular compilation,
+  resolved against the same workspace root as `angular({ include })`.
+  `@analogjs/platform` uses it to compile pages from `additionalPagesDirs`.
 - `AnalogPluginContext` exposes `registerStylePreprocessor`,
   `externalizeComponentStyles`, `configureStylesheetRegistry`,
-  `registerTransformFilter`, and `registerComponentRegistry` today. It grows
-  when a concrete integration needs another seam.
+  `registerTransformFilter`, `registerComponentRegistry`, and `addInclude`
+  today. It grows when a concrete integration needs another seam.
 
 ## Scope
 

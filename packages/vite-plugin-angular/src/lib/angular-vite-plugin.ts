@@ -1443,6 +1443,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       externalizeStylesRequested = integrations.externalizeStyles;
       configureStylesheetRegistry = integrations.configureStylesheetRegistry;
       transformFilter = integrations.transformFilter;
+      tsconfigResolver.setIntegrationIncludes(integrations.include);
       await _doPerformCompilation(config, ids);
     } finally {
       resolve!();

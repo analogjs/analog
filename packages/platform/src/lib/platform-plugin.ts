@@ -9,6 +9,7 @@ import {
   debugPlatform,
 } from './utils/debug.js';
 import { routerPlugin } from './router-plugin.js';
+import { libraryPagesPlugin } from './library-pages-plugin.js';
 import { ssrBuildPlugin } from './ssr/ssr-build-plugin.js';
 import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
@@ -64,6 +65,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
+    ...libraryPagesPlugin(platformOptions),
     routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),

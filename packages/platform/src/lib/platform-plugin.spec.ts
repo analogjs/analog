@@ -117,4 +117,26 @@ describe('platformPlugin', () => {
       }),
     );
   });
+
+  it('registers library page globs with Angular through analog.setup', () => {
+    const plugin = platformPlugin({
+      additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
+    }).find((p: any) => p.name === 'analogjs-platform-library-pages') as any;
+    const addInclude = vi.fn();
+
+    plugin.analog.setup({ addInclude });
+
+    expect(addInclude).toHaveBeenCalledWith([
+      '/libs/shared/feature/**/*.page.ts',
+      '/libs/other/**/*.page.ts',
+    ]);
+  });
+
+  it('adds no library pages plugin without additionalPagesDirs', () => {
+    expect(
+      platformPlugin().some(
+        (p: any) => p.name === 'analogjs-platform-library-pages',
+      ),
+    ).toBe(false);
+  });
 });

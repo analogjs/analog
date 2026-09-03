@@ -505,6 +505,7 @@ export function compilationAPIPlugin(
       const integrations = await discoverAnalogIntegrations(config);
       stylePreprocessor = integrations.stylePreprocessor;
       transformFilter = integrations.transformFilter;
+      tsconfigResolver.setIntegrationIncludes(integrations.include);
       externalizeStylesRequested = integrations.externalizeStyles;
       await performAngularCompilation(config, ids);
     } finally {

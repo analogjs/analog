@@ -30,8 +30,28 @@ export class TsconfigResolver {
     { options: any; rootNames: string[] }
   >();
   private tsconfigGraphRootCache = new Map<string, string[]>();
+  private integrationIncludes: string[] = [];
 
   constructor(private options: TsconfigResolverOptions) {}
+
+  /**
+   * Replaces the include globs contributed by Vite plugins through
+   * `analog.setup()`. Invalidates the include cache when the set changes.
+   */
+  setIntegrationIncludes(globs: string[]): void {
+    if (
+      globs.length === this.integrationIncludes.length &&
+      globs.every((glob, index) => glob === this.integrationIncludes[index])
+    ) {
+      return;
+    }
+    this.integrationIncludes = [...globs];
+    this.invalidateIncludeCache();
+  }
+
+  private get includeGlobs(): string[] {
+    return [...this.options.include, ...this.integrationIncludes];
+  }
 
   invalidateIncludeCache(): void {
     this.includeCache = [];
@@ -48,7 +68,7 @@ export class TsconfigResolver {
   }
 
   ensureIncludeCache(): string[] {
-    if (this.options.include.length > 0 && this.includeCache.length === 0) {
+    if (this.includeGlobs.length > 0 && this.includeCache.length === 0) {
       this.includeCache = this.findIncludes();
       debugEmit('include cache populated', {
         fileCount: this.includeCache.length,
@@ -210,7 +230,7 @@ export class TsconfigResolver {
   }
 
   private findIncludes(): string[] {
-    const globs = this.options.include.map((glob) =>
+    const globs = this.includeGlobs.map((glob) =>
       normalizeIncludeGlob(this.options.workspaceRoot, glob),
     );
     const files = globSync(globs, { dot: true, absolute: true });

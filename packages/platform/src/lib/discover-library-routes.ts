@@ -111,12 +111,9 @@ export function discoverLibraryRoutes(
 }
 
 /**
- * Builds `${dir}/**\/*.page.ts` globs for each provided directory.
- *
- * Pass the result to `@analogjs/vite-plugin-angular`'s `include` option so
- * workspace libraries discovered by `discoverLibraryRoutes` (or supplied
- * via `analog({ additionalPagesDirs })`) participate in Angular
- * compilation.
+ * Builds `${dir}/**\/*.page.ts` globs for each provided directory. The
+ * platform registers these with Angular compilation through `analog.setup()`
+ * for every `additionalPagesDirs` entry.
  */
 export function pageGlobs(dirs: string[]): string[] {
   return dirs.map((dir) => `${dir}/**/*.page.ts`);

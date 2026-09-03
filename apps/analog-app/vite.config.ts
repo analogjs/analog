@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 
-import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
 import { resolve } from 'node:path';
@@ -87,10 +87,7 @@ export default defineConfig(async ({ mode, command }) => {
         },
       }),
       angular({
-        include: [
-          ...explicitLibPages,
-          ...pageGlobs(discoveredLibs.additionalPagesDirs),
-        ],
+        include: explicitLibPages,
         additionalContentDirs: discoveredLibs.additionalContentDirs,
         inlineStylesExtension: 'scss',
         fileReplacements,

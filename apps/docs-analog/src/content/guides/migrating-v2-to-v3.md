@@ -140,10 +140,10 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 
 #### Workspace library globs
 
-If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to both `analog()` and `angular()`:
+If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
 
 ```ts
-import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 
 const libs = discoverLibraryRoutes(resolve(__dirname, '../..'));
@@ -154,10 +154,7 @@ plugins: [
     additionalContentDirs: libs.additionalContentDirs,
     additionalAPIDirs: libs.additionalAPIDirs,
   }),
-  angular({
-    include: pageGlobs(libs.additionalPagesDirs),
-    additionalContentDirs: libs.additionalContentDirs,
-  }),
+  angular(),
   nitro(),
 ];
 ```
