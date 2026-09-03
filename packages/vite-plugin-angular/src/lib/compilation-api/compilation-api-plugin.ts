@@ -791,10 +791,6 @@ export function compilationAPIPlugin(
         const isAngular =
           /(Component|Directive|Pipe|Injectable|NgModule)\(/.test(code);
 
-        if (id.includes('?') && id.includes('analog-content-')) {
-          return;
-        }
-
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }

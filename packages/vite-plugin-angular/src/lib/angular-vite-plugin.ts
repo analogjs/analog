@@ -1131,13 +1131,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             }
           }
 
-          /**
-           * Skip transforming content files
-           */
-          if (id.includes('?') && id.includes('analog-content-')) {
-            return;
-          }
-
           // Encapsulation of component stylesheets is handled by the
           // separate '@analogjs/vite-plugin-angular:encapsulation' plugin
           // with enforce: 'post'. This ensures @tailwindcss/vite (enforce:

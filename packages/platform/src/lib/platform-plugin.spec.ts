@@ -118,13 +118,35 @@ describe('platformPlugin', () => {
     );
   });
 
+  function getIntegrationPlugin(
+    options?: Parameters<typeof platformPlugin>[0],
+  ) {
+    return platformPlugin(options).find(
+      (p: any) => p.name === 'analogjs-platform-angular-integration',
+    ) as any;
+  }
+
+  it('keeps Angular away from content modules through analog.setup', () => {
+    const registerTransformFilter = vi.fn();
+
+    getIntegrationPlugin().analog.setup({
+      registerTransformFilter,
+      addInclude: vi.fn(),
+    });
+
+    const filter = registerTransformFilter.mock.calls[0][0];
+    expect(filter('', '/src/content/post.md?analog-content-file=true')).toBe(
+      false,
+    );
+    expect(filter('', '/src/app/app.component.ts')).toBe(true);
+  });
+
   it('registers library page globs with Angular through analog.setup', () => {
-    const plugin = platformPlugin({
-      additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
-    }).find((p: any) => p.name === 'analogjs-platform-library-pages') as any;
     const addInclude = vi.fn();
 
-    plugin.analog.setup({ addInclude });
+    getIntegrationPlugin({
+      additionalPagesDirs: ['/libs/shared/feature', '/libs/other'],
+    }).analog.setup({ registerTransformFilter: vi.fn(), addInclude });
 
     expect(addInclude).toHaveBeenCalledWith([
       '/libs/shared/feature/**/*.page.ts',
@@ -132,11 +154,14 @@ describe('platformPlugin', () => {
     ]);
   });
 
-  it('adds no library pages plugin without additionalPagesDirs', () => {
-    expect(
-      platformPlugin().some(
-        (p: any) => p.name === 'analogjs-platform-library-pages',
-      ),
-    ).toBe(false);
+  it('adds no includes without additionalPagesDirs', () => {
+    const addInclude = vi.fn();
+
+    getIntegrationPlugin().analog.setup({
+      registerTransformFilter: vi.fn(),
+      addInclude,
+    });
+
+    expect(addInclude).not.toHaveBeenCalled();
   });
 });
