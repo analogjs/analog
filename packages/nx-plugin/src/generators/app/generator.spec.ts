@@ -244,6 +244,14 @@ describe('nx-plugin generator', () => {
       );
     });
 
+    it('rejects the oxlint linter outside an Nx workspace', async () => {
+      const tree = createTreeWithEmptyWorkspace({ formatter: 'prettier' });
+
+      await expect(
+        generator(tree, { analogAppName: 'oxlint-app', linter: 'oxlint' }),
+      ).rejects.toThrow('The oxlint linter is only supported in Nx workspaces');
+    });
+
     it('does not overwrite existing agent context in the app', async () => {
       const analogAppName = 'existing-agents-app';
       const tree = createTreeWithEmptyWorkspace({

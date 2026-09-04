@@ -176,7 +176,7 @@ jobs:
           - **Failing workflow run**: $RUN_URL
           - **Matrix slot**: \`@angular/compiler@${MATRIX_VERSION}\`
           - **Workspace pin**: see \`package.json\` for the version that the workspace currently builds against
-          - **Reproduction**: \`pnpm install\` with \`pnpm.overrides\` setting \`@angular/compiler\`, \`@angular/compiler-cli\` and the Angular runtime packages (core, common, platform-browser, platform-browser-dynamic, router) to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
+          - **Reproduction**: \`pnpm install\` with the \`overrides:\` block of \`pnpm-workspace.yaml\` setting \`@angular/compiler\`, \`@angular/compiler-cli\` and the Angular runtime packages (core, common, platform-browser, platform-browser-dynamic, router) to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
 
           ## Which area/package is the issue in?
 

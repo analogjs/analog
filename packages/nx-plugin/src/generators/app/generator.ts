@@ -84,14 +84,17 @@ export async function appGenerator(
     );
   }
 
-  if (
-    options.linter === 'oxlint' &&
-    nxVersion &&
-    belowMinimumSupportedOxlintNxVersion(nxVersion)
-  ) {
-    throw new Error(
-      stripIndents`Nx v${MINIMUM_SUPPORTED_OXLINT_NX_VERSION} or newer is required to use the oxlint linter`,
-    );
+  if (options.linter === 'oxlint') {
+    if (!nxVersion) {
+      throw new Error(
+        stripIndents`The oxlint linter is only supported in Nx workspaces`,
+      );
+    }
+    if (belowMinimumSupportedOxlintNxVersion(nxVersion)) {
+      throw new Error(
+        stripIndents`Nx v${MINIMUM_SUPPORTED_OXLINT_NX_VERSION} or newer is required to use the oxlint linter`,
+      );
+    }
   }
 
   const normalizedOptions = normalizeOptions(tree, options);
