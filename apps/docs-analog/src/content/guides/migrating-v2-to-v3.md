@@ -309,7 +309,7 @@ Do not assume your v2 workspace can keep the same Node and tooling floor. The `b
 
 - current templates now require Node `^22.18.0 || ^24.3.0`
 - current templates pin TypeScript `6.0.2`
-- current templates use `vite-tsconfig-paths` `^7.0.0-alpha.1`
+- current templates use `vite-tsconfig-paths` `^6.1.1`
 - content-enabled templates now pin `marked` `^17.0.5`
 
 Match the current template line for your Angular major instead of assuming one repo-wide Vite target.
