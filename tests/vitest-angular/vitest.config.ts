@@ -8,7 +8,7 @@ import resetTestBedBetweenTestsProject from './src/reset-test-bed-between-tests/
 import sourcemapProject from './src/sourcemap/vitest.project';
 
 export default defineConfig({
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/tests/vitest-angular',
   plugins: [viteTsConfigPaths()] as Plugin[],
   test: {

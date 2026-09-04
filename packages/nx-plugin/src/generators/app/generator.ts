@@ -14,7 +14,11 @@ import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { major, coerce } from 'semver';
 import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addHomePage } from './lib/add-home-page';
-import { belowMinimumSupportedNxVersion } from './versions/minimum-supported-versions';
+import {
+  belowMinimumSupportedNxVersion,
+  belowMinimumSupportedOxlintNxVersion,
+  MINIMUM_SUPPORTED_OXLINT_NX_VERSION,
+} from './versions/minimum-supported-versions';
 import { addAngularApp } from './lib/add-angular-app';
 import setupAnalogGenerator from '../init/generator';
 import { addFiles } from './lib/add-files';
@@ -78,6 +82,19 @@ export async function appGenerator(
     throw new Error(
       stripIndents`Nx v15.2.0 or newer is required to install Analog`,
     );
+  }
+
+  if (options.linter === 'oxlint') {
+    if (!nxVersion) {
+      throw new Error(
+        stripIndents`The oxlint linter is only supported in Nx workspaces`,
+      );
+    }
+    if (belowMinimumSupportedOxlintNxVersion(nxVersion)) {
+      throw new Error(
+        stripIndents`Nx v${MINIMUM_SUPPORTED_OXLINT_NX_VERSION} or newer is required to use the oxlint linter`,
+      );
+    }
   }
 
   const normalizedOptions = normalizeOptions(tree, options);

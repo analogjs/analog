@@ -14,7 +14,10 @@ export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
   const appOptions: ApplicationSchema = {
     name: options.analogAppName,
     directory: `${appsDir}/${options.analogAppName}`,
-    linter: !isNx || process.env['NODE_ENV'] === 'test' ? 'none' : 'eslint',
+    linter: !isNx
+      ? 'none'
+      : (options.linter ??
+        (process.env['NODE_ENV'] === 'test' ? 'none' : 'eslint')),
     // Analog sets up its own Vitest configuration in the init generator, so the
     // Angular generator should not scaffold a test runner. Nx 23 also removed
     // the `'vitest'` option in favour of `'vitest-angular'`/`'vitest-analog'`.
@@ -22,7 +25,6 @@ export async function addAngularApp(tree: Tree, options: NormalizedOptions) {
     standalone: true,
     ssr: false,
     bundler: 'esbuild',
-    serverRouting: false,
     skipFormat: true,
     tags: options.tags,
   };

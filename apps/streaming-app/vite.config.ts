@@ -6,7 +6,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],

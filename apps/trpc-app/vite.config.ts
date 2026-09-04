@@ -8,7 +8,7 @@ import viteTsConfigPaths from 'vite-tsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/public',
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms', 'isomorphic-fetch'],
