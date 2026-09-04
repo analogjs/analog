@@ -1,3 +1,9 @@
+# [3.0.0-alpha.85](https://github.com/analogjs/analog/compare/v3.0.0-alpha.84...v3.0.0-alpha.85) (2026-09-04)
+
+### Bug Fixes
+
+- **create-analog:** scaffold vite-tsconfig-paths 6.1.1 and nitro 3.0.260903-beta ([99d992c](https://github.com/analogjs/analog/commit/99d992c98dea4e0d305eb2c4522b607f9d6b170c))
+
 # [3.0.0-alpha.84](https://github.com/analogjs/analog/compare/v3.0.0-alpha.83...v3.0.0-alpha.84) (2026-09-03)
 
 ### Bug Fixes
