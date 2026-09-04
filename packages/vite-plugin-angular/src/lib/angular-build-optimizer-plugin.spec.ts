@@ -314,9 +314,11 @@ export class Greeter {
     expect(JSON.parse(result.map)).toEqual(mapObj);
   });
 
-  it('throws an error if no inline sourcemap is present', () => {
-    expect(() =>
-      extractInlineSourceMap('console.log("test");', '/x/test.js'),
-    ).toThrow('Angular optimizer did not generate a source map for /x/test.js');
+  it('returns null map if no inline sourcemap is present', () => {
+    const result = extractInlineSourceMap('console.log("test");', '/x/test.js');
+    expect(result).toEqual({
+      code: 'console.log("test");',
+      map: null,
+    });
   });
 });
