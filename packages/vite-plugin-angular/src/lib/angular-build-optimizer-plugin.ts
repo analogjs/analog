@@ -106,9 +106,10 @@ export function extractInlineSourceMap(code: string, id: string) {
     /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
   );
   if (!sourceMapMatch || sourceMapMatch.index === undefined) {
-    throw new Error(
-      `Angular optimizer did not generate a source map for ${id}`,
-    );
+    return {
+      code,
+      map: null,
+    };
   }
   return {
     code: code.slice(0, sourceMapMatch.index),
