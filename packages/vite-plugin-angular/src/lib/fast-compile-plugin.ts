@@ -71,6 +71,19 @@ export interface FastCompilePluginOptions {
   fastCompileMode?: 'full' | 'partial';
 }
 
+/**
+ * Directory that `compilerOptions.paths` targets resolve against. Mirrors
+ * TypeScript: `baseUrl` when set, otherwise the directory of the config
+ * that declares `paths` (`pathsBasePath`, since `baseUrl` is optional
+ * from TS 4.1).
+ */
+export function getPathsBasePath(
+  options: { baseUrl?: string; pathsBasePath?: string } | undefined,
+  fallback: string,
+): string {
+  return options?.baseUrl ?? options?.pathsBasePath ?? fallback;
+}
+
 export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
 ): Plugin {
@@ -214,7 +227,7 @@ export function fastCompilePlugin(
     // silently drops it because arrays don't have a directive def.
     const candidates = new Set<string>(config.rootNames);
     const tsPaths = config.options?.paths;
-    const baseUrl = (config.options?.baseUrl ?? projectRoot) as string;
+    const baseUrl = getPathsBasePath(config.options, projectRoot);
     // Cold-start dedup caches shared by the three scan phases below
     // (candidates scan, walkImports, scanBarrelExports). Scoped to this
     // init call only — HMR/watcher re-scans must hit disk fresh.
