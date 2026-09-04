@@ -6,7 +6,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig(({ mode }) => ({
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/my-package',
   plugins: [
     angular({ jit: false }),

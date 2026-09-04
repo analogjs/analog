@@ -4,7 +4,7 @@ import { defineConfig } from 'vite';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(() => ({
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/vite-plugin-nitro',
   plugins: [
     viteTsConfigPaths({

@@ -17,7 +17,7 @@ process.env['VITE_ANALOG_BASE_URL'] = base;
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],
