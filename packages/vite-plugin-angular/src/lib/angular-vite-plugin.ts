@@ -277,6 +277,29 @@ export function angular(options?: PluginOptions): Plugin[] {
     );
   }
 
+  async function releaseCompilation() {
+    await angularCompilation?.close?.();
+    angularCompilation = undefined;
+    builder = undefined;
+    nextProgram = undefined;
+    cachedHost = undefined;
+    cachedHostKey = undefined;
+    inlineComponentStyles = undefined;
+    externalComponentStyles = undefined;
+    outputFile = undefined;
+    outputFiles.clear();
+    emittedIds.clear();
+    fileTransformMap.clear();
+    sourceFileCache.clear();
+    sourceFileCache.modifiedFiles.clear();
+    sourceFileCache.babelFileCache?.clear();
+    sourceFileCache.typeScriptFileCache?.clear();
+    sourceFileCache.referencedFiles = undefined;
+    tsconfigOptionsCache.clear();
+    includeCache = [];
+    styleTransform = undefined;
+  }
+
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -445,7 +468,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           initialCompilation = true;
         }
       },
-      buildEnd() {
+      async buildEnd() {
         // Report diagnostics for production builds. Watch/serve already report
         // per-module from `transform`; build mode defers to here so a single
         // errored file no longer aborts the build before the rest are checked
@@ -458,14 +481,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
-        const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
+        try {
+          const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
 
-        if (warnings.length > 0) {
-          this.warn(warnings.join('\n'));
-        }
+          if (warnings.length > 0) {
+            this.warn(warnings.join('\n'));
+          }
 
-        if (errors.length > 0) {
-          this.error(errors.join('\n\n'));
+          if (errors.length > 0) {
+            this.error(errors.join('\n\n'));
+          }
+        } finally {
+          await releaseCompilation();
         }
       },
       async handleHotUpdate(ctx) {
@@ -889,10 +916,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             writeFileSync(declarationPath, data, 'utf-8');
           },
         );
-        // Tear down the persistent compilation instance at end of build so it
-        // does not leak memory across unrelated Vite invocations.
-        angularCompilation?.close?.();
-        angularCompilation = undefined;
+        declarationFiles.length = 0;
       },
     };
   }
