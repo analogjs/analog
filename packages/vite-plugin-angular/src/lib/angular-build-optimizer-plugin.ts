@@ -98,6 +98,10 @@ export function buildOptimizerPlugin({
           : { code: transformed, map: { mappings: '' } };
       },
     },
+    async closeBundle() {
+      await javascriptTransformer?.close?.();
+      javascriptTransformer = undefined;
+    },
   };
 }
 
