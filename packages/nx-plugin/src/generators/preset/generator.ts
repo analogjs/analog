@@ -5,7 +5,11 @@ import { PresetGeneratorSchema } from './schema';
 export default async function (tree: Tree, options: PresetGeneratorSchema) {
   ensurePackage('@nx/angular', NX_VERSION);
   ensurePackage('@nx/vite', NX_VERSION);
-  ensurePackage('@nx/eslint', NX_VERSION);
+  if (options.linter === 'oxlint') {
+    ensurePackage('@nx/oxlint', NX_VERSION);
+  } else if (options.linter !== 'none') {
+    ensurePackage('@nx/eslint', NX_VERSION);
+  }
   ensurePackage('@angular-devkit/core', 'latest');
   ensurePackage('rxjs', 'latest');
 

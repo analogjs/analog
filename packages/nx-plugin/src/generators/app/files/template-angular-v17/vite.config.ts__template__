@@ -11,7 +11,7 @@ import tailwindcss from '@tailwindcss/vite';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/public',
     cacheDir: `<%= offsetFromRoot %>node_modules/.vite`,
     <% if (addTRPC) { %>
