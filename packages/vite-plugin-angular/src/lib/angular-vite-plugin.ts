@@ -254,10 +254,9 @@ export function angular(options?: PluginOptions): Plugin[] {
   let liveReloadProgramHasExternalStyles = false;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
-  let styleTransform: (
-    code: string,
-    filename: string,
-  ) => Promise<vite.PreprocessCSSResult>;
+  let styleTransform:
+    | ((code: string, filename: string) => Promise<vite.PreprocessCSSResult>)
+    | undefined;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
   // Persistent Angular Compilation API instance. Kept alive across rebuilds so
@@ -267,6 +266,16 @@ export function angular(options?: PluginOptions): Plugin[] {
   let angularCompilation:
     | Awaited<ReturnType<typeof createAngularCompilationType>>
     | undefined;
+
+  function getStyleTransform() {
+    return (
+      styleTransform ??
+      (async (code: string) => ({
+        code,
+        deps: new Set<string>(),
+      }))
+    );
+  }
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -381,7 +390,8 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         if (!jit) {
           const pluginContext = this;
-          const cssTransformHook = this.environment.config.plugins.find(
+          const environmentConfig = this.environment?.config ?? resolvedConfig;
+          const cssTransformHook = environmentConfig.plugins?.find(
             (plugin) => plugin.name === 'vite:css',
           )?.transform;
           const cssTransform = (
@@ -406,24 +416,22 @@ export function angular(options?: PluginOptions): Plugin[] {
                   >)
             | undefined;
 
-          if (!cssTransform) {
-            throw new Error('Unable to locate the Vite CSS transform hook');
-          }
+          if (cssTransform) {
+            styleTransform = async (code: string, filename: string) => {
+              const result = await cssTransform.call(
+                pluginContext,
+                code,
+                filename,
+              );
 
-          styleTransform = async (code: string, filename: string) => {
-            const result = await cssTransform.call(
-              pluginContext,
-              code,
-              filename,
-            );
-
-            return {
-              code:
-                typeof result === 'string' ? result : (result?.code ?? code),
-              map: typeof result === 'object' ? result?.map : undefined,
-              deps: new Set<string>(),
+              return {
+                code:
+                  typeof result === 'string' ? result : (result?.code ?? code),
+                map: typeof result === 'object' ? result?.map : undefined,
+                deps: new Set<string>(),
+              };
             };
-          };
+          }
         }
 
         // Defer the first compilation in test mode
@@ -1055,7 +1063,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           let stylesheetResult;
 
           try {
-            stylesheetResult = await styleTransform(data, `${filename}?direct`);
+            stylesheetResult = await getStyleTransform()(
+              data,
+              `${filename}?direct`,
+            );
           } catch (e) {
             console.error(`${e}`);
           }
@@ -1390,7 +1401,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
-      augmentHostWithResources(host, styleTransform, {
+      augmentHostWithResources(host, getStyleTransform(), {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,
         inlineComponentStyles,

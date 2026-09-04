@@ -1202,4 +1202,39 @@ export class AppComponent {}
     expect(entry.originalColumn).toBe(13);
     expect(sources).toContain(normalizePath(templatePath));
   }, 60_000);
+
+  it('handles environment without vite:css or missing this.environment gracefully', async () => {
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+      plugins: [],
+    };
+    mainPlugin.configResolved(resolvedConfig);
+
+    // Context without this.environment (e.g. older Vite or minimal test harness)
+    const ctx = {
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+
+    await mainPlugin.buildStart.call(ctx);
+    const result = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+
+    expect(result?.code).toContain('ɵcmp');
+  }, 60_000);
 });
