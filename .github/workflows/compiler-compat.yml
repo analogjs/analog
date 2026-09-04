@@ -14,6 +14,12 @@ name: Compiler Compatibility Tests
 #     to the matrix version via pnpm.overrides, then runs the compiler
 #     unit/integration suite. Failures here mean the compiler crashes
 #     against a peer dep version it claims to support.
+#   - The Angular runtime packages the suite boots (core, common,
+#     platform-browser, platform-browser-dynamic, router) are pinned to
+#     the same version. Angular's partial declarations require core and
+#     compiler to match (core 22.1's `ɵɵngDeclareService` calls a
+#     compiler API older compilers don't have), so mixing the workspace's
+#     core with the matrix compiler would fail before our compiler runs.
 #
 # Matrix policy:
 #   - Each numeric slot pins the FLOOR of a supported major (e.g. 19.0.0).
@@ -87,22 +93,29 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: '**/pnpm-lock.yaml'
 
-      - name: Pin @angular/compiler and @angular/compiler-cli via pnpm overrides
+      - name: Pin @angular/compiler, @angular/compiler-cli and the Angular runtime via pnpm overrides
         # pnpm 11 reads `overrides` from pnpm-workspace.yaml, not from the
         # root package.json `pnpm` field — so the matrix pin must be injected
-        # there. Insert the two entries under the existing `overrides:` block
+        # there. Insert the entries under the existing `overrides:` block
         # (appending a fresh block if one isn't present).
         run: |
           node -e "
           const fs = require('fs');
           const f = 'pnpm-workspace.yaml';
           const v = '${{ matrix.angular-version }}';
+          const packages = [
+            '@angular/compiler',
+            '@angular/compiler-cli',
+            '@angular/core',
+            '@angular/common',
+            '@angular/platform-browser',
+            '@angular/platform-browser-dynamic',
+            '@angular/router',
+          ];
           const lines = fs.readFileSync(f, 'utf-8').split('\n');
           let i = lines.findIndex(l => l.trim() === 'overrides:');
           if (i < 0) { lines.push('overrides:'); i = lines.length - 1; }
-          lines.splice(i + 1, 0,
-            \"  '@angular/compiler': '\" + v + \"'\",
-            \"  '@angular/compiler-cli': '\" + v + \"'\");
+          lines.splice(i + 1, 0, ...packages.map(p => \"  '\" + p + \"': '\" + v + \"'\"));
           fs.writeFileSync(f, lines.join('\n'));
           console.log(lines.join('\n'));
           "
@@ -163,7 +176,7 @@ jobs:
           - **Failing workflow run**: $RUN_URL
           - **Matrix slot**: \`@angular/compiler@${MATRIX_VERSION}\`
           - **Workspace pin**: see \`package.json\` for the version that the workspace currently builds against
-          - **Reproduction**: \`pnpm install\` with \`pnpm.overrides\` setting \`@angular/compiler\` and \`@angular/compiler-cli\` to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
+          - **Reproduction**: \`pnpm install\` with \`pnpm.overrides\` setting \`@angular/compiler\`, \`@angular/compiler-cli\` and the Angular runtime packages (core, common, platform-browser, platform-browser-dynamic, router) to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
 
           ## Which area/package is the issue in?
 
