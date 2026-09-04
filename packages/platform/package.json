@@ -32,7 +32,6 @@
   },
   "dependencies": {
     "@analogjs/vite-plugin-angular": "workspace:*",
-    "@babel/core": "catalog:",
     "es-toolkit": "catalog:",
     "front-matter": "catalog:",
     "h3": "catalog:",
@@ -45,6 +44,9 @@
     "tinyglobby": "catalog:",
     "vitefu": "catalog:",
     "xmlbuilder2": "catalog:"
+  },
+  "devDependencies": {
+    "@babel/core": "catalog:"
   },
   "peerDependencies": {
     "@nx/angular": "catalog:peerCompat",

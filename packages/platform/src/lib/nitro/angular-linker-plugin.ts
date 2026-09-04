@@ -1,3 +1,28 @@
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+import type { PluginItem, transformAsync } from '@babel/core';
+import type { Plugin, SourceMapInput } from 'rolldown';
+
+const require = createRequire(import.meta.url);
+
+type BabelCore = { transformAsync: typeof transformAsync };
+
+/**
+ * Loads the `@babel/core` release that `@angular/compiler-cli` depends on.
+ * The linker Babel plugin asserts the Babel major it was built against
+ * (Angular 22.0 needs Babel 7, Angular 22.1+ needs Babel 8), so resolving
+ * through compiler-cli keeps both in sync, including in strict pnpm layouts.
+ */
+async function loadBabel(): Promise<BabelCore> {
+  const compilerCliRequire = createRequire(
+    require.resolve('@angular/compiler-cli/package.json'),
+  );
+  const babelEntry = compilerCliRequire.resolve('@babel/core');
+  const babel = await import(pathToFileURL(babelEntry).href);
+  return babel.transformAsync ? babel : babel.default;
+}
+
 /**
  * Rolldown plugin that runs the Angular Linker against partially-compiled
  * Angular npm packages.
@@ -11,15 +36,10 @@
  * Loaded lazily so apps that never trigger the SSR optimizer don't
  * incur the babel + compiler-cli/linker cost.
  */
-export function angularLinkerPlugin() {
-  let linkerBabelPlugin: unknown;
+export function angularLinkerPlugin(): Plugin {
+  let linkerBabelPlugin: PluginItem | undefined;
   let needsLinkingFn: ((id: string, code: string) => boolean) | undefined;
-  let transformAsyncFn:
-    | ((
-        code: string,
-        options: Record<string, unknown>,
-      ) => Promise<{ code?: string; map?: unknown } | null>)
-    | undefined;
+  let transformAsyncFn: BabelCore['transformAsync'] | undefined;
 
   async function ensureLoaded() {
     if (linkerBabelPlugin && needsLinkingFn && transformAsyncFn) return;
@@ -29,11 +49,10 @@ export function angularLinkerPlugin() {
 
     const linkerBabel = await import('@angular/compiler-cli/linker/babel');
     linkerBabelPlugin =
-      (linkerBabel as { default?: unknown }).default ?? linkerBabel;
+      (linkerBabel as { default?: PluginItem }).default ??
+      (linkerBabel as PluginItem);
 
-    // @ts-expect-error — @babel/core ships without bundled type declarations
-    const babel = await import('@babel/core');
-    transformAsyncFn = babel.transformAsync;
+    transformAsyncFn = (await loadBabel()).transformAsync;
   }
 
   return {
@@ -49,7 +68,7 @@ export function angularLinkerPlugin() {
 
       const result = await transformAsyncFn!(code, {
         filename: id,
-        plugins: [linkerBabelPlugin],
+        plugins: [linkerBabelPlugin!],
         sourceMaps: true,
         compact: false,
         configFile: false,
@@ -57,7 +76,10 @@ export function angularLinkerPlugin() {
       });
 
       if (result?.code) {
-        return { code: result.code, map: result.map ?? null };
+        return {
+          code: result.code,
+          map: (result.map ?? null) as SourceMapInput,
+        };
       }
       return;
     },
