@@ -14,14 +14,14 @@ import {
   sitemapPlugin,
 } from './vite/index';
 
-const REPO_ROOT = resolve(__dirname, '../..');
-const CONTENT_DIR = resolve(__dirname, 'src/content');
+const REPO_ROOT = resolve(import.meta.dirname, '../..');
+const CONTENT_DIR = resolve(import.meta.dirname, 'src/content');
 const CLIENT_DIST = resolve(REPO_ROOT, 'dist/apps/docs-analog/client');
 const SITE_URL = 'https://analogjs.org';
 const NON_DEFAULT_LOCALES = ['de', 'es', 'pt-br', 'zh-hans'] as const;
 
 export default defineConfig(({ mode }) => ({
-  root: __dirname,
+  root: import.meta.dirname,
   build: {
     outDir: '../../dist/apps/docs-analog/client',
     reportCompressedSize: true,
