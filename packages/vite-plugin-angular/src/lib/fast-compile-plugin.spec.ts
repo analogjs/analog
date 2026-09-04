@@ -1,7 +1,11 @@
 // Mocked at module level so the plugin sees our stubs for the OXC/esbuild
 // strip pass on the bypass path. Kept in a separate file from compile.spec.ts
 // because that suite uses real `vite.transformWithOxc` for end-to-end checks.
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { readConfiguration } from '@angular/compiler-cli';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let mockRolldownVersion: string | undefined;
 const mockTransformWithOxc = vi.fn();
@@ -22,7 +26,7 @@ vi.mock('vite', async () => {
   };
 });
 
-import { fastCompilePlugin } from './fast-compile-plugin';
+import { fastCompilePlugin, getPathsBasePath } from './fast-compile-plugin';
 
 function buildPlugin() {
   return fastCompilePlugin({
@@ -350,5 +354,62 @@ describe('fastCompilePlugin transform filter', () => {
     expect(matchesExclude('/src/app/foo.ts')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?t=12345')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?component')).toBe(false);
+  });
+});
+
+describe('getPathsBasePath', () => {
+  let workspaceRoot: string;
+
+  beforeEach(() => {
+    workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-paths-base-'));
+  });
+
+  afterEach(() => {
+    rmSync(workspaceRoot, { recursive: true, force: true });
+  });
+
+  function writeConfigs(
+    root: Record<string, unknown>,
+    app: Record<string, unknown>,
+  ) {
+    mkdirSync(join(workspaceRoot, 'apps', 'demo'), { recursive: true });
+    writeFileSync(
+      join(workspaceRoot, 'tsconfig.base.json'),
+      JSON.stringify(root),
+    );
+    const appConfig = join(workspaceRoot, 'apps', 'demo', 'tsconfig.json');
+    writeFileSync(
+      appConfig,
+      JSON.stringify({ extends: '../../tsconfig.base.json', ...app }),
+    );
+    return appConfig;
+  }
+
+  it('anchors inherited paths on the config that declares them when baseUrl is unset', () => {
+    const appConfig = writeConfigs(
+      { compilerOptions: { paths: { lib: ['./libs/lib/src/index.ts'] } } },
+      { files: [] },
+    );
+
+    const { options } = readConfiguration(appConfig);
+
+    expect(getPathsBasePath(options, dirname(appConfig))).toBe(workspaceRoot);
+  });
+
+  it('prefers an explicit baseUrl over the declaring config directory', () => {
+    const appConfig = writeConfigs(
+      { compilerOptions: { paths: { lib: ['./libs/lib/src/index.ts'] } } },
+      { compilerOptions: { baseUrl: './src' }, files: [] },
+    );
+
+    const { options } = readConfiguration(appConfig);
+
+    expect(getPathsBasePath(options, dirname(appConfig))).toBe(
+      join(workspaceRoot, 'apps', 'demo', 'src'),
+    );
+  });
+
+  it('falls back to the project root when no config anchors paths', () => {
+    expect(getPathsBasePath(undefined, '/project')).toBe('/project');
   });
 });
