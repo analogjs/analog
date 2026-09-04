@@ -1,3 +1,9 @@
+# [3.0.0-alpha.86](https://github.com/analogjs/analog/compare/v3.0.0-alpha.85...v3.0.0-alpha.86) (2026-09-04)
+
+### Bug Fixes
+
+- **platform:** load the Babel release bundled with the Angular compiler for the SSR linker ([d0ccbaa](https://github.com/analogjs/analog/commit/d0ccbaa87148a11bcff52e2b92f893fd58526eab))
+
 # [3.0.0-alpha.85](https://github.com/analogjs/analog/compare/v3.0.0-alpha.84...v3.0.0-alpha.85) (2026-09-04)
 
 ### Bug Fixes
