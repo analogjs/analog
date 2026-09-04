@@ -1203,6 +1203,57 @@ export class AppComponent {}
     expect(sources).toContain(normalizePath(templatePath));
   }, 60_000);
 
+  it('releases production compilation output at buildEnd', async () => {
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+    };
+    mainPlugin.configResolved(resolvedConfig);
+    const environmentConfig = {
+      ...resolvedConfig,
+      plugins: [
+        {
+          name: 'vite:css',
+          transform: {
+            handler: vi.fn(async (code: string) => ({ code })),
+          },
+        },
+      ],
+    };
+    const ctx = {
+      environment: { config: environmentConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+
+    await mainPlugin.buildStart.call(ctx);
+    const compiled = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+    await mainPlugin.buildEnd.call(ctx);
+    const released = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+
+    expect(compiled?.code).toContain('ɵcmp');
+    expect(released).toBeUndefined();
+  }, 60_000);
+
   it('handles environment without vite:css or missing this.environment gracefully', async () => {
     const mainPlugin = createAppBuildPlugin();
 
