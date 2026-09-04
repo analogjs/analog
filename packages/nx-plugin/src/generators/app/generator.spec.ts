@@ -228,11 +228,19 @@ describe('nx-plugin generator', () => {
     it('passes the linter option to the Angular application generator', async () => {
       const { applicationGenerator } = await import('@nx/angular/generators');
 
-      await setup({ analogAppName: 'oxlint-app', linter: 'oxlint' });
+      await setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.2.0');
 
       expect(applicationGenerator).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ name: 'oxlint-app', linter: 'oxlint' }),
+      );
+    });
+
+    it('rejects the oxlint linter on Nx versions below 23.2', async () => {
+      await expect(
+        setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.1.0'),
+      ).rejects.toThrow(
+        'Nx v23.2.0 or newer is required to use the oxlint linter',
       );
     });
 
