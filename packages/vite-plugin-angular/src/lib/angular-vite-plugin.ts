@@ -370,7 +370,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         const invalidateCompilationOnFsChange = createFsWatcherCacheInvalidator(
           invalidateFsCaches,
           invalidateTsconfigCaches,
-          () => performCompilation(resolvedConfig),
+          () => performCompilation(server.environments.client.config),
           pluginOptions.include.map(
             (glob) =>
               `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
@@ -387,7 +387,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          pendingCompilation = performCompilation(resolvedConfig);
+          pendingCompilation = performCompilation(
+            this.environment?.config ?? resolvedConfig,
+          );
           await pendingCompilation;
           pendingCompilation = null;
 
@@ -421,7 +423,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
-          pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+          pendingCompilation = performCompilation(
+            ctx.server.environments.client.config,
+            [fileId],
+          );
 
           let result;
 
@@ -523,10 +528,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          pendingCompilation = performCompilation(resolvedConfig, [
-            ...mods.map((mod) => mod.id as string),
-            ...updates,
-          ]);
+          pendingCompilation = performCompilation(
+            ctx.server.environments.client.config,
+            [...mods.map((mod) => mod.id as string), ...updates],
+          );
 
           if (updates.length > 0) {
             await pendingCompilation;
@@ -693,7 +698,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             if (isVitestVscode && !initialCompilation) {
               // Do full initial compilation
-              pendingCompilation = performCompilation(resolvedConfig);
+              pendingCompilation = performCompilation(
+                this.environment?.config ?? resolvedConfig,
+              );
               initialCompilation = true;
             }
 
@@ -702,7 +709,10 @@ export function angular(options?: PluginOptions): Plugin[] {
               const invalidated = tsMod.lastInvalidationTimestamp;
 
               if (testWatchMode && invalidated) {
-                pendingCompilation = performCompilation(resolvedConfig, [id]);
+                pendingCompilation = performCompilation(
+                  this.environment?.config ?? resolvedConfig,
+                  [id],
+                );
               }
             }
           }
