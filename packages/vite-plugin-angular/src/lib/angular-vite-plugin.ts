@@ -21,7 +21,6 @@ import {
   ModuleNode,
   normalizePath,
   Plugin,
-  preprocessCSS,
   ResolvedConfig,
   ViteDevServer,
 } from 'vite';
@@ -344,11 +343,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           inlineComponentStyles = new Map();
         }
 
-        if (!jit) {
-          styleTransform = (code: string, filename: string) =>
-            preprocessCSS(code, filename, config);
-        }
-
         if (isTest) {
           // set test watch mode
           // - vite override from vitest-angular
@@ -385,6 +379,53 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        if (!jit) {
+          const pluginContext = this;
+          const cssTransformHook = this.environment.config.plugins.find(
+            (plugin) => plugin.name === 'vite:css',
+          )?.transform;
+          const cssTransform = (
+            typeof cssTransformHook === 'function'
+              ? cssTransformHook
+              : cssTransformHook?.handler
+          ) as
+            | ((
+                this: typeof pluginContext,
+                code: string,
+                filename: string,
+              ) =>
+                | string
+                | { code: string; map?: vite.PreprocessCSSResult['map'] }
+                | null
+                | undefined
+                | Promise<
+                    | string
+                    | { code: string; map?: vite.PreprocessCSSResult['map'] }
+                    | null
+                    | undefined
+                  >)
+            | undefined;
+
+          if (!cssTransform) {
+            throw new Error('Unable to locate the Vite CSS transform hook');
+          }
+
+          styleTransform = async (code: string, filename: string) => {
+            const result = await cssTransform.call(
+              pluginContext,
+              code,
+              filename,
+            );
+
+            return {
+              code:
+                typeof result === 'string' ? result : (result?.code ?? code),
+              map: typeof result === 'object' ? result?.map : undefined,
+              deps: new Set<string>(),
+            };
+          };
+        }
+
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
           pendingCompilation = performCompilation(
@@ -1014,11 +1055,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           let stylesheetResult;
 
           try {
-            stylesheetResult = await preprocessCSS(
-              data,
-              `${filename}?direct`,
-              resolvedConfig,
-            );
+            stylesheetResult = await styleTransform(data, `${filename}?direct`);
           } catch (e) {
             console.error(`${e}`);
           }

@@ -3,15 +3,7 @@ import * as realFs from 'node:fs';
 import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { normalizePath, preprocessCSS } from 'vite';
-
-vi.mock('vite', async () => {
-  const actual = await vi.importActual<typeof import('vite')>('vite');
-  return {
-    ...actual,
-    preprocessCSS: vi.fn(async (code: string) => ({ code, deps: new Set() })),
-  };
-});
+import { normalizePath } from 'vite';
 
 import type ts from 'typescript';
 import * as tsModule from 'typescript';
@@ -1020,6 +1012,9 @@ describe('buildStart initial compilation', () => {
   const templatePath = normalizePath(
     path.join(fixtureDir, 'src', 'app.component.html'),
   );
+  const stylePath = normalizePath(
+    path.join(fixtureDir, 'src', 'app.component.scss'),
+  );
 
   beforeEach(() => {
     realFs.rmSync(fixtureDir, { recursive: true, force: true });
@@ -1047,12 +1042,18 @@ describe('buildStart initial compilation', () => {
   selector: 'app-root',
   standalone: true,
   templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {}
 `,
       'utf-8',
     );
     realFs.writeFileSync(templatePath, '<h1>hello</h1>', 'utf-8');
+    realFs.writeFileSync(
+      stylePath,
+      '$color: red; h1 { color: $color; }',
+      'utf-8',
+    );
   });
 
   afterEach(() => {
@@ -1086,15 +1087,31 @@ export class AppComponent {}
       { root: fixtureDir, build: {} },
       { command: 'build' },
     );
-    mainPlugin.configResolved({
+    const resolvedConfig = {
       root: fixtureDir,
       mode: 'production',
       build: {},
       server: { watch: {} },
       safeModulePaths: new Set(),
-    });
+    };
+    mainPlugin.configResolved(resolvedConfig);
+    const cssTransform = vi.fn(async (code: string) => ({ code }));
+    const environmentConfig = {
+      ...resolvedConfig,
+      plugins: [
+        {
+          name: 'vite:css',
+          transform: { handler: cssTransform },
+        },
+      ],
+    };
 
-    const ctx = { warn: vi.fn(), error: vi.fn(), addWatchFile: vi.fn() };
+    const ctx = {
+      environment: { config: environmentConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
     const code = realFs.readFileSync(componentPath, 'utf-8');
 
     // Deliberately don't await `buildStart` — this is the racing plugin's view.
@@ -1107,25 +1124,58 @@ export class AppComponent {}
     await buildStart;
 
     expect(result?.code).toContain('ɵcmp');
+    expect(cssTransform).toHaveBeenCalledWith(
+      expect.any(String),
+      `${stylePath}?direct`,
+    );
+    expect(cssTransform.mock.contexts[0]).toBe(ctx);
     expect(ctx.warn).not.toHaveBeenCalled();
   }, 60_000);
 
   it('emits sourcemaps for production builds when build.sourcemap is enabled', async () => {
     const mainPlugin = createAppBuildPlugin();
+    realFs.writeFileSync(
+      componentPath,
+      `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+})
+export class AppComponent {}
+`,
+      'utf-8',
+    );
 
     await mainPlugin.config(
       { root: fixtureDir, build: { sourcemap: true } },
       { command: 'build' },
     );
-    mainPlugin.configResolved({
+    const resolvedConfig = {
       root: fixtureDir,
       mode: 'production',
       build: { sourcemap: true },
       server: { watch: {} },
       safeModulePaths: new Set(),
-    });
+    };
+    mainPlugin.configResolved(resolvedConfig);
+    const environmentConfig = {
+      ...resolvedConfig,
+      plugins: [
+        {
+          name: 'vite:css',
+          transform: { handler: vi.fn(async (code: string) => ({ code })) },
+        },
+      ],
+    };
 
-    const ctx = { warn: vi.fn(), error: vi.fn(), addWatchFile: vi.fn() };
+    const ctx = {
+      environment: { config: environmentConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
     const code = realFs.readFileSync(componentPath, 'utf-8');
 
     await mainPlugin.buildStart.call(ctx);
