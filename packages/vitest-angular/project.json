@@ -22,6 +22,13 @@
         "command": "node tools/scripts/verify-package-artifacts.mts vitest-angular"
       }
     },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build"],
+      "options": {
+        "configFile": "packages/vitest-angular/vite.config.ts"
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
