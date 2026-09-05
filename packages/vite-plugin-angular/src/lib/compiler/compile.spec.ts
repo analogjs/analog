@@ -28,4 +28,10 @@ describe('NgLite Compiler', () => {
     expect(pipe).toContain('ɵpipe');
     expect(service).toContain('ɵprov');
   });
+
+  it('uses null for the default providedIn for Injectable', () => {
+    const service = compile(`@Injectable() class S {}`, 's.ts');
+    expect(service).not.toContain('providedIn: "root"');
+    expect(service).not.toContain("providedIn: 'root'");
+  });
 });
