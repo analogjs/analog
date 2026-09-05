@@ -8,9 +8,30 @@ export function buildOptimizerPlugin({
   supportedBrowsers: string[];
   jit: boolean;
 }): Plugin {
-  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
+  const transformers = new Map<
+    string,
+    InstanceType<typeof JavaScriptTransformer>
+  >();
   let isProd = false;
+  let isWatch = false;
   let preserveVendorMaps = false;
+
+  function getTransformer(envName = 'default') {
+    let transformer = transformers.get(envName);
+    if (!transformer) {
+      transformer = new JavaScriptTransformer(
+        {
+          sourcemap: preserveVendorMaps,
+          thirdPartySourcemaps: preserveVendorMaps,
+          advancedOptimizations: isProd,
+          jit: true,
+        },
+        1,
+      );
+      transformers.set(envName, transformer);
+    }
+    return transformer;
+  }
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
@@ -44,15 +65,7 @@ export function buildOptimizerPlugin({
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
-      javascriptTransformer = new JavaScriptTransformer(
-        {
-          sourcemap: preserveVendorMaps,
-          thirdPartySourcemaps: preserveVendorMaps,
-          advancedOptimizations: isProd,
-          jit: true,
-        },
-        1,
-      );
+      isWatch = config.command === 'serve' || !!config.build?.watch;
     },
     transform: {
       filter: {
@@ -85,7 +98,9 @@ export function buildOptimizerPlugin({
 
         const sideEffects =
           jit && cleanId.includes('@angular/compiler') ? true : false;
-        const result: Uint8Array = await javascriptTransformer.transformData(
+        const envName = this.environment?.name ?? 'default';
+        const transformer = getTransformer(envName);
+        const result: Uint8Array = await transformer.transformData(
           cleanId,
           code,
           false,
@@ -97,6 +112,17 @@ export function buildOptimizerPlugin({
           ? extractInlineSourceMap(transformed, cleanId)
           : { code: transformed, map: { mappings: '' } };
       },
+    },
+    async closeBundle() {
+      if (isWatch) {
+        return;
+      }
+      const envName = this.environment?.name ?? 'default';
+      const transformer = transformers.get(envName);
+      if (transformer) {
+        transformers.delete(envName);
+        await transformer.close();
+      }
     },
   };
 }
