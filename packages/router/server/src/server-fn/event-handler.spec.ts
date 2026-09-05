@@ -1,125 +1,135 @@
-import { Injector } from '@angular/core';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+// @vitest-environment node
+import { createServerFnEventHandler } from './event-handler';
+import { serverFn } from './server-fn';
+import { serverFnRegistry } from './registry';
+import { DestroyRef, Injector, inject } from '@angular/core';
+import { nullable, string } from 'valibot';
+import { H3, toNodeHandler } from 'nitro/h3';
+import { once } from 'node:events';
+import { createServer } from 'node:http';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-// Keep h3 real except `readBody`, whose parse-failure path is what the
-// malformed-body case exercises — driving that from a plain fake event would
-// mean reconstructing h3's raw-body stream internals.
-vi.mock('h3', async () => {
-  const actual = await vi.importActual<typeof import('h3')>('h3');
-  return {
-    ...actual,
-    readBody: async (event: { __throws?: boolean; _requestBody?: unknown }) => {
-      if (event.__throws) {
-        throw new SyntaxError('Unexpected token in JSON');
-      }
-      return event._requestBody;
-    },
-  };
+const parent = Injector.create({ providers: [] });
+const app = new H3()
+  .all('/_analog/fn/:id', createServerFnEventHandler(parent))
+  .all(
+    '/_analog/promised/:id',
+    createServerFnEventHandler(Promise.resolve(parent)),
+  );
+const server = createServer(toNodeHandler(app));
+const listening = Promise.withResolvers<URL>();
+const standardInput = nullable(string());
+
+beforeAll(async () => {
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  const address = server.address();
+  if (address === null || typeof address === 'string')
+    throw new Error('Expected an allocated loopback TCP port');
+  listening.resolve(new URL(`http://127.0.0.1:${address.port}`));
 });
 
-import { handleServerFnRequest } from './event-handler';
-import { serverFnRegistry } from './registry';
-import { serverFn } from './server-fn';
+afterAll(async () => {
+  server.closeAllConnections();
+  await new Promise<void>((resolve, reject) =>
+    server.close((error) => (error ? reject(error) : resolve())),
+  );
+  parent.destroy();
+  serverFnRegistry.clear();
+});
 
-type FakeRes = {
-  statusCode: number;
-  headers: Record<string, string | string[]>;
-  setHeader(key: string, value: string | string[]): void;
-};
-
-function fakeEvent(options: {
-  id: string;
-  method?: string;
-  body?: unknown;
-  bodyThrows?: boolean;
-  headers?: Record<string, string>;
-}) {
-  const res: FakeRes = {
-    statusCode: 200,
-    headers: {},
-    setHeader(key, value) {
-      this.headers[key] = value;
-    },
-  };
-  return {
-    method: options.method ?? 'GET',
-    context: { params: { id: options.id } },
-    node: {
-      req: { headers: options.headers ?? {} },
-      res,
-    },
-    // `readBody(event)` reads `event._requestBody` under h3's unenv shim in
-    // tests; model it (and the throwing case) directly.
-    _requestBody: options.bodyThrows ? undefined : (options.body ?? undefined),
-    __throws: options.bodyThrows,
-  } as never;
-}
-
-// h3's readBody is hard to drive from a plain object, so exercise the handler
-// through a small event whose body accessor we control.
-describe('handleServerFnRequest', () => {
-  beforeEach(() => serverFnRegistry.clear());
-
-  const jsonHeaders = { 'content-type': 'application/json' };
-
-  it('dispatches a GET and writes the status and body', async () => {
-    serverFn({ id: 'read' }, async () => ({ ok: true }));
-
-    const event = fakeEvent({ id: 'read', method: 'GET' });
-    const body = await handleServerFnRequest(
-      event,
-      Injector.create({ providers: [] }),
-    );
-
-    expect(body).toEqual({ ok: true });
-    expect(
-      (event as never as { node: { res: FakeRes } }).node.res.statusCode,
-    ).toBe(200);
-  });
-
-  it('accepts a promised injector, awaiting it before dispatch', async () => {
-    serverFn({ id: 'read2' }, async () => 'ok');
-
-    const event = fakeEvent({ id: 'read2', method: 'GET' });
-    const injector = Promise.resolve(Injector.create({ providers: [] }));
-
-    await expect(handleServerFnRequest(event, injector)).resolves.toBe('ok');
-  });
-
-  it('propagates response headers onto the h3 response', async () => {
-    serverFn({ id: 'redir' }, async () => {
-      return new Response(null, {
-        status: 302,
-        headers: { Location: '/next' },
+describe('server functions over Node HTTP', () => {
+  it.each([null, 'text'])(
+    'decodes a JSON body and releases the request scope for %j',
+    async (input) => {
+      const destroyed = vi.fn<() => void>();
+      const ref = serverFn(
+        { id: 'http-input', input: standardInput },
+        (value) => {
+          inject(DestroyRef).onDestroy(destroyed);
+          return { value };
+        },
+      );
+      const response = await fetch(new URL(ref.url, await listening.promise), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
       });
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ value: input });
+      expect(destroyed).toHaveBeenCalledExactlyOnceWith();
+    },
+  );
+
+  it('returns a JSON validation error without invoking the handler', async () => {
+    const handler = vi.fn<(value: string | null) => string | null>(
+      (value) => value,
+    );
+    const ref = serverFn({ id: 'http-invalid', input: standardInput }, handler);
+    const response = await fetch(new URL(ref.url, await listening.promise), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{"unexpected":true}',
     });
-
-    const event = fakeEvent({ id: 'redir', method: 'GET' });
-    const res = (event as never as { node: { res: FakeRes } }).node.res;
-
-    await handleServerFnRequest(event, Injector.create({ providers: [] }));
-
-    expect(res.statusCode).toBe(302);
-    expect(res.headers['location']).toBe('/next');
+    expect(response.status).toBe(400);
+    expect(await response.json()).toHaveProperty('errors');
+    expect(handler).not.toHaveBeenCalled();
   });
 
-  it('returns 400 with the JSON error contract when the body is malformed', async () => {
-    serverFn({ id: 'write', method: 'POST' }, async () => 'never');
-
-    const event = fakeEvent({
-      id: 'write',
-      method: 'POST',
-      bodyThrows: true,
-      headers: jsonHeaders,
-    });
-    const res = (event as never as { node: { res: FakeRes } }).node.res;
-
-    const body = await handleServerFnRequest(
-      event,
-      Injector.create({ providers: [] }),
+  it('preserves a redirect status and Location over the native HTTP adapter', async () => {
+    const ref = serverFn(
+      { id: 'http-redirect' },
+      () =>
+        new Response(null, {
+          status: 303,
+          headers: { Location: '/destination' },
+        }),
     );
+    const response = await fetch(new URL(ref.url, await listening.promise), {
+      redirect: 'manual',
+    });
+    await response.text();
+    expect(response.status).toBe(303);
+    expect(response.headers.get('location')).toBe('/destination');
+  });
 
-    expect(res.statusCode).toBe(400);
-    expect(body).toEqual({ message: 'Malformed request body' });
+  it('awaits a promised application injector', async () => {
+    serverFn({ id: 'http-promised' }, () => ({ ready: true }));
+    const response = await fetch(
+      new URL('/_analog/promised/http-promised', await listening.promise),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ready: true });
+  });
+
+  it('returns the JSON error contract for malformed JSON', async () => {
+    const handler = vi.fn<() => string>(() => 'never');
+    const ref = serverFn({ id: 'http-malformed', method: 'POST' }, handler);
+    const response = await fetch(new URL(ref.url, await listening.promise), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{invalid',
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      message: 'Malformed request body',
+    });
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('keeps repeated response cookies separate', async () => {
+    const ref = serverFn({ id: 'http-cookies' }, () => {
+      const headers = new Headers();
+      headers.append('set-cookie', 'first=1; Path=/');
+      headers.append('set-cookie', 'second=2; Path=/');
+      return new Response(null, { status: 204, headers });
+    });
+    const response = await fetch(new URL(ref.url, await listening.promise));
+    await response.text();
+    expect(response.status).toBe(204);
+    expect(response.headers.getSetCookie()).toEqual([
+      'first=1; Path=/',
+      'second=2; Path=/',
+    ]);
   });
 });

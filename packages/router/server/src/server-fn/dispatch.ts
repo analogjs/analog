@@ -153,14 +153,21 @@ export async function dispatchServerFn(
   // chain once: an interceptor that awaits before `next` would otherwise run the
   // handler outside the context and break `inject()`.
   const runInCtx = <T>(fn: () => T): T => runInInjectionContext(injector, fn);
-  const interceptors = injector.get(SERVER_FN_INTERCEPTORS, []);
-  const outcome = await runInterceptors(
-    interceptors,
-    input,
-    def.handler,
-    runInCtx,
-  );
+  try {
+    const interceptors = injector.get(SERVER_FN_INTERCEPTORS, []);
+    const outcome = await runInterceptors(
+      interceptors,
+      input,
+      def.handler,
+      runInCtx,
+    );
+    return await readServerFnOutcome(outcome);
+  } finally {
+    injector.destroy();
+  }
+}
 
+async function readServerFnOutcome(outcome: unknown): Promise<DispatchResult> {
   if (outcome instanceof Response) {
     const text = await outcome.text();
     const body = text ? safeJson(text) : null;

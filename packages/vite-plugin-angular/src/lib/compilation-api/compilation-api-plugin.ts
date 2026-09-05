@@ -160,11 +160,10 @@ export function compilationAPIPlugin(
       resolvedTsConfigPath,
       config,
     );
-    const mergedRootNames = union(
-      cached.rootNames,
-      expandedGraphRoots,
-      includedFiles,
-    ).map((file) => normalizePath(file));
+    const mergedRootNames = union(cached.rootNames, [
+      ...expandedGraphRoots,
+      ...includedFiles,
+    ]).map((file) => normalizePath(file));
 
     if (mergedRootNames.length === cached.rootNames.length) {
       return resolvedTsConfigPath;
@@ -272,9 +271,9 @@ export function compilationAPIPlugin(
         async transformStylesheet(
           data: string,
           containingFile: string,
-          resourceFile: string | null,
-          order: number,
-          className: string | null,
+          resourceFile?: string,
+          order?: number,
+          className?: string,
         ) {
           const filename =
             resourceFile ??
@@ -465,7 +464,7 @@ export function compilationAPIPlugin(
       });
     }
 
-    const affectedFiles = await compilation.emitAffectedFiles();
+    const affectedFiles = [...(await compilation.emitAffectedFiles())];
     debugEmit('emitAffectedFiles summary', {
       count: affectedFiles.length,
       templateUpdateCount: templateUpdates.size,
@@ -602,6 +601,7 @@ export function compilationAPIPlugin(
                   plugins: [
                     createRolldownCompilerPlugin(
                       compilerPluginOptions,
+                      isTest,
                       !pluginOptions.isAstroIntegration,
                     ),
                   ],
@@ -697,12 +697,10 @@ export function compilationAPIPlugin(
           debugHmr('sending component update', { relativeFileId });
           sendHMRComponentUpdate(ctx.server, relativeFileId);
 
-          return ctx.modules.map((mod) => {
-            if (mod.id === ctx.file) {
-              mod.isSelfAccepting = true;
-            }
-            return mod;
-          });
+          const clientModule =
+            ctx.server.environments.client?.moduleGraph.getModuleById(ctx.file);
+          if (clientModule) clientModule.isSelfAccepting = true;
+          return ctx.modules;
         }
       }
 
@@ -814,6 +812,8 @@ export function compilationAPIPlugin(
           await pendingCompilation;
           pendingCompilation = null;
         }
+
+        await compilationLock;
 
         const typescriptResult = fileEmitter(id);
         if (!typescriptResult) {

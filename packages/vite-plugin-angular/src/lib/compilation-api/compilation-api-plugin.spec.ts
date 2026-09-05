@@ -137,9 +137,13 @@ describe('compilationAPIPlugin', () => {
 
     expect(result.esbuild).toBeUndefined();
     expect(result.oxc).toBeUndefined();
+    expect(result.optimizeDeps.rolldownOptions.plugins[0].load).toBeDefined();
+    expect(result.optimizeDeps.rolldownOptions.plugins[0].buildEnd).toBeTypeOf(
+      'function',
+    );
   });
 
-  it('initializes compilation on buildStart', async () => {
+  it('waits for buildStart compilation before transforming an emitted module', async () => {
     const initializeMock = vi.fn().mockResolvedValue({
       externalStylesheets: new Map(),
       templateUpdates: new Map(),
@@ -147,7 +151,11 @@ describe('compilationAPIPlugin', () => {
     const diagnoseFilesMock = vi
       .fn()
       .mockResolvedValue({ errors: [], warnings: [] });
-    const emitAffectedFilesMock = vi.fn().mockResolvedValue([]);
+    const emitted =
+      Promise.withResolvers<{ filename: string; contents: string }[]>();
+    const emitAffectedFilesMock = vi
+      .fn()
+      .mockImplementation(() => emitted.promise);
 
     createAngularCompilationMock.mockResolvedValue({
       initialize: initializeMock,
@@ -184,10 +192,25 @@ describe('compilationAPIPlugin', () => {
       server: {},
       plugins: [],
     });
-    await (plugin.buildStart as any).call({
+    const building = (plugin.buildStart as any).call({
       addWatchFile: vi.fn(),
       error: vi.fn(),
       warn: vi.fn(),
+    });
+
+    await vi.waitFor(() =>
+      expect(emitAffectedFilesMock).toHaveBeenCalledOnce(),
+    );
+    const filename = join(tempRoot, 'main.ts');
+    const transformed = (plugin.transform as any).handler.call(
+      { warn: vi.fn(), error: vi.fn() },
+      'export const value = 1;',
+      filename,
+    );
+    emitted.resolve([{ filename, contents: 'export const value = 1;' }]);
+    await building;
+    await expect(transformed).resolves.toMatchObject({
+      code: 'export const value = 1;',
     });
 
     expect(createAngularCompilationMock).toHaveBeenCalledOnce();
@@ -327,7 +350,7 @@ describe('compilationAPIPlugin', () => {
       externalStylesheets: new Map(),
       templateUpdates: new Map([
         [
-          encodeURIComponent(`src/app.component.ts@AppComponent`),
+          encodeURIComponent(`${testFile}@AppComponent`),
           '/* hmr update code */',
         ],
       ]),
@@ -394,6 +417,28 @@ describe('compilationAPIPlugin', () => {
 
     expect(result).toBeDefined();
     expect(result.code).toBe('compiled output');
+
+    const clientModule = { isSelfAccepting: false };
+    const mixedModule = {
+      id: testFile,
+      get isSelfAccepting() {
+        return clientModule.isSelfAccepting;
+      },
+    };
+    const send = vi.fn();
+    const modules = await (plugin.handleHotUpdate as any)({
+      file: testFile,
+      modules: [mixedModule],
+      server: {
+        ws: { send },
+        environments: {
+          client: { moduleGraph: { getModuleById: () => clientModule } },
+        },
+      },
+    });
+    expect(modules).toEqual([mixedModule]);
+    expect(clientModule.isSelfAccepting).toBe(true);
+    expect(send).toHaveBeenCalled();
   });
 
   it('serves emitted output for TypeScript files without Angular decorators', async () => {

@@ -236,12 +236,13 @@ describe('analogNitroPlugin', () => {
     });
   });
 
-  it('stamps route rule headers for ssr and streaming opt-outs', () => {
+  it('stamps route rule headers for explicit SSR and streaming policies', () => {
     const nitroMock: any = {
       options: {
         routeRules: {
           '/buffered': { streaming: false },
           '/no-ssr': { ssr: false },
+          '/ssr': { ssr: true, headers: { 'x-existing': 'preserved' } },
           '/default': {},
         },
       },
@@ -254,6 +255,10 @@ describe('analogNitroPlugin', () => {
     });
     expect(nitroMock.options.routeRules['/no-ssr'].headers).toEqual({
       'x-analog-no-ssr': 'true',
+    });
+    expect(nitroMock.options.routeRules['/ssr'].headers).toEqual({
+      'x-existing': 'preserved',
+      'x-analog-no-ssr': 'false',
     });
     expect(nitroMock.options.routeRules['/default'].headers).toBeUndefined();
   });

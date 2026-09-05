@@ -2,7 +2,7 @@ import { type SnapshotSerializer } from 'vitest';
 
 const CLEANED_ELEMENT_MARKER = '__analogSnapshotCleaned__';
 
-export const attributesToRemovePatterns = [
+export const attributesToRemovePatterns: string[] = [
   'ng-reflect',
   '_nghost',
   '_ngcontent',

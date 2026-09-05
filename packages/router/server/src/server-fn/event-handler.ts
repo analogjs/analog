@@ -3,6 +3,8 @@ import {
   eventHandler,
   getRouterParam,
   readBody,
+  setResponseHeader,
+  setResponseStatus,
   type EventHandler,
   type H3Event,
 } from 'nitro/h3';
@@ -38,7 +40,7 @@ export async function handleServerFnRequest(
   event: H3Event,
   appInjector: Injector | Promise<Injector>,
 ): Promise<unknown> {
-  const node = assertNodeContext(event);
+  assertNodeContext(event);
   const id = getRouterParam(event, 'id') ?? '';
 
   // h3 parses the body before dispatch gets a say, and its parse error is an
@@ -48,7 +50,7 @@ export async function handleServerFnRequest(
     try {
       input = await readBody(event);
     } catch {
-      node.res.statusCode = 400;
+      setResponseStatus(event, 400);
       return { message: 'Malformed request body' };
     }
   }
@@ -58,10 +60,10 @@ export async function handleServerFnRequest(
     method: event.method,
   });
 
-  node.res.statusCode = status;
+  setResponseStatus(event, status);
   if (headers) {
     for (const [key, value] of Object.entries(headers)) {
-      node.res.setHeader(key, value);
+      setResponseHeader(event, key, value);
     }
   }
   return body;

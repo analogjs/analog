@@ -2,6 +2,12 @@
 
 [Vitest](https://vitest.dev) can be added to **_any_** existing Angular project with a few steps.
 
+The integration supports Vitest 5 alongside its existing Vitest 1–4 peer ranges.
+Vitest 5 requires Vite 6.4 or newer and Node.js 22.12 or newer; see the
+[Vitest migration guide](https://vitest.dev/guide/migration/). Keep `vitest` and
+its `@vitest/*` companion packages on the same version. Use the bare `vitest`
+import in setup files so hooks register with the active runner.
+
 ## Automated Setup Using a Schematic/Generator
 
 Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.

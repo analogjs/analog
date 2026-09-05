@@ -96,6 +96,10 @@ jobs:
         run: |
           node -e "
           const fs = require('fs');
+          // This matrix tests compiler APIs; the main CI job builds the workspace.
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+          delete pkg.scripts.prepare;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           const f = 'pnpm-workspace.yaml';
           const v = '${{ matrix.angular-version }}';
           const pinned = ['@angular/compiler', '@angular/compiler-cli'];
