@@ -203,20 +203,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       };
 
       if (ssr) {
-        // Two-pronged registration: `experimental.vite.services.ssr.entry`
-        // is the documented hook, but nitro/vite's setupNitroContext also
-        // accepts an `environments.ssr.build.rollupOptions.input` entry
-        // (see node_modules/nitro/dist/vite.mjs:710-734). When `analog()`
-        // and `nitro()` are invoked separately, the `services` slot on
-        // `nitro()`'s pluginConfig is empty, so the rollupOptions.input
-        // path is how we get our wrapper entry recognized.
-        overrides.experimental = {
-          vite: {
-            services: {
-              ssr: { entry: ssrEntryMarkerPath },
-            },
-          },
-        };
+        // Nitro discovers this service from the Vite environment input.
+        // experimental.vite.services belongs to nitro()'s own configuration,
+        // not Vite's experimental options returned by this hook.
         (overrides.environments as Record<string, unknown>)['ssr'] = {
           build: {
             outDir: resolve(
@@ -345,9 +334,8 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // `apps/<name>/.vercel/output/` and the deploy can't find them.
           // Hoist to workspace root and apply Analog's runtime defaults.
           if (preset.includes('vercel')) {
-            const vercel = (nitro.options as { vercel?: Record<string, any> })
-              .vercel;
-            (nitro.options as { vercel?: Record<string, any> }).vercel = {
+            const vercel = nitro.options.vercel;
+            nitro.options.vercel = {
               ...vercel,
               entryFormat: vercel?.entryFormat ?? 'node',
               functions: {
@@ -925,10 +913,7 @@ async function wirePrerender(
       })
     : collected;
 
-  const nitroPrerender = (nitro.options.prerender ??= {}) as Record<
-    string,
-    any
-  >;
+  const nitroPrerender = (nitro.options.prerender ??= {});
   nitroPrerender.routes ??= [];
   nitroPrerender.routes.push(...expanded);
   if (prerender?.discover ?? false) {
@@ -942,9 +927,7 @@ async function wirePrerender(
   // straight back out — the route never reaches the renderer at all. Drop it
   // once the assets are in place and before the first route is rendered, so
   // the prerendered document takes its place.
-  const prerendersRoot = (nitroPrerender.routes as string[]).some(
-    (route) => route === '/',
-  );
+  const prerendersRoot = nitroPrerender.routes.some((route) => route === '/');
 
   if ((options.ssr ?? true) && prerendersRoot) {
     nitro.hooks.hook('prerender:init', () => {
@@ -1002,11 +985,7 @@ async function wirePrerender(
 }
 
 async function collectRoutes(
-  routesInput: Options['prerender'] extends infer P
-    ? P extends { routes?: infer R }
-      ? R
-      : never
-    : never,
+  routesInput: NonNullable<Options['prerender']>['routes'],
   context: NitroPluginContext,
   apiPrefix: string,
 ): Promise<{
