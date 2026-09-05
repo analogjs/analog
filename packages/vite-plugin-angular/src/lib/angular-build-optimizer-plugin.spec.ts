@@ -322,3 +322,50 @@ export class Greeter {
     });
   });
 });
+
+describe('buildOptimizerPlugin lifecycle & environment handling', () => {
+  it('closes transformer on closeBundle in non-watch mode', async () => {
+    const plugin = createPlugin();
+    plugin.configResolved?.({
+      command: 'build',
+      build: { sourcemap: false },
+    } as any);
+    const ctx = { environment: { name: 'client' } };
+
+    await (plugin.transform as any).handler.call(
+      ctx,
+      'console.log("hello");',
+      '/x/test.js',
+    );
+
+    await expect((plugin as any).closeBundle.call(ctx)).resolves.not.toThrow();
+  });
+
+  it('maintains isolated transformers across client and ssr environments', async () => {
+    const plugin = createPlugin();
+    plugin.configResolved?.({
+      command: 'build',
+      build: { sourcemap: false },
+    } as any);
+    const clientCtx = { environment: { name: 'client' } };
+    const ssrCtx = { environment: { name: 'ssr' } };
+
+    await (plugin.transform as any).handler.call(
+      clientCtx,
+      'console.log("client");',
+      '/x/test.js',
+    );
+    await (plugin.transform as any).handler.call(
+      ssrCtx,
+      'console.log("ssr");',
+      '/x/test.js',
+    );
+
+    await expect(
+      (plugin as any).closeBundle.call(clientCtx),
+    ).resolves.not.toThrow();
+    await expect(
+      (plugin as any).closeBundle.call(ssrCtx),
+    ).resolves.not.toThrow();
+  });
+});
