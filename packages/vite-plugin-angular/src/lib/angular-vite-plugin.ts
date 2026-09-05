@@ -93,11 +93,7 @@ import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { cssExtensionStyleResolverPlugin } from './utils/css-extension-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
-import {
-  toVirtualRawId,
-  toVirtualStyleId,
-  VIRTUAL_RAW_PREFIX,
-} from './utils/virtual-ids.js';
+import { toVirtualRawId, VIRTUAL_RAW_PREFIX } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
@@ -445,6 +441,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   jit,
                   incremental: watchMode,
                 },
+                isTest,
                 // Astro manages the transformer lifecycle externally.
                 !isAstroIntegration,
               ),
@@ -1494,11 +1491,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = union(
-      rootNames,
-      tsconfigResolver.ensureIncludeCache(),
-      replacements,
-    );
+    rootNames = union(rootNames, [
+      ...tsconfigResolver.ensureIncludeCache(),
+      ...replacements,
+    ]);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
