@@ -9,5 +9,8 @@
     "@analogjs/router": "workspace:*",
     "@analogjs/vitest-angular": "workspace:*",
     "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "workspace:*"
   }
 }

@@ -15,6 +15,10 @@ Source code for the Analog framework exists under the `packages/` folder. To con
 
 Analog uses [pnpm](https://pnpm.io/) to manage its dependencies.
 
+Use the Node.js version pinned in `.node-version`. Angular 22 requires Node.js
+24.15.0 or newer in the 24.x release line, or Node.js 26.x.
+The `.nvmrc` symlink shares that pin with nvm and the Nx Agents Node installer.
+
 Before opening a pull request, run the following command from the root folder to make sure your development dependencies are up-to-date:
 
 ```shell
