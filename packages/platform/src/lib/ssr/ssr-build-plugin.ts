@@ -93,7 +93,7 @@ export function ssrBuildPlugin(): vite.Plugin[] {
  * Only active when the platform's `i18n` option is configured.
  * Only transforms `@angular/core` modules in SSR builds.
  */
-export function i18nDefRegistryPlugin(): Plugin {
+export function i18nDefRegistryPlugin(): vite.Plugin {
   const DETECT_MARKER = 'GENERATED_COMP_IDS.set(compId, componentDef.type);';
   const RETURN_STMT = 'return compId;\n}';
 
