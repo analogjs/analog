@@ -2,6 +2,18 @@ import * as o from '@angular/compiler';
 import { unwrapForwardRefOxc } from './utils.js';
 import { FIELD_DECORATORS, SIGNAL_APIS } from './constants.js';
 
+interface DetectedFields {
+  inputs: o.R3DirectiveMetadata['inputs'];
+  outputs: o.R3DirectiveMetadata['outputs'];
+  viewQueries: o.R3QueryMetadata[];
+  contentQueries: o.R3QueryMetadata[];
+}
+
+interface DetectedDecoratedFields extends DetectedFields {
+  hostProperties: Record<string, string>;
+  hostListeners: Record<string, string>;
+}
+
 function getCallApi(call: any): { api: string; required: boolean } | null {
   const callee = call.callee;
   if (!callee) return null;
@@ -453,7 +465,10 @@ export function extractMetadata(
  * Detect signal-based APIs on class members: input(), model(), output(),
  * viewChild(), contentChild(), viewChildren(), contentChildren().
  */
-export function detectSignals(classNode: any, sourceCode: string) {
+export function detectSignals(
+  classNode: any,
+  sourceCode: string,
+): DetectedFields {
   const inputs: any = {},
     outputs: any = {},
     viewQueries: any[] = [],
@@ -684,7 +699,10 @@ export function detectSignals(classNode: any, sourceCode: string) {
  * Detect decorator-based field metadata: @Input, @Output, @ViewChild,
  * @ContentChild, @ViewChildren, @ContentChildren, @HostBinding, @HostListener.
  */
-export function detectFieldDecorators(classNode: any, sourceCode: string) {
+export function detectFieldDecorators(
+  classNode: any,
+  sourceCode: string,
+): DetectedDecoratedFields {
   const inputs: any = {};
   const outputs: any = {};
   const viewQueries: any[] = [];

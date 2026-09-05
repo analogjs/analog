@@ -6,7 +6,7 @@
  */
 
 /** All six Angular class decorators. */
-export const ANGULAR_DECORATORS = new Set([
+export const ANGULAR_DECORATORS: Set<string> = new Set([
   'Component',
   'Directive',
   'Pipe',
@@ -20,7 +20,7 @@ export const ANGULAR_DECORATORS = new Set([
  * Derived from {@link ANGULAR_DECORATORS} so the fast-path "is this an Angular file?"
  * checks stay in sync with the canonical decorator set and don't drift.
  */
-export const ANGULAR_DECORATOR_CALL_RE = new RegExp(
+export const ANGULAR_DECORATOR_CALL_RE: RegExp = new RegExp(
   `@(${[...ANGULAR_DECORATORS].join('|')})\\(`,
 );
 
@@ -29,7 +29,7 @@ export const ANGULAR_DECORATOR_CALL_RE = new RegExp(
  * pipe name, or module exports).  Excludes `@Injectable` and `@Service`, which
  * self-register via ɵprov and don't need Ivy compilation.
  */
-export const COMPILABLE_DECORATORS = new Set([
+export const COMPILABLE_DECORATORS: Set<string> = new Set([
   'Component',
   'Directive',
   'Pipe',
@@ -37,7 +37,7 @@ export const COMPILABLE_DECORATORS = new Set([
 ]);
 
 /** Decorator names used on class fields and host bindings. */
-export const FIELD_DECORATORS = new Set([
+export const FIELD_DECORATORS: Set<string> = new Set([
   'Input',
   'Output',
   'ViewChild',
@@ -49,7 +49,7 @@ export const FIELD_DECORATORS = new Set([
 ]);
 
 /** Signal-based reactive APIs that need downleveling or metadata extraction. */
-export const SIGNAL_APIS = new Set([
+export const SIGNAL_APIS: Set<string> = new Set([
   'input',
   'model',
   'output',

@@ -1,4 +1,4 @@
-import { createDebug } from 'obug';
+import { createDebug, type Debugger } from 'obug';
 
 // Structured debug output for the fast-compile path. Activated via the
 // `DEBUG` environment variable, e.g.:
@@ -17,24 +17,24 @@ const root = createDebug('analog-fast-compile');
  * Top-level compile/transform events: per-file start, end, timing,
  * fatal errors that get rethrown after logging.
  */
-export const debugCompile = root;
+export const debugCompile: Debugger = root;
 
 /**
  * Registry scanning of `.ts` and `.d.ts` files. Useful when a directive
  * or pipe is not being recognized as a dependency — turning this on
  * shows what the registry actually saw.
  */
-export const debugRegistry = root.extend('registry');
+export const debugRegistry: Debugger = root.extend('registry');
 
 /**
  * Cross-file dependency resolution decisions: how an `imports: [...]`
  * entry was resolved to underlying directives, NgModule export
  * expansion, tuple barrel expansion.
  */
-export const debugResolve = root.extend('resolve');
+export const debugResolve: Debugger = root.extend('resolve');
 
 /**
  * Code emission and helper hoisting: which Ivy instructions were
  * emitted, where helpers were inserted, type-only import elision.
  */
-export const debugEmit = root.extend('emit');
+export const debugEmit: Debugger = root.extend('emit');

@@ -928,7 +928,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           });
 
           pendingCompilation = performCompilation(resolvedConfig, [
-            ...mods.map((mod) => mod.id).filter(Boolean),
+            ...mods
+              .map((mod) => mod.id)
+              .filter((id): id is string => Boolean(id)),
             ...updates,
           ]);
 
@@ -1097,7 +1099,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
             debugStylesV('load: served inline component stylesheet', {
               filename,
-              length: componentStyles.length,
               requestId: id,
               ...describeStylesheetContent(componentStyles),
             });
@@ -1831,7 +1832,7 @@ export async function getModulesForChangedFile(
     requestId: string;
     candidate: string;
     via: 'url' | 'id';
-    moduleId?: string;
+    moduleId?: string | null;
   }> = [];
   for (const requestId of stylesheetRequestIds) {
     const candidates = [
@@ -1923,7 +1924,7 @@ function diagnoseComponentStylesheetPipeline(
   dependencies: StylesheetDependency[];
   diagnostics: ReturnType<AnalogStylesheetRegistry['getDiagnosticsForSource']>;
   tags: string[];
-  directModuleId?: string;
+  directModuleId?: string | null;
   directModuleUrl?: string;
   trackedRequestIds: string[];
   wrapperCount: number;
@@ -2117,7 +2118,7 @@ export async function findComponentStylesheetWrapperModules(
   const lookupHits: Array<{
     candidate: string;
     via?: 'url' | 'id';
-    moduleId?: string;
+    moduleId?: string | null;
     moduleType?: string;
   }> = [];
 
@@ -2220,8 +2221,8 @@ function logComponentStylesheetHmrOutcome(details: {
   encapsulation: string;
   diagnosis: ReturnType<typeof diagnoseComponentStylesheetPipeline>;
   outcome: ComponentStylesheetHmrOutcome;
-  directModuleId?: string;
-  wrapperIds?: string[];
+  directModuleId?: string | null;
+  wrapperIds?: Array<string | null>;
 }) {
   const pitfalls: string[] = [];
   const rejectedPreferredPaths: string[] = [];

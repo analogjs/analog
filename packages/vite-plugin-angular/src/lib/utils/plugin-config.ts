@@ -23,7 +23,7 @@ import {
  * zero characters, and any non-`x` letter was admitted — so `.tsrx`
  * and similar extensions matched by accident.
  */
-export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
+export const TS_EXT_REGEX: RegExp = /\.[cm]?ts(?![a-z])/;
 
 /**
  * Resolves whether Angular should be compiled for production. An explicit
@@ -52,7 +52,7 @@ export function getTsConfigPath(
   isTest: boolean,
   isLib: boolean,
   workspaceRoot?: string,
-) {
+): string {
   if (tsconfig && isAbsolute(tsconfig)) {
     if (!existsSync(tsconfig)) {
       console.error(
@@ -111,7 +111,7 @@ export function getTsConfigPath(
 
 export function createTsConfigGetter(
   tsconfigOrGetter?: string | (() => string),
-) {
+): () => string {
   if (typeof tsconfigOrGetter === 'function') {
     return tsconfigOrGetter;
   }
@@ -128,7 +128,12 @@ export interface DepOptimizerOptions {
   isAstroIntegration: boolean;
 }
 
-export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
+export function createDepOptimizerConfig(opts: DepOptimizerOptions): {
+  optimizeDeps: vite.DepOptimizationOptions & {
+    include: string[];
+    exclude: string[];
+  };
+} {
   const defineOptions = {
     ngJitMode: 'false',
     ngI18nClosureMode: 'false',
