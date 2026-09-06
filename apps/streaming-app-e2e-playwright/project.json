@@ -13,7 +13,8 @@
       "executor": "nx:run-commands",
       "options": {
         "cwd": "",
-        "command": "start-server-and-test 'nx serve-nitro streaming-app' http://localhost:3211/fn-buffered 'nx run streaming-app-e2e-playwright:vitest'"
+        "env": { "PORT": "3211", "HOST": "127.0.0.1" },
+        "command": "start-server-and-test 'node dist/apps/streaming-app/analog/server/index.mjs' http://127.0.0.1:3211/fn-buffered 'nx run streaming-app-e2e-playwright:vitest'"
       }
     },
     "lint": {
