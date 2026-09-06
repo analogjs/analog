@@ -15,6 +15,15 @@ const baseURL = process.env['E2E_BASE_URL'] ?? 'http://localhost:3211';
 const SERVER_FN_PATH = '/_analog/fn/';
 const SEED_KEY_RE = /__analog_fn_[a-z0-9]+_/;
 const TOKEN_RE = /srv-[0-9a-f-]{8,}/;
+// Freeze the public IDs for the fixture's source paths and export names.
+// Deliberate fixture renames update these; a changed build algorithm must not
+// silently change both the producer and the test's expectation.
+const HTTP_FUNCTION_IDS = {
+  getGreeting: 'b433cec6a2df44df',
+  echo: '922435c0a643faf2',
+  redirect: '2b9ef1de5a4f82d1',
+  cookies: '1fa490a326a4632b',
+} as const;
 
 let browser: Browser;
 
@@ -89,6 +98,81 @@ async function validateRoute(path: string) {
 }
 
 describe('serverFn inside @defer (hydrate on immediate)', () => {
+  test('dispatches a cold HTTP request before a page loads its server-function module', async () => {
+    const id = HTTP_FUNCTION_IDS.getGreeting;
+    const response = await fetch(`${baseURL}/_analog/fn/${id}`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('application/json');
+    const body = await response.json();
+    expect(body.message).toBe('hello from serverFn');
+    expect(body.token).toMatch(TOKEN_RE);
+    const missing = await fetch(`${baseURL}/_analog/fn/missing`);
+    expect(missing.status).toBe(404);
+    expect(missing.headers.get('content-type')).toContain('application/json');
+  });
+
+  test('validates cold POST calls and binds the application and per-request injectors', async () => {
+    const id = HTTP_FUNCTION_IDS.echo;
+    const url = `${baseURL}/_analog/fn/${id}`;
+    const call = (value: string) =>
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-request-marker': value,
+        },
+        body: JSON.stringify({ value }),
+      });
+    const responses = await Promise.all([call('first'), call('second')]);
+    expect(responses.map((response) => response.status)).toEqual([200, 200]);
+    expect(
+      await Promise.all(responses.map((response) => response.json())),
+    ).toEqual([
+      { value: 'first', label: 'configured-server', requestMarker: 'first' },
+      { value: 'second', label: 'configured-server', requestMarker: 'second' },
+    ]);
+    const invalid = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ value: 5 }),
+    });
+    expect(invalid.status).toBe(400);
+    expect(invalid.headers.get('content-type')).toContain('application/json');
+    const malformed = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{',
+    });
+    expect(malformed.status).toBe(400);
+    expect(await malformed.json()).toEqual({
+      message: 'Malformed request body',
+    });
+    const foreign = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'sec-fetch-site': 'cross-site',
+        origin: 'https://foreign.example',
+      },
+      body: JSON.stringify({ value: 'blocked' }),
+    });
+    expect(foreign.status).toBe(403);
+    expect((await fetch(url)).status).toBe(405);
+  });
+
+  test('preserves native redirect status and separate cookies over HTTP', async () => {
+    const url = (name: keyof typeof HTTP_FUNCTION_IDS) =>
+      `${baseURL}/_analog/fn/${HTTP_FUNCTION_IDS[name]}`;
+    const redirect = await fetch(url('redirect'), { redirect: 'manual' });
+    expect(redirect.status).toBe(303);
+    expect(redirect.headers.get('location')).toBe('/buffered');
+    const cookies = await fetch(url('cookies'));
+    expect(cookies.status).toBe(204);
+    expect(cookies.headers.getSetCookie()).toEqual([
+      'first=one; Path=/; HttpOnly',
+      'second=two; Path=/; HttpOnly',
+    ]);
+  });
   test('buffered path: seeds TransferState and hydrates with zero refetch', async () => {
     await validateRoute('/fn-buffered');
   });
