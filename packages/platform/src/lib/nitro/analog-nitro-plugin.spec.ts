@@ -253,6 +253,51 @@ describe('analogNitroPlugin', () => {
     }
   });
 
+  it.each([
+    { error: { statusCode: 422 }, status: 422 },
+    { error: { status: 503 }, status: 503 },
+    { error: { statusCode: 200 }, status: 500 },
+    { error: { statusCode: '422' }, status: 500 },
+    { error: { statusCode: 600 }, status: 500 },
+  ])(
+    'returns a safe error document with HTTP status $status',
+    async ({ error, status }) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')
+        .split('\n')
+        .filter((line: string) => !line.startsWith('import '))
+        .join('\n')
+        .replace('export default', 'return');
+      const previousFetch = globalThis.$fetch;
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const renderer = vi.fn(async () => {
+          throw { ...error, message: 'private-error-marker' };
+        });
+        const service = new Function(
+          'renderer',
+          'createFetch',
+          'nitroServerFetch',
+          code,
+        )(renderer, () => vi.fn(), vi.fn());
+        const response = await service.fetch(
+          new Request('http://localhost/failed'),
+        );
+        expect(response.status).toBe(status);
+        expect(response.headers.get('cache-control')).toBe('no-store');
+        expect(response.headers.get('x-robots-tag')).toBe('noindex');
+        const html = await response.text();
+        expect(html).toContain('<h1>Unable to load this page</h1>');
+        expect(html).not.toContain('private-error-marker');
+        expect(html).not.toContain('<script');
+      } finally {
+        globalThis.$fetch = previousFetch;
+        log.mockRestore();
+      }
+    },
+  );
+
   it('registers page handlers and the page-endpoints rollup plugin in nitro setup', async () => {
     mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
     writeFileSync(

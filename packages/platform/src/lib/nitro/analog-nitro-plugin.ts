@@ -959,9 +959,11 @@ export default {
       });
     } catch (err) {
       console.error('[analog ssr]', err);
-      return new Response(TEMPLATE, {
-        status: 500,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
+      const errorStatus = err?.statusCode ?? err?.status;
+      const status = Number.isInteger(errorStatus) && errorStatus >= 400 && errorStatus <= 599 ? errorStatus : 500;
+      return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Unable to load this page</title></head><body><h1>Unable to load this page</h1><p>The request could not be completed.</p></body></html>', {
+        status,
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' },
       });
     }
   },
