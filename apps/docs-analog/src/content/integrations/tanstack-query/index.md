@@ -73,6 +73,18 @@ export const appConfig: ApplicationConfig = {
 
 `provideAnalogQuery()` rehydrates the TanStack Query cache from `TransferState` on the client, preventing duplicate fetches after SSR navigation.
 
+The native SSR host supplies a request-scoped fetch. Local subrequests inherit
+the original cookies, authorization and custom headers; explicit request headers
+take precedence. Hop-by-hop and inherited body-framing headers are excluded.
+External URLs use standard fetch with only explicitly supplied credentials.
+Request bodies, runtime context for local calls, and cancellation remain attached
+to their request. Do not store the injected fetch in a module-level variable.
+
+The SSR cookie interceptor preserves existing headers and explicit cookies. It
+adds incoming cookies only for same-origin Analog page endpoints, including when
+an absolute URL is used; a matching path on another origin receives no automatic
+cookie forwarding.
+
 :::warning Pass a factory, not a `new QueryClient()` instance.
 `provideTanStackQuery(new QueryClient())` evaluates the constructor once at module-load time, so every SSR request on the same Node process shares the same cache and leaks query state between responses. Wrapping the client in an `InjectionToken` with `factory: () => new QueryClient()` gives each `bootstrapApplication` call its own client.
 :::
