@@ -1,3 +1,9 @@
+## [2.7.2-beta.2](https://github.com/analogjs/analog/compare/v2.7.2-beta.1...v2.7.2-beta.2) (2026-09-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use null for default providedIn setting for Injectable ([#2515](https://github.com/analogjs/analog/issues/2515)) ([c555ba6](https://github.com/analogjs/analog/commit/c555ba67efdb8f876f3b99c63e07326389e417bd))
+
 ## [2.7.2-beta.1](https://github.com/analogjs/analog/compare/v2.7.1...v2.7.2-beta.1) (2026-08-31)
 
 ### Bug Fixes
