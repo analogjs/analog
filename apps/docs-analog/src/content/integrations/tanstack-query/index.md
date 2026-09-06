@@ -172,6 +172,11 @@ When nested loads prefetch the same key, TanStack's cache timestamps determine
 which value is retained. The server transfers that resolved cache to the browser;
 an older child payload does not replace newer parent or application-prefetched data.
 
+For Worker builds, Analog respects Nitro's non-Node or `noExternals: true` target
+policy. Dependencies used by generated page-load endpoints, including RxJS, are
+bundled instead of requiring a runtime `node_modules` directory. Native-only
+dependencies still need a compatible target or a separate adapter.
+
 ```ts
 // src/app/pages/posts.server.ts
 import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';

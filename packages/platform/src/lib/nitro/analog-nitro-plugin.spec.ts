@@ -325,6 +325,46 @@ describe('analogNitroPlugin', () => {
     );
   });
 
+  it.each([
+    { node: false, noExternals: undefined, externalize: false },
+    { node: true, noExternals: true, externalize: false },
+    { node: true, noExternals: false, externalize: true },
+  ])(
+    'respects the resolved Nitro dependency policy %j',
+    async ({ node, noExternals, externalize }) => {
+      const plugin = analogNitroPlugin({ workspaceRoot, ssr: false });
+      callConfig(plugin, projectRoot);
+      const hook = vi.fn();
+      const nitroMock = {
+        options: {
+          rootDir: projectRoot,
+          buildDir: join(projectRoot, '.nitro'),
+          handlers: [],
+          scanDirs: [],
+          virtual: {},
+          dev: false,
+          node,
+          noExternals,
+        },
+        hooks: { hook },
+      };
+      await (plugin as any).nitro.setup(nitroMock);
+      const before = hook.mock.calls.find(
+        ([name]) => name === 'rollup:before',
+      )?.[1];
+      const config = { plugins: [], external: ['user-external'] };
+      before(nitroMock, config);
+      const matches = (id: string) =>
+        config.external.some((entry: string | RegExp) =>
+          typeof entry === 'string' ? entry === id : entry.test(id),
+        );
+      expect(matches('rxjs')).toBe(externalize);
+      expect(matches('rxjs/operators')).toBe(externalize);
+      expect(matches('sharp')).toBe(externalize);
+      expect(matches('user-external')).toBe(true);
+    },
+  );
+
   it('hides the virtual renderer from prerender path resolution and restores it', async () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
     callConfig(plugin, projectRoot, 'serve');

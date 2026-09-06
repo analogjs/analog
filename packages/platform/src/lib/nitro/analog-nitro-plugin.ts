@@ -536,7 +536,12 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             if (hasServerFunctions)
               rollupConfig.plugins.push(serverFunctionIdsPlugin(projectRoot));
           }
-          applyAnalogNitroExternals(rollupConfig);
+          if (
+            nitro.options.node !== false &&
+            nitro.options.noExternals !== true
+          ) {
+            applyAnalogNitroExternals(rollupConfig);
+          }
           sanitizeNitroBundlerConfig(rollupConfig);
         });
 
@@ -728,8 +733,8 @@ export default {
 }
 
 /**
- * Packages Analog forces external in the Nitro server bundle. Each entry is
- * here for a specific reason — see comments.
+ * Node-compatible server packages with runtime dependency resolution.
+ * Fully bundled and non-Node targets must retain Nitro's bundling policy.
  */
 const ANALOG_NITRO_EXTERNALS = [
   // rxjs ships per-entry CJS/ESM facades that confuse the Nitro/Rolldown
