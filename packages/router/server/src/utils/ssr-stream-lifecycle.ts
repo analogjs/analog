@@ -8,6 +8,7 @@ export interface SsrStreamWriter {
 
 export function createSsrStream(options: {
   signal?: AbortSignal;
+  waitUntil?(task: Promise<void>): void;
   render(writer: SsrStreamWriter): Promise<void>;
   destroy(): Promise<void>;
 }): ReadableStream<Uint8Array> {
@@ -21,16 +22,24 @@ export function createSsrStream(options: {
   let capturing = true;
   let cleanup: Promise<void> | undefined;
   let controller: ReadableStreamDefaultController<Uint8Array>;
+  let keepAlive: ReturnType<typeof setInterval> | undefined;
+  let complete!: () => void;
+  const completed = new Promise<void>((resolve) => {
+    complete = resolve;
+  });
 
   function destroy(): Promise<void> {
     capturing = false;
+    clearInterval(keepAlive);
     options.signal?.removeEventListener('abort', abort);
     for (const [timer, task] of pending) {
       clearTimeout(timer);
       task.resolve();
     }
     pending.clear();
-    return (cleanup ??= Promise.resolve().then(options.destroy));
+    return (cleanup ??= Promise.resolve()
+      .then(options.destroy)
+      .finally(complete));
   }
 
   function fail(error: unknown): void {
@@ -83,6 +92,15 @@ export function createSsrStream(options: {
   return new ReadableStream<Uint8Array>({
     start(streamController) {
       controller = streamController;
+      if (options.waitUntil) {
+        options.waitUntil(completed);
+        // Workers detect a disconnected HTTP client on a subsequent write.
+        // Keep the stream observable while Angular waits for asynchronous data.
+        keepAlive = setInterval(
+          () => writer.enqueue('<!--analog-render-pending-->'),
+          1000,
+        );
+      }
       options.signal?.addEventListener('abort', abort, { once: true });
       if (options.signal?.aborted) abort();
       // Do not return the render promise: cancellation must be able to run

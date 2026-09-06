@@ -273,6 +273,7 @@ export function renderStream(
 
     return createSsrStream({
       signal: serverContext.signal,
+      waitUntil: serverContext.waitUntil,
       destroy: () => asyncDestroyPlatform(platformRef),
       async render(writer) {
         let blockIndex = 0;

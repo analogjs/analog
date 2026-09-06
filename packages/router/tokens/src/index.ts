@@ -20,6 +20,8 @@ export type ServerContext = {
   streaming?: boolean;
   /** Aborted when the host request is cancelled. */
   signal?: AbortSignal;
+  /** Edge-host lifetime handoff for stream cleanup after client cancellation. */
+  waitUntil?: (task: Promise<void>) => void;
 };
 
 export const REQUEST: InjectionToken<ServerRequest> =
