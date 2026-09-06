@@ -126,6 +126,8 @@ export interface Options {
    * Additional API paths to include
    */
   additionalAPIDirs?: string[];
+  /** Workspace-relative directories containing additional server-function modules. */
+  additionalServerFnDirs?: string[];
   /**
    * Generate routes from the app's route directories.
    *

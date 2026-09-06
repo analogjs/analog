@@ -12,6 +12,13 @@ Server functions require Angular v19 or higher, as the client half is built on `
 
 Server functions are defined with `serverFn` from `@analogjs/router/server` in any `.server.ts` file under `src`. They can live alongside an existing `load` or `action`.
 
+The split Vite integration uses `analog()`, `angular()` and `nitro()` together.
+Analog discovers directly exported server functions and registers their
+`/_analog/fn/:id` HTTP handler, so the first HTTP call works without a prior page
+render. Modules with only page loads or unrelated server code are not imported
+for function registration. Extra workspace-relative directories can be supplied
+through `analog({ additionalServerFnDirs: ['libs/catalog/src'] })`.
+
 ```ts
 // src/app/server-fns/products.server.ts
 import { serverFn } from '@analogjs/router/server';
@@ -132,6 +139,13 @@ export const getGreeting = serverFn(async () => {
 `REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
 
 Handlers resolve dependencies from **your app's own server config**. There is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
+
+The split integration reads the named `config` export from either
+`src/app/app.config.server.ts` or `src/app.config.server.ts`. Keep one canonical
+file and use that same config in `main.server.ts`; having both files fails the
+build as ambiguous. Without either file, the HTTP application has an empty
+provider list and can resolve root-provided services only. Request and response
+tokens are still created separately for each call.
 
 The dispatcher destroys its child request injector after the handler completes or
 fails, including after consuming a returned `Response` body. Request-scoped
