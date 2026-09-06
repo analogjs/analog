@@ -4,8 +4,11 @@ import { generateSsrRendererVirtual } from './analog-nitro-plugin';
 
 const template = '<html><body><app-root></app-root></body></html>';
 
-function createRenderer(fetch: (request: Request) => Promise<Response>) {
-  const source = generateSsrRendererVirtual(template)
+function createRenderer(
+  fetch: (request: Request) => Promise<Response>,
+  prerender = false,
+) {
+  const source = generateSsrRendererVirtual(template, prerender)
     .replace("import { defineHandler } from 'nitro/h3';", '')
     .replace("import ssr from '#analog/ssr';", '')
     .replace('export default', 'return');
@@ -26,6 +29,19 @@ function createEvent(ssr?: boolean) {
 }
 
 describe('SSR renderer route rules', () => {
+  it('buffers the prerender instance even when a route explicitly enables streaming', async () => {
+    const fetch = vi.fn(
+      async (_request: Request) => new Response('complete document'),
+    );
+    const render = createRenderer(fetch, true);
+    const event = createEvent();
+    event.context.routeRules.headers['x-analog-no-streaming'] = 'false';
+    await render(event);
+    expect(fetch.mock.calls[0][0].headers.get('x-analog-no-streaming')).toBe(
+      'true',
+    );
+  });
+
   it('accepts a server Request adapter and preserves runtime, URL and abort signal', async () => {
     const fetch = vi.fn(async (_request: Request) => new Response('rendered'));
     const render = createRenderer(fetch);

@@ -327,7 +327,7 @@ describe('analogNitroPlugin', () => {
 
   it('hides the virtual renderer from prerender path resolution and restores it', async () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
-    callConfig(plugin, projectRoot);
+    callConfig(plugin, projectRoot, 'serve');
 
     const hookFn = vi.fn();
     const nitroMock: any = {
@@ -356,11 +356,21 @@ describe('analogNitroPlugin', () => {
     for (const hook of hooksFor('prerender:config')) hook(prerendererConfig);
     expect(prerendererConfig.renderer).toBe(false);
 
-    const prerenderer: any = { options: { renderer: undefined } };
+    const originalVirtual = nitroMock.options.virtual;
+    const prerenderer: any = {
+      options: { renderer: undefined, virtual: originalVirtual },
+    };
     for (const hook of hooksFor('prerender:init')) hook(prerenderer);
     expect(prerenderer.options.renderer).toEqual({
       handler: '#analog/ssr-renderer',
     });
+    expect(prerenderer.options.virtual).not.toBe(originalVirtual);
+    expect(prerenderer.options.virtual['#analog/ssr-renderer']()).toContain(
+      "const noStreaming = 'true'",
+    );
+    expect(originalVirtual['#analog/ssr-renderer']()).not.toContain(
+      "const noStreaming = 'true'",
+    );
   });
 
   it('stamps route rule headers for explicit SSR and streaming policies', () => {

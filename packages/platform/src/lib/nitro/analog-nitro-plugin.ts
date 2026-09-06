@@ -578,6 +578,14 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           });
           nitro.hooks.hook('prerender:init', (prerenderer) => {
             prerenderer.options.renderer = { handler: '#analog/ssr-renderer' };
+            // Static HTML must already contain the authoritative document.
+            // Keep the override local to the prerender instance so request-time
+            // responses can still stream.
+            prerenderer.options.virtual = {
+              ...prerenderer.options.virtual,
+              '#analog/ssr-renderer': () =>
+                generateSsrRendererVirtual(readIndexHtml(), true),
+            };
           });
         }
         // When ssr === false, Nitro's auto-detected template-serving
@@ -610,7 +618,10 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
  * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
  * nitro/vite's `prodSetup`).
  */
-export function generateSsrRendererVirtual(template: string): string {
+export function generateSsrRendererVirtual(
+  template: string,
+  prerender = false,
+): string {
   return `
 import { defineHandler } from 'nitro/h3';
 import ssr from '#analog/ssr';
@@ -626,7 +637,8 @@ export default defineHandler(async (event) => {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
-  const noStreaming = event.context.routeRules?.headers?.['x-analog-no-streaming']
+  const noStreaming = ${prerender ? "'true'" : 'undefined'}
+    ?? event.context.routeRules?.headers?.['x-analog-no-streaming']
     ?? event.res.headers.get('x-analog-no-streaming');
   if (noStreaming !== null && noStreaming !== undefined || event.req.headers.has('x-analog-no-streaming') || event.req.headers.has('x-analog-no-ssr')) {
     const headers = new Headers(event.req.headers);

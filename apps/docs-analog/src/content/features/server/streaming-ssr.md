@@ -132,6 +132,13 @@ response body or aborting the host request disposes the rendering platform and
 cancels queued block flushes. Failures after the shell has been sent error the
 stream; they cannot change the already-committed HTTP status.
 
+## Prerendering
+
+Nitro prerendering always writes the fully buffered document, even when a route
+enables streaming. Static HTML therefore contains its final content and hydration
+state without requiring the browser to assemble streaming templates. This
+prerender-only policy does not disable streaming for request-time rendering.
+
 ## Cloudflare Workers
 
 Use zoneless Angular and enable incoming request cancellation in the generated
