@@ -26,6 +26,77 @@ function createEvent(ssr?: boolean) {
 }
 
 describe('SSR renderer route rules', () => {
+  it('accepts a server Request adapter and preserves runtime, URL and abort signal', async () => {
+    const fetch = vi.fn(async (_request: Request) => new Response('rendered'));
+    const render = createRenderer(fetch);
+    const abort = new AbortController();
+    const runtime = { node: { req: {}, res: {} } };
+    const event = {
+      ...createEvent(),
+      req: {
+        url: 'http://localhost/stream?query=1',
+        method: 'GET',
+        headers: new Headers(),
+        signal: abort.signal,
+        runtime,
+      },
+    };
+    event.context.routeRules.headers['x-analog-no-streaming'] = 'true';
+    await render(event);
+    const forwarded = fetch.mock.calls[0][0];
+    expect(forwarded.url).toBe(event.req.url);
+    expect(Reflect.get(forwarded, 'runtime')).toBe(runtime);
+    abort.abort();
+    expect(forwarded.signal.aborted).toBe(true);
+  });
+  it('forwards the resolved streaming rule before response headers are applied', async () => {
+    const fetch = vi.fn(async () => new Response('server-rendered content'));
+    const render = createRenderer(fetch);
+    const event = createEvent();
+    event.context.routeRules.headers['x-analog-no-streaming'] = 'true';
+    await render(event);
+    expect(fetch.mock.calls[0][0].headers.get('x-analog-no-streaming')).toBe(
+      'true',
+    );
+  });
+
+  it('resets caller-supplied streaming policy hints when no rule opts out', async () => {
+    const fetch = vi.fn(
+      async (_request: Request) => new Response('server-rendered content'),
+    );
+    const render = createRenderer(fetch);
+    const event = createEvent();
+    event.req.headers.set('x-analog-no-streaming', 'true');
+    await render(event);
+    expect(
+      fetch.mock.calls[0][0].headers.get('x-analog-no-streaming'),
+    ).toBeNull();
+  });
+
+  it('does not forward caller-controlled no-SSR hints to the internal renderer', async () => {
+    const fetch = vi.fn(
+      async (_request: Request) => new Response('server-rendered content'),
+    );
+    const render = createRenderer(fetch);
+    const event = createEvent();
+    event.req.headers.set('x-analog-no-ssr', 'true');
+    await render(event);
+    expect(fetch.mock.calls[0][0].headers.get('x-analog-no-ssr')).toBeNull();
+  });
+
+  it('an explicit streaming opt-in overrides an inherited response hint', async () => {
+    const fetch = vi.fn(
+      async (_request: Request) => new Response('server-rendered content'),
+    );
+    const render = createRenderer(fetch);
+    const event = createEvent();
+    event.context.routeRules.headers['x-analog-no-streaming'] = 'false';
+    event.res.headers.set('x-analog-no-streaming', 'true');
+    await render(event);
+    expect(fetch.mock.calls[0][0].headers.get('x-analog-no-streaming')).toBe(
+      'false',
+    );
+  });
   it('returns the client template before response headers are applied', async () => {
     const fetch = vi.fn(async () => new Response('server-rendered content'));
     const render = createRenderer(fetch);

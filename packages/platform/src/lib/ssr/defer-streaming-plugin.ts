@@ -108,11 +108,17 @@ export function inspectAngularCoreModule(
  * that falls back to buffered rendering.
  */
 export function deferStreamingPlugin(): Plugin {
-  let applied = false;
-  let warnedDrift = false;
+  const applied = new Set<string>();
+  const warnedDrift = new Set<string>();
   return {
     name: 'analogjs-defer-streaming',
     enforce: 'post',
+    config() {
+      return {
+        ssr: { noExternal: ['@angular/core'] },
+        environments: { ssr: { optimizeDeps: { exclude: ['@angular/core'] } } },
+      };
+    },
     transform: {
       filter: {
         id: /\/@angular\/core\//,
@@ -122,8 +128,8 @@ export function deferStreamingPlugin(): Plugin {
         const info = inspectAngularCoreModule(code);
         if (info.kind === 'not-target') return;
         if (info.kind === 'drifted') {
-          if (!warnedDrift) {
-            warnedDrift = true;
+          if (!warnedDrift.has(this.environment.name)) {
+            warnedDrift.add(this.environment.name);
             this.warn(
               `experimental streaming SSR: found @angular/core's @defer runtime ` +
                 `but could not apply the resolution hook (${info.reason}). The ` +
@@ -135,12 +141,18 @@ export function deferStreamingPlugin(): Plugin {
         }
         const out = injectDeferStreamingHook(code);
         if (!out) return;
-        applied = true;
+        applied.add(this.environment.name);
         return { code: out };
       },
     },
     buildEnd() {
-      if (!applied && !warnedDrift) {
+      // Nitro's final server bundle consumes the already-transformed SSR
+      // service; it does not load Angular's source module a second time.
+      if (this.environment.name !== 'ssr') return;
+      if (
+        !applied.has(this.environment.name) &&
+        !warnedDrift.has(this.environment.name)
+      ) {
         this.warn(
           `experimental streaming SSR is enabled but @angular/core's @defer ` +
             `runtime module was never encountered during the SSR build, so the ` +

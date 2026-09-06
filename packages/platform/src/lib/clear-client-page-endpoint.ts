@@ -10,6 +10,9 @@ export function clearClientPageEndpointsPlugin(): Plugin {
 
   return {
     name: 'analogjs-platform-clear-client-page-endpoint',
+    // Run after Angular records the original source in its compilation cache.
+    // Otherwise a client proxy can become the cached input for the SSR build.
+    enforce: 'post',
     config() {
       return {
         build: {

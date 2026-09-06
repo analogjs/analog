@@ -24,10 +24,12 @@ Enable the `experimental.streaming` option in your Vite config:
 ```ts
 // vite.config.ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [analog({ experimental: { streaming: true } })],
+  plugins: [analog({ experimental: { streaming: true } }), angular(), nitro()],
 });
 ```
 
@@ -85,8 +87,8 @@ resolves, and hydrated on the client when its trigger fires:
 
 A block backed by asynchronous data (for example an
 [`httpResource`](https://angular.dev/guide/http/http-resource)) keeps the render
-pending until its data resolves, so the block streams with its final content and
-the page's time-to-first-byte is unaffected.
+pending until its data resolves. Its early preview may still show loading state;
+the authoritative tail contains the settled data and hydration state.
 
 ## Title and meta
 
@@ -105,18 +107,27 @@ render (no streaming, but SSR and hydration still work):
 ```ts
 // vite.config.ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [
     analog({
       experimental: { streaming: true },
-      nitro: {
-        routeRules: {
-          '/report': { streaming: false },
-        },
+    }),
+    angular(),
+    nitro({
+      routeRules: {
+        '/report': { streaming: false },
       },
     }),
   ],
 });
 ```
+
+An explicit `streaming: true` rule overrides an inherited opt-out. Route policy
+comes from the host's matched rules, not caller-provided headers. Cancelling the
+response body or aborting the host request disposes the rendering platform and
+cancels queued block flushes. Failures after the shell has been sent error the
+stream; they cannot change the already-committed HTTP status.

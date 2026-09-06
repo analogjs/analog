@@ -264,6 +264,17 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           typeof source === 'string'
             ? source
             : new TextDecoder().decode(source);
+        // The SSR service has captured the template. Leaving it in public
+        // output makes Nitro serve the empty shell ahead of the root renderer.
+        if ((options.ssr ?? true) && _outputOptions.dir) {
+          for (const extension of ['', '.br', '.gz']) {
+            const shell = resolve(
+              _outputOptions.dir,
+              `${basename(indexHtmlPath())}${extension}`,
+            );
+            if (existsSync(shell)) unlinkSync(shell);
+          }
+        }
       }
     },
 
@@ -595,6 +606,25 @@ export default defineHandler(async (event) => {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
+  const noStreaming = event.context.routeRules?.headers?.['x-analog-no-streaming']
+    ?? event.res.headers.get('x-analog-no-streaming');
+  if (noStreaming !== null && noStreaming !== undefined || event.req.headers.has('x-analog-no-streaming') || event.req.headers.has('x-analog-no-ssr')) {
+    const headers = new Headers(event.req.headers);
+    headers.delete('x-analog-no-ssr');
+    headers.delete('x-analog-no-streaming');
+    if (noStreaming !== null && noStreaming !== undefined) headers.set('x-analog-no-streaming', noStreaming);
+    // srvx's Node request is Request-compatible but does not carry Undici's
+    // private constructor state. Copy its public fields and retain runtime
+    // context for native Node server functions.
+    const request = new Request(event.req.url, {
+      method: event.req.method,
+      headers,
+      signal: event.req.signal,
+      ...(event.req.method === 'GET' || event.req.method === 'HEAD' ? {} : { body: event.req.body, duplex: 'half' }),
+    });
+    if (event.req.runtime) Object.defineProperty(request, 'runtime', { value: event.req.runtime });
+    return service.fetch(request);
+  }
   return service.fetch(event.req);
 });
 `;
@@ -778,8 +808,11 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
         'x-analog-no-ssr': String(!rule.ssr),
       };
     }
-    if (rule?.streaming === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
+    if (typeof rule?.streaming === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-streaming': String(!rule.streaming),
+      };
     }
   }
 }
@@ -866,9 +899,16 @@ export default {
       connection: {},
     };
 
+    const node = req.runtime?.node;
+    const serverRequest = node?.req ?? reqShim;
+    if (node?.req) serverRequest.originalUrl = requestUrl;
+
     try {
       const html = await renderer(requestUrl, TEMPLATE, {
-        req: reqShim,
+        req: serverRequest,
+        res: node?.res,
+        streaming: req.headers.get('x-analog-no-streaming') !== 'true',
+        signal: req.signal,
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
