@@ -10,10 +10,11 @@ import {
   type StateKey,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, merge, Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import type { ServerFn } from './types';
 import { SERVER_FN_DISPATCHER } from './dispatcher';
+import { withAbortSignal } from '../with-abort-signal';
 
 /**
  * Client transport for server functions. In the browser it goes through Angular
@@ -60,7 +61,7 @@ export class ServerFnClient {
                 : input,
             { headers: { 'Content-Type': 'application/json' } },
           );
-    return firstServerFnValue(request$, signal);
+    return firstValueFrom(withAbortSignal(request$, signal));
   }
 
   /** Key a read's value for TransferState hydration (fn id + input). */
@@ -149,24 +150,4 @@ export function injectServerFnMutation<In, Out>(
 function stableInput(input: unknown): string {
   if (input === undefined) return '_';
   return JSON.stringify(input);
-}
-
-function firstServerFnValue<T>(
-  request$: Observable<T>,
-  signal?: AbortSignal,
-): Promise<T> {
-  if (!signal) return firstValueFrom(request$);
-  const aborted$ = new Observable<never>((subscriber) => {
-    const abort = () =>
-      subscriber.error(
-        signal.reason ??
-          new DOMException('Server function aborted', 'AbortError'),
-      );
-    if (signal.aborted) abort();
-    else signal.addEventListener('abort', abort, { once: true });
-    return () => signal.removeEventListener('abort', abort);
-  });
-  // Install cancellation before subscribing to interceptors, which may resolve
-  // synchronously. Either outcome removes the listener and unsubscribes HTTP.
-  return firstValueFrom(merge(aborted$, request$));
 }

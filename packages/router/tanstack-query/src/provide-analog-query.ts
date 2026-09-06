@@ -11,7 +11,11 @@ import type { EnvironmentProviders, StateKey } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { ResolveEnd, Router } from '@angular/router';
 import type { ActivatedRouteSnapshot } from '@angular/router';
-import { QueryClient, hydrate } from '@tanstack/angular-query-experimental';
+import {
+  QueryClient,
+  dehydrate,
+  hydrate,
+} from '@tanstack/angular-query-experimental';
 import type { DehydratedState } from '@tanstack/angular-query-experimental';
 
 import { ANALOG_QUERIES_KEY } from './constants.js';
@@ -87,37 +91,13 @@ function mergeRouteSnapshot(
     if (dehydrated) {
       hydrate(client, dehydrated);
       if (transferState) {
-        const existing = transferState.get<DehydratedState | null>(
-          ANALOG_QUERY_STATE_KEY,
-          null,
-        );
-        transferState.set(
-          ANALOG_QUERY_STATE_KEY,
-          existing ? mergeDehydrated(existing, dehydrated) : dehydrated,
-        );
+        // Serialize the cache hydrate actually retained. An older child load
+        // must not overwrite newer parent or application-prefetched data.
+        transferState.set(ANALOG_QUERY_STATE_KEY, dehydrate(client));
       }
     }
   }
   for (const child of snapshot.children) {
     mergeRouteSnapshot(child, client, transferState);
   }
-}
-
-function mergeDehydrated(
-  base: DehydratedState,
-  next: DehydratedState,
-): DehydratedState {
-  // Last-writer-wins on duplicate `queryHash`: child route resolves run
-  // after parent resolves, so the later entry is the fresher one and
-  // matches `hydrate()`'s own newer-wins semantics for the QueryClient.
-  const queriesByHash = new Map(
-    base.queries.map((query) => [query.queryHash, query]),
-  );
-  for (const query of next.queries) {
-    queriesByHash.set(query.queryHash, query);
-  }
-  return {
-    mutations: [...base.mutations, ...next.mutations],
-    queries: [...queriesByHash.values()],
-  };
 }

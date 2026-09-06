@@ -159,9 +159,18 @@ export default class TodosComponent {
 
 Query params, mutation bodies, and response shapes are all inferred from the server route definition with no manual type duplication.
 
+`serverQueryOptions` and `serverInfiniteQueryOptions` forward TanStack Query
+cancellation to Angular's HTTP subscription. Cancelling a query or removing its
+last observer aborts an in-flight request. HTTP errors retain their status and
+body; configure retries through the query or mutation options as usual.
+
 ## Prefetching Queries in `load()`
 
 Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
+
+When nested loads prefetch the same key, TanStack's cache timestamps determine
+which value is retained. The server transfers that resolved cache to the browser;
+an older child payload does not replace newer parent or application-prefetched data.
 
 ```ts
 // src/app/pages/posts.server.ts
