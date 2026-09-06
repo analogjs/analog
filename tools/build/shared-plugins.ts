@@ -39,6 +39,7 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
     async writeBundle(options, bundle) {
       const { isolatedDeclarationSync } = await import('oxc-transform');
       const outDir = options.dir!;
+      const emittedDeclarations = new Set<string>();
 
       for (const [fileName, chunk] of Object.entries(bundle)) {
         if (chunk.type !== 'chunk' || !chunk.facadeModuleId) continue;
@@ -68,6 +69,7 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
             const dtsPath = join(outDir, fileName.replace(/\.js$/, '.d.ts'));
             mkdirSync(dirname(dtsPath), { recursive: true });
             writeFileSync(dtsPath, result.code);
+            emittedDeclarations.add(resolve(dtsPath));
           }
         } catch (error) {
           this.error(
@@ -86,12 +88,9 @@ export function oxcDtsPlugin(pkgDir: string): Plugin {
         const relPath = relative(pkgDir, tsFile);
         const dtsOut = join(outDir, relPath.replace(/\.ts$/, '.d.ts'));
 
-        try {
-          readFileSync(dtsOut);
-          continue;
-        } catch {
-          // not yet generated
-        }
+        // Only skip declarations emitted by this build. Existing output may
+        // describe an older version of a type-only source file.
+        if (emittedDeclarations.has(resolve(dtsOut))) continue;
 
         try {
           const source = readFileSync(tsFile, 'utf-8');

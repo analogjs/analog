@@ -34,7 +34,12 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["vite-plugin-angular:build"]
+      "dependsOn": ["vite-plugin-angular:build"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tools/build/**/*.ts"
+      ]
     },
     "version": {
       "executor": "@jscutlery/semver:version",
