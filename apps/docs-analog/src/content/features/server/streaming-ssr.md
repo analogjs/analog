@@ -131,3 +131,31 @@ comes from the host's matched rules, not caller-provided headers. Cancelling the
 response body or aborting the host request disposes the rendering platform and
 cancels queued block flushes. Failures after the shell has been sent error the
 stream; they cannot change the already-committed HTTP status.
+
+## Cloudflare Workers
+
+Use zoneless Angular and enable incoming request cancellation in the generated
+Worker configuration:
+
+```ts
+nitro({
+  preset: 'cloudflare-module',
+  cloudflare: {
+    wrangler: {
+      compatibility_flags: ['nodejs_compat', 'enable_request_signal'],
+    },
+  },
+});
+```
+
+The native Nitro integration passes Cloudflare's `waitUntil` into the render
+context. While a streamed render is pending, the renderer emits a small HTML
+comment once per second. Workers observe disconnected clients on a subsequent
+write, so a silent data operation must not prevent that notification. The
+request lifetime remains held until the Angular platform has been disposed;
+completion, failure and cancellation stop the comments and release that lifetime.
+
+Custom edge hosts can supply the optional `ServerContext.waitUntil` callback for
+the same handoff. Hosts without it do not emit these comments. This rendering
+support does not remove the native server-function dispatcher's requirement for
+Node-compatible request and response objects.
