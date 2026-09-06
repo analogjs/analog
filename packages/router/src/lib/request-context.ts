@@ -122,7 +122,8 @@ export function requestContextInterceptor(
           };
           const transferResponse = new HttpResponse(cacheResponse);
 
-          transferState.set(storeKey, cacheResponse);
+          if (req.transferCache !== false)
+            transferState.set(storeKey, cacheResponse);
           return transferResponse;
         }),
     );
@@ -141,7 +142,7 @@ export function requestContextInterceptor(
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
     const cacheRestoreResponse = transferState.get(storeKey, null);
 
-    if (cacheRestoreResponse) {
+    if (req.transferCache !== false && cacheRestoreResponse) {
       transferState.remove(storeKey);
       return of(new HttpResponse(cacheRestoreResponse));
     }

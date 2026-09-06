@@ -56,6 +56,7 @@ export function serverQueryOptions<
         withAbortSignal(
           http.get<InferRouteResult<TRoute>>(
             buildUrl(url, query as Record<string, any>),
+            { transferCache: false },
           ),
           signal,
         ),
@@ -87,7 +88,11 @@ export function serverMutationOptions<
 > {
   return {
     mutationFn: (body: InferRouteBody<TRoute>) =>
-      lastValueFrom(http.post<InferRouteResult<TRoute>>(url, body)),
+      lastValueFrom(
+        http.post<InferRouteResult<TRoute>>(url, body, {
+          transferCache: false,
+        }),
+      ),
     ...options,
   } as CreateMutationOptions<
     InferRouteResult<TRoute>,
@@ -139,6 +144,7 @@ export function serverInfiniteQueryOptions<
         withAbortSignal(
           http.get<InferRouteResult<TRoute>>(
             buildUrl(url, buildQuery(context) as Record<string, any>),
+            { transferCache: false },
           ),
           context.signal,
         ),

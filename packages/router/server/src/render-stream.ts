@@ -52,6 +52,7 @@ import { afterBodyOpen, bodyInner, headInner } from './utils/stream-html';
 import { isLikelyBot, streamingDisabledByRoute } from './utils/stream-request';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
 import { createSsrStream } from './utils/ssr-stream-lifecycle';
+import { createSsrNavigationTracker } from './ssr-navigation';
 
 if (import.meta.env?.PROD) {
   enableProdMode();
@@ -215,16 +216,19 @@ export function renderStream(
   config: ApplicationConfig,
   platformProviders: Provider[] = [],
 ) {
-  function bootstrap(context: BootstrapContext) {
-    return bootstrapApplication(rootComponent, config, context);
-  }
-
   return async function renderStream(
     url: string,
     document: string,
     serverContext: ServerContext,
   ): Promise<ReadableStream<Uint8Array>> {
     serverContext.signal?.throwIfAborted();
+    const navigation = createSsrNavigationTracker();
+    const applicationConfig = {
+      ...config,
+      providers: [...config.providers, navigation.provider],
+    };
+    const bootstrap = (context: BootstrapContext) =>
+      bootstrapApplication(rootComponent, applicationConfig, context);
     // Reset before every render — both the buffered fallback below and the
     // streaming path — so a prior render's locale/consts are not frozen for the
     // process lifetime (parity with render.ts).
@@ -245,17 +249,15 @@ export function renderStream(
       if (!bot && !routeDisabled && !primitiveAvailable) {
         warnMissingPrimitiveOnce();
       }
-      const html = await renderApplication(
-        (context) => bootstrapApplication(rootComponent, config, context),
-        {
-          document,
-          url,
-          platformProviders: [
-            provideServerContext(serverContext),
-            platformProviders,
-          ],
-        },
-      );
+      const html = await renderApplication(bootstrap, {
+        document,
+        url,
+        platformProviders: [
+          provideServerContext(serverContext),
+          platformProviders,
+        ],
+      });
+      navigation.throwIfFailed();
       return new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(html as string));
@@ -299,9 +301,11 @@ export function renderStream(
           if (!writer.active) return;
           await appRef.whenStable();
           if (!writer.active) return;
+          navigation.throwIfFailed();
           await writer.finishBlocks();
           if (!writer.active) return;
           const authoritative = await renderInternal(platformRef, appRef);
+          navigation.throwIfFailed();
           writer.enqueue(
             `<template data-analog-head>${headInner(authoritative)}</template>` +
               `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +

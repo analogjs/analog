@@ -77,6 +77,7 @@ describe('server query HTTP lifecycle', () => {
     const request = TestBed.inject(HttpTestingController).expectOne(
       '/api/items',
     );
+    expect(request.request.transferCache).toBe(false);
     await cache.cancelQueries({ queryKey: ['items'] });
     await pending;
     expect(request.cancelled).toBe(true);
@@ -104,6 +105,7 @@ describe('server query HTTP lifecycle', () => {
     const request = TestBed.inject(HttpTestingController).expectOne(
       '/api/items?page=0',
     );
+    expect(request.request.transferCache).toBe(false);
     await cache.cancelQueries({ queryKey: ['pages'] });
     await pending;
     expect(request.cancelled).toBe(true);

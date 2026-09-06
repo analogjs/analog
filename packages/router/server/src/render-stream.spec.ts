@@ -9,6 +9,7 @@ const angular = vi.hoisted(() => ({
   platform: vi.fn(),
   render: vi.fn(),
   buffered: vi.fn(),
+  navigation: vi.fn(),
 }));
 vi.mock('@angular/platform-browser', () => ({
   bootstrapApplication: angular.bootstrap,
@@ -22,6 +23,12 @@ vi.mock('@angular/platform-server', () => ({
 vi.mock('./provide-server-context', () => ({ provideServerContext: () => [] }));
 vi.mock('./utils/reset-component-def-tviews', () => ({
   resetComponentDefTViews: vi.fn(),
+}));
+vi.mock('./ssr-navigation', () => ({
+  createSsrNavigationTracker: () => ({
+    provider: { ɵproviders: [] },
+    throwIfFailed: angular.navigation,
+  }),
 }));
 
 import { renderStream } from './render-stream';
@@ -56,6 +63,27 @@ afterEach(() => {
 });
 
 describe('streaming render lifetime', () => {
+  it('fails the response body and disposes the platform when navigation fails after the shell', async () => {
+    const failure = Object.assign(new Error('navigation failed'), {
+      statusCode: 503,
+    });
+    const destroyed = Promise.withResolvers<void>();
+    angular.platform.mockReturnValue({ destroy: () => destroyed.resolve() });
+    angular.bootstrap.mockResolvedValue({ whenStable: async () => {} });
+    angular.navigation.mockImplementation(() => {
+      throw failure;
+    });
+    const reader = (
+      await renderStream(App, { providers: [] })('/', document, context())
+    ).getReader();
+    expect(new TextDecoder().decode((await reader.read()).value)).toContain(
+      'data-analog-stream',
+    );
+    await expect(reader.read()).rejects.toBe(failure);
+    await destroyed.promise;
+    expect(angular.render).not.toHaveBeenCalled();
+  });
+
   it('flushes the shell before application stability and destroys the platform after the tail', async () => {
     const stable = Promise.withResolvers<void>();
     const destroyed = Promise.withResolvers<void>();
