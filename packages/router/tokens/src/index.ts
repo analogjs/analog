@@ -22,6 +22,8 @@ export type ServerContext = {
   signal?: AbortSignal;
   /** Edge-host lifetime handoff for stream cleanup after client cancellation. */
   waitUntil?: (task: Promise<void>) => void;
+  /** HTTP hosts can finish a failed progressive document with a safe HTML trailer. */
+  renderErrorsAsHtml?: boolean;
 };
 
 export const REQUEST: InjectionToken<ServerRequest> =

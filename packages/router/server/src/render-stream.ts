@@ -276,6 +276,9 @@ export function renderStream(
     return createSsrStream({
       signal: serverContext.signal,
       waitUntil: serverContext.waitUntil,
+      errorHtml: serverContext.renderErrorsAsHtml
+        ? '<script data-analog-error>window.__analogFail&&window.__analogFail();</script></body></html>'
+        : undefined,
       destroy: () => asyncDestroyPlatform(platformRef),
       async render(writer) {
         let blockIndex = 0;

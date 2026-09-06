@@ -63,6 +63,28 @@ afterEach(() => {
 });
 
 describe('streaming render lifetime', () => {
+  it('closes an HTTP document with a safe failure trailer and disposes its platform', async () => {
+    const destroyed = Promise.withResolvers<void>();
+    angular.platform.mockReturnValue({ destroy: () => destroyed.resolve() });
+    angular.bootstrap.mockRejectedValue(new Error('private-render-detail'));
+    const reader = (
+      await renderStream(App, { providers: [] })('/', document, {
+        ...context(),
+        renderErrorsAsHtml: true,
+      })
+    ).getReader();
+    let html = '';
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      html += new TextDecoder().decode(chunk.value);
+    }
+    await destroyed.promise;
+    expect(html).toContain('<script data-analog-error>');
+    expect(html).not.toContain('private-render-detail');
+    expect(angular.render).not.toHaveBeenCalled();
+  });
+
   it('fails the response body and disposes the platform when navigation fails after the shell', async () => {
     const failure = Object.assign(new Error('navigation failed'), {
       statusCode: 503,

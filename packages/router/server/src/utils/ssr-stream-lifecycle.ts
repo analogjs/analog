@@ -9,6 +9,7 @@ export interface SsrStreamWriter {
 export function createSsrStream(options: {
   signal?: AbortSignal;
   waitUntil?(task: Promise<void>): void;
+  errorHtml?: string;
   render(writer: SsrStreamWriter): Promise<void>;
   destroy(): Promise<void>;
 }): ReadableStream<Uint8Array> {
@@ -42,10 +43,16 @@ export function createSsrStream(options: {
       .finally(complete));
   }
 
-  function fail(error: unknown): void {
+  function fail(error: unknown, aborted = false): void {
     if (state !== 'rendering' && state !== 'closing') return;
     state = 'failed';
-    controller.error(error);
+    if (options.errorHtml && !aborted) {
+      console.error('[analog ssr]', error);
+      controller.enqueue(encoder.encode(options.errorHtml));
+      controller.close();
+    } else {
+      controller.error(error);
+    }
     // The stream already owns the original failure. Consume cleanup failures
     // here; the render finalizer and body cancellation also await cleanup.
     void destroy().catch(() => undefined);
@@ -55,6 +62,7 @@ export function createSsrStream(options: {
     fail(
       options.signal?.reason ??
         new DOMException('The render was aborted.', 'AbortError'),
+      true,
     );
   }
 

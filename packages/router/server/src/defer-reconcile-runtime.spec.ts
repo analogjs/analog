@@ -11,6 +11,7 @@ type Runtime = {
   __analogPaint: (id: string) => void;
   __analogReconcileHead: () => void;
   __analogFinalize: () => void;
+  __analogFail: () => void;
 };
 const rt = () => window as unknown as Runtime;
 
@@ -41,6 +42,17 @@ describe('DEFER_RECONCILE_RUNTIME', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
     expect(document.body.textContent).toBe('Complete');
     expect(document.querySelector('[data-analog-render-error]')).toBeNull();
+  });
+
+  it('shows a safe error as soon as the failure trailer executes', () => {
+    document.body.innerHTML = '<div data-analog-stream>Preview</div>';
+    rt().__analogFail();
+    expect(
+      document.querySelector('[data-analog-render-error]')?.textContent,
+    ).toContain('Unable to load this page');
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute('content'),
+    ).toBe('noindex');
   });
 
   describe('__analogPaint', () => {

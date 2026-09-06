@@ -26,8 +26,7 @@ export const DEFER_RECONCILE_RUNTIME = /* js */ `
   function region() {
     return document.querySelector('[data-analog-stream]');
   }
-  function checkCompletion() {
-    if (completed || !region()) return;
+  function showError() {
     document.title = 'Unable to load this page';
     var robots = document.head.querySelector('meta[name="robots"]');
     if (!robots) {
@@ -47,6 +46,10 @@ export const DEFER_RECONCILE_RUNTIME = /* js */ `
     error.appendChild(message);
     document.body.replaceChildren(error);
   }
+  function checkCompletion() {
+    if (!completed && region()) showError();
+  }
+  window.__analogFail = showError;
   // A Worker HTTP adapter can turn a stream error into ordinary EOF. The
   // authoritative tail, rather than transport completion, proves SSR success.
   document.addEventListener('DOMContentLoaded', checkCompletion, { once: true });
