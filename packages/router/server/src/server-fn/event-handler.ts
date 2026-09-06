@@ -9,7 +9,7 @@ import {
   type H3Event,
 } from 'nitro/h3';
 
-import { dispatchServerFn } from './dispatch';
+import { dispatchServerFn, type DispatchResult } from './dispatch';
 import { assertNodeContext } from './node-context';
 
 /**
@@ -66,5 +66,33 @@ export async function handleServerFnRequest(
       setResponseHeader(event, key, value);
     }
   }
-  return body;
+  return serializeServerFnBody(event, { status, body, headers });
+}
+
+function serializeServerFnBody(
+  event: H3Event,
+  result: DispatchResult,
+): unknown {
+  const { status, body, headers } = result;
+  const contentType = headers?.['content-type'];
+  const mediaType =
+    typeof contentType === 'string'
+      ? contentType.split(';')[0].trim().toLowerCase()
+      : undefined;
+  if (
+    mediaType &&
+    mediaType !== 'application/json' &&
+    !mediaType.endsWith('+json')
+  )
+    return body;
+  if (body === undefined || (body === null && status !== 200)) return body;
+
+  // h3 treats strings as text and null as an empty body. RPC callers expect JSON
+  // for these values too, while explicit non-JSON Response headers retain control.
+  setResponseHeader(
+    event,
+    'content-type',
+    contentType ?? 'application/json; charset=utf-8',
+  );
+  return JSON.stringify(body);
 }

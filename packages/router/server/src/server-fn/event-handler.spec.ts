@@ -39,6 +39,41 @@ afterAll(async () => {
 });
 
 describe('server functions over Node HTTP', () => {
+  it.each([null, '', 'text', false, true, 0, 7, ['a', 1], { nested: true }])(
+    'serializes the raw JSON return value %j',
+    async (value) => {
+      const ref = serverFn({ id: 'http-output' }, () => value);
+      const response = await fetch(new URL(ref.url, await listening.promise));
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toContain(
+        'application/json',
+      );
+      expect(await response.json()).toEqual(value);
+    },
+  );
+
+  it('preserves an explicitly returned text response', async () => {
+    const ref = serverFn(
+      { id: 'http-text' },
+      () =>
+        new Response('plain text', {
+          headers: { 'Content-Type': 'text/plain' },
+        }),
+    );
+    const response = await fetch(new URL(ref.url, await listening.promise));
+    expect(response.headers.get('content-type')).toBe('text/plain');
+    expect(await response.text()).toBe('plain text');
+  });
+
+  it('keeps a JSON string Response encoded as JSON', async () => {
+    const ref = serverFn({ id: 'http-json-string' }, () =>
+      Response.json('text'),
+    );
+    const response = await fetch(new URL(ref.url, await listening.promise));
+    expect(response.headers.get('content-type')).toContain('application/json');
+    expect(await response.json()).toBe('text');
+  });
+
   it.each([null, 'text'])(
     'decodes a JSON body and releases the request scope for %j',
     async (input) => {
