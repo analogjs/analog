@@ -226,7 +226,16 @@ describe('analogNitroPlugin', () => {
         signal: abort.signal,
       });
       const node = { req: { headers: {}, originalUrl: '' }, res: {} };
-      Object.defineProperty(request, 'runtime', { value: { node } });
+      const tasks: Promise<void>[] = [];
+      const edge = {
+        tasks,
+        waitUntil(task: Promise<void>) {
+          this.tasks.push(task);
+        },
+      };
+      Object.defineProperty(request, 'runtime', {
+        value: { node, cloudflare: { context: edge } },
+      });
       expect(await (await service.fetch(request)).text()).toBe('rendered');
       const context = renderer.mock.calls[0][2];
       expect(context.streaming).toBe(false);
@@ -234,6 +243,9 @@ describe('analogNitroPlugin', () => {
       expect(context.req).toBe(node.req);
       expect(context.res).toBe(node.res);
       expect(context.req.originalUrl).toBe('/stream?test=1');
+      const task = Promise.resolve();
+      context.waitUntil(task);
+      expect(tasks).toEqual([task]);
       abort.abort();
       expect(context.signal.aborted).toBe(true);
     } finally {

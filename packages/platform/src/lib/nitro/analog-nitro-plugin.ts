@@ -929,6 +929,7 @@ export default {
         res: node?.res,
         streaming: req.headers.get('x-analog-no-streaming') !== 'true',
         signal: req.signal,
+        waitUntil: req.runtime?.cloudflare?.context?.waitUntil?.bind(req.runtime.cloudflare.context),
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
