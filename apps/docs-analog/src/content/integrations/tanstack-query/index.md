@@ -164,6 +164,11 @@ cancellation to Angular's HTTP subscription. Cancelling a query or removing its
 last observer aborts an in-flight request. HTTP errors retain their status and
 body; configure retries through the query or mutation options as usual.
 
+The Query helpers disable HTTP transfer caching for their requests. Both Angular
+and Analog's request-context interceptor honor this setting, leaving TanStack's
+dehydrated state as the cache owner. Other HTTP requests retain their existing
+transfer-cache behavior unless they also set `transferCache: false`.
+
 ## Prefetching Queries in `load()`
 
 Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
@@ -171,6 +176,15 @@ Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query qu
 When nested loads prefetch the same key, TanStack's cache timestamps determine
 which value is retained. The server transfers that resolved cache to the browser;
 an older child payload does not replace newer parent or application-prefetched data.
+
+Unhandled navigation or page-load errors reject buffered SSR instead of producing
+an empty successful page. The native production wrapper preserves error statuses
+from 400 through 599 and returns a generic, non-cacheable, non-indexable error
+document without server details. A navigation error recovered by a router redirect
+can still render normally. If progressive rendering has already sent its shell,
+the response body fails and the application is disposed; its HTTP status can no
+longer change. Use buffered rendering when the page requires its final load status
+before response headers are sent.
 
 For Worker builds, Analog respects Nitro's non-Node or `noExternals: true` target
 policy. Dependencies used by generated page-load endpoints, including RxJS, are
