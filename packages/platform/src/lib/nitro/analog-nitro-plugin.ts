@@ -953,10 +953,14 @@ export default {
         // and throws TypeError during prerender/SSR.
         fetch: ssrOFetch,
       });
-      return new Response(html, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
+      const headers = { 'content-type': 'text/html; charset=utf-8' };
+      if (html instanceof ReadableStream && req.headers.get('x-analog-no-streaming') !== 'true') {
+        // Compression can retain the shell until EOF, leaving no browser
+        // runtime to report an interrupted render. Do not cache partial HTML.
+        headers['content-encoding'] = 'identity';
+        headers['cache-control'] = 'no-store, no-transform';
+      }
+      return new Response(html, { status: 200, headers });
     } catch (err) {
       console.error('[analog ssr]', err);
       const errorStatus = err?.statusCode ?? err?.status;

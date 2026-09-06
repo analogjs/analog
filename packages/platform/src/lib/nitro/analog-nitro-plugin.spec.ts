@@ -329,6 +329,51 @@ describe('analogNitroPlugin', () => {
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
   });
 
+  it.each([true, false])(
+    'prevents compression buffering for progressive responses (enabled=%s)',
+    async (streaming) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')
+        .split('\n')
+        .filter((line: string) => !line.startsWith('import '))
+        .join('\n')
+        .replace('export default', 'return');
+      const previousFetch = globalThis.$fetch;
+      try {
+        const renderer = vi.fn(
+          async () =>
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('shell'));
+                controller.close();
+              },
+            }),
+        );
+        const service = new Function(
+          'renderer',
+          'createFetch',
+          'nitroServerFetch',
+          code,
+        )(renderer, () => vi.fn(), vi.fn());
+        const response = await service.fetch(
+          new Request('http://localhost/stream', {
+            headers: streaming ? {} : { 'x-analog-no-streaming': 'true' },
+          }),
+        );
+        expect(response.headers.get('content-encoding')).toBe(
+          streaming ? 'identity' : null,
+        );
+        expect(response.headers.get('cache-control')).toBe(
+          streaming ? 'no-store, no-transform' : null,
+        );
+        expect(await response.text()).toBe('shell');
+      } finally {
+        globalThis.$fetch = previousFetch;
+      }
+    },
+  );
+
   it('registers HTTP server functions when HTML SSR is disabled', async () => {
     mkdirSync(join(workspaceRoot, 'src/app/server-fns'), { recursive: true });
     writeFileSync(

@@ -188,6 +188,9 @@ before response headers are sent.
 Some HTTP adapters expose an errored stream as ordinary EOF. The progressive
 browser runtime therefore requires the authoritative completion tail; if the
 document ends without it, the preview becomes a generic, non-indexable error view.
+Progressive responses use identity encoding and `Cache-Control: no-store, no-transform`
+so compression cannot hold back the shell or cache an incomplete document.
+Explicitly buffered routes and static assets retain their normal encoding policy.
 
 For Worker builds, Analog respects Nitro's non-Node or `noExternals: true` target
 policy. Dependencies used by generated page-load endpoints, including RxJS, are
