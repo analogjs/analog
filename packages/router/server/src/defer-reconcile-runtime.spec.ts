@@ -21,6 +21,28 @@ describe('DEFER_RECONCILE_RUNTIME', () => {
     installRuntime();
   });
 
+  it('replaces an incomplete streamed document with a non-indexable error view', () => {
+    document.body.innerHTML =
+      '<div data-analog-stream><p>Incomplete preview</p></div>';
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    expect(
+      document.querySelector('[data-analog-render-error] h1')?.textContent,
+    ).toBe('Unable to load this page');
+    expect(document.querySelector('[data-analog-stream]')).toBeNull();
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute('content'),
+    ).toBe('noindex');
+  });
+
+  it('does not replace a completed authoritative document at EOF', () => {
+    document.body.innerHTML =
+      '<div data-analog-stream></div><template data-analog-authoritative><h1>Complete</h1></template>';
+    rt().__analogFinalize();
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    expect(document.body.textContent).toBe('Complete');
+    expect(document.querySelector('[data-analog-render-error]')).toBeNull();
+  });
+
   describe('__analogPaint', () => {
     it('paints a streamed block into the live region and removes the template', () => {
       document.body.innerHTML =

@@ -185,6 +185,9 @@ can still render normally. If progressive rendering has already sent its shell,
 the response body fails and the application is disposed; its HTTP status can no
 longer change. Use buffered rendering when the page requires its final load status
 before response headers are sent.
+Some HTTP adapters expose an errored stream as ordinary EOF. The progressive
+browser runtime therefore requires the authoritative completion tail; if the
+document ends without it, the preview becomes a generic, non-indexable error view.
 
 For Worker builds, Analog respects Nitro's non-Node or `noExternals: true` target
 policy. Dependencies used by generated page-load endpoints, including RxJS, are

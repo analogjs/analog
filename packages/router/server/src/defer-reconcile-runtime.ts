@@ -22,9 +22,34 @@
  */
 export const DEFER_RECONCILE_RUNTIME = /* js */ `
 (function () {
+  var completed = false;
   function region() {
     return document.querySelector('[data-analog-stream]');
   }
+  function checkCompletion() {
+    if (completed || !region()) return;
+    document.title = 'Unable to load this page';
+    var robots = document.head.querySelector('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement('meta');
+      robots.setAttribute('name', 'robots');
+      document.head.appendChild(robots);
+    }
+    robots.setAttribute('content', 'noindex');
+    var error = document.createElement('main');
+    error.setAttribute('data-analog-render-error', '');
+    error.setAttribute('role', 'alert');
+    var heading = document.createElement('h1');
+    heading.textContent = 'Unable to load this page';
+    var message = document.createElement('p');
+    message.textContent = 'The page could not finish loading.';
+    error.appendChild(heading);
+    error.appendChild(message);
+    document.body.replaceChildren(error);
+  }
+  // A Worker HTTP adapter can turn a stream error into ordinary EOF. The
+  // authoritative tail, rather than transport completion, proves SSR success.
+  document.addEventListener('DOMContentLoaded', checkCompletion, { once: true });
   window.__analogPaint = function (id) {
     var tpl = document.querySelector('template[data-analog-defer="' + id + '"]');
     var r = region();
@@ -81,6 +106,8 @@ export const DEFER_RECONCILE_RUNTIME = /* js */ `
   window.__analogFinalize = function () {
     var auth = document.querySelector('template[data-analog-authoritative]');
     if (!auth) return;
+    completed = true;
+    document.removeEventListener('DOMContentLoaded', checkCompletion);
     // Replace the entire body — preview region, block templates and runtime
     // scripts — with just the authoritative body, so the reconciled DOM matches
     // a buffered render byte-for-byte before hydration boots.
