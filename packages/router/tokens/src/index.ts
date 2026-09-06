@@ -16,6 +16,10 @@ export type ServerContext = {
   req: ServerRequest;
   res: ServerResponse;
   fetch?: ServerInternalFetch;
+  /** Trusted route policy supplied by the SSR host. */
+  streaming?: boolean;
+  /** Aborted when the host request is cancelled. */
+  signal?: AbortSignal;
 };
 
 export const REQUEST: InjectionToken<ServerRequest> =

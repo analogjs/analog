@@ -11,6 +11,8 @@ import {
   ServerRequest,
   ServerResponse,
 } from '../../tokens/src/index.js';
+import { SERVER_FN_DISPATCHER } from '../../src/lib/server-fn/dispatcher';
+import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 
 function getHeaderValue(
   value: string | string[] | undefined,
@@ -65,6 +67,10 @@ export function provideServerContext({
     { provide: RESPONSE, useValue: res },
     { provide: BASE_URL, useValue: baseUrl },
     { provide: INTERNAL_FETCH, useValue: fetch },
+    {
+      provide: SERVER_FN_DISPATCHER,
+      useValue: createServerFnDispatcher(req, res),
+    },
     ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
   ];
 }
