@@ -946,6 +946,7 @@ export default {
         res: node?.res,
         streaming: req.headers.get('x-analog-no-streaming') !== 'true',
         signal: req.signal,
+        renderErrorsAsHtml: true,
         waitUntil: req.runtime?.cloudflare?.context?.waitUntil?.bind(req.runtime.cloudflare.context),
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,

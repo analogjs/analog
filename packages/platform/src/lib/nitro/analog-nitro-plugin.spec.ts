@@ -240,6 +240,7 @@ describe('analogNitroPlugin', () => {
       const context = renderer.mock.calls[0][2];
       expect(context.streaming).toBe(false);
       expect(context.signal).toBe(request.signal);
+      expect(context.renderErrorsAsHtml).toBe(true);
       expect(context.req).toBe(node.req);
       expect(context.res).toBe(node.res);
       expect(context.req.originalUrl).toBe('/stream?test=1');
