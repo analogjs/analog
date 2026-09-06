@@ -1317,6 +1317,10 @@ importers:
         version: link:../../packages/vitest-angular
 
   libs/shared/feature:
+    dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../../packages/content
     devDependencies:
       '@analogjs/vitest-angular':
         specifier: workspace:*
