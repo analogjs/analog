@@ -1,3 +1,4 @@
+import type { ResourceDependencies } from './resource-dependencies.js';
 import { Context, Data, Effect, Layer } from 'effect';
 import {
   preprocessStylesheetResult,
@@ -15,6 +16,7 @@ export interface StylesheetRequest {
   readonly inlineStylesExtension: string;
   readonly registry: AnalogStylesheetRegistry | undefined;
   readonly preprocessor: StylePreprocessor | undefined;
+  readonly dependencies?: Set<string>;
 }
 
 export class StylesheetFailure extends Data.TaggedError('StylesheetFailure')<{
@@ -72,6 +74,10 @@ export const transformStylesheet: (
         }),
       catch: (cause) => stylesheetFailure('preprocess', file, cause),
     });
+    for (const dependency of preprocessed.dependencies) {
+      if (dependency.kind === undefined || dependency.kind === 'file')
+        request.dependencies?.add(dependency.id);
+    }
     const registry = request.registry;
     if (registry) {
       return yield* Effect.try({
@@ -92,10 +98,10 @@ export type NativeStylesheetCompiler = (
   code: string,
   file: string,
 ) =>
-  | { code: string }
+  | { code: string; deps?: Set<string> }
   | null
   | undefined
-  | Promise<{ code: string } | null | undefined>;
+  | Promise<{ code: string; deps?: Set<string> } | null | undefined>;
 
 export function stylesheetCompilerLayer(
   compile: NativeStylesheetCompiler,
@@ -112,8 +118,27 @@ export function stylesheetCompilerLayer(
 /** A finite callback into Angular; the enclosing compiler drains these calls. */
 export function createStylesheetTransform(
   compile: NativeStylesheetCompiler,
+  graph?: ResourceDependencies,
 ): (request: StylesheetRequest) => Promise<string | undefined> {
-  const layer = stylesheetCompilerLayer(compile);
-  return (request) =>
-    Effect.runPromise(transformStylesheet(request).pipe(Effect.provide(layer)));
+  return async (request) => {
+    const dependencies = new Set<string>();
+    const layer = stylesheetCompilerLayer(async (code, file) => {
+      const result = await compile(code, file);
+      for (const dependency of result?.deps ?? []) dependencies.add(dependency);
+      return result;
+    });
+    const code = await Effect.runPromise(
+      transformStylesheet({ ...request, dependencies }).pipe(
+        Effect.provide(layer),
+      ),
+    );
+    const source = request.resourceFile ?? request.containingFile;
+    graph?.replace(
+      source,
+      request.resourceFile
+        ? dependencies
+        : [...graph.dependencies(source), ...dependencies],
+    );
+    return code;
+  };
 }

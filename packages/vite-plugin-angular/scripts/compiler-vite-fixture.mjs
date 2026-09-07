@@ -361,6 +361,7 @@ async function concurrentEnvironmentCase(mode) {
 }
 
 async function browserHmrCase(browser, mode, liveReload) {
+  const statefulHmr = liveReload && angularVersion !== '19.0.0';
   const compilationApi = mode.startsWith('api');
   const fast = mode.startsWith('fast');
   const jit = mode.endsWith('jit');
@@ -514,7 +515,7 @@ async function browserHmrCase(browser, mode, liveReload) {
     );
     assert.equal(
       await page.locator('[data-testid="count"]').textContent(),
-      liveReload ? '1' : '0',
+      statefulHmr ? '1' : '0',
       `${name}: expected HMR state preservation or full reload`,
     );
     assert.deepEqual(errors, [], `${name}: no browser runtime errors`);
@@ -534,7 +535,35 @@ async function browserHmrCase(browser, mode, liveReload) {
       [],
       `${name}: stylesheet update has no runtime errors`,
     );
-    if (fast) {
+    assert.equal(
+      await page.locator('[data-testid="count"]').textContent(),
+      statefulHmr ? '1' : '0',
+      `${name}: CSS state or compatibility reload`,
+    );
+    // Older Vite watchers throttle repeated changes to one path for 50 ms.
+    // Keep this correctness sequence outside that window; latency is measured separately.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await writeFile(
+      join(root, 'src/view.html'),
+      '<p data-testid="message">after CSS</p><button data-testid="count" (click)="count=count+1">{{count}}</button><child-a/><child-b/>',
+    );
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid="message"]')?.textContent ===
+        'after CSS',
+    );
+    assert.equal(
+      await page.locator('[data-testid="count"]').textContent(),
+      statefulHmr ? '1' : '0',
+    );
+    assert.equal(
+      await page
+        .locator('[data-testid="message"]')
+        .evaluate((element) => getComputedStyle(element).width),
+      '37px',
+      'Later template updates retain the latest stylesheet',
+    );
+    if (!jit) {
       await writeFile(
         join(root, 'src/shared.html'),
         '<p data-shared>{{label}} after</p>',
@@ -598,9 +627,14 @@ async function browserHmrCase(browser, mode, liveReload) {
   }
 }
 
-if (major >= 21) {
-  for (const mode of ['default', 'fast', 'api'])
-    await concurrentEnvironmentCase(mode);
+if (major >= 19) {
+  if (major >= 21)
+    for (const mode of [
+      'default',
+      'fast',
+      ...(compilationApiAvailable ? ['api'] : []),
+    ])
+      await concurrentEnvironmentCase(mode);
   await writeFile(
     join(root, 'index.html'),
     '<!doctype html><html><body><app-root></app-root><script type="module" src="/src/browser.ts"></script></body></html>',
@@ -621,11 +655,19 @@ if (major >= 21) {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch();
   try {
-    for (const mode of ['default', 'fast', 'api']) {
+    for (const mode of [
+      'default',
+      'fast',
+      ...(compilationApiAvailable ? ['api'] : []),
+    ]) {
       await browserHmrCase(browser, mode, true);
       await browserHmrCase(browser, mode, false);
     }
-    for (const mode of ['default-jit', 'fast-jit', 'api-jit'])
+    for (const mode of [
+      'default-jit',
+      'fast-jit',
+      ...(compilationApiAvailable ? ['api-jit'] : []),
+    ])
       await browserHmrCase(browser, mode, false);
   } finally {
     await browser.close();

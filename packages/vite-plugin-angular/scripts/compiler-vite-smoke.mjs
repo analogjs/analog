@@ -48,6 +48,11 @@ const angularTuples = {
     builder: '19.0.0',
     package: '@angular/build',
   },
+  '19.0.1': {
+    typescript: '5.6.3',
+    builder: '19.0.1',
+    package: '@angular/build',
+  },
   '20.0.0': {
     typescript: '5.8.3',
     builder: '20.0.0',
@@ -123,9 +128,12 @@ const dependencies = {
   [tuple.package]: tuple.builder,
   typescript: tuple.typescript,
   vite: values.vite,
+  ...(values.angular === '22.0.0' && values.vite === '8.2.2'
+    ? { sass: '1.97.3' }
+    : {}),
   rxjs: '7.8.2',
   tslib: '2.8.1',
-  ...(!oldAngular
+  ...(Number(values.angular.split('.')[0]) >= 19
     ? {
         playwright: '1.59.1',
         'zone.js': values.angular === '22.0.0' ? '0.16.1' : '0.15.1',
@@ -170,7 +178,7 @@ execaSync(
   ['install', '--ignore-workspace', '--no-frozen-lockfile', '--prefer-offline'],
   { cwd: root, env, stdio: 'inherit' },
 );
-if (!oldAngular) {
+if (Number(values.angular.split('.')[0]) >= 19) {
   execaSync(
     'pnpm',
     [
@@ -214,6 +222,8 @@ if (
           '--edits=4',
           '--restart-every=2',
           '--close-queued',
+          '--expect-style-state',
+          '--race-ssr',
           `--ssr-loader=${values.vite === '6.0.0' ? 'runner' : 'compat'}`,
         ],
         {
@@ -236,4 +246,18 @@ if (
       closeSync(log);
     }
   }
+}
+
+if (values.angular === '22.0.0' && values.vite === '8.2.2') {
+  copyFileSync(
+    join(scriptDirectory, 'compiler-style-qualification.mjs'),
+    join(root, 'styles.mjs'),
+  );
+  execaSync(consumerNode, ['styles.mjs'], {
+    cwd: root,
+    env: { ...env, NODE_ENV: 'development' },
+    stdio: 'inherit',
+    timeout: 180000,
+    killSignal: 'SIGKILL',
+  });
 }

@@ -1,8 +1,10 @@
+import { ResourceDependencies } from './resource-dependencies.js';
 import { it, expect } from '@effect/vitest';
 import { Cause, Effect, Exit, Layer } from 'effect';
 import { expectTypeOf } from 'vitest';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 import {
+  createStylesheetTransform,
   StylesheetCompiler,
   StylesheetFailure,
   transformStylesheet,
@@ -99,3 +101,22 @@ it.effect(
       ),
     ),
 );
+
+it('tracks preprocessor and Sass dependencies and removes obsolete imports', async () => {
+  const dependencies = new ResourceDependencies();
+  let imports = new Set(['/src/old.scss']);
+  const transform = createStylesheetTransform(
+    async () => ({ code: 'compiled', deps: imports }),
+    dependencies,
+  );
+  const external = { ...request, resourceFile: '/src/component.scss' };
+  await transform(external);
+  expect(dependencies.owners('/src/theme.css')).toEqual([
+    '/src/component.scss',
+  ]);
+  expect(dependencies.owners('/src/old.scss')).toEqual(['/src/component.scss']);
+  imports = new Set(['/src/new.scss']);
+  await transform(external);
+  expect(dependencies.owners('/src/old.scss')).toEqual([]);
+  expect(dependencies.owners('/src/new.scss')).toEqual(['/src/component.scss']);
+});

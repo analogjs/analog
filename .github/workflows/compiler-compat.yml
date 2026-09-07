@@ -238,6 +238,7 @@ jobs:
           - { angular: '17.3.12', vite: '6.0.0', node: '20.19.5' }
           - { angular: '18.2.14', vite: '6.0.0', node: '20.19.5' }
           - { angular: '19.0.0', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '19.0.1', vite: '6.0.0', node: '20.19.5' }
           - { angular: '20.0.0', vite: '6.0.0', node: '20.19.5' }
           - { angular: '20.1.0', vite: '6.0.0', node: '20.19.5' }
           - { angular: '21.0.0', vite: '7.0.0', node: '24.15.0' }

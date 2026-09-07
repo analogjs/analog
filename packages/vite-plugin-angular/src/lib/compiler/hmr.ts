@@ -31,6 +31,9 @@ export function ɵhmr_${c.className}(type) {
   for (const key of Object.getOwnPropertyNames(${c.className})) {
     if (key.startsWith('ɵ')) type[key] = ${c.className}[key];
   }
+  // Definitions and factories must keep targeting the original live class.
+  if (type.ɵcmp) type.ɵcmp.type = type;
+  if (type.ɵfac) type.ɵfac = (target) => ${c.className}.ɵfac(target ?? type);
 }`,
     )
     .join('\n');

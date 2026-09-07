@@ -1,3 +1,8 @@
+import { ResourceDependencies } from '../resource-dependencies.js';
+import {
+  StyleUrlsResolver,
+  TemplateUrlsResolver,
+} from '../component-resolvers.js';
 import { stripQuery, isCompilerSource } from '../utils/module-id.js';
 import { componentHmrId } from '../utils/component-hmr-id.js';
 import { createCompilerSession } from '../compiler-session.js';
@@ -107,9 +112,6 @@ export function compilationAPIPlugin(
   },
 ): CompilerPlugin {
   let resolvedConfig: ResolvedConfig;
-  const renderStylesheet = createStylesheetTransform((code, file) =>
-    preprocessCSS(code, file, resolvedConfig),
-  );
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
   let stylePreprocessor: StylePreprocessor | undefined;
@@ -124,6 +126,26 @@ export function compilationAPIPlugin(
   const sourceFileCache: SourceFileCacheType = new SourceFileCache();
   const { outputFiles, classNames } = state;
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
+  const resourceDependencies = new ResourceDependencies();
+  const styleDependencies = new ResourceDependencies();
+  const resourceOwners = (file: string): readonly string[] => [
+    ...new Set([
+      ...resourceDependencies.owners(file),
+      ...styleDependencies
+        .owners(file)
+        .flatMap((source) =>
+          TS_EXT_REGEX.test(source)
+            ? [source]
+            : resourceDependencies.owners(source),
+        ),
+    ]),
+  ];
+  const renderStylesheet = createStylesheetTransform(
+    (code, file) => preprocessCSS(code, file, resolvedConfig),
+    styleDependencies,
+  );
+  const styleUrlsResolver = new StyleUrlsResolver();
+  const templateUrlsResolver = new TemplateUrlsResolver();
   let initialCompilation = false;
   let viteServer: ViteDevServer | undefined;
 
@@ -154,6 +176,10 @@ export function compilationAPIPlugin(
         angularCompilation = undefined;
         viteServer = undefined;
         sourceFileCache.reset();
+        resourceDependencies.clear();
+        styleDependencies.clear();
+        styleUrlsResolver.clear();
+        templateUrlsResolver.clear();
         outputFiles.clear();
         classNames.clear();
         stylesheetRegistry = undefined;
@@ -264,6 +290,21 @@ export function compilationAPIPlugin(
       !!pluginOptions.jit,
       false,
     ));
+    ids = ids && [
+      ...new Set([
+        // Angular rejects HMR candidates when modifiedFiles contains an unknown
+        // Sass partial. Report its owning stylesheet; keep actual TS/resource edits.
+        ...ids.filter(
+          (id) =>
+            TS_EXT_REGEX.test(id) ||
+            resourceDependencies.owners(id).length ||
+            !styleDependencies.owners(id).length,
+        ),
+        ...ids.flatMap((id) => styleDependencies.owners(id)),
+      ]),
+    ];
+    for (const id of ids ?? [])
+      if (TS_EXT_REGEX.test(id)) styleDependencies.remove(id);
     const modifiedFiles = ids?.length
       ? new Set(ids.map((file) => normalizePath(file)))
       : undefined;
@@ -535,6 +576,9 @@ export function compilationAPIPlugin(
     name: '@analogjs/vite-plugin-angular-compilation-api',
     api: {
       read: compilation.read,
+      defer: compilation.defer,
+      watch: compilation.watch,
+      resourceOwners,
       invalidate: async (files) => {
         await compilation.run(files);
       },
@@ -617,7 +661,11 @@ export function compilationAPIPlugin(
         }
       };
       compilation.watch(server.watcher, 'add', invalidateCompilation);
-      compilation.watch(server.watcher, 'unlink', invalidateCompilation);
+      compilation.watch(server.watcher, 'unlink', (file) => {
+        resourceDependencies.remove(file);
+        styleDependencies.remove(file);
+        return invalidateCompilation();
+      });
       compilation.watch(server.watcher, 'change', invalidateTsconfig);
     },
     async buildStart() {
@@ -666,14 +714,21 @@ export function compilationAPIPlugin(
         }
       }
 
-      if (/\.(html|htm)$/.test(ctx.file)) {
+      if (
+        /\.(html|htm)$/.test(ctx.file) ||
+        (!shouldExternalizeStyles() && resourceOwners(ctx.file).length)
+      ) {
         debugHmr('template file changed', { file: ctx.file });
         const updatedComponents = await compilation.run([ctx.file]);
         if (shouldEnableLiveReload()) {
-          notifyComponentUpdates(
-            ctx.server,
-            updatedComponents.updatedComponents,
-          );
+          if (updatedComponents.updatedComponents.length) {
+            notifyComponentUpdates(
+              ctx.server,
+              updatedComponents.updatedComponents,
+            );
+          } else {
+            ctx.server.ws.send({ type: 'full-reload' });
+          }
           return [];
         }
       }
@@ -762,6 +817,13 @@ export function compilationAPIPlugin(
       },
       async handler(code, id) {
         if (!isCompilerSource(id)) return;
+        resourceDependencies.replace(
+          stripQuery(id),
+          [
+            ...templateUrlsResolver.resolve(code, stripQuery(id)),
+            ...styleUrlsResolver.resolve(code, stripQuery(id)),
+          ].map((resource) => resource.absolutePath),
+        );
         if (transformFilter && !transformFilter(code, id)) {
           return;
         }
@@ -793,6 +855,14 @@ export function compilationAPIPlugin(
         }
 
         const typescriptResult = await compilation.read(() => fileEmitter(id));
+        for (const source of [
+          stripQuery(id),
+          ...resourceDependencies.dependencies(stripQuery(id)),
+        ]) {
+          for (const dependency of styleDependencies.dependencies(source))
+            this.addWatchFile(dependency);
+        }
+
         if (!typescriptResult) {
           debugCompilationApi('transform skip (file not emitted)', { id });
           if (isAngular) {

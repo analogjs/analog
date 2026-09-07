@@ -1,3 +1,4 @@
+import { ResourceDependencies } from './resource-dependencies.js';
 import {
   stripQuery,
   resolveJitResource,
@@ -255,6 +256,20 @@ function createPluginSet(
     }));
 
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
+  const resourceDependencies = new ResourceDependencies();
+  const styleDependencies = new ResourceDependencies();
+  const resourceOwners = (file: string): readonly string[] => [
+    ...new Set([
+      ...resourceDependencies.owners(file),
+      ...styleDependencies
+        .owners(file)
+        .flatMap((source) =>
+          TS_EXT_REGEX.test(source)
+            ? [source]
+            : resourceDependencies.owners(source),
+        ),
+    ]),
+  ];
   const sourceFileCache: SourceFileCacheType = new SourceFileCache();
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -341,6 +356,8 @@ function createPluginSet(
         declarationFiles.length = 0;
         fileTransformMap.clear();
         sourceFileCache.reset();
+        resourceDependencies.clear();
+        styleDependencies.clear();
         styleUrlsResolver.clear();
         templateUrlsResolver.clear();
         jitStyles.clear();
@@ -381,6 +398,9 @@ function createPluginSet(
       name: '@analogjs/vite-plugin-angular',
       api: {
         read: compilation.read,
+        defer: compilation.defer,
+        watch: compilation.watch,
+        resourceOwners,
         invalidate: async (files) => {
           await compilation.run(files);
         },
@@ -482,6 +502,8 @@ function createPluginSet(
           invalidateCompilationOnFsChange,
         );
         compilation.watch(server.watcher, 'unlink', (file) => {
+          resourceDependencies.remove(file);
+          styleDependencies.remove(file);
           evictDeletedFileMetadata(file, {
             classNamesMap: classNames as Map<string, string>,
             fileTransformMap,
@@ -565,6 +587,42 @@ function createPluginSet(
               return mod;
             });
           }
+        }
+
+        const changedOwners = resourceOwners(ctx.file);
+        if (
+          shouldEnableLiveReload() &&
+          changedOwners.length &&
+          (/\.(html|htm)$/.test(ctx.file) || !shouldExternalizeStyles())
+        ) {
+          await compilation.run([ctx.file]);
+          const owners = changedOwners.flatMap((id) => {
+            const module = ctx.server.moduleGraph.getModuleById(id);
+            return module ? [module] : [];
+          });
+          for (const module of owners)
+            ctx.server.moduleGraph.invalidateModule(module);
+          const updates = await compilation.read(() =>
+            changedOwners.map((id) => ({ id, result: fileEmitter(id) })),
+          );
+          if (
+            updates.every(
+              (update) =>
+                update.result?.hmrEligible && classNames.has(update.id),
+            )
+          ) {
+            for (const { id } of updates) {
+              const className = classNames.get(id)!;
+              sendHMRComponentUpdate(
+                ctx.server,
+                componentHmrId(relative(process.cwd(), id), className),
+                classNames,
+              );
+            }
+            return owners.map(markModuleSelfAccepting);
+          }
+          ctx.server.ws.send({ type: 'full-reload' });
+          return [];
         }
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
@@ -1129,6 +1187,15 @@ function createPluginSet(
           const typescriptResult = await compilation.read(() =>
             fileEmitter(id),
           );
+          if (watchMode) {
+            for (const source of [
+              id,
+              ...styleUrls.map((resource) => resource.absolutePath),
+            ]) {
+              for (const dependency of styleDependencies.dependencies(source))
+                this.addWatchFile(dependency);
+            }
+          }
           if (!typescriptResult) {
             debugCompilerV('transform skip (file not emitted by Angular)', {
               id,
@@ -1323,7 +1390,10 @@ function createPluginSet(
             () =>
               createPluginSet({ ...options, liveReload: false }, false)
                 .compiler,
-            (compiler, files) => compiler.api.invalidate(files),
+            (compiler, files) => compiler.api.defer(files),
+            (compiler, file) => compiler.api.resourceOwners(file),
+            (compiler, server, listener) =>
+              compiler.api.watch(server.watcher, 'change', listener),
           )
         : compilationPlugin,
       ...(isTest && !isStackBlitz
@@ -1375,6 +1445,14 @@ function createPluginSet(
     cached: ResolvedSourceProject,
   ) {
     const isProd = config.mode === 'production';
+    ids = ids && [
+      ...new Set([
+        ...ids,
+        ...ids.flatMap((id) => styleDependencies.owners(id)),
+      ]),
+    ];
+    for (const id of ids ?? [])
+      if (TS_EXT_REGEX.test(id)) styleDependencies.remove(id);
     const modifiedFiles = new Set<string>(ids ?? []);
     sourceFileCache.invalidate(modifiedFiles);
 
@@ -1477,6 +1555,7 @@ function createPluginSet(
         externalizeStyles,
       });
       augmentHostWithResources(host, styleTransform, {
+        styleDependencies,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,
         ...(stylesheetRegistry ? { stylesheetRegistry } : {}),
@@ -1533,6 +1612,13 @@ function createPluginSet(
 
     if (angularCompiler) {
       await angularCompiler.analyzeAsync();
+      for (const source of typeScriptProgram.getSourceFiles()) {
+        if (!source.isDeclarationFile)
+          resourceDependencies.replace(
+            source.fileName,
+            angularCompiler.getResourceDependencies(source),
+          );
+      }
     }
     previousBuilder = watchMode ? incrementalBuilder : undefined;
     nextProgram = angularProgram;
@@ -1627,7 +1713,9 @@ function createPluginSet(
       });
     };
 
+    const emittedFiles = new Set<string>();
     const writeOutputFile = (id: string) => {
+      if (emittedFiles.has(id)) return;
       const sourceFile = builder.getSourceFile(id);
       if (!sourceFile) {
         return;
@@ -1678,6 +1766,7 @@ function createPluginSet(
       );
 
       writeFileCallback(id, content, false, undefined, [sourceFile]);
+      emittedFiles.add(id);
       if (map !== undefined && mapFilename !== undefined) {
         // Use the filename TypeScript emitted (handles `.cts`/`.mts` as well
         // as `.ts`) instead of regex-replacing the source `.ts` extension.
@@ -1691,7 +1780,8 @@ function createPluginSet(
 
     if (watchMode) {
       if (ids && ids.length > 0) {
-        ids.forEach((id) => writeOutputFile(id));
+        const owners = ids.flatMap((id) => resourceDependencies.owners(id));
+        for (const id of new Set([...ids, ...owners])) writeOutputFile(id);
       } else {
         /**
          * Only block the server from starting up

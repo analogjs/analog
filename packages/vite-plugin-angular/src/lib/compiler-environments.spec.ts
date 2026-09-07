@@ -66,6 +66,53 @@ describe('compiler environment selection', () => {
     await updating;
   });
 
+  it('invalidates known resource owners without clearing unrelated server modules', async () => {
+    const defer = vi.fn();
+    const plugin = isolateCompilerEnvironments(
+      { name: 'compiler' },
+      () => ({ name: 'compiler' }),
+      defer,
+      () => ['/src/a.ts', '/src/b.ts'],
+    );
+    Reflect.apply(hook(plugin.config), {}, [
+      {},
+      { command: 'serve', mode: 'development' },
+    ]);
+    await Reflect.apply(hook(plugin.configResolved), {}, [
+      { build: { ssr: false } },
+    ]);
+    const selected = await Reflect.apply(
+      hook(plugin.applyToEnvironment),
+      plugin,
+      [{ name: 'ssr', config: { build: {} } }],
+    );
+    const modules = new Map([
+      ['/src/a.ts', { id: '/src/a.ts' }],
+      ['/src/b.ts', { id: '/src/b.ts' }],
+    ]);
+    const graph = {
+      getModuleById: (id: string) => modules.get(id),
+      invalidateModule: vi.fn(),
+      invalidateAll: vi.fn(),
+    };
+    await Reflect.apply(
+      hook(selected.hotUpdate),
+      { environment: { moduleGraph: graph } },
+      [{ file: '/src/shared.html', timestamp: 42 }],
+    );
+    expect(defer).toHaveBeenCalledExactlyOnceWith(expect.anything(), [
+      '/src/shared.html',
+    ]);
+    expect(graph.invalidateAll).not.toHaveBeenCalled();
+    expect(graph.invalidateModule).toHaveBeenCalledTimes(2);
+    expect(graph.invalidateModule).toHaveBeenCalledWith(
+      modules.get('/src/a.ts'),
+      expect.any(Set),
+      42,
+      true,
+    );
+  });
+
   it('keeps the dependency scanner away from the live client compiler', async () => {
     const create = vi.fn();
     const plugin = isolateCompilerEnvironments({ name: 'compiler' }, create);
@@ -75,6 +122,50 @@ describe('compiler environment selection', () => {
       ]),
     ).resolves.toBe(false);
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it('publishes resource dirtiness before Vite reaches the server hot-update hook', async () => {
+    const defer = vi.fn();
+    let change: ((file: string) => void) | undefined;
+    const plugin = isolateCompilerEnvironments(
+      { name: 'compiler' },
+      () => ({ name: 'compiler' }),
+      defer,
+      () => ['/src/app.ts'],
+      (_child, _server, listener) => {
+        change = listener;
+      },
+    );
+    Reflect.apply(hook(plugin.config), {}, [
+      {},
+      { command: 'serve', mode: 'development' },
+    ]);
+    await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
+    const module = { id: '/src/app.ts' };
+    const graph = {
+      getModuleById: () => module,
+      invalidateModule: vi.fn(),
+      invalidateAll: vi.fn(),
+    };
+    const environment = {
+      name: 'ssr',
+      config: { build: {} },
+      moduleGraph: graph,
+    };
+    const child = await Reflect.apply(hook(plugin.applyToEnvironment), plugin, [
+      environment,
+    ]);
+    await Reflect.apply(hook(plugin.configureServer), {}, [
+      { environments: { ssr: environment } },
+    ]);
+    change!('/src/view.css');
+    expect(defer).toHaveBeenCalledTimes(1);
+    expect(graph.invalidateModule).toHaveBeenCalledTimes(1);
+    await Reflect.apply(hook(child.hotUpdate), { environment }, [
+      { file: '/src/view.css' },
+    ]);
+    expect(defer).toHaveBeenCalledTimes(1);
+    expect(graph.invalidateAll).not.toHaveBeenCalled();
   });
 
   it('shares in-flight child initialization only for the exact environment', async () => {

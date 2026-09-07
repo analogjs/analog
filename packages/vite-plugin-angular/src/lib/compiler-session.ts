@@ -14,6 +14,7 @@ export interface CompilerSession {
     ids?: readonly string[],
     signal?: AbortSignal,
   ): Promise<CompilationResult>;
+  defer(ids: readonly string[]): void;
   ready(): Promise<CompilationResult | undefined>;
   close(): Promise<void>;
   own(finalizer: () => Promise<void>): void;
@@ -33,6 +34,8 @@ interface ActiveSession {
   readonly resources: Scope.Closeable;
   readonly operations: NativeOperations;
   ready: Promise<CompilationResult | undefined>;
+  readonly dirty: Set<string>;
+  readers: number;
 }
 
 type Lifecycle =
@@ -60,6 +63,8 @@ export function createCompilerSession(
     resources: Scope.makeUnsafe(),
     operations: new NativeOperations(),
     ready: Promise.resolve(undefined),
+    dirty: new Set(),
+    readers: 0,
   });
   let state: Lifecycle = open();
   const session: CompilerSession = {
@@ -70,6 +75,8 @@ export function createCompilerSession(
     run(ids, signal) {
       if (state._tag === 'Closing')
         return Promise.reject(new Error('Compiler session is closed'));
+      ids = ids ? [...new Set([...state.dirty, ...ids])] : undefined;
+      state.dirty.clear();
       const work = state.runtime
         .runPromise(
           Effect.flatMap(CompilationScheduler, (scheduler) =>
@@ -89,10 +96,18 @@ export function createCompilerSession(
           )
         : work;
     },
-    ready: () =>
-      state._tag === 'Active'
-        ? state.ready
-        : state.closed.then(() => undefined),
+    defer(ids) {
+      if (state._tag === 'Closing')
+        throw new Error('Compiler session is closed');
+      for (const id of ids) state.dirty.add(id);
+      // Reads already admitted must also observe edits arriving during compilation.
+      if (state.readers && state.dirty.size) session.run([...state.dirty]);
+    },
+    ready() {
+      if (state._tag === 'Closing') return state.closed.then(() => undefined);
+      if (state.dirty.size) return session.run([...state.dirty]);
+      return state.ready;
+    },
     close() {
       if (state._tag === 'Closing') return state.closed;
       const active = state;
@@ -115,43 +130,19 @@ export function createCompilerSession(
       );
     },
     read(reader) {
-      if (state._tag === 'Closing')
-        return Promise.reject(new Error('Compiler session is closed'));
-      return state.operations.track(
-        state.runtime
-          .runPromise(
-            Effect.flatMap(CompilationScheduler, (scheduler) =>
-              scheduler.read(
-                Effect.try({
-                  try: reader,
-                  catch: (cause) => new CompilationFailure({ cause }),
-                }),
-              ),
-            ),
-          )
-          .catch((error: unknown) => {
-            throw error instanceof CompilationFailure ? error.cause : error;
-          }),
+      return read(
+        Effect.try({
+          try: reader,
+          catch: (cause) => new CompilationFailure({ cause }),
+        }),
       );
     },
     readAsync(reader) {
-      if (state._tag === 'Closing')
-        return Promise.reject(new Error('Compiler session is closed'));
-      return state.operations.track(
-        state.runtime
-          .runPromise(
-            Effect.flatMap(CompilationScheduler, (scheduler) =>
-              scheduler.read(
-                Effect.tryPromise({
-                  try: reader,
-                  catch: (cause) => new CompilationFailure({ cause }),
-                }),
-              ),
-            ),
-          )
-          .catch((error: unknown) => {
-            throw error instanceof CompilationFailure ? error.cause : error;
-          }),
+      return read(
+        Effect.tryPromise({
+          try: reader,
+          catch: (cause) => new CompilationFailure({ cause }),
+        }),
       );
     },
     watch(watcher, event, listener) {
@@ -162,5 +153,28 @@ export function createCompilerSession(
       });
     },
   };
+  function read<A>(
+    operation: Effect.Effect<A, CompilationFailure>,
+  ): Promise<A> {
+    if (state._tag === 'Closing')
+      return Promise.reject(new Error('Compiler session is closed'));
+    const active = state;
+    active.readers++;
+    if (active.dirty.size) session.run([...active.dirty]);
+    return active.operations.track(
+      active.runtime
+        .runPromise(
+          Effect.flatMap(CompilationScheduler, (scheduler) =>
+            scheduler.read(operation),
+          ),
+        )
+        .catch((error: unknown) => {
+          throw error instanceof CompilationFailure ? error.cause : error;
+        })
+        .finally(() => {
+          active.readers--;
+        }),
+    );
+  }
   return session;
 }

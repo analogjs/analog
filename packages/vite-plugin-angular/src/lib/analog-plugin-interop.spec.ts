@@ -271,3 +271,10 @@ describe('analog plugin interop', () => {
     expect(setup).toHaveBeenCalledTimes(1);
   });
 });
+
+it('keeps Tailwind Vite component styles in the Vite CSS pipeline', async () => {
+  const integrations = await discoverAnalogIntegrations({
+    plugins: [{ name: '@tailwindcss/vite:generate:serve' }],
+  } as any);
+  expect(integrations.externalizeStyles).toBe(true);
+});

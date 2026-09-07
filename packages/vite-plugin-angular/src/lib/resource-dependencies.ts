@@ -27,6 +27,10 @@ export class ResourceDependencies {
     this.resourcesBySource.delete(source);
   }
 
+  dependencies(source: string): readonly string[] {
+    return [...(this.resourcesBySource.get(normalizePath(source)) ?? [])];
+  }
+
   owners(resource: string): readonly string[] {
     return [...(this.sourcesByResource.get(normalizePath(resource)) ?? [])];
   }

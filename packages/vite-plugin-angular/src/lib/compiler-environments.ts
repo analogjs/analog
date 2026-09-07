@@ -1,5 +1,6 @@
 import type {
   ConfigEnv,
+  DevEnvironment,
   Plugin,
   ResolvedConfig,
   UserConfig,
@@ -33,7 +34,13 @@ interface Configuration {
 export function isolateCompilerEnvironments<P extends Plugin>(
   primary: P,
   create: () => P,
-  invalidate?: (plugin: P, files: readonly string[]) => Promise<void>,
+  invalidate?: (plugin: P, files: readonly string[]) => void | Promise<void>,
+  resourceOwners?: (plugin: P, file: string) => readonly string[],
+  watchResources?: (
+    plugin: P,
+    server: ViteDevServer,
+    listener: (file: string) => void,
+  ) => void,
 ): Plugin {
   let configuration:
     | Configuration
@@ -128,6 +135,45 @@ export function isolateCompilerEnvironments<P extends Plugin>(
   ): Promise<Plugin> {
     const { config, resolved, env, context, resolvedContext } = configuration;
     const child = create();
+    const watchedResources = new Set<string>();
+    if (invalidate && watchResources) {
+      const configureServer = handler(child.configureServer);
+      child.configureServer = async function (server) {
+        const post = await configureServer?.call(this, server);
+        watchResources(child, server, (file) => {
+          const live = server.environments[environment.name];
+          if (live && /\.(html?|css|s[ac]ss|less)$/.test(file)) {
+            // Client HMR can await compilation before the server hook runs.
+            // Publish server dirtiness at the watcher boundary so requests in
+            // that interval cannot reuse stale inlined resources.
+            invalidate(child, [file]);
+            invalidateResources(live, file, Date.now());
+            watchedResources.add(file);
+          }
+        });
+        return post;
+      };
+    }
+    function invalidateResources(
+      live: DevEnvironment,
+      file: string,
+      timestamp: number,
+    ) {
+      const graph = live.moduleGraph;
+      const owners = resourceOwners?.(child, file) ?? [];
+      const modules = owners.flatMap((owner) => {
+        const module = graph.getModuleById(owner);
+        return module ? [module] : [];
+      });
+      if (modules.length === owners.length && modules.length) {
+        const invalidated = new Set<(typeof modules)[number]>();
+        for (const module of modules)
+          graph.invalidateModule(module, invalidated, timestamp, true);
+      } else {
+        graph.invalidateAll();
+      }
+    }
+
     const environmentConfig: ResolvedConfig = {
       ...resolved,
       ...environment.config,
@@ -156,13 +202,10 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     };
     if (invalidate) {
       isolated.hotUpdate = async function (ctx) {
+        if (watchedResources.delete(ctx.file)) return;
         const compilation = invalidate(child, [ctx.file]);
-        if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) {
-          // Drop cached SSR modules as soon as the next generation is queued.
-          // Requests then enter the compiler's read barrier instead of serving
-          // old HTML while a slower Angular compilation is still running.
-          this.environment.moduleGraph.invalidateAll();
-        }
+        if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file))
+          invalidateResources(this.environment, ctx.file, ctx.timestamp);
         await compilation;
       };
     }

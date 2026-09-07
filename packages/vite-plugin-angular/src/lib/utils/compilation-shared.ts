@@ -1,3 +1,4 @@
+import { angularFullVersion } from './devkit.js';
 import { stripQuery, splitComponentId } from './module-id.js';
 import { resolveHmrSource } from './component-hmr-id.js';
 /**
@@ -266,13 +267,17 @@ export function createCompilationMode(
   return {
     shouldEnableLiveReload: () => {
       const mode = current();
-      return mode.watch && mode.liveReload && mode.hmr;
+      // Angular 19.0.0 calls Map.remove during HMR; 19.0.1 fixes the runtime.
+      return (
+        mode.watch &&
+        mode.liveReload &&
+        mode.hmr &&
+        angularFullVersion >= 190001
+      );
     },
     shouldExternalizeStyles: () => {
       const mode = current();
-      return (
-        mode.watch && ((mode.liveReload && mode.hmr) || mode.externalizeStyles)
-      );
+      return mode.watch && mode.externalizeStyles;
     },
   };
 }

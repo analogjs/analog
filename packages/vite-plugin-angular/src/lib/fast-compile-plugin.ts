@@ -1,3 +1,4 @@
+import { angularFullVersion } from './utils/devkit.js';
 import {
   stripQuery,
   resolveJitResource,
@@ -581,6 +582,7 @@ export function fastCompilePlugin(
     // whenever a style needs a non-`css` preprocessor — either the configured
     // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
     // own extension.
+    const stylesheetDependencies = new Set<string>();
     let resolvedStyles: Map<string, string> | undefined;
     let resolvedInlineStyles: Map<number, string> | undefined;
 
@@ -604,6 +606,8 @@ export function fastCompilePlugin(
               fakePath,
               resolvedConfig,
             );
+            for (const dependency of processed.deps ?? [])
+              stylesheetDependencies.add(dependency);
             resolvedInlineStyles.set(i, processed.code);
           } catch (e) {
             throw stylesheetFailure('compile', id, e);
@@ -645,6 +649,7 @@ export function fastCompilePlugin(
     resourceDependencies.replace(id, [
       ...inlined.resourceDependencies,
       ...result.resourceDependencies,
+      ...stylesheetDependencies,
     ]);
 
     // Strip TypeScript-only syntax
@@ -668,7 +673,12 @@ export function fastCompilePlugin(
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
-    if (watchMode && pluginOptions.liveReload) {
+    if (
+      watchMode &&
+      pluginOptions.liveReload &&
+      resolvedConfig.server.hmr !== false &&
+      angularFullVersion >= 190001
+    ) {
       const fileDeclarations = [...registry.values()].filter(
         (e) => normalizePath(e.fileName) === normalizePath(id),
       );
@@ -697,6 +707,9 @@ export function fastCompilePlugin(
     name: '@analogjs/vite-plugin-angular-fast-compile',
     api: {
       read: compilation.read,
+      defer: compilation.defer,
+      watch: compilation.watch,
+      resourceOwners: (file) => resourceDependencies.owners(file),
       invalidate: async (files) => {
         await compilation.run(files);
       },
@@ -848,9 +861,13 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return compilation.readAsync(() =>
+        const result = await compilation.readAsync(() =>
           handleFastCompileTransform(code, id),
         );
+        if (watchMode)
+          for (const dependency of resourceDependencies.dependencies(id))
+            this.addWatchFile(dependency);
+        return result;
       },
     },
   };

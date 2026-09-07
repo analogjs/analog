@@ -1,3 +1,4 @@
+import type { CompilerSession } from './compiler-session.js';
 import { Context, Data, type Effect } from 'effect';
 import type { Plugin } from 'vite';
 import type { SourceGraphFailure } from './compiler-source-graph.js';
@@ -6,6 +7,9 @@ import type { StylesheetFailure } from './stylesheet-pipeline.js';
 export interface CompilerPlugin extends Plugin {
   api: {
     invalidate(files: readonly string[]): Promise<void>;
+    defer(files: readonly string[]): void;
+    watch: CompilerSession['watch'];
+    resourceOwners(file: string): readonly string[];
     read<A>(reader: () => A): Promise<A>;
   };
 }

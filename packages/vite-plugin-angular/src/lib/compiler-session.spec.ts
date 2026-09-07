@@ -178,3 +178,76 @@ describe('compiler session', () => {
     expect(events.listenerCount('change')).toBe(0);
   });
 });
+
+describe('deferred server compilation', () => {
+  it('coalesces idle edits and compiles once before concurrent reads', async () => {
+    let revision = 0;
+    const compile = vi.fn(async () => {
+      revision++;
+    });
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(['view.html']);
+    session.defer(['view.css', 'view.html']);
+    expect(compile).toHaveBeenCalledTimes(1);
+    expect(
+      await Promise.all([
+        session.read(() => revision),
+        session.readAsync(async () => revision),
+      ]),
+    ).toEqual([2, 2]);
+    expect(compile).toHaveBeenLastCalledWith(['view.html', 'view.css']);
+    expect(compile).toHaveBeenCalledTimes(2);
+    await session.close();
+  });
+
+  it('includes edits admitted while a read waits for compilation', async () => {
+    const started = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    let revision = 0;
+    const session = createCompilerSession(async () => {
+      revision++;
+      if (revision === 2) {
+        started.resolve();
+        await release.promise;
+      }
+    });
+    await session.start();
+    session.defer(['first.html']);
+    const reading = session.read(() => revision);
+    await started.promise;
+    session.defer(['second.html']);
+    release.resolve();
+    expect(await reading).toBe(3);
+    await session.close();
+  });
+
+  it('surfaces deferred failures and recovers on the next edit', async () => {
+    const error = new Error('invalid resource');
+    const compile = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(error)
+      .mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(['broken.html']);
+    await expect(session.read(() => 'stale')).rejects.toBe(error);
+    session.defer(['fixed.html']);
+    await expect(session.read(() => 'fresh')).resolves.toBe('fresh');
+    await session.close();
+  });
+
+  it('discards unread dirty state on close and starts a fresh generation', async () => {
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(['unused.html']);
+    await session.close();
+    expect(compile).toHaveBeenCalledTimes(1);
+    expect(() => session.defer(['late.html'])).toThrow('closed');
+    await session.start();
+    expect(compile).toHaveBeenLastCalledWith(undefined);
+    await session.close();
+  });
+});

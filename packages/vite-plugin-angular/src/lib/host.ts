@@ -1,3 +1,4 @@
+import type { ResourceDependencies } from './resource-dependencies.js';
 import type { CompilerHost } from '@angular/compiler-cli';
 import {
   createStylesheetTransform,
@@ -30,6 +31,7 @@ export function augmentHostWithResources(
     stylesheetRegistry?: AnalogStylesheetRegistry;
     sourceFileCache?: SourceFileCache;
     stylePreprocessor?: StylePreprocessor;
+    styleDependencies?: ResourceDependencies;
   },
 ): void {
   const resourceHost: CompilerHost = host;
@@ -50,7 +52,10 @@ export function augmentHostWithResources(
     return options?.sourceFileCache?.modifiedFiles;
   };
 
-  const renderStylesheet = createStylesheetTransform(transform);
+  const renderStylesheet = createStylesheetTransform(
+    transform,
+    options.styleDependencies,
+  );
   resourceHost.transformResource = async function (data, context) {
     if (context.type !== 'style') return null;
     const content = await renderStylesheet({

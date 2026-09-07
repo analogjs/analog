@@ -198,6 +198,7 @@ describe('angular hmr style preprocessing', () => {
             name: 'preprocessor-plugin',
             analog: {
               setup(ctx: any) {
+                ctx.externalizeComponentStyles();
                 ctx.registerStylePreprocessor(stylePreprocessor);
               },
             },
@@ -272,6 +273,7 @@ describe('angular hmr style preprocessing', () => {
           name: 'prepender-plugin',
           analog: {
             setup(ctx: any) {
+              ctx.externalizeComponentStyles();
               ctx.registerStylePreprocessor(prepender);
             },
           },
@@ -307,6 +309,7 @@ describe('angular hmr style preprocessing', () => {
             name: 'pipeline-a',
             analog: {
               setup(ctx: any) {
+                ctx.externalizeComponentStyles();
                 ctx.registerStylePreprocessor(preprocessStylesheet);
               },
             },
@@ -365,6 +368,22 @@ describe('angular hmr style preprocessing', () => {
       );
     },
   );
+
+  it('compiles ordinary component styles into HMR metadata without external links', async () => {
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({});
+    preprocessCSSMock.mockResolvedValue({ code: '.demo { color: blue; }' });
+    const code = await transformStylesheet(
+      '.demo { color: blue; }',
+      '/project/demo.ts',
+      '/project/demo.css',
+      0,
+      'Demo',
+    );
+    expect(code).toBe('.demo { color: blue; }');
+    expect(preprocessCSSMock).toHaveBeenCalledTimes(1);
+    expect(await plugin.load('/project/demo.css?ngcomp=demo')).toBeUndefined();
+    await plugin.closeBundle();
+  });
 
   it(
     'wraps the compilation API tsconfig when include adds extra source roots',
@@ -464,6 +483,22 @@ describe('angular hmr style preprocessing', () => {
       }
     },
   );
+
+  it('compiles ordinary component styles into HMR metadata without external links', async () => {
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({});
+    preprocessCSSMock.mockResolvedValue({ code: '.demo { color: blue; }' });
+    const code = await transformStylesheet(
+      '.demo { color: blue; }',
+      '/project/demo.ts',
+      '/project/demo.css',
+      0,
+      'Demo',
+    );
+    expect(code).toBe('.demo { color: blue; }');
+    expect(preprocessCSSMock).toHaveBeenCalledTimes(1);
+    expect(await plugin.load('/project/demo.css?ngcomp=demo')).toBeUndefined();
+    await plugin.closeBundle();
+  });
 
   it(
     'wraps the compilation API tsconfig when project references and tsconfig paths add source roots',

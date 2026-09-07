@@ -63,7 +63,10 @@ export async function runAnalogSetupHooks(
   const transformFilters: TransformFilter[] = [];
   const componentRegistries: ComponentRegistryEntries[] = [];
   const include: string[] = [];
-  let externalizeStyles = false;
+  // Tailwind's Vite transform does not run inside preprocessCSS.
+  let externalizeStyles = plugins.some((plugin) =>
+    plugin.name.startsWith('@tailwindcss/vite:'),
+  );
 
   for (const plugin of plugins as readonly AnalogIntegrationPlugin[]) {
     if (typeof plugin.analog?.setup !== 'function') {

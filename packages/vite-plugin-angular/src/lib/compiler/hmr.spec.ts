@@ -16,7 +16,6 @@ describe('HMR code generation', () => {
     expect(code).toContain('Object.getOwnPropertyNames(MyComponent)');
     expect(code).toContain("key.startsWith('ɵ')");
     expect(code).not.toContain('type.ɵcmp = ');
-    expect(code).not.toContain('type.ɵfac = ');
   });
 
   it('generates ɵɵreplaceMetadata call for components', () => {
@@ -168,5 +167,35 @@ describe('HMR code generation', () => {
       LiveComponent,
     ]);
     expect(hot.invalidate).not.toHaveBeenCalled();
+  });
+
+  it('keeps recreated instances and definitions attached to the live class', () => {
+    const generated = generateHmrCode([
+      {
+        className: 'MyComponent',
+        selector: 'app-my',
+        kind: 'component',
+        fileName: 'my.ts',
+      },
+    ]);
+    const apply = new Function(
+      'MyComponent',
+      'meta',
+      `${generated.replaceAll('export function', 'function').replaceAll('import.meta', 'meta')}\nreturn ɵhmr_MyComponent;`,
+    );
+    class LiveComponent {
+      static ɵcmp: { type: unknown; revision: number };
+      static ɵfac: (target?: typeof LiveComponent) => LiveComponent;
+    }
+    for (const revision of [1, 2, 3]) {
+      class DonorComponent {
+        static ɵcmp = { type: DonorComponent, revision };
+        static ɵfac = (target = DonorComponent) => new target();
+      }
+      apply(DonorComponent, {})(LiveComponent);
+      expect(LiveComponent.ɵcmp.type).toBe(LiveComponent);
+      expect(LiveComponent.ɵcmp.revision).toBe(revision);
+      expect(LiveComponent.ɵfac()).toBeInstanceOf(LiveComponent);
+    }
   });
 });

@@ -26,6 +26,8 @@ const { values } = parseArgs({
     'restart-every': { type: 'string', default: '0' },
     'close-queued': { type: 'boolean', default: false },
     'refresh-ssr': { type: 'boolean', default: false },
+    'expect-style-state': { type: 'boolean', default: false },
+    'race-ssr': { type: 'boolean', default: false },
     'ssr-loader': { type: 'string', default: 'compat' },
     label: { type: 'string', default: 'candidate' },
   },
@@ -251,6 +253,18 @@ try {
       counter,
       'Template HMR preserves state',
     );
+    const immediateSsr = values['race-ssr']
+      ? new Promise((resolve, reject) => {
+          const listener = (file) => {
+            if (file !== join(root, 'src/view.css')) return;
+            server.watcher.off('change', listener);
+            queueMicrotask(() => renderSsr(revision).then(resolve, reject));
+          };
+          server.watcher.on('change', listener);
+        })
+      : undefined;
+    // Observe rejection immediately while the browser update is still pending.
+    immediateSsr?.catch((error) => errors.push(String(error)));
     const cssAt = performance.now();
     await fs.writeFile(join(root, 'src/view.css'), css(revision));
     await page.waitForFunction(
@@ -267,10 +281,24 @@ try {
       { timeout: 15000 },
     );
     const stylesheetMs = performance.now() - cssAt;
-    const ssr = await renderSsr(revision);
+    const styleStatePreserved =
+      (await page.locator('[data-count]').textContent()) === counter;
+    if (values['expect-style-state'])
+      assert.equal(
+        styleStatePreserved,
+        true,
+        'Component CSS HMR preserves state',
+      );
+    const ssr = await (immediateSsr ?? renderSsr(revision));
     assert.equal(await page.locator('[data-child]').count(), count - 1);
     assert.deepEqual(errors, []);
-    records.push({ revision, templateMs, stylesheetMs, ssr });
+    records.push({
+      revision,
+      templateMs,
+      stylesheetMs,
+      styleStatePreserved,
+      ssr,
+    });
     if (restartEvery && revision % restartEvery === 0) {
       const restartAt = performance.now();
       await page.waitForLoadState('load');

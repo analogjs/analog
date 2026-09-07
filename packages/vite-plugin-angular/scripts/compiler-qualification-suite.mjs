@@ -11,7 +11,11 @@ import { parseArgs } from 'node:util';
 import { execa } from 'execa';
 
 const { values } = parseArgs({
-  options: { root: { type: 'string' }, phase: { type: 'string' } },
+  options: {
+    root: { type: 'string' },
+    phase: { type: 'string' },
+    hmr: { type: 'boolean', default: false },
+  },
 });
 assert.ok(values.root);
 assert.ok(['paired', 'soak'].includes(values.phase));
@@ -43,6 +47,8 @@ async function run({ vite, side, mode, sample, soak = false }) {
     `--mode=${mode}`,
     `--label=${side}`,
   ];
+  if (values.hmr && side === 'candidate')
+    args.push('--expect-style-state', ...(soak ? ['--race-ssr'] : []));
   if (soak)
     args.push(
       '--components=100',
