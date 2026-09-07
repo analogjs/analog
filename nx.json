@@ -14,12 +14,9 @@
     "@nx/js:tsc": { "cache": false },
     "lint": {
       "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/eslint.config.mjs",
+        "...",
         "{workspaceRoot}/.oxlintrc.json",
-        "{workspaceRoot}/tools/eslint-rules/**/*",
-        { "externalDependencies": ["eslint"] }
+        "{workspaceRoot}/pnpm-lock.yaml"
       ],
       "cache": true
     },

@@ -150,15 +150,17 @@ describe('analog plugin interop', () => {
       } as AnalogIntegrationPlugin,
     ]);
 
-    expect(() =>
-      configureStylesheetRegistry?.({} as any, { workspaceRoot: '/workspace' }),
-    ).toThrow(
-      expect.objectContaining({
-        message:
-          '[analog] Stylesheet registry configurator from plugin "vite-plugin-xyz" failed: boom',
-        cause,
-      }),
-    );
+    let received: unknown;
+    try {
+      configureStylesheetRegistry?.({} as any, { workspaceRoot: '/workspace' });
+    } catch (error) {
+      received = error;
+    }
+    expect(received).toMatchObject({
+      message:
+        '[analog] Stylesheet registry configurator from plugin "vite-plugin-xyz" failed: boom',
+    });
+    expect((received as Error).cause).toBe(cause);
   });
 
   it('records a request to externalize component styles', async () => {
@@ -228,37 +230,36 @@ describe('analog plugin interop', () => {
       } as AnalogIntegrationPlugin,
     ]);
 
-    expect(() =>
-      stylePreprocessor?.('.demo {}', 'app.component.scss', context),
-    ).toThrow(
-      expect.objectContaining({
-        message:
-          '[analog] Style preprocessor from plugin "vite-plugin-xyz" failed for "app.component.scss": boom',
-        cause,
-      }),
-    );
+    let received: unknown;
+    try {
+      stylePreprocessor?.('.demo {}', 'app.component.scss', context);
+    } catch (error) {
+      received = error;
+    }
+    expect(received).toMatchObject({
+      message:
+        '[analog] Style preprocessor from plugin "vite-plugin-xyz" failed for "app.component.scss": boom',
+    });
+    expect((received as Error).cause).toBe(cause);
   });
 
   it('names the failing plugin when analog.setup throws', async () => {
     const cause = new Error('bad config');
-    await expect(
-      runAnalogSetupHooks([
-        {
-          name: 'vite-plugin-xyz',
-          analog: {
-            setup() {
-              throw cause;
-            },
+    const received = await runAnalogSetupHooks([
+      {
+        name: 'vite-plugin-xyz',
+        analog: {
+          setup() {
+            throw cause;
           },
-        } as AnalogIntegrationPlugin,
-      ]),
-    ).rejects.toThrow(
-      expect.objectContaining({
-        message:
-          '[analog] analog.setup() from plugin "vite-plugin-xyz" failed: bad config',
-        cause,
-      }),
-    );
+        },
+      } as AnalogIntegrationPlugin,
+    ]).catch((error: unknown) => error);
+    expect(received).toMatchObject({
+      message:
+        '[analog] analog.setup() from plugin "vite-plugin-xyz" failed: bad config',
+    });
+    expect((received as Error).cause).toBe(cause);
   });
 
   it('runs setup hooks once per resolved config', async () => {
