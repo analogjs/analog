@@ -179,13 +179,9 @@ Local qualification at this milestone: **911 tests passed, six existing skips**;
 
 The audits found no compiler-owned HTTP/SSR error serializer. Compiler failures retain local paths and original causes for terminal/dev-overlay diagnostics; they are not a redaction guarantee. The public root declaration contract is Effect-free, while shipped internal declarations retain Effect implementation types. Effect `4.0.0-rc.112` remains a runtime dependency of the compiler package.
 
-Initial packed measurements show both benefits and regressions: lower retained heap after closed plugin sets, higher plugin-construction cost, slower warm ngtsc builds, and additional RSS/first-transform cost for an independently compiled SSR environment. These exploratory samples are being refreshed against the frozen implementation before publishing the comparison table. Cache bounds and coalescing tests establish correctness; neither is a speedup measurement.
+Frozen packed measurements on `52c8825cf` versus alpha `4225f4509` (n=5, Angular 22.0.0, TypeScript 6.0.2, Node 24.15.0, Vite 6.0.0 and 8.2.2) are published on analogjs/analog#2521. No overall speedup is claimed. Headline results: import −18–19% and retained heap after closed plugin sets −76–77%; `angular()` construct +312–318%; Vite 8 warm ngtsc +15.0%; dual-environment incremental RSS ≈76 MiB with slower SSR transforms. Candidate-only Angular core FESM cache: 309.5 ms vs 456.8 ms with `ANALOG_TRANSFORM_CACHE=0`. Five ngtsc processes coalesced 100 invalidations to `compilations=3` / `coalesced=99`. Cache bounds and coalescing remain correctness, not speed.
 
-- Qualify the composed source graph and retained-state cleanup across the installed consumer matrix.
-- Finish native state cleanup, concurrent-environment and restart regressions, shared test fixtures, and remaining composition review.
-- Run installed-package declaration checks and the complete Angular/Node/TypeScript/Vite matrix, including fast/full/partial, HMR, SSR, resource, and source-map cases.
-- Record controlled baseline/candidate timing, memory, retained dependencies, duplicate work, and browser module-graph evidence. Investigate regressions rather than inferring speed from code structure.
-- Run every required CI gate on the final PR head, inspect review findings, and update this log, the PR, and the issue with exact results.
+Still unpaid versus analogjs/analog#2519: browser websocket/DOM HMR latency, rendered SSR HTML/CSS after edits, shutdown timing, and peak RSS of a sustained server. Investigate warm-build and first-transform/SSR isolation costs without weakening ownership. Re-run the frozen protocol after any further compiler change.
 
 ## Attribution
 
