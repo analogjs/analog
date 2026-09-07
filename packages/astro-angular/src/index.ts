@@ -69,11 +69,14 @@ function transformFilterPlugin(
   };
 }
 
-function getViteConfiguration(pluginOptions?: AngularOptions) {
+function getViteConfiguration(
+  pluginOptions: AngularOptions | undefined,
+  development: boolean,
+) {
   const isRolldown = !!vite.rolldownVersion;
   return {
     [isRolldown ? 'oxc' : 'esbuild']: {
-      ...(isRolldown ? { jsx: { development: true } } : { jsxDev: true }),
+      ...(isRolldown ? { jsx: { development } } : { jsxDev: development }),
     },
     optimizeDeps: {
       include: [
@@ -154,10 +157,15 @@ export default function (options?: AngularOptions): AstroIntegration {
   return {
     name: '@analogjs/astro-angular',
     hooks: {
-      'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
+      'astro:config:setup': ({
+        command,
+        addRenderer,
+        updateConfig,
+        addMiddleware,
+      }) => {
         addRenderer(getRenderer(options?.useAngularHydration));
         updateConfig({
-          vite: getViteConfiguration(options),
+          vite: getViteConfiguration(options, command === 'dev'),
         });
         if (options?.strictStylePlacement) {
           addMiddleware({

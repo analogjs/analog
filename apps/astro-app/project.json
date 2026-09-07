@@ -6,14 +6,20 @@
   "tags": [],
   "targets": {
     "serve": {
-      "command": "astro dev --root apps/astro-app --port 43030"
+      "command": "astro dev --port 43030",
+      "options": {
+        "cwd": "apps/astro-app"
+      }
     },
     "build": {
       "command": "astro build --root apps/astro-app",
       "dependsOn": ["astro-angular:build"]
     },
     "preview": {
-      "command": "astro preview --root apps/astro-app --port 43030"
+      "command": "astro preview --port 43030",
+      "options": {
+        "cwd": "apps/astro-app"
+      }
     },
     "typecheck": {
       "executor": "nx:run-commands",

@@ -63,45 +63,53 @@ describe('astro-angular plugin', () => {
   });
 
   describe('vite configuration', () => {
-    it('should use esbuild config key when rolldownVersion is not available', async () => {
-      registerMocks();
-      const mod = await import('./index');
-      const plugin = mod.default();
+    it.each(['dev', 'build'] as const)(
+      'uses esbuild JSX settings for %s',
+      async (command) => {
+        registerMocks();
+        const mod = await import('./index');
+        const plugin = mod.default();
 
-      let viteConfig: any;
-      const mockSetup = {
-        addRenderer: vi.fn(),
-        updateConfig: vi.fn(function (config: any) {
-          viteConfig = config.vite;
-        }),
-      };
+        let viteConfig: any;
+        const mockSetup = {
+          command,
+          addRenderer: vi.fn(),
+          updateConfig: vi.fn(function (config: any) {
+            viteConfig = config.vite;
+          }),
+        };
 
-      plugin.hooks['astro:config:setup'](mockSetup);
+        plugin.hooks['astro:config:setup'](mockSetup);
 
-      expect(viteConfig).toHaveProperty('esbuild');
-      expect(viteConfig).not.toHaveProperty('oxc');
-      expect(viteConfig.esbuild.jsxDev).toBe(true);
-    });
+        expect(viteConfig).toHaveProperty('esbuild');
+        expect(viteConfig).not.toHaveProperty('oxc');
+        expect(viteConfig.esbuild.jsxDev).toBe(command === 'dev');
+      },
+    );
 
-    it('should use oxc config key when rolldownVersion is available', async () => {
-      registerMocks('1.0.0');
-      const mod = await import('./index');
-      const plugin = mod.default();
+    it.each(['dev', 'build'] as const)(
+      'uses OXC JSX settings for %s',
+      async (command) => {
+        registerMocks('1.0.0');
+        const mod = await import('./index');
+        const plugin = mod.default();
 
-      let viteConfig: any;
-      const mockSetup = {
-        addRenderer: vi.fn(),
-        updateConfig: vi.fn(function (config: any) {
-          viteConfig = config.vite;
-        }),
-      };
+        let viteConfig: any;
+        const mockSetup = {
+          command,
+          addRenderer: vi.fn(),
+          updateConfig: vi.fn(function (config: any) {
+            viteConfig = config.vite;
+          }),
+        };
 
-      plugin.hooks['astro:config:setup'](mockSetup);
+        plugin.hooks['astro:config:setup'](mockSetup);
 
-      expect(viteConfig).toHaveProperty('oxc');
-      expect(viteConfig).not.toHaveProperty('esbuild');
-      expect(viteConfig.oxc.jsx).toEqual({ development: true });
-    });
+        expect(viteConfig).toHaveProperty('oxc');
+        expect(viteConfig).not.toHaveProperty('esbuild');
+        expect(viteConfig.oxc.jsx).toEqual({ development: command === 'dev' });
+      },
+    );
   });
 
   describe('transformFilter option', () => {
