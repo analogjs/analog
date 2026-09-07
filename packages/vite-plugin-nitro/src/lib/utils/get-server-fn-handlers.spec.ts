@@ -45,7 +45,9 @@ describe('getServerFnHandlers', () => {
     // the whole Angular app into the dispatch bundle.
     writeFileSync(
       join(workspaceRoot, 'src/main.server.ts'),
-      `export default async function render() { return ''; }`,
+      `import { serverFn } from '@analogjs/router/server';
+       export const rootFn = serverFn(async () => []);
+       export default async function render() { return ''; }`,
     );
     writeFileSync(
       join(workspaceRoot, 'src/main-cf.server.ts'),
