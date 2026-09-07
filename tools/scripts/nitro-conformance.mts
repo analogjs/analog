@@ -17,6 +17,15 @@ import { analogNitroPlugin } from '../../packages/platform/dist/src/lib/nitro/an
 import { serverModePlugin } from '../../packages/platform/dist/src/server-mode-plugin.js';
 import standaloneNitro from '../../packages/vite-plugin-nitro/dist/src/index.js';
 
+let phase = 'initialization';
+setTimeout(() => {
+  console.error(
+    `Nitro conformance timed out during ${phase}`,
+    process.getActiveResourcesInfo(),
+  );
+  process.exit(1);
+}, 180_000).unref();
+
 const cloudflare = process.argv.includes('--cloudflare');
 const workspace = resolve(import.meta.dirname, '../..');
 const cache = join(workspace, 'node_modules/.cache');
@@ -168,6 +177,7 @@ try {
   for (const kind of cloudflare
     ? (['native'] as const)
     : (['native', 'standalone'] as const)) {
+    phase = `${kind}: start development server`;
     const server = await createServer(config(kind));
     try {
       await server.listen();
@@ -175,11 +185,13 @@ try {
       await check(`http://127.0.0.1:${address.port}`, kind === 'native');
       console.log(`${kind}: development HTTP checks passed`);
     } finally {
+      phase = `${kind}: close development server`;
       await server.close();
     }
 
     for (const staticOutput of cloudflare ? [false] : [false, true]) {
       await rm(output.dir, { recursive: true, force: true });
+      phase = `${kind}: ${staticOutput ? 'static' : 'server'} build`;
       const builder = await createBuilder(config(kind, staticOutput));
       await builder.buildApp();
       assert.match(
@@ -206,10 +218,12 @@ try {
           await worker.stop();
         }
       } else {
+        phase = `${kind}: start production preview`;
         const { child, url } = await preview();
         try {
           await check(url, true);
         } finally {
+          phase = `${kind}: close production preview`;
           child.kill();
           await once(child, 'exit');
         }
@@ -219,7 +233,9 @@ try {
       );
     }
   }
+  phase = 'remove fixture';
   await rm(root, { recursive: true, force: true });
+  phase = 'all checks complete; waiting for resource shutdown';
 } catch (error) {
   console.error(`Fixture retained for diagnosis: ${root}`);
   throw error;
