@@ -64,7 +64,7 @@ catalogs:
       specifier: ^20.5.0
       version: 20.5.0
     '@compodoc/compodoc':
-      specifier: ^2.0.0
+      specifier: 2.0.0
       version: 2.0.0
     '@eslint/eslintrc':
       specifier: ^3.3.5
