@@ -12,6 +12,12 @@ This is intentionally narrow:
 - Tailwind, Panda, Tokiforge, Style Dictionary, and library-specific bridges
   stay outside `@analogjs/platform`
 
+## Component styles during development
+
+The default and experimental Compilation API compilers keep ordinary styles in Angular component metadata. Eligible CSS and template edits preserve component instance state through Angular HMR. Vite preprocessing (including Sass/Less and PostCSS) still runs, and file dependencies returned by preprocessors are watched.
+
+An integration that needs arbitrary Vite CSS transform hooks, virtual CSS imports, or the live stylesheet registry must call `externalizeComponentStyles()` in its setup hook. Analog recognizes `@tailwindcss/vite` and selects externalization automatically. Externalization preserves those integrations but can require a page reload and reset component state. The fast compiler continues to inline styles through its existing preprocessing path.
+
 ## Reach Angular through `analog.setup`
 
 The Angular stylesheet seam is the part of the contract a standalone Vite
@@ -34,6 +40,7 @@ export function tokens(): AnalogIntegrationPlugin {
     },
     analog: {
       setup(ctx) {
+        ctx.externalizeComponentStyles();
         ctx.registerStylePreprocessor((code, filename, context) => {
           if (context?.inline) {
             return code;

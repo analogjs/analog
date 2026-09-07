@@ -140,6 +140,29 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 
 `angular()` validates its own options when the Vite config loads. Copy only supported keys rather than spreading an old `vite` object: unknown keys, string booleans, incomplete file replacements, and invalid compiler modes now fail immediately. Explicit `false` still disables an option. Stylesheet preprocessing failures also fail compilation instead of silently producing missing CSS; fix the reported stylesheet or preprocessor error.
 
+#### Development updates and component styles
+
+Ordinary component styles now stay in Angular's component metadata during development. Eligible template and style edits use Angular component HMR and retain component instance state. Angular recreates affected views, so DOM state such as focus, selection, and child view state can still change. Angular 19.0.0 uses a full reload because of an upstream HMR runtime bug; stateful updates require 19.0.1 or newer. JIT, disabled HMR, and edits Angular cannot replace retain their reload behavior.
+
+CSS preprocessors and PostCSS still run through Vite's `preprocessCSS`. Arbitrary Vite CSS transform hooks require the external stylesheet pipeline. Analog detects `@tailwindcss/vite` and retains that pipeline automatically. Other integrations can request it through the existing setup hook:
+
+```ts
+import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
+
+const componentStyles: AnalogIntegrationPlugin = {
+  name: 'component-style-integration',
+  analog: {
+    setup(context) {
+      context.externalizeComponentStyles();
+    },
+  },
+};
+```
+
+External styles preserve Vite plugin processing but can require a full reload and lose component state. This integration contract applies to the default and experimental Compilation API compilers; the fast compiler continues to inline its styles.
+
+Client and SSR compilers remain separate. On a development resource edit, Analog invalidates known SSR component owners immediately and defers their compilation until the next SSR read. Browser-only editing avoids unused server compilation; the next SSR request pays that work before receiving fresh output. Unknown ownership falls back to broader invalidation. This affects development only, with no change to production rendering or `angular()` options.
+
 #### Workspace library globs
 
 If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:

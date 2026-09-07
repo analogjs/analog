@@ -2,7 +2,7 @@
 
 This is the canonical implementation and measurement record for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The PR remains a draft. Native `angular(options): Plugin[]` usage is retained; Effect `4.0.0-rc.112` is a prerelease runtime dependency of the compiler package.
 
-This log preserves the historical `52c8825cf` versus alpha `4225f4509` measurements and records subsequent qualification separately. There is **no overall speedup claim**: import time and retained heap improve, while construction, several warm builds, development transforms, and independent SSR compilation have measured costs. The cause of the warm-build regressions has not been isolated.
+This log preserves historical measurements and records the HMR follow-up at `56001cdf1` separately. There is **no overall speedup claim**: import time and retained heap improve, while construction, several warm builds, development transforms, and independent SSR compilation have measured costs. The cause of the warm-build regressions has not been isolated.
 
 ## Composition and audit record
 
@@ -16,7 +16,7 @@ Code: [backend composition](src/lib/compiler-backend-live.ts), [source graph](sr
 
 `CompilationScheduler` serializes compilation and lazy emission, coalesces pending file sets, lets full invalidation supersede individual files, and waits for the newest successful queued generation. `CompilerSession` owns listeners, its runtime, native callers, and finalizers. Cancelling a waiter does not abort Angular; shutdown drains admitted work before disposal. Reopening waits for the previous close. Optimizer factories register final release even where Astro disables an early cleanup hook.
 
-Vite environment selection is keyed by environment identity and shares only in-flight initialization for that exact environment. Dependency scans cannot own the live compiler. Real client/server build tests hold the server transform until after client close. Browser HMR remains on the primary compiler. JIT inline styles have separate owners and are removed only when the last owner releases them. Server HTML/CSS edits invalidate that server environment's whole module graph immediately after queuing compilation: cached requests must enter the compiler read barrier. Angular-inlined resource owners are not discoverable through a Vite-only lookup. Rendered-SSR measurements include this correctness fallback.
+Vite environment selection is keyed by environment identity and shares only in-flight initialization for that exact environment. Dependency scans cannot own the live compiler. Real client/server build tests hold the server transform until after client close. Browser HMR remains on the primary compiler. JIT inline styles have separate owners and are removed only when the last owner releases them. Server resource edits now publish dirtiness synchronously at the watcher boundary and invalidate known Angular resource owners and their Vite importers. Unknown or incomplete ownership retains whole-graph invalidation. Compilation is deferred until the next server read; a request arriving during client HMR still enters the compiler read barrier. The historical measurements below used eager server compilation and whole-graph invalidation.
 
 Restart qualification exposed overlapping server lifetimes: Vite can configure a replacement before closing its predecessor. Each resolved plugin configuration now owns a complete plugin set, including compiler, stylesheet registry, caches, and HMR middleware. Environment hooks retain that configuration when a later restart begins, so old cleanup cannot erase new state or detach new watchers. See [configuration lifetime adapter](src/lib/restartable-plugins.ts).
 
@@ -28,7 +28,7 @@ The typed stylesheet program and replaceable compiler service handle preprocessi
 
 Fast HMR uses a bidirectional resource index: every component sharing a template or stylesheet is invalidated, old references are removed, and paths are normalized. HMR metadata targets the original live class across successive module evaluations. Windows registry filenames and Vite module IDs are normalized before identifying those declarations. Packed browser tests update a template, a stylesheet, and resources shared by two components; the separate runtime protocol measures file-write-to-DOM/computed-style latency.
 
-Component CSS in the Compilation API uses a full reload because Angular's original stylesheet link can otherwise be reattached after Vite replaces it, overriding newer rules. Registry ownership also recognizes CSS cached by the browser after restart without a new module-graph request. Template HMR preserves state; a component-CSS full reload resets it. Windows ngtsc external-style references use Vite filesystem URLs in normal emit and HMR metadata, preventing drive letters from being interpreted as browser URL schemes.
+Ordinary component CSS now uses Angular's native metadata replacement. Explicitly externalized component CSS in the Compilation API retains a full reload because Angular's original stylesheet link can otherwise be reattached after Vite replaces it, overriding newer rules. Registry ownership also recognizes CSS cached by the browser after restart without a new module-graph request. Eligible template and ordinary component-CSS HMR preserve instance state; an external-style full reload resets it. Windows ngtsc external-style references use Vite filesystem URLs in normal emit and HMR metadata, preventing drive letters from being interpreted as browser URL schemes.
 
 Angular HMR identifiers use the compiler host's filename casing policy. Update messages now preserve class-name case while canonicalizing file paths, and middleware resolves canonical requests back to actual Vite module IDs. Compilation API template updates use the same lookup against known emitted files. This covers projects nested under directories containing uppercase letters on Windows.
 
@@ -51,6 +51,90 @@ The public root declaration contract is Effect-free and passes packed checks wit
 The transferable Effect/TypeScript practices are explicit service/error channels, Layer composition at native boundaries, scoped lifetimes, one decode of owned configuration, checked optional/indexed values, and substitute test capabilities. No private application implementation or private dependency was imported. More infrastructure and tests increase line count; net reduction is not an acceptance gate.
 
 Code: [public entry](src/index.ts), [option decoder](src/lib/plugin-options-schema.ts), [toolchain adapter](src/lib/utils/devkit.ts), [packed qualification](scripts/compiler-vite-fixture.mjs).
+
+## HMR follow-up: behavior and tradeoffs
+
+This follow-up replaces the earlier PR's HMR paths. Historical results remain attributed to their original compiler revisions. It does not remove the separate SSR compiler or change production compilation, public `angular()` options, eager integration invalidation, or shutdown's admitted-work drain.
+
+| Code path                                                            | Earlier PR behavior                                                                                          | Current behavior and benefit                                                                                                                                                                           | Tradeoff / fallback                                                                                                                                                        |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Server resource change (`compiler-environments`, `compiler-session`) | Each client edit also awaited a server compilation and invalidated the whole SSR graph.                      | Watcher publishes dirty resource IDs immediately. Known owners and importers are invalidated; edits coalesce until the next server read. Browser-only editing avoids unused SSR compilation.           | The next SSR request pays compilation cost. Unknown/incomplete owner sets invalidate the whole graph. This does not reduce cold SSR initialization cost.                   |
+| Read versus edit race (`compiler-session`)                           | Reads waited for eagerly queued generations.                                                                 | A read flushes deferred work; edits during admitted reads queue a newer generation. Reads retain the existing latest-generation barrier.                                                               | Extra dirtiness/reader bookkeeping. Close discards never-requested dirty work but still drains admitted native calls; restart owns a fresh scope.                          |
+| ngtsc emit (`angular-vite-plugin`)                                   | Changed owners could be emitted once during compilation and again when middleware or transform read them.    | Each source emits once per compiler generation, including its map and HMR metadata. Subsequent reads reuse that generation's output.                                                                   | The cache is intentionally generation-local; TS/program changes still regenerate output and diagnostics.                                                                   |
+| Shared resources (`resource-dependencies`, compiler hosts)           | Fast mode tracked direct resources; other paths often relied on Vite resource lookup and broad invalidation. | Angular owners plus preprocessor dependencies identify all affected components. Sass partial edits reach their owning stylesheet.                                                                      | Dependency edges must be replaced and released. Unrecognized changes retain conservative reload/invalidation; Angular's Compilation API can decline HMR.                   |
+| Default / Compilation API component CSS                              | Enabling HMR automatically externalized styles; CSS commonly reloaded the document and reset state.          | Ordinary styles stay in Angular metadata and use Angular component HMR. CSS and template edits retain component instance state.                                                                        | Angular recreates views: focus, selection and child-view state are not guaranteed. This is component replacement, not a DOM-preserving CSS swap.                           |
+| CSS integrations (`analog-plugin-interop`, stylesheet pipeline)      | Component CSS re-entered Vite's plugin pipeline automatically during HMR.                                    | Vite preprocessing and PostCSS remain available through `preprocessCSS`. `@tailwindcss/vite` keeps external styles automatically; other integrations can call existing `externalizeComponentStyles()`. | Arbitrary Vite CSS transform hooks require externalization. That path can reload and lose state. Fast mode continues its existing inline-style pipeline.                   |
+| Fast component replacement (`compiler/hmr`)                          | Donor metadata could change the component definition/factory's class identity.                               | Replacement definitions and factories keep targeting the original live class across successive updates.                                                                                                | Uses Angular's private replacement API; directives/pipes and failed replacements retain reload fallback. Fast-mode ordinary method changes can still need a manual reload. |
+| Compatibility / disabled branches                                    | HMR availability relied on configuration and private API shape.                                              | Angular 19.0.0 reloads around its upstream `Map.remove` bug; 19.0.1+ uses native HMR. Vite `server.hmr: false` and Analog `liveReload: false` disable replacement.                                     | Angular 17/18 and JIT retain compatibility behavior; Compilation API remains version-gated. Vite 6–8 use progressive fallbacks.                                            |
+
+A final source-read follow-up (`d1459a857`) extends the watcher boundary to TypeScript: it publishes compiler dirtiness and calls Vite's source-module invalidation before an incoming SSR read can reuse cached JavaScript. Compiler build-info files are excluded. The default, fast and Compilation API paths pass direct source/resource SSR race checks on Vite 6.0, 6.4 and 8.2: 36 edit pairs, 18 restarts and 900 queued callers. The benchmark and 15-minute-soak compiler remains explicitly frozen to `56001cdf1`; this additional TypeScript branch does not change the measured resource-edit path. Final package checks pass 936 tests (six existing skips), source/test typechecks, ESLint, build and artifact validation. The shared-Sass fixture also asserts the actual Emulated/None/ShadowDom DOM behavior in all nine combinations.
+
+The [migration guide](../../apps/docs-analog/src/content/guides/migrating-v2-to-v3.md) includes the stylesheet integration opt-in and development SSR timing change. Browser qualification checks repeated template → CSS → template updates, shared resources, enabled/disabled HMR, JIT, restart and SSR isolation. A separate packed Sass fixture checks two owners and repeated partial edits in Emulated, None and ShadowDom modes.
+
+### HMR comparison (`56001cdf1`)
+
+Angular 22.0.0, TypeScript 6.0.2, Node 24.15.0, pnpm 10.33.0, Chromium via Playwright 1.59.1; Linux 6.17 x86_64 on AMD EPYC 7773X. Three sides: compatibility-corrected alpha `4225f4509`, the original PR compiler at `4305f920b`, and optimized compiler `56001cdf1`. Five fresh processes per side, alternating order, ten template/CSS edit pairs per process. All 45 processes and 450 edit pairs passed. These comparative runs were serial and separate from other local qualification jobs.
+
+Each median is the median of five per-process means; p95 pools the 50 individual edits. Times include file write, watcher, websocket, compilation and browser DOM/computed-style observation. All three sides use the same explicit SSR graph refresh policy for timing comparability. Native SSR freshness is tested separately without that helper. [Machine-readable HMR results and raw-file hashes](hmr-qualification.json) retain per-process observations and archive provenance.
+
+| Vite  | Edit     | Corrected alpha median / p95 (ms) | Original PR median / p95 (ms) | Optimized median / p95 (ms) |
+| ----- | -------- | --------------------------------: | ----------------------------: | --------------------------: |
+| 6.0.0 | Template |                      69.5 / 113.0 |                 127.3 / 174.1 |                63.2 / 122.1 |
+| 6.0.0 | CSS      |                     171.4 / 196.8 |                 134.1 / 185.0 |                 48.5 / 63.6 |
+| 7.3.6 | Template |                      75.4 / 123.5 |                 133.0 / 180.7 |                57.8 / 108.7 |
+| 7.3.6 | CSS      |                     137.4 / 158.0 |                 152.2 / 164.7 |                 46.9 / 64.7 |
+| 8.2.2 | Template |                       63.2 / 86.8 |                  94.8 / 109.0 |                 50.6 / 73.8 |
+| 8.2.2 | CSS      |                     153.4 / 160.5 |                 154.3 / 174.1 |                 56.7 / 65.5 |
+
+Template median latency is **1.88–2.30× faster than the original PR** and 9–23% lower than corrected alpha. CSS median latency is **2.72–3.24× faster than the original PR**. Vite 6's template p95 remains 8% above alpha despite a lower median; these fixtures do not establish a universal latency win. Candidate CSS retained state in **150/150 edits**, checked both immediately and after rendered SSR to detect delayed reloads; both older sides retained it in 0/150. All template edits retained state on all sides.
+
+| Vite  | First SSR: alpha / original PR / optimized (ms) | SSR after edits: alpha / original PR / optimized (ms) |
+| ----- | ----------------------------------------------: | ----------------------------------------------------: |
+| 6.0.0 |                           237.7 / 723.0 / 730.5 |                                    42.3 / 20.7 / 48.2 |
+| 7.3.6 |                           229.3 / 714.9 / 723.1 |                                    40.5 / 25.4 / 47.1 |
+| 8.2.2 |                           228.7 / 740.0 / 731.6 |                                    34.7 / 24.1 / 40.2 |
+
+The next SSR read now includes deferred compiler work: 40–48 ms versus the earlier PR's 21–25 ms in this fixture. In this one-component fixture, cold SSR remains about three times alpha's cost because independent server compilation remains. SSR measures module import plus Angular rendering, excluding HTTP transport and the subsequent computed-style assertion. This HMR follow-up makes no new production-build, cold-start or memory-improvement claim.
+
+### Larger fixtures and sustained qualification
+
+Five fresh processes per side on Vite 8.2.2 with 100 and 500 components; ten template/CSS edit pairs in every process. All 30 processes and 300 edit pairs passed. The root template/CSS changes while all child components are asserted in browser and rendered SSR. This measures larger component trees, not many independent simultaneous file edits. Values remain process-mean medians / pooled edit p95.
+
+| Components | Edit     | Corrected alpha (ms) | Original PR (ms) | Optimized (ms) |
+| ---------- | -------- | -------------------: | ---------------: | -------------: |
+| 100        | Template |        133.1 / 181.2 |    166.0 / 243.3 |  106.8 / 156.4 |
+| 100        | CSS      |        383.2 / 454.4 |    397.0 / 472.8 |   97.8 / 125.2 |
+| 500        | Template |        409.4 / 593.3 |    517.0 / 723.9 |  305.6 / 451.5 |
+| 500        | CSS      |       903.9 / 1186.5 |  1071.4 / 1426.4 |  279.8 / 369.4 |
+
+Candidate CSS retained state in 100/100 larger-fixture edits. Together with the small fixtures, all 250 candidate CSS edits retained state. SSR and shutdown measurements remain available in the JSON; the cold-SSR ratios in the one-component table must not be generalized to these larger trees.
+
+Nine new **15-minute, 100-component** soaks cover ngtsc, fast and Compilation API on Vite 6.0.0 (Environment Runner), 6.4.3 and 8.2.2 (legacy SSR loader). All **540 edit pairs, 27 restarts and 900 queued invalidations** passed. Each CSS edit starts an SSR read at the watcher boundary while client HMR is in flight; rendered HTML/CSS must be fresh without explicit graph refresh. CSS and template state remain preserved between intentional server restarts. Soaks run concurrently for correctness and memory observation; their latencies are not comparative evidence.
+
+| Vite  | Mode  | Sampled peak Node RSS (MiB) | Heap after close/GC (MiB) | Shutdown with 100 queued calls (ms) |
+| ----- | ----- | --------------------------: | ------------------------: | ----------------------------------: |
+| 6.0.0 | api   |                      1203.0 |                     120.2 |                               620.9 |
+| 6.0.0 | fast  |                       477.8 |                     121.0 |                                10.0 |
+| 6.0.0 | ngtsc |                       862.5 |                     135.0 |                               228.1 |
+| 6.4.3 | api   |                      1187.3 |                     113.1 |                               591.6 |
+| 6.4.3 | fast  |                       502.7 |                     115.0 |                                10.7 |
+| 6.4.3 | ngtsc |                       851.8 |                     129.9 |                               218.3 |
+| 8.2.2 | api   |                      1823.1 |                     128.4 |                               621.6 |
+| 8.2.2 | fast  |                      1088.9 |                     133.2 |                                11.0 |
+| 8.2.2 | ngtsc |                      1494.1 |                     146.1 |                               219.4 |
+
+RSS excludes Chromium and is sampled once per second; it is not a kernel high-water measurement. The JSON also records kernel peak RSS and intermediate GC checkpoints. These durations and fixtures do not establish leak freedom or a memory improvement over the original PR.
+
+### Reproduce the comparison
+
+Use Node 24.15.0 and pnpm 10.33.0. Build and pack the three revisions separately; the alpha control includes only the two compatibility corrections described in the original qualification. Keep timing phases serial and separate from other qualification jobs.
+
+```sh
+pnpm exec nx run vite-plugin-angular:build
+node packages/vite-plugin-angular/scripts/compiler-hmr-benchmark.mjs --root=dist/hmr-paired --control=/path/control.tgz --pr=/path/original-pr.tgz --candidate=/path/optimized.tgz
+node packages/vite-plugin-angular/scripts/compiler-hmr-benchmark.mjs --root=dist/hmr-100 --control=/path/control.tgz --pr=/path/original-pr.tgz --candidate=/path/optimized.tgz --vites=8.2.2 --components=100
+node packages/vite-plugin-angular/scripts/compiler-hmr-benchmark.mjs --root=dist/hmr-500 --control=/path/control.tgz --pr=/path/original-pr.tgz --candidate=/path/optimized.tgz --vites=8.2.2 --components=500
+```
 
 ## Supporting work
 
