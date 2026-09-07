@@ -1,190 +1,194 @@
-# Effect compiler refactor: enhancement log
+# Effect compiler refactor: implementation and evidence log
 
-This is the running implementation and evidence log for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), addressing [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The goal is a maintainable compiler that demonstrates Effect through useful composition, precise contracts, resource ownership, and reproducible compatibility checks. Source line count is informational rather than an acceptance gate.
+This is the canonical implementation and measurement record for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The PR remains a draft. Native `angular(options): Plugin[]` usage is retained; Effect `4.0.0-rc.112` is a prerelease runtime dependency of the compiler package.
 
-The PR remains in progress. The results below identify the checks already exercised; they do not claim that CI has passed on a final commit. Performance benefits remain hypotheses until the controlled measurements are recorded.
+The measurements below compare frozen implementation `52c8825cf` with alpha `4225f4509`. Subsequent documentation changes do not change that measured implementation. There is **no overall speedup claim**: import time and retained heap improve, while construction, several warm builds, development transforms, and independent SSR compilation have measured costs. The cause of the warm-build regressions has not been isolated.
 
-## Implemented enhancements
+## Composition and audit record
 
-### Milestone: core composition and strictness
+### Compiler operations and source discovery
 
-The package suite passed **895 tests with six existing skips** at this milestone. Source typecheck, test typecheck, and package ESLint have passed during the refactor; the publication checks are being refreshed. The native caller boundary now drains admitted transformations before runtime disposal so an already-started transform can return its result during shutdown.
+`CompilerBackend` and `CompilerSourceGraph` expose precise success, failure, and service requirements. Live Layers own configuration/root/include discovery before native Angular work. Tests replace those capabilities without starting compiler workers. All three modes receive integration includes while preserving their own reference-expansion policies. TypeScript configuration failures retain native diagnostics. Closed scopes clear source, builder, metadata, output, and resource caches; lazy emit closures capture their own builder.
 
-### Source graph as an explicit dependency
+Code: [backend composition](src/lib/compiler-backend-live.ts), [source graph](src/lib/compiler-source-graph-live.ts).
 
-**Change:** all three compiler modes compose `CompilerSourceGraph` into the backend Layer. TypeScript options, configured roots, additional includes, and reference expansion are resolved before entering the native compiler adapter. Contracts are separate from live adapters. Invalid configuration retains TypeScript's diagnostic objects in a typed failure, and the source-graph cache is cleared when the compiler scope closes.
+### Scheduling, reads, and resource ownership
 
-**Benefit:** tests can substitute a complete source graph without reading a TypeScript project from disk. Compiler modes share include discovery and cache ownership while preserving their existing reference-expansion policies. Fast mode now receives the same integration-provided includes. Effect's array operations also replace the compiler package's direct `es-toolkit` dependency.
+`CompilationScheduler` serializes compilation and lazy emission, coalesces pending file sets, lets full invalidation supersede individual files, and waits for the newest successful queued generation. `CompilerSession` owns listeners, its runtime, native callers, and finalizers. Cancelling a waiter does not abort Angular; shutdown drains admitted work before disposal. Reopening waits for the previous close. Optimizer factories register final release even where Astro disables an early cleanup hook.
 
-**Evidence:** focused tests supply an in-memory graph and verify invalid TypeScript configuration diagnostics. The package's source and test typechecks remain required publication gates.
+Vite environment selection is keyed by environment identity and shares only in-flight initialization for that exact environment. Dependency scans cannot own the live compiler. Real client/server build tests hold the server transform until after client close. Browser HMR remains on the primary compiler. JIT inline styles have separate owners and are removed only when the last owner releases them. Server HTML/CSS edits currently invalidate that server environment's whole module graph: Angular-inlined resource owners are not discoverable through a Vite-only lookup. This is a correctness fallback with an unmeasured rendered-SSR edit cost.
 
-**Code:** [source graph contract](src/lib/compiler-source-graph.ts), [live graph](src/lib/compiler-source-graph-live.ts), [backend composition](src/lib/compiler-backend-live.ts), [graph tests](src/lib/compiler-source-graph.spec.ts).
+Code: [scheduler](src/lib/compilation-scheduler.ts), [session](src/lib/compiler-session.ts), [environment selection](src/lib/compiler-environments.ts).
 
-### Serialized emission and explicit optimizer ownership
+### Stylesheets and HMR
 
-**Change:** lazy TypeScript emission and fast transforms share the compiler's permit. Reads recheck the current generation after acquiring it, and failed compilations remain failures for subsequent reads. Optimizer factories must register a disposer with their compiler owner, including when Astro disables the early optimizer cleanup hook. Owned resources are released even if compilation never initializes or compiler disposal fails.
+The typed stylesheet program and replaceable compiler service handle preprocessing, externalization, inline compilation, and phase/file/cause failures for ngtsc, the Compilation API, and inline JIT styles. Empty CSS is valid. Fast-mode and external-registry paths now surface failures instead of dropping CSS. Registry refresh removes collision-prone basename aliases. JIT CSS is serialized as a JavaScript string, so backticks and interpolation text remain data.
 
-**Benefit:** a transform cannot race a mutation of its compiler state. Disabling one cleanup hook no longer means losing the resource owner. Native callers admitted before shutdown can finish before their runtime is disposed.
+Fast HMR uses a bidirectional resource index: every component sharing a template or stylesheet is invalidated, old references are removed, and paths are normalized. HMR metadata targets the original live class across successive module evaluations. Packed browser tests update a template, a stylesheet, and resources shared by two components. These tests prove behavior, not websocket/DOM latency.
 
-**Evidence:** lifecycle and dependency-adapter tests cover cold shutdown, failed disposal, externally retained transformers, and output completion while shutdown is pending.
+Code: [stylesheet pipeline](src/lib/stylesheet-pipeline.ts), [resource ownership](src/lib/resource-dependencies.ts), [HMR metadata](src/lib/compiler/hmr.ts).
 
-### Releasing retained native state
+### Transformers and caches
 
-**Change:** compiler scope cleanup drops builders, source caches, emitted output, metadata, and resource-resolution caches. JIT inline styles retain separate compiler owners, so closing one environment preserves another environment's shared stylesheet and the last owner releases it.
+Dependency optimization, fallback linking, and build linking share a lazy `DependencyTransformer` host with typed acquisition/transform/release errors, serialized work, and drained shutdown. Storage is replaceable through `CacheStorage`; `TransformCache` adds LRU limits of 256 entries and 64 MiB. Namespaces include compiler, builder, TypeScript, Node, and format versions.
 
-**Benefit:** retaining a plugin object after shutdown does not require retaining its previous Angular program and compiler-generated JIT styles. Lazy emit callbacks capture the builder for their own compilation rather than reading a reassigned global builder.
+Native cache keys must be 64 lowercase hexadecimal characters. ENOENT is a miss; other I/O is a typed failure. Publication writes an exclusive temporary file and creates a no-replace hard link; an existing complete entry wins. This does not defend parent directories controlled by a local adversary. `ANALOG_TRANSFORM_CACHE=0` disables disk persistence while retaining bounded memory. TestClock accounting and coalescing counts are correctness evidence, not benchmarks.
 
-**Code:** [native compiler](src/lib/angular-vite-plugin.ts), [source cache](src/lib/utils/source-file-cache.ts), [JIT style ownership](src/lib/utils/jit-inline-styles.ts).
+Code: [transformer lifecycle](src/lib/javascript-transformer.ts), [cache services](src/lib/utils/transform-cache.ts).
 
-### Typed stylesheet pipeline
+### TypeScript and native boundaries
 
-**Change:** ngtsc and the Compilation API use the same `transformStylesheet` program and `StylesheetCompiler` service. The program retains its compiler requirement until the native adapter supplies it. Stylesheet requests carry the containing file, resource file, class identity, order, preprocessor, and registry explicitly.
+Source and tests enable `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`, with separate typecheck targets. Analog-owned options decode once, preserve explicit false and lazy getters, normalize undefined, and reject malformed or unknown settings. The migration guide documents this behavioral tightening and the new visible stylesheet errors. Angular private capabilities are loaded lazily and checked centrally; installed-version tests qualify behavior.
 
-**Benefit:** preprocessing, resource registration, and CSS compilation have one implementation. Externalized CSS enters Vite's CSS pipeline once. Inline CSS is compiled before returning to Angular. An empty compiled stylesheet remains a valid result. Failures carry a stage, filename, original cause, and useful message instead of silently discarding CSS.
+The public root declaration contract is Effect-free and passes packed checks with `skipLibCheck: false`. Shipped internal declarations retain Effect implementation types; package exports do not make those supported public subpaths. Pure compiler algorithms and synchronous TypeScript host callbacks remain native. Structured resource identities replace delimiter-joined path pairs, and handlers enforce filters on Vite releases that ignore hook filters. The dedicated Compilation API regression suite is restored, with 13 tests separate from the six stylesheet HMR cases.
 
-**Evidence:** focused tests exercise substitute compiler Layers, externalization without duplicate compilation, empty CSS, typed requirements, and error classification. The existing host regression is being strengthened to require a reported stylesheet failure.
+The transferable Effect/TypeScript practices are explicit service/error channels, Layer composition at native boundaries, scoped lifetimes, one decode of owned configuration, checked optional/indexed values, and substitute test capabilities. No private application implementation or private dependency was imported. More infrastructure and tests increase line count; net reduction is not an acceptance gate.
 
-**Code:** [pipeline](src/lib/stylesheet-pipeline.ts), [pipeline tests](src/lib/stylesheet-pipeline.spec.ts), [TypeScript host](src/lib/host.ts), [Compilation API adapter](src/lib/compilation-api/compilation-api-plugin.ts).
+Code: [public entry](src/index.ts), [option decoder](src/lib/plugin-options-schema.ts), [toolchain adapter](src/lib/utils/devkit.ts), [packed qualification](scripts/compiler-vite-fixture.mjs).
 
-### Composable compiler backend and scheduler
+## Supporting work
 
-**Change:** `CompilerBackend` and `CompilationScheduler` separate native compiler work from scheduling. Pending invalidations combine into the following compilation, and a full invalidation supersedes individual file lists. Successful superseded generations defer completion to the newest queued generation.
+- [analogjs/analog#2520](https://github.com/analogjs/analog/pull/2520) supplies public compatibility work for roots, HMR metadata, declarations, Node bootstrap, and packed fixtures. Reconcile when it merges.
+- Source-map behavior adapts [analogjs/analog#2506](https://github.com/analogjs/analog/pull/2506): production honors Vite's map setting, fast mode composes the final OXC/esbuild map, and the Compilation API retains its native inline map until Vite consumes it. Checked normalization preserves contents, extension fields, and URL roots; packed tests assert source file and line.
+- The supporting `platform` no-SSR repair reads the matched route-rule header before rendering. It is distinct from the compiler refactor and is not shipped by updating only `@analogjs/vite-plugin-angular`.
 
-**Benefit:** both Angular compilation paths share concurrency and readiness rules. Callers cannot consume an older successful snapshot while newer queued work is unfinished. The backend can be replaced by a test Layer without starting Angular workers.
+## Frozen measurements
 
-**Evidence:** 100 queued invalidations coalesce into one following compilation while retaining all affected files. Tests verify newest-generation results, isolation, failure recovery, and readiness recorded before asynchronous Layer initialization.
+### Provenance and method
 
-**Code:** [backend contract](src/lib/compiler-backend.ts), [scheduler](src/lib/compilation-scheduler.ts), [scheduler tests](src/lib/compilation-scheduler.spec.ts).
+| Item              | Value                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| Candidate source  | `52c8825cfaeb309bb703a0b03177cd2b2bb3cdb6`                                                             |
+| Candidate tarball | SHA-256 `b96abb704ba145b36b34405474eb29c70d439dd860b7ff5b0f977c5efa5cd786`, 302,074 bytes (294.99 KiB) |
+| Baseline source   | `4225f45090a4cf4bdfb562a788e908787b6ec73c`                                                             |
+| Baseline tarball  | SHA-256 `8e34dd1dff78cb638b3ce7fa8f83b77eda4d1b8d6469233fb54fe85d77988804`, 311,339 bytes (304.04 KiB) |
+| Consumer pins     | Angular 22.0.0, TypeScript 6.0.2, Node 24.15.0, pnpm 10.33.0; Vite 6.0.0 and 8.2.2                     |
+| Installation      | Fresh isolated consumers, normal native scripts enabled for esbuild, watcher, lmdb, and msgpackr       |
+| Host              | Linux 6.17 x86_64, AMD EPYC 7773X, 128 logical CPUs, 247 GiB RAM                                       |
 
-### Explicit lifetime and cancellation ownership
+Every production cell uses five fresh Node processes per revision in alternating
+order. Each process imports the packed package, constructs `angular()`, then
+performs three production library builds of 20 standalone Angular components.
+The worker asserts exactly 20 `defineComponent` occurrences in each emitted
+bundle. “Warm” is the mean of builds two and three within each process. Results
+are medians with the five-sample min/max range. Production heap uses decimal MB (1,000,000 bytes); RSS growth uses MiB (1,048,576 bytes).
 
-**Change:** the native compiler session has a tagged lifecycle. It removes owned listeners, drains non-abortable work, and disposes its runtime. A cancelled waiter does not release Angular's shared mutable compiler. Subsequent build cycles open another scope after the previous scope closes.
+The candidate package is the exact frozen rebuilt `dist` snapshot. Earlier
+exploratory measurements are superseded by the JSON files in `results/`.
 
-**Benefit:** cancellation, shutdown, watch mode, and plugin reuse follow one ownership model. An abandoned caller cannot cause another compilation to overlap the still-running Angular operation.
+### Production builds
 
-**Evidence:** tests cover waiter cancellation, queued work during shutdown, repeated close, reopening during disposal, partial Layer acquisition failure, and exactly-once release.
+#### Default ngtsc
 
-**Code:** [session](src/lib/compiler-session.ts), [session tests](src/lib/compiler-session.spec.ts).
+| Vite  | Metric                                |     Alpha median [range] | Candidate median [range] |  Change |
+| ----- | ------------------------------------- | -----------------------: | -----------------------: | ------: |
+| 6.0.0 | Import                                |  881.0 [875.5, 887.4] ms |  711.6 [702.6, 715.9] ms |  -19.2% |
+| 6.0.0 | Import heap                           |  45.71 [45.36, 45.71] MB |  40.95 [40.47, 40.95] MB |  -10.4% |
+| 6.0.0 | `angular()` construct                 |  1.206 [1.176, 1.384] ms |  5.038 [4.872, 5.110] ms | +317.6% |
+| 6.0.0 | First build                           | 988.5 [963.7, 1021.3] ms | 984.6 [932.6, 1000.3] ms |   -0.4% |
+| 6.0.0 | Warm build                            |  543.0 [516.0, 547.1] ms |  569.0 [511.7, 605.0] ms |   +4.8% |
+| 6.0.0 | Heap after three retained plugin sets |                266.39 MB |                 63.02 MB |  -76.3% |
+| 8.2.2 | Import                                |  889.5 [886.1, 907.9] ms |  725.9 [699.6, 731.1] ms |  -18.4% |
+| 8.2.2 | Import heap                           |  47.07 [46.71, 47.08] MB |  42.31 [42.16, 42.53] MB |  -10.1% |
+| 8.2.2 | `angular()` construct                 |  1.221 [1.178, 1.237] ms |  5.028 [4.867, 5.133] ms | +311.8% |
+| 8.2.2 | First build                           |  864.1 [822.2, 881.8] ms |  894.8 [872.2, 910.0] ms |   +3.6% |
+| 8.2.2 | Warm build                            |  500.3 [488.3, 513.6] ms |  575.4 [533.2, 595.6] ms |  +15.0% |
+| 8.2.2 | Heap after three retained plugin sets |                263.19 MB |                 59.99 MB |  -77.2% |
 
-### Environment-specific compiler state
+#### Fast compile
 
-**Change:** Vite's `applyToEnvironment` hook creates separate compiler instances for client and server environments. The browser instance remains connected to Angular HMR. Server environments receive their own invalidation hook, including resource-change invalidation. Fast compilation uses the shared session for initialization and rescans.
-
-**Benefit:** concurrent client/server builds have independent Angular state, configuration, and scopes. Closing one environment does not dispose the compiler used by another.
-
-**Evidence:** the Analog application has completed its client/server build with environment isolation. Concurrent-environment, restart, and complete Vite-matrix qualification remain in progress. Server resource changes currently invalidate that environment's module graph; their cost must be measured.
-
-**Code:** [environment adapter](src/lib/compiler-environments.ts), [fast compiler](src/lib/fast-compile-plugin.ts).
-
-### One owned JavaScript transformer implementation
-
-**Change:** dependency optimization, fallback linking, and build linking use `DependencyTransformer` and a shared native host. Workers are acquired lazily, work is serialized, and shutdown drains transformations before release. Acquisition, transformation, and release failures have explicit contracts.
-
-**Benefit:** worker lifecycle logic is shared across esbuild and Rolldown and the other linker entry points. The build optimizer now has cleanup hooks. Expected transform failures are no longer described as infallible Effects.
-
-**Evidence:** both dependency adapters are tested for lazy allocation, reuse, test-mode behavior, external ownership, failures, shutdown during work, and reacquisition after a build cycle.
-
-**Code:** [transformer service](src/lib/javascript-transformer.ts), [dependency adapters](src/lib/compiler-plugin.ts), [adapter tests](src/lib/compiler-plugin.spec.ts).
-
-### Bounded, observable transform caching
-
-**Change:** `CacheStorage` and `TransformCache` compose disk storage with a memory cache bounded by both entry count and bytes. Native cache keys are validated branded SHA-256 values. Disk writes use unique temporary files and atomic rename. Only a missing file counts as a disk miss; other I/O failures remain visible. Cache namespaces include compiler, builder, TypeScript, Node, and format versions.
-
-**Benefit:** long-running dev servers have a defined retention limit. Incorrect toolchain reuse and hidden permission/storage errors become easier to diagnose. Storage can be substituted in tests independently of the Angular worker.
-
-**Evidence:** tests verify LRU behavior, memory accounting, cross-instance persistence, missing-entry versus I/O-failure behavior, and unsafe-key rejection. `TestClock` verifies measured work duration without real sleeps.
-
-**Code:** [cache services](src/lib/utils/transform-cache.ts), [cache tests](src/lib/utils/transform-cache.spec.ts).
-
-### Lazy, checked Angular private capabilities
-
-**Change:** Angular's private builder exports are loaded when a capability is needed. Version-specific loading is centralized, callable exports are checked at the module boundary, and unsupported Compilation API selection produces an actionable error.
-
-**Benefit:** importing the compiler or constructing a plugin does not start Angular workers. Private API assumptions are concentrated in one adapter instead of spreading across compiler consumers. The checks establish capability presence; the version matrix must still establish behavior.
-
-**Code:** [toolchain adapter](src/lib/utils/devkit.ts).
-
-### Strict source and test contracts
-
-**Change:** the compiler package enables `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`. Source and test typechecks are separate targets. Unsafe indexing is checked, native nullable identities are modeled, and fixture assertions require values to exist before inspecting them. Public options and integration/registry contracts are separated from implementation modules.
-
-**Benefit:** missing values and optional-field semantics become compiler-checked. Public declarations can avoid pulling Effect and Angular private implementation types into older consumers. The latter is being qualified with installed-package declaration checks.
-
-**Evidence:** source typecheck, test typecheck, and package ESLint passed together before the subsequent source-graph work. New changes are being checked again; the final requirement is zero diagnostics on the published PR head.
-
-**Code:** [package tsconfig](tsconfig.json), [public entry](src/index.ts), [options](src/lib/plugin-options.ts), [integration contracts](src/lib/analog-plugin-types.ts), [registry contracts](src/lib/compiler/registry-types.ts).
-
-### Configuration decoded at the native boundary
-
-**Change:** Analog-owned plugin configuration is decoded once before compiler construction. Explicit `false` remains meaningful, explicit `undefined` selects the existing default, lazy tsconfig getters remain lazy, and malformed settings are rejected. Vite-owned configuration stays with Vite.
-
-**Benefit:** errors such as a string-valued boolean or misspelled option fail near their source. Internal code receives a normalized contract rather than repeatedly interpreting loosely shaped options.
-
-**Evidence:** tests cover defaults, false values, lazy getters, combined browser/server replacements, invalid compiler modes, incomplete replacements, and unknown keys.
-
-**Code:** [option boundary](src/lib/plugin-options-schema.ts), [option tests](src/lib/plugin-options-schema.spec.ts).
-
-### Structured resource identities and older-Vite guards
-
-**Change:** component resource resolvers return relative/absolute path records instead of delimiter-concatenated strings. Request queries are separated from file paths, and HMR component IDs split at the final class separator. Compiler transform handlers enforce their source filters even on Vite releases that ignore hook filters.
-
-**Benefit:** path relationships are checked by TypeScript. Resource names containing delimiters cannot be confused with encoded pairs. Older Vite releases receive the same filtering behavior as newer releases.
-
-**Evidence:** resolver tests preserve the expected paths and cache behavior. The installed Vite 6.0 consumer passes default and Compilation API browser/HMR cases; fast browser and the expanded matrix remain to be recorded.
-
-**Code:** [resource resolvers](src/lib/component-resolvers.ts), [request identities](src/lib/utils/module-id.ts).
-
-### Dedicated Compilation API regression coverage restored
-
-**Change:** `compilation-api-plugin.spec.ts` is restored as a dedicated suite. Constructor and configuration assertions do not depend on the stylesheet HMR fixture automatically running build hooks. The HMR file keeps its six stylesheet-focused cases.
-
-**Benefit:** lifecycle ordering, root inclusion, iterable output, transform readiness, and HMR metadata have an identifiable regression suite. Test consolidation no longer obscures whether a constructor or hook was actually tested before compilation.
-
-**Evidence:** the dedicated suite passes 13 tests. The package passed 884 tests with six existing skips before the additional stylesheet/source-graph tests were added; later counts will replace this checkpoint.
-
-**Code:** [dedicated API suite](src/lib/compilation-api/compilation-api-plugin.spec.ts), [stylesheet HMR suite](src/lib/angular-vite-plugin-live-reload.spec.ts).
-
-### Reproducible compatibility and CI repairs
-
-**Change:** applicable public compiler compatibility fixes from [analogjs/analog#2520](https://github.com/analogjs/analog/pull/2520) are incorporated with attribution. These include compiler roots, HMR metadata, declaration refresh, Node bootstrap, and installed-package fixtures. CI path filters cover the compiler package and dependency/build metadata. Alternate compiler API tests avoid unrelated workspace prepare builds.
-
-**Benefit:** compatibility is exercised against installed packages and actual Angular/Vite toolchains. Compiler changes trigger the relevant gates, and bootstrap failures can be distinguished from compilation failures.
-
-**Evidence:** packed Vite 6.0/Angular 22 checks pass for the current fixture. The complete supported matrix, dependency lifecycle qualification, and final-head CI are still required.
-
-### No-SSR route regression repaired during CI qualification
-
-**Change:** the Nitro renderer reads Analog's no-SSR marker from matched route-rule headers before rendering. Response headers are applied too late, and h3 treats false-valued rules as resets.
-
-**Benefit:** a client-only route does not accidentally execute Angular SSR or emit server-side JSON-LD.
-
-**Evidence:** the previously failing real-browser JSON-LD regression now passes, together with all eight JSON-LD E2E tests. The full E2E suite will be rerun for final qualification.
-
-**Code:** [Nitro integration](../platform/src/lib/nitro/analog-nitro-plugin.ts), [renderer](../platform/src/lib/nitro/renderers.ts), [existing E2E regression](../../apps/analog-app-e2e/tests/json-ld.spec.ts).
-
-## Work in progress
-
-### Audit and installed-consumer qualification milestone
-
-Independent security and lifecycle audits found and repaired additional compiler defects:
-
-- JIT inline CSS now uses the typed stylesheet pipeline and a serialized JavaScript string literal. Backticks and interpolation text in CSS remain data. Fast compilation, Compilation API external preprocessing, and HMR registry refresh report stylesheet failures rather than hiding missing CSS.
-- Fast HMR tracks every owner of shared templates and styles with a bidirectional resource index, removes stale edges, and preserves the original live class across successive module updates. Packed browser tests update a template, its stylesheet, and resources shared by two components.
-- Vite's shared builder may resolve several configurations before building. Compiler selection now binds native state to environment identity, shares only in-flight initialization for the same environment, and excludes dependency scans from the live compiler. The server can transform after the client build has closed.
-- Production source maps follow `build.sourcemap`; fast compilation composes the final OXC/esbuild map; the Compilation API preserves its native inline map until Vite consumes it. Checked normalization preserves source contents, extension fields, and URL roots. Packed tests assert the authored source file and line.
-- Immutable disk-cache publication uses an exclusive temporary file and a no-replace hard link. A concurrent writer cannot replace the first complete entry. This protects normal cache publication, not parent directories controlled by a local adversary.
-- The v3 migration guide now lists supported Angular options instead of advising blind spreading of old Vite options. Unknown keys and stylesheet errors are documented behavioral changes.
-
-Local qualification at this milestone: **911 tests passed, six existing skips**; source typecheck, test typecheck, and package ESLint passed. All **12 installed Angular/Node/TypeScript/Vite cells** passed, including Angular 17–21 and six exact Vite 6–8 releases on Angular 22. Browser cases cover Angular 21 and 22; all cells check built application graphs and public declarations with `skipLibCheck: false`. Vite 6.0 and 8.2 endpoint reruns also check SSR development graphs and enable the native dependency build scripts. The Analog app built with seven prerendered routes, real SSR HTML, and six sitemap URLs. These are local results; final-head CI remains a separate gate.
-
-The audits found no compiler-owned HTTP/SSR error serializer. Compiler failures retain local paths and original causes for terminal/dev-overlay diagnostics; they are not a redaction guarantee. The public root declaration contract is Effect-free, while shipped internal declarations retain Effect implementation types. Effect `4.0.0-rc.112` remains a runtime dependency of the compiler package.
-
-Frozen packed measurements on `52c8825cf` versus alpha `4225f4509` (n=5, Angular 22.0.0, TypeScript 6.0.2, Node 24.15.0, Vite 6.0.0 and 8.2.2) are published on analogjs/analog#2521. No overall speedup is claimed. Headline results: import −18–19% and retained heap after closed plugin sets −76–77%; `angular()` construct +312–318%; Vite 8 warm ngtsc +15.0%; dual-environment incremental RSS ≈76 MiB with slower SSR transforms. Candidate-only Angular core FESM cache: 309.5 ms vs 456.8 ms with `ANALOG_TRANSFORM_CACHE=0`. Five ngtsc processes coalesced 100 invalidations to `compilations=3` / `coalesced=99`. Cache bounds and coalescing remain correctness, not speed.
-
-Still unpaid versus analogjs/analog#2519: browser websocket/DOM HMR latency, rendered SSR HTML/CSS after edits, shutdown timing, and peak RSS of a sustained server. Investigate warm-build and first-transform/SSR isolation costs without weakening ownership. Re-run the frozen protocol after any further compiler change.
+| Vite  | Metric                                |    Alpha median [range] | Candidate median [range] | Change |
+| ----- | ------------------------------------- | ----------------------: | -----------------------: | -----: |
+| 6.0.0 | First build                           | 326.7 [307.7, 329.1] ms |  351.3 [342.2, 360.1] ms |  +7.5% |
+| 6.0.0 | Warm build                            | 156.9 [151.3, 158.2] ms |  182.8 [176.1, 188.3] ms | +16.5% |
+| 6.0.0 | Heap after three retained plugin sets |                59.38 MB |                 55.47 MB |  -6.6% |
+| 8.2.2 | First build                           | 216.2 [212.1, 219.3] ms |  221.7 [219.8, 224.0] ms |  +2.5% |
+| 8.2.2 | Warm build                            | 126.3 [125.0, 130.0] ms |  138.1 [131.9, 140.7] ms |  +9.4% |
+| 8.2.2 | Heap after three retained plugin sets |                56.28 MB |                 52.23 MB |  -7.2% |
+
+Import and construction results are the same package-level operation in both
+modes: candidate import is 18–20% faster and ~10% lower heap, while construction
+adds about 3.8 ms. The measured warm-build regressions remain visible. No
+overall speedup is claimed.
+
+### Dev transform and dual-environment RSS
+
+This is a module-transform harness, not a browser benchmark. It creates a Vite
+server without listening on a TCP port, transforms an Angular bootstrap module
+in client and SSR environments, and verifies five watcher-triggered template
+edits compile to updated `defineComponent` output. The process exits after each
+sample, so this does not measure shutdown or browser websocket/DOM HMR latency. RSS values are increases from the pre-construction baseline, not total process RSS. Template-update timings start after a 25 ms wait following the watcher event; they are module-request timings, not end-to-end edit latency.
+
+| Vite  | Metric                          |    Alpha median [range] | Candidate median [range] |
+| ----- | ------------------------------- | ----------------------: | -----------------------: |
+| 6.0.0 | Setup before first compiler use | 713.4 [674.7, 748.3] ms |     21.3 [20.9, 21.4] ms |
+| 6.0.0 | First TypeScript transform      |   53.2 [53.0, 201.7] ms |  722.4 [716.3, 740.4] ms |
+| 6.0.0 | First template update           |    12.1 [11.2, 24.2] ms |     46.7 [46.3, 49.5] ms |
+| 6.0.0 | Later template update mean      |      8.9 [7.6, 15.9] ms |     35.1 [32.9, 65.3] ms |
+| 6.0.0 | Client / client+SSR RSS growth  |        166 / 169.04 MiB |         164 / 241.02 MiB |
+| 6.0.0 | SSR transform                   |     70.0 [8.9, 71.6] ms |  535.2 [507.5, 882.6] ms |
+| 8.2.2 | Setup before first compiler use | 703.5 [656.6, 713.1] ms |     16.5 [16.5, 17.1] ms |
+| 8.2.2 | First TypeScript transform      |    50.9 [49.5, 53.7] ms |  719.5 [693.4, 754.9] ms |
+| 8.2.2 | First template update           |    54.4 [51.3, 70.9] ms |  118.7 [110.1, 126.2] ms |
+| 8.2.2 | Later template update mean      |    31.5 [18.6, 39.9] ms |     65.0 [58.0, 84.8] ms |
+| 8.2.2 | Client / client+SSR RSS growth  |     175.94 / 178.94 MiB |      168.64 / 244.64 MiB |
+| 8.2.2 | SSR transform                   |    75.0 [71.7, 83.9] ms |  539.9 [504.5, 545.7] ms |
+
+The candidate defers initialization, making setup much faster but moving work to
+first transform. Separate compiler ownership is a correctness invariant, with a
+measured approximately 76–77 MiB incremental client+SSR RSS cost and slower SSR
+module transforms in this harness. These are costs to investigate without
+weakening lifecycle or environment isolation.
+
+Candidate fast-compile dev transforms are materially smaller than candidate
+ngtsc in this harness: Vite 6 first transform 131.2 [127.0, 164.0] ms and Vite
+8 first transform 111.2 [109.5, 112.2] ms. This is mode behavior, not a
+comparison against a browser HMR outcome.
+
+### Dependency cache and burst accounting
+
+The candidate-only Vite 8 dependency workload explicitly transforms Angular
+core's FESM module. It writes 376 KiB under `node_modules/.cache/analog`.
+Default cache median is 309.5 [307.3, 463.7] ms versus 456.8 [452.4, 459.2] ms
+with `ANALOG_TRANSFORM_CACHE=0`, a 32.2% lower median. The first default sample
+populates the cache and accounts for the high end of its range.
+
+Five fresh candidate ngtsc processes each enqueue 100 concurrent
+`compiler.api.invalidate` calls after an initial compilation. Effect metric
+snapshots consistently move `analog.compiler.compilations` from 1 to 3 and set
+`analog.compiler.coalesced` to 99. This demonstrates queue coalescing without
+claiming a latency multiplier. Alpha does not expose an equivalent metric/API, so no paired counter comparison exists. Fast mode exposes the internal invalidation API too; its burst behavior was not measured in this protocol.
+
+### Footprint and limits
+
+Packed gzip files: candidate **302,074 bytes (294.99 KiB)** versus alpha **311,339 bytes (304.04 KiB)**, a 9,265-byte reduction. Regular package-file contents total **47,533,320 bytes for Effect** versus **4,231,890 bytes for alpha's es-toolkit**. These are package contents, not the incremental allocation of a shared pnpm store. Filesystem allocation and download size are different measures. The compiler tarball excludes dependencies, so it does not establish an installed-size win.
+
+This evidence does not measure browser HMR state retention, rendered SSR
+HTML/CSS updates, shutdown latency, production request latency, or peak RSS
+under a sustained server. It does not attribute warm-build regressions to a
+specific internal cause. All raw machine-readable records are retained in
+`dist/effect-evidence/perf/results/` in the working checkout.
+
+## Verification and evidence boundaries
+
+- 911 compiler-package tests passed, with six existing skips. Source typecheck, test typecheck, package ESLint, compiler/builders build, and artifact checks passed.
+- All 12 installed consumer cells passed: Angular 17.3.12/18.2.14/19.0.0/20.0.0/20.1.0 on Node 20.19.5 and matching TypeScript; Angular 21.0.0 on Node 24.15.0/Vite 7.0.0; Angular 22.0.0 on Node 24.15.0 with Vite 6.0.0, 6.4.3, 7.0.0, 7.3.6, 8.0.0, and 8.2.2.
+- Packed checks cover public declarations, normal/fast full/partial/supported API output, source-map positions, replacements/includes, and built application graphs. Angular 21/22 browser cases cover AOT/JIT, HMR enabled/disabled, shared resources, and restarts. Vite 6.0/8.2 endpoint reruns also verify SSR development graphs and native dependency scripts. Those application graphs contain no Effect modules; the compiler's Node process does load Effect.
+- The Analog app produced seven prerendered routes, six sitemap URLs, and real SSR HTML (14,102-byte home and 4,008-byte shipping output). This is output qualification, not a request-latency benchmark.
+- GitHub CI passed on implementation `52c8825cf` and documentation head `1461fd389`, including Linux, Windows, compiler conformance, all installed consumers, and previews. Every subsequent push requires a new CI check.
+- Compiler failures retain local paths and original causes for terminal/dev-overlay diagnostics. No compiler-owned HTTP/SSR error serializer was found; this is not a redaction guarantee.
+
+Raw frozen JSON and the exact local measurement scripts are retained under `dist/effect-evidence/perf/results/` and `dist/effect-evidence/perf/scripts/`. The committed `scripts/compiler-benchmark.mjs` reproduces the default-mode production comparison between prepared consumers. These local artifacts are not published package exports.
+
+## Unpaid qualification
+
+- [ ] Browser websocket/DOM HMR latency, including state retention under timed edits.
+- [ ] Rendered SSR HTML/CSS after edits, including the cost of whole-environment invalidation.
+- [ ] Shutdown latency and resource release under measured workloads.
+- [ ] Peak/retained RSS of a sustained server, beyond these short process samples.
+
+Keep these items open in [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). Investigate the reported regressions without weakening ownership or hiding failures. Re-run the packed protocol after any compiler change; a new documentation commit does not turn frozen measurements into measurements of different code.
 
 ## Attribution
 
-Compatibility changes are derived from public Analog commits `5277af9f7547e95cc4cebaec9cb05085a23e8647`, `47ca5f2ac44a54c16f98f810d395357e5b6832e5`, and `b3482e5e06b474869cdc21e01ffb3267da35f267`. Effect architecture and TypeScript practices are applied as portable engineering patterns; no private application implementation or private package dependency is introduced.
-
-Source-map behavior adapts public [analogjs/analog#2506](https://github.com/analogjs/analog/pull/2506) at `ea55ddabd86c6160e4741ade9d5cb4096a791d35`, with checked decoding and additional Compilation API and URL-root coverage. Prepared with OpenAI Codex.
+Compatibility attribution: public commits `5277af9f7547e95cc4cebaec9cb05085a23e8647`, `47ca5f2ac44a54c16f98f810d395357e5b6832e5`, and `b3482e5e06b474869cdc21e01ffb3267da35f267`. Source-map attribution: `ea55ddabd86c6160e4741ade9d5cb4096a791d35`. Prepared with OpenAI Codex. Grok independently reviewed the description and measurement protocol. Squash merge remains the recommendation.
