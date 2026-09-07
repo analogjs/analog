@@ -174,10 +174,8 @@ export class AnalogStylesheetRegistry {
     // derived wrapper id eagerly so HMR can reason about the browser-visible
     // stylesheet identity without waiting for that wrapper request to be
     // observed later in the session.
-    if (normalizedRequestId.includes('?direct&ngcomp=')) {
-      requestIds.add(
-        normalizedRequestId.replace('?direct&ngcomp=', '?ngcomp='),
-      );
+    if (normalizedRequestId.includes('?direct&ngcomp')) {
+      requestIds.add(normalizedRequestId.replace('?direct&ngcomp', '?ngcomp'));
     }
     this.sourceToRequestIds.set(sourcePath, requestIds);
   }

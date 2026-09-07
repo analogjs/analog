@@ -47,7 +47,14 @@ for (let sample = 0; sample < 5; sample++) {
     console.log(`Completed ${name} sample ${sample + 1}/5`);
   }
 }
-for (const field of ['node', 'angular', 'typescript', 'vite', 'fastCompile'])
+for (const field of [
+  'node',
+  'angular',
+  'typescript',
+  'vite',
+  'fastCompile',
+  'useAngularCompilationAPI',
+])
   assert.equal(
     records.baseline[0][field],
     records.candidate[0][field],
@@ -59,9 +66,19 @@ const metrics = {};
 for (const [name, read] of Object.entries({
   importMs: (row) => row.importMs,
   importHeapBytes: (row) => row.importHeapBytes,
+  importRssBytes: (row) => row.importRssBytes,
+  importCpuMs: (row) => (row.importCpu.user + row.importCpu.system) / 1000,
   constructMs: (row) => row.constructMs[0],
   coldBuildMs: (row) => row.buildMs[0],
   warmBuildMs: (row) => (row.buildMs[1] + row.buildMs[2]) / 2,
+  coldBuildCpuMs: (row) =>
+    (row.buildCpu[0].user + row.buildCpu[0].system) / 1000,
+  warmBuildCpuMs: (row) =>
+    (row.buildCpu[1].user +
+      row.buildCpu[1].system +
+      row.buildCpu[2].user +
+      row.buildCpu[2].system) /
+    2000,
   retainedHeapBytes: (row) => row.heapAfterClose[2],
   retainedHeapGrowthBytes: (row) =>
     row.heapAfterClose[2] - row.heapAfterClose[0],

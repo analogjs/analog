@@ -62,7 +62,13 @@ try {
           jit: false,
           liveReload: true,
           fastCompile: mode === 'fast',
-          experimental: { useAngularCompilationAPI: mode === 'api' },
+          experimental: {
+            useAngularCompilationAPI: mode === 'api',
+            // Keep this legacy state-retention check on the metadata path.
+            // The native-style worker separately proves the ShadowDom reload.
+            componentStyleHmr:
+              encapsulation === 'ShadowDom' ? 'metadata' : 'auto',
+          },
         }),
         server: { host: '127.0.0.1', port: 0 },
       });

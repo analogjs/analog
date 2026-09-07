@@ -4,7 +4,7 @@ import { Plugin } from 'vite';
 import { debugStylesV } from './utils/debug.js';
 
 export function isComponentStyleSheet(id: string): boolean {
-  return id.includes('ngcomp=');
+  return new URL(id, 'http://localhost').searchParams.has('ngcomp');
 }
 
 export function getComponentStyleSheetMeta(id: string): {

@@ -197,7 +197,7 @@ export function compilationAPIPlugin(
     watchMode &&
     pluginOptions.liveReload &&
     resolvedConfig?.server.hmr !== false &&
-    angularFullVersion >= 190001 &&
+    angularFullVersion >= 210000 &&
     angularFullVersion < 230000;
   const { shouldEnableLiveReload, shouldExternalizeStyles } =
     createCompilationMode(() => ({
@@ -561,7 +561,7 @@ export function compilationAPIPlugin(
   }
 
   function isComponentStyleSheet(id: string): boolean {
-    return id.includes('ngcomp=');
+    return new URL(id, 'http://localhost').searchParams.has('ngcomp');
   }
 
   function getFilenameFromPath(id: string): string {
@@ -777,7 +777,7 @@ export function compilationAPIPlugin(
         // the same correctness fallback as the ngtsc stylesheet path.
         if (
           stylesheetRegistry?.hasExternalSource(ctx.file) ||
-          ctx.modules.some((module) => module.id?.includes('ngcomp='))
+          ctx.modules.some((module) => isComponentStyleSheet(module.id ?? ''))
         ) {
           for (const module of ctx.modules) {
             ctx.server.moduleGraph.invalidateModule(module);

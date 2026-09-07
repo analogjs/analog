@@ -30,6 +30,7 @@ const { values } = parseArgs({
     'race-ssr': { type: 'boolean', default: false },
     'ssr-first': { type: 'boolean', default: false },
     'ssr-idle-ms': { type: 'string', default: '0' },
+    warmup: { type: 'string', default: 'default' },
     'race-source': { type: 'boolean', default: false },
     'ssr-loader': { type: 'string', default: 'compat' },
     label: { type: 'string', default: 'candidate' },
@@ -38,6 +39,7 @@ const { values } = parseArgs({
 assert.ok(values.output, '--output is required');
 assert.ok(['ngtsc', 'fast', 'api'].includes(values.mode));
 assert.ok(['compat', 'runner'].includes(values['ssr-loader']));
+assert.ok(['default', 'off'].includes(values.warmup));
 assert.equal(process.version, 'v24.15.0');
 assert.equal(typeof globalThis.gc, 'function', 'Run with --expose-gc');
 const count = Number(values.components),
@@ -68,6 +70,7 @@ const result = {
   ssrLoader: values['ssr-loader'],
   startupOrder: values['ssr-first'] ? 'server-first' : 'browser-first',
   ssrIdleMs: Number(values['ssr-idle-ms']),
+  warmup: values.warmup,
   records,
   memory,
   restarts,
@@ -165,7 +168,10 @@ const plugins = angular({
   jit: false,
   liveReload: true,
   fastCompile: values.mode === 'fast',
-  experimental: { useAngularCompilationAPI: values.mode === 'api' },
+  experimental: {
+    useAngularCompilationAPI: values.mode === 'api',
+    ...(values.warmup === 'off' ? { ssrHmrWarmup: false } : {}),
+  },
 });
 const server = await createServer({
   root,
@@ -324,6 +330,8 @@ try {
     if (values['race-source']) {
       sourceRevision = revision;
       const file = join(root, 'src/version.ts');
+      const browserReload =
+        values.mode === 'fast' ? page.waitForEvent('load') : undefined;
       const fresh = new Promise((resolve, reject) => {
         const listener = (changed) => {
           if (changed !== file) return;
@@ -335,6 +343,15 @@ try {
       fresh.catch((error) => errors.push(String(error)));
       await fs.writeFile(file, `export const sourceRevision = ${revision};`);
       sourceSsr = await fresh;
+      // A behavioral source edit now reloads fast mode automatically. Observe
+      // the completed browser boot before checking its rendered children.
+      if (browserReload) {
+        await browserReload;
+        await page.waitForFunction(
+          (count) => document.querySelectorAll('[data-child]').length === count,
+          count - 1,
+        );
+      }
     }
     assert.equal(await page.locator('[data-child]').count(), count - 1);
     assert.deepEqual(errors, []);

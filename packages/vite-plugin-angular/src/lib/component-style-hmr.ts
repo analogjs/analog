@@ -2,7 +2,10 @@ import MagicString from 'magic-string';
 import type { HmrContext, ModuleNode, Plugin } from 'vite';
 import { normalizePath } from 'vite';
 import type { AnalogStylesheetRegistry } from './stylesheet-registry.js';
-import { getComponentStyleSheetMeta } from './encapsulation-plugin.js';
+import {
+  getComponentStyleSheetMeta,
+  isComponentStyleSheet,
+} from './encapsulation-plugin.js';
 import { isCompilerSource, stripQuery } from './utils/module-id.js';
 
 const clientId = 'virtual:analog-component-style-hmr';
@@ -10,7 +13,25 @@ const event = 'analog:component-style';
 
 // Updating the existing link keeps Angular's SharedStylesHost ownership intact.
 const client = `import { createHotContext } from '/@vite/client';
+import { RendererFactory2 } from '@angular/core';
 const hot = createHotContext(import.meta.url);
+export function replaceMetadata(replace, type, ...args) {
+  // Angular clears renderer caches while recreating live views. A previously
+  // destroyed component also needs that hook before it can be created again.
+  if (type.ɵcmp?.tView) {
+    const factories = new Set();
+    for (const root of document.querySelectorAll('[ng-version]')) {
+      const factory = globalThis.ng?.getInjector?.(root)?.get(RendererFactory2, null);
+      if (factory) factories.add(factory);
+    }
+    if (!factories.size || [...factories].some((factory) => !factory.componentReplaced)) {
+      hot.invalidate('The renderer cannot invalidate component metadata safely');
+      return;
+    }
+    for (const factory of factories) factory.componentReplaced(type.ɵcmp.id);
+  }
+  return replace(type, ...args);
+}
 const cleanups = new WeakMap();
 hot.on('${event}', ({ paths, timestamp }) => {
   const identity = (value) => {
@@ -62,9 +83,54 @@ export function componentStyleHmrPlugin(): Plugin {
         enabled &&
         !options?.ssr &&
         isCompilerSource(id) &&
-        code.includes('ɵɵExternalStylesFeature')
+        (code.includes('ɵɵExternalStylesFeature') ||
+          code.includes('ɵɵreplaceMetadata'))
       ) {
         const output = new MagicString(code).prepend(`import '${clientId}';\n`);
+        if (code.includes('ɵɵreplaceMetadata')) {
+          const ast = this.parse(code);
+          const namespaces = new Set(
+            ast.body.flatMap((node) =>
+              node.type === 'ImportDeclaration' &&
+              node.source.value === '@angular/core'
+                ? node.specifiers
+                    .filter(
+                      (specifier) =>
+                        specifier.type === 'ImportNamespaceSpecifier',
+                    )
+                    .map((specifier) => specifier.local.name)
+                : [],
+            ),
+          );
+          const visit = (node: any) => {
+            if (!node || typeof node !== 'object') return;
+            if (
+              node.type === 'CallExpression' &&
+              node.callee.type === 'MemberExpression' &&
+              !node.callee.computed &&
+              namespaces.has(node.callee.object.name) &&
+              node.callee.property.name === 'ɵɵreplaceMetadata'
+            ) {
+              output.prependLeft(
+                node.arguments[0].start,
+                code.slice(node.callee.start, node.callee.end) + ', ',
+              );
+              output.overwrite(
+                node.callee.start,
+                node.callee.end,
+                '__analogReplaceMetadata',
+              );
+            }
+            for (const child of Object.values(node)) {
+              if (Array.isArray(child)) child.forEach(visit);
+              else if (child && typeof child === 'object') visit(child);
+            }
+          };
+          visit(ast);
+          output.prepend(
+            `import { replaceMetadata as __analogReplaceMetadata } from '${clientId}';\n`,
+          );
+        }
         return {
           code: output.toString(),
           map: output.generateMap({
@@ -94,7 +160,7 @@ export async function updateComponentStyles(
       return;
     modules.add(module);
     if (
-      !module.id?.includes('ngcomp=') &&
+      !isComponentStyleSheet(module.id ?? '') &&
       !(module.type === 'js' && /\.(css|s[ac]ss|less)$/.test(module.id ?? ''))
     )
       for (const importer of module.importers) visit(importer);
@@ -109,7 +175,7 @@ export async function updateComponentStyles(
     if (module) visit(module);
   }
   const styles = [...modules].filter((module) =>
-    module.id?.includes('ngcomp='),
+    isComponentStyleSheet(module.id ?? ''),
   );
   if (
     !styles.length ||
@@ -118,8 +184,8 @@ export async function updateComponentStyles(
       return (
         !module.file ||
         !module.url ||
-        !meta.componentId ||
-        !['emulated', 'none'].includes(meta.encapsulation)
+        (meta.encapsulation === 'emulated' && !meta.componentId) ||
+        !['emulated', 'none', 'shadow'].includes(meta.encapsulation)
       );
     })
   )
@@ -131,7 +197,7 @@ export async function updateComponentStyles(
       (module) =>
         module.id?.includes('?inline') ||
         (module.type === 'js' &&
-          !module.id?.includes('ngcomp=') &&
+          !isComponentStyleSheet(module.id ?? '') &&
           isCompilerSource(module.id ?? '')),
     )
   )
@@ -142,6 +208,15 @@ export async function updateComponentStyles(
   for (const source of sources) refresh(source);
   for (const module of modules)
     graph.invalidateModule(module, undefined, ctx.timestamp);
+  if (
+    styles.some(
+      (module) =>
+        getComponentStyleSheetMeta(module.id!).encapsulation === 'shadow',
+    )
+  ) {
+    ctx.server.ws.send({ type: 'full-reload' });
+    return [];
+  }
   ctx.server.ws.send(event, {
     paths: [
       ...new Set(
@@ -161,7 +236,7 @@ export async function updateComponentStyles(
   return [...modules].filter(
     (module) =>
       module.type === 'js' &&
-      !module.id?.includes('ngcomp=') &&
+      !isComponentStyleSheet(module.id ?? '') &&
       module.isSelfAccepting === true,
   );
 }

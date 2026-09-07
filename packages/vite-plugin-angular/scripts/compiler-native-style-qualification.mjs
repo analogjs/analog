@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { createRequire } from 'node:module';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import angular from '@analogjs/vite-plugin-angular';
@@ -17,7 +18,11 @@ const { values } = parseArgs({
 });
 const root = await fs.mkdtemp(join(process.cwd(), 'native-style-'));
 const write = (file, text) => fs.writeFile(join(root, file), text);
+const angularVersion = createRequire(import.meta.url)(
+  '@angular/core/package.json',
+).version;
 const native =
+  Number(angularVersion.split('.')[0]) >= (values.mode === 'api' ? 21 : 20) &&
   values.mode !== 'fast' &&
   values.encapsulation !== 'ShadowDom' &&
   values.strategy === 'auto';
@@ -91,7 +96,15 @@ server.ws.send = (...args) => {
 };
 const page = await browser.newPage();
 page.on('pageerror', (error) => errors.push(error.message));
-const result = { ...values, native, records, events, errors, passed: false };
+const result = {
+  ...values,
+  angularVersion,
+  native,
+  records,
+  events,
+  errors,
+  passed: false,
+};
 try {
   await server.listen();
   await page.goto(`http://127.0.0.1:${server.httpServer.address().port}`);
@@ -219,6 +232,35 @@ try {
   }
   assert.deepEqual(errors, []);
   result.passed = true;
+} catch (error) {
+  result.failure = {
+    message: error.message,
+    stack: error.stack,
+    rendered: await page
+      .locator('child-a, child-b, child-c')
+      .evaluateAll((hosts) =>
+        hosts.map((host) => ({
+          tag: host.tagName,
+          width: getComputedStyle(
+            (host.shadowRoot ?? host).querySelector('[data-style]'),
+          ).width,
+          links: [
+            ...(host.shadowRoot ?? document).querySelectorAll(
+              'link[rel="stylesheet"]',
+            ),
+          ].map((link) => link.href),
+        })),
+      ),
+    modules: [...server.environments.client.moduleGraph.idToModuleMap.values()]
+      .filter((module) => module.id?.includes('.scss'))
+      .map((module) => ({
+        id: module.id,
+        file: module.file,
+        url: module.url,
+        importers: [...module.importers].map((importer) => importer.id),
+      })),
+  };
+  throw error;
 } finally {
   await page.close();
   await browser.close();

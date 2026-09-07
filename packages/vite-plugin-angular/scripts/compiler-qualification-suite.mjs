@@ -15,10 +15,12 @@ const { values } = parseArgs({
     root: { type: 'string' },
     phase: { type: 'string' },
     hmr: { type: 'boolean', default: false },
+    mode: { type: 'string', default: 'ngtsc' },
   },
 });
 assert.ok(values.root);
 assert.ok(['paired', 'soak'].includes(values.phase));
+assert.ok(['ngtsc', 'fast', 'api'].includes(values.mode));
 assert.equal(process.version, 'v24.15.0');
 const root = resolve(values.root);
 const results = join(root, 'results');
@@ -60,7 +62,7 @@ async function run({ vite, side, mode, sample, soak = false }) {
       // Its Environment Runner and 6.4.3's legacy loader cover both APIs.
       `--ssr-loader=${vite === 6 ? 'runner' : 'compat'}`,
     );
-  else args.push('--components=1', '--edits=10', '--refresh-ssr');
+  else args.push('--components=1', '--edits=10');
   const started = Date.now();
   try {
     await execa(process.execPath, args, {
@@ -92,7 +94,7 @@ if (values.phase === 'paired') {
       for (const side of sample % 2
         ? ['candidate', 'control']
         : ['control', 'candidate']) {
-        await run({ vite, side, mode: 'ngtsc', sample });
+        await run({ vite, side, mode: values.mode, sample });
       }
     }
 } else {

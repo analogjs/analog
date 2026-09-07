@@ -19,6 +19,7 @@ globalThis.gc();
 const afterImport = process.memoryUsage();
 const { build } = await import('vite');
 const fastCompile = process.env.ANALOG_PERF_FAST === '1';
+const useAngularCompilationAPI = process.env.ANALOG_PERF_API === '1';
 const root = join(process.cwd(), 'benchmark-project');
 await mkdir(root, { recursive: true });
 const files = [];
@@ -64,7 +65,7 @@ for (let cycle = 0; cycle < 3; cycle++) {
     liveReload: false,
     fastCompile,
     fastCompileMode: 'full',
-    experimental: { useAngularCompilationAPI: false },
+    experimental: { useAngularCompilationAPI },
   });
   retainedPlugins.push(plugins);
   constructMs.push(performance.now() - constructStart);
@@ -100,6 +101,7 @@ const result = {
   typescript: require('typescript/package.json').version,
   vite: require('vite/package.json').version,
   fastCompile,
+  useAngularCompilationAPI,
   importMs,
   importCpu,
   importHeapBytes: afterImport.heapUsed - beforeImport.heapUsed,

@@ -268,7 +268,7 @@ function createPluginSet(
     watchMode &&
     pluginOptions.liveReload &&
     resolvedConfig?.server.hmr !== false &&
-    angularFullVersion >= 190001 &&
+    angularFullVersion >= 200000 &&
     angularFullVersion < 230000;
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
   const resourceDependencies = new ResourceDependencies();
@@ -624,6 +624,26 @@ function createPluginSet(
           if (updated) return updated;
         }
         const changedOwners = resourceOwners(ctx.file);
+        // Angular 19 replaces definitions by reference. Shared resource updates
+        // can leave parent directive caches pointing at the previous definition.
+        if (
+          shouldEnableLiveReload() &&
+          angularFullVersion < 200000 &&
+          changedOwners.length > 1
+        ) {
+          await compilation.run([ctx.file]);
+          for (const owner of changedOwners)
+            for (const module of ctx.server.moduleGraph.getModulesByFile(
+              owner,
+            ) ?? [])
+              ctx.server.moduleGraph.invalidateModule(
+                module,
+                undefined,
+                ctx.timestamp,
+              );
+          ctx.server.ws.send({ type: 'full-reload' });
+          return [];
+        }
         if (
           shouldEnableLiveReload() &&
           changedOwners.length &&
@@ -777,7 +797,7 @@ function createPluginSet(
                 // falls back to reload for correctness.
                 const trackedWrapperRequestIds =
                   stylesheetDiagnosis.trackedRequestIds.filter((id) =>
-                    id.includes('?ngcomp='),
+                    id.includes('?ngcomp'),
                   );
                 const canUseCssUpdate =
                   encapsulation !== 'shadow' &&
@@ -1459,11 +1479,7 @@ function createPluginSet(
       angularFullVersion < 190004 && pendingTasksPlugin(),
       nxFolderPlugin(),
       encapsulationPlugin(),
-      pluginOptions.componentStyleHmr === 'auto' &&
-        liveReload &&
-        !isTest &&
-        !pluginOptions.fastCompile &&
-        componentStyleHmrPlugin(),
+      liveReload && !isTest && componentStyleHmrPlugin(),
     ].filter((plugin): plugin is Plugin => Boolean(plugin)),
   };
 
@@ -2093,7 +2109,7 @@ function diagnoseComponentStylesheetPipeline(
   }
 
   if (
-    trackedRequestIds.some((id) => id.includes('?ngcomp=')) &&
+    trackedRequestIds.some((id) => id.includes('?ngcomp')) &&
     wrapperModules.length === 0
   ) {
     anomalies.push('tracked_wrapper_missing_from_module_graph');
@@ -2103,7 +2119,7 @@ function diagnoseComponentStylesheetPipeline(
   }
 
   if (
-    trackedRequestIds.every((id) => !id.includes('?ngcomp=')) &&
+    trackedRequestIds.every((id) => !id.includes('?ngcomp')) &&
     wrapperModules.length === 0
   ) {
     anomalies.push('wrapper_not_yet_tracked');
@@ -2183,14 +2199,14 @@ export async function findComponentStylesheetWrapperModules(
   for (const requestId of stylesheetRegistry?.getRequestIdsForSource(
     sourcePath ?? '',
   ) ?? []) {
-    if (requestId.includes('?ngcomp=')) {
+    if (requestId.includes('?ngcomp')) {
       directRequestIds.add(requestId);
     }
   }
 
   const candidateWrapperIds = [...directRequestIds]
-    .filter((id) => id.includes('?direct&ngcomp='))
-    .map((id) => id.replace('?direct&ngcomp=', '?ngcomp='));
+    .filter((id) => id.includes('?direct&ngcomp'))
+    .map((id) => id.replace('?direct&ngcomp', '?ngcomp'));
 
   const lookupHits: Array<{
     candidate: string;
