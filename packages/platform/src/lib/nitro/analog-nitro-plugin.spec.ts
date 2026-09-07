@@ -79,9 +79,10 @@ describe('analogNitroPlugin', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
-      /\.analog\/__ssr-entry\.mjs$/,
-    );
+    expect(overrides.environments.ssr.build.rollupOptions.input).toEqual({
+      index: join(projectRoot, '.analog/__ssr-entry.mjs'),
+    });
+    expect(overrides.experimental).toBeUndefined();
     expect(overrides.environments.ssr.optimizeDeps.include).toContain(
       '@angular/core',
     );
@@ -330,6 +331,10 @@ describe('analogNitroPlugin', () => {
         routeRules: {
           '/buffered': { streaming: false },
           '/no-ssr': { ssr: false },
+          '/no-ssr/help': {
+            ssr: true,
+            headers: { 'x-analog-no-ssr': 'true', 'x-example': 'retained' },
+          },
           '/default': {},
         },
       },
@@ -342,6 +347,10 @@ describe('analogNitroPlugin', () => {
     });
     expect(nitroMock.options.routeRules['/no-ssr'].headers).toEqual({
       'x-analog-no-ssr': 'true',
+    });
+    expect(nitroMock.options.routeRules['/no-ssr/help'].headers).toEqual({
+      'x-analog-no-ssr': 'false',
+      'x-example': 'retained',
     });
     expect(nitroMock.options.routeRules['/default'].headers).toBeUndefined();
   });
