@@ -53,7 +53,7 @@ setupTestBed({ browserMode: true });
 setupTestBed({ teardown: { destroyAfterEach: false } });
 ```
 
-Calls without the shorthand must retain `destroyAfterEach: true`. Explicit `rethrowErrors` and provider options must retain their behavior. Keep the schematic's browser/jsdom selection and Playwright dependency generation intact.
+Calls without the shorthand must retain `destroyAfterEach: true`. Explicit unknown-element/property error flags and provider options must retain their behavior. Keep the schematic's browser/jsdom selection and Playwright dependency generation intact.
 
 Acceptance: tests exercise default teardown and explicit overrides; schematic tests assert both browser and jsdom output; compile a generated setup file; build the public setup-testbed entrypoint. Reconcile with [analogjs/analog#2527](https://github.com/analogjs/analog/pull/2527), which upgrades Vitest and currently retains the shorthand. Do not duplicate that upgrade.
 
