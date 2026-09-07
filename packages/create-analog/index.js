@@ -142,7 +142,7 @@ async function init() {
     targetDir === '.' ? path.basename(path.resolve()) : (targetDir ?? '');
 
   /** @type {PromptAnswers} */
-  let result = {};
+  let result;
 
   try {
     result = /** @type {PromptAnswers} */ (

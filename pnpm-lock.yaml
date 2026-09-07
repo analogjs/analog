@@ -1683,9 +1683,21 @@ importers:
       '@angular-devkit/schematics':
         specifier: catalog:peerVitestAngular
         version: 21.2.7(chokidar@5.0.0)
+      '@angular/core':
+        specifier: 22.0.0
+        version: 22.0.0(@angular/compiler@22.0.0)(rxjs@7.8.2)(zone.js@0.16.1)
+      '@angular/platform-browser':
+        specifier: 22.0.0
+        version: 22.0.0(@angular/animations@22.0.0(@angular/core@22.0.0(@angular/compiler@22.0.0)(rxjs@7.8.2)(zone.js@0.16.1)))(@angular/common@22.0.0(@angular/core@22.0.0(@angular/compiler@22.0.0)(rxjs@7.8.2)(zone.js@0.16.1))(rxjs@7.8.2))(@angular/core@22.0.0(@angular/compiler@22.0.0)(rxjs@7.8.2)(zone.js@0.16.1))
       oxc-transform:
         specifier: 'catalog:'
         version: 0.124.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
+      tinyglobby:
+        specifier: 'catalog:'
+        version: 0.2.16
+      vite:
+        specifier: catalog:peerCompat
+        version: 8.0.8(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.2)(yaml@2.9.0)
       vitest:
         specifier: catalog:peerVitestAngular
         version: 4.1.4(@types/node@25.6.0)(@vitest/browser-playwright@4.1.4)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.8.9)(jsdom@29.0.2)(vite@8.0.8(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(less@4.6.4)(sass-embedded@1.99.0)(sass@1.99.0)(terser@5.46.2)(yaml@2.9.0))

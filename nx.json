@@ -12,13 +12,14 @@
     "serve": { "dependsOn": ["^build"] },
     "build-package": { "cache": false },
     "@nx/js:tsc": { "cache": false },
-    "@nx/eslint:lint": {
+    "lint": {
       "inputs": [
         "default",
         "^default",
         "{workspaceRoot}/eslint.config.mjs",
         "{workspaceRoot}/.oxlintrc.json",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
+        "{workspaceRoot}/tools/eslint-rules/**/*",
+        { "externalDependencies": ["eslint"] }
       ],
       "cache": true
     },
@@ -63,7 +64,7 @@
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
-      "options": { "targetName": "eslint:lint" }
+      "options": { "targetName": "lint" }
     },
     {
       "plugin": "@nx/oxlint",

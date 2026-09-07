@@ -32,7 +32,16 @@ export default [
   {
     files: ['**/*.json'],
     rules: {
-      '@nx/dependency-checks': 'error',
+      '@nx/dependency-checks': [
+        'error',
+        {
+          // Consumer integration and schematic peers need not be imported by the runtime bundle.
+          ignoredDependencies: [
+            '@analogjs/vite-plugin-angular',
+            '@angular-devkit/schematics',
+          ],
+        },
+      ],
     },
     languageOptions: {
       parser: await import('jsonc-eslint-parser'),
