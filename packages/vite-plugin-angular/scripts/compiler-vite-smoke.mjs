@@ -146,7 +146,9 @@ if (values.angular === '22.0.0') {
     { cwd: root, env, stdio: 'inherit' },
   );
 }
-execaSync(process.execPath, ['fixture.mjs'], {
+const consumerNode = process.env.ANALOG_CONSUMER_NODE || process.execPath;
+console.log(`Consumer Node: ${execaSync(consumerNode, ['--version']).stdout}`);
+execaSync(consumerNode, ['fixture.mjs'], {
   cwd: root,
   env,
   stdio: 'inherit',

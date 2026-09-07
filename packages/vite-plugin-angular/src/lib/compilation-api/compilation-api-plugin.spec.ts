@@ -236,7 +236,7 @@ describe('compilationAPIPlugin', () => {
     expect(close).toHaveBeenCalledOnce();
   });
 
-  it('includes integration-provided files outside the configured TypeScript roots', async () => {
+  it('refreshes TypeScript roots and preserves integration includes after tsconfig changes', async () => {
     const main = join(tempRoot, 'main.ts');
     const extra = join(tempRoot, 'integration.ts');
     writeFileSync(main, 'export const main = 1;');
@@ -298,6 +298,32 @@ describe('compilationAPIPlugin', () => {
         cachedViteActual.normalizePath(extra),
       ]),
     );
+    const replacement = join(tempRoot, 'replacement.ts');
+    writeFileSync(replacement, 'export const replacement = 3;');
+    const watcher = { on: vi.fn(), off: vi.fn() };
+    (plugin.configureServer as any)({ watcher, ws: { send: vi.fn() } });
+    writeFileSync(
+      join(tempRoot, 'tsconfig.json'),
+      JSON.stringify({
+        files: ['replacement.ts'],
+        compilerOptions: { target: 'es2022' },
+      }),
+    );
+    const onChange = watcher.on.mock.calls.find(
+      ([event]) => event === 'change',
+    )![1];
+    await onChange(join(tempRoot, 'tsconfig.json'));
+    expect(initialize).toHaveBeenCalledTimes(2);
+    const updated = JSON.parse(
+      readFileSync(initialize.mock.calls[1][0], 'utf8'),
+    );
+    expect(updated.files).toEqual(
+      expect.arrayContaining([
+        cachedViteActual.normalizePath(replacement),
+        cachedViteActual.normalizePath(extra),
+      ]),
+    );
+    expect(updated.files).not.toContain(cachedViteActual.normalizePath(main));
   });
 
   it('consumes an iterable compilation result without requiring an array', async () => {

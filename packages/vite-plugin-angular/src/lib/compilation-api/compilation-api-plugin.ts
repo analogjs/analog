@@ -689,9 +689,9 @@ export function compilationAPIPlugin(
         tsconfigResolver.invalidateAll();
         await performCompilation(resolvedConfig);
       };
-      const invalidateTsconfig = (file: string) => {
+      const invalidateTsconfig = async (file: string) => {
         if (file.includes('tsconfig')) {
-          tsconfigResolver.invalidateTsconfigCaches();
+          await invalidateCompilation();
         }
       };
       server.watcher.on('add', invalidateCompilation);

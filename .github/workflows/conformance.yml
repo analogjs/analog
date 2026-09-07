@@ -8,6 +8,7 @@ on:
       - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
+      - '.node-version'
       - '.github/workflows/conformance.yml'
   push:
     branches: [beta]
@@ -16,6 +17,7 @@ on:
       - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
+      - '.node-version'
       - '.github/workflows/conformance.yml'
 
 env:
