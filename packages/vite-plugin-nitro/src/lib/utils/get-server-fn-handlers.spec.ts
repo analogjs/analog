@@ -125,6 +125,7 @@ describe('getServerFnHandlers', () => {
     `export const load = async () => ({});`,
     `// import { serverFn } from '@analogjs/router/server';
      export const load = async () => ({ text: 'serverFn' });`,
+    `import { serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
     `import { serverFn } from 'another-library'; export const load = async () => ({});`,
     `import type { serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
     `import { type serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,

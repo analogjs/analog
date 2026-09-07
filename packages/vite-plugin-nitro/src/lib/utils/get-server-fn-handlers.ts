@@ -117,6 +117,7 @@ function definesServerFn(file: string): boolean {
       node.declaration?.type === 'VariableDeclaration' &&
       node.declaration.declarations.some(
         (declarator) =>
+          declarator.id?.type === 'Identifier' &&
           declarator.init?.type === 'CallExpression' &&
           declarator.init.callee?.type === 'Identifier' &&
           localNames.has(declarator.init.callee.name),
