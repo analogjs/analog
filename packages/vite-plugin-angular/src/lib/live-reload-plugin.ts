@@ -1,4 +1,5 @@
 import { splitComponentId } from './utils/module-id.js';
+import { resolveHmrSource } from './utils/component-hmr-id.js';
 import { resolve } from 'node:path';
 import { ServerResponse } from 'node:http';
 import { Connect, normalizePath, Plugin, ViteDevServer } from 'vite';
@@ -53,7 +54,10 @@ export function liveReloadPlugin({
         }
 
         const [fileId] = splitComponentId(componentId);
-        const resolvedId = normalizePath(resolve(process.cwd(), fileId));
+        const resolvedId = resolveHmrSource(
+          classNames,
+          normalizePath(resolve(process.cwd(), fileId)),
+        );
         const invalidated =
           !!server.moduleGraph.getModuleById(resolvedId)
             ?.lastInvalidationTimestamp && classNames.get(resolvedId);
@@ -100,8 +104,11 @@ export function liveReloadPlugin({
         }
 
         const result = await fileEmitter(
-          normalizePath(
-            resolve(process.cwd(), splitComponentId(componentId)[0]),
+          resolveHmrSource(
+            classNames,
+            normalizePath(
+              resolve(process.cwd(), splitComponentId(componentId)[0]),
+            ),
           ),
         );
 

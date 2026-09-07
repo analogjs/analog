@@ -2,7 +2,7 @@
 
 This is the canonical implementation and measurement record for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The PR remains a draft. Native `angular(options): Plugin[]` usage is retained; Effect `4.0.0-rc.112` is a prerelease runtime dependency of the compiler package.
 
-The measurements below compare frozen implementation `52c8825cf` with alpha `4225f4509`. Subsequent documentation changes do not change that measured implementation. There is **no overall speedup claim**: import time and retained heap improve, while construction, several warm builds, development transforms, and independent SSR compilation have measured costs. The cause of the warm-build regressions has not been isolated.
+This log preserves the historical `52c8825cf` versus alpha `4225f4509` measurements and records subsequent qualification separately. There is **no overall speedup claim**: import time and retained heap improve, while construction, several warm builds, development transforms, and independent SSR compilation have measured costs. The cause of the warm-build regressions has not been isolated.
 
 ## Composition and audit record
 
@@ -16,7 +16,9 @@ Code: [backend composition](src/lib/compiler-backend-live.ts), [source graph](sr
 
 `CompilationScheduler` serializes compilation and lazy emission, coalesces pending file sets, lets full invalidation supersede individual files, and waits for the newest successful queued generation. `CompilerSession` owns listeners, its runtime, native callers, and finalizers. Cancelling a waiter does not abort Angular; shutdown drains admitted work before disposal. Reopening waits for the previous close. Optimizer factories register final release even where Astro disables an early cleanup hook.
 
-Vite environment selection is keyed by environment identity and shares only in-flight initialization for that exact environment. Dependency scans cannot own the live compiler. Real client/server build tests hold the server transform until after client close. Browser HMR remains on the primary compiler. JIT inline styles have separate owners and are removed only when the last owner releases them. Server HTML/CSS edits currently invalidate that server environment's whole module graph: Angular-inlined resource owners are not discoverable through a Vite-only lookup. This is a correctness fallback with an unmeasured rendered-SSR edit cost.
+Vite environment selection is keyed by environment identity and shares only in-flight initialization for that exact environment. Dependency scans cannot own the live compiler. Real client/server build tests hold the server transform until after client close. Browser HMR remains on the primary compiler. JIT inline styles have separate owners and are removed only when the last owner releases them. Server HTML/CSS edits invalidate that server environment's whole module graph immediately after queuing compilation: cached requests must enter the compiler read barrier. Angular-inlined resource owners are not discoverable through a Vite-only lookup. Rendered-SSR measurements include this correctness fallback.
+
+Restart qualification exposed overlapping server lifetimes: Vite can configure a replacement before closing its predecessor. Each resolved plugin configuration now owns a complete plugin set, including compiler, stylesheet registry, caches, and HMR middleware. Environment hooks retain that configuration when a later restart begins, so old cleanup cannot erase new state or detach new watchers. See [configuration lifetime adapter](src/lib/restartable-plugins.ts).
 
 Code: [scheduler](src/lib/compilation-scheduler.ts), [session](src/lib/compiler-session.ts), [environment selection](src/lib/compiler-environments.ts).
 
@@ -24,7 +26,11 @@ Code: [scheduler](src/lib/compilation-scheduler.ts), [session](src/lib/compiler-
 
 The typed stylesheet program and replaceable compiler service handle preprocessing, externalization, inline compilation, and phase/file/cause failures for ngtsc, the Compilation API, and inline JIT styles. Empty CSS is valid. Fast-mode and external-registry paths now surface failures instead of dropping CSS. Registry refresh removes collision-prone basename aliases. JIT CSS is serialized as a JavaScript string, so backticks and interpolation text remain data.
 
-Fast HMR uses a bidirectional resource index: every component sharing a template or stylesheet is invalidated, old references are removed, and paths are normalized. HMR metadata targets the original live class across successive module evaluations. Packed browser tests update a template, a stylesheet, and resources shared by two components. These tests prove behavior, not websocket/DOM latency.
+Fast HMR uses a bidirectional resource index: every component sharing a template or stylesheet is invalidated, old references are removed, and paths are normalized. HMR metadata targets the original live class across successive module evaluations. Windows registry filenames and Vite module IDs are normalized before identifying those declarations. Packed browser tests update a template, a stylesheet, and resources shared by two components; the separate runtime protocol measures file-write-to-DOM/computed-style latency.
+
+Component CSS in the Compilation API uses a full reload because Angular's original stylesheet link can otherwise be reattached after Vite replaces it, overriding newer rules. Registry ownership also recognizes CSS cached by the browser after restart without a new module-graph request. Template HMR preserves state; a component-CSS full reload resets it. Windows ngtsc external-style references use Vite filesystem URLs in normal emit and HMR metadata, preventing drive letters from being interpreted as browser URL schemes.
+
+Angular HMR identifiers use the compiler host's filename casing policy. Update messages now preserve class-name case while canonicalizing file paths, and middleware resolves canonical requests back to actual Vite module IDs. Compilation API template updates use the same lookup against known emitted files. This covers projects nested under directories containing uppercase letters on Windows.
 
 Code: [stylesheet pipeline](src/lib/stylesheet-pipeline.ts), [resource ownership](src/lib/resource-dependencies.ts), [HMR metadata](src/lib/compiler/hmr.ts).
 
@@ -52,7 +58,7 @@ Code: [public entry](src/index.ts), [option decoder](src/lib/plugin-options-sche
 - Source-map behavior adapts [analogjs/analog#2506](https://github.com/analogjs/analog/pull/2506): production honors Vite's map setting, fast mode composes the final OXC/esbuild map, and the Compilation API retains its native inline map until Vite consumes it. Checked normalization preserves contents, extension fields, and URL roots; packed tests assert source file and line.
 - The supporting `platform` no-SSR repair reads the matched route-rule header before rendering. It is distinct from the compiler refactor and is not shipped by updating only `@analogjs/vite-plugin-angular`.
 
-## Frozen measurements
+## Historical frozen measurements (`52c8825cf`)
 
 ### Provenance and method
 

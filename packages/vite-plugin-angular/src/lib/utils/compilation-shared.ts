@@ -1,4 +1,5 @@
 import { stripQuery, splitComponentId } from './module-id.js';
+import { resolveHmrSource } from './component-hmr-id.js';
 /**
  * Shared utilities used by both angular-vite-plugin.ts and
  * compilation-api/compilation-api-plugin.ts.
@@ -98,6 +99,7 @@ export function toAngularCompilationFileReplacements(
  */
 export function mapTemplateUpdatesToFiles(
   templateUpdates: ReadonlyMap<string, string> | undefined,
+  knownFiles?: ReadonlyMap<string, unknown>,
 ): Map<
   string,
   {
@@ -109,7 +111,10 @@ export function mapTemplateUpdatesToFiles(
 
   templateUpdates?.forEach((code, encodedUpdateId) => {
     const [file, className] = splitComponentId(encodedUpdateId);
-    const resolvedFile = normalizePath(resolve(process.cwd(), file));
+    const requested = normalizePath(resolve(process.cwd(), file));
+    const resolvedFile = knownFiles
+      ? resolveHmrSource(knownFiles, requested)
+      : requested;
 
     updatesByFile.set(resolvedFile, {
       className,

@@ -1,4 +1,5 @@
 import { stripQuery, isCompilerSource } from '../utils/module-id.js';
+import { componentHmrId } from '../utils/component-hmr-id.js';
 import { createCompilerSession } from '../compiler-session.js';
 import {
   extractInlineSourceMap,
@@ -432,6 +433,7 @@ export function compilationAPIPlugin(
 
     const templateUpdates = mapTemplateUpdatesToFiles(
       compilationResult.templateUpdates,
+      outputFiles,
     );
     if (templateUpdates.size > 0) {
       debugHmr('compilation API template updates', {
@@ -489,7 +491,10 @@ export function compilationAPIPlugin(
     for (const file of files) {
       const className = classNames.get(file);
       if (!className) continue;
-      const relativeFileId = `${normalizePath(relative(process.cwd(), file))}@${className}`;
+      const relativeFileId = componentHmrId(
+        relative(process.cwd(), file),
+        className,
+      );
       const clientGraph = server.environments.client?.moduleGraph;
       const clientModule = clientGraph?.getModuleById(file);
       if (clientModule) {
@@ -644,14 +649,12 @@ export function compilationAPIPlugin(
           });
         }
 
-        if (
-          shouldEnableLiveReload() &&
-          result?.hmrEligible &&
-          classNames.get(fileId)
-        ) {
-          const relativeFileId = `${normalizePath(
+        const hmrClassName = classNames.get(fileId);
+        if (shouldEnableLiveReload() && result?.hmrEligible && hmrClassName) {
+          const relativeFileId = componentHmrId(
             relative(process.cwd(), fileId),
-          )}@${classNames.get(fileId)}`;
+            hmrClassName,
+          );
 
           debugHmr('sending component update', { relativeFileId });
           sendHMRComponentUpdate(ctx.server, relativeFileId);

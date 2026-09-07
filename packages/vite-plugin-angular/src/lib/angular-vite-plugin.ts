@@ -13,6 +13,7 @@ import type { CompilerPlugin } from './compiler-backend.js';
 import { projectCompilerLayer } from './compiler-backend-live.js';
 import { isolateCompilerEnvironments } from './compiler-environments.js';
 import { restartablePlugins } from './restartable-plugins.js';
+import { componentHmrId } from './utils/component-hmr-id.js';
 import { parsePluginOptions } from './plugin-options-schema.js';
 import { NgtscProgram } from '@angular/compiler-cli';
 import { Array as Arrays, Layer } from 'effect';
@@ -540,14 +541,12 @@ function createPluginSet(
             });
           }
 
-          if (
-            shouldEnableLiveReload() &&
-            result?.hmrEligible &&
-            classNames.get(fileId)
-          ) {
-            const relativeFileId = `${normalizePath(
+          const hmrClassName = classNames.get(fileId);
+          if (shouldEnableLiveReload() && result?.hmrEligible && hmrClassName) {
+            const relativeFileId = componentHmrId(
               relative(process.cwd(), fileId),
-            )}@${classNames.get(fileId)}`;
+              hmrClassName,
+            );
 
             debugHmr('sending component update', { relativeFileId });
             debugHmrV('ts hmr component update payload', {
@@ -837,9 +836,12 @@ function createPluginSet(
                   updateCount: updates.length,
                 });
                 updates.forEach((updateId) => {
-                  const relativeFileId = `${normalizePath(
+                  const className = classNames.get(updateId);
+                  if (!className) return;
+                  const relativeFileId = componentHmrId(
                     relative(process.cwd(), updateId),
-                  )}@${classNames.get(updateId)}`;
+                    className,
+                  );
                   sendHMRComponentUpdate(
                     ctx.server,
                     relativeFileId,
@@ -895,9 +897,12 @@ function createPluginSet(
               updateCount: updates.length,
             });
             updates.forEach((updateId) => {
-              const impRelativeFileId = `${normalizePath(
+              const className = classNames.get(updateId);
+              if (!className) return;
+              const impRelativeFileId = componentHmrId(
                 relative(process.cwd(), updateId),
-              )}@${classNames.get(updateId)}`;
+                className,
+              );
 
               sendHMRComponentUpdate(ctx.server, impRelativeFileId, classNames);
             });
