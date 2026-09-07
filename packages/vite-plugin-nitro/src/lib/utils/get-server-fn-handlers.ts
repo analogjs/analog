@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { parseSync } from 'oxc-parser';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
@@ -37,7 +39,7 @@ const EXCLUDED_SERVER_FILES: RegExp[] = [/\/app\.config\.server\.ts$/];
  *
  * Scope is `<projectRoot>/<sourceRoot>/**\/*.server.ts` because the RFC allows a
  * server function to live in any `.server.ts` module, including existing page
- * server files. Files that define no server function simply register nothing.
+ * server files. Only modules importing the serverFn runtime API participate.
  * Angular SSR config (`app.config.server.ts`) is excluded — it is not a route or
  * function module and must not be pulled into the dispatch bundle.
  *
@@ -72,5 +74,27 @@ export function getServerFnHandlers({
     )
     .filter((file) => (seen.has(file) ? false : (seen.add(file), true)))
     .sort()
+    .filter(importsServerFn)
     .map((file) => ({ file }));
+}
+
+function importsServerFn(file: string): boolean {
+  const code = readFileSync(file, 'utf8');
+  if (!code.includes('serverFn')) return false;
+
+  const { program } = parseSync(file, code);
+  return program.body.some(
+    (node) =>
+      node.type === 'ImportDeclaration' &&
+      node.importKind !== 'type' &&
+      node.source.value === '@analogjs/router/server' &&
+      node.specifiers.some(
+        (specifier) =>
+          specifier.type === 'ImportSpecifier' &&
+          specifier.importKind !== 'type' &&
+          (specifier.imported.type === 'Identifier'
+            ? specifier.imported.name
+            : specifier.imported.value) === 'serverFn',
+      ),
+  );
 }
