@@ -262,7 +262,9 @@ jobs:
         if: runner.os != 'Windows'
       - run: corepack enable
       - name: Install the modern authoring workspace
-        run: pnpm install --frozen-lockfile
+        # Multiple Nx versions run native postinstall code in this workspace.
+        # Serialize Windows lifecycle scripts to avoid concurrent native loads.
+        run: pnpm install --frozen-lockfile ${{ runner.os == 'Windows' && '--child-concurrency=1' || '' }}
       - name: Build the package on the authoring Node version
         env:
           NX_DAEMON: 'false'
