@@ -3,8 +3,10 @@ import { expect, test } from '@playwright/test';
 test('caller hints cannot disable SSR on an enabled route', async ({
   request,
 }) => {
-  for (const headers of [{}, { 'x-analog-no-ssr': 'true' }]) {
-    const response = await request.get('/products/1?ssr-policy=1', { headers });
+  for (const supplied of [false, true]) {
+    const response = await request.get('/products/1?ssr-policy=1', {
+      headers: supplied ? { 'x-analog-no-ssr': 'true' } : {},
+    });
     expect(response.status()).toBe(200);
     const html = await response.text();
     expect(html).toContain('Product Details');
