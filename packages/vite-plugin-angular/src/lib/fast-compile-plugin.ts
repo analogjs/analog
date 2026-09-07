@@ -36,6 +36,7 @@ import {
   isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
@@ -734,6 +735,11 @@ export function fastCompilePlugin(
     },
     async buildStart() {
       await initFastCompile();
+    },
+    closeBundle() {
+      if (!watchMode) {
+        releaseCssPreprocessorWorkers();
+      }
     },
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module

@@ -46,6 +46,7 @@ import {
   angularFullVersion,
 } from './utils/devkit.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
 const require = createRequire(import.meta.url);
 
@@ -298,7 +299,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     sourceFileCache.referencedFiles = undefined;
     tsconfigOptionsCache.clear();
     includeCache = [];
-    styleTransform = undefined;
+    releaseCssPreprocessorWorkers();
   }
 
   function angularPlugin(): Plugin {
@@ -402,7 +403,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         const invalidateCompilationOnFsChange = createFsWatcherCacheInvalidator(
           invalidateFsCaches,
           invalidateTsconfigCaches,
-          () => performCompilation(server.environments.client.config),
+          () => performCompilation(resolvedConfig),
           pluginOptions.include.map(
             (glob) =>
               `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
@@ -417,6 +418,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        if (!jit) {
+          styleTransform = (code: string, filename: string) =>
+            preprocessCSS(code, filename, resolvedConfig);
+        }
+
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
           pendingCompilation = performCompilation(
@@ -459,10 +465,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (TS_EXT_REGEX.test(ctx.file)) {
           let [fileId] = ctx.file.split('?');
 
-          pendingCompilation = performCompilation(
-            ctx.server.environments.client.config,
-            [fileId],
-          );
+          pendingCompilation = performCompilation(resolvedConfig, [fileId]);
 
           let result;
 
@@ -564,10 +567,10 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          pendingCompilation = performCompilation(
-            ctx.server.environments.client.config,
-            [...mods.map((mod) => mod.id as string), ...updates],
-          );
+          pendingCompilation = performCompilation(resolvedConfig, [
+            ...mods.map((mod) => mod.id as string),
+            ...updates,
+          ]);
 
           if (updates.length > 0) {
             await pendingCompilation;
@@ -877,6 +880,10 @@ export function angular(options?: PluginOptions): Plugin[] {
           },
         );
         declarationFiles.length = 0;
+
+        if (!watchMode) {
+          releaseCssPreprocessorWorkers();
+        }
       },
     };
   }
@@ -1211,6 +1218,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Each pass creates a new builder/program, so previously emitted output
     // can go stale — only dedupe emits within a single pass.
     emittedIds = new Set<string>();
+
+    if (!jit) {
+      styleTransform = (code: string, filename: string) =>
+        preprocessCSS(code, filename, config);
+    }
 
     const discardIncrementalProgram = shouldDiscardIncrementalProgram({
       externalRuntimeStylesNowEnabled: shouldEnableExternalRuntimeStyles({
