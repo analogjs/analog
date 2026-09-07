@@ -10,9 +10,11 @@ const require = createRequire(import.meta.url);
 assert.equal(process.version, 'v24.15.0');
 globalThis.gc();
 const beforeImport = process.memoryUsage();
+const importCpuStart = process.cpuUsage();
 const importStart = performance.now();
 const { default: angular } = await import('@analogjs/vite-plugin-angular');
 const importMs = performance.now() - importStart;
+const importCpu = process.cpuUsage(importCpuStart);
 globalThis.gc();
 const afterImport = process.memoryUsage();
 const { build } = await import('vite');
@@ -51,6 +53,7 @@ await writeFile(
 const retainedPlugins = [];
 const constructMs = [];
 const buildMs = [];
+const buildCpu = [];
 const heapAfterClose = [];
 for (let cycle = 0; cycle < 3; cycle++) {
   const constructStart = performance.now();
@@ -66,6 +69,7 @@ for (let cycle = 0; cycle < 3; cycle++) {
   retainedPlugins.push(plugins);
   constructMs.push(performance.now() - constructStart);
   const start = performance.now();
+  const cpuStart = process.cpuUsage();
   await build({
     root,
     configFile: false,
@@ -84,6 +88,7 @@ for (let cycle = 0; cycle < 3; cycle++) {
     },
   });
   buildMs.push(performance.now() - start);
+  buildCpu.push(process.cpuUsage(cpuStart));
   const output = await readFile(join(root, 'output/result.js'), 'utf8');
   assert.equal((output.match(/defineComponent\(/g) ?? []).length, 20);
   globalThis.gc();
@@ -96,9 +101,11 @@ const result = {
   vite: require('vite/package.json').version,
   fastCompile,
   importMs,
+  importCpu,
   importHeapBytes: afterImport.heapUsed - beforeImport.heapUsed,
   importRssBytes: afterImport.rss - beforeImport.rss,
   buildMs,
+  buildCpu,
   constructMs,
   heapAfterClose,
   retainedPluginSets: retainedPlugins.length,

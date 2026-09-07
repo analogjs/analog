@@ -28,6 +28,7 @@ export function augmentHostWithResources(
   options: {
     inlineStylesExtension: string;
     isProd?: boolean;
+    externalizeInlineStyles?: boolean;
     stylesheetRegistry?: AnalogStylesheetRegistry;
     sourceFileCache?: SourceFileCache;
     stylePreprocessor?: StylePreprocessor;
@@ -65,7 +66,10 @@ export function augmentHostWithResources(
       className: context.className,
       order: context.order,
       inlineStylesExtension: options.inlineStylesExtension,
-      registry: options.stylesheetRegistry,
+      registry:
+        context.resourceFile || options.externalizeInlineStyles !== false
+          ? options.stylesheetRegistry
+          : undefined,
       preprocessor: options.stylePreprocessor,
     });
     return content === undefined ? null : { content };

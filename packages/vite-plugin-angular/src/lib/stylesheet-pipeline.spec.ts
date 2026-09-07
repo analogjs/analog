@@ -1,6 +1,9 @@
 import { ResourceDependencies } from './resource-dependencies.js';
 import { it, expect } from '@effect/vitest';
-import { Cause, Effect, Exit, Layer } from 'effect';
+import * as Cause from 'effect/Cause';
+import * as Effect from 'effect/Effect';
+import * as Exit from 'effect/Exit';
+import * as Layer from 'effect/Layer';
 import { expectTypeOf } from 'vitest';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 import {

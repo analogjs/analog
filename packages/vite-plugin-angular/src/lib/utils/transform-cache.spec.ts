@@ -1,5 +1,9 @@
 import { it, expect } from '@effect/vitest';
-import { Cause, Effect, Exit, Layer, Schema } from 'effect';
+import * as Cause from 'effect/Cause';
+import * as Effect from 'effect/Effect';
+import * as Exit from 'effect/Exit';
+import * as Layer from 'effect/Layer';
+import * as Schema from 'effect/Schema';
 import { TestClock } from 'effect/testing';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

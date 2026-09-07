@@ -513,6 +513,7 @@ describe('compilationAPIPlugin', () => {
       inlineStylesExtension: 'css',
       jit: false,
       liveReload: true,
+      componentStyleHmr: 'metadata',
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],

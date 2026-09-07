@@ -1,6 +1,6 @@
 import { VERSION } from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
-import { Schema } from 'effect';
+import * as Schema from 'effect/Schema';
 import type {
   createAngularCompilation as AngularCompilationFactory,
   createJitResourceTransformer as JitResourceFactory,

@@ -6,7 +6,11 @@ import type {
   UserConfig,
   ViteDevServer,
 } from 'vite';
-import { stripQuery, TS_EXT_REGEX } from './utils/module-id.js';
+import {
+  isCompilerSource,
+  stripQuery,
+  TS_EXT_REGEX,
+} from './utils/module-id.js';
 import { normalizePath } from 'vite';
 
 type Callback<H> = Extract<NonNullable<H>, (...args: never[]) => unknown>;
@@ -43,6 +47,10 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     server: ViteDevServer,
     listener: (file: string) => void,
   ) => void,
+  warming?: {
+    schedule(plugin: P): void;
+    settled(plugin: P): Promise<unknown>;
+  },
 ): Plugin {
   let configuration:
     | Configuration
@@ -59,15 +67,28 @@ export function isolateCompilerEnvironments<P extends Plugin>(
   const selections = new WeakMap<CompilerEnvironment, Promise<Plugin>>();
   const pendingServerChildren = new Set<P>();
   let primaryBuildClaimed = false;
+  const usedServerChildren = new Set<P>();
+  const client: P = {
+    ...primary,
+    async handleHotUpdate(ctx) {
+      const result = await handler(primary.handleHotUpdate)?.call(this, ctx);
+      if (warming && usedServerChildren.size) {
+        await warming.settled(primary);
+        for (const child of usedServerChildren) warming.schedule(child);
+      }
+      return result;
+    },
+  };
 
   return {
-    ...primary,
+    ...client,
     perEnvironmentStartEndDuringDev: true,
     config(config, env) {
       // A restart resolves configuration before its new server exists. Child
       // compilers must wait for that server, never bind to the closed watcher.
       serverPhase = undefined;
       pendingServerChildren.clear();
+      usedServerChildren.clear();
       configuration = { _tag: 'Configured', config, env, context: this };
       return handler(primary.config)?.call(this, config, env);
     },
@@ -126,7 +147,7 @@ export function isolateCompilerEnvironments<P extends Plugin>(
       // configs before any build starts. A native compiler can belong to
       // only one of those environment objects, even when names repeat.
       if (env.command === 'build') primaryBuildClaimed = true;
-      return { ...primary, perEnvironmentStartEndDuringDev: true };
+      return { ...client, perEnvironmentStartEndDuringDev: true };
     }
     return createEnvironment(environment, configuration);
   }
@@ -207,6 +228,25 @@ export function isolateCompilerEnvironments<P extends Plugin>(
       ...child,
       perEnvironmentStartEndDuringDev: true,
     };
+    const transform = handler(child.transform);
+    if (
+      warming &&
+      transform &&
+      env.command === 'serve' &&
+      resolved.mode !== 'test' &&
+      resolved.server?.hmr !== false &&
+      (environment.config.consumer === 'server' || environment.name === 'ssr')
+    ) {
+      isolated.transform = {
+        ...(typeof child.transform === 'object' ? child.transform : {}),
+        async handler(code, id, options) {
+          const result = await transform.call(this, code, id, options);
+          if (result != null && isCompilerSource(id))
+            usedServerChildren.add(child);
+          return result;
+        },
+      };
+    }
     if (invalidate) {
       isolated.hotUpdate = async function (ctx) {
         if (watchedChanges.delete(ctx.file)) return;

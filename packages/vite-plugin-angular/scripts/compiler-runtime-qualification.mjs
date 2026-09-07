@@ -28,6 +28,8 @@ const { values } = parseArgs({
     'refresh-ssr': { type: 'boolean', default: false },
     'expect-style-state': { type: 'boolean', default: false },
     'race-ssr': { type: 'boolean', default: false },
+    'ssr-first': { type: 'boolean', default: false },
+    'ssr-idle-ms': { type: 'string', default: '0' },
     'race-source': { type: 'boolean', default: false },
     'ssr-loader': { type: 'string', default: 'compat' },
     label: { type: 'string', default: 'candidate' },
@@ -64,12 +66,15 @@ const result = {
   angular: require('@angular/core/package.json').version,
   typescript: require('typescript/package.json').version,
   ssrLoader: values['ssr-loader'],
+  startupOrder: values['ssr-first'] ? 'server-first' : 'browser-first',
+  ssrIdleMs: Number(values['ssr-idle-ms']),
   records,
   memory,
   restarts,
   errors,
   passed: false,
 };
+const initialCpu = process.cpuUsage();
 const started = performance.now();
 const capture = (stage) => {
   memory.push({
@@ -238,6 +243,7 @@ async function renderSsr(revision) {
 }
 try {
   await server.listen();
+  if (values['ssr-first']) result.initialSsr = await renderSsr(0);
   await page.goto(origin);
   await page.waitForFunction(
     () =>
@@ -248,7 +254,7 @@ try {
     count - 1,
     'Browser includes every child',
   );
-  result.initialSsr = await renderSsr(0);
+  result.initialSsr ??= await renderSsr(0);
   globalThis.gc();
   capture('ready-gc');
   const windowStart = performance.now();
@@ -301,6 +307,8 @@ try {
     const stylesheetMs = performance.now() - cssAt;
     const immediateStyleStatePreserved =
       (await page.locator('[data-count]').textContent()) === counter;
+    if (!immediateSsr && result.ssrIdleMs)
+      await new Promise((resolve) => setTimeout(resolve, result.ssrIdleMs));
     const ssr = await (immediateSsr ?? renderSsr(revision));
     // A linked stylesheet can update before an already queued page reload.
     const styleStatePreserved =
@@ -415,6 +423,8 @@ try {
   result.passed = completed;
   await persist();
 }
+result.cpu = process.cpuUsage(initialCpu);
+await persist();
 console.log(
   JSON.stringify({
     passed: result.passed,

@@ -1,4 +1,9 @@
-import { Effect, Layer } from 'effect';
+import * as Metric from 'effect/Metric';
+import * as Effect from 'effect/Effect';
+import * as Layer from 'effect/Layer';
+const integrationTime = Metric.timer('analog.compiler.integrations');
+const nativeTime = Metric.timer('analog.compiler.native');
+
 import type { ResolvedConfig } from 'vite';
 import {
   CompilerBackend,
@@ -49,7 +54,7 @@ export function nativeCompilerLayer(options: {
         const updatedComponents = yield* Effect.tryPromise({
           try: () => options.compile(request.files?.slice()),
           catch: compilationFailure,
-        });
+        }).pipe(Effect.trackDuration(nativeTime));
         return { updatedComponents: updatedComponents ?? [] };
       });
       return CompilerBackend.of({ compile });
@@ -88,7 +93,10 @@ export function projectCompilerLayer(options: {
         const integrations = yield* Effect.tryPromise({
           try: () => discoverAnalogIntegrations(config),
           catch: compilationFailure,
-        });
+        }).pipe(
+          Effect.withSpan('analog.integrations.discover'),
+          Effect.trackDuration(integrationTime),
+        );
         options.configure(integrations);
         const project = yield* graph.resolve({
           tsconfig: options.tsconfig(),
@@ -100,7 +108,7 @@ export function projectCompilerLayer(options: {
         const updatedComponents = yield* Effect.tryPromise({
           try: () => options.compile(request.files?.slice(), project),
           catch: compilationFailure,
-        });
+        }).pipe(Effect.trackDuration(nativeTime));
         return { updatedComponents: updatedComponents ?? [] };
       });
       return CompilerBackend.of({ compile });

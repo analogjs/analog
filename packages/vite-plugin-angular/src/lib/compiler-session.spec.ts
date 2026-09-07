@@ -1,7 +1,14 @@
+import * as Scope from 'effect/Scope';
+import * as Exit from 'effect/Exit';
+import * as Effect from 'effect/Effect';
+import * as ManagedRuntime from 'effect/ManagedRuntime';
+import * as TestClock from 'effect/testing/TestClock';
 import { EventEmitter } from 'node:events';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createCompilerSession as makeSession } from './compiler-session.js';
 import { nativeCompilerLayer } from './compiler-backend-live.js';
+
+vi.mock('effect/ManagedRuntime', { spy: true });
 
 function createCompilerSession(
   compile: (files: string[] | undefined) => Promise<void>,
@@ -249,5 +256,139 @@ describe('deferred server compilation', () => {
     await session.start();
     expect(compile).toHaveBeenLastCalledWith(undefined);
     await session.close();
+  });
+});
+
+describe('scoped SSR warmup', () => {
+  const scopes: Scope.Closeable[] = [];
+  afterEach(async () => {
+    for (const scope of scopes.splice(0))
+      await Effect.runPromise(Scope.close(scope, Exit.void));
+    vi.restoreAllMocks();
+  });
+  async function setup(
+    compile = vi.fn().mockResolvedValue(undefined),
+    close = vi.fn(),
+  ) {
+    const scope = Scope.makeUnsafe();
+    scopes.push(scope);
+    const clock = await Effect.runPromise(
+      Effect.provideService(TestClock.make(), Scope.Scope, scope),
+    );
+    const session = makeSession(nativeCompilerLayer({ compile, close }), clock);
+    const advance = (ms: number) => Effect.runPromise(clock.adjust(ms));
+    return { session, clock, compile, close, advance };
+  }
+
+  it('allocates one runtime at concurrent first use and none for unused ownership', async () => {
+    const make = vi.mocked(ManagedRuntime.make);
+    make.mockClear();
+    const { session, compile } = await setup();
+    const resource = vi.fn().mockResolvedValue(undefined);
+    const events = new EventEmitter();
+    session.own(resource);
+    session.watch(events, 'change', () => {});
+    expect(make).not.toHaveBeenCalled();
+    await session.close();
+    expect(resource).toHaveBeenCalledOnce();
+    expect(events.listenerCount('change')).toBe(0);
+    expect(make).not.toHaveBeenCalled();
+    await Promise.all([session.start(), session.read(() => 'ready')]);
+    expect(make).toHaveBeenCalledTimes(1);
+    expect(compile).toHaveBeenCalledOnce();
+    await session.close();
+    await session.start();
+    expect(make).toHaveBeenCalledTimes(2);
+    await session.close();
+    make.mockRestore();
+  });
+
+  it('replaces the quiet delay and coalesces pending edits', async () => {
+    const { session, compile, advance } = await setup();
+    await session.start();
+    session.defer(['one.html']);
+    session.warmup();
+    await advance(74);
+    expect(compile).toHaveBeenCalledTimes(1);
+    session.defer(['two.css']);
+    session.warmup();
+    await advance(74);
+    expect(compile).toHaveBeenCalledTimes(1);
+    await advance(1);
+    await session.ready();
+    expect(compile).toHaveBeenCalledTimes(2);
+    expect(compile).toHaveBeenLastCalledWith(['one.html', 'two.css']);
+    await session.close();
+  });
+
+  it('lets reads bypass the delay without a later duplicate compilation', async () => {
+    const { session, compile, advance } = await setup();
+    await session.start();
+    session.defer(['one.html']);
+    session.warmup();
+    await session.read(() => 'fresh');
+    expect(compile).toHaveBeenCalledTimes(2);
+    await advance(100);
+    expect(compile).toHaveBeenCalledTimes(2);
+    await session.close();
+  });
+
+  it('retains failures for readiness and reads, then recovers on a later edit', async () => {
+    const failure = new Error('warmup failed');
+    const compile = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValue(undefined);
+    const { session, advance } = await setup(compile);
+    await session.start();
+    session.defer(['broken.html']);
+    session.warmup();
+    await advance(75);
+    await expect(session.ready()).rejects.toBe(failure);
+    await expect(session.read(() => 'stale')).rejects.toBe(failure);
+    session.defer(['fixed.html']);
+    session.warmup();
+    await advance(75);
+    await expect(session.read(() => 'fresh')).resolves.toBe('fresh');
+    await session.close();
+  });
+
+  it('cancels unadmitted work and never inherits a prior delay after reopen', async () => {
+    const { session, compile, advance } = await setup();
+    await session.start();
+    session.defer(['old.html']);
+    session.warmup();
+    await session.close();
+    await session.start();
+    await advance(100);
+    expect(compile.mock.calls).toEqual([[undefined], [undefined]]);
+    await session.close();
+  });
+
+  it('drains admitted native warmup and includes edits arriving during a read', async () => {
+    const started = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    let revision = 0;
+    const compile = vi.fn(async () => {
+      if (++revision === 2) {
+        started.resolve();
+        await release.promise;
+      }
+    });
+    const { session, advance, close } = await setup(compile);
+    await session.start();
+    session.defer(['one.html']);
+    session.warmup();
+    await advance(75);
+    await started.promise;
+    const read = session.read(() => revision);
+    session.defer(['two.html']);
+    const closing = session.close();
+    expect(close).not.toHaveBeenCalled();
+    release.resolve();
+    expect(await read).toBe(3);
+    await closing;
+    expect(close).toHaveBeenCalledOnce();
   });
 });

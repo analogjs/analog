@@ -27,7 +27,7 @@ export interface SourceProject {
 }
 
 export class TsconfigResolver {
-  private includeCache: string[] = [];
+  private includeCache: string[] | undefined;
   private tsconfigOptionsCache = new Map<string, SourceProject>();
   private tsconfigGraphRootCache = new Map<string, string[]>();
   private integrationIncludes: string[] = [];
@@ -54,7 +54,7 @@ export class TsconfigResolver {
   }
 
   invalidateIncludeCache(): void {
-    this.includeCache = [];
+    this.includeCache = undefined;
   }
 
   invalidateTsconfigCaches(): void {
@@ -68,8 +68,8 @@ export class TsconfigResolver {
   }
 
   ensureIncludeCache(): string[] {
-    if (this.includeGlobs.length > 0 && this.includeCache.length === 0) {
-      this.includeCache = this.findIncludes();
+    if (this.includeCache === undefined) {
+      this.includeCache = this.includeGlobs.length ? this.findIncludes() : [];
       debugEmit('include cache populated', {
         fileCount: this.includeCache.length,
       });
@@ -83,6 +83,7 @@ export class TsconfigResolver {
   ): ReturnType<typeof compilerCli.readConfiguration> {
     const emitSourceMaps =
       config.mode !== 'production' || !!config.build?.sourcemap;
+    const started = performance.now();
     const result = compilerCli.readConfiguration(resolvedTsConfigPath, {
       suppressOutputPathCheck: true,
       sourceMap: emitSourceMaps,
@@ -98,6 +99,9 @@ export class TsconfigResolver {
       sourceRoot: '',
       supportTestBed: false,
       supportJitMode: false,
+    });
+    debugEmit('tsconfig parse timing', {
+      durationMs: performance.now() - started,
     });
     delete result.options.outDir;
     return result;
@@ -240,8 +244,10 @@ export class TsconfigResolver {
     const globs = this.includeGlobs.map((glob) =>
       normalizeIncludeGlob(this.options.workspaceRoot, glob),
     );
+    const started = performance.now();
     const files = globSync(globs, { dot: true, absolute: true });
     debugEmit('include discovery', {
+      durationMs: performance.now() - started,
       patternCount: globs.length,
       fileCount: files.length,
     });

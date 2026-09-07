@@ -327,3 +327,60 @@ describe('compiler environment selection', () => {
     expect(create).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('SSR warmup eligibility', () => {
+  it.each([
+    { command: 'serve', hmr: true, warming: true, expected: true },
+    { command: 'serve', hmr: false, warming: true, expected: false },
+    { command: 'build', hmr: true, warming: true, expected: false },
+    { command: 'serve', hmr: true, warming: false, expected: false },
+  ])(
+    'uses host settings and waits for a real SSR transform: $command/$hmr/$warming',
+    async ({ command, hmr, warming, expected }) => {
+      const schedule = vi.fn();
+      const released = Promise.withResolvers<void>();
+      const settled = vi.fn(() => released.promise);
+      const primary: Plugin = { name: 'primary', handleHotUpdate: () => [] };
+      const plugin = isolateCompilerEnvironments<Plugin>(
+        primary,
+        () => ({ name: 'server', transform: (code) => code }),
+        undefined,
+        undefined,
+        undefined,
+        warming ? { schedule, settled } : undefined,
+      );
+      Reflect.apply(hook(plugin.config), {}, [
+        {},
+        { command, mode: 'development' },
+      ]);
+      await Reflect.apply(hook(plugin.configResolved), {}, [
+        { build: {}, server: { hmr } },
+      ]);
+      const select = (name: string, mode?: string) =>
+        Reflect.apply(hook(plugin.applyToEnvironment), plugin, [
+          {
+            name,
+            ...(mode ? { mode } : {}),
+            config: {
+              consumer: name === 'client' ? 'client' : 'server',
+              build: {},
+            },
+          },
+        ]);
+      expect(await select('ssr', 'scan')).toBe(false);
+      const client = await select('client');
+      const server = await select('ssr');
+      await Reflect.apply(hook(client.handleHotUpdate), {}, [{}]);
+      expect(schedule).not.toHaveBeenCalled();
+      await Reflect.apply(hook(server.transform), {}, [
+        'export {};',
+        '/src/view.ts',
+      ]);
+      const updating = Reflect.apply(hook(client.handleHotUpdate), {}, [{}]);
+      expect(schedule).not.toHaveBeenCalled();
+      released.resolve();
+      await updating;
+      expect(schedule).toHaveBeenCalledTimes(expected ? 1 : 0);
+    },
+  );
+});

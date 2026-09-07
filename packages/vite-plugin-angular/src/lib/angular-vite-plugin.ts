@@ -1,3 +1,7 @@
+import {
+  componentStyleHmrPlugin,
+  updateComponentStyles,
+} from './component-style-hmr.js';
 import { ResourceDependencies } from './resource-dependencies.js';
 import {
   stripQuery,
@@ -17,7 +21,8 @@ import { restartablePlugins } from './restartable-plugins.js';
 import { componentHmrId } from './utils/component-hmr-id.js';
 import { parsePluginOptions } from './plugin-options-schema.js';
 import { NgtscProgram } from '@angular/compiler-cli';
-import { Array as Arrays, Layer } from 'effect';
+import * as Arrays from 'effect/Array';
+import * as Layer from 'effect/Layer';
 import type { ResolvedSourceProject } from './compiler-source-graph.js';
 import { sourceGraphLayer } from './compiler-source-graph-live.js';
 import {
@@ -217,6 +222,7 @@ function createPluginSet(
       options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
+    componentStyleHmr: options?.experimental?.componentStyleHmr ?? 'auto',
     // Set on each compilation from preprocessors registered by Vite plugins
     // through `analog.setup()`.
     stylePreprocessor: undefined as StylePreprocessor | undefined,
@@ -252,9 +258,18 @@ function createPluginSet(
       watch: isTest ? testWatchMode : watchMode,
       liveReload: pluginOptions.liveReload,
       hmr: resolvedConfig?.server.hmr !== false,
-      externalizeStyles: externalizeStylesRequested,
+      externalizeStyles: externalizeStylesRequested || shouldUseNativeStyles(),
     }));
 
+  const shouldUseNativeStyles = () =>
+    pluginOptions.componentStyleHmr === 'auto' &&
+    !jit &&
+    !isTest &&
+    watchMode &&
+    pluginOptions.liveReload &&
+    resolvedConfig?.server.hmr !== false &&
+    angularFullVersion >= 190001 &&
+    angularFullVersion < 230000;
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
   const resourceDependencies = new ResourceDependencies();
   const styleDependencies = new ResourceDependencies();
@@ -400,6 +415,8 @@ function createPluginSet(
         read: compilation.read,
         defer: compilation.defer,
         watch: compilation.watch,
+        warmup: compilation.warmup,
+        ready: compilation.ready,
         resourceOwners,
         invalidate: async (files) => {
           await compilation.run(files);
@@ -484,6 +501,9 @@ function createPluginSet(
         }
       },
       configureServer(server) {
+        if (!jit)
+          styleTransform = (code, file) =>
+            preprocessCSS(code, file, server.config);
         viteServer = server;
 
         // Add/unlink changes the TypeScript program shape, not just file
@@ -589,6 +609,20 @@ function createPluginSet(
           }
         }
 
+        if (shouldUseNativeStyles()) {
+          const updated = await updateComponentStyles(
+            ctx,
+            stylesheetRegistry,
+            (file) =>
+              refreshStylesheetRegistryForFile(
+                file,
+                stylesheetRegistry,
+                pluginOptions.stylePreprocessor,
+              ),
+            resourceOwners(ctx.file),
+          );
+          if (updated) return updated;
+        }
         const changedOwners = resourceOwners(ctx.file);
         if (
           shouldEnableLiveReload() &&
@@ -1076,6 +1110,7 @@ function createPluginSet(
         // Map angular inline styles to the source text
         if (isComponentStyleSheet(id)) {
           const filename = getFilenameFromPath(id);
+          stylesheetRegistry?.registerActiveRequest(id);
           const componentStyles =
             stylesheetRegistry?.getServedContent(filename);
           if (componentStyles) {
@@ -1341,6 +1376,7 @@ function createPluginSet(
           jit,
           liveReload: pluginOptions.liveReload,
           disableTypeChecking: pluginOptions.disableTypeChecking,
+          componentStyleHmr: pluginOptions.componentStyleHmr,
           supportedBrowsers: pluginOptions.supportedBrowsers,
           fileReplacements: pluginOptions.fileReplacements,
           isTest,
@@ -1394,6 +1430,14 @@ function createPluginSet(
             (compiler, file) => compiler.api.resourceOwners(file),
             (compiler, server, listener) =>
               compiler.api.watch(server.watcher, 'change', listener),
+            !isTest &&
+              liveReload &&
+              options?.experimental?.ssrHmrWarmup !== false
+              ? {
+                  schedule: (compiler) => compiler.api.warmup(),
+                  settled: (compiler) => compiler.api.ready(),
+                }
+              : undefined,
           )
         : compilationPlugin,
       ...(isTest && !isStackBlitz
@@ -1415,6 +1459,11 @@ function createPluginSet(
       angularFullVersion < 190004 && pendingTasksPlugin(),
       nxFolderPlugin(),
       encapsulationPlugin(),
+      pluginOptions.componentStyleHmr === 'auto' &&
+        liveReload &&
+        !isTest &&
+        !pluginOptions.fastCompile &&
+        componentStyleHmrPlugin(),
     ].filter((plugin): plugin is Plugin => Boolean(plugin)),
   };
 
@@ -1544,7 +1593,7 @@ function createPluginSet(
     if (!jit) {
       const externalizeStyles = !!tsCompilerOptions['externalRuntimeStyles'];
       stylesheetRegistry = externalizeStyles
-        ? new AnalogStylesheetRegistry()
+        ? (stylesheetRegistry ?? new AnalogStylesheetRegistry())
         : undefined;
       if (stylesheetRegistry) {
         configureStylesheetRegistry?.(stylesheetRegistry, {
@@ -1557,6 +1606,7 @@ function createPluginSet(
       augmentHostWithResources(host, styleTransform, {
         styleDependencies,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        externalizeInlineStyles: externalizeStylesRequested,
         isProd,
         ...(stylesheetRegistry ? { stylesheetRegistry } : {}),
         sourceFileCache,

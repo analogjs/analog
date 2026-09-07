@@ -37,6 +37,10 @@ export interface PluginOptions {
   fastCompileMode?: 'full' | 'partial';
   experimental?: {
     useAngularCompilationAPI?: boolean;
+    /** Warm previously read SSR environments after 75 ms without edits. Defaults to true in dev. */
+    ssrHmrWarmup?: boolean;
+    /** Prefer qualified native external CSS updates. Metadata retains the existing style behavior. */
+    componentStyleHmr?: 'auto' | 'metadata';
   };
   /**
    * Enable debug logging for specific scopes.

@@ -18,6 +18,12 @@ describe('Analog option boundary', () => {
       debug: { logFile: false },
     });
   });
+  it('preserves both independent HMR escape hatches', () => {
+    const options = {
+      experimental: { componentStyleHmr: 'metadata', ssrHmrWarmup: false },
+    };
+    expect(parsePluginOptions(options)).toEqual(options);
+  });
   it('retains lazy tsconfig getters and both environment replacements', () => {
     let calls = 0;
     const tsconfig = () => {
@@ -38,6 +44,8 @@ describe('Analog option boundary', () => {
     { fastCompileMode: 'fast' },
     { fileReplacements: [{ replace: 'source.ts' }] },
     { experimental: { useAngularCompilationAPI: 1 } },
+    { experimental: { ssrHmrWarmup: 'true' } },
+    { experimental: { componentStyleHmr: 'native' } },
     { liveReLoad: true },
   ])('rejects malformed owned configuration: %j', (value) => {
     expect(() => parsePluginOptions(value)).toThrow();

@@ -113,6 +113,12 @@ export class AnalogStylesheetRegistry {
     return false;
   }
 
+  getExternalRequestsForSource(sourcePath: string): string[] {
+    return [...this.externalRequestToSource].flatMap(([request, source]) =>
+      normalizePath(source) === normalizePath(sourcePath) ? [request] : [],
+    );
+  }
+
   getPublicIdsForSource(sourcePath: string): string[] {
     return [...(this.sourceToPublicIds.get(sourcePath) ?? [])];
   }
@@ -146,8 +152,11 @@ export class AnalogStylesheetRegistry {
     // the source file so later HMR events for `/src/...component.css` can find
     // the currently active virtual requests.
     const normalizedRequestId = this.normalizeRequestId(requestId);
-    const requestPath = stripQuery(normalizedRequestId);
+    const requestPath = stripQuery(requestId);
     const sourcePath =
+      (this.hasExternalSource(requestPath)
+        ? normalizePath(requestPath)
+        : undefined) ??
       this.resolveExternalSource(requestPath) ??
       this.resolveExternalSource(requestPath.replace(/^\//, '')) ??
       this.getServedSourcePath(requestPath) ??

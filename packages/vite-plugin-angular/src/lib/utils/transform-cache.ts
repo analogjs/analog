@@ -4,7 +4,13 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { VERSION } from '@angular/compiler';
 import ts from 'typescript';
-import { Clock, Context, Data, Effect, Layer, Result, Schema } from 'effect';
+import * as Clock from 'effect/Clock';
+import * as Context from 'effect/Context';
+import * as Data from 'effect/Data';
+import * as Effect from 'effect/Effect';
+import * as Layer from 'effect/Layer';
+import * as Result from 'effect/Result';
+import * as Schema from 'effect/Schema';
 
 /** The callback boundary required by Angular's JavaScriptTransformer. */
 export interface TransformCacheStore {

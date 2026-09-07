@@ -1,4 +1,4 @@
-import { Schema } from 'effect';
+import * as Schema from 'effect/Schema';
 import type { PluginOptions } from './plugin-options.js';
 import type { DebugModeOptions, DebugOption } from './debug-options.js';
 
@@ -44,6 +44,8 @@ const Options = Schema.Struct({
   experimental: Schema.optional(
     Schema.Struct({
       useAngularCompilationAPI: Schema.optional(Schema.Boolean),
+      ssrHmrWarmup: Schema.optional(Schema.Boolean),
+      componentStyleHmr: Schema.optional(Schema.Literals(['auto', 'metadata'])),
     }),
   ),
   debug: Schema.optional(
@@ -106,12 +108,22 @@ function normalizeCompilationOptions(
     ...(value.fastCompileMode === undefined
       ? {}
       : { fastCompileMode: value.fastCompileMode }),
-    ...(value.experimental?.useAngularCompilationAPI === undefined
+    ...(value.experimental === undefined
       ? {}
       : {
           experimental: {
-            useAngularCompilationAPI:
-              value.experimental.useAngularCompilationAPI,
+            ...(value.experimental.useAngularCompilationAPI === undefined
+              ? {}
+              : {
+                  useAngularCompilationAPI:
+                    value.experimental.useAngularCompilationAPI,
+                }),
+            ...(value.experimental.ssrHmrWarmup === undefined
+              ? {}
+              : { ssrHmrWarmup: value.experimental.ssrHmrWarmup }),
+            ...(value.experimental.componentStyleHmr === undefined
+              ? {}
+              : { componentStyleHmr: value.experimental.componentStyleHmr }),
           },
         }),
   };

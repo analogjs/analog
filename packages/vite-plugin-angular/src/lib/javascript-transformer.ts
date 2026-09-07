@@ -1,13 +1,11 @@
-import {
-  Context,
-  Data,
-  Effect,
-  Fiber,
-  Layer,
-  ManagedRuntime,
-  Schema,
-  Semaphore,
-} from 'effect';
+import * as Context from 'effect/Context';
+import * as Data from 'effect/Data';
+import * as Effect from 'effect/Effect';
+import * as Fiber from 'effect/Fiber';
+import * as Layer from 'effect/Layer';
+import * as ManagedRuntime from 'effect/ManagedRuntime';
+import * as Schema from 'effect/Schema';
+import * as Semaphore from 'effect/Semaphore';
 import { JavaScriptTransformer } from './utils/devkit.js';
 import { NativeOperations } from './native-operations.js';
 import {

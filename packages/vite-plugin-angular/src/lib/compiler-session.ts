@@ -1,4 +1,10 @@
-import { Effect, Exit, Layer, ManagedRuntime, Scope } from 'effect';
+import * as Clock from 'effect/Clock';
+import * as Fiber from 'effect/Fiber';
+import * as Effect from 'effect/Effect';
+import * as Exit from 'effect/Exit';
+import * as Layer from 'effect/Layer';
+import * as ManagedRuntime from 'effect/ManagedRuntime';
+import * as Scope from 'effect/Scope';
 import type { EventEmitter } from 'node:events';
 import {
   CompilationFailure,
@@ -15,6 +21,7 @@ export interface CompilerSession {
     signal?: AbortSignal,
   ): Promise<CompilationResult>;
   defer(ids: readonly string[]): void;
+  warmup(): void;
   ready(): Promise<CompilationResult | undefined>;
   close(): Promise<void>;
   own(finalizer: () => Promise<void>): void;
@@ -29,7 +36,11 @@ export interface CompilerSession {
 
 interface ActiveSession {
   readonly _tag: 'Active';
-  readonly runtime: ManagedRuntime.ManagedRuntime<CompilationScheduler, never>;
+  runtime:
+    | ManagedRuntime.ManagedRuntime<CompilationScheduler, never>
+    | undefined;
+  readonly previous: Promise<void> | undefined;
+  warmup: Fiber.Fiber<void> | undefined;
   readonly listeners: (() => void)[];
   readonly resources: Scope.Closeable;
   readonly operations: NativeOperations;
@@ -45,20 +56,14 @@ type Lifecycle =
 /** The native Vite boundary: one lifecycle and one runtime per owner. */
 export function createCompilerSession(
   backend: Layer.Layer<CompilerBackend>,
+  clock?: Clock.Clock,
 ): CompilerSession {
   const layer = CompilationScheduler.layer.pipe(Layer.provide(backend));
   const open = (previous?: Promise<void>): ActiveSession => ({
     _tag: 'Active',
-    runtime: ManagedRuntime.make(
-      previous
-        ? Layer.unwrap(
-            Effect.as(
-              Effect.promise(() => previous),
-              layer,
-            ),
-          )
-        : layer,
-    ),
+    runtime: undefined,
+    previous,
+    warmup: undefined,
     listeners: [],
     resources: Scope.makeUnsafe(),
     operations: new NativeOperations(),
@@ -66,6 +71,22 @@ export function createCompilerSession(
     dirty: new Set(),
     readers: 0,
   });
+  const runtime = (active: ActiveSession) =>
+    (active.runtime ??= ManagedRuntime.make(
+      active.previous
+        ? Layer.unwrap(
+            Effect.as(
+              Effect.promise(() => active.previous!),
+              layer,
+            ),
+          )
+        : layer,
+    ));
+  function cancelWarmup(active: ActiveSession) {
+    const waiting = active.warmup;
+    active.warmup = undefined;
+    if (waiting) Effect.runSync(Fiber.interrupt(waiting));
+  }
   let state: Lifecycle = open();
   const session: CompilerSession = {
     start() {
@@ -75,9 +96,10 @@ export function createCompilerSession(
     run(ids, signal) {
       if (state._tag === 'Closing')
         return Promise.reject(new Error('Compiler session is closed'));
+      cancelWarmup(state);
       ids = ids ? [...new Set([...state.dirty, ...ids])] : undefined;
       state.dirty.clear();
-      const work = state.runtime
+      const work = runtime(state)
         .runPromise(
           Effect.flatMap(CompilationScheduler, (scheduler) =>
             scheduler.run(ids),
@@ -99,9 +121,28 @@ export function createCompilerSession(
     defer(ids) {
       if (state._tag === 'Closing')
         throw new Error('Compiler session is closed');
+      cancelWarmup(state);
       for (const id of ids) state.dirty.add(id);
       // Reads already admitted must also observe edits arriving during compilation.
       if (state.readers && state.dirty.size) session.run([...state.dirty]);
+    },
+    warmup() {
+      if (state._tag === 'Closing' || !state.dirty.size) return;
+      const active = state;
+      cancelWarmup(active);
+      const delayed = Effect.sleep(75).pipe(
+        Effect.andThen(
+          Effect.sync(() => {
+            active.warmup = undefined;
+            if (state === active && active.dirty.size)
+              session.run([...active.dirty]);
+          }),
+        ),
+      );
+      // ManagedRuntime.runFork attaches this waiting fiber to its owning scope.
+      active.warmup = runtime(active).runFork(
+        clock ? Effect.provideService(delayed, Clock.Clock, clock) : delayed,
+      );
     },
     ready() {
       if (state._tag === 'Closing') return state.closed.then(() => undefined);
@@ -111,10 +152,13 @@ export function createCompilerSession(
     close() {
       if (state._tag === 'Closing') return state.closed;
       const active = state;
+      cancelWarmup(active);
       for (const remove of active.listeners.splice(0)) remove();
       const closed = Effect.runPromise(
         Effect.promise(() => active.operations.drain()).pipe(
-          Effect.andThen(active.runtime.disposeEffect),
+          Effect.andThen(
+            Effect.suspend(() => active.runtime?.disposeEffect ?? Effect.void),
+          ),
           Effect.ensuring(
             Scope.close(active.resources, Exit.succeed(undefined)),
           ),
@@ -162,7 +206,7 @@ export function createCompilerSession(
     active.readers++;
     if (active.dirty.size) session.run([...active.dirty]);
     return active.operations.track(
-      active.runtime
+      runtime(active)
         .runPromise(
           Effect.flatMap(CompilationScheduler, (scheduler) =>
             scheduler.read(operation),

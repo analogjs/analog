@@ -1,5 +1,10 @@
 import { it, expect } from '@effect/vitest';
-import { Cause, Deferred, Effect, Exit, Fiber, Layer } from 'effect';
+import * as Cause from 'effect/Cause';
+import * as Deferred from 'effect/Deferred';
+import * as Effect from 'effect/Effect';
+import * as Exit from 'effect/Exit';
+import * as Fiber from 'effect/Fiber';
+import * as Layer from 'effect/Layer';
 import { expectTypeOf } from 'vitest';
 import {
   CompilerBackend,

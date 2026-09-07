@@ -1,3 +1,4 @@
+import { updateComponentStyles } from '../component-style-hmr.js';
 import { ResourceDependencies } from '../resource-dependencies.js';
 import {
   StyleUrlsResolver,
@@ -15,7 +16,7 @@ import { createStylesheetTransform } from '../stylesheet-pipeline.js';
 import type { CompilerPlugin } from '../compiler-backend.js';
 import { projectCompilerLayer } from '../compiler-backend-live.js';
 import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
-import { Layer } from 'effect';
+import * as Layer from 'effect/Layer';
 import type { ResolvedSourceProject } from '../compiler-source-graph.js';
 import { sourceGraphLayer } from '../compiler-source-graph-live.js';
 import { createHash } from 'node:crypto';
@@ -94,6 +95,7 @@ export interface CompilationAPIPluginOptions {
   supportedBrowsers: string[];
   fileReplacements: FileReplacement[];
   isTest: boolean;
+  componentStyleHmr?: 'auto' | 'metadata';
   isAstroIntegration: boolean;
   include: string[];
   debug?: DebugOption;
@@ -141,7 +143,8 @@ export function compilationAPIPlugin(
     ]),
   ];
   const renderStylesheet = createStylesheetTransform(
-    (code, file) => preprocessCSS(code, file, resolvedConfig),
+    (code, file) =>
+      preprocessCSS(code, file, viteServer?.config ?? resolvedConfig),
     styleDependencies,
   );
   const styleUrlsResolver = new StyleUrlsResolver();
@@ -187,12 +190,21 @@ export function compilationAPIPlugin(
     }).pipe(Layer.provide(sourceGraphLayer(tsconfigResolver))),
   );
 
+  const shouldUseNativeStyles = () =>
+    pluginOptions.componentStyleHmr !== 'metadata' &&
+    !pluginOptions.jit &&
+    !isTest &&
+    watchMode &&
+    pluginOptions.liveReload &&
+    resolvedConfig?.server.hmr !== false &&
+    angularFullVersion >= 190001 &&
+    angularFullVersion < 230000;
   const { shouldEnableLiveReload, shouldExternalizeStyles } =
     createCompilationMode(() => ({
       watch: isTest ? testWatchMode : watchMode,
       liveReload: pluginOptions.liveReload,
       hmr: resolvedConfig?.server.hmr !== false,
-      externalizeStyles: externalizeStylesRequested,
+      externalizeStyles: externalizeStylesRequested || shouldUseNativeStyles(),
     }));
 
   function resolveTsConfigPath() {
@@ -356,9 +368,11 @@ export function compilationAPIPlugin(
               className,
               order,
               inlineStylesExtension: pluginOptions.inlineStylesExtension,
-              registry: shouldExternalizeStyles()
-                ? stylesheetRegistry
-                : undefined,
+              registry:
+                shouldExternalizeStyles() &&
+                (resourceFile || externalizeStylesRequested)
+                  ? stylesheetRegistry
+                  : undefined,
               preprocessor: stylePreprocessor,
             })) ?? ''
           );
@@ -578,6 +592,8 @@ export function compilationAPIPlugin(
       read: compilation.read,
       defer: compilation.defer,
       watch: compilation.watch,
+      warmup: compilation.warmup,
+      ready: compilation.ready,
       resourceOwners,
       invalidate: async (files) => {
         await compilation.run(files);
@@ -714,6 +730,20 @@ export function compilationAPIPlugin(
         }
       }
 
+      if (shouldUseNativeStyles()) {
+        const updated = await updateComponentStyles(
+          ctx,
+          stylesheetRegistry,
+          (file) =>
+            refreshStylesheetRegistryForFile(
+              file,
+              stylesheetRegistry,
+              stylePreprocessor,
+            ),
+          resourceOwners(ctx.file),
+        );
+        if (updated) return updated;
+      }
       if (
         /\.(html|htm)$/.test(ctx.file) ||
         (!shouldExternalizeStyles() && resourceOwners(ctx.file).length)
@@ -799,6 +829,7 @@ export function compilationAPIPlugin(
       // Serve component stylesheets from registry
       if (isComponentStyleSheet(id)) {
         const filename = getFilenameFromPath(id);
+        stylesheetRegistry?.registerActiveRequest(id);
         const componentStyles = stylesheetRegistry?.getServedContent(filename);
         if (componentStyles) {
           stylesheetRegistry?.registerActiveRequest(id);

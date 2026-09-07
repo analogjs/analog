@@ -142,7 +142,20 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 
 #### Development updates and component styles
 
-Ordinary component styles now stay in Angular's component metadata during development. Eligible template and style edits use Angular component HMR and retain component instance state. Angular recreates affected views, so DOM state such as focus, selection, and child view state can still change. Angular 19.0.0 uses a full reload because of an upstream HMR runtime bug; stateful updates require 19.0.1 or newer. JIT, disabled HMR, and edits Angular cannot replace retain their reload behavior.
+Development defaults to `experimental.componentStyleHmr: 'auto'`. The ngtsc and Compilation API compilers use native stylesheet updates for qualified external CSS in Emulated and None encapsulation. These updates change the existing stylesheet links, preserving Angular's ownership of those links and the component DOM, focus, selection, and child state. Shared Sass/Less dependencies update every loaded usage. ShadowDom, unsupported versions, missing stylesheet identity, and failed stylesheet loads retain correctness fallbacks.
+
+Templates and ordinary inline styles still use Angular metadata HMR, which recreates affected views: focus, selection, and child state can change. The fast compiler continues to inline styles and use metadata replacement. Fast-mode methods, fields, constructors, dependency changes, directives, pipes, and ambiguous edits automatically reload. Angular 19.0.0 uses a full reload around an upstream runtime bug; stateful updates require 19.0.1 or newer. JIT and disabled HMR retain compatibility behavior.
+
+Set `experimental.componentStyleHmr: 'metadata'` to retain the earlier ordinary-style behavior:
+
+```ts
+angular({
+  experimental: {
+    componentStyleHmr: 'metadata',
+    ssrHmrWarmup: false,
+  },
+});
+```
 
 CSS preprocessors and PostCSS still run through Vite's `preprocessCSS`. Arbitrary Vite CSS transform hooks require the external stylesheet pipeline. Analog detects `@tailwindcss/vite` and retains that pipeline automatically. Other integrations can request it through the existing setup hook:
 
@@ -161,7 +174,9 @@ const componentStyles: AnalogIntegrationPlugin = {
 
 External styles preserve Vite plugin processing but can require a full reload and lose component state. This integration contract applies to the default and experimental Compilation API compilers; the fast compiler continues to inline its styles.
 
-Client and SSR compilers remain separate. On a development resource edit, Analog invalidates known SSR component owners immediately and defers their compilation until the next SSR read. Browser-only editing avoids unused server compilation; the next SSR request pays that work before receiving fresh output. Unknown ownership falls back to broader invalidation. This affects development only, with no change to production rendering or `angular()` options.
+Client and SSR compilers remain separate. Development edits synchronously mark server compilers dirty before Vite invalidates their loaded modules. Once an SSR environment has handled a real module read, `experimental.ssrHmrWarmup` defaults to `true`: after client compilation and update dispatch settle, a scoped task waits for a 75 ms quiet period and compiles pending server changes. This delay does not promise that browser painting has completed. New edits replace the waiting task; incoming SSR reads bypass the delay and await the latest generation immediately.
+
+Warming trades background CPU for less foreground SSR waiting after an idle interval. Environments that have never served SSR, builds, tests, `liveReload: false`, and `server.hmr: false` do not warm speculatively. Set `experimental.ssrHmrWarmup: false` for strictly on-demand server compilation. Background failures remain observable on readiness and the next read; a later edit can recover. Shutdown cancels waiting tasks and drains already-admitted native work. Restart creates a fresh owner and cannot inherit the old delay.
 
 Shared resources invalidate every loaded SSR variant of each owning component. An owner that has not been loaded yet does not clear unrelated SSR modules; its first load receives the updated compilation. Requests arriving after an edit also discard pending transforms from before that edit.
 

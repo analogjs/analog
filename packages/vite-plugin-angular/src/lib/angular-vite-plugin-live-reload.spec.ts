@@ -31,6 +31,7 @@ async function setupLiveReloadPlugin(options: {
   }>;
   include?: string[];
   liveReload?: boolean;
+  componentStyleHmr?: 'auto' | 'metadata';
   templateUpdates?: Map<string, string>;
   plugins?: unknown[];
   tsconfig?: string;
@@ -128,6 +129,9 @@ async function setupLiveReloadPlugin(options: {
     workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
+      ...(options.componentStyleHmr
+        ? { componentStyleHmr: options.componentStyleHmr }
+        : {}),
     },
   }).find(
     (entry) => entry.name === '@analogjs/vite-plugin-angular-compilation-api',
@@ -370,7 +374,9 @@ describe('angular hmr style preprocessing', () => {
   );
 
   it('compiles ordinary component styles into HMR metadata without external links', async () => {
-    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({});
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+      componentStyleHmr: 'metadata',
+    });
     preprocessCSSMock.mockResolvedValue({ code: '.demo { color: blue; }' });
     const code = await transformStylesheet(
       '.demo { color: blue; }',
@@ -485,7 +491,9 @@ describe('angular hmr style preprocessing', () => {
   );
 
   it('compiles ordinary component styles into HMR metadata without external links', async () => {
-    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({});
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+      componentStyleHmr: 'metadata',
+    });
     preprocessCSSMock.mockResolvedValue({ code: '.demo { color: blue; }' });
     const code = await transformStylesheet(
       '.demo { color: blue; }',

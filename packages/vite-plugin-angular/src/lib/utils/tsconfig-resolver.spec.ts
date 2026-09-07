@@ -23,6 +23,28 @@ describe('TsconfigResolver integration includes', () => {
     rmSync(workspaceRoot, { recursive: true, force: true });
   });
 
+  it('reuses a computed empty include set until files or configuration change', () => {
+    const resolver = new TsconfigResolver({
+      workspaceRoot,
+      include: ['**/*.extra.ts'],
+      liveReload: true,
+      isTest: false,
+    });
+    const empty = resolver.ensureIncludeCache();
+    expect(empty).toEqual([]);
+    expect(resolver.ensureIncludeCache()).toBe(empty);
+    const file = join(workspaceRoot, 'matching.extra.ts');
+    writeFileSync(file, 'export {};');
+    expect(resolver.ensureIncludeCache()).toBe(empty);
+    resolver.invalidateIncludeCache();
+    expect(resolver.ensureIncludeCache()).toEqual([file]);
+    rmSync(file);
+    resolver.invalidateAll();
+    const removed = resolver.ensureIncludeCache();
+    expect(removed).toEqual([]);
+    expect(resolver.ensureIncludeCache()).toBe(removed);
+  });
+
   it('separates cached production options when source maps are enabled', () => {
     const path = join(workspaceRoot, 'tsconfig.json');
     writeFileSync(

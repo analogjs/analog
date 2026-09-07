@@ -7,7 +7,7 @@ import {
 import { createCompilerSession } from './compiler-session.js';
 import type { CompilerPlugin } from './compiler-backend.js';
 import { projectCompilerLayer } from './compiler-backend-live.js';
-import { Layer } from 'effect';
+import * as Layer from 'effect/Layer';
 import { componentHmrSignature } from './compiler/hmr.js';
 import { stylesheetFailure } from './stylesheet-pipeline.js';
 import { ResourceDependencies } from './resource-dependencies.js';
@@ -73,6 +73,7 @@ export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
 ): CompilerPlugin {
   let resolvedConfig: ResolvedConfig;
+  let stylesheetConfig: ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
@@ -616,7 +617,7 @@ export function fastCompilePlugin(
             const processed = await preprocessCSS(
               style,
               fakePath,
-              resolvedConfig,
+              stylesheetConfig,
             );
             for (const dependency of processed.deps ?? [])
               stylesheetDependencies.add(dependency);
@@ -725,6 +726,8 @@ export function fastCompilePlugin(
       read: compilation.read,
       defer: compilation.defer,
       watch: compilation.watch,
+      warmup: compilation.warmup,
+      ready: compilation.ready,
       resourceOwners: (file) => resourceDependencies.owners(file),
       invalidate: async (files) => {
         await compilation.run(files);
@@ -765,11 +768,13 @@ export function fastCompilePlugin(
     },
     async configResolved(config) {
       resolvedConfig = config;
+      stylesheetConfig = config;
       const integrations = await discoverAnalogIntegrations(config);
       transformFilter = integrations.transformFilter;
       componentRegistries = integrations.componentRegistries;
     },
     configureServer(server) {
+      stylesheetConfig = server.config;
       // Watch for new .ts files and scan them into the registry. Use
       // the barrel-aware scanner so a newly added re-export entry
       // (`export * from './x'`) also expands its underlying directive
@@ -780,8 +785,18 @@ export function fastCompilePlugin(
           !filePath.endsWith('.spec.ts') &&
           !filePath.endsWith('.d.ts')
         ) {
+          tsconfigResolver.invalidateAll();
           await compilation.run([filePath]);
         }
+      });
+      compilation.watch(server.watcher, 'unlink', async (file) => {
+        if (!TS_EXT_REGEX.test(file)) return;
+        tsconfigResolver.invalidateAll();
+        hmrSignatures.delete(file);
+        await compilation.run([file]);
+      });
+      compilation.watch(server.watcher, 'change', (file) => {
+        if (file.endsWith('.json')) tsconfigResolver.invalidateAll();
       });
     },
     async buildStart() {

@@ -1,14 +1,12 @@
-import {
-  Context,
-  Deferred,
-  Effect,
-  Exit,
-  Fiber,
-  Layer,
-  Metric,
-  Ref,
-  Semaphore,
-} from 'effect';
+import * as Context from 'effect/Context';
+import * as Deferred from 'effect/Deferred';
+import * as Effect from 'effect/Effect';
+import * as Exit from 'effect/Exit';
+import * as Fiber from 'effect/Fiber';
+import * as Layer from 'effect/Layer';
+import * as Metric from 'effect/Metric';
+import * as Ref from 'effect/Ref';
+import * as Semaphore from 'effect/Semaphore';
 import {
   CompilerBackend,
   type CompilerFailure,

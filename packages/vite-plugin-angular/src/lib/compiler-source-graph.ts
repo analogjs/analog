@@ -1,4 +1,6 @@
-import { Context, Data, type Effect } from 'effect';
+import * as Context from 'effect/Context';
+import * as Data from 'effect/Data';
+import type * as Effect from 'effect/Effect';
 import type { ResolvedConfig } from 'vite';
 import type { SourceProject } from './utils/tsconfig-resolver.js';
 

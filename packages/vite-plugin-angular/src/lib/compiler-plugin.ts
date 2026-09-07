@@ -11,7 +11,7 @@ import type { PluginBuild } from 'esbuild';
 import { createJavaScriptTransformer } from './javascript-transformer.js';
 
 import { CompilerPluginOptions } from './utils/devkit.js';
-import type { Layer } from 'effect';
+import type * as Layer from 'effect/Layer';
 import type { TransformCache } from './utils/transform-cache.js';
 
 type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;

@@ -1,5 +1,8 @@
 import { it, expect } from '@effect/vitest';
-import { Cause, Effect, Exit, Layer } from 'effect';
+import * as Cause from 'effect/Cause';
+import * as Effect from 'effect/Effect';
+import * as Exit from 'effect/Exit';
+import * as Layer from 'effect/Layer';
 import { resolveConfig } from 'vite';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
