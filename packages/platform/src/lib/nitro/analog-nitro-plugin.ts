@@ -607,6 +607,19 @@ export default defineHandler(async (event) => {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
+  if (event.req.headers.has('x-analog-no-ssr')) {
+    const headers = new Headers(event.req.headers);
+    headers.delete('x-analog-no-ssr');
+    // Copy public fields because server Request adapters lack native constructor state.
+    const request = new Request(event.req.url, {
+      method: event.req.method,
+      headers,
+      signal: event.req.signal,
+      ...(event.req.method === 'GET' || event.req.method === 'HEAD' ? {} : { body: event.req.body, duplex: 'half' }),
+    });
+    if (event.req.runtime) Object.defineProperty(request, 'runtime', { value: event.req.runtime });
+    return service.fetch(request);
+  }
   return service.fetch(event.req);
 });
 `;
