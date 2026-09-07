@@ -102,6 +102,22 @@ try {
             { timeout: 15000 },
           );
           assert.equal(await styles.count(), 2);
+          assert.deepEqual(
+            await page
+              .locator('child-a, child-b')
+              .evaluateAll((hosts) => hosts.map((host) => !!host.shadowRoot)),
+            [encapsulation === 'ShadowDom', encapsulation === 'ShadowDom'],
+          );
+          assert.deepEqual(
+            await styles.evaluateAll((elements) =>
+              elements.map((element) =>
+                element
+                  .getAttributeNames()
+                  .some((name) => name.startsWith('_ngcontent-')),
+              ),
+            ),
+            [encapsulation === 'Emulated', encapsulation === 'Emulated'],
+          );
           assert.equal(
             await page.locator('button').textContent(),
             '1',

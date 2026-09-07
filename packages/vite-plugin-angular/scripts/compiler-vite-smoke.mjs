@@ -224,6 +224,7 @@ if (
           '--close-queued',
           '--expect-style-state',
           '--race-ssr',
+          '--race-source',
           `--ssr-loader=${values.vite === '6.0.0' ? 'runner' : 'compat'}`,
         ],
         {

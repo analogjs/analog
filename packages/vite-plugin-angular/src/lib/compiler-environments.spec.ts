@@ -124,7 +124,7 @@ describe('compiler environment selection', () => {
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('publishes resource dirtiness before Vite reaches the server hot-update hook', async () => {
+  it('publishes source/resource dirtiness before Vite reaches the server hot-update hook', async () => {
     const defer = vi.fn();
     let change: ((file: string) => void) | undefined;
     const plugin = isolateCompilerEnvironments(
@@ -143,6 +143,7 @@ describe('compiler environment selection', () => {
     await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
     const module = { id: '/src/app.ts' };
     const graph = {
+      onFileChange: vi.fn(),
       getModuleById: () => module,
       invalidateModule: vi.fn(),
       invalidateAll: vi.fn(),
@@ -166,6 +167,15 @@ describe('compiler environment selection', () => {
     ]);
     expect(defer).toHaveBeenCalledTimes(1);
     expect(graph.invalidateAll).not.toHaveBeenCalled();
+    change!('/src/app.ts');
+    expect(graph.onFileChange).toHaveBeenCalledExactlyOnceWith('/src/app.ts');
+    expect(defer).toHaveBeenLastCalledWith(expect.anything(), ['/src/app.ts']);
+    await Reflect.apply(hook(child.hotUpdate), { environment }, [
+      { file: '/src/app.ts' },
+    ]);
+    expect(defer).toHaveBeenCalledTimes(2);
+    change!('/src/cache.tsbuildinfo');
+    expect(defer).toHaveBeenCalledTimes(2);
   });
 
   it('shares in-flight child initialization only for the exact environment', async () => {

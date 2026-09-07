@@ -6,6 +6,8 @@ import type {
   UserConfig,
   ViteDevServer,
 } from 'vite';
+import { TS_EXT_REGEX } from './utils/module-id.js';
+import { normalizePath } from 'vite';
 
 type Callback<H> = Extract<NonNullable<H>, (...args: never[]) => unknown>;
 type HookContext<K extends keyof Plugin> = ThisParameterType<
@@ -36,7 +38,7 @@ export function isolateCompilerEnvironments<P extends Plugin>(
   create: () => P,
   invalidate?: (plugin: P, files: readonly string[]) => void | Promise<void>,
   resourceOwners?: (plugin: P, file: string) => readonly string[],
-  watchResources?: (
+  watchChanges?: (
     plugin: P,
     server: ViteDevServer,
     listener: (file: string) => void,
@@ -135,20 +137,22 @@ export function isolateCompilerEnvironments<P extends Plugin>(
   ): Promise<Plugin> {
     const { config, resolved, env, context, resolvedContext } = configuration;
     const child = create();
-    const watchedResources = new Set<string>();
-    if (invalidate && watchResources) {
+    const watchedChanges = new Set<string>();
+    if (invalidate && watchChanges) {
       const configureServer = handler(child.configureServer);
       child.configureServer = async function (server) {
         const post = await configureServer?.call(this, server);
-        watchResources(child, server, (file) => {
+        watchChanges(child, server, (file) => {
           const live = server.environments[environment.name];
-          if (live && /\.(html?|css|s[ac]ss|less)$/.test(file)) {
+          const resource = /\.(html?|css|s[ac]ss|less)$/.test(file);
+          if (live && (resource || TS_EXT_REGEX.test(file))) {
             // Client HMR can await compilation before the server hook runs.
             // Publish server dirtiness at the watcher boundary so requests in
-            // that interval cannot reuse stale inlined resources.
+            // that interval cannot reuse stale source or inlined resources.
             invalidate(child, [file]);
-            invalidateResources(live, file, Date.now());
-            watchedResources.add(file);
+            if (resource) invalidateResources(live, file, Date.now());
+            else live.moduleGraph.onFileChange(normalizePath(file));
+            watchedChanges.add(file);
           }
         });
         return post;
@@ -202,7 +206,7 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     };
     if (invalidate) {
       isolated.hotUpdate = async function (ctx) {
-        if (watchedResources.delete(ctx.file)) return;
+        if (watchedChanges.delete(ctx.file)) return;
         const compilation = invalidate(child, [ctx.file]);
         if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file))
           invalidateResources(this.environment, ctx.file, ctx.timestamp);

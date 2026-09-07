@@ -113,6 +113,25 @@ for (const vite of values.vites.split(',')) {
     );
     await fs.writeFile(join(cwd, 'install.log'), install.all ?? install.stdout);
     assert.equal(install.exitCode, 0, `Install failed: ${cwd}/install.log`);
+    if (side === 'control') {
+      const browser = await execa(
+        'pnpm',
+        [
+          'exec',
+          'playwright',
+          'install',
+          'chromium',
+          ...(process.env.CI ? ['--with-deps'] : []),
+        ],
+        { cwd, env, all: true, reject: false },
+      );
+      await fs.writeFile(join(cwd, 'browser-install.log'), browser.all);
+      assert.equal(
+        browser.exitCode,
+        0,
+        `Browser install failed: ${cwd}/browser-install.log`,
+      );
+    }
   }
   for (let sample = 0; sample < samples; sample++) {
     for (const side of sample % 2 ? [...sides].reverse() : sides) {

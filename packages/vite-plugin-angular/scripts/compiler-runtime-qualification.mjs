@@ -28,6 +28,7 @@ const { values } = parseArgs({
     'refresh-ssr': { type: 'boolean', default: false },
     'expect-style-state': { type: 'boolean', default: false },
     'race-ssr': { type: 'boolean', default: false },
+    'race-source': { type: 'boolean', default: false },
     'ssr-loader': { type: 'string', default: 'compat' },
     label: { type: 'string', default: 'candidate' },
   },
@@ -118,6 +119,17 @@ await fs.writeFile(
   join(root, 'src/ssr.ts'),
   "import 'zone.js/node'; import '@angular/compiler'; import {bootstrapApplication} from '@angular/platform-browser'; import {provideZoneChangeDetection} from '@angular/core'; import {renderApplication,provideServerRendering} from '@angular/platform-server'; import {App} from './app'; export function render(){return renderApplication(context=>bootstrapApplication(App,{providers:[provideServerRendering(),provideZoneChangeDetection()]},context),{document:'<html><head></head><body><app-root></app-root></body></html>',url:'http://localhost/',allowedHosts:['localhost']});}",
 );
+let sourceRevision = 0;
+if (values['race-source']) {
+  await fs.writeFile(
+    join(root, 'src/version.ts'),
+    'export const sourceRevision = 0;',
+  );
+  await fs.appendFile(
+    join(root, 'src/ssr.ts'),
+    "\nexport { sourceRevision } from './version';",
+  );
+}
 await fs.writeFile(
   join(root, 'tsconfig.json'),
   JSON.stringify({
@@ -183,6 +195,12 @@ async function renderSsr(revision) {
     values['ssr-loader'] === 'runner'
       ? await server.environments.ssr.runner.import('/src/ssr.ts')
       : await server.ssrLoadModule('/src/ssr.ts');
+  if (values['race-source'])
+    assert.equal(
+      module.sourceRevision,
+      sourceRevision,
+      'SSR source is current',
+    );
   const html = await module.render();
   const ms = performance.now() - start;
   assert.ok(html.includes(`REVISION_${revision}`), 'SSR template is current');
@@ -281,7 +299,12 @@ try {
       { timeout: 15000 },
     );
     const stylesheetMs = performance.now() - cssAt;
+    const immediateStyleStatePreserved =
+      (await page.locator('[data-count]').textContent()) === counter;
+    const ssr = await (immediateSsr ?? renderSsr(revision));
+    // A linked stylesheet can update before an already queued page reload.
     const styleStatePreserved =
+      immediateStyleStatePreserved &&
       (await page.locator('[data-count]').textContent()) === counter;
     if (values['expect-style-state'])
       assert.equal(
@@ -289,7 +312,22 @@ try {
         true,
         'Component CSS HMR preserves state',
       );
-    const ssr = await (immediateSsr ?? renderSsr(revision));
+    let sourceSsr;
+    if (values['race-source']) {
+      sourceRevision = revision;
+      const file = join(root, 'src/version.ts');
+      const fresh = new Promise((resolve, reject) => {
+        const listener = (changed) => {
+          if (changed !== file) return;
+          server.watcher.off('change', listener);
+          queueMicrotask(() => renderSsr(revision).then(resolve, reject));
+        };
+        server.watcher.on('change', listener);
+      });
+      fresh.catch((error) => errors.push(String(error)));
+      await fs.writeFile(file, `export const sourceRevision = ${revision};`);
+      sourceSsr = await fresh;
+    }
     assert.equal(await page.locator('[data-child]').count(), count - 1);
     assert.deepEqual(errors, []);
     records.push({
@@ -298,6 +336,7 @@ try {
       stylesheetMs,
       styleStatePreserved,
       ssr,
+      ...(sourceSsr ? { sourceSsr } : {}),
     });
     if (restartEvery && revision % restartEvery === 0) {
       const restartAt = performance.now();
