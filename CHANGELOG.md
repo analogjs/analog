@@ -1,3 +1,9 @@
+## [2.7.2-beta.3](https://github.com/analogjs/analog/compare/v2.7.2-beta.2...v2.7.2-beta.3) (2026-09-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve source maps across TypeScript transforms ([#2506](https://github.com/analogjs/analog/issues/2506)) ([cad322b](https://github.com/analogjs/analog/commit/cad322b2dff5af4d6c7a2b095ee36bcfca5840e2))
+
 ## [2.7.2-beta.2](https://github.com/analogjs/analog/compare/v2.7.2-beta.1...v2.7.2-beta.2) (2026-09-06)
 
 ### Bug Fixes
