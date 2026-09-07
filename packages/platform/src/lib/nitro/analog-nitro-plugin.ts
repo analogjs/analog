@@ -1,10 +1,10 @@
-import { existsSync, readFileSync, readdirSync, unlinkSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { basename, dirname, relative, resolve } from 'node:path';
+import { existsSync, readFileSync, unlinkSync } from 'node:fs';
+import { basename, normalize, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { Plugin, UserConfig } from 'vite';
 
-import type { Options } from '../options.js';
+import type { Options, PrerenderOptions } from '../options.js';
 import { SERVER_MODE_ID } from '../../server-mode-plugin.js';
 import type {
   PrerenderContentDir,
@@ -203,20 +203,6 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       };
 
       if (ssr) {
-        // Two-pronged registration: `experimental.vite.services.ssr.entry`
-        // is the documented hook, but nitro/vite's setupNitroContext also
-        // accepts an `environments.ssr.build.rollupOptions.input` entry
-        // (see node_modules/nitro/dist/vite.mjs:710-734). When `analog()`
-        // and `nitro()` are invoked separately, the `services` slot on
-        // `nitro()`'s pluginConfig is empty, so the rollupOptions.input
-        // path is how we get our wrapper entry recognized.
-        overrides.experimental = {
-          vite: {
-            services: {
-              ssr: { entry: ssrEntryMarkerPath },
-            },
-          },
-        };
         (overrides.environments as Record<string, unknown>)['ssr'] = {
           build: {
             outDir: resolve(
@@ -286,22 +272,13 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           refreshContext(nitro.options.rootDir);
         }
 
-        // Nitro's default dev runner answers from a worker, and the response
-        // does not survive the trip back: the server adapter receives a value
-        // it cannot read headers from, so every request Nitro handles hangs
-        // without a status. Run the environment in process until that path is
-        // fixed upstream. An explicit `devServer.runner` or `NITRO_DEV_RUNNER`
-        // still wins.
-        if (
-          nitro.options.dev &&
-          !process.env['NITRO_DEV_RUNNER'] &&
-          !nitro.options.devServer?.runner
-        ) {
-          nitro.options.devServer = {
-            ...nitro.options.devServer,
-            runner: 'self',
-          };
-        }
+        const isPrerenderer = nitro.options.preset === 'nitro-prerender';
+        if (!isPrerenderer)
+          nitro.options.static = options.static ?? nitro.options.static;
+        nitro.options.framework = {
+          ...nitro.options.framework,
+          name: 'analog',
+        };
 
         // Preserve the legacy `@analogjs/vite-plugin-nitro` final output
         // layout so downstream tooling (deploy scripts, docs, the
@@ -321,7 +298,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         // Keeping `buildDir` adjacent to the project root means workspace
         // packages installed at `<rootDir>/node_modules/` (the usual install
         // shape for both standalone and Nx setups) remain reachable.
-        if (!nitro.options.dev) {
+        if (!nitro.options.dev && !isPrerenderer) {
+          const userOutput = nitro.options._config?.output;
+          const resolvedOutput = { ...nitro.options.output };
           // Deployment presets (Vercel, Netlify, Cloudflare, Firebase, ...)
           // own their own output layout — Vercel writes the Build Output API
           // tree under `.vercel/output/`, Netlify expects functions under
@@ -332,7 +311,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // default node-server preset (or no preset at all) so docs and
           // the legacy `dist/analog/server` start command keep working for
           // standalone Node deployments.
-          const preset = (nitro.options.preset ?? '').toLowerCase();
+          const preset = (nitro.options.preset ?? '')
+            .toLowerCase()
+            .replaceAll('_', '-');
           const isManagedPreset =
             preset !== '' &&
             preset !== 'node-server' &&
@@ -345,15 +326,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // `apps/<name>/.vercel/output/` and the deploy can't find them.
           // Hoist to workspace root and apply Analog's runtime defaults.
           if (preset.includes('vercel')) {
-            const vercel = (nitro.options as { vercel?: Record<string, any> })
-              .vercel;
-            (nitro.options as { vercel?: Record<string, any> }).vercel = {
+            const vercel = nitro.options.vercel;
+            nitro.options.vercel = {
               ...vercel,
               entryFormat: vercel?.entryFormat ?? 'node',
-              functions: {
-                runtime: vercel?.functions?.runtime ?? 'nodejs24.x',
-                ...vercel?.functions,
-              },
+              functions: { runtime: 'nodejs24.x', ...vercel?.functions },
             };
             const vercelDir = resolve(context.workspaceRoot, '.vercel/output');
             nitro.options.output = {
@@ -397,7 +374,10 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // `<workspaceRoot>/dist/<rootDir>/` so `wrangler pages deploy
           // dist/<rootDir>` from the workspace root finds `_worker.js/`
           // alongside the static assets.
-          if (preset.includes('cloudflare')) {
+          if (
+            preset === 'cloudflare-pages' ||
+            preset === 'cloudflare-pages-static'
+          ) {
             const cfDir = resolve(
               context.workspaceRoot,
               'dist',
@@ -425,29 +405,20 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             };
           }
 
-          // Nitro v3's prerender writer compares `filePath.startsWith(publicDir)`
-          // with `filePath` built via `node:path.join` (platform-native
-          // separators on Windows) and `publicDir` set via `resolveNitroPath`
-          // (always forward slashes via pathe). On Windows the two sides
-          // disagree and every route is marked `(skipped)` — no HTML is
-          // written. Hook `prerender:route` and write the file ourselves
-          // when Nitro has skipped it but the route generated content.
-          nitro.hooks.hook('prerender:route', async (route) => {
-            if (!route.skip || route.error) return;
-            const buffer = route.data;
-            if (!buffer || !route.fileName) return;
-            const filePath = resolve(
-              nitro.options.output.publicDir,
-              route.fileName.replace(/^[\\/]+/, ''),
+          // Preserve user output overrides after applying Analog's default layout.
+          if (userOutput?.dir) nitro.options.output = resolvedOutput;
+          else {
+            if (userOutput?.publicDir)
+              nitro.options.output.publicDir = resolvedOutput.publicDir;
+            if (userOutput?.serverDir)
+              nitro.options.output.serverDir = resolvedOutput.serverDir;
+          }
+          // Nitro joins prerender filenames with platform-native separators.
+          if (process.platform === 'win32') {
+            nitro.options.output.publicDir = normalize(
+              nitro.options.output.publicDir + sep,
             );
-            try {
-              await mkdir(dirname(filePath), { recursive: true });
-              await writeFile(filePath, Buffer.from(buffer));
-              route.skip = false;
-            } catch {
-              // leave Nitro's skip in place if the manual write also fails
-            }
-          });
+          }
         }
 
         // Register the user's Vite `publicDir` (e.g. `src/public/`) as a
@@ -489,6 +460,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             prerendererConfig.output = {
               ...prerendererConfig.output,
               publicDir: nitro.options.output.publicDir,
+              serverDir: resolve(nitro.options.buildDir, 'prerender'),
             };
           },
         );
@@ -517,8 +489,6 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           if (Array.isArray(rollupConfig.plugins)) {
             rollupConfig.plugins.push(pageEndpointsPlugin());
           }
-          applyAnalogNitroExternals(rollupConfig);
-          sanitizeNitroBundlerConfig(rollupConfig);
         });
 
         if (ssr) {
@@ -532,14 +502,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // for a typical app — so we install our own renderer virtual
           // explicitly here.
           //
-          // `#analog/ssr` is a Nitro virtual (not a Vite virtual) so it
-          // resolves under both Vite-built bundles (main) and Rolldown-built
-          // bundles (Nitro's prerender, which forces builder: 'rolldown' —
-          // see nitro/dist/_chunks/nitro.mjs:769). That sidesteps nitro/vite's
-          // prodSetup polyfill, which is Vite-only and leaves
-          // `__nitro_vite_envs__` unset in the prerender bundle.
+          // Nitro shares the service graph across development, build, and prerender.
           nitro.options.virtual['#analog/ssr'] = () =>
-            generateSsrServiceVirtual(nitro);
+            generateSsrServiceVirtual();
           // Lazy: `setup()` runs before any environment builds, so reading
           // the template here would read it before the client has emitted
           // one. Nitro resolves this virtual when it bundles — the prerender
@@ -584,13 +549,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   return plugin;
 }
 
-/**
- * Builds the h3 handler installed as Nitro's `renderer.handler`. Short-circuits
- * `ssr: false` routes to the raw client template; otherwise dispatches the
- * request to the SSR service env (`fetchViteEnv("ssr", req)` works in dev via
- * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
- * nitro/vite's `prodSetup`).
- */
+// Apply trusted rendering policy before dispatching to the SSR environment.
 function generateSsrRendererVirtual(template: string): string {
   return `
 import { defineHandler } from 'nitro/h3';
@@ -600,150 +559,36 @@ const TEMPLATE = ${JSON.stringify(template)};
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  // 'x-analog-no-ssr' is stamped on response headers by
-  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // applies routeRule headers to the response before the renderer fires,
-  // so we can short-circuit by reading them here.
-  if (event.res.headers.get('x-analog-no-ssr') === 'true') {
+  if (event.context.routeRules?.headers?.['x-analog-no-ssr'] === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
-  return service.fetch(event.req);
+  const headers = new Headers(event.req.headers);
+  headers.delete('x-analog-no-ssr');
+  headers.delete('x-analog-no-streaming');
+  if (event.context.routeRules?.headers?.['x-analog-no-streaming'] === 'true') {
+    headers.set('x-analog-no-streaming', 'true');
+  }
+  const request = new Request(event.req.url, {
+    method: event.req.method,
+    headers,
+    body: event.req.body,
+    duplex: 'half',
+    signal: event.req.signal,
+  });
+  request.runtime = event.req.runtime;
+  request.waitUntil = event.req.waitUntil;
+  request.ip = event.req.ip;
+  return service.fetch(request);
 });
 `;
 }
 
-/**
- * Resolves \`#analog/ssr\` to the SSR fetch handler. The shape returned by
- * this function is bundler-agnostic: works in Vite-built main bundles and
- * Rolldown-built prerender bundles alike.
- *
- * - Dev: dispatch through nitro/vite's env runner (\`fetchViteEnv\`); the SSR
- *   service module isn't on disk yet, so we delegate to the runner.
- * - Build / prerender: re-export the built SSR entry directly from the
- *   filesystem. By the time Nitro's bundlers ask for \`#analog/ssr\`, Vite has
- *   already produced \`<buildDir>/vite/services/ssr/<entry>.mjs\`.
- */
-function generateSsrServiceVirtual(nitro: Nitro): string {
-  if (nitro.options.dev) {
-    return `
+function generateSsrServiceVirtual(): string {
+  return `
 import { fetchViteEnv } from 'nitro/vite/runtime';
-export default {
-  // The dev runner answers from a worker, and a rejection there comes back as
-  // something Nitro cannot turn into a response, so the request hangs with no
-  // status and no message. Answer with the failure instead.
-  async fetch(req) {
-    try {
-      return await fetchViteEnv('ssr', req);
-    } catch (err) {
-      console.error('[analog ssr]', err);
-      const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
-      return new Response(message, {
-        status: 500,
-        headers: { 'content-type': 'text/plain; charset=utf-8' },
-      });
-    }
-  },
-};
+export default { fetch: (req) => fetchViteEnv('ssr', req) };
 `;
-  }
-
-  const ssrDir = resolve(nitro.options.buildDir, 'vite/services/ssr');
-  if (!existsSync(ssrDir)) {
-    return `export default { async fetch() { throw new Error('Analog SSR service directory missing: ${ssrDir}'); } };`;
-  }
-  const entries = readdirSync(ssrDir).filter((f) => f.endsWith('.mjs'));
-  if (entries.length === 0) {
-    return `export default { async fetch() { throw new Error('No Analog SSR entry file built in: ${ssrDir}'); } };`;
-  }
-  // Prefer 'main.server.mjs' if present; otherwise take the only entry.
-  const entry = entries.find((f) => f === 'main.server.mjs') ?? entries[0];
-  const entryPath = resolve(ssrDir, entry);
-  return `export { default } from ${JSON.stringify(entryPath)};`;
-}
-
-/**
- * Packages Analog forces external in the Nitro server bundle. Each entry is
- * here for a specific reason — see comments.
- */
-const ANALOG_NITRO_EXTERNALS = [
-  // rxjs ships per-entry CJS/ESM facades that confuse the Nitro/Rolldown
-  // resolver during bundling.
-  'rxjs',
-  // node-fetch-native's polyfill subpath rewrites global fetch and isn't
-  // safe to inline into the Nitro bundle.
-  'node-fetch-native/dist/polyfill',
-  // sharp ships platform-specific native binaries under @img/sharp-*. pnpm
-  // creates symlinks for ALL optional platform deps but only installs the
-  // matching one, leaving broken symlinks that crash Nitro's externals
-  // plugin with ENOENT during realpath(). Externalizing sharp avoids
-  // bundling it; the user's app resolves it from node_modules at runtime.
-  'sharp',
-];
-
-function applyAnalogNitroExternals(rollupConfig: { external?: unknown }): void {
-  // Rolldown's `external` only accepts `Array<string | RegExp>`; promote
-  // whatever shape Nitro gave us (regex, single string, undefined) to an
-  // array and append Analog's entries as regex patterns that also match
-  // sub-paths (e.g. `sharp` matches `sharp/lib/foo`).
-  const prev = rollupConfig.external;
-  const existing: Array<string | RegExp> =
-    prev === undefined
-      ? []
-      : Array.isArray(prev)
-        ? (prev as Array<string | RegExp>)
-        : prev instanceof RegExp
-          ? [prev]
-          : typeof prev === 'string'
-            ? [prev]
-            : [];
-
-  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  for (const entry of ANALOG_NITRO_EXTERNALS) {
-    const pattern = new RegExp(`^${escapeRegExp(entry)}(?:/|$)`);
-    if (!existing.some((p) => String(p) === String(pattern))) {
-      existing.push(pattern);
-    }
-  }
-
-  rollupConfig.external = existing;
-}
-
-/**
- * Workarounds for Nitro v3 + Rolldown bundler interaction quirks. Each
- * is narrowly scoped and can be removed once the upstream bug is fixed:
- *
- * 1. `output.codeSplitting` — Nitro 3.0.x sets this; Rolldown rejects it
- *    as an unknown key.
- * 2. `output.manualChunks` — Nitro's default manual chunking crashes
- *    Nitro's prerender rebundle.
- * 3. `output.chunkFileNames` — Nitro's chunk-name function produces
- *    route-derived `[token]` patterns which Rollup/Rolldown interprets as
- *    placeholders; we rewrite non-standard tokens to `_token_`.
- */
-function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
-  const output = rollupConfig.output;
-  if (!output || Array.isArray(output) || typeof output !== 'object') return;
-  const out = output as Record<string, unknown>;
-
-  if ('codeSplitting' in out) delete out['codeSplitting'];
-  if ('manualChunks' in out) delete out['manualChunks'];
-
-  const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
-  const chunkFileNames = out['chunkFileNames'];
-  if (typeof chunkFileNames === 'function') {
-    const originalFn = chunkFileNames as (...args: unknown[]) => unknown;
-    out['chunkFileNames'] = (...args: unknown[]) => {
-      const result = originalFn(...args);
-      if (typeof result !== 'string') return result;
-      return result.replace(/\[[^\]]+\]/g, (match: string) =>
-        VALID_ROLLUP_PLACEHOLDER.test(match)
-          ? match
-          : `_${match.slice(1, -1)}_`,
-      );
-    };
-  }
 }
 
 /**
@@ -768,11 +613,14 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   if (!routeRules) return;
 
   for (const rule of Object.values(routeRules)) {
-    if (rule?.ssr === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    if (typeof rule?.ssr === 'boolean') {
+      rule.headers = { ...rule.headers, 'x-analog-no-ssr': String(!rule.ssr) };
     }
-    if (rule?.streaming === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
+    if (typeof rule?.streaming === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-streaming': String(!rule.streaming),
+      };
     }
   }
 }
@@ -799,7 +647,8 @@ function generateSsrEntryWrapper(
 // as event replay on the server.
 import ${JSON.stringify(SERVER_MODE_ID)};
 import { serverFetch as nitroServerFetch } from 'nitro';
-import { createFetch } from 'ofetch';
+import { H3Event, getProxyRequestHeaders } from 'nitro/h3';
+import { createFetch } from ${JSON.stringify(fileURLToPath(import.meta.resolve('ofetch')))};
 import renderer from ${JSON.stringify(entryServer)};
 
 const TEMPLATE = ${JSON.stringify(template)};
@@ -822,10 +671,9 @@ const ssrFetch = (resource, init) => {
       : resource.url;
   // Relative URLs from injectAPIPrefix() etc. need a host for Nitro's
   // Request constructor to accept them.
-  if (typeof url === 'string' && url.startsWith('/')) {
-    url = 'http://localhost' + url;
-  }
-  return nitroServerFetch(url, init);
+  return url.startsWith('/') && !url.startsWith('//')
+    ? nitroServerFetch(resource, init)
+    : globalThis.fetch(resource, init);
 };
 
 // Wrap in ofetch so consumers that expect \`$fetch.raw()\` (the router's
@@ -837,6 +685,29 @@ if (typeof globalThis.$fetch === 'undefined') {
   globalThis.$fetch = ssrOFetch;
 }
 
+function createRequestFetch(parent) {
+  const origin = new URL(parent.url).origin;
+  const inherited = new Headers(getProxyRequestHeaders(new H3Event(parent)));
+  inherited.delete('content-length');
+  inherited.delete('content-type');
+  return createFetch({
+    fetch(resource, init) {
+      const target = new URL(resource instanceof Request ? resource.url : resource.toString(), parent.url);
+      const supplied = resource instanceof Request ? new Request(resource, init) : new Request(target, init);
+      const signal = AbortSignal.any([parent.signal, supplied.signal]);
+      signal.throwIfAborted();
+      if (target.origin !== origin) return globalThis.fetch(new Request(supplied, { signal }));
+      const headers = new Headers(inherited);
+      supplied.headers.forEach((value, name) => headers.set(name, value));
+      const child = new Request(supplied, { headers, signal });
+      child.runtime = parent.runtime;
+      child.waitUntil = parent.waitUntil;
+      child.ip = parent.ip;
+      return nitroServerFetch(child);
+    },
+  });
+}
+
 export default {
   async fetch(req) {
     const url = new URL(req.url);
@@ -844,13 +715,6 @@ export default {
     // Preserve the query string so Angular's router + injectQuery() and
     // server data loaders that read from req.url see the full path+query.
     const requestUrl = requestPath + url.search;
-
-    if (req.headers.get('x-analog-no-ssr') === 'true') {
-      return new Response(TEMPLATE, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
-    }
 
     const reqShim = {
       headers: Object.fromEntries(req.headers.entries()),
@@ -861,13 +725,17 @@ export default {
 
     try {
       const html = await renderer(requestUrl, TEMPLATE, {
-        req: reqShim,
+        req: req.runtime?.node?.req ?? reqShim,
+        res: req.runtime?.node?.res,
+        signal: req.signal,
+        streaming: req.headers.get('x-analog-no-streaming') !== 'true',
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
         // and throws TypeError during prerender/SSR.
-        fetch: ssrOFetch,
+        fetch: createRequestFetch(req),
       });
+      if (html instanceof Response) return html;
       return new Response(html, {
         status: 200,
         headers: { 'content-type': 'text/html; charset=utf-8' },
@@ -906,10 +774,7 @@ async function wirePrerender(
       })
     : collected;
 
-  const nitroPrerender = (nitro.options.prerender ??= {}) as Record<
-    string,
-    any
-  >;
+  const nitroPrerender = (nitro.options.prerender ??= {});
   nitroPrerender.routes ??= [];
   nitroPrerender.routes.push(...expanded);
   if (prerender?.discover ?? false) {
@@ -931,7 +796,7 @@ async function wirePrerender(
     nitro.hooks.hook('prerender:init', () => {
       const publicDir = resolve(nitro.options.output.publicDir);
 
-      for (const extension of ['', '.br', '.gz']) {
+      for (const extension of ['', '.br', '.gz', '.zst']) {
         const indexFile = resolve(publicDir, `index.html${extension}`);
 
         if (existsSync(indexFile)) {
@@ -983,11 +848,7 @@ async function wirePrerender(
 }
 
 async function collectRoutes(
-  routesInput: Options['prerender'] extends infer P
-    ? P extends { routes?: infer R }
-      ? R
-      : never
-    : never,
+  routesInput: PrerenderOptions['routes'],
   context: NitroPluginContext,
   apiPrefix: string,
 ): Promise<{

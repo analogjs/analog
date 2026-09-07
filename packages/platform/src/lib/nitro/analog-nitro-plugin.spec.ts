@@ -79,7 +79,7 @@ describe('analogNitroPlugin', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
+    expect(overrides.environments.ssr.build.rollupOptions.input.index).toMatch(
       /\.analog\/__ssr-entry\.mjs$/,
     );
     expect(overrides.environments.ssr.optimizeDeps.include).toContain(
@@ -147,7 +147,7 @@ describe('analogNitroPlugin', () => {
     // ship markup pointing at an entry that a build does not emit.
     expect(code).toContain('/assets/main-abc.js');
     expect(code).not.toContain('id=\\"app\\"');
-    expect(code).toContain("'x-analog-no-ssr'");
+    expect(code).not.toContain("req.headers.get('x-analog-no-ssr')");
   });
 
   it('fails loudly when a build produced no client document', () => {
