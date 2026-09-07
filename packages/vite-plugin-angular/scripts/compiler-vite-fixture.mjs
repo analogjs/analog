@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { build, createServer, version as viteVersion } from 'vite';
+import {
+  build,
+  createBuilder,
+  createServer,
+  version as viteVersion,
+} from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 
 const require = createRequire(import.meta.url);
@@ -85,6 +90,55 @@ async function buildCase(name, options, expected) {
     );
   results.push({ name, passed: true });
 }
+
+async function environmentDefinesCase() {
+  const entry = join(root, 'src/environment.ts');
+  await writeFile(
+    entry,
+    'declare const ngServerMode: boolean; export const server = typeof ngServerMode !== "undefined" && ngServerMode;',
+  );
+  const builder = await createBuilder({
+    root,
+    configFile: false,
+    logLevel: 'silent',
+    plugins: [
+      angular({
+        workspaceRoot: root,
+        tsconfig: join(root, 'tsconfig.json'),
+        include: [entry],
+        jit: false,
+        liveReload: false,
+      }),
+    ],
+    build: { write: false, minify: false, lib: { entry, formats: ['es'] } },
+    environments: {
+      client: { consumer: 'client' },
+      ssr: { consumer: 'server', build: { ssr: true } },
+    },
+  });
+  for (const [name, expected] of [
+    ['client', false],
+    ['ssr', true],
+  ]) {
+    const result = await builder.build(builder.environments[name]);
+    const bundles = Array.isArray(result) ? result : [result];
+    const chunk = bundles
+      .flatMap((bundle) => bundle.output ?? [])
+      .find((file) => file.type === 'chunk' && file.isEntry);
+    assert.ok(chunk, `${name}: environment entry emitted`);
+    const output = await import(
+      `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`
+    );
+    assert.equal(
+      output.server,
+      expected,
+      `${name}: environment-specific Angular server mode`,
+    );
+  }
+  results.push({ name: 'environment-server-mode', passed: true });
+}
+
+await environmentDefinesCase();
 
 await buildCase(
   'normal-replacement',
