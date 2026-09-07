@@ -252,6 +252,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+  let incrementalBuilder:
+    | ts.EmitAndSemanticDiagnosticsBuilderProgram
+    | undefined;
   let nextProgram: NgtscProgram | undefined;
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
@@ -1551,8 +1554,9 @@ export function angular(options?: PluginOptions): Plugin[] {
      */
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
+    let createdBuilder: ts.EmitAndSemanticDiagnosticsBuilderProgram;
     const oldBuilder =
-      builder ?? ts.readBuilderProgram(tsCompilerOptions, host);
+      incrementalBuilder ?? ts.readBuilderProgram(tsCompilerOptions, host);
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1566,7 +1570,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       typeScriptProgram = angularProgram.compiler.getCurrentProgram();
       augmentProgramWithVersioning(typeScriptProgram);
 
-      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      createdBuilder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         typeScriptProgram,
         host,
         oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
@@ -1574,21 +1578,22 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       nextProgram = angularProgram;
     } else {
-      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      createdBuilder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         rootNames,
         tsCompilerOptions,
         host,
         oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
       );
 
-      typeScriptProgram = builder.getProgram();
+      typeScriptProgram = createdBuilder.getProgram();
     }
 
-    if (!watchMode) {
-      // When not in watch mode, the startup cost of the incremental analysis can be avoided by
-      // using an abstract builder that only wraps a TypeScript program.
-      builder = ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
-    }
+    // Abstract builders have no incremental state in older TypeScript versions.
+    // Retain the real builder for the next environment or compilation pass.
+    incrementalBuilder = createdBuilder;
+    builder = watchMode
+      ? createdBuilder
+      : ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
 
     if (angularCompiler!) {
       await angularCompiler.analyzeAsync();
