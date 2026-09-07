@@ -83,7 +83,7 @@ catalog:
   '@babel/core': ^8.0.0
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
-  '@compodoc/compodoc': ^1.2.1
+  '@compodoc/compodoc': ^2.0.0
   '@eslint/eslintrc': ^3.3.5
   '@eslint/js': ^10.0.1
   '@netlify/functions': ^5.1.5
@@ -197,6 +197,8 @@ catalog:
   zone.js: ^0.16.1
 
 overrides:
+  # Compodoc uses uuid.v4; v13 also satisfies vis-data 8's peer range.
+  '@compodoc/compodoc@2.0.0>uuid': 13.0.0
   '@angular/animations': 22.0.0
   '@angular/common': 22.0.0
   '@angular/compiler': 22.0.0
