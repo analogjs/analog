@@ -1,4 +1,4 @@
-import { execaCommandSync as commandSync } from 'execa';
+import { execaSync } from 'execa';
 import {
   mkdirpSync,
   readdirSync,
@@ -20,7 +20,7 @@ const tmpDir = join(realpathSync(tmpdir()), 'create-analog-test');
 const genPath = join(tmpDir, projectName);
 
 const run = (args: string[], options = {}) => {
-  return commandSync(`node ${CLI_PATH} ${args.join(' ')}`, options);
+  return execaSync(process.execPath, [CLI_PATH, ...args], options);
 };
 
 // Helper to create a non-empty directory
