@@ -46,7 +46,12 @@
     "xmlbuilder2": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "catalog:"
+    "@babel/core": "catalog:",
+    "jiti": "catalog:",
+    "less": "catalog:",
+    "sass": "catalog:",
+    "sass-embedded": "catalog:",
+    "vite": "catalog:"
   },
   "peerDependencies": {
     "@nx/angular": "catalog:peerCompat",

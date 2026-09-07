@@ -79,9 +79,10 @@ describe('analogNitroPlugin', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
-      /\.analog\/__ssr-entry\.mjs$/,
-    );
+    expect(overrides.environments.ssr.build.rollupOptions.input).toEqual({
+      index: join(projectRoot, '.analog/__ssr-entry.mjs'),
+    });
+    expect(overrides.experimental).toBeUndefined();
     expect(overrides.environments.ssr.optimizeDeps.include).toContain(
       '@angular/core',
     );
@@ -167,6 +168,51 @@ describe('analogNitroPlugin', () => {
     expect(code).toContain('id=\\"app\\"');
   });
 
+  it.each([
+    { error: { statusCode: 422 }, status: 422 },
+    { error: { status: 503 }, status: 503 },
+    { error: { statusCode: 200 }, status: 500 },
+    { error: { statusCode: '422' }, status: 500 },
+    { error: { statusCode: 600 }, status: 500 },
+  ])(
+    'returns a safe error document with HTTP status $status',
+    async ({ error, status }) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')
+        .split('\n')
+        .filter((line: string) => !line.startsWith('import '))
+        .join('\n')
+        .replace('export default', 'return');
+      const previousFetch = globalThis.$fetch;
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const renderer = vi.fn(async () => {
+          throw { ...error, message: 'private-error-marker' };
+        });
+        const service = new Function(
+          'renderer',
+          'createFetch',
+          'nitroServerFetch',
+          code,
+        )(renderer, () => vi.fn(), vi.fn());
+        const response = await service.fetch(
+          new Request('http://localhost/failed'),
+        );
+        expect(response.status).toBe(status);
+        expect(response.headers.get('cache-control')).toBe('no-store');
+        expect(response.headers.get('x-robots-tag')).toBe('noindex');
+        const html = await response.text();
+        expect(html).toContain('<h1>Unable to load this page</h1>');
+        expect(html).not.toContain('private-error-marker');
+        expect(html).not.toContain('<script');
+      } finally {
+        globalThis.$fetch = previousFetch;
+        log.mockRestore();
+      }
+    },
+  );
+
   it('registers page handlers and the page-endpoints rollup plugin in nitro setup', async () => {
     mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
     writeFileSync(
@@ -197,6 +243,46 @@ describe('analogNitroPlugin', () => {
     expect(nitroMock.options.handlers[0].route).toContain('/_analog/pages');
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
   });
+
+  it.each([
+    { node: false, noExternals: undefined, externalize: false },
+    { node: true, noExternals: true, externalize: false },
+    { node: true, noExternals: false, externalize: true },
+  ])(
+    'respects the resolved Nitro dependency policy %j',
+    async ({ node, noExternals, externalize }) => {
+      const plugin = analogNitroPlugin({ workspaceRoot, ssr: false });
+      callConfig(plugin, projectRoot);
+      const hook = vi.fn();
+      const nitroMock = {
+        options: {
+          rootDir: projectRoot,
+          buildDir: join(projectRoot, '.nitro'),
+          handlers: [],
+          scanDirs: [],
+          virtual: {},
+          dev: false,
+          node,
+          noExternals,
+        },
+        hooks: { hook },
+      };
+      await (plugin as any).nitro.setup(nitroMock);
+      const before = hook.mock.calls.find(
+        ([name]) => name === 'rollup:before',
+      )?.[1];
+      const config = { plugins: [], external: ['user-external'] };
+      before(nitroMock, config);
+      const matches = (id: string) =>
+        config.external.some((entry: string | RegExp) =>
+          typeof entry === 'string' ? entry === id : entry.test(id),
+        );
+      expect(matches('rxjs')).toBe(externalize);
+      expect(matches('rxjs/operators')).toBe(externalize);
+      expect(matches('sharp')).toBe(externalize);
+      expect(matches('user-external')).toBe(true);
+    },
+  );
 
   it('hides the virtual renderer from prerender path resolution and restores it', async () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
