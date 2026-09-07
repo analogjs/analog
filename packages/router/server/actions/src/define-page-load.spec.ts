@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import { definePageLoad } from './define-page-load';
 
 // Minimal Standard Schema implementation for testing

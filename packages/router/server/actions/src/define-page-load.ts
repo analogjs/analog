@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import type { H3Event, H3EventContext } from 'h3';
 import type { $Fetch } from 'nitropack';
 import { fail } from './actions';

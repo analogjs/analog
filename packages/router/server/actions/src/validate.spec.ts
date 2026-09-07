@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import { validateWithSchema } from './validate';
 
 function createMockSchema<T>(

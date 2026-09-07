@@ -56,7 +56,7 @@ import {
   dehydrate,
   type DehydratedState,
 } from '@tanstack/angular-query-experimental';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
 
 export const ANALOG_QUERIES_KEY = '__analogQueries' as const;
 

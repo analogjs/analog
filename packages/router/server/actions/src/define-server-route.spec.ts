@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import { defineServerRoute } from './define-server-route';
 
 function createMockSchema<T>(

@@ -16,3 +16,4 @@ export type {
   DefinePageLoadOptions,
 } from './define-page-load';
 export { validateWithSchema } from './validate';
+export type { StandardSchemaV1 } from './standard-schema';

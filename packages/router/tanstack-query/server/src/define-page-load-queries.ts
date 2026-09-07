@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
 import type { DehydratedState } from '@tanstack/angular-query-experimental';
 import type { H3Event, H3EventContext } from 'h3';
@@ -7,6 +6,7 @@ import type { $Fetch } from 'nitropack';
 import {
   definePageLoad,
   type PageLoadContext,
+  type StandardSchemaV1,
 } from '@analogjs/router/server/actions';
 import { ANALOG_QUERIES_KEY } from '@analogjs/router/tanstack-query';
 

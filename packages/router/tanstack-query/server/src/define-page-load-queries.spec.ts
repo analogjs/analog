@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
 import { QueryClient } from '@tanstack/angular-query-experimental';
 import { describe, expect, it, vi } from 'vitest';
 

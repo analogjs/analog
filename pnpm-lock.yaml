@@ -251,9 +251,6 @@ importers:
       '@semantic-release/git':
         specifier: ^10.0.1
         version: 10.0.1(semantic-release@25.0.5(supports-color@8.1.1)(typescript@6.0.3))(supports-color@8.1.1)
-      '@standard-schema/spec':
-        specifier: ^1.1.0
-        version: 1.1.0
       '@storybook/addon-docs':
         specifier: ^10.6.0
         version: 10.6.0(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(storybook@10.6.0(@types/react@18.3.31)(prettier@3.8.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))

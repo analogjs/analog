@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import type { H3Event } from 'h3';
 import { fail, json } from './actions';
 import {
