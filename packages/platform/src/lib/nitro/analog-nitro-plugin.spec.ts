@@ -75,6 +75,29 @@ describe('analogNitroPlugin', () => {
     expect(typeof (plugin as any).nitro.setup).toBe('function');
   });
 
+  it('closes the development Nitro instance once when Vite closes its environments', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+    const close = vi.fn().mockResolvedValue(undefined);
+    const nitroMock = {
+      options: {
+        rootDir: projectRoot,
+        buildDir: join(projectRoot, '.nitro'),
+        handlers: [],
+        scanDirs: [],
+        virtual: {},
+        renderer: {},
+        dev: true,
+      },
+      hooks: { hook: vi.fn() },
+      close,
+    };
+    await (plugin as any).nitro.setup(nitroMock);
+    const hook = plugin.closeBundle as () => Promise<void>;
+    await Promise.all([hook(), hook()]);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
   it('registers the SSR service entry and linker optimizeDeps when ssr=true', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);

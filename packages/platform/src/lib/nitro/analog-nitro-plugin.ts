@@ -128,11 +128,21 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     );
   }
 
+  let devNitro: Nitro | undefined;
+
   const plugin: Plugin & {
     nitro: { setup: (nitro: Nitro) => void | Promise<void> };
   } = {
     name: '@analogjs/nitro',
     enforce: 'pre',
+
+    async closeBundle() {
+      if (devNitro) {
+        const nitro = devNitro;
+        devNitro = undefined;
+        await nitro.close();
+      }
+    },
 
     config(userConfig, configEnv) {
       refreshContext(userConfig.root);
@@ -273,6 +283,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         }
 
         const isPrerenderer = nitro.options.preset === 'nitro-prerender';
+        if (nitro.options.dev && !isPrerenderer) devNitro = nitro;
         if (!isPrerenderer)
           nitro.options.static = options.static ?? nitro.options.static;
         nitro.options.framework = {
