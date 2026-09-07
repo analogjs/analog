@@ -211,7 +211,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
   let includeCache: string[] = [];
-  const linkedSourceRoots = new Set<string>();
   function invalidateFsCaches() {
     includeCache = [];
   }
@@ -377,23 +376,16 @@ export function angular(options?: PluginOptions): Plugin[] {
               `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
           ),
         );
-        server.watcher.on('add', (file) => {
-          if (basename(file).includes('tsconfig')) linkedSourceRoots.clear();
-          invalidateCompilationOnFsChange(file);
-        });
+        server.watcher.on('add', invalidateCompilationOnFsChange);
         server.watcher.on('unlink', (file) => {
           const id = normalizePath(file);
-          if (linkedSourceRoots.delete(id)) {
-            outputFiles.delete(id);
-            fileTransformMap.delete(id);
-            sourceFileCache.delete(id);
-          }
-          if (basename(file).includes('tsconfig')) linkedSourceRoots.clear();
+          outputFiles.delete(id);
+          fileTransformMap.delete(id);
+          sourceFileCache.delete(id);
           invalidateCompilationOnFsChange(file);
         });
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
-            linkedSourceRoots.clear();
             invalidateTsconfigCaches();
           }
         });
@@ -747,22 +739,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             pendingCompilation = null;
           }
 
-          let typescriptResult = fileEmitter(id);
-          const sourceFile = builder?.getSourceFile(id);
-          if (
-            typescriptResult?.content === '' &&
-            sourceFile &&
-            builder!.getProgram().isSourceFileFromExternalLibrary(sourceFile) &&
-            !linkedSourceRoots.has(normalizePath(sourceFile.fileName))
-          ) {
-            // TypeScript skips emit for source-linked package entries until
-            // they are roots. Only promote files requested by Vite.
-            linkedSourceRoots.add(normalizePath(sourceFile.fileName));
-            pendingCompilation = performCompilation(resolvedConfig, [id]);
-            await pendingCompilation;
-            pendingCompilation = null;
-            typescriptResult = fileEmitter(id);
-          }
+          const typescriptResult = fileEmitter(id);
 
           // File not in the Angular program — skip and let other plugins
           // or Vite's built-in transform handle it. Warn if it looks like
@@ -1307,14 +1284,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = [
-      ...new Set([
-        ...rootNames,
-        ...includeCache,
-        ...replacements,
-        ...linkedSourceRoots,
-      ]),
-    ];
+    rootNames = [...new Set([...rootNames, ...includeCache, ...replacements])];
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
@@ -1337,6 +1307,55 @@ export function angular(options?: PluginOptions): Plugin[] {
           return file;
         },
       });
+      const resolutionCache = ts.createModuleResolutionCache(
+        host.getCurrentDirectory(),
+        host.getCanonicalFileName.bind(host),
+        tsCompilerOptions,
+      );
+      host.getModuleResolutionCache = () => resolutionCache;
+      host.resolveModuleNameLiterals = (
+        literals,
+        containingFile,
+        redirectedReference,
+        compilerOptions,
+        containingSourceFile,
+      ) =>
+        literals.map((literal) => {
+          const resolution: ts.ResolvedModuleWithFailedLookupLocations =
+            ts.resolveModuleName(
+              literal.text,
+              containingFile,
+              compilerOptions,
+              host,
+              resolutionCache,
+              redirectedReference,
+              ts.getModeForUsageLocation(
+                containingSourceFile,
+                literal,
+                compilerOptions,
+              ),
+            );
+          const resolvedModule = resolution.resolvedModule;
+          if (
+            resolvedModule?.isExternalLibraryImport &&
+            TS_EXT_REGEX.test(resolvedModule.resolvedFileName) &&
+            !EXCLUDED_TS_EXT_REGEX.test(resolvedModule.resolvedFileName) &&
+            !normalizePath(resolvedModule.resolvedFileName).includes(
+              '/node_modules/',
+            )
+          ) {
+            // A workspace symlink resolves to source outside node_modules.
+            // Classify it before program creation so TypeScript emits it.
+            return {
+              ...resolution,
+              resolvedModule: {
+                ...resolvedModule,
+                isExternalLibraryImport: false,
+              },
+            };
+          }
+          return resolution;
+        });
       cachedHost = host;
       cachedHostKey = hostKey;
 
