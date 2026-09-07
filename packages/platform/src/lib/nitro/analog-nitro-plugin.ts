@@ -625,8 +625,9 @@ export default defineHandler(async (event) => {
   const noStreaming = ${prerender ? "'true'" : 'undefined'}
     ?? event.context.routeRules?.headers?.['x-analog-no-streaming']
     ?? event.res.headers.get('x-analog-no-streaming');
-  if (noStreaming !== null && noStreaming !== undefined || event.req.headers.has('x-analog-no-streaming')) {
+  if (noStreaming !== null && noStreaming !== undefined || event.req.headers.has('x-analog-no-streaming') || event.req.headers.has('x-analog-no-ssr')) {
     const headers = new Headers(event.req.headers);
+    headers.delete('x-analog-no-ssr');
     headers.delete('x-analog-no-streaming');
     if (noStreaming !== null && noStreaming !== undefined) headers.set('x-analog-no-streaming', noStreaming);
     // srvx's Node request is Request-compatible but does not carry Undici's

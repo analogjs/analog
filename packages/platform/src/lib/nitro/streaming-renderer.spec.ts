@@ -29,6 +29,33 @@ function createEvent(headers: Record<string, string> = {}) {
 }
 
 describe('Streaming renderer route rules', () => {
+  it.each([
+    { rule: undefined, prerender: false, expected: null },
+    { rule: 'true', prerender: false, expected: 'true' },
+    { rule: 'false', prerender: false, expected: 'false' },
+    { rule: 'false', prerender: true, expected: 'true' },
+  ])(
+    'filters caller SSR hints while preserving $expected streaming policy (prerender=$prerender)',
+    async ({ rule, prerender, expected }) => {
+      const fetch = vi.fn(
+        async (_request: Request) => new Response('rendered'),
+      );
+      const event = createEvent({ 'x-analog-no-ssr': 'false' });
+      event.req.headers.set('x-analog-no-ssr', 'true');
+      event.req.headers.set('x-analog-no-streaming', 'true');
+      if (rule !== undefined)
+        event.context.routeRules.headers['x-analog-no-streaming'] = rule;
+
+      await createRenderer(fetch, prerender)(event);
+
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(fetch.mock.calls[0][0].headers.get('x-analog-no-ssr')).toBeNull();
+      expect(fetch.mock.calls[0][0].headers.get('x-analog-no-streaming')).toBe(
+        expected,
+      );
+    },
+  );
+
   it('buffers the prerender instance even when a route explicitly enables streaming', async () => {
     const fetch = vi.fn(
       async (_request: Request) => new Response('complete document'),

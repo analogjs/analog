@@ -38,6 +38,10 @@ async function validateRoute(path: string) {
   // user-agent so this fixture exercises the progressive path as well.
   const page: Page = await browser.newPage({
     userAgent: 'Mozilla/5.0 Chrome/130.0.0.0 Safari/537.36',
+    extraHTTPHeaders: {
+      'x-analog-no-ssr': 'true',
+      'x-analog-no-streaming': 'true',
+    },
   });
   const fnRequests: string[] = [];
   const pageErrors: string[] = [];
