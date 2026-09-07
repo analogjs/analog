@@ -602,6 +602,7 @@ export function compilationAPIPlugin(
                   plugins: [
                     createRolldownCompilerPlugin(
                       compilerPluginOptions,
+                      isTest,
                       !pluginOptions.isAstroIntegration,
                     ),
                   ],
