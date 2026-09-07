@@ -117,6 +117,7 @@ export function generateHmrCode(
   declarations: RegistryEntry[],
   localDepClassNames: string[] = [],
   signature?: string,
+  rendererCache = false,
 ): string {
   const components = declarations.filter((d) => d.kind === 'component');
   const nonComponents = declarations.filter((d) => d.kind !== 'component');
@@ -146,7 +147,7 @@ export function ɵhmr_${c.className}(type) {
     .map(
       (c) => `
       try {
-        i0.ɵɵreplaceMetadata(
+        ${rendererCache ? '__analogReplaceMetadata(i0.ɵɵreplaceMetadata,' : 'i0.ɵɵreplaceMetadata('}
           ɵhmrClasses.get('${c.className}'),
           newModule.ɵhmr_${c.className},
           { i0 },
@@ -177,7 +178,7 @@ export function ɵhmr_${c.className}(type) {
     if (!replaced) import.meta.hot.invalidate('Component HMR failed, reloading');`;
   }
 
-  return `\nexport const ɵhmrSignature = ${JSON.stringify(signature ?? null)};\n${applyFns}
+  return `\n${rendererCache ? "import { replaceMetadata as __analogReplaceMetadata } from 'virtual:analog-component-style-hmr';\n" : ''}export const ɵhmrSignature = ${JSON.stringify(signature ?? null)};\n${applyFns}
 if (import.meta.hot) {
   // Later module evaluations must update the class Angular first instantiated.
   // The newly imported class is only a metadata donor, never the live target.

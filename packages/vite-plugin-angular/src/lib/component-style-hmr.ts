@@ -79,6 +79,11 @@ export function componentStyleHmrPlugin(): Plugin {
       return;
     },
     transform(code, id, options) {
+      // Fast mode emits this call directly alongside its existing HMR footer.
+      if (
+        code.includes('import { replaceMetadata as __analogReplaceMetadata }')
+      )
+        return;
       if (
         enabled &&
         !options?.ssr &&

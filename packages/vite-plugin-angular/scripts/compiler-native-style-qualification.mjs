@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { createRequire } from 'node:module';
-import { createServer } from 'vite';
+import { createServer, version as viteVersion } from 'vite';
 import { chromium } from 'playwright';
 import angular from '@analogjs/vite-plugin-angular';
 
@@ -22,6 +22,9 @@ const angularVersion = createRequire(import.meta.url)(
   '@angular/core/package.json',
 ).version;
 const native =
+  (values.mode === 'api'
+    ? Number(viteVersion.split('.')[0]) >= 7
+    : viteVersion.startsWith('6.0.')) &&
   Number(angularVersion.split('.')[0]) >= (values.mode === 'api' ? 21 : 20) &&
   values.mode !== 'fast' &&
   values.encapsulation !== 'ShadowDom' &&
@@ -99,6 +102,7 @@ page.on('pageerror', (error) => errors.push(error.message));
 const result = {
   ...values,
   angularVersion,
+  viteVersion,
   native,
   records,
   events,

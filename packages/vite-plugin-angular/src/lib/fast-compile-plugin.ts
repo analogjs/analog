@@ -701,6 +701,7 @@ export function fastCompilePlugin(
           fileDeclarations,
           localDepClassNames,
           hmrSignature,
+          angularFullVersion >= 200000,
         );
       }
     }

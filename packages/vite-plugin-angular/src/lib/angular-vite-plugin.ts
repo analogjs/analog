@@ -262,6 +262,7 @@ function createPluginSet(
     }));
 
   const shouldUseNativeStyles = () =>
+    vite.version.startsWith('6.0.') &&
     pluginOptions.componentStyleHmr === 'auto' &&
     !jit &&
     !isTest &&

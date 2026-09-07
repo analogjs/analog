@@ -29,6 +29,7 @@ import {
   preprocessCSS,
   ResolvedConfig,
   ViteDevServer,
+  version as viteVersion,
 } from 'vite';
 
 import {
@@ -191,6 +192,7 @@ export function compilationAPIPlugin(
   );
 
   const shouldUseNativeStyles = () =>
+    Number(viteVersion.split('.')[0]) >= 7 &&
     pluginOptions.componentStyleHmr !== 'metadata' &&
     !pluginOptions.jit &&
     !isTest &&
