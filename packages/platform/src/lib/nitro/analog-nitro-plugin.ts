@@ -22,6 +22,10 @@ import {
   createI18nPostRenderingHook,
 } from './i18n-prerender.js';
 import { angularLinkerPlugin } from './angular-linker-plugin.js';
+import {
+  registerServerFunctions,
+  serverFunctionIdsPlugin,
+} from './server-functions.js';
 
 const SSR_ENTRY_VIRTUAL_ID = '\0virtual:@analogjs/nitro/ssr-entry';
 
@@ -501,6 +505,20 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         });
         nitro.options.handlers.push(...pageHandlers);
 
+        const projectRoot = resolve(context.workspaceRoot, context.rootDir);
+        const hasServerFunctions = registerServerFunctions(nitro, {
+          projectRoot,
+          directories: [
+            resolve(projectRoot, context.sourceRoot),
+            ...(options.additionalServerFnDirs ?? []).map((directory) =>
+              resolve(
+                context.workspaceRoot,
+                directory.startsWith('/') ? `.${directory}` : directory,
+              ),
+            ),
+          ],
+        });
+
         const serverDir = resolve(
           context.workspaceRoot,
           context.rootDir,
@@ -516,6 +534,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         nitro.hooks.hook('rollup:before', (_n, rollupConfig: any) => {
           if (Array.isArray(rollupConfig.plugins)) {
             rollupConfig.plugins.push(pageEndpointsPlugin());
+            if (hasServerFunctions) {
+              rollupConfig.plugins.push(serverFunctionIdsPlugin(projectRoot));
+            }
           }
           applyAnalogNitroExternals(rollupConfig);
           sanitizeNitroBundlerConfig(rollupConfig);
@@ -859,9 +880,14 @@ export default {
       connection: {},
     };
 
+    const node = req.runtime?.node;
+    const serverRequest = node?.req ?? reqShim;
+    if (node?.req) serverRequest.originalUrl = requestUrl;
+
     try {
       const html = await renderer(requestUrl, TEMPLATE, {
-        req: reqShim,
+        req: serverRequest,
+        res: node?.res,
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`

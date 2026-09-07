@@ -7,7 +7,8 @@
     "@analogjs/my-package": "workspace:*",
     "@analogjs/router": "workspace:*",
     "@analogjs/top-bar": "workspace:*",
-    "es-toolkit": "catalog:"
+    "es-toolkit": "catalog:",
+    "valibot": "catalog:"
   },
   "devDependencies": {
     "@analogjs/platform": "workspace:*",

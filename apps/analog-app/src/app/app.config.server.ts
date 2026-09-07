@@ -8,10 +8,12 @@ import {
 
 import { appConfig } from './app.config';
 import { authInterceptor } from './server-fns/auth.interceptor';
+import { HTTP_LABEL } from './server-fns/http-label';
 
 const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(),
+    { provide: HTTP_LABEL, useValue: 'configured-server' },
     // Server-function interceptors live in the server config — the same config
     // the dispatch endpoint bootstraps — so there is one DI surface, not two.
     provideServerFns(withServerFnInterceptors([authInterceptor])),

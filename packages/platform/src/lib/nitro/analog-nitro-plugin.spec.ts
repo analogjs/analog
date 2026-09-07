@@ -167,6 +167,41 @@ describe('analogNitroPlugin', () => {
     expect(code).toContain('id=\\"app\\"');
   });
 
+  it('preserves native Node request and response for in-process server functions', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+    const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')
+      .split('\n')
+      .filter((line: string) => !line.startsWith('import '))
+      .join('\n')
+      .replace('export default', 'return');
+    const renderer = vi.fn(async () => 'rendered');
+    const previousFetch = globalThis.$fetch;
+    try {
+      const service = new Function(
+        'renderer',
+        'createFetch',
+        'nitroServerFetch',
+        code,
+      )(renderer, () => vi.fn(), vi.fn());
+      const abort = new AbortController();
+      const request = new Request('http://localhost/stream?test=1', {
+        headers: { 'x-analog-no-streaming': 'true' },
+        signal: abort.signal,
+      });
+      const node = { req: { headers: {}, originalUrl: '' }, res: {} };
+      Object.defineProperty(request, 'runtime', { value: { node } });
+      expect(await (await service.fetch(request)).text()).toBe('rendered');
+      const context = renderer.mock.calls[0][2];
+      expect(context.req).toBe(node.req);
+      expect(context.res).toBe(node.res);
+      expect(context.req.originalUrl).toBe('/stream?test=1');
+      abort.abort();
+    } finally {
+      globalThis.$fetch = previousFetch;
+    }
+  });
+
   it('registers page handlers and the page-endpoints rollup plugin in nitro setup', async () => {
     mkdirSync(join(workspaceRoot, 'src/app/pages'), { recursive: true });
     writeFileSync(
@@ -197,6 +232,59 @@ describe('analogNitroPlugin', () => {
     expect(nitroMock.options.handlers[0].route).toContain('/_analog/pages');
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
   });
+
+  it.each([undefined, 'libs/catalog/src', '/libs/catalog/src'])(
+    'registers HTTP functions with SSR disabled and extra directory %s',
+    async (additionalDirectory) => {
+      const sourceDirectory = additionalDirectory?.startsWith('/')
+        ? additionalDirectory.slice(1)
+        : (additionalDirectory ?? 'src/app/server-fns');
+      mkdirSync(join(workspaceRoot, sourceDirectory), { recursive: true });
+      writeFileSync(
+        join(workspaceRoot, sourceDirectory, 'read.server.ts'),
+        `import { serverFn } from '@analogjs/router/server'; export const read = serverFn(async () => 'value');`,
+      );
+      const plugin = analogNitroPlugin({
+        workspaceRoot,
+        ssr: false,
+        additionalServerFnDirs: additionalDirectory
+          ? [additionalDirectory]
+          : undefined,
+      });
+      callConfig(plugin, projectRoot);
+      const hook = vi.fn();
+      const nitroMock: any = {
+        options: {
+          rootDir: projectRoot,
+          buildDir: join(projectRoot, '.nitro'),
+          handlers: [],
+          scanDirs: [],
+          virtual: {},
+          dev: true,
+        },
+        hooks: { hook },
+      };
+      await (plugin as any).nitro.setup(nitroMock);
+      expect(nitroMock.options.handlers).toContainEqual({
+        route: '/_analog/fn/:id',
+        handler: '#analog/server-functions',
+        lazy: true,
+      });
+      expect(nitroMock.options.virtual['#analog/server-functions']()).toContain(
+        'read.server.ts',
+      );
+      const before = hook.mock.calls.find(
+        ([name]) => name === 'rollup:before',
+      )?.[1];
+      const config = { plugins: [] };
+      before(nitroMock, config);
+      expect(config.plugins).toContainEqual(
+        expect.objectContaining({
+          name: 'analogjs-platform-server-function-ids',
+        }),
+      );
+    },
+  );
 
   it('hides the virtual renderer from prerender path resolution and restores it', async () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
