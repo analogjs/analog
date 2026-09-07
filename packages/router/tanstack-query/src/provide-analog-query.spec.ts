@@ -16,6 +16,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   QueryClient,
   dehydrate,
+  hydrate,
   provideTanStackQuery,
 } from '@tanstack/angular-query-experimental';
 
@@ -185,24 +186,18 @@ describe('TanStack Query SSR integration', () => {
     expect(queryClient.getQueryData(['posts'])).toEqual(['a', 'b']);
   });
 
-  it('keeps the later entry when parent and child prefetch the same queryHash (last-writer-wins)', async () => {
+  it('keeps the newer child entry when parent and child prefetch the same queryHash', async () => {
     const events = new Subject<unknown>();
     const queryClient = new QueryClient();
     const transferState = new TransferState();
 
     // Parent prefetched `['posts']` with stale data.
     const parentSeed = new QueryClient();
-    await parentSeed.prefetchQuery({
-      queryKey: ['posts'],
-      queryFn: async () => ['stale'],
-    });
+    parentSeed.setQueryData(['posts'], ['stale'], { updatedAt: 1000 });
 
     // Child prefetched the same queryKey with fresher data.
     const childSeed = new QueryClient();
-    await childSeed.prefetchQuery({
-      queryKey: ['posts'],
-      queryFn: async () => ['fresh'],
-    });
+    childSeed.setQueryData(['posts'], ['fresh'], { updatedAt: 2000 });
 
     TestBed.configureTestingModule({
       providers: [
@@ -269,6 +264,70 @@ describe('TanStack Query SSR integration', () => {
     expect(stored?.queries).toHaveLength(1);
     expect(stored?.queries[0]?.queryKey).toEqual(['posts']);
     expect(queryClient.getQueryData(['posts'])).toEqual([{ id: 1 }]);
+  });
+
+  it.each([1000, 2000])(
+    'keeps parent data when a child cache timestamp is %i and not newer',
+    (childUpdatedAt) => {
+      const events = new Subject<unknown>();
+      const queryClient = new QueryClient();
+      const transferState = new TransferState();
+      const parent = new QueryClient();
+      const child = new QueryClient();
+      parent.setQueryData(['posts'], ['fresh'], { updatedAt: 2000 });
+      child.setQueryData(['posts'], ['old'], { updatedAt: childUpdatedAt });
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: PLATFORM_ID, useValue: 'server' },
+          { provide: TransferState, useValue: transferState },
+          { provide: Router, useValue: { events } },
+          provideTanStackQuery(queryClient),
+          provideAnalogQuery(),
+        ],
+      });
+      TestBed.inject(QueryClient);
+      emitResolveEnd(
+        events,
+        makeSnapshot({ load: { [ANALOG_QUERIES_KEY]: dehydrate(parent) } }, [
+          makeSnapshot({ load: { [ANALOG_QUERIES_KEY]: dehydrate(child) } }),
+        ]),
+      );
+      expect(queryClient.getQueryData(['posts'])).toEqual(['fresh']);
+      const stored = transferState.get(ANALOG_QUERY_STATE_KEY, null);
+      const browser = new QueryClient();
+      hydrate(browser, stored);
+      expect(browser.getQueryData(['posts'])).toEqual(
+        queryClient.getQueryData(['posts']),
+      );
+      for (const cache of [parent, child, browser, queryClient]) cache.clear();
+    },
+  );
+
+  it('retains newer application-prefetched data when mirroring a route load', () => {
+    const events = new Subject<unknown>();
+    const queryClient = new QueryClient();
+    const transferState = new TransferState();
+    const seed = new QueryClient();
+    queryClient.setQueryData(['posts'], ['application'], { updatedAt: 2000 });
+    seed.setQueryData(['posts'], ['route'], { updatedAt: 1000 });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: TransferState, useValue: transferState },
+        { provide: Router, useValue: { events } },
+        provideTanStackQuery(queryClient),
+        provideAnalogQuery(),
+      ],
+    });
+    TestBed.inject(QueryClient);
+    emitResolveEnd(
+      events,
+      makeSnapshot({ load: { [ANALOG_QUERIES_KEY]: dehydrate(seed) } }),
+    );
+    expect(
+      transferState.get(ANALOG_QUERY_STATE_KEY, null)?.queries[0]?.state.data,
+    ).toEqual(['application']);
+    for (const cache of [seed, queryClient]) cache.clear();
   });
 
   it('does not write to TransferState on the client (PLATFORM_ID = browser)', async () => {

@@ -1,6 +1,16 @@
-import { inject } from '@angular/core';
+import {
+  PLATFORM_ID,
+  TransferState,
+  inject,
+  makeStateKey,
+} from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import type { Route } from '@angular/router';
+import {
+  Router,
+  type Route,
+  type ActivatedRouteSnapshot,
+} from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   injectInternalServerFetch,
@@ -48,7 +58,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
     routeConfig.runGuardsAndResolvers ?? 'paramsOrQueryParamsChange';
   routeConfig.resolve = {
     ...routeConfig.resolve,
-    load: async (route) => {
+    load: reusePageLoad(async (route) => {
       const routeConfig = route.routeConfig as Route & {
         [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
       };
@@ -61,26 +71,53 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
         const internalFetch = injectInternalServerFetch();
-
-        if (internalFetch) {
-          return internalFetch(`${url.pathname}${url.search}`);
+        const transferState = inject(TransferState);
+        const server = isPlatformServer(inject(PLATFORM_ID));
+        // An exact endpoint/query identity avoids origin differences between
+        // prerender and the browser, and does not truncate identity to a hash.
+        const key = makeStateKey<{ value: unknown }>(
+          `analog:page-load:${url.pathname}${url.search}`,
+        );
+        if (!server && transferState.hasKey(key)) {
+          const seed = transferState.get(key, { value: undefined });
+          transferState.remove(key);
+          if (!inject(Router).navigated) return seed.value;
         }
-
         const globalFetch = (
           globalThis as unknown as { $fetch?: ServerInternalFetch }
         ).$fetch;
-        if (!!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] && globalFetch) {
-          return globalFetch(`${url.pathname}${url.search}`);
-        }
-
-        return firstValueFrom(http.get(`${url.href}`));
+        const serverFetch = server
+          ? (internalFetch ??
+            (import.meta.env?.['VITE_ANALOG_PUBLIC_BASE_URL']
+              ? globalFetch
+              : undefined))
+          : undefined;
+        const value = serverFetch
+          ? await serverFetch(`${url.pathname}${url.search}`)
+          : await firstValueFrom(http.get(url.href, { transferCache: false }));
+        // Keep an envelope so an undefined result survives JSON serialization.
+        if (server) transferState.set(key, { value });
+        return value;
       }
 
       return {};
-    },
+    }),
   };
 
   return routeConfig;
+}
+
+function reusePageLoad(
+  load: (route: ActivatedRouteSnapshot) => Promise<unknown>,
+): (route: ActivatedRouteSnapshot) => Promise<unknown> {
+  const pending = new WeakMap<ActivatedRouteSnapshot, Promise<unknown>>();
+  return (route) => {
+    const existing = pending.get(route);
+    if (existing) return existing;
+    const value = load(route);
+    pending.set(route, value);
+    return value;
+  };
 }
 
 function isRedirectRouteMeta(

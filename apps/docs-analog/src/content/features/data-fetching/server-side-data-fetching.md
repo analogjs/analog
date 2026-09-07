@@ -28,6 +28,13 @@ export const load = async ({
 Accessing the data fetched on the server can be done using the `injectLoad` function provided by `@analogjs/router`.
 The `load` function is resolved using Angular route resolvers, so setting `requireSync: false` and `initialValue: {}` offers no advantage, as load is fetched before the component is instantiated.
 
+During SSR, the resolved load result is transferred with an exact endpoint and
+query identity. The browser consumes that result during initial navigation,
+including `null`, empty and undefined values, without calling the load endpoint
+again. The seed is single-use and is not reused after initial navigation.
+Later navigation fetches fresh data. Calls through `getLoadResolver` and the
+route's own resolver share one load for the same navigation snapshot.
+
 ```ts
 // src/app/pages/index.page.ts
 import { Component } from '@angular/core';
