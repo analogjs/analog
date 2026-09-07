@@ -1,22 +1,122 @@
+import { createHash } from 'node:crypto';
+import { parseSync } from 'oxc-parser';
 import type { RegistryEntry } from './registry.js';
 
-/**
- * Generate HMR code using Angular's ɵɵreplaceMetadata for components,
- * and simple field-swap + invalidation for directives/pipes.
- *
- * The applyMetadata callback dynamically copies all ɵ-prefixed static
- * fields (ɵcmp, ɵfac, ɵdir, ɵpipe, etc.) from the newly compiled class
- * to the old class reference that Angular's runtime is tracking.
- *
- * For components, ɵɵreplaceMetadata then merges the old/new definitions
- * and recreates matching LViews in the component tree.
- *
- * For directives and pipes, ɵɵreplaceMetadata does not support them, so
- * we fall back to a full page reload via import.meta.hot.invalidate().
- */
+/** Fingerprint everything except proven literal component template/style metadata. */
+export function componentHmrSignature(
+  code: string,
+  file: string,
+): string | undefined {
+  try {
+    const { program, errors } = parseSync(file, code);
+    if (errors.length) return;
+    const components = new Set<string>();
+    for (const node of program.body) {
+      if (
+        node.type !== 'ImportDeclaration' ||
+        node.source.value !== '@angular/core'
+      )
+        continue;
+      for (const specifier of node.specifiers) {
+        if (
+          specifier.type === 'ImportSpecifier' &&
+          specifier.imported.type === 'Identifier' &&
+          specifier.imported.name === 'Component'
+        )
+          components.add(specifier.local.name);
+      }
+    }
+    const resources = new Set<object>();
+    let found = false;
+    for (const node of program.body) {
+      const declaration =
+        node.type === 'ExportNamedDeclaration' ||
+        node.type === 'ExportDefaultDeclaration'
+          ? node.declaration
+          : node;
+      if (declaration?.type !== 'ClassDeclaration') continue;
+      for (const decorator of declaration.decorators ?? []) {
+        const call = decorator.expression;
+        if (
+          call.type !== 'CallExpression' ||
+          call.callee.type !== 'Identifier' ||
+          !components.has(call.callee.name)
+        )
+          return;
+        const metadata = call.arguments[0];
+        if (
+          call.arguments.length !== 1 ||
+          metadata?.type !== 'ObjectExpression'
+        )
+          return;
+        found = true;
+        for (const property of metadata.properties) {
+          if (
+            property.type !== 'Property' ||
+            property.computed ||
+            property.method ||
+            property.shorthand
+          )
+            return;
+          const key =
+            property.key.type === 'Identifier'
+              ? property.key.name
+              : property.key.type === 'Literal'
+                ? property.key.value
+                : undefined;
+          if (
+            ![
+              'template',
+              'templateUrl',
+              'styles',
+              'styleUrl',
+              'styleUrls',
+            ].includes(String(key))
+          )
+            continue;
+          const literal = (value: typeof property.value): boolean =>
+            (value.type === 'Literal' && typeof value.value === 'string') ||
+            (value.type === 'TemplateLiteral' &&
+              value.expressions.length === 0);
+          const value = property.value;
+          if (
+            !literal(value) &&
+            !(
+              value.type === 'ArrayExpression' &&
+              value.elements.every(
+                (element) =>
+                  element !== null &&
+                  element.type !== 'SpreadElement' &&
+                  literal(element),
+              )
+            )
+          )
+            return;
+          resources.add(property);
+        }
+      }
+    }
+    if (!found) return;
+    return createHash('sha256')
+      .update(
+        JSON.stringify(program, (key, value) => {
+          if (['start', 'end', 'loc', 'raw'].includes(key)) return undefined;
+          if (typeof value === 'bigint') return String(value);
+          return Array.isArray(value)
+            ? value.filter((item) => !resources.has(item))
+            : value;
+        }),
+      )
+      .digest('hex');
+  } catch {
+    return undefined;
+  }
+}
+
 export function generateHmrCode(
   declarations: RegistryEntry[],
   localDepClassNames: string[] = [],
+  signature?: string,
 ): string {
   const components = declarations.filter((d) => d.kind === 'component');
   const nonComponents = declarations.filter((d) => d.kind !== 'component');
@@ -24,7 +124,7 @@ export function generateHmrCode(
   // Export applyMetadata functions so the accept callback can access them.
   // Dynamically copy all ɵ-prefixed static fields to handle ɵcmp, ɵfac,
   // ɵdir, ɵpipe, ɵmod, ɵinj, ɵprov, and any future Ivy fields.
-  const applyFns = declarations
+  const applyFns = components
     .map(
       (c) => `
 export function ɵhmr_${c.className}(type) {
@@ -56,45 +156,28 @@ export function ɵhmr_${c.className}(type) {
         );
         replaced = true;
       } catch(e) {
-        // ɵɵreplaceMetadata failed — will fall back to page reload
+        import.meta.hot.invalidate('Component HMR failed, reloading');
+        return;
       }`,
-    )
-    .join('\n');
-
-  // Directives/pipes: swap static fields and invalidate
-  const swapBlocks = nonComponents
-    .map(
-      (c) => `
-      try {
-        newModule.ɵhmr_${c.className}(ɵhmrClasses.get('${c.className}'));
-        swapped = true;
-      } catch(e) {}`,
     )
     .join('\n');
 
   let acceptBody = `
     if (!newModule) return;`;
-
-  if (components.length > 0) {
-    acceptBody += `
-    let replaced = false;${replaceBlocks}
-    if (!replaced) {
-      import.meta.hot.invalidate('Component HMR failed, reloading');
-      return;
-    }`;
-  }
-
   if (nonComponents.length > 0) {
     acceptBody += `
-    let swapped = false;${swapBlocks}
-    if (swapped) {
-      // Directive/pipe definitions updated — full reload needed for Angular
-      // to pick up the new behavior since ɵɵreplaceMetadata only supports components.
-      import.meta.hot.invalidate('Directive/pipe changed, reloading');
-    }`;
+    import.meta.hot.invalidate('Directive/pipe changed, reloading');`;
+  } else {
+    acceptBody += `
+    if (!ɵhmrSignature || newModule.ɵhmrSignature !== ɵhmrSignature) {
+      import.meta.hot.invalidate('Component behavior changed, reloading');
+      return;
+    }
+    let replaced = false;${replaceBlocks}
+    if (!replaced) import.meta.hot.invalidate('Component HMR failed, reloading');`;
   }
 
-  return `\n${applyFns}
+  return `\nexport const ɵhmrSignature = ${JSON.stringify(signature ?? null)};\n${applyFns}
 if (import.meta.hot) {
   // Later module evaluations must update the class Angular first instantiated.
   // The newly imported class is only a metadata donor, never the live target.

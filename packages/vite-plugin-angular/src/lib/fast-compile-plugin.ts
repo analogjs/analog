@@ -8,6 +8,7 @@ import { createCompilerSession } from './compiler-session.js';
 import type { CompilerPlugin } from './compiler-backend.js';
 import { projectCompilerLayer } from './compiler-backend-live.js';
 import { Layer } from 'effect';
+import { componentHmrSignature } from './compiler/hmr.js';
 import { stylesheetFailure } from './stylesheet-pipeline.js';
 import { ResourceDependencies } from './resource-dependencies.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
@@ -80,6 +81,7 @@ export function fastCompilePlugin(
   // fast-compile plugin state
   const registry: ComponentRegistry = new Map();
   const resourceDependencies = new ResourceDependencies();
+  const hmrSignatures = new Map<string, string | undefined>();
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
@@ -115,6 +117,7 @@ export function fastCompilePlugin(
       },
       close: () => {
         registry.clear();
+        hmrSignatures.clear();
         resourceDependencies.clear();
         scannedDtsPackages.clear();
       },
@@ -559,6 +562,15 @@ export function fastCompilePlugin(
       return { code: stripped.code, map: stripped.map };
     }
 
+    const hmrSignature =
+      watchMode &&
+      pluginOptions.liveReload &&
+      !pluginOptions.isTest &&
+      resolvedConfig.server.hmr !== false
+        ? componentHmrSignature(code, id)
+        : undefined;
+    hmrSignatures.set(id, hmrSignature);
+
     // Inline external templateUrl/styleUrl(s) into the source before compilation.
     // `styleExtensions` carries the source extension of each inlined external
     // style so it can be preprocessed by its own file type (e.g. an external
@@ -684,7 +696,11 @@ export function fastCompilePlugin(
       );
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
-        outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
+        outputCode += generateHmrCode(
+          fileDeclarations,
+          localDepClassNames,
+          hmrSignature,
+        );
       }
     }
 
@@ -788,7 +804,17 @@ export function fastCompilePlugin(
       if (TS_EXT_REGEX.test(ctx.file)) {
         const fileId = stripQuery(ctx.file);
 
+        const previous = hmrSignatures.get(fileId);
+        const current = componentHmrSignature(await ctx.read(), fileId);
         await compilation.run([fileId]);
+        if (
+          pluginOptions.liveReload &&
+          resolvedConfig.server.hmr !== false &&
+          (!previous || previous !== current)
+        ) {
+          ctx.server.ws.send({ type: 'full-reload' });
+          return [];
+        }
       }
 
       // Let Vite handle the rest — the transform hook will recompile
