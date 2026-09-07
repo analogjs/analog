@@ -1074,6 +1074,74 @@ export class AppComponent {}
     }
   }
 
+  it('emits source-linked workspace packages without an explicit include', async () => {
+    const libDir = path.join(fixtureDir, 'lib');
+    realFs.mkdirSync(libDir, { recursive: true });
+    realFs.mkdirSync(path.join(fixtureDir, 'node_modules'), {
+      recursive: true,
+    });
+    realFs.writeFileSync(
+      path.join(libDir, 'package.json'),
+      JSON.stringify({
+        name: 'linked-lib',
+        type: 'module',
+        exports: './index.ts',
+      }),
+    );
+    realFs.writeFileSync(
+      path.join(libDir, 'index.ts'),
+      "export { DemoDirective } from './directive';",
+    );
+    realFs.writeFileSync(
+      path.join(libDir, 'directive.ts'),
+      "import { Directive } from '@angular/core'; @Directive({ selector: '[demo]', standalone: true }) export class DemoDirective {}",
+    );
+    realFs.symlinkSync(
+      libDir,
+      path.join(fixtureDir, 'node_modules/linked-lib'),
+      'junction',
+    );
+    realFs.appendFileSync(
+      componentPath,
+      "\nexport { DemoDirective } from 'linked-lib';",
+    );
+    const mainPlugin = createAppBuildPlugin();
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    mainPlugin.configResolved({
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+    });
+    const ctx = { warn: vi.fn(), error: vi.fn(), addWatchFile: vi.fn() };
+    await mainPlugin.buildStart.call(ctx);
+    const transform = async (name: string) => {
+      const id = normalizePath(path.join(libDir, name));
+      return mainPlugin.transform.handler.call(
+        ctx,
+        realFs.readFileSync(id, 'utf8'),
+        id,
+      );
+    };
+    expect((await transform('index.ts'))?.code).toContain('DemoDirective');
+    expect((await transform('directive.ts'))?.code).toContain('ɵdir');
+    expect((await transform('index.ts'))?.code).toContain('DemoDirective');
+    realFs.appendFileSync(
+      path.join(libDir, 'directive.ts'),
+      '\nexport const updated = 42;',
+    );
+    await mainPlugin.handleHotUpdate({
+      file: normalizePath(path.join(libDir, 'directive.ts')),
+      modules: [],
+    });
+    expect((await transform('directive.ts'))?.code).toContain('updated = 42');
+    expect(ctx.warn).not.toHaveBeenCalled();
+  }, 60_000);
+
   it('waits for the initial compilation before emitting a transform result', async () => {
     const mainPlugin = createAppBuildPlugin();
 

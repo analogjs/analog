@@ -211,6 +211,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
   let includeCache: string[] = [];
+  const linkedSourceRoots = new Set<string>();
   function invalidateFsCaches() {
     includeCache = [];
   }
@@ -380,6 +381,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         server.watcher.on('unlink', invalidateCompilationOnFsChange);
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
+            linkedSourceRoots.clear();
             invalidateTsconfigCaches();
           }
         });
@@ -733,7 +735,22 @@ export function angular(options?: PluginOptions): Plugin[] {
             pendingCompilation = null;
           }
 
-          const typescriptResult = fileEmitter(id);
+          let typescriptResult = fileEmitter(id);
+          const sourceFile = builder?.getSourceFile(id);
+          if (
+            typescriptResult?.content === '' &&
+            sourceFile &&
+            builder!.getProgram().isSourceFileFromExternalLibrary(sourceFile) &&
+            !linkedSourceRoots.has(normalizePath(sourceFile.fileName))
+          ) {
+            // TypeScript skips emit for source-linked package entries until
+            // they are roots. Only promote files requested by Vite.
+            linkedSourceRoots.add(normalizePath(sourceFile.fileName));
+            pendingCompilation = performCompilation(resolvedConfig, [id]);
+            await pendingCompilation;
+            pendingCompilation = null;
+            typescriptResult = fileEmitter(id);
+          }
 
           // File not in the Angular program — skip and let other plugins
           // or Vite's built-in transform handle it. Warn if it looks like
@@ -1278,7 +1295,14 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = [...new Set([...rootNames, ...includeCache, ...replacements])];
+    rootNames = [
+      ...new Set([
+        ...rootNames,
+        ...includeCache,
+        ...replacements,
+        ...linkedSourceRoots,
+      ]),
+    ];
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
