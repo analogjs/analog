@@ -116,6 +116,18 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       queryOutput: Record<string, string | string[] | undefined>;
     };
+    '/render-policy/[mode]': {
+      params: { mode: string };
+      paramsOutput: { mode: string };
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
+    '/ssr-errors/[status]': {
+      params: { status: string };
+      paramsOutput: { status: string };
+      query: Record<string, string | string[] | undefined>;
+      queryOutput: Record<string, string | string[] | undefined>;
+    };
     '/[...slug]': {
       params: { slug: string[] };
       paramsOutput: { slug: string[] };
@@ -176,6 +188,8 @@ export interface AnalogFileRoutesById {
   "/blog/posts/[slug]": AnalogGeneratedRouteRecord<"/blog/posts/[slug]", "blog/posts/[slug]", "/blog/posts/[slug]", null, readonly []>;
   "/greet/[name]": AnalogGeneratedRouteRecord<"/greet/[name]", "greet/[name]", "/greet/[name]", null, readonly []>;
   "/products/[productId]": AnalogGeneratedRouteRecord<"/products/[productId]", "products/[productId]", "/products/[productId]", null, readonly []>;
+  "/render-policy/[mode]": AnalogGeneratedRouteRecord<"/render-policy/[mode]", "render-policy/[mode]", "/render-policy/[mode]", null, readonly []>;
+  "/ssr-errors/[status]": AnalogGeneratedRouteRecord<"/ssr-errors/[status]", "ssr-errors/[status]", "/ssr-errors/[status]", null, readonly []>;
   "/[...slug]": AnalogGeneratedRouteRecord<"/[...slug]", "[...slug]", "/[...slug]", null, readonly []>;
   "/shipping/[...slug]": AnalogGeneratedRouteRecord<"/shipping/[...slug]", "[...slug]", "/shipping/[...slug]", "/shipping/index", readonly []>;
 }
@@ -199,6 +213,8 @@ export interface AnalogFileRoutesByFullPath {
   "/blog/posts/[slug]": AnalogFileRoutesById["/blog/posts/[slug]"];
   "/greet/[name]": AnalogFileRoutesById["/greet/[name]"];
   "/products/[productId]": AnalogFileRoutesById["/products/[productId]"];
+  "/render-policy/[mode]": AnalogFileRoutesById["/render-policy/[mode]"];
+  "/ssr-errors/[status]": AnalogFileRoutesById["/ssr-errors/[status]"];
   "/[...slug]": AnalogFileRoutesById["/[...slug]"];
   "/shipping/[...slug]": AnalogFileRoutesById["/shipping/[...slug]"];
 }
@@ -512,6 +528,38 @@ export const analogRouteTree = {
       isCatchAll: false,
       isOptionalCatchAll: false,
     } satisfies AnalogFileRoutesById["/products/[productId]"],
+    "/render-policy/[mode]": {
+      id: "/render-policy/[mode]",
+      path: "render-policy/[mode]",
+      fullPath: "/render-policy/[mode]",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/src/app/pages/render-policy/[mode].page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/render-policy/[mode]"],
+    "/ssr-errors/[status]": {
+      id: "/ssr-errors/[status]",
+      path: "ssr-errors/[status]",
+      fullPath: "/ssr-errors/[status]",
+      parentId: null,
+      children: [] as const,
+      sourceFile: "/src/app/pages/ssr-errors/[status].page.ts",
+      kind: "page",
+      hasParamsSchema: false,
+      hasQuerySchema: false,
+      hasJsonLd: false,
+      isIndex: false,
+      isGroup: false,
+      isCatchAll: false,
+      isOptionalCatchAll: false,
+    } satisfies AnalogFileRoutesById["/ssr-errors/[status]"],
     "/[...slug]": {
       id: "/[...slug]",
       path: "[...slug]",
@@ -564,6 +612,8 @@ export const analogRouteTree = {
     "/blog/posts/[slug]": "/blog/posts/[slug]",
     "/greet/[name]": "/greet/[name]",
     "/products/[productId]": "/products/[productId]",
+    "/render-policy/[mode]": "/render-policy/[mode]",
+    "/ssr-errors/[status]": "/ssr-errors/[status]",
     "/[...slug]": "/[...slug]",
     "/shipping/[...slug]": "/shipping/[...slug]",
   },

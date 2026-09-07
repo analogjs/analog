@@ -72,6 +72,7 @@ export default defineConfig(async ({ mode, command }) => {
             '/cart',
             '/shipping',
             '/client',
+            '/render-policy/prerendered',
             '/404.html',
             {
               route: '/newsletter',
@@ -94,9 +95,13 @@ export default defineConfig(async ({ mode, command }) => {
       }),
       nitro({
         routeRules: {
+          '/products/**': { ssr: true },
           '/client': { ssr: false },
           '/cart/**': { ssr: false },
           '/404.html': { ssr: false },
+          '/render-policy/**': { ssr: false },
+          '/render-policy/enabled': { ssr: true },
+          '/render-policy/prerendered': { ssr: true },
         },
       }),
       {
