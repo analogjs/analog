@@ -3,11 +3,13 @@ import {
   eventHandler,
   getRouterParam,
   readBody,
+  setResponseHeader,
+  setResponseStatus,
   type EventHandler,
   type H3Event,
 } from 'nitro/h3';
 
-import { dispatchServerFn } from './dispatch';
+import { dispatchServerFn, type DispatchResult } from './dispatch';
 import { assertNodeContext } from './node-context';
 
 /**
@@ -38,7 +40,7 @@ export async function handleServerFnRequest(
   event: H3Event,
   appInjector: Injector | Promise<Injector>,
 ): Promise<unknown> {
-  const node = assertNodeContext(event);
+  assertNodeContext(event);
   const id = getRouterParam(event, 'id') ?? '';
 
   // h3 parses the body before dispatch gets a say, and its parse error is an
@@ -48,7 +50,7 @@ export async function handleServerFnRequest(
     try {
       input = await readBody(event);
     } catch {
-      node.res.statusCode = 400;
+      setResponseStatus(event, 400);
       return { message: 'Malformed request body' };
     }
   }
@@ -58,11 +60,46 @@ export async function handleServerFnRequest(
     method: event.method,
   });
 
-  node.res.statusCode = status;
+  setResponseStatus(event, status);
   if (headers) {
     for (const [key, value] of Object.entries(headers)) {
-      node.res.setHeader(key, value);
+      setResponseHeader(event, key, value);
     }
   }
-  return body;
+  return serializeServerFnBody(event, { status, body, headers });
+}
+
+function serializeServerFnBody(
+  event: H3Event,
+  result: DispatchResult,
+): unknown {
+  const { status, body, headers } = result;
+  const contentType = headers?.['content-type'];
+  const mediaType =
+    typeof contentType === 'string'
+      ? contentType.split(';')[0].trim().toLowerCase()
+      : undefined;
+  if (
+    mediaType &&
+    mediaType !== 'application/json' &&
+    !mediaType.endsWith('+json')
+  )
+    return body;
+  if (
+    body === undefined ||
+    status === 204 ||
+    status === 205 ||
+    status === 304 ||
+    (body === null && status !== 200 && !mediaType)
+  )
+    return body;
+
+  // h3 treats strings as text and null as an empty body. RPC callers expect JSON
+  // for these values too, while explicit non-JSON Response headers retain control.
+  setResponseHeader(
+    event,
+    'content-type',
+    contentType ?? 'application/json; charset=utf-8',
+  );
+  return JSON.stringify(body);
 }
