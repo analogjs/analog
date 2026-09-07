@@ -483,7 +483,7 @@ describe('compilationAPIPlugin', () => {
     const testFile = join(tempRoot, 'src/app.component.ts');
     const update = vi.fn();
     const initializeMock = vi.fn().mockResolvedValue({
-      externalStylesheets: new Map(),
+      externalStylesheets: new Map([[join(tempRoot, 'src/view.css'), 'view']]),
       templateUpdates: new Map([
         [
           encodeURIComponent(`${testFile}@AppComponent`),
@@ -614,6 +614,16 @@ describe('compilationAPIPlugin', () => {
       expect(invalidateStyle).toHaveBeenCalledWith(stylesheet);
       expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
     }
+    // Browser-cached CSS may not enter the new module graph after a restart.
+    send.mockClear();
+    expect(
+      await (plugin.handleHotUpdate as any)({
+        file: join(tempRoot, 'src/view.css'),
+        modules: [],
+        server: { ws: { send } },
+      }),
+    ).toEqual([]);
+    expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
     send.mockClear();
     const globalCss = { id: `${tempRoot}/src/global.css` };
     expect(

@@ -105,6 +105,14 @@ export class AnalogStylesheetRegistry {
     return this.externalRequestToSource.get(normalizedRequestId);
   }
 
+  hasExternalSource(sourcePath: string): boolean {
+    const normalized = normalizePath(sourcePath);
+    for (const source of this.externalRequestToSource.values()) {
+      if (normalizePath(source) === normalized) return true;
+    }
+    return false;
+  }
+
   getPublicIdsForSource(sourcePath: string): string[] {
     return [...(this.sourceToPublicIds.get(sourcePath) ?? [])];
   }

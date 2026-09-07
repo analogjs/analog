@@ -4,10 +4,15 @@ import {
   isCompilerSource,
 } from './utils/module-id.js';
 import { createCompilerSession } from './compiler-session.js';
+import {
+  externalStyleUrlTransformer,
+  externalStyleUrlsInHmr,
+} from './utils/external-style-urls.js';
 import { normalizeSourceMap } from './utils/source-map.js';
 import type { CompilerPlugin } from './compiler-backend.js';
 import { projectCompilerLayer } from './compiler-backend-live.js';
 import { isolateCompilerEnvironments } from './compiler-environments.js';
+import { restartablePlugins } from './restartable-plugins.js';
 import { parsePluginOptions } from './plugin-options-schema.js';
 import { NgtscProgram } from '@angular/compiler-cli';
 import { Array as Arrays, Layer } from 'effect';
@@ -172,7 +177,8 @@ interface DeclarationFile {
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
-  return createPluginSet(parsePluginOptions(options ?? {}), true).plugins;
+  const parsed = parsePluginOptions(options ?? {});
+  return restartablePlugins(() => createPluginSet(parsed, true).plugins);
 }
 
 function createPluginSet(
@@ -1538,7 +1544,12 @@ function createPluginSet(
       : [];
 
     const transformers = mergeTransformers(
-      { before: beforeTransformers },
+      {
+        before: beforeTransformers,
+        ...(process.platform === 'win32'
+          ? { after: [externalStyleUrlTransformer] }
+          : {}),
+      },
       angularCompiler?.prepareEmit().transformers ?? {},
     );
 
@@ -2269,6 +2280,8 @@ export function getFileMetadata(
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
+          if (hmrUpdateCode)
+            hmrUpdateCode = externalStyleUrlsInHmr(hmrUpdateCode);
           if (hmrUpdateCode) {
             const className = (node as any).name.getText();
             options.classNames?.set(file, className);

@@ -191,7 +191,10 @@ execaSync(consumerNode, ['fixture.mjs'], {
   killSignal: 'SIGKILL',
 });
 console.log(`Installed-package evidence retained at ${root}`);
-if (values.angular === '22.0.0' && values.vite === '8.2.2') {
+if (
+  values.angular === '22.0.0' &&
+  ['6.0.0', '6.4.3', '8.2.2'].includes(values.vite)
+) {
   copyFileSync(
     join(scriptDirectory, 'compiler-runtime-qualification.mjs'),
     join(root, 'runtime.mjs'),
@@ -208,9 +211,10 @@ if (values.angular === '22.0.0' && values.vite === '8.2.2') {
           `--output=runtime-${mode}.json`,
           `--mode=${mode}`,
           '--components=100',
-          '--edits=3',
-          '--restart-every=3',
+          '--edits=4',
+          '--restart-every=2',
           '--close-queued',
+          `--ssr-loader=${values.vite === '6.0.0' ? 'runner' : 'compat'}`,
         ],
         {
           cwd: root,

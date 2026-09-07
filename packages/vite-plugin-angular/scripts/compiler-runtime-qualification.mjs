@@ -8,7 +8,11 @@ import { createRequire } from 'node:module';
 import { createServer as createNetServer } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
-import { createServer, version as viteVersion } from 'vite';
+import {
+  createServer,
+  createRunnableDevEnvironment,
+  version as viteVersion,
+} from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 import { chromium } from 'playwright';
 
@@ -22,11 +26,13 @@ const { values } = parseArgs({
     'restart-every': { type: 'string', default: '0' },
     'close-queued': { type: 'boolean', default: false },
     'refresh-ssr': { type: 'boolean', default: false },
+    'ssr-loader': { type: 'string', default: 'compat' },
     label: { type: 'string', default: 'candidate' },
   },
 });
 assert.ok(values.output, '--output is required');
 assert.ok(['ngtsc', 'fast', 'api'].includes(values.mode));
+assert.ok(['compat', 'runner'].includes(values['ssr-loader']));
 assert.equal(process.version, 'v24.15.0');
 assert.equal(typeof globalThis.gc, 'function', 'Run with --expose-gc');
 const count = Number(values.components),
@@ -54,6 +60,7 @@ const result = {
   vite: viteVersion,
   angular: require('@angular/core/package.json').version,
   typescript: require('typescript/package.json').version,
+  ssrLoader: values['ssr-loader'],
   records,
   memory,
   restarts,
@@ -147,6 +154,13 @@ const server = await createServer({
   cacheDir: join(root, '.vite-cache'),
   logLevel: 'silent',
   plugins,
+  ...(values['ssr-loader'] === 'runner'
+    ? {
+        environments: {
+          ssr: { dev: { createEnvironment: createRunnableDevEnvironment } },
+        },
+      }
+    : {}),
   server: { host: '127.0.0.1', port: address.port, strictPort: true },
 });
 const browser = await chromium.launch();
@@ -163,7 +177,10 @@ async function renderSsr(revision) {
   if (values['refresh-ssr'])
     server.environments.ssr.moduleGraph.invalidateAll();
   const start = performance.now();
-  const module = await server.ssrLoadModule('/src/ssr.ts');
+  const module =
+    values['ssr-loader'] === 'runner'
+      ? await server.environments.ssr.runner.import('/src/ssr.ts')
+      : await server.ssrLoadModule('/src/ssr.ts');
   const html = await module.render();
   const ms = performance.now() - start;
   assert.ok(html.includes(`REVISION_${revision}`), 'SSR template is current');

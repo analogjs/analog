@@ -55,6 +55,10 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     ...primary,
     perEnvironmentStartEndDuringDev: true,
     config(config, env) {
+      // A restart resolves configuration before its new server exists. Child
+      // compilers must wait for that server, never bind to the closed watcher.
+      serverPhase = undefined;
+      pendingServerChildren.clear();
       configuration = { _tag: 'Configured', config, env, context: this };
       return handler(primary.config)?.call(this, config, env);
     },

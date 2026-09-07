@@ -687,7 +687,10 @@ export function compilationAPIPlugin(
         // re-add an unversioned link whose stale rules override the update.
         // Until both hosts share link ownership, reload component CSS using
         // the same correctness fallback as the ngtsc stylesheet path.
-        if (ctx.modules.some((module) => module.id?.includes('ngcomp='))) {
+        if (
+          stylesheetRegistry?.hasExternalSource(ctx.file) ||
+          ctx.modules.some((module) => module.id?.includes('ngcomp='))
+        ) {
           for (const module of ctx.modules) {
             ctx.server.moduleGraph.invalidateModule(module);
           }

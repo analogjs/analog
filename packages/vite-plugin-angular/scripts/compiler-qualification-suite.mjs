@@ -1,5 +1,6 @@
 // Runs the runtime worker in prepared, isolated packed consumers.
 // --root contains vite{6,7,8}-{control,candidate}, each with installed packages.
+// Soaks additionally use vite6-latest-candidate (Vite 6.4.3).
 // node compiler-qualification-suite.mjs --root=<directory> --phase=paired|soak
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -26,6 +27,11 @@ for (const vite of [6, 7, 8])
   for (const side of ['control', 'candidate']) {
     await fs.copyFile(worker, join(root, `vite${vite}-${side}`, 'runtime.mjs'));
   }
+if (values.phase === 'soak')
+  await fs.copyFile(
+    worker,
+    join(root, 'vite6-latest-candidate', 'runtime.mjs'),
+  );
 async function run({ vite, side, mode, sample, soak = false }) {
   const name = `${soak ? 'soak' : 'paired'}-vite${vite}-${side}-${mode}-${sample}`;
   const output = join(results, `${name}.json`);
@@ -44,6 +50,9 @@ async function run({ vite, side, mode, sample, soak = false }) {
       '--duration-ms=900000',
       '--restart-every=20',
       '--close-queued',
+      // Vite 6.0's legacy ssrLoadModule retains its old runner on restart.
+      // Its Environment Runner and 6.4.3's legacy loader cover both APIs.
+      `--ssr-loader=${vite === 6 ? 'runner' : 'compat'}`,
     );
   else args.push('--components=1', '--edits=10', '--refresh-ssr');
   const started = Date.now();
@@ -83,7 +92,7 @@ if (values.phase === 'paired') {
 } else {
   // Concurrent soak jobs qualify behavior and memory, not comparative latency.
   const jobs = [];
-  for (const vite of [6, 8])
+  for (const vite of [6, '6-latest', 8])
     for (const mode of ['ngtsc', 'fast', 'api']) {
       jobs.push(run({ vite, side: 'candidate', mode, sample: 0, soak: true }));
     }

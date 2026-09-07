@@ -148,6 +148,12 @@ describe('stylesheet-registry', () => {
       'abc123.css',
       '/project/src/app/demo.component.css',
     );
+    expect(
+      registry.hasExternalSource('/project/src/app/demo.component.css'),
+    ).toBe(true);
+    expect(registry.hasExternalSource('/project/src/app/global.css')).toBe(
+      false,
+    );
     registry.registerServedStylesheet({
       publicId: 'abc123.css',
       sourcePath: '/project/src/app/demo.component.css',
