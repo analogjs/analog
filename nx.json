@@ -12,12 +12,11 @@
     "serve": { "dependsOn": ["^build"] },
     "build-package": { "cache": false },
     "@nx/js:tsc": { "cache": false },
-    "@nx/eslint:lint": {
+    "lint": {
       "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/eslint.config.mjs",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
+        "...",
+        "{workspaceRoot}/.oxlintrc.json",
+        "{workspaceRoot}/pnpm-lock.yaml"
       ],
       "cache": true
     },
@@ -26,7 +25,8 @@
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
+    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] },
+    "oxlint": { "options": { "args": ["--quiet"] } }
   },
   "generators": {
     "@nx/angular:application": {
@@ -61,7 +61,11 @@
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
-      "options": { "targetName": "eslint:lint" }
+      "options": { "targetName": "lint" }
+    },
+    {
+      "plugin": "@nx/oxlint",
+      "options": { "targetName": "oxlint" }
     }
   ],
   "analytics": false,

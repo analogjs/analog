@@ -1,5 +1,55 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`preset generator > should format generated files in an Oxfmt workspace 1`] = `
+"/// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+
+import tailwindcss from '@tailwindcss/vite';
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  return {
+    root: __dirname,
+    cacheDir: \`../node_modules/.vite\`,
+    build: {
+      outDir: '../dist/./my-app/client',
+      reportCompressedSize: true,
+      target: ['es2020'],
+    },
+    server: {
+      fs: {
+        allow: ['.'],
+      },
+    },
+    plugins: [
+      analog(),
+
+      tailwindcss(),
+    ],
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['src/test-setup.ts'],
+      include: ['**/*.spec.ts'],
+      reporters: ['default'],
+    },
+  };
+});
+"
+`;
+
+exports[`preset generator > should format generated files in an Oxfmt workspace 2`] = `
+"import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-snapshots';
+import '@analogjs/vitest-angular/setup-serializers';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+setupTestBed();
+"
+`;
+
 exports[`preset generator > should match index.html 1`] = `
 "<!doctype html>
 <html lang="en">

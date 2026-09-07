@@ -11,8 +11,9 @@ describe('preset generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
     nxVersion = '21.0.0',
+    formatter: 'prettier' | 'oxfmt' = 'prettier',
   ) => {
-    const tree = createTreeWithEmptyWorkspace();
+    const tree = createTreeWithEmptyWorkspace({ formatter });
     addDependenciesToPackageJson(tree, { nx: nxVersion }, {});
     await generator(tree, options);
     const config = readProjectConfiguration(tree, options.analogAppName);
@@ -35,6 +36,19 @@ describe('preset generator', () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
 
     expect(tree.read('/my-app/vite.config.ts').toString()).toMatchSnapshot();
+  });
+
+  it('should format generated files in an Oxfmt workspace', async () => {
+    const { tree } = await setup(
+      { analogAppName: 'my-app' },
+      '23.2.0',
+      'oxfmt',
+    );
+
+    expect(tree.exists('.oxfmtrc.json')).toBe(true);
+    expect(tree.exists('.prettierrc')).toBe(false);
+    expect(tree.read('/my-app/vite.config.ts').toString()).toMatchSnapshot();
+    expect(tree.read('/my-app/src/test-setup.ts').toString()).toMatchSnapshot();
   });
 
   it('should match index.html', async () => {

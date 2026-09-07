@@ -206,7 +206,10 @@ describe('nx-plugin generator', () => {
 
     it('does not overwrite existing agent context in the app', async () => {
       const analogAppName = 'existing-agents-app';
-      const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+      const tree = createTreeWithEmptyWorkspace({
+        layout: 'apps-libs',
+        formatter: 'prettier',
+      });
 
       addDependenciesToPackageJson(tree, {}, { nx: '21.0.0' });
       tree.write(`apps/${analogAppName}/AGENTS.md`, '# Custom guidance');
