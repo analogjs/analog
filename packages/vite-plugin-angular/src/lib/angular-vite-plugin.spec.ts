@@ -1093,21 +1093,12 @@ export class AppComponent {}
       build: {},
       server: { watch: {} },
       safeModulePaths: new Set(),
+      css: {},
     };
     mainPlugin.configResolved(resolvedConfig);
-    const cssTransform = vi.fn(async (code: string) => ({ code }));
-    const environmentConfig = {
-      ...resolvedConfig,
-      plugins: [
-        {
-          name: 'vite:css',
-          transform: { handler: cssTransform },
-        },
-      ],
-    };
 
     const ctx = {
-      environment: { config: environmentConfig },
+      environment: { config: resolvedConfig },
       warn: vi.fn(),
       error: vi.fn(),
       addWatchFile: vi.fn(),
@@ -1124,11 +1115,6 @@ export class AppComponent {}
     await buildStart;
 
     expect(result?.code).toContain('ɵcmp');
-    expect(cssTransform).toHaveBeenCalledWith(
-      expect.any(String),
-      `${stylePath}?direct`,
-    );
-    expect(cssTransform.mock.contexts[0]).toBe(ctx);
     expect(ctx.warn).not.toHaveBeenCalled();
   }, 60_000);
 
@@ -1158,20 +1144,12 @@ export class AppComponent {}
       build: { sourcemap: true },
       server: { watch: {} },
       safeModulePaths: new Set(),
+      css: {},
     };
     mainPlugin.configResolved(resolvedConfig);
-    const environmentConfig = {
-      ...resolvedConfig,
-      plugins: [
-        {
-          name: 'vite:css',
-          transform: { handler: vi.fn(async (code: string) => ({ code })) },
-        },
-      ],
-    };
 
     const ctx = {
-      environment: { config: environmentConfig },
+      environment: { config: resolvedConfig },
       warn: vi.fn(),
       error: vi.fn(),
       addWatchFile: vi.fn(),
@@ -1216,21 +1194,11 @@ export class AppComponent {}
       build: {},
       server: { watch: {} },
       safeModulePaths: new Set(),
+      css: {},
     };
     mainPlugin.configResolved(resolvedConfig);
-    const environmentConfig = {
-      ...resolvedConfig,
-      plugins: [
-        {
-          name: 'vite:css',
-          transform: {
-            handler: vi.fn(async (code: string) => ({ code })),
-          },
-        },
-      ],
-    };
     const ctx = {
-      environment: { config: environmentConfig },
+      environment: { config: resolvedConfig },
       warn: vi.fn(),
       error: vi.fn(),
       addWatchFile: vi.fn(),
@@ -1254,7 +1222,7 @@ export class AppComponent {}
     expect(released).toBeUndefined();
   }, 60_000);
 
-  it('handles environment without vite:css or missing this.environment gracefully', async () => {
+  it('handles missing this.environment gracefully', async () => {
     const mainPlugin = createAppBuildPlugin();
 
     await mainPlugin.config(
@@ -1267,6 +1235,7 @@ export class AppComponent {}
       build: {},
       server: { watch: {} },
       safeModulePaths: new Set(),
+      css: {},
       plugins: [],
     };
     mainPlugin.configResolved(resolvedConfig);
