@@ -1,3 +1,9 @@
+## [2.7.2-beta.4](https://github.com/analogjs/analog/compare/v2.7.2-beta.3...v2.7.2-beta.4) (2026-09-07)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** exclude load-only server-function hosts ([#2543](https://github.com/analogjs/analog/issues/2543)) ([68d67c5](https://github.com/analogjs/analog/commit/68d67c51171a88d7f87a0ae09e2bfdf317147f49))
+
 ## [2.7.2-beta.3](https://github.com/analogjs/analog/compare/v2.7.2-beta.2...v2.7.2-beta.3) (2026-09-07)
 
 ### Bug Fixes
