@@ -259,6 +259,7 @@ jobs:
         with:
           node-version-file: .node-version
       - run: npm install --global corepack@0.31.0
+        if: runner.os != 'Windows'
       - run: corepack enable
       - name: Install the modern authoring workspace
         run: pnpm install --frozen-lockfile
@@ -283,7 +284,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: compiler-angular-${{ matrix.angular }}-vite-${{ matrix.vite }}
+          name: compiler-angular-${{ matrix.angular }}-vite-${{ matrix.vite }}${{ matrix.os && '-windows' || '' }}
           path: |
             dist/compiler-vite-smoke/**/result.json
             dist/compiler-vite-smoke/**/runtime-*.json
