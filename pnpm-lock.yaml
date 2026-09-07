@@ -580,7 +580,7 @@ overrides:
 
 patchedDependencies:
   env-runner@0.2.1:
-    hash: ea38bd2de9e79688151dca573475ba86f7a66ea373c7aab88e2d52336b86c51d
+    hash: 5df085b3606e2287bb4773406abfab74da3aa317d2e23790d19f8ac8607cb8b4
     path: patches/env-runner@0.2.1.patch
   srvx@1.0.3:
     hash: 1a1528a16f03185b1481fbd95c4621229c71c18fd47d3b97634272fc57d97632
@@ -911,7 +911,7 @@ importers:
         version: 4.0.0-beta.36
       env-runner:
         specifier: 0.2.1
-        version: 0.2.1(patch_hash=ea38bd2de9e79688151dca573475ba86f7a66ea373c7aab88e2d52336b86c51d)
+        version: 0.2.1(patch_hash=5df085b3606e2287bb4773406abfab74da3aa317d2e23790d19f8ac8607cb8b4)
       es-toolkit:
         specifier: 'catalog:'
         version: 1.45.1
@@ -1217,6 +1217,13 @@ importers:
       tailwindcss:
         specifier: ^4.2.2
         version: 4.2.2
+    devDependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260903-beta
 
   apps/opt-catchall-app:
     dependencies:
@@ -28005,7 +28012,7 @@ snapshots:
 
   env-paths@2.2.1: {}
 
-  env-runner@0.2.1(patch_hash=ea38bd2de9e79688151dca573475ba86f7a66ea373c7aab88e2d52336b86c51d):
+  env-runner@0.2.1(patch_hash=5df085b3606e2287bb4773406abfab74da3aa317d2e23790d19f8ac8607cb8b4):
     dependencies:
       crossws: 0.4.12(srvx@1.0.3(patch_hash=1a1528a16f03185b1481fbd95c4621229c71c18fd47d3b97634272fc57d97632))
       exsolve: 1.1.1
@@ -31519,7 +31526,7 @@ snapshots:
       consola: 3.4.2
       crossws: 0.4.12(srvx@1.0.3(patch_hash=1a1528a16f03185b1481fbd95c4621229c71c18fd47d3b97634272fc57d97632))
       db0: 0.4.1
-      env-runner: 0.2.1(patch_hash=ea38bd2de9e79688151dca573475ba86f7a66ea373c7aab88e2d52336b86c51d)
+      env-runner: 0.2.1(patch_hash=5df085b3606e2287bb4773406abfab74da3aa317d2e23790d19f8ac8607cb8b4)
       h3: 2.0.1-rc.31(crossws@0.4.12(srvx@1.0.3(patch_hash=1a1528a16f03185b1481fbd95c4621229c71c18fd47d3b97634272fc57d97632)))(ocache@0.3.0)
       hookable: 6.1.1
       nf3: 0.3.24

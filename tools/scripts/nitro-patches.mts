@@ -121,3 +121,30 @@ try {
 } finally {
   await runner.close();
 }
+
+// Workerd module names use forward slashes, even when the host is Windows.
+const windowsEntry = String.raw`D:\analog\entry.mjs`;
+const windowsRunner = new MiniflareEnvRunner({
+  name: 'analog-windows-path-regression',
+  miniflare,
+  data: {
+    entry: windowsEntry,
+    virtual: {
+      [windowsEntry]: `import { value } from './dep.mjs';
+        export default { fetch() { return new Response(value); } };`,
+      'D:/analog/entry.mjs': `import { value } from './dep.mjs';
+        export default { fetch() { return new Response(value); } };`,
+      'D:/analog/dep.mjs': `export const value = 'windows-relative-import';`,
+    },
+  },
+});
+try {
+  await windowsRunner.waitForReady();
+  assert.equal(
+    await (await windowsRunner.fetch('http://localhost/')).text(),
+    'windows-relative-import',
+  );
+  console.log('env-runner: Windows module names preserve relative imports');
+} finally {
+  await windowsRunner.close();
+}

@@ -2,6 +2,8 @@
 
 import { resolve } from 'node:path';
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
@@ -16,7 +18,7 @@ import {
 
 const REPO_ROOT = resolve(__dirname, '../..');
 const CONTENT_DIR = resolve(__dirname, 'src/content');
-const CLIENT_DIST = resolve(REPO_ROOT, 'dist/apps/docs-analog/client');
+const CLIENT_DIST = resolve(REPO_ROOT, 'dist/apps/docs-analog/analog/public');
 const SITE_URL = 'https://analogjs.org';
 const NON_DEFAULT_LOCALES = ['de', 'es', 'pt-br', 'zh-hans'] as const;
 
@@ -93,6 +95,8 @@ export default defineConfig(({ mode }) => ({
         },
       },
     }),
+    angular(),
+    nitro({ prerender: { failOnError: true } }),
     copyMarkdownPlugin({
       entries: [
         {

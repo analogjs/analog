@@ -65,6 +65,17 @@ describe('analogNitroPlugin', () => {
     rmSync(workspaceRoot, { recursive: true, force: true });
   });
 
+  it('provides configured locales to client and SSR runtime providers', () => {
+    const plugin = analogNitroPlugin({
+      workspaceRoot,
+      i18n: { defaultLocale: 'en', locales: ['en', 'de'] },
+    });
+    expect(callConfig(plugin, projectRoot).define).toEqual({
+      ANALOG_I18N_DEFAULT_LOCALE: '"en"',
+      ANALOG_I18N_LOCALES: '["en","de"]',
+    });
+  });
+
   it('exposes the expected plugin shape', () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
     expect(plugin.name).toBe('@analogjs/nitro');

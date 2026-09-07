@@ -22,6 +22,7 @@ export function expandRoutesWithLocales(
     // would otherwise get locale-prefixed and produce phantom routes like
     // `/en/api`.
     if (
+      i18n.locales.includes(route.split('/')[1]) ||
       route.includes('/_analog/') ||
       route === '/api' ||
       route.startsWith('/api/')

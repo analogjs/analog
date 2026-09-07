@@ -8,13 +8,8 @@
   "implicitDependencies": ["vitest-angular"],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/docs-analog/.nitro",
-        "{workspaceRoot}/dist/apps/docs-analog/ssr",
-        "{workspaceRoot}/dist/apps/docs-analog/analog"
-      ],
+      "executor": "@analogjs/platform:vite",
+      "outputs": ["{workspaceRoot}/dist/apps/docs-analog/analog"],
       "options": {
         "configFile": "apps/docs-analog/vite.config.ts",
         "outputPath": "dist/apps/docs-analog/client"
@@ -28,7 +23,8 @@
           "sourcemap": false,
           "mode": "production"
         }
-      }
+      },
+      "dependsOn": ["platform:build", "router:build", "content:build"]
     },
     "serve": {
       "executor": "@nx/vite:dev-server",

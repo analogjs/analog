@@ -212,6 +212,15 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
         } as UserConfig['environments'],
       };
 
+      if (options.i18n) {
+        overrides.define = {
+          ANALOG_I18N_DEFAULT_LOCALE: JSON.stringify(
+            options.i18n.defaultLocale,
+          ),
+          ANALOG_I18N_LOCALES: JSON.stringify(options.i18n.locales),
+        };
+      }
+
       if (ssr) {
         (overrides.environments as Record<string, unknown>)['ssr'] = {
           build: {

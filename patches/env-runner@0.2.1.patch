@@ -1,5 +1,5 @@
 diff --git a/dist/_chunks/miniflare-runner.mjs b/dist/_chunks/miniflare-runner.mjs
-index 0bf102478621ae17148cb8b3b0a0336c10c93553..63d74a3b03c9e1af8704069a7128685c12cd4c19 100644
+index 0bf102478621ae17148cb8b3b0a0336c10c93553..97566aa688141876d2398a04903919ec4775ea8f 100644
 --- a/dist/_chunks/miniflare-runner.mjs
 +++ b/dist/_chunks/miniflare-runner.mjs
 @@ -409,6 +409,25 @@ var MiniflareEnvRunner = class extends BaseEnvRunner {
@@ -28,3 +28,12 @@ index 0bf102478621ae17148cb8b3b0a0336c10c93553..63d74a3b03c9e1af8704069a7128685c
  		const res = await this.#miniflare.dispatchFetch(url, init);
  		if (res instanceof Response) return res;
  		return new Response(res.body, {
+@@ -571,7 +590,7 @@ var MiniflareEnvRunner = class extends BaseEnvRunner {
+ 				}
+ 				options.durableObjects = autoDOs;
+ 			}
+-			options.script = generateWrapper(resolvedEntry, {
++			options.script = generateWrapper(resolvedEntry.replaceAll("\\", "/"), {
+ 				dynamicOnly: true,
+ 				captureErrors: this.#captureErrors,
+ 				exports: detectedExports

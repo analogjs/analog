@@ -13,6 +13,13 @@ const i18n: I18nPrerenderOptions = {
 };
 
 describe('expandRoutesWithLocales', () => {
+  it('preserves routes whose content transform already added a locale', () => {
+    expect(expandRoutesWithLocales(['/de/docs/intro', '/fr'], i18n)).toEqual([
+      '/de/docs/intro',
+      '/fr',
+    ]);
+  });
+
   it('should expand a single route to all locales', () => {
     const result = expandRoutesWithLocales(['/about'], i18n);
 
