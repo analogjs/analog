@@ -29,6 +29,19 @@ nx migrate @analogjs/platform@latest
 
 ## v2 to v3 checklist
 
+### Replace `defineRouteMeta` with `RouteMeta`
+
+The deprecated `defineRouteMeta` helper has been removed from `@analogjs/router`. Use the exported type to check the metadata object without a runtime wrapper:
+
+```diff
+-import { defineRouteMeta } from '@analogjs/router';
+-export const routeMeta = defineRouteMeta({ title: 'Welcome' });
++import type { RouteMeta } from '@analogjs/router';
++export const routeMeta: RouteMeta = { title: 'Welcome' };
+```
+
+The object is still exported as `routeMeta`. Supported metadata, including redirects, guards and JSON-LD, retains its existing runtime behavior.
+
 ### Angular version support
 
 Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 or newer before adopting the stable v3 line.

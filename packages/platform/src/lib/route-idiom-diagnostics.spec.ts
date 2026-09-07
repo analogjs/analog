@@ -31,21 +31,25 @@ describe('route-idiom-diagnostics', () => {
     );
   });
 
-  it('does not warn about missing default exports for redirect-only routes', () => {
-    const diagnostics = analyzeAnalogRouteFile({
-      filename: '/workspace/src/app/pages/index.page.ts',
-      code: [
-        'export const routeMeta = {',
-        "  redirectTo: '/home',",
-        "  pathMatch: 'full',",
-        '};',
-      ].join('\n'),
-    });
+  it.each(['', ': RouteMeta'])(
+    'accepts redirect-only metadata with annotation %j',
+    (annotation) => {
+      const diagnostics = analyzeAnalogRouteFile({
+        filename: '/workspace/src/app/pages/index.page.ts',
+        code: [
+          "import type { RouteMeta } from '@analogjs/router';",
+          `export const routeMeta${annotation} = {`,
+          "  redirectTo: '/home',",
+          "  pathMatch: 'full',",
+          '};',
+        ].join('\n'),
+      });
 
-    expect(diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
-      'missing-default-export',
-    );
-  });
+      expect(diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
+        'missing-default-export',
+      );
+    },
+  );
 
   it('warns when redirect routes also default-export a component', () => {
     const diagnostics = analyzeAnalogRouteFile({

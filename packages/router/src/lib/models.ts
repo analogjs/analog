@@ -9,7 +9,6 @@ import {
   Route,
 } from '@angular/router';
 
-import { defineRouteMeta } from './define-route';
 import { AnalogJsonLdDocument } from './json-ld';
 import { MetaTag } from './meta-tags';
 
@@ -50,7 +49,7 @@ export type RouteMeta =
 
 export type RouteExport = {
   default: Type<unknown>;
-  routeMeta?: RouteMeta | ReturnType<typeof defineRouteMeta>;
+  routeMeta?: RouteMeta;
   routeJsonLd?:
     | AnalogJsonLdDocument
     | ResolveFn<AnalogJsonLdDocument | undefined>;
