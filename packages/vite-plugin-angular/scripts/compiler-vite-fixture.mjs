@@ -482,8 +482,8 @@ async function browserHmrCase(browser, mode, liveReload) {
           .width === '31px',
     );
     if (!liveReload) {
-      await server.restart();
-      await page.reload();
+      await page.waitForLoadState('load');
+      await Promise.all([page.waitForEvent('load'), server.restart()]);
       await page.waitForFunction(
         () =>
           document.querySelector('[data-testid="message"]')?.textContent ===

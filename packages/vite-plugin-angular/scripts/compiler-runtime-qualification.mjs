@@ -273,8 +273,8 @@ try {
     records.push({ revision, templateMs, stylesheetMs, ssr });
     if (restartEvery && revision % restartEvery === 0) {
       const restartAt = performance.now();
-      await server.restart();
-      await page.reload();
+      await page.waitForLoadState('load');
+      await Promise.all([page.waitForEvent('load'), server.restart()]);
       await page.waitForFunction(
         (n) =>
           document.querySelector('[data-message]')?.textContent ===

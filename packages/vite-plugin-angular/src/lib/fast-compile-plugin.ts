@@ -107,7 +107,8 @@ export function fastCompilePlugin(
           if (!TS_EXT_REGEX.test(file)) continue;
           if (!existsSync(file)) resourceDependencies.remove(file);
           for (const [name, entry] of registry)
-            if (entry.fileName === file) registry.delete(name);
+            if (normalizePath(entry.fileName) === normalizePath(file))
+              registry.delete(name);
           await scanBarrelExports(file, new Set(), true);
         }
       },
@@ -669,7 +670,7 @@ export function fastCompilePlugin(
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
       const fileDeclarations = [...registry.values()].filter(
-        (e) => e.fileName === id,
+        (e) => normalizePath(e.fileName) === normalizePath(id),
       );
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
