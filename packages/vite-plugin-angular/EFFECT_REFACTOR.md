@@ -163,7 +163,7 @@ claiming a latency multiplier. Alpha does not expose an equivalent metric/API, s
 
 Packed gzip files: candidate **302,074 bytes (294.99 KiB)** versus alpha **311,339 bytes (304.04 KiB)**, a 9,265-byte reduction. Regular package-file contents total **47,533,320 bytes for Effect** versus **4,231,890 bytes for alpha's es-toolkit**. These are package contents, not the incremental allocation of a shared pnpm store. Filesystem allocation and download size are different measures. The compiler tarball excludes dependencies, so it does not establish an installed-size win.
 
-This evidence does not measure browser HMR state retention, rendered SSR
+The production/module-transform protocol above does not measure browser HMR state retention, rendered SSR
 HTML/CSS updates, shutdown latency, production request latency, or peak RSS
 under a sustained server. It does not attribute warm-build regressions to a
 specific internal cause. All raw machine-readable records are retained in
@@ -180,6 +180,31 @@ specific internal cause. All raw machine-readable records are retained in
 
 Raw frozen JSON and the exact local measurement scripts are retained under `dist/effect-evidence/perf/results/` and `dist/effect-evidence/perf/scripts/`. The committed `scripts/compiler-benchmark.mjs` reproduces the default-mode production comparison between prepared consumers. These local artifacts are not published package exports.
 
+### Bounded browser, rendered-SSR, shutdown, and memory follow-up
+
+This follows the same frozen compiler implementation `52c8825cf`, with Angular 22.0.0, Vite 8.2.2, Node 24.15.0, and Chromium. Five fresh candidate processes each keep a real Vite server running through ten template and ten CSS edits over 60 seconds. Values are five-process medians [min, max]; edit timings first average ten edits within each process. Browser timing starts before the file write and ends when the DOM/computed style changes. SSR timing is module load plus `renderApplication` after the browser update, not HTTP request latency.
+
+| Candidate metric                        |                 Median [range] |
+| --------------------------------------- | -----------------------------: |
+| Template write → browser DOM            |        93.18 [88.98, 95.84] ms |
+| CSS write → browser computed style      |     153.27 [151.73, 156.53] ms |
+| First rendered SSR call                 |     723.57 [713.30, 740.81] ms |
+| Rendered SSR call after edits           |        21.88 [20.16, 24.13] ms |
+| Idle server close                       |           2.58 [2.49, 2.62] ms |
+| Close after admitting 100 invalidations |        68.67 [66.39, 69.56] ms |
+| Sampled peak Node RSS                   | 1181.40 [1170.46, 1206.80] MiB |
+| End-of-window Node RSS after GC         | 1181.40 [1170.34, 1205.50] MiB |
+| End-of-window heap after GC             |    271.90 [271.87, 271.94] MiB |
+| Heap after server close and GC          |    111.86 [111.84, 111.88] MiB |
+
+Template HMR retained the counter in **50/50** edits. Rendered SSR HTML and CSS contained the edited values in **50/50** checks. In the separate shutdown workload, **500/500** admitted caller promises completed; none had settled when close was invoked. RSS is the Node process only, sampled every 250 ms; it excludes Chromium and is not a kernel high-water mark or a long-duration leak test. The closed server object remains referenced during the final heap sample.
+
+All five exact-alpha consumers failed before browser startup because `PlatformLocation` remained partially compiled without the Angular compiler available. That prevents a valid paired comparison for this follow-up; it is a package-level compatibility result, not proof that Effect alone fixes browser startup. No browser/SSR speedup is claimed.
+
+These observations supply bounded data for the four previously unpaid categories. Paired alpha comparisons, larger applications, longer memory soaks, and other browser/Vite versions remain unqualified. Raw data and the exact local harness are retained in `dist/effect-evidence/perf/` (`browser-supplement.json`, `browser-vite8-*.json`, and `shutdown-queued-*.json`).
+
+A separate server-without-listen probe exited with an unsettled close on both revisions, including with zero queued compiler calls. Those probes are excluded from the listening-server shutdown table and remain an unqualified lifecycle case.
+
 ## Unpaid qualification
 
 - [ ] Browser websocket/DOM HMR latency, including state retention under timed edits.
@@ -187,7 +212,7 @@ Raw frozen JSON and the exact local measurement scripts are retained under `dist
 - [ ] Shutdown latency and resource release under measured workloads.
 - [ ] Peak/retained RSS of a sustained server, beyond these short process samples.
 
-Keep these items open in [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). Investigate the reported regressions without weakening ownership or hiding failures. Re-run the packed protocol after any compiler change; a new documentation commit does not turn frozen measurements into measurements of different code.
+The follow-up supplies bounded Vite 8 candidate data for these categories; paired alpha measurements and broader qualification remain incomplete. Keep these items open in [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). Investigate the reported regressions without weakening ownership or hiding failures. Re-run the packed protocol after any compiler change; a new documentation commit does not turn frozen measurements into measurements of different code.
 
 ## Attribution
 
