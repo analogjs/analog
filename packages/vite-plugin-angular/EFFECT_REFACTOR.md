@@ -58,6 +58,128 @@ Code: [public entry](src/index.ts), [option decoder](src/lib/plugin-options-sche
 - Source-map behavior adapts [analogjs/analog#2506](https://github.com/analogjs/analog/pull/2506): production honors Vite's map setting, fast mode composes the final OXC/esbuild map, and the Compilation API retains its native inline map until Vite consumes it. Checked normalization preserves contents, extension fields, and URL roots; packed tests assert source file and line.
 - The supporting `platform` no-SSR repair reads the matched route-rule header before rendering. It is distinct from the compiler refactor and is not shipped by updating only `@analogjs/vite-plugin-angular`.
 
+## Completed qualification (6dea9aeff)
+
+Qualification uses compiler `6dea9aeff` and alpha `4225f4509`, Angular 22.0.0, TypeScript 6.0.2, Node 24.15.0, pnpm 10.33.0, and Chromium via Playwright 1.59.1. Linux host: AMD EPYC 7773X, 128 logical CPUs. [Machine-readable results and raw-file hashes](https://github.com/benpsnyder/analog/blob/refactor/effect-compiler-session/packages/vite-plugin-angular/qualification.json). Production comparisons use untouched alpha. Browser comparisons use alpha with only the missing Rolldown test-mode argument and the older-Vite FESM fallback-linker guard corrected; they are explicitly a compatibility-corrected control.
+
+### Production comparison
+
+Five fresh processes per side, alternating order; 20 standalone Angular components and three builds per process. Every build asserts 20 emitted component definitions. Warm time is the mean of builds two and three; tables show five-process medians [min, max]. Heap uses decimal MB and is sampled after explicit GC with all three closed plugin sets retained. No overall speedup is claimed.
+
+| Vite / mode   | Metric                              |            Untouched alpha |                Refactor | Change |
+| ------------- | ----------------------------------- | -------------------------: | ----------------------: | -----: |
+| 6.0.0 / ngtsc | Import                              |    877.7 [869.6, 889.1] ms | 712.0 [688.9, 727.5] ms | -18.9% |
+| 6.0.0 / ngtsc | Construct                           |    1.237 [1.190, 1.288] ms | 5.190 [5.175, 5.243] ms | 319.7% |
+| 6.0.0 / ngtsc | First build                         |   986.3 [950.5, 1029.2] ms | 962.7 [907.9, 995.7] ms |  -2.4% |
+| 6.0.0 / ngtsc | Warm build                          |    523.2 [518.9, 546.5] ms | 527.4 [459.0, 559.5] ms |   0.8% |
+| 6.0.0 / ngtsc | Heap after three closed plugin sets | 266.41 [266.40, 266.42] MB | 63.23 [63.20, 63.24] MB | -76.3% |
+| 6.0.0 / fast  | Import                              |    866.2 [854.6, 877.9] ms | 707.8 [692.4, 714.8] ms | -18.3% |
+| 6.0.0 / fast  | Construct                           |    1.199 [1.116, 1.423] ms | 5.214 [5.174, 6.197] ms | 335.0% |
+| 6.0.0 / fast  | First build                         |    306.0 [295.0, 322.3] ms | 336.1 [335.1, 345.6] ms |   9.8% |
+| 6.0.0 / fast  | Warm build                          |    145.1 [144.9, 150.1] ms | 172.6 [160.4, 177.0] ms |  18.9% |
+| 6.0.0 / fast  | Heap after three closed plugin sets |    59.38 [59.32, 59.39] MB | 55.69 [55.68, 55.69] MB |  -6.2% |
+| 8.2.2 / ngtsc | Import                              |    882.7 [875.3, 886.3] ms | 715.5 [699.8, 725.9] ms | -18.9% |
+| 8.2.2 / ngtsc | Construct                           |    1.213 [1.135, 1.473] ms | 4.987 [4.847, 5.125] ms | 311.1% |
+| 8.2.2 / ngtsc | First build                         |    810.4 [773.7, 846.9] ms | 859.1 [805.8, 921.4] ms |   6.0% |
+| 8.2.2 / ngtsc | Warm build                          |    476.7 [463.5, 486.6] ms | 529.1 [486.1, 544.5] ms |  11.0% |
+| 8.2.2 / ngtsc | Heap after three closed plugin sets | 263.19 [263.17, 263.22] MB | 60.21 [60.19, 60.21] MB | -77.1% |
+| 8.2.2 / fast  | Import                              |    884.7 [875.6, 889.2] ms | 723.1 [707.3, 737.1] ms | -18.3% |
+| 8.2.2 / fast  | Construct                           |    1.206 [1.192, 1.252] ms | 5.192 [5.110, 5.242] ms | 330.5% |
+| 8.2.2 / fast  | First build                         |    206.9 [206.3, 220.1] ms | 218.4 [214.6, 226.6] ms |   5.5% |
+| 8.2.2 / fast  | Warm build                          |    127.2 [125.4, 132.6] ms | 131.6 [127.6, 134.0] ms |   3.4% |
+| 8.2.2 / fast  | Heap after three closed plugin sets |    56.28 [56.26, 56.29] MB | 52.45 [52.45, 52.46] MB |  -6.8% |
+
+### Dependency and package cost
+
+The qualified tarball is **347,764 bytes (339.61 KiB)** versus untouched alpha **311,339 bytes (304.04 KiB)**. SHA-256: `cff8c1fcfdc0ac48b26fc258e779c01851e59936f1a0e1511dd44e386cf123ff`. This is a compiler-tarball increase; the earlier smaller 52c8825cf tarball remains historical evidence. Effect package-file contents total 47,533,320 bytes versus alpha es-toolkit's 4,231,890 bytes. Those totals are not incremental shared-pnpm-store allocation or download size. Effect loads in the Node compiler, while checked application/browser graphs exclude it.
+
+### Paired browser HMR and rendered SSR
+
+Five fresh processes per side on each Vite version; ten template/CSS edit pairs per process. All 30 processes passed: 150/150 candidate and 150/150 control template-state checks and rendered HTML/CSS checks. Latencies are file write → changed DOM/computed style. SSR time is module import plus Angular renderApplication, excluding the browser CSS assertion and HTTP transport. Each rendered document is checked in a fresh browser context, covering both linked control CSS and inline candidate CSS. Both paired sides use the same explicit SSR-module refresh policy; the native soak cases below do not use that helper. Each edit metric first averages the ten edits within a process, then reports the five-process median [min, max].
+
+| Vite  | Metric                     |    Corrected alpha control |                   Refactor | Change |
+| ----- | -------------------------- | -------------------------: | -------------------------: | -----: |
+| 6.0.0 | Template write → DOM       |    63.55 [59.89, 64.68] ms |  117.33 [99.49, 124.62] ms |  84.6% |
+| 6.0.0 | CSS write → computed style | 182.57 [162.67, 183.36] ms | 135.23 [103.09, 161.06] ms | -25.9% |
+| 6.0.0 | First rendered SSR         | 213.09 [208.77, 236.96] ms | 700.30 [618.88, 703.77] ms | 228.6% |
+| 6.0.0 | Rendered SSR after edits   |    32.62 [30.49, 39.26] ms |    19.18 [17.83, 21.58] ms | -41.2% |
+| 6.0.0 | Idle close                 |       1.72 [1.70, 1.78] ms |       2.64 [2.56, 2.77] ms |  53.5% |
+| 7.3.6 | Template write → DOM       |    78.82 [60.57, 91.61] ms | 111.23 [101.15, 131.71] ms |  41.1% |
+| 7.3.6 | CSS write → computed style |  125.72 [94.98, 148.25] ms | 147.51 [126.54, 152.66] ms |  17.3% |
+| 7.3.6 | First rendered SSR         | 233.65 [217.19, 235.77] ms | 655.10 [649.15, 719.52] ms | 180.4% |
+| 7.3.6 | Rendered SSR after edits   |    31.38 [27.58, 37.69] ms |    19.15 [17.47, 20.42] ms | -39.0% |
+| 7.3.6 | Idle close                 |       1.83 [1.81, 1.90] ms |       2.85 [2.76, 3.18] ms |  55.6% |
+| 8.2.2 | Template write → DOM       |    61.89 [57.89, 66.87] ms |    91.60 [84.52, 94.57] ms |  48.0% |
+| 8.2.2 | CSS write → computed style | 152.17 [147.95, 153.26] ms | 152.31 [149.40, 153.04] ms |   0.1% |
+| 8.2.2 | First rendered SSR         | 202.28 [186.22, 202.53] ms | 701.39 [693.97, 722.92] ms | 246.7% |
+| 8.2.2 | Rendered SSR after edits   |    36.63 [29.32, 38.53] ms |    18.64 [17.87, 20.53] ms | -49.1% |
+| 8.2.2 | Idle close                 |       1.91 [1.83, 2.39] ms |       2.79 [2.70, 2.86] ms |  45.6% |
+
+Untouched alpha failed startup in the original 5/5 runs because its positional argument incorrectly enabled test mode and omitted the Rolldown linker. The refactor fixes that handoff with named options. The original failures are preserved; the corrected control does not replace untouched-alpha evidence or attribute the startup repair to Effect alone.
+
+### Sustained edit, restart, and shutdown qualification
+
+Nine independent **15-minute, 100-component** processes cover ngtsc, fast, and Compilation API modes. Each performs 60 template/CSS edit pairs, checks every child in the browser and rendered SSR, restarts three times, and admits 100 compiler invalidations immediately before close. All **540 edit pairs, 27 restarts, and 900 admitted caller promises** passed. Template updates preserve the current counter; component-CSS full reloads intentionally reset browser state. The final cohort runs concurrently to qualify behavior and memory; its timings are not comparative performance benchmarks.
+
+| Vite / SSR loader | Mode  | Template + CSS edit pairs | Restarts | Queued callers drained |     Close |
+| ----------------- | ----- | ------------------------: | -------: | ---------------------: | --------: |
+| 6.0.0 / runner    | ngtsc |                        60 |        3 |              100 / 100 | 212.33 ms |
+| 6.0.0 / runner    | fast  |                        60 |        3 |              100 / 100 |   9.71 ms |
+| 6.0.0 / runner    | api   |                        60 |        3 |              100 / 100 | 645.86 ms |
+| 6.4.3 / compat    | ngtsc |                        60 |        3 |              100 / 100 | 214.59 ms |
+| 6.4.3 / compat    | fast  |                        60 |        3 |              100 / 100 |  10.10 ms |
+| 6.4.3 / compat    | api   |                        60 |        3 |              100 / 100 | 624.14 ms |
+| 8.2.2 / compat    | ngtsc |                        60 |        3 |              100 / 100 | 217.77 ms |
+| 8.2.2 / compat    | fast  |                        60 |        3 |              100 / 100 |  10.01 ms |
+| 8.2.2 / compat    | api   |                        60 |        3 |              100 / 100 | 637.84 ms |
+
+### Sustained Node memory
+
+RSS and heap use MiB (1,048,576 bytes). Kernel peak RSS is the Node process high-water mark; sampling runs once per second, with explicit-GC checkpoints after ten edits and each restart. The trajectory is ready → before compiler close → after close. Browser contexts are closed before the last two samples, and the closed server remains referenced. These measurements exclude Chromium and separate child processes. Whole-graph SSR reevaluation also produces Angular development-mode duplicate-component-ID warnings; browser page-error checks remain clean. The measurements expose retained growth; they do not establish zero retention, a fixed memory ceiling, or multi-hour leak freedom.
+
+| Vite  | Mode  | Kernel peak RSS (MiB) | RSS ready → before close → closed (MiB) | Heap ready → before close → closed (MiB) |
+| ----- | ----- | --------------------: | --------------------------------------: | ---------------------------------------: |
+| 6.0.0 | ngtsc |                 828.4 |                   641.3 → 825.2 → 803.8 |                    283.7 → 305.9 → 136.8 |
+| 6.0.0 | fast  |                 495.0 |                   413.0 → 459.8 → 458.8 |                    106.6 → 120.1 → 118.7 |
+| 6.0.0 | api   |                1197.0 |                  928.4 → 1059.0 → 928.7 |                    105.1 → 119.8 → 117.5 |
+| 6.4.3 | ngtsc |                 904.9 |                   629.7 → 902.4 → 876.7 |                    275.0 → 298.7 → 130.0 |
+| 6.4.3 | fast  |                 509.9 |                   394.7 → 463.1 → 462.1 |                     97.9 → 113.2 → 112.3 |
+| 6.4.3 | api   |                1216.0 |                  961.1 → 1072.7 → 941.2 |                     96.4 → 113.6 → 111.8 |
+| 8.2.2 | ngtsc |                1589.4 |                1198.6 → 1548.6 → 1541.8 |                    281.7 → 315.2 → 146.6 |
+| 8.2.2 | fast  |                1099.7 |                1045.6 → 1058.0 → 1053.6 |                    104.9 → 131.4 → 130.5 |
+| 8.2.2 | api   |                1802.0 |                1582.6 → 1667.7 → 1537.2 |                    103.0 → 129.2 → 127.3 |
+
+### Middleware shutdown
+
+All 12 additional SSR middleware cases passed: Vite 6.0.0 and 8.2.2 × three compiler modes × zero or 100 queued invalidations. Each imports a 20-component SSR module without opening an HTTP listener, closes the server, verifies every admitted caller settled, and exits. This qualifies the supported middleware host lifecycle. Earlier probes that transformed client modules on an unstarted non-middleware server remain excluded; they are not listening-server or middleware shutdown measurements.
+
+### Vite 6.0 legacy SSR boundary
+
+A plain-JavaScript reproduction **without Analog** confirms Vite 6.0.0 retains its legacy SSR runner across server.restart; a subsequent module load times out. Vite 6.4.3 passes that same reproduction. The 6.0 soak therefore uses Vite's [Environment Runner](https://vite.dev/guide/api-environment-frameworks#runnabledevenvironment); 6.4.3 and 8.2.2 use the legacy ssrLoadModule API. Hosts on 6.0 needing SSR restart must use the runner or upgrade within Vite 6. This is an upstream host limitation, not an unpaid Effect refactor fix.
+
+### Completed acceptance
+
+- [x] Browser file-write-to-DOM/CSS latency and template-state retention, paired on Vite 6/7/8.
+- [x] Rendered SSR HTML/CSS after edits, including whole-environment invalidation.
+- [x] Idle, queued, and middleware shutdown; all admitted caller promises drain.
+- [x] Sustained RSS/heap observations in nine 15-minute edit/restart processes.
+- [x] 924 compiler-package tests passed, with six existing skips; source/test typechecks, ESLint, build, and artifact validation passed.
+- [x] 13 installed consumer CI cells: 12 Linux Angular 17–22/Vite 6–8 cells plus Angular 22/Vite 8.2.2 on Windows. Expanded runtime cases cover 100 components, edits after restart, and queued close.
+
+The four previously unpaid categories are complete for this explicit protocol. Chromium, these fixtures/toolchains, and the stated duration bound the results. Warm-build regressions, independent SSR memory, prerelease-dependency acceptance, other browsers, and multi-hour behavior are not claimed away. Final GitHub checks are reverified after the documentation push.
+
+### Reproduction
+
+Use Node 24.15.0 and pnpm 10.33.0 for the Angular 22 measurements. Build and pack each revision separately with normal native dependency scripts enabled. Prepare matching installed consumers named `vite{6,7,8}-{control,candidate}` using Vite 6.0.0/7.3.6/8.2.2, plus `vite6-latest-candidate` on 6.4.3. Preserve the two control-only corrections described above and the tarball hashes.
+
+- `pnpm exec nx run vite-plugin-angular:build` builds and validates the package.
+- `node packages/vite-plugin-angular/scripts/compiler-vite-smoke.mjs --angular=22.0.0 --vite=8.2.2` prepares a fresh installed consumer and runs its full fixture. Select other matrix pins through the same CLI.
+- `node packages/vite-plugin-angular/scripts/compiler-qualification-suite.mjs --root=<prepared-consumers> --phase=paired` runs the 30 serial browser comparisons.
+- `node packages/vite-plugin-angular/scripts/compiler-qualification-suite.mjs --root=<prepared-consumers> --phase=soak` runs the nine 15-minute cases.
+- `node packages/vite-plugin-angular/scripts/compiler-benchmark.mjs --baseline=<untouched-alpha-consumer> --candidate=<candidate-consumer> --output=<report.json>` runs the production comparison. Set optional `ANALOG_PERF_FAST=1` for full fast mode, leave it unset for ngtsc.
+
+Keep comparative timing phases serial and separate from other local qualification jobs. Raw JSON/logs and packed consumers are retained locally; the committed summary retains per-process production/browser statistics, GC checkpoints, and raw-file SHA-256 digests. CI uploads the installed-consumer results and runtime failure diagnostics.
+
 ## Historical frozen measurements (`52c8825cf`)
 
 ### Provenance and method
@@ -175,7 +297,7 @@ under a sustained server. It does not attribute warm-build regressions to a
 specific internal cause. All raw machine-readable records are retained in
 `dist/effect-evidence/perf/results/` in the working checkout.
 
-## Verification and evidence boundaries
+## Historical verification and evidence boundaries (52c8825cf)
 
 - 911 compiler-package tests passed, with six existing skips. Source typecheck, test typecheck, package ESLint, compiler/builders build, and artifact checks passed.
 - All 12 installed consumer cells passed: Angular 17.3.12/18.2.14/19.0.0/20.0.0/20.1.0 on Node 20.19.5 and matching TypeScript; Angular 21.0.0 on Node 24.15.0/Vite 7.0.0; Angular 22.0.0 on Node 24.15.0 with Vite 6.0.0, 6.4.3, 7.0.0, 7.3.6, 8.0.0, and 8.2.2.
@@ -207,23 +329,10 @@ Template HMR retained the counter in **50/50** edits. Rendered SSR HTML and CSS 
 
 All five exact-alpha consumers failed before browser startup because `PlatformLocation` remained partially compiled without the Angular compiler available. That prevents a valid paired comparison for this follow-up; it is a package-level compatibility result, not proof that Effect alone fixes browser startup. No browser/SSR speedup is claimed.
 
-These observations supply bounded data for the four previously unpaid categories. Paired alpha comparisons, larger applications, longer memory soaks, and other browser/Vite versions remain unqualified. Raw data and the exact local harness are retained in `dist/effect-evidence/perf/` (`browser-supplement.json`, `browser-vite8-*.json`, and `shutdown-queued-*.json`).
+At that checkpoint the four categories had only bounded candidate observations. The completed qualification section above supersedes that coverage limit. Raw data and the exact local harness are retained in `dist/effect-evidence/perf/` (`browser-supplement.json`, `browser-vite8-*.json`, and `shutdown-queued-*.json`).
 
-A separate server-without-listen probe exited with an unsettled close on both revisions, including with zero queued compiler calls. Those probes are excluded from the listening-server shutdown table and remain an unqualified lifecycle case.
-
-## Unpaid qualification
-
-The completion pass adds a reproducible runtime qualification worker and suite. Its acceptance protocol is five paired ngtsc browser/SSR runs on Vite 6.0.0, 7.3.6, and 8.2.2; 100-component fixtures across ngtsc/fast/API modes; 15-minute edit/restart soaks at the Vite 6 and 8 endpoints; and idle/queued shutdown checks. The control is explicitly alpha plus the missing Rolldown test-mode argument and the older-Vite fallback-linker filter guard. Paired SSR runs apply the same explicit host refresh policy to both sides; candidate soak runs use native invalidation. Untouched alpha measurements remain historical evidence.
-
-Larger fixtures exposed two additional correctness fixes: Compilation API component CSS now uses a reload fallback to prevent an orphaned stale stylesheet link from overriding subsequent updates, and SSR resource invalidation clears cached modules immediately after queuing compilation so requests wait at the compiler read barrier. Ordinary global CSS continues through Vite's normal HMR path. These fixes are being qualified before closing the checklist below. CI also gains installed-consumer runtime coverage on Windows.
-
-- [ ] Browser websocket/DOM HMR latency, including state retention under timed edits.
-- [ ] Rendered SSR HTML/CSS after edits, including the cost of whole-environment invalidation.
-- [ ] Shutdown latency and resource release under measured workloads.
-- [ ] Peak/retained RSS of a sustained server, beyond these short process samples.
-
-The follow-up supplies bounded Vite 8 candidate data for these categories; paired alpha measurements and broader qualification remain incomplete. Keep these items open in [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). Investigate the reported regressions without weakening ownership or hiding failures. Re-run the packed protocol after any compiler change; a new documentation commit does not turn frozen measurements into measurements of different code.
+A separate server-without-listen probe exited with an unsettled close on both revisions, including with zero queued compiler calls. Those historical probes are excluded from the listening-server table; the completed middleware protocol above qualifies the supported host lifecycle.
 
 ## Attribution
 
-Compatibility attribution: public commits `5277af9f7547e95cc4cebaec9cb05085a23e8647`, `47ca5f2ac44a54c16f98f810d395357e5b6832e5`, and `b3482e5e06b474869cdc21e01ffb3267da35f267`. Source-map attribution: `ea55ddabd86c6160e4741ade9d5cb4096a791d35`. Prepared with OpenAI Codex. Grok independently reviewed the description and measurement protocol. Squash merge remains the recommendation.
+Compatibility attribution: public commits `5277af9f7547e95cc4cebaec9cb05085a23e8647`, `47ca5f2ac44a54c16f98f810d395357e5b6832e5`, and `b3482e5e06b474869cdc21e01ffb3267da35f267`. Source-map attribution: `ea55ddabd86c6160e4741ade9d5cb4096a791d35`. Prepared with OpenAI Codex. Grok independently reviewed the earlier description and frozen measurement protocol. Squash merge remains the recommendation.

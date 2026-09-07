@@ -47,7 +47,7 @@ for (let sample = 0; sample < 5; sample++) {
     console.log(`Completed ${name} sample ${sample + 1}/5`);
   }
 }
-for (const field of ['node', 'angular', 'typescript', 'vite'])
+for (const field of ['node', 'angular', 'typescript', 'vite', 'fastCompile'])
   assert.equal(
     records.baseline[0][field],
     records.candidate[0][field],

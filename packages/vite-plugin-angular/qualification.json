@@ -1,0 +1,2444 @@
+{
+  "candidate": {
+    "source": "6dea9aeffcf9d345e2b61031960511d508438f0a",
+    "tarball": "candidate-hmrids.tgz",
+    "sha256": "cff8c1fcfdc0ac48b26fc258e779c01851e59936f1a0e1511dd44e386cf123ff",
+    "bytes": 347764
+  },
+  "baseline": {
+    "source": "4225f45090a4cf4bdfb562a788e908787b6ec73c",
+    "productionTarSha256": "8e34dd1dff78cb638b3ce7fa8f83b77eda4d1b8d6469233fb54fe85d77988804",
+    "browserControlSha256": "d73159ba03a3834c3f837795426a36693ed23e379f06009e428f5c888d53137d",
+    "browserControlChanges": [
+      "Correct missing isTest positional argument in Rolldown dependency optimizer",
+      "Enforce FESM fallback-linker guard on Vite versions that ignore hook filters"
+    ]
+  },
+  "toolchain": {
+    "angular": "22.0.0",
+    "typescript": "6.0.2",
+    "node": "24.15.0",
+    "pnpm": "10.33.0",
+    "browser": "Chromium (Playwright 1.59.1)"
+  },
+  "production": [
+    {
+      "vite": "6.0.0",
+      "mode": "ngtsc",
+      "methodology": "Five fresh processes per revision, alternating order; 20 Angular components; three builds per process; explicit GC with all three plugin sets retained; warm filesystem and package caches; same machine and toolchain. No claim about peak RSS or production application latency.",
+      "metrics": {
+        "importMs": {
+          "baseline": 877.664968,
+          "candidate": 712.0482969999999,
+          "baselineRange": [869.5708400000001, 889.148135],
+          "candidateRange": [688.9166600000001, 727.465565],
+          "changePercent": -18.87014715619823
+        },
+        "importHeapBytes": {
+          "baseline": 45703080,
+          "candidate": 41100120,
+          "baselineRange": [45344624, 45741856],
+          "candidateRange": [40771648, 41119240],
+          "changePercent": -10.07144376265232
+        },
+        "constructMs": {
+          "baseline": 1.2365649999999277,
+          "candidate": 5.189870000000042,
+          "baselineRange": [1.1897969999999987, 1.288061999999968],
+          "candidateRange": [5.174702000000025, 5.242779000000041],
+          "changePercent": 319.70054141920116
+        },
+        "coldBuildMs": {
+          "baseline": 986.283962,
+          "candidate": 962.7433550000001,
+          "baselineRange": [950.4911649999999, 1029.207134],
+          "candidateRange": [907.8677100000001, 995.7133529999999],
+          "changePercent": -2.3867981136247973
+        },
+        "warmBuildMs": {
+          "baseline": 523.2292285000001,
+          "candidate": 527.4165470000003,
+          "baselineRange": [518.8858254999999, 546.5001409999999],
+          "candidateRange": [459.03222299999993, 559.4850180000001],
+          "changePercent": 0.8002837517323773
+        },
+        "retainedHeapBytes": {
+          "baseline": 266413088,
+          "candidate": 63229000,
+          "baselineRange": [266395192, 266417120],
+          "candidateRange": [63200208, 63244144],
+          "changePercent": -76.266556393806
+        },
+        "retainedHeapGrowthBytes": {
+          "baseline": 133950936,
+          "candidate": 1148528,
+          "baselineRange": [133940792, 133967896],
+          "candidateRange": [1126424, 1163528],
+          "changePercent": -99.14257560693716
+        }
+      },
+      "records": {
+        "baseline": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 876.697716,
+            "importHeapBytes": 45344624,
+            "importRssBytes": 170262528,
+            "buildMs": [986.283962, 548.1878340000001, 522.9893750000001],
+            "constructMs": [
+              1.2365649999999277, 0.2820400000000518, 0.38695800000004965
+            ],
+            "heapAfterClose": [132470440, 199711584, 266413568],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 889.148135,
+            "importHeapBytes": 45670464,
+            "importRssBytes": 166436864,
+            "buildMs": [
+              1023.1226340000001, 537.5243869999999, 508.93407000000025
+            ],
+            "constructMs": [
+              1.217529999999897, 0.4419709999999668, 0.3460810000001402
+            ],
+            "heapAfterClose": [132427296, 199663376, 266395192],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 877.664968,
+            "importHeapBytes": 45741856,
+            "importRssBytes": 168087552,
+            "buildMs": [1029.207134, 551.5638389999997, 541.436443],
+            "constructMs": [
+              1.288061999999968, 0.2775219999998626, 0.3793639999998959
+            ],
+            "heapAfterClose": [132476328, 199721272, 266417120],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 878.2902690000001,
+            "importHeapBytes": 45709952,
+            "importRssBytes": 170504192,
+            "buildMs": [
+              969.3519360000001, 537.0998750000001, 504.95887200000016
+            ],
+            "constructMs": [
+              1.2679150000000163, 0.23811699999987468, 0.3934300000000803
+            ],
+            "heapAfterClose": [132446768, 199681936, 266397704],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 869.5708400000001,
+            "importHeapBytes": 45703080,
+            "importRssBytes": 167124992,
+            "buildMs": [
+              950.4911649999999, 522.9917419999999, 514.7799089999999
+            ],
+            "constructMs": [
+              1.1897969999999987, 0.26180299999987255, 0.39346999999997934
+            ],
+            "heapAfterClose": [132449688, 199703536, 266413088],
+            "retainedPluginSets": 3
+          }
+        ],
+        "candidate": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 712.0482969999999,
+            "importHeapBytes": 40771648,
+            "importRssBytes": 169762816,
+            "buildMs": [995.7133529999999, 563.440276, 518.4728009999999],
+            "constructMs": [
+              5.188027000000034, 0.7474259999999049, 0.7582860000002256
+            ],
+            "heapAfterClose": [62064208, 62643312, 63227736],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 716.474519,
+            "importHeapBytes": 41100120,
+            "importRssBytes": 170409984,
+            "buildMs": [907.8677100000001, 464.52621, 453.53823599999987],
+            "constructMs": [
+              5.174702000000025, 0.5322110000001885, 0.5583999999998923
+            ],
+            "heapAfterClose": [62073784, 62648448, 63200208],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 727.465565,
+            "importHeapBytes": 41097112,
+            "importRssBytes": 177483776,
+            "buildMs": [956.803442, 519.9175650000002, 534.9155290000003],
+            "constructMs": [
+              5.242779000000041, 0.6555129999999281, 0.7330090000000382
+            ],
+            "heapAfterClose": [62083192, 62656160, 63229000],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 688.9166600000001,
+            "importHeapBytes": 41119240,
+            "importRssBytes": 174170112,
+            "buildMs": [975.458111, 539.9879970000002, 578.982039],
+            "constructMs": [
+              5.189870000000042, 0.6753700000001572, 0.6594700000000557
+            ],
+            "heapAfterClose": [62081680, 62667832, 63230208],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": false,
+            "importMs": 708.0368920000001,
+            "importHeapBytes": 41117648,
+            "importRssBytes": 170926080,
+            "buildMs": [
+              962.7433550000001, 550.0899410000002, 493.03702999999996
+            ],
+            "constructMs": [
+              5.210027999999966, 0.6582680000001346, 0.7417550000000119
+            ],
+            "heapAfterClose": [62084944, 62667624, 63244144],
+            "retainedPluginSets": 3
+          }
+        ]
+      }
+    },
+    {
+      "vite": "6.0.0",
+      "mode": "fast",
+      "methodology": "Five fresh processes per revision, alternating order; 20 Angular components; three builds per process; explicit GC with all three plugin sets retained; warm filesystem and package caches; same machine and toolchain. No claim about peak RSS or production application latency.",
+      "metrics": {
+        "importMs": {
+          "baseline": 866.197198,
+          "candidate": 707.814277,
+          "baselineRange": [854.6347079999999, 877.863915],
+          "candidateRange": [692.449504, 714.780923],
+          "changePercent": -18.28485723178246
+        },
+        "importHeapBytes": {
+          "baseline": 45708008,
+          "candidate": 41121728,
+          "baselineRange": [45674112, 45722592],
+          "candidateRange": [41100160, 41129336],
+          "changePercent": -10.033865400566134
+        },
+        "constructMs": {
+          "baseline": 1.1988149999999678,
+          "candidate": 5.214416000000028,
+          "baselineRange": [1.115607999999952, 1.4228359999999611],
+          "candidateRange": [5.174150999999938, 6.196622999999931],
+          "changePercent": 334.96419380806617
+        },
+        "coldBuildMs": {
+          "baseline": 305.98449200000005,
+          "candidate": 336.06035099999997,
+          "baselineRange": [294.9966390000001, 322.27227200000016],
+          "candidateRange": [335.06302500000004, 345.573935],
+          "changePercent": 9.829210233308137
+        },
+        "warmBuildMs": {
+          "baseline": 145.0885834999999,
+          "candidate": 172.57840899999997,
+          "baselineRange": [144.93628650000005, 150.13584000000003],
+          "candidateRange": [160.41218949999995, 177.02322249999997],
+          "changePercent": 18.94692527617107
+        },
+        "retainedHeapBytes": {
+          "baseline": 59375496,
+          "candidate": 55685872,
+          "baselineRange": [59323096, 59388184],
+          "candidateRange": [55683696, 55689960],
+          "changePercent": -6.21405166872206
+        },
+        "retainedHeapGrowthBytes": {
+          "baseline": 406840,
+          "candidate": 566664,
+          "baselineRange": [402016, 412088],
+          "candidateRange": [562984, 571088],
+          "changePercent": 39.2842395044735
+        }
+      },
+      "records": {
+        "baseline": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 854.6347079999999,
+            "importHeapBytes": 45708664,
+            "importRssBytes": 168009728,
+            "buildMs": [298.0666140000001, 152.284942, 137.59359399999994],
+            "constructMs": [
+              1.1496620000000348, 0.2733140000000276, 0.23190599999998085
+            ],
+            "heapAfterClose": [58981344, 59127344, 59388184],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 875.6377130000001,
+            "importHeapBytes": 45674112,
+            "importRssBytes": 164937728,
+            "buildMs": [
+              314.69431199999997, 145.42995099999985, 144.74721599999998
+            ],
+            "constructMs": [
+              1.1988149999999678, 0.27892500000007203, 0.4325129999999717
+            ],
+            "heapAfterClose": [58914600, 59059296, 59323096],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 866.197198,
+            "importHeapBytes": 45706840,
+            "importRssBytes": 173129728,
+            "buildMs": [
+              294.9966390000001, 147.88776200000007, 141.98481100000004
+            ],
+            "constructMs": [
+              1.4228359999999611, 0.24987999999984822, 0.23345900000003894
+            ],
+            "heapAfterClose": [58973024, 59118216, 59375496],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 857.393721,
+            "importHeapBytes": 45722592,
+            "importRssBytes": 172847104,
+            "buildMs": [305.98449200000005, 156.22880800000007, 144.042872],
+            "constructMs": [
+              1.115607999999952, 0.43515800000000127, 0.29524500000002263
+            ],
+            "heapAfterClose": [58972488, 59118400, 59374504],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 877.863915,
+            "importHeapBytes": 45708008,
+            "importRssBytes": 174538752,
+            "buildMs": [
+              322.27227200000016, 156.25127999999995, 141.82049199999983
+            ],
+            "constructMs": [
+              1.2344719999999825, 0.263445000000047, 0.20840199999997822
+            ],
+            "heapAfterClose": [58967416, 59116216, 59379504],
+            "retainedPluginSets": 3
+          }
+        ],
+        "candidate": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 714.780923,
+            "importHeapBytes": 41100160,
+            "importRssBytes": 167215104,
+            "buildMs": [335.233329, 171.9875239999999, 163.80166899999995],
+            "constructMs": [
+              5.302060999999981, 0.7611210000000028, 0.5886370000000625
+            ],
+            "heapAfterClose": [55119112, 55333656, 55685776],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 695.9109060000001,
+            "importHeapBytes": 41117856,
+            "importRssBytes": 172060672,
+            "buildMs": [345.573935, 183.25313000000006, 164.10205399999995],
+            "constructMs": [
+              6.196622999999931, 0.7305140000000847, 0.5657439999999951
+            ],
+            "heapAfterClose": [55120712, 55331952, 55683696],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 707.898056,
+            "importHeapBytes": 41129336,
+            "importRssBytes": 171663360,
+            "buildMs": [339.14501300000006, 175.720102, 169.43671599999993],
+            "constructMs": [
+              5.198495999999977, 0.7114980000001196, 0.5886169999998856
+            ],
+            "heapAfterClose": [55120528, 55340728, 55685872],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 692.449504,
+            "importHeapBytes": 41121728,
+            "importRssBytes": 167542784,
+            "buildMs": [
+              336.06035099999997, 173.52183800000012, 147.3025409999998
+            ],
+            "constructMs": [
+              5.174150999999938, 0.6965299999999388, 0.5789480000000822
+            ],
+            "heapAfterClose": [55120608, 55336632, 55688824],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "6.0.0",
+            "fastCompile": true,
+            "importMs": 707.814277,
+            "importHeapBytes": 41123104,
+            "importRssBytes": 165752832,
+            "buildMs": [
+              335.06302500000004, 187.4929709999999, 166.55347400000005
+            ],
+            "constructMs": [
+              5.214416000000028, 0.591752999999926, 0.5010319999998956
+            ],
+            "heapAfterClose": [55118872, 55338840, 55689960],
+            "retainedPluginSets": 3
+          }
+        ]
+      }
+    },
+    {
+      "vite": "8.2.2",
+      "mode": "ngtsc",
+      "methodology": "Five fresh processes per revision, alternating order; 20 Angular components; three builds per process; explicit GC with all three plugin sets retained; warm filesystem and package caches; same machine and toolchain. No claim about peak RSS or production application latency.",
+      "metrics": {
+        "importMs": {
+          "baseline": 882.709491,
+          "candidate": 715.459616,
+          "baselineRange": [875.285154, 886.292103],
+          "candidateRange": [699.780074, 725.8549409999999],
+          "changePercent": -18.947329410781194
+        },
+        "importHeapBytes": {
+          "baseline": 47070456,
+          "candidate": 42503520,
+          "baselineRange": [46722456, 47101848],
+          "candidateRange": [42473864, 42504616],
+          "changePercent": -9.702340678407705
+        },
+        "constructMs": {
+          "baseline": 1.212900999999988,
+          "candidate": 4.986717999999996,
+          "baselineRange": [1.135214000000019, 1.4727690000000848],
+          "candidateRange": [4.846783999999957, 5.125057999999967],
+          "changePercent": 311.1397385277154
+        },
+        "coldBuildMs": {
+          "baseline": 810.4381209999999,
+          "candidate": 859.074099,
+          "baselineRange": [773.7210970000001, 846.866982],
+          "candidateRange": [805.7898919999999, 921.376814],
+          "changePercent": 6.001195740889901
+        },
+        "warmBuildMs": {
+          "baseline": 476.71571400000016,
+          "candidate": 529.131779,
+          "baselineRange": [463.53025449999996, 486.61903499999994],
+          "candidateRange": [486.13578399999983, 544.4663245],
+          "changePercent": 10.995245900369014
+        },
+        "retainedHeapBytes": {
+          "baseline": 263187184,
+          "candidate": 60205584,
+          "baselineRange": [263165528, 263224768],
+          "candidateRange": [60193896, 60214640],
+          "changePercent": -77.12442411329573
+        },
+        "retainedHeapGrowthBytes": {
+          "baseline": 134105832,
+          "candidate": 1277800,
+          "baselineRange": [134083056, 134110408],
+          "candidateRange": [1269800, 1287832],
+          "changePercent": -99.04717044669616
+        }
+      },
+      "records": {
+        "baseline": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 875.285154,
+            "importHeapBytes": 47101848,
+            "importRssBytes": 164392960,
+            "buildMs": [846.866982, 515.7814269999999, 457.456643],
+            "constructMs": [
+              1.2406029999999646, 0.21611600000005637, 0.24890800000002855
+            ],
+            "heapAfterClose": [129118936, 196475056, 263224768],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 881.452789,
+            "importHeapBytes": 47091792,
+            "importRssBytes": 165244928,
+            "buildMs": [
+              810.4381209999999, 512.8448720000001, 440.5865560000002
+            ],
+            "constructMs": [
+              1.4727690000000848, 0.22332000000005792, 0.26776299999983166
+            ],
+            "heapAfterClose": [129102296, 196444432, 263185352],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 882.709491,
+            "importHeapBytes": 47064392,
+            "importRssBytes": 165003264,
+            "buildMs": [783.494081, 504.47857699999986, 462.5628120000001],
+            "constructMs": [
+              1.135214000000019, 0.2260150000001886, 0.2632450000000972
+            ],
+            "heapAfterClose": [129086416, 196454880, 263196824],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 886.292103,
+            "importHeapBytes": 47070456,
+            "importRssBytes": 169984000,
+            "buildMs": [843.768626, 472.503514, 454.5569949999999],
+            "constructMs": [
+              1.205646999999999, 0.20742999999993117, 0.26846500000010565
+            ],
+            "heapAfterClose": [129075952, 196452392, 263165528],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 885.469464,
+            "importHeapBytes": 46722456,
+            "importRssBytes": 162549760,
+            "buildMs": [
+              773.7210970000001, 481.39141700000005, 449.03533100000004
+            ],
+            "constructMs": [
+              1.212900999999988, 0.2363949999999022, 0.23251699999991615
+            ],
+            "heapAfterClose": [129077488, 196444960, 263187184],
+            "retainedPluginSets": 3
+          }
+        ],
+        "candidate": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 725.8549409999999,
+            "importHeapBytes": 42503664,
+            "importRssBytes": 172855296,
+            "buildMs": [866.218542, 492.6285660000001, 484.07146299999977],
+            "constructMs": [
+              5.125057999999967, 0.5841089999998985, 0.5774260000002869
+            ],
+            "heapAfterClose": [58927784, 59616776, 60205584],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 699.780074,
+            "importHeapBytes": 42473864,
+            "importRssBytes": 166166528,
+            "buildMs": [825.241041, 476.3908879999999, 495.88067999999976],
+            "constructMs": [
+              4.95279400000004, 0.504088000000138, 0.6694890000003397
+            ],
+            "heapAfterClose": [58932632, 59623712, 60214512],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 720.057103,
+            "importHeapBytes": 42503432,
+            "importRssBytes": 172838912,
+            "buildMs": [921.376814, 506.4013520000001, 563.6702599999999],
+            "constructMs": [
+              4.986717999999996, 0.597293000000036, 0.6054279999998471
+            ],
+            "heapAfterClose": [58926808, 59633208, 60214640],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 715.459616,
+            "importHeapBytes": 42503520,
+            "importRssBytes": 169996288,
+            "buildMs": [859.074099, 553.67923, 535.2534190000001],
+            "constructMs": [
+              5.062781000000086, 0.6594099999999798, 0.5945079999996778
+            ],
+            "heapAfterClose": [58927768, 59622752, 60204264],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": false,
+            "importMs": 705.637802,
+            "importHeapBytes": 42504616,
+            "importRssBytes": 172294144,
+            "buildMs": [
+              805.7898919999999, 531.4213799999998, 526.8421780000003
+            ],
+            "constructMs": [
+              4.846783999999957, 0.6868019999999433, 0.6069210000000567
+            ],
+            "heapAfterClose": [58924096, 59612328, 60193896],
+            "retainedPluginSets": 3
+          }
+        ]
+      }
+    },
+    {
+      "vite": "8.2.2",
+      "mode": "fast",
+      "methodology": "Five fresh processes per revision, alternating order; 20 Angular components; three builds per process; explicit GC with all three plugin sets retained; warm filesystem and package caches; same machine and toolchain. No claim about peak RSS or production application latency.",
+      "metrics": {
+        "importMs": {
+          "baseline": 884.7265500000001,
+          "candidate": 723.067343,
+          "baselineRange": [875.6318709999999, 889.188393],
+          "candidateRange": [707.296329, 737.065552],
+          "changePercent": -18.27222286931482
+        },
+        "importHeapBytes": {
+          "baseline": 47067144,
+          "candidate": 42503392,
+          "baselineRange": [47062760, 47078504],
+          "candidateRange": [42152160, 42503728],
+          "changePercent": -9.696258604516135
+        },
+        "constructMs": {
+          "baseline": 1.2060069999999996,
+          "candidate": 5.191702999999961,
+          "baselineRange": [1.1916310000000294, 1.2521050000000287],
+          "candidateRange": [5.109508000000005, 5.2418879999999035],
+          "changePercent": 330.4869706394708
+        },
+        "coldBuildMs": {
+          "baseline": 206.943125,
+          "candidate": 218.39397900000006,
+          "baselineRange": [206.28283299999998, 220.116938],
+          "candidateRange": [214.56106, 226.60046],
+          "changePercent": 5.533333856826628
+        },
+        "warmBuildMs": {
+          "baseline": 127.20077100000003,
+          "candidate": 131.5618675,
+          "baselineRange": [125.38366400000007, 132.57156049999992],
+          "candidateRange": [127.55127900000002, 134.02601600000003],
+          "changePercent": 3.4285142029524116
+        },
+        "retainedHeapBytes": {
+          "baseline": 56278536,
+          "candidate": 52452992,
+          "baselineRange": [56255520, 56290784],
+          "candidateRange": [52449496, 52457272],
+          "changePercent": -6.79751868456564
+        },
+        "retainedHeapGrowthBytes": {
+          "baseline": 627944,
+          "candidate": 769632,
+          "baselineRange": [621152, 645744],
+          "candidateRange": [765488, 789200],
+          "changePercent": 22.563795497687693
+        }
+      },
+      "records": {
+        "baseline": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 875.6318709999999,
+            "importHeapBytes": 47067144,
+            "importRssBytes": 169623552,
+            "buildMs": [209.903051, 130.36270200000013, 121.59269999999992],
+            "constructMs": [
+              1.1916310000000294, 0.32087400000000343, 0.22039399999994203
+            ],
+            "heapAfterClose": [55662840, 55987192, 56290784],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 889.188393,
+            "importHeapBytes": 47067608,
+            "importRssBytes": 169771008,
+            "buildMs": [206.943125, 128.20418300000006, 122.56314500000008],
+            "constructMs": [
+              1.1951080000000047, 0.2596579999999449, 0.22638600000004772
+            ],
+            "heapAfterClose": [55653776, 55973184, 56277848],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 882.0778909999999,
+            "importHeapBytes": 47078504,
+            "importRssBytes": 170696704,
+            "buildMs": [
+              206.67233599999997, 127.8782900000001, 126.52325199999996
+            ],
+            "constructMs": [
+              1.248658999999975, 0.27988600000003316, 0.3043319999999312
+            ],
+            "heapAfterClose": [55652488, 55973336, 56282672],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 884.7265500000001,
+            "importHeapBytes": 47064224,
+            "importRssBytes": 168329216,
+            "buildMs": [
+              206.28283299999998, 134.03649100000007, 126.65871599999991
+            ],
+            "constructMs": [
+              1.2060069999999996, 0.29183899999998175, 0.281880000000001
+            ],
+            "heapAfterClose": [55632792, 55952176, 56278536],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 888.8522379999999,
+            "importHeapBytes": 47062760,
+            "importRssBytes": 168570880,
+            "buildMs": [220.116938, 135.23436300000003, 129.9087579999998],
+            "constructMs": [
+              1.2521050000000287, 0.24571199999991222, 0.2598190000001068
+            ],
+            "heapAfterClose": [55634368, 55951552, 56255520],
+            "retainedPluginSets": 3
+          }
+        ],
+        "candidate": [
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 737.065552,
+            "importHeapBytes": 42502176,
+            "importRssBytes": 170901504,
+            "buildMs": [
+              221.28631799999994, 134.16918099999998, 133.80609700000014
+            ],
+            "constructMs": [
+              5.160084000000097, 0.5800609999998869, 0.6685270000000401
+            ],
+            "heapAfterClose": [51684824, 52086640, 52454456],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 707.296329,
+            "importHeapBytes": 42152160,
+            "importRssBytes": 170618880,
+            "buildMs": [
+              218.39397900000006, 134.99602600000014, 128.12770899999987
+            ],
+            "constructMs": [
+              5.230215999999928, 0.637348999999972, 0.5682879999999386
+            ],
+            "heapAfterClose": [51663792, 52064384, 52452992],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 715.721912,
+            "importHeapBytes": 42503392,
+            "importRssBytes": 172707840,
+            "buildMs": [214.56106, 129.9110330000001, 126.76344300000005],
+            "constructMs": [
+              5.2418879999999035, 0.5451550000000225, 0.5104100000000926
+            ],
+            "heapAfterClose": [51683216, 52090272, 52449496],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 723.175157,
+            "importHeapBytes": 42503480,
+            "importRssBytes": 169803776,
+            "buildMs": [216.349063, 135.10036200000013, 132.95166999999992],
+            "constructMs": [
+              5.109508000000005, 0.6075530000000526, 0.5609749999998712
+            ],
+            "heapAfterClose": [51684184, 52084360, 52449672],
+            "retainedPluginSets": 3
+          },
+          {
+            "node": "v24.15.0",
+            "angular": "22.0.0",
+            "typescript": "6.0.2",
+            "vite": "8.2.2",
+            "fastCompile": true,
+            "importMs": 723.067343,
+            "importHeapBytes": 42503728,
+            "importRssBytes": 169545728,
+            "buildMs": [226.60046, 128.15707300000008, 126.94548499999996],
+            "constructMs": [
+              5.191702999999961, 0.6022319999999581, 0.5193370000001778
+            ],
+            "heapAfterClose": [51683256, 52083696, 52457272],
+            "retainedPluginSets": 3
+          }
+        ]
+      }
+    }
+  ],
+  "paired": [
+    {
+      "vite": "6.0.0",
+      "sides": {
+        "control": [
+          {
+            "sample": 0,
+            "vite": "6.0.0",
+            "templateMs": 63.54830409999995,
+            "stylesheetMs": 179.16027170000007,
+            "initialSsrMs": 210.84247199999982,
+            "updatedSsrMs": 31.402418599999965,
+            "shutdownMs": 1.7386190000006536,
+            "kernelPeakRssBytes": 655847424
+          },
+          {
+            "sample": 1,
+            "vite": "6.0.0",
+            "templateMs": 61.99596609999999,
+            "stylesheetMs": 162.66555570000008,
+            "initialSsrMs": 224.83685400000013,
+            "updatedSsrMs": 30.494941299999844,
+            "shutdownMs": 1.7810389999995095,
+            "kernelPeakRssBytes": 652177408
+          },
+          {
+            "sample": 2,
+            "vite": "6.0.0",
+            "templateMs": 64.6799809000001,
+            "stylesheetMs": 182.56622520000002,
+            "initialSsrMs": 208.7675790000003,
+            "updatedSsrMs": 32.62011790000015,
+            "shutdownMs": 1.6975420000007944,
+            "kernelPeakRssBytes": 646213632
+          },
+          {
+            "sample": 3,
+            "vite": "6.0.0",
+            "templateMs": 59.887145300000064,
+            "stylesheetMs": 182.97163119999988,
+            "initialSsrMs": 236.95634100000007,
+            "updatedSsrMs": 37.92235340000006,
+            "shutdownMs": 1.7088130000011006,
+            "kernelPeakRssBytes": 651218944
+          },
+          {
+            "sample": 4,
+            "vite": "6.0.0",
+            "templateMs": 64.26218700000008,
+            "stylesheetMs": 183.35771640000013,
+            "initialSsrMs": 213.0939440000002,
+            "updatedSsrMs": 39.262163500000135,
+            "shutdownMs": 1.7223790000007284,
+            "kernelPeakRssBytes": 651444224
+          }
+        ],
+        "candidate": [
+          {
+            "sample": 0,
+            "vite": "6.0.0",
+            "templateMs": 99.49311860000003,
+            "stylesheetMs": 161.06110290000007,
+            "initialSsrMs": 702.2279360000002,
+            "updatedSsrMs": 18.86796309999995,
+            "shutdownMs": 2.6442219999998997,
+            "kernelPeakRssBytes": 730013696
+          },
+          {
+            "sample": 1,
+            "vite": "6.0.0",
+            "templateMs": 115.8232146999998,
+            "stylesheetMs": 135.23215070000006,
+            "initialSsrMs": 700.3037680000002,
+            "updatedSsrMs": 17.82666790000003,
+            "shutdownMs": 2.5857120000000577,
+            "kernelPeakRssBytes": 746008576
+          },
+          {
+            "sample": 2,
+            "vite": "6.0.0",
+            "templateMs": 124.61787949999989,
+            "stylesheetMs": 137.00526940000003,
+            "initialSsrMs": 618.88366,
+            "updatedSsrMs": 20.60808909999978,
+            "shutdownMs": 2.6863210000001345,
+            "kernelPeakRssBytes": 788234240
+          },
+          {
+            "sample": 3,
+            "vite": "6.0.0",
+            "templateMs": 119.37970150000005,
+            "stylesheetMs": 103.08987190000002,
+            "initialSsrMs": 703.7696029999997,
+            "updatedSsrMs": 19.180216000000065,
+            "shutdownMs": 2.5607150000005277,
+            "kernelPeakRssBytes": 783060992
+          },
+          {
+            "sample": 4,
+            "vite": "6.0.0",
+            "templateMs": 117.33374560000016,
+            "stylesheetMs": 121.6627703,
+            "initialSsrMs": 697.029841,
+            "updatedSsrMs": 21.579662499999994,
+            "shutdownMs": 2.772493000000395,
+            "kernelPeakRssBytes": 772554752
+          }
+        ]
+      }
+    },
+    {
+      "vite": "7.3.6",
+      "sides": {
+        "control": [
+          {
+            "sample": 0,
+            "vite": "7.3.6",
+            "templateMs": 79.18689490000006,
+            "stylesheetMs": 125.72082420000007,
+            "initialSsrMs": 235.77244500000006,
+            "updatedSsrMs": 37.692406099999786,
+            "shutdownMs": 1.895673999999417,
+            "kernelPeakRssBytes": 625668096
+          },
+          {
+            "sample": 1,
+            "vite": "7.3.6",
+            "templateMs": 61.38606829999999,
+            "stylesheetMs": 148.25004580000004,
+            "initialSsrMs": 222.572005,
+            "updatedSsrMs": 31.382515199999943,
+            "shutdownMs": 1.8423539999994318,
+            "kernelPeakRssBytes": 580952064
+          },
+          {
+            "sample": 2,
+            "vite": "7.3.6",
+            "templateMs": 60.57086459999982,
+            "stylesheetMs": 144.9972507999999,
+            "initialSsrMs": 217.1923999999999,
+            "updatedSsrMs": 27.584136999999828,
+            "shutdownMs": 1.834248999999545,
+            "kernelPeakRssBytes": 593227776
+          },
+          {
+            "sample": 3,
+            "vite": "7.3.6",
+            "templateMs": 91.61168440000002,
+            "stylesheetMs": 94.9800755000002,
+            "initialSsrMs": 233.65105499999981,
+            "updatedSsrMs": 30.799806399999852,
+            "shutdownMs": 1.8248320000002423,
+            "kernelPeakRssBytes": 628092928
+          },
+          {
+            "sample": 4,
+            "vite": "7.3.6",
+            "templateMs": 78.82493590000027,
+            "stylesheetMs": 123.15411279999998,
+            "initialSsrMs": 233.89099299999998,
+            "updatedSsrMs": 32.13547329999979,
+            "shutdownMs": 1.805554999999913,
+            "kernelPeakRssBytes": 620449792
+          }
+        ],
+        "candidate": [
+          {
+            "sample": 0,
+            "vite": "7.3.6",
+            "templateMs": 103.62981420000033,
+            "stylesheetMs": 149.79763969999993,
+            "initialSsrMs": 719.5230530000003,
+            "updatedSsrMs": 19.154609999999956,
+            "shutdownMs": 2.7579860000005283,
+            "kernelPeakRssBytes": 767176704
+          },
+          {
+            "sample": 1,
+            "vite": "7.3.6",
+            "templateMs": 131.71146579999987,
+            "stylesheetMs": 152.65879250000006,
+            "initialSsrMs": 650.7548529999999,
+            "updatedSsrMs": 17.471890899999927,
+            "shutdownMs": 2.8145320000003267,
+            "kernelPeakRssBytes": 750563328
+          },
+          {
+            "sample": 2,
+            "vite": "7.3.6",
+            "templateMs": 111.23235939999991,
+            "stylesheetMs": 146.23392109999986,
+            "initialSsrMs": 655.0991409999997,
+            "updatedSsrMs": 17.916600199999994,
+            "shutdownMs": 3.1838159999997515,
+            "kernelPeakRssBytes": 745943040
+          },
+          {
+            "sample": 3,
+            "vite": "7.3.6",
+            "templateMs": 113.4029046000001,
+            "stylesheetMs": 147.5061454000003,
+            "initialSsrMs": 669.3329840000001,
+            "updatedSsrMs": 20.131510600000183,
+            "shutdownMs": 2.9099420000002283,
+            "kernelPeakRssBytes": 745787392
+          },
+          {
+            "sample": 4,
+            "vite": "7.3.6",
+            "templateMs": 101.1514376000001,
+            "stylesheetMs": 126.54258759999998,
+            "initialSsrMs": 649.153503,
+            "updatedSsrMs": 20.415921499999875,
+            "shutdownMs": 2.853866999999809,
+            "kernelPeakRssBytes": 746827776
+          }
+        ]
+      }
+    },
+    {
+      "vite": "8.2.2",
+      "sides": {
+        "control": [
+          {
+            "sample": 0,
+            "vite": "8.2.2",
+            "templateMs": 61.71504630000013,
+            "stylesheetMs": 151.37224769999995,
+            "initialSsrMs": 189.80940699999974,
+            "updatedSsrMs": 33.68943519999998,
+            "shutdownMs": 1.9136490000000776,
+            "kernelPeakRssBytes": 1235779584
+          },
+          {
+            "sample": 1,
+            "vite": "8.2.2",
+            "templateMs": 63.71184419999986,
+            "stylesheetMs": 153.25643179999992,
+            "initialSsrMs": 202.31295799999998,
+            "updatedSsrMs": 37.30467669999998,
+            "shutdownMs": 2.3903659999996307,
+            "kernelPeakRssBytes": 1256103936
+          },
+          {
+            "sample": 2,
+            "vite": "8.2.2",
+            "templateMs": 66.8737392,
+            "stylesheetMs": 152.16565660000006,
+            "initialSsrMs": 202.53056700000025,
+            "updatedSsrMs": 36.62853800000012,
+            "shutdownMs": 1.918587999999545,
+            "kernelPeakRssBytes": 1227288576
+          },
+          {
+            "sample": 3,
+            "vite": "8.2.2",
+            "templateMs": 57.89214009999996,
+            "stylesheetMs": 147.95192939999998,
+            "initialSsrMs": 202.2773870000001,
+            "updatedSsrMs": 29.3247929000001,
+            "shutdownMs": 1.833889000000454,
+            "kernelPeakRssBytes": 1227890688
+          },
+          {
+            "sample": 4,
+            "vite": "8.2.2",
+            "templateMs": 61.89145999999996,
+            "stylesheetMs": 153.18004609999988,
+            "initialSsrMs": 186.22350499999993,
+            "updatedSsrMs": 38.53028479999989,
+            "shutdownMs": 1.8269350000000486,
+            "kernelPeakRssBytes": 1244098560
+          }
+        ],
+        "candidate": [
+          {
+            "sample": 0,
+            "vite": "8.2.2",
+            "templateMs": 91.59723260000024,
+            "stylesheetMs": 150.22330229999983,
+            "initialSsrMs": 693.974408,
+            "updatedSsrMs": 20.53386819999987,
+            "shutdownMs": 2.6967320000003383,
+            "kernelPeakRssBytes": 1282572288
+          },
+          {
+            "sample": 1,
+            "vite": "8.2.2",
+            "templateMs": 91.83447459999988,
+            "stylesheetMs": 152.3058317999998,
+            "initialSsrMs": 710.5941600000001,
+            "updatedSsrMs": 18.6380396999999,
+            "shutdownMs": 2.827006000000438,
+            "kernelPeakRssBytes": 1297006592
+          },
+          {
+            "sample": 2,
+            "vite": "8.2.2",
+            "templateMs": 90.08362110000016,
+            "stylesheetMs": 152.49906870000004,
+            "initialSsrMs": 698.0115049999999,
+            "updatedSsrMs": 20.03092000000006,
+            "shutdownMs": 2.7871219999997265,
+            "kernelPeakRssBytes": 1309188096
+          },
+          {
+            "sample": 3,
+            "vite": "8.2.2",
+            "templateMs": 84.51853000000014,
+            "stylesheetMs": 149.39545890000005,
+            "initialSsrMs": 722.9229,
+            "updatedSsrMs": 18.040224900000247,
+            "shutdownMs": 2.862944999999854,
+            "kernelPeakRssBytes": 1293578240
+          },
+          {
+            "sample": 4,
+            "vite": "8.2.2",
+            "templateMs": 94.57174740000028,
+            "stylesheetMs": 153.0394685999999,
+            "initialSsrMs": 701.3879890000003,
+            "updatedSsrMs": 17.871799000000056,
+            "shutdownMs": 2.74632500000007,
+            "kernelPeakRssBytes": 1289183232
+          }
+        ]
+      }
+    }
+  ],
+  "soaks": [
+    {
+      "vite": "6.0.0",
+      "mode": "ngtsc",
+      "ssrLoader": "runner",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 2760.607551999972
+        },
+        {
+          "revision": 40,
+          "ms": 2632.527489
+        },
+        {
+          "revision": 60,
+          "ms": 2600.133339999942
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 212.33169800008181,
+      "actualWindowMs": 899999.7938659999,
+      "kernelPeakRssBytes": 868659200,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 4121.405624,
+          "rss": 672428032,
+          "heapTotal": 512626688,
+          "heapUsed": 297466336,
+          "external": 44857531,
+          "arrayBuffers": 856126
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 140395.454014,
+          "rss": 775659520,
+          "heapTotal": 556343296,
+          "heapUsed": 317432680,
+          "external": 42637514,
+          "arrayBuffers": 856230
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 293130.607895,
+          "rss": 846249984,
+          "heapTotal": 530767872,
+          "heapUsed": 313800760,
+          "external": 44874638,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 440527.42489,
+          "rss": 849596416,
+          "heapTotal": 575488000,
+          "heapUsed": 324793352,
+          "external": 42530782,
+          "arrayBuffers": 856231
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 592932.766286,
+          "rss": 852926464,
+          "heapTotal": 527568896,
+          "heapUsed": 321679240,
+          "external": 42485138,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 740423.868477,
+          "rss": 854962176,
+          "heapTotal": 542142464,
+          "heapUsed": 332445408,
+          "external": 42355482,
+          "arrayBuffers": 856231
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 892996.9772910001,
+          "rss": 865300480,
+          "heapTotal": 536166400,
+          "heapUsed": 329025872,
+          "external": 42518865,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 904266.767411,
+          "rss": 865300480,
+          "heapTotal": 378355712,
+          "heapUsed": 320778704,
+          "external": 42344999,
+          "arrayBuffers": 856097
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 904539.808471,
+          "rss": 842866688,
+          "heapTotal": 324100096,
+          "heapUsed": 143468272,
+          "external": 32719519,
+          "arrayBuffers": 856097
+        }
+      ]
+    },
+    {
+      "vite": "6.0.0",
+      "mode": "fast",
+      "ssrLoader": "runner",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 2199.468047000002
+        },
+        {
+          "revision": 40,
+          "ms": 2141.865229999996
+        },
+        {
+          "revision": 60,
+          "ms": 2123.169242999982
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 9.711790999979712,
+      "actualWindowMs": 899999.910583,
+      "kernelPeakRssBytes": 519036928,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 2855.994346,
+          "rss": 433111040,
+          "heapTotal": 273072128,
+          "heapUsed": 111739984,
+          "external": 37420563,
+          "arrayBuffers": 2674421
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 138452.982765,
+          "rss": 448323584,
+          "heapTotal": 236068864,
+          "heapUsed": 112887016,
+          "external": 34877003,
+          "arrayBuffers": 2010769
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 290618.003853,
+          "rss": 459665408,
+          "heapTotal": 286191616,
+          "heapUsed": 118098688,
+          "external": 34390477,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 438448.610017,
+          "rss": 462204928,
+          "heapTotal": 280055808,
+          "heapUsed": 118190736,
+          "external": 36954878,
+          "arrayBuffers": 3427167
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 590560.3849739999,
+          "rss": 474292224,
+          "heapTotal": 292691968,
+          "heapUsed": 124120888,
+          "external": 36968367,
+          "arrayBuffers": 952413
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 738431.9494019999,
+          "rss": 469028864,
+          "heapTotal": 287080448,
+          "heapUsed": 123393488,
+          "external": 37415881,
+          "arrayBuffers": 4175559
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 890577.179163,
+          "rss": 482185216,
+          "heapTotal": 298668032,
+          "heapUsed": 129385568,
+          "external": 37163453,
+          "arrayBuffers": 3477667
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 902936.794927,
+          "rss": 482185216,
+          "heapTotal": 148459520,
+          "heapUsed": 125951024,
+          "external": 32947597,
+          "arrayBuffers": 878658
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 902985.9730069999,
+          "rss": 481116160,
+          "heapTotal": 150294528,
+          "heapUsed": 124448136,
+          "external": 32719519,
+          "arrayBuffers": 856097
+        }
+      ]
+    },
+    {
+      "vite": "6.0.0",
+      "mode": "api",
+      "ssrLoader": "runner",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 3950.6508159999503
+        },
+        {
+          "revision": 40,
+          "ms": 3838.987461000099
+        },
+        {
+          "revision": 60,
+          "ms": 3943.128037999966
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 645.864610999939,
+      "actualWindowMs": 899999.820559,
+      "kernelPeakRssBytes": 1255145472,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 4939.590653,
+          "rss": 973512704,
+          "heapTotal": 253935616,
+          "heapUsed": 110231184,
+          "external": 36597992,
+          "arrayBuffers": 2206245
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 140878.688724,
+          "rss": 1186111488,
+          "heapTotal": 267001856,
+          "heapUsed": 111578864,
+          "external": 33382856,
+          "arrayBuffers": 848310
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 294728.767926,
+          "rss": 1221111808,
+          "heapTotal": 272760832,
+          "heapUsed": 117360616,
+          "external": 35298083,
+          "arrayBuffers": 2348184
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 440791.64236,
+          "rss": 1214951424,
+          "heapTotal": 220286976,
+          "heapUsed": 117378032,
+          "external": 33898246,
+          "arrayBuffers": 924247
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 594540.912348,
+          "rss": 1233494016,
+          "heapTotal": 278798336,
+          "heapUsed": 123732216,
+          "external": 36596191,
+          "arrayBuffers": 3219110
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 740796.6895260001,
+          "rss": 1231212544,
+          "heapTotal": 191660032,
+          "heapUsed": 124265192,
+          "external": 33172518,
+          "arrayBuffers": 848311
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 894655.666347,
+          "rss": 1232306176,
+          "heapTotal": 289492992,
+          "heapUsed": 129805888,
+          "external": 34918742,
+          "arrayBuffers": 1317178
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 905032.392936,
+          "rss": 1110425600,
+          "heapTotal": 148459520,
+          "heapUsed": 125578952,
+          "external": 32939206,
+          "arrayBuffers": 847937
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 905730.451988,
+          "rss": 973770752,
+          "heapTotal": 153702400,
+          "heapUsed": 123165312,
+          "external": 32712384,
+          "arrayBuffers": 847905
+        }
+      ]
+    },
+    {
+      "vite": "6.4.3",
+      "mode": "ngtsc",
+      "ssrLoader": "compat",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 2812.212839999993
+        },
+        {
+          "revision": 40,
+          "ms": 2543.5228910000296
+        },
+        {
+          "revision": 60,
+          "ms": 2507.9479940000456
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 214.59099599998444,
+      "actualWindowMs": 900000.5993290001,
+      "kernelPeakRssBytes": 948834304,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 4162.389826,
+          "rss": 660336640,
+          "heapTotal": 503762944,
+          "heapUsed": 288342128,
+          "external": 44213636,
+          "arrayBuffers": 856126
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 140555.567662,
+          "rss": 783941632,
+          "heapTotal": 542498816,
+          "heapUsed": 308299568,
+          "external": 42139816,
+          "arrayBuffers": 856230
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 293293.892119,
+          "rss": 923013120,
+          "heapTotal": 502763520,
+          "heapUsed": 305204944,
+          "external": 42828600,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 440655.364148,
+          "rss": 928681984,
+          "heapTotal": 570552320,
+          "heapUsed": 316385936,
+          "external": 41997394,
+          "arrayBuffers": 856231
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 592944.726622,
+          "rss": 932388864,
+          "heapTotal": 520269824,
+          "heapUsed": 313534720,
+          "external": 42070134,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 740465.336648,
+          "rss": 935837696,
+          "heapTotal": 536940544,
+          "heapUsed": 324496424,
+          "external": 44376311,
+          "arrayBuffers": 2644749
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 893045.957437,
+          "rss": 946208768,
+          "heapTotal": 527290368,
+          "heapUsed": 321478528,
+          "external": 42050852,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 904302.345607,
+          "rss": 946208768,
+          "heapTotal": 369217536,
+          "heapUsed": 313162464,
+          "external": 42160771,
+          "arrayBuffers": 874854
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 904578.147437,
+          "rss": 919281664,
+          "heapTotal": 308408320,
+          "heapUsed": 136293208,
+          "external": 32537115,
+          "arrayBuffers": 856097
+        }
+      ]
+    },
+    {
+      "vite": "6.4.3",
+      "mode": "fast",
+      "ssrLoader": "compat",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 2198.5706600000267
+        },
+        {
+          "revision": 40,
+          "ms": 2141.0692130000098
+        },
+        {
+          "revision": 60,
+          "ms": 2131.6050650000107
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 10.096294000046328,
+      "actualWindowMs": 900000.955377,
+      "kernelPeakRssBytes": 534716416,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 2766.8130300000003,
+          "rss": 413880320,
+          "heapTotal": 267354112,
+          "heapUsed": 102636592,
+          "external": 35307428,
+          "arrayBuffers": 856126
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 138327.076585,
+          "rss": 430235648,
+          "heapTotal": 268361728,
+          "heapUsed": 103921352,
+          "external": 32856129,
+          "arrayBuffers": 856251
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 290573.81133299996,
+          "rss": 447643648,
+          "heapTotal": 274378752,
+          "heapUsed": 109445488,
+          "external": 36118788,
+          "arrayBuffers": 856128
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 438368.49794699997,
+          "rss": 439537664,
+          "heapTotal": 273022976,
+          "heapUsed": 109475328,
+          "external": 34893622,
+          "arrayBuffers": 1980330
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 590545.844634,
+          "rss": 483495936,
+          "heapTotal": 302956544,
+          "heapUsed": 116297272,
+          "external": 34490663,
+          "arrayBuffers": 1464371
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 738341.63877,
+          "rss": 472940544,
+          "heapTotal": 281354240,
+          "heapUsed": 115852072,
+          "external": 36225152,
+          "arrayBuffers": 3162919
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 890482.8068949999,
+          "rss": 491819008,
+          "heapTotal": 281141248,
+          "heapUsed": 122142696,
+          "external": 34563066,
+          "arrayBuffers": 2376810
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 902841.589172,
+          "rss": 485646336,
+          "heapTotal": 145350656,
+          "heapUsed": 118686256,
+          "external": 32765070,
+          "arrayBuffers": 878658
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 902895.705156,
+          "rss": 484593664,
+          "heapTotal": 145350656,
+          "heapUsed": 117798416,
+          "external": 32537115,
+          "arrayBuffers": 856097
+        }
+      ]
+    },
+    {
+      "vite": "6.4.3",
+      "mode": "api",
+      "ssrLoader": "compat",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 3948.4571509999805
+        },
+        {
+          "revision": 40,
+          "ms": 3794.2330270000966
+        },
+        {
+          "revision": 60,
+          "ms": 3902.7295060000615
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 624.144861000008,
+      "actualWindowMs": 899999.292984,
+      "kernelPeakRssBytes": 1275043840,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 5139.537122000001,
+          "rss": 1007833088,
+          "heapTotal": 247169024,
+          "heapUsed": 101041896,
+          "external": 34855339,
+          "arrayBuffers": 847966
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 141070.677116,
+          "rss": 1201803264,
+          "heapTotal": 256303104,
+          "heapUsed": 102212104,
+          "external": 33081765,
+          "arrayBuffers": 848310
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 294869.526105,
+          "rss": 1207377920,
+          "heapTotal": 268873728,
+          "heapUsed": 109395632,
+          "external": 34124122,
+          "arrayBuffers": 847968
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 440993.262988,
+          "rss": 1234714624,
+          "heapTotal": 266469376,
+          "heapUsed": 109116024,
+          "external": 33654394,
+          "arrayBuffers": 1584667
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 594662.126509,
+          "rss": 1232371712,
+          "heapTotal": 267567104,
+          "heapUsed": 115981536,
+          "external": 34336127,
+          "arrayBuffers": 847968
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 740940.323641,
+          "rss": 1233350656,
+          "heapTotal": 268509184,
+          "heapUsed": 116390872,
+          "external": 34634612,
+          "arrayBuffers": 1594233
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 894772.898726,
+          "rss": 1253015552,
+          "heapTotal": 281665536,
+          "heapUsed": 123425328,
+          "external": 35729934,
+          "arrayBuffers": 2741607
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 905214.7289989999,
+          "rss": 1124855808,
+          "heapTotal": 141942784,
+          "heapUsed": 119139464,
+          "external": 32756182,
+          "arrayBuffers": 847937
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 905886.781842,
+          "rss": 986910720,
+          "heapTotal": 147972096,
+          "heapUsed": 117209128,
+          "external": 32529980,
+          "arrayBuffers": 847905
+        }
+      ]
+    },
+    {
+      "vite": "8.2.2",
+      "mode": "ngtsc",
+      "ssrLoader": "compat",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 3288.1463140000124
+        },
+        {
+          "revision": 40,
+          "ms": 3028.0135570000857
+        },
+        {
+          "revision": 60,
+          "ms": 3153.4180029999698
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 217.77363999991212,
+      "actualWindowMs": 900000.264934,
+      "kernelPeakRssBytes": 1666637824,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 4075.1174589999996,
+          "rss": 1256873984,
+          "heapTotal": 453296128,
+          "heapUsed": 295365464,
+          "external": 57227853,
+          "arrayBuffers": 144520
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 140353.87760100001,
+          "rss": 1613520896,
+          "heapTotal": 503992320,
+          "heapUsed": 312522112,
+          "external": 54207661,
+          "arrayBuffers": 144624
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 293525.62482100003,
+          "rss": 1636257792,
+          "heapTotal": 471719936,
+          "heapUsed": 315041856,
+          "external": 55465805,
+          "arrayBuffers": 144522
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 440349.023797,
+          "rss": 1641594880,
+          "heapTotal": 619565056,
+          "heapUsed": 324326144,
+          "external": 55162958,
+          "arrayBuffers": 700590
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 593285.456797,
+          "rss": 1650212864,
+          "heapTotal": 486629376,
+          "heapUsed": 327305240,
+          "external": 55205541,
+          "arrayBuffers": 322381
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 740267.521499,
+          "rss": 1651445760,
+          "heapTotal": 634736640,
+          "heapUsed": 336341016,
+          "external": 54796097,
+          "arrayBuffers": 146953
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 893456.355005,
+          "rss": 1624920064,
+          "heapTotal": 549773312,
+          "heapUsed": 338452224,
+          "external": 55476168,
+          "arrayBuffers": 144522
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 904227.624113,
+          "rss": 1623797760,
+          "heapTotal": 391176192,
+          "heapUsed": 330517744,
+          "external": 53916756,
+          "arrayBuffers": 144491
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 904508.115652,
+          "rss": 1616736256,
+          "heapTotal": 330891264,
+          "heapUsed": 153711760,
+          "external": 44304593,
+          "arrayBuffers": 144491
+        }
+      ]
+    },
+    {
+      "vite": "8.2.2",
+      "mode": "fast",
+      "ssrLoader": "compat",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 2253.8282360000303
+        },
+        {
+          "revision": 40,
+          "ms": 2169.988711999962
+        },
+        {
+          "revision": 60,
+          "ms": 2146.078168999986
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 10.013228000025265,
+      "actualWindowMs": 900000.623962,
+      "kernelPeakRssBytes": 1153105920,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 2807.964526,
+          "rss": 1096380416,
+          "heapTotal": 287404032,
+          "heapUsed": 109968328,
+          "external": 46536533,
+          "arrayBuffers": 144520
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 138349.63235899998,
+          "rss": 1058611200,
+          "heapTotal": 267018240,
+          "heapUsed": 109856472,
+          "external": 45085952,
+          "arrayBuffers": 145050
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 290614.350883,
+          "rss": 1087684608,
+          "heapTotal": 296288256,
+          "heapUsed": 120882056,
+          "external": 45447854,
+          "arrayBuffers": 144522
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 438330.253211,
+          "rss": 1076473856,
+          "heapTotal": 284291072,
+          "heapUsed": 121940208,
+          "external": 44573541,
+          "arrayBuffers": 145051
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 590495.348382,
+          "rss": 1107763200,
+          "heapTotal": 303132672,
+          "heapUsed": 131149776,
+          "external": 46493828,
+          "arrayBuffers": 144522
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 738305.921277,
+          "rss": 1091915776,
+          "heapTotal": 290545664,
+          "heapUsed": 128862880,
+          "external": 45615615,
+          "arrayBuffers": 145051
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 890420.276927,
+          "rss": 1109405696,
+          "heapTotal": 309915648,
+          "heapUsed": 141153440,
+          "external": 45145465,
+          "arrayBuffers": 144522
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 902879.503069,
+          "rss": 1109405696,
+          "heapTotal": 163901440,
+          "heapUsed": 137825736,
+          "external": 44520333,
+          "arrayBuffers": 144491
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 902932.106439,
+          "rss": 1104769024,
+          "heapTotal": 165736448,
+          "heapUsed": 136826152,
+          "external": 44304593,
+          "arrayBuffers": 144491
+        }
+      ]
+    },
+    {
+      "vite": "8.2.2",
+      "mode": "api",
+      "ssrLoader": "compat",
+      "components": 100,
+      "edits": 60,
+      "restarts": [
+        {
+          "revision": 20,
+          "ms": 4133.8538100000005
+        },
+        {
+          "revision": 40,
+          "ms": 3939.980671999976
+        },
+        {
+          "revision": 60,
+          "ms": 3897.2109900000505
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "shutdownMs": 637.8360040000407,
+      "actualWindowMs": 900000.206401,
+      "kernelPeakRssBytes": 1889517568,
+      "gc": [
+        {
+          "stage": "ready-gc",
+          "elapsedMs": 4976.24981,
+          "rss": 1659441152,
+          "heapTotal": 253849600,
+          "heapUsed": 107953016,
+          "external": 46782438,
+          "arrayBuffers": 136360
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 140959.252778,
+          "rss": 1834786816,
+          "heapTotal": 247095296,
+          "heapUsed": 107203112,
+          "external": 47805898,
+          "arrayBuffers": 136704
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 294925.684053,
+          "rss": 1860124672,
+          "heapTotal": 251461632,
+          "heapUsed": 118816080,
+          "external": 44508998,
+          "arrayBuffers": 136362
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 440767.058339,
+          "rss": 1866289152,
+          "heapTotal": 272752640,
+          "heapUsed": 117334136,
+          "external": 45576417,
+          "arrayBuffers": 233368
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 594692.588245,
+          "rss": 1872711680,
+          "heapTotal": 252801024,
+          "heapUsed": 129194184,
+          "external": 46043452,
+          "arrayBuffers": 136362
+        },
+        {
+          "stage": "checkpoint-gc",
+          "elapsedMs": 740808.581822,
+          "rss": 1879912448,
+          "heapTotal": 286089216,
+          "heapUsed": 128035336,
+          "external": 45000404,
+          "arrayBuffers": 136705
+        },
+        {
+          "stage": "restart-gc",
+          "elapsedMs": 894644.38588,
+          "rss": 1874616320,
+          "heapTotal": 276361216,
+          "heapUsed": 139669336,
+          "external": 44996857,
+          "arrayBuffers": 476137
+        },
+        {
+          "stage": "before-close-gc",
+          "elapsedMs": 905052.013352,
+          "rss": 1748733952,
+          "heapTotal": 157609984,
+          "heapUsed": 135438584,
+          "external": 44512109,
+          "arrayBuffers": 136331
+        },
+        {
+          "stage": "after-close-gc",
+          "elapsedMs": 905736.8774829999,
+          "rss": 1611907072,
+          "heapTotal": 164950016,
+          "heapUsed": 133435104,
+          "external": 44296401,
+          "arrayBuffers": 136299
+        }
+      ]
+    }
+  ],
+  "middleware": [
+    {
+      "vite": 6,
+      "mode": "ngtsc",
+      "sample": 0,
+      "callers": 0,
+      "settledAtClose": 0,
+      "settledAfterClose": 0,
+      "shutdownMs": 3.0574300000000676
+    },
+    {
+      "vite": 6,
+      "mode": "ngtsc",
+      "sample": 1,
+      "callers": 100,
+      "settledAtClose": 0,
+      "settledAfterClose": 100,
+      "shutdownMs": 113.79562299999998
+    },
+    {
+      "vite": 6,
+      "mode": "fast",
+      "sample": 2,
+      "callers": 0,
+      "settledAtClose": 0,
+      "settledAfterClose": 0,
+      "shutdownMs": 76.69045600000004
+    },
+    {
+      "vite": 6,
+      "mode": "fast",
+      "sample": 3,
+      "callers": 100,
+      "settledAtClose": 0,
+      "settledAfterClose": 100,
+      "shutdownMs": 95.82833600000004
+    },
+    {
+      "vite": 6,
+      "mode": "api",
+      "sample": 4,
+      "callers": 0,
+      "settledAtClose": 0,
+      "settledAfterClose": 0,
+      "shutdownMs": 82.26748399999997
+    },
+    {
+      "vite": 6,
+      "mode": "api",
+      "sample": 5,
+      "callers": 100,
+      "settledAtClose": 0,
+      "settledAfterClose": 100,
+      "shutdownMs": 193.40151100000003
+    },
+    {
+      "vite": 8,
+      "mode": "ngtsc",
+      "sample": 6,
+      "callers": 0,
+      "settledAtClose": 0,
+      "settledAfterClose": 0,
+      "shutdownMs": 6.911837000000105
+    },
+    {
+      "vite": 8,
+      "mode": "ngtsc",
+      "sample": 7,
+      "callers": 100,
+      "settledAtClose": 0,
+      "settledAfterClose": 100,
+      "shutdownMs": 125.16876899999988
+    },
+    {
+      "vite": 8,
+      "mode": "fast",
+      "sample": 8,
+      "callers": 0,
+      "settledAtClose": 0,
+      "settledAfterClose": 0,
+      "shutdownMs": 13.135972000000038
+    },
+    {
+      "vite": 8,
+      "mode": "fast",
+      "sample": 9,
+      "callers": 100,
+      "settledAtClose": 0,
+      "settledAfterClose": 100,
+      "shutdownMs": 86.38819199999989
+    },
+    {
+      "vite": 8,
+      "mode": "api",
+      "sample": 10,
+      "callers": 0,
+      "settledAtClose": 0,
+      "settledAfterClose": 0,
+      "shutdownMs": 84.32668600000034
+    },
+    {
+      "vite": 8,
+      "mode": "api",
+      "sample": 11,
+      "callers": 100,
+      "settledAtClose": 0,
+      "settledAfterClose": 100,
+      "shutdownMs": 186.54405399999996
+    }
+  ],
+  "rawSha256": {
+    "production-final-vite6-ngtsc.json": "80547838803016ddf99a8e25b1a5756e71f2dce227597aa513fe9f2e1137f001",
+    "production-final-vite6-fast.json": "66e8d1b9bf99cc025da727633b7ce22a9f9ebf8854abeba81d3df53dfe998f84",
+    "production-final-vite8-ngtsc.json": "afa3764849b1b9d5da4be266bf2c437970786a570d2f36690220dc2044b09437",
+    "production-final-vite8-fast.json": "87f8bfa7150e98b047de6930413f518b39b330718e2aa36b06b4a047cc6d05b5",
+    "paired-vite6-control-ngtsc-0.json": "9a7967b4a9ab364319177cef00781a641a9e7e819f63267aab6317a882d8d05f",
+    "paired-vite6-control-ngtsc-1.json": "66419065522c6eb149edf498d50c767898f0944df84077afcdb18eed48c208e4",
+    "paired-vite6-control-ngtsc-2.json": "deeface209306fa57f2563866d2d2043ca110d69e3c55c55e9834b405cff077a",
+    "paired-vite6-control-ngtsc-3.json": "7471a61a5821cd89db2d56d780df6745db1ba01f1a17f7c8f17fe1586df4d60a",
+    "paired-vite6-control-ngtsc-4.json": "33864072779d3b09efd076174faf65ba48f3eef1889eaf4ddd36fc9ff9e6aedb",
+    "paired-vite6-candidate-ngtsc-0.json": "0e639504675a58276363a1d8d27143a028a49c7036760860b9e443f0c2a6f418",
+    "paired-vite6-candidate-ngtsc-1.json": "3a034abccc830d2422fe6a2f0e7738cadeca10c9d295106d459dc1a966256484",
+    "paired-vite6-candidate-ngtsc-2.json": "7d336f7720628df1a48f4eb5ad39f20bf54af26056c382d19773199e9d85d81d",
+    "paired-vite6-candidate-ngtsc-3.json": "573884f4287942ae23575877cc93d20287ea0f4ccd82a9c6d005cb0406f02c9d",
+    "paired-vite6-candidate-ngtsc-4.json": "090205bfcb610e23d021d06c8ff11822e659ca7dfb29aa3983b38958a7888872",
+    "paired-vite7-control-ngtsc-0.json": "41f59a1f6d31f29f8495b2567a124e21eb3026f34021c444539cf63f58d70c99",
+    "paired-vite7-control-ngtsc-1.json": "4b2a8d0c548121d04be5ac90557f9f6504ceb07ba7bf363c1ec5fdd96f935c42",
+    "paired-vite7-control-ngtsc-2.json": "a324a928accb32111eb86f713424c6d05568acc97de3defe28eb9a41d5737d6d",
+    "paired-vite7-control-ngtsc-3.json": "e918047e95e8b7ff83ba8cf16f80ea70060985fc03d8157a321012c16cc1629a",
+    "paired-vite7-control-ngtsc-4.json": "0eac5d268ce5797806bf58fa06e5709805d388abf8139ca21ff4ddcbc7959cc5",
+    "paired-vite7-candidate-ngtsc-0.json": "dc91713b3494a85cc2a9914a7d8b2d25fe1c5d187914f692b781e7a533821929",
+    "paired-vite7-candidate-ngtsc-1.json": "98dee11c3ad681a21d4c8febe8c5f4bbfc92027aa32dfac4755aa16a833c8000",
+    "paired-vite7-candidate-ngtsc-2.json": "9a75a7fe52fe9a67cd1b5744d1815f42d603120dba2549429950ec667e65d938",
+    "paired-vite7-candidate-ngtsc-3.json": "c16559928ce35935b653ce11e122dbada095848ce1a5cd723fa85bd25b435fa8",
+    "paired-vite7-candidate-ngtsc-4.json": "5302d9c603289c8b23da2605c83b3032ab99dd000d7d44e7da2b3fac9032ae18",
+    "paired-vite8-control-ngtsc-0.json": "69df687bc03469c08c1e4f4662cd5e4a23df54a1c22e70408488d2dff55cc3e6",
+    "paired-vite8-control-ngtsc-1.json": "a638411dfdef6c2322f1a4d350e599ef275d09800adad21eda7a06abed723132",
+    "paired-vite8-control-ngtsc-2.json": "03cb9c0755698251d903a5288d407a7341e01d572563265924a73efc8928fba8",
+    "paired-vite8-control-ngtsc-3.json": "c1af7a7a08a1bfc8eb5b1b3a299ee8ef8dfe5a33c36ad9c18ae0e26cc0b68e56",
+    "paired-vite8-control-ngtsc-4.json": "7048d398c7e586614c7b1f4aa86a26f700ab527997c3befdcb0d4c5c91e573d1",
+    "paired-vite8-candidate-ngtsc-0.json": "45438199af6399f481d8263706b00a0803c9b7167744a9a92e07c2ed7a872f72",
+    "paired-vite8-candidate-ngtsc-1.json": "bdbd0b5e1ff838348330c64a932e5d4f8aeb6c9c2e1d5ce18114d1a67a43b510",
+    "paired-vite8-candidate-ngtsc-2.json": "f6e152cdb558bf3d1792f23df836b1ed03a88cb747c20a2e362d607b7b209f86",
+    "paired-vite8-candidate-ngtsc-3.json": "a428bd7a51dd72451a8d421b87824aa6e16d11f5ae78801cb545762226328771",
+    "paired-vite8-candidate-ngtsc-4.json": "8a774233cfb64d2047a51a5617516e1bb5f61ef02632d4c7402aa1ccc517005a",
+    "soak-vite6-candidate-ngtsc-0.json": "fa792b230f2437bacbf6e052e9cb93205fc12ec0a83397d9a190b61bd8bf5b94",
+    "soak-vite6-candidate-fast-0.json": "c5ac3eb58bda05ed8ea03adc0f23d013ad1b916d5362c4038b712ec97026f40d",
+    "soak-vite6-candidate-api-0.json": "97985bcb559db8aea54504d1d9f16cb06265a61d6f555f3ea4db92dcec287ac2",
+    "soak-vite6-latest-candidate-ngtsc-0.json": "6cf6c0a7004224eb19cb358978c14c985951237961334c9ebb0f8fd7c7abd622",
+    "soak-vite6-latest-candidate-fast-0.json": "41e5e698c3325f63946e00cb7cf2a9ead4103f87560485b4d2f88911c208b728",
+    "soak-vite6-latest-candidate-api-0.json": "263519be4db968f5c1cd1b504f2662779b8e76a7516a67a84e25e1919ad5014d",
+    "soak-vite8-candidate-ngtsc-0.json": "233c97fc604c9bee320d5edc6de78cdb6797744e5fb805d5cc115a25dc3dbffd",
+    "soak-vite8-candidate-fast-0.json": "888214114f38b0fde970e2f827d20b6a6004eef0dd1f5a3da23a51f61278289d",
+    "soak-vite8-candidate-api-0.json": "72677c89b274efddfbaf6e15925a23f35eef6a6fd65a08a94d74a5648b368f92",
+    "middleware-ssr-vite6-ngtsc-0.json": "5214843e1505d26036ab191c7be0dd37b31e66ecb587db7a300dbaaf9be66209",
+    "middleware-ssr-vite6-ngtsc-100.json": "27e4d7f9e13ba7b0c5bfea7dfc349cfba4c56b9336d90bb4ed9d915ddafa4e10",
+    "middleware-ssr-vite6-fast-0.json": "01bef2da2b6435f5de52813d7b94a6d345d8473a522bc8390beb2616b57eb99f",
+    "middleware-ssr-vite6-fast-100.json": "0b1b3411b426ab9c1c95886f4de79676a73ff241943e072a820fc294820925b7",
+    "middleware-ssr-vite6-api-0.json": "011130e8b7dc47b5296e3d03e6c79c7e8b4f84edfc77194ba5f5db41c13d7cf7",
+    "middleware-ssr-vite6-api-100.json": "90be45dd342ff93f19494b79299ffbf663c446e7fbc564be660073976bc22ae9",
+    "middleware-ssr-vite8-ngtsc-0.json": "8315b9d91416b29dc14641db5e34b38e5c6c3918df921a2dc012573635c6ba74",
+    "middleware-ssr-vite8-ngtsc-100.json": "eb073f1ae79b1cb7686d4b57b0159642648687633496e57b0fe6110cb3eb9184",
+    "middleware-ssr-vite8-fast-0.json": "b443204a0f9c11ce26ac41ec2bdc1fcf23a4d3f1fd794f31cb286ca6ba0eb315",
+    "middleware-ssr-vite8-fast-100.json": "e64088fcd0f4601ebfef2362de3cceab3f235b8a2139465ed01c99c8bce2fc92",
+    "middleware-ssr-vite8-api-0.json": "d669aa828411899c101d22c4f0a06c0d0c7918dd853c31bb253b695db75678b8",
+    "middleware-ssr-vite8-api-100.json": "3c4f9ecafe7b8df818544a88fbf1e551595198bdc7cf31180706eaca7f8ca50f",
+    "native-vite6-restart.json": "ca34d7a2c001f502dfae1d7c71a6a44b09c7dcde23ae06db21c0e0f20d3508c6",
+    "native-vite6-latest-restart.json": "620f766bdce404df960b542009d49d549a3937e1d28defdd28ee7f2c1ed332d3"
+  },
+  "nativeSsrRestart": [
+    {
+      "vite": "6.0.0",
+      "angularPlugin": false,
+      "expectedValue": 1,
+      "observedValue": null,
+      "passed": false,
+      "failure": "Legacy SSR runner transport timed out after 60000 ms after restart"
+    },
+    {
+      "vite": "6.4.3",
+      "angularPlugin": false,
+      "expectedValue": 1,
+      "observedValue": 1,
+      "passed": true
+    }
+  ]
+}
