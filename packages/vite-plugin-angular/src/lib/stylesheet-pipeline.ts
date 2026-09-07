@@ -24,11 +24,12 @@ export class StylesheetFailure extends Data.TaggedError('StylesheetFailure')<{
   readonly message: string;
 }> {}
 
-function failure(
+export function stylesheetFailure(
   phase: StylesheetFailure['phase'],
   file: string,
   cause: unknown,
 ): StylesheetFailure {
+  if (cause instanceof StylesheetFailure) return cause;
   return new StylesheetFailure({
     phase,
     file,
@@ -69,7 +70,7 @@ export const transformStylesheet: (
           ...identity,
           inline: !resourceFile,
         }),
-      catch: (cause) => failure('preprocess', file, cause),
+      catch: (cause) => stylesheetFailure('preprocess', file, cause),
     });
     const registry = request.registry;
     if (registry) {
@@ -80,7 +81,7 @@ export const transformStylesheet: (
             ...identity,
             inlineStylesExtension: request.inlineStylesExtension,
           }),
-        catch: (cause) => failure('register', file, cause),
+        catch: (cause) => stylesheetFailure('register', file, cause),
       });
     }
     const compiler = yield* StylesheetCompiler;
@@ -103,7 +104,7 @@ export function stylesheetCompilerLayer(
     compile: (code, file) =>
       Effect.tryPromise({
         try: async () => (await compile(code, file))?.code,
-        catch: (cause) => failure('compile', file, cause),
+        catch: (cause) => stylesheetFailure('compile', file, cause),
       }),
   });
 }

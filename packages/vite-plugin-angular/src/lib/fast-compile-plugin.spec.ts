@@ -23,6 +23,8 @@ vi.mock('vite', async () => {
 });
 
 import { fastCompilePlugin } from './fast-compile-plugin';
+import { hook } from '../testing/required.test-support.js';
+import { normalizePath } from 'vite';
 
 function buildPlugin() {
   return fastCompilePlugin({
@@ -245,10 +247,8 @@ export class App {
     const plugin = buildPlugin();
     const handler = getTransformHandler(plugin);
 
-    // A component file goes through the full compile path which calls
-    // transformWithOxc internally too, but with `sourcemap: false`. The
-    // bypass uses `sourcemap: true` — assert no `sourcemap: true` call to
-    // confirm we did not enter the bypass branch.
+    // The bypass strips the original input directly. Compilation first emits
+    // Angular definitions and supplies its map to the final strip operation.
     const code = `
 import { Component } from '@angular/core';
 @Component({ selector: 'x', template: '' })
@@ -266,7 +266,7 @@ export class XComponent {}
     }
 
     const sawBypassCall = mockTransformWithOxc.mock.calls.some(
-      ([, , opts]: any[]) => opts?.sourcemap === true,
+      ([input]) => input === code,
     );
     expect(sawBypassCall).toBe(false);
   });
@@ -298,9 +298,71 @@ export class MyService {
     }
 
     const sawBypassCall = mockTransformWithOxc.mock.calls.some(
-      ([, , opts]: any[]) => opts?.sourcemap === true,
+      ([input]) => input === code,
     );
     expect(sawBypassCall).toBe(false);
+  });
+
+  it('rejects a stylesheet compilation failure with its cause and owner', async () => {
+    const cause = new Error('invalid SCSS');
+    mockPreprocessCSS.mockRejectedValueOnce(cause);
+    const id = `${__dirname}/compiler/__fixtures__/ext.component.ts`;
+    const code = `import { Component } from '@angular/core'; @Component({ selector: 'app-ext', template: '', styleUrl: './test.component.scss' }) export class ExtComponent {}`;
+    await expect(
+      getTransformHandler(buildPlugin()).call(
+        { addWatchFile: () => undefined },
+        code,
+        id,
+      ),
+    ).rejects.toMatchObject({
+      _tag: 'StylesheetFailure',
+      phase: 'compile',
+      file: id,
+      cause,
+    });
+  });
+
+  it('invalidates both modules sharing a resource and removes stale ownership', async () => {
+    const plugin = buildPlugin();
+    const transform = getTransformHandler(plugin);
+    mockPreprocessCSS.mockResolvedValue({ code: '', deps: new Set() });
+    const first = {
+      id: normalizePath(`${__dirname}/compiler/__fixtures__/first.ts`),
+    };
+    const second = {
+      id: normalizePath(`${__dirname}/compiler/__fixtures__/second.ts`),
+    };
+    const source = `import { Component } from '@angular/core'; @Component({ selector: 'app-shared', template: '', styleUrl: './test.component.scss' }) export class SharedComponent {}`;
+    for (const module of [first, second])
+      await transform.call(
+        { addWatchFile: () => undefined },
+        source,
+        module.id,
+      );
+    const modules = new Map(
+      [first, second].map((module) => [module.id, module]),
+    );
+    const ctx = {
+      file: normalizePath(
+        `${__dirname}/compiler/__fixtures__/test.component.scss`,
+      ),
+      modules: [],
+      server: {
+        moduleGraph: { getModuleById: (id: string) => modules.get(id) },
+      },
+    };
+    await expect(
+      Reflect.apply(hook(plugin.handleHotUpdate), {}, [ctx]),
+    ).resolves.toEqual([first, second]);
+    await transform.call(
+      { addWatchFile: () => undefined },
+      'export const removed = true;',
+      first.id,
+    );
+    await expect(
+      Reflect.apply(hook(plugin.handleHotUpdate), {}, [ctx]),
+    ).resolves.toEqual([second]);
+    await Reflect.apply(hook(plugin.closeBundle), {}, []);
   });
 
   it('preprocesses an external .scss styleUrl by its own extension when inlineStylesExtension is css', async () => {

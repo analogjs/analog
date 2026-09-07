@@ -4,6 +4,7 @@ import {
   isCompilerSource,
 } from './utils/module-id.js';
 import { createCompilerSession } from './compiler-session.js';
+import { normalizeSourceMap } from './utils/source-map.js';
 import type { CompilerPlugin } from './compiler-backend.js';
 import { projectCompilerLayer } from './compiler-backend-live.js';
 import { isolateCompilerEnvironments } from './compiler-environments.js';
@@ -1234,7 +1235,9 @@ function createPluginSet(
 
           return {
             code: data,
-            map: typescriptResult.map ?? null,
+            map: typescriptResult.map
+              ? normalizeSourceMap(typescriptResult.map, id)
+              : null,
           };
         },
       },

@@ -5,7 +5,7 @@ import { stripQuery, splitComponentId } from './module-id.js';
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, isAbsolute, resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { normalizePath } from 'vite';
 
@@ -18,6 +18,7 @@ import { normalizeStylesheetDependencies } from '../style-preprocessor.js';
 import type { StylePreprocessor } from '../style-preprocessor.js';
 import type { FileReplacement } from '../plugins/file-replacements.plugin.js';
 import { debugStylesV } from './debug.js';
+import { stylesheetFailure } from '../stylesheet-pipeline.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -159,11 +160,16 @@ export function refreshStylesheetRegistryForFile(
   }
 
   const rawCss = readFileSync(normalizedFile, 'utf-8');
-  const preprocessed = preprocessStylesheetResult(
-    rawCss,
-    normalizedFile,
-    stylePreprocessor,
-  );
+  let preprocessed;
+  try {
+    preprocessed = preprocessStylesheetResult(
+      rawCss,
+      normalizedFile,
+      stylePreprocessor,
+    );
+  } catch (cause) {
+    throw stylesheetFailure('preprocess', normalizedFile, cause);
+  }
   const servedCss = rewriteRelativeCssImports(
     preprocessed.code,
     normalizedFile,
@@ -185,7 +191,6 @@ export function refreshStylesheetRegistryForFile(
       [
         normalizedFile,
         normalizePath(normalizedFile),
-        basename(normalizedFile),
         normalizedFile.replace(/^\//, ''),
       ],
     );

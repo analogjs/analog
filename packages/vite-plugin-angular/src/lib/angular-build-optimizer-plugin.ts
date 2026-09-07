@@ -1,8 +1,11 @@
 import { stripQuery } from './utils/module-id.js';
-import type { Plugin, UserConfig } from 'vite';
+import type { Plugin } from 'vite';
 import { createJavaScriptTransformer } from './javascript-transformer.js';
 import { isProdMode } from './utils/plugin-config.js';
-import { getJsTransformConfigKey } from './utils/rolldown.js';
+import {
+  extractInlineSourceMap,
+  normalizeSourceMap,
+} from './utils/source-map.js';
 
 export function buildOptimizerPlugin({
   jit,
@@ -13,8 +16,8 @@ export function buildOptimizerPlugin({
   let isProd = false;
   let preserveVendorMaps = false;
   const javascriptTransformer = createJavaScriptTransformer(() => ({
-    sourcemap: false,
-    thirdPartySourcemaps: false,
+    sourcemap: preserveVendorMaps,
+    thirdPartySourcemaps: preserveVendorMaps,
     advancedOptimizations: isProd,
     jit: true,
   }));
@@ -38,8 +41,6 @@ export function buildOptimizerPlugin({
       isProd = isProdMode(userConfig.mode);
       // Advanced optimizations paired with dev-mode defines would strip
       // dev-only code the debug API needs, so both key off `isProd`.
-      const jsTransformConfigKey = getJsTransformConfigKey();
-
       return {
         define: isProd
           ? {
@@ -49,17 +50,7 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        [jsTransformConfigKey]: {
-          define: isProd
-            ? {
-                ngDevMode: 'false',
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ngServerMode: `${!!userConfig.build?.ssr}`,
-              }
-            : undefined,
-        },
-      } as UserConfig;
+      };
     },
     // The top-level define keys `ngServerMode` off the legacy `build.ssr`
     // flag. Environment API builds run the server through an environment
@@ -114,8 +105,13 @@ export function buildOptimizerPlugin({
           sideEffects,
         );
 
+        const transformed = Buffer.from(result).toString();
+        if (!preserveVendorMaps)
+          return { code: transformed, map: { mappings: '' } };
+        const linked = extractInlineSourceMap(transformed);
         return {
-          code: Buffer.from(result).toString(),
+          code: linked.code,
+          map: linked.map ? normalizeSourceMap(linked.map, cleanId) : null,
         };
       },
     },

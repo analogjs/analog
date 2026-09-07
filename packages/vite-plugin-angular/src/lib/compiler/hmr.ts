@@ -44,7 +44,7 @@ export function ɵhmr_${c.className}(type) {
       (c) => `
       try {
         i0.ɵɵreplaceMetadata(
-          ${c.className},
+          ɵhmrClasses.get('${c.className}'),
           newModule.ɵhmr_${c.className},
           { i0 },
           ${localDepsArray},
@@ -63,7 +63,7 @@ export function ɵhmr_${c.className}(type) {
     .map(
       (c) => `
       try {
-        newModule.ɵhmr_${c.className}(${c.className});
+        newModule.ɵhmr_${c.className}(ɵhmrClasses.get('${c.className}'));
         swapped = true;
       } catch(e) {}`,
     )
@@ -93,6 +93,10 @@ export function ɵhmr_${c.className}(type) {
 
   return `\n${applyFns}
 if (import.meta.hot) {
+  // Later module evaluations must update the class Angular first instantiated.
+  // The newly imported class is only a metadata donor, never the live target.
+  const ɵhmrClasses = import.meta.hot.data.analogClasses ??= new Map();
+  ${declarations.map((c) => `if (!ɵhmrClasses.has('${c.className}')) ɵhmrClasses.set('${c.className}', ${c.className});`).join('\n  ')}
   import.meta.hot.accept((newModule) => {${acceptBody}
   });
 }`;

@@ -7,10 +7,12 @@ import { createCompilerSession } from './compiler-session.js';
 import type { CompilerPlugin } from './compiler-backend.js';
 import { projectCompilerLayer } from './compiler-backend-live.js';
 import { Layer } from 'effect';
+import { stylesheetFailure } from './stylesheet-pipeline.js';
+import { ResourceDependencies } from './resource-dependencies.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { sourceGraphLayer } from './compiler-source-graph-live.js';
 import type { ResolvedSourceProject } from './compiler-source-graph.js';
-import { promises as fsPromises } from 'node:fs';
+import { existsSync, promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
@@ -28,7 +30,6 @@ import {
   inlineResourceUrls,
   extractInlineStyles,
   generateHmrCode,
-  debugCompile,
   debugRegistry,
   ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
@@ -77,7 +78,7 @@ export function fastCompilePlugin(
 
   // fast-compile plugin state
   const registry: ComponentRegistry = new Map();
-  const resourceToSource = new Map<string, string>();
+  const resourceDependencies = new ResourceDependencies();
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
@@ -98,12 +99,13 @@ export function fastCompilePlugin(
       },
       compile: async (files, project) => {
         if (!files) {
-          resourceToSource.clear();
+          resourceDependencies.clear();
           await initFastCompile(project);
           return;
         }
         for (const file of files) {
           if (!TS_EXT_REGEX.test(file)) continue;
+          if (!existsSync(file)) resourceDependencies.remove(file);
           for (const [name, entry] of registry)
             if (entry.fileName === file) registry.delete(name);
           await scanBarrelExports(file, new Set(), true);
@@ -111,7 +113,7 @@ export function fastCompilePlugin(
       },
       close: () => {
         registry.clear();
-        resourceToSource.clear();
+        resourceDependencies.clear();
         scannedDtsPackages.clear();
       },
     }).pipe(Layer.provide(sourceGraphLayer(tsconfigResolver))),
@@ -494,6 +496,7 @@ export function fastCompilePlugin(
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
     if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
+      resourceDependencies.remove(id);
       // Non-Angular file — strip TS-only syntax ourselves so barrels
       // like `export { Foo, type Bar } from './x'` and other TS-only
       // forms don't leak unstripped to Rolldown. In rolldown-vite the
@@ -566,9 +569,7 @@ export function fastCompilePlugin(
     // reads through its own fallback (a templateUrl/styleUrl the inliner did
     // NOT already inline), so files inlined here must be recorded here or a
     // later edit to them never invalidates the owning module.
-    for (const dep of inlined.resourceDependencies) {
-      resourceToSource.set(dep, id);
-    }
+    resourceDependencies.replace(id, inlined.resourceDependencies);
 
     // Single OXC parse of the post-inline source, shared by every AST
     // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
@@ -604,15 +605,7 @@ export function fastCompilePlugin(
             );
             resolvedInlineStyles.set(i, processed.code);
           } catch (e) {
-            if (debugCompile.enabled) {
-              debugCompile(
-                'inline style #%d preprocessing failed in %s: %s',
-                i,
-                id,
-                (e as Error)?.message,
-              );
-            }
-            // Skip styles that can't be preprocessed
+            throw stylesheetFailure('compile', id, e);
           }
         }
         if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
@@ -648,21 +641,29 @@ export function fastCompilePlugin(
     });
 
     // Track resource dependencies for HMR
-    for (const dep of result.resourceDependencies) {
-      resourceToSource.set(dep, id);
-    }
+    resourceDependencies.replace(id, [
+      ...inlined.resourceDependencies,
+      ...result.resourceDependencies,
+    ]);
 
     // Strip TypeScript-only syntax
     const stripped = vite.transformWithOxc
-      ? await vite.transformWithOxc(result.code, id, {
-          lang: 'ts',
-          sourcemap: false,
-          decorator: { legacy: false, emitDecoratorMetadata: false },
-        })
-      : await vite.transformWithEsbuild(result.code, id, {
-          loader: 'ts',
-          sourcemap: false,
-        });
+      ? await vite.transformWithOxc(
+          result.code,
+          id,
+          {
+            lang: 'ts',
+            sourcemap: true,
+            decorator: { legacy: false, emitDecoratorMetadata: false },
+          },
+          result.map,
+        )
+      : await vite.transformWithEsbuild(
+          result.code,
+          id,
+          { loader: 'ts', sourcemap: true },
+          result.map,
+        );
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
@@ -676,7 +677,7 @@ export function fastCompilePlugin(
       }
     }
 
-    return { code: outputCode, map: result.map };
+    return { code: outputCode, map: stripped.map };
   }
 
   function resolveTsConfigPath() {
@@ -762,13 +763,13 @@ export function fastCompilePlugin(
     closeWatcher: () => compilation.close(),
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module
-      if (resourceToSource.has(ctx.file)) {
-        const parentSource = resourceToSource.get(ctx.file)!;
-        const parentModule = ctx.server.moduleGraph.getModuleById(parentSource);
-        if (parentModule) {
-          return [parentModule];
-        }
-      }
+      const parents = resourceDependencies
+        .owners(ctx.file)
+        .flatMap((source) => {
+          const module = ctx.server.moduleGraph.getModuleById(source);
+          return module ? [module] : [];
+        });
+      if (parents.length) return parents;
 
       if (TS_EXT_REGEX.test(ctx.file)) {
         const fileId = stripQuery(ctx.file);

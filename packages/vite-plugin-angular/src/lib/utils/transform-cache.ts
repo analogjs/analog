@@ -29,6 +29,9 @@ export class CacheIoFailure extends Data.TaggedError('CacheIoFailure')<{
 const missingFile = Schema.decodeUnknownResult(
   Schema.Struct({ code: Schema.Literal('ENOENT') }),
 );
+const existingFile = Schema.decodeUnknownResult(
+  Schema.Struct({ code: Schema.Literal('EEXIST') }),
+);
 
 export class CacheStorage extends Context.Service<
   CacheStorage,
@@ -90,8 +93,14 @@ export function diskCacheLayer(baseDir: string): Layer.Layer<CacheStorage> {
     yield* Effect.tryPromise({
       try: async () => {
         await fs.promises.mkdir(path.dirname(file), { recursive: true });
-        await fs.promises.writeFile(temporary, value);
-        await fs.promises.rename(temporary, file);
+        await fs.promises.writeFile(temporary, value, { flag: 'wx' });
+        try {
+          // Publish a complete immutable entry without replacing another
+          // writer's entry (or following an existing destination symlink).
+          await fs.promises.link(temporary, file);
+        } catch (cause) {
+          if (!Result.isSuccess(existingFile(cause))) throw cause;
+        }
       },
       catch: (cause) =>
         new CacheIoFailure({ operation: 'write', path: file, cause }),

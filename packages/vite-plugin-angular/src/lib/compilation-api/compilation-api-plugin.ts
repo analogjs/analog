@@ -1,5 +1,10 @@
 import { stripQuery, isCompilerSource } from '../utils/module-id.js';
 import { createCompilerSession } from '../compiler-session.js';
+import {
+  extractInlineSourceMap,
+  normalizeSourceMap,
+} from '../utils/source-map.js';
+import { stylesheetFailure } from '../stylesheet-pipeline.js';
 import { createStylesheetTransform } from '../stylesheet-pipeline.js';
 import type { CompilerPlugin } from '../compiler-backend.js';
 import { projectCompilerLayer } from '../compiler-backend-live.js';
@@ -9,7 +14,7 @@ import type { ResolvedSourceProject } from '../compiler-source-graph.js';
 import { sourceGraphLayer } from '../compiler-source-graph-live.js';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { basename, isAbsolute, join, relative, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import {
   normalizePath,
@@ -321,6 +326,12 @@ export function compilationAPIPlugin(
         },
       },
       (tsCompilerOptions: Record<string, unknown>) => {
+        // The native API returns one emitted value per source file. Keep the
+        // map inline until the Vite transform boundary so it cannot be replaced
+        // by the subsequent JavaScript emission in Angular's internal Map.
+        tsCompilerOptions['sourceMap'] = false;
+        tsCompilerOptions['inlineSourceMap'] = !!project.options.sourceMap;
+        tsCompilerOptions['inlineSources'] = !!project.options.sourceMap;
         if (shouldExternalizeStyles()) {
           tsCompilerOptions['externalRuntimeStyles'] = true;
         }
@@ -393,7 +404,7 @@ export function compilationAPIPlugin(
               diagnostics: preprocessed.diagnostics,
               tags: preprocessed.tags,
             },
-            [key, normalizePath(key), basename(key), key.replace(/^\//, '')],
+            [key, normalizePath(key), key.replace(/^\//, '')],
           );
 
           if (servedCss && servedCss !== rawCss) {
@@ -402,10 +413,7 @@ export function compilationAPIPlugin(
             preprocessStats.skipped++;
           }
         } catch (e) {
-          preprocessStats.errors++;
-          console.warn(
-            `[@analogjs/vite-plugin-angular] failed to preprocess external stylesheet: ${key}: ${e}`,
-          );
+          throw stylesheetFailure('preprocess', key, e);
         }
       } else {
         preprocessStats.skipped++;
@@ -796,9 +804,10 @@ export function compilationAPIPlugin(
           }
         }
 
+        const emitted = extractInlineSourceMap(data);
         return {
-          code: data,
-          map: null,
+          code: emitted.code,
+          map: emitted.map ? normalizeSourceMap(emitted.map, id) : null,
         };
       },
     },

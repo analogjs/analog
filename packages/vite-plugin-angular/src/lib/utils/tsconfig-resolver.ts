@@ -81,12 +81,13 @@ export class TsconfigResolver {
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
   ): ReturnType<typeof compilerCli.readConfiguration> {
-    const isProd = config.mode === 'production';
+    const emitSourceMaps =
+      config.mode !== 'production' || !!config.build?.sourcemap;
     const result = compilerCli.readConfiguration(resolvedTsConfigPath, {
       suppressOutputPathCheck: true,
-      sourceMap: !isProd,
+      sourceMap: emitSourceMaps,
       inlineSourceMap: false,
-      inlineSources: !isProd,
+      inlineSources: emitSourceMaps,
       declaration: false,
       declarationMap: false,
       allowEmptyCodegenFiles: false,
@@ -230,6 +231,7 @@ export class TsconfigResolver {
       isProd ? 'prod' : 'dev',
       this.options.isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
+      config.build?.sourcemap ? 'maps' : 'nomaps',
       this.options.liveReload ? 'live-reload' : 'no-live-reload',
     ].join('|');
   }

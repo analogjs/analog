@@ -3,9 +3,8 @@ import {
   JIT_INLINE_STYLE_PREFIX,
   getJitInlineStyles,
 } from './utils/jit-inline-styles.js';
-import { debugStyles } from './utils/debug.js';
 import { discoverAnalogIntegrations } from './analog-plugin-interop.js';
-import { preprocessStylesheet } from './stylesheet-registry.js';
+import { createStylesheetTransform } from './stylesheet-pipeline.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 
 export function jitPlugin({
@@ -15,6 +14,9 @@ export function jitPlugin({
 }): Plugin {
   let config: ResolvedConfig;
   let stylePreprocessor: StylePreprocessor | undefined;
+  const renderStylesheet = createStylesheetTransform((code, file) =>
+    preprocessCSS(code, file, config),
+  );
 
   return {
     name: '@analogjs/vite-plugin-angular-jit',
@@ -47,37 +49,17 @@ export function jitPlugin({
           decodeURIComponent(encodedStyles),
           'base64',
         ).toString();
-        const filename = `${styleIdHash}.${inlineStylesExtension}`;
-        const preprocessed = preprocessStylesheet(
-          decodedStyles,
-          filename,
-          stylePreprocessor,
-          { filename, inline: true },
-        );
-
-        let styles: string | undefined = '';
-
-        try {
-          const compiled = await preprocessCSS(
-            preprocessed,
-            `${filename}?direct`,
-            config,
-          );
-          styles = compiled?.code;
-        } catch (e) {
-          const errorMessage = e instanceof Error ? e.message : String(e);
-          debugStyles('jit css compilation error', {
-            styleIdHash,
-            error: errorMessage,
-          });
-          console.warn(
-            '[@analogjs/vite-plugin-angular]: Failed to preprocess inline JIT stylesheet %s. Returning an empty stylesheet instead. %s',
-            styleIdHash,
-            errorMessage,
-          );
-        }
-
-        return `export default \`${styles}\``;
+        const styles = await renderStylesheet({
+          data: decodedStyles,
+          containingFile: `${styleIdHash}.ts`,
+          resourceFile: undefined,
+          className: undefined,
+          order: undefined,
+          inlineStylesExtension,
+          registry: undefined,
+          preprocessor: stylePreprocessor,
+        });
+        return `export default ${JSON.stringify(styles ?? '')}`;
       }
 
       return;

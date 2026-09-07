@@ -47,7 +47,9 @@ export function isolateCompilerEnvironments<P extends Plugin>(
   let serverPhase:
     | { server: ViteDevServer; context: HookContext<'configureServer'> }
     | undefined;
-  const children = new Map<CompilerEnvironment, P>();
+  const selections = new WeakMap<CompilerEnvironment, Promise<Plugin>>();
+  const pendingServerChildren = new Set<P>();
+  let primaryBuildClaimed = false;
 
   return {
     ...primary,
@@ -70,58 +72,92 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     async configureServer(server) {
       serverPhase = { server, context: this };
       const post = await handler(primary.configureServer)?.call(this, server);
-      for (const child of children.values())
+      for (const child of pendingServerChildren)
         await handler(child.configureServer)?.call(this, server);
+      pendingServerChildren.clear();
       return post;
     },
     async applyToEnvironment(environment) {
+      // Vite 6's dependency scanner is named "client" too. It discovers
+      // imports with its own transformer and must never own the live compiler.
+      if ('mode' in environment && environment.mode === 'scan') return false;
       if (configuration._tag !== 'Resolved')
         throw new Error(
           'Compiler config and configResolved must run before environment selection',
         );
-      const { config, resolved, env, context, resolvedContext } = configuration;
-      // Keep the browser compiler connected to the public HMR middleware.
-      const primaryName = resolved.build.ssr ? 'ssr' : 'client';
-      if (environment.name === primaryName)
-        return { ...primary, perEnvironmentStartEndDuringDev: true };
-      const existing = children.get(environment);
+      const existing = selections.get(environment);
       if (existing) return existing;
-      const child = create();
-      const environmentConfig: ResolvedConfig = {
-        ...resolved,
-        ...environment.config,
-        build: { ...resolved.build, ...environment.config.build },
-      };
-      await handler(child.config)?.call(
-        context,
-        { ...config, build: environmentConfig.build },
-        env,
-      );
-      await handler(child.configResolved)?.call(
-        resolvedContext,
-        environmentConfig,
-      );
-      if (serverPhase)
-        await handler(child.configureServer)?.call(
-          serverPhase.context,
-          serverPhase.server,
-        );
-      // Legacy handleHotUpdate runs only in the client environment. A separate
-      // hook keeps server compiler state current without sending browser HMR.
-      const isolated = {
-        ...child,
-        perEnvironmentStartEndDuringDev: true,
-      };
-      if (invalidate) {
-        isolated.hotUpdate = async function (ctx) {
-          await invalidate(child, [ctx.file]);
-          if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) {
-            this.environment.moduleGraph.invalidateAll();
-          }
-        };
+      const selected = selectEnvironment(environment, configuration);
+      selections.set(environment, selected);
+      try {
+        return await selected;
+      } catch (cause) {
+        selections.delete(environment);
+        throw cause;
       }
-      children.set(environment, isolated);
-      return isolated;
     },
   };
+
+  async function selectEnvironment(
+    environment: CompilerEnvironment,
+    configuration: Configuration,
+  ): Promise<Plugin> {
+    const { resolved, env } = configuration;
+    // Keep the browser compiler connected to the public HMR middleware.
+    const primaryName = resolved.build.ssr ? 'ssr' : 'client';
+    if (
+      environment.name === primaryName &&
+      (env.command === 'serve' || !primaryBuildClaimed)
+    ) {
+      // The builder can resolve the same shared plugin against several
+      // configs before any build starts. A native compiler can belong to
+      // only one of those environment objects, even when names repeat.
+      if (env.command === 'build') primaryBuildClaimed = true;
+      return { ...primary, perEnvironmentStartEndDuringDev: true };
+    }
+    return createEnvironment(environment, configuration);
+  }
+
+  async function createEnvironment(
+    environment: CompilerEnvironment,
+    configuration: Configuration,
+  ): Promise<Plugin> {
+    const { config, resolved, env, context, resolvedContext } = configuration;
+    const child = create();
+    const environmentConfig: ResolvedConfig = {
+      ...resolved,
+      ...environment.config,
+      build: { ...resolved.build, ...environment.config.build },
+    };
+    await handler(child.config)?.call(
+      context,
+      { ...config, build: environmentConfig.build },
+      env,
+    );
+    await handler(child.configResolved)?.call(
+      resolvedContext,
+      environmentConfig,
+    );
+    if (serverPhase)
+      await handler(child.configureServer)?.call(
+        serverPhase.context,
+        serverPhase.server,
+      );
+    else if (env.command === 'serve') pendingServerChildren.add(child);
+    // Legacy handleHotUpdate runs only in the client environment. A separate
+    // hook keeps server compiler state current without sending browser HMR.
+    const isolated = {
+      ...child,
+      perEnvironmentStartEndDuringDev: true,
+    };
+    if (invalidate) {
+      isolated.hotUpdate = async function (ctx) {
+        await invalidate(child, [ctx.file]);
+        if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) {
+          this.environment.moduleGraph.invalidateAll();
+        }
+      };
+    }
+    return isolated;
+  }
 }

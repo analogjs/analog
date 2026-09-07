@@ -59,6 +59,14 @@ it.effect(
       expect(
         yield* run(Effect.flatMap(CacheStorage, (cache) => cache.get(key(0)))),
       ).toEqual(Buffer.from([1, 2]));
+      yield* run(
+        Effect.flatMap(CacheStorage, (cache) =>
+          cache.put(key(0), new Uint8Array([3])),
+        ),
+      );
+      expect(
+        yield* run(Effect.flatMap(CacheStorage, (cache) => cache.get(key(0)))),
+      ).toEqual(Buffer.from([1, 2]));
       const blocker = join(directory, 'blocker');
       yield* Effect.promise(() => writeFile(blocker, 'not a directory'));
       const failed = yield* Effect.exit(

@@ -18,11 +18,9 @@ describe('jitPlugin', () => {
     vi.clearAllMocks();
   });
 
-  it('soft-fails ordinary preprocessCSS errors', async () => {
-    const warn = vi
-      .spyOn(console, 'warn')
-      .mockImplementation((message?: unknown) => message);
-    vi.mocked(preprocessCSS).mockRejectedValue(new Error('boom'));
+  it('reports stylesheet errors instead of returning empty CSS', async () => {
+    const cause = new Error('boom');
+    vi.mocked(preprocessCSS).mockRejectedValue(cause);
 
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
     Reflect.apply(hook(plugin.configResolved), {}, [{ test: { css: true } }]);
@@ -33,12 +31,26 @@ describe('jitPlugin', () => {
       ),
     );
 
-    await expect(Reflect.apply(hook(plugin.load), {}, [id])).resolves.toContain(
-      'export default',
-    );
-    expect(warn).toHaveBeenCalled();
+    await expect(
+      Reflect.apply(hook(plugin.load), {}, [id]),
+    ).rejects.toMatchObject({
+      _tag: 'StylesheetFailure',
+      phase: 'compile',
+      cause,
+    });
+  });
 
-    warn.mockRestore();
+  it('serializes inline CSS as a string even when it contains JavaScript delimiters', async () => {
+    const css =
+      '.demo::after { content: "` ${globalThis.injected = true} \\\\"; }';
+    vi.mocked(preprocessCSS).mockResolvedValue({ code: css, deps: new Set() });
+    const plugin = jitPlugin({ inlineStylesExtension: 'css' });
+    Reflect.apply(hook(plugin.configResolved), {}, [{}]);
+    const id = toJitInlineStyleId(
+      encodeURIComponent(Buffer.from(css).toString('base64')),
+    );
+    const output = await Reflect.apply(hook(plugin.load), {}, [id]);
+    expect(output).toBe(`export default ${JSON.stringify(css)}`);
   });
 
   it('applies preprocessors registered through analog.setup before preprocessCSS', async () => {
@@ -72,8 +84,8 @@ describe('jitPlugin', () => {
       ),
     );
 
-    await expect(Reflect.apply(hook(plugin.load), {}, [id])).resolves.toContain(
-      '.demo { color: red; }\n/* xyz */',
+    await expect(Reflect.apply(hook(plugin.load), {}, [id])).resolves.toBe(
+      `export default ${JSON.stringify('.demo { color: red; }\n/* xyz */')}`,
     );
     expect(preprocessCSS).toHaveBeenCalledWith(
       '.demo { color: red; }\n/* xyz */',

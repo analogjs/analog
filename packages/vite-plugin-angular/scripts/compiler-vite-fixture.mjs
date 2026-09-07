@@ -2,14 +2,99 @@ import assert from 'node:assert/strict';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
-import { build, createServer, version as viteVersion } from 'vite';
+import { execFileSync } from 'node:child_process';
+import { createServer as createNetServer } from 'node:net';
+import {
+  build,
+  createBuilder,
+  createServer,
+  version as viteVersion,
+} from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
+import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
 
 const require = createRequire(import.meta.url);
 const angularVersion = require('@angular/core/package.json').version;
 const [major] = angularVersion.split('.').map(Number);
 const root = process.cwd();
 const results = [];
+async function availablePort() {
+  const reservation = createNetServer();
+  await new Promise((resolve, reject) =>
+    reservation.once('error', reject).listen(0, '127.0.0.1', resolve),
+  );
+  const address = reservation.address();
+  assert.ok(address && typeof address !== 'string');
+  await new Promise((resolve, reject) =>
+    reservation.close((error) => (error ? reject(error) : resolve())),
+  );
+  return address.port;
+}
+const effectModuleIds = (ids) =>
+  [...ids].filter((id) =>
+    /(?:node_modules\/.*\beffect(?:@|\/)|^effect(?:\/|$))/.test(id),
+  );
+function effectGraphGuard(name) {
+  return {
+    name: 'assert-effect-free-application-graph',
+    generateBundle() {
+      const modules = [...this.getModuleIds()];
+      assert.deepEqual(
+        effectModuleIds(modules),
+        [],
+        `${name}: application graph excludes Effect`,
+      );
+      results.push({
+        name: `${name}-application-graph`,
+        passed: true,
+        moduleCount: modules.length,
+        environment: this.environment?.name,
+        effectModules: [],
+      });
+    },
+  };
+}
+await writeFile(
+  join(root, 'public-contract.ts'),
+  `
+import angular, { type PluginOptions, type AnalogIntegrationPlugin, type ComponentRegistryEntry } from '@analogjs/vite-plugin-angular';
+const options = { jit: false, fastCompileMode: 'partial', experimental: { useAngularCompilationAPI: false } } satisfies PluginOptions;
+const plugins = angular(options);
+const entry: ComponentRegistryEntry = { selector: 'demo', kind: 'component', fileName: 'demo.ts', className: 'Demo' };
+const integration: AnalogIntegrationPlugin = { name: 'fixture', analog: { setup(context) { context.registerComponentRegistry(new Map([['Demo', entry]])); } } };
+void [plugins, integration];
+`,
+);
+await writeFile(
+  join(root, 'tsconfig.types.json'),
+  JSON.stringify({
+    files: ['public-contract.ts'],
+    compilerOptions: {
+      strict: true,
+      noEmit: true,
+      skipLibCheck: false,
+      module: 'esnext',
+      moduleResolution: 'bundler',
+      target: 'es2022',
+      lib: ['es2022', 'dom'],
+      types: ['node'],
+    },
+  }),
+);
+execFileSync(
+  process.execPath,
+  [
+    require.resolve('typescript/lib/tsc.js'),
+    '--project',
+    'tsconfig.types.json',
+  ],
+  { stdio: 'inherit' },
+);
+results.push({
+  name: 'public-declarations',
+  passed: true,
+  skipLibCheck: false,
+});
 await mkdir(join(root, 'src'));
 await writeFile(
   join(root, 'src/configured.ts'),
@@ -22,6 +107,7 @@ await writeFile(
   import { Component } from '@angular/core';
   @Component({selector: 'app-example', standalone: true, template: '<p>compiler compatibility</p>'})
   export class ExampleComponent {}
+  export const sourceMapAnchor = 'ANALOG_SOURCE_MAP_ANCHOR';
 `,
 );
 await writeFile(
@@ -46,6 +132,7 @@ async function buildCase(name, options, expected) {
     configFile: false,
     logLevel: 'silent',
     plugins: [
+      effectGraphGuard(name),
       angular({
         workspaceRoot: root,
         tsconfig: join(root, 'tsconfig.json'),
@@ -57,6 +144,7 @@ async function buildCase(name, options, expected) {
     build: {
       outDir,
       minify: false,
+      sourcemap: true,
       lib: {
         entry: join(root, 'src/original.ts'),
         formats: ['es'],
@@ -83,6 +171,28 @@ async function buildCase(name, options, expected) {
       !code.includes('__decorate'),
       `${name}: AOT compilation did not fall through`,
     );
+  const anchor = code.indexOf('ANALOG_SOURCE_MAP_ANCHOR');
+  assert.ok(anchor >= 0, `${name}: source-map anchor retained`);
+  const prefix = code.slice(0, anchor).split('\n');
+  const map = JSON.parse(await readFile(join(outDir, `${output}.map`), 'utf8'));
+  const position = originalPositionFor(new TraceMap(map), {
+    line: prefix.length,
+    column: prefix.at(-1).length,
+  });
+  const originalSource =
+    name === 'normal-replacement' ? 'component.ts' : 'original.ts';
+  const original = await readFile(join(root, 'src', originalSource), 'utf8');
+  assert.ok(
+    position.source?.endsWith(originalSource),
+    `${name}: source map points to authored TypeScript`,
+  );
+  assert.equal(
+    position.line,
+    original
+      .split('\n')
+      .findIndex((line) => line.includes('ANALOG_SOURCE_MAP_ANCHOR')) + 1,
+    `${name}: source-map line`,
+  );
   results.push({ name, passed: true });
 }
 
@@ -152,19 +262,137 @@ if (compilationApiAvailable) {
   });
 }
 
-async function browserHmrCase(browser, compilationApi, liveReload) {
-  const name = `browser-api-${compilationApi}-live-reload-${liveReload}`;
+async function concurrentEnvironmentCase(mode) {
+  const name = `concurrent-${mode}`;
+  await writeFile(
+    join(root, 'src/marker.ts'),
+    'export const marker = "browser-marker";',
+  );
+  await writeFile(
+    join(root, 'src/marker.server.ts'),
+    'export const marker = "server-marker";',
+  );
+  await writeFile(
+    join(root, 'src/concurrent.ts'),
+    'export { ExampleComponent } from "./component"; export { marker } from "./marker";',
+  );
+  const clientFinished = Promise.withResolvers();
+  const output = (environment) =>
+    join(root, 'output', `${name}-${environment}`);
+  const options = {
+    minify: false,
+    lib: {
+      entry: join(root, 'src/concurrent.ts'),
+      formats: ['es'],
+      fileName: 'result',
+    },
+    rollupOptions: { external: ['@angular/core'] },
+  };
+  const builder = await createBuilder({
+    root,
+    configFile: false,
+    logLevel: 'silent',
+    builder: { sharedPlugins: true },
+    environments: {
+      client: {
+        consumer: 'client',
+        build: { ...options, outDir: output('client') },
+      },
+      ssr: {
+        consumer: 'server',
+        build: { ...options, ssr: true, outDir: output('ssr') },
+      },
+    },
+    plugins: [
+      effectGraphGuard(name),
+      {
+        name: 'hold-server-transform-until-client-closes',
+        enforce: 'pre',
+        async transform(_code, id) {
+          if (this.environment.name === 'ssr' && id.endsWith('/concurrent.ts'))
+            await clientFinished.promise;
+        },
+      },
+      angular({
+        workspaceRoot: root,
+        tsconfig: join(root, 'tsconfig.json'),
+        jit: false,
+        liveReload: false,
+        fastCompile: mode === 'fast',
+        include: ['src/*.ts'],
+        fileReplacements: [
+          { replace: 'src/marker.ts', ssr: 'src/marker.server.ts' },
+        ],
+        experimental: { useAngularCompilationAPI: mode === 'api' },
+      }),
+    ],
+  });
+  const settled = await Promise.allSettled([
+    builder
+      .build(builder.environments.client)
+      .finally(() => clientFinished.resolve()),
+    builder.build(builder.environments.ssr),
+  ]);
+  const failures = settled.filter((result) => result.status === 'rejected');
+  if (failures.length)
+    throw new AggregateError(
+      failures.map((result) => result.reason),
+      `${name}: both environments must complete`,
+    );
+  for (const [environment, marker] of [
+    ['client', 'browser-marker'],
+    ['ssr', 'server-marker'],
+  ]) {
+    const file = (await readdir(output(environment))).find((file) =>
+      /\.[cm]?js$/.test(file),
+    );
+    assert.ok(file, `${name}/${environment}: JavaScript output`);
+    const code = await readFile(join(output(environment), file), 'utf8');
+    assert.ok(
+      code.includes(marker),
+      `${name}/${environment}: environment-specific replacement`,
+    );
+    assert.ok(
+      code.includes('defineComponent'),
+      `${name}/${environment}: Angular compilation`,
+    );
+  }
+  results.push({ name, passed: true, serverTransformAfterClientClose: true });
+}
+
+async function browserHmrCase(browser, mode, liveReload) {
+  const compilationApi = mode.startsWith('api');
+  const fast = mode.startsWith('fast');
+  const jit = mode.endsWith('jit');
+  const name = `browser-${mode}-live-reload-${liveReload}`;
+  await writeFile(
+    join(root, 'src/browser.ts'),
+    `${jit ? "import '@angular/compiler';" : ''} import 'zone.js'; import { provideZoneChangeDetection } from '@angular/core'; import { bootstrapApplication } from '@angular/platform-browser'; import { AppComponent } from './app.component'; bootstrapApplication(AppComponent, { providers: [provideZoneChangeDetection()] });`,
+  );
   await writeFile(
     join(root, 'src/view.html'),
-    '<p data-testid="message">before</p><button data-testid="count" (click)="count=count+1">{{count}}</button>',
+    '<p data-testid="message">before</p><button data-testid="count" (click)="count=count+1">{{count}}</button><child-a/><child-b/>',
+  );
+  await writeFile(
+    join(root, 'src/view.css'),
+    '[data-testid="message"] { width: 31px; }',
+  );
+  await writeFile(
+    join(root, 'src/shared.html'),
+    '<p data-shared>{{label}} before</p>',
+  );
+  await writeFile(
+    join(root, 'src/shared.css'),
+    '[data-shared] { width: 41px; }',
   );
   process.env.NODE_ENV = 'development';
   const compiledModules = [];
   const plugins = angular({
     workspaceRoot: root,
     tsconfig: join(root, 'tsconfig.browser.json'),
-    jit: false,
+    jit,
     liveReload,
+    fastCompile: fast,
     experimental: { useAngularCompilationAPI: compilationApi },
   });
   const compiler = plugins.find(
@@ -172,7 +400,9 @@ async function browserHmrCase(browser, compilationApi, liveReload) {
       plugin.name ===
       (compilationApi
         ? '@analogjs/vite-plugin-angular-compilation-api'
-        : '@analogjs/vite-plugin-angular'),
+        : fast
+          ? '@analogjs/vite-plugin-angular-fast-compile'
+          : '@analogjs/vite-plugin-angular'),
   );
   const transform = compiler.transform;
   const transformHandler =
@@ -191,7 +421,11 @@ async function browserHmrCase(browser, compilationApi, liveReload) {
     configFile: false,
     logLevel: 'silent',
     plugins,
-    server: { host: '127.0.0.1', port: 0, strictPort: true },
+    server: {
+      host: '127.0.0.1',
+      port: await availablePort(),
+      strictPort: true,
+    },
   });
   const page = await browser.newPage();
   const errors = [];
@@ -221,7 +455,34 @@ async function browserHmrCase(browser, compilationApi, liveReload) {
       () =>
         document.querySelector('[data-testid="count"]')?.textContent === '1',
     );
+    const effectModules = effectModuleIds(
+      server.environments.client.moduleGraph.idToModuleMap.keys(),
+    );
+    assert.deepEqual(
+      effectModules,
+      [],
+      `${name}: Effect stays outside the browser module graph`,
+    );
+    await server.transformRequest('/src/app.component.ts', { ssr: true });
+    const ssrModules = [
+      ...server.environments.ssr.moduleGraph.idToModuleMap.keys(),
+    ];
+    assert.ok(
+      ssrModules.length > 0,
+      `${name}: SSR transform creates an application graph`,
+    );
+    assert.deepEqual(
+      effectModuleIds(ssrModules),
+      [],
+      `${name}: SSR application graph excludes Effect`,
+    );
+    await page.waitForFunction(
+      () =>
+        getComputedStyle(document.querySelector('[data-testid="message"]'))
+          .width === '31px',
+    );
     if (!liveReload) {
+      await server.restart();
       await page.reload();
       await page.waitForFunction(
         () =>
@@ -236,13 +497,13 @@ async function browserHmrCase(browser, compilationApi, liveReload) {
       results.push({
         name,
         passed: true,
-        behavior: 'boot and manual reload with Angular HMR disabled',
+        behavior: 'boot and restart with Angular HMR disabled',
       });
       return;
     }
     await writeFile(
       join(root, 'src/view.html'),
-      '<p data-testid="message">after</p><button data-testid="count" (click)="count=count+1">{{count}}</button>',
+      '<p data-testid="message">after</p><button data-testid="count" (click)="count=count+1">{{count}}</button><child-a/><child-b/>',
     );
     await page.waitForFunction(
       () =>
@@ -257,13 +518,65 @@ async function browserHmrCase(browser, compilationApi, liveReload) {
       `${name}: expected HMR state preservation or full reload`,
     );
     assert.deepEqual(errors, [], `${name}: no browser runtime errors`);
-    results.push({ name, passed: true });
+    await writeFile(
+      join(root, 'src/view.css'),
+      '[data-testid="message"] { width: 37px; }',
+    );
+    await page.waitForFunction(
+      () =>
+        getComputedStyle(document.querySelector('[data-testid="message"]'))
+          .width === '37px',
+      null,
+      { timeout: 15000 },
+    );
+    assert.deepEqual(
+      errors,
+      [],
+      `${name}: stylesheet update has no runtime errors`,
+    );
+    if (fast) {
+      await writeFile(
+        join(root, 'src/shared.html'),
+        '<p data-shared>{{label}} after</p>',
+      );
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll('[data-shared]')]
+            .map((element) => element.textContent)
+            .join(',') === 'a after,b after',
+      );
+      await writeFile(
+        join(root, 'src/shared.css'),
+        '[data-shared] { width: 47px; }',
+      );
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll('[data-shared]')].length === 2 &&
+          [...document.querySelectorAll('[data-shared]')].every(
+            (element) => getComputedStyle(element).width === '47px',
+          ),
+      );
+    }
+    results.push({
+      name,
+      passed: true,
+      stylesheetUpdated: true,
+      countAfterStylesheetUpdate: await page
+        .locator('[data-testid="count"]')
+        .textContent(),
+    });
   } catch (error) {
+    console.error(`${name}:`, error);
     await writeFile(
       join(root, `${name}-failure.json`),
       JSON.stringify(
         {
           name,
+          failure: {
+            name: error?.name,
+            message: error?.message,
+            stack: error?.stack,
+          },
           errors,
           consoleMessages,
           socketMessages,
@@ -285,19 +598,22 @@ async function browserHmrCase(browser, compilationApi, liveReload) {
   }
 }
 
-if (major === 22) {
+if (major >= 21) {
+  for (const mode of ['default', 'fast', 'api'])
+    await concurrentEnvironmentCase(mode);
   await writeFile(
     join(root, 'index.html'),
     '<!doctype html><html><body><app-root></app-root><script type="module" src="/src/browser.ts"></script></body></html>',
   );
   await writeFile(
     join(root, 'src/app.component.ts'),
-    `import { Component } from '@angular/core'; @Component({ selector: 'app-root', standalone: true, templateUrl: './view.html' }) export class AppComponent { count = 0; }`,
+    `import { Component } from '@angular/core'; import { SharedA } from './shared-a'; import { SharedB } from './shared-b'; @Component({ selector: 'app-root', standalone: true, imports: [SharedA, SharedB], templateUrl: './view.html', styleUrl: './view.css' }) export class AppComponent { count = 0; }`,
   );
-  await writeFile(
-    join(root, 'src/browser.ts'),
-    `import 'zone.js'; import { provideZoneChangeDetection } from '@angular/core'; import { bootstrapApplication } from '@angular/platform-browser'; import { AppComponent } from './app.component'; bootstrapApplication(AppComponent, { providers: [provideZoneChangeDetection()] });`,
-  );
+  for (const letter of ['a', 'b'])
+    await writeFile(
+      join(root, `src/shared-${letter}.ts`),
+      `import { Component } from '@angular/core'; @Component({selector: 'child-${letter}', standalone: true, templateUrl: './shared.html', styleUrl: './shared.css'}) export class Shared${letter.toUpperCase()} { label = '${letter}'; }`,
+    );
   await writeFile(
     join(root, 'tsconfig.browser.json'),
     JSON.stringify({ extends: './tsconfig.json', files: ['src/browser.ts'] }),
@@ -305,10 +621,12 @@ if (major === 22) {
   const { chromium } = await import('playwright');
   const browser = await chromium.launch();
   try {
-    await browserHmrCase(browser, false, true);
-    await browserHmrCase(browser, true, true);
-    await browserHmrCase(browser, false, false);
-    await browserHmrCase(browser, true, false);
+    for (const mode of ['default', 'fast', 'api']) {
+      await browserHmrCase(browser, mode, true);
+      await browserHmrCase(browser, mode, false);
+    }
+    for (const mode of ['default-jit', 'fast-jit', 'api-jit'])
+      await browserHmrCase(browser, mode, false);
   } finally {
     await browser.close();
   }

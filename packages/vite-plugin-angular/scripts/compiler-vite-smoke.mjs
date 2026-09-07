@@ -10,14 +10,26 @@ import {
   readFileSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 const { values } = parseArgs({
-  options: { vite: { type: 'string' }, angular: { type: 'string' } },
+  options: {
+    vite: { type: 'string' },
+    angular: { type: 'string' },
+    'node-executable': { type: 'string' },
+  },
 });
-const supportedVite = ['6.0.0', '7.0.0', '8.0.8'];
+const supportedVite = [
+  '6.0.0',
+  '6.4.3',
+  '7.0.0',
+  '7.3.6',
+  '8.0.0',
+  '8.0.8',
+  '8.2.2',
+];
 const angularTuples = {
   '17.3.12': {
     typescript: '5.4.5',
@@ -65,6 +77,14 @@ if (!tuple || !supportedVite.includes(values.vite)) {
 }
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+const consumerNode = values['node-executable'] ?? process.execPath;
+const oldAngular = Number(values.angular.split('.')[0]) < 21;
+const expectedNode = oldAngular ? 'v20.19.5' : 'v24.15.0';
+const actualNode = execaSync(consumerNode, ['--version']).stdout.trim();
+if (actualNode !== expectedNode)
+  throw new Error(
+    `Angular ${values.angular} qualification requires ${expectedNode}; received ${actualNode}. Select --node-executable or run this script with the pinned consumer Node.`,
+  );
 const workspace = resolve(scriptDirectory, '../../..');
 const outputRoot = join(workspace, 'dist/compiler-vite-smoke');
 mkdirSync(outputRoot, { recursive: true });
@@ -93,13 +113,18 @@ const dependencies = {
   '@angular/platform-browser': values.angular,
   '@angular/compiler': values.angular,
   '@angular/compiler-cli': values.angular,
+  '@types/node': oldAngular ? '20.12.14' : '24.13.3',
+  '@jridgewell/trace-mapping': '0.3.31',
   [tuple.package]: tuple.builder,
   typescript: tuple.typescript,
   vite: values.vite,
   rxjs: '7.8.2',
   tslib: '2.8.1',
-  ...(values.angular === '22.0.0'
-    ? { playwright: '1.59.1', 'zone.js': '0.16.1' }
+  ...(!oldAngular
+    ? {
+        playwright: '1.59.1',
+        'zone.js': values.angular === '22.0.0' ? '0.16.1' : '0.15.1',
+      }
     : {}),
 };
 writeFileSync(
@@ -109,6 +134,15 @@ writeFileSync(
       name: 'analog-compiler-compat-fixture',
       private: true,
       type: 'module',
+      packageManager: 'pnpm@10.33.0',
+      pnpm: {
+        onlyBuiltDependencies: [
+          'esbuild',
+          '@parcel/watcher',
+          'lmdb',
+          'msgpackr-extract',
+        ],
+      },
       dependencies,
     },
     null,
@@ -120,20 +154,18 @@ copyFileSync(
   join(root, 'fixture.mjs'),
 );
 const env = { ...process.env, NODE_ENV: 'production' };
+const pathKey = Object.keys(env).find((key) => key.toLowerCase() === 'path');
+if (!pathKey)
+  throw new Error('The consumer runner requires PATH to locate pnpm');
+env[pathKey] = `${dirname(consumerNode)}${delimiter}${env[pathKey]}`;
 env.PLAYWRIGHT_SKIP_BROWSER_GC = '1';
 delete env.VITEST;
 execaSync(
   'pnpm',
-  [
-    'install',
-    '--ignore-workspace',
-    '--ignore-scripts',
-    '--no-frozen-lockfile',
-    '--prefer-offline',
-  ],
+  ['install', '--ignore-workspace', '--no-frozen-lockfile', '--prefer-offline'],
   { cwd: root, env, stdio: 'inherit' },
 );
-if (values.angular === '22.0.0') {
+if (!oldAngular) {
   execaSync(
     'pnpm',
     [
@@ -146,9 +178,11 @@ if (values.angular === '22.0.0') {
     { cwd: root, env, stdio: 'inherit' },
   );
 }
-execaSync(process.execPath, ['fixture.mjs'], {
+execaSync(consumerNode, ['fixture.mjs'], {
   cwd: root,
   env,
   stdio: 'inherit',
+  timeout: 180000,
+  killSignal: 'SIGKILL',
 });
 console.log(`Installed-package evidence retained at ${root}`);

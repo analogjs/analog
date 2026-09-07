@@ -64,6 +64,16 @@ export function parsePluginOptions(input: unknown): PluginOptions {
   // Explicit undefined has always selected the public default. Normalize it
   // to an omitted key while keeping internal exact-optional contracts.
   return {
+    ...normalizeProjectOptions(value),
+    ...normalizeCompilationOptions(value),
+    ...(value.debug === undefined
+      ? {}
+      : { debug: normalizeDebug(value.debug) }),
+  };
+}
+
+function normalizeProjectOptions(value: typeof Options.Type): PluginOptions {
+  return {
     ...(value.tsconfig === undefined ? {} : { tsconfig: value.tsconfig }),
     ...(value.workspaceRoot === undefined
       ? {}
@@ -71,18 +81,25 @@ export function parsePluginOptions(input: unknown): PluginOptions {
     ...(value.inlineStylesExtension === undefined
       ? {}
       : { inlineStylesExtension: value.inlineStylesExtension }),
-    ...(value.jit === undefined ? {} : { jit: value.jit }),
     ...(value.supportedBrowsers === undefined
       ? {}
       : { supportedBrowsers: value.supportedBrowsers }),
     ...(value.include === undefined ? {} : { include: value.include }),
+    ...(value.fileReplacements === undefined
+      ? {}
+      : { fileReplacements: value.fileReplacements }),
+  };
+}
+
+function normalizeCompilationOptions(
+  value: typeof Options.Type,
+): PluginOptions {
+  return {
+    ...(value.jit === undefined ? {} : { jit: value.jit }),
     ...(value.liveReload === undefined ? {} : { liveReload: value.liveReload }),
     ...(value.disableTypeChecking === undefined
       ? {}
       : { disableTypeChecking: value.disableTypeChecking }),
-    ...(value.fileReplacements === undefined
-      ? {}
-      : { fileReplacements: value.fileReplacements }),
     ...(value.fastCompile === undefined
       ? {}
       : { fastCompile: value.fastCompile }),
@@ -97,9 +114,6 @@ export function parsePluginOptions(input: unknown): PluginOptions {
               value.experimental.useAngularCompilationAPI,
           },
         }),
-    ...(value.debug === undefined
-      ? {}
-      : { debug: normalizeDebug(value.debug) }),
   };
 }
 

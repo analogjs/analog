@@ -127,16 +127,18 @@ Add `@analogjs/vite-plugin-angular` and `nitro` to the app's `devDependencies`:
 
 These options used to live on `analog()`. Pass them to `angular()` or `nitro()` directly:
 
-| v2 location                                                                                                                                      | v3 location                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                                                                 |
-| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
-| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })`                                       |
-| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
-| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                            |
-| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
+| v2 location                                                                                                                                      | v3 location                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `analog({ vite: {...} })`                                                                                                                        | move supported Angular options to `angular({...})`; keep generic Vite settings in `defineConfig({...})` |
+| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                        |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })`                                         |
+| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline))   |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                              |
+| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                                 |
 
 `analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`.
+
+`angular()` validates its own options when the Vite config loads. Copy only supported keys rather than spreading an old `vite` object: unknown keys, string booleans, incomplete file replacements, and invalid compiler modes now fail immediately. Explicit `false` still disables an option. Stylesheet preprocessing failures also fail compilation instead of silently producing missing CSS; fix the reported stylesheet or preprocessor error.
 
 #### Workspace library globs
 

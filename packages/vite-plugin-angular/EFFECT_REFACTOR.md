@@ -164,6 +164,23 @@ The package suite passed **895 tests with six existing skips** at this milestone
 
 ## Work in progress
 
+### Audit and installed-consumer qualification milestone
+
+Independent security and lifecycle audits found and repaired additional compiler defects:
+
+- JIT inline CSS now uses the typed stylesheet pipeline and a serialized JavaScript string literal. Backticks and interpolation text in CSS remain data. Fast compilation, Compilation API external preprocessing, and HMR registry refresh report stylesheet failures rather than hiding missing CSS.
+- Fast HMR tracks every owner of shared templates and styles with a bidirectional resource index, removes stale edges, and preserves the original live class across successive module updates. Packed browser tests update a template, its stylesheet, and resources shared by two components.
+- Vite's shared builder may resolve several configurations before building. Compiler selection now binds native state to environment identity, shares only in-flight initialization for the same environment, and excludes dependency scans from the live compiler. The server can transform after the client build has closed.
+- Production source maps follow `build.sourcemap`; fast compilation composes the final OXC/esbuild map; the Compilation API preserves its native inline map until Vite consumes it. Checked normalization preserves source contents, extension fields, and URL roots. Packed tests assert the authored source file and line.
+- Immutable disk-cache publication uses an exclusive temporary file and a no-replace hard link. A concurrent writer cannot replace the first complete entry. This protects normal cache publication, not parent directories controlled by a local adversary.
+- The v3 migration guide now lists supported Angular options instead of advising blind spreading of old Vite options. Unknown keys and stylesheet errors are documented behavioral changes.
+
+Local qualification at this milestone: **911 tests passed, six existing skips**; source typecheck, test typecheck, and package ESLint passed. All **12 installed Angular/Node/TypeScript/Vite cells** passed, including Angular 17–21 and six exact Vite 6–8 releases on Angular 22. Browser cases cover Angular 21 and 22; all cells check built application graphs and public declarations with `skipLibCheck: false`. Vite 6.0 and 8.2 endpoint reruns also check SSR development graphs and enable the native dependency build scripts. The Analog app built with seven prerendered routes, real SSR HTML, and six sitemap URLs. These are local results; final-head CI remains a separate gate.
+
+The audits found no compiler-owned HTTP/SSR error serializer. Compiler failures retain local paths and original causes for terminal/dev-overlay diagnostics; they are not a redaction guarantee. The public root declaration contract is Effect-free, while shipped internal declarations retain Effect implementation types. Effect `4.0.0-rc.112` remains a runtime dependency of the compiler package.
+
+Initial packed measurements show both benefits and regressions: lower retained heap after closed plugin sets, higher plugin-construction cost, slower warm ngtsc builds, and additional RSS/first-transform cost for an independently compiled SSR environment. These exploratory samples are being refreshed against the frozen implementation before publishing the comparison table. Cache bounds and coalescing tests establish correctness; neither is a speedup measurement.
+
 - Qualify the composed source graph and retained-state cleanup across the installed consumer matrix.
 - Finish native state cleanup, concurrent-environment and restart regressions, shared test fixtures, and remaining composition review.
 - Run installed-package declaration checks and the complete Angular/Node/TypeScript/Vite matrix, including fast/full/partial, HMR, SSR, resource, and source-map cases.
@@ -173,3 +190,5 @@ The package suite passed **895 tests with six existing skips** at this milestone
 ## Attribution
 
 Compatibility changes are derived from public Analog commits `5277af9f7547e95cc4cebaec9cb05085a23e8647`, `47ca5f2ac44a54c16f98f810d395357e5b6832e5`, and `b3482e5e06b474869cdc21e01ffb3267da35f267`. Effect architecture and TypeScript practices are applied as portable engineering patterns; no private application implementation or private package dependency is introduced.
+
+Source-map behavior adapts public [analogjs/analog#2506](https://github.com/analogjs/analog/pull/2506) at `ea55ddabd86c6160e4741ade9d5cb4096a791d35`, with checked decoding and additional Compilation API and URL-root coverage. Prepared with OpenAI Codex.

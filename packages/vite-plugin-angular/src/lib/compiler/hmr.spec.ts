@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { generateHmrCode } from './hmr';
 
 describe('HMR code generation', () => {
@@ -89,7 +89,9 @@ describe('HMR code generation', () => {
     // Should have both ɵɵreplaceMetadata for component and invalidate for directive
     expect(code).toContain('ɵɵreplaceMetadata');
     expect(code).toContain('newModule.ɵhmr_MyComponent');
-    expect(code).toContain('newModule.ɵhmr_MyDirective(MyDirective)');
+    expect(code).toContain(
+      "newModule.ɵhmr_MyDirective(ɵhmrClasses.get('MyDirective'))",
+    );
     expect(code).toContain(
       "import.meta.hot.invalidate('Directive/pipe changed, reloading')",
     );
@@ -125,6 +127,46 @@ describe('HMR code generation', () => {
     ]);
 
     // Default: no local deps
-    expect(code).toMatch(/ɵɵreplaceMetadata\(\s*MyComponent[\s\S]*?\[\],/);
+    expect(code).toContain("ɵhmrClasses.get('MyComponent')");
+    expect(code).toContain('          [],');
+  });
+
+  it('targets the live class across successive module evaluations', () => {
+    const generated = generateHmrCode([
+      {
+        className: 'MyComponent',
+        selector: 'app-my',
+        kind: 'component',
+        fileName: 'my.ts',
+      },
+    ]);
+    const evaluate = new Function(
+      'MyComponent',
+      'i0',
+      'meta',
+      generated
+        .replaceAll('export function', 'function')
+        .replaceAll('import.meta', 'meta'),
+    );
+    const replace = vi.fn();
+    const callbacks: ((module: {
+      ɵhmr_MyComponent: (type: object) => void;
+    }) => void)[] = [];
+    const hot = {
+      data: {},
+      accept: (callback: (typeof callbacks)[number]) =>
+        callbacks.push(callback),
+      invalidate: vi.fn(),
+    };
+    class LiveComponent {}
+    class NewModuleComponent {}
+    evaluate(LiveComponent, { ɵɵreplaceMetadata: replace }, { hot });
+    evaluate(NewModuleComponent, { ɵɵreplaceMetadata: replace }, { hot });
+    for (const callback of callbacks) callback({ ɵhmr_MyComponent: () => {} });
+    expect(replace.mock.calls.map(([target]) => target)).toEqual([
+      LiveComponent,
+      LiveComponent,
+    ]);
+    expect(hot.invalidate).not.toHaveBeenCalled();
   });
 });

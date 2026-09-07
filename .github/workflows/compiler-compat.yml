@@ -235,15 +235,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { angular: '17.3.12', vite: '6.0.0' }
-          - { angular: '18.2.14', vite: '6.0.0' }
-          - { angular: '19.0.0', vite: '6.0.0' }
-          - { angular: '20.0.0', vite: '6.0.0' }
-          - { angular: '20.1.0', vite: '6.0.0' }
-          - { angular: '21.0.0', vite: '7.0.0' }
-          - { angular: '22.0.0', vite: '6.0.0' }
-          - { angular: '22.0.0', vite: '7.0.0' }
-          - { angular: '22.0.0', vite: '8.0.8' }
+          - { angular: '17.3.12', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '18.2.14', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '19.0.0', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '20.0.0', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '20.1.0', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '21.0.0', vite: '7.0.0', node: '24.15.0' }
+          - { angular: '22.0.0', vite: '6.0.0', node: '24.15.0' }
+          - { angular: '22.0.0', vite: '6.4.3', node: '24.15.0' }
+          - { angular: '22.0.0', vite: '7.0.0', node: '24.15.0' }
+          - { angular: '22.0.0', vite: '7.3.6', node: '24.15.0' }
+          - { angular: '22.0.0', vite: '8.0.0', node: '24.15.0' }
+          - { angular: '22.0.0', vite: '8.2.2', node: '24.15.0' }
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -251,19 +254,26 @@ jobs:
           node-version-file: .node-version
       - run: npm install --global corepack@0.31.0
       - run: corepack enable
-      - name: Install workspace without unrelated package prepare builds
-        run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Test the installed package in an isolated Angular/Vite consumer
+      - name: Install the modern authoring workspace
+        run: pnpm install --frozen-lockfile
+      - name: Build the package on the authoring Node version
         env:
           NX_DAEMON: 'false'
           NX_NO_CLOUD: 'true'
-        run: pnpm exec nx run vite-plugin-angular:compat-smoke --vite=${{ matrix.vite }} --angular=${{ matrix.angular }}
+        run: pnpm exec nx run vite-plugin-angular:build
       - name: Check compiler package tests, declarations, and lint
-        if: matrix.angular == '22.0.0' && matrix.vite == '8.0.8'
+        if: matrix.angular == '22.0.0' && matrix.vite == '8.2.2'
         env:
           NX_DAEMON: 'false'
           NX_NO_CLOUD: 'true'
-        run: pnpm exec nx run-many --targets=test,typecheck,eslint:lint --projects=vite-plugin-angular --parallel=1
+        run: pnpm exec nx run-many --targets=test,typecheck,typecheck-tests,eslint:lint --projects=vite-plugin-angular --parallel=1
+      - name: Select the supported consumer Node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - run: corepack enable
+      - name: Test the installed package in an isolated Angular/Vite consumer
+        run: node packages/vite-plugin-angular/scripts/compiler-vite-smoke.mjs --vite=${{ matrix.vite }} --angular=${{ matrix.angular }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
