@@ -1,5 +1,5 @@
 import '@angular/compiler';
-import { setupTestBed } from '../../../../vitest-angular/setup-testbed';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const { initTestEnvironment, setupHook, cleanupHook } = vi.hoisted(() => ({
   initTestEnvironment: vi.fn(),
