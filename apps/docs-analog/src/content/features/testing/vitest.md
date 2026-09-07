@@ -2,6 +2,31 @@
 
 [Vitest](https://vitest.dev) can be added to **_any_** existing Angular project with a few steps.
 
+The integration supports Vitest 5 alongside its existing Vitest 1–4 peer ranges.
+Vitest 5 requires Vite 6.4 or newer and Node.js 22.12 or newer; see the
+[Vitest migration guide](https://vitest.dev/guide/migration/). Keep `vitest` and
+its `@vitest/*` companion packages on the same version. Use the bare `vitest`
+import in setup files so hooks register with the active runner.
+
+## Migrating to Vitest 5
+
+Current starters and setup generators select Vitest 5. Version-specific Angular
+starters retain their existing test versions. Angular's own `unit-test` builder
+and other integrations may declare different Vitest peer ranges; use the Analog
+builder when following this guide.
+
+- Ignore `.vitest/`, the default output directory for reports and attachments.
+  Keep Vite's transform cache configuration at the top-level `cacheDir`; remove
+  obsolete `test.cache` and `test.cacheDir` settings.
+- `clearMocks` now defaults to `true`. Set up expected mock calls inside each
+  test or its `beforeEach`, and keep `vi.mock`, `vi.unmock`, and `vi.hoisted` at
+  module scope. Always await promise assertions.
+- Browser text assertions are exact by default. Use `toMatchTextContent` for
+  substring or regular-expression matches.
+- Open Vitest UI using the authenticated URL printed by the runner.
+
+For the complete upstream changes, see the [Vitest 5 migration guide](https://vitest.dev/guide/migration/).
+
 ## Automated Setup Using a Schematic/Generator
 
 Vitest can be installed and setup using a schematic/generator for Angular CLI or Nx workspaces.

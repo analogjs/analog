@@ -27,9 +27,7 @@ export async function createAngularMemoryPlugin(
   resolveId: (source: string, importer: string) => Promise<string | undefined>;
   load: (id: string) => { code: string; map: string | undefined } | undefined;
 }> {
-  const { normalizePath } = await (Function(
-    'return import("vite")',
-  )() as Promise<typeof import('vite')>);
+  const { normalizePath } = await import('vite');
   const { outputFiles, external } = options;
   let config;
   let projectRoot: string;
@@ -88,15 +86,21 @@ export async function createAngularMemoryPlugin(
               .replace(/^[./]+/, '_')
               .replace(/\//g, '-');
 
+      const emittedFile = [
+        relativeFile.replace(/\.js$/, '.mjs'),
+        relativeFile,
+        id,
+      ].find((candidate) => outputFiles.has(candidate));
       const codeContents =
-        outputFiles.get(relativeFile)?.contents ||
-        outputFiles.get(id)?.contents;
+        emittedFile === undefined
+          ? undefined
+          : outputFiles.get(emittedFile)?.contents;
       if (codeContents === undefined) {
         return undefined;
       }
 
       const code = Buffer.from(codeContents).toString('utf-8');
-      const mapContents = outputFiles.get(relativeFile + '.map')?.contents;
+      const mapContents = outputFiles.get(emittedFile + '.map')?.contents;
 
       return {
         // Remove source map URL comments from the code if a sourcemap is present.

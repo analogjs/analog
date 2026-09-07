@@ -6,17 +6,33 @@ title: 添加Vitest
 
 通过几个步骤，[Vitest](https://vitest.dev) 可以被添加到现有的 Angular 工作区。
 
+## 迁移到 Vitest 5
+
+当前模板和生成器使用 Vitest 5；针对特定 Angular 版本的模板保留原有版本。
+集成仍保留 Vitest 1–4 的 peer 依赖范围。Vitest 5 要求 Node.js 22.12、
+Vite 6.4 或更高版本，请保持 `vitest` 与 `@vitest/*` 配套包的版本一致。
+
+- 将报告和附件目录 `.vitest/` 加入忽略列表。Vite 缓存使用顶层 `cacheDir`，
+  删除旧的 `test.cache` 和 `test.cacheDir` 配置。
+- `clearMocks` 默认开启，请在每个测试中设置预期的 mock 调用。
+  `vi.mock`、`vi.unmock` 和 `vi.hoisted` 必须位于模块顶层。
+- Promise 断言必须等待完成。浏览器文本断言默认精确匹配；子字符串或正则匹配
+  使用 `toMatchTextContent`。
+- 使用运行器输出的带认证信息的 URL 打开 Vitest UI。
+
+更多说明见 [Vitest 5 迁移指南](https://vitest.dev/guide/migration/)。
+
 ## 使用原理器/生成器
 
 通过 Angular CLI 或者 Nx 工作区的原理器/生成器来安装和设置 Vitest。
 
-首先，安装 `@analogjs/platform` 包：
+首先，安装 `@analogjs/vitest-angular` 包：
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -24,7 +40,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -32,7 +48,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -41,7 +57,7 @@ pnpm install -w @analogjs/platform --save-dev
 下一步，运行原理器来设置 Vite 配置，测试配置文件并且更新测试配置。
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 然后，[运行测试](#运行测试)
@@ -180,7 +196,7 @@ getTestBed().initTestEnvironment(
   <TabItem value="npm">
 
 ```shell
-npm install @vitest/browser playwright --save-dev
+npm install @vitest/browser-playwright@^5.0.0 playwright --save-dev
 ```
 
   </TabItem>
@@ -188,7 +204,7 @@ npm install @vitest/browser playwright --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @vitest/browser playwright --dev
+yarn add @vitest/browser-playwright@^5.0.0 playwright --dev
 ```
 
   </TabItem>
@@ -196,7 +212,7 @@ yarn add @vitest/browser playwright --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @vitest/browser playwright
+pnpm install -w @vitest/browser-playwright@^5.0.0 playwright
 ```
 
   </TabItem>
@@ -209,6 +225,7 @@ pnpm install -w @vitest/browser playwright
 
 ```ts
 /// <reference types="vitest" />
+import { playwright } from '@vitest/browser-playwright';
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -220,9 +237,9 @@ export default defineConfig(({ mode }) => ({
     // Vitest 浏览器配置
     browser: {
       enabled: true,
-      name: 'chromium',
+      instances: [{ browser: 'chromium' }],
       headless: false, // 在 CI 中设置为 true
-      provider: 'playwright',
+      provider: playwright(),
     },
   },
   define: {

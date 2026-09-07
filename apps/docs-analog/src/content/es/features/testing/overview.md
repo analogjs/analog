@@ -2,6 +2,11 @@
 
 Analog soporta [Vitest](https://vitest.dev) para ejecutar pruebas unitarias.
 
+Las plantillas actuales utilizan Vitest 5 con Node.js 22.12+ y Vite 6.4+.
+Las plantillas de versiones específicas de Angular conservan sus versiones.
+Consulta las [notas de migración](/docs/features/testing/vitest#migrating-to-vitest-5)
+sobre mocks, aserciones del navegador y el directorio `.vitest/`.
+
 ## Características de Vitest
 
 Vitest soporta muchas características:

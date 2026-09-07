@@ -21,6 +21,13 @@ __TAILWIND_PLUGIN__    analog({
       },
     }),
     angular(),
-    nitro({ static: true }),
+    ...(mode === 'test' ? [] : [nitro({ static: true })]),
   ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+    include: ['**/*.spec.ts'],
+    reporters: ['default'],
+  },
 }));

@@ -5,6 +5,7 @@ import {
 } from '@angular-devkit/architect';
 
 import { VitestSchema } from './schema';
+import { resolve } from 'node:path';
 
 async function vitestBuilder(
   options: VitestSchema,
@@ -20,16 +21,22 @@ async function vitestBuilder(
   const projectConfig = await context.getProjectMetadata(
     context.target as unknown as string,
   );
+  const projectRoot = projectConfig['root'] ?? '.';
+  if (typeof projectRoot !== 'string') {
+    throw new Error('The Angular project root must be a string.');
+  }
   const { coverageArgs, ...extraArgs } = await getExtraArgs(options);
   const watch = options.watch === true;
   const ui = options.ui === true;
   const coverageEnabled = options.coverage === true;
   const update = options.update === true;
   const config = {
-    root: `${projectConfig['root'] || '.'}`,
+    root: resolve(context.workspaceRoot, projectRoot),
     watch,
     ui,
-    config: options.configFile,
+    config: options.configFile
+      ? resolve(context.workspaceRoot, options.configFile)
+      : undefined,
     coverage: {
       enabled: coverageEnabled,
       ...coverageArgs,
@@ -38,6 +45,7 @@ async function vitestBuilder(
     ...extraArgs,
   };
   const viteOverrides: any = {
+    root: config.root,
     test: { watch },
   };
 

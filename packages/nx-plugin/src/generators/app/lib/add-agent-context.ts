@@ -6,7 +6,7 @@ const AGENT_CONTEXT_FILES = ['AGENTS.md', 'CLAUDE.md'];
 
 // Seeds agent context in the app so AI coding assistants pick up Analog
 // conventions (see node_modules/@analogjs/platform/AGENTS.md).
-export function addAgentContext(tree: Tree, projectRoot: string) {
+export function addAgentContext(tree: Tree, projectRoot: string): void {
   for (const fileName of AGENT_CONTEXT_FILES) {
     const filePath = `${projectRoot}/${fileName}`;
 

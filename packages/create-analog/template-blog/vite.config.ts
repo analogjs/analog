@@ -23,7 +23,7 @@ __TAILWIND_PLUGIN__    analog({
       },
     }),
     angular(),
-    nitro(),
+    ...(mode === 'test' ? [] : [nitro()]),
   ],
   test: {
     globals: true,

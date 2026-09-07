@@ -13,6 +13,7 @@ import { addAnalogDependencies } from './lib/add-analog-dependencies';
 import { updateTestTarget } from './lib/update-test-target';
 import { updateTsConfig } from './lib/update-tsconfig';
 import { SetupVitestGeneratorSchema } from './schema';
+import { updateGitIgnore } from '../init/lib/update-git-ignore';
 
 function addFiles(
   tree: Tree,
@@ -64,6 +65,7 @@ async function setupVitestGenerator(
   addAnalogDependencies(tree, angularVersion, nxVersion ?? '');
   updateTsConfig(tree, options);
   updateTestTarget(tree, options);
+  updateGitIgnore(tree);
 
   addFiles(tree, options, majorAngularVersion);
 

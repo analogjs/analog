@@ -2,6 +2,10 @@
 
 Analog 支持使用 [Vitest](https://vitest.dev) 运行单元测试。
 
+当前模板使用 Vitest 5，需要 Node.js 22.12+ 和 Vite 6.4+；针对特定 Angular
+版本的模板保持原有版本。有关 mock 默认值、浏览器断言和 `.vitest/` 输出目录，
+请参阅[迁移说明](/docs/features/testing/vitest#migrating-to-vitest-5)。
+
 ## Vitest 功能
 
 Vitest 支持许多功能：

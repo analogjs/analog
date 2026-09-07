@@ -22,6 +22,27 @@
         "command": "node tools/scripts/verify-package-artifacts.mts vitest-angular"
       }
     },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "dependsOn": ["build"],
+      "options": {
+        "configFile": "packages/vitest-angular/vite.config.ts"
+      }
+    },
+    "consumer-smoke": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "build",
+        "platform:build",
+        "router:build",
+        "content:build",
+        "create-analog:build"
+      ],
+      "options": {
+        "command": "node tools/scripts/vitest-consumer-smoke.mjs"
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

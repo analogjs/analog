@@ -53,7 +53,6 @@ export default defineConfig(({ mode }) => {
       globals: true,
       include: ['**/*.spec.ts'],
       exclude: ['**/files/**/*.spec.ts'],
-      cacheDir: '../../node_modules/.vitest',
       testTimeout: 10000,
       passWithNoTests: true,
     },

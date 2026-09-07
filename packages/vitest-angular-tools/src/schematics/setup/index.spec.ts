@@ -70,12 +70,13 @@ describe('setup schematic', () => {
       '@analogjs/vite-plugin-angular': expect.anything(),
       jsdom: '^22.0.0',
       vite: '^7.0.0',
-      vitest: '^4.0.0',
+      vitest: '^5.0.0',
       'vite-tsconfig-paths': '^4.2.0',
     });
+    expect(resultTree.readContent('/.gitignore')).toContain('.vitest/');
   });
 
-  it('should add vitest v4 for Angular 21+', async () => {
+  it('should add vitest v5 for Angular 21+', async () => {
     // Update to Angular 21
     tree.overwrite(
       '/package.json',
@@ -94,7 +95,7 @@ describe('setup schematic', () => {
     );
 
     const packageJson = JSON.parse(resultTree.readContent('/package.json'));
-    expect(packageJson.devDependencies.vitest).toBe('^4.0.0');
+    expect(packageJson.devDependencies.vitest).toBe('^5.0.0');
   });
 
   it('should update angular.json test target', async () => {
@@ -306,7 +307,7 @@ describe('setup schematic', () => {
 
       const packageJson = JSON.parse(resultTree.readContent('/package.json'));
       expect(packageJson.devDependencies).toMatchObject({
-        '@vitest/browser-playwright': '^4.0.0',
+        '@vitest/browser-playwright': '^5.0.0',
         playwright: '^1.54.0',
       });
       expect(packageJson.devDependencies.jsdom).toBeUndefined();
