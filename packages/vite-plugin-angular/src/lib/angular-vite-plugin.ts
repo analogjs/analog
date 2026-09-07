@@ -1479,7 +1479,10 @@ function createPluginSet(
       angularFullVersion < 190004 && pendingTasksPlugin(),
       nxFolderPlugin(),
       encapsulationPlugin(),
-      liveReload && !isTest && componentStyleHmrPlugin(),
+      liveReload &&
+        !isTest &&
+        angularFullVersion >= 200000 &&
+        componentStyleHmrPlugin(),
     ].filter((plugin): plugin is Plugin => Boolean(plugin)),
   };
 

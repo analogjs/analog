@@ -82,7 +82,12 @@ describe('component stylesheet updates', () => {
       'RendererFactory2',
       'hot',
       body + '; return replaceMetadata;',
-    )({ querySelectorAll: () => [] }, {}, {}, hot);
+    )(
+      { querySelectorAll: () => [] },
+      { location: { reload: hot.invalidate } },
+      {},
+      hot,
+    );
     replace.mockClear();
     unsupported(replace, type);
     expect(hot.invalidate).toHaveBeenCalledOnce();

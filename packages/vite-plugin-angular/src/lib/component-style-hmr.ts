@@ -25,7 +25,7 @@ export function replaceMetadata(replace, type, ...args) {
       if (factory) factories.add(factory);
     }
     if (!factories.size || [...factories].some((factory) => !factory.componentReplaced)) {
-      hot.invalidate('The renderer cannot invalidate component metadata safely');
+      globalThis.location.reload();
       return;
     }
     for (const factory of factories) factory.componentReplaced(type.ɵcmp.id);
