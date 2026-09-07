@@ -1,3 +1,4 @@
+import { createCompilerSession } from '../compiler-session.js';
 import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
 import { union } from 'es-toolkit';
 import { createHash } from 'node:crypto';
@@ -29,16 +30,12 @@ import {
   type DebugOption,
 } from '../utils/debug.js';
 import {
+  createDepOptimizerConfig,
   getTsConfigPath,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
 import { TsconfigResolver } from '../utils/tsconfig-resolver.js';
-import { isRolldown } from '../utils/rolldown.js';
-import {
-  createCompilerPlugin,
-  createRolldownCompilerPlugin,
-} from '../compiler-plugin.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheetResult,
@@ -60,6 +57,7 @@ import {
   toAngularCompilationFileReplacements,
   mapTemplateUpdatesToFiles,
   refreshStylesheetRegistryForFile,
+  createCompilationMode,
   DiagnosticModes,
   isTestWatchMode,
 } from '../utils/compilation-shared.js';
@@ -102,8 +100,6 @@ export function compilationAPIPlugin(
   const outputFiles = new Map<string, EmitFileResult>();
   const classNames = new Map<string, string>();
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
-  let compilationLock = Promise.resolve();
-  let pendingCompilation: Promise<void> | null = null;
   let initialCompilation = false;
   let viteServer: ViteDevServer | undefined;
 
@@ -117,24 +113,28 @@ export function compilationAPIPlugin(
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   let testWatchMode = isTestWatchMode();
 
-  function hasViteHmrTransport(): boolean {
-    return resolvedConfig ? resolvedConfig.server.hmr !== false : true;
-  }
+  const compilation = createCompilerSession(
+    async (ids) => {
+      const integrations = await discoverAnalogIntegrations(resolvedConfig);
+      stylePreprocessor = integrations.stylePreprocessor;
+      transformFilter = integrations.transformFilter;
+      tsconfigResolver.setIntegrationIncludes(integrations.include);
+      externalizeStylesRequested = integrations.externalizeStyles;
+      await performAngularCompilation(resolvedConfig, ids);
+    },
+    async () => {
+      await angularCompilation?.close?.();
+      angularCompilation = undefined;
+    },
+  );
 
-  function shouldEnableLiveReload(): boolean {
-    const effectiveWatchMode = isTest ? testWatchMode : watchMode;
-    return !!(
-      effectiveWatchMode &&
-      pluginOptions.liveReload &&
-      hasViteHmrTransport()
-    );
-  }
-
-  function shouldExternalizeStyles(): boolean {
-    const effectiveWatchMode = isTest ? testWatchMode : watchMode;
-    if (!effectiveWatchMode) return false;
-    return !!(shouldEnableLiveReload() || externalizeStylesRequested);
-  }
+  const { shouldEnableLiveReload, shouldExternalizeStyles } =
+    createCompilationMode(() => ({
+      watch: isTest ? testWatchMode : watchMode,
+      liveReload: pluginOptions.liveReload,
+      hmr: resolvedConfig?.server.hmr !== false,
+      externalizeStyles: externalizeStylesRequested,
+    }));
 
   function resolveTsConfigPath() {
     const tsconfigValue = pluginOptions.tsconfigGetter();
@@ -366,7 +366,7 @@ export function compilationAPIPlugin(
 
         debugCompiler('tsCompilerOptions (compilation API)', {
           liveReload: pluginOptions.liveReload,
-          viteHmr: hasViteHmrTransport(),
+          viteHmr: resolvedConfig.server.hmr !== false,
           externalizeStylesRequested,
           watchMode,
           shouldExternalize: shouldExternalizeStyles(),
@@ -493,25 +493,6 @@ export function compilationAPIPlugin(
     }
   }
 
-  async function performCompilation(config: ResolvedConfig, ids?: string[]) {
-    let resolve: (() => unknown) | undefined;
-    const previousLock = compilationLock;
-    compilationLock = new Promise<void>((r) => {
-      resolve = r;
-    });
-    try {
-      await previousLock;
-      const integrations = await discoverAnalogIntegrations(config);
-      stylePreprocessor = integrations.stylePreprocessor;
-      transformFilter = integrations.transformFilter;
-      tsconfigResolver.setIntegrationIncludes(integrations.include);
-      externalizeStylesRequested = integrations.externalizeStyles;
-      await performAngularCompilation(config, ids);
-    } finally {
-      resolve!();
-    }
-  }
-
   function isComponentStyleSheet(id: string): boolean {
     return id.includes('ngcomp=');
   }
@@ -566,59 +547,17 @@ export function compilationAPIPlugin(
       // esbuild/oxc so they don't compete.
       debugCompilationApi('esbuild/oxc disabled, Angular handles transforms');
 
-      // The compilation API owns user-source transforms, but deps
-      // optimization still bundles partial-compiled Angular libs from
-      // node_modules (`ɵɵngDeclareInjectable/Factory`). Without the
-      // linker plugin, those declarations reach the browser unprocessed
-      // and Angular tries to JIT-compile them at runtime. Mirror the
-      // deps-optimizer wiring from `angular-vite-plugin.ts` so the
-      // linker runs on `.[cm]?js` deps under both rolldown and esbuild.
-      const useRolldown = isRolldown();
-      const preliminaryTsConfigPath = resolveTsConfigPath();
-      const compilerPluginOptions = {
-        tsconfig: preliminaryTsConfigPath,
-        sourcemap: !isProd,
-        advancedOptimizations: isProd,
-        jit: pluginOptions.jit,
-        incremental: watchMode,
-      };
-
-      // No `resolve.conditions` extension here: the `style` condition is
-      // scoped to `.css`-extension requests by
-      // `cssExtensionStyleResolverPlugin`, registered once at the
-      // `angular()` factory level. Adding `style` globally caused
-      // Tailwind v4's JS plugin resolver to pick the `style` exports of
-      // packages such as `tailwindcss-primeui`, which then crashed Node's
-      // ESM loader when it tried to import the resulting `.css` file.
       return {
         esbuild: undefined,
         oxc: undefined,
-        optimizeDeps: {
-          include: ['rxjs/operators', 'rxjs', 'tslib'],
-          exclude: ['@angular/platform-server'],
-          ...(useRolldown
-            ? {
-                rolldownOptions: {
-                  plugins: [
-                    createRolldownCompilerPlugin(
-                      compilerPluginOptions,
-                      !pluginOptions.isAstroIntegration,
-                    ),
-                  ],
-                },
-              }
-            : {
-                esbuildOptions: {
-                  plugins: [
-                    createCompilerPlugin(
-                      compilerPluginOptions,
-                      isTest,
-                      !pluginOptions.isAstroIntegration,
-                    ),
-                  ],
-                },
-              }),
-        },
+        ...createDepOptimizerConfig({
+          tsconfig: resolveTsConfigPath(),
+          isProd,
+          jit: pluginOptions.jit,
+          watchMode,
+          isTest,
+          isAstroIntegration: pluginOptions.isAstroIntegration,
+        }),
       };
     },
     async configResolved(config) {
@@ -643,11 +582,11 @@ export function compilationAPIPlugin(
 
       const invalidateCompilation = async () => {
         tsconfigResolver.invalidateAll();
-        await performCompilation(resolvedConfig);
+        await compilation.run();
       };
-      server.watcher.on('add', invalidateCompilation);
-      server.watcher.on('unlink', invalidateCompilation);
-      server.watcher.on('change', (file) => {
+      compilation.watch(server.watcher, 'add', invalidateCompilation);
+      compilation.watch(server.watcher, 'unlink', invalidateCompilation);
+      compilation.watch(server.watcher, 'change', (file) => {
         if (file.includes('tsconfig')) {
           tsconfigResolver.invalidateTsconfigCaches();
         }
@@ -655,8 +594,7 @@ export function compilationAPIPlugin(
     },
     async buildStart() {
       if (!isVitestVscode) {
-        await performCompilation(resolvedConfig);
-        pendingCompilation = null;
+        await compilation.run();
         initialCompilation = true;
       }
     },
@@ -670,13 +608,12 @@ export function compilationAPIPlugin(
         const [fileId] = ctx.file.split('?');
         debugHmr('TS file changed', { file: ctx.file, fileId });
 
-        pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+        compilation.run([fileId]);
 
         let result;
 
         if (shouldEnableLiveReload()) {
-          await pendingCompilation;
-          pendingCompilation = null;
+          await compilation.ready();
           result = fileEmitter(fileId);
           debugHmr('TS file emitted', {
             fileId,
@@ -709,7 +646,7 @@ export function compilationAPIPlugin(
       if (/\.(html|htm)$/.test(ctx.file)) {
         debugHmr('template file changed', { file: ctx.file });
         // Recompile to pick up template changes
-        pendingCompilation = performCompilation(resolvedConfig);
+        compilation.run();
       }
 
       if (/\.(css|less|sass|scss)$/.test(ctx.file)) {
@@ -797,7 +734,7 @@ export function compilationAPIPlugin(
 
         if (isTest) {
           if (isVitestVscode && !initialCompilation) {
-            pendingCompilation = performCompilation(resolvedConfig);
+            compilation.run();
             initialCompilation = true;
           }
 
@@ -805,15 +742,12 @@ export function compilationAPIPlugin(
           if (tsMod) {
             const invalidated = tsMod.lastInvalidationTimestamp;
             if (testWatchMode && invalidated) {
-              pendingCompilation = performCompilation(resolvedConfig, [id]);
+              compilation.run([id]);
             }
           }
         }
 
-        if (pendingCompilation) {
-          await pendingCompilation;
-          pendingCompilation = null;
-        }
+        await compilation.ready();
 
         const typescriptResult = fileEmitter(id);
         if (!typescriptResult) {
@@ -851,9 +785,9 @@ export function compilationAPIPlugin(
         };
       },
     },
-    closeBundle() {
-      angularCompilation?.close?.();
-      angularCompilation = undefined;
+    async closeBundle() {
+      if (!resolvedConfig?.build.watch) await compilation.close();
     },
+    closeWatcher: () => compilation.close(),
   };
 }

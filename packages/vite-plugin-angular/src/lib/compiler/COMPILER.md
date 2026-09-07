@@ -12,7 +12,7 @@ export default defineConfig({
 });
 ```
 
-Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
+Supported dependency ranges are defined by the package manifest and workspace catalogs. The compiler API and conformance matrices live in `.github/workflows/compiler-compat.yml` and `.github/workflows/conformance.yml`. Installed-package Vite consumers require separate build and runtime qualification. Components that use `@defer` at runtime require Angular 18+.
 
 ## Architecture
 
@@ -60,6 +60,18 @@ The compiler is integrated into `@analogjs/vite-plugin-angular` as an alternativ
 7. Injects synthetic imports for NgModule-exported classes
 
 The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.) continue to work alongside the fast-compile path.
+
+## Compiler orchestration
+
+The ngtsc and Angular Compilation API integrations use an internal Effect v4 compiler session. The session serializes Angular mutations and combines queued file invalidations into the following compilation; a full invalidation takes precedence over a file list. Its Promise boundary records pending work synchronously so transforms arriving during initialization wait for the compiler.
+
+Cancelling a caller stops that caller waiting. It does not interrupt Angular's non-abortable compilation or release its semaphore early. Session shutdown removes owned watcher listeners, drains pending compilation and then disposes the runtime. Build watchers keep their session between rebuilds and dispose it through `closeWatcher`.
+
+Dependency optimizer setup is shared by all three compilation modes. Named options separate test behavior from transformer ownership. The selected esbuild or Rolldown adapter lazily acquires its JavaScript transformer through an Effect Layer; a disposed build can acquire a fresh transformer on the following optimizer cycle. Externally owned transformer lifetimes retain their existing opt-out.
+
+Effect stays inside compiler tooling. `angular(options)`, Angular compilation algorithms, plugin interop and application browser APIs retain their native contracts. HMR metadata belongs to the plugin instance, and common watch/style decisions and stylesheet lookups share one implementation.
+
+Run the package's `test` and `build` Nx targets to verify the integration. Session tests cover queued invalidation, failure recovery, cancellation, draining and listener isolation. The shared HMR fixture exercises the Compilation API's existing assertions; adapter tests run the same lifetime cases for esbuild and Rolldown. These tests are distinct from the full Angular/Vite consumer compatibility matrix and controlled performance comparisons tracked in [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519).
 
 ## Source Files
 

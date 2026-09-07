@@ -239,3 +239,28 @@ export function isTestWatchMode(args = process.argv): boolean {
 
   return true;
 }
+
+export function createCompilationMode(
+  current: () => {
+    watch: boolean;
+    liveReload: boolean;
+    hmr: boolean;
+    externalizeStyles: boolean;
+  },
+): {
+  shouldEnableLiveReload: () => boolean;
+  shouldExternalizeStyles: () => boolean;
+} {
+  return {
+    shouldEnableLiveReload: () => {
+      const mode = current();
+      return mode.watch && mode.liveReload && mode.hmr;
+    },
+    shouldExternalizeStyles: () => {
+      const mode = current();
+      return (
+        mode.watch && ((mode.liveReload && mode.hmr) || mode.externalizeStyles)
+      );
+    },
+  };
+}

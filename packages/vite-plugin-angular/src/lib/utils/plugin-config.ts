@@ -128,7 +128,9 @@ export interface DepOptimizerOptions {
   isAstroIntegration: boolean;
 }
 
-export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
+export function createDepOptimizerConfig(
+  opts: DepOptimizerOptions,
+): Pick<vite.UserConfig, 'optimizeDeps'> {
   const defineOptions = {
     ngJitMode: 'false',
     ngI18nClosureMode: 'false',
@@ -143,40 +145,26 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
     ? createPersistentTransformCache(transformCacheDir)
     : undefined;
 
-  const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] = {
-    plugins: [
-      createRolldownCompilerPlugin(
-        {
-          tsconfig: opts.tsconfig,
-          sourcemap: !opts.isProd,
-          advancedOptimizations: opts.isProd,
-          jit: opts.jit,
-          incremental: opts.watchMode,
-        },
-        opts.isTest,
-        !opts.isAstroIntegration,
-        transformCache,
-      ),
-    ],
+  const settings = {
+    compiler: {
+      tsconfig: opts.tsconfig,
+      sourcemap: !opts.isProd,
+      advancedOptimizations: opts.isProd,
+      jit: opts.jit,
+      incremental: opts.watchMode,
+    },
+    isTest: opts.isTest,
+    closeTransformer: !opts.isAstroIntegration,
+    cache: transformCache,
   };
-
-  const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
-    plugins: [
-      createCompilerPlugin(
-        {
-          tsconfig: opts.tsconfig,
-          sourcemap: !opts.isProd,
-          advancedOptimizations: opts.isProd,
-          jit: opts.jit,
-          incremental: opts.watchMode,
+  const optimizerOptions = vite.rolldownVersion
+    ? { rolldownOptions: { plugins: [createRolldownCompilerPlugin(settings)] } }
+    : {
+        esbuildOptions: {
+          plugins: [createCompilerPlugin(settings)],
+          define: defineOptions,
         },
-        opts.isTest,
-        !opts.isAstroIntegration,
-        transformCache,
-      ),
-    ],
-    define: defineOptions,
-  };
+      };
 
   // No top-level `resolve` block: the `style` package-export condition
   // is now scoped to `.css`-extension requests via
@@ -184,9 +172,9 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
   // longer needs to leak it into Vite's global `resolve.conditions`.
   return {
     optimizeDeps: {
-      include: ['rxjs/operators', 'rxjs'],
+      include: ['rxjs/operators', 'rxjs', 'tslib'],
       exclude: ['@angular/platform-server'],
-      ...(vite.rolldownVersion ? { rolldownOptions } : { esbuildOptions }),
+      ...optimizerOptions,
     },
   };
 }

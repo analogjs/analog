@@ -110,64 +110,19 @@ describe('liveReload option', () => {
 });
 
 describe('isTestWatchMode', () => {
-  it('should return false for vitest --run', () => {
-    const result = isTestWatchMode(['--run']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest run', () => {
-    const result = isTestWatchMode(['run']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest run with a file filter', () => {
-    const result = isTestWatchMode(['run', 'src/example.spec.ts']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return true for a file filter that contains run', () => {
-    const result = isTestWatchMode(['src/run-helpers.spec.ts']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return true for vitest --no-run', () => {
-    const result = isTestWatchMode(['--no-run']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return true for vitest --watch', () => {
-    const result = isTestWatchMode(['--watch']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return true for vitest watch', () => {
-    const result = isTestWatchMode(['watch']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return false for vitest --no-watch', () => {
-    const result = isTestWatchMode(['--no-watch']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest --watch=false', () => {
-    const result = isTestWatchMode(['--watch=false']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest --watch false', () => {
-    const result = isTestWatchMode(['--watch', 'false']);
-
-    expect(result).toBeFalsy();
+  it.each([
+    [['--run'], false],
+    [['run'], false],
+    [['run', 'src/example.spec.ts'], false],
+    [['src/run-helpers.spec.ts'], true],
+    [['--no-run'], true],
+    [['--watch'], true],
+    [['watch'], true],
+    [['--no-watch'], false],
+    [['--watch=false'], false],
+    [['--watch', 'false'], false],
+  ])('resolves %j to %s', (args, expected) => {
+    expect(isTestWatchMode(args)).toBe(expected);
   });
 });
 

@@ -52,6 +52,7 @@
     ]
   },
   "dependencies": {
+    "effect": "catalog:",
     "es-toolkit": "catalog:",
     "magic-string": "catalog:",
     "obug": "catalog:",
