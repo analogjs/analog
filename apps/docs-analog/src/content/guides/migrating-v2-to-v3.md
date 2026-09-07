@@ -38,7 +38,7 @@ nx migrate @analogjs/platform@latest
 +setupTestBed({ teardown: { destroyAfterEach: false } });
 ```
 
-Calls without that option keep the default `destroyAfterEach: true`. The setup schematic's `--browserMode` option still selects Playwright browser testing; newly generated setup files use the explicit teardown configuration.
+Calls without an explicit `teardown.destroyAfterEach` override keep the default `destroyAfterEach: true`. The setup schematic's `--browserMode` option still selects Playwright browser testing; newly generated setup files use the explicit teardown configuration.
 
 ### Angular version support
 
