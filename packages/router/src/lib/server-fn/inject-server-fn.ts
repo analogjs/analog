@@ -14,6 +14,7 @@ import { firstValueFrom } from 'rxjs';
 
 import type { ServerFn } from './types';
 import { SERVER_FN_DISPATCHER } from './dispatcher';
+import { withAbortSignal } from '../with-abort-signal';
 
 /**
  * Client transport for server functions. In the browser it goes through Angular
@@ -36,16 +37,23 @@ export class ServerFnClient {
     return !!this.dispatcher;
   }
 
-  async call<In, Out>(fn: ServerFn<In, Out>, input: In): Promise<Out> {
+  async call<In, Out>(
+    fn: ServerFn<In, Out>,
+    input: In,
+    signal?: AbortSignal,
+  ): Promise<Out> {
+    signal?.throwIfAborted();
     if (this.dispatcher) {
-      return this.dispatcher(fn, input, this.injector);
+      const value = await this.dispatcher(fn, input, this.injector);
+      signal?.throwIfAborted();
+      return value;
     }
 
     const request$ =
       fn.method === 'GET'
         ? this.http.get<Out>(fn.url)
         : this.http.post<Out>(fn.url, input ?? {});
-    return firstValueFrom(request$);
+    return firstValueFrom(withAbortSignal(request$, signal));
   }
 
   /** Key a read's value for TransferState hydration (fn id + input). */
@@ -102,13 +110,13 @@ export function injectServerFn<In, Out>(
 
   return resource<Out | undefined, unknown>({
     params: () => (args ? args() : NO_INPUT),
-    loader: async ({ params }) => {
+    loader: async ({ params, abortSignal }) => {
       const input = (params === NO_INPUT ? undefined : params) as In;
       // Hydrate from the SSR seed on first client render; else fetch and (on
       // the server) seed for the client.
       const seeded = client.readSeed(fn as ServerFn<unknown, Out>, input);
       if (seeded !== undefined) return seeded;
-      const value = await client.call(fn, input);
+      const value = await client.call(fn, input, abortSignal);
       if (client.isServer) {
         client.writeSeed(fn as ServerFn<unknown, Out>, input, value);
       }
@@ -132,6 +140,6 @@ export function injectServerFnMutation<In, Out>(
 }
 
 function stableInput(input: unknown): string {
-  if (input === undefined || input === null) return '_';
+  if (input === undefined) return '_';
   return JSON.stringify(input);
 }

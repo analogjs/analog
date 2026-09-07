@@ -14,6 +14,7 @@ import type {
   InferRouteBody,
   InferRouteResult,
 } from '../../server/actions/src/index.js';
+import { withAbortSignal } from '../../src/lib/with-abort-signal';
 
 function buildUrl(base: string, params?: Record<string, unknown>): string {
   if (!params) return base;
@@ -50,10 +51,14 @@ export function serverQueryOptions<
   const { query, ...rest } = options;
   return {
     ...rest,
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       lastValueFrom(
-        http.get<InferRouteResult<TRoute>>(
-          buildUrl(url, query as Record<string, any>),
+        withAbortSignal(
+          http.get<InferRouteResult<TRoute>>(
+            buildUrl(url, query as Record<string, any>),
+            { transferCache: false },
+          ),
+          signal,
         ),
       ),
   } as CreateQueryOptions<InferRouteResult<TRoute>, TError, TData, TQueryKey>;
@@ -83,7 +88,11 @@ export function serverMutationOptions<
 > {
   return {
     mutationFn: (body: InferRouteBody<TRoute>) =>
-      lastValueFrom(http.post<InferRouteResult<TRoute>>(url, body)),
+      lastValueFrom(
+        http.post<InferRouteResult<TRoute>>(url, body, {
+          transferCache: false,
+        }),
+      ),
     ...options,
   } as CreateMutationOptions<
     InferRouteResult<TRoute>,
@@ -130,10 +139,14 @@ export function serverInfiniteQueryOptions<
   const { query: buildQuery, ...rest } = options;
   return {
     ...rest,
-    queryFn: (context: { pageParam: TPageParam }) =>
+    queryFn: (context: { pageParam: TPageParam; signal: AbortSignal }) =>
       lastValueFrom(
-        http.get<InferRouteResult<TRoute>>(
-          buildUrl(url, buildQuery(context) as Record<string, any>),
+        withAbortSignal(
+          http.get<InferRouteResult<TRoute>>(
+            buildUrl(url, buildQuery(context) as Record<string, any>),
+            { transferCache: false },
+          ),
+          context.signal,
         ),
       ),
   } as CreateInfiniteQueryOptions<

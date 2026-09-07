@@ -799,6 +799,7 @@ function generateSsrEntryWrapper(
 // as event replay on the server.
 import ${JSON.stringify(SERVER_MODE_ID)};
 import { serverFetch as nitroServerFetch } from 'nitro';
+import { H3Event, getProxyRequestHeaders } from 'nitro/h3';
 import { createFetch } from 'ofetch';
 import renderer from ${JSON.stringify(entryServer)};
 
@@ -820,12 +821,9 @@ const ssrFetch = (resource, init) => {
     : resource instanceof URL
       ? resource.href
       : resource.url;
-  // Relative URLs from injectAPIPrefix() etc. need a host for Nitro's
-  // Request constructor to accept them.
-  if (typeof url === 'string' && url.startsWith('/')) {
-    url = 'http://localhost' + url;
-  }
-  return nitroServerFetch(url, init);
+  return url.startsWith('/') && !url.startsWith('//')
+    ? nitroServerFetch(resource, init)
+    : globalThis.fetch(resource, init);
 };
 
 // Wrap in ofetch so consumers that expect \`$fetch.raw()\` (the router's
@@ -835,6 +833,29 @@ const ssrFetch = (resource, init) => {
 const ssrOFetch = createFetch({ fetch: ssrFetch });
 if (typeof globalThis.$fetch === 'undefined') {
   globalThis.$fetch = ssrOFetch;
+}
+
+function createRequestFetch(parent) {
+  const origin = new URL(parent.url).origin;
+  const inherited = new Headers(getProxyRequestHeaders(new H3Event(parent)));
+  inherited.delete('content-length');
+  inherited.delete('content-type');
+  return createFetch({
+    fetch(resource, init) {
+      const target = new URL(resource instanceof Request ? resource.url : resource.toString(), parent.url);
+      const supplied = resource instanceof Request ? new Request(resource, init) : new Request(target, init);
+      const signal = AbortSignal.any([parent.signal, supplied.signal]);
+      signal.throwIfAborted();
+      if (target.origin !== origin) return globalThis.fetch(new Request(supplied, { signal }));
+      const headers = new Headers(inherited);
+      supplied.headers.forEach((value, name) => headers.set(name, value));
+      const child = new Request(supplied, { headers, signal });
+      child.runtime = parent.runtime;
+      child.waitUntil = parent.waitUntil;
+      child.ip = parent.ip;
+      return nitroServerFetch(child);
+    },
+  });
 }
 
 export default {
@@ -866,7 +887,7 @@ export default {
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
         // and throws TypeError during prerender/SSR.
-        fetch: ssrOFetch,
+        fetch: createRequestFetch(req),
       });
       return new Response(html, {
         status: 200,
