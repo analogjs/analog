@@ -45,7 +45,7 @@ describe('TypeScript server externalization', () => {
       options: { node: true, externals: config.externals },
       hooks: { hook },
     };
-    await (config.modules![0] as Function)(instance);
+    await (config.modules![0] as (nitro: typeof instance) => void)(instance);
     const existing = { name: 'consumer-plugin' };
     const rollup = { plugins: [existing] };
     await hook.mock.calls[0][1](instance, rollup);
@@ -78,7 +78,7 @@ describe('TypeScript server externalization', () => {
         options: { ...options, externals: config.externals },
         hooks: { hook },
       };
-      await (config.modules![0] as Function)(instance);
+      await (config.modules![0] as (nitro: typeof instance) => void)(instance);
       const rollup = { plugins: [] };
       await hook.mock.calls[0][1](instance, rollup);
       expect(rollup.plugins).toEqual([]);
