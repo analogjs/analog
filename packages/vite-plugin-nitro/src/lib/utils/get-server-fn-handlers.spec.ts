@@ -125,7 +125,7 @@ describe('getServerFnHandlers', () => {
     `export const load = async () => ({});`,
     `// import { serverFn } from '@analogjs/router/server';
      export const load = async () => ({ text: 'serverFn' });`,
-    `import { serverFn } from 'another-library'; export const load = serverFn();`,
+    `import { serverFn } from 'another-library'; export const load = async () => ({});`,
     `import type { serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
     `import { type serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
   ])('excludes load-only modules: %s', (code) => {
@@ -185,6 +185,42 @@ describe('getServerFnHandlers', () => {
       ).toBe(true);
     },
   );
+
+  it('wires dispatch for the conventional serverFn re-export that the client transforms', async () => {
+    rmSync(join(workspaceRoot, 'src/app/server-fns'), { recursive: true });
+    writeFileSync(
+      join(workspaceRoot, 'src/app/server-fn.ts'),
+      `export { serverFn } from '@analogjs/router/server';`,
+    );
+    const page = join(workspaceRoot, 'src/app/pages/shipping/index.server.ts');
+    writeFileSync(
+      page,
+      `import { serverFn } from '../../server-fn';
+       export const load = async () => ({});
+       export const getData = serverFn(async () => []);`,
+    );
+
+    const plugin = nitro({ ssr: false, useAPIMiddleware: false })[1] as any;
+    const config = await plugin.config(
+      { root: workspaceRoot, build: {} },
+      { command: 'build', mode: 'production' },
+    );
+    await config.builder.buildApp({
+      build: vi.fn(),
+      environments: { client: {} },
+    });
+    const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
+
+    expect(
+      nitroConfig.handlers?.some(
+        (handler) =>
+          typeof handler !== 'string' && handler.route === '/_analog/fn/:id',
+      ),
+    ).toBe(true);
+    expect(
+      JSON.stringify(nitroConfig.virtual).includes('shipping/index.server.ts'),
+    ).toBe(true);
+  });
 
   it('returns deterministic, de-duplicated, sorted output', () => {
     const first = getServerFnHandlers({ workspaceRoot, sourceRoot, rootDir });
