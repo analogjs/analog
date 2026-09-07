@@ -229,8 +229,8 @@ jobs:
           fi
 
   consumer-compat:
-    name: Angular ${{ matrix.angular }} / Vite ${{ matrix.vite }} consumer
-    runs-on: ubuntu-latest
+    name: Angular ${{ matrix.angular }} / Vite ${{ matrix.vite }} consumer${{ matrix.os && ' (Windows)' || '' }}
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -247,6 +247,12 @@ jobs:
           - { angular: '22.0.0', vite: '7.3.6', node: '24.15.0' }
           - { angular: '22.0.0', vite: '8.0.0', node: '24.15.0' }
           - { angular: '22.0.0', vite: '8.2.2', node: '24.15.0' }
+          - {
+              angular: '22.0.0',
+              vite: '8.2.2',
+              node: '24.15.0',
+              os: 'windows-latest',
+            }
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -280,6 +286,8 @@ jobs:
           name: compiler-angular-${{ matrix.angular }}-vite-${{ matrix.vite }}
           path: |
             dist/compiler-vite-smoke/**/result.json
+            dist/compiler-vite-smoke/**/runtime-*.json
+            dist/compiler-vite-smoke/**/runtime-*.log
             dist/compiler-vite-smoke/**/*-failure.json
             dist/compiler-vite-smoke/*/pnpm-lock.yaml
           if-no-files-found: warn

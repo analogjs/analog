@@ -9,6 +9,8 @@ import {
   mkdtempSync,
   readFileSync,
   writeFileSync,
+  openSync,
+  closeSync,
 } from 'node:fs';
 import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -111,6 +113,9 @@ const dependencies = {
   '@angular/core': values.angular,
   '@angular/common': values.angular,
   '@angular/platform-browser': values.angular,
+  ...(values.angular === '22.0.0'
+    ? { '@angular/platform-server': values.angular }
+    : {}),
   '@angular/compiler': values.angular,
   '@angular/compiler-cli': values.angular,
   '@types/node': oldAngular ? '20.12.14' : '24.13.3',
@@ -186,3 +191,45 @@ execaSync(consumerNode, ['fixture.mjs'], {
   killSignal: 'SIGKILL',
 });
 console.log(`Installed-package evidence retained at ${root}`);
+if (values.angular === '22.0.0' && values.vite === '8.2.2') {
+  copyFileSync(
+    join(scriptDirectory, 'compiler-runtime-qualification.mjs'),
+    join(root, 'runtime.mjs'),
+  );
+  for (const mode of ['ngtsc', 'fast', 'api']) {
+    const logPath = join(root, `runtime-${mode}.log`);
+    const log = openSync(logPath, 'w');
+    try {
+      execaSync(
+        consumerNode,
+        [
+          '--expose-gc',
+          'runtime.mjs',
+          `--output=runtime-${mode}.json`,
+          `--mode=${mode}`,
+          '--components=100',
+          '--edits=3',
+          '--restart-every=3',
+          '--close-queued',
+        ],
+        {
+          cwd: root,
+          env: { ...env, NODE_ENV: 'development' },
+          stdio: ['ignore', log, log],
+          timeout: 180000,
+          killSignal: 'SIGKILL',
+        },
+      );
+      console.log(
+        `Runtime qualification passed: ${mode}, 100 components, restart and queued shutdown`,
+      );
+    } catch (error) {
+      console.error(
+        readFileSync(logPath, 'utf8').split('\n').slice(-30).join('\n'),
+      );
+      throw error;
+    } finally {
+      closeSync(log);
+    }
+  }
+}

@@ -207,6 +207,10 @@ A separate server-without-listen probe exited with an unsettled close on both re
 
 ## Unpaid qualification
 
+The completion pass adds a reproducible runtime qualification worker and suite. Its acceptance protocol is five paired ngtsc browser/SSR runs on Vite 6.0.0, 7.3.6, and 8.2.2; 100-component fixtures across ngtsc/fast/API modes; 15-minute edit/restart soaks at the Vite 6 and 8 endpoints; and idle/queued shutdown checks. The control is explicitly alpha plus the missing Rolldown test-mode argument and the older-Vite fallback-linker filter guard. Paired SSR runs apply the same explicit host refresh policy to both sides; candidate soak runs use native invalidation. Untouched alpha measurements remain historical evidence.
+
+Larger fixtures exposed two additional correctness fixes: Compilation API component CSS now uses a reload fallback to prevent an orphaned stale stylesheet link from overriding subsequent updates, and SSR resource invalidation clears cached modules immediately after queuing compilation so requests wait at the compiler read barrier. Ordinary global CSS continues through Vite's normal HMR path. These fixes are being qualified before closing the checklist below. CI also gains installed-consumer runtime coverage on Windows.
+
 - [ ] Browser websocket/DOM HMR latency, including state retention under timed edits.
 - [ ] Rendered SSR HTML/CSS after edits, including the cost of whole-environment invalidation.
 - [ ] Shutdown latency and resource release under measured workloads.

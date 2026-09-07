@@ -1,0 +1,97 @@
+// Runs the runtime worker in prepared, isolated packed consumers.
+// --root contains vite{6,7,8}-{control,candidate}, each with installed packages.
+// node compiler-qualification-suite.mjs --root=<directory> --phase=paired|soak
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import { openSync, closeSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
+import { execa } from 'execa';
+
+const { values } = parseArgs({
+  options: { root: { type: 'string' }, phase: { type: 'string' } },
+});
+assert.ok(values.root);
+assert.ok(['paired', 'soak'].includes(values.phase));
+assert.equal(process.version, 'v24.15.0');
+const root = resolve(values.root);
+const results = join(root, 'results');
+await fs.mkdir(results, { recursive: true });
+const worker = join(
+  dirname(fileURLToPath(import.meta.url)),
+  'compiler-runtime-qualification.mjs',
+);
+for (const vite of [6, 7, 8])
+  for (const side of ['control', 'candidate']) {
+    await fs.copyFile(worker, join(root, `vite${vite}-${side}`, 'runtime.mjs'));
+  }
+async function run({ vite, side, mode, sample, soak = false }) {
+  const name = `${soak ? 'soak' : 'paired'}-vite${vite}-${side}-${mode}-${sample}`;
+  const output = join(results, `${name}.json`);
+  const log = openSync(join(results, `${name}.log`), 'w');
+  const args = [
+    '--expose-gc',
+    'runtime.mjs',
+    `--output=${output}`,
+    `--mode=${mode}`,
+    `--label=${side}`,
+  ];
+  if (soak)
+    args.push(
+      '--components=100',
+      '--edits=60',
+      '--duration-ms=900000',
+      '--restart-every=20',
+      '--close-queued',
+    );
+  else args.push('--components=1', '--edits=10', '--refresh-ssr');
+  const started = Date.now();
+  try {
+    await execa(process.execPath, args, {
+      cwd: join(root, `vite${vite}-${side}`),
+      env: { ...process.env, NODE_ENV: 'development', VITEST: undefined },
+      stdio: ['ignore', log, log],
+      timeout: soak ? 1200000 : 180000,
+      killSignal: 'SIGKILL',
+    });
+    const result = JSON.parse(await fs.readFile(output, 'utf8'));
+    assert.equal(result.passed, true, name);
+    assert.equal(result.records.length, soak ? 60 : 10, name);
+    assert.ok(Number.isFinite(result.shutdownMs), name);
+    if (soak) {
+      assert.equal(result.restarts.length, 3, name);
+      assert.equal(result.drainedCallers, 100, name);
+      assert.ok(result.actualWindowMs >= 899000, name);
+    }
+    console.log(
+      JSON.stringify({ name, passed: true, elapsedMs: Date.now() - started }),
+    );
+  } finally {
+    closeSync(log);
+  }
+}
+if (values.phase === 'paired') {
+  for (const vite of [6, 7, 8])
+    for (let sample = 0; sample < 5; sample++) {
+      for (const side of sample % 2
+        ? ['candidate', 'control']
+        : ['control', 'candidate']) {
+        await run({ vite, side, mode: 'ngtsc', sample });
+      }
+    }
+} else {
+  // Concurrent soak jobs qualify behavior and memory, not comparative latency.
+  const jobs = [];
+  for (const vite of [6, 8])
+    for (const mode of ['ngtsc', 'fast', 'api']) {
+      jobs.push(run({ vite, side: 'candidate', mode, sample: 0, soak: true }));
+    }
+  const outcomes = await Promise.allSettled(jobs);
+  const failures = outcomes.filter((result) => result.status === 'rejected');
+  if (failures.length)
+    throw new AggregateError(
+      failures.map((result) => result.reason),
+      'Runtime soak qualification failed',
+    );
+}

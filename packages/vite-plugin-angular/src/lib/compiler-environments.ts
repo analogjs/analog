@@ -152,10 +152,14 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     };
     if (invalidate) {
       isolated.hotUpdate = async function (ctx) {
-        await invalidate(child, [ctx.file]);
+        const compilation = invalidate(child, [ctx.file]);
         if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) {
+          // Drop cached SSR modules as soon as the next generation is queued.
+          // Requests then enter the compiler's read barrier instead of serving
+          // old HTML while a slower Angular compilation is still running.
           this.environment.moduleGraph.invalidateAll();
         }
+        await compilation;
       };
     }
     return isolated;

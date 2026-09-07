@@ -598,6 +598,32 @@ describe('compilationAPIPlugin', () => {
     expect(update).toHaveBeenLastCalledWith(new Set([templateFile]));
     expect(invalidateModule).toHaveBeenCalledWith(clientModule);
     expect(send).toHaveBeenCalled();
+    const stylesheet = { id: `${tempRoot}/src/view.css?direct&ngcomp=app&e=0` };
+    for (let edit = 0; edit < 2; edit++) {
+      send.mockClear();
+      const invalidateStyle = vi.fn();
+      const result = await (plugin.handleHotUpdate as any)({
+        file: `${tempRoot}/src/view.css`,
+        modules: [stylesheet],
+        server: {
+          ws: { send },
+          moduleGraph: { invalidateModule: invalidateStyle },
+        },
+      });
+      expect(result).toEqual([]);
+      expect(invalidateStyle).toHaveBeenCalledWith(stylesheet);
+      expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
+    }
+    send.mockClear();
+    const globalCss = { id: `${tempRoot}/src/global.css` };
+    expect(
+      await (plugin.handleHotUpdate as any)({
+        file: globalCss.id,
+        modules: [globalCss],
+        server: { ws: { send } },
+      }),
+    ).toEqual([globalCss]);
+    expect(send).not.toHaveBeenCalled();
     await expect(
       transformHandler.call(
         { warn: vi.fn(), error: vi.fn() },

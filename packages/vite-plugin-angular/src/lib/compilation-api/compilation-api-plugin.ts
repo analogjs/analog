@@ -682,6 +682,18 @@ export function compilationAPIPlugin(
           stylesheetRegistry,
           stylePreprocessor,
         );
+        // Angular's external-style host retains the original link element,
+        // while Vite's CSS update replaces it. A later template HMR can then
+        // re-add an unversioned link whose stale rules override the update.
+        // Until both hosts share link ownership, reload component CSS using
+        // the same correctness fallback as the ngtsc stylesheet path.
+        if (ctx.modules.some((module) => module.id?.includes('ngcomp='))) {
+          for (const module of ctx.modules) {
+            ctx.server.moduleGraph.invalidateModule(module);
+          }
+          ctx.server.ws.send({ type: 'full-reload' });
+          return [];
+        }
       }
 
       return ctx.modules;

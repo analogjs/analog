@@ -4,6 +4,38 @@ import { isolateCompilerEnvironments } from './compiler-environments.js';
 import { hook } from '../testing/required.test-support.js';
 
 describe('compiler environment selection', () => {
+  it('invalidates cached SSR modules before waiting for resource compilation', async () => {
+    const release = Promise.withResolvers<void>();
+    const invalidate = vi.fn(() => release.promise);
+    const plugin = isolateCompilerEnvironments(
+      { name: 'compiler' },
+      () => ({ name: 'compiler' }),
+      invalidate,
+    );
+    Reflect.apply(hook(plugin.config), {}, [
+      {},
+      { command: 'serve', mode: 'development' },
+    ]);
+    await Reflect.apply(hook(plugin.configResolved), {}, [
+      { build: { ssr: false } },
+    ]);
+    const selected = await Reflect.apply(
+      hook(plugin.applyToEnvironment),
+      plugin,
+      [{ name: 'ssr', config: { build: { ssr: false } } }],
+    );
+    const invalidateAll = vi.fn();
+    const updating = Reflect.apply(
+      hook(selected.hotUpdate),
+      { environment: { moduleGraph: { invalidateAll } } },
+      [{ file: '/src/view.html' }],
+    );
+    expect(invalidate).toHaveBeenCalled();
+    expect(invalidateAll).toHaveBeenCalledTimes(1);
+    release.resolve();
+    await updating;
+  });
+
   it('keeps the dependency scanner away from the live client compiler', async () => {
     const create = vi.fn();
     const plugin = isolateCompilerEnvironments({ name: 'compiler' }, create);
