@@ -6,7 +6,7 @@ import type {
   UserConfig,
   ViteDevServer,
 } from 'vite';
-import { TS_EXT_REGEX } from './utils/module-id.js';
+import { stripQuery, TS_EXT_REGEX } from './utils/module-id.js';
 import { normalizePath } from 'vite';
 
 type Callback<H> = Extract<NonNullable<H>, (...args: never[]) => unknown>;
@@ -165,14 +165,17 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     ) {
       const graph = live.moduleGraph;
       const owners = resourceOwners?.(child, file) ?? [];
-      const modules = owners.flatMap((owner) => {
-        const module = graph.getModuleById(owner);
-        return module ? [module] : [];
-      });
-      if (modules.length === owners.length && modules.length) {
+      if (owners.length) {
+        // A source can have several query variants, or none before lazy loading.
+        // Compiler dirtiness still guards the first read of an unloaded owner.
+        const modules = owners.flatMap((owner) => [
+          ...(graph.getModulesByFile(normalizePath(stripQuery(owner))) ?? []),
+        ]);
         const invalidated = new Set<(typeof modules)[number]>();
+        // File invalidation also expires pending transforms; HMR timestamps alone
+        // let a later SSR request share an in-flight pre-edit transform.
         for (const module of modules)
-          graph.invalidateModule(module, invalidated, timestamp, true);
+          graph.invalidateModule(module, invalidated, timestamp);
       } else {
         graph.invalidateAll();
       }

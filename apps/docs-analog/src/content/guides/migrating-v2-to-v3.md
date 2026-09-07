@@ -163,6 +163,8 @@ External styles preserve Vite plugin processing but can require a full reload an
 
 Client and SSR compilers remain separate. On a development resource edit, Analog invalidates known SSR component owners immediately and defers their compilation until the next SSR read. Browser-only editing avoids unused server compilation; the next SSR request pays that work before receiving fresh output. Unknown ownership falls back to broader invalidation. This affects development only, with no change to production rendering or `angular()` options.
 
+Shared resources invalidate every loaded SSR variant of each owning component. An owner that has not been loaded yet does not clear unrelated SSR modules; its first load receives the updated compilation. Requests arriving after an edit also discard pending transforms from before that edit.
+
 #### Workspace library globs
 
 If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:

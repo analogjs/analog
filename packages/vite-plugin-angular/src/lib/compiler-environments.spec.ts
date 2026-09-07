@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Plugin } from 'vite';
+import { createServer, type Plugin } from 'vite';
 import { isolateCompilerEnvironments } from './compiler-environments.js';
 import { hook } from '../testing/required.test-support.js';
 
@@ -92,6 +92,10 @@ describe('compiler environment selection', () => {
     ]);
     const graph = {
       getModuleById: (id: string) => modules.get(id),
+      getModulesByFile: (id: string) => {
+        const module = modules.get(id);
+        return module ? new Set([module]) : undefined;
+      },
       invalidateModule: vi.fn(),
       invalidateAll: vi.fn(),
     };
@@ -109,8 +113,126 @@ describe('compiler environment selection', () => {
       modules.get('/src/a.ts'),
       expect.any(Set),
       42,
-      true,
     );
+  });
+
+  it.each([
+    { loaded: ['/src/a.ts'], owners: ['/src/a.ts', '/src/lazy.ts'] },
+    { loaded: [], owners: ['/src/lazy.ts'] },
+    { loaded: ['/src/a.ts?one', '/src/a.ts?two'], owners: ['/src/a.ts'] },
+    { loaded: ['/src/a.ts', '/src/a.ts?one'], owners: ['/src/a.ts'] },
+  ])(
+    'invalidates all loaded variants without penalizing lazy owners: $loaded',
+    async ({ loaded, owners }) => {
+      const invalidate = vi.fn();
+      const plugin = isolateCompilerEnvironments(
+        { name: 'compiler' },
+        () => ({ name: 'compiler' }),
+        invalidate,
+        () => owners,
+      );
+      Reflect.apply(hook(plugin.config), {}, [
+        {},
+        { command: 'serve', mode: 'development' },
+      ]);
+      await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
+      const selected = await Reflect.apply(
+        hook(plugin.applyToEnvironment),
+        plugin,
+        [{ name: 'ssr', config: { build: {} } }],
+      );
+      const modules = loaded.map((id) => ({ id }));
+      const graph = {
+        getModuleById: (id: string) =>
+          modules.find((module) => module.id === id),
+        getModulesByFile: (file: string) =>
+          new Set(modules.filter((module) => module.id.split('?')[0] === file)),
+        invalidateModule: vi.fn(),
+        invalidateAll: vi.fn(),
+      };
+      await Reflect.apply(
+        hook(selected.hotUpdate),
+        { environment: { moduleGraph: graph } },
+        [{ file: '/src/shared.html', timestamp: 42 }],
+      );
+      expect(invalidate).toHaveBeenCalledExactlyOnceWith(expect.anything(), [
+        '/src/shared.html',
+      ]);
+      expect(graph.invalidateAll).not.toHaveBeenCalled();
+      expect(
+        graph.invalidateModule.mock.calls.map(([module]) => module),
+      ).toEqual(modules);
+    },
+  );
+
+  it('does not reuse an in-flight Vite transform after an admitted resource invalidation', async () => {
+    const started = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    let revision = 1;
+    let hold = true;
+    const server = await createServer({
+      configFile: false,
+      logLevel: 'silent',
+      server: { middlewareMode: true, watch: null },
+      optimizeDeps: { noDiscovery: true },
+      plugins: [
+        {
+          name: 'controlled-source',
+          resolveId(id) {
+            if (id === '/owner.ts') return id;
+            return null;
+          },
+          load(id) {
+            if (id === '/owner.ts')
+              return `export const revision = ${revision};`;
+            return null;
+          },
+          async transform(_code, id) {
+            if (id === '/owner.ts' && hold) {
+              hold = false;
+              started.resolve();
+              await release.promise;
+            }
+          },
+        },
+      ],
+    });
+    try {
+      const plugin = isolateCompilerEnvironments(
+        { name: 'compiler' },
+        () => ({ name: 'compiler' }),
+        () => {
+          revision++;
+        },
+        () => ['/owner.ts'],
+      );
+      Reflect.apply(hook(plugin.config), {}, [
+        {},
+        { command: 'serve', mode: 'development' },
+      ]);
+      await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
+      const selected = await Reflect.apply(
+        hook(plugin.applyToEnvironment),
+        plugin,
+        [{ name: 'ssr', config: { build: {} } }],
+      );
+      const environment = server.environments['ssr']!;
+      const old = environment.transformRequest('/owner.ts');
+      await started.promise;
+      await Reflect.apply(hook(selected.hotUpdate), { environment }, [
+        { file: '/view.html', timestamp: Date.now() },
+      ]);
+      const fresh = environment.transformRequest('/owner.ts');
+      expect((await fresh)?.code).toContain('revision = 2');
+      release.resolve();
+      await old;
+      expect((await environment.transformRequest('/owner.ts'))?.code).toContain(
+        'revision = 2',
+      );
+    } finally {
+      release.resolve();
+      await server.close();
+    }
   });
 
   it('keeps the dependency scanner away from the live client compiler', async () => {
@@ -145,6 +267,7 @@ describe('compiler environment selection', () => {
     const graph = {
       onFileChange: vi.fn(),
       getModuleById: () => module,
+      getModulesByFile: () => new Set([module]),
       invalidateModule: vi.fn(),
       invalidateAll: vi.fn(),
     };
