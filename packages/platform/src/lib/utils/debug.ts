@@ -1,11 +1,13 @@
-import { createDebug } from 'obug';
+import { createDebug, type Debugger } from 'obug';
 import { nitroDebugInstances } from '../nitro/debug.js';
 import { createDebugHarness } from './debug-harness.js';
 
-export const debugPlatform = createDebug('analog:platform');
-export const debugRoutes = createDebug('analog:platform:routes');
-export const debugContent = createDebug('analog:platform:content');
-export const debugTypedRouter = createDebug('analog:platform:typed-router');
+export const debugPlatform: Debugger = createDebug('analog:platform');
+export const debugRoutes: Debugger = createDebug('analog:platform:routes');
+export const debugContent: Debugger = createDebug('analog:platform:content');
+export const debugTypedRouter: Debugger = createDebug(
+  'analog:platform:typed-router',
+);
 
 const platformDebugInstances = [
   debugPlatform,

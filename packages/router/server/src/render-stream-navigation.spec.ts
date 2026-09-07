@@ -48,13 +48,12 @@ afterEach(() => {
 
 describe('Buffered streaming navigation failures', () => {
   it('preserves standalone rendering without router providers', async () => {
-    expect(
-      await renderStream(Plain, { providers: [] })(
-        '/',
-        '<html><body><analogjs-plain /></body></html>',
-        context('/'),
-      ),
-    ).toContain('Standalone render');
+    const result = await renderStream(Plain, { providers: [] })(
+      '/',
+      '<html><body><analogjs-plain /></body></html>',
+      context('/'),
+    );
+    expect(await new Response(result).text()).toContain('Standalone render');
   });
   for (const renderer of [
     { name: 'buffered renderStream', create: renderStream },
@@ -107,9 +106,12 @@ describe('Buffered streaming navigation failures', () => {
         ),
       ],
     };
-    expect(
-      await renderStream(Root, config)('/failed', document, context('/failed')),
-    ).toContain('Rendered page');
+    const result = await renderStream(Root, config)(
+      '/failed',
+      document,
+      context('/failed'),
+    );
+    expect(await new Response(result).text()).toContain('Rendered page');
   });
 
   it('keeps failure state local to concurrent requests', async () => {
@@ -136,6 +138,8 @@ describe('Buffered streaming navigation failures', () => {
     expect(failed).toEqual({ status: 'rejected', reason: failure });
     expect(success.status).toBe('fulfilled');
     if (success.status === 'fulfilled')
-      expect(success.value).toContain('Rendered page');
+      expect(await new Response(success.value).text()).toContain(
+        'Rendered page',
+      );
   });
 });

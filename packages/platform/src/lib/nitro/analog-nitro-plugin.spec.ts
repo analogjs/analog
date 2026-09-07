@@ -90,9 +90,10 @@ describe('analogNitroPlugin', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
-      /\.analog\/__ssr-entry\.mjs$/,
-    );
+    expect(overrides.environments.ssr.build.rollupOptions.input).toEqual({
+      index: join(projectRoot, '.analog/__ssr-entry.mjs'),
+    });
+    expect(overrides.experimental).toBeUndefined();
     expect(overrides.environments.ssr.optimizeDeps.include).toContain(
       '@angular/core',
     );
@@ -225,6 +226,7 @@ describe('analogNitroPlugin', () => {
         signal: abort.signal,
       });
       const tasks: Promise<void>[] = [];
+      const node = { req: { headers: {}, originalUrl: '' }, res: {} };
       const edge = {
         tasks,
         waitUntil(task: Promise<void>) {
@@ -232,13 +234,15 @@ describe('analogNitroPlugin', () => {
         },
       };
       Object.defineProperty(request, 'runtime', {
-        value: { cloudflare: { context: edge } },
+        value: { node, cloudflare: { context: edge } },
       });
       expect(await (await service.fetch(request)).text()).toBe('rendered');
       const context = renderer.mock.calls[0][2];
       expect(context.streaming).toBe(false);
       expect(context.signal).toBe(request.signal);
       expect(context.renderErrorsAsHtml).toBe(true);
+      expect(context.req).toBe(node.req);
+      expect(context.res).toBe(node.res);
       expect(context.req.originalUrl).toBe('/stream?test=1');
       const task = Promise.resolve();
       context.waitUntil(task);
@@ -381,6 +385,10 @@ describe('analogNitroPlugin', () => {
           '/buffered': { streaming: false },
           '/streamed': { streaming: true },
           '/no-ssr': { ssr: false },
+          '/no-ssr/help': {
+            ssr: true,
+            headers: { 'x-analog-no-ssr': 'true', 'x-example': 'retained' },
+          },
           '/default': {},
         },
       },
@@ -396,6 +404,10 @@ describe('analogNitroPlugin', () => {
     });
     expect(nitroMock.options.routeRules['/no-ssr'].headers).toEqual({
       'x-analog-no-ssr': 'true',
+    });
+    expect(nitroMock.options.routeRules['/no-ssr/help'].headers).toEqual({
+      'x-analog-no-ssr': 'false',
+      'x-example': 'retained',
     });
     expect(nitroMock.options.routeRules['/default'].headers).toBeUndefined();
   });

@@ -118,7 +118,7 @@ async function extractWithLocalizeTools(
   files: string[],
   basePath: string,
 ): Promise<ExtractedMessage[]> {
-  // @ts-expect-error - @angular/localize/tools is an optional dependency
+  // Keep the optional dependency outside static module resolution.
   const localizeToolsPkg = '@angular/localize/tools';
   const localizeTools = await import(/* @vite-ignore */ localizeToolsPkg);
   const { MessageExtractor, ɵParsedMessage } = localizeTools as any;

@@ -23,6 +23,14 @@ path is unchanged.
 
 ## Enabling streaming
 
+For Cloudflare Module and Durable Worker presets, use Nitro's generated Wrangler
+configuration and keep server output separate from public assets. Deployment
+scripts that referenced the former Pages-shaped `dist/_worker.js` location must
+follow the generated configuration instead. Cloudflare Pages retains its own
+`_worker.js` layout. Native server-function dispatch requires a Node request and
+response context; streaming SSR alone does not make those functions portable to
+Worker runtimes.
+
 Enable the `experimental.streaming` option in your Vite config:
 
 ```ts
