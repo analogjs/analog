@@ -23,10 +23,8 @@ launch-templates:
         uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/checkout/main.yaml'
 
       - name: Install Node
-        # Reads `.node-version` (24.11.0). The base image ships Node 24.14, so we
-        # install the pinned version to preserve the old `node-version-file`
-        # behavior. Verify this reusable step picks up `.node-version`; if not,
-        # pass the version explicitly via its inputs.
+        # This step reads .nvmrc, which points to the shared .node-version pin.
+        # Install Node 24.15.0 instead of falling back to the Node 24.14 image.
         uses: 'nrwl/nx-cloud-workflows/v5/workflow-steps/install-node/main.yaml'
 
       - name: Enable Corepack and pnpm
