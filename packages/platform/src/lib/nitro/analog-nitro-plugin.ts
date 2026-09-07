@@ -591,7 +591,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
  * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
  * nitro/vite's `prodSetup`).
  */
-function generateSsrRendererVirtual(template: string): string {
+export function generateSsrRendererVirtual(template: string): string {
   return `
 import { defineHandler } from 'nitro/h3';
 import ssr from '#analog/ssr';
@@ -600,14 +600,26 @@ const TEMPLATE = ${JSON.stringify(template)};
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  // 'x-analog-no-ssr' is stamped on response headers by
-  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // applies routeRule headers to the response before the renderer fires,
-  // so we can short-circuit by reading them here.
-  if (event.res.headers.get('x-analog-no-ssr') === 'true') {
+  // Matched header rules are available before response middleware applies them.
+  const noSsr = event.context.routeRules?.headers?.['x-analog-no-ssr']
+    ?? event.res.headers.get('x-analog-no-ssr');
+  if (noSsr === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
+  if (event.req.headers.has('x-analog-no-ssr')) {
+    const headers = new Headers(event.req.headers);
+    headers.delete('x-analog-no-ssr');
+    // Copy public fields because server Request adapters lack native constructor state.
+    const request = new Request(event.req.url, {
+      method: event.req.method,
+      headers,
+      signal: event.req.signal,
+      ...(event.req.method === 'GET' || event.req.method === 'HEAD' ? {} : { body: event.req.body, duplex: 'half' }),
+    });
+    if (event.req.runtime) Object.defineProperty(request, 'runtime', { value: event.req.runtime });
+    return service.fetch(request);
+  }
   return service.fetch(event.req);
 });
 `;
@@ -748,7 +760,8 @@ function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
 
 /**
  * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
- * any rule with `ssr: false`, and `x-analog-no-streaming: true` onto any rule
+ * any rule with `ssr: false`, resetting it for explicit `ssr: true`, and
+ * `x-analog-no-streaming: true` onto any rule
  * with `streaming: false`. Kept as response-header hints for downstream
  * consumers (CDN, edge logic); the actual SSR short-circuit happens inside
  * the SSR renderer virtual above, and the router falls back to a buffered
@@ -768,8 +781,11 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   if (!routeRules) return;
 
   for (const rule of Object.values(routeRules)) {
-    if (rule?.ssr === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    if (typeof rule?.ssr === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-ssr': String(!rule.ssr),
+      };
     }
     if (rule?.streaming === false) {
       rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };

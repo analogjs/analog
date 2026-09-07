@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as o from '@angular/compiler';
 
 /** Shared printer — only used as fallback for complex WrappedNodeExpr (e.g. decorator args). */

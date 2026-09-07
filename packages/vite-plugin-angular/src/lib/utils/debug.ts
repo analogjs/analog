@@ -1,21 +1,25 @@
-import { createDebug } from 'obug';
+import { createDebug, type Debugger } from 'obug';
 import { createDebugHarness } from './debug-harness.js';
 
 // Normal — key decisions, once per startup or per component
-export const debugHmr = createDebug('analog:angular:hmr');
-export const debugStyles = createDebug('analog:angular:styles');
-export const debugCompiler = createDebug('analog:angular:compiler');
-export const debugCompilationApi = createDebug(
+export const debugHmr: Debugger = createDebug('analog:angular:hmr');
+export const debugStyles: Debugger = createDebug('analog:angular:styles');
+export const debugCompiler: Debugger = createDebug('analog:angular:compiler');
+export const debugCompilationApi: Debugger = createDebug(
   'analog:angular:compilation-api',
 );
-export const debugEmit = createDebug('analog:angular:emit');
-export const debugStylePipeline = createDebug('analog:angular:style-pipeline');
+export const debugEmit: Debugger = createDebug('analog:angular:emit');
+export const debugStylePipeline: Debugger = createDebug(
+  'analog:angular:style-pipeline',
+);
 
 // Verbose — per-file detail, enable with :v suffix or parent:*
-export const debugHmrV = createDebug('analog:angular:hmr:v');
-export const debugStylesV = createDebug('analog:angular:styles:v');
-export const debugCompilerV = createDebug('analog:angular:compiler:v');
-export const debugEmitV = createDebug('analog:angular:emit:v');
+export const debugHmrV: Debugger = createDebug('analog:angular:hmr:v');
+export const debugStylesV: Debugger = createDebug('analog:angular:styles:v');
+export const debugCompilerV: Debugger = createDebug(
+  'analog:angular:compiler:v',
+);
+export const debugEmitV: Debugger = createDebug('analog:angular:emit:v');
 
 const angularDebugInstances = [
   debugHmr,

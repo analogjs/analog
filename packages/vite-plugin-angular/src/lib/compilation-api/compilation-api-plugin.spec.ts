@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -113,33 +113,48 @@ describe('compilationAPIPlugin', () => {
     expect(plugin.closeBundle).toBeTypeOf('function');
   });
 
-  it('config hook disables esbuild/oxc', async () => {
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
-      workspaceRoot: tempRoot,
-      inlineStylesExtension: 'css',
-      jit: false,
-      liveReload: true,
-      disableTypeChecking: true,
-      supportedBrowsers: ['safari 15'],
-      fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
-      include: [],
-    });
+  it.each([
+    { test: false, astro: false },
+    { test: false, astro: true },
+    { test: true, astro: false },
+    { test: true, astro: true },
+  ])(
+    'separates test mode from transformer ownership (%j)',
+    async ({ test, astro }) => {
+      process.env['NODE_ENV'] = test ? 'test' : 'development';
+      if (test) process.env['VITEST'] = 'true';
+      const { compilationAPIPlugin } =
+        await import('./compilation-api-plugin.js');
+      const plugin = compilationAPIPlugin({
+        tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+        workspaceRoot: tempRoot,
+        inlineStylesExtension: 'css',
+        jit: false,
+        liveReload: true,
+        disableTypeChecking: true,
+        supportedBrowsers: ['safari 15'],
+        fileReplacements: [],
+        isTest: test,
+        isAstroIntegration: astro,
+        include: [],
+      });
 
-    const result = await (plugin.config as any)(
-      { root: tempRoot, mode: 'development' },
-      { command: 'serve', mode: 'development' },
-    );
+      const result = await (plugin.config as any)(
+        { root: tempRoot, mode: 'development' },
+        { command: 'serve', mode: 'development' },
+      );
 
-    expect(result.esbuild).toBeUndefined();
-    expect(result.oxc).toBeUndefined();
-  });
+      expect(result.esbuild).toBeUndefined();
+      expect(result.oxc).toBeUndefined();
+      const dependencyPlugin = result.optimizeDeps.rolldownOptions.plugins[0];
+      expect(dependencyPlugin.load !== undefined).toBe(!test);
+      expect(typeof dependencyPlugin.buildEnd).toBe(
+        astro ? 'undefined' : 'function',
+      );
+    },
+  );
 
-  it('initializes compilation on buildStart', async () => {
+  it('waits for buildStart compilation before transforming an emitted module', async () => {
     const initializeMock = vi.fn().mockResolvedValue({
       externalStylesheets: new Map(),
       templateUpdates: new Map(),
@@ -147,13 +162,19 @@ describe('compilationAPIPlugin', () => {
     const diagnoseFilesMock = vi
       .fn()
       .mockResolvedValue({ errors: [], warnings: [] });
-    const emitAffectedFilesMock = vi.fn().mockResolvedValue([]);
+    const emitted =
+      Promise.withResolvers<{ filename: string; contents: string }[]>();
+    const close = vi.fn();
+    const emitAffectedFilesMock = vi
+      .fn()
+      .mockImplementation(() => emitted.promise);
 
     createAngularCompilationMock.mockResolvedValue({
       initialize: initializeMock,
       update: vi.fn(),
       diagnoseFiles: diagnoseFilesMock,
       emitAffectedFiles: emitAffectedFilesMock,
+      close,
     });
 
     const { compilationAPIPlugin } =
@@ -184,15 +205,177 @@ describe('compilationAPIPlugin', () => {
       server: {},
       plugins: [],
     });
-    await (plugin.buildStart as any).call({
+    const building = (plugin.buildStart as any).call({
       addWatchFile: vi.fn(),
       error: vi.fn(),
       warn: vi.fn(),
     });
 
+    await vi.waitFor(() =>
+      expect(emitAffectedFilesMock).toHaveBeenCalledOnce(),
+    );
+    const filename = join(tempRoot, 'main.ts');
+    const transformed = (plugin.transform as any).handler.call(
+      { warn: vi.fn(), error: vi.fn() },
+      'export const value = 1;',
+      filename,
+    );
+    const closing = (plugin.closeBundle as any)();
+    await Promise.resolve();
+    expect(close).not.toHaveBeenCalled();
+    emitted.resolve([{ filename, contents: 'export const value = 1;' }]);
+    await building;
+    await closing;
+    await expect(transformed).resolves.toMatchObject({
+      code: 'export const value = 1;',
+    });
+
     expect(createAngularCompilationMock).toHaveBeenCalledOnce();
     expect(initializeMock).toHaveBeenCalledOnce();
     expect(emitAffectedFilesMock).toHaveBeenCalledOnce();
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('refreshes TypeScript roots and preserves integration includes after tsconfig changes', async () => {
+    const main = join(tempRoot, 'main.ts');
+    const extra = join(tempRoot, 'integration.ts');
+    writeFileSync(main, 'export const main = 1;');
+    writeFileSync(extra, 'export const integration = 2;');
+    writeFileSync(
+      join(tempRoot, 'tsconfig.json'),
+      JSON.stringify({
+        files: ['main.ts'],
+        compilerOptions: { target: 'es2022' },
+      }),
+    );
+    const initialize = vi.fn(async (_tsconfig: string) => ({
+      externalStylesheets: new Map(),
+      templateUpdates: new Map(),
+    }));
+    createAngularCompilationMock.mockResolvedValue({
+      initialize,
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi.fn().mockResolvedValue([]),
+    });
+    const { compilationAPIPlugin } =
+      await import('./compilation-api-plugin.js');
+    const plugin = compilationAPIPlugin({
+      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      isTest: false,
+      isAstroIntegration: false,
+      include: [extra],
+    });
+    await (plugin.config as any)(
+      { root: tempRoot, mode: 'development' },
+      { command: 'serve', mode: 'development' },
+    );
+    await (plugin.configResolved as any)({
+      cacheDir: join(tempRoot, '.vite'),
+      root: tempRoot,
+      mode: 'development',
+      build: {},
+      server: {},
+      plugins: [],
+    });
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+    const wrapper = JSON.parse(
+      readFileSync(initialize.mock.calls[0][0], 'utf8'),
+    );
+    expect(wrapper.files).toEqual(
+      expect.arrayContaining([
+        cachedViteActual.normalizePath(main),
+        cachedViteActual.normalizePath(extra),
+      ]),
+    );
+    const replacement = join(tempRoot, 'replacement.ts');
+    writeFileSync(replacement, 'export const replacement = 3;');
+    const watcher = { on: vi.fn(), off: vi.fn() };
+    (plugin.configureServer as any)({ watcher, ws: { send: vi.fn() } });
+    writeFileSync(
+      join(tempRoot, 'tsconfig.json'),
+      JSON.stringify({
+        files: ['replacement.ts'],
+        compilerOptions: { target: 'es2022' },
+      }),
+    );
+    const onChange = watcher.on.mock.calls.find(
+      ([event]) => event === 'change',
+    )![1];
+    await onChange(join(tempRoot, 'tsconfig.json'));
+    expect(initialize).toHaveBeenCalledTimes(2);
+    const updated = JSON.parse(
+      readFileSync(initialize.mock.calls[1][0], 'utf8'),
+    );
+    expect(updated.files).toEqual(
+      expect.arrayContaining([
+        cachedViteActual.normalizePath(replacement),
+        cachedViteActual.normalizePath(extra),
+      ]),
+    );
+    expect(updated.files).not.toContain(cachedViteActual.normalizePath(main));
+  });
+
+  it('consumes an iterable compilation result without requiring an array', async () => {
+    const filename = join(tempRoot, 'main.ts');
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: vi.fn().mockResolvedValue({
+        externalStylesheets: new Map(),
+        templateUpdates: new Map(),
+      }),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi.fn(function* () {
+        yield { filename, contents: 'export const fromCompiler = true;' };
+      }),
+    });
+    const { compilationAPIPlugin } =
+      await import('./compilation-api-plugin.js');
+    const plugin = compilationAPIPlugin({
+      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      isTest: false,
+      isAstroIntegration: false,
+      include: [],
+    });
+    await (plugin.config as any)(
+      { root: tempRoot, mode: 'development' },
+      { command: 'serve', mode: 'development' },
+    );
+    await (plugin.configResolved as any)({
+      cacheDir: join(tempRoot, '.vite'),
+      root: tempRoot,
+      mode: 'development',
+      build: {},
+      server: {},
+      plugins: [],
+    });
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+    const result = await (plugin.transform as any).handler.call(
+      { warn: vi.fn(), error: vi.fn() },
+      'export const raw = true;',
+      filename,
+    );
+    expect(result.code).toBe('export const fromCompiler = true;');
   });
 
   it('hands the stylesheet registry to analog.setup configurators', async () => {
@@ -323,11 +506,12 @@ describe('compilationAPIPlugin', () => {
 
   it('maps templateUpdates to HMR metadata', async () => {
     const testFile = join(tempRoot, 'src/app.component.ts');
+    const update = vi.fn();
     const initializeMock = vi.fn().mockResolvedValue({
       externalStylesheets: new Map(),
       templateUpdates: new Map([
         [
-          encodeURIComponent(`src/app.component.ts@AppComponent`),
+          encodeURIComponent(`${testFile}@AppComponent`),
           '/* hmr update code */',
         ],
       ]),
@@ -341,7 +525,7 @@ describe('compilationAPIPlugin', () => {
 
     createAngularCompilationMock.mockResolvedValue({
       initialize: initializeMock,
-      update: vi.fn(),
+      update,
       diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
       emitAffectedFiles: emitAffectedFilesMock,
     });
@@ -394,6 +578,58 @@ describe('compilationAPIPlugin', () => {
 
     expect(result).toBeDefined();
     expect(result.code).toBe('compiled output');
+
+    const clientModule = { isSelfAccepting: false };
+    const mixedModule = {
+      id: testFile,
+      get isSelfAccepting() {
+        return clientModule.isSelfAccepting;
+      },
+    };
+    const send = vi.fn();
+    const modules = await (plugin.handleHotUpdate as any)({
+      file: testFile,
+      modules: [mixedModule],
+      server: {
+        ws: { send },
+        environments: {
+          client: { moduleGraph: { getModuleById: () => clientModule } },
+        },
+      },
+    });
+    expect(modules).toEqual([mixedModule]);
+    expect(clientModule.isSelfAccepting).toBe(true);
+    expect(send).toHaveBeenCalled();
+
+    send.mockClear();
+    emitAffectedFilesMock.mockResolvedValue([]);
+    const templateFile = join(tempRoot, 'src/app.component.html');
+    const invalidateModule = vi.fn();
+    await (plugin.handleHotUpdate as any)({
+      file: templateFile,
+      modules: [],
+      server: {
+        ws: { send },
+        environments: {
+          client: {
+            moduleGraph: {
+              getModuleById: () => clientModule,
+              invalidateModule,
+            },
+          },
+        },
+      },
+    });
+    expect(update).toHaveBeenLastCalledWith(new Set([templateFile]));
+    expect(invalidateModule).toHaveBeenCalledWith(clientModule);
+    expect(send).toHaveBeenCalled();
+    await expect(
+      transformHandler.call(
+        { warn: vi.fn(), error: vi.fn() },
+        'source text',
+        testFile,
+      ),
+    ).resolves.toMatchObject({ code: 'compiled output' });
   });
 
   it('serves emitted output for TypeScript files without Angular decorators', async () => {

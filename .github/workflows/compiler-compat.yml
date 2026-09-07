@@ -37,14 +37,22 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'packages/vite-plugin-angular/src/lib/compiler/**'
+      - 'packages/vite-plugin-angular/**'
+      - 'tools/build/**'
       - 'package.json'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.node-version'
       - '.github/workflows/compiler-compat.yml'
   push:
     branches: [beta]
     paths:
-      - 'packages/vite-plugin-angular/src/lib/compiler/**'
+      - 'packages/vite-plugin-angular/**'
+      - 'tools/build/**'
       - 'package.json'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.node-version'
       - '.github/workflows/compiler-compat.yml'
 
 env:
@@ -70,7 +78,7 @@ jobs:
         # signal-input array shape and aren't worth supporting). v19/v20
         # use the floor of the major as a deterministic CI signal.
         angular-version:
-          ['17.3.12', '18.2.14', '19.0.0', '20.0.0', '21.0.0', 'next']
+          ['17.3.12', '18.2.14', '19.0.0', '20.0.0', '21.0.0', '22.0.0', 'next']
 
     name: Angular ${{ matrix.angular-version }}
 
@@ -96,6 +104,10 @@ jobs:
         run: |
           node -e "
           const fs = require('fs');
+          // Alternate compiler versions qualify compiler APIs, not the entire workspace.
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+          delete pkg.scripts.prepare;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           const f = 'pnpm-workspace.yaml';
           const v = '${{ matrix.angular-version }}';
           const pinned = ['@angular/compiler', '@angular/compiler-cli'];
@@ -217,3 +229,59 @@ jobs:
               --label "bug,vite-plugin-angular" \
               --body "$BODY"
           fi
+
+  consumer-compat:
+    name: Angular ${{ matrix.angular }} / Vite ${{ matrix.vite }} consumer
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { angular: '17.3.12', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '18.2.14', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '19.0.0', vite: '6.0.0', node: '20.19.5' }
+          - { angular: '20.0.0', vite: '6.0.0' }
+          - { angular: '20.1.0', vite: '6.0.0' }
+          - { angular: '21.0.0', vite: '7.0.0' }
+          - { angular: '22.0.0', vite: '6.0.0' }
+          - { angular: '22.0.0', vite: '7.0.0' }
+          - { angular: '22.0.0', vite: '8.0.8' }
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install supported Node for legacy Angular consumers
+        if: matrix.node != ''
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Record the consumer Node executable
+        if: matrix.node != ''
+        id: consumer-node
+        run: echo "path=$(node -p 'process.execPath')" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - name: Install workspace without unrelated package prepare builds
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Test the installed package in an isolated Angular/Vite consumer
+        env:
+          ANALOG_CONSUMER_NODE: ${{ steps.consumer-node.outputs.path }}
+          NX_DAEMON: 'false'
+          NX_NO_CLOUD: 'true'
+        run: pnpm exec nx run vite-plugin-angular:compat-smoke --vite=${{ matrix.vite }} --angular=${{ matrix.angular }}
+      - name: Check compiler package tests, declarations, and lint
+        if: matrix.angular == '22.0.0' && matrix.vite == '8.0.8'
+        env:
+          NX_DAEMON: 'false'
+          NX_NO_CLOUD: 'true'
+        run: pnpm exec nx run-many --targets=test,typecheck,eslint:lint --projects=vite-plugin-angular --parallel=1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compiler-angular-${{ matrix.angular }}-vite-${{ matrix.vite }}
+          path: |
+            dist/compiler-vite-smoke/**/result.json
+            dist/compiler-vite-smoke/**/*-failure.json
+            dist/compiler-vite-smoke/*/pnpm-lock.yaml
+          if-no-files-found: warn

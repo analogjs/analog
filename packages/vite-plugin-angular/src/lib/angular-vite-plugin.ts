@@ -19,7 +19,7 @@ import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
-import * as ts from 'typescript';
+import ts from 'typescript';
 import {
   ModuleNode,
   normalizePath,
@@ -93,11 +93,7 @@ import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { cssExtensionStyleResolverPlugin } from './utils/css-extension-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
-import {
-  toVirtualRawId,
-  toVirtualStyleId,
-  VIRTUAL_RAW_PREFIX,
-} from './utils/virtual-ids.js';
+import { toVirtualRawId, VIRTUAL_RAW_PREFIX } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
@@ -256,6 +252,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   const ts = require('typescript');
   let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+  let incrementalBuilder:
+    | ts.EmitAndSemanticDiagnosticsBuilderProgram
+    | undefined;
   let nextProgram: NgtscProgram | undefined;
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
@@ -445,6 +444,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   jit,
                   incremental: watchMode,
                 },
+                isTest,
                 // Astro manages the transformer lifecycle externally.
                 !isAstroIntegration,
               ),
@@ -931,7 +931,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           });
 
           pendingCompilation = performCompilation(resolvedConfig, [
-            ...mods.map((mod) => mod.id).filter(Boolean),
+            ...mods
+              .map((mod) => mod.id)
+              .filter((id): id is string => Boolean(id)),
             ...updates,
           ]);
 
@@ -1100,7 +1102,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
             debugStylesV('load: served inline component stylesheet', {
               filename,
-              length: componentStyles.length,
               requestId: id,
               ...describeStylesheetContent(componentStyles),
             });
@@ -1327,20 +1328,23 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   const compilationPlugin = pluginOptions.useAngularCompilationAPI
-    ? compilationAPIPlugin({
-        tsconfigGetter: pluginOptions.tsconfigGetter,
-        workspaceRoot: pluginOptions.workspaceRoot,
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        jit,
-        liveReload: pluginOptions.liveReload,
-        disableTypeChecking: pluginOptions.disableTypeChecking,
-        supportedBrowsers: pluginOptions.supportedBrowsers,
-        fileReplacements: pluginOptions.fileReplacements,
-        isTest,
-        isAstroIntegration,
-        include: pluginOptions.include,
-        debug: options?.debug,
-      })
+    ? compilationAPIPlugin(
+        {
+          tsconfigGetter: pluginOptions.tsconfigGetter,
+          workspaceRoot: pluginOptions.workspaceRoot,
+          inlineStylesExtension: pluginOptions.inlineStylesExtension,
+          jit,
+          liveReload: pluginOptions.liveReload,
+          disableTypeChecking: pluginOptions.disableTypeChecking,
+          supportedBrowsers: pluginOptions.supportedBrowsers,
+          fileReplacements: pluginOptions.fileReplacements,
+          isTest,
+          isAstroIntegration,
+          include: pluginOptions.include,
+          debug: options?.debug,
+        },
+        { classNames, outputFiles },
+      )
     : pluginOptions.fastCompile
       ? fastCompilePlugin({
           tsconfigGetter: pluginOptions.tsconfigGetter,
@@ -1366,16 +1370,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
-    // `compilationPlugin` is either `angularPlugin()` or `fastCompilePlugin()`
-    // depending on `pluginOptions.fastCompile`. When fastCompile is off the
-    // array used to also include an unconditional `angularPlugin()` right
-    // before this line — invoking the same plugin twice and double-
-    // registering its hooks. Removed: `compilationPlugin` already covers both
-    // branches.
+    // Register the selected compiler and its shared HMR middleware once.
     compilationPlugin,
-    !pluginOptions.fastCompile &&
-      pluginOptions.liveReload &&
-      liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz
       ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
       : []),
@@ -1494,11 +1490,10 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = union(
-      rootNames,
-      tsconfigResolver.ensureIncludeCache(),
-      replacements,
-    );
+    rootNames = union(rootNames, [
+      ...tsconfigResolver.ensureIncludeCache(),
+      ...replacements,
+    ]);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
@@ -1559,8 +1554,9 @@ export function angular(options?: PluginOptions): Plugin[] {
      */
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
+    let createdBuilder: ts.EmitAndSemanticDiagnosticsBuilderProgram;
     const oldBuilder =
-      builder ?? ts.readBuilderProgram(tsCompilerOptions, host);
+      incrementalBuilder ?? ts.readBuilderProgram(tsCompilerOptions, host);
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1574,7 +1570,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       typeScriptProgram = angularProgram.compiler.getCurrentProgram();
       augmentProgramWithVersioning(typeScriptProgram);
 
-      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      createdBuilder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         typeScriptProgram,
         host,
         oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
@@ -1582,21 +1578,22 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       nextProgram = angularProgram;
     } else {
-      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      createdBuilder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         rootNames,
         tsCompilerOptions,
         host,
         oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
       );
 
-      typeScriptProgram = builder.getProgram();
+      typeScriptProgram = createdBuilder.getProgram();
     }
 
-    if (!watchMode) {
-      // When not in watch mode, the startup cost of the incremental analysis can be avoided by
-      // using an abstract builder that only wraps a TypeScript program.
-      builder = ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
-    }
+    // Abstract builders have no incremental state in older TypeScript versions.
+    // Retain the real builder for the next environment or compilation pass.
+    incrementalBuilder = createdBuilder;
+    builder = watchMode
+      ? createdBuilder
+      : ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
 
     if (angularCompiler!) {
       await angularCompiler.analyzeAsync();
@@ -1835,7 +1832,7 @@ export async function getModulesForChangedFile(
     requestId: string;
     candidate: string;
     via: 'url' | 'id';
-    moduleId?: string;
+    moduleId?: string | null;
   }> = [];
   for (const requestId of stylesheetRequestIds) {
     const candidates = [
@@ -1927,7 +1924,7 @@ function diagnoseComponentStylesheetPipeline(
   dependencies: StylesheetDependency[];
   diagnostics: ReturnType<AnalogStylesheetRegistry['getDiagnosticsForSource']>;
   tags: string[];
-  directModuleId?: string;
+  directModuleId?: string | null;
   directModuleUrl?: string;
   trackedRequestIds: string[];
   wrapperCount: number;
@@ -2121,7 +2118,7 @@ export async function findComponentStylesheetWrapperModules(
   const lookupHits: Array<{
     candidate: string;
     via?: 'url' | 'id';
-    moduleId?: string;
+    moduleId?: string | null;
     moduleType?: string;
   }> = [];
 
@@ -2224,8 +2221,8 @@ function logComponentStylesheetHmrOutcome(details: {
   encapsulation: string;
   diagnosis: ReturnType<typeof diagnoseComponentStylesheetPipeline>;
   outcome: ComponentStylesheetHmrOutcome;
-  directModuleId?: string;
-  wrapperIds?: string[];
+  directModuleId?: string | null;
+  wrapperIds?: Array<string | null>;
 }) {
   const pitfalls: string[] = [];
   const rejectedPreferredPaths: string[] = [];

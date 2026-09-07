@@ -1,7 +1,7 @@
 import type { CompilerHost } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 
-import * as ts from 'typescript';
+import ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';

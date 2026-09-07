@@ -106,6 +106,9 @@ describe('liveReload option', () => {
     const names = angular().map((plugin) => plugin.name);
 
     expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
+    expect(
+      names.filter((name) => name === 'analogjs-live-reload-plugin'),
+    ).toHaveLength(1);
   });
 });
 

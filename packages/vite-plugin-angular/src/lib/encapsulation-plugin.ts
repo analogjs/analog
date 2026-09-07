@@ -54,6 +54,7 @@ export function encapsulationPlugin(): Plugin {
           };
         }
       }
+      return;
     },
   };
 }
