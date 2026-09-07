@@ -377,8 +377,20 @@ export function angular(options?: PluginOptions): Plugin[] {
               `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
           ),
         );
-        server.watcher.on('add', invalidateCompilationOnFsChange);
-        server.watcher.on('unlink', invalidateCompilationOnFsChange);
+        server.watcher.on('add', (file) => {
+          if (basename(file).includes('tsconfig')) linkedSourceRoots.clear();
+          invalidateCompilationOnFsChange(file);
+        });
+        server.watcher.on('unlink', (file) => {
+          const id = normalizePath(file);
+          if (linkedSourceRoots.delete(id)) {
+            outputFiles.delete(id);
+            fileTransformMap.delete(id);
+            sourceFileCache.delete(id);
+          }
+          if (basename(file).includes('tsconfig')) linkedSourceRoots.clear();
+          invalidateCompilationOnFsChange(file);
+        });
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
             linkedSourceRoots.clear();

@@ -1139,6 +1139,26 @@ export class AppComponent {}
       modules: [],
     });
     expect((await transform('directive.ts'))?.code).toContain('updated = 42');
+    const watchers = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        on: (event: string, handler: (file: string) => void) =>
+          watchers.set(event, handler),
+      },
+    });
+    const barrel = normalizePath(path.join(libDir, 'index.ts'));
+    realFs.rmSync(barrel);
+    vi.useFakeTimers();
+    try {
+      watchers.get('unlink')!(barrel);
+      await vi.advanceTimersByTimeAsync(100);
+      await mainPlugin.buildStart.call(ctx);
+      expect(
+        await mainPlugin.transform.handler.call(ctx, '', barrel),
+      ).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
     expect(ctx.warn).not.toHaveBeenCalled();
   }, 60_000);
 
