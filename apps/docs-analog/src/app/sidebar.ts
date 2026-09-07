@@ -205,6 +205,11 @@ export function getSidebar(): SidebarNode[] {
         },
         {
           kind: 'doc',
+          id: 'guides/migrating-v1-to-v2',
+          label: $localize`:@@sidebar.migrating-v1-to-v2:Migrating from Analog v1 to v2`,
+        },
+        {
+          kind: 'doc',
           id: 'guides/libraries',
           label: $localize`:@@sidebar.libraries:Building an Angular library`,
         },

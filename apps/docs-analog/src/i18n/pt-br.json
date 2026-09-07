@@ -61,6 +61,7 @@
   "sidebar.updating": "Atualizando",
   "sidebar.guides": "Guias",
   "sidebar.migrating": "Migrar um app Angular para Analog",
+  "sidebar.migrating-v1-to-v2": "Migrar do Analog v1 para v2",
   "sidebar.libraries": "Criar uma biblioteca Angular",
   "sidebar.angular-compilation": "Compilação Angular",
   "sidebar.compatibility": "Compatibilidade de versões",

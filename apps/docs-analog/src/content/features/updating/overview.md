@@ -1,5 +1,7 @@
 # Updating to the latest version
 
+For an existing Analog v1 app, follow the [Analog v1 to v2 migration guide](/docs/guides/migrating-v1-to-v2).
+
 You can use the `ng update` command for an Angular CLI workspace, or the `nx migrate` command for updating within an Nx workspace.
 
 <Tabs groupId="app-upgrader">

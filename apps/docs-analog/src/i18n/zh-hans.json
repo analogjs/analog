@@ -61,6 +61,7 @@
   "sidebar.updating": "更新",
   "sidebar.guides": "指南",
   "sidebar.migrating": "将 Angular 应用迁移到 Analog",
+  "sidebar.migrating-v1-to-v2": "从 Analog v1 迁移到 v2",
   "sidebar.libraries": "构建 Angular 库",
   "sidebar.angular-compilation": "Angular 编译",
   "sidebar.compatibility": "版本兼容性",
