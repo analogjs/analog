@@ -17,8 +17,9 @@ Analog works best when route files clearly express whether they are pages, layou
 ```ts
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import type { RouteMeta } from '@analogjs/router';
 
-export const routeMeta = {
+export const routeMeta: RouteMeta = {
   title: 'Products',
 };
 
@@ -34,7 +35,9 @@ export default class ProductsPage {}
 Redirect route files are clearer when they only export `routeMeta`.
 
 ```ts
-export const routeMeta = {
+import type { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
   redirectTo: '/home',
   pathMatch: 'full',
 };
