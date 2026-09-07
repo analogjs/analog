@@ -1,4 +1,4 @@
-import type { ServerContext } from '@analogjs/router/tokens';
+import type { ServerContext } from '../../../tokens/src/index.js';
 
 /**
  * Per-request decisions about whether the streaming renderer should fall back
@@ -32,5 +32,7 @@ export function isLikelyBot(serverContext: ServerContext): boolean {
 export function streamingDisabledByRoute(
   serverContext: ServerContext,
 ): boolean {
-  return serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true';
+  return serverContext.streaming === undefined
+    ? serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true'
+    : !serverContext.streaming;
 }

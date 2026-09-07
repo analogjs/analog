@@ -15,7 +15,6 @@ const baseURL = process.env['E2E_BASE_URL'] ?? 'http://localhost:3211';
 const SERVER_FN_PATH = '/_analog/fn/';
 const SEED_KEY_RE = /__analog_fn_[a-z0-9]+_/;
 const TOKEN_RE = /srv-[0-9a-f-]{8,}/;
-
 let browser: Browser;
 
 beforeAll(async () => {
@@ -35,8 +34,14 @@ async function validateRoute(path: string) {
   // Everything is derived from THIS single navigation: the server mints a fresh
   // token per request, so the SSR token must come from the same response we then
   // hydrate — not a separate fetch.
-  const page: Page = await browser.newPage();
+  // HeadlessChrome intentionally receives buffered HTML. Use a normal browser
+  // user-agent so this fixture exercises the progressive path as well.
+  const page: Page = await browser.newPage({
+    userAgent: 'Mozilla/5.0 Chrome/130.0.0.0 Safari/537.36',
+  });
   const fnRequests: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('request', (req: Request) => {
     if (req.url().includes(SERVER_FN_PATH)) fnRequests.push(req.url());
   });
@@ -48,6 +53,10 @@ async function validateRoute(path: string) {
     // 1. The server-rendered document for this navigation carries the serverFn
     //    seed and its value — proof `whenStable` awaited the late resource.
     const ssrHtml = (await response?.text()) ?? '';
+    expect(response?.status()).toBe(200);
+    expect(ssrHtml.includes('data-analog-authoritative')).toBe(
+      path === '/fn-streaming',
+    );
     expect(ssrHtml, 'ng-state TransferState script present').toContain(
       'ng-state',
     );
@@ -72,6 +81,7 @@ async function validateRoute(path: string) {
 
     // 3. And it got there with no HTTP round-trip to the server function.
     expect(fnRequests, `no client refetch of ${SERVER_FN_PATH}`).toEqual([]);
+    expect(pageErrors).toEqual([]);
   } finally {
     await page.close();
   }
@@ -84,5 +94,36 @@ describe('serverFn inside @defer (hydrate on immediate)', () => {
 
   test('streaming path: tail carries the seed and hydrates with zero refetch', async () => {
     await validateRoute('/fn-streaming');
+  });
+
+  test('HTTP stream sends its shell before the authoritative document and buffers crawlers', async () => {
+    const response = await fetch(baseURL, {
+      headers: { 'user-agent': 'Mozilla/5.0' },
+    });
+    expect(response.status).toBe(200);
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    const first = decoder.decode((await reader.read()).value);
+    expect(first).toContain('data-analog-stream');
+    expect(first).not.toContain('<template data-analog-authoritative>');
+    let html = first;
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      html += decoder.decode(chunk.value, { stream: true });
+    }
+    const block = html.indexOf('<template data-analog-defer=');
+    const tail = html.indexOf('<template data-analog-authoritative>');
+    expect(block).toBeGreaterThan(0);
+    expect(tail).toBeGreaterThan(block);
+    expect(html).toContain('summer');
+    const bot = await fetch(baseURL, {
+      headers: { 'user-agent': 'Googlebot' },
+    });
+    const buffered = await bot.text();
+    expect(bot.status).toBe(200);
+    expect(buffered).toContain('<title>Streamed dynamically');
+    expect(buffered).toContain('summer');
+    expect(buffered).not.toContain('data-analog-authoritative');
   });
 });

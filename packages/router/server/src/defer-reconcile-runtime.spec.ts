@@ -11,6 +11,7 @@ type Runtime = {
   __analogPaint: (id: string) => void;
   __analogReconcileHead: () => void;
   __analogFinalize: () => void;
+  __analogFail: () => void;
 };
 const rt = () => window as unknown as Runtime;
 
@@ -19,6 +20,39 @@ describe('DEFER_RECONCILE_RUNTIME', () => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
     installRuntime();
+  });
+
+  it('replaces an incomplete streamed document with a non-indexable error view', () => {
+    document.body.innerHTML =
+      '<div data-analog-stream><p>Incomplete preview</p></div>';
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    expect(
+      document.querySelector('[data-analog-render-error] h1')?.textContent,
+    ).toBe('Unable to load this page');
+    expect(document.querySelector('[data-analog-stream]')).toBeNull();
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute('content'),
+    ).toBe('noindex');
+  });
+
+  it('does not replace a completed authoritative document at EOF', () => {
+    document.body.innerHTML =
+      '<div data-analog-stream></div><template data-analog-authoritative><h1>Complete</h1></template>';
+    rt().__analogFinalize();
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+    expect(document.body.textContent).toBe('Complete');
+    expect(document.querySelector('[data-analog-render-error]')).toBeNull();
+  });
+
+  it('shows a safe error as soon as the failure trailer executes', () => {
+    document.body.innerHTML = '<div data-analog-stream>Preview</div>';
+    rt().__analogFail();
+    expect(
+      document.querySelector('[data-analog-render-error]')?.textContent,
+    ).toContain('Unable to load this page');
+    expect(
+      document.querySelector('meta[name="robots"]')?.getAttribute('content'),
+    ).toBe('noindex');
   });
 
   describe('__analogPaint', () => {
@@ -78,6 +112,25 @@ describe('DEFER_RECONCILE_RUNTIME', () => {
   });
 
   describe('__analogFinalize', () => {
+    it('activates bootstrap modules only after the authoritative body exists', () => {
+      document.body.innerHTML =
+        '<div data-analog-stream></div>' +
+        '<template data-analog-head><script type="module" src="/main.js" nonce="fixture-nonce"></script></template>' +
+        '<template data-analog-authoritative><main id="app">ready</main>' +
+        '<script type="application/json" id="ng-state">{}</script></template>';
+      rt().__analogReconcileHead();
+      expect(document.head.querySelector('script')).toBeNull();
+      rt().__analogFinalize();
+      expect(document.getElementById('app')?.textContent).toBe('ready');
+      const script = document.head.querySelector('script');
+      expect(script?.getAttribute('src')).toBe('/main.js');
+      expect(script?.nonce).toBe('fixture-nonce');
+      expect(script?.async).toBe(false);
+      expect(document.getElementById('ng-state')?.textContent).toBe('{}');
+      rt().__analogFinalize();
+      expect(document.head.querySelectorAll('script')).toHaveLength(1);
+    });
+
     it('swaps the body to the authoritative document', () => {
       document.body.innerHTML =
         '<div data-analog-stream></div>' +

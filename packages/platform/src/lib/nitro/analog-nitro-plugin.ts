@@ -275,6 +275,17 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           typeof source === 'string'
             ? source
             : new TextDecoder().decode(source);
+        // The SSR service has captured the template. Leaving it in public
+        // output makes Nitro serve the empty shell ahead of the root renderer.
+        if ((options.ssr ?? true) && _outputOptions.dir) {
+          for (const extension of ['', '.br', '.gz']) {
+            const shell = resolve(
+              _outputOptions.dir,
+              `${basename(indexHtmlPath())}${extension}`,
+            );
+            if (existsSync(shell)) unlinkSync(shell);
+          }
+        }
       }
     },
 
@@ -559,6 +570,14 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           });
           nitro.hooks.hook('prerender:init', (prerenderer) => {
             prerenderer.options.renderer = { handler: '#analog/ssr-renderer' };
+            // Static HTML must already contain the authoritative document.
+            // Keep the override local to the prerender instance so request-time
+            // responses can still stream.
+            prerenderer.options.virtual = {
+              ...prerenderer.options.virtual,
+              '#analog/ssr-renderer': () =>
+                generateSsrRendererVirtual(readIndexHtml(), true),
+            };
           });
         }
         // When ssr === false, Nitro's auto-detected template-serving
@@ -591,7 +610,10 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
  * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
  * nitro/vite's `prodSetup`).
  */
-function generateSsrRendererVirtual(template: string): string {
+export function generateSsrRendererVirtual(
+  template: string,
+  prerender = false,
+): string {
   return `
 import { defineHandler } from 'nitro/h3';
 import ssr from '#analog/ssr';
@@ -608,6 +630,25 @@ export default defineHandler(async (event) => {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
+  const noStreaming = ${prerender ? "'true'" : 'undefined'}
+    ?? event.context.routeRules?.headers?.['x-analog-no-streaming']
+    ?? event.res.headers.get('x-analog-no-streaming');
+  if (noStreaming !== null && noStreaming !== undefined || event.req.headers.has('x-analog-no-streaming')) {
+    const headers = new Headers(event.req.headers);
+    headers.delete('x-analog-no-streaming');
+    if (noStreaming !== null && noStreaming !== undefined) headers.set('x-analog-no-streaming', noStreaming);
+    // srvx's Node request is Request-compatible but does not carry Undici's
+    // private constructor state. Copy its public fields and retain runtime
+    // context for streaming cancellation and Worker lifetime.
+    const request = new Request(event.req.url, {
+      method: event.req.method,
+      headers,
+      signal: event.req.signal,
+      ...(event.req.method === 'GET' || event.req.method === 'HEAD' ? {} : { body: event.req.body, duplex: 'half' }),
+    });
+    if (event.req.runtime) Object.defineProperty(request, 'runtime', { value: event.req.runtime });
+    return service.fetch(request);
+  }
   return service.fetch(event.req);
 });
 `;
@@ -771,8 +812,11 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
     if (rule?.ssr === false) {
       rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
     }
-    if (rule?.streaming === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
+    if (typeof rule?.streaming === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-streaming': String(!rule.streaming),
+      };
     }
   }
 }
@@ -862,16 +906,24 @@ export default {
     try {
       const html = await renderer(requestUrl, TEMPLATE, {
         req: reqShim,
+        streaming: req.headers.get('x-analog-no-streaming') !== 'true',
+        signal: req.signal,
+        renderErrorsAsHtml: true,
+        waitUntil: req.runtime?.cloudflare?.context?.waitUntil?.bind(req.runtime.cloudflare.context),
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
         // and throws TypeError during prerender/SSR.
         fetch: ssrOFetch,
       });
-      return new Response(html, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
+      const headers = { 'content-type': 'text/html; charset=utf-8' };
+      if (html instanceof ReadableStream && req.headers.get('x-analog-no-streaming') !== 'true') {
+        // Compression can retain the shell until EOF, leaving no browser
+        // runtime to report an interrupted render. Do not cache partial HTML.
+        headers['content-encoding'] = 'identity';
+        headers['cache-control'] = 'no-store, no-transform';
+      }
+      return new Response(html, { status: 200, headers });
     } catch (err) {
       console.error('[analog ssr]', err);
       return new Response(TEMPLATE, {

@@ -6,6 +6,14 @@
   "tags": ["type:release"],
   "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
+    "streaming-smoke": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build", "router:build", "content:build"],
+      "options": {
+        "command": "node tools/scripts/streaming-runtime-smoke.mjs"
+      }
+    },
     "build-self": {
       "executor": "nx:run-commands",
       "cache": false,

@@ -42,17 +42,20 @@ import {
   INITIAL_CONFIG,
   ɵrenderInternal as renderInternal,
 } from '@angular/platform-server';
-import type { PlatformRef, ApplicationRef } from '@angular/core';
-import type { ServerContext } from '@analogjs/router/tokens';
+import type { PlatformRef } from '@angular/core';
+import type { ServerContext } from '../../tokens/src/index.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { provideServerContext } from './provide-server-context';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
-import { afterBodyOpen, bodyInner, headInner } from './utils/stream-html';
+import { bodyInner, headInner } from './utils/stream-html';
+import { createStreamShell } from './utils/stream-shell';
 import { isLikelyBot, streamingDisabledByRoute } from './utils/stream-request';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
+import { createSsrStream } from './utils/ssr-stream-lifecycle';
+import { createSsrNavigationTracker } from './ssr-navigation';
 
-if (import.meta.env.PROD) {
+if (import.meta.env?.PROD) {
   enableProdMode();
 }
 
@@ -81,7 +84,7 @@ interface SsrStreamingGlobals {
 }
 
 function streamingPrimitiveAvailable(): boolean {
-  const g = globalThis as unknown as SsrStreamingGlobals;
+  const g: typeof globalThis & SsrStreamingGlobals = globalThis;
   return (
     typeof g.__analogSsrInternals?.collectNativeNodesInLContainer === 'function'
   );
@@ -99,24 +102,56 @@ type DeferCaptureHandler = (ev: DeferCaptureEvent) => void;
  * no-op.
  */
 const captureStore = new AsyncLocalStorage<DeferCaptureHandler>();
+const CAPTURE_ZONE_KEY = 'analogSsrDeferCapture';
+interface CaptureZone {
+  fork(spec: {
+    name: string;
+    properties: Record<string, DeferCaptureHandler>;
+  }): CaptureZone;
+  run<T>(callback: () => T): T;
+  get(key: typeof CAPTURE_ZONE_KEY): DeferCaptureHandler | undefined;
+}
+
+function currentCaptureZone(): CaptureZone | undefined {
+  const host: typeof globalThis & { Zone?: { current: CaptureZone } } =
+    globalThis;
+  return host.Zone?.current;
+}
+
+function runWithCapture<T>(handler: DeferCaptureHandler, render: () => T): T {
+  const zone = currentCaptureZone();
+  return captureStore.run(handler, () =>
+    zone === undefined
+      ? render()
+      : zone
+          .fork({
+            name: 'analog-ssr-capture',
+            properties: { [CAPTURE_ZONE_KEY]: handler },
+          })
+          .run(render),
+  );
+}
 
 function installCaptureDispatcher(): void {
-  const g = globalThis as unknown as {
+  const g: typeof globalThis & {
     __analogSsrDeferCapture?: DeferCaptureHandler & {
       __analogDispatcher?: boolean;
     };
-  };
+  } = globalThis;
   if (g.__analogSsrDeferCapture?.__analogDispatcher) return;
-  const dispatch = ((ev: DeferCaptureEvent) => {
-    captureStore.getStore()?.(ev);
-  }) as DeferCaptureHandler & { __analogDispatcher?: boolean };
+  const dispatch: DeferCaptureHandler & { __analogDispatcher?: boolean } = (
+    ev,
+  ) => {
+    const zoneHandler = currentCaptureZone()?.get(CAPTURE_ZONE_KEY);
+    (zoneHandler ?? captureStore.getStore())?.(ev);
+  };
   dispatch.__analogDispatcher = true;
   g.__analogSsrDeferCapture = dispatch;
 }
 
 let warnedMissingPrimitive = false;
 function warnMissingPrimitiveOnce(): void {
-  if (warnedMissingPrimitive || !import.meta.env.DEV) return;
+  if (warnedMissingPrimitive || !import.meta.env?.DEV) return;
   warnedMissingPrimitive = true;
   console.warn(
     '[@analogjs/router] renderStream: the streaming hook was not found on ' +
@@ -132,22 +167,38 @@ function warnMissingPrimitiveOnce(): void {
  * block's interpolations.
  */
 function serializeLContainerHtml(lContainer: unknown): string {
-  const g = globalThis as unknown as SsrStreamingGlobals;
+  const g: typeof globalThis & SsrStreamingGlobals = globalThis;
   const collect = g.__analogSsrInternals?.collectNativeNodesInLContainer;
   if (!collect) return '';
-  const nodes: any[] = [];
+  const nodes: {
+    nodeType: number;
+    outerHTML?: string;
+    data?: string;
+    nodeValue?: string;
+  }[] = [];
   collect(lContainer, nodes);
   let html = '';
-  for (const n of nodes) html += n?.outerHTML ?? n?.data ?? n?.nodeValue ?? '';
+  for (const node of nodes) {
+    if (node.nodeType === 1) html += node.outerHTML ?? '';
+    else if (node.nodeType === 3)
+      html += (node.data ?? node.nodeValue ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+  }
   return html;
 }
 
 /** Destroy the platform on a macrotask, matching `renderApplication`. */
 function asyncDestroyPlatform(platformRef: PlatformRef): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      platformRef.destroy();
-      resolve();
+      try {
+        platformRef.destroy();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
     }, 0);
   });
 }
@@ -166,15 +217,19 @@ export function renderStream(
   config: ApplicationConfig,
   platformProviders: Provider[] = [],
 ) {
-  function bootstrap(context: BootstrapContext) {
-    return bootstrapApplication(rootComponent, config, context);
-  }
-
   return async function renderStream(
     url: string,
     document: string,
     serverContext: ServerContext,
   ): Promise<ReadableStream<Uint8Array>> {
+    serverContext.signal?.throwIfAborted();
+    const navigation = createSsrNavigationTracker();
+    const applicationConfig = {
+      ...config,
+      providers: [...config.providers, navigation.provider],
+    };
+    const bootstrap = (context: BootstrapContext) =>
+      bootstrapApplication(rootComponent, applicationConfig, context);
     // Reset before every render — both the buffered fallback below and the
     // streaming path — so a prior render's locale/consts are not frozen for the
     // process lifetime (parity with render.ts).
@@ -195,17 +250,15 @@ export function renderStream(
       if (!bot && !routeDisabled && !primitiveAvailable) {
         warnMissingPrimitiveOnce();
       }
-      const html = await renderApplication(
-        (context) => bootstrapApplication(rootComponent, config, context),
-        {
-          document,
-          url,
-          platformProviders: [
-            provideServerContext(serverContext),
-            platformProviders,
-          ],
-        },
-      );
+      const html = await renderApplication(bootstrap, {
+        document,
+        url,
+        platformProviders: [
+          provideServerContext(serverContext),
+          platformProviders,
+        ],
+      });
+      navigation.throwIfFailed();
       return new ReadableStream({
         start(controller) {
           controller.enqueue(new TextEncoder().encode(html as string));
@@ -215,105 +268,62 @@ export function renderStream(
     }
 
     installCaptureDispatcher();
-    const encoder = new TextEncoder();
+    const platformRef = platformServer([
+      { provide: INITIAL_CONFIG, useValue: { document, url } },
+      provideServerContext(serverContext),
+      platformProviders,
+    ]);
 
-    // The stream is returned immediately; `start` fills it as the render
-    // progresses, so the consumer receives the head, then each @defer block the
-    // moment it resolves, then the authoritative tail — true streaming.
-    return new ReadableStream<Uint8Array>({
-      async start(controller) {
-        const enqueue = (s: string) => controller.enqueue(encoder.encode(s));
+    let shell: string;
+    try {
+      shell = createStreamShell(platformRef);
+    } catch (error) {
+      await asyncDestroyPlatform(platformRef);
+      throw error;
+    }
 
-        // The capture handler fires once per @defer block as it resolves. The
-        // block's DOM is not filled until the next change-detection tick, so we
-        // serialize + flush it a macrotask later — flushing DURING the render.
-        // It is scoped to this render via async-local storage (see
-        // installCaptureDispatcher) so concurrent renders never cross-talk.
+    return createSsrStream({
+      signal: serverContext.signal,
+      waitUntil: serverContext.waitUntil,
+      errorHtml: serverContext.renderErrorsAsHtml
+        ? '<script data-analog-error>window.__analogFail&&window.__analogFail();</script></body></html>'
+        : undefined,
+      destroy: () => asyncDestroyPlatform(platformRef),
+      async render(writer) {
         let blockIndex = 0;
-        let capturing = true;
         const seen = new Set<unknown>();
-        const pendingFlushes: Promise<void>[] = [];
-        const onBlockResolved: DeferCaptureHandler = (ev) => {
-          // A block can reach `Complete` more than once during a render; only
-          // stream each container once. Also ignore any resolution that fires
-          // after the render has moved on to serializing the authoritative tail.
-          if (!capturing || seen.has(ev.lContainer)) return;
-          seen.add(ev.lContainer);
+        const onBlockResolved: DeferCaptureHandler = (event) => {
+          if (!writer.active || seen.has(event.lContainer)) return;
+          seen.add(event.lContainer);
           const id = `s${blockIndex++}`;
-          pendingFlushes.push(
-            new Promise<void>((resolve) => {
-              setTimeout(() => {
-                const html = serializeLContainerHtml(ev.lContainer);
-                enqueue(
-                  `<template data-analog-defer="${id}">${html}</template>` +
-                    `<script>window.__analogPaint&&window.__analogPaint(${JSON.stringify(id)})</script>`,
-                );
-                resolve();
-              }, 0);
-            }),
+          writer.scheduleBlock(
+            () =>
+              `<template data-analog-defer="${id}">${serializeLContainerHtml(event.lContainer)}</template>` +
+              `<script>window.__analogPaint&&window.__analogPaint(${JSON.stringify(id)})</script>`,
           );
         };
 
-        // Run the whole render inside the async-local context so every
-        // change-detection tick and @defer resolution it schedules routes back
-        // to THIS render's handler.
-        await captureStore.run(onBlockResolved, async () => {
-          const platformRef = platformServer([
-            { provide: INITIAL_CONFIG, useValue: { document, url } },
-            provideServerContext(serverContext),
-            platformProviders,
-          ]);
-
-          // 1. Flush the head + reconcile runtime immediately (before the app is
-          //    rendered), then open the live streaming region.
-          enqueue(
-            document.slice(0, afterBodyOpen(document)) +
+        await runWithCapture(onBlockResolved, async () => {
+          writer.enqueue(
+            shell +
               `<script>${DEFER_RECONCILE_RUNTIME}</script>` +
-              `<div data-analog-stream></div>`,
+              '<div data-analog-stream></div>',
           );
-
-          let appRef: ApplicationRef | undefined;
-          let errored = false;
-          try {
-            // 2. Bootstrap + render. Blocks resolve out of order during this
-            //    phase and flush via the capture handler above.
-            appRef = await bootstrap({ platformRef } as BootstrapContext);
-            await appRef.whenStable();
-            await Promise.all(pendingFlushes);
-            // Stop capturing before serializing the tail so late resolutions
-            // triggered by the hydration pass are not streamed as extra blocks.
-            capturing = false;
-
-            // 3. Flush the authoritative, fully hydration-annotated document as
-            //    the tail. Carried in <template>s (their inert `ng-state`
-            //    script survives). The app's resolved <head> ships alongside so
-            //    a dynamically-set title/meta — set during render, after the
-            //    shell head was already flushed — is reconciled onto the live
-            //    document before the runtime swaps in the body and hydration
-            //    boots.
-            const authoritative = await renderInternal(platformRef, appRef);
-            enqueue(
-              `<template data-analog-head>${headInner(authoritative)}</template>` +
-                `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +
-                `<script>window.__analogReconcileHead&&window.__analogReconcileHead();` +
-                `window.__analogFinalize&&window.__analogFinalize()</script>` +
-                `</body></html>`,
-            );
-          } catch (err) {
-            // The head + runtime were already flushed, so the status/headers are
-            // committed; error the stream (a no-op silent close would hand the
-            // client a truncated, non-hydratable 200) and log with block context.
-            errored = true;
-            console.error(
-              `[@analogjs/router] renderStream failed for ${url} after ` +
-                `${blockIndex} block(s); response truncated.`,
-              err,
-            );
-            controller.error(err);
-          } finally {
-            await asyncDestroyPlatform(platformRef);
-            if (!errored) controller.close();
-          }
+          const appRef = await bootstrap({ platformRef });
+          if (!writer.active) return;
+          await appRef.whenStable();
+          if (!writer.active) return;
+          navigation.throwIfFailed();
+          await writer.finishBlocks();
+          if (!writer.active) return;
+          const authoritative = await renderInternal(platformRef, appRef);
+          navigation.throwIfFailed();
+          writer.enqueue(
+            `<template data-analog-head>${headInner(authoritative)}</template>` +
+              `<template data-analog-authoritative>${bodyInner(authoritative)}</template>` +
+              '<script>window.__analogReconcileHead&&window.__analogReconcileHead();' +
+              'window.__analogFinalize&&window.__analogFinalize()</script></body></html>',
+          );
         });
       },
     });

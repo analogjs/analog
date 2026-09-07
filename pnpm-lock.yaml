@@ -1223,6 +1223,12 @@ importers:
       '@analogjs/platform':
         specifier: workspace:*
         version: link:../../packages/platform
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
+      nitro:
+        specifier: 'catalog:'
+        version: 3.0.260903-beta
 
   apps/tailwind-debug-app:
     dependencies:

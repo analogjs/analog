@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { Plugin } from 'vite';
 
 import { Options } from './options.js';
@@ -19,6 +19,11 @@ import { serverModePlugin } from '../server-mode-plugin.js';
 import { routeGenerationPlugin } from './route-generation-plugin.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
 import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
+import {
+  deferStreamingPlugin,
+  streamingSupportedOnAngular,
+  MIN_STREAMING_ANGULAR_MAJOR,
+} from './ssr/defer-streaming-plugin.js';
 
 /**
  * The installed `@angular/core` major version, resolved from the workspace root
@@ -47,9 +52,24 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ssr: true,
     ...opts,
   };
+  const streaming =
+    platformOptions.ssr && platformOptions.experimental?.streaming === true;
+  if (
+    streaming &&
+    !streamingSupportedOnAngular(
+      getAngularCoreMajor(
+        resolve(platformOptions.workspaceRoot ?? process.cwd()),
+      ),
+    )
+  ) {
+    throw new Error(
+      `Experimental streaming SSR requires Angular ${MIN_STREAMING_ANGULAR_MAJOR} or newer.`,
+    );
+  }
 
   debugPlatform('experimental options resolved', {
     typedRouter: platformOptions.experimental?.typedRouter,
+    streaming,
   });
 
   return [
@@ -60,6 +80,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       },
     },
     analogNitroPlugin(platformOptions),
+    ...(streaming ? [deferStreamingPlugin()] : []),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),
