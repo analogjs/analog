@@ -4,6 +4,12 @@ import { join } from 'node:path';
 import { normalizePath } from 'vite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { vi } from 'vitest';
+import { nitro } from '../vite-plugin-nitro';
+import { buildServer } from '../build-server';
+
+vi.mock('../build-server');
+
 import { getServerFnHandlers } from './get-server-fn-handlers';
 
 describe('getServerFnHandlers', () => {
@@ -21,12 +27,14 @@ describe('getServerFnHandlers', () => {
     // Dedicated server-fn module.
     writeFileSync(
       join(workspaceRoot, 'src/app/server-fns/products.server.ts'),
-      `export const getProducts = serverFn({ id: 'getProducts' }, async () => []);`,
+      `import { serverFn } from '@analogjs/router/server'; export const getProducts = serverFn({ id: 'getProducts' }, async () => []);`,
     );
     // A page server file may also host a server function.
     writeFileSync(
       join(workspaceRoot, 'src/app/pages/shipping/index.server.ts'),
-      `export default async function load() { return {}; }`,
+      `import { serverFn as defineServerFn } from '@analogjs/router/server';
+       export const load = async () => ({});
+       export const shipping = defineServerFn(async () => []);`,
     );
     // Angular SSR config — matched by the glob but must be excluded.
     writeFileSync(
@@ -37,7 +45,9 @@ describe('getServerFnHandlers', () => {
     // the whole Angular app into the dispatch bundle.
     writeFileSync(
       join(workspaceRoot, 'src/main.server.ts'),
-      `export default async function render() { return ''; }`,
+      `import { serverFn } from '@analogjs/router/server';
+       export const rootFn = serverFn(async () => []);
+       export default async function render() { return ''; }`,
     );
     writeFileSync(
       join(workspaceRoot, 'src/main-cf.server.ts'),
@@ -99,7 +109,7 @@ describe('getServerFnHandlers', () => {
   it('keeps a page named main.server.ts, which is not an SSR entry', () => {
     writeFileSync(
       join(workspaceRoot, 'src/app/pages/main.server.ts'),
-      `export const load = async () => ({});`,
+      `import { serverFn } from '@analogjs/router/server'; export const main = serverFn(async () => ({}));`,
     );
 
     const files = getServerFnHandlers({
@@ -111,6 +121,108 @@ describe('getServerFnHandlers', () => {
     expect(files.some((f) => f.endsWith('app/pages/main.server.ts'))).toBe(
       true,
     );
+  });
+
+  it.each([
+    `export const load = async () => ({});`,
+    `// import { serverFn } from '@analogjs/router/server';
+     export const load = async () => ({ text: 'serverFn' });`,
+    `import { serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
+    `import { serverFn } from 'another-library'; export const load = async () => ({});`,
+    `import type { serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
+    `import { type serverFn } from '@analogjs/router/server'; export const load = async () => ({});`,
+  ])('excludes load-only modules: %s', (code) => {
+    rmSync(join(workspaceRoot, 'src/app/server-fns'), { recursive: true });
+    writeFileSync(
+      join(workspaceRoot, 'src/app/pages/shipping/index.server.ts'),
+      code,
+    );
+    expect(getServerFnHandlers({ workspaceRoot, sourceRoot, rootDir })).toEqual(
+      [],
+    );
+  });
+
+  it.each([false, true])(
+    'wires dispatch only for runtime serverFn imports: %s',
+    async (withServerFn) => {
+      rmSync(join(workspaceRoot, 'src/app/server-fns'), { recursive: true });
+      const page = join(
+        workspaceRoot,
+        'src/app/pages/shipping/index.server.ts',
+      );
+      writeFileSync(
+        page,
+        `export const load = async () => ({});` +
+          (withServerFn
+            ? `import { serverFn as defineFn } from '@analogjs/router/server'; export const getData = defineFn(async () => []);`
+            : ''),
+      );
+      const plugin = nitro({ ssr: false, useAPIMiddleware: false })[1] as any;
+      const config = await plugin.config(
+        { root: workspaceRoot, build: {} },
+        { command: 'build', mode: 'production' },
+      );
+      await config.builder.buildApp({
+        build: vi.fn(),
+        environments: { client: {} },
+      });
+      const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
+      expect(
+        nitroConfig.handlers?.some(
+          (handler) =>
+            typeof handler !== 'string' && handler.route === '/_analog/fn/:id',
+        ),
+      ).toBe(withServerFn);
+      expect(
+        JSON.stringify(nitroConfig.virtual).includes('@analogjs/router/server'),
+      ).toBe(withServerFn);
+      expect(
+        nitroConfig.moduleSideEffects?.includes('@angular/compiler') ?? false,
+      ).toBe(withServerFn);
+      expect(
+        nitroConfig.handlers?.some(
+          (handler) =>
+            typeof handler !== 'string' &&
+            handler.handler.includes('shipping/index.server.ts'),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it('wires dispatch for the conventional serverFn re-export that the client transforms', async () => {
+    rmSync(join(workspaceRoot, 'src/app/server-fns'), { recursive: true });
+    writeFileSync(
+      join(workspaceRoot, 'src/app/server-fn.ts'),
+      `export { serverFn } from '@analogjs/router/server';`,
+    );
+    const page = join(workspaceRoot, 'src/app/pages/shipping/index.server.ts');
+    writeFileSync(
+      page,
+      `import { serverFn } from '../../server-fn';
+       export const load = async () => ({});
+       export const getData = serverFn(async () => []);`,
+    );
+
+    const plugin = nitro({ ssr: false, useAPIMiddleware: false })[1] as any;
+    const config = await plugin.config(
+      { root: workspaceRoot, build: {} },
+      { command: 'build', mode: 'production' },
+    );
+    await config.builder.buildApp({
+      build: vi.fn(),
+      environments: { client: {} },
+    });
+    const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
+
+    expect(
+      nitroConfig.handlers?.some(
+        (handler) =>
+          typeof handler !== 'string' && handler.route === '/_analog/fn/:id',
+      ),
+    ).toBe(true);
+    expect(
+      JSON.stringify(nitroConfig.virtual).includes('shipping/index.server.ts'),
+    ).toBe(true);
   });
 
   it('returns deterministic, de-duplicated, sorted output', () => {
@@ -127,7 +239,7 @@ describe('getServerFnHandlers', () => {
     mkdirSync(join(workspaceRoot, 'libs/shared/src'), { recursive: true });
     writeFileSync(
       join(workspaceRoot, 'libs/shared/src/reports.server.ts'),
-      `export const getReport = serverFn({ id: 'getReport' }, async () => ({}));`,
+      `import { serverFn } from '@analogjs/router/server'; export const getReport = serverFn({ id: 'getReport' }, async () => ({}));`,
     );
 
     const files = getServerFnHandlers({
