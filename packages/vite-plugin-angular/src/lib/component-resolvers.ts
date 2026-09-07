@@ -182,7 +182,8 @@ export function getAngularComponentMetadata(
 
           const name = property.key.name;
           if (name === 'selector') {
-            metadata.selector = getStringValue(property.value);
+            const selector = getStringValue(property.value);
+            if (selector !== undefined) metadata.selector = selector;
           } else if (name === 'styleUrl') {
             const val = getStringValue(property.value);
             if (val !== undefined) {
@@ -239,57 +240,43 @@ export function getInlineTemplates(code: string): string[] {
 // Resolver caches
 // ---------------------------------------------------------------------------
 
-interface StyleUrlsCacheEntry {
-  code: string;
-  styleUrls: string[];
+export interface ResourceLocation {
+  readonly relativePath: string;
+  readonly absolutePath: string;
 }
 
-export class StyleUrlsResolver {
-  // These resolvers may be called multiple times during the same
-  // compilation for the same files. Caching is required because these
-  // resolvers use synchronous system calls to the filesystem, which can
-  // degrade performance when running compilations for multiple files.
-  private readonly styleUrlsCache = new Map<string, StyleUrlsCacheEntry>();
+class ComponentUrlsResolver {
+  private readonly cache = new Map<
+    string,
+    { readonly code: string; readonly urls: readonly ResourceLocation[] }
+  >();
 
-  resolve(code: string, id: string): string[] {
-    const entry = this.styleUrlsCache.get(id);
-    if (entry?.code === code) {
-      return entry.styleUrls;
-    }
+  constructor(private readonly extract: (code: string) => readonly string[]) {}
 
-    const styleUrls = getStyleUrls(code).map((styleUrlPath) => {
-      return `${styleUrlPath}|${normalizePath(
-        resolve(dirname(id), styleUrlPath),
-      )}`;
-    });
+  clear(): void {
+    this.cache.clear();
+  }
 
-    this.styleUrlsCache.set(id, { code, styleUrls });
-    return styleUrls;
+  resolve(code: string, id: string): readonly ResourceLocation[] {
+    const previous = this.cache.get(id);
+    if (previous?.code === code) return previous.urls;
+    const urls = this.extract(code).map((relativePath) => ({
+      relativePath,
+      absolutePath: normalizePath(resolve(dirname(id), relativePath)),
+    }));
+    this.cache.set(id, { code, urls });
+    return urls;
   }
 }
 
-interface TemplateUrlsCacheEntry {
-  code: string;
-  templateUrlPaths: string[];
+export class StyleUrlsResolver extends ComponentUrlsResolver {
+  constructor() {
+    super(getStyleUrls);
+  }
 }
 
-export class TemplateUrlsResolver {
-  private readonly templateUrlsCache = new Map<
-    string,
-    TemplateUrlsCacheEntry
-  >();
-
-  resolve(code: string, id: string): string[] {
-    const entry = this.templateUrlsCache.get(id);
-    if (entry?.code === code) {
-      return entry.templateUrlPaths;
-    }
-
-    const templateUrlPaths = getTemplateUrls(code).map(
-      (url) => `${url}|${normalizePath(resolve(dirname(id), url))}`,
-    );
-
-    this.templateUrlsCache.set(id, { code, templateUrlPaths });
-    return templateUrlPaths;
+export class TemplateUrlsResolver extends ComponentUrlsResolver {
+  constructor() {
+    super(getTemplateUrls);
   }
 }

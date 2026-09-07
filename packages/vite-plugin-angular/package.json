@@ -53,13 +53,21 @@
   },
   "dependencies": {
     "effect": "catalog:",
-    "es-toolkit": "catalog:",
     "magic-string": "catalog:",
     "obug": "catalog:",
     "oxc-parser": "catalog:",
     "oxc-resolver": "catalog:",
     "rolldown": "catalog:",
     "tinyglobby": "catalog:"
+  },
+  "devDependencies": {
+    "@effect/vitest": "4.0.0-rc.112",
+    "esbuild": "catalog:",
+    "jiti": "catalog:",
+    "less": "catalog:",
+    "sass": "catalog:",
+    "sass-embedded": "catalog:",
+    "vite": "catalog:"
   },
   "builders": "./dist/src/lib/tools/builders.json",
   "nx-migrations": {

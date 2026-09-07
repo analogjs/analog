@@ -1,9 +1,20 @@
+import {
+  stripQuery,
+  resolveJitResource,
+  isCompilerSource,
+} from './utils/module-id.js';
+import { createCompilerSession } from './compiler-session.js';
+import type { CompilerPlugin } from './compiler-backend.js';
+import { projectCompilerLayer } from './compiler-backend-live.js';
+import { Layer } from 'effect';
+import { TsconfigResolver } from './utils/tsconfig-resolver.js';
+import { sourceGraphLayer } from './compiler-source-graph-live.js';
+import type { ResolvedSourceProject } from './compiler-source-graph.js';
 import { promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
 
-import * as compilerCli from '@angular/compiler-cli';
 import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 
 import {
@@ -52,11 +63,12 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  include?: string[];
 }
 
 export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
-): Plugin {
+): CompilerPlugin {
   let resolvedConfig: ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];
@@ -69,6 +81,41 @@ export function fastCompilePlugin(
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
+  const tsconfigResolver = new TsconfigResolver({
+    workspaceRoot: pluginOptions.workspaceRoot,
+    include: pluginOptions.include ?? [],
+    liveReload: pluginOptions.liveReload,
+    isTest: pluginOptions.isTest,
+  });
+  const compilation = createCompilerSession(
+    projectCompilerLayer({
+      config: () => resolvedConfig,
+      tsconfig: resolveTsConfigPath,
+      expandReferences: false,
+      configure: (integrations) => {
+        transformFilter = integrations.transformFilter;
+        componentRegistries = integrations.componentRegistries;
+      },
+      compile: async (files, project) => {
+        if (!files) {
+          resourceToSource.clear();
+          await initFastCompile(project);
+          return;
+        }
+        for (const file of files) {
+          if (!TS_EXT_REGEX.test(file)) continue;
+          for (const [name, entry] of registry)
+            if (entry.fileName === file) registry.delete(name);
+          await scanBarrelExports(file, new Set(), true);
+        }
+      },
+      close: () => {
+        registry.clear();
+        resourceToSource.clear();
+        scannedDtsPackages.clear();
+      },
+    }).pipe(Layer.provide(sourceGraphLayer(tsconfigResolver))),
+  );
 
   /**
    * Scan a file into the registry, then recursively walk its relative
@@ -177,7 +224,7 @@ export function fastCompilePlugin(
     }
   }
 
-  async function initFastCompile() {
+  async function initFastCompile(config: ResolvedSourceProject) {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
@@ -185,7 +232,6 @@ export function fastCompilePlugin(
     scannedDtsPackages.clear();
     const resolvedTsConfigPath = resolveTsConfigPath();
     projectRoot = dirname(resolvedTsConfigPath);
-    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
 
     // Collect candidate files: tsconfig rootNames PLUS the entry points
@@ -544,7 +590,7 @@ export function fastCompilePlugin(
 
       if (styleStrings.length > 0) {
         resolvedInlineStyles = new Map();
-        for (let i = 0; i < styleStrings.length; i++) {
+        for (const [i, style] of styleStrings.entries()) {
           // External styleUrls are preprocessed by their own extension; truly
           // inline `styles: [...]` fall back to `inlineStylesExtension`.
           const ext = styleExtensions.get(i) ?? inlineExt;
@@ -552,7 +598,7 @@ export function fastCompilePlugin(
           try {
             const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
             const processed = await preprocessCSS(
-              styleStrings[i],
+              style,
               fakePath,
               resolvedConfig,
             );
@@ -592,10 +638,12 @@ export function fastCompilePlugin(
 
     const result = compile(code, id, {
       registry: compileRegistry,
-      resolvedStyles,
-      resolvedInlineStyles,
+      ...(resolvedStyles ? { resolvedStyles } : {}),
+      ...(resolvedInlineStyles ? { resolvedInlineStyles } : {}),
       useDefineForClassFields,
-      compilationMode: pluginOptions.fastCompileMode,
+      ...(pluginOptions.fastCompileMode
+        ? { compilationMode: pluginOptions.fastCompileMode }
+        : {}),
       oxcProgram,
     });
 
@@ -645,6 +693,12 @@ export function fastCompilePlugin(
 
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
+    api: {
+      read: compilation.read,
+      invalidate: async (files) => {
+        await compilation.run(files);
+      },
+    },
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';
@@ -659,6 +713,7 @@ export function fastCompilePlugin(
       const preliminaryTsConfigPath = resolveTsConfigPath();
 
       const depOptimizer = createDepOptimizerConfig({
+        own: compilation.own,
         tsconfig: preliminaryTsConfigPath,
         isProd,
         jit: pluginOptions.jit,
@@ -688,19 +743,23 @@ export function fastCompilePlugin(
       // the barrel-aware scanner so a newly added re-export entry
       // (`export * from './x'`) also expands its underlying directive
       // classes — otherwise the registry stays stale until restart.
-      server.watcher.on('add', async (filePath) => {
+      compilation.watch(server.watcher, 'add', async (filePath) => {
         if (
           filePath.endsWith('.ts') &&
           !filePath.endsWith('.spec.ts') &&
           !filePath.endsWith('.d.ts')
         ) {
-          await scanBarrelExports(filePath, new Set(), true);
+          await compilation.run([filePath]);
         }
       });
     },
     async buildStart() {
-      await initFastCompile();
+      await compilation.start();
     },
+    closeBundle: async () => {
+      if (!resolvedConfig?.build.watch) await compilation.close();
+    },
+    closeWatcher: () => compilation.close(),
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module
       if (resourceToSource.has(ctx.file)) {
@@ -712,21 +771,9 @@ export function fastCompilePlugin(
       }
 
       if (TS_EXT_REGEX.test(ctx.file)) {
-        const [fileId] = ctx.file.split('?');
+        const fileId = stripQuery(ctx.file);
 
-        // Remove old entries from this file
-        const oldEntries = [...registry.entries()]
-          .filter(([_, v]) => v.fileName === fileId)
-          .map(([k]) => k);
-        for (const key of oldEntries) {
-          registry.delete(key);
-        }
-
-        // Rescan the changed file via the barrel-aware scanner so an
-        // edited barrel re-export picks up newly-referenced files.
-        // Pass overwrite=true so updated metadata replaces stale
-        // entries from the previous scan.
-        await scanBarrelExports(fileId, new Set(), true);
+        await compilation.run([fileId]);
       }
 
       // Let Vite handle the rest — the transform hook will recompile
@@ -738,9 +785,7 @@ export function fastCompilePlugin(
       }
 
       if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const filePath = normalizePath(
-          resolve(dirname(importer as string), id.split(';')[1]),
-        );
+        const filePath = resolveJitResource(id, importer);
         if (id.includes(':style')) {
           markStylePathSafe(resolvedConfig, filePath);
           return filePath + '?inline';
@@ -754,7 +799,7 @@ export function fastCompilePlugin(
       // User `.scss?inline` / `.css?inline` imports: resolve and mark
       // safe so Vite's native CSS pipeline handles them.
       if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
-        const filePath = id.split('?')[0];
+        const filePath = stripQuery(id);
         const resolved = isAbsolute(filePath)
           ? normalizePath(filePath)
           : normalizePath(resolve(dirname(importer), filePath));
@@ -771,7 +816,7 @@ export function fastCompilePlugin(
       // Vitest fallback: module-runner can skip resolveId, so the bare
       // ?inline query reaches load. Mark safe and let Vite handle it.
       if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        markStylePathSafe(resolvedConfig, id.split('?')[0]);
+        markStylePathSafe(resolvedConfig, stripQuery(id));
       }
 
       return;
@@ -792,6 +837,8 @@ export function fastCompilePlugin(
         },
       },
       async handler(code, id) {
+        if (!isCompilerSource(id)) return;
+        await compilation.ready();
         if (transformFilter && !transformFilter(code, id)) {
           return;
         }
@@ -799,7 +846,9 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleFastCompileTransform(code, id);
+        return compilation.readAsync(() =>
+          handleFastCompileTransform(code, id),
+        );
       },
     },
   };

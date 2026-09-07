@@ -27,7 +27,7 @@ async function setupLegacyTransformPlugin() {
     getSourceFile: vi.fn().mockReturnValue(undefined),
   };
 
-  vi.doMock('typescript', () => ({
+  const mockTypeScript = {
     sys: {
       readFile: vi.fn(),
     },
@@ -40,6 +40,10 @@ async function setupLegacyTransformPlugin() {
     createIncrementalCompilerHost: vi.fn().mockReturnValue({}),
     createPrinter: vi.fn().mockReturnValue({ printNode: vi.fn() }),
     createSourceFile: vi.fn().mockReturnValue({}),
+  };
+  vi.doMock('typescript', () => ({
+    ...mockTypeScript,
+    default: mockTypeScript,
   }));
 
   vi.doMock('@angular/compiler-cli', () => ({
@@ -48,6 +52,7 @@ async function setupLegacyTransformPlugin() {
     readConfiguration: vi.fn(() => ({
       options: {},
       rootNames: [`${workspaceRoot}/src/app/app.component.ts`],
+      errors: [],
     })),
   }));
 
@@ -157,7 +162,7 @@ describe('legacy Angular transform', () => {
   it('returns undefined when Angular did not emit the requested TS file', async () => {
     const { plugin, workspaceRoot } = await setupLegacyTransformPlugin();
     const transformHook = plugin.transform.handler;
-    const id = `${workspaceRoot}/enterpriseOS/schema/src/gdm/identifiers.ts`;
+    const id = `${workspaceRoot}/libs/shared/src/identifiers.ts`;
 
     const result = await transformHook.call(
       {
@@ -165,7 +170,7 @@ describe('legacy Angular transform', () => {
         error: vi.fn(),
         warn: vi.fn(),
       },
-      'export const DvsEntityUuidSchema = {};',
+      'export const identifier = "example";',
       id,
     );
 

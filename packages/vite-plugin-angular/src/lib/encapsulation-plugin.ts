@@ -1,3 +1,4 @@
+import { stripQuery } from './utils/module-id.js';
 import * as ngCompiler from '@angular/compiler';
 import { Plugin } from 'vite';
 import { debugStylesV } from './utils/debug.js';
@@ -44,7 +45,7 @@ export function encapsulationPlugin(): Plugin {
         const { encapsulation, componentId } = getComponentStyleSheetMeta(id);
         if (encapsulation === 'emulated' && componentId) {
           debugStylesV('applying emulated view encapsulation (post)', {
-            stylesheet: id.split('?')[0],
+            stylesheet: stripQuery(id),
             componentId,
           });
           const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
@@ -54,6 +55,7 @@ export function encapsulationPlugin(): Plugin {
           };
         }
       }
+      return;
     },
   };
 }

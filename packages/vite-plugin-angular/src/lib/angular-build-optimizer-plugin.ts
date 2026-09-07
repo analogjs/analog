@@ -1,5 +1,6 @@
+import { stripQuery } from './utils/module-id.js';
 import type { Plugin, UserConfig } from 'vite';
-import { JavaScriptTransformer } from './utils/devkit.js';
+import { createJavaScriptTransformer } from './javascript-transformer.js';
 import { isProdMode } from './utils/plugin-config.js';
 import { getJsTransformConfigKey } from './utils/rolldown.js';
 
@@ -9,9 +10,14 @@ export function buildOptimizerPlugin({
   supportedBrowsers: string[];
   jit: boolean;
 }): Plugin {
-  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
   let isProd = false;
   let preserveVendorMaps = false;
+  const javascriptTransformer = createJavaScriptTransformer(() => ({
+    sourcemap: false,
+    thirdPartySourcemaps: false,
+    advancedOptimizations: isProd,
+    jit: true,
+  }));
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
@@ -32,15 +38,6 @@ export function buildOptimizerPlugin({
       isProd = isProdMode(userConfig.mode);
       // Advanced optimizations paired with dev-mode defines would strip
       // dev-only code the debug API needs, so both key off `isProd`.
-      javascriptTransformer ??= new JavaScriptTransformer(
-        {
-          sourcemap: false,
-          thirdPartySourcemaps: false,
-          advancedOptimizations: isProd,
-          jit: true,
-        },
-        1,
-      );
       const jsTransformConfigKey = getJsTransformConfigKey();
 
       return {
@@ -78,6 +75,8 @@ export function buildOptimizerPlugin({
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
     },
+    closeBundle: () => javascriptTransformer.close(),
+    closeWatcher: () => javascriptTransformer.close(),
     transform: {
       filter: {
         // Allow an optional `?query` after the extension. Some environments
@@ -91,7 +90,7 @@ export function buildOptimizerPlugin({
       async handler(code, id) {
         // Strip the `?query` so the fesm check and the transformer see a real
         // filename rather than `foo.mjs?v=<hash>`.
-        const cleanId = id.split('?')[0];
+        const cleanId = stripQuery(id);
         const angularPackage = /fesm20/.test(cleanId);
 
         if (!angularPackage) {
@@ -112,7 +111,6 @@ export function buildOptimizerPlugin({
         const result: Uint8Array = await javascriptTransformer.transformData(
           cleanId,
           code,
-          false,
           sideEffects,
         );
 

@@ -7,7 +7,7 @@ import {
   createRolldownCompilerPlugin,
 } from '../compiler-plugin.js';
 import {
-  createPersistentTransformCache,
+  transformCacheLayer,
   resolveTransformCacheDir,
 } from './transform-cache.js';
 
@@ -23,7 +23,7 @@ import {
  * zero characters, and any non-`x` letter was admitted — so `.tsrx`
  * and similar extensions matched by accident.
  */
-export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
+export { TS_EXT_REGEX } from './module-id.js';
 
 /**
  * Resolves whether Angular should be compiled for production. An explicit
@@ -52,7 +52,7 @@ export function getTsConfigPath(
   isTest: boolean,
   isLib: boolean,
   workspaceRoot?: string,
-) {
+): string {
   if (tsconfig && isAbsolute(tsconfig)) {
     if (!existsSync(tsconfig)) {
       console.error(
@@ -111,7 +111,7 @@ export function getTsConfigPath(
 
 export function createTsConfigGetter(
   tsconfigOrGetter?: string | (() => string),
-) {
+): () => string {
   if (typeof tsconfigOrGetter === 'function') {
     return tsconfigOrGetter;
   }
@@ -126,6 +126,7 @@ export interface DepOptimizerOptions {
   watchMode: boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
+  own(finalizer: () => Promise<void>): void;
 }
 
 export function createDepOptimizerConfig(
@@ -141,9 +142,7 @@ export function createDepOptimizerConfig(
   // transformer's own key covers file bytes + options, and the directory
   // is namespaced by Angular version, so entries never go stale.
   const transformCacheDir = resolveTransformCacheDir(dirname(opts.tsconfig));
-  const transformCache = transformCacheDir
-    ? createPersistentTransformCache(transformCacheDir)
-    : undefined;
+  const transformCache = transformCacheLayer(transformCacheDir);
 
   const settings = {
     compiler: {
@@ -155,6 +154,7 @@ export function createDepOptimizerConfig(
     },
     isTest: opts.isTest,
     closeTransformer: !opts.isAstroIntegration,
+    own: opts.own,
     cache: transformCache,
   };
   const optimizerOptions = vite.rolldownVersion

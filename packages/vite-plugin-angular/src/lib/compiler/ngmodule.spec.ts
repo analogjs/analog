@@ -333,7 +333,7 @@ describe('Dependency list deduplication', () => {
   function depsArrayFor(result: string): string {
     const m = result.match(/dependencies:\s*\(\)\s*=>\s*\[([\s\S]*?)\]/);
     expect(m).not.toBeNull();
-    return m![1];
+    return required(m?.[1]);
   }
   function countRefs(deps: string, name: string): number {
     return (deps.match(new RegExp(`\\b${name}\\b`, 'g')) ?? []).length;
@@ -454,7 +454,7 @@ describe('NgModule scope for declared (non-standalone) components', () => {
       m,
       'compiled output should contain a dependencies array',
     ).not.toBeNull();
-    return m![1];
+    return required(m?.[1]);
   }
 
   it("inlines the declaring module's own declarations and transitive imported-module exports into a non-standalone component", () => {
@@ -609,3 +609,4 @@ describe('NgModule scope for declared (non-standalone) components', () => {
     }
   });
 });
+import { required } from '../../testing/required.test-support.js';

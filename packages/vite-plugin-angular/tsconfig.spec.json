@@ -5,6 +5,8 @@
     "module": "preserve",
     "types": ["node", "vitest/globals"],
     "moduleResolution": "bundler",
+    "lib": ["dom", "es2024"],
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "composite": false
   },

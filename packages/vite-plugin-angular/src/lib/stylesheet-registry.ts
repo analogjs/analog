@@ -1,3 +1,4 @@
+import { stripQuery, splitQuery } from './utils/module-id.js';
 import { createHash } from 'node:crypto';
 import { dirname, normalize, resolve } from 'node:path';
 import { normalizePath } from 'vite';
@@ -5,7 +6,7 @@ import type {
   StylePreprocessor,
   StylesheetDependency,
   StylesheetDiagnostic,
-  StylesheetTransformResult,
+  NormalizedStylesheetTransformResult,
   StylesheetTransformContext,
 } from './style-preprocessor.js';
 import { normalizeStylesheetTransformResult as normalizeTransformResult } from './style-preprocessor.js';
@@ -54,7 +55,7 @@ export class AnalogStylesheetRegistry {
    * module for the same public stylesheet id.
    */
   private normalizeRequestId(requestId: string): string {
-    const [rawPathname, rawSearch = ''] = requestId.split('?');
+    const [rawPathname, rawSearch] = splitQuery(requestId);
     const normalizedPathname = rawPathname.replace(/^\//, '');
 
     if (!rawSearch) {
@@ -137,7 +138,7 @@ export class AnalogStylesheetRegistry {
     // the source file so later HMR events for `/src/...component.css` can find
     // the currently active virtual requests.
     const normalizedRequestId = this.normalizeRequestId(requestId);
-    const requestPath = normalizedRequestId.split('?')[0];
+    const requestPath = stripQuery(normalizedRequestId);
     const sourcePath =
       this.resolveExternalSource(requestPath) ??
       this.resolveExternalSource(requestPath.replace(/^\//, '')) ??
@@ -222,8 +223,8 @@ export class AnalogStylesheetRegistry {
     const normalizedRequestId = this.normalizeRequestId(requestId);
     const publicId =
       this.servedAliasToId.get(normalizedRequestId) ??
-      this.servedAliasToId.get(normalizedRequestId.split('?')[0]) ??
-      normalizedRequestId.split('?')[0];
+      this.servedAliasToId.get(stripQuery(normalizedRequestId)) ??
+      stripQuery(normalizedRequestId);
     return this.servedById.get(publicId);
   }
 }
@@ -243,7 +244,7 @@ export function preprocessStylesheetResult(
   filename: string,
   stylePreprocessor?: StylePreprocessor,
   context?: StylesheetTransformContext,
-): StylesheetTransformResult {
+): NormalizedStylesheetTransformResult {
   return normalizeTransformResult(
     stylePreprocessor?.(code, filename, context),
     code,
@@ -319,9 +320,9 @@ export function registerStylesheetContent(
       publicId: stylesheetId,
       sourcePath: normalizedSourcePath,
       normalizedCode: code,
-      dependencies,
-      diagnostics,
-      tags,
+      ...(dependencies ? { dependencies } : {}),
+      ...(diagnostics ? { diagnostics } : {}),
+      ...(tags ? { tags } : {}),
     },
     aliases,
   );

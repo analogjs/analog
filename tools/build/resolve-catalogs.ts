@@ -80,7 +80,7 @@ function parseCatalogs(workspaceRoot: string): ParsedCatalogs {
       const match = line.match(
         /^\s+['"]?([^'":\s][^'":]*?)['"]?\s*:\s*['"]?(.+?)['"]?\s*$/,
       );
-      if (match) {
+      if (match?.[1] !== undefined && match[2] !== undefined) {
         defaultCatalog[match[1]] = match[2];
       }
       continue;
@@ -89,7 +89,7 @@ function parseCatalogs(workspaceRoot: string): ParsedCatalogs {
     if (section === 'named') {
       // Named catalog header: "  peerCompat:" (2-space indent, no value)
       const headerMatch = line.match(/^ {2}(\w[\w-]*):\s*$/);
-      if (headerMatch) {
+      if (headerMatch?.[1] !== undefined) {
         currentCatalogName = headerMatch[1];
         namedCatalogs[currentCatalogName] = {};
         continue;
@@ -100,8 +100,11 @@ function parseCatalogs(workspaceRoot: string): ParsedCatalogs {
         const entryMatch = line.match(
           /^\s{4,}['"]?([^'":\s][^'":]*?)['"]?\s*:\s*['"]?(.+?)['"]?\s*$/,
         );
-        if (entryMatch) {
-          namedCatalogs[currentCatalogName][entryMatch[1]] = entryMatch[2];
+        if (entryMatch?.[1] !== undefined && entryMatch[2] !== undefined) {
+          const catalog = namedCatalogs[currentCatalogName];
+          if (!catalog)
+            throw new Error(`Missing named catalog: ${currentCatalogName}`);
+          catalog[entryMatch[1]] = entryMatch[2];
         }
       }
     }
@@ -141,7 +144,7 @@ function buildWorkspacePackageMap(workspaceRoot: string): Map<string, string> {
     }
     if (inPackages) {
       const match = line.match(/^\s+-\s+['"]?(.+?)['"]?\s*$/);
-      if (match) {
+      if (match?.[1] !== undefined) {
         globs.push(match[1]);
       }
     }

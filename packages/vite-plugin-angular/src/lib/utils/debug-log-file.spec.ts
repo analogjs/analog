@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 /**
  * Duplicates of this file (keep in sync):
  *   packages/platform/src/lib/utils/debug-log-file.spec.ts
@@ -79,7 +80,7 @@ describe('wrapInstancesForFileLog', () => {
     wrapInstancesForFileLog([dbg], '/app/tmp/debug/analog.log');
     dbg.log('hello %s', 'world');
     expect(originalLog).toHaveBeenCalled();
-    const written = vi.mocked(appendFileSync).mock.calls[0][1];
+    const written = required(vi.mocked(appendFileSync).mock.calls[0])[1];
     expect(written).toContain('hello world');
   });
 
@@ -87,7 +88,7 @@ describe('wrapInstancesForFileLog', () => {
     const dbg = createDebug('test:ns');
     wrapInstancesForFileLog([dbg], '/app/tmp/debug/analog.log');
     dbg.log('\x1B[38;5;42mcolored\x1B[0m text');
-    const written = vi.mocked(appendFileSync).mock.calls[0][1];
+    const written = required(vi.mocked(appendFileSync).mock.calls[0])[1];
     expect(written).not.toContain('\x1B');
     expect(written).toContain('colored text');
   });

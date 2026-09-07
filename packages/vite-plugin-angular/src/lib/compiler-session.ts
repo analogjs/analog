@@ -1,36 +1,24 @@
-import {
-  Context,
-  Data,
-  Deferred,
-  Effect,
-  Layer,
-  ManagedRuntime,
-  Ref,
-  Semaphore,
-} from 'effect';
+import { Effect, Exit, Layer, ManagedRuntime, Scope } from 'effect';
 import type { EventEmitter } from 'node:events';
-
-class CompilationFailure extends Data.TaggedError('CompilationFailure')<{
-  cause: unknown;
-}> {}
-
-class Compilation extends Context.Service<
-  Compilation,
-  {
-    run: (ids?: string[]) => Effect.Effect<void, CompilationFailure>;
-  }
->()('@analogjs/vite-plugin-angular/Compilation') {}
-
-interface Batch {
-  ids: string[] | undefined;
-  done: Deferred.Deferred<void, CompilationFailure>;
-}
+import {
+  CompilationFailure,
+  type CompilationResult,
+  type CompilerBackend,
+} from './compiler-backend.js';
+import { CompilationScheduler } from './compilation-scheduler.js';
+import { NativeOperations } from './native-operations.js';
 
 export interface CompilerSession {
-  start(): Promise<void>;
-  run(ids?: string[], signal?: AbortSignal): Promise<void>;
-  ready(): Promise<void>;
+  start(): Promise<CompilationResult>;
+  run(
+    ids?: readonly string[],
+    signal?: AbortSignal,
+  ): Promise<CompilationResult>;
+  ready(): Promise<CompilationResult | undefined>;
   close(): Promise<void>;
+  own(finalizer: () => Promise<void>): void;
+  read<A>(reader: () => A): Promise<A>;
+  readAsync<A>(reader: () => Promise<A>): Promise<A>;
   watch(
     watcher: Pick<EventEmitter, 'on' | 'off'>,
     event: string,
@@ -38,110 +26,138 @@ export interface CompilerSession {
   ): void;
 }
 
-function compilationLayer(
-  compile: (ids?: string[]) => Promise<void>,
-  dispose?: () => void | Promise<void>,
-): Layer.Layer<Compilation> {
-  const resource = Effect.gen(function* () {
-    const scope = yield* Effect.scope;
-    const semaphore = yield* Semaphore.make(1);
-    const pending = yield* Ref.make<Batch | undefined>(undefined);
-    yield* Effect.addFinalizer(() =>
-      Effect.promise(async () => {
-        await dispose?.();
-      }),
-    );
-    const drain = Effect.gen(function* () {
-      const batch = yield* Ref.getAndSet(pending, undefined);
-      if (!batch) return;
-      yield* Deferred.complete(
-        batch.done,
-        Effect.tryPromise({
-          try: () => compile(batch.ids),
-          catch: (cause) => new CompilationFailure({ cause }),
-        }),
-      );
-    }).pipe(semaphore.withPermits(1), Effect.uninterruptible);
-
-    const run = Effect.fn('analog.compile')(function* (ids?: string[]) {
-      const done = yield* Deferred.make<void, CompilationFailure>();
-      const [batch, start] = yield* Ref.modify(pending, (previous) => {
-        const next: Batch = {
-          done: previous?.done ?? done,
-          ids: previous ? mergeInvalidations(previous.ids, ids) : ids?.slice(),
-        };
-        return [[next, !previous] as const, next];
-      });
-      if (start) yield* Effect.forkIn(drain, scope);
-      return yield* Deferred.await(batch.done);
-    });
-    return Compilation.of({ run });
-  });
-  return Layer.effect(Compilation, resource);
+interface ActiveSession {
+  readonly _tag: 'Active';
+  readonly runtime: ManagedRuntime.ManagedRuntime<CompilationScheduler, never>;
+  readonly listeners: (() => void)[];
+  readonly resources: Scope.Closeable;
+  readonly operations: NativeOperations;
+  ready: Promise<CompilationResult | undefined>;
 }
 
-function mergeInvalidations(
-  previous: string[] | undefined,
-  next: string[] | undefined,
-): string[] | undefined {
-  return previous && next ? [...new Set([...previous, ...next])] : undefined;
-}
+type Lifecycle =
+  | ActiveSession
+  | { readonly _tag: 'Closing'; readonly closed: Promise<void> };
 
-/** One owner for pending compiler mutations, including non-abortable work. */
+/** The native Vite boundary: one lifecycle and one runtime per owner. */
 export function createCompilerSession(
-  compile: (ids?: string[]) => Promise<void>,
-  dispose?: () => void | Promise<void>,
+  backend: Layer.Layer<CompilerBackend>,
 ): CompilerSession {
-  let runtime = ManagedRuntime.make(compilationLayer(compile, dispose));
-  // Record the Promise synchronously so a Vite transform arriving while the
-  // Layer is initializing can already wait for the scheduled compilation.
-  let pending = Promise.resolve();
-  const listeners: (() => void)[] = [];
-  let closing: Promise<void> | undefined;
+  const layer = CompilationScheduler.layer.pipe(Layer.provide(backend));
+  const open = (previous?: Promise<void>): ActiveSession => ({
+    _tag: 'Active',
+    runtime: ManagedRuntime.make(
+      previous
+        ? Layer.unwrap(
+            Effect.as(
+              Effect.promise(() => previous),
+              layer,
+            ),
+          )
+        : layer,
+    ),
+    listeners: [],
+    resources: Scope.makeUnsafe(),
+    operations: new NativeOperations(),
+    ready: Promise.resolve(undefined),
+  });
+  let state: Lifecycle = open();
   const session: CompilerSession = {
     start() {
-      const previous = closing;
-      if (previous) {
-        const layer = Effect.as(
-          Effect.promise(() => previous),
-          compilationLayer(compile, dispose),
-        );
-        runtime = ManagedRuntime.make(Layer.unwrap(layer));
-        closing = undefined;
-      }
+      if (state._tag === 'Closing') state = open(state.closed);
       return session.run();
     },
     run(ids, signal) {
-      if (closing)
+      if (state._tag === 'Closing')
         return Promise.reject(new Error('Compiler session is closed'));
-      const work = runtime.runPromise(
-        Effect.flatMap(Compilation, (session) => session.run(ids)),
+      const work = state.runtime
+        .runPromise(
+          Effect.flatMap(CompilationScheduler, (scheduler) =>
+            scheduler.run(ids),
+          ),
+        )
+        .catch((error: unknown) => {
+          throw error instanceof CompilationFailure ? error.cause : error;
+        });
+      // Publish readiness before the asynchronous Layer can initialize.
+      state.ready = work;
+      state.operations.track(work);
+      return signal
+        ? Effect.runPromise(
+            Effect.promise(() => work),
+            { signal },
+          )
+        : work;
+    },
+    ready: () =>
+      state._tag === 'Active'
+        ? state.ready
+        : state.closed.then(() => undefined),
+    close() {
+      if (state._tag === 'Closing') return state.closed;
+      const active = state;
+      for (const remove of active.listeners.splice(0)) remove();
+      const closed = Effect.runPromise(
+        Effect.promise(() => active.operations.drain()).pipe(
+          Effect.andThen(active.runtime.disposeEffect),
+          Effect.ensuring(
+            Scope.close(active.resources, Exit.succeed(undefined)),
+          ),
+        ),
       );
-      pending = work.catch((error: unknown) => {
-        throw error instanceof CompilationFailure ? error.cause : error;
-      });
-      void pending.catch(() => {});
-      if (!signal) return pending;
-      const result = pending;
-      return Effect.runPromise(
-        Effect.promise(() => result),
-        { signal },
+      state = { _tag: 'Closing', closed };
+      return closed;
+    },
+    own(finalizer) {
+      if (state._tag === 'Closing') state = open(state.closed);
+      Effect.runSync(
+        Scope.addFinalizer(state.resources, Effect.promise(finalizer)),
       );
     },
-    ready: () => pending,
-    close() {
-      for (const remove of listeners.splice(0)) remove();
-      const current = runtime;
-      const work = pending;
-      closing ??= (async () => {
-        await work.catch(() => {});
-        await current.dispose();
-      })();
-      return closing;
+    read(reader) {
+      if (state._tag === 'Closing')
+        return Promise.reject(new Error('Compiler session is closed'));
+      return state.operations.track(
+        state.runtime
+          .runPromise(
+            Effect.flatMap(CompilationScheduler, (scheduler) =>
+              scheduler.read(
+                Effect.try({
+                  try: reader,
+                  catch: (cause) => new CompilationFailure({ cause }),
+                }),
+              ),
+            ),
+          )
+          .catch((error: unknown) => {
+            throw error instanceof CompilationFailure ? error.cause : error;
+          }),
+      );
+    },
+    readAsync(reader) {
+      if (state._tag === 'Closing')
+        return Promise.reject(new Error('Compiler session is closed'));
+      return state.operations.track(
+        state.runtime
+          .runPromise(
+            Effect.flatMap(CompilationScheduler, (scheduler) =>
+              scheduler.read(
+                Effect.tryPromise({
+                  try: reader,
+                  catch: (cause) => new CompilationFailure({ cause }),
+                }),
+              ),
+            ),
+          )
+          .catch((error: unknown) => {
+            throw error instanceof CompilationFailure ? error.cause : error;
+          }),
+      );
     },
     watch(watcher, event, listener) {
+      if (state._tag === 'Closing') state = open(state.closed);
       watcher.on(event, listener);
-      listeners.push(() => {
+      state.listeners.push(() => {
         watcher.off(event, listener);
       });
     },

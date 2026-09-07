@@ -1,7 +1,11 @@
 import type { CompilerHost } from '@angular/compiler-cli';
+import {
+  createStylesheetTransform,
+  type NativeStylesheetCompiler,
+} from './stylesheet-pipeline.js';
 import { normalizePath } from 'vite';
 
-import * as ts from 'typescript';
+import ts from 'typescript';
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -19,11 +23,7 @@ import type { SourceFileCache } from './utils/source-file-cache.js';
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,
-  transform: (
-    code: string,
-    id: string,
-    options?: { ssr?: boolean },
-  ) => ReturnType<any> | null,
+  transform: NativeStylesheetCompiler,
   options: {
     inlineStylesExtension: string;
     isProd?: boolean;
@@ -32,12 +32,12 @@ export function augmentHostWithResources(
     stylePreprocessor?: StylePreprocessor;
   },
 ): void {
-  const resourceHost = host as CompilerHost;
+  const resourceHost: CompilerHost = host;
 
   resourceHost.readResource = async function (fileName: string) {
     const filePath = normalizePath(fileName);
 
-    const content = (this as any).readFile(filePath);
+    const content = host.readFile(filePath);
 
     if (content === undefined) {
       throw new Error('Unable to locate component resource: ' + fileName);
@@ -50,89 +50,20 @@ export function augmentHostWithResources(
     return options?.sourceFileCache?.modifiedFiles;
   };
 
+  const renderStylesheet = createStylesheetTransform(transform);
   resourceHost.transformResource = async function (data, context) {
-    // Only style resources are supported currently
-    if (context.type !== 'style') {
-      return null;
-    }
-
-    const filename =
-      context.resourceFile ??
-      context.containingFile.replace(
-        '.ts',
-        `.${options?.inlineStylesExtension}`,
-      );
-    const preprocessed = preprocessStylesheetResult(
+    if (context.type !== 'style') return null;
+    const content = await renderStylesheet({
       data,
-      filename,
-      options.stylePreprocessor,
-      {
-        filename,
-        containingFile: context.containingFile,
-        resourceFile: context.resourceFile ?? undefined,
-        className: context.className,
-        order: context.order,
-        inline: !context.resourceFile,
-      },
-    );
-
-    // Externalized path: store preprocessed CSS for Vite's serve-time pipeline.
-    // CSS must NOT be transformed here — the load hook returns it into
-    // Vite's transform pipeline where PostCSS / Tailwind process it once.
-    if (options.stylesheetRegistry) {
-      const stylesheetId = registerStylesheetContent(
-        options.stylesheetRegistry,
-        {
-          code: preprocessed.code,
-          dependencies: normalizeStylesheetDependencies(
-            preprocessed.dependencies,
-          ),
-          diagnostics: preprocessed.diagnostics,
-          tags: preprocessed.tags,
-          containingFile: context.containingFile,
-          className: context.className,
-          order: context.order,
-          inlineStylesExtension: options.inlineStylesExtension,
-          resourceFile: context.resourceFile ?? undefined,
-        },
-      );
-      debugStyles('NgtscProgram: stylesheet deferred to Vite pipeline', {
-        stylesheetId,
-        resourceFile: context.resourceFile ?? '(inline)',
-        dependencies: preprocessed.dependencies,
-        diagnostics: preprocessed.diagnostics,
-        tags: preprocessed.tags,
-      });
-      return { content: stylesheetId };
-    }
-
-    // Non-externalized: CSS is returned directly to the Angular compiler
-    // and never re-enters Vite's pipeline, so transform eagerly.
-    debugStyles('NgtscProgram: stylesheet processed inline via transform', {
-      filename,
-      resourceFile: context.resourceFile ?? '(inline)',
-      dataLength: preprocessed.code.length,
+      containingFile: context.containingFile,
+      resourceFile: context.resourceFile ?? undefined,
+      className: context.className,
+      order: context.order,
+      inlineStylesExtension: options.inlineStylesExtension,
+      registry: options.stylesheetRegistry,
+      preprocessor: options.stylePreprocessor,
     });
-    let stylesheetResult;
-
-    try {
-      stylesheetResult = await transform(
-        preprocessed.code,
-        `${filename}?direct`,
-      );
-    } catch (e) {
-      debugStyles('NgtscProgram: stylesheet transform error', {
-        filename,
-        resourceFile: context.resourceFile ?? '(inline)',
-        error: String(e),
-      });
-    }
-
-    if (!stylesheetResult?.code) {
-      return null;
-    }
-
-    return { content: stylesheetResult.code };
+    return content === undefined ? null : { content };
   };
 
   resourceHost.resourceNameToFileName = function (

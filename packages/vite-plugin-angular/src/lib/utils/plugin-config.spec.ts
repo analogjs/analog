@@ -19,6 +19,7 @@ describe('createDepOptimizerConfig', () => {
   // so this helper must not return any global `resolve` block at all.
   it('does not return a global resolve block', () => {
     const config = createDepOptimizerConfig({
+      own: () => {},
       tsconfig: '/project/tsconfig.app.json',
       isProd: false,
       jit: false,

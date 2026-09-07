@@ -8,13 +8,10 @@
 import * as compilerCli from '@angular/compiler-cli';
 import { existsSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
-import { createRequire } from 'node:module';
+import ts from 'typescript';
 import { normalizePath, ResolvedConfig } from 'vite';
 import { globSync } from 'tinyglobby';
 import { debugEmit, debugEmitV } from './debug.js';
-
-const require = createRequire(import.meta.url);
-const ts = require('typescript');
 
 export interface TsconfigResolverOptions {
   workspaceRoot: string;
@@ -23,12 +20,15 @@ export interface TsconfigResolverOptions {
   isTest: boolean;
 }
 
+export interface SourceProject {
+  readonly options: compilerCli.CompilerOptions;
+  readonly rootNames: readonly string[];
+  readonly errors: readonly ts.Diagnostic[];
+}
+
 export class TsconfigResolver {
   private includeCache: string[] = [];
-  private tsconfigOptionsCache = new Map<
-    string,
-    { options: any; rootNames: string[] }
-  >();
+  private tsconfigOptionsCache = new Map<string, SourceProject>();
   private tsconfigGraphRootCache = new Map<string, string[]>();
   private integrationIncludes: string[] = [];
 
@@ -80,11 +80,10 @@ export class TsconfigResolver {
   readAngularTsconfigConfiguration(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-  ) {
+  ): ReturnType<typeof compilerCli.readConfiguration> {
     const isProd = config.mode === 'production';
-    return compilerCli.readConfiguration(resolvedTsConfigPath, {
+    const result = compilerCli.readConfiguration(resolvedTsConfigPath, {
       suppressOutputPathCheck: true,
-      outDir: undefined,
       sourceMap: !isProd,
       inlineSourceMap: false,
       inlineSources: !isProd,
@@ -99,12 +98,14 @@ export class TsconfigResolver {
       supportTestBed: false,
       supportJitMode: false,
     });
+    delete result.options.outDir;
+    return result;
   }
 
   getCachedTsconfigOptions(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-  ): { options: any; rootNames: string[] } {
+  ): SourceProject {
     const tsconfigKey = this.getTsconfigCacheKey(resolvedTsConfigPath, config);
     let cached = this.tsconfigOptionsCache.get(tsconfigKey);
 
@@ -113,7 +114,11 @@ export class TsconfigResolver {
         resolvedTsConfigPath,
         config,
       );
-      cached = { options: read.options, rootNames: read.rootNames };
+      cached = {
+        options: read.options,
+        rootNames: read.rootNames,
+        errors: read.errors,
+      };
       this.tsconfigOptionsCache.set(tsconfigKey, cached);
       debugEmit('tsconfig root names loaded', {
         resolvedTsConfigPath,
@@ -131,7 +136,7 @@ export class TsconfigResolver {
   collectExpandedTsconfigRoots(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-    visited = new Set<string>(),
+    visited: Set<string> = new Set<string>(),
   ): string[] {
     const normalizedTsConfigPath = normalizePath(resolvedTsConfigPath);
     if (visited.has(normalizedTsConfigPath)) {

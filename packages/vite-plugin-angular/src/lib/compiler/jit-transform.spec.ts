@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { describe, it, expect } from 'vitest';
 import { jitTransform } from './jit-transform';
 
@@ -605,7 +606,7 @@ describe('JIT Transform', () => {
       const reflect = new ReflectionCapabilities();
       const params = reflect.parameters(TestComp);
       expect(params.length).toBe(1);
-      expect(params[0].length).toBe(2); // [type, decorator]
+      expect(required(params[0]).length).toBe(2); // [type, decorator]
     });
   });
 });

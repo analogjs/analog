@@ -25,10 +25,18 @@ const options = {
   incremental: false,
 };
 async function backend(kind: string, isTest = false, owned = true) {
+  const finalizers: (() => Promise<void>)[] = [];
+  const own = (finalizer: () => Promise<void>) => {
+    finalizers.push(finalizer);
+  };
+  const closeOwner = async () => {
+    for (const close of finalizers) await close();
+  };
   if (kind === 'esbuild') {
     const onLoad = vi.fn();
     const onEnd = vi.fn();
     const plugin = createCompilerPlugin({
+      own,
       compiler: options,
       isTest,
       closeTransformer: owned,
@@ -36,11 +44,13 @@ async function backend(kind: string, isTest = false, owned = true) {
     await Reflect.apply(plugin.setup, undefined, [{ onLoad, onEnd }]);
     const load = onLoad.mock.calls[0]?.[1];
     return {
+      closeOwner,
       load: load && ((file: string) => load({ path: file })),
       close: onEnd.mock.calls[0]?.[0],
     };
   }
   const plugin = createRolldownCompilerPlugin({
+    own,
     compiler: options,
     isTest,
     closeTransformer: owned,
@@ -48,6 +58,7 @@ async function backend(kind: string, isTest = false, owned = true) {
   const load = plugin.load;
   const end = plugin.buildEnd;
   return {
+    closeOwner,
     load:
       load && typeof load === 'object'
         ? (file: string) => Reflect.apply(load.handler, {}, [file])
@@ -96,6 +107,16 @@ describe.each(['esbuild', 'rolldown'])('%s dependency transformer', (kind) => {
     expect(state.close).toHaveBeenCalledTimes(2);
   });
 
+  it('releases externally retained transformers through their compiler owner', async () => {
+    const plugin = await backend(kind, false, false);
+    await plugin.load('retained.js');
+    expect(plugin.close).toBeUndefined();
+    expect(state.close).not.toHaveBeenCalled();
+    await plugin.closeOwner();
+    await plugin.closeOwner();
+    expect(state.close).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps the transformer alive until non-abortable work settles', async () => {
     const started = Promise.withResolvers<void>();
     const release = Promise.withResolvers<Uint8Array>();
@@ -109,7 +130,8 @@ describe.each(['esbuild', 'rolldown'])('%s dependency transformer', (kind) => {
     const closing = plugin.close();
     expect(state.close).not.toHaveBeenCalled();
     release.resolve(new Uint8Array());
-    await Promise.allSettled([work, closing]);
+    await expect(work).resolves.toBeDefined();
+    await closing;
     expect(state.close).toHaveBeenCalledTimes(1);
   });
 

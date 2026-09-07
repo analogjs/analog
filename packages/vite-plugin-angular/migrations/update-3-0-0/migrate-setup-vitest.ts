@@ -3,6 +3,7 @@ import {
   readJson,
   runTasksInSerial,
   Tree,
+  type GeneratorCallback,
   visitNotIgnoredFiles,
 } from '@nx/devkit';
 
@@ -36,7 +37,9 @@ function getAnalogVersion(tree: Tree): string {
   );
 }
 
-export default async function migrateSetupVitest(tree: Tree) {
+export default async function migrateSetupVitest(
+  tree: Tree,
+): Promise<GeneratorCallback | undefined> {
   const filesToUpdate: string[] = [];
 
   visitNotIgnoredFiles(tree, '', (filePath) => {

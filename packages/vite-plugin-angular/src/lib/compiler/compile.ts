@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as o from '@angular/compiler';
@@ -595,7 +595,9 @@ export function compile(
               type: dep,
               selector: selector || `_unresolved-${depClassName}`,
               kind,
-              ...(kind === 1 ? { name: registryEntry?.pipeName } : {}),
+              ...(kind === 1 && registryEntry?.pipeName !== undefined
+                ? { name: registryEntry.pipeName }
+                : {}),
             };
             // Pass inputs/outputs from registry so template bindings resolve.
             // R3DirectiveDependencyMetadata expects inputs/outputs as string[]
@@ -774,7 +776,7 @@ export function compile(
           // Store resolved resources for metadata inlining
           resolvedResources.set(dec, {
             template: templateContent || undefined,
-            styles: meta.styles?.length > 0 ? [...meta.styles] : undefined,
+            ...(meta.styles?.length > 0 ? { styles: [...meta.styles] } : {}),
           });
 
           const parsedTemplate = parseTemplate(templateContent, fileName, {
@@ -810,8 +812,8 @@ export function compile(
             };
           }
           const templateErrors = parsedTemplate.errors ?? [];
-          if (templateErrors.length > 0) {
-            const firstError = templateErrors[0];
+          const firstError = templateErrors[0];
+          if (firstError) {
             classCompileError = new Error(
               `[fast-compile] Template parse error in ${fileName} (${className}): ${firstError.msg}`,
             );

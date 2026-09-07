@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { hook } from '../testing/required.test-support.js';
 
 vi.mock('vite', async () => {
   const actual = await vi.importActual<typeof import('vite')>('vite');
@@ -24,7 +25,7 @@ describe('jitPlugin', () => {
     vi.mocked(preprocessCSS).mockRejectedValue(new Error('boom'));
 
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
-    plugin.configResolved?.({ test: { css: true } } as any);
+    Reflect.apply(hook(plugin.configResolved), {}, [{ test: { css: true } }]);
 
     const id = toJitInlineStyleId(
       encodeURIComponent(
@@ -32,7 +33,9 @@ describe('jitPlugin', () => {
       ),
     );
 
-    await expect(plugin.load?.(id)).resolves.toContain('export default');
+    await expect(Reflect.apply(hook(plugin.load), {}, [id])).resolves.toContain(
+      'export default',
+    );
     expect(warn).toHaveBeenCalled();
 
     warn.mockRestore();
@@ -45,20 +48,22 @@ describe('jitPlugin', () => {
     }));
 
     const plugin = jitPlugin({ inlineStylesExtension: 'css' });
-    plugin.configResolved?.({
-      plugins: [
-        {
-          name: 'vite-plugin-xyz',
-          analog: {
-            setup(ctx: any) {
-              ctx.registerStylePreprocessor(
-                (code: string) => `${code}\n/* xyz */`,
-              );
+    Reflect.apply(hook(plugin.configResolved), {}, [
+      {
+        plugins: [
+          {
+            name: 'vite-plugin-xyz',
+            analog: {
+              setup(ctx: any) {
+                ctx.registerStylePreprocessor(
+                  (code: string) => `${code}\n/* xyz */`,
+                );
+              },
             },
           },
-        },
-      ],
-    } as any);
+        ],
+      },
+    ]);
     await (plugin.buildStart as any)?.();
 
     const id = toJitInlineStyleId(
@@ -67,7 +72,7 @@ describe('jitPlugin', () => {
       ),
     );
 
-    await expect(plugin.load?.(id)).resolves.toContain(
+    await expect(Reflect.apply(hook(plugin.load), {}, [id])).resolves.toContain(
       '.demo { color: red; }\n/* xyz */',
     );
     expect(preprocessCSS).toHaveBeenCalledWith(

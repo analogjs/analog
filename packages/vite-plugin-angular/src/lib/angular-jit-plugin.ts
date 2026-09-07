@@ -34,7 +34,9 @@ export function jitPlugin({
     },
     async load(id: string) {
       if (id.includes(JIT_INLINE_STYLE_PREFIX)) {
-        const styleIdHash = id.split('style:inline;')[1];
+        const styleIdHash = id.slice(
+          id.indexOf('style:inline;') + 'style:inline;'.length,
+        );
         const encodedStyles = getJitInlineStyles(styleIdHash);
 
         if (encodedStyles === undefined) {

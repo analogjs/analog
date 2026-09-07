@@ -75,15 +75,15 @@ export function replaceFiles(
   };
 }
 
-export type FileReplacement = FileReplacementWith | FileReplacementSSR;
-
-export interface FileReplacementBase {
-  replace: string;
-}
-export interface FileReplacementWith extends FileReplacementBase {
-  with: string;
-}
-
-export interface FileReplacementSSR extends FileReplacementBase {
-  ssr: string;
-}
+import type {
+  FileReplacement,
+  FileReplacementBase,
+  FileReplacementWith,
+  FileReplacementSSR,
+} from '../file-replacement.js';
+export type {
+  FileReplacement,
+  FileReplacementBase,
+  FileReplacementWith,
+  FileReplacementSSR,
+} from '../file-replacement.js';

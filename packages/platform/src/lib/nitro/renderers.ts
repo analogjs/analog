@@ -43,10 +43,9 @@ const normalizeHtmlRequestUrl = (url) =>
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  const noSSR = event.res.headers.get('x-analog-no-ssr');
   const requestPath = normalizeHtmlRequestUrl(event.path);
 
-  if (noSSR === 'true') {
+  if (event.context.routeRules?.headers?.['x-analog-no-ssr'] === 'true') {
     return template;
   }
 

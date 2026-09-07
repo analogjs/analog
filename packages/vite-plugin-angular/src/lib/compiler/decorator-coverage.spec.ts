@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -24,8 +25,8 @@ import {
  * so the factory name selects which set we extract.
  */
 const ANGULAR_ROOT =
-  process.env.ANGULAR_SOURCE_DIR ||
-  path.resolve(process.env.HOME ?? '', 'projects/angular/angular');
+  process.env['ANGULAR_SOURCE_DIR'] ||
+  path.resolve(process.env['HOME'] ?? '', 'projects/angular/angular');
 const CORE_SRC = path.join(ANGULAR_ROOT, 'packages/core/src');
 
 function collectDeclarations(dir: string, factory: string): Set<string> {
@@ -46,7 +47,7 @@ function collectDeclarations(dir: string, factory: string): Set<string> {
       ) {
         const code = fs.readFileSync(full, 'utf-8');
         if (!code.includes(factory)) continue;
-        for (const match of code.matchAll(re)) names.add(match[1]);
+        for (const match of code.matchAll(re)) names.add(required(match[1]));
       }
     }
   };

@@ -31,6 +31,14 @@ export class SourceFileCache extends Map<string, ts.SourceFile> {
     super();
   }
 
+  reset(): void {
+    this.clear();
+    this.modifiedFiles.clear();
+    this.babelFileCache.clear();
+    this.typeScriptFileCache.clear();
+    delete this.referencedFiles;
+  }
+
   invalidate(files: Iterable<string>): void {
     if (files !== this.modifiedFiles) {
       this.modifiedFiles.clear();

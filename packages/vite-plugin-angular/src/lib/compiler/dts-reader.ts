@@ -286,6 +286,7 @@ function subEntryFromFilePath(
   // File directly in pkgDir (no subdirectory) → no sub-entry
   if (segments.length < 2) return undefined;
   const firstDir = segments[0];
+  if (firstDir === undefined) return undefined;
   // Skip internal/build directories and chunk files
   if (NON_ENTRY_DIRS.has(firstDir) || firstDir.startsWith('_'))
     return undefined;
@@ -312,7 +313,14 @@ export function collectImportedPackages(
 
     const parts = specifier.split('/');
     packages.add(
-      specifier.startsWith('@') ? parts.slice(0, 2).join('/') : parts[0],
+      specifier.startsWith('@')
+        ? parts.slice(0, 2).join('/')
+        : specifier.slice(
+            0,
+            specifier.indexOf('/') < 0
+              ? specifier.length
+              : specifier.indexOf('/'),
+          ),
     );
   }
 
@@ -445,7 +453,14 @@ function visitStatements(
         const outputs = extractOutputs(typeParams[4]);
 
         entries.push({
-          selector: selector.split(',')[0].trim(),
+          selector: selector
+            .slice(
+              0,
+              selector.indexOf(',') < 0
+                ? selector.length
+                : selector.indexOf(','),
+            )
+            .trim(),
           kind: propName === 'ɵcmp' ? 'component' : 'directive',
           fileName,
           className,

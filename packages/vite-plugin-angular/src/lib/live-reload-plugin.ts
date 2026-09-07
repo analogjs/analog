@@ -1,3 +1,4 @@
+import { splitComponentId } from './utils/module-id.js';
 import { resolve } from 'node:path';
 import { ServerResponse } from 'node:http';
 import { Connect, normalizePath, Plugin, ViteDevServer } from 'vite';
@@ -13,7 +14,9 @@ export function liveReloadPlugin({
   fileEmitter,
 }: {
   classNames: Map<string, string>;
-  fileEmitter: (file: string) => EmitFileResult | undefined;
+  fileEmitter: (
+    file: string,
+  ) => EmitFileResult | undefined | Promise<EmitFileResult | undefined>;
 }): Plugin {
   return {
     name: 'analogjs-live-reload-plugin',
@@ -49,7 +52,7 @@ export function liveReloadPlugin({
           return;
         }
 
-        const [fileId] = decodeURIComponent(componentId).split('@');
+        const [fileId] = splitComponentId(componentId);
         const resolvedId = normalizePath(resolve(process.cwd(), fileId));
         const invalidated =
           !!server.moduleGraph.getModuleById(resolvedId)
@@ -64,7 +67,7 @@ export function liveReloadPlugin({
           return;
         }
 
-        const result = fileEmitter(resolvedId);
+        const result = await fileEmitter(resolvedId);
         debugHmr('middleware: served component update', {
           resolvedId,
           hasCode: !!result?.hmrUpdateCode,
@@ -87,7 +90,7 @@ export function liveReloadPlugin({
 
       return undefined;
     },
-    load(id, options) {
+    async load(id, options) {
       if (options?.ssr && id.includes(ANGULAR_COMPONENT_PREFIX)) {
         const requestUrl = new URL(id.slice(1), 'http://localhost');
         const componentId = requestUrl.searchParams.get('c');
@@ -96,12 +99,9 @@ export function liveReloadPlugin({
           return;
         }
 
-        const result = fileEmitter(
+        const result = await fileEmitter(
           normalizePath(
-            resolve(
-              process.cwd(),
-              decodeURIComponent(componentId).split('@')[0],
-            ),
+            resolve(process.cwd(), splitComponentId(componentId)[0]),
           ),
         );
 

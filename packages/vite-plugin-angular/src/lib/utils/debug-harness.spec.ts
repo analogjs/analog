@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 /**
  * Duplicates of this file (keep in sync):
  *   packages/platform/src/lib/utils/debug-harness.spec.ts
@@ -246,14 +247,14 @@ describe('logFile wiring', () => {
     const harness = makeHarness();
     harness.applyDebugOption({ logFile: true }, '/custom/root');
     const callArgs = vi.mocked(wrapInstancesForFileLog).mock.calls[0];
-    expect(callArgs[1]).toContain('/custom/root');
+    expect(required(callArgs)[1]).toContain('/custom/root');
   });
 
   it('uses provided workspaceRoot for scoped dir path', () => {
     const harness = makeHarness();
     harness.applyDebugOption({ logFile: 'scoped' }, '/custom/root');
     const callArgs = vi.mocked(wrapInstancesForScopedFileLog).mock.calls[0];
-    expect(callArgs[1]).toContain('/custom/root');
+    expect(required(callArgs)[1]).toContain('/custom/root');
   });
 
   it('wraps all instance groups', () => {

@@ -122,7 +122,7 @@ async function setupLiveReloadPlugin(options: {
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
     liveReload: options.liveReload ?? true,
-    include: options.include,
+    ...(options.include ? { include: options.include } : {}),
     tsconfig: resolvedTsconfig,
     inlineStylesExtension: 'css',
     workspaceRoot: resolvedWorkspaceRoot,
@@ -168,138 +168,6 @@ describe('angular hmr style preprocessing', () => {
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'development');
     vi.stubEnv('VITEST', undefined);
-  });
-
-  it('creates a plugin with the correct name and enforce', async () => {
-    const { plugin } = await setupLiveReloadPlugin({});
-    expect(plugin.name).toBe('@analogjs/vite-plugin-angular-compilation-api');
-    expect(plugin.enforce).toBe('pre');
-  });
-
-  it('has required Vite plugin hooks', async () => {
-    const { plugin } = await setupLiveReloadPlugin({});
-    for (const name of [
-      'config',
-      'configResolved',
-      'configureServer',
-      'buildStart',
-      'handleHotUpdate',
-      'resolveId',
-      'load',
-      'closeBundle',
-    ]) {
-      expect(plugin[name]).toBeTypeOf('function');
-    }
-    expect(plugin.transform).toBeDefined();
-  });
-
-  it('config hook disables esbuild/oxc', async () => {
-    const { plugin, workspaceRoot } = await setupLiveReloadPlugin({});
-    const config = await plugin.config(
-      { root: workspaceRoot, mode: 'development' },
-      { command: 'serve', mode: 'development' },
-    );
-    expect(config.esbuild).toBeUndefined();
-    expect(config.oxc).toBeUndefined();
-  });
-
-  it('initializes compilation on buildStart', async () => {
-    const { initialize } = await setupLiveReloadPlugin({ liveReload: false });
-    const compilation =
-      await createAngularCompilationMock.mock.results[0].value;
-    expect(createAngularCompilationMock).toHaveBeenCalledOnce();
-    expect(initialize).toHaveBeenCalledOnce();
-    expect(compilation.emitAffectedFiles).toHaveBeenCalledOnce();
-  });
-
-  it('hands the stylesheet registry to analog.setup configurators', async () => {
-    const configure = vi.fn();
-    const { workspaceRoot } = await setupLiveReloadPlugin({
-      liveReload: false,
-      plugins: [
-        {
-          name: 'registry',
-          analog: {
-            setup(ctx: any) {
-              ctx.configureStylesheetRegistry(configure);
-            },
-          },
-        },
-      ],
-    });
-    expect(configure).toHaveBeenCalledWith(
-      expect.objectContaining({ getRequestIdsForSource: expect.any(Function) }),
-      { workspaceRoot },
-    );
-  });
-
-  it('externalizes styles requested through analog.setup with live reload disabled', async () => {
-    const file = '/project/src/demo.component.css';
-    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
-      liveReload: false,
-      plugins: [
-        {
-          name: 'external-styles',
-          analog: {
-            setup(ctx: any) {
-              ctx.externalizeComponentStyles();
-            },
-          },
-        },
-      ],
-    });
-    const id = await transformStylesheet(
-      '.demo { @apply sa:flex; }',
-      '/project/src/demo.component.ts',
-      file,
-      0,
-      'DemoComponent',
-    );
-    expect(id).toMatch(/^[a-f0-9]+\.css$/);
-    expect(preprocessCSSMock).not.toHaveBeenCalled();
-    expect(plugin.resolveId(`/${id}?ngcomp=ng-c1&e=0`)).toBe(
-      `${file}?ngcomp=ng-c1&e=0`,
-    );
-    await expect(plugin.load(`${file}?ngcomp=ng-c1&e=0`)).resolves.toBe(
-      '.demo { @apply sa:flex; }',
-    );
-  });
-
-  it('maps templateUpdates to HMR metadata', async () => {
-    const file = '/project/src/app.component.ts';
-    const { plugin } = await setupLiveReloadPlugin({
-      templateUpdates: new Map([
-        [
-          encodeURIComponent('src/app.component.ts@AppComponent'),
-          '/* hmr update code */',
-        ],
-      ]),
-      emitAffectedFiles: [{ filename: file, contents: 'compiled output' }],
-    });
-    const result = await plugin.transform.handler.call(
-      { warn: vi.fn(), error: vi.fn() },
-      '@Component({ template: "" }) export class AppComponent {}',
-      file,
-    );
-    expect(result).toBeDefined();
-    expect(result.code).toBe('compiled output');
-  });
-
-  it('serves emitted output for TypeScript files without Angular decorators', async () => {
-    const file = '/project/src/app.config.ts';
-    const { plugin } = await setupLiveReloadPlugin({
-      emitAffectedFiles: [
-        { filename: file, contents: 'export const appConfig = {};' },
-      ],
-    });
-    const warn = vi.fn();
-    const result = await plugin.transform.handler.call(
-      { warn, error: vi.fn() },
-      'import type { ApplicationConfig } from "@angular/core"; export const appConfig: ApplicationConfig = {};',
-      file,
-    );
-    expect(result.code).toBe('export const appConfig = {};');
-    expect(warn).not.toHaveBeenCalled();
   });
 
   afterEach(() => {

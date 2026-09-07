@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as o from '@angular/compiler';
 
 /** Shared printer — only used as fallback for complex WrappedNodeExpr (e.g. decorator args). */
@@ -482,17 +482,20 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     );
   }
   visitTemplateLiteralExpr(ast: o.TemplateLiteralExpr) {
+    const first = ast.elements[0];
+    if (!first || ast.elements.length !== ast.expressions.length + 1) {
+      throw new Error('Invalid Angular template literal element count');
+    }
     return (
       '`' +
-      ast.elements[0].text +
+      first.text +
       ast.expressions
-        .map(
-          (e: any, i: number) =>
-            '${' +
-            e.visitExpression(this, null) +
-            '}' +
-            ast.elements[i + 1].text,
-        )
+        .map((e: o.Expression, i: number) => {
+          const element = ast.elements[i + 1];
+          if (!element)
+            throw new Error('Missing Angular template literal element');
+          return '${' + e.visitExpression(this, null) + '}' + element.text;
+        })
         .join('') +
       '`'
     );

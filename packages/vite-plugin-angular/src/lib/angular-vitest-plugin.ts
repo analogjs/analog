@@ -1,3 +1,4 @@
+import { splitQuery } from './utils/module-id.js';
 import type { Plugin, TransformResult, UserConfig } from 'vite';
 // Use the namespace import so these runtime helpers still resolve on Vite 6,
 // which does not expose them as named exports.
@@ -146,7 +147,7 @@ export function angularVitestSourcemapPlugin(
         id: /\.ts(?:\?|$)/,
       },
       async handler(code: string, id: string) {
-        const [bareId, query] = id.split('?');
+        const [bareId, query] = splitQuery(id);
 
         if (query && query.includes('inline')) {
           return;

@@ -600,11 +600,9 @@ const TEMPLATE = ${JSON.stringify(template)};
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  // 'x-analog-no-ssr' is stamped on response headers by
-  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // applies routeRule headers to the response before the renderer fires,
-  // so we can short-circuit by reading them here.
-  if (event.res.headers.get('x-analog-no-ssr') === 'true') {
+  // Read the matched rule before response-header middleware runs. h3 treats
+  // false rules as resets, so use the header stamped by Analog's setup.
+  if (event.context.routeRules?.headers?.['x-analog-no-ssr'] === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;

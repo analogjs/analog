@@ -1,6 +1,16 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
-import { createCompilerSession } from './compiler-session.js';
+import { createCompilerSession as makeSession } from './compiler-session.js';
+import { nativeCompilerLayer } from './compiler-backend-live.js';
+
+function createCompilerSession(
+  compile: (files: string[] | undefined) => Promise<void>,
+  close?: () => void | Promise<void>,
+) {
+  return makeSession(
+    nativeCompilerLayer({ compile, ...(close ? { close } : {}) }),
+  );
+}
 
 describe('compiler session', () => {
   it('opens a fresh scope when Vite reuses the plugin for another environment', async () => {
@@ -67,7 +77,7 @@ describe('compiler session', () => {
       await expect(session.run()).rejects.toBe(error);
       await expect(session.ready()).rejects.toBe(error);
       await session.run(['fixed.ts']);
-      await expect(session.ready()).resolves.toBeUndefined();
+      await expect(session.ready()).resolves.toEqual({ updatedComponents: [] });
       expect(compile).toHaveBeenCalledTimes(2);
     } finally {
       await session.close();
@@ -129,5 +139,42 @@ describe('compiler session', () => {
     await session.close();
     expect(events.listenerCount('add')).toBe(0);
     expect(compile).not.toHaveBeenCalled();
+  });
+
+  it('owns optimizer resources even when the compiler Layer never initializes', async () => {
+    const compile = vi.fn();
+    const close = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    session.own(close);
+    await session.close();
+    await session.close();
+    expect(compile).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases optimizer resources even when compiler disposal fails', async () => {
+    const close = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(
+      async () => {},
+      async () => {
+        throw new Error('compiler disposal failed');
+      },
+    );
+    session.own(close);
+    await session.start();
+    await expect(session.close()).rejects.toThrow();
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('registers a fresh watcher scope when the same plugin starts another server', async () => {
+    const session = createCompilerSession(async () => {});
+    const events = new EventEmitter();
+    await session.start();
+    await session.close();
+    session.watch(events, 'change', () => {});
+    await session.start();
+    expect(events.listenerCount('change')).toBe(1);
+    await session.close();
+    expect(events.listenerCount('change')).toBe(0);
   });
 });

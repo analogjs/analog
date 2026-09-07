@@ -1,6 +1,12 @@
+import { stripQuery, isCompilerSource } from '../utils/module-id.js';
 import { createCompilerSession } from '../compiler-session.js';
+import { createStylesheetTransform } from '../stylesheet-pipeline.js';
+import type { CompilerPlugin } from '../compiler-backend.js';
+import { projectCompilerLayer } from '../compiler-backend-live.js';
 import { type createAngularCompilation as createAngularCompilationType } from '@angular/build/private';
-import { union } from 'es-toolkit';
+import { Layer } from 'effect';
+import type { ResolvedSourceProject } from '../compiler-source-graph.js';
+import { sourceGraphLayer } from '../compiler-source-graph-live.js';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, isAbsolute, join, relative, resolve } from 'node:path';
@@ -15,6 +21,7 @@ import {
 
 import {
   createAngularCompilation,
+  supportsAngularCompilation,
   SourceFileCache,
   angularFullVersion,
 } from '../utils/devkit.js';
@@ -81,10 +88,22 @@ export interface CompilationAPIPluginOptions {
   debug?: DebugOption;
 }
 
+interface CompilationAPIState {
+  outputFiles: Map<string, EmitFileResult>;
+  classNames: Map<string, string>;
+}
+
 export function compilationAPIPlugin(
   pluginOptions: CompilationAPIPluginOptions,
-): Plugin {
+  state: CompilationAPIState = {
+    outputFiles: new Map<string, EmitFileResult>(),
+    classNames: new Map<string, string>(),
+  },
+): CompilerPlugin {
   let resolvedConfig: ResolvedConfig;
+  const renderStylesheet = createStylesheetTransform((code, file) =>
+    preprocessCSS(code, file, resolvedConfig),
+  );
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
   let stylePreprocessor: StylePreprocessor | undefined;
@@ -97,8 +116,7 @@ export function compilationAPIPlugin(
     | Awaited<ReturnType<typeof createAngularCompilationType>>
     | undefined;
   const sourceFileCache: SourceFileCacheType = new SourceFileCache();
-  const outputFiles = new Map<string, EmitFileResult>();
-  const classNames = new Map<string, string>();
+  const { outputFiles, classNames } = state;
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
   let initialCompilation = false;
   let viteServer: ViteDevServer | undefined;
@@ -114,18 +132,27 @@ export function compilationAPIPlugin(
   let testWatchMode = isTestWatchMode();
 
   const compilation = createCompilerSession(
-    async (ids) => {
-      const integrations = await discoverAnalogIntegrations(resolvedConfig);
-      stylePreprocessor = integrations.stylePreprocessor;
-      transformFilter = integrations.transformFilter;
-      tsconfigResolver.setIntegrationIncludes(integrations.include);
-      externalizeStylesRequested = integrations.externalizeStyles;
-      await performAngularCompilation(resolvedConfig, ids);
-    },
-    async () => {
-      await angularCompilation?.close?.();
-      angularCompilation = undefined;
-    },
+    projectCompilerLayer({
+      config: () => resolvedConfig,
+      tsconfig: resolveTsConfigPath,
+      expandReferences: true,
+      configure: (integrations) => {
+        stylePreprocessor = integrations.stylePreprocessor;
+        transformFilter = integrations.transformFilter;
+        externalizeStylesRequested = integrations.externalizeStyles;
+      },
+      compile: (ids, project) =>
+        performAngularCompilation(resolvedConfig, ids, project),
+      close: async () => {
+        await angularCompilation?.close?.();
+        angularCompilation = undefined;
+        viteServer = undefined;
+        sourceFileCache.reset();
+        outputFiles.clear();
+        classNames.clear();
+        stylesheetRegistry = undefined;
+      },
+    }).pipe(Layer.provide(sourceGraphLayer(tsconfigResolver))),
   );
 
   const { shouldEnableLiveReload, shouldExternalizeStyles } =
@@ -150,23 +177,13 @@ export function compilationAPIPlugin(
   function resolveCompilationApiTsConfigPath(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
+    project: ResolvedSourceProject,
   ): string {
-    const includedFiles = tsconfigResolver.ensureIncludeCache();
-    const cached = tsconfigResolver.getCachedTsconfigOptions(
-      resolvedTsConfigPath,
-      config,
+    const mergedRootNames = project.rootNames.map((file) =>
+      normalizePath(file),
     );
-    const expandedGraphRoots = tsconfigResolver.collectExpandedTsconfigRoots(
-      resolvedTsConfigPath,
-      config,
-    );
-    const mergedRootNames = union(
-      cached.rootNames,
-      expandedGraphRoots,
-      includedFiles,
-    ).map((file) => normalizePath(file));
 
-    if (mergedRootNames.length === cached.rootNames.length) {
+    if (mergedRootNames.length === project.configuredRoots.length) {
       return resolvedTsConfigPath;
     }
 
@@ -208,7 +225,8 @@ export function compilationAPIPlugin(
     debugCompilationApi('generated include wrapper tsconfig', {
       originalTsconfig: resolvedTsConfigPath,
       wrapperTsconfig: wrapperPath,
-      includeCount: includedFiles.length,
+      additionalRootCount:
+        mergedRootNames.length - project.configuredRoots.length,
       rootNameCount: mergedRootNames.length,
     });
 
@@ -233,11 +251,13 @@ export function compilationAPIPlugin(
 
   async function performAngularCompilation(
     config: ResolvedConfig,
-    ids?: string[],
+    ids: string[] | undefined,
+    project: ResolvedSourceProject,
   ) {
-    const compilation = (angularCompilation ??= await (
-      createAngularCompilation as typeof createAngularCompilationType
-    )(!!pluginOptions.jit, false));
+    const compilation = (angularCompilation ??= await createAngularCompilation(
+      !!pluginOptions.jit,
+      false,
+    ));
     const modifiedFiles = ids?.length
       ? new Set(ids.map((file) => normalizePath(file)))
       : undefined;
@@ -255,100 +275,46 @@ export function compilationAPIPlugin(
     const compilationApiTsConfigPath = resolveCompilationApiTsConfigPath(
       resolvedTsConfigPath,
       config,
+      project,
     );
     debugEmit('compilation initialize', {
       resolvedTsConfigPath,
       compilationApiTsConfigPath,
       modifiedFileCount: modifiedFiles?.size ?? 0,
     });
+    const fileReplacements = toAngularCompilationFileReplacements(
+      pluginOptions.fileReplacements,
+      pluginOptions.workspaceRoot,
+    );
     const compilationResult = await compilation.initialize(
       compilationApiTsConfigPath,
       {
-        fileReplacements: toAngularCompilationFileReplacements(
-          pluginOptions.fileReplacements,
-          pluginOptions.workspaceRoot,
-        ),
-        modifiedFiles,
+        ...(fileReplacements ? { fileReplacements } : {}),
+        ...(modifiedFiles ? { modifiedFiles } : {}),
         async transformStylesheet(
           data: string,
           containingFile: string,
-          resourceFile: string | null,
-          order: number,
-          className: string | null,
+          resourceFile?: string,
+          order?: number,
+          className?: string,
         ) {
-          const filename =
-            resourceFile ??
-            containingFile.replace(
-              '.ts',
-              `.${pluginOptions.inlineStylesExtension}`,
-            );
-
-          const preprocessed = preprocessStylesheetResult(
-            data,
-            filename,
-            stylePreprocessor,
-            {
-              filename,
+          if (shouldEnableLiveReload() && className) {
+            classNames.set(normalizePath(containingFile), className);
+          }
+          return (
+            (await renderStylesheet({
+              data,
               containingFile,
               resourceFile,
               className,
               order,
-              inline: !resourceFile,
-            },
+              inlineStylesExtension: pluginOptions.inlineStylesExtension,
+              registry: shouldExternalizeStyles()
+                ? stylesheetRegistry
+                : undefined,
+              preprocessor: stylePreprocessor,
+            })) ?? ''
           );
-
-          if (shouldEnableLiveReload() && className && containingFile) {
-            classNames.set(normalizePath(containingFile), className as string);
-          }
-
-          if (shouldExternalizeStyles()) {
-            const stylesheetId = registerStylesheetContent(
-              stylesheetRegistry!,
-              {
-                code: preprocessed.code,
-                dependencies: normalizeStylesheetDependencies(
-                  preprocessed.dependencies,
-                ),
-                diagnostics: preprocessed.diagnostics,
-                tags: preprocessed.tags,
-                containingFile,
-                className: className as string | undefined,
-                order,
-                inlineStylesExtension: pluginOptions.inlineStylesExtension,
-                resourceFile: resourceFile ?? undefined,
-              },
-            );
-
-            debugStyles('stylesheet deferred to Vite pipeline', {
-              stylesheetId,
-              resourceFile: resourceFile ?? '(inline)',
-            });
-
-            return stylesheetId;
-          }
-
-          debugStyles('stylesheet processed inline via preprocessCSS', {
-            filename,
-            resourceFile: resourceFile ?? '(inline)',
-            dataLength: preprocessed.code.length,
-          });
-
-          let stylesheetResult;
-          try {
-            stylesheetResult = await preprocessCSS(
-              preprocessed.code,
-              `${filename}?direct`,
-              resolvedConfig,
-            );
-          } catch (e) {
-            debugStyles('preprocessCSS error', {
-              filename,
-              resourceFile: resourceFile ?? '(inline)',
-              error: String(e),
-            });
-          }
-
-          return stylesheetResult?.code || '';
         },
         processWebWorker(_workerFile: string, _containingFile: string) {
           return '';
@@ -380,9 +346,10 @@ export function compilationAPIPlugin(
         }
 
         if (!isTest && resolvedConfig.build?.lib) {
-          tsCompilerOptions['declaration'] = true;
-          tsCompilerOptions['declarationMap'] = watchMode;
-          tsCompilerOptions['inlineSources'] = true;
+          // This API returns one output per source file. Declaration output
+          // would replace its JavaScript; library declarations need a separate build.
+          tsCompilerOptions['declaration'] = false;
+          tsCompilerOptions['declarationMap'] = false;
         }
 
         if (isTest) {
@@ -465,12 +432,25 @@ export function compilationAPIPlugin(
       });
     }
 
-    const affectedFiles = await compilation.emitAffectedFiles();
+    const affectedFiles = [...(await compilation.emitAffectedFiles())];
     debugEmit('emitAffectedFiles summary', {
       count: affectedFiles.length,
       templateUpdateCount: templateUpdates.size,
       knownOutputCountBefore: outputFiles.size,
     });
+
+    // A template-only HMR update may not emit the component's full JavaScript.
+    for (const [filename, update] of templateUpdates) {
+      classNames.set(filename, update.className);
+      const previous = outputFiles.get(filename);
+      if (previous) {
+        outputFiles.set(filename, {
+          ...previous,
+          hmrUpdateCode: update.code,
+          hmrEligible: true,
+        });
+      }
+    }
 
     for (const file of affectedFiles) {
       const normalizedFilename = normalizePath(file.filename);
@@ -487,9 +467,28 @@ export function compilationAPIPlugin(
         warnings: warnings.map(
           (warning: { text?: string }) => warning.text || '',
         ),
-        hmrUpdateCode: templateUpdate?.code,
+        hmrUpdateCode: templateUpdate?.code ?? null,
         hmrEligible: !!templateUpdate?.code,
       });
+    }
+    return [...templateUpdates.keys()];
+  }
+
+  function notifyComponentUpdates(
+    server: ViteDevServer,
+    files: readonly string[],
+  ) {
+    for (const file of files) {
+      const className = classNames.get(file);
+      if (!className) continue;
+      const relativeFileId = `${normalizePath(relative(process.cwd(), file))}@${className}`;
+      const clientGraph = server.environments.client?.moduleGraph;
+      const clientModule = clientGraph?.getModuleById(file);
+      if (clientModule) {
+        clientGraph?.invalidateModule(clientModule);
+        clientModule.isSelfAccepting = true;
+      }
+      sendHMRComponentUpdate(server, relativeFileId);
     }
   }
 
@@ -521,8 +520,22 @@ export function compilationAPIPlugin(
 
   return {
     name: '@analogjs/vite-plugin-angular-compilation-api',
+    api: {
+      read: compilation.read,
+      invalidate: async (files) => {
+        await compilation.run(files);
+      },
+    },
     enforce: 'pre' as const,
     async config(config, { command }) {
+      if (
+        typeof createAngularCompilation !== 'function' ||
+        !supportsAngularCompilation()
+      ) {
+        throw new Error(
+          '[@analogjs/vite-plugin-angular]: The experimental Compilation API requires @angular/build/private to export createAngularCompilation. Use a compatible @angular/build version or set experimental.useAngularCompilationAPI to false.',
+        );
+      }
       activateDeferredDebug(command);
       watchMode = command === 'serve';
       const isProd =
@@ -548,9 +561,10 @@ export function compilationAPIPlugin(
       debugCompilationApi('esbuild/oxc disabled, Angular handles transforms');
 
       return {
-        esbuild: undefined,
-        oxc: undefined,
+        esbuild: false,
+        oxc: false,
         ...createDepOptimizerConfig({
+          own: compilation.own,
           tsconfig: resolveTsConfigPath(),
           isProd,
           jit: pluginOptions.jit,
@@ -584,13 +598,14 @@ export function compilationAPIPlugin(
         tsconfigResolver.invalidateAll();
         await compilation.run();
       };
-      compilation.watch(server.watcher, 'add', invalidateCompilation);
-      compilation.watch(server.watcher, 'unlink', invalidateCompilation);
-      compilation.watch(server.watcher, 'change', (file) => {
+      const invalidateTsconfig = (file: string) => {
         if (file.includes('tsconfig')) {
           tsconfigResolver.invalidateTsconfigCaches();
         }
-      });
+      };
+      compilation.watch(server.watcher, 'add', invalidateCompilation);
+      compilation.watch(server.watcher, 'unlink', invalidateCompilation);
+      compilation.watch(server.watcher, 'change', invalidateTsconfig);
     },
     async buildStart() {
       if (!isVitestVscode) {
@@ -605,7 +620,7 @@ export function compilationAPIPlugin(
       }
 
       if (TS_EXT_REGEX.test(ctx.file)) {
-        const [fileId] = ctx.file.split('?');
+        const fileId = stripQuery(ctx.file);
         debugHmr('TS file changed', { file: ctx.file, fileId });
 
         compilation.run([fileId]);
@@ -613,8 +628,7 @@ export function compilationAPIPlugin(
         let result;
 
         if (shouldEnableLiveReload()) {
-          await compilation.ready();
-          result = fileEmitter(fileId);
+          result = await compilation.read(() => fileEmitter(fileId));
           debugHmr('TS file emitted', {
             fileId,
             hmrEligible: !!result?.hmrEligible,
@@ -634,19 +648,23 @@ export function compilationAPIPlugin(
           debugHmr('sending component update', { relativeFileId });
           sendHMRComponentUpdate(ctx.server, relativeFileId);
 
-          return ctx.modules.map((mod) => {
-            if (mod.id === ctx.file) {
-              mod.isSelfAccepting = true;
-            }
-            return mod;
-          });
+          const clientModule =
+            ctx.server.environments.client?.moduleGraph.getModuleById(ctx.file);
+          if (clientModule) clientModule.isSelfAccepting = true;
+          return ctx.modules;
         }
       }
 
       if (/\.(html|htm)$/.test(ctx.file)) {
         debugHmr('template file changed', { file: ctx.file });
-        // Recompile to pick up template changes
-        compilation.run();
+        const updatedComponents = await compilation.run([ctx.file]);
+        if (shouldEnableLiveReload()) {
+          notifyComponentUpdates(
+            ctx.server,
+            updatedComponents.updatedComponents,
+          );
+          return [];
+        }
       }
 
       if (/\.(css|less|sass|scss)$/.test(ctx.file)) {
@@ -717,6 +735,7 @@ export function compilationAPIPlugin(
         },
       },
       async handler(code, id) {
+        if (!isCompilerSource(id)) return;
         if (transformFilter && !transformFilter(code, id)) {
           return;
         }
@@ -747,9 +766,7 @@ export function compilationAPIPlugin(
           }
         }
 
-        await compilation.ready();
-
-        const typescriptResult = fileEmitter(id);
+        const typescriptResult = await compilation.read(() => fileEmitter(id));
         if (!typescriptResult) {
           debugCompilationApi('transform skip (file not emitted)', { id });
           if (isAngular) {

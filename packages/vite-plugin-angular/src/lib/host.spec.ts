@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type * as ts from 'typescript';
 import { augmentHostWithResources } from './host.js';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
 
 describe('augmentHostWithResources', () => {
   it('preprocesses external stylesheets before Vite transforms them', async () => {
@@ -128,7 +129,7 @@ describe('augmentHostWithResources', () => {
     const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
     const transform = vi.fn();
     const stylesheetRegistry = new AnalogStylesheetRegistry();
-    const stylePreprocessor = vi.fn(() => ({
+    const stylePreprocessor = vi.fn<StylePreprocessor>(() => ({
       code: '.demo { color: red; }',
       dependencies: [{ id: 'virtual:brandos/tailwind.css', kind: 'bridge' }],
       diagnostics: [
@@ -178,7 +179,7 @@ describe('augmentHostWithResources', () => {
     ).toEqual(['tailwind']);
   });
 
-  it('returns null when eager stylesheet transform fails', async () => {
+  it('reports eager stylesheet failures instead of silently discarding CSS', async () => {
     const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
     const transform = vi.fn().mockRejectedValue(new Error('boom'));
 
@@ -192,6 +193,11 @@ describe('augmentHostWithResources', () => {
         resourceFile: '/project/src/app/demo.component.css',
         containingFile: '/project/src/app/demo.component.ts',
       }),
-    ).resolves.toBeNull();
+    ).rejects.toMatchObject({
+      _tag: 'StylesheetFailure',
+      phase: 'compile',
+      file: '/project/src/app/demo.component.css?direct',
+      cause: expect.objectContaining({ message: 'boom' }),
+    });
   });
 });

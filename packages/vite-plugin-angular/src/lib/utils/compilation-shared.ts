@@ -1,3 +1,4 @@
+import { stripQuery, splitComponentId } from './module-id.js';
 /**
  * Shared utilities used by both angular-vite-plugin.ts and
  * compilation-api/compilation-api-plugin.ts.
@@ -106,8 +107,7 @@ export function mapTemplateUpdatesToFiles(
   const updatesByFile = new Map<string, { className: string; code: string }>();
 
   templateUpdates?.forEach((code, encodedUpdateId) => {
-    const [file, className = ''] =
-      decodeURIComponent(encodedUpdateId).split('@');
+    const [file, className] = splitComponentId(encodedUpdateId);
     const resolvedFile = normalizePath(resolve(process.cwd(), file));
 
     updatesByFile.set(resolvedFile, {
@@ -148,7 +148,7 @@ export function refreshStylesheetRegistryForFile(
   stylesheetRegistry?: AnalogStylesheetRegistry,
   stylePreprocessor?: StylePreprocessor,
 ): void {
-  const normalizedFile = normalizePath(file.split('?')[0]);
+  const normalizedFile = normalizePath(stripQuery(file));
   if (!stylesheetRegistry || !existsSync(normalizedFile)) {
     return;
   }
@@ -206,7 +206,9 @@ export function refreshStylesheetRegistryForFile(
  * Checks for vitest run from the command line
  * @returns boolean
  */
-export function isTestWatchMode(args = process.argv): boolean {
+export function isTestWatchMode(
+  args: readonly string[] = process.argv,
+): boolean {
   // vitest --run
   const hasRun = args.find((arg) => arg.includes('--run'));
   if (hasRun) {

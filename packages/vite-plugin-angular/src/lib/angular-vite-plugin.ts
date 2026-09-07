@@ -1,6 +1,17 @@
+import {
+  stripQuery,
+  resolveJitResource,
+  isCompilerSource,
+} from './utils/module-id.js';
 import { createCompilerSession } from './compiler-session.js';
+import type { CompilerPlugin } from './compiler-backend.js';
+import { projectCompilerLayer } from './compiler-backend-live.js';
+import { isolateCompilerEnvironments } from './compiler-environments.js';
+import { parsePluginOptions } from './plugin-options-schema.js';
 import { NgtscProgram } from '@angular/compiler-cli';
-import { union } from 'es-toolkit';
+import { Array as Arrays, Layer } from 'effect';
+import type { ResolvedSourceProject } from './compiler-source-graph.js';
+import { sourceGraphLayer } from './compiler-source-graph-live.js';
 import {
   existsSync,
   mkdirSync,
@@ -19,8 +30,7 @@ import {
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
-import { createRequire } from 'node:module';
-import * as ts from 'typescript';
+import ts from 'typescript';
 import {
   ModuleNode,
   normalizePath,
@@ -87,18 +97,12 @@ import {
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
-import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
+import { createJitInlineStyles } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { cssExtensionStyleResolverPlugin } from './utils/css-extension-resolver.js';
 import { getJsTransformConfigKey } from './utils/rolldown.js';
-import {
-  toVirtualRawId,
-  toVirtualStyleId,
-  VIRTUAL_RAW_PREFIX,
-} from './utils/virtual-ids.js';
+import { toVirtualRawId, VIRTUAL_RAW_PREFIX } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
-
-const require = createRequire(import.meta.url);
 
 import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
@@ -142,57 +146,8 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 
-export interface PluginOptions {
-  tsconfig?: string | (() => string);
-  workspaceRoot?: string;
-  inlineStylesExtension?: string;
-  jit?: boolean;
-  supportedBrowsers?: string[];
-  /**
-   * Additional files to include in compilation
-   */
-  include?: string[];
-  /**
-   * Enables Analog's Angular live-reload/HMR pipeline during development/watch mode.
-   *
-   * This is separate from Vite's `server.hmr` option, which configures the
-   * HMR client transport.
-   *
-   * Defaults to `true` for watch mode. Set to `false` to disable Angular
-   * reload updates while keeping other stylesheet externalization behavior
-   * available when needed.
-   */
-  liveReload?: boolean;
-  disableTypeChecking?: boolean;
-  fileReplacements?: FileReplacement[];
-  /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
-   * Defaults to `false`.
-   */
-  fastCompile?: boolean;
-  /**
-   * Compilation output mode used when `fastCompile` is enabled.
-   * - `'full'` (default): Emit final Ivy definitions for application builds.
-   * - `'partial'`: Emit partial declarations for library publishing.
-   */
-  fastCompileMode?: 'full' | 'partial';
-  experimental?: {
-    useAngularCompilationAPI?: boolean;
-  };
-  /**
-   * Enable debug logging for specific scopes.
-   *
-   * - `true` → enables all `analog:angular:*` scopes
-   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:hmr']`)
-   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
-   *   to restrict output to a specific Vite command (omit for both)
-   *
-   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
-   * (browser), using the `obug` convention.
-   */
-  debug?: DebugOption;
-}
+import type { PluginOptions } from './plugin-options.js';
+export type { PluginOptions } from './plugin-options.js';
 
 export function evictDeletedFileMetadata(
   file: string,
@@ -204,7 +159,7 @@ export function evictDeletedFileMetadata(
     fileTransformMap: Map<string, string>;
   },
 ): void {
-  const normalizedFile = normalizePath(file.split('?')[0]);
+  const normalizedFile = normalizePath(stripQuery(file));
   classNamesMap.delete(normalizedFile);
   fileTransformMap.delete(normalizedFile);
 }
@@ -216,7 +171,15 @@ interface DeclarationFile {
 }
 
 export function angular(options?: PluginOptions): Plugin[] {
+  return createPluginSet(parsePluginOptions(options ?? {}), true).plugins;
+}
+
+function createPluginSet(
+  options: PluginOptions | undefined,
+  isolate: boolean,
+): { plugins: Plugin[]; compiler: CompilerPlugin } {
   const classNames = new Map<string, string>();
+  const jitStyles = createJitInlineStyles();
   applyDebugOption(options?.debug, options?.workspaceRoot);
   const liveReload = options?.liveReload ?? true;
   // Set on each compilation from the Vite plugins' `analog.setup()` hooks.
@@ -253,8 +216,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
-  const ts = require('typescript');
-  let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+  let previousBuilder: ts.EmitAndSemanticDiagnosticsBuilderProgram | undefined;
   let nextProgram: NgtscProgram | undefined;
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
@@ -345,17 +307,40 @@ export function angular(options?: PluginOptions): Plugin[] {
     code: string,
     filename: string,
   ) => Promise<vite.PreprocessCSSResult>;
-  const compilation = createCompilerSession(async (ids) => {
-    const integrations = await discoverAnalogIntegrations(resolvedConfig);
-    pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
-    externalizeStylesRequested = integrations.externalizeStyles;
-    configureStylesheetRegistry = integrations.configureStylesheetRegistry;
-    transformFilter = integrations.transformFilter;
-    tsconfigResolver.setIntegrationIncludes(integrations.include);
-    await _doPerformCompilation(resolvedConfig, ids);
-  });
+  const compilation = createCompilerSession(
+    projectCompilerLayer({
+      config: () => resolvedConfig,
+      tsconfig: resolveTsConfigPath,
+      expandReferences: false,
+      configure: (integrations) => {
+        pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
+        externalizeStylesRequested = integrations.externalizeStyles;
+        configureStylesheetRegistry = integrations.configureStylesheetRegistry;
+        transformFilter = integrations.transformFilter;
+      },
+      compile: (ids, project) =>
+        _doPerformCompilation(resolvedConfig, ids, project),
+      close: () => {
+        previousBuilder = undefined;
+        viteServer = undefined;
+        nextProgram = undefined;
+        cachedHost = undefined;
+        cachedHostKey = undefined;
+        outputFile = undefined;
+        stylesheetRegistry = undefined;
+        outputFiles.clear();
+        classNames.clear();
+        declarationFiles.length = 0;
+        fileTransformMap.clear();
+        sourceFileCache.reset();
+        styleUrlsResolver.clear();
+        templateUrlsResolver.clear();
+        jitStyles.clear();
+      },
+    }).pipe(Layer.provide(sourceGraphLayer(tsconfigResolver))),
+  );
 
-  function angularPlugin(): Plugin {
+  function angularPlugin(): CompilerPlugin {
     let isProd = false;
 
     if (angularFullVersion < 190000 && pluginOptions.liveReload) {
@@ -386,6 +371,12 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      api: {
+        read: compilation.read,
+        invalidate: async (files) => {
+          await compilation.run(files);
+        },
+      },
       async config(config, { command }) {
         activateDeferredDebug(command);
         watchMode = command === 'serve';
@@ -417,6 +408,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         return {
           [jsTransformConfigKey]: jsTransformConfigValue,
           ...createDepOptimizerConfig({
+            own: compilation.own,
             tsconfig: preliminaryTsConfigPath,
             isProd,
             jit,
@@ -472,7 +464,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         const invalidateCompilationOnFsChange = createFsWatcherCacheInvalidator(
           invalidateFsCaches,
           invalidateTsconfigCaches,
-          () => compilation.run(),
+          async () => {
+            await compilation.run();
+          },
         );
         compilation.watch(
           server.watcher,
@@ -507,7 +501,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
-          const [fileId] = ctx.file.split('?');
+          const fileId = stripQuery(ctx.file);
           debugHmr('TS file changed', { file: ctx.file, fileId });
 
           compilation.run([fileId]);
@@ -515,8 +509,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           let result;
 
           if (shouldEnableLiveReload()) {
-            await compilation.ready();
-            result = fileEmitter(fileId);
+            result = await compilation.read(() => fileEmitter(fileId));
             debugHmr('TS file emitted', {
               fileId,
               hmrEligible: !!result?.hmrEligible,
@@ -570,7 +563,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
         if (/\.(html|htm|css|less|sass|scss)$/.test(ctx.file)) {
           debugHmr('resource file changed', { file: ctx.file });
-          fileTransformMap.delete(ctx.file.split('?')[0]);
+          fileTransformMap.delete(stripQuery(ctx.file));
           // Angular component resources frequently enter HMR with incomplete
           // watcher context. In practice `ctx.modules` may only contain the
           // source file, only the `?direct` module, or nothing at all after a
@@ -728,7 +721,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                     wrapperIds: wrapperModules.map((mod) => mod.id),
                   });
 
-                  return union(
+                  return Arrays.union(
                     fileModules
                       .filter((mod) => {
                         // Component stylesheets will have 2 modules (*.component.scss and *.component.scss?direct&ngcomp=xyz&e=x)
@@ -881,7 +874,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           });
 
           compilation.run([
-            ...mods.map((mod) => mod.id).filter(Boolean),
+            ...mods
+              .map((mod) => mod.id)
+              .filter((id): id is string => id !== null),
             ...updates,
           ]);
 
@@ -923,9 +918,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (jit && id.startsWith('angular:jit:')) {
-          const filePath = normalizePath(
-            resolve(dirname(importer as string), id.split(';')[1]),
-          );
+          const filePath = resolveJitResource(id, importer);
           if (id.includes(':style')) {
             // Mark the style path as safe so Vite's Denied ID check
             // passes, then let Vite's native CSS pipeline handle the
@@ -944,7 +937,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         // User `.scss?inline` / `.css?inline` imports: resolve and mark
         // safe so Vite's native CSS pipeline handles them.
         if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
-          const filePath = id.split('?')[0];
+          const filePath = stripQuery(id);
           const resolved = isAbsolute(filePath)
             ? normalizePath(filePath)
             : normalizePath(resolve(dirname(importer), filePath));
@@ -1007,7 +1000,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         // path safe here so the Denied ID check passes, then let Vite's
         // CSS pipeline handle the rest.
         if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-          markStylePathSafe(resolvedConfig, id.split('?')[0]);
+          markStylePathSafe(resolvedConfig, stripQuery(id));
         }
 
         // Map angular inline styles to the source text
@@ -1033,7 +1026,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
             debugStylesV('load: served inline component stylesheet', {
               filename,
-              length: componentStyles.length,
               requestId: id,
               ...describeStylesheetContent(componentStyles),
             });
@@ -1051,6 +1043,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           },
         },
         async handler(code, id) {
+          if (!isCompilerSource(id)) return;
           if (transformFilter && !transformFilter(code, id)) {
             return;
           }
@@ -1116,18 +1109,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             : [];
 
           if (resolveResourceUrls && watchMode) {
-            for (const urlSet of [...templateUrls, ...styleUrls]) {
-              // `urlSet` is a string where a relative path is joined with an
-              // absolute path using the `|` symbol.
-              // For example: `./app.component.html|/home/projects/analog/src/app/app.component.html`.
-              const [, absoluteFileUrl] = urlSet.split('|');
-              this.addWatchFile(absoluteFileUrl);
+            for (const resource of [...templateUrls, ...styleUrls]) {
+              this.addWatchFile(resource.absolutePath);
             }
           }
 
-          await compilation.ready();
-
-          const typescriptResult = fileEmitter(id);
+          const typescriptResult = await compilation.read(() =>
+            fileEmitter(id),
+          );
           if (!typescriptResult) {
             debugCompilerV('transform skip (file not emitted by Angular)', {
               id,
@@ -1182,33 +1171,37 @@ export function angular(options?: PluginOptions): Plugin[] {
             // large inline style can't produce an over-long filename (#2459).
             data = data.replace(
               /angular:jit:style:inline;([A-Za-z0-9+/=]*)/g,
-              (_match, encodedStyles) => toJitInlineStyleId(encodedStyles),
+              (_match, encodedStyles) => jitStyles.register(encodedStyles),
             );
 
             // Templates use virtual ids (no extension) so Vite's asset/CSS
             // plugins don't interfere. (#2263)
-            templateUrls.forEach((templateUrlSet) => {
-              const [templateFile, resolvedTemplateUrl] =
-                templateUrlSet.split('|');
-              data = data.replace(
-                `angular:jit:template:file;${templateFile}`,
-                toVirtualRawId(resolvedTemplateUrl),
-              );
-            });
+            templateUrls.forEach(
+              ({
+                relativePath: templateFile,
+                absolutePath: resolvedTemplateUrl,
+              }) => {
+                data = data.replace(
+                  `angular:jit:template:file;${templateFile}`,
+                  toVirtualRawId(resolvedTemplateUrl),
+                );
+              },
+            );
 
             // External styles use native ?inline imports. We mark each
             // path as safe in Vite's safeModulePaths so the Denied ID
             // security check passes, and Vite's CSS pipeline handles
             // preprocessing, test.css, and browser/node differences
             // natively. (#2263, #2310)
-            styleUrls.forEach((styleUrlSet) => {
-              const [styleFile, resolvedStyleUrl] = styleUrlSet.split('|');
-              markStylePathSafe(resolvedConfig, resolvedStyleUrl);
-              data = data.replace(
-                `angular:jit:style:file;${styleFile}`,
-                resolvedStyleUrl + '?inline',
-              );
-            });
+            styleUrls.forEach(
+              ({ relativePath: styleFile, absolutePath: resolvedStyleUrl }) => {
+                markStylePathSafe(resolvedConfig, resolvedStyleUrl);
+                data = data.replace(
+                  `angular:jit:style:file;${styleFile}`,
+                  resolvedStyleUrl + '?inline',
+                );
+              },
+            );
           }
 
           // Angular's HMR initializer emits dynamic import() calls that Vite's
@@ -1259,20 +1252,23 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
 
   const compilationPlugin = pluginOptions.useAngularCompilationAPI
-    ? compilationAPIPlugin({
-        tsconfigGetter: pluginOptions.tsconfigGetter,
-        workspaceRoot: pluginOptions.workspaceRoot,
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        jit,
-        liveReload: pluginOptions.liveReload,
-        disableTypeChecking: pluginOptions.disableTypeChecking,
-        supportedBrowsers: pluginOptions.supportedBrowsers,
-        fileReplacements: pluginOptions.fileReplacements,
-        isTest,
-        isAstroIntegration,
-        include: pluginOptions.include,
-        debug: options?.debug,
-      })
+    ? compilationAPIPlugin(
+        {
+          tsconfigGetter: pluginOptions.tsconfigGetter,
+          workspaceRoot: pluginOptions.workspaceRoot,
+          inlineStylesExtension: pluginOptions.inlineStylesExtension,
+          jit,
+          liveReload: pluginOptions.liveReload,
+          disableTypeChecking: pluginOptions.disableTypeChecking,
+          supportedBrowsers: pluginOptions.supportedBrowsers,
+          fileReplacements: pluginOptions.fileReplacements,
+          isTest,
+          isAstroIntegration,
+          include: pluginOptions.include,
+          ...(options?.debug === undefined ? {} : { debug: options.debug }),
+        },
+        { classNames, outputFiles },
+      )
     : pluginOptions.fastCompile
       ? fastCompilePlugin({
           tsconfigGetter: pluginOptions.tsconfigGetter,
@@ -1284,46 +1280,63 @@ export function angular(options?: PluginOptions): Plugin[] {
           isTest,
           isAstroIntegration,
           fastCompileMode: pluginOptions.fastCompileMode,
+          include: pluginOptions.include,
         })
       : angularPlugin();
 
-  return [
-    // Scope the `style` package-export condition to `.css`-extension
-    // requests so packages like `@angular/material/prebuilt-themes/*.css`
-    // (gated only under `style`) still resolve from JS imports, without
-    // leaking `style` into Vite's global `resolve.conditions` and
-    // breaking Tailwind v4's JS plugin resolver for packages with mixed
-    // exports such as `tailwindcss-primeui`.
-    cssExtensionStyleResolverPlugin(),
-    replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
-    virtualModulesPlugin({ jit }),
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
-    // `compilationPlugin` is either `angularPlugin()` or `fastCompilePlugin()`
-    // depending on `pluginOptions.fastCompile`. When fastCompile is off the
-    // array used to also include an unconditional `angularPlugin()` right
-    // before this line — invoking the same plugin twice and double-
-    // registering its hooks. Removed: `compilationPlugin` already covers both
-    // branches.
-    compilationPlugin,
-    !pluginOptions.fastCompile &&
+  return {
+    compiler: compilationPlugin,
+    plugins: [
+      // Scope the `style` package-export condition to `.css`-extension
+      // requests so packages like `@angular/material/prebuilt-themes/*.css`
+      // (gated only under `style`) still resolve from JS imports, without
+      // leaking `style` into Vite's global `resolve.conditions` and
+      // breaking Tailwind v4's JS plugin resolver for packages with mixed
+      // exports such as `tailwindcss-primeui`.
+      cssExtensionStyleResolverPlugin(),
+      replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
+      virtualModulesPlugin({ jit }),
       pluginOptions.liveReload &&
-      liveReloadPlugin({ classNames, fileEmitter }),
-    ...(isTest && !isStackBlitz
-      ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
-      : []),
-    (jit &&
-      jitPlugin({
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-      })) as Plugin,
-    buildOptimizerPlugin({
-      supportedBrowsers: pluginOptions.supportedBrowsers,
-      jit,
-    }),
-    routerPlugin(),
-    angularFullVersion < 190004 && pendingTasksPlugin(),
-    nxFolderPlugin(),
-    encapsulationPlugin(),
-  ].filter(Boolean) as Plugin[];
+        liveReloadPlugin({
+          classNames,
+          fileEmitter: (file) =>
+            compilationPlugin.api.read(() => fileEmitter(file)),
+        }),
+      // Register the selected compiler and its shared HMR middleware once.
+      isolate
+        ? isolateCompilerEnvironments(
+            compilationPlugin,
+            () =>
+              createPluginSet({ ...options, liveReload: false }, false)
+                .compiler,
+            (compiler, files) => compiler.api.invalidate(files),
+          )
+        : compilationPlugin,
+      ...(isTest && !isStackBlitz
+        ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
+        : []),
+      jit &&
+        withEnvironments(() =>
+          jitPlugin({
+            inlineStylesExtension: pluginOptions.inlineStylesExtension,
+          }),
+        ),
+      withEnvironments(() =>
+        buildOptimizerPlugin({
+          supportedBrowsers: pluginOptions.supportedBrowsers,
+          jit,
+        }),
+      ),
+      withEnvironments(routerPlugin),
+      angularFullVersion < 190004 && pendingTasksPlugin(),
+      nxFolderPlugin(),
+      encapsulationPlugin(),
+    ].filter((plugin): plugin is Plugin => Boolean(plugin)),
+  };
+
+  function withEnvironments(create: () => Plugin): Plugin {
+    return isolate ? isolateCompilerEnvironments(create(), create) : create();
+  }
 
   function resolveTsConfigPath() {
     const tsconfigValue = pluginOptions.tsconfigGetter();
@@ -1342,7 +1355,11 @@ export function angular(options?: PluginOptions): Plugin[] {
    * This method share mutable state and performs the actual compilation work.
    * It should not be called concurrently. The compiler session serializes calls to this method.
    */
-  async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
+  async function _doPerformCompilation(
+    config: ResolvedConfig,
+    ids: string[] | undefined,
+    cached: ResolvedSourceProject,
+  ) {
     const isProd = config.mode === 'production';
     const modifiedFiles = new Set<string>(ids ?? []);
     sourceFileCache.invalidate(modifiedFiles);
@@ -1352,12 +1369,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         fileTransformMap.delete(id);
       }
     }
-
-    const resolvedTsConfigPath = resolveTsConfigPath();
-    const cached = tsconfigResolver.getCachedTsconfigOptions(
-      resolvedTsConfigPath,
-      config,
-    );
 
     // Clone options before mutation (preserve cache purity)
     const tsCompilerOptions = { ...cached.options };
@@ -1406,11 +1417,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ),
     );
     // Merge + dedupe root names
-    rootNames = union(
-      rootNames,
-      tsconfigResolver.ensureIncludeCache(),
-      replacements,
-    );
+    rootNames = Arrays.dedupe([...rootNames, ...replacements]);
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
@@ -1458,9 +1465,11 @@ export function angular(options?: PluginOptions): Plugin[] {
       augmentHostWithResources(host, styleTransform, {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,
-        stylesheetRegistry,
+        ...(stylesheetRegistry ? { stylesheetRegistry } : {}),
         sourceFileCache,
-        stylePreprocessor: pluginOptions.stylePreprocessor,
+        ...(pluginOptions.stylePreprocessor
+          ? { stylePreprocessor: pluginOptions.stylePreprocessor }
+          : {}),
       });
     }
 
@@ -1470,13 +1479,15 @@ export function angular(options?: PluginOptions): Plugin[] {
      * This is shared between an initial build and a hot update.
      */
     let typeScriptProgram: ts.Program;
-    let angularCompiler: NgtscProgram['compiler'];
+    let incrementalBuilder: ts.EmitAndSemanticDiagnosticsBuilderProgram;
+    let angularCompiler: NgtscProgram['compiler'] | undefined;
+    let angularProgram: NgtscProgram | undefined;
     const oldBuilder =
-      builder ?? ts.readBuilderProgram(tsCompilerOptions, host);
+      previousBuilder ?? ts.readBuilderProgram(tsCompilerOptions, host);
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
-      const angularProgram: NgtscProgram = new compilerCli.NgtscProgram(
+      angularProgram = new compilerCli.NgtscProgram(
         rootNames,
         tsCompilerOptions,
         host,
@@ -1486,33 +1497,31 @@ export function angular(options?: PluginOptions): Plugin[] {
       typeScriptProgram = angularProgram.compiler.getCurrentProgram();
       augmentProgramWithVersioning(typeScriptProgram);
 
-      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      incrementalBuilder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         typeScriptProgram,
         host,
-        oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
+        oldBuilder,
       );
-
-      nextProgram = angularProgram;
     } else {
-      builder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
+      incrementalBuilder = ts.createEmitAndSemanticDiagnosticsBuilderProgram(
         rootNames,
         tsCompilerOptions,
         host,
-        oldBuilder as ts.EmitAndSemanticDiagnosticsBuilderProgram,
+        oldBuilder,
       );
 
-      typeScriptProgram = builder.getProgram();
+      typeScriptProgram = incrementalBuilder.getProgram();
     }
 
-    if (!watchMode) {
-      // When not in watch mode, the startup cost of the incremental analysis can be avoided by
-      // using an abstract builder that only wraps a TypeScript program.
-      builder = ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
-    }
+    const builder = watchMode
+      ? incrementalBuilder
+      : ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
 
-    if (angularCompiler!) {
+    if (angularCompiler) {
       await angularCompiler.analyzeAsync();
     }
+    previousBuilder = watchMode ? incrementalBuilder : undefined;
+    nextProgram = angularProgram;
 
     const beforeTransformers = jit
       ? [
@@ -1527,12 +1536,12 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     const transformers = mergeTransformers(
       { before: beforeTransformers },
-      jit ? {} : angularCompiler!.prepareEmit().transformers,
+      angularCompiler?.prepareEmit().transformers ?? {},
     );
 
     const fileMetadata = getFileMetadata(
       builder,
-      angularCompiler!,
+      angularCompiler,
       pluginOptions.liveReload,
       { disableTypeChecking: pluginOptions.disableTypeChecking, classNames },
     );
@@ -1544,11 +1553,12 @@ export function angular(options?: PluginOptions): Plugin[] {
       _b,
       sourceFiles,
     ) => {
-      if (!sourceFiles?.length) {
+      const sourceFile = sourceFiles?.[0];
+      if (!sourceFile) {
         return;
       }
 
-      const filename = normalizePath(sourceFiles[0].fileName);
+      const filename = normalizePath(sourceFile.fileName);
 
       // Skip declaration outputs and declaration source files.
       if (
@@ -1583,10 +1593,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         ...(existing ?? {}),
         content,
         dependencies: [],
-        errors: metadata.errors,
-        warnings: metadata.warnings,
-        hmrUpdateCode: metadata.hmrUpdateCode,
-        hmrEligible: metadata.hmrEligible,
+        errors: metadata.errors ?? [],
+        warnings: metadata.warnings ?? [],
+        hmrUpdateCode: metadata.hmrUpdateCode ?? null,
+        hmrEligible: metadata.hmrEligible ?? false,
       });
       debugEmitV('registered ngtsc output', {
         filename,
@@ -1671,9 +1681,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (isTest) {
           // TypeScript will loop until there are no more affected files in the program
           while (
-            (
-              builder as ts.EmitAndSemanticDiagnosticsBuilderProgram
-            ).emitNextAffectedFile(
+            incrementalBuilder.emitNextAffectedFile(
               writeFileCallback,
               undefined,
               undefined,
@@ -1726,7 +1734,7 @@ export async function getModulesForChangedFile(
   eventModules: readonly ModuleNode[] = [],
   stylesheetRegistry?: AnalogStylesheetRegistry,
 ): Promise<ModuleNode[]> {
-  const normalizedFile = normalizePath(file.split('?')[0]);
+  const normalizedFile = normalizePath(stripQuery(file));
   const modules = new Map<string, ModuleNode>();
 
   for (const mod of eventModules) {
@@ -1747,7 +1755,7 @@ export async function getModulesForChangedFile(
     requestId: string;
     candidate: string;
     via: 'url' | 'id';
-    moduleId?: string;
+    moduleId: string | null | undefined;
   }> = [];
   for (const requestId of stylesheetRequestIds) {
     const candidates = [
@@ -1791,9 +1799,9 @@ export function isModuleForChangedResource(
   changedFile: string,
   stylesheetRegistry?: AnalogStylesheetRegistry,
 ): boolean {
-  const normalizedChangedFile = normalizePath(changedFile.split('?')[0]);
+  const normalizedChangedFile = normalizePath(stripQuery(changedFile));
 
-  if (normalizePath((mod.file ?? '').split('?')[0]) === normalizedChangedFile) {
+  if (normalizePath(stripQuery(mod.file ?? '')) === normalizedChangedFile) {
     return true;
   }
 
@@ -1808,9 +1816,7 @@ export function isModuleForChangedResource(
   const requestPath = getFilenameFromPath(mod.id);
   const sourcePath = resolveStylesheetSource(stylesheetRegistry, requestPath);
 
-  return (
-    normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
-  );
+  return normalizePath(stripQuery(sourcePath ?? '')) === normalizedChangedFile;
 }
 
 function resolveStylesheetSource(
@@ -1842,20 +1848,20 @@ function diagnoseComponentStylesheetPipeline(
   stylePreprocessor?: StylePreprocessor,
 ): {
   file: string;
-  sourcePath?: string;
-  source?: ReturnType<typeof describeStylesheetContent>;
-  registry?: ReturnType<typeof describeStylesheetContent>;
+  sourcePath: string | undefined;
+  source: ReturnType<typeof describeStylesheetContent> | undefined;
+  registry: ReturnType<typeof describeStylesheetContent> | undefined;
   dependencies: StylesheetDependency[];
   diagnostics: ReturnType<AnalogStylesheetRegistry['getDiagnosticsForSource']>;
   tags: string[];
-  directModuleId?: string;
-  directModuleUrl?: string;
+  directModuleId: string | null;
+  directModuleUrl: string;
   trackedRequestIds: string[];
   wrapperCount: number;
   anomalies: string[];
   hints: string[];
 } {
-  const normalizedFile = normalizePath(changedFile.split('?')[0]);
+  const normalizedFile = normalizePath(stripQuery(changedFile));
   const sourceExists = existsSync(normalizedFile);
   const sourceCode = sourceExists
     ? readFileSync(normalizedFile, 'utf-8')
@@ -2029,9 +2035,9 @@ export async function findComponentStylesheetWrapperModules(
 
   const lookupHits: Array<{
     candidate: string;
-    via?: 'url' | 'id';
-    moduleId?: string;
-    moduleType?: string;
+    via: 'url' | 'id' | undefined;
+    moduleId: string | null | undefined;
+    moduleType: string | undefined;
   }> = [];
 
   for (const candidate of candidateWrapperIds) {
@@ -2137,8 +2143,8 @@ function logComponentStylesheetHmrOutcome(details: {
   encapsulation: string;
   diagnosis: ReturnType<typeof diagnoseComponentStylesheetPipeline>;
   outcome: ComponentStylesheetHmrOutcome;
-  directModuleId?: string;
-  wrapperIds?: string[];
+  directModuleId?: string | null;
+  wrapperIds?: Array<string | null>;
 }) {
   const pitfalls: string[] = [];
   const rejectedPreferredPaths: string[] = [];
@@ -2191,7 +2197,7 @@ export function findTemplateOwnerModules(
   server: ViteDevServer,
   resourceFile: string,
 ): ModuleNode[] {
-  const normalizedResourceFile = normalizePath(resourceFile.split('?')[0]);
+  const normalizedResourceFile = normalizePath(stripQuery(resourceFile));
   const candidateTsFiles = [
     normalizedResourceFile.replace(/\.(html|htm)$/i, '.ts'),
   ];
@@ -2221,7 +2227,6 @@ export function getFileMetadata(
     classNames?: Map<string, string>;
   } = {},
 ) {
-  const ts = require('typescript');
   return (
     file: string,
   ): {
@@ -2271,7 +2276,12 @@ export function getFileMetadata(
       }
     }
 
-    return { errors, warnings, hmrUpdateCode, hmrEligible };
+    return {
+      errors,
+      warnings,
+      hmrUpdateCode: hmrUpdateCode ?? null,
+      hmrEligible,
+    };
   };
 }
 

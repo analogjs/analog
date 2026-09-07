@@ -3,7 +3,8 @@ import {
   angularVitestPlugin,
   angularVitestSourcemapPlugin,
 } from './angular-vitest-plugin';
-import { defineConfig, resolveConfig } from 'vite';
+import { resolveConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 describe('angularVitestPlugin', () => {
   /* Setting the pool to vmThreads by default to avoid issues related to global conflicts when using JSDOM.
@@ -18,7 +19,7 @@ describe('angularVitestPlugin', () => {
       }),
       'serve',
     );
-    expect(config.test?.pool).toBe('vmThreads');
+    expect(config).toMatchObject({ test: { pool: 'vmThreads' } });
   });
 
   it('should not override pool option if already set by user', async () => {
@@ -31,7 +32,7 @@ describe('angularVitestPlugin', () => {
       }),
       'serve',
     );
-    expect(config.test?.pool).toBe('threads');
+    expect(config).toMatchObject({ test: { pool: 'threads' } });
   });
 
   it('should noExternal all vitest-angular setup entrypoints', async () => {
@@ -80,7 +81,11 @@ describe('angularVitestSourcemapPlugin', () => {
 
     expect(handler).toBeTypeOf('function');
     await expect(
-      handler?.('export const template = ""', '/src/app.component.ts?inline'),
+      handler &&
+        Reflect.apply(handler, {}, [
+          'export const template = ""',
+          '/src/app.component.ts?inline',
+        ]),
     ).resolves.toBeUndefined();
   });
 });

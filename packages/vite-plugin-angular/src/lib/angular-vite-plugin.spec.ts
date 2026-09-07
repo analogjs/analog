@@ -1,3 +1,4 @@
+import { required } from '../testing/required.test-support.js';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
@@ -106,6 +107,9 @@ describe('liveReload option', () => {
     const names = angular().map((plugin) => plugin.name);
 
     expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
+    expect(
+      names.filter((name) => name === 'analogjs-live-reload-plugin'),
+    ).toHaveLength(1);
   });
 });
 
@@ -919,8 +923,8 @@ describe('mapTemplateUpdatesToFiles', () => {
     );
 
     const entry = [...updates.values()][0];
-    expect(entry.className).toBe('');
-    expect(entry.code).toBe('export const hmr = true;');
+    expect(required(entry).className).toBe('');
+    expect(required(entry).code).toBe('export const hmr = true;');
   });
 
   it('maps multiple updates across different files', () => {
