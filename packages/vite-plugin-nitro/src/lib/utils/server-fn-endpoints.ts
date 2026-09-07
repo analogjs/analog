@@ -1,4 +1,4 @@
-import type { NitroEventHandler } from 'nitropack';
+import type { NitroEventHandler } from 'nitro/types';
 import { normalizePath } from 'vite';
 
 import type { ServerFnHandlerModule } from './get-server-fn-handlers';

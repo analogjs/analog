@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { parseSync } from 'oxc-parser';
 import { normalizePath } from 'vite';
 import { SERVER_FETCH_FACTORY_SNIPPET } from '../utils/renderers.js';
@@ -38,7 +39,7 @@ export function pageEndpointsPlugin() {
         // a global runtime `$fetch` being available during prerender.
         const code = `
             import { defineHandler, fetchWithEvent } from 'nitro/h3';
-            import { createFetch } from 'ofetch';
+            import { createFetch } from ${JSON.stringify(fileURLToPath(import.meta.resolve('ofetch')))};
 
             ${
               fileExports.includes('load')
@@ -63,7 +64,7 @@ export function pageEndpointsPlugin() {
             export default defineHandler(async(event) => {
               ${SERVER_FETCH_FACTORY_SNIPPET}
 
-              if (event.method === 'GET') {
+              if (event.method === 'GET' || event.method === 'HEAD') {
                 try {
                   return await load({
                     params: event.context.params,

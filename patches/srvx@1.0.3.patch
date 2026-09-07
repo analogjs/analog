@@ -1,0 +1,22 @@
+diff --git a/dist/adapters/node.mjs b/dist/adapters/node.mjs
+index dfcc7544b92b37fc34ce770b0c825b2eb5a0e927..99d87ac2d0f6e7a0e2b74d15a67012398277fc7c 100644
+--- a/dist/adapters/node.mjs
++++ b/dist/adapters/node.mjs
+@@ -1139,7 +1139,7 @@ function toNodeHandler(handler, options) {
+ 			maxRequestBodySize: options?.maxRequestBodySize,
+ 			trustProxy: options?.trustProxy
+ 		}));
+-		return res instanceof Promise ? res.then((resolvedRes) => send(nodeRes, resolvedRes)) : send(nodeRes, res);
++		return typeof res?.then === "function" ? res.then((resolvedRes) => send(nodeRes, resolvedRes)) : send(nodeRes, res);
+ 	}
+ 	convertedNodeHandler.__fetchHandler = handler;
+ 	assignFnName(convertedNodeHandler, handler, " (converted to Node handler)");
+@@ -1205,7 +1205,7 @@ var NodeServer = class {
+ 			} catch (error) {
+ 				return sendErrorResponse(nodeRes, error, this.options.silent);
+ 			}
+-			return res instanceof Promise ? res.then((resolvedRes) => sendNodeResponseDetached(nodeRes, resolvedRes, this.options.silent), (error) => sendErrorResponse(nodeRes, error, this.options.silent)) : sendNodeResponseDetached(nodeRes, res, this.options.silent);
++			return typeof res?.then === "function" ? res.then((resolvedRes) => sendNodeResponseDetached(nodeRes, resolvedRes, this.options.silent), (error) => sendErrorResponse(nodeRes, error, this.options.silent)) : sendNodeResponseDetached(nodeRes, res, this.options.silent);
+ 		};
+ 		this.node = {
+ 			handler,

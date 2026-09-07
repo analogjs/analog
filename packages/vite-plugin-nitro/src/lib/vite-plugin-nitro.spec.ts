@@ -215,7 +215,7 @@ describe('nitro', () => {
 
     expect(createNitro).toHaveBeenCalledWith(
       expect.objectContaining({
-        builder: 'rollup',
+        builder: 'rolldown',
         dev: true,
         virtual: expect.objectContaining({
           '#ANALOG_SSR_RENDERER': expect.stringContaining(
@@ -349,7 +349,7 @@ describe('nitro', () => {
     },
   );
 
-  it('should strip Rolldown-only codeSplitting from Nitro rollup builds', async () => {
+  it('preserves Nitro chunk splitting configuration', async () => {
     vi.stubEnv('VITEST', '');
     vi.stubEnv('NODE_ENV', 'production');
     const { buildServerImportSpy } = await mockBuildFunctions();
@@ -365,10 +365,14 @@ describe('nitro', () => {
       );
       writeBuiltClientIndexHtml(workspaceRoot, '<html>rollup build</html>');
 
-      const plugin = nitro({
-        workspaceRoot,
-        ssrBuildDir,
-      });
+      const output = {
+        codeSplitting: { groups: [{ test: /node_modules/, name: 'vendor' }] },
+        entryFileNames: 'index.mjs',
+      };
+      const plugin = nitro(
+        { workspaceRoot, ssrBuildDir },
+        { rollupConfig: { output } },
+      );
       const result = await (plugin[1].config as any)(
         {},
         { command: 'build', mode: 'production' },
@@ -382,18 +386,7 @@ describe('nitro', () => {
       });
 
       const nitroConfig = buildServerImportSpy.mock.calls[0][1];
-      const bundlerConfig = {
-        output: {
-          codeSplitting: { groups: [{ test: /node_modules/, name: 'vendor' }] },
-          entryFileNames: 'index.mjs',
-        },
-      };
-
-      await nitroConfig.hooks['rollup:before']({}, bundlerConfig);
-
-      expect(bundlerConfig.output).toEqual({
-        entryFileNames: 'index.mjs',
-      });
+      expect(nitroConfig.rollupConfig.output).toEqual(output);
       expect(nitroConfig.virtual?.['#analog/index']).toBe(
         'export default "<html>rollup build</html>";',
       );
