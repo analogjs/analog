@@ -594,7 +594,7 @@ export function compilationAPIPlugin(
     },
     async buildStart() {
       if (!isVitestVscode) {
-        await compilation.run();
+        await compilation.start();
         initialCompilation = true;
       }
     },

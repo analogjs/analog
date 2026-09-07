@@ -495,8 +495,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          compilation.run();
-          await compilation.ready();
+          await compilation.start();
 
           initialCompilation = true;
         }

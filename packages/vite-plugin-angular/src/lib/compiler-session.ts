@@ -27,6 +27,7 @@ interface Batch {
 }
 
 export interface CompilerSession {
+  start(): Promise<void>;
   run(ids?: string[], signal?: AbortSignal): Promise<void>;
   ready(): Promise<void>;
   close(): Promise<void>;
@@ -91,13 +92,25 @@ export function createCompilerSession(
   compile: (ids?: string[]) => Promise<void>,
   dispose?: () => void | Promise<void>,
 ): CompilerSession {
-  const runtime = ManagedRuntime.make(compilationLayer(compile, dispose));
+  let runtime = ManagedRuntime.make(compilationLayer(compile, dispose));
   // Record the Promise synchronously so a Vite transform arriving while the
   // Layer is initializing can already wait for the scheduled compilation.
   let pending = Promise.resolve();
   const listeners: (() => void)[] = [];
   let closing: Promise<void> | undefined;
-  return {
+  const session: CompilerSession = {
+    start() {
+      const previous = closing;
+      if (previous) {
+        const layer = Effect.as(
+          Effect.promise(() => previous),
+          compilationLayer(compile, dispose),
+        );
+        runtime = ManagedRuntime.make(Layer.unwrap(layer));
+        closing = undefined;
+      }
+      return session.run();
+    },
     run(ids, signal) {
       if (closing)
         return Promise.reject(new Error('Compiler session is closed'));
@@ -117,10 +130,12 @@ export function createCompilerSession(
     },
     ready: () => pending,
     close() {
+      for (const remove of listeners.splice(0)) remove();
+      const current = runtime;
+      const work = pending;
       closing ??= (async () => {
-        for (const remove of listeners.splice(0)) remove();
-        await pending.catch(() => {});
-        await runtime.dispose();
+        await work.catch(() => {});
+        await current.dispose();
       })();
       return closing;
     },
@@ -131,4 +146,5 @@ export function createCompilerSession(
       });
     },
   };
+  return session;
 }

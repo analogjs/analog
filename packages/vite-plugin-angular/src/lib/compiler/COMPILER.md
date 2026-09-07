@@ -65,7 +65,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 
 The ngtsc and Angular Compilation API integrations use an internal Effect v4 compiler session. The session serializes Angular mutations and combines queued file invalidations into the following compilation; a full invalidation takes precedence over a file list. Its Promise boundary records pending work synchronously so transforms arriving during initialization wait for the compiler.
 
-Cancelling a caller stops that caller waiting. It does not interrupt Angular's non-abortable compilation or release its semaphore early. Session shutdown removes owned watcher listeners, drains pending compilation and then disposes the runtime. Build watchers keep their session between rebuilds and dispose it through `closeWatcher`.
+Cancelling a caller stops that caller waiting. It does not interrupt Angular's non-abortable compilation or release its semaphore early. Session shutdown removes owned watcher listeners, drains pending compilation and then disposes the runtime. Build watchers keep their session between rebuilds and dispose it through `closeWatcher`. If Vite reuses the plugin for another build environment, `buildStart` opens a fresh scope after the previous scope has closed.
 
 Dependency optimizer setup is shared by all three compilation modes. Named options separate test behavior from transformer ownership. The selected esbuild or Rolldown adapter lazily acquires its JavaScript transformer through an Effect Layer; a disposed build can acquire a fresh transformer on the following optimizer cycle. Externally owned transformer lifetimes retain their existing opt-out.
 

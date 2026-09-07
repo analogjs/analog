@@ -3,6 +3,25 @@ import { describe, expect, it, vi } from 'vitest';
 import { createCompilerSession } from './compiler-session.js';
 
 describe('compiler session', () => {
+  it('opens a fresh scope when Vite reuses the plugin for another environment', async () => {
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const release = Promise.withResolvers<void>();
+    const dispose = vi.fn().mockReturnValueOnce(release.promise);
+    const session = createCompilerSession(compile, dispose);
+    await session.start();
+    const closing = session.close();
+    await expect(session.run()).rejects.toThrow('Compiler session is closed');
+    const reopening = session.start();
+    expect(session.ready()).toBe(reopening);
+    expect(compile).toHaveBeenCalledTimes(1);
+    release.resolve();
+    await Promise.all([closing, reopening]);
+    expect(compile).toHaveBeenCalledTimes(2);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    await session.close();
+    expect(dispose).toHaveBeenCalledTimes(2);
+  });
+
   it.each([false, true])(
     'coalesces pending invalidations (full=%s)',
     async (full) => {
