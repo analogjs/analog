@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, unlinkSync } from 'node:fs';
-import { basename, normalize, relative, resolve, sep } from 'node:path';
+import { basename, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { Plugin, UserConfig } from 'vite';
@@ -413,11 +413,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             if (userOutput?.serverDir)
               nitro.options.output.serverDir = resolvedOutput.serverDir;
           }
-          // Nitro joins prerender filenames with platform-native separators.
+          // Nitro uses pathe joins and a string prefix check before writing routes.
           if (process.platform === 'win32') {
-            nitro.options.output.publicDir = normalize(
-              nitro.options.output.publicDir + sep,
-            );
+            nitro.options.output.publicDir = nitro.options.output.publicDir
+              .replaceAll('\\', '/')
+              .replace(/\/?$/, '/');
           }
         }
 

@@ -99,6 +99,34 @@ describe('Nitro v3 integration', () => {
     ).toBe(false);
   });
 
+  it('uses forward slashes for Nitro prerender containment on Windows', async () => {
+    vi.stubGlobal('process', { ...process, platform: 'win32' });
+    const publicDir = 'D:\\workspace\\output\\public';
+    const { nitro } = await setup(
+      {},
+      {
+        dev: false,
+        output: {
+          dir: 'D:\\workspace\\output',
+          publicDir,
+          serverDir: 'D:\\workspace\\output\\server',
+        },
+        _config: { output: { publicDir } },
+      },
+    );
+    expect(nitro.options.output.publicDir).toBe('D:/workspace/output/public/');
+    expect(
+      'D:/workspace/output/public/index.html'.startsWith(
+        nitro.options.output.publicDir,
+      ),
+    ).toBe(true);
+    expect(
+      'D:/workspace/output/public-other/index.html'.startsWith(
+        nitro.options.output.publicDir,
+      ),
+    ).toBe(false);
+  });
+
   it('keeps the isolated prerenderer dynamic and its server in the build directory', async () => {
     const { nitro } = await setup(
       { static: true },
