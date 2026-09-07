@@ -116,6 +116,7 @@ catalog:
   eslint-plugin-storybook: 10.3.5
   front-matter: ^4.0.2
   es-toolkit: ^1.45.1
+  esbuild: 0.28.0
   execa: ^9.6.1
   fast-glob: ^3.3.3
   fd-package-json: ^2.0.0

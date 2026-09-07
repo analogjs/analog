@@ -35,7 +35,7 @@ export function compilePartialCode(
   }).code;
 }
 
-export function expectCompiles(result: string) {
+export function expectCompiles(result: string): void {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
 }

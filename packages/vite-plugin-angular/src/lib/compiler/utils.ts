@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as path from 'node:path';
 
 /** Collect type-only imported names: `import type { X }` and `import { type X }`. */

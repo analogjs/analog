@@ -206,7 +206,9 @@ export function refreshStylesheetRegistryForFile(
  * Checks for vitest run from the command line
  * @returns boolean
  */
-export function isTestWatchMode(args = process.argv): boolean {
+export function isTestWatchMode(
+  args: readonly string[] = process.argv,
+): boolean {
   // vitest --run
   const hasRun = args.find((arg) => arg.includes('--run'));
   if (hasRun) {

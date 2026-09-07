@@ -80,7 +80,7 @@ export class TsconfigResolver {
   readAngularTsconfigConfiguration(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-  ) {
+  ): ReturnType<typeof compilerCli.readConfiguration> {
     const isProd = config.mode === 'production';
     return compilerCli.readConfiguration(resolvedTsConfigPath, {
       suppressOutputPathCheck: true,
@@ -131,7 +131,7 @@ export class TsconfigResolver {
   collectExpandedTsconfigRoots(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-    visited = new Set<string>(),
+    visited: Set<string> = new Set<string>(),
   ): string[] {
     const normalizedTsConfigPath = normalizePath(resolvedTsConfigPath);
     if (visited.has(normalizedTsConfigPath)) {

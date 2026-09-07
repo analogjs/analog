@@ -23,7 +23,20 @@
       }
     },
     "test": {
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tools/build/**/*.ts"
+      ]
+    },
+    "compat-smoke": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node packages/vite-plugin-angular/scripts/compiler-vite-smoke.mjs"
+      }
     },
     "version": {
       "executor": "@jscutlery/semver:version",

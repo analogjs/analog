@@ -7,6 +7,8 @@ import {
   type TransformCacheStore,
 } from './utils/transform-cache.js';
 
+const FESM_MODULE_ID = /fesm(.*?)\.mjs/;
+
 export function routerPlugin(): Plugin {
   const memoryCache = new Map<string, Uint8Array>();
   const memoryOnly: TransformCacheStore = {
@@ -36,9 +38,12 @@ export function routerPlugin(): Plugin {
     },
     transform: {
       filter: {
-        id: /fesm(.*?)\.mjs/,
+        id: FESM_MODULE_ID,
       },
       async handler(_code: string, id: string) {
+        // Early Vite 6 does not apply hook filters. Never overwrite a compiled
+        // application module by reading its original TypeScript from disk.
+        if (!FESM_MODULE_ID.test(id)) return;
         const path = id.split('?')[0];
         const contents = await javascriptTransformer.transformFile(path);
 
