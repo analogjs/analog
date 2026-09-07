@@ -29,6 +29,17 @@ nx migrate @analogjs/platform@latest
 
 ## v2 to v3 checklist
 
+### Use explicit TestBed teardown options
+
+`setupTestBed()` no longer accepts the deprecated runtime `browserMode` option. Express the teardown behavior directly:
+
+```diff
+-setupTestBed({ browserMode: true });
++setupTestBed({ teardown: { destroyAfterEach: false } });
+```
+
+Calls without that option keep the default `destroyAfterEach: true`. The setup schematic's `--browserMode` option still selects Playwright browser testing; newly generated setup files use the explicit teardown configuration.
+
 ### Angular version support
 
 Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 or newer before adopting the stable v3 line.
