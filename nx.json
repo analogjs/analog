@@ -17,6 +17,7 @@
         "default",
         "^default",
         "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/.oxlintrc.json",
         "{workspaceRoot}/tools/eslint-rules/**/*"
       ],
       "cache": true
@@ -26,7 +27,8 @@
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
+    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] },
+    "oxlint": { "options": { "args": ["--quiet"] } }
   },
   "generators": {
     "@nx/angular:application": {
@@ -62,6 +64,10 @@
     {
       "plugin": "@nx/eslint/plugin",
       "options": { "targetName": "eslint:lint" }
+    },
+    {
+      "plugin": "@nx/oxlint",
+      "options": { "targetName": "oxlint" }
     }
   ],
   "analytics": false,

@@ -1,0 +1,17 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": ["setup-zone.ts", "setup-vitest.ts"],
+      "rules": {
+        "typescript/ban-ts-comment": [
+          "error",
+          {
+            "ts-ignore": false
+          }
+        ],
+        "prefer-rest-params": "off"
+      }
+    }
+  ]
+}

@@ -6,14 +6,9 @@ import angularTemplateEslintPlugin from '@angular-eslint/eslint-plugin-template'
 import js from '@eslint/js';
 import nxEslintPlugin from '@nx/eslint-plugin';
 import oxlint from 'eslint-plugin-oxlint';
-import { createJiti } from 'jiti';
+import oxlintConfig from './.oxlintrc.json' with { type: 'json' };
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const jiti = createJiti(import.meta.url);
-const oxlintConfig = /** @type {{ default: import('oxlint').OxlintConfig }} */ (
-  await jiti.import('./oxlint.config.ts')
-).default;
-
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
@@ -24,7 +19,6 @@ export default [
     ignores: [
       '**/dist',
       '**/out-tsc',
-      '**/oxlint.config.ts',
       '**/playwright-report',
       '**/playwright-report/**',
     ],
@@ -37,25 +31,6 @@ export default [
     },
   },
   { plugins: { '@nx': nxEslintPlugin } },
-  {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
-    rules: {
-      '@nx/enforce-module-boundaries': [
-        'error',
-        {
-          enforceBuildableLibDependency: true,
-          allowCircularSelfDependency: true,
-          allow: ['../../tools/vite/get-workspace-dependency-excludes.js'],
-          depConstraints: [
-            {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
-            },
-          ],
-        },
-      ],
-    },
-  },
   ...compat
     .config({
       extends: ['plugin:@nx/typescript'],

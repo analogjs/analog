@@ -1,8 +1,8 @@
 {
   "eslint.validate": ["json"],
   "nxConsole.generateAiAgentRules": true,
-  "oxc.configPath": "./oxlint.config.ts",
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "always"
-  }
+  },
+  "editor.defaultFormatter": "oxc.oxc-vscode"
 }
