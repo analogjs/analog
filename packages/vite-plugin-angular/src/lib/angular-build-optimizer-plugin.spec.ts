@@ -1,6 +1,9 @@
 import { afterEach, describe, it, expect } from 'vitest';
 import type { Plugin, UserConfig } from 'vite';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin';
+import {
+  buildOptimizerPlugin,
+  extractInlineSourceMap,
+} from './angular-build-optimizer-plugin';
 
 function createPlugin(): Plugin {
   return buildOptimizerPlugin({
@@ -71,6 +74,16 @@ describe('buildOptimizerPlugin config()', () => {
     expect(config.define).toEqual(
       expect.objectContaining({ ngDevMode: 'false' }),
     );
+  });
+
+  it('does not re-enable Vite TypeScript transforms', () => {
+    const plugin = createPlugin();
+    const config = (
+      plugin as Plugin & { config: (c: UserConfig) => UserConfig }
+    ).config({ mode: 'production' });
+
+    expect(config).not.toHaveProperty('oxc');
+    expect(config).not.toHaveProperty('esbuild');
   });
 
   it('should set ngServerMode to true for production SSR builds', () => {
@@ -216,5 +229,143 @@ describe('buildOptimizerPlugin vendor sourcemaps', () => {
 
     expect(result?.map).toBeNull();
     expect(result?.code).toBe(sourceWithMapUrl);
+  });
+});
+
+describe('extractInlineSourceMap', () => {
+  it('extracts base64 encoded sourcemap and removes sourceMappingURL comment', () => {
+    const mapObj = {
+      version: 3,
+      file: 'test.js',
+      sourceRoot: '',
+      sources: ['test.ts', 'utils.ts'],
+      sourcesContent: [
+        `import { formatGreeting } from './utils';
+
+export class Greeter {
+  private prefix = 'Hello';
+
+  constructor(public suffix: string = '!') {}
+
+  greet(name: string): string {
+    const greeting = formatGreeting(this.prefix, name, this.suffix);
+    console.log(greeting);
+    return greeting;
+  }
+}
+`,
+        `export function formatGreeting(prefix: string, name: string, suffix: string): string {
+  return \`\${prefix}, \${name}\${suffix}\`;
+}
+`,
+      ],
+      names: [
+        'Greeter',
+        'prefix',
+        'suffix',
+        'greet',
+        'name',
+        'greeting',
+        'formatGreeting',
+        'console',
+        'log',
+      ],
+      mappings:
+        'AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,SAAS,CAAC;AAEzC,OAAM,MAAO,OAAO;IAClB,OAAA,MAAe,GAAA,KAAO,CAAC;IAEvB,YAAA,OAAA,MAAc,GAAA,GAAG,CAAA,CAAE;IAEnB,KAAK,CAAC,IAAY;QAChB,MAAM,QAAQ,GAAG,cAAc,CAAC,IAAI,CAAC,MAAM,EAAE,IAAI,EAAE,IAAI,CAAC,MAAM,CAAC,CAAC;QAChE,OAAO,CAAC,GAAG,CAAC,QAAQ,CAAC,CAAC;QACtB,OAAO,QAAQ,CAAC;IAClB,CAAC;CACF',
+      ignoreList: [],
+    };
+    const base64Map = Buffer.from(JSON.stringify(mapObj)).toString('base64');
+    const sourceCode = `import { formatGreeting } from './utils';
+export class Greeter {
+  constructor(suffix = '!') {
+    this.suffix = suffix;
+    this.prefix = 'Hello';
+  }
+  greet(name) {
+    const greeting = formatGreeting(this.prefix, name, this.suffix);
+    console.log(greeting);
+    return greeting;
+  }
+}`;
+    const code = `${sourceCode}\n//# sourceMappingURL=data:application/json;base64,${base64Map}`;
+
+    const result = extractInlineSourceMap(code, '/x/test.js');
+
+    expect(result.code).toBe(sourceCode);
+    expect(JSON.parse(result.map)).toEqual(mapObj);
+  });
+
+  it('supports charset parameter in data URI', () => {
+    const mapObj = {
+      version: 3,
+      file: 'test.js',
+      sources: ['test.ts'],
+      sourcesContent: ['export const message = "hello world";\n'],
+      names: ['message'],
+      mappings: 'AAAA,OAAO,MAAMA,OAAO,GAAG,aAAa,CAAC',
+    };
+    const base64Map = Buffer.from(JSON.stringify(mapObj)).toString('base64');
+    const sourceCode = 'export const message = "hello world";';
+    const code = `${sourceCode}\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,${base64Map}`;
+
+    const result = extractInlineSourceMap(code, '/x/test.js');
+
+    expect(result.code).toBe(sourceCode);
+    expect(JSON.parse(result.map)).toEqual(mapObj);
+  });
+
+  it('returns null map if no inline sourcemap is present', () => {
+    const result = extractInlineSourceMap('console.log("test");', '/x/test.js');
+    expect(result).toEqual({
+      code: 'console.log("test");',
+      map: null,
+    });
+  });
+});
+
+describe('buildOptimizerPlugin lifecycle & environment handling', () => {
+  it('closes transformer on closeBundle in non-watch mode', async () => {
+    const plugin = createPlugin();
+    plugin.configResolved?.({
+      command: 'build',
+      build: { sourcemap: false },
+    } as any);
+    const ctx = { environment: { name: 'client' } };
+
+    await (plugin.transform as any).handler.call(
+      ctx,
+      'console.log("hello");',
+      '/x/test.js',
+    );
+
+    await expect((plugin as any).closeBundle.call(ctx)).resolves.not.toThrow();
+  });
+
+  it('maintains isolated transformers across client and ssr environments', async () => {
+    const plugin = createPlugin();
+    plugin.configResolved?.({
+      command: 'build',
+      build: { sourcemap: false },
+    } as any);
+    const clientCtx = { environment: { name: 'client' } };
+    const ssrCtx = { environment: { name: 'ssr' } };
+
+    await (plugin.transform as any).handler.call(
+      clientCtx,
+      'console.log("client");',
+      '/x/test.js',
+    );
+    await (plugin.transform as any).handler.call(
+      ssrCtx,
+      'console.log("ssr");',
+      '/x/test.js',
+    );
+
+    await expect(
+      (plugin as any).closeBundle.call(clientCtx),
+    ).resolves.not.toThrow();
+    await expect(
+      (plugin as any).closeBundle.call(ssrCtx),
+    ).resolves.not.toThrow();
   });
 });

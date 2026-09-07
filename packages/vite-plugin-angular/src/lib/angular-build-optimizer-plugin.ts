@@ -1,5 +1,4 @@
 import type { Plugin, UserConfig } from 'vite';
-import * as vite from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 import { isProdMode } from './utils/plugin-config.js';
 
@@ -9,9 +8,30 @@ export function buildOptimizerPlugin({
   supportedBrowsers: string[];
   jit: boolean;
 }): Plugin {
-  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
+  const transformers = new Map<
+    string,
+    InstanceType<typeof JavaScriptTransformer>
+  >();
   let isProd = false;
+  let isWatch = false;
   let preserveVendorMaps = false;
+
+  function getTransformer(envName = 'default') {
+    let transformer = transformers.get(envName);
+    if (!transformer) {
+      transformer = new JavaScriptTransformer(
+        {
+          sourcemap: preserveVendorMaps,
+          thirdPartySourcemaps: preserveVendorMaps,
+          advancedOptimizations: isProd,
+          jit: true,
+        },
+        1,
+      );
+      transformers.set(envName, transformer);
+    }
+    return transformer;
+  }
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
@@ -32,16 +52,6 @@ export function buildOptimizerPlugin({
       isProd = isProdMode(userConfig.mode);
       // Advanced optimizations paired with dev-mode defines would strip
       // dev-only code the debug API needs, so both key off `isProd`.
-      javascriptTransformer ??= new JavaScriptTransformer(
-        {
-          sourcemap: false,
-          thirdPartySourcemaps: false,
-          advancedOptimizations: isProd,
-          jit: true,
-        },
-        1,
-      );
-
       return {
         define: isProd
           ? {
@@ -51,20 +61,11 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        [vite.rolldownVersion ? 'oxc' : 'esbuild']: {
-          define: isProd
-            ? {
-                ngDevMode: 'false',
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ngServerMode: `${!!userConfig.build?.ssr}`,
-              }
-            : undefined,
-        },
       } as UserConfig;
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
+      isWatch = config.command === 'serve' || !!config.build?.watch;
     },
     transform: {
       filter: {
@@ -97,17 +98,47 @@ export function buildOptimizerPlugin({
 
         const sideEffects =
           jit && cleanId.includes('@angular/compiler') ? true : false;
-        const result: Uint8Array = await javascriptTransformer.transformData(
+        const envName = this.environment?.name ?? 'default';
+        const transformer = getTransformer(envName);
+        const result: Uint8Array = await transformer.transformData(
           cleanId,
           code,
           false,
           sideEffects,
         );
 
-        return {
-          code: Buffer.from(result).toString(),
-        };
+        const transformed = Buffer.from(result).toString();
+        return preserveVendorMaps
+          ? extractInlineSourceMap(transformed, cleanId)
+          : { code: transformed, map: { mappings: '' } };
       },
     },
+    async closeBundle() {
+      if (isWatch) {
+        return;
+      }
+      const envName = this.environment?.name ?? 'default';
+      const transformer = transformers.get(envName);
+      if (transformer) {
+        transformers.delete(envName);
+        await transformer.close();
+      }
+    },
+  };
+}
+
+export function extractInlineSourceMap(code: string, id: string) {
+  const sourceMapMatch = code.match(
+    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
+  );
+  if (!sourceMapMatch || sourceMapMatch.index === undefined) {
+    return {
+      code,
+      map: null,
+    };
+  }
+  return {
+    code: code.slice(0, sourceMapMatch.index),
+    map: Buffer.from(sourceMapMatch[1]!, 'base64').toString(),
   };
 }
