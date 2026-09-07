@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { parseSync } from 'oxc-parser';
 import { resolve } from 'node:path';
 import { globSync } from 'tinyglobby';
 
@@ -37,7 +39,8 @@ const EXCLUDED_SERVER_FILES: RegExp[] = [/\/app\.config\.server\.ts$/];
  *
  * Scope is `<projectRoot>/<sourceRoot>/**\/*.server.ts` because the RFC allows a
  * server function to live in any `.server.ts` module, including existing page
- * server files. Files that define no server function simply register nothing.
+ * server files. Only modules defining a server function that the client
+ * transform can rewrite participate.
  * Angular SSR config (`app.config.server.ts`) is excluded — it is not a route or
  * function module and must not be pulled into the dispatch bundle.
  *
@@ -72,5 +75,52 @@ export function getServerFnHandlers({
     )
     .filter((file) => (seen.has(file) ? false : (seen.add(file), true)))
     .sort()
+    .filter(definesServerFn)
     .map((file) => ({ file }));
+}
+
+/**
+ * Match the client scrub's supported server-function declaration shape. The
+ * scrub deliberately falls back to the conventional `serverFn` name when the
+ * function is re-exported through a local barrel, so discovery must make the
+ * same choice or the browser receives a proxy without a dispatch route.
+ */
+function definesServerFn(file: string): boolean {
+  const code = readFileSync(file, 'utf8');
+  if (!code.includes('serverFn')) return false;
+
+  const { program } = parseSync(file, code);
+  const localNames = new Set<string>();
+  for (const node of program.body) {
+    if (
+      node.type !== 'ImportDeclaration' ||
+      node.source.value !== '@analogjs/router/server'
+    ) {
+      continue;
+    }
+    for (const specifier of node.specifiers) {
+      if (
+        specifier.type === 'ImportSpecifier' &&
+        (specifier.imported.type === 'Identifier'
+          ? specifier.imported.name
+          : specifier.imported.value) === 'serverFn'
+      ) {
+        localNames.add(specifier.local.name);
+      }
+    }
+  }
+  if (localNames.size === 0) localNames.add('serverFn');
+
+  return program.body.some(
+    (node) =>
+      node.type === 'ExportNamedDeclaration' &&
+      node.declaration?.type === 'VariableDeclaration' &&
+      node.declaration.declarations.some(
+        (declarator) =>
+          declarator.id?.type === 'Identifier' &&
+          declarator.init?.type === 'CallExpression' &&
+          declarator.init.callee?.type === 'Identifier' &&
+          localNames.has(declarator.init.callee.name),
+      ),
+  );
 }

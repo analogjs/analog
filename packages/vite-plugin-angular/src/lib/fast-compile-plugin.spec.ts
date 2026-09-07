@@ -249,10 +249,8 @@ export class App {
     const plugin = buildPlugin();
     const handler = getTransformHandler(plugin);
 
-    // A component file goes through the full compile path which calls
-    // transformWithOxc internally too, but with `sourcemap: false`. The
-    // bypass uses `sourcemap: true` — assert no `sourcemap: true` call to
-    // confirm we did not enter the bypass branch.
+    // A component file goes through the full compile path, so the final strip
+    // receives Angular's generated Ivy definitions rather than the raw input.
     const code = `
 import { Component } from '@angular/core';
 @Component({ selector: 'x', template: '' })
@@ -269,10 +267,69 @@ export class XComponent {}
       // we only care that the bypass branch was not taken.
     }
 
-    const sawBypassCall = mockTransformWithOxc.mock.calls.some(
-      ([, , opts]: any[]) => opts?.sourcemap === true,
+    const sawCompiledCall = mockTransformWithOxc.mock.calls.some(
+      ([callCode]: any[]) => callCode.includes('ɵcmp'),
     );
-    expect(sawBypassCall).toBe(false);
+    expect(sawCompiledCall).toBe(true);
+  });
+
+  it('composes the AOT compiler map with the TypeScript strip map', async () => {
+    const plugin = buildPlugin();
+    const handler = getTransformHandler(plugin);
+    const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'x', template: '' })
+export class XComponent {
+  value: string = 'test';
+}
+`;
+
+    const result = await handler.call(
+      { addWatchFile: () => undefined },
+      code,
+      '/src/app/x.component.ts',
+    );
+    const stripCall = mockTransformWithOxc.mock.calls.at(-1)!;
+
+    expect(stripCall[2]).toMatchObject({ lang: 'ts', sourcemap: true });
+    expect(stripCall[3]).toMatchObject({ mappings: expect.any(String) });
+    expect(result.map).toEqual({ mappings: '' });
+  });
+
+  it('composes the AOT compiler map with the esbuild fallback map', async () => {
+    const viteMod = await import('vite');
+    const realOxc = viteMod.transformWithOxc;
+    Object.defineProperty(viteMod, 'transformWithOxc', {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      const plugin = buildPlugin();
+      const handler = getTransformHandler(plugin);
+      const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'x', template: '' })
+export class XComponent {
+  value: string = 'test';
+}
+`;
+
+      const result = await handler.call(
+        { addWatchFile: () => undefined },
+        code,
+        '/src/app/x.component.ts',
+      );
+      const stripCall = mockTransformWithEsbuild.mock.calls.at(-1)!;
+
+      expect(stripCall[2]).toMatchObject({ loader: 'ts', sourcemap: true });
+      expect(stripCall[3]).toMatchObject({ mappings: expect.any(String) });
+      expect(result.map).toEqual({ mappings: '' });
+    } finally {
+      Object.defineProperty(viteMod, 'transformWithOxc', {
+        value: realOxc,
+        configurable: true,
+      });
+    }
   });
 
   it('does not run the bypass strip when the file has only @Service', async () => {
@@ -301,10 +358,10 @@ export class MyService {
       // we only care that the bypass branch was not taken.
     }
 
-    const sawBypassCall = mockTransformWithOxc.mock.calls.some(
-      ([, , opts]: any[]) => opts?.sourcemap === true,
+    const sawCompiledCall = mockTransformWithOxc.mock.calls.some(
+      ([callCode]: any[]) => callCode.includes('ɵprov'),
     );
-    expect(sawBypassCall).toBe(false);
+    expect(sawCompiledCall).toBe(true);
   });
 
   it('preprocesses an external .scss styleUrl by its own extension when inlineStylesExtension is css', async () => {
