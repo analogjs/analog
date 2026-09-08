@@ -4,6 +4,15 @@ This follow-up to [analogjs/analog#2521](https://github.com/analogjs/analog/pull
 
 **The strict 5% acceptance gate remains unmet: 6/12 browser cells pass all four latency limits; first/warm build gates pass. The latency misses are detailed below. No overall speedup or completed performance-acceptance claim is made.**
 
+## CI follow-up and unresolved correctness
+
+The documentation head `5cf1a8a1858eb77cdefed65a4e6fdebe346215a7` exposed two failures in [the 2026-09-08 compatibility run](https://github.com/analogjs/analog/actions/runs/34187310136), despite an unchanged measured runtime and the preceding source-head CI passing. **Overall correctness acceptance is therefore open.** The passing local cohorts below remain attributed evidence, not proof that these failures are eliminated.
+
+- **Angular 22/Vite 6.0 shared styles:** after shared HTML and CSS edits, both owners received Angular and Vite update events, but the final child nodes lost emulated encapsulation attributes and stylesheet application. The exact fresh local packed fixture passed. This is an intermittent observed output defect; its root cause is unproven. No speculative renderer-cache reordering was applied. [Failed job](https://github.com/analogjs/analog/actions/runs/34187310136/job/101938134944), [browser failure artifact](evidence/hmr-p95-sprint/ci-shared-style-failure.json).
+- **Windows Angular 22/Vite 8.2.2:** the API ShadowDom fixture timed out waiting for its initial element, before any edit. Earlier browser/runtime checks and the other encapsulation cases passed. A fresh Linux consumer using the same packed artifact passed all nine style cases, including API ShadowDom and shared-Sass edits. The Windows artifact lacks browser diagnostics for this bootstrap timeout, so it does not establish a cause. [Failed job](https://github.com/analogjs/analog/actions/runs/34187310136/job/101938135017).
+
+GitHub rejected the failed-job rerun because the current account lacks repository admin rights. Subsequent passing checks cannot by themselves establish that these intermittent failures are fixed. The PR records the latest exact-head snapshot; both failures remain qualification limitations until diagnosed and resolved.
+
 ## Implemented changes and retained boundaries
 
 - Fast compilation shares the original OXC parse between the behavioral HMR signature and resource discovery. The compiler reuses it only if resource inlining leaves the source byte-identical; otherwise it parses the rewritten source. Parse errors still decline metadata HMR. Existing external SCSS preprocessing, JIT and disabled-HMR behavior remain covered.

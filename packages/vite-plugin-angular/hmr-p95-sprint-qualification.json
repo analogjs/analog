@@ -26,11 +26,12 @@
     "candidateTree": "4ea425acbb412933f0198e131394a60e14343d48"
   },
   "acceptance": {
-    "correctness": true,
+    "correctness": false,
     "strictPerformanceGate": false,
     "browserCellsPassing": 6,
     "browserCellsRequired": 12,
-    "firstWarmBuildGate": true
+    "firstWarmBuildGate": true,
+    "localCorrectnessCohortPassed": true
   },
   "archive": {
     "path": "evidence/hmr-p95-sprint/qualification-results.tar.gz",
@@ -1645,5 +1646,16 @@
       ["8.2.2", "fast", "240.0", "1092.7", "127.9", "6.5"],
       ["8.2.2", "ngtsc", "240.0", "1508.4", "140.6", "193.3"]
     ]
+  },
+  "ciFollowup": {
+    "revision": "5cf1a8a1858eb77cdefed65a4e6fdebe346215a7",
+    "runtimeUnchanged": true,
+    "workflow": "https://github.com/analogjs/analog/actions/runs/34187310136",
+    "unresolved": [
+      "Angular 22/Vite 6.0 shared CSS loses styles and emulated attributes after shared HTML update",
+      "Windows Angular 22/Vite 8.2.2 API ShadowDom initial render timeout before edit"
+    ],
+    "localExactVite6Replay": "passed; does not establish elimination",
+    "failedJobRerun": "denied: repository admin rights required"
   }
 }
