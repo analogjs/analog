@@ -177,9 +177,10 @@ Query params, mutation bodies, and response shapes are all inferred from the ser
 
 Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
 
+Define the query options in a shared module. Page `.server.ts` files are emptied in the client build, so the component cannot import runtime values from them.
+
 ```ts
-// src/app/pages/posts.server.ts
-import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
+// src/app/pages/posts.query.ts
 import { queryOptions } from '@tanstack/angular-query-experimental';
 
 export const postsQuery = queryOptions({
@@ -187,6 +188,13 @@ export const postsQuery = queryOptions({
   queryFn: async ({ signal }) =>
     fetch('https://api.example.com/posts', { signal }).then((r) => r.json()),
 });
+```
+
+```ts
+// src/app/pages/posts.server.ts
+import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
+
+import { postsQuery } from './posts.query';
 
 export const load = definePageLoadQueries({
   handler: async ({ client }) => {
@@ -200,7 +208,7 @@ export const load = definePageLoadQueries({
 import { Component } from '@angular/core';
 import { injectQuery } from '@tanstack/angular-query-experimental';
 
-import { postsQuery } from './posts.server';
+import { postsQuery } from './posts.query';
 
 @Component({
   template: `

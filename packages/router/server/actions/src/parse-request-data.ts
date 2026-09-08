@@ -100,7 +100,11 @@ export async function parseRequestData(event: H3Event): Promise<unknown> {
     } catch {
       const request = getRequest(event);
       if (typeof request.formData === 'function') {
-        return parseFormData(await request.formData());
+        try {
+          return parseFormData(await request.formData());
+        } catch {
+          return {};
+        }
       }
 
       return {};

@@ -178,37 +178,42 @@ export function defineServerRoute<
       params = paramsResult.value;
     }
 
-    if (options.input) {
-      data = await parseRequestData(event);
+    const hasBody = method !== 'GET' && method !== 'HEAD';
+    const requestData =
+      options.input || (options.body && hasBody)
+        ? await parseRequestData(event)
+        : undefined;
 
-      const inputResult = await validateWithSchema(options.input, data);
+    if (options.input) {
+      const inputResult = await validateWithSchema(options.input, requestData);
       if (inputResult.issues) {
         return fail(422, inputResult.issues);
       }
       data = inputResult.value;
-    } else {
-      if (options.query) {
-        const url = new URL(getRequestUrl(event), 'http://localhost');
-        const queryResult = await validateWithSchema(
-          options.query,
-          parseSearchParams(url.searchParams),
-        );
-        if (queryResult.issues) {
-          return fail(422, queryResult.issues);
-        }
-        query = queryResult.value;
-      }
+    }
 
-      if (options.body && method !== 'GET' && method !== 'HEAD') {
-        body = await parseRequestData(event);
-        const bodyResult = await validateWithSchema(options.body, body);
-        if (bodyResult.issues) {
-          return fail(422, bodyResult.issues);
-        }
-        body = bodyResult.value;
+    if (options.query) {
+      const url = new URL(getRequestUrl(event), 'http://localhost');
+      const queryResult = await validateWithSchema(
+        options.query,
+        parseSearchParams(url.searchParams),
+      );
+      if (queryResult.issues) {
+        return fail(422, queryResult.issues);
       }
+      query = queryResult.value;
+    }
 
-      if (method === 'GET' || method === 'HEAD') {
+    if (options.body && hasBody) {
+      const bodyResult = await validateWithSchema(options.body, requestData);
+      if (bodyResult.issues) {
+        return fail(422, bodyResult.issues);
+      }
+      body = bodyResult.value;
+    }
+
+    if (!options.input) {
+      if (!hasBody) {
         data = query;
       } else if (body !== undefined) {
         data = body;
