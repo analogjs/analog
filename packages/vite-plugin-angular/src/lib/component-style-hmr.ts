@@ -156,6 +156,7 @@ export async function updateComponentStyles(
   registry: AnalogStylesheetRegistry | undefined,
   refresh: (source: string) => void,
   owners: readonly string[] = [],
+  allowNativeUpdates = true,
 ): Promise<ModuleNode[] | undefined> {
   if (!registry || !/\.(css|s[ac]ss|less)$/.test(ctx.file)) return;
   const graph = ctx.server.moduleGraph;
@@ -214,6 +215,7 @@ export async function updateComponentStyles(
   for (const module of modules)
     graph.invalidateModule(module, undefined, ctx.timestamp);
   if (
+    !allowNativeUpdates ||
     styles.some(
       (module) =>
         getComponentStyleSheetMeta(module.id!).encapsulation === 'shadow',

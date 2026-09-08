@@ -611,7 +611,7 @@ function createPluginSet(
           }
         }
 
-        if (shouldUseNativeStyles()) {
+        if (shouldExternalizeStyles()) {
           const updated = await updateComponentStyles(
             ctx,
             stylesheetRegistry,
@@ -622,6 +622,7 @@ function createPluginSet(
                 pluginOptions.stylePreprocessor,
               ),
             resourceOwners(ctx.file),
+            shouldUseNativeStyles(),
           );
           if (updated) return updated;
         }

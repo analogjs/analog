@@ -733,7 +733,7 @@ export function compilationAPIPlugin(
         }
       }
 
-      if (shouldUseNativeStyles()) {
+      if (shouldExternalizeStyles()) {
         const updated = await updateComponentStyles(
           ctx,
           stylesheetRegistry,
@@ -744,6 +744,7 @@ export function compilationAPIPlugin(
               stylePreprocessor,
             ),
           resourceOwners(ctx.file),
+          shouldUseNativeStyles(),
         );
         if (updated) return updated;
       }

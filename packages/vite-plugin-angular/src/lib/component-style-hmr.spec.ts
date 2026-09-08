@@ -190,6 +190,26 @@ describe('component stylesheet updates', () => {
     expect(send).toHaveBeenCalledWith({ type: 'full-reload' });
   });
 
+  it('refreshes every shared Sass usage before a disabled native path reloads', async () => {
+    const { ctx, send, invalidateModule } = fixture();
+    const refresh = vi.fn();
+    expect(
+      await updateComponentStyles(
+        ctx,
+        new AnalogStylesheetRegistry(),
+        refresh,
+        [],
+        false,
+      ),
+    ).toEqual([]);
+    expect(refresh).toHaveBeenCalledExactlyOnceWith('/view.scss');
+    expect(invalidateModule).toHaveBeenCalledTimes(3);
+    expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'full-reload' });
+    expect(refresh.mock.invocationCallOrder[0]).toBeLessThan(
+      send.mock.invocationCallOrder[0]!,
+    );
+  });
+
   it.each([[0, 9], []])(
     'retains fallback when any usage is unsupported: %j',
     async (...encapsulations) => {

@@ -284,6 +284,11 @@ if (values.angular === '22.0.0' && values.vite === '8.2.2') {
           strategy: 'auto',
           externalize: true,
         })),
+        {
+          encapsulation: 'Emulated',
+          strategy: 'metadata',
+          externalize: true,
+        },
       );
     for (const { encapsulation, strategy, externalize } of cases) {
       const name = `runtime-native-${mode}-${encapsulation}-${strategy}${externalize ? '-external' : ''}`;
