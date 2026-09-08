@@ -1,5 +1,7 @@
 # HMR integration: implementation and qualification
 
+Latest follow-up: [two-hour p95 sprint and short-soak qualification](HMR_P95_SPRINT.md). The tables and 15-minute soaks below remain the earlier `e66dfc` cohort; they are not pooled with the new repaired-control comparison.
+
 This is the current implementation record for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The issue retains the maintainer's adoption decision. Earlier results in [EFFECT_REFACTOR.md](EFFECT_REFACTOR.md) and [HMR_DOWNSIDES.md](HMR_DOWNSIDES.md) remain historical cohorts.
 
 **Correctness qualification passes, but the strict 5% performance gate remains unmet in the cells marked below. Automatic ordinary-style externalization was removed; established metadata/reload fallbacks remain. No overall speedup or completed performance-acceptance claim is made.**
