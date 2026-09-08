@@ -582,6 +582,7 @@ describe('compilationAPIPlugin', () => {
     };
     const send = vi.fn();
     const modules = await (plugin.handleHotUpdate as any)({
+      read: vi.fn().mockResolvedValue('updated content'),
       file: testFile,
       modules: [mixedModule],
       server: {
@@ -600,6 +601,7 @@ describe('compilationAPIPlugin', () => {
     const templateFile = join(tempRoot, 'src/app.component.html');
     const invalidateModule = vi.fn();
     await (plugin.handleHotUpdate as any)({
+      read: vi.fn().mockResolvedValue('updated content'),
       file: templateFile,
       modules: [],
       server: {
@@ -622,6 +624,7 @@ describe('compilationAPIPlugin', () => {
       send.mockClear();
       const invalidateStyle = vi.fn();
       const result = await (plugin.handleHotUpdate as any)({
+        read: vi.fn().mockResolvedValue('updated content'),
         file: `${tempRoot}/src/view.css`,
         modules: [stylesheet],
         server: {
@@ -637,6 +640,7 @@ describe('compilationAPIPlugin', () => {
     send.mockClear();
     expect(
       await (plugin.handleHotUpdate as any)({
+        read: vi.fn().mockResolvedValue('updated content'),
         file: join(tempRoot, 'src/view.css'),
         modules: [],
         server: { ws: { send } },
@@ -647,6 +651,7 @@ describe('compilationAPIPlugin', () => {
     const globalCss = { id: `${tempRoot}/src/global.css` };
     expect(
       await (plugin.handleHotUpdate as any)({
+        read: vi.fn().mockResolvedValue('updated content'),
         file: globalCss.id,
         modules: [globalCss],
         server: { ws: { send } },

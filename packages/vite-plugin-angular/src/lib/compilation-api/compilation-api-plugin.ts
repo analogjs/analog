@@ -706,6 +706,9 @@ export function compilationAPIPlugin(
         return [];
       }
 
+      // Watchers may fire after truncation but before the editor writes content.
+      await ctx.read();
+
       if (TS_EXT_REGEX.test(ctx.file)) {
         const fileId = stripQuery(ctx.file);
         debugHmr('TS file changed', { file: ctx.file, fileId });

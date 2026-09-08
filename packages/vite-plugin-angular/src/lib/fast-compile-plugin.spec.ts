@@ -343,6 +343,7 @@ export class MyService {
       [first, second].map((module) => [module.id, module]),
     );
     const ctx = {
+      read: vi.fn().mockResolvedValue('updated styles'),
       file: normalizePath(
         `${__dirname}/compiler/__fixtures__/test.component.scss`,
       ),
