@@ -3,6 +3,7 @@ import {
   JIT_INLINE_STYLE_PREFIX,
   getJitInlineStyles,
 } from './utils/jit-inline-styles.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -54,6 +55,11 @@ export function jitPlugin({
       }
 
       return;
+    },
+    closeBundle() {
+      if (!this.meta?.watchMode) {
+        releaseCssPreprocessorWorkers();
+      }
     },
   };
 }

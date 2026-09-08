@@ -16,6 +16,12 @@
       "x-prompt": "Add TailwindCSS for styling?",
       "default": true
     },
+    "linter": {
+      "description": "The tool to use for running lint checks. `oxlint` requires Nx 23.2 or newer.",
+      "type": "string",
+      "enum": ["eslint", "oxlint", "none"],
+      "default": "eslint"
+    },
     "tags": {
       "type": "string",
       "description": "Add tags to the project (used for linting)",

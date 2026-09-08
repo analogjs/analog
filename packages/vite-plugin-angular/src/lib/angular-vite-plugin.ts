@@ -46,6 +46,7 @@ import {
   angularFullVersion,
 } from './utils/devkit.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
 const require = createRequire(import.meta.url);
 
@@ -255,10 +256,9 @@ export function angular(options?: PluginOptions): Plugin[] {
   let liveReloadProgramHasExternalStyles = false;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
-  let styleTransform: (
-    code: string,
-    filename: string,
-  ) => Promise<vite.PreprocessCSSResult>;
+  let styleTransform:
+    | ((code: string, filename: string) => Promise<vite.PreprocessCSSResult>)
+    | undefined;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
   // Persistent Angular Compilation API instance. Kept alive across rebuilds so
@@ -268,6 +268,39 @@ export function angular(options?: PluginOptions): Plugin[] {
   let angularCompilation:
     | Awaited<ReturnType<typeof createAngularCompilationType>>
     | undefined;
+
+  function getStyleTransform() {
+    return (
+      styleTransform ??
+      (async (code: string) => ({
+        code,
+        deps: new Set<string>(),
+      }))
+    );
+  }
+
+  async function releaseCompilation() {
+    await angularCompilation?.close?.();
+    angularCompilation = undefined;
+    builder = undefined;
+    nextProgram = undefined;
+    cachedHost = undefined;
+    cachedHostKey = undefined;
+    inlineComponentStyles = undefined;
+    externalComponentStyles = undefined;
+    outputFile = undefined;
+    outputFiles.clear();
+    emittedIds.clear();
+    fileTransformMap.clear();
+    sourceFileCache.clear();
+    sourceFileCache.modifiedFiles.clear();
+    sourceFileCache.babelFileCache?.clear();
+    sourceFileCache.typeScriptFileCache?.clear();
+    sourceFileCache.referencedFiles = undefined;
+    tsconfigOptionsCache.clear();
+    includeCache = [];
+    releaseCssPreprocessorWorkers();
+  }
 
   function angularPlugin(): Plugin {
     let isProd = false;
@@ -385,16 +418,23 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        if (!jit) {
+          styleTransform = (code: string, filename: string) =>
+            preprocessCSS(code, filename, resolvedConfig);
+        }
+
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          pendingCompilation = performCompilation(resolvedConfig);
+          pendingCompilation = performCompilation(
+            this.environment?.config ?? resolvedConfig,
+          );
           await pendingCompilation;
           pendingCompilation = null;
 
           initialCompilation = true;
         }
       },
-      buildEnd() {
+      async buildEnd() {
         // Report diagnostics for production builds. Watch/serve already report
         // per-module from `transform`; build mode defers to here so a single
         // errored file no longer aborts the build before the rest are checked
@@ -407,14 +447,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           return;
         }
 
-        const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
+        try {
+          const { errors, warnings } = collectEmittedDiagnostics(outputFiles);
 
-        if (warnings.length > 0) {
-          this.warn(warnings.join('\n'));
-        }
+          if (warnings.length > 0) {
+            this.warn(warnings.join('\n'));
+          }
 
-        if (errors.length > 0) {
-          this.error(errors.join('\n\n'));
+          if (errors.length > 0) {
+            this.error(errors.join('\n\n'));
+          }
+        } finally {
+          await releaseCompilation();
         }
       },
       async handleHotUpdate(ctx) {
@@ -693,7 +737,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             if (isVitestVscode && !initialCompilation) {
               // Do full initial compilation
-              pendingCompilation = performCompilation(resolvedConfig);
+              pendingCompilation = performCompilation(
+                this.environment?.config ?? resolvedConfig,
+              );
               initialCompilation = true;
             }
 
@@ -702,7 +748,10 @@ export function angular(options?: PluginOptions): Plugin[] {
               const invalidated = tsMod.lastInvalidationTimestamp;
 
               if (testWatchMode && invalidated) {
-                pendingCompilation = performCompilation(resolvedConfig, [id]);
+                pendingCompilation = performCompilation(
+                  this.environment?.config ?? resolvedConfig,
+                  [id],
+                );
               }
             }
           }
@@ -817,7 +866,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           return {
             code: data,
-            map: typescriptResult.map ?? null,
+            map: typescriptResult.map
+              ? normalizeSourceMapSources(typescriptResult.map, id)
+              : null,
           };
         },
       },
@@ -828,12 +879,33 @@ export function angular(options?: PluginOptions): Plugin[] {
             writeFileSync(declarationPath, data, 'utf-8');
           },
         );
-        // Tear down the persistent compilation instance at end of build so it
-        // does not leak memory across unrelated Vite invocations.
-        angularCompilation?.close?.();
-        angularCompilation = undefined;
+        declarationFiles.length = 0;
+
+        if (!watchMode) {
+          releaseCssPreprocessorWorkers();
+        }
       },
     };
+  }
+
+  function normalizeSourceMapSources(map: string, id: string): string {
+    const sourceMap = JSON.parse(map) as {
+      sources?: string[];
+      sourceRoot?: string;
+    };
+    const sourceDirectory = dirname(id);
+    const sourceRoot = sourceMap.sourceRoot ?? '';
+
+    sourceMap.sources = sourceMap.sources?.map((source) => {
+      if (isAbsolute(source) || /^[a-z][a-z\d+.-]*:/i.test(source)) {
+        return normalizePath(source);
+      }
+
+      return normalizePath(resolve(sourceDirectory, sourceRoot, source));
+    });
+    delete sourceMap.sourceRoot;
+
+    return JSON.stringify(sourceMap);
   }
 
   const compilationPlugin = pluginOptions.fastCompile
@@ -982,10 +1054,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           let stylesheetResult;
 
           try {
-            stylesheetResult = await preprocessCSS(
+            stylesheetResult = await getStyleTransform()(
               data,
               `${filename}?direct`,
-              resolvedConfig,
             );
           } catch (e) {
             console.error(`${e}`);
@@ -1148,6 +1219,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     // can go stale — only dedupe emits within a single pass.
     emittedIds = new Set<string>();
 
+    if (!jit) {
+      styleTransform = (code: string, filename: string) =>
+        preprocessCSS(code, filename, config);
+    }
+
     const discardIncrementalProgram = shouldDiscardIncrementalProgram({
       externalRuntimeStylesNowEnabled: shouldEnableExternalRuntimeStyles({
         liveReload: pluginOptions.liveReload,
@@ -1177,6 +1253,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const isProd = config.mode === 'production';
+    // Analog historically forced sourceMap off in production. Honour Vite's
+    // `build.sourcemap` so production builds can emit maps for Sentry / etc.
+    const emitSourceMaps = !isProd || !!config.build.sourcemap;
     const modifiedFiles = new Set<string>(ids ?? []);
     sourceFileCache.invalidate(modifiedFiles);
 
@@ -1197,6 +1276,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       isProd ? 'prod' : 'dev',
       isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
+      emitSourceMaps ? 'maps' : 'nomaps',
     ].join('|');
     let cached = tsconfigOptionsCache.get(tsconfigKey);
 
@@ -1204,9 +1284,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       const read = compilerCli.readConfiguration(resolvedTsConfigPath, {
         suppressOutputPathCheck: true,
         outDir: undefined,
-        sourceMap: !isProd,
+        sourceMap: emitSourceMaps,
         inlineSourceMap: false,
-        inlineSources: !isProd,
+        inlineSources: emitSourceMaps,
         // Don't force-override `declaration`/`declarationMap` here — the
         // user's tsconfig value is respected below so that app builds running
         // through Vite's library mode (e.g. WXT entrypoints) can opt out of
@@ -1317,7 +1397,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       externalComponentStyles = tsCompilerOptions['externalRuntimeStyles']
         ? new Map()
         : undefined;
-      augmentHostWithResources(host, styleTransform, {
+      augmentHostWithResources(host, getStyleTransform(), {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         isProd,
         inlineComponentStyles,

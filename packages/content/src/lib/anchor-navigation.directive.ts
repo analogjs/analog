@@ -20,7 +20,22 @@ export class AnchorNavigationDirective {
       !hasDownloadAttribute(element)
     ) {
       const { pathname, search, hash } = element;
-      const url = this.location.normalize(`${pathname}${search}${hash}`);
+      // A `<base>` element makes the browser resolve fragment-only hrefs
+      // (e.g. `href="#some-id"`) against the base URL rather than the
+      // current document, so `pathname`/`search` come back as the base's
+      // rather than the current page's. Fall back to the document's own
+      // location in that case, or an in-page anchor link would navigate
+      // to the base route and lose the fragment there.
+      const isFragmentOnly = element.getAttribute('href')?.startsWith('#');
+      const resolvedPathname = isFragmentOnly
+        ? this.document.location.pathname
+        : pathname;
+      const resolvedSearch = isFragmentOnly
+        ? this.document.location.search
+        : search;
+      const url = this.location.normalize(
+        `${resolvedPathname}${resolvedSearch}${hash}`,
+      );
       this.router.navigateByUrl(url);
 
       return false;

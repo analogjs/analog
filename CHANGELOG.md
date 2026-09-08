@@ -1,3 +1,27 @@
+## [2.7.2-beta.4](https://github.com/analogjs/analog/compare/v2.7.2-beta.3...v2.7.2-beta.4) (2026-09-07)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** exclude load-only server-function hosts ([#2543](https://github.com/analogjs/analog/issues/2543)) ([68d67c5](https://github.com/analogjs/analog/commit/68d67c51171a88d7f87a0ae09e2bfdf317147f49))
+
+## [2.7.2-beta.3](https://github.com/analogjs/analog/compare/v2.7.2-beta.2...v2.7.2-beta.3) (2026-09-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve source maps across TypeScript transforms ([#2506](https://github.com/analogjs/analog/issues/2506)) ([cad322b](https://github.com/analogjs/analog/commit/cad322b2dff5af4d6c7a2b095ee36bcfca5840e2))
+
+## [2.7.2-beta.2](https://github.com/analogjs/analog/compare/v2.7.2-beta.1...v2.7.2-beta.2) (2026-09-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** use null for default providedIn setting for Injectable ([#2515](https://github.com/analogjs/analog/issues/2515)) ([c555ba6](https://github.com/analogjs/analog/commit/c555ba67efdb8f876f3b99c63e07326389e417bd))
+
+## [2.7.2-beta.1](https://github.com/analogjs/analog/compare/v2.7.1...v2.7.2-beta.1) (2026-08-31)
+
+### Bug Fixes
+
+- **content:** resolve fragment-only anchor hrefs against the current document, not <base href> ([#2501](https://github.com/analogjs/analog/issues/2501)) ([83d299a](https://github.com/analogjs/analog/commit/83d299a4c111546ecc9ac658bf7269124e207215))
+
 ## [2.7.1](https://github.com/analogjs/analog/compare/v2.7.0...v2.7.1) (2026-08-26)
 
 ### Bug Fixes

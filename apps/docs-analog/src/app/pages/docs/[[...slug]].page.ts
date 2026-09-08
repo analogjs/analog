@@ -14,7 +14,13 @@ import {
   injectContent,
   MarkdownComponent,
 } from '@analogjs/content';
-import { DocFooter, EnhanceCode, extractHeadings, Toc } from '../../docs';
+import {
+  CopyPage,
+  DocFooter,
+  EnhanceCode,
+  extractHeadings,
+  Toc,
+} from '../../docs';
 import { DocSeo } from '../../seo';
 
 interface DocAttributes {
@@ -23,20 +29,29 @@ interface DocAttributes {
 }
 
 @Component({
-  imports: [MarkdownComponent, DocFooter, EnhanceCode, Toc],
+  imports: [MarkdownComponent, CopyPage, DocFooter, EnhanceCode, Toc],
   template: `
     <div class="flex gap-8">
       <div #article docsEnhanceCode class="flex-1 min-w-0 min-h-screen">
         @if (doc(); as doc) {
           <header class="mb-6">
-            @if (doc.attributes.title) {
-              <h1
-                class="text-5xl font-bold leading-tight tracking-tight"
-                style="letter-spacing: -0.02em"
-              >
-                {{ doc.attributes.title }}
-              </h1>
-            }
+            <div class="flex items-start gap-4">
+              @if (doc.attributes.title) {
+                <h1
+                  class="text-5xl font-bold leading-tight tracking-tight"
+                  style="letter-spacing: -0.02em"
+                >
+                  {{ doc.attributes.title }}
+                </h1>
+              }
+              @if (slug(); as s) {
+                <docs-copy-page
+                  class="shrink-0 pt-2"
+                  [pageTitle]="doc.attributes.title"
+                  [slug]="s"
+                />
+              }
+            </div>
             @if (doc.attributes.description) {
               <p class="mt-3 text-lg" style="color: var(--fg-muted)">
                 {{ doc.attributes.description }}

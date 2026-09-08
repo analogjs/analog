@@ -26,6 +26,7 @@ export {
 export { useLocaleSignal } from './locale';
 export { DocsLayoutShell, redirectDocsRoot } from './docs-layout';
 
+export { CopyPage, markdownForCopy } from './components/copy-page';
 export { DocFooter } from './components/doc-footer';
 export { EnhanceCode } from './components/enhance-code';
 export { Footer } from './components/footer';

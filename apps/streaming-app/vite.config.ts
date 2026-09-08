@@ -1,12 +1,12 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],
@@ -33,7 +33,7 @@ export default defineConfig(() => {
           },
         },
       }),
-      nxViteTsPaths(),
+      viteTsConfigPaths(),
     ],
   };
 });

@@ -1,17 +1,19 @@
 /// <reference types='vitest' />
 import angular from '@analogjs/vite-plugin-angular';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig(({ mode }) => ({
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/my-package',
   plugins: [
     angular({ jit: false }),
-    nxViteTsPaths(),
-    nxCopyAssetsPlugin(['*.md', 'package.json']),
+    viteTsConfigPaths(),
+    viteStaticCopy({
+      targets: [{ src: ['*.md', 'package.json'], dest: '.' }],
+    }),
   ],
   resolve: {
     mainFields: ['module'],

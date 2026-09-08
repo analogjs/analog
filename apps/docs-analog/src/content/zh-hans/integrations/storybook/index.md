@@ -272,20 +272,7 @@ export default config;
 
 ### 使用 Nx
 
-对于 Nx 工作区，从 `@nx/vite` 包导入并使用 `nxViteTsPaths` 插件。将插件添加到 `.storybook/main.ts` 中的 `plugins` 数组。
-
-```ts
-const config: StorybookConfig = {
-  // ... 其他配置, addons 等
-  async viteFinal(config: UserConfig) {
-    return mergeConfig(config, {
-      plugins: [nxViteTsPaths()],
-    });
-  },
-};
-
-export default config;
-```
+Nx 工作区在 `.storybook/main.ts` 中使用相同的 `vite-tsconfig-paths` 插件。`@nx/vite` 包中的 `nxViteTsPaths` 插件已弃用，并将在 Nx 24 中移除，请替换为 `viteTsConfigPaths()`。
 
 ## 使用文件替换
 

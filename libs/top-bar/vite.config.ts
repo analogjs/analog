@@ -6,7 +6,7 @@ import angular from '@analogjs/vite-plugin-angular';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     plugins: [angular()],
     test: {
       reporters: ['default'],

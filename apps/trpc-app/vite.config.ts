@@ -3,12 +3,12 @@
 import analog from '@analogjs/platform';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, PluginOption } from 'vite';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/public',
     optimizeDeps: {
       include: ['@angular/common', '@angular/forms', 'isomorphic-fetch'],
@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
           },
         },
       }),
-      nxViteTsPaths(),
+      viteTsConfigPaths(),
       visualizer() as PluginOption,
     ],
     test: {

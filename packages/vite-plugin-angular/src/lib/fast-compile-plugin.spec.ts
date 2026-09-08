@@ -1,7 +1,11 @@
 // Mocked at module level so the plugin sees our stubs for the OXC/esbuild
 // strip pass on the bypass path. Kept in a separate file from compile.spec.ts
 // because that suite uses real `vite.transformWithOxc` for end-to-end checks.
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { readConfiguration } from '@angular/compiler-cli';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let mockRolldownVersion: string | undefined;
 const mockTransformWithOxc = vi.fn();
@@ -22,7 +26,7 @@ vi.mock('vite', async () => {
   };
 });
 
-import { fastCompilePlugin } from './fast-compile-plugin';
+import { fastCompilePlugin, getPathsBasePath } from './fast-compile-plugin';
 
 function buildPlugin() {
   return fastCompilePlugin({
@@ -245,10 +249,8 @@ export class App {
     const plugin = buildPlugin();
     const handler = getTransformHandler(plugin);
 
-    // A component file goes through the full compile path which calls
-    // transformWithOxc internally too, but with `sourcemap: false`. The
-    // bypass uses `sourcemap: true` — assert no `sourcemap: true` call to
-    // confirm we did not enter the bypass branch.
+    // A component file goes through the full compile path, so the final strip
+    // receives Angular's generated Ivy definitions rather than the raw input.
     const code = `
 import { Component } from '@angular/core';
 @Component({ selector: 'x', template: '' })
@@ -265,10 +267,69 @@ export class XComponent {}
       // we only care that the bypass branch was not taken.
     }
 
-    const sawBypassCall = mockTransformWithOxc.mock.calls.some(
-      ([, , opts]: any[]) => opts?.sourcemap === true,
+    const sawCompiledCall = mockTransformWithOxc.mock.calls.some(
+      ([callCode]: any[]) => callCode.includes('ɵcmp'),
     );
-    expect(sawBypassCall).toBe(false);
+    expect(sawCompiledCall).toBe(true);
+  });
+
+  it('composes the AOT compiler map with the TypeScript strip map', async () => {
+    const plugin = buildPlugin();
+    const handler = getTransformHandler(plugin);
+    const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'x', template: '' })
+export class XComponent {
+  value: string = 'test';
+}
+`;
+
+    const result = await handler.call(
+      { addWatchFile: () => undefined },
+      code,
+      '/src/app/x.component.ts',
+    );
+    const stripCall = mockTransformWithOxc.mock.calls.at(-1)!;
+
+    expect(stripCall[2]).toMatchObject({ lang: 'ts', sourcemap: true });
+    expect(stripCall[3]).toMatchObject({ mappings: expect.any(String) });
+    expect(result.map).toEqual({ mappings: '' });
+  });
+
+  it('composes the AOT compiler map with the esbuild fallback map', async () => {
+    const viteMod = await import('vite');
+    const realOxc = viteMod.transformWithOxc;
+    Object.defineProperty(viteMod, 'transformWithOxc', {
+      value: undefined,
+      configurable: true,
+    });
+    try {
+      const plugin = buildPlugin();
+      const handler = getTransformHandler(plugin);
+      const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'x', template: '' })
+export class XComponent {
+  value: string = 'test';
+}
+`;
+
+      const result = await handler.call(
+        { addWatchFile: () => undefined },
+        code,
+        '/src/app/x.component.ts',
+      );
+      const stripCall = mockTransformWithEsbuild.mock.calls.at(-1)!;
+
+      expect(stripCall[2]).toMatchObject({ loader: 'ts', sourcemap: true });
+      expect(stripCall[3]).toMatchObject({ mappings: expect.any(String) });
+      expect(result.map).toEqual({ mappings: '' });
+    } finally {
+      Object.defineProperty(viteMod, 'transformWithOxc', {
+        value: realOxc,
+        configurable: true,
+      });
+    }
   });
 
   it('does not run the bypass strip when the file has only @Service', async () => {
@@ -297,10 +358,10 @@ export class MyService {
       // we only care that the bypass branch was not taken.
     }
 
-    const sawBypassCall = mockTransformWithOxc.mock.calls.some(
-      ([, , opts]: any[]) => opts?.sourcemap === true,
+    const sawCompiledCall = mockTransformWithOxc.mock.calls.some(
+      ([callCode]: any[]) => callCode.includes('ɵprov'),
     );
-    expect(sawBypassCall).toBe(false);
+    expect(sawCompiledCall).toBe(true);
   });
 
   it('preprocesses an external .scss styleUrl by its own extension when inlineStylesExtension is css', async () => {
@@ -350,5 +411,62 @@ describe('fastCompilePlugin transform filter', () => {
     expect(matchesExclude('/src/app/foo.ts')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?t=12345')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?component')).toBe(false);
+  });
+});
+
+describe('getPathsBasePath', () => {
+  let workspaceRoot: string;
+
+  beforeEach(() => {
+    workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-paths-base-'));
+  });
+
+  afterEach(() => {
+    rmSync(workspaceRoot, { recursive: true, force: true });
+  });
+
+  function writeConfigs(
+    root: Record<string, unknown>,
+    app: Record<string, unknown>,
+  ) {
+    mkdirSync(join(workspaceRoot, 'apps', 'demo'), { recursive: true });
+    writeFileSync(
+      join(workspaceRoot, 'tsconfig.base.json'),
+      JSON.stringify(root),
+    );
+    const appConfig = join(workspaceRoot, 'apps', 'demo', 'tsconfig.json');
+    writeFileSync(
+      appConfig,
+      JSON.stringify({ extends: '../../tsconfig.base.json', ...app }),
+    );
+    return appConfig;
+  }
+
+  it('anchors inherited paths on the config that declares them when baseUrl is unset', () => {
+    const appConfig = writeConfigs(
+      { compilerOptions: { paths: { lib: ['./libs/lib/src/index.ts'] } } },
+      { files: [] },
+    );
+
+    const { options } = readConfiguration(appConfig);
+
+    expect(getPathsBasePath(options, dirname(appConfig))).toBe(workspaceRoot);
+  });
+
+  it('prefers an explicit baseUrl over the declaring config directory', () => {
+    const appConfig = writeConfigs(
+      { compilerOptions: { paths: { lib: ['./libs/lib/src/index.ts'] } } },
+      { compilerOptions: { baseUrl: './src' }, files: [] },
+    );
+
+    const { options } = readConfiguration(appConfig);
+
+    expect(getPathsBasePath(options, dirname(appConfig))).toBe(
+      join(workspaceRoot, 'apps', 'demo', 'src'),
+    );
+  });
+
+  it('falls back to the project root when no config anchors paths', () => {
+    expect(getPathsBasePath(undefined, '/project')).toBe('/project');
   });
 });

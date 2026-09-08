@@ -11,7 +11,10 @@ import { AnalogPageGeneratorSchema } from './schema';
 
 describe('analog-page generator', () => {
   const setup = async (options: AnalogPageGeneratorSchema) => {
-    const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+    const tree = createTreeWithEmptyWorkspace({
+      layout: 'apps-libs',
+      formatter: 'prettier',
+    });
     addProjectConfiguration(tree, options.pathname, {
       projectType: 'application',
       sourceRoot: `apps/${names(options.project).fileName}/src`,
@@ -26,7 +29,10 @@ describe('analog-page generator', () => {
   let tree: Tree;
 
   beforeEach(() => {
-    tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+    tree = createTreeWithEmptyWorkspace({
+      layout: 'apps-libs',
+      formatter: 'prettier',
+    });
   });
 
   it('should create analog page correctly', async () => {

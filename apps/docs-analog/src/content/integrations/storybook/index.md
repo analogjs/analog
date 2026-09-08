@@ -271,20 +271,7 @@ export default config;
 
 ### With Nx
 
-For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package. Add the plugin to the `plugins` array in the `.storybook/main.ts`.
-
-```ts
-const config: StorybookConfig = {
-  // ... other config, addons, etc.
-  async viteFinal(config: UserConfig) {
-    return mergeConfig(config, {
-      plugins: [nxViteTsPaths()],
-    });
-  },
-};
-
-export default config;
-```
+Nx workspaces use the same `vite-tsconfig-paths` plugin in the `.storybook/main.ts`. The `nxViteTsPaths` plugin from `@nx/vite` is deprecated and is removed in Nx 24, so replace it with `viteTsConfigPaths()`.
 
 ## Using File Replacements
 
@@ -452,6 +439,14 @@ npm run test-storybook
 ```
 
 You can also run tests directly in the Storybook UI. Start Storybook and use the "Run Tests" button in the sidebar, or navigate to a story to see interaction tests run automatically in the Interactions panel.
+
+#### With Nx
+
+In an Nx workspace using the `@nx/storybook/plugin` inferred targets, Nx 23.2 and newer detects `@storybook/addon-vitest` in the project's `.storybook/main.ts` and infers the `test-storybook` target as `vitest run --project=storybook`, so no target needs to be added to the `project.json`. Run the interaction tests with:
+
+```sh
+npx nx test-storybook your-app
+```
 
 ## Building with Angular in Development Mode
 

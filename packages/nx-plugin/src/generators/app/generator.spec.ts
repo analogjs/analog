@@ -7,10 +7,24 @@ import {
 } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import { lt } from 'semver';
+import { vi } from 'vitest';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
 import { checkAndCleanWithSemver } from '@nx/devkit/internal';
+
+// Record the options handed to the Angular application generator while keeping
+// linting off, so the tests don't depend on a linter package being set up.
+vi.mock('@nx/angular/generators', async (importOriginal) => {
+  const mod =
+    await importOriginal<typeof import('@nx/angular/dist/generators')>();
+  return {
+    ...mod,
+    applicationGenerator: vi.fn((tree, options) =>
+      mod.applicationGenerator(tree, { ...options, linter: 'none' }),
+    ),
+  };
+});
 
 describe('nx-plugin generator', () => {
   const setup = async (
@@ -18,9 +32,10 @@ describe('nx-plugin generator', () => {
     nxVersion = '21.0.0',
     standalone = false,
   ) => {
-    const tree = createTreeWithEmptyWorkspace(
-      standalone ? {} : { layout: 'apps-libs' },
-    );
+    const tree = createTreeWithEmptyWorkspace({
+      formatter: 'prettier',
+      ...(standalone ? {} : { layout: 'apps-libs' }),
+    });
 
     addDependenciesToPackageJson(tree, {}, { nx: nxVersion });
     await generator(tree, options);
@@ -210,9 +225,39 @@ describe('nx-plugin generator', () => {
       );
     });
 
+    it('passes the linter option to the Angular application generator', async () => {
+      const { applicationGenerator } = await import('@nx/angular/generators');
+
+      await setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.2.0');
+
+      expect(applicationGenerator).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ name: 'oxlint-app', linter: 'oxlint' }),
+      );
+    });
+
+    it('rejects the oxlint linter on Nx versions below 23.2', async () => {
+      await expect(
+        setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.1.0'),
+      ).rejects.toThrow(
+        'Nx v23.2.0 or newer is required to use the oxlint linter',
+      );
+    });
+
+    it('rejects the oxlint linter outside an Nx workspace', async () => {
+      const tree = createTreeWithEmptyWorkspace({ formatter: 'prettier' });
+
+      await expect(
+        generator(tree, { analogAppName: 'oxlint-app', linter: 'oxlint' }),
+      ).rejects.toThrow('The oxlint linter is only supported in Nx workspaces');
+    });
+
     it('does not overwrite existing agent context in the app', async () => {
       const analogAppName = 'existing-agents-app';
-      const tree = createTreeWithEmptyWorkspace({ layout: 'apps-libs' });
+      const tree = createTreeWithEmptyWorkspace({
+        layout: 'apps-libs',
+        formatter: 'prettier',
+      });
 
       addDependenciesToPackageJson(tree, {}, { nx: '21.0.0' });
       tree.write(`apps/${analogAppName}/AGENTS.md`, '# Custom guidance');

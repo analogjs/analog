@@ -8,7 +8,7 @@ import { RouterOutlet } from '@angular/router';
   host: {
     class: 'max-w-screen-md mx-auto block h-full bg-zinc-900 text-zinc-50',
   },
-  changeDetection: ChangeDetectionStrategy.Default,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: ` <router-outlet></router-outlet> `,
 })
 export class AppComponent {}

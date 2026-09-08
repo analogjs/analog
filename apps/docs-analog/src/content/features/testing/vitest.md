@@ -412,11 +412,28 @@ export default defineConfig(({ mode }) => ({
 
 ### With Nx
 
-For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
+Nx workspaces use the same `vite-tsconfig-paths` plugin. The `nxViteTsPaths` plugin from `@nx/vite` is deprecated and is removed in Nx 24, so replace it with `viteTsConfigPaths()`.
 
 ```ts
 /// <reference types="vitest" />
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
 export default defineConfig(({ mode }) => ({
-  plugins: [angular(), nxViteTsPaths()],
+  root: import.meta.dirname,
+  plugins: [angular(), viteTsConfigPaths()],
 }));
+```
+
+Use `import.meta.dirname` instead of `__dirname` for the project `root`, so the config also loads with Vite's native config loader. The `@analogjs/platform` generators emit `import.meta.dirname`, and Nx 23.2 ships the `update-23-2-0-use-import-meta-dirname` migration that rewrites existing configs.
+
+Vitest 4 removed the `vitest.workspace` file. To run the tests of multiple projects from the workspace root, list them in the `test.projects` option of a root `vitest.config.ts`, which is also what Nx 23.2 generates:
+
+```ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    projects: ['apps/**/vite.config.ts', 'libs/**/vite.config.ts'],
+  },
+});
 ```

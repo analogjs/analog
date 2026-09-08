@@ -297,19 +297,7 @@ export default defineConfig(({ mode }) => ({
 
 ### With Nx
 
-For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
-
-```ts
-/// <reference types="vitest" />
-import { defineConfig } from 'vite';
-
-import angular from '@analogjs/vite-plugin-angular';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
-export default defineConfig(({ mode }) => ({
-  plugins: [angular(), nxViteTsPaths()],
-}));
-```
+Nx workspaces use the same `vite-tsconfig-paths` plugin. The `nxViteTsPaths` plugin from `@nx/vite` is deprecated and is removed in Nx 24, so replace it with `viteTsConfigPaths()`.
 
 ## IDE Support
 

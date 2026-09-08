@@ -153,16 +153,51 @@ export default defineConfig(({ mode }) => ({
 
 ## Copiando archivos estáticos
 
-Los archivos estáticos en la carpeta `public` son copiados al directorio de salida del build por defecto. Si deseas copiar archivos adicionales fuera de ese directorio, utiliza el plugin de Vite `nxCopyAssetsPlugin`.
+Los archivos estáticos en la carpeta `public` son copiados al directorio de salida del build por defecto. Si deseas copiar archivos adicionales fuera de ese directorio, utiliza el plugin de Vite `vite-plugin-static-copy`.
 
-Importa el plugin y configúralo:
+Primero, instala el paquete `vite-plugin-static-copy`.
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+
+  <TabItem label="Yarn" value="yarn">
+
+```shell
+yarn add vite-plugin-static-copy --dev
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm install -w vite-plugin-static-copy --save-dev
+```
+
+  </TabItem>
+</Tabs>
+
+Luego, importa el plugin y configúralo:
 
 ```ts
 /// <reference types="vitest" />
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // ...
-  plugins: [analog(), nxCopyAssetsPlugin(['*.md'])],
+  plugins: [
+    analog(),
+    viteStaticCopy({
+      targets: [{ src: '*.md', dest: '.' }],
+    }),
+  ],
 }));
 ```
 

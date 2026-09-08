@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import analog, { type PrerenderContentFile } from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
 
 // Only run in Netlify CI
@@ -17,7 +17,7 @@ process.env['VITE_ANALOG_BASE_URL'] = base;
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
-    root: __dirname,
+    root: import.meta.dirname,
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],
@@ -97,7 +97,7 @@ export default defineConfig(() => {
           },
         },
       }),
-      nxViteTsPaths(),
+      viteTsConfigPaths(),
     ],
   };
 });
