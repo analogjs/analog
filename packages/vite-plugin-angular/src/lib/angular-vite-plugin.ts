@@ -258,11 +258,12 @@ function createPluginSet(
       watch: isTest ? testWatchMode : watchMode,
       liveReload: pluginOptions.liveReload,
       hmr: resolvedConfig?.server.hmr !== false,
-      externalizeStyles: externalizeStylesRequested || shouldUseNativeStyles(),
+      externalizeStyles: externalizeStylesRequested,
     }));
 
   const shouldUseNativeStyles = () =>
-    vite.version.startsWith('6.0.') &&
+    // Ordinary ngtsc styles retain metadata HMR after the latency qualification.
+    externalizeStylesRequested &&
     pluginOptions.componentStyleHmr === 'auto' &&
     !jit &&
     !isTest &&

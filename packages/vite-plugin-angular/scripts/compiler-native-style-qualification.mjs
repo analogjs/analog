@@ -13,6 +13,7 @@ const { values } = parseArgs({
     mode: { type: 'string', default: 'ngtsc' },
     encapsulation: { type: 'string', default: 'Emulated' },
     strategy: { type: 'string', default: 'auto' },
+    externalize: { type: 'boolean', default: false },
     output: { type: 'string' },
   },
 });
@@ -24,7 +25,7 @@ const angularVersion = createRequire(import.meta.url)(
 const native =
   (values.mode === 'api'
     ? Number(viteVersion.split('.')[0]) >= 7
-    : viteVersion.startsWith('6.0.')) &&
+    : values.externalize) &&
   Number(angularVersion.split('.')[0]) >= (values.mode === 'api' ? 21 : 20) &&
   values.mode !== 'fast' &&
   values.encapsulation !== 'ShadowDom' &&
@@ -80,16 +81,30 @@ const server = await createServer({
   root,
   configFile: false,
   logLevel: 'warn',
-  plugins: angular({
-    workspaceRoot: root,
-    tsconfig: join(root, 'tsconfig.json'),
-    jit: false,
-    fastCompile: values.mode === 'fast',
-    experimental: {
-      useAngularCompilationAPI: values.mode === 'api',
-      componentStyleHmr: values.strategy,
-    },
-  }),
+  plugins: [
+    ...angular({
+      workspaceRoot: root,
+      tsconfig: join(root, 'tsconfig.json'),
+      jit: false,
+      fastCompile: values.mode === 'fast',
+      experimental: {
+        useAngularCompilationAPI: values.mode === 'api',
+        componentStyleHmr: values.strategy,
+      },
+    }),
+    ...(values.externalize
+      ? [
+          {
+            name: 'qualify-component-externalization',
+            analog: {
+              setup(context) {
+                context.externalizeComponentStyles();
+              },
+            },
+          },
+        ]
+      : []),
+  ],
   server: { host: '127.0.0.1', port: 0 },
 });
 const send = server.ws.send.bind(server.ws);

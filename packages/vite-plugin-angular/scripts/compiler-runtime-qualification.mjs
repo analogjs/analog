@@ -27,6 +27,7 @@ const { values } = parseArgs({
     'close-queued': { type: 'boolean', default: false },
     'refresh-ssr': { type: 'boolean', default: false },
     'expect-style-state': { type: 'boolean', default: false },
+    'event-latency': { type: 'boolean', default: false },
     'race-ssr': { type: 'boolean', default: false },
     'ssr-first': { type: 'boolean', default: false },
     'ssr-idle-ms': { type: 'string', default: '0' },
@@ -71,6 +72,7 @@ const result = {
   startupOrder: values['ssr-first'] ? 'server-first' : 'browser-first',
   ssrIdleMs: Number(values['ssr-idle-ms']),
   warmup: values.warmup,
+  latencyProbe: values['event-latency'] ? 'dom-events' : 'frame-poll',
   records,
   memory,
   restarts,
@@ -247,6 +249,49 @@ async function renderSsr(revision) {
     css: html.includes('<link') ? 'linked' : 'inline',
   };
 }
+// Arm before the write. Mutation/load events observe the rendered condition
+// without adding a requestAnimationFrame polling interval to edit latency.
+async function armBrowserUpdate(kind, revision) {
+  if (!values['event-latency']) return;
+  await page.evaluate(
+    ({ kind, revision }) => {
+      globalThis.__analogUpdate = new Promise((resolve, reject) => {
+        const finish = (error) => {
+          observer.disconnect();
+          document.removeEventListener('load', check, true);
+          clearTimeout(timeout);
+          if (error) reject(error);
+          else resolve();
+        };
+        const check = () => {
+          const element = document.querySelector('[data-message]');
+          if (
+            element &&
+            (kind === 'template'
+              ? element.textContent === `REVISION_${revision}`
+              : getComputedStyle(element)
+                  .getPropertyValue('--fixture-revision')
+                  .trim() === `${revision}px`)
+          )
+            finish();
+        };
+        const observer = new MutationObserver(check);
+        const timeout = setTimeout(
+          () => finish(new Error(`${kind} update timed out`)),
+          15000,
+        );
+        observer.observe(document, {
+          subtree: true,
+          childList: true,
+          characterData: true,
+          attributes: true,
+        });
+        document.addEventListener('load', check, true);
+      });
+    },
+    { kind, revision },
+  );
+}
 try {
   await server.listen();
   if (values['ssr-first']) result.initialSsr = await renderSsr(0);
@@ -268,15 +313,19 @@ try {
   for (let revision = 1; revision <= edits; revision++) {
     await page.locator('[data-count]').click();
     const counter = await page.locator('[data-count]').textContent();
+    await armBrowserUpdate('template', revision);
     const templateAt = performance.now();
     await fs.writeFile(join(root, 'src/view.html'), template(revision));
-    await page.waitForFunction(
-      (n) =>
-        document.querySelector('[data-message]')?.textContent ===
-        `REVISION_${n}`,
-      revision,
-      { timeout: 15000 },
-    );
+    if (values['event-latency'])
+      await page.evaluate(() => globalThis.__analogUpdate);
+    else
+      await page.waitForFunction(
+        (n) =>
+          document.querySelector('[data-message]')?.textContent ===
+          `REVISION_${n}`,
+        revision,
+        { timeout: 15000 },
+      );
     const templateMs = performance.now() - templateAt;
     assert.equal(
       await page.locator('[data-count]').textContent(),
@@ -295,21 +344,25 @@ try {
       : undefined;
     // Observe rejection immediately while the browser update is still pending.
     immediateSsr?.catch((error) => errors.push(String(error)));
+    await armBrowserUpdate('style', revision);
     const cssAt = performance.now();
     await fs.writeFile(join(root, 'src/view.css'), css(revision));
-    await page.waitForFunction(
-      (n) => {
-        const element = document.querySelector('[data-message]');
-        return (
-          element &&
-          getComputedStyle(element)
-            .getPropertyValue('--fixture-revision')
-            .trim() === `${n}px`
-        );
-      },
-      revision,
-      { timeout: 15000 },
-    );
+    if (values['event-latency'])
+      await page.evaluate(() => globalThis.__analogUpdate);
+    else
+      await page.waitForFunction(
+        (n) => {
+          const element = document.querySelector('[data-message]');
+          return (
+            element &&
+            getComputedStyle(element)
+              .getPropertyValue('--fixture-revision')
+              .trim() === `${n}px`
+          );
+        },
+        revision,
+        { timeout: 15000 },
+      );
     const stylesheetMs = performance.now() - cssAt;
     const immediateStyleStatePreserved =
       (await page.locator('[data-count]').textContent()) === counter;
