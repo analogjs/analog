@@ -62,6 +62,7 @@ function countInlineStyleLiterals(arrayExpr: any): number {
 export async function inlineResourceUrls(
   code: string,
   fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
 ): Promise<InlineResourceResult> {
   const styleExtensions = new Map<number, string>();
 
@@ -69,7 +70,7 @@ export async function inlineResourceUrls(
     return { code, styleExtensions, resourceDependencies: [] };
   }
 
-  const { program } = parseSync(fileName, code);
+  program ??= parseSync(fileName, code).program;
   const ms = new MagicString(code);
   let changed = false;
   const dir = path.dirname(fileName);

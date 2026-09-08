@@ -303,31 +303,43 @@ describe('compilationAPIPlugin', () => {
 
   it('consumes an iterable compilation result without requiring an array', async () => {
     const filename = join(tempRoot, 'main.ts');
+    const secondFilename = join(tempRoot, 'second.ts');
+    const outputFiles = new Map();
     createAngularCompilationMock.mockResolvedValue({
       initialize: vi.fn().mockResolvedValue({
         externalStylesheets: new Map(),
         templateUpdates: new Map(),
       }),
-      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      diagnoseFiles: vi.fn().mockResolvedValue({
+        errors: [{ text: 'compilation error' }],
+        warnings: [{ text: 'compilation warning' }],
+      }),
       emitAffectedFiles: vi.fn(function* () {
         yield { filename, contents: 'export const fromCompiler = true;' };
+        yield {
+          filename: secondFilename,
+          contents: 'export const second = true;',
+        };
       }),
     });
     const { compilationAPIPlugin } =
       await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
-      workspaceRoot: tempRoot,
-      inlineStylesExtension: 'css',
-      jit: false,
-      liveReload: false,
-      disableTypeChecking: true,
-      supportedBrowsers: ['safari 15'],
-      fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
-      include: [],
-    });
+    const plugin = compilationAPIPlugin(
+      {
+        tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+        workspaceRoot: tempRoot,
+        inlineStylesExtension: 'css',
+        jit: false,
+        liveReload: false,
+        disableTypeChecking: true,
+        supportedBrowsers: ['safari 15'],
+        fileReplacements: [],
+        isTest: false,
+        isAstroIntegration: false,
+        include: [],
+      },
+      { outputFiles, classNames: new Map() },
+    );
     await (plugin.config as any)(
       { root: tempRoot, mode: 'development' },
       { command: 'serve', mode: 'development' },
@@ -351,6 +363,12 @@ describe('compilationAPIPlugin', () => {
       filename,
     );
     expect(result.code).toBe('export const fromCompiler = true;');
+    const firstOutput = outputFiles.get(filename)!;
+    const secondOutput = outputFiles.get(secondFilename)!;
+    expect(firstOutput.errors).toEqual(['compilation error']);
+    expect(firstOutput.warnings).toEqual(['compilation warning']);
+    expect(firstOutput.errors).toBe(secondOutput.errors);
+    expect(firstOutput.warnings).toBe(secondOutput.warnings);
   });
 
   it('hands the stylesheet registry to analog.setup configurators', async () => {

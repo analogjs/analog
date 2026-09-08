@@ -1,6 +1,6 @@
 // Copy into an installed consumer before running so imports use its toolchain.
 // node --expose-gc compiler-runtime-qualification.mjs --output=result.json
-//   --mode=ngtsc|fast|api --components=100 --edits=60 --duration-ms=900000
+//   --mode=ngtsc|fast|api --components=100 --edits=60 --duration-ms=240000
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { join, resolve } from 'node:path';

@@ -563,20 +563,31 @@ export function fastCompilePlugin(
       return { code: stripped.code, map: stripped.map };
     }
 
-    const hmrSignature =
+    const needsHmrSignature =
       watchMode &&
       pluginOptions.liveReload &&
       !pluginOptions.isTest &&
-      resolvedConfig.server.hmr !== false
-        ? componentHmrSignature(code, id)
+      resolvedConfig.server.hmr !== false;
+    const hasExternalResources =
+      code.includes('templateUrl') || code.includes('styleUrl');
+    // The HMR fingerprint and resource inliner both inspect the original
+    // decorator AST. Parse it once, then only parse a second time when inlining
+    // actually changes the source that reaches the compiler.
+    const originalParse =
+      needsHmrSignature || hasExternalResources
+        ? parseSync(id, code)
         : undefined;
+    const hmrSignature = needsHmrSignature
+      ? componentHmrSignature(code, id, originalParse)
+      : undefined;
     hmrSignatures.set(id, hmrSignature);
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation.
     // `styleExtensions` carries the source extension of each inlined external
     // style so it can be preprocessed by its own file type (e.g. an external
     // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
-    const inlined = await inlineResourceUrls(code, id);
+    const originalCode = code;
+    const inlined = await inlineResourceUrls(code, id, originalParse?.program);
     code = inlined.code;
     const { styleExtensions } = inlined;
 
@@ -586,10 +597,12 @@ export function fastCompilePlugin(
     // later edit to them never invalidates the owning module.
     resourceDependencies.replace(id, inlined.resourceDependencies);
 
-    // Single OXC parse of the post-inline source, shared by every AST
-    // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
-    // so its program can never be reused here.
-    const { program: oxcProgram } = parseSync(id, code);
+    // Share the post-inline AST with every compiler consumer, reusing the
+    // original parse only when resource inlining left the source unchanged.
+    const oxcProgram =
+      code === originalCode && originalParse
+        ? originalParse.program
+        : parseSync(id, code).program;
 
     // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
     // whenever a style needs a non-`css` preprocessor — either the configured

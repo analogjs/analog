@@ -6,10 +6,12 @@ import type { RegistryEntry } from './registry.js';
 export function componentHmrSignature(
   code: string,
   file: string,
+  parsed?: ReturnType<typeof parseSync>,
 ): string | undefined {
   try {
-    const { program, errors } = parseSync(file, code);
-    if (errors.length) return;
+    parsed ??= parseSync(file, code);
+    if (parsed.errors.length) return;
+    const { program } = parsed;
     const components = new Set<string>();
     for (const node of program.body) {
       if (

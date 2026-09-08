@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { parseSync } from 'oxc-parser';
 import { componentHmrSignature, generateHmrCode } from './hmr';
 import type { RegistryEntry } from './registry';
 
@@ -37,6 +38,17 @@ describe('fast component HMR qualification', () => {
   ])('accepts literal template/style edits', (updated) => {
     expect(signature).toBeTypeOf('string');
     expect(componentHmrSignature(updated, 'my.ts')).toBe(signature);
+  });
+
+  it('accepts a caller-owned parsed program', () => {
+    const parsed = parseSync('my.ts', source);
+    expect(componentHmrSignature(source, 'my.ts', parsed)).toBe(signature);
+  });
+
+  it('declines a caller-owned malformed parse', () => {
+    const malformed = parseSync('my.ts', `${source}\n@Component(`);
+    expect(malformed.errors.length).toBeGreaterThan(0);
+    expect(componentHmrSignature(source, 'my.ts', malformed)).toBeUndefined();
   });
 
   it.each([

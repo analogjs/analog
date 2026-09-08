@@ -2,9 +2,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import angular from '@analogjs/vite-plugin-angular';
+
+const { values } = parseArgs({
+  options: { output: { type: 'string', default: 'fast-behavior-result.json' } },
+});
 
 const root = await fs.mkdtemp(join(process.cwd(), 'fast-behavior-'));
 const files = {
@@ -97,8 +102,5 @@ try {
   await page.close();
   await browser.close();
   await server.close();
-  await fs.writeFile(
-    resolve(process.argv[2] ?? 'fast-behavior-result.json'),
-    JSON.stringify(result, null, 2),
-  );
+  await fs.writeFile(resolve(values.output), JSON.stringify(result, null, 2));
 }

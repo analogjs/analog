@@ -488,6 +488,15 @@ export function compilationAPIPlugin(
 
     const errors = diagnostics.errors?.length ? diagnostics.errors : [];
     const warnings = diagnostics.warnings?.length ? diagnostics.warnings : [];
+    // Diagnostics apply to the compilation, not to one emitted source file.
+    // Reusing the normalized arrays avoids allocating identical empty/error
+    // lists for every affected output during an incremental update.
+    const errorMessages = errors.map(
+      (error: { text?: string }) => error.text || '',
+    );
+    const warningMessages = warnings.map(
+      (warning: { text?: string }) => warning.text || '',
+    );
 
     const templateUpdates = mapTemplateUpdatesToFiles(
       compilationResult.templateUpdates,
@@ -531,10 +540,8 @@ export function compilationAPIPlugin(
       outputFiles.set(normalizedFilename, {
         content: file.contents,
         dependencies: [],
-        errors: errors.map((error: { text?: string }) => error.text || ''),
-        warnings: warnings.map(
-          (warning: { text?: string }) => warning.text || '',
-        ),
+        errors: errorMessages,
+        warnings: warningMessages,
         hmrUpdateCode: templateUpdate?.code ?? null,
         hmrEligible: !!templateUpdate?.code,
       });
