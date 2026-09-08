@@ -595,6 +595,37 @@ async function browserHmrCase(browser, mode, liveReload) {
                 .some((name) => name.startsWith('_ngcontent-')),
           ),
       );
+      await writeFile(join(root, 'src/shared.css'), '');
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll('[data-shared]')].every(
+            (element) =>
+              getComputedStyle(element).width !== '47px' &&
+              !element
+                .getAttributeNames()
+                .some((name) => name.startsWith('_ngcontent-')),
+          ),
+      );
+      await writeFile(
+        join(root, 'src/shared.css'),
+        '[data-shared] { width: 53px; }',
+      );
+      await page.waitForFunction(
+        () =>
+          [...document.querySelectorAll('[data-shared]')].length === 2 &&
+          [...document.querySelectorAll('[data-shared]')].every(
+            (element) =>
+              getComputedStyle(element).width === '53px' &&
+              element
+                .getAttributeNames()
+                .some((name) => name.startsWith('_ngcontent-')),
+          ),
+      );
+      assert.equal(
+        await page.locator('[data-testid="count"]').textContent(),
+        statefulHmr ? '1' : '0',
+        `${name}: empty stylesheet round-trip preserves the component state`,
+      );
       if (mode === 'default') {
         const sharedOwnerUpdates = socketMessages
           .flatMap((message) => {
