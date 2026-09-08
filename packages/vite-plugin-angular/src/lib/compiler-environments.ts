@@ -165,10 +165,14 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     const { config, resolved, env, context, resolvedContext } = configuration;
     const child = create();
     const watchedChanges = new Set<string>();
+    let restoreFetch: (() => void) | undefined;
     if (invalidate && watchChanges) {
       const configureServer = handler(child.configureServer);
       child.configureServer = async function (server) {
         const post = await configureServer?.call(this, server);
+        const live = server.environments[environment.name];
+        if (live && typeof live.fetchModule === 'function' && !restoreFetch)
+          restoreFetch = keepFetchCurrent(live);
         watchChanges(child, server, (file) => {
           const live = server.environments[environment.name];
           const resource = /\.(html?|css|s[ac]ss|less)$/.test(file);
@@ -183,6 +187,12 @@ export function isolateCompilerEnvironments<P extends Plugin>(
           }
         });
         return post;
+      };
+      const closeBundle = handler(child.closeBundle);
+      child.closeBundle = async function (...args) {
+        restoreFetch?.();
+        restoreFetch = undefined;
+        return closeBundle?.apply(this, args);
       };
     }
     function invalidateResources(
@@ -264,6 +274,41 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     }
     return isolated;
   }
+}
+
+function keepFetchCurrent(environment: DevEnvironment) {
+  const original = environment.fetchModule;
+  const fetchModule = original.bind(environment);
+  const current: DevEnvironment['fetchModule'] = async (
+    id,
+    importer,
+    options,
+  ) => {
+    let retry = false;
+    for (;;) {
+      const started = Date.now();
+      const result = await fetchModule(
+        id,
+        importer,
+        retry ? { ...options, cached: false } : options,
+      );
+      const module =
+        'id' in result && typeof result.id === 'string'
+          ? environment.moduleGraph.getModuleById(result.id)
+          : 'cache' in result
+            ? await environment.moduleGraph.getModuleByUrl(id)
+            : undefined;
+      if (!module || module.lastInvalidationTimestamp < started)
+        return retry && !('externalize' in result)
+          ? { ...result, invalidate: true }
+          : result;
+      retry = true;
+    }
+  };
+  environment.fetchModule = current;
+  return () => {
+    if (environment.fetchModule === current) environment.fetchModule = original;
+  };
 }
 
 function settleTruncatedSource(file: string): BeforeCompile {

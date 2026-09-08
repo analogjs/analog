@@ -293,11 +293,20 @@ describe('compiler environment selection', () => {
       expect.any(Function),
     );
     expect(graph.invalidateModule).toHaveBeenCalledTimes(1);
-    await Reflect.apply(hook(child.hotUpdate), { environment }, [
-      { file: '/src/view.css' },
-    ]);
+    await expect(
+      Reflect.apply(hook(child.hotUpdate), { environment }, [
+        { file: '/src/view.css' },
+      ]),
+    ).resolves.toBeUndefined();
     expect(defer).toHaveBeenCalledTimes(1);
     expect(graph.invalidateAll).not.toHaveBeenCalled();
+    await expect(
+      Reflect.apply(hook(child.hotUpdate), { environment }, [
+        { file: '/src/view.css', timestamp: 43 },
+      ]),
+    ).resolves.toBeUndefined();
+    expect(defer).toHaveBeenCalledTimes(2);
+    expect(graph.invalidateModule).toHaveBeenCalledTimes(2);
     change!('/src/app.ts');
     expect(graph.onFileChange).toHaveBeenCalledExactlyOnceWith('/src/app.ts');
     expect(defer).toHaveBeenLastCalledWith(
@@ -305,13 +314,87 @@ describe('compiler environment selection', () => {
       ['/src/app.ts'],
       expect.any(Function),
     );
-    await Reflect.apply(hook(child.hotUpdate), { environment }, [
-      { file: '/src/app.ts' },
-    ]);
-    expect(defer).toHaveBeenCalledTimes(2);
+    await expect(
+      Reflect.apply(hook(child.hotUpdate), { environment }, [
+        { file: '/src/app.ts' },
+      ]),
+    ).resolves.toBeUndefined();
+    expect(defer).toHaveBeenCalledTimes(3);
     change!('/src/cache.tsbuildinfo');
-    expect(defer).toHaveBeenCalledTimes(2);
+    expect(defer).toHaveBeenCalledTimes(3);
   });
+
+  it.each(['id', 'cache'])(
+    'keeps retrying an invalidated pending runner %s result',
+    async (kind) => {
+      let invalidated = true;
+      const fetchModule = vi
+        .fn()
+        .mockResolvedValueOnce(
+          kind === 'id'
+            ? { id: '/src/app.ts', code: 'stale' }
+            : { cache: true },
+        )
+        .mockResolvedValueOnce({ id: '/src/app.ts', code: 'still stale' })
+        .mockImplementationOnce(() => {
+          invalidated = false;
+          return Promise.resolve({ id: '/src/app.ts', code: 'fresh' });
+        });
+      const plugin = isolateCompilerEnvironments(
+        { name: 'compiler' },
+        () => ({ name: 'compiler' }),
+        vi.fn(),
+        undefined,
+        () => {},
+      );
+      Reflect.apply(hook(plugin.config), {}, [
+        {},
+        { command: 'serve', mode: 'development' },
+      ]);
+      await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
+      const environment = {
+        name: 'ssr',
+        config: { build: {} },
+        fetchModule,
+        moduleGraph: {
+          getModuleById: () => ({
+            lastInvalidationTimestamp: invalidated
+              ? Number.MAX_SAFE_INTEGER
+              : 0,
+          }),
+          getModuleByUrl: () => ({
+            lastInvalidationTimestamp: invalidated
+              ? Number.MAX_SAFE_INTEGER
+              : 0,
+          }),
+        },
+      };
+      const child = await Reflect.apply(
+        hook(plugin.applyToEnvironment),
+        plugin,
+        [environment],
+      );
+      await Reflect.apply(hook(plugin.configureServer), {}, [
+        { environments: { ssr: environment } },
+      ]);
+      await expect(
+        environment.fetchModule('/src/app.ts', undefined, { cached: true }),
+      ).resolves.toEqual({
+        id: '/src/app.ts',
+        code: 'fresh',
+        invalidate: true,
+      });
+      expect(fetchModule).toHaveBeenLastCalledWith('/src/app.ts', undefined, {
+        cached: false,
+      });
+      fetchModule.mockRejectedValueOnce(new Error('runner fetch failed'));
+      await expect(environment.fetchModule('/src/app.ts')).rejects.toThrow(
+        'runner fetch failed',
+      );
+      await Reflect.apply(hook(child.closeBundle), {}, []);
+      expect(environment.fetchModule).toBe(fetchModule);
+    },
+  );
 
   it('shares in-flight child initialization only for the exact environment', async () => {
     const initialized = Promise.withResolvers<void>();
