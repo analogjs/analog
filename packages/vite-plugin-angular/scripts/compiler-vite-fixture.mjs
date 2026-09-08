@@ -595,6 +595,9 @@ async function browserHmrCase(browser, mode, liveReload) {
                 .some((name) => name.startsWith('_ngcontent-')),
           ),
       );
+      const sharedCounter = await page
+        .locator('[data-testid="count"]')
+        .textContent();
       // Keep this distinct edit outside older Vite's 50 ms watcher throttle.
       await new Promise((resolve) => setTimeout(resolve, 100));
       await writeFile(join(root, 'src/shared.css'), '');
@@ -624,7 +627,7 @@ async function browserHmrCase(browser, mode, liveReload) {
       );
       assert.equal(
         await page.locator('[data-testid="count"]').textContent(),
-        statefulHmr ? '1' : '0',
+        sharedCounter,
         `${name}: empty stylesheet round-trip preserves the component state`,
       );
       if (mode === 'default') {
