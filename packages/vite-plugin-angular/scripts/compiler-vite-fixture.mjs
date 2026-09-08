@@ -595,6 +595,23 @@ async function browserHmrCase(browser, mode, liveReload) {
                 .some((name) => name.startsWith('_ngcontent-')),
           ),
       );
+      if (mode === 'default') {
+        const sharedOwnerUpdates = socketMessages
+          .flatMap((message) => {
+            const payload = JSON.parse(message);
+            return payload.type === 'update' ? (payload.updates ?? []) : [];
+          })
+          .filter(
+            (update) =>
+              update.type === 'js-update' &&
+              ['/src/shared-a.ts', '/src/shared-b.ts'].includes(update.path),
+          );
+        assert.deepEqual(
+          sharedOwnerUpdates,
+          [],
+          `${name}: resource metadata updates do not re-evaluate shared owners`,
+        );
+      }
     }
     results.push({
       name,

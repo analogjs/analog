@@ -684,7 +684,11 @@ function createPluginSet(
                 classNames,
               );
             }
-            return owners.map(markModuleSelfAccepting);
+            // The custom metadata event is the complete resource update. Letting
+            // Vite also re-evaluate these owners invokes Angular's metadata
+            // loader a second time for the same resource generation.
+            owners.forEach(markModuleSelfAccepting);
+            return [];
           }
           ctx.server.ws.send({ type: 'full-reload' });
           return [];
