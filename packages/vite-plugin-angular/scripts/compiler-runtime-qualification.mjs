@@ -3,7 +3,8 @@
 //   --mode=ngtsc|fast|api --components=100 --edits=60 --duration-ms=240000
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { createServer as createNetServer } from 'node:net';
 import { performance } from 'node:perf_hooks';
@@ -15,6 +16,12 @@ import {
 } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 import { chromium } from 'playwright';
+
+assert.equal(
+  await fs.realpath(process.cwd()),
+  await fs.realpath(dirname(fileURLToPath(import.meta.url))),
+  'Run the copied worker from its installed consumer directory',
+);
 
 const { values } = parseArgs({
   options: {
@@ -69,6 +76,8 @@ const records = [],
 const sockets = [];
 const result = {
   label: values.label,
+  consumerRoot: process.cwd(),
+  projectRoot: root,
   mode: values.mode,
   components: count,
   edits,
@@ -226,6 +235,10 @@ async function renderSsr(revision) {
     );
   const html = await module.render();
   const ms = performance.now() - start;
+  assert.ok(
+    html.includes(`ng-version="${result.angular}"`),
+    'SSR Angular version matches the packed consumer',
+  );
   assert.ok(html.includes(`REVISION_${revision}`), 'SSR template is current');
   const rendered = await browser.newPage();
   try {
@@ -306,6 +319,12 @@ try {
   await server.listen();
   if (values['ssr-first']) result.initialSsr = await renderSsr(0);
   await page.goto(origin);
+  await page.locator('[ng-version]').waitFor();
+  assert.equal(
+    await page.locator('[ng-version]').first().getAttribute('ng-version'),
+    result.angular,
+    'Browser Angular version matches the packed consumer',
+  );
   await page.waitForFunction(
     () =>
       document.querySelector('[data-message]')?.textContent === 'REVISION_0',

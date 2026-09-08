@@ -195,11 +195,13 @@ try {
         child: root.querySelector('[data-grand]').textContent,
       };
       return {
+        parent: window.__styleProof.parent,
         count: window.__styleProof.count,
         child: window.__styleProof.child,
       };
     });
     await new Promise((resolve) => setTimeout(resolve, 100));
+    const cssEventStart = events.length;
     if (index === 1)
       await write(
         'view.scss',
@@ -238,12 +240,22 @@ try {
         child: root.querySelector('[data-grand]').textContent,
       };
     });
-    records.push({ expected, before, ...proof });
+    const cssEvents = events.slice(cssEventStart);
+    records.push({ expected, before, ...proof, cssEvents });
     if (native) {
       assert.equal(proof.identity, true, 'native CSS preserves DOM nodes');
       assert.equal(proof.focus, true, 'native CSS preserves focus');
       assert.deepEqual(proof.selection, [1, 4]);
-      assert.equal(proof.parent, '1');
+      assert.equal(proof.parent, before.parent);
+      assert.equal(
+        cssEvents.some(
+          ([event]) =>
+            event === 'angular:component-update' ||
+            event?.type === 'full-reload',
+        ),
+        false,
+        'native CSS does not replace metadata or dispatch a reload',
+      );
       assert.equal(proof.count, before.count);
       assert.equal(proof.child, before.child);
     }
