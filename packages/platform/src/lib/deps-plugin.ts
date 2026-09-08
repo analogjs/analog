@@ -3,8 +3,6 @@ import type { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { Options } from './options.js';
-import { debugPlatform } from './utils/debug.js';
-import { getJsTransformConfigKey } from './utils/rolldown.js';
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot =
@@ -14,18 +12,10 @@ export function depsPlugin(options?: Options): Plugin[] {
     {
       name: 'analogjs-deps-plugin',
       config() {
-        // Skip Vite's built-in ts/js transform so `@analogjs/vite-plugin-angular`
-        // (when the user includes it) owns Angular file compilation. Users who
-        // run an alternative compiler or compile through Angular's own
-        // compilation API can override this in their own Vite config.
-        const transformConfig = { exclude: ['**/*.ts', '**/*.js'] };
-        debugPlatform('deps transform config', {
-          jsTransformKey: getJsTransformConfigKey(),
-          transformExcluded: true,
-        });
-
+        // Each Angular compiler mode configures Vite's TypeScript transform.
+        // The compilation API and fast compiler need its fallback for files
+        // outside Angular's program, including Nitro-only server helpers.
         return {
-          [getJsTransformConfigKey()]: transformConfig,
           ssr: {
             noExternal: [
               '@analogjs/**',
