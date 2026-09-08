@@ -16,6 +16,7 @@ const { values } = parseArgs({
     output: { type: 'string' },
     hmr: { type: 'boolean', default: false },
     'event-latency': { type: 'boolean', default: false },
+    edits: { type: 'string', default: '10' },
     mode: { type: 'string', default: 'ngtsc' },
   },
 });
@@ -23,6 +24,8 @@ assert.ok(values.root);
 assert.ok(['paired', 'ssr-idle', 'soak'].includes(values.phase));
 assert.ok(['ngtsc', 'fast', 'api'].includes(values.mode));
 assert.equal(process.version, 'v24.15.0');
+const edits = Number(values.edits);
+assert.ok(Number.isInteger(edits) && edits > 0);
 const root = resolve(values.root);
 const results = values.output ? resolve(values.output) : join(root, 'results');
 await fs.mkdir(results, { recursive: true });
@@ -79,7 +82,7 @@ async function run({
       `--warmup=${warmup}`,
       ...(serverFirst ? ['--ssr-first'] : []),
     );
-  else args.push('--components=1', '--edits=10');
+  else args.push('--components=1', `--edits=${edits}`);
   const started = Date.now();
   try {
     await execa(process.execPath, args, {
@@ -91,7 +94,7 @@ async function run({
     });
     const result = JSON.parse(await fs.readFile(output, 'utf8'));
     assert.equal(result.passed, true, name);
-    assert.equal(result.records.length, soak ? 60 : idle ? 5 : 10, name);
+    assert.equal(result.records.length, soak ? 60 : idle ? 5 : edits, name);
     assert.ok(Number.isFinite(result.shutdownMs), name);
     if (soak) {
       assert.equal(result.restarts.length, 3, name);

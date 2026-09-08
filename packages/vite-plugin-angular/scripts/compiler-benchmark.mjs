@@ -13,11 +13,14 @@ const { values } = parseArgs({
     baseline: { type: 'string' },
     candidate: { type: 'string' },
     output: { type: 'string' },
+    samples: { type: 'string', default: '5' },
   },
 });
 for (const key of ['baseline', 'candidate', 'output'])
   assert.ok(values[key], `--${key} is required`);
 const output = resolve(values.output);
+const samples = Number(values.samples);
+assert.ok(Number.isInteger(samples) && samples > 0);
 await mkdir(dirname(output), { recursive: true });
 const records = { baseline: [], candidate: [] };
 for (const name of Object.keys(records)) {
@@ -29,7 +32,7 @@ for (const name of Object.keys(records)) {
     join(resolve(values[name]), 'compiler-benchmark-worker.mjs'),
   );
 }
-for (let sample = 0; sample < 5; sample++) {
+for (let sample = 0; sample < samples; sample++) {
   for (const name of sample % 2
     ? ['candidate', 'baseline']
     : ['baseline', 'candidate']) {
@@ -44,7 +47,7 @@ for (let sample = 0; sample < 5; sample++) {
       },
     );
     records[name].push(JSON.parse(await readFile(record, 'utf8')));
-    console.log(`Completed ${name} sample ${sample + 1}/5`);
+    console.log(`Completed ${name} sample ${sample + 1}/${samples}`);
   }
 }
 for (const field of [
@@ -103,8 +106,7 @@ await writeFile(
   output,
   JSON.stringify(
     {
-      methodology:
-        'Five fresh processes per revision, alternating order; 20 Angular components; three builds per process; explicit GC with all three plugin sets retained; warm filesystem and package caches; same machine and toolchain. No claim about peak RSS or production application latency.',
+      methodology: `${samples} fresh processes per revision, alternating order; 20 Angular components; three builds per process; explicit GC with all three plugin sets retained; warm filesystem and package caches; same machine and toolchain. No claim about peak RSS or production application latency.`,
       metrics,
       records,
     },

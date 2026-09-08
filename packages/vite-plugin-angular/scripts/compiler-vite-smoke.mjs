@@ -277,7 +277,7 @@ if (values.angular === '22.0.0' && values.vite === '8.2.2') {
         strategy: 'metadata',
         externalize: false,
       });
-    if (mode === 'ngtsc')
+    if (mode !== 'fast')
       cases.push(
         ...['Emulated', 'None', 'ShadowDom'].map((encapsulation) => ({
           encapsulation,

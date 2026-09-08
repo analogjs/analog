@@ -192,6 +192,7 @@ export function compilationAPIPlugin(
   );
 
   const shouldUseNativeStyles = () =>
+    externalizeStylesRequested &&
     Number(viteVersion.split('.')[0]) >= 7 &&
     pluginOptions.componentStyleHmr !== 'metadata' &&
     !pluginOptions.jit &&
@@ -206,7 +207,7 @@ export function compilationAPIPlugin(
       watch: isTest ? testWatchMode : watchMode,
       liveReload: pluginOptions.liveReload,
       hmr: resolvedConfig?.server.hmr !== false,
-      externalizeStyles: externalizeStylesRequested || shouldUseNativeStyles(),
+      externalizeStyles: externalizeStylesRequested,
     }));
 
   function resolveTsConfigPath() {

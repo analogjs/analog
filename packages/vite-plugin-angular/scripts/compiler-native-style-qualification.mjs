@@ -23,9 +23,8 @@ const angularVersion = createRequire(import.meta.url)(
   '@angular/core/package.json',
 ).version;
 const native =
-  (values.mode === 'api'
-    ? Number(viteVersion.split('.')[0]) >= 7
-    : values.externalize) &&
+  values.externalize &&
+  (values.mode !== 'api' || Number(viteVersion.split('.')[0]) >= 7) &&
   Number(angularVersion.split('.')[0]) >= (values.mode === 'api' ? 21 : 20) &&
   values.mode !== 'fast' &&
   values.encapsulation !== 'ShadowDom' &&
