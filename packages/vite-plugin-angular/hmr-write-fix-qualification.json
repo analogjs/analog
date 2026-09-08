@@ -1,0 +1,62 @@
+{
+  "runtimeHead": "ca75a6d499a29fb765fe049db374f26319566585",
+  "sourceTree": "045f79d276f97738477f2112980d494d250dfddb",
+  "correctnessAccepted": false,
+  "openDefect": "Vite 6.0/ngtsc browser remains revision 3 after second restart expecting revision 4",
+  "tests": {
+    "passed": 995,
+    "skipped": 6
+  },
+  "splitProbes": {
+    "passed": 6,
+    "total": 6
+  },
+  "soaks": {
+    "passed": 9,
+    "total": 9,
+    "windowMs": 240000,
+    "processCapMs": 300000,
+    "pairs": 540,
+    "restarts": 27,
+    "drainedCallers": 900
+  },
+  "packed": {
+    "sourceHead": "ca75a6d499a29fb765fe049db374f26319566585",
+    "runtimeSourceTree": "045f79d276f97738477f2112980d494d250dfddb",
+    "candidateTarball": "/mnt/buildvol/tmp/snyder/analog-hmr-fetch-2521/candidate-final.tgz",
+    "candidateTarballSha256": "2b4b09ddea722407d3a14330bfd0235e9266f0e6e4d7ddc248729d523913519f",
+    "nativeWorkerSha256": "9b4a9376bf0ddd4d57436b95262ef33539023ef0a52d55686c8c009fe8f7fd56",
+    "node": "24.15.0",
+    "commands": [
+      "node runner.mjs --angular=22.0.0 --vite=6.0.0 --node-executable=/home/snyder/.local/share/fnm/node-versions/v24.15.0/installation/bin/node",
+      "node runner.mjs --angular=22.0.0 --vite=8.2.2 --node-executable=/home/snyder/.local/share/fnm/node-versions/v24.15.0/installation/bin/node"
+    ],
+    "results": {
+      "vite6.0.0": {
+        "consumer": "consumers/angular-22.0.0-vite-6.0.0-pluGHg",
+        "status": "failed",
+        "phase": "ngtsc runtime post-restart browser render barrier",
+        "failure": "page.waitForFunction timed out at runtime.mjs:477 waiting for REVISION_4; captured HTML remained REVISION_3. All four SSR/source-SSR records passed and no ssrFailure was recorded."
+      },
+      "vite8.2.2": {
+        "consumer": "consumers/angular-22.0.0-vite-8.2.2-KDuP2F",
+        "status": "passed",
+        "runtimeArtifacts": 23,
+        "styleQualification": "passed"
+      }
+    },
+    "note": "The Vite 6 and Vite 8 commands were concurrent. The Vite 6 failure is retained as a valid failed packed run and has not been replaced by a rerun."
+  },
+  "performance": {
+    "executed": false,
+    "historicalBrowserCellsPassed": 6,
+    "historicalBrowserCellsTotal": 12,
+    "maximumRegressionPercent": 5
+  },
+  "archive": {
+    "path": "evidence/hmr-write-fix/qualification-results.tar.gz",
+    "sha256": "59c01d1887e731f341f6211dc72d74e2d50319d6c127ce2502d38133cb7e98d6",
+    "bytes": 13818727,
+    "files": 704
+  }
+}

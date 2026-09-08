@@ -1,5 +1,7 @@
 # HMR p95 sprint: implementation and qualification
 
+> Historical measured cohort. See the [subsequent correctness repairs and stopping-point disposition](HMR_WRITE_FIX.md) for newer source, retained failures and the unexecuted next comparison.
+
 This follow-up to [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521) keeps the original acceptance limits: at most 5% regression in each browser median/p95 and each first/warm build median. The sprint began on 2026-09-08 at 03:18 UTC with a two-hour implementation budget and seven isolated worktrees. The maintainer's adoption decision remains in [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519).
 
 **The strict 5% acceptance gate remains unmet: 6/12 browser cells pass all four latency limits; first/warm build gates pass. The latency misses are detailed below. No overall speedup or completed performance-acceptance claim is made.**
