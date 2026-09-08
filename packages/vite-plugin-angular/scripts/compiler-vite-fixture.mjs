@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
@@ -574,15 +574,25 @@ async function browserHmrCase(browser, mode, liveReload) {
             .map((element) => element.textContent)
             .join(',') === 'a after,b after',
       );
-      await writeFile(
-        join(root, 'src/shared.css'),
-        '[data-shared] { width: 47px; }',
-      );
+      // A watcher can observe the truncate before the editor finishes writing.
+      // The compiler must consume Vite's stabilized HMR read, not emit an
+      // empty stylesheet that changes Angular's encapsulation to None.
+      const sharedStylesheet = await open(join(root, 'src/shared.css'), 'w');
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        await sharedStylesheet.writeFile('[data-shared] { width: 47px; }');
+      } finally {
+        await sharedStylesheet.close();
+      }
       await page.waitForFunction(
         () =>
           [...document.querySelectorAll('[data-shared]')].length === 2 &&
           [...document.querySelectorAll('[data-shared]')].every(
-            (element) => getComputedStyle(element).width === '47px',
+            (element) =>
+              getComputedStyle(element).width === '47px' &&
+              element
+                .getAttributeNames()
+                .some((name) => name.startsWith('_ngcontent-')),
           ),
       );
     }
