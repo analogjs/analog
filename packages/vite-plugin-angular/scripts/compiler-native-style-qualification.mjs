@@ -79,6 +79,7 @@ await write(
 const browser = await chromium.launch();
 const server = await createServer({
   root,
+  cacheDir: join(root, '.vite-cache'),
   configFile: false,
   logLevel: 'warn',
   plugins: [

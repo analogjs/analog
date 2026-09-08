@@ -261,4 +261,65 @@ if (values.angular === '22.0.0' && values.vite === '8.2.2') {
     timeout: 180000,
     killSignal: 'SIGKILL',
   });
+  copyFileSync(
+    join(scriptDirectory, 'compiler-native-style-qualification.mjs'),
+    join(root, 'native-styles.mjs'),
+  );
+  for (const mode of ['ngtsc', 'fast', 'api']) {
+    const cases = ['Emulated', 'None', 'ShadowDom'].map((encapsulation) => ({
+      encapsulation,
+      strategy: 'auto',
+      externalize: false,
+    }));
+    if (mode !== 'fast')
+      cases.push({
+        encapsulation: 'Emulated',
+        strategy: 'metadata',
+        externalize: false,
+      });
+    if (mode === 'ngtsc')
+      cases.push(
+        ...['Emulated', 'None', 'ShadowDom'].map((encapsulation) => ({
+          encapsulation,
+          strategy: 'auto',
+          externalize: true,
+        })),
+      );
+    for (const { encapsulation, strategy, externalize } of cases) {
+      const name = `runtime-native-${mode}-${encapsulation}-${strategy}${externalize ? '-external' : ''}`;
+      execaSync(
+        consumerNode,
+        [
+          'native-styles.mjs',
+          `--mode=${mode}`,
+          `--encapsulation=${encapsulation}`,
+          `--strategy=${strategy}`,
+          `--output=${name}.json`,
+          ...(externalize ? ['--externalize'] : []),
+        ],
+        {
+          cwd: root,
+          env: { ...env, NODE_ENV: 'development' },
+          stdio: 'inherit',
+          timeout: 180000,
+          killSignal: 'SIGKILL',
+        },
+      );
+    }
+  }
+  copyFileSync(
+    join(scriptDirectory, 'compiler-fast-behavior-qualification.mjs'),
+    join(root, 'fast-behavior.mjs'),
+  );
+  execaSync(
+    consumerNode,
+    ['fast-behavior.mjs', '--output=runtime-fast-behavior.json'],
+    {
+      cwd: root,
+      env: { ...env, NODE_ENV: 'development' },
+      stdio: 'inherit',
+      timeout: 180000,
+      killSignal: 'SIGKILL',
+    },
+  );
 }

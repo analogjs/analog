@@ -35,6 +35,7 @@ for (const [file, code] of Object.entries(files))
   await fs.writeFile(join(root, file), code);
 const server = await createServer({
   root,
+  cacheDir: join(root, '.vite-cache'),
   configFile: false,
   logLevel: 'silent',
   plugins: angular({

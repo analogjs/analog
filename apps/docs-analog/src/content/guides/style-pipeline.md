@@ -14,7 +14,9 @@ This is intentionally narrow:
 
 ## Component styles during development
 
-The default and experimental Compilation API compilers keep ordinary styles in Angular component metadata. Eligible CSS and template edits preserve component instance state through Angular HMR. Vite preprocessing (including Sass/Less and PostCSS) still runs, and file dependencies returned by preprocessors are watched.
+Ordinary ngtsc and fast-mode styles use Angular metadata HMR. Eligible updates preserve component instances, but Angular recreates their views, so focus, selection, and child state can change. With `experimental.componentStyleHmr: 'auto'` (the default), qualified external styles update existing stylesheet links and preserve that DOM state. This includes the Compilation API with Angular 21–22/Vite 7–8, and ngtsc with Angular 20–22 when an integration requires external styles. Templates, unsupported inline styles, ShadowDom, and unavailable stylesheet identities retain metadata or reload fallbacks.
+
+Set `experimental.componentStyleHmr: 'metadata'` for the earlier ordinary-style behavior. Vite preprocessing (including Sass/Less and PostCSS) still runs, and file dependencies returned by preprocessors are watched. See the [development update migration guide](./migrating-v2-to-v3#development-updates-and-component-styles) for qualification limits and SSR warming settings.
 
 An integration that needs arbitrary Vite CSS transform hooks, virtual CSS imports, or the live stylesheet registry must call `externalizeComponentStyles()` in its setup hook. Analog recognizes `@tailwindcss/vite` and selects externalization automatically. Externalization preserves those integrations but can require a page reload and reset component state. The fast compiler continues to inline styles through its existing preprocessing path.
 
