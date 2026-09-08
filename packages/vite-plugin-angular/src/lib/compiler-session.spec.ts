@@ -187,6 +187,37 @@ describe('compiler session', () => {
 });
 
 describe('deferred server compilation', () => {
+  it('retains a source barrier across an ungated duplicate invalidation', async () => {
+    const entered = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const reader = vi.fn(() => 'fresh');
+    const session = createCompilerSession(compile);
+    await session.start();
+    const barrier = vi.fn(() => {
+      entered.resolve();
+      return release.promise;
+    });
+    session.defer(['view.css'], barrier);
+    // A queued hot-update hook can arrive after the watcher published the
+    // source barrier. It must not make the first SSR read compile early.
+    session.defer(['view.css']);
+    const read = session.read(reader);
+    await Promise.race([
+      entered.promise,
+      read.then(() => {
+        throw new Error('SSR read bypassed the source barrier');
+      }),
+    ]);
+    expect(barrier).toHaveBeenCalledOnce();
+    expect(compile).toHaveBeenCalledTimes(1);
+    expect(reader).not.toHaveBeenCalled();
+    release.resolve();
+    await expect(read).resolves.toBe('fresh');
+    expect(compile).toHaveBeenLastCalledWith(['view.css']);
+    await session.close();
+  });
+
   it('holds concurrent SSR reads through a later source generation', async () => {
     const first = Promise.withResolvers<void>();
     const second = Promise.withResolvers<void>();

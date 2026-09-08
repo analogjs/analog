@@ -135,7 +135,8 @@ export function createCompilerSession(
       if (state._tag === 'Closing')
         throw new Error('Compiler session is closed');
       cancelWarmup(state);
-      for (const id of ids) state.dirty.set(id, beforeCompile);
+      for (const id of ids)
+        state.dirty.set(id, beforeCompile ?? state.dirty.get(id));
       if (state.readers && state.dirty.size)
         session.run([...state.dirty.keys()]);
     },

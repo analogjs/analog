@@ -6,7 +6,6 @@ import fs from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { createServer as createNetServer } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
 import {
@@ -173,16 +172,7 @@ await fs.writeFile(
     },
   }),
 );
-const reservation = createNetServer();
-await new Promise((done, fail) =>
-  reservation.once('error', fail).listen(0, '127.0.0.1', done),
-);
-const address = reservation.address();
-assert.ok(address && typeof address !== 'string');
-await new Promise((done, fail) =>
-  reservation.close((error) => (error ? fail(error) : done())),
-);
-const origin = `http://127.0.0.1:${address.port}`;
+let origin;
 const plugins = angular({
   workspaceRoot: root,
   tsconfig: join(root, 'tsconfig.json'),
@@ -207,7 +197,7 @@ const server = await createServer({
         },
       }
     : {}),
-  server: { host: '127.0.0.1', port: address.port, strictPort: true },
+  server: { host: '127.0.0.1', port: 0, strictPort: false },
 });
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -263,6 +253,26 @@ async function renderSsr(revision) {
       revision,
       { timeout: 5000 },
     );
+  } catch (error) {
+    result.ssrFailure = {
+      revision,
+      html,
+      renderedHtml: await rendered.content(),
+      sourceStyle: await fs.readFile(join(root, 'src/view.css'), 'utf8'),
+      style: await rendered.evaluate(() => {
+        const element = document.querySelector('[data-message]');
+        return {
+          element: element?.outerHTML,
+          computed: element
+            ? getComputedStyle(element).getPropertyValue('--fixture-revision')
+            : undefined,
+          links: [...document.querySelectorAll('link[rel="stylesheet"]')].map(
+            (link) => link.href,
+          ),
+        };
+      }),
+    };
+    throw error;
   } finally {
     await rendered.close();
   }
@@ -317,6 +327,9 @@ async function armBrowserUpdate(kind, revision) {
 }
 try {
   await server.listen();
+  const address = server.httpServer.address();
+  assert.ok(address && typeof address !== 'string');
+  origin = `http://127.0.0.1:${address.port}`;
   if (values['ssr-first']) result.initialSsr = await renderSsr(0);
   await page.goto(origin);
   await page.locator('[ng-version]').waitFor();
