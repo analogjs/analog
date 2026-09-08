@@ -74,12 +74,58 @@ try {
       });
       const page = await browser.newPage();
       const errors = [];
+      const consoleMessages = [];
+      const failedRequests = [];
+      const failedResponses = [];
+      const serverErrors = [];
+      const recordServerError = (error) => serverErrors.push(String(error));
+      server.httpServer?.on('error', recordServerError);
+      server.watcher.on('error', recordServerError);
+      const loggerError = server.config.logger.error.bind(server.config.logger);
+      server.config.logger.error = (message, options) => {
+        serverErrors.push(String(message));
+        loggerError(message, options);
+      };
       page.on('pageerror', (error) => errors.push(error.message));
+      page.on('console', (message) => {
+        if (message.type() === 'error') consoleMessages.push(message.text());
+      });
+      page.on('requestfailed', (request) => {
+        failedRequests.push({
+          url: request.url(),
+          failure: request.failure()?.errorText,
+        });
+      });
+      page.on('response', (response) => {
+        if (response.status() >= 400)
+          failedResponses.push({
+            url: response.url(),
+            status: response.status(),
+          });
+      });
       try {
         await server.listen();
         await page.goto(`http://127.0.0.1:${server.httpServer.address().port}`);
         const styles = page.locator('[data-style]');
-        await styles.first().waitFor();
+        try {
+          await styles.first().waitFor();
+        } catch (error) {
+          console.error(
+            'Style fixture bootstrap failed:',
+            JSON.stringify({
+              mode,
+              encapsulation,
+              url: page.url(),
+              pageErrors: errors,
+              consoleErrors: consoleMessages,
+              failedRequests,
+              failedResponses,
+              serverErrors,
+              html: await page.content().catch(() => '<unavailable>'),
+            }),
+          );
+          throw error;
+        }
         await page.locator('button').click();
         await page.waitForFunction(
           () => document.querySelector('button')?.textContent === '1',
