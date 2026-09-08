@@ -1,6 +1,8 @@
 # Effect compiler refactor: implementation and evidence log
 
-This is the canonical implementation and measurement record for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The PR remains a draft. Native `angular(options): Plugin[]` usage is retained; Effect `4.0.0-rc.112` is a prerelease runtime dependency of the compiler package.
+> Historical record. The qualified SSR invalidation fix is integrated. See [the current integration report](HMR_INTEGRATION.md) for lazy Effect loading, SSR warming, style capabilities, new qualification, and remaining latency cautions. Measurements below retain their original revisions and protocols.
+
+This file preserves the earlier implementation and measurement record for [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519). The PR remains a draft. Native `angular(options): Plugin[]` usage is retained; Effect `4.0.0-rc.112` is a prerelease runtime dependency of the compiler package.
 
 This log preserves historical measurements and records the HMR follow-up at `56001cdf1` separately. There is **no overall speedup claim**: import time and retained heap improve, while construction, several warm builds, development transforms, and independent SSR compilation have measured costs. The cause of the warm-build regressions has not been isolated.
 

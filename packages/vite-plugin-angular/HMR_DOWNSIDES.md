@@ -1,5 +1,7 @@
 # HMR downside investigation
 
+> Historical record. The qualified SSR invalidation fix is integrated. See [the current integration report](HMR_INTEGRATION.md) for lazy Effect loading, SSR warming, style capabilities, new qualification, and remaining latency cautions. Measurements below retain their original revisions and protocols.
+
 Follow-up to [analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521).
 Comparison control: `0cf3f80025f2c7db8080700a2ac63d1874598de1`, kept in
 `hmr-2521`. Work branch: `perf/hmr-downsides-2521`, branched from that control.

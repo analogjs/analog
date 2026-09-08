@@ -1,5 +1,7 @@
 Suggested title: **fix(vite-plugin-angular): invalidate SSR resource variants without clearing unrelated modules**
 
+> Historical record. The qualified SSR invalidation fix is integrated. See [the current integration report](HMR_INTEGRATION.md) for lazy Effect loading, SSR warming, style capabilities, new qualification, and remaining latency cautions. Measurements below retain their original revisions and protocols.
+
 ## PR Checklist
 
 Follow-up to [Effect compiler refactor analogjs/analog#2521](https://github.com/analogjs/analog/pull/2521), tracked by [analogjs/analog#2519](https://github.com/analogjs/analog/issues/2519).
