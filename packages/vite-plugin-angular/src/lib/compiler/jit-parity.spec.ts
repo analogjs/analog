@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 /**
  * Differential parity tests. The propDecorators object emitted by
  * Analog's JIT transform is normalized and compared against a reference
@@ -93,7 +94,7 @@ function rewriteImports(code: string): string {
 function firstClassName(code: string): string {
   const m = code.match(/(?:export\s+)?class\s+(\w+)/);
   if (!m) throw new Error('parity harness: no class declaration found');
-  return m[1];
+  return required(m[1]);
 }
 
 /** Normalize the emitted `propDecorators` from `{type: <stub>, args: [...]}`
@@ -151,7 +152,7 @@ const ref = {
       isSignal: true,
       required: !!opts.required,
     };
-    if (opts.alias !== undefined) args.alias = opts.alias;
+    if (opts.alias !== undefined) args['alias'] = opts.alias;
     return {
       [field]: [
         {
@@ -219,8 +220,8 @@ const ref = {
  *  empty-args (Analog) or property-name-as-arg (Angular) form. */
 function expectOutputNoAlias(meta: PropMeta, field: string) {
   expect(meta[field]).toHaveLength(1);
-  expect(meta[field][0].ngMetadataName).toBe('Output');
-  const arg0 = meta[field][0].args[0];
+  expect(required(required(meta[field])[0]).ngMetadataName).toBe('Output');
+  const arg0 = required(required(meta[field])[0]).args[0];
   expect(arg0 === undefined || arg0 === field).toBe(true);
 }
 
@@ -271,10 +272,13 @@ describe('JIT propDecorators parity with Angular reference', () => {
         @Component({ selector: 'x', template: '' })
         export class X { size = input(0, { transform: numberAttribute }); }
       `);
-      const opts = meta.size[0].args[0] as Record<string, unknown>;
-      expect(opts.transform).toBeUndefined();
-      expect(opts.isSignal).toBe(true);
-      expect(opts.required).toBe(false);
+      const opts = required(required(meta['size'])[0]).args[0] as Record<
+        string,
+        unknown
+      >;
+      expect(opts['transform']).toBeUndefined();
+      expect(opts['isSignal']).toBe(true);
+      expect(opts['required']).toBe(false);
     });
 
     it('drops transform from input.required() config', () => {
@@ -283,9 +287,12 @@ describe('JIT propDecorators parity with Angular reference', () => {
         @Component({ selector: 'x', template: '' })
         export class X { open = input.required({ transform: booleanAttribute }); }
       `);
-      const opts = meta.open[0].args[0] as Record<string, unknown>;
-      expect(opts.transform).toBeUndefined();
-      expect(opts.required).toBe(true);
+      const opts = required(required(meta['open'])[0]).args[0] as Record<
+        string,
+        unknown
+      >;
+      expect(opts['transform']).toBeUndefined();
+      expect(opts['required']).toBe(true);
     });
   });
 
@@ -298,7 +305,7 @@ describe('JIT propDecorators parity with Angular reference', () => {
         export class X { value = model(0); }
       `);
       expect(meta).toEqual(ref.model('value'));
-      expect(meta.valueChange).toBeUndefined();
+      expect(meta['valueChange']).toBeUndefined();
     });
 
     // Would have caught: model.required() silently non-required.
@@ -405,7 +412,7 @@ describe('JIT propDecorators parity with Angular reference', () => {
         r: [
           {
             ngMetadataName: 'ViewChild',
-            args: ['r', { read: STUBS.ElementRef, isSignal: true }],
+            args: ['r', { read: STUBS['ElementRef'], isSignal: true }],
           },
         ],
       });
@@ -437,9 +444,9 @@ describe('JIT propDecorators parity with Angular reference', () => {
         @Component({ selector: 'x', template: '' })
         export class X { @Input() name = input(); }
       `);
-      expect(meta.name).toHaveLength(1);
-      expect(meta.name[0].ngMetadataName).toBe('Input');
-      const arg0 = meta.name[0].args[0] as any;
+      expect(meta['name']).toHaveLength(1);
+      expect(required(required(meta['name'])[0]).ngMetadataName).toBe('Input');
+      const arg0 = required(required(meta['name'])[0]).args[0] as any;
       expect(arg0?.isSignal).toBeUndefined();
     });
 
@@ -449,9 +456,9 @@ describe('JIT propDecorators parity with Angular reference', () => {
         @Component({ selector: 'x', template: '' })
         export class X { @Input() value = model(0); }
       `);
-      expect(meta.value).toHaveLength(1);
-      expect(meta.value[0].ngMetadataName).toBe('Input');
-      expect(meta.valueChange).toBeUndefined();
+      expect(meta['value']).toHaveLength(1);
+      expect(required(required(meta['value'])[0]).ngMetadataName).toBe('Input');
+      expect(meta['valueChange']).toBeUndefined();
     });
 
     it('@ViewChild on a field with viewChild() — only the explicit decorator', () => {
@@ -460,9 +467,9 @@ describe('JIT propDecorators parity with Angular reference', () => {
         @Component({ selector: 'x', template: '<div #r></div>' })
         export class X { @ViewChild('r') r = viewChild('r'); }
       `);
-      expect(meta.r).toHaveLength(1);
-      expect(meta.r[0].ngMetadataName).toBe('ViewChild');
-      const arg1 = meta.r[0].args[1] as any;
+      expect(meta['r']).toHaveLength(1);
+      expect(required(required(meta['r'])[0]).ngMetadataName).toBe('ViewChild');
+      const arg1 = required(required(meta['r'])[0]).args[1] as any;
       expect(arg1?.isSignal).toBeUndefined();
     });
   });

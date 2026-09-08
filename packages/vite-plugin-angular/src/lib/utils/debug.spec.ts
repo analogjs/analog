@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('obug', () => ({
@@ -115,7 +116,7 @@ describe('applyDebugOption logFile (angular)', () => {
   it('uses provided workspaceRoot for file path', () => {
     applyDebugOption({ logFile: true }, '/custom/root');
     const callArgs = vi.mocked(wrapInstancesForFileLog).mock.calls[0];
-    expect(callArgs[1]).toContain('/custom/root');
+    expect(required(callArgs)[1]).toContain('/custom/root');
   });
 
   it('wraps only angular instances (single call)', () => {

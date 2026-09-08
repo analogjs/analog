@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { encapsulationPlugin } from './encapsulation-plugin.js';
+import {
+  encapsulationPlugin,
+  isComponentStyleSheet,
+} from './encapsulation-plugin.js';
 
 const transform = (code: string, id: string) =>
   (encapsulationPlugin().transform as any)(code, id) as
@@ -7,6 +10,15 @@ const transform = (code: string, id: string) =>
     | undefined;
 
 describe('encapsulationPlugin', () => {
+  it.each([2, 3])(
+    'recognizes Angular bare ngcomp queries for encapsulation %s',
+    (encapsulation) => {
+      expect(
+        isComponentStyleSheet(`/abc.css?direct&ngcomp&e=${encapsulation}`),
+      ).toBe(true);
+      expect(isComponentStyleSheet('/abc.css?unrelated=ngcomp')).toBe(false);
+    },
+  );
   it('rewrites :host for emulated component stylesheet requests', () => {
     const result = transform(
       ':host { display: block; }',

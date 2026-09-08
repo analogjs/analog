@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { describe, it, expect } from 'vitest';
 import {
   scanDtsFile,
@@ -17,10 +18,10 @@ declare class RouterLinkActive {
 `;
     const entries = scanDtsFile(dts, 'router.d.ts');
     expect(entries).toHaveLength(1);
-    expect(entries[0].selector).toBe('[routerLinkActive]');
-    expect(entries[0].kind).toBe('directive');
-    expect(entries[0].className).toBe('RouterLinkActive');
-    expect(entries[0].inputs).toEqual({
+    expect(required(entries[0]).selector).toBe('[routerLinkActive]');
+    expect(required(entries[0]).kind).toBe('directive');
+    expect(required(entries[0]).className).toBe('RouterLinkActive');
+    expect(required(entries[0]).inputs).toEqual({
       routerLinkActiveOptions: {
         classPropertyName: 'routerLinkActiveOptions',
         bindingPropertyName: 'routerLinkActiveOptions',
@@ -40,7 +41,7 @@ declare class RouterLinkActive {
         required: false,
       },
     });
-    expect(entries[0].outputs).toEqual({
+    expect(required(entries[0]).outputs).toEqual({
       isActiveChange: 'isActiveChange',
     });
   });
@@ -54,9 +55,9 @@ declare class MyComponent {
 `;
     const entries = scanDtsFile(dts, 'comp.d.ts');
     expect(entries).toHaveLength(1);
-    expect(entries[0].selector).toBe('my-comp');
-    expect(entries[0].kind).toBe('component');
-    expect(entries[0].inputs!['title']).toEqual({
+    expect(required(entries[0]).selector).toBe('my-comp');
+    expect(required(entries[0]).kind).toBe('component');
+    expect(required(entries[0]).inputs!['title']).toEqual({
       classPropertyName: 'title',
       bindingPropertyName: 'title',
       isSignal: false,
@@ -74,9 +75,9 @@ declare class AsyncPipe {
 `;
     const entries = scanDtsFile(dts, 'pipe.d.ts');
     expect(entries).toHaveLength(1);
-    expect(entries[0].kind).toBe('pipe');
-    expect(entries[0].pipeName).toBe('async');
-    expect(entries[0].selector).toBe('async');
+    expect(required(entries[0]).kind).toBe('pipe');
+    expect(required(entries[0]).pipeName).toBe('async');
+    expect(required(entries[0]).selector).toBe('async');
   });
 
   it('should detect signal inputs with isSignal flag', () => {
@@ -88,8 +89,13 @@ declare class RouterOutlet {
 `;
     const entries = scanDtsFile(dts, 'outlet.d.ts');
     expect(entries).toHaveLength(1);
-    expect(entries[0].inputs!['name'].isSignal).toBe(false);
-    expect(entries[0].inputs!['routerOutletData'].isSignal).toBe(true);
+    expect(
+      required(required(required(entries[0]).inputs)!['name']).isSignal,
+    ).toBe(false);
+    expect(
+      required(required(required(entries[0]).inputs)!['routerOutletData'])
+        .isSignal,
+    ).toBe(true);
   });
 
   it('should handle aliased inputs', () => {
@@ -101,11 +107,15 @@ declare class NgModel {
 `;
     const entries = scanDtsFile(dts, 'forms.d.ts');
     expect(entries).toHaveLength(1);
-    expect(entries[0].inputs!['isDisabled'].bindingPropertyName).toBe(
-      'disabled',
-    );
-    expect(entries[0].inputs!['model'].bindingPropertyName).toBe('ngModel');
-    expect(entries[0].outputs!['update']).toBe('ngModelChange');
+    expect(
+      required(required(required(entries[0]).inputs)!['isDisabled'])
+        .bindingPropertyName,
+    ).toBe('disabled');
+    expect(
+      required(required(required(entries[0]).inputs)!['model'])
+        .bindingPropertyName,
+    ).toBe('ngModel');
+    expect(required(entries[0]).outputs!['update']).toBe('ngModelChange');
   });
 
   it('should skip files without Angular declarations', () => {
@@ -130,8 +140,8 @@ declare class DirectiveB {
 `;
     const entries = scanDtsFile(dts, 'multi.d.ts');
     expect(entries).toHaveLength(2);
-    expect(entries[0].className).toBe('DirectiveA');
-    expect(entries[1].className).toBe('DirectiveB');
+    expect(required(entries[0]).className).toBe('DirectiveA');
+    expect(required(entries[1]).className).toBe('DirectiveB');
   });
 });
 
@@ -148,10 +158,13 @@ declare class MyDir {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].selector).toBe('[myDir]');
-    expect(entries[0].kind).toBe('directive');
-    expect(entries[0].inputs!['color'].bindingPropertyName).toBe('color');
-    expect(entries[0].outputs!['colorChange']).toBe('colorChange');
+    expect(required(entries[0]).selector).toBe('[myDir]');
+    expect(required(entries[0]).kind).toBe('directive');
+    expect(
+      required(required(required(entries[0]).inputs)!['color'])
+        .bindingPropertyName,
+    ).toBe('color');
+    expect(required(entries[0]).outputs!['colorChange']).toBe('colorChange');
   });
 
   it('extracts pipe name from .d.ts', () => {
@@ -166,8 +179,8 @@ declare class CurrencyPipe {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].kind).toBe('pipe');
-    expect(entries[0].pipeName).toBe('currency');
+    expect(required(entries[0]).kind).toBe('pipe');
+    expect(required(entries[0]).pipeName).toBe('currency');
   });
 });
 
@@ -185,9 +198,9 @@ declare class SharedModule {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].kind).toBe('ngmodule');
-    expect(entries[0].className).toBe('SharedModule');
-    expect(entries[0].exports).toContain('ButtonComponent');
+    expect(required(entries[0]).kind).toBe('ngmodule');
+    expect(required(entries[0]).className).toBe('SharedModule');
+    expect(required(entries[0]).exports).toContain('ButtonComponent');
   });
 });
 

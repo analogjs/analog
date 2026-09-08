@@ -1,3 +1,4 @@
+import { stripQuery } from './module-id.js';
 // Shared Vite plugin helpers for routing component resources (templates)
 // through virtual module ids. Both angular-vite-plugin and fast-compile-plugin
 // use these so the rewriting + loading behavior stays in sync between them.
@@ -24,7 +25,7 @@ function resolveImportPath(
   id: string,
   importer: string | undefined,
 ): string | undefined {
-  const filePath = id.split('?')[0];
+  const filePath = stripQuery(id);
   return isAbsolute(filePath)
     ? normalizePath(filePath)
     : importer

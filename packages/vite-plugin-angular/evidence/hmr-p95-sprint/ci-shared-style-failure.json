@@ -1,0 +1,60 @@
+{
+  "name": "browser-default-live-reload-true",
+  "failure": {
+    "name": "TimeoutError",
+    "message": "page.waitForFunction: Timeout 30000ms exceeded.",
+    "stack": "page.waitForFunction: Timeout 30000ms exceeded.\n    at browserHmrCase (/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/fixture.mjs:581:18)\n    at async file:///home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/fixture.mjs:663:7"
+  },
+  "errors": [],
+  "consoleMessages": [
+    "[vite] connecting...",
+    "[vite] connected.",
+    "Angular is running in development mode."
+  ],
+  "socketMessages": [
+    "{\"type\":\"connected\"}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fapp.component.ts%40AppComponent\",\"timestamp\":1788842009851}}",
+    "{\"type\":\"update\",\"updates\":[{\"type\":\"js-update\",\"timestamp\":1788842009799,\"path\":\"/src/app.component.ts\",\"acceptedPath\":\"/src/app.component.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false}]}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fapp.component.ts%40AppComponent\",\"timestamp\":1788842009895}}",
+    "{\"type\":\"update\",\"updates\":[{\"type\":\"js-update\",\"timestamp\":1788842009854,\"path\":\"/src/app.component.ts\",\"acceptedPath\":\"/src/app.component.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false}]}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fapp.component.ts%40AppComponent\",\"timestamp\":1788842009946}}",
+    "{\"type\":\"update\",\"updates\":[{\"type\":\"js-update\",\"timestamp\":1788842009908,\"path\":\"/src/app.component.ts\",\"acceptedPath\":\"/src/app.component.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false}]}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fapp.component.ts%40AppComponent\",\"timestamp\":1788842010095}}",
+    "{\"type\":\"update\",\"updates\":[{\"type\":\"js-update\",\"timestamp\":1788842010060,\"path\":\"/src/app.component.ts\",\"acceptedPath\":\"/src/app.component.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false}]}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fshared-a.ts%40SharedA\",\"timestamp\":1788842010155}}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fshared-b.ts%40SharedB\",\"timestamp\":1788842010155}}",
+    "{\"type\":\"update\",\"updates\":[{\"type\":\"js-update\",\"timestamp\":1788842010113,\"path\":\"/src/shared-a.ts\",\"acceptedPath\":\"/src/shared-a.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false},{\"type\":\"js-update\",\"timestamp\":1788842010113,\"path\":\"/src/shared-b.ts\",\"acceptedPath\":\"/src/shared-b.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false}]}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fshared-a.ts%40SharedA\",\"timestamp\":1788842010216}}",
+    "{\"type\":\"custom\",\"event\":\"angular:component-update\",\"data\":{\"id\":\"src%2Fshared-b.ts%40SharedB\",\"timestamp\":1788842010216}}",
+    "{\"type\":\"update\",\"updates\":[{\"type\":\"js-update\",\"timestamp\":1788842010172,\"path\":\"/src/shared-a.ts\",\"acceptedPath\":\"/src/shared-a.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false},{\"type\":\"js-update\",\"timestamp\":1788842010172,\"path\":\"/src/shared-b.ts\",\"acceptedPath\":\"/src/shared-b.ts\",\"explicitImportRequired\":false,\"isWithinCircularImport\":false}]}"
+  ],
+  "fileEvents": [
+    {
+      "event": "change",
+      "path": "/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/src/view.html"
+    },
+    {
+      "event": "change",
+      "path": "/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/src/view.html"
+    },
+    {
+      "event": "change",
+      "path": "/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/src/view.css"
+    },
+    {
+      "event": "change",
+      "path": "/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/src/view.html"
+    },
+    {
+      "event": "change",
+      "path": "/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/src/shared.html"
+    },
+    {
+      "event": "change",
+      "path": "/home/runner/work/analog/analog/dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-q9Xe6Y/src/shared.css"
+    }
+  ],
+  "compiledModules": [],
+  "html": "<!DOCTYPE html><html><head><script type=\"module\" src=\"/@vite/client\"></script>\n<style>[data-testid=\"message\"][_ngcontent-ng-c3504341005] { width: 37px; }</style></head><body><app-root ng-version=\"22.0.0\" _nghost-ng-c3504341005=\"\"><p _ngcontent-ng-c3504341005=\"\" data-testid=\"message\">after CSS</p><button _ngcontent-ng-c3504341005=\"\" data-testid=\"count\">1</button><child-a _ngcontent-ng-c3504341005=\"\" _nghost-ng-c21939290=\"\"><p data-shared=\"\">a after</p></child-a><child-b _ngcontent-ng-c3504341005=\"\" _nghost-ng-c1803439225=\"\"><p data-shared=\"\">b after</p></child-b></app-root><script type=\"module\" src=\"/src/browser.ts\"></script></body></html>",
+  "component": "import { injectQuery as __vite__injectQuery } from \"/@vite/client\";import { createHotContext as __vite__createHotContext } from \"/@vite/client\";import.meta.hot = __vite__createHotContext(\"/src/app.component.ts\");import { replaceMetadata as __analogReplaceMetadata } from \"/@id/__x00__virtual:analog-component-style-hmr\";\nimport \"/@id/__x00__virtual:analog-component-style-hmr\";\nimport { Component } from \"/node_modules/.vite/deps/@angular_core.js?v=2e6af73f\";\nimport { SharedA } from \"/src/shared-a.ts?t=1788842010172\";\nimport { SharedB } from \"/src/shared-b.ts?t=1788842010172\";\nimport * as i0 from \"/node_modules/.vite/deps/@angular_core.js?v=2e6af73f\";\nexport class AppComponent {\n    count = 0;\n    static ɵfac = function AppComponent_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || AppComponent)(); };\n    static ɵcmp = /*@__PURE__*/ i0.ɵɵdefineComponent({ type: AppComponent, selectors: [[\"app-root\"]], decls: 6, vars: 1, consts: [[\"data-testid\", \"message\"], [\"data-testid\", \"count\", 3, \"click\"]], template: function AppComponent_Template(rf, ctx) { if (rf & 1) {\n            i0.ɵɵelementStart(0, \"p\", 0);\n            i0.ɵɵtext(1, \"after CSS\");\n            i0.ɵɵelementEnd();\n            i0.ɵɵelementStart(2, \"button\", 1);\n            i0.ɵɵlistener(\"click\", function AppComponent_Template_button_click_2_listener() { return ctx.count = ctx.count + 1; });\n            i0.ɵɵtext(3);\n            i0.ɵɵelementEnd();\n            i0.ɵɵelement(4, \"child-a\")(5, \"child-b\");\n        } if (rf & 2) {\n            i0.ɵɵadvance(3);\n            i0.ɵɵtextInterpolate(ctx.count);\n        } }, dependencies: [SharedA, SharedB], styles: [\"[data-testid=\\\"message\\\"][_ngcontent-%COMP%] { width: 37px; }\"] });\n}\n(() => { (typeof ngDevMode === \"undefined\" || ngDevMode) && i0.ɵsetClassMetadata(AppComponent, [{\n        type: Component,\n        args: [{ selector: 'app-root', standalone: true, imports: [SharedA, SharedB], template: \"<p data-testid=\\\"message\\\">after CSS</p><button data-testid=\\\"count\\\" (click)=\\\"count=count+1\\\">{{count}}</button><child-a/><child-b/>\", styles: [\"[data-testid=\\\"message\\\"] { width: 37px; }\"] }]\n    }], null, null); })();\n(() => { (typeof ngDevMode === \"undefined\" || ngDevMode) && i0.ɵsetClassDebugInfo(AppComponent, { className: \"AppComponent\", filePath: \"src/app.component.ts\", lineNumber: 1 }); })();\n(() => { const id = \"src%2Fapp.component.ts%40AppComponent\"; function AppComponent_HmrLoad(t) { import(/* @vite-ignore */\n__vite__injectQuery(i0.ɵɵgetReplaceMetadataURL(id, t, import.meta.url), 'import')).then(m => m.default && __analogReplaceMetadata(i0.ɵɵreplaceMetadata, AppComponent, m.default, [i0], [SharedA, SharedB, Component], import.meta, id)); } (typeof ngDevMode === \"undefined\" || ngDevMode) && AppComponent_HmrLoad(Date.now()); (typeof ngDevMode === \"undefined\" || ngDevMode) && (import.meta.hot && import.meta.hot.on(\"angular:component-update\", d => d.id === id && AppComponent_HmrLoad(d.timestamp))); })();"
+}

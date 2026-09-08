@@ -7,10 +7,11 @@ const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
 const temporaryWorkspaceRoots = new Set<string>();
 
-async function setupLegacyTransformPlugin() {
+async function setupLegacyTransformPlugin(development = false) {
   vi.resetModules();
-  process.env['NODE_ENV'] = 'test';
-  process.env['VITEST'] = 'true';
+  process.env['NODE_ENV'] = development ? 'development' : 'test';
+  if (development) delete process.env['VITEST'];
+  else process.env['VITEST'] = 'true';
 
   const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-transform-'));
   temporaryWorkspaceRoots.add(workspaceRoot);
@@ -20,6 +21,8 @@ async function setupLegacyTransformPlugin() {
 
   const mockBuilder = {
     emit: vi.fn(),
+    getSyntacticDiagnostics: vi.fn().mockReturnValue([]),
+    getSemanticDiagnostics: vi.fn().mockReturnValue([]),
     emitNextAffectedFile: vi.fn().mockReturnValue(false),
     getProgram: vi.fn().mockReturnValue({
       getTypeChecker: vi.fn(),
@@ -27,11 +30,12 @@ async function setupLegacyTransformPlugin() {
     getSourceFile: vi.fn().mockReturnValue(undefined),
   };
 
-  vi.doMock('typescript', () => ({
+  const mockTypeScript = {
     sys: {
       readFile: vi.fn(),
     },
     ScriptTarget: { Latest: 99 },
+    DiagnosticCategory: { Error: 1, Warning: 0 },
     readBuilderProgram: vi.fn().mockReturnValue(undefined),
     createAbstractBuilder: vi.fn().mockReturnValue(mockBuilder),
     createEmitAndSemanticDiagnosticsBuilderProgram: vi
@@ -40,6 +44,10 @@ async function setupLegacyTransformPlugin() {
     createIncrementalCompilerHost: vi.fn().mockReturnValue({}),
     createPrinter: vi.fn().mockReturnValue({ printNode: vi.fn() }),
     createSourceFile: vi.fn().mockReturnValue({}),
+  };
+  vi.doMock('typescript', () => ({
+    ...mockTypeScript,
+    default: mockTypeScript,
   }));
 
   vi.doMock('@angular/compiler-cli', () => ({
@@ -48,6 +56,7 @@ async function setupLegacyTransformPlugin() {
     readConfiguration: vi.fn(() => ({
       options: {},
       rootNames: [`${workspaceRoot}/src/app/app.component.ts`],
+      errors: [],
     })),
   }));
 
@@ -67,9 +76,7 @@ async function setupLegacyTransformPlugin() {
     mergeTransformers: vi.fn(() => ({})),
   }));
 
-  // Keep this spec scoped to the "Angular emitted nothing" guard. Pulling in
-  // the real Analog compiler plugin would exercise the emitter stack instead
-  // of the opt-out behavior this regression test is protecting.
+  // Substitute integration so these cases isolate the Vite transform boundary.
   vi.doMock('./analog-compiler-plugin.js', () => ({
     analogCompilerPlugin: vi.fn(() => ({
       name: 'mock-analog-compiler-plugin',
@@ -83,6 +90,7 @@ async function setupLegacyTransformPlugin() {
     },
     SourceFileCache: class {
       invalidate = vi.fn();
+      reset = vi.fn();
     },
     angularFullVersion: 200000,
     createAngularCompilation: vi.fn(),
@@ -91,6 +99,7 @@ async function setupLegacyTransformPlugin() {
 
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
+    jit: true,
     tsconfig: tsconfigPath,
     workspaceRoot,
     experimental: {
@@ -120,7 +129,7 @@ async function setupLegacyTransformPlugin() {
     warn: vi.fn(),
   });
 
-  return { plugin, workspaceRoot };
+  return { plugin, workspaceRoot, mockBuilder };
 }
 
 describe('legacy Angular transform', () => {
@@ -154,10 +163,58 @@ describe('legacy Angular transform', () => {
     }
   });
 
+  it('emits once per generation while refreshing output, maps and diagnostics after invalidation', async () => {
+    const { plugin, workspaceRoot, mockBuilder } =
+      await setupLegacyTransformPlugin(true);
+    const id = `${workspaceRoot}/src/app/app.component.ts`;
+    let revision = 1;
+    mockBuilder.getSourceFile.mockReturnValue({ fileName: id, statements: [] });
+    mockBuilder.emit.mockImplementation(
+      (_source: unknown, write: (file: string, code: string) => void) => {
+        write(id.replace('.ts', '.js'), `export const revision = ${revision};`);
+        write(
+          id.replace('.ts', '.js.map'),
+          JSON.stringify({
+            version: 3,
+            sources: [id],
+            sourcesContent: [`revision ${revision}`],
+            names: [],
+            mappings: 'AAAA',
+          }),
+        );
+      },
+    );
+    const context = { addWatchFile: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const transform = () =>
+      plugin.transform.handler.call(
+        context,
+        `export const revision = ${revision};`,
+        id,
+      );
+    try {
+      const first = await transform();
+      expect(await transform()).toEqual(first);
+      expect(mockBuilder.emit).toHaveBeenCalledTimes(1);
+      revision = 2;
+      mockBuilder.getSyntacticDiagnostics.mockReturnValue([
+        { category: 1, messageText: 'updated diagnostic' },
+      ]);
+      await plugin.api.invalidate([id]);
+      const next = await transform();
+      expect(await transform()).toEqual(next);
+      expect(mockBuilder.emit).toHaveBeenCalledTimes(2);
+      expect(next.code).toContain('revision = 2');
+      expect(JSON.stringify(next.map)).toContain('revision 2');
+      expect(context.error).toHaveBeenCalledWith('updated diagnostic');
+    } finally {
+      await plugin.closeWatcher();
+    }
+  }, 15_000);
+
   it('returns undefined when Angular did not emit the requested TS file', async () => {
     const { plugin, workspaceRoot } = await setupLegacyTransformPlugin();
     const transformHook = plugin.transform.handler;
-    const id = `${workspaceRoot}/enterpriseOS/schema/src/gdm/identifiers.ts`;
+    const id = `${workspaceRoot}/libs/shared/src/identifiers.ts`;
 
     const result = await transformHook.call(
       {
@@ -165,7 +222,7 @@ describe('legacy Angular transform', () => {
         error: vi.fn(),
         warn: vi.fn(),
       },
-      'export const DvsEntityUuidSchema = {};',
+      'export const identifier = "example";',
       id,
     );
 

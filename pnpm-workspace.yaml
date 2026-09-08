@@ -108,7 +108,7 @@ catalog:
   cpy-cli: ^7.0.0
   defu: ^6.1.4
   destr: ^2.0.5
-  effect: 4.0.0-beta.36
+  effect: 4.0.0-rc.112
   eslint: ^10.1.0
   eslint-config-prettier: 10.1.8
   eslint-plugin-oxlint: ^1.57.0
@@ -116,6 +116,7 @@ catalog:
   eslint-plugin-storybook: 10.3.5
   front-matter: ^4.0.2
   es-toolkit: ^1.45.1
+  esbuild: 0.28.0
   execa: ^9.6.1
   fast-glob: ^3.3.3
   fd-package-json: ^2.0.0

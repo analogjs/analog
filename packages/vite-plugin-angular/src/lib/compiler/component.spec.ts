@@ -8,6 +8,7 @@ import { compile as rawCompile } from './compile';
 import { scanFile } from './registry';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
 import { ANGULAR_MAJOR } from './angular-version';
+import { parseSync } from 'oxc-parser';
 
 // Angular 19 ships several features in fundamentally different shapes
 // from v20+: `@defer` dependency emission predates the
@@ -2209,6 +2210,23 @@ describe('OXC-based resource inlining', () => {
       export class ExtComponent {}
     `,
       __dirname + '/__fixtures__/test.component.ts',
+    );
+
+    expect(result).not.toContain('templateUrl');
+    expect(result).toContain('template:');
+  });
+
+  it('uses a caller-owned AST when inlining resources', async () => {
+    const source = `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-ext', templateUrl: './test.component.html' })
+      export class ExtComponent {}
+    `;
+    const file = __dirname + '/__fixtures__/test.component.ts';
+    const { code: result } = await inlineResourceUrls(
+      source,
+      file,
+      parseSync(file, source).program,
     );
 
     expect(result).not.toContain('templateUrl');

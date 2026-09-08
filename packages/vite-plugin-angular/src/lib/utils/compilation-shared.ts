@@ -1,10 +1,13 @@
+import { angularFullVersion } from './devkit.js';
+import { stripQuery, splitComponentId } from './module-id.js';
+import { resolveHmrSource } from './component-hmr-id.js';
 /**
  * Shared utilities used by both angular-vite-plugin.ts and
  * compilation-api/compilation-api-plugin.ts.
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, isAbsolute, resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { normalizePath } from 'vite';
 
@@ -17,6 +20,7 @@ import { normalizeStylesheetDependencies } from '../style-preprocessor.js';
 import type { StylePreprocessor } from '../style-preprocessor.js';
 import type { FileReplacement } from '../plugins/file-replacements.plugin.js';
 import { debugStylesV } from './debug.js';
+import { stylesheetFailure } from '../stylesheet-pipeline.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -96,6 +100,7 @@ export function toAngularCompilationFileReplacements(
  */
 export function mapTemplateUpdatesToFiles(
   templateUpdates: ReadonlyMap<string, string> | undefined,
+  knownFiles?: ReadonlyMap<string, unknown>,
 ): Map<
   string,
   {
@@ -106,9 +111,11 @@ export function mapTemplateUpdatesToFiles(
   const updatesByFile = new Map<string, { className: string; code: string }>();
 
   templateUpdates?.forEach((code, encodedUpdateId) => {
-    const [file, className = ''] =
-      decodeURIComponent(encodedUpdateId).split('@');
-    const resolvedFile = normalizePath(resolve(process.cwd(), file));
+    const [file, className] = splitComponentId(encodedUpdateId);
+    const requested = normalizePath(resolve(process.cwd(), file));
+    const resolvedFile = knownFiles
+      ? resolveHmrSource(knownFiles, requested)
+      : requested;
 
     updatesByFile.set(resolvedFile, {
       className,
@@ -148,7 +155,7 @@ export function refreshStylesheetRegistryForFile(
   stylesheetRegistry?: AnalogStylesheetRegistry,
   stylePreprocessor?: StylePreprocessor,
 ): void {
-  const normalizedFile = normalizePath(file.split('?')[0]);
+  const normalizedFile = normalizePath(stripQuery(file));
   if (!stylesheetRegistry || !existsSync(normalizedFile)) {
     return;
   }
@@ -159,11 +166,16 @@ export function refreshStylesheetRegistryForFile(
   }
 
   const rawCss = readFileSync(normalizedFile, 'utf-8');
-  const preprocessed = preprocessStylesheetResult(
-    rawCss,
-    normalizedFile,
-    stylePreprocessor,
-  );
+  let preprocessed;
+  try {
+    preprocessed = preprocessStylesheetResult(
+      rawCss,
+      normalizedFile,
+      stylePreprocessor,
+    );
+  } catch (cause) {
+    throw stylesheetFailure('preprocess', normalizedFile, cause);
+  }
   const servedCss = rewriteRelativeCssImports(
     preprocessed.code,
     normalizedFile,
@@ -185,7 +197,6 @@ export function refreshStylesheetRegistryForFile(
       [
         normalizedFile,
         normalizePath(normalizedFile),
-        basename(normalizedFile),
         normalizedFile.replace(/^\//, ''),
       ],
     );
@@ -206,7 +217,9 @@ export function refreshStylesheetRegistryForFile(
  * Checks for vitest run from the command line
  * @returns boolean
  */
-export function isTestWatchMode(args = process.argv): boolean {
+export function isTestWatchMode(
+  args: readonly string[] = process.argv,
+): boolean {
   // vitest --run
   const hasRun = args.find((arg) => arg.includes('--run'));
   if (hasRun) {
@@ -238,4 +251,33 @@ export function isTestWatchMode(args = process.argv): boolean {
   }
 
   return true;
+}
+
+export function createCompilationMode(
+  current: () => {
+    watch: boolean;
+    liveReload: boolean;
+    hmr: boolean;
+    externalizeStyles: boolean;
+  },
+): {
+  shouldEnableLiveReload: () => boolean;
+  shouldExternalizeStyles: () => boolean;
+} {
+  return {
+    shouldEnableLiveReload: () => {
+      const mode = current();
+      // Angular 19.0.0 calls Map.remove during HMR; 19.0.1 fixes the runtime.
+      return (
+        mode.watch &&
+        mode.liveReload &&
+        mode.hmr &&
+        angularFullVersion >= 190001
+      );
+    },
+    shouldExternalizeStyles: () => {
+      const mode = current();
+      return mode.watch && mode.externalizeStyles;
+    },
+  };
 }

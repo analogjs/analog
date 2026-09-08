@@ -1,3 +1,4 @@
+import { required } from '../testing/required.test-support.js';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
@@ -106,68 +107,26 @@ describe('liveReload option', () => {
     const names = angular().map((plugin) => plugin.name);
 
     expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
+    expect(
+      names.filter((name) => name === 'analogjs-live-reload-plugin'),
+    ).toHaveLength(1);
   });
 });
 
 describe('isTestWatchMode', () => {
-  it('should return false for vitest --run', () => {
-    const result = isTestWatchMode(['--run']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest run', () => {
-    const result = isTestWatchMode(['run']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest run with a file filter', () => {
-    const result = isTestWatchMode(['run', 'src/example.spec.ts']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return true for a file filter that contains run', () => {
-    const result = isTestWatchMode(['src/run-helpers.spec.ts']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return true for vitest --no-run', () => {
-    const result = isTestWatchMode(['--no-run']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return true for vitest --watch', () => {
-    const result = isTestWatchMode(['--watch']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return true for vitest watch', () => {
-    const result = isTestWatchMode(['watch']);
-
-    expect(result).toBeTruthy();
-  });
-
-  it('should return false for vitest --no-watch', () => {
-    const result = isTestWatchMode(['--no-watch']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest --watch=false', () => {
-    const result = isTestWatchMode(['--watch=false']);
-
-    expect(result).toBeFalsy();
-  });
-
-  it('should return false for vitest --watch false', () => {
-    const result = isTestWatchMode(['--watch', 'false']);
-
-    expect(result).toBeFalsy();
+  it.each([
+    [['--run'], false],
+    [['run'], false],
+    [['run', 'src/example.spec.ts'], false],
+    [['src/run-helpers.spec.ts'], true],
+    [['--no-run'], true],
+    [['--watch'], true],
+    [['watch'], true],
+    [['--no-watch'], false],
+    [['--watch=false'], false],
+    [['--watch', 'false'], false],
+  ])('resolves %j to %s', (args, expected) => {
+    expect(isTestWatchMode(args)).toBe(expected);
   });
 });
 
@@ -964,8 +923,8 @@ describe('mapTemplateUpdatesToFiles', () => {
     );
 
     const entry = [...updates.values()][0];
-    expect(entry.className).toBe('');
-    expect(entry.code).toBe('export const hmr = true;');
+    expect(required(entry).className).toBe('');
+    expect(required(entry).code).toBe('export const hmr = true;');
   });
 
   it('maps multiple updates across different files', () => {

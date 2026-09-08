@@ -1,9 +1,24 @@
-import { promises as fsPromises } from 'node:fs';
+import { angularFullVersion } from './utils/devkit.js';
+import {
+  stripQuery,
+  resolveJitResource,
+  isCompilerSource,
+} from './utils/module-id.js';
+import { createCompilerSession } from './compiler-session.js';
+import type { CompilerPlugin } from './compiler-backend.js';
+import { projectCompilerLayer } from './compiler-backend-live.js';
+import * as Layer from 'effect/Layer';
+import { componentHmrSignature } from './compiler/hmr.js';
+import { stylesheetFailure } from './stylesheet-pipeline.js';
+import { ResourceDependencies } from './resource-dependencies.js';
+import { TsconfigResolver } from './utils/tsconfig-resolver.js';
+import { sourceGraphLayer } from './compiler-source-graph-live.js';
+import type { ResolvedSourceProject } from './compiler-source-graph.js';
+import { existsSync, promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
 
-import * as compilerCli from '@angular/compiler-cli';
 import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 
 import {
@@ -17,7 +32,6 @@ import {
   inlineResourceUrls,
   extractInlineStyles,
   generateHmrCode,
-  debugCompile,
   debugRegistry,
   ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
@@ -52,12 +66,14 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  include?: string[];
 }
 
 export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
-): Plugin {
+): CompilerPlugin {
   let resolvedConfig: ResolvedConfig;
+  let stylesheetConfig: ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
@@ -65,10 +81,49 @@ export function fastCompilePlugin(
 
   // fast-compile plugin state
   const registry: ComponentRegistry = new Map();
-  const resourceToSource = new Map<string, string>();
+  const resourceDependencies = new ResourceDependencies();
+  const hmrSignatures = new Map<string, string | undefined>();
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
+  const tsconfigResolver = new TsconfigResolver({
+    workspaceRoot: pluginOptions.workspaceRoot,
+    include: pluginOptions.include ?? [],
+    liveReload: pluginOptions.liveReload,
+    isTest: pluginOptions.isTest,
+  });
+  const compilation = createCompilerSession(
+    projectCompilerLayer({
+      config: () => resolvedConfig,
+      tsconfig: resolveTsConfigPath,
+      expandReferences: false,
+      configure: (integrations) => {
+        transformFilter = integrations.transformFilter;
+        componentRegistries = integrations.componentRegistries;
+      },
+      compile: async (files, project) => {
+        if (!files) {
+          resourceDependencies.clear();
+          await initFastCompile(project);
+          return;
+        }
+        for (const file of files) {
+          if (!TS_EXT_REGEX.test(file)) continue;
+          if (!existsSync(file)) resourceDependencies.remove(file);
+          for (const [name, entry] of registry)
+            if (normalizePath(entry.fileName) === normalizePath(file))
+              registry.delete(name);
+          await scanBarrelExports(file, new Set(), true);
+        }
+      },
+      close: () => {
+        registry.clear();
+        hmrSignatures.clear();
+        resourceDependencies.clear();
+        scannedDtsPackages.clear();
+      },
+    }).pipe(Layer.provide(sourceGraphLayer(tsconfigResolver))),
+  );
 
   /**
    * Scan a file into the registry, then recursively walk its relative
@@ -177,7 +232,7 @@ export function fastCompilePlugin(
     }
   }
 
-  async function initFastCompile() {
+  async function initFastCompile(config: ResolvedSourceProject) {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
     // Scan all source files to build the registry
@@ -185,7 +240,6 @@ export function fastCompilePlugin(
     scannedDtsPackages.clear();
     const resolvedTsConfigPath = resolveTsConfigPath();
     projectRoot = dirname(resolvedTsConfigPath);
-    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
 
     // Collect candidate files: tsconfig rootNames PLUS the entry points
@@ -448,6 +502,7 @@ export function fastCompilePlugin(
     id: string,
   ): Promise<{ code: string; map: any } | undefined> {
     if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
+      resourceDependencies.remove(id);
       // Non-Angular file — strip TS-only syntax ourselves so barrels
       // like `export { Foo, type Bar } from './x'` and other TS-only
       // forms don't leak unstripped to Rolldown. In rolldown-vite the
@@ -508,11 +563,31 @@ export function fastCompilePlugin(
       return { code: stripped.code, map: stripped.map };
     }
 
+    const needsHmrSignature =
+      watchMode &&
+      pluginOptions.liveReload &&
+      !pluginOptions.isTest &&
+      resolvedConfig.server.hmr !== false;
+    const hasExternalResources =
+      code.includes('templateUrl') || code.includes('styleUrl');
+    // The HMR fingerprint and resource inliner both inspect the original
+    // decorator AST. Parse it once, then only parse a second time when inlining
+    // actually changes the source that reaches the compiler.
+    const originalParse =
+      needsHmrSignature || hasExternalResources
+        ? parseSync(id, code)
+        : undefined;
+    const hmrSignature = needsHmrSignature
+      ? componentHmrSignature(code, id, originalParse)
+      : undefined;
+    hmrSignatures.set(id, hmrSignature);
+
     // Inline external templateUrl/styleUrl(s) into the source before compilation.
     // `styleExtensions` carries the source extension of each inlined external
     // style so it can be preprocessed by its own file type (e.g. an external
     // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
-    const inlined = await inlineResourceUrls(code, id);
+    const originalCode = code;
+    const inlined = await inlineResourceUrls(code, id, originalParse?.program);
     code = inlined.code;
     const { styleExtensions } = inlined;
 
@@ -520,19 +595,20 @@ export function fastCompilePlugin(
     // reads through its own fallback (a templateUrl/styleUrl the inliner did
     // NOT already inline), so files inlined here must be recorded here or a
     // later edit to them never invalidates the owning module.
-    for (const dep of inlined.resourceDependencies) {
-      resourceToSource.set(dep, id);
-    }
+    resourceDependencies.replace(id, inlined.resourceDependencies);
 
-    // Single OXC parse of the post-inline source, shared by every AST
-    // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
-    // so its program can never be reused here.
-    const { program: oxcProgram } = parseSync(id, code);
+    // Share the post-inline AST with every compiler consumer, reusing the
+    // original parse only when resource inlining left the source unchanged.
+    const oxcProgram =
+      code === originalCode && originalParse
+        ? originalParse.program
+        : parseSync(id, code).program;
 
     // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
     // whenever a style needs a non-`css` preprocessor — either the configured
     // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
     // own extension.
+    const stylesheetDependencies = new Set<string>();
     let resolvedStyles: Map<string, string> | undefined;
     let resolvedInlineStyles: Map<number, string> | undefined;
 
@@ -544,7 +620,7 @@ export function fastCompilePlugin(
 
       if (styleStrings.length > 0) {
         resolvedInlineStyles = new Map();
-        for (let i = 0; i < styleStrings.length; i++) {
+        for (const [i, style] of styleStrings.entries()) {
           // External styleUrls are preprocessed by their own extension; truly
           // inline `styles: [...]` fall back to `inlineStylesExtension`.
           const ext = styleExtensions.get(i) ?? inlineExt;
@@ -552,21 +628,15 @@ export function fastCompilePlugin(
           try {
             const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
             const processed = await preprocessCSS(
-              styleStrings[i],
+              style,
               fakePath,
-              resolvedConfig,
+              stylesheetConfig,
             );
+            for (const dependency of processed.deps ?? [])
+              stylesheetDependencies.add(dependency);
             resolvedInlineStyles.set(i, processed.code);
           } catch (e) {
-            if (debugCompile.enabled) {
-              debugCompile(
-                'inline style #%d preprocessing failed in %s: %s',
-                i,
-                id,
-                (e as Error)?.message,
-              );
-            }
-            // Skip styles that can't be preprocessed
+            throw stylesheetFailure('compile', id, e);
           }
         }
         if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
@@ -592,43 +662,64 @@ export function fastCompilePlugin(
 
     const result = compile(code, id, {
       registry: compileRegistry,
-      resolvedStyles,
-      resolvedInlineStyles,
+      ...(resolvedStyles ? { resolvedStyles } : {}),
+      ...(resolvedInlineStyles ? { resolvedInlineStyles } : {}),
       useDefineForClassFields,
-      compilationMode: pluginOptions.fastCompileMode,
+      ...(pluginOptions.fastCompileMode
+        ? { compilationMode: pluginOptions.fastCompileMode }
+        : {}),
       oxcProgram,
     });
 
     // Track resource dependencies for HMR
-    for (const dep of result.resourceDependencies) {
-      resourceToSource.set(dep, id);
-    }
+    resourceDependencies.replace(id, [
+      ...inlined.resourceDependencies,
+      ...result.resourceDependencies,
+      ...stylesheetDependencies,
+    ]);
 
     // Strip TypeScript-only syntax
     const stripped = vite.transformWithOxc
-      ? await vite.transformWithOxc(result.code, id, {
-          lang: 'ts',
-          sourcemap: false,
-          decorator: { legacy: false, emitDecoratorMetadata: false },
-        })
-      : await vite.transformWithEsbuild(result.code, id, {
-          loader: 'ts',
-          sourcemap: false,
-        });
+      ? await vite.transformWithOxc(
+          result.code,
+          id,
+          {
+            lang: 'ts',
+            sourcemap: true,
+            decorator: { legacy: false, emitDecoratorMetadata: false },
+          },
+          result.map,
+        )
+      : await vite.transformWithEsbuild(
+          result.code,
+          id,
+          { loader: 'ts', sourcemap: true },
+          result.map,
+        );
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
-    if (watchMode && pluginOptions.liveReload) {
+    if (
+      watchMode &&
+      pluginOptions.liveReload &&
+      resolvedConfig.server.hmr !== false &&
+      angularFullVersion >= 190001
+    ) {
       const fileDeclarations = [...registry.values()].filter(
-        (e) => e.fileName === id,
+        (e) => normalizePath(e.fileName) === normalizePath(id),
       );
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
-        outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
+        outputCode += generateHmrCode(
+          fileDeclarations,
+          localDepClassNames,
+          hmrSignature,
+          angularFullVersion >= 200000,
+        );
       }
     }
 
-    return { code: outputCode, map: result.map };
+    return { code: outputCode, map: stripped.map };
   }
 
   function resolveTsConfigPath() {
@@ -645,6 +736,17 @@ export function fastCompilePlugin(
 
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
+    api: {
+      read: compilation.read,
+      defer: compilation.defer,
+      watch: compilation.watch,
+      warmup: compilation.warmup,
+      ready: compilation.ready,
+      resourceOwners: (file) => resourceDependencies.owners(file),
+      invalidate: async (files) => {
+        await compilation.run(files);
+      },
+    },
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';
@@ -659,6 +761,7 @@ export function fastCompilePlugin(
       const preliminaryTsConfigPath = resolveTsConfigPath();
 
       const depOptimizer = createDepOptimizerConfig({
+        own: compilation.own,
         tsconfig: preliminaryTsConfigPath,
         isProd,
         jit: pluginOptions.jit,
@@ -679,54 +782,76 @@ export function fastCompilePlugin(
     },
     async configResolved(config) {
       resolvedConfig = config;
+      stylesheetConfig = config;
       const integrations = await discoverAnalogIntegrations(config);
       transformFilter = integrations.transformFilter;
       componentRegistries = integrations.componentRegistries;
     },
     configureServer(server) {
+      stylesheetConfig = server.config;
       // Watch for new .ts files and scan them into the registry. Use
       // the barrel-aware scanner so a newly added re-export entry
       // (`export * from './x'`) also expands its underlying directive
       // classes — otherwise the registry stays stale until restart.
-      server.watcher.on('add', async (filePath) => {
+      compilation.watch(server.watcher, 'add', async (filePath) => {
         if (
           filePath.endsWith('.ts') &&
           !filePath.endsWith('.spec.ts') &&
           !filePath.endsWith('.d.ts')
         ) {
-          await scanBarrelExports(filePath, new Set(), true);
+          tsconfigResolver.invalidateAll();
+          await compilation.run([filePath]);
         }
+      });
+      compilation.watch(server.watcher, 'unlink', async (file) => {
+        if (!TS_EXT_REGEX.test(file)) return;
+        tsconfigResolver.invalidateAll();
+        hmrSignatures.delete(file);
+        await compilation.run([file]);
+      });
+      compilation.watch(server.watcher, 'change', (file) => {
+        if (file.endsWith('.json')) tsconfigResolver.invalidateAll();
       });
     },
     async buildStart() {
-      await initFastCompile();
+      await compilation.start();
     },
+    closeBundle: async () => {
+      if (!resolvedConfig?.build.watch) await compilation.close();
+    },
+    closeWatcher: () => compilation.close(),
     async handleHotUpdate(ctx) {
-      // Resource file changes → invalidate parent .ts module
-      if (resourceToSource.has(ctx.file)) {
-        const parentSource = resourceToSource.get(ctx.file)!;
-        const parentModule = ctx.server.moduleGraph.getModuleById(parentSource);
-        if (parentModule) {
-          return [parentModule];
-        }
+      if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) {
+        const content = ctx.read();
+        if (resourceDependencies.owners(ctx.file).length)
+          compilation.defer([ctx.file], async () => {
+            await content;
+          });
+        await content;
       }
+      // Resource file changes → invalidate parent .ts module
+      const parents = resourceDependencies
+        .owners(ctx.file)
+        .flatMap((source) => {
+          const module = ctx.server.moduleGraph.getModuleById(source);
+          return module ? [module] : [];
+        });
+      if (parents.length) return parents;
 
       if (TS_EXT_REGEX.test(ctx.file)) {
-        const [fileId] = ctx.file.split('?');
+        const fileId = stripQuery(ctx.file);
 
-        // Remove old entries from this file
-        const oldEntries = [...registry.entries()]
-          .filter(([_, v]) => v.fileName === fileId)
-          .map(([k]) => k);
-        for (const key of oldEntries) {
-          registry.delete(key);
+        const previous = hmrSignatures.get(fileId);
+        const current = componentHmrSignature(await ctx.read(), fileId);
+        await compilation.run([fileId]);
+        if (
+          pluginOptions.liveReload &&
+          resolvedConfig.server.hmr !== false &&
+          (!previous || previous !== current)
+        ) {
+          ctx.server.ws.send({ type: 'full-reload' });
+          return [];
         }
-
-        // Rescan the changed file via the barrel-aware scanner so an
-        // edited barrel re-export picks up newly-referenced files.
-        // Pass overwrite=true so updated metadata replaces stale
-        // entries from the previous scan.
-        await scanBarrelExports(fileId, new Set(), true);
       }
 
       // Let Vite handle the rest — the transform hook will recompile
@@ -738,9 +863,7 @@ export function fastCompilePlugin(
       }
 
       if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const filePath = normalizePath(
-          resolve(dirname(importer as string), id.split(';')[1]),
-        );
+        const filePath = resolveJitResource(id, importer);
         if (id.includes(':style')) {
           markStylePathSafe(resolvedConfig, filePath);
           return filePath + '?inline';
@@ -754,7 +877,7 @@ export function fastCompilePlugin(
       // User `.scss?inline` / `.css?inline` imports: resolve and mark
       // safe so Vite's native CSS pipeline handles them.
       if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
-        const filePath = id.split('?')[0];
+        const filePath = stripQuery(id);
         const resolved = isAbsolute(filePath)
           ? normalizePath(filePath)
           : normalizePath(resolve(dirname(importer), filePath));
@@ -771,7 +894,7 @@ export function fastCompilePlugin(
       // Vitest fallback: module-runner can skip resolveId, so the bare
       // ?inline query reaches load. Mark safe and let Vite handle it.
       if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        markStylePathSafe(resolvedConfig, id.split('?')[0]);
+        markStylePathSafe(resolvedConfig, stripQuery(id));
       }
 
       return;
@@ -792,6 +915,8 @@ export function fastCompilePlugin(
         },
       },
       async handler(code, id) {
+        if (!isCompilerSource(id)) return;
+        await compilation.ready();
         if (transformFilter && !transformFilter(code, id)) {
           return;
         }
@@ -799,7 +924,13 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleFastCompileTransform(code, id);
+        const result = await compilation.readAsync(() =>
+          handleFastCompileTransform(code, id),
+        );
+        if (watchMode)
+          for (const dependency of resourceDependencies.dependencies(id))
+            this.addWatchFile(dependency);
+        return result;
       },
     },
   };

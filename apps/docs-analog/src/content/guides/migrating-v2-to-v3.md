@@ -127,16 +127,58 @@ Add `@analogjs/vite-plugin-angular` and `nitro` to the app's `devDependencies`:
 
 These options used to live on `analog()`. Pass them to `angular()` or `nitro()` directly:
 
-| v2 location                                                                                                                                      | v3 location                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                                                                 |
-| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
-| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })`                                       |
-| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
-| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                            |
-| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
+| v2 location                                                                                                                                      | v3 location                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `analog({ vite: {...} })`                                                                                                                        | move supported Angular options to `angular({...})`; keep generic Vite settings in `defineConfig({...})` |
+| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                        |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })`                                         |
+| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline))   |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                              |
+| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                                 |
 
 `analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`.
+
+`angular()` validates its own options when the Vite config loads. Copy only supported keys rather than spreading an old `vite` object: unknown keys, string booleans, incomplete file replacements, and invalid compiler modes now fail immediately. Explicit `false` still disables an option. Stylesheet preprocessing failures also fail compilation instead of silently producing missing CSS; fix the reported stylesheet or preprocessor error.
+
+#### Development updates and component styles
+
+Development defaults to `experimental.componentStyleHmr: 'auto'`. Native stylesheet updates require an integration that already externalizes styles: ngtsc supports Angular 20–22/Vite 6–8, and the Compilation API supports Angular 21–22/Vite 7–8. These qualified external CSS updates preserve Emulated/None component DOM, focus, selection, and child state by updating Angular's existing stylesheet links. Ordinary styles retain metadata updates because enabling external styles missed the template-latency gate. The Compilation API on Vite 6 also retains its existing fallback. Shared Sass/Less dependencies still use Vite's stylesheet pipeline. ShadowDom, missing stylesheet identity, and failed stylesheet loads retain correctness fallbacks. Angular 19 shared-resource edits reload because its metadata replacement can leave parent definitions stale.
+
+Templates and ordinary inline styles still use Angular metadata HMR, which recreates affected views: focus, selection, and child state can change. The fast compiler continues to inline styles and use metadata replacement. Fast-mode methods, fields, constructors, dependency changes, directives, pipes, and ambiguous edits automatically reload. Angular 19.0.0 uses a full reload around an upstream runtime bug; stateful updates require 19.0.1 or newer. JIT and disabled HMR retain compatibility behavior.
+
+Set `experimental.componentStyleHmr: 'metadata'` to retain the earlier ordinary-style behavior:
+
+```ts
+angular({
+  experimental: {
+    componentStyleHmr: 'metadata',
+    ssrHmrWarmup: false,
+  },
+});
+```
+
+CSS preprocessors and PostCSS still run through Vite's `preprocessCSS`. Arbitrary Vite CSS transform hooks require the external stylesheet pipeline. Analog detects `@tailwindcss/vite` and retains that pipeline automatically. Other integrations can request it through the existing setup hook:
+
+```ts
+import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
+
+const componentStyles: AnalogIntegrationPlugin = {
+  name: 'component-style-integration',
+  analog: {
+    setup(context) {
+      context.externalizeComponentStyles();
+    },
+  },
+};
+```
+
+External styles preserve Vite plugin processing but can require a full reload and lose component state. This integration contract applies to the default and experimental Compilation API compilers; the fast compiler continues to inline its styles.
+
+Client and SSR compilers remain separate. Development edits synchronously mark server compilers dirty before Vite invalidates their loaded modules. Once an SSR environment has handled a real module read, `experimental.ssrHmrWarmup` defaults to `true`: after client compilation and update dispatch settle, a scoped task waits for a 75 ms quiet period and compiles pending server changes. This delay does not promise that browser painting has completed. New edits replace the waiting task; incoming SSR reads bypass the delay and await the latest generation immediately.
+
+Warming trades background CPU for less foreground SSR waiting after an idle interval. Environments that have never served SSR, builds, tests, `liveReload: false`, and `server.hmr: false` do not warm speculatively. Set `experimental.ssrHmrWarmup: false` for strictly on-demand server compilation. Background failures remain observable on readiness and the next read; a later edit can recover. Shutdown cancels waiting tasks and drains already-admitted native work. Restart creates a fresh owner and cannot inherit the old delay.
+
+Shared resources invalidate every loaded SSR variant of each owning component. An owner that has not been loaded yet does not clear unrelated SSR modules; its first load receives the updated compilation. Requests arriving after an edit also discard pending transforms from before that edit.
 
 #### Workspace library globs
 

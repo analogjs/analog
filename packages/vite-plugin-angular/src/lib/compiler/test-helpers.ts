@@ -30,12 +30,12 @@ export function compilePartialCode(
   registry?: ComponentRegistry,
 ): string {
   return rawCompile(sourceCode, fileName, {
-    registry,
+    ...(registry ? { registry } : {}),
     compilationMode: 'partial',
   }).code;
 }
 
-export function expectCompiles(result: string) {
+export function expectCompiles(result: string): void {
   expect(result).toBeTruthy();
   expect(result).not.toMatch(/^Error:/m);
 }

@@ -8,27 +8,35 @@
 
 import type { DepOptimizationConfig, Rolldown } from 'vite';
 import type { PluginBuild } from 'esbuild';
+import { createJavaScriptTransformer } from './javascript-transformer.js';
 
-import {
-  CompilerPluginOptions,
-  JavaScriptTransformer,
-} from './utils/devkit.js';
-import type { TransformCacheStore } from './utils/transform-cache.js';
+import { CompilerPluginOptions } from './utils/devkit.js';
+import type * as Layer from 'effect/Layer';
+import type { TransformCache } from './utils/transform-cache.js';
 
 type EsbuildOptions = NonNullable<DepOptimizationConfig['esbuildOptions']>;
 type EsbuildPlugin = NonNullable<EsbuildOptions['plugins']>[number];
 
-export function createCompilerPlugin(
-  pluginOptions: CompilerPluginOptions,
-  isTest: boolean,
-  closeTransformer: boolean,
-  cache?: TransformCacheStore,
-): EsbuildPlugin {
-  const javascriptTransformer = new JavaScriptTransformer(
-    { ...pluginOptions, jit: true },
-    1,
+export interface DependencyCompilerOptions {
+  compiler: CompilerPluginOptions;
+  isTest: boolean;
+  closeTransformer: boolean;
+  own(finalizer: () => Promise<void>): void;
+  cache?: Layer.Layer<TransformCache>;
+}
+
+export function createCompilerPlugin({
+  compiler,
+  isTest,
+  closeTransformer,
+  own,
+  cache,
+}: DependencyCompilerOptions): EsbuildPlugin {
+  const javascriptTransformer = createJavaScriptTransformer(
+    () => ({ ...compiler, jit: true }),
     cache,
   );
+  own(javascriptTransformer.close);
 
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
@@ -51,17 +59,18 @@ export function createCompilerPlugin(
   };
 }
 
-export function createRolldownCompilerPlugin(
-  pluginOptions: CompilerPluginOptions,
-  isTest: boolean,
-  closeTransformer: boolean,
-  cache?: TransformCacheStore,
-): Rolldown.Plugin {
-  const javascriptTransformer = new JavaScriptTransformer(
-    { ...pluginOptions, jit: true },
-    1,
+export function createRolldownCompilerPlugin({
+  compiler,
+  isTest,
+  closeTransformer,
+  own,
+  cache,
+}: DependencyCompilerOptions): Rolldown.Plugin {
+  const javascriptTransformer = createJavaScriptTransformer(
+    () => ({ ...compiler, jit: true }),
     cache,
   );
+  own(javascriptTransformer.close);
 
   const plugin: Rolldown.Plugin = {
     name: 'analogjs-rolldown-deps-optimizer-plugin',
@@ -77,8 +86,7 @@ export function createRolldownCompilerPlugin(
 
         return {
           code: Buffer.from(contents).toString('utf-8'),
-          loader: 'js',
-        } as any;
+        };
       },
     };
   }

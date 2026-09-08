@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { describe, it, expect } from 'vitest';
 import { compile, type CompileOptions } from './compile';
 import { scanFile, type ComponentRegistry } from './registry';
@@ -6,8 +7,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 const ANGULAR_ROOT =
-  process.env.ANGULAR_SOURCE_DIR ||
-  path.resolve(process.env.HOME!, 'projects/angular/angular');
+  process.env['ANGULAR_SOURCE_DIR'] ||
+  path.resolve(process.env['HOME']!, 'projects/angular/angular');
 const COMPLIANCE_DIR = path.join(
   ANGULAR_ROOT,
   'packages/compiler-cli/test/compliance/test_cases',
@@ -58,7 +59,11 @@ function expectEmit(
     const calls: { full: string; name: string; args: string }[] = [];
     let m;
     while ((m = ivyPattern.exec(s)) !== null) {
-      calls.push({ full: m[0], name: m[1], args: m[2].trim() });
+      calls.push({
+        full: m[0],
+        name: required(m[1]),
+        args: required(m[2]).trim(),
+      });
     }
     return calls;
   };
@@ -194,7 +199,8 @@ function expectEmit(
     if (
       actualCalls.some(
         (ac) =>
-          ac.name === ec.name && ac.args.startsWith(ec.args.split(',')[0]),
+          ac.name === ec.name &&
+          ac.args.startsWith(required(ec.args.split(',')[0])),
       )
     ) {
       matched++;
@@ -375,7 +381,7 @@ const angularAvailable = fs.existsSync(COMPLIANCE_DIR);
 describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
   const results = { pass: 0, fail: 0, skip: 0, error: 0 };
   const MIN_CONFORMANCE_PASS_RATE = Number.parseFloat(
-    process.env.ANGULAR_CONFORMANCE_MIN_PASS_RATE ?? '0.75',
+    process.env['ANGULAR_CONFORMANCE_MIN_PASS_RATE'] ?? '0.75',
   );
 
   for (const category of CATEGORIES) {

@@ -62,6 +62,7 @@ function countInlineStyleLiterals(arrayExpr: any): number {
 export async function inlineResourceUrls(
   code: string,
   fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
 ): Promise<InlineResourceResult> {
   const styleExtensions = new Map<number, string>();
 
@@ -69,7 +70,7 @@ export async function inlineResourceUrls(
     return { code, styleExtensions, resourceDependencies: [] };
   }
 
-  const { program } = parseSync(fileName, code);
+  program ??= parseSync(fileName, code).program;
   const ms = new MagicString(code);
   let changed = false;
   const dir = path.dirname(fileName);
@@ -333,6 +334,8 @@ export async function inlineResourceUrls(
         // prop with the merged contents and drop any additional ones so we
         // don't emit multiple `styles` properties.
         const [first, ...rest] = cssProps;
+        if (!first)
+          throw new Error('Cannot inline styles without a resource property');
         ms.overwrite(
           first.prop.start,
           first.prop.end,
@@ -383,13 +386,13 @@ function removePropertyWithSeparator(
   propEnd: number,
 ): void {
   let i = propEnd;
-  while (i < code.length && isWhitespace(code[i])) i++;
+  while (i < code.length && isWhitespace(code.charAt(i))) i++;
   if (code[i] === ',') {
     ms.remove(propStart, i + 1);
     return;
   }
   let j = propStart - 1;
-  while (j >= 0 && isWhitespace(code[j])) j--;
+  while (j >= 0 && isWhitespace(code.charAt(j))) j--;
   if (code[j] === ',') {
     ms.remove(j, propEnd);
     return;

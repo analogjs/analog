@@ -58,17 +58,13 @@ export async function preprocessInlineStyles(
   if (styleStrings.length === 0) return undefined;
 
   const result = new Map<number, string>();
-  for (let i = 0; i < styleStrings.length; i++) {
+  for (const [i, style] of styleStrings.entries()) {
     try {
       const fakePath = id.replace(
         /\.ts$/,
         `.inline-${i}.${inlineStyleLanguage}`,
       );
-      const processed = await preprocessCSS(
-        styleStrings[i],
-        fakePath,
-        resolvedConfig,
-      );
+      const processed = await preprocessCSS(style, fakePath, resolvedConfig);
       result.set(i, processed.code);
     } catch (e: any) {
       console.warn(

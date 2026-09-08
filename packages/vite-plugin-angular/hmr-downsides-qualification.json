@@ -1,0 +1,3314 @@
+{
+  "control": "0cf3f80025f2c7db8080700a2ac63d1874598de1",
+  "originalPr": "4305f920b154d424b8645e70cf71a9005c404001",
+  "candidate": {
+    "base": "0cf3f80025f2c7db8080700a2ac63d1874598de1",
+    "source": "packages/vite-plugin-angular/src/lib/compiler-environments.ts",
+    "sourceSha256": "0a4feddf92688fbac9ebe5ef60133d8d2525623b58ee5ab4dfd97b8ef0ac2c37"
+  },
+  "protocol": {
+    "angular": "22.0.0",
+    "node": "24.15.0",
+    "typescript": "6.0.2",
+    "vite": "8.2.2",
+    "playwright": "1.59.1",
+    "samplesPerSide": 3,
+    "templateCssPairsPerSample": 3,
+    "order": "candidate/control/original; reverse; candidate/control/original",
+    "concurrency": 1,
+    "ssrPolicy": "Four concurrent module reads started at the watcher boundary, followed by four serial renders; no explicit graph refresh",
+    "reloads": "Main-frame navigations; path-scoped full-reload messages counted separately",
+    "statistics": "Median of per-process means for edit latency, median across processes for first SSR and memory",
+    "memory": "Node RSS after initial SSR/GC and heap after close/GC; excludes Chromium, not peak RSS or a leak test",
+    "baselineFreshness": "Original PR returned stale HTML in 3 of 18 edit groups; after-edit SSR timing is not a successful-request comparison"
+  },
+  "packages": {
+    "candidate": {
+      "file": "candidate-final.tgz",
+      "sha256": "e661bcb4546b17290900f987ce9726055b265e6b7e56e6001b3b16aab5a2e32d",
+      "bytes": 354191
+    },
+    "control": {
+      "file": "analogjs-vite-plugin-angular-3.0.0-alpha.86.tgz",
+      "sha256": "9cafd9b32c5f080d533d687d4807df808d2de9e40701caf37b8fa67abd87d2fd",
+      "bytes": 354069
+    },
+    "pr4305": {
+      "file": "candidate-generations.tgz",
+      "sha256": "a1ab736ed2715e563a463b51891cd4d436855ae72c2efce81253004c7c579d0b",
+      "bytes": 346405
+    }
+  },
+  "summary": {
+    "candidate": {
+      "templateMs": 138.2690156666666,
+      "cssMs": 121.89901066666668,
+      "ssrAfterEditMs": 136.74194200000025,
+      "firstSsrMs": 751.1290859999999,
+      "freshGroups": 18,
+      "groups": 18,
+      "freshRenders": 72,
+      "renders": 72,
+      "unrelatedModuleRetained": 18,
+      "actualReloads": 0,
+      "cssInstanceRetention": 9,
+      "cssEdits": 9,
+      "viewRecreations": 18,
+      "readyRssMiB": 1119.0859375,
+      "closedHeapMiB": 112.04488372802734
+    },
+    "control": {
+      "templateMs": 135.59860600000033,
+      "cssMs": 123.92198000000037,
+      "ssrAfterEditMs": 144.380571,
+      "firstSsrMs": 730.3873159999998,
+      "freshGroups": 18,
+      "groups": 18,
+      "freshRenders": 72,
+      "renders": 72,
+      "unrelatedModuleRetained": 0,
+      "actualReloads": 0,
+      "cssInstanceRetention": 9,
+      "cssEdits": 9,
+      "viewRecreations": 18,
+      "readyRssMiB": 1129.83203125,
+      "closedHeapMiB": 112.15177154541016
+    },
+    "pr4305": {
+      "templateMs": 175.85590433333346,
+      "cssMs": 192.3942013333335,
+      "ssrAfterEditMs": 149.57517733333347,
+      "firstSsrMs": 778.1455740000001,
+      "freshGroups": 15,
+      "groups": 18,
+      "freshRenders": 60,
+      "renders": 72,
+      "unrelatedModuleRetained": 0,
+      "actualReloads": 9,
+      "cssInstanceRetention": 0,
+      "cssEdits": 9,
+      "viewRecreations": 18,
+      "readyRssMiB": 1131.609375,
+      "closedHeapMiB": 112.9915771484375
+    }
+  },
+  "comparisons": [
+    {
+      "side": "candidate",
+      "sample": 0,
+      "raw": "dist/hmr-downsides/vite8.2.2-candidate/final-comparison-0.json",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 170.6886340000001,
+          "ssr": {
+            "ms": 178.25465600000007,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 141.27242000000024,
+          "ssr": {
+            "ms": 143.43169900000066,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 123.5661169999994,
+          "ssr": {
+            "ms": 131.45303299999978,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 112.05550099999982,
+          "ssr": {
+            "ms": 118.24919399999999,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 107.22821699999986,
+          "ssr": {
+            "ms": 115.12756600000012,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 112.36911099999998,
+          "ssr": {
+            "ms": 119.28441900000053,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 715.2974160000003,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 7.564107999999578,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1180196864,
+        "heapTotal": 422051840,
+        "heapUsed": 273567944,
+        "external": 55965429,
+        "arrayBuffers": 145202
+      },
+      "closedMemory": {
+        "rss": 1244065792,
+        "heapTotal": 341807104,
+        "heapUsed": 117489840,
+        "external": 44523310,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.9226640000006228
+    },
+    {
+      "side": "candidate",
+      "sample": 1,
+      "raw": "dist/hmr-downsides/vite8.2.2-candidate/final-comparison-1.json",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 178.38292800000045,
+          "ssr": {
+            "ms": 187.06956700000046,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 145.16364599999997,
+          "ssr": {
+            "ms": 147.99164100000053,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 144.0069110000004,
+          "ssr": {
+            "ms": 151.25306199999977,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 133.14687700000013,
+          "ssr": {
+            "ms": 141.19416399999955,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 126.55433499999981,
+          "ssr": {
+            "ms": 128.9157239999995,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 120.57985499999995,
+          "ssr": {
+            "ms": 126.28267500000038,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 765.2869879999998,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 6.725021000000197,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1173446656,
+        "heapTotal": 419954688,
+        "heapUsed": 273557264,
+        "external": 55965430,
+        "arrayBuffers": 145203
+      },
+      "closedMemory": {
+        "rss": 1248288768,
+        "heapTotal": 358846464,
+        "heapUsed": 117483184,
+        "external": 44531321,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.994738999999754
+    },
+    {
+      "side": "candidate",
+      "sample": 2,
+      "raw": "dist/hmr-downsides/vite8.2.2-candidate/final-comparison-2.json",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 170.50513,
+          "ssr": {
+            "ms": 179.34159,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 132.50314699999944,
+          "ssr": {
+            "ms": 146.31537000000026,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 122.91738899999928,
+          "ssr": {
+            "ms": 134.13586699999996,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 112.95188700000017,
+          "ssr": {
+            "ms": 120.97216300000036,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 121.3845280000005,
+          "ssr": {
+            "ms": 120.49605800000063,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 111.266028,
+          "ssr": {
+            "ms": 119.19060400000035,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 751.1290859999999,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 6.529203000000052,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1173323776,
+        "heapTotal": 418906112,
+        "heapUsed": 273577296,
+        "external": 55965430,
+        "arrayBuffers": 145203
+      },
+      "closedMemory": {
+        "rss": 1241997312,
+        "heapTotal": 345477120,
+        "heapUsed": 117487576,
+        "external": 44525474,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.8885789999994813
+    },
+    {
+      "side": "control",
+      "sample": 0,
+      "raw": "dist/hmr-downsides/vite8.2.2-control/final-comparison-0.json",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 156.90341200000057,
+          "ssr": {
+            "ms": 180.7882580000005,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 131.42726500000026,
+          "ssr": {
+            "ms": 150.6588039999997,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 141.62277799999993,
+          "ssr": {
+            "ms": 144.35075700000016,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 117.1121060000005,
+          "ssr": {
+            "ms": 131.471587,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 120.12094199999956,
+          "ssr": {
+            "ms": 133.9634619999997,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 123.22656900000038,
+          "ssr": {
+            "ms": 125.05055799999991,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 739.9837090000001,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 6.358873000000131,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1184714752,
+        "heapTotal": 422838272,
+        "heapUsed": 273550600,
+        "external": 55965466,
+        "arrayBuffers": 145203
+      },
+      "closedMemory": {
+        "rss": 1248661504,
+        "heapTotal": 343117824,
+        "heapUsed": 117599656,
+        "external": 44585476,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.9484620000002906
+    },
+    {
+      "side": "control",
+      "sample": 1,
+      "raw": "dist/hmr-downsides/vite8.2.2-control/final-comparison-1.json",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 157.63038000000006,
+          "ssr": {
+            "ms": 182.34796099999994,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 135.51419799999985,
+          "ssr": {
+            "ms": 151.8632290000005,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 132.62622800000008,
+          "ssr": {
+            "ms": 147.65443700000014,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 121.12810600000012,
+          "ssr": {
+            "ms": 135.92002999999931,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 116.53921000000082,
+          "ssr": {
+            "ms": 132.41211600000042,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 120.87764499999957,
+          "ssr": {
+            "ms": 121.37786500000038,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 730.3873159999998,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 6.325119999999515,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1227198464,
+        "heapTotal": 422313984,
+        "heapUsed": 273542312,
+        "external": 55965465,
+        "arrayBuffers": 145202
+      },
+      "closedMemory": {
+        "rss": 1293209600,
+        "heapTotal": 343904256,
+        "heapUsed": 117570464,
+        "external": 44581317,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.780525999999554
+    },
+    {
+      "side": "control",
+      "sample": 2,
+      "raw": "dist/hmr-downsides/vite8.2.2-control/final-comparison-2.json",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 154.19474200000013,
+          "ssr": {
+            "ms": 178.3874979999996,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 128.13016799999968,
+          "ssr": {
+            "ms": 147.516439,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 128.88677000000007,
+          "ssr": {
+            "ms": 143.4285949999994,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 114.48983799999951,
+          "ssr": {
+            "ms": 128.95536900000025,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 113.79031300000042,
+          "ssr": {
+            "ms": 127.43496199999936,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 118.07854399999997,
+          "ssr": {
+            "ms": 118.61339000000044,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": false,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 726.4464510000003,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 6.226775000000089,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1178001408,
+        "heapTotal": 422313984,
+        "heapUsed": 273551096,
+        "external": 55965466,
+        "arrayBuffers": 145203
+      },
+      "closedMemory": {
+        "rss": 1244131328,
+        "heapTotal": 350457856,
+        "heapUsed": 117628752,
+        "external": 44585482,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.8453380000000834
+    },
+    {
+      "side": "pr4305",
+      "sample": 0,
+      "raw": "dist/hmr-downsides/vite8.2.2-pr4305/final-comparison-0.json",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 258.31210100000044,
+          "ssr": {
+            "ms": 255.1818370000001,
+            "fresh": [false, false, false, false]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 223.12553000000025,
+          "ssr": {
+            "ms": 140.64835700000003,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": false,
+          "formValueRetained": false,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 131.8687749999999,
+          "ssr": {
+            "ms": 145.97944800000005,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 178.57013000000006,
+          "ssr": {
+            "ms": 112.80980900000031,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 137.386837,
+          "ssr": {
+            "ms": 140.5816020000002,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 175.48694400000022,
+          "ssr": {
+            "ms": 102.39930100000038,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 778.1455740000001,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 10.751068999999916,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1200525312,
+        "heapTotal": 423636992,
+        "heapUsed": 273419008,
+        "external": 55965407,
+        "arrayBuffers": 1332376
+      },
+      "closedMemory": {
+        "rss": 1272594432,
+        "heapTotal": 338935808,
+        "heapUsed": 118303976,
+        "external": 44747329,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.4985059999999066
+    },
+    {
+      "side": "pr4305",
+      "sample": 1,
+      "raw": "dist/hmr-downsides/vite8.2.2-pr4305/final-comparison-1.json",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 262.16516299999967,
+          "ssr": {
+            "ms": 258.8978919999995,
+            "fresh": [false, false, false, false]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 216.52699800000028,
+          "ssr": {
+            "ms": 132.26754400000027,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": false,
+          "formValueRetained": false,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 124.24614700000075,
+          "ssr": {
+            "ms": 138.34736200000043,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 182.10690700000032,
+          "ssr": {
+            "ms": 101.90052300000025,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 121.35163600000033,
+          "ssr": {
+            "ms": 126.56473499999993,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 176.33444700000018,
+          "ssr": {
+            "ms": 93.79061900000033,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 757.3094689999998,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 9.78428200000053,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1186578432,
+        "heapTotal": 420741120,
+        "heapUsed": 273579384,
+        "external": 55965408,
+        "arrayBuffers": 145203
+      },
+      "closedMemory": {
+        "rss": 1271570432,
+        "heapTotal": 368283648,
+        "heapUsed": 118480256,
+        "external": 44747464,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 3.4054510000005394
+    },
+    {
+      "side": "pr4305",
+      "sample": 2,
+      "raw": "dist/hmr-downsides/vite8.2.2-pr4305/final-comparison-2.json",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 262.18890999999985,
+          "ssr": {
+            "ms": 259.0451920000005,
+            "fresh": [false, false, false, false]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 221.6207540000005,
+          "ssr": {
+            "ms": 139.51692300000013,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": false,
+          "formValueRetained": false,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 130.59717499999988,
+          "ssr": {
+            "ms": 144.5573060000006,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 190.5066479999996,
+          "ssr": {
+            "ms": 109.96335999999974,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 3,
+          "width": 33,
+          "browserMs": 135.73537399999987,
+          "ssr": {
+            "ms": 140.06604499999958,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 3,
+          "width": 34,
+          "browserMs": 183.4958200000001,
+          "ssr": {
+            "ms": 104.30223800000022,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": false,
+          "reloads": 1,
+          "reloadMessages": 1,
+          "instanceRetained": false,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "initialSsr": {
+        "ms": 799.6750809999999,
+        "fresh": [true, true, true, true]
+      },
+      "lazySsr": {
+        "ms": 10.01443399999971,
+        "fresh": [true]
+      },
+      "lazyBrowser": true,
+      "readyMemory": {
+        "rss": 1173491712,
+        "heapTotal": 420741120,
+        "heapUsed": 273629072,
+        "external": 55965338,
+        "arrayBuffers": 1332107
+      },
+      "closedMemory": {
+        "rss": 1256243200,
+        "heapTotal": 364089344,
+        "heapUsed": 118532064,
+        "external": 44747792,
+        "arrayBuffers": 144491
+      },
+      "closeMs": 5.296665999999277
+    }
+  ],
+  "ownershipMatrix": [
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/ownership-api.json",
+      "vite": "6.0.0",
+      "mode": "api",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 124.8743999999997,
+          "ssr": {
+            "ms": 96.5777909999997,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 88.9368370000002,
+          "ssr": {
+            "ms": 77.66624200000024,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 121.42983600000025,
+          "ssr": {
+            "ms": 69.71931399999994,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 105.21912400000019,
+          "ssr": {
+            "ms": 86.50480600000083,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 8.325379999999313,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/ownership-fast.json",
+      "vite": "6.0.0",
+      "mode": "fast",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 52.03867900000023,
+          "ssr": {
+            "ms": 72.67703299999994,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 53.409867000000304,
+          "ssr": {
+            "ms": 59.10328799999979,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 45.03927199999998,
+          "ssr": {
+            "ms": 58.70285599999988,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 45.171851999999944,
+          "ssr": {
+            "ms": 57.93780799999968,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 11.865444000000025,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/ownership-ngtsc.json",
+      "vite": "6.0.0",
+      "mode": "ngtsc",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 221.78551800000014,
+          "ssr": {
+            "ms": 226.90468099999998,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 208.4612619999998,
+          "ssr": {
+            "ms": 213.95282499999985,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 169.02433099999962,
+          "ssr": {
+            "ms": 174.58102599999984,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 121.58638999999948,
+          "ssr": {
+            "ms": 115.58098100000007,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 6.129581999999573,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/ownership-api.json",
+      "vite": "7.3.6",
+      "mode": "api",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 115.04865099999915,
+          "ssr": {
+            "ms": 98.05623999999989,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 89.91634900000008,
+          "ssr": {
+            "ms": 82.5671940000002,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 101.61349699999937,
+          "ssr": {
+            "ms": 90.83178999999927,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 100.32859100000042,
+          "ssr": {
+            "ms": 91.41737100000046,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 9.693381000000045,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/ownership-fast.json",
+      "vite": "7.3.6",
+      "mode": "fast",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 52.162773000000016,
+          "ssr": {
+            "ms": 76.4571390000001,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 44.48629200000005,
+          "ssr": {
+            "ms": 58.73918400000002,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 56.178080000000136,
+          "ssr": {
+            "ms": 63.299786999999924,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 33.991815999999744,
+          "ssr": {
+            "ms": 53.509112999999616,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 9.86191800000006,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/ownership-ngtsc.json",
+      "vite": "7.3.6",
+      "mode": "ngtsc",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 229.6078419999999,
+          "ssr": {
+            "ms": 237.23064999999997,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 196.59168999999974,
+          "ssr": {
+            "ms": 202.23338499999954,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 166.31108099999983,
+          "ssr": {
+            "ms": 170.23924499999976,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 170.37696400000004,
+          "ssr": {
+            "ms": 175.85874800000056,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 4.914157000000159,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/ownership-api.json",
+      "vite": "8.2.2",
+      "mode": "api",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 127.84744000000046,
+          "ssr": {
+            "ms": 99.508871,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 90.09196900000006,
+          "ssr": {
+            "ms": 84.96364900000026,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 89.87836799999968,
+          "ssr": {
+            "ms": 69.51906800000052,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 90.35379099999955,
+          "ssr": {
+            "ms": 81.43622899999991,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 7.45605599999999,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/ownership-fast.json",
+      "vite": "8.2.2",
+      "mode": "fast",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 85.56368699999985,
+          "ssr": {
+            "ms": 94.31068899999991,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 76.6318470000001,
+          "ssr": {
+            "ms": 89.86092400000007,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 60.09526300000016,
+          "ssr": {
+            "ms": 64.45709199999965,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 66.82636599999978,
+          "ssr": {
+            "ms": 67.45860500000026,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 11.491641999999956,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/ownership-ngtsc.json",
+      "vite": "8.2.2",
+      "mode": "ngtsc",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 163.25304200000028,
+          "ssr": {
+            "ms": 172.01113600000008,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 129.6017670000001,
+          "ssr": {
+            "ms": 143.18239500000027,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 127.22819599999957,
+          "ssr": {
+            "ms": 134.79737299999988,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 110.40358899999956,
+          "ssr": {
+            "ms": 121.82084099999975,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 6.141333999999915,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/hmr-downsides/vite8.2.2-candidate/final-ownership-fast.json",
+      "vite": "8.2.2",
+      "mode": "fast",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 87.0364340000001,
+          "ssr": {
+            "ms": 89.35221700000011,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 67.89399200000025,
+          "ssr": {
+            "ms": 70.01780399999961,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 70.55954199999996,
+          "ssr": {
+            "ms": 65.06368099999963,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 74.00483800000029,
+          "ssr": {
+            "ms": 69.90645399999994,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 12.16611899999998,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "candidate",
+      "raw": "dist/hmr-downsides/vite8.2.2-candidate/final-ownership-api.json",
+      "vite": "8.2.2",
+      "mode": "api",
+      "passed": true,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 127.22604899999988,
+          "ssr": {
+            "ms": 99.77679200000057,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 100.05842100000064,
+          "ssr": {
+            "ms": 87.19482199999948,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 101.59359700000005,
+          "ssr": {
+            "ms": 71.77648899999986,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 102.02787400000034,
+          "ssr": {
+            "ms": 99.3125599999994,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 9.099063999999998,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "control",
+      "raw": "dist/hmr-downsides/vite8.2.2-control/final-ownership-fast.json",
+      "vite": "8.2.2",
+      "mode": "fast",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 74.09137099999998,
+          "ssr": {
+            "ms": 60.888112999999976,
+            "fresh": [true, false, false, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 72.003827,
+          "ssr": {
+            "ms": 72.57544099999996,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 57.194830000000366,
+          "ssr": {
+            "ms": 69.09289600000011,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 73.61196000000018,
+          "ssr": {
+            "ms": 69.86938500000042,
+            "fresh": [true, true, true, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 12.179372999999941,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    },
+    {
+      "side": "control",
+      "raw": "dist/hmr-downsides/vite8.2.2-control/final-ownership-api.json",
+      "vite": "8.2.2",
+      "mode": "api",
+      "passed": false,
+      "records": [
+        {
+          "file": "src/shared.html",
+          "revision": 1,
+          "width": 31,
+          "browserMs": 145.70262999999977,
+          "ssr": {
+            "ms": 115.73439899999994,
+            "fresh": [true, false, false, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 1,
+          "width": 32,
+          "browserMs": 88.423812,
+          "ssr": {
+            "ms": 87.39055000000008,
+            "fresh": [true, false, false, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.html",
+          "revision": 2,
+          "width": 32,
+          "browserMs": 88.66486500000065,
+          "ssr": {
+            "ms": 64.85742399999981,
+            "fresh": [true, false, false, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 1,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        },
+        {
+          "file": "src/shared.css",
+          "revision": 2,
+          "width": 33,
+          "browserMs": 90.28038199999992,
+          "ssr": {
+            "ms": 73.87500400000044,
+            "fresh": [true, false, false, true]
+          },
+          "retainedAtWatcher": true,
+          "tokenRetained": true,
+          "reloads": 0,
+          "reloadMessages": 0,
+          "instanceRetained": true,
+          "signalRetained": true,
+          "formValueRetained": true,
+          "viewRecreated": true
+        }
+      ],
+      "lazySsr": {
+        "ms": 7.0927419999998165,
+        "fresh": [true]
+      },
+      "lazyBrowser": true
+    }
+  ],
+  "compatibility": [
+    {
+      "raw": "dist/compiler-vite-smoke/angular-17.3.12-vite-6.0.0-s4lqbq/result.json",
+      "angular": "17.3.12",
+      "vite": "6.0.0",
+      "node": "v20.19.5",
+      "typescript": "5.4.5",
+      "results": [
+        {
+          "name": "public-declarations",
+          "passed": true,
+          "skipLibCheck": false
+        },
+        {
+          "name": "normal-replacement-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-replacement",
+          "passed": true
+        },
+        {
+          "name": "normal-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-include",
+          "passed": true
+        },
+        {
+          "name": "fast-full-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-full",
+          "passed": true
+        },
+        {
+          "name": "fast-partial-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-partial",
+          "passed": true
+        },
+        {
+          "name": "compilation-api-include",
+          "supported": false,
+          "unavailableOptionRejected": true,
+          "reason": "Installed @angular/build does not expose createAngularCompilation"
+        }
+      ]
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/result.json",
+      "angular": "22.0.0",
+      "vite": "6.0.0",
+      "node": "v24.15.0",
+      "typescript": "6.0.2",
+      "results": [
+        {
+          "name": "public-declarations",
+          "passed": true,
+          "skipLibCheck": false
+        },
+        {
+          "name": "normal-replacement-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-replacement",
+          "passed": true
+        },
+        {
+          "name": "normal-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-include",
+          "passed": true
+        },
+        {
+          "name": "fast-full-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-full",
+          "passed": true
+        },
+        {
+          "name": "fast-partial-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-partial",
+          "passed": true
+        },
+        {
+          "name": "compilation-api-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "compilation-api-include",
+          "passed": true
+        },
+        {
+          "name": "concurrent-default-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-default-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-default",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "concurrent-fast-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-fast-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-fast",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "concurrent-api-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-api-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-api",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "browser-default-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-default-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-fast-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-fast-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-api-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-api-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-default-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-fast-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-api-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        }
+      ]
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/result.json",
+      "angular": "22.0.0",
+      "vite": "7.3.6",
+      "node": "v24.15.0",
+      "typescript": "6.0.2",
+      "results": [
+        {
+          "name": "public-declarations",
+          "passed": true,
+          "skipLibCheck": false
+        },
+        {
+          "name": "normal-replacement-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-replacement",
+          "passed": true
+        },
+        {
+          "name": "normal-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-include",
+          "passed": true
+        },
+        {
+          "name": "fast-full-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-full",
+          "passed": true
+        },
+        {
+          "name": "fast-partial-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-partial",
+          "passed": true
+        },
+        {
+          "name": "compilation-api-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "compilation-api-include",
+          "passed": true
+        },
+        {
+          "name": "concurrent-default-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-default-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-default",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "concurrent-fast-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-fast-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-fast",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "concurrent-api-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-api-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-api",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "browser-default-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-default-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-fast-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-fast-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-api-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-api-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-default-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-fast-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-api-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        }
+      ]
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/result.json",
+      "angular": "22.0.0",
+      "vite": "8.2.2",
+      "node": "v24.15.0",
+      "typescript": "6.0.2",
+      "results": [
+        {
+          "name": "public-declarations",
+          "passed": true,
+          "skipLibCheck": false
+        },
+        {
+          "name": "normal-replacement-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-replacement",
+          "passed": true
+        },
+        {
+          "name": "normal-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "normal-include",
+          "passed": true
+        },
+        {
+          "name": "fast-full-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-full",
+          "passed": true
+        },
+        {
+          "name": "fast-partial-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "fast-partial",
+          "passed": true
+        },
+        {
+          "name": "compilation-api-include-application-graph",
+          "passed": true,
+          "moduleCount": 2,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "compilation-api-include",
+          "passed": true
+        },
+        {
+          "name": "concurrent-default-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-default-application-graph",
+          "passed": true,
+          "moduleCount": 5,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-default",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "concurrent-fast-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-fast-application-graph",
+          "passed": true,
+          "moduleCount": 5,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-fast",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "concurrent-api-application-graph",
+          "passed": true,
+          "moduleCount": 4,
+          "environment": "client",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-api-application-graph",
+          "passed": true,
+          "moduleCount": 5,
+          "environment": "ssr",
+          "effectModules": []
+        },
+        {
+          "name": "concurrent-api",
+          "passed": true,
+          "serverTransformAfterClientClose": true
+        },
+        {
+          "name": "browser-default-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-default-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-fast-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-fast-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-api-live-reload-true",
+          "passed": true,
+          "stylesheetUpdated": true,
+          "countAfterStylesheetUpdate": "1"
+        },
+        {
+          "name": "browser-api-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-default-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-fast-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        },
+        {
+          "name": "browser-api-jit-live-reload-false",
+          "passed": true,
+          "behavior": "boot and restart with Angular HMR disabled"
+        }
+      ]
+    }
+  ],
+  "runtime": [
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/runtime-api.json",
+      "vite": "6.0.0",
+      "mode": "api",
+      "passed": true,
+      "edits": 4,
+      "restarts": [
+        {
+          "revision": 2,
+          "ms": 4076.9508509999996
+        },
+        {
+          "revision": 4,
+          "ms": 3992.884943000001
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "ssrLoader": "runner"
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/runtime-fast.json",
+      "vite": "6.0.0",
+      "mode": "fast",
+      "passed": true,
+      "edits": 4,
+      "restarts": [
+        {
+          "revision": 2,
+          "ms": 2352.051455
+        },
+        {
+          "revision": 4,
+          "ms": 2339.669443999999
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "ssrLoader": "runner"
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/runtime-ngtsc.json",
+      "vite": "6.0.0",
+      "mode": "ngtsc",
+      "passed": true,
+      "edits": 4,
+      "restarts": [
+        {
+          "revision": 2,
+          "ms": 3047.682010999999
+        },
+        {
+          "revision": 4,
+          "ms": 2845.0398050000003
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "ssrLoader": "runner"
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/runtime-api.json",
+      "vite": "8.2.2",
+      "mode": "api",
+      "passed": true,
+      "edits": 4,
+      "restarts": [
+        {
+          "revision": 2,
+          "ms": 4211.246176
+        },
+        {
+          "revision": 4,
+          "ms": 3964.2262759999994
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "ssrLoader": "compat"
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/runtime-fast.json",
+      "vite": "8.2.2",
+      "mode": "fast",
+      "passed": true,
+      "edits": 4,
+      "restarts": [
+        {
+          "revision": 2,
+          "ms": 2872.132641
+        },
+        {
+          "revision": 4,
+          "ms": 2759.923988999999
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "ssrLoader": "compat"
+    },
+    {
+      "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/runtime-ngtsc.json",
+      "vite": "8.2.2",
+      "mode": "ngtsc",
+      "passed": true,
+      "edits": 4,
+      "restarts": [
+        {
+          "revision": 2,
+          "ms": 3640.9200139999994
+        },
+        {
+          "revision": 4,
+          "ms": 3375.0255159999997
+        }
+      ],
+      "drainedCallers": 100,
+      "queuedAtClose": 100,
+      "ssrLoader": "compat"
+    }
+  ],
+  "rawSha256": {
+    "dist/hmr-downsides/vite8.2.2-candidate/final-comparison-0.json": "29ce6f2e3c9f062771b7402221f475fb319933281914faee6f083e514696a575",
+    "dist/hmr-downsides/vite8.2.2-candidate/final-comparison-1.json": "da457c6472e4dfe259ec4a982d46018ab48590ae67149df775566b5a0f72c8fd",
+    "dist/hmr-downsides/vite8.2.2-candidate/final-comparison-2.json": "edbebdca5b3670df4711e69f99fc2997be23b6f74b8f5151ffd5d96fc2a841c1",
+    "dist/hmr-downsides/vite8.2.2-control/final-comparison-0.json": "6da52e4e0bdce6801c8f7806c22f9381c7bf99b69df303cd925b9335e667ec67",
+    "dist/hmr-downsides/vite8.2.2-control/final-comparison-1.json": "8bbd886e8206a3ff213baa88572d6d62cf25ceb9a91b7a385db440f91360731e",
+    "dist/hmr-downsides/vite8.2.2-control/final-comparison-2.json": "925c70f7b90f77619fdb709d23fff7de4c97d52210bbc51dd7eb2cc208fba7f8",
+    "dist/hmr-downsides/vite8.2.2-pr4305/final-comparison-0.json": "f5a4ab4c0e7e356872acc4ef47b2aba913598c8022a9cd05597e1d39f65373e0",
+    "dist/hmr-downsides/vite8.2.2-pr4305/final-comparison-1.json": "5cdd59cde0f02bb051ebb726d0e2968c0a134cde163fd504c45dac151fe4cdbc",
+    "dist/hmr-downsides/vite8.2.2-pr4305/final-comparison-2.json": "639bdb4d62d1e64f5ab3a774886c34b6ef25c09a2e4ab5bec91cf1e23103beab",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/ownership-api.json": "3a24c97c1856ae95f765d7469d451dbdb27a5046b40a153e5861516c1d907319",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/ownership-fast.json": "d2e64cb2e89a18cd0df4af31c021b8ff84318a39476d9bb47816f6318aa241da",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/ownership-ngtsc.json": "d8b35c3afd3c626f45ca9963a99dff6c94f239458c53e0fd59ae6281787dbac0",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/ownership-api.json": "4e2b493f85bc6f448d07da22a00a72a17fe3962d59504d70b30d249f129fc809",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/ownership-fast.json": "38c844698d1419380b5864eee20083cf3e16d00eae2197e5d8faefc621a38bce",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/ownership-ngtsc.json": "b472e52d14162218178ca2ffc1761404744ed99a65245e9b974c5007d2f75e95",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/ownership-api.json": "e79e20a94557b66748b415277e3fefbb2f4d200eeb85689dd8a88316994cae96",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/ownership-fast.json": "88b722a56918813b1eb4081dc270a02a9459cf5361d5c8633ce7538510bff455",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/ownership-ngtsc.json": "c4d91f2aa34094565a7da43130e7cbc098db9a55ebf2e399042e7e0f68657351",
+    "dist/hmr-downsides/vite8.2.2-candidate/final-ownership-fast.json": "8e4a68658b82ce1eca90eaea251d126f1a4ae61f623972d2ebd542ab83437dc4",
+    "dist/hmr-downsides/vite8.2.2-candidate/final-ownership-api.json": "23ba4564d4dccdb029a91551c8ee510a61770b364f4a613146b81d0e831c9c9d",
+    "dist/hmr-downsides/vite8.2.2-control/final-ownership-fast.json": "71d67219b75d2002e1aed85c74adcf4bfd2d8cdc6d4851f783f58f5aab931132",
+    "dist/hmr-downsides/vite8.2.2-control/final-ownership-api.json": "a3dce29ebfac5a555cd6e4b3032ea5e73dc4be5675a9758f0dc97a884ca111d3",
+    "dist/compiler-vite-smoke/angular-17.3.12-vite-6.0.0-s4lqbq/result.json": "8c7eda73ce21282291692f41d5bf14d6b37aff2487bdb4934ce4cb927c1c98ca",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/result.json": "9d24f93f27b3652c57c4b2a1e5fc82d71288a40b906934367d1b1277798f1a14",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-7.3.6-WLO98D/result.json": "30dcca7f28d1020b71a923982ac29ea6f7d848bf7615aa4cbb7712cd861afc83",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/result.json": "5a54f911aa026b0407de263be4249f98274a9d5570a0062408d1ca57af192214",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/runtime-api.json": "f0606b4cd0d52c66122e2f026c97449447b7dbc0f529a2adeab8ac211dc5414d",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/runtime-fast.json": "b946ebfdebf73d6dad0b03fe1c750ac5d3738c28e204dec3cc52a416afe0f85c",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-6.0.0-l2IKcV/runtime-ngtsc.json": "88a0e76c08a1e1de067297183f51b2eff8dda158249bf90782969d20c309d266",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/runtime-api.json": "36399314e0c702fdf96fcbdbb2f1e7af9ceb6ea40450c3a4389ca78ad3116dd9",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/runtime-fast.json": "d340ecc05dc55b40c0e13feb60b6217881a8d99aa0005d01b7c2a97077420f6f",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/runtime-ngtsc.json": "6da567cfec8995739c53daf8b62216d741845631417cad429128c5f06a6cf5bf",
+    "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/style-result.json": "4b8e28e85686679aa8239f526606fdd0e5018d05ccf16c8dc46a4b3ad61951e6",
+    "dist/hmr-downsides/tests-and-test-types.log": "f5e89d8dfe368b3cca4d27dda14dae81b7e8cb7fe8df10ac692e0efc5c0af615",
+    "dist/hmr-downsides/eslint.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "dist/hmr-downsides/smoke-22.0.0-6.0.0.log": "233e4839557d3e04fb053275584773833d8c9a825cd5c66b0d020fb91566c581",
+    "dist/hmr-downsides/smoke-22.0.0-8.2.2.log": "c704e8dba96c8f9540e132564c467e0e1aafbdb749dcbb62c4bacb34d07c355d",
+    "dist/hmr-downsides/smoke-22.0.0-7.3.6.log": "80fcc3a64de8bc1d2900383265403382e5f28bc47a1d056cac645a85960337c5",
+    "dist/hmr-downsides/package-gates.log": "fc6df4bf739848e567b13a9f723601571435c70cfd6684cf013b4904fc38b72e",
+    "dist/hmr-downsides/smoke-17.3.12-6.0.0.log": "5539ea9a23f00b3e7caeff921d3917859e42d69e9a16f9376cbedb9ea8d9e27a",
+    "dist/hmr-downsides/red-ownership.log": "c2f3d972d763b08f9e4133d8da4507fe3050457c9de6a900179638f6baa4b4d1",
+    "dist/hmr-downsides/red-pending-transform.log": "c1ae53704e6f113c9dd4adf9935cd22a3e14fae12bb9b494d241aeb089e4eca8",
+    "dist/hmr-downsides/final-focused.log": "aad16673f3561ea55f4163625b5dc8d9147fc44fc92e76007614913802e26261"
+  },
+  "styles": {
+    "raw": "dist/compiler-vite-smoke/angular-22.0.0-vite-8.2.2-ySOl6c/style-result.json",
+    "results": {
+      "passed": true,
+      "results": [
+        {
+          "mode": "ngtsc",
+          "encapsulation": "Emulated",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "ngtsc",
+          "encapsulation": "None",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "ngtsc",
+          "encapsulation": "ShadowDom",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "fast",
+          "encapsulation": "Emulated",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "fast",
+          "encapsulation": "None",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "fast",
+          "encapsulation": "ShadowDom",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "api",
+          "encapsulation": "Emulated",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "api",
+          "encapsulation": "None",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        },
+        {
+          "mode": "api",
+          "encapsulation": "ShadowDom",
+          "sharedOwners": 2,
+          "partialEdits": 2,
+          "statePreserved": true
+        }
+      ]
+    }
+  },
+  "verification": {
+    "unitTests": 941,
+    "existingSkippedTests": 6,
+    "sourceTypecheck": "passed",
+    "testTypecheck": "passed after explicit null returns in new fixture hooks",
+    "buildAndArtifactVerification": "passed",
+    "eslint": "passed",
+    "redOwnershipCases": 4,
+    "redPendingTransformCases": 1,
+    "notes": "package-gates.log has the initial test-typecheck failure; tests-and-test-types.log and final-focused.log record corrected passing evidence"
+  }
+}

@@ -1,144 +1,250 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as crypto from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { VERSION } from '@angular/compiler';
-import { createDebug } from 'obug';
+import ts from 'typescript';
+import * as Clock from 'effect/Clock';
+import * as Context from 'effect/Context';
+import * as Data from 'effect/Data';
+import * as Effect from 'effect/Effect';
+import * as Layer from 'effect/Layer';
+import * as Result from 'effect/Result';
+import * as Schema from 'effect/Schema';
 
-const debugCache = createDebug('analog-transform-cache');
-
-/**
- * The `{ get, put }` shape `@angular/build`'s `JavaScriptTransformer`
- * accepts as its third constructor argument. Keys are SHA-256 digests the
- * transformer derives from the file bytes plus every option that affects
- * output, so entries are immutable and never need invalidation — but the
- * digest does NOT cover the linker version, so stores must be namespaced
- * by Angular version (see {@link resolveTransformCacheDir}).
- */
+/** The callback boundary required by Angular's JavaScriptTransformer. */
 export interface TransformCacheStore {
   get(key: string): Promise<Uint8Array | undefined> | Uint8Array | undefined;
   put(key: string, value: Uint8Array): Promise<void> | void;
 }
 
-interface TransformCacheStats {
+export const TransformCacheKey: Schema.brand<
+  Schema.String,
+  'TransformCacheKey'
+> = Schema.String.check(Schema.isPattern(/^[a-f0-9]{64}$/)).pipe(
+  Schema.brand('TransformCacheKey'),
+);
+export type TransformCacheKey = typeof TransformCacheKey.Type;
+
+export class CacheIoFailure extends Data.TaggedError('CacheIoFailure')<{
+  readonly operation: 'read' | 'write' | 'cleanup';
+  readonly path: string;
+  readonly cause: unknown;
+}> {}
+
+const missingFile = Schema.decodeUnknownResult(
+  Schema.Struct({ code: Schema.Literal('ENOENT') }),
+);
+const existingFile = Schema.decodeUnknownResult(
+  Schema.Struct({ code: Schema.Literal('EEXIST') }),
+);
+
+export class CacheStorage extends Context.Service<
+  CacheStorage,
+  {
+    readonly get: (
+      key: TransformCacheKey,
+    ) => Effect.Effect<Uint8Array | undefined, CacheIoFailure>;
+    readonly put: (
+      key: TransformCacheKey,
+      value: Uint8Array,
+    ) => Effect.Effect<void, CacheIoFailure>;
+  }
+>()('@analogjs/vite-plugin-angular/CacheStorage') {
+  static readonly disabled: Layer.Layer<CacheStorage> = Layer.succeed(
+    CacheStorage,
+    {
+      get: () => Effect.succeed(undefined),
+      put: () => Effect.void,
+    },
+  );
+}
+
+/** Content-addressed disk adapter; only ENOENT is a cache miss. */
+export function diskCacheLayer(baseDir: string): Layer.Layer<CacheStorage> {
+  const entry = (key: TransformCacheKey) =>
+    path.join(baseDir, key.slice(0, 2), key);
+  const get = Effect.fn('analog.cache.read')(function* (
+    key: TransformCacheKey,
+  ) {
+    const file = entry(key);
+    return yield* Effect.tryPromise({
+      try: () => fs.promises.readFile(file),
+      catch: (cause) =>
+        new CacheIoFailure({ operation: 'read', path: file, cause }),
+    }).pipe(
+      Effect.catchIf(
+        (error) => Result.isSuccess(missingFile(error.cause)),
+        () => Effect.succeed(undefined),
+      ),
+    );
+  });
+  const put = Effect.fn('analog.cache.write')(function* (
+    key: TransformCacheKey,
+    value: Uint8Array,
+  ) {
+    const file = entry(key);
+    const temporary = `${file}.${randomUUID()}`;
+    const cleanup = Effect.tryPromise({
+      try: () => fs.promises.unlink(temporary),
+      catch: (cause) =>
+        new CacheIoFailure({ operation: 'cleanup', path: temporary, cause }),
+    }).pipe(
+      Effect.catchIf(
+        (error) => Result.isSuccess(missingFile(error.cause)),
+        () => Effect.void,
+      ),
+      Effect.orDie,
+    );
+    yield* Effect.tryPromise({
+      try: async () => {
+        await fs.promises.mkdir(path.dirname(file), { recursive: true });
+        await fs.promises.writeFile(temporary, value, { flag: 'wx' });
+        try {
+          // Publish a complete immutable entry without replacing another
+          // writer's entry (or following an existing destination symlink).
+          await fs.promises.link(temporary, file);
+        } catch (cause) {
+          if (!Result.isSuccess(existingFile(cause))) throw cause;
+        }
+      },
+      catch: (cause) =>
+        new CacheIoFailure({ operation: 'write', path: file, cause }),
+    }).pipe(Effect.uninterruptible, Effect.ensuring(cleanup));
+  });
+  return Layer.succeed(CacheStorage, { get, put });
+}
+
+export interface TransformCacheStats {
   hits: number;
   misses: number;
   writes: number;
-  /** Approximate total ms spent in the linker worker for cache misses. */
   workerMs: number;
+  memoryBytes: number;
 }
 
-/**
- * Disk-backed content-addressed store for linked/transformed dependency
- * output. Entries are written atomically (temp + rename) so concurrent
- * dev servers can share a directory; all failures degrade to a miss.
- */
-export function createPersistentTransformCache(
-  baseDir: string,
-): TransformCacheStore & { stats: TransformCacheStats } {
-  const stats: TransformCacheStats = {
-    hits: 0,
-    misses: 0,
-    writes: 0,
-    workerMs: 0,
-  };
-  // Miss timestamps by key: with the transformer's serialized worker, the
-  // gap between a missed get and its put approximates linker time per file.
-  const missedAt = new Map<string, number>();
-
-  const entryPath = (key: string) => path.join(baseDir, key.slice(0, 2), key);
-
-  return {
-    stats,
-    async get(key: string): Promise<Uint8Array | undefined> {
-      try {
-        const value = await fs.promises.readFile(entryPath(key));
-        stats.hits++;
-        debugCache('hit %s (hits=%d misses=%d)', key, stats.hits, stats.misses);
-        return value;
-      } catch {
-        stats.misses++;
-        missedAt.set(key, performance.now());
-        debugCache(
-          'miss %s (hits=%d misses=%d)',
-          key,
-          stats.hits,
-          stats.misses,
+export class TransformCache extends Context.Service<
+  TransformCache,
+  {
+    readonly get: CacheStorage['Service']['get'];
+    readonly put: CacheStorage['Service']['put'];
+    readonly stats: Readonly<TransformCacheStats>;
+  }
+>()('@analogjs/vite-plugin-angular/TransformCache') {
+  static readonly layer: Layer.Layer<TransformCache, never, CacheStorage> =
+    Layer.effect(
+      TransformCache,
+      Effect.gen(function* () {
+        const storage = yield* CacheStorage;
+        const clock = yield* Clock.Clock;
+        const memory = new Map<TransformCacheKey, Uint8Array>();
+        const missedAt = new Map<TransformCacheKey, number>();
+        const stats: TransformCacheStats = {
+          hits: 0,
+          misses: 0,
+          writes: 0,
+          workerMs: 0,
+          memoryBytes: 0,
+        };
+        // Bound both entry count and bytes: a large dependency cannot retain an
+        // unbounded buffer graph for the lifetime of a dev server.
+        const remember = (key: TransformCacheKey, value: Uint8Array) => {
+          stats.memoryBytes -= memory.get(key)?.byteLength ?? 0;
+          memory.delete(key);
+          memory.set(key, value);
+          stats.memoryBytes += value.byteLength;
+          while (memory.size > 256 || stats.memoryBytes > 64 * 1024 * 1024) {
+            const first = memory.keys().next().value;
+            if (first === undefined) break;
+            stats.memoryBytes -= memory.get(first)?.byteLength ?? 0;
+            memory.delete(first);
+          }
+        };
+        yield* Effect.addFinalizer(() =>
+          Effect.sync(() => {
+            memory.clear();
+            missedAt.clear();
+            stats.memoryBytes = 0;
+          }),
         );
-        return undefined;
-      }
-    },
-    async put(key: string, value: Uint8Array): Promise<void> {
-      const startedAt = missedAt.get(key);
-      if (startedAt !== undefined) {
-        missedAt.delete(key);
-        stats.workerMs += performance.now() - startedAt;
-      }
-      try {
-        const file = entryPath(key);
-        await fs.promises.mkdir(path.dirname(file), { recursive: true });
-        const tmp = `${file}.${process.pid}.${crypto.randomBytes(4).toString('hex')}`;
-        await fs.promises.writeFile(tmp, value);
-        await fs.promises.rename(tmp, file);
-        stats.writes++;
-        debugCache(
-          'put %s (writes=%d workerMs=%d)',
-          key,
-          stats.writes,
-          Math.round(stats.workerMs),
-        );
-      } catch (e) {
-        debugCache('put failed %s: %s', key, (e as Error)?.message);
-      }
-    },
-  };
+        const get = Effect.fn('analog.cache.get')(function* (
+          key: TransformCacheKey,
+        ) {
+          const value = memory.get(key) ?? (yield* storage.get(key));
+          if (value !== undefined) {
+            remember(key, value);
+            stats.hits++;
+          } else {
+            stats.misses++;
+            missedAt.set(key, yield* clock.currentTimeMillis);
+            if (missedAt.size > 256) {
+              const first = missedAt.keys().next().value;
+              if (first !== undefined) missedAt.delete(first);
+            }
+          }
+          return value;
+        });
+        const put = Effect.fn('analog.cache.put')(function* (
+          key: TransformCacheKey,
+          value: Uint8Array,
+        ) {
+          yield* storage.put(key, value);
+          remember(key, value);
+          const started = missedAt.get(key);
+          missedAt.delete(key);
+          if (started !== undefined)
+            stats.workerMs += (yield* clock.currentTimeMillis) - started;
+          stats.writes++;
+        });
+        return TransformCache.of({ get, put, stats });
+      }),
+    );
 }
 
-/**
- * Layer an unbounded in-memory map over a persistent store so repeat
- * transforms in the same session never touch the disk.
- */
-export function withMemoryLayer(
-  store: TransformCacheStore,
-): TransformCacheStore {
-  const memory = new Map<string, Uint8Array>();
-  return {
-    async get(key: string): Promise<Uint8Array | undefined> {
-      const cached = memory.get(key) ?? (await store.get(key));
-      if (cached) memory.set(key, cached);
-      return cached;
-    },
-    async put(key: string, value: Uint8Array): Promise<void> {
-      memory.set(key, value);
-      await store.put(key, value);
-    },
-  };
+export function transformCacheLayer(
+  directory?: string,
+): Layer.Layer<TransformCache> {
+  return TransformCache.layer.pipe(
+    Layer.provide(
+      directory ? diskCacheLayer(directory) : CacheStorage.disabled,
+    ),
+  );
 }
 
-/**
- * Resolve the shared on-disk cache directory: `node_modules/.cache` at the
- * nearest `node_modules` above `startDir` — the conventional tool-cache
- * location, so installs and `node_modules` cleans evict it without a
- * separate eviction pass. Namespaced by the installed Angular version
- * because the transformer's cache key does not cover the linker version.
- * Returns `null` (caching disabled) when no `node_modules` exists or the
- * `ANALOG_TRANSFORM_CACHE=0` kill switch is set.
- */
-export function resolveTransformCacheDir(startDir: string): string | null {
-  if (process.env['ANALOG_TRANSFORM_CACHE'] === '0') return null;
+/** Namespace native content hashes by all toolchain versions they omit. */
+export function resolveTransformCacheDir(startDir: string): string | undefined {
+  if (process.env['ANALOG_TRANSFORM_CACHE'] === '0') return undefined;
   let dir = path.resolve(startDir);
   for (;;) {
     if (fs.existsSync(path.join(dir, 'node_modules'))) {
+      const require = createRequire(import.meta.url);
+      const builder: { version: string } = require(
+        Number(VERSION.major) === 17
+          ? '@angular-devkit/build-angular/package.json'
+          : '@angular/build/package.json',
+      );
+      const namespace = createHash('sha256')
+        .update(
+          JSON.stringify({
+            format: 2,
+            compiler: VERSION.full,
+            builder: builder.version,
+            typescript: ts.version,
+            node: process.versions.node,
+          }),
+        )
+        .digest('hex');
       return path.join(
         dir,
         'node_modules',
         '.cache',
         'analog',
         'transform-cache',
-        VERSION.full,
+        namespace,
       );
     }
     const parent = path.dirname(dir);
-    if (parent === dir) return null;
+    if (parent === dir) return undefined;
     dir = parent;
   }
 }

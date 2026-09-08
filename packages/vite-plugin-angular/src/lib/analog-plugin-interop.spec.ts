@@ -136,13 +136,14 @@ describe('analog plugin interop', () => {
   });
 
   it('names the failing plugin when a registry configurator throws', async () => {
+    const cause = new Error('boom');
     const { configureStylesheetRegistry } = await runAnalogSetupHooks([
       {
         name: 'vite-plugin-xyz',
         analog: {
           setup(ctx) {
             ctx.configureStylesheetRegistry(() => {
-              throw new Error('boom');
+              throw cause;
             });
           },
         },
@@ -152,7 +153,11 @@ describe('analog plugin interop', () => {
     expect(() =>
       configureStylesheetRegistry?.({} as any, { workspaceRoot: '/workspace' }),
     ).toThrow(
-      '[analog] Stylesheet registry configurator from plugin "vite-plugin-xyz" failed: boom',
+      expect.objectContaining({
+        message:
+          '[analog] Stylesheet registry configurator from plugin "vite-plugin-xyz" failed: boom',
+        cause,
+      }),
     );
   });
 
@@ -209,13 +214,14 @@ describe('analog plugin interop', () => {
   });
 
   it('names the failing plugin and stylesheet when a preprocessor throws', async () => {
+    const cause = new Error('boom');
     const { stylePreprocessor } = await runAnalogSetupHooks([
       {
         name: 'vite-plugin-xyz',
         analog: {
           setup(ctx) {
             ctx.registerStylePreprocessor(() => {
-              throw new Error('boom');
+              throw cause;
             });
           },
         },
@@ -225,25 +231,32 @@ describe('analog plugin interop', () => {
     expect(() =>
       stylePreprocessor?.('.demo {}', 'app.component.scss', context),
     ).toThrow(
-      '[analog] Style preprocessor from plugin "vite-plugin-xyz" failed for "app.component.scss": boom',
+      expect.objectContaining({
+        message:
+          '[analog] Style preprocessor from plugin "vite-plugin-xyz" failed for "app.component.scss": boom',
+        cause,
+      }),
     );
   });
 
   it('names the failing plugin when analog.setup throws', async () => {
+    const cause = new Error('bad config');
     await expect(
       runAnalogSetupHooks([
         {
           name: 'vite-plugin-xyz',
           analog: {
             setup() {
-              throw new Error('bad config');
+              throw cause;
             },
           },
         } as AnalogIntegrationPlugin,
       ]),
-    ).rejects.toThrow(
-      '[analog] analog.setup() from plugin "vite-plugin-xyz" failed: bad config',
-    );
+    ).rejects.toMatchObject({
+      message:
+        '[analog] analog.setup() from plugin "vite-plugin-xyz" failed: bad config',
+      cause,
+    });
   });
 
   it('runs setup hooks once per resolved config', async () => {
@@ -257,4 +270,11 @@ describe('analog plugin interop', () => {
 
     expect(setup).toHaveBeenCalledTimes(1);
   });
+});
+
+it('keeps Tailwind Vite component styles in the Vite CSS pipeline', async () => {
+  const integrations = await discoverAnalogIntegrations({
+    plugins: [{ name: '@tailwindcss/vite:generate:serve' }],
+  } as any);
+  expect(integrations.externalizeStyles).toBe(true);
 });

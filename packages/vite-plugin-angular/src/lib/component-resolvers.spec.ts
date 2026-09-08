@@ -7,18 +7,10 @@ import {
   TemplateUrlsResolver,
 } from './component-resolvers';
 import { normalizePath } from 'vite';
-import { relative } from 'node:path';
-
-const WINDOWS_DRIVE_IN_PATH_RE = /\|[A-Z]:/i;
-
-// array version of normalizePath
-const normalizePaths = (paths: string[]) =>
-  paths.map((path) =>
-    normalizePath(path).replace(WINDOWS_DRIVE_IN_PATH_RE, '|'),
-  );
+import type { ResourceLocation } from './component-resolvers';
 
 interface CustomMatchers<R = unknown> {
-  toMatchNormalizedPaths: (expected: string[]) => R;
+  toMatchNormalizedPaths: (expected: readonly ResourceLocation[]) => R;
 }
 
 declare module 'vitest' {
@@ -29,47 +21,18 @@ declare module 'vitest' {
 }
 
 expect.extend({
-  // OS agnostic paths array comparison
-  // Two normalized paths are the same if path.relative(p1, p2) === ''
-  // In Windows a normalized absolute path includes the drive i.e. C:
-  toMatchNormalizedPaths(actual: unknown, expected: string[]) {
-    const { matcherHint, printExpected, printReceived, diff } = this.utils;
-
-    if (!(Array.isArray(actual) && actual.length === expected.length)) {
-      return {
-        pass: false,
-        message: () =>
-          matcherHint('toMatchNormalizedPaths') +
-          '\n\n' +
-          'Expected:\n' +
-          `  type: ${printExpected('Array')}\n` +
-          `  length: ${printExpected(expected.length)}\n` +
-          'Received:\n' +
-          `  type: ${printReceived(Array.isArray(actual) ? 'Array' : typeof actual)}\n` +
-          `  length: ${printReceived(Array.isArray(actual) ? actual.length : '-')}`,
-      };
-    }
-
-    const normalizedActual = normalizePaths(actual);
-    const normalizedExpected = normalizePaths(expected);
-
-    const areSame = normalizedExpected.every(
-      (path, index) => relative(normalizedActual[index], path) === '',
-    );
-    if (!areSame) {
-      return {
-        pass: false,
-        message: () =>
-          matcherHint('toMatchNormalizedPaths') +
-          '\n\n' +
-          '(normalized values)\n' +
-          diff(normalizedExpected, normalizedActual),
-      };
-    }
-
+  toMatchNormalizedPaths(
+    actual: readonly ResourceLocation[],
+    expected: readonly ResourceLocation[],
+  ) {
+    const normalized = actual.map(({ relativePath, absolutePath }) => ({
+      relativePath,
+      absolutePath: normalizePath(absolutePath).replace(/^[A-Z]:/i, ''),
+    }));
     return {
-      pass: true,
-      message: () => 'Paths match',
+      pass: this.equals(normalized, expected),
+      message: () =>
+        this.utils.diff(expected, normalized) ?? 'Resource paths match',
     };
   },
 });
@@ -87,7 +50,10 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
       ];
       const styleUrlsResolver = new StyleUrlsResolver();
       const resolvedPaths = styleUrlsResolver.resolve(code, id);
@@ -104,7 +70,10 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
       ];
       const styleUrlsResolver = new StyleUrlsResolver();
       const resolvedPaths = styleUrlsResolver.resolve(code, id);
@@ -124,8 +93,11 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
-        '../styles.css|/path/to/styles.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
+        { relativePath: '../styles.css', absolutePath: '/path/to/styles.css' },
       ];
 
       const styleUrlsResolver = new StyleUrlsResolver();
@@ -146,9 +118,15 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
-        './another.css|/path/to/src/another.css',
-        '../styles.css|/path/to/styles.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
+        {
+          relativePath: './another.css',
+          absolutePath: '/path/to/src/another.css',
+        },
+        { relativePath: '../styles.css', absolutePath: '/path/to/styles.css' },
       ];
 
       const styleUrlsResolver = new StyleUrlsResolver();
@@ -166,7 +144,10 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './[param].component.css|/path/to/src/[param].component.css',
+        {
+          relativePath: './[param].component.css',
+          absolutePath: '/path/to/src/[param].component.css',
+        },
       ];
       const styleUrlsResolver = new StyleUrlsResolver();
       const resolvedPaths = styleUrlsResolver.resolve(code, id);
@@ -183,7 +164,10 @@ describe('component-resolvers', () => {
     `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
       ];
       const styleUrlsResolver = new StyleUrlsResolver();
       const resolvedPaths = styleUrlsResolver.resolve(code, id);
@@ -203,8 +187,11 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
-        '../styles.css|/path/to/styles.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
+        { relativePath: '../styles.css', absolutePath: '/path/to/styles.css' },
       ];
 
       const styleUrlsResolver = new StyleUrlsResolver();
@@ -225,8 +212,11 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
-        '../styles.css|/path/to/styles.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
+        { relativePath: '../styles.css', absolutePath: '/path/to/styles.css' },
       ];
 
       const styleUrlsResolver = new StyleUrlsResolver();
@@ -247,9 +237,15 @@ describe('component-resolvers', () => {
       `;
 
       const expectedPaths = [
-        './app.component.css|/path/to/src/app.component.css',
-        './another.css|/path/to/src/another.css',
-        '../styles.css|/path/to/styles.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
+        {
+          relativePath: './another.css',
+          absolutePath: '/path/to/src/another.css',
+        },
+        { relativePath: '../styles.css', absolutePath: '/path/to/styles.css' },
       ];
 
       const styleUrlsResolver = new StyleUrlsResolver();
@@ -312,10 +308,16 @@ describe('component-resolvers', () => {
       );
 
       expect(first).toMatchNormalizedPaths([
-        './app.component.css|/path/to/src/app.component.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
       ]);
       expect(second).toMatchNormalizedPaths([
-        './other.component.css|/path/to/src/other.component.css',
+        {
+          relativePath: './other.component.css',
+          absolutePath: '/path/to/src/other.component.css',
+        },
       ]);
     });
 
@@ -347,10 +349,16 @@ describe('component-resolvers', () => {
       const styleUrls = new StyleUrlsResolver().resolve(code, id);
 
       expect(templateUrls).toMatchNormalizedPaths([
-        './app.component.html|/path/to/src/app.component.html',
+        {
+          relativePath: './app.component.html',
+          absolutePath: '/path/to/src/app.component.html',
+        },
       ]);
       expect(styleUrls).toMatchNormalizedPaths([
-        './app.component.css|/path/to/src/app.component.css',
+        {
+          relativePath: './app.component.css',
+          absolutePath: '/path/to/src/app.component.css',
+        },
       ]);
     });
   });
@@ -367,8 +375,10 @@ describe('component-resolvers', () => {
         export class MyComponent {}
       `;
 
-        const expectedUrl =
-          './app.component.html|/path/to/src/app.component.html';
+        const expectedUrl = {
+          relativePath: './app.component.html',
+          absolutePath: '/path/to/src/app.component.html',
+        };
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
@@ -383,8 +393,10 @@ describe('component-resolvers', () => {
         export class MyComponent {}
       `;
 
-        const expectedUrl =
-          './[param].component.html|/path/to/src/[param].component.html';
+        const expectedUrl = {
+          relativePath: './[param].component.html',
+          absolutePath: '/path/to/src/[param].component.html',
+        };
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
@@ -399,8 +411,10 @@ describe('component-resolvers', () => {
         export class MyComponent {}
       `;
 
-        const expectedUrl =
-          './app.component.html|/path/to/src/app.component.html';
+        const expectedUrl = {
+          relativePath: './app.component.html',
+          absolutePath: '/path/to/src/app.component.html',
+        };
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
@@ -415,8 +429,10 @@ describe('component-resolvers', () => {
         export class MyComponent {}
       `;
 
-        const expectedUrl =
-          './[param].component.html|/path/to/src/[param].component.html';
+        const expectedUrl = {
+          relativePath: './[param].component.html',
+          absolutePath: '/path/to/src/[param].component.html',
+        };
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
@@ -436,10 +452,14 @@ describe('component-resolvers', () => {
         export class MyComponentTwo {}
       `;
 
-        const expectedUrl1 =
-          './app.component.html|/path/to/src/app.component.html';
-        const expectedUrl2 =
-          './app1.component.html|/path/to/src/app1.component.html';
+        const expectedUrl1 = {
+          relativePath: './app.component.html',
+          absolutePath: '/path/to/src/app.component.html',
+        };
+        const expectedUrl2 = {
+          relativePath: './app1.component.html',
+          absolutePath: '/path/to/src/app1.component.html',
+        };
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
@@ -471,8 +491,10 @@ describe('component-resolvers', () => {
         export class MyComponent {}
       `;
 
-        const expectedUrl =
-          './app.component.html|/path/to/src/app.component.html';
+        const expectedUrl = {
+          relativePath: './app.component.html',
+          absolutePath: '/path/to/src/app.component.html',
+        };
         const templateUrlsResolver = new TemplateUrlsResolver();
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
@@ -493,7 +515,10 @@ describe('component-resolvers', () => {
         const resolvedTemplateUrls = templateUrlsResolver.resolve(code, id);
 
         expect(resolvedTemplateUrls).toMatchNormalizedPaths([
-          './app.component.html|/path/to/src/app.component.html',
+          {
+            relativePath: './app.component.html',
+            absolutePath: '/path/to/src/app.component.html',
+          },
         ]);
       });
     });

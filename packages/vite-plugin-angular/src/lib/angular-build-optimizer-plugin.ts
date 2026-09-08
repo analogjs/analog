@@ -1,7 +1,11 @@
-import type { Plugin, UserConfig } from 'vite';
-import { JavaScriptTransformer } from './utils/devkit.js';
+import { stripQuery } from './utils/module-id.js';
+import type { Plugin } from 'vite';
+import { createJavaScriptTransformer } from './javascript-transformer.js';
 import { isProdMode } from './utils/plugin-config.js';
-import { getJsTransformConfigKey } from './utils/rolldown.js';
+import {
+  extractInlineSourceMap,
+  normalizeSourceMap,
+} from './utils/source-map.js';
 
 export function buildOptimizerPlugin({
   jit,
@@ -9,9 +13,14 @@ export function buildOptimizerPlugin({
   supportedBrowsers: string[];
   jit: boolean;
 }): Plugin {
-  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
   let isProd = false;
   let preserveVendorMaps = false;
+  const javascriptTransformer = createJavaScriptTransformer(() => ({
+    sourcemap: preserveVendorMaps,
+    thirdPartySourcemaps: preserveVendorMaps,
+    advancedOptimizations: isProd,
+    jit: true,
+  }));
 
   return {
     name: '@analogjs/vite-plugin-angular-optimizer',
@@ -32,17 +41,6 @@ export function buildOptimizerPlugin({
       isProd = isProdMode(userConfig.mode);
       // Advanced optimizations paired with dev-mode defines would strip
       // dev-only code the debug API needs, so both key off `isProd`.
-      javascriptTransformer ??= new JavaScriptTransformer(
-        {
-          sourcemap: false,
-          thirdPartySourcemaps: false,
-          advancedOptimizations: isProd,
-          jit: true,
-        },
-        1,
-      );
-      const jsTransformConfigKey = getJsTransformConfigKey();
-
       return {
         define: isProd
           ? {
@@ -52,17 +50,7 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        [jsTransformConfigKey]: {
-          define: isProd
-            ? {
-                ngDevMode: 'false',
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ngServerMode: `${!!userConfig.build?.ssr}`,
-              }
-            : undefined,
-        },
-      } as UserConfig;
+      };
     },
     // The top-level define keys `ngServerMode` off the legacy `build.ssr`
     // flag. Environment API builds run the server through an environment
@@ -78,6 +66,8 @@ export function buildOptimizerPlugin({
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
     },
+    closeBundle: () => javascriptTransformer.close(),
+    closeWatcher: () => javascriptTransformer.close(),
     transform: {
       filter: {
         // Allow an optional `?query` after the extension. Some environments
@@ -91,7 +81,7 @@ export function buildOptimizerPlugin({
       async handler(code, id) {
         // Strip the `?query` so the fesm check and the transformer see a real
         // filename rather than `foo.mjs?v=<hash>`.
-        const cleanId = id.split('?')[0];
+        const cleanId = stripQuery(id);
         const angularPackage = /fesm20/.test(cleanId);
 
         if (!angularPackage) {
@@ -112,12 +102,16 @@ export function buildOptimizerPlugin({
         const result: Uint8Array = await javascriptTransformer.transformData(
           cleanId,
           code,
-          false,
           sideEffects,
         );
 
+        const transformed = Buffer.from(result).toString();
+        if (!preserveVendorMaps)
+          return { code: transformed, map: { mappings: '' } };
+        const linked = extractInlineSourceMap(transformed);
         return {
-          code: Buffer.from(result).toString(),
+          code: linked.code,
+          map: linked.map ? normalizeSourceMap(linked.map, cleanId) : null,
         };
       },
     },

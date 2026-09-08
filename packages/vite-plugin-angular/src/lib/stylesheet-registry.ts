@@ -1,3 +1,4 @@
+import { stripQuery, splitQuery } from './utils/module-id.js';
 import { createHash } from 'node:crypto';
 import { dirname, normalize, resolve } from 'node:path';
 import { normalizePath } from 'vite';
@@ -5,7 +6,7 @@ import type {
   StylePreprocessor,
   StylesheetDependency,
   StylesheetDiagnostic,
-  StylesheetTransformResult,
+  NormalizedStylesheetTransformResult,
   StylesheetTransformContext,
 } from './style-preprocessor.js';
 import { normalizeStylesheetTransformResult as normalizeTransformResult } from './style-preprocessor.js';
@@ -54,7 +55,7 @@ export class AnalogStylesheetRegistry {
    * module for the same public stylesheet id.
    */
   private normalizeRequestId(requestId: string): string {
-    const [rawPathname, rawSearch = ''] = requestId.split('?');
+    const [rawPathname, rawSearch] = splitQuery(requestId);
     const normalizedPathname = rawPathname.replace(/^\//, '');
 
     if (!rawSearch) {
@@ -104,6 +105,20 @@ export class AnalogStylesheetRegistry {
     return this.externalRequestToSource.get(normalizedRequestId);
   }
 
+  hasExternalSource(sourcePath: string): boolean {
+    const normalized = normalizePath(sourcePath);
+    for (const source of this.externalRequestToSource.values()) {
+      if (normalizePath(source) === normalized) return true;
+    }
+    return false;
+  }
+
+  getExternalRequestsForSource(sourcePath: string): string[] {
+    return [...this.externalRequestToSource].flatMap(([request, source]) =>
+      normalizePath(source) === normalizePath(sourcePath) ? [request] : [],
+    );
+  }
+
   getPublicIdsForSource(sourcePath: string): string[] {
     return [...(this.sourceToPublicIds.get(sourcePath) ?? [])];
   }
@@ -137,8 +152,11 @@ export class AnalogStylesheetRegistry {
     // the source file so later HMR events for `/src/...component.css` can find
     // the currently active virtual requests.
     const normalizedRequestId = this.normalizeRequestId(requestId);
-    const requestPath = normalizedRequestId.split('?')[0];
+    const requestPath = stripQuery(requestId);
     const sourcePath =
+      (this.hasExternalSource(requestPath)
+        ? normalizePath(requestPath)
+        : undefined) ??
       this.resolveExternalSource(requestPath) ??
       this.resolveExternalSource(requestPath.replace(/^\//, '')) ??
       this.getServedSourcePath(requestPath) ??
@@ -156,10 +174,8 @@ export class AnalogStylesheetRegistry {
     // derived wrapper id eagerly so HMR can reason about the browser-visible
     // stylesheet identity without waiting for that wrapper request to be
     // observed later in the session.
-    if (normalizedRequestId.includes('?direct&ngcomp=')) {
-      requestIds.add(
-        normalizedRequestId.replace('?direct&ngcomp=', '?ngcomp='),
-      );
+    if (normalizedRequestId.includes('?direct&ngcomp')) {
+      requestIds.add(normalizedRequestId.replace('?direct&ngcomp', '?ngcomp'));
     }
     this.sourceToRequestIds.set(sourcePath, requestIds);
   }
@@ -222,8 +238,8 @@ export class AnalogStylesheetRegistry {
     const normalizedRequestId = this.normalizeRequestId(requestId);
     const publicId =
       this.servedAliasToId.get(normalizedRequestId) ??
-      this.servedAliasToId.get(normalizedRequestId.split('?')[0]) ??
-      normalizedRequestId.split('?')[0];
+      this.servedAliasToId.get(stripQuery(normalizedRequestId)) ??
+      stripQuery(normalizedRequestId);
     return this.servedById.get(publicId);
   }
 }
@@ -243,7 +259,7 @@ export function preprocessStylesheetResult(
   filename: string,
   stylePreprocessor?: StylePreprocessor,
   context?: StylesheetTransformContext,
-): StylesheetTransformResult {
+): NormalizedStylesheetTransformResult {
   return normalizeTransformResult(
     stylePreprocessor?.(code, filename, context),
     code,
@@ -319,9 +335,9 @@ export function registerStylesheetContent(
       publicId: stylesheetId,
       sourcePath: normalizedSourcePath,
       normalizedCode: code,
-      dependencies,
-      diagnostics,
-      tags,
+      ...(dependencies ? { dependencies } : {}),
+      ...(diagnostics ? { diagnostics } : {}),
+      ...(tags ? { tags } : {}),
     },
     aliases,
   );

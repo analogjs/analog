@@ -170,7 +170,7 @@ Angular supports HMR where in most cases components can be updated without a ful
 
 This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `liveReload` when you need custom host, port, or path settings.
 
-Analog requires Angular v19 or newer for `liveReload` to work. On Angular v17-v18, `liveReload` is forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
+Component HMR requires Angular v19.0.1 or newer. Angular v19.0.0 uses a full reload to avoid an upstream HMR runtime error. On Angular v17-v18, `liveReload` is forcibly disabled at runtime with a console warning, so HMR is unavailable on those versions.
 
 ```ts
 /// <reference types="vitest" />

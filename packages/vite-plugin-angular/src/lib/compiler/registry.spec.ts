@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { describe, it, expect } from 'vitest';
 import { scanFile } from './registry';
 import {
@@ -18,9 +19,9 @@ describe('Registry scanFile', () => {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].selector).toBe('app-test');
-    expect(entries[0].kind).toBe('component');
-    expect(entries[0].className).toBe('TestComponent');
+    expect(required(entries[0]).selector).toBe('app-test');
+    expect(required(entries[0]).kind).toBe('component');
+    expect(required(entries[0]).className).toBe('TestComponent');
   });
 
   it('extracts directive metadata', () => {
@@ -34,8 +35,8 @@ describe('Registry scanFile', () => {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].selector).toBe('[appTest]');
-    expect(entries[0].kind).toBe('directive');
+    expect(required(entries[0]).selector).toBe('[appTest]');
+    expect(required(entries[0]).kind).toBe('directive');
   });
 
   it('extracts pipe metadata', () => {
@@ -49,9 +50,9 @@ describe('Registry scanFile', () => {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].kind).toBe('pipe');
-    expect(entries[0].pipeName).toBe('myPipe');
-    expect(entries[0].selector).toBe('myPipe');
+    expect(required(entries[0]).kind).toBe('pipe');
+    expect(required(entries[0]).pipeName).toBe('myPipe');
+    expect(required(entries[0]).selector).toBe('myPipe');
   });
 
   it('extracts NgModule with exports', () => {
@@ -68,9 +69,12 @@ describe('Registry scanFile', () => {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].kind).toBe('ngmodule');
-    expect(entries[0].className).toBe('SharedModule');
-    expect(entries[0].exports).toEqual(['FooComponent', 'BarDirective']);
+    expect(required(entries[0]).kind).toBe('ngmodule');
+    expect(required(entries[0]).className).toBe('SharedModule');
+    expect(required(entries[0]).exports).toEqual([
+      'FooComponent',
+      'BarDirective',
+    ]);
   });
 
   it('skips files without decorators', () => {
@@ -121,8 +125,8 @@ describe('Registry input/output extraction', () => {
       'child.ts',
     );
 
-    expect(entries[0].inputs).toBeDefined();
-    expect(entries[0].inputs!['name']).toEqual({
+    expect(required(entries[0]).inputs).toBeDefined();
+    expect(required(entries[0]).inputs!['name']).toEqual({
       classPropertyName: 'name',
       bindingPropertyName: 'name',
       isSignal: true,
@@ -142,7 +146,7 @@ describe('Registry input/output extraction', () => {
       'child.ts',
     );
 
-    expect(entries[0].inputs!['data']).toEqual({
+    expect(required(entries[0]).inputs!['data']).toEqual({
       classPropertyName: 'data',
       bindingPropertyName: 'data',
       isSignal: true,
@@ -162,8 +166,8 @@ describe('Registry input/output extraction', () => {
       'child.ts',
     );
 
-    expect(entries[0].outputs).toBeDefined();
-    expect(entries[0].outputs!['clicked']).toBe('clicked');
+    expect(required(entries[0]).outputs).toBeDefined();
+    expect(required(entries[0]).outputs!['clicked']).toBe('clicked');
   });
 
   it('extracts model() as input + output', () => {
@@ -178,7 +182,7 @@ describe('Registry input/output extraction', () => {
       'child.ts',
     );
 
-    expect(entries[0].inputs!['value']).toEqual({
+    expect(required(entries[0]).inputs!['value']).toEqual({
       classPropertyName: 'value',
       bindingPropertyName: 'value',
       isSignal: true,
@@ -187,7 +191,7 @@ describe('Registry input/output extraction', () => {
     // Registry's outputs map mirrors Angular's `{ classProp: bindingName }`
     // convention. For a `model()` the class property is `value` and the
     // binding event is `valueChange`.
-    expect(entries[0].outputs!['value']).toBe('valueChange');
+    expect(required(entries[0]).outputs!['value']).toBe('valueChange');
   });
 
   it('extracts @Input decorator-based inputs', () => {
@@ -202,7 +206,7 @@ describe('Registry input/output extraction', () => {
       'child.ts',
     );
 
-    expect(entries[0].inputs!['title']).toEqual({
+    expect(required(entries[0]).inputs!['title']).toEqual({
       classPropertyName: 'title',
       bindingPropertyName: 'title',
       isSignal: false,
@@ -302,7 +306,7 @@ describe('scanFile preserves sourcePackage as undefined', () => {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].sourcePackage).toBeUndefined();
+    expect(required(entries[0]).sourcePackage).toBeUndefined();
   });
 });
 
@@ -323,8 +327,8 @@ describe('Registry outputFromObservable support', () => {
     );
 
     expect(entries).toHaveLength(1);
-    expect(entries[0].outputs).toBeDefined();
-    expect(entries[0].outputs!['changed']).toBe('changed');
+    expect(required(entries[0]).outputs).toBeDefined();
+    expect(required(entries[0]).outputs!['changed']).toBe('changed');
   });
 });
 
@@ -340,7 +344,7 @@ describe('Signal input/model alias support', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].inputs!['ariaLabel']).toEqual({
+    expect(required(entries[0]).inputs!['ariaLabel']).toEqual({
       classPropertyName: 'ariaLabel',
       bindingPropertyName: 'aria-label',
       isSignal: true,
@@ -359,7 +363,7 @@ describe('Signal input/model alias support', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].inputs!['value']).toEqual({
+    expect(required(entries[0]).inputs!['value']).toEqual({
       classPropertyName: 'value',
       bindingPropertyName: 'public-value',
       isSignal: true,
@@ -378,9 +382,12 @@ describe('Signal input/model alias support', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].inputs!['value'].bindingPropertyName).toBe('val');
+    expect(
+      required(required(required(entries[0]).inputs)!['value'])
+        .bindingPropertyName,
+    ).toBe('val');
     // Outputs map: { classProp: bindingName }
-    expect(entries[0].outputs!['value']).toBe('valChange');
+    expect(required(entries[0]).outputs!['value']).toBe('valChange');
   });
 
   it('emits aliased binding name in compiled component output', () => {
@@ -478,7 +485,9 @@ describe('Signal input transform marker in registry', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].inputs!['flag'].hasTransform).toBe(true);
+    expect(
+      required(required(required(entries[0]).inputs)!['flag']).hasTransform,
+    ).toBe(true);
   });
 
   it('omits hasTransform when no transform option', () => {
@@ -492,7 +501,9 @@ describe('Signal input transform marker in registry', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].inputs!['flag'].hasTransform).toBeUndefined();
+    expect(
+      required(required(required(entries[0]).inputs)!['flag']).hasTransform,
+    ).toBeUndefined();
   });
 
   it('flags hasTransform on input.required()', () => {
@@ -506,7 +517,9 @@ describe('Signal input transform marker in registry', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].inputs!['flag'].hasTransform).toBe(true);
+    expect(
+      required(required(required(entries[0]).inputs)!['flag']).hasTransform,
+    ).toBe(true);
   });
 });
 
@@ -522,7 +535,7 @@ describe('Output alias in registry', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].outputs!['click']).toBe('publicClick');
+    expect(required(entries[0]).outputs!['click']).toBe('publicClick');
   });
 
   it('extracts alias from outputFromObservable() options in registry', () => {
@@ -538,7 +551,7 @@ describe('Output alias in registry', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].outputs!['change']).toBe('changed');
+    expect(required(entries[0]).outputs!['change']).toBe('changed');
   });
 
   it('falls back to property name when no alias', () => {
@@ -552,6 +565,6 @@ describe('Output alias in registry', () => {
     `,
       'c.ts',
     );
-    expect(entries[0].outputs!['click']).toBe('click');
+    expect(required(entries[0]).outputs!['click']).toBe('click');
   });
 });

@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as path from 'node:path';
 
 /** Collect type-only imported names: `import type { X }` and `import { type X }`. */
@@ -59,7 +59,8 @@ export function unwrapForwardRef(node: ts.Expression): ts.Expression {
       arg.body.statements.length === 1
     ) {
       const stmt = arg.body.statements[0];
-      if (ts.isReturnStatement(stmt) && stmt.expression) return stmt.expression;
+      if (stmt && ts.isReturnStatement(stmt) && stmt.expression)
+        return stmt.expression;
     }
   }
   return node;

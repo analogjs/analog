@@ -12,8 +12,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const preprocessCSSMock = vi.fn();
 const createAngularCompilationMock = vi.fn();
-const originalNodeEnv = process.env['NODE_ENV'];
-const originalVitestEnv = process.env['VITEST'];
 const temporaryWorkspaceRoots = new Set<string>();
 
 // Cache the real module exports once so vi.doMock factories stay synchronous
@@ -32,6 +30,9 @@ async function setupLiveReloadPlugin(options: {
     filename: string;
   }>;
   include?: string[];
+  liveReload?: boolean;
+  componentStyleHmr?: 'auto' | 'metadata';
+  templateUpdates?: Map<string, string>;
   plugins?: unknown[];
   tsconfig?: string;
   workspaceRoot?: string;
@@ -39,8 +40,8 @@ async function setupLiveReloadPlugin(options: {
   vi.resetModules();
   preprocessCSSMock.mockReset();
   createAngularCompilationMock.mockReset();
-  process.env['NODE_ENV'] = 'development';
-  delete process.env['VITEST'];
+  vi.stubEnv('NODE_ENV', 'development');
+  vi.stubEnv('VITEST', undefined);
 
   const resolvedWorkspaceRoot =
     options.workspaceRoot ??
@@ -115,19 +116,22 @@ async function setupLiveReloadPlugin(options: {
     transformStylesheet = hostOptions.transformStylesheet;
     return {
       externalStylesheets: new Map(),
-      templateUpdates: new Map(),
+      templateUpdates: options.templateUpdates ?? new Map(),
     };
   });
 
   const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
-    liveReload: true,
-    include: options.include,
+    liveReload: options.liveReload ?? true,
+    ...(options.include ? { include: options.include } : {}),
     tsconfig: resolvedTsconfig,
     inlineStylesExtension: 'css',
     workspaceRoot: resolvedWorkspaceRoot,
     experimental: {
       useAngularCompilationAPI: true,
+      ...(options.componentStyleHmr
+        ? { componentStyleHmr: options.componentStyleHmr }
+        : {}),
     },
   }).find(
     (entry) => entry.name === '@analogjs/vite-plugin-angular-compilation-api',
@@ -157,6 +161,7 @@ async function setupLiveReloadPlugin(options: {
   expect(transformStylesheet).toBeTypeOf('function');
 
   return {
+    workspaceRoot: resolvedWorkspaceRoot,
     initialize,
     plugin,
     transformStylesheet: transformStylesheet!,
@@ -165,8 +170,8 @@ async function setupLiveReloadPlugin(options: {
 
 describe('angular hmr style preprocessing', () => {
   beforeEach(() => {
-    process.env['NODE_ENV'] = 'development';
-    delete process.env['VITEST'];
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('VITEST', undefined);
   });
 
   afterEach(() => {
@@ -178,17 +183,7 @@ describe('angular hmr style preprocessing', () => {
     }
     temporaryWorkspaceRoots.clear();
 
-    if (originalNodeEnv === undefined) {
-      delete process.env['NODE_ENV'];
-    } else {
-      process.env['NODE_ENV'] = originalNodeEnv;
-    }
-
-    if (originalVitestEnv === undefined) {
-      delete process.env['VITEST'];
-    } else {
-      process.env['VITEST'] = originalVitestEnv;
-    }
+    vi.unstubAllEnvs();
   });
 
   // First run pays the cold-start cost of dynamically importing the full
@@ -207,6 +202,7 @@ describe('angular hmr style preprocessing', () => {
             name: 'preprocessor-plugin',
             analog: {
               setup(ctx: any) {
+                ctx.externalizeComponentStyles();
                 ctx.registerStylePreprocessor(stylePreprocessor);
               },
             },
@@ -281,6 +277,7 @@ describe('angular hmr style preprocessing', () => {
           name: 'prepender-plugin',
           analog: {
             setup(ctx: any) {
+              ctx.externalizeComponentStyles();
               ctx.registerStylePreprocessor(prepender);
             },
           },
@@ -316,6 +313,7 @@ describe('angular hmr style preprocessing', () => {
             name: 'pipeline-a',
             analog: {
               setup(ctx: any) {
+                ctx.externalizeComponentStyles();
                 ctx.registerStylePreprocessor(preprocessStylesheet);
               },
             },
@@ -374,6 +372,24 @@ describe('angular hmr style preprocessing', () => {
       );
     },
   );
+
+  it('compiles ordinary component styles into HMR metadata without external links', async () => {
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+      componentStyleHmr: 'metadata',
+    });
+    preprocessCSSMock.mockResolvedValue({ code: '.demo { color: blue; }' });
+    const code = await transformStylesheet(
+      '.demo { color: blue; }',
+      '/project/demo.ts',
+      '/project/demo.css',
+      0,
+      'Demo',
+    );
+    expect(code).toBe('.demo { color: blue; }');
+    expect(preprocessCSSMock).toHaveBeenCalledTimes(1);
+    expect(await plugin.load('/project/demo.css?ngcomp=demo')).toBeUndefined();
+    await plugin.closeBundle();
+  });
 
   it(
     'wraps the compilation API tsconfig when include adds extra source roots',
@@ -473,6 +489,24 @@ describe('angular hmr style preprocessing', () => {
       }
     },
   );
+
+  it('compiles ordinary component styles into HMR metadata without external links', async () => {
+    const { plugin, transformStylesheet } = await setupLiveReloadPlugin({
+      componentStyleHmr: 'metadata',
+    });
+    preprocessCSSMock.mockResolvedValue({ code: '.demo { color: blue; }' });
+    const code = await transformStylesheet(
+      '.demo { color: blue; }',
+      '/project/demo.ts',
+      '/project/demo.css',
+      0,
+      'Demo',
+    );
+    expect(code).toBe('.demo { color: blue; }');
+    expect(preprocessCSSMock).toHaveBeenCalledTimes(1);
+    expect(await plugin.load('/project/demo.css?ngcomp=demo')).toBeUndefined();
+    await plugin.closeBundle();
+  });
 
   it(
     'wraps the compilation API tsconfig when project references and tsconfig paths add source roots',

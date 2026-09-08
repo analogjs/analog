@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 /**
  * Differential parity tests for the fast-compile AOT path.
  *
@@ -133,7 +134,7 @@ function rewriteImports(code: string): string {
 function firstClassName(code: string): string {
   const m = code.match(/(?:export\s+)?class\s+(\w+)/);
   if (!m) throw new Error('aot parity: no class declaration found');
-  return m[1];
+  return required(m[1]);
 }
 
 /** Normalize captured metadata into the shape the oracle compares
@@ -272,8 +273,8 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
         @Component({ selector: 'x', template: '' })
         export class X { size = input(0, { transform: numberAttribute }); }
       `);
-      expect(meta.inputs.size.transformFunction).toBeNull();
-      expect(meta.inputs.size.isSignal).toBe(true);
+      expect(required(meta.inputs['size']).transformFunction).toBeNull();
+      expect(required(meta.inputs['size']).isSignal).toBe(true);
     });
   });
 
@@ -378,7 +379,7 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
         export class X { r = viewChild.required('r'); }
       `);
       expect(meta.viewQueries).toHaveLength(1);
-      expect(meta.viewQueries[0].isSignal).toBe(true);
+      expect(required(meta.viewQueries[0]).isSignal).toBe(true);
     });
 
     it('viewChild preserves the `read` option', () => {
@@ -387,7 +388,7 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
         @Component({ selector: 'x', template: '<div #r></div>' })
         export class X { r = viewChild('r', { read: ElementRef }); }
       `);
-      expect(meta.viewQueries[0].read).toBe(ElementRefStub);
+      expect(required(meta.viewQueries[0]).read).toBe(ElementRefStub);
     });
 
     it('contentChildren defaults descendants to false; contentChild to true', () => {
@@ -407,8 +408,8 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
       const byName = Object.fromEntries(
         meta.queries.map((q) => [q.propertyName, q]),
       );
-      expect(byName.one.descendants).toBe(true);
-      expect(byName.many.descendants ?? false).toBe(false);
+      expect(required(byName['one']).descendants).toBe(true);
+      expect(required(byName['many']).descendants ?? false).toBe(false);
     });
   });
 
@@ -423,7 +424,7 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
       expect(meta.viewQueries).toHaveLength(1);
       // The explicit @ViewChild wins → no isSignal flag from the
       // signal-derived path.
-      expect(meta.viewQueries[0].isSignal).toBe(false);
+      expect(required(meta.viewQueries[0]).isSignal).toBe(false);
     });
 
     // Would have caught: AOT decorator metadata being silently overwritten.
@@ -434,7 +435,7 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
         export class X { @Input() name = input(); }
       `);
       // The decorator path produces a non-signal input descriptor.
-      expect(meta.inputs.name.isSignal).toBe(false);
+      expect(required(meta.inputs['name']).isSignal).toBe(false);
     });
 
     it('@Input on a field with model() — Input wins, no synthetic Output', () => {
@@ -443,7 +444,7 @@ describe('AOT partial-mode metadata parity with Angular reference', () => {
         @Component({ selector: 'x', template: '' })
         export class X { @Input() value = model(0); }
       `);
-      expect(meta.inputs.value.isSignal).toBe(false);
+      expect(required(meta.inputs['value']).isSignal).toBe(false);
       // No model-derived Change output — the decorator path doesn't
       // synthesize one, and the signal branch was skipped.
       expect(meta.outputs).toEqual({});

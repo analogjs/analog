@@ -8,13 +8,10 @@
 import * as compilerCli from '@angular/compiler-cli';
 import { existsSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
-import { createRequire } from 'node:module';
+import ts from 'typescript';
 import { normalizePath, ResolvedConfig } from 'vite';
 import { globSync } from 'tinyglobby';
 import { debugEmit, debugEmitV } from './debug.js';
-
-const require = createRequire(import.meta.url);
-const ts = require('typescript');
 
 export interface TsconfigResolverOptions {
   workspaceRoot: string;
@@ -23,12 +20,15 @@ export interface TsconfigResolverOptions {
   isTest: boolean;
 }
 
+export interface SourceProject {
+  readonly options: compilerCli.CompilerOptions;
+  readonly rootNames: readonly string[];
+  readonly errors: readonly ts.Diagnostic[];
+}
+
 export class TsconfigResolver {
-  private includeCache: string[] = [];
-  private tsconfigOptionsCache = new Map<
-    string,
-    { options: any; rootNames: string[] }
-  >();
+  private includeCache: string[] | undefined;
+  private tsconfigOptionsCache = new Map<string, SourceProject>();
   private tsconfigGraphRootCache = new Map<string, string[]>();
   private integrationIncludes: string[] = [];
 
@@ -54,7 +54,7 @@ export class TsconfigResolver {
   }
 
   invalidateIncludeCache(): void {
-    this.includeCache = [];
+    this.includeCache = undefined;
   }
 
   invalidateTsconfigCaches(): void {
@@ -68,8 +68,8 @@ export class TsconfigResolver {
   }
 
   ensureIncludeCache(): string[] {
-    if (this.includeGlobs.length > 0 && this.includeCache.length === 0) {
-      this.includeCache = this.findIncludes();
+    if (this.includeCache === undefined) {
+      this.includeCache = this.includeGlobs.length ? this.findIncludes() : [];
       debugEmit('include cache populated', {
         fileCount: this.includeCache.length,
       });
@@ -80,14 +80,15 @@ export class TsconfigResolver {
   readAngularTsconfigConfiguration(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-  ) {
-    const isProd = config.mode === 'production';
-    return compilerCli.readConfiguration(resolvedTsConfigPath, {
+  ): ReturnType<typeof compilerCli.readConfiguration> {
+    const emitSourceMaps =
+      config.mode !== 'production' || !!config.build?.sourcemap;
+    const started = performance.now();
+    const result = compilerCli.readConfiguration(resolvedTsConfigPath, {
       suppressOutputPathCheck: true,
-      outDir: undefined,
-      sourceMap: !isProd,
+      sourceMap: emitSourceMaps,
       inlineSourceMap: false,
-      inlineSources: !isProd,
+      inlineSources: emitSourceMaps,
       declaration: false,
       declarationMap: false,
       allowEmptyCodegenFiles: false,
@@ -99,12 +100,17 @@ export class TsconfigResolver {
       supportTestBed: false,
       supportJitMode: false,
     });
+    debugEmit('tsconfig parse timing', {
+      durationMs: performance.now() - started,
+    });
+    delete result.options.outDir;
+    return result;
   }
 
   getCachedTsconfigOptions(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-  ): { options: any; rootNames: string[] } {
+  ): SourceProject {
     const tsconfigKey = this.getTsconfigCacheKey(resolvedTsConfigPath, config);
     let cached = this.tsconfigOptionsCache.get(tsconfigKey);
 
@@ -113,7 +119,11 @@ export class TsconfigResolver {
         resolvedTsConfigPath,
         config,
       );
-      cached = { options: read.options, rootNames: read.rootNames };
+      cached = {
+        options: read.options,
+        rootNames: read.rootNames,
+        errors: read.errors,
+      };
       this.tsconfigOptionsCache.set(tsconfigKey, cached);
       debugEmit('tsconfig root names loaded', {
         resolvedTsConfigPath,
@@ -131,7 +141,7 @@ export class TsconfigResolver {
   collectExpandedTsconfigRoots(
     resolvedTsConfigPath: string,
     config: ResolvedConfig,
-    visited = new Set<string>(),
+    visited: Set<string> = new Set<string>(),
   ): string[] {
     const normalizedTsConfigPath = normalizePath(resolvedTsConfigPath);
     if (visited.has(normalizedTsConfigPath)) {
@@ -225,6 +235,7 @@ export class TsconfigResolver {
       isProd ? 'prod' : 'dev',
       this.options.isTest ? 'test' : 'app',
       config.build?.lib ? 'lib' : 'nolib',
+      config.build?.sourcemap ? 'maps' : 'nomaps',
       this.options.liveReload ? 'live-reload' : 'no-live-reload',
     ].join('|');
   }
@@ -233,8 +244,10 @@ export class TsconfigResolver {
     const globs = this.includeGlobs.map((glob) =>
       normalizeIncludeGlob(this.options.workspaceRoot, glob),
     );
+    const started = performance.now();
     const files = globSync(globs, { dot: true, absolute: true });
     debugEmit('include discovery', {
+      durationMs: performance.now() - started,
       patternCount: globs.length,
       fileCount: files.length,
     });

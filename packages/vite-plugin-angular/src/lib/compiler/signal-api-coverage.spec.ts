@@ -1,3 +1,4 @@
+import { required } from '../../testing/required.test-support.js';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -17,8 +18,8 @@ import { SIGNAL_APIS } from './constants';
  * union, which is the authoritative source the Angular compiler itself uses.
  */
 const ANGULAR_ROOT =
-  process.env.ANGULAR_SOURCE_DIR ||
-  path.resolve(process.env.HOME ?? '', 'projects/angular/angular');
+  process.env['ANGULAR_SOURCE_DIR'] ||
+  path.resolve(process.env['HOME'] ?? '', 'projects/angular/angular');
 const INITIALIZER_FNS_FILE = path.join(
   ANGULAR_ROOT,
   'packages/compiler-cli/src/ngtsc/annotations/directive/src/initializer_functions.ts',
@@ -29,7 +30,8 @@ function upstreamInitializerApis(): Set<string> {
   const union = code.match(/functionName:\s*([^;]+);/);
   const names = new Set<string>();
   if (union) {
-    for (const m of union[1].matchAll(/'([A-Za-z]+)'/g)) names.add(m[1]);
+    for (const m of required(union[1]).matchAll(/'([A-Za-z]+)'/g))
+      names.add(required(m[1]));
   }
   return names;
 }

@@ -12,6 +12,14 @@ This is intentionally narrow:
 - Tailwind, Panda, Tokiforge, Style Dictionary, and library-specific bridges
   stay outside `@analogjs/platform`
 
+## Component styles during development
+
+Ordinary ngtsc and fast-mode styles use Angular metadata HMR. Eligible updates preserve component instances, but Angular recreates their views, so focus, selection, and child state can change. With `experimental.componentStyleHmr: 'auto'` (the default), qualified external styles update existing stylesheet links and preserve that DOM state. This requires an integration that already externalizes styles, with ngtsc on Angular 20–22/Vite 6–8 or the Compilation API on Angular 21–22/Vite 7–8. Ordinary styles retain metadata updates because automatic externalization missed the template-latency gate. Templates, unsupported inline styles, ShadowDom, and unavailable stylesheet identities retain metadata or reload fallbacks.
+
+Set `experimental.componentStyleHmr: 'metadata'` for the earlier ordinary-style behavior. Vite preprocessing (including Sass/Less and PostCSS) still runs, and file dependencies returned by preprocessors are watched. See the [development update migration guide](./migrating-v2-to-v3#development-updates-and-component-styles) for qualification limits and SSR warming settings.
+
+An integration that needs arbitrary Vite CSS transform hooks, virtual CSS imports, or the live stylesheet registry must call `externalizeComponentStyles()` in its setup hook. Analog recognizes `@tailwindcss/vite` and selects externalization automatically. Externalization preserves those integrations but can require a page reload and reset component state. The fast compiler continues to inline styles through its existing preprocessing path.
+
 ## Reach Angular through `analog.setup`
 
 The Angular stylesheet seam is the part of the contract a standalone Vite
@@ -34,6 +42,7 @@ export function tokens(): AnalogIntegrationPlugin {
     },
     analog: {
       setup(ctx) {
+        ctx.externalizeComponentStyles();
         ctx.registerStylePreprocessor((code, filename, context) => {
           if (context?.inline) {
             return code;

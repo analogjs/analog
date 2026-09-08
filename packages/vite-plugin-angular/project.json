@@ -23,7 +23,27 @@
       }
     },
     "test": {
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tools/build/**/*.ts"
+      ]
+    },
+    "compat-smoke": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node packages/vite-plugin-angular/scripts/compiler-vite-smoke.mjs"
+      }
+    },
+    "typecheck-tests": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/vite-plugin-angular",
+        "command": "pnpm exec tsgo --project tsconfig.spec.json --noEmit"
+      }
     },
     "version": {
       "executor": "@jscutlery/semver:version",

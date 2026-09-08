@@ -26,6 +26,13 @@ export interface StylesheetTransformResult {
   tags?: string[];
 }
 
+export interface NormalizedStylesheetTransformResult {
+  code: string;
+  dependencies: StylesheetDependency[];
+  diagnostics: StylesheetDiagnostic[];
+  tags: string[];
+}
+
 export interface StylesheetRegistryReader {
   getPublicIdsForSource(sourcePath: string): string[];
   getRequestIdsForSource(sourcePath: string): string[];
@@ -43,13 +50,13 @@ export type StylePreprocessor = (
 export function normalizeStylesheetTransformResult(
   value: string | StylesheetTransformResult | undefined,
   fallbackCode: string,
-): StylesheetTransformResult {
+): NormalizedStylesheetTransformResult {
   if (value == null) {
-    return { code: fallbackCode };
+    return { code: fallbackCode, dependencies: [], diagnostics: [], tags: [] };
   }
 
   if (typeof value === 'string') {
-    return { code: value };
+    return { code: value, dependencies: [], diagnostics: [], tags: [] };
   }
 
   return {

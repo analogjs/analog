@@ -109,7 +109,10 @@ export function jitTransform(
     for (const dec of angularDecs) {
       const start: number = dec.start;
       let trimEnd: number = dec.end;
-      while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
+      while (
+        trimEnd < sourceCode.length &&
+        /\s/.test(sourceCode.charAt(trimEnd))
+      )
         trimEnd++;
       ms.remove(start, trimEnd);
     }
@@ -247,7 +250,10 @@ export function jitTransform(
       for (const dec of memberDecs) {
         const start: number = dec.start;
         let trimEnd: number = dec.end;
-        while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
+        while (
+          trimEnd < sourceCode.length &&
+          /\s/.test(sourceCode.charAt(trimEnd))
+        )
           trimEnd++;
         ms.remove(start, trimEnd);
       }
@@ -269,7 +275,7 @@ export function jitTransform(
             let trimEnd: number = dec.end;
             while (
               trimEnd < sourceCode.length &&
-              /\s/.test(sourceCode[trimEnd])
+              /\s/.test(sourceCode.charAt(trimEnd))
             )
               trimEnd++;
             ms.remove(start, trimEnd);

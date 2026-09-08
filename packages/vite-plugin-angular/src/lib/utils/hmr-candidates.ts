@@ -101,9 +101,9 @@ export function analyzeFileUpdates(
 
   const candidates: ts.ClassDeclaration[] = [];
 
-  for (let i = 0; i < updated.statements.length; ++i) {
-    const updatedNode = updated.statements[i];
+  for (const [i, updatedNode] of updated.statements.entries()) {
     const staleNode = stale.statements[i];
+    if (!staleNode) return null;
 
     if (ts.isClassDeclaration(updatedNode)) {
       if (!ts.isClassDeclaration(staleNode)) {
@@ -280,6 +280,8 @@ function analyzeMetaUpdates(
   let hasSupportedUpdate = false;
 
   if (
+    !staleObject ||
+    !updatedObject ||
     !ts.isObjectLiteralExpression(staleObject) ||
     !ts.isObjectLiteralExpression(updatedObject)
   ) {

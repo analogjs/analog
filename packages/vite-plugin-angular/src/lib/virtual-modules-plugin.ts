@@ -1,3 +1,4 @@
+import { stripQuery, resolveJitResource } from './utils/module-id.js';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { normalizePath, Plugin } from 'vite';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
@@ -18,15 +19,13 @@ export function virtualModulesPlugin(
       }
 
       if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const filePath = normalizePath(
-          resolve(dirname(importer as string), id.split(';')[1]),
-        );
+        const filePath = resolveJitResource(id, importer);
         return toVirtualRawId(filePath);
       }
 
       // Intercept .html?raw imports to bypass Vite server.fs restrictions
       if (id.includes('.html?raw')) {
-        const filePath = id.split('?')[0];
+        const filePath = stripQuery(id);
         const resolved = isAbsolute(filePath)
           ? normalizePath(filePath)
           : importer
