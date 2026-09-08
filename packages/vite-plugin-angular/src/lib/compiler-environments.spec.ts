@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createServer, type Plugin } from 'vite';
+import { createServer, type DevEnvironment, type Plugin } from 'vite';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -325,21 +325,23 @@ describe('compiler environment selection', () => {
   });
 
   it.each(['id', 'cache'])(
-    'keeps retrying an invalidated pending runner %s result',
+    'retries each later invalidation of a pending runner %s result',
     async (kind) => {
-      let invalidated = true;
-      const fetchModule = vi
-        .fn()
-        .mockResolvedValueOnce(
-          kind === 'id'
-            ? { id: '/src/app.ts', code: 'stale' }
-            : { cache: true },
-        )
-        .mockResolvedValueOnce({ id: '/src/app.ts', code: 'still stale' })
-        .mockImplementationOnce(() => {
-          invalidated = false;
-          return Promise.resolve({ id: '/src/app.ts', code: 'fresh' });
-        });
+      const module = { lastInvalidationTimestamp: Number.MAX_SAFE_INTEGER };
+      let invalidateModule = () => {};
+      const graphInvalidate = vi.fn();
+      const fetchModule = vi.fn(
+        async (..._args: Parameters<DevEnvironment['fetchModule']>) => {
+          if (fetchModule.mock.calls.length < 3) invalidateModule();
+          return fetchModule.mock.calls.length === 1
+            ? kind === 'id'
+              ? { id: '/src/app.ts', code: 'stale' }
+              : { cache: true }
+            : fetchModule.mock.calls.length === 2
+              ? { id: '/src/app.ts', code: 'still stale' }
+              : { id: '/src/app.ts', code: 'fresh' };
+        },
+      );
       const plugin = isolateCompilerEnvironments(
         { name: 'compiler' },
         () => ({ name: 'compiler' }),
@@ -357,18 +359,12 @@ describe('compiler environment selection', () => {
         config: { build: {} },
         fetchModule,
         moduleGraph: {
-          getModuleById: () => ({
-            lastInvalidationTimestamp: invalidated
-              ? Number.MAX_SAFE_INTEGER
-              : 0,
-          }),
-          getModuleByUrl: () => ({
-            lastInvalidationTimestamp: invalidated
-              ? Number.MAX_SAFE_INTEGER
-              : 0,
-          }),
+          getModuleById: () => module,
+          getModuleByUrl: () => module,
+          invalidateModule: graphInvalidate,
         },
       };
+      invalidateModule = () => environment.moduleGraph.invalidateModule(module);
       const child = await Reflect.apply(
         hook(plugin.applyToEnvironment),
         plugin,
@@ -393,8 +389,56 @@ describe('compiler environment selection', () => {
       );
       await Reflect.apply(hook(child.closeBundle), {}, []);
       expect(environment.fetchModule).toBe(fetchModule);
+      expect(environment.moduleGraph.invalidateModule).toBe(graphInvalidate);
     },
   );
+
+  it('does not refetch after an unrelated invalidation', async () => {
+    const module = { lastInvalidationTimestamp: Number.MAX_SAFE_INTEGER };
+    const unrelated = { lastInvalidationTimestamp: Number.MAX_SAFE_INTEGER };
+    let invalidateUnrelated = () => {};
+    const fetchModule = vi.fn(
+      async (..._args: Parameters<DevEnvironment['fetchModule']>) => {
+        invalidateUnrelated();
+        return { id: '/src/app.ts' };
+      },
+    );
+    const invalidateModule = vi.fn();
+    const plugin = isolateCompilerEnvironments(
+      { name: 'compiler' },
+      () => ({ name: 'compiler' }),
+      vi.fn(),
+      undefined,
+      () => {},
+    );
+    Reflect.apply(hook(plugin.config), {}, [
+      {},
+      { command: 'serve', mode: 'development' },
+    ]);
+    await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
+    const environment = {
+      name: 'ssr',
+      config: { build: {} },
+      fetchModule,
+      moduleGraph: {
+        getModuleById: () => module,
+        getModuleByUrl: () => module,
+        invalidateModule,
+      },
+    };
+    invalidateUnrelated = () =>
+      environment.moduleGraph.invalidateModule(unrelated);
+    await Reflect.apply(hook(plugin.applyToEnvironment), plugin, [environment]);
+    await Reflect.apply(hook(plugin.configureServer), {}, [
+      { environments: { ssr: environment } },
+    ]);
+
+    await expect(environment.fetchModule('/src/app.ts')).resolves.toEqual({
+      id: '/src/app.ts',
+    });
+    expect(fetchModule).toHaveBeenCalledOnce();
+    expect(environment.moduleGraph.invalidateModule).not.toBe(invalidateModule);
+  });
 
   it('shares in-flight child initialization only for the exact environment', async () => {
     const initialized = Promise.withResolvers<void>();

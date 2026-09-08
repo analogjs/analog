@@ -279,6 +279,15 @@ export function isolateCompilerEnvironments<P extends Plugin>(
 function keepFetchCurrent(environment: DevEnvironment) {
   const original = environment.fetchModule;
   const fetchModule = original.bind(environment);
+  const graph = environment.moduleGraph;
+  const originalInvalidate = graph.invalidateModule;
+  const invalidations = new WeakMap<object, number>();
+  let generation = 0;
+  const invalidateModule: typeof graph.invalidateModule = (module, ...args) => {
+    invalidations.set(module, ++generation);
+    return originalInvalidate.call(graph, module, ...args);
+  };
+  graph.invalidateModule = invalidateModule;
   const current: DevEnvironment['fetchModule'] = async (
     id,
     importer,
@@ -286,7 +295,7 @@ function keepFetchCurrent(environment: DevEnvironment) {
   ) => {
     let retry = false;
     for (;;) {
-      const started = Date.now();
+      const started = generation;
       const result = await fetchModule(
         id,
         importer,
@@ -294,11 +303,11 @@ function keepFetchCurrent(environment: DevEnvironment) {
       );
       const module =
         'id' in result && typeof result.id === 'string'
-          ? environment.moduleGraph.getModuleById(result.id)
+          ? graph.getModuleById(result.id)
           : 'cache' in result
-            ? await environment.moduleGraph.getModuleByUrl(id)
+            ? await graph.getModuleByUrl(id)
             : undefined;
-      if (!module || module.lastInvalidationTimestamp < started)
+      if (!module || (invalidations.get(module) ?? 0) <= started)
         return retry && !('externalize' in result)
           ? { ...result, invalidate: true }
           : result;
@@ -308,6 +317,8 @@ function keepFetchCurrent(environment: DevEnvironment) {
   environment.fetchModule = current;
   return () => {
     if (environment.fetchModule === current) environment.fetchModule = original;
+    if (graph.invalidateModule === invalidateModule)
+      graph.invalidateModule = originalInvalidate;
   };
 }
 
