@@ -128,7 +128,8 @@ const dependencies = {
   [tuple.package]: tuple.builder,
   typescript: tuple.typescript,
   vite: values.vite,
-  ...(values.angular === '22.0.0' && values.vite === '8.2.2'
+  ...(values.angular === '19.0.1' ||
+  (values.angular === '22.0.0' && values.vite === '8.2.2')
     ? { sass: '1.97.3' }
     : {}),
   rxjs: '7.8.2',
@@ -199,6 +200,29 @@ execaSync(consumerNode, ['fixture.mjs'], {
   killSignal: 'SIGKILL',
 });
 console.log(`Installed-package evidence retained at ${root}`);
+if (values.angular === '19.0.1') {
+  copyFileSync(
+    join(scriptDirectory, 'compiler-native-style-qualification.mjs'),
+    join(root, 'native-styles.mjs'),
+  );
+  for (const strategy of ['auto', 'metadata'])
+    execaSync(
+      consumerNode,
+      [
+        'native-styles.mjs',
+        '--mode=ngtsc',
+        `--strategy=${strategy}`,
+        `--output=runtime-shared-reload-${strategy}.json`,
+      ],
+      {
+        cwd: root,
+        env: { ...env, NODE_ENV: 'development' },
+        stdio: 'inherit',
+        timeout: 180000,
+        killSignal: 'SIGKILL',
+      },
+    );
+}
 if (
   values.angular === '22.0.0' &&
   ['6.0.0', '6.4.3', '8.2.2'].includes(values.vite)

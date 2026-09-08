@@ -341,6 +341,7 @@ function createPluginSet(
     return emittedResult;
   };
   let initialCompilation = false;
+  let suppressHmrReplay = false;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
   let styleTransform: (
@@ -361,6 +362,7 @@ function createPluginSet(
       compile: (ids, project) =>
         _doPerformCompilation(resolvedConfig, ids, project),
       close: () => {
+        suppressHmrReplay = false;
         previousBuilder = undefined;
         viteServer = undefined;
         nextProgram = undefined;
@@ -551,6 +553,7 @@ function createPluginSet(
           debugHmr('ignored file change', { file: ctx.file });
           return [];
         }
+        suppressHmrReplay = false;
 
         if (TS_EXT_REGEX.test(ctx.file)) {
           const fileId = stripQuery(ctx.file);
@@ -634,6 +637,8 @@ function createPluginSet(
           angularFullVersion < 200000 &&
           changedOwners.length > 1
         ) {
+          // Reloaded Angular 19 views must not replay the old metadata update.
+          suppressHmrReplay = true;
           await compilation.run([ctx.file]);
           for (const owner of changedOwners)
             for (const module of ctx.server.moduleGraph.getModulesByFile(
@@ -1440,7 +1445,9 @@ function createPluginSet(
         liveReloadPlugin({
           classNames,
           fileEmitter: (file) =>
-            compilationPlugin.api.read(() => fileEmitter(file)),
+            compilationPlugin.api.read(() =>
+              suppressHmrReplay ? undefined : fileEmitter(file),
+            ),
         }),
       // Register the selected compiler and its shared HMR middleware once.
       isolate

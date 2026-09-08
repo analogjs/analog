@@ -216,6 +216,10 @@ try {
       await write('_tokens.scss', `$width: ${expected}px;`);
     }
     await width(expected);
+    // A computed style can become current before a queued fallback reload.
+    // Observe settled state before interacting with the lazy-owner control.
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await width(expected);
     const proof = await page.locator('child-a').evaluate((host) => {
       const root = host.shadowRoot ?? host,
         input = root.querySelector('input'),
