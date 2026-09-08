@@ -13,3 +13,5 @@ pnpm-lock.yaml
 .all-contributorsrc
 
 .nx/self-healing
+# vendored oxlint plugin, kept byte-identical to upstream
+/tools/oxlint/anti-slop
