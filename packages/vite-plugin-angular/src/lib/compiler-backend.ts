@@ -1,4 +1,4 @@
-import type { CompilerSession } from './compiler-session.js';
+import type { BeforeCompile, CompilerSession } from './compiler-session.js';
 import * as Context from 'effect/Context';
 import * as Data from 'effect/Data';
 import type * as Effect from 'effect/Effect';
@@ -9,7 +9,7 @@ import type { StylesheetFailure } from './stylesheet-pipeline.js';
 export interface CompilerPlugin extends Plugin {
   api: {
     invalidate(files: readonly string[]): Promise<void>;
-    defer(files: readonly string[]): void;
+    defer(files: readonly string[], beforeCompile?: BeforeCompile): void;
     watch: CompilerSession['watch'];
     warmup: CompilerSession['warmup'];
     ready: CompilerSession['ready'];

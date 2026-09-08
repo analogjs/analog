@@ -187,6 +187,112 @@ describe('compiler session', () => {
 });
 
 describe('deferred server compilation', () => {
+  it('holds concurrent SSR reads through a later source generation', async () => {
+    const first = Promise.withResolvers<void>();
+    const second = Promise.withResolvers<void>();
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const reader = vi.fn(() => 'fresh');
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(['view.css'], () => first.promise);
+    const read = session.read(reader);
+    const concurrent = session.readAsync(async () => reader());
+    const ready = session.ready();
+    session.defer(['view.html'], () => second.promise);
+    first.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(compile).toHaveBeenCalledTimes(2);
+    expect(reader).not.toHaveBeenCalled();
+    setTimeout(() => second.resolve(), 30);
+    await expect(Promise.all([read, concurrent, ready])).resolves.toEqual([
+      'fresh',
+      'fresh',
+      { updatedComponents: [] },
+    ]);
+    expect(compile).toHaveBeenCalledTimes(3);
+    expect(reader).toHaveBeenCalledTimes(2);
+    expect(compile).toHaveBeenLastCalledWith(['view.html']);
+    await session.close();
+  });
+
+  it('cancels an unsettled source barrier on close without admitting native work', async () => {
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(
+      ['view.css'],
+      (signal) =>
+        new Promise<void>((_resolve, reject) =>
+          signal.addEventListener('abort', () => reject(signal.reason), {
+            once: true,
+          }),
+        ),
+    );
+    const read = session.read(() => 'fresh');
+    await session.close();
+    await expect(read).rejects.toBeDefined();
+    expect(compile).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not admit native work after close when a source read ignores abort', async () => {
+    const entered = Promise.withResolvers<void>();
+    const release = Promise.withResolvers<void>();
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(['view.css'], async () => {
+      entered.resolve();
+      await release.promise;
+    });
+    const read = session.read(() => 'fresh');
+    await entered.promise;
+    const closing = session.close();
+    expect(compile).toHaveBeenCalledTimes(1);
+    release.resolve();
+    await closing;
+    await expect(read).rejects.toBeDefined();
+    expect(compile).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces a source gate failure and recovers with a later edit', async () => {
+    const failure = new Error('source read failed');
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(['broken.css'], async () => {
+      throw failure;
+    });
+    await expect(session.read(() => 'stale')).rejects.toBe(failure);
+    session.defer(['fixed.css'], async () => {});
+    await expect(session.read(() => 'fresh')).resolves.toBe('fresh');
+    expect(compile).toHaveBeenCalledTimes(2);
+    await session.close();
+  });
+
+  it('does not inherit a cancelled source gate after restart', async () => {
+    const entered = Promise.withResolvers<void>();
+    const compile = vi.fn().mockResolvedValue(undefined);
+    const session = createCompilerSession(compile);
+    await session.start();
+    session.defer(
+      ['old.css'],
+      (signal) =>
+        new Promise<void>((_resolve, reject) => {
+          entered.resolve();
+          signal.addEventListener('abort', () => reject(signal.reason), {
+            once: true,
+          });
+        }),
+    );
+    const read = session.read(() => 'stale');
+    await entered.promise;
+    await session.close();
+    await expect(read).rejects.toBeDefined();
+    await session.start();
+    expect(compile).toHaveBeenCalledTimes(2);
+    await session.close();
+  });
+
   it('coalesces idle edits and compiles once before concurrent reads', async () => {
     let revision = 0;
     const compile = vi.fn(async () => {

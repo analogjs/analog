@@ -14,13 +14,16 @@ import {
 import { CompilationScheduler } from './compilation-scheduler.js';
 import { NativeOperations } from './native-operations.js';
 
+/** A source-specific barrier used only when a watcher saw an unstable write. */
+export type BeforeCompile = (signal: AbortSignal) => Promise<void>;
+
 export interface CompilerSession {
   start(): Promise<CompilationResult>;
   run(
     ids?: readonly string[],
     signal?: AbortSignal,
   ): Promise<CompilationResult>;
-  defer(ids: readonly string[]): void;
+  defer(ids: readonly string[], beforeCompile?: BeforeCompile): void;
   warmup(): void;
   ready(): Promise<CompilationResult | undefined>;
   close(): Promise<void>;
@@ -45,7 +48,8 @@ interface ActiveSession {
   readonly resources: Scope.Closeable;
   readonly operations: NativeOperations;
   ready: Promise<CompilationResult | undefined>;
-  readonly dirty: Set<string>;
+  readonly dirty: Map<string, BeforeCompile | undefined>;
+  readonly settlementAbort: AbortController;
   readers: number;
 }
 
@@ -68,7 +72,8 @@ export function createCompilerSession(
     resources: Scope.makeUnsafe(),
     operations: new NativeOperations(),
     ready: Promise.resolve(undefined),
-    dirty: new Set(),
+    dirty: new Map(),
+    settlementAbort: new AbortController(),
     readers: 0,
   });
   const runtime = (active: ActiveSession) =>
@@ -96,13 +101,21 @@ export function createCompilerSession(
     run(ids, signal) {
       if (state._tag === 'Closing')
         return Promise.reject(new Error('Compiler session is closed'));
-      cancelWarmup(state);
-      ids = ids ? [...new Set([...state.dirty, ...ids])] : undefined;
-      state.dirty.clear();
-      const work = runtime(state)
+      const active = state;
+      cancelWarmup(active);
+      const dirty = [...active.dirty];
+      ids = ids
+        ? [...new Set([...dirty.map(([id]) => id), ...ids])]
+        : undefined;
+      active.dirty.clear();
+      const beforeCompile = composeBeforeCompile(
+        dirty.map(([, barrier]) => barrier),
+        active.settlementAbort.signal,
+      );
+      const work = runtime(active)
         .runPromise(
           Effect.flatMap(CompilationScheduler, (scheduler) =>
-            scheduler.run(ids),
+            scheduler.run(ids, beforeCompile),
           ),
         )
         .catch((error: unknown) => {
@@ -118,13 +131,13 @@ export function createCompilerSession(
           )
         : work;
     },
-    defer(ids) {
+    defer(ids, beforeCompile) {
       if (state._tag === 'Closing')
         throw new Error('Compiler session is closed');
       cancelWarmup(state);
-      for (const id of ids) state.dirty.add(id);
-      // Reads already admitted must also observe edits arriving during compilation.
-      if (state.readers && state.dirty.size) session.run([...state.dirty]);
+      for (const id of ids) state.dirty.set(id, beforeCompile);
+      if (state.readers && state.dirty.size)
+        session.run([...state.dirty.keys()]);
     },
     warmup() {
       if (state._tag === 'Closing' || !state.dirty.size) return;
@@ -135,7 +148,7 @@ export function createCompilerSession(
           Effect.sync(() => {
             active.warmup = undefined;
             if (state === active && active.dirty.size)
-              session.run([...active.dirty]);
+              session.run([...active.dirty.keys()]);
           }),
         ),
       );
@@ -146,13 +159,14 @@ export function createCompilerSession(
     },
     ready() {
       if (state._tag === 'Closing') return state.closed.then(() => undefined);
-      if (state.dirty.size) return session.run([...state.dirty]);
+      if (state.dirty.size) return session.run([...state.dirty.keys()]);
       return state.ready;
     },
     close() {
       if (state._tag === 'Closing') return state.closed;
       const active = state;
       cancelWarmup(active);
+      active.settlementAbort.abort();
       for (const remove of active.listeners.splice(0)) remove();
       const closed = Effect.runPromise(
         Effect.promise(() => active.operations.drain()).pipe(
@@ -204,7 +218,7 @@ export function createCompilerSession(
       return Promise.reject(new Error('Compiler session is closed'));
     const active = state;
     active.readers++;
-    if (active.dirty.size) session.run([...active.dirty]);
+    if (active.dirty.size) session.run([...active.dirty.keys()]);
     return active.operations.track(
       runtime(active)
         .runPromise(
@@ -221,4 +235,21 @@ export function createCompilerSession(
     );
   }
   return session;
+}
+
+function composeBeforeCompile(
+  barriers: readonly (BeforeCompile | undefined)[],
+  signal: AbortSignal,
+): (() => Promise<void>) | undefined {
+  const active = barriers.filter(
+    (barrier): barrier is BeforeCompile => barrier !== undefined,
+  );
+  return active.length
+    ? () => {
+        if (signal.aborted) return Promise.reject(signal.reason);
+        return Promise.all(active.map((barrier) => barrier(signal))).then(() =>
+          signal.throwIfAborted(),
+        );
+      }
+    : undefined;
 }

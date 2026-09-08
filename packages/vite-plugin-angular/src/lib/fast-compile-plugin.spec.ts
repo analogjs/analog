@@ -324,6 +324,16 @@ export class MyService {
 
   it('invalidates both modules sharing a resource and removes stale ownership', async () => {
     const plugin = buildPlugin();
+    await (plugin.config as any)(
+      { root: process.cwd(), mode: 'development' },
+      { command: 'serve' },
+    );
+    await (plugin.configResolved as any)({
+      root: process.cwd(),
+      plugins: [],
+      build: {},
+      server: { hmr: false },
+    });
     const transform = getTransformHandler(plugin);
     mockPreprocessCSS.mockResolvedValue({ code: '', deps: new Set() });
     const first = {

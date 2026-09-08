@@ -8,6 +8,7 @@ import * as Metric from 'effect/Metric';
 import * as Ref from 'effect/Ref';
 import * as Semaphore from 'effect/Semaphore';
 import {
+  CompilationFailure,
   CompilerBackend,
   type CompilerFailure,
   type CompilationResult,
@@ -17,6 +18,7 @@ type Completion = Deferred.Deferred<CompilationResult, CompilerFailure>;
 interface Batch {
   readonly generation: number;
   readonly files: readonly string[] | undefined;
+  readonly beforeCompile: (() => Promise<void>) | undefined;
   readonly done: Completion;
 }
 
@@ -41,6 +43,7 @@ export class CompilationScheduler extends Context.Service<
   {
     readonly run: (
       files: readonly string[] | undefined,
+      beforeCompile?: () => Promise<void>,
     ) => Effect.Effect<CompilationResult, CompilerFailure>;
     readonly read: <A, E>(
       operation: Effect.Effect<A, E>,
@@ -69,7 +72,15 @@ export class CompilationScheduler extends Context.Service<
           let waiters: Completion[] = [first.done];
           for (;;) {
             yield* Metric.update(compilations, 1);
-            const result = yield* Effect.exit(backend.compile(batch));
+            const result = yield* Effect.exit(
+              (batch.beforeCompile
+                ? Effect.tryPromise({
+                    try: batch.beforeCompile,
+                    catch: (cause) => new CompilationFailure({ cause }),
+                  })
+                : Effect.void
+              ).pipe(Effect.andThen(backend.compile(batch))),
+            );
             const next = yield* Ref.modify(
               state,
               (current): readonly [Batch | undefined, QueueState] => {
@@ -108,7 +119,10 @@ export class CompilationScheduler extends Context.Service<
       );
 
       const run = Effect.fn('analog.compiler.run')(
-        (files: readonly string[] | undefined) =>
+        (
+          files: readonly string[] | undefined,
+          beforeCompile?: () => Promise<void>,
+        ) =>
           Effect.uninterruptibleMask((restore) =>
             Effect.gen(function* () {
               const done = yield* Deferred.make<
@@ -124,6 +138,9 @@ export class CompilationScheduler extends Context.Service<
                   const batch: Batch = {
                     generation,
                     done: pending?.done ?? done,
+                    beforeCompile: pending
+                      ? mergeBeforeCompile(pending.beforeCompile, beforeCompile)
+                      : beforeCompile,
                     files: pending
                       ? mergeInvalidations(pending.files, files)
                       : files?.slice(),
@@ -188,4 +205,16 @@ function mergeInvalidations(
   next: readonly string[] | undefined,
 ): readonly string[] | undefined {
   return previous && next ? [...new Set([...previous, ...next])] : undefined;
+}
+
+function mergeBeforeCompile(
+  previous: (() => Promise<void>) | undefined,
+  next: (() => Promise<void>) | undefined,
+): (() => Promise<void>) | undefined {
+  if (!previous) return next;
+  if (!next) return previous;
+  return async () => {
+    await previous();
+    await next();
+  };
 }

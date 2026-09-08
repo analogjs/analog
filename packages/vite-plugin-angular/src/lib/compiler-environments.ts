@@ -12,6 +12,8 @@ import {
   TS_EXT_REGEX,
 } from './utils/module-id.js';
 import { normalizePath } from 'vite';
+import { readFile } from 'node:fs/promises';
+import type { BeforeCompile } from './compiler-session.js';
 
 type Callback<H> = Extract<NonNullable<H>, (...args: never[]) => unknown>;
 type HookContext<K extends keyof Plugin> = ThisParameterType<
@@ -40,7 +42,11 @@ interface Configuration {
 export function isolateCompilerEnvironments<P extends Plugin>(
   primary: P,
   create: () => P,
-  invalidate?: (plugin: P, files: readonly string[]) => void | Promise<void>,
+  invalidate?: (
+    plugin: P,
+    files: readonly string[],
+    beforeCompile?: BeforeCompile,
+  ) => void | Promise<void>,
   resourceOwners?: (plugin: P, file: string) => readonly string[],
   watchChanges?: (
     plugin: P,
@@ -170,7 +176,7 @@ export function isolateCompilerEnvironments<P extends Plugin>(
             // Client HMR can await compilation before the server hook runs.
             // Publish server dirtiness at the watcher boundary so requests in
             // that interval cannot reuse stale source or inlined resources.
-            invalidate(child, [file]);
+            invalidate(child, [file], settleTruncatedSource(file));
             if (resource) invalidateResources(live, file, Date.now());
             else live.moduleGraph.onFileChange(normalizePath(file));
             watchedChanges.add(file);
@@ -258,4 +264,44 @@ export function isolateCompilerEnvironments<P extends Plugin>(
     }
     return isolated;
   }
+}
+
+function settleTruncatedSource(file: string): BeforeCompile {
+  return async (signal) => {
+    try {
+      if ((await readFile(file)).byteLength) return;
+    } catch (error: any) {
+      // Deletions have their own compiler path and must not wait for content.
+      if (error?.code === 'ENOENT') return;
+      throw error;
+    }
+    // Editors can expose a zero-byte truncate before completing the write. A
+    // normal resource takes no delay; only that observed empty snapshot is
+    // polled briefly. A genuinely empty resource is accepted at the bound.
+    const deadline = Date.now() + 100;
+    while (Date.now() < deadline) {
+      await waitForSourceWrite(signal, Math.min(10, deadline - Date.now()));
+      try {
+        if ((await readFile(file)).byteLength) return;
+      } catch (error: any) {
+        if (error?.code === 'ENOENT') return;
+        throw error;
+      }
+    }
+  };
+}
+
+function waitForSourceWrite(signal: AbortSignal, ms: number): Promise<void> {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    signal.addEventListener('abort', abort, { once: true });
+  });
 }

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createServer, type Plugin } from 'vite';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { isolateCompilerEnvironments } from './compiler-environments.js';
 import { hook } from '../testing/required.test-support.js';
 
@@ -284,6 +287,11 @@ describe('compiler environment selection', () => {
     ]);
     change!('/src/view.css');
     expect(defer).toHaveBeenCalledTimes(1);
+    expect(defer).toHaveBeenLastCalledWith(
+      expect.anything(),
+      ['/src/view.css'],
+      expect.any(Function),
+    );
     expect(graph.invalidateModule).toHaveBeenCalledTimes(1);
     await Reflect.apply(hook(child.hotUpdate), { environment }, [
       { file: '/src/view.css' },
@@ -292,7 +300,11 @@ describe('compiler environment selection', () => {
     expect(graph.invalidateAll).not.toHaveBeenCalled();
     change!('/src/app.ts');
     expect(graph.onFileChange).toHaveBeenCalledExactlyOnceWith('/src/app.ts');
-    expect(defer).toHaveBeenLastCalledWith(expect.anything(), ['/src/app.ts']);
+    expect(defer).toHaveBeenLastCalledWith(
+      expect.anything(),
+      ['/src/app.ts'],
+      expect.any(Function),
+    );
     await Reflect.apply(hook(child.hotUpdate), { environment }, [
       { file: '/src/app.ts' },
     ]);
@@ -326,6 +338,72 @@ describe('compiler environment selection', () => {
     expect(await first).toBe(await second);
     expect(create).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['view.css', 'view.ts'])(
+    'settles a truncated %s write and bounds genuinely empty content',
+    async (name) => {
+      const directory = await mkdtemp(join(tmpdir(), 'analog-resource-'));
+      const file = join(directory, name);
+      let change: ((file: string) => void) | undefined;
+      let beforeCompile: ((signal: AbortSignal) => Promise<void>) | undefined;
+      const plugin = isolateCompilerEnvironments(
+        { name: 'compiler' },
+        () => ({ name: 'compiler' }),
+        (_child, _files, barrier) => {
+          beforeCompile = barrier;
+        },
+        () => [],
+        (_child, _server, listener) => {
+          change = listener;
+        },
+      );
+      const graph = {
+        getModulesByFile: () => undefined,
+        invalidateAll: vi.fn(),
+        onFileChange: vi.fn(),
+      };
+      const environment = {
+        name: 'ssr',
+        config: { build: {} },
+        moduleGraph: graph,
+      };
+      try {
+        await writeFile(file, '');
+        Reflect.apply(hook(plugin.config), {}, [
+          {},
+          { command: 'serve', mode: 'development' },
+        ]);
+        await Reflect.apply(hook(plugin.configResolved), {}, [{ build: {} }]);
+        await Reflect.apply(hook(plugin.applyToEnvironment), plugin, [
+          environment,
+        ]);
+        await Reflect.apply(hook(plugin.configureServer), {}, [
+          { environments: { ssr: environment } },
+        ]);
+        change!(file);
+        expect(beforeCompile).toEqual(expect.any(Function));
+        const controller = new AbortController();
+        const delayed = beforeCompile!(controller.signal);
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        await writeFile(file, 'body { color: red; }');
+        await delayed;
+
+        await writeFile(file, '');
+        change!(file);
+        const emptyStarted = Date.now();
+        await beforeCompile!(controller.signal);
+        expect(Date.now() - emptyStarted).toBeGreaterThanOrEqual(90);
+
+        await writeFile(file, 'body { color: blue; }');
+        change!(file);
+        const populatedStarted = Date.now();
+        await beforeCompile!(controller.signal);
+        expect(Date.now() - populatedStarted).toBeLessThan(50);
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    },
+  );
 });
 
 describe('SSR warmup eligibility', () => {

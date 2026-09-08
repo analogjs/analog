@@ -821,7 +821,14 @@ export function fastCompilePlugin(
     },
     closeWatcher: () => compilation.close(),
     async handleHotUpdate(ctx) {
-      if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) await ctx.read();
+      if (/\.(html?|css|s[ac]ss|less)$/.test(ctx.file)) {
+        const content = ctx.read();
+        if (resourceDependencies.owners(ctx.file).length)
+          compilation.defer([ctx.file], async () => {
+            await content;
+          });
+        await content;
+      }
       // Resource file changes → invalidate parent .ts module
       const parents = resourceDependencies
         .owners(ctx.file)

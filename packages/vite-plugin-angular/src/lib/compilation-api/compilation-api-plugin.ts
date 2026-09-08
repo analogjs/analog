@@ -707,7 +707,17 @@ export function compilationAPIPlugin(
       }
 
       // Watchers may fire after truncation but before the editor writes content.
-      await ctx.read();
+      if (
+        TS_EXT_REGEX.test(ctx.file) ||
+        /\.(html?|css|s[ac]ss|less)$/.test(ctx.file)
+      ) {
+        const content = ctx.read();
+        if (TS_EXT_REGEX.test(ctx.file) || resourceOwners(ctx.file).length)
+          compilation.defer([ctx.file], async () => {
+            await content;
+          });
+        await content;
+      }
 
       if (TS_EXT_REGEX.test(ctx.file)) {
         const fileId = stripQuery(ctx.file);

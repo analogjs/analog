@@ -556,7 +556,17 @@ function createPluginSet(
         suppressHmrReplay = false;
 
         // Watchers may fire after truncation but before the editor writes content.
-        await ctx.read();
+        if (
+          TS_EXT_REGEX.test(ctx.file) ||
+          /\.(html?|css|s[ac]ss|less)$/.test(ctx.file)
+        ) {
+          const content = ctx.read();
+          if (TS_EXT_REGEX.test(ctx.file) || resourceOwners(ctx.file).length)
+            compilation.defer([ctx.file], async () => {
+              await content;
+            });
+          await content;
+        }
 
         if (TS_EXT_REGEX.test(ctx.file)) {
           const fileId = stripQuery(ctx.file);
@@ -1463,7 +1473,8 @@ function createPluginSet(
             () =>
               createPluginSet({ ...options, liveReload: false }, false)
                 .compiler,
-            (compiler, files) => compiler.api.defer(files),
+            (compiler, files, beforeCompile) =>
+              compiler.api.defer(files, beforeCompile),
             (compiler, file) => compiler.api.resourceOwners(file),
             (compiler, server, listener) =>
               compiler.api.watch(server.watcher, 'change', listener),
