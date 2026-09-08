@@ -33,6 +33,7 @@ import {
 } from './component-resolvers.js';
 import {
   augmentHostWithCaching,
+  augmentHostWithModuleResolution,
   augmentHostWithResources,
   augmentProgramWithVersioning,
   mergeTransformers,
@@ -77,6 +78,7 @@ import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   TS_EXT_REGEX,
+  EXCLUDED_TS_EXT_REGEX,
   createTsConfigGetter,
   getTsConfigPath,
   createDepOptimizerConfig,
@@ -1387,55 +1389,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return file;
         },
       });
-      const resolutionCache = ts.createModuleResolutionCache(
-        host.getCurrentDirectory(),
-        host.getCanonicalFileName.bind(host),
-        tsCompilerOptions,
-      );
-      host.getModuleResolutionCache = () => resolutionCache;
-      host.resolveModuleNameLiterals = (
-        literals,
-        containingFile,
-        redirectedReference,
-        compilerOptions,
-        containingSourceFile,
-      ) =>
-        literals.map((literal) => {
-          const resolution: ts.ResolvedModuleWithFailedLookupLocations =
-            ts.resolveModuleName(
-              literal.text,
-              containingFile,
-              compilerOptions,
-              host,
-              resolutionCache,
-              redirectedReference,
-              ts.getModeForUsageLocation(
-                containingSourceFile,
-                literal,
-                compilerOptions,
-              ),
-            );
-          const resolvedModule = resolution.resolvedModule;
-          if (
-            resolvedModule?.isExternalLibraryImport &&
-            TS_EXT_REGEX.test(resolvedModule.resolvedFileName) &&
-            !EXCLUDED_TS_EXT_REGEX.test(resolvedModule.resolvedFileName) &&
-            !normalizePath(resolvedModule.resolvedFileName).includes(
-              '/node_modules/',
-            )
-          ) {
-            // A workspace symlink resolves to source outside node_modules.
-            // Classify it before program creation so TypeScript emits it.
-            return {
-              ...resolution,
-              resolvedModule: {
-                ...resolvedModule,
-                isExternalLibraryImport: false,
-              },
-            };
-          }
-          return resolution;
-        });
+      augmentHostWithModuleResolution(host, tsCompilerOptions);
       cachedHost = host;
       cachedHostKey = hostKey;
 
@@ -1718,9 +1672,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 }
 
 const COMPONENT_RESOURCE_EXT_REGEX = /\.(html|htm|css|scss|sass|less)$/;
-// Spec files stay included — a newly added spec must join the program's
-// root names in Vitest watch mode.
-const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
 
 export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
