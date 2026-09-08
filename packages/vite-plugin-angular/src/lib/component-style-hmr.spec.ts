@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { parseSync } from 'oxc-parser';
 import type { HmrContext, ModuleNode } from 'vite';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 import {
@@ -41,6 +42,47 @@ function fixture(encapsulations = [0, 2]) {
 }
 
 describe('component stylesheet updates', () => {
+  it('rewrites every generated metadata replacement without traversing unrelated declarations', () => {
+    const plugin = componentStyleHmrPlugin();
+    (plugin.configResolved as any)({
+      server: { hmr: {} },
+      base: '/',
+    } as any);
+    const declarations = Array.from(
+      { length: 100 },
+      (_, index) =>
+        `const value${index} = { nested: [${index}, ${index + 1}] };`,
+    ).join('\n');
+    const code = `
+      import * as i0 from '@angular/core';
+      ${declarations}
+      if (import.meta.hot) {
+        import.meta.hot.accept((next) => {
+          i0.ɵɵreplaceMetadata(ComponentA, next.ComponentA, {});
+          i0.ɵɵreplaceMetadata(ComponentB, next.ComponentB, {});
+        });
+      }
+    `;
+    const transformed = (plugin.transform as any).call(
+      { parse: (source: string) => parseSync('component.ts', source).program },
+      code,
+      '/src/component.ts',
+      { ssr: false },
+    );
+
+    expect(transformed.code).toContain(
+      `import '${'virtual:analog-component-style-hmr'}';`,
+    );
+    expect(transformed.code).toContain(
+      "import { replaceMetadata as __analogReplaceMetadata } from 'virtual:analog-component-style-hmr';",
+    );
+    expect(
+      transformed.code.match(/__analogReplaceMetadata\(i0\.ɵɵreplaceMetadata/g),
+    ).toHaveLength(2);
+    expect(transformed.code).not.toContain('i0.ɵɵreplaceMetadata(ComponentA');
+    expect(transformed.map).toBeDefined();
+  });
+
   it('invalidates Angular renderer caches for previously destroyed components', () => {
     const plugin = componentStyleHmrPlugin();
     const code = (plugin.load as any)(

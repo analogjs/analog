@@ -131,7 +131,19 @@ export function componentStyleHmrPlugin(): Plugin {
               else if (child && typeof child === 'object') visit(child);
             }
           };
-          visit(ast);
+          // Angular emits its metadata replacement inside a generated
+          // top-level HMR initializer. Restrict traversal to top-level AST
+          // statements that contain the call so unrelated generated template
+          // functions do not inflate every dev transform. The AST still
+          // verifies the namespace import and exact call shape before edits.
+          for (const statement of ast.body) {
+            if (
+              code
+                .slice(statement.start, statement.end)
+                .includes('ɵɵreplaceMetadata')
+            )
+              visit(statement);
+          }
           output.prepend(
             `import { replaceMetadata as __analogReplaceMetadata } from '${clientId}';\n`,
           );
