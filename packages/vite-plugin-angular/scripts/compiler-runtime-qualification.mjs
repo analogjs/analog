@@ -29,6 +29,7 @@ const { values } = parseArgs({
     'expect-style-state': { type: 'boolean', default: false },
     'event-latency': { type: 'boolean', default: false },
     'race-ssr': { type: 'boolean', default: false },
+    'split-resource-write-ms': { type: 'string', default: '0' },
     'ssr-first': { type: 'boolean', default: false },
     'ssr-idle-ms': { type: 'string', default: '0' },
     warmup: { type: 'string', default: 'default' },
@@ -47,6 +48,14 @@ const count = Number(values.components),
   edits = Number(values.edits);
 const duration = Number(values['duration-ms']),
   restartEvery = Number(values['restart-every']);
+const splitResourceWriteMs = Number(values['split-resource-write-ms']);
+assert.ok(
+  Number.isSafeInteger(splitResourceWriteMs) && splitResourceWriteMs >= 0,
+);
+assert.ok(
+  !splitResourceWriteMs || !values['event-latency'],
+  'Split writes are correctness probes, not latency samples',
+);
 for (const number of [count, edits, duration, restartEvery])
   assert.ok(Number.isSafeInteger(number) && number >= 0);
 assert.ok(count >= 1 && edits >= 1);
@@ -64,6 +73,7 @@ const result = {
   components: count,
   edits,
   durationMs: duration,
+  splitResourceWriteMs,
   node: process.version,
   vite: viteVersion,
   angular: require('@angular/core/package.json').version,
@@ -346,7 +356,19 @@ try {
     immediateSsr?.catch((error) => errors.push(String(error)));
     await armBrowserUpdate('style', revision);
     const cssAt = performance.now();
-    await fs.writeFile(join(root, 'src/view.css'), css(revision));
+    if (splitResourceWriteMs) {
+      const stylesheet = await fs.open(join(root, 'src/view.css'), 'w');
+      try {
+        await new Promise((resolve) =>
+          setTimeout(resolve, splitResourceWriteMs),
+        );
+        await stylesheet.writeFile(css(revision));
+      } finally {
+        await stylesheet.close();
+      }
+    } else {
+      await fs.writeFile(join(root, 'src/view.css'), css(revision));
+    }
     if (values['event-latency'])
       await page.evaluate(() => globalThis.__analogUpdate);
     else

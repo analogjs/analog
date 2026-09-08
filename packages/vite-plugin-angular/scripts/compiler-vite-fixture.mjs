@@ -595,16 +595,17 @@ async function browserHmrCase(browser, mode, liveReload) {
                 .some((name) => name.startsWith('_ngcontent-')),
           ),
       );
+      // Keep this distinct edit outside older Vite's 50 ms watcher throttle.
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await writeFile(join(root, 'src/shared.css'), '');
-      await page.waitForFunction(
-        () =>
-          [...document.querySelectorAll('[data-shared]')].every(
-            (element) =>
-              getComputedStyle(element).width !== '47px' &&
-              !element
-                .getAttributeNames()
-                .some((name) => name.startsWith('_ngcontent-')),
-          ),
+      await page.waitForFunction(() =>
+        [...document.querySelectorAll('[data-shared]')].every(
+          (element) =>
+            getComputedStyle(element).width !== '47px' &&
+            !element
+              .getAttributeNames()
+              .some((name) => name.startsWith('_ngcontent-')),
+        ),
       );
       await writeFile(
         join(root, 'src/shared.css'),
