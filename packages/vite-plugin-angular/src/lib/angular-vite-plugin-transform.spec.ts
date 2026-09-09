@@ -93,9 +93,6 @@ async function setupLegacyTransformPlugin() {
   const plugin = angular({
     tsconfig: tsconfigPath,
     workspaceRoot,
-    experimental: {
-      useAngularCompilationAPI: false,
-    },
   }).find((entry) => entry.name === '@analogjs/vite-plugin-angular') as any;
 
   await plugin.config?.(

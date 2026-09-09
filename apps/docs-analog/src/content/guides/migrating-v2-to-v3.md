@@ -131,7 +131,7 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                                                                 |
 | `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
-| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angular({ experimental: { useAngularCompilationAPI: true } })`                                       |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angularCompilationPlugin()`                                                                          |
 | `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
 | `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                            |
 | `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
@@ -301,7 +301,7 @@ If your app has a `src/server/routes/api` directory, no change is needed — tha
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
 
-If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, treat that path as not yet ported to the current v3 alpha line. Do not represent it as a stable v3 migration target yet. Use the standard `@analogjs/vite-plugin-angular` path for the v3 alpha migration itself, and treat `experimental.useAngularCompilationAPI` as a separate opt-in evaluation rather than a drop-in replacement.
+If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, treat that path as not yet ported to the current v3 alpha line. Do not represent it as a stable v3 migration target yet. Use the standard `@analogjs/vite-plugin-angular` path for the v3 alpha migration itself, and treat `angularCompilationPlugin()` as a separate experimental opt-in evaluation rather than a drop-in replacement. Its API and behavior may change in future releases.
 
 ### Template and toolchain baseline shifts
 

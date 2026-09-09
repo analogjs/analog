@@ -19,6 +19,7 @@ import {
 } from '../utils/devkit.js';
 import {
   activateDeferredDebug,
+  applyDebugOption,
   debugCompilationApi,
   debugCompiler,
   debugEmit,
@@ -30,6 +31,7 @@ import {
 } from '../utils/debug.js';
 import {
   getTsConfigPath,
+  createTsConfigGetter,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
@@ -63,29 +65,72 @@ import {
   DiagnosticModes,
   isTestWatchMode,
 } from '../utils/compilation-shared.js';
+import { angularVitestPlugins } from '../angular-vitest-plugin.js';
+import { buildOptimizerPlugin } from '../angular-build-optimizer-plugin.js';
+import { jitPlugin } from '../angular-jit-plugin.js';
+import { liveReloadPlugin } from '../live-reload-plugin.js';
+import { virtualModulesPlugin } from '../virtual-modules-plugin.js';
+import { encapsulationPlugin } from '../encapsulation-plugin.js';
+import { nxFolderPlugin } from '../nx-folder-plugin.js';
+import { routerPlugin } from '../router-plugin.js';
+import { replaceFiles } from '../plugins/file-replacements.plugin.js';
+import { cssExtensionStyleResolverPlugin } from '../utils/css-extension-resolver.js';
 import { loadVirtualRawModule } from '../utils/virtual-resources.js';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
 
-export interface CompilationAPIPluginOptions {
-  tsconfigGetter: () => string;
-  workspaceRoot: string;
-  inlineStylesExtension: string;
-  jit: boolean;
-  liveReload: boolean;
-  disableTypeChecking: boolean;
-  supportedBrowsers: string[];
-  fileReplacements: FileReplacement[];
-  isTest: boolean;
-  isAstroIntegration: boolean;
-  include: string[];
+/**
+ * @experimental The Angular Compilation API plugin may change in future releases.
+ */
+export interface AngularCompilationPluginOptions {
+  tsconfig?: string | (() => string);
+  workspaceRoot?: string;
+  inlineStylesExtension?: string;
+  jit?: boolean;
+  liveReload?: boolean;
+  disableTypeChecking?: boolean;
+  supportedBrowsers?: string[];
+  fileReplacements?: FileReplacement[];
+  include?: string[];
   debug?: DebugOption;
 }
 
-export function compilationAPIPlugin(
-  pluginOptions: CompilationAPIPluginOptions,
-): Plugin {
+/**
+ * Compiles Angular applications using Angular's private Compilation API.
+ *
+ * @experimental This plugin may change in future releases.
+ */
+export function angularCompilationPlugin(
+  options: AngularCompilationPluginOptions = {},
+): Plugin[] {
+  if (
+    angularFullVersion < 200100 ||
+    typeof createAngularCompilation !== 'function'
+  ) {
+    throw new Error(
+      '[@analogjs/vite-plugin-angular]: angularCompilationPlugin requires Angular v20.1 or later and a matching @angular/build package with the Compilation API.',
+    );
+  }
+
+  applyDebugOption(options.debug, options.workspaceRoot);
+  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const isStackBlitz = !!process.versions['webcontainer'];
+  const pluginOptions = {
+    tsconfigGetter: createTsConfigGetter(options.tsconfig),
+    workspaceRoot:
+      options.workspaceRoot ??
+      process.env['NX_WORKSPACE_ROOT'] ??
+      process.cwd(),
+    inlineStylesExtension: options.inlineStylesExtension ?? 'css',
+    jit: options.jit ?? isTest,
+    liveReload: options.liveReload ?? true,
+    disableTypeChecking: options.disableTypeChecking ?? true,
+    supportedBrowsers: options.supportedBrowsers ?? ['safari 15'],
+    fileReplacements: options.fileReplacements ?? [],
+    include: options.include ?? [],
+    isAstroIntegration: process.env['ANALOG_ASTRO'] === 'true',
+  };
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
@@ -107,7 +152,6 @@ export function compilationAPIPlugin(
   let initialCompilation = false;
   let viteServer: ViteDevServer | undefined;
 
-  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const tsconfigResolver = new TsconfigResolver({
     workspaceRoot: pluginOptions.workspaceRoot,
     include: pluginOptions.include,
@@ -538,7 +582,7 @@ export function compilationAPIPlugin(
     classNames.delete(id);
   }
 
-  return {
+  const compilerPlugin: Plugin = {
     name: '@analogjs/vite-plugin-angular-compilation-api',
     enforce: 'pre' as const,
     async config(config, { command }) {
@@ -554,13 +598,7 @@ export function compilationAPIPlugin(
         isLib: !!config?.build?.lib,
       };
 
-      if (angularFullVersion < 200100) {
-        console.warn(
-          '[@analogjs/vite-plugin-angular]: The Angular Compilation API is only available with Angular v20.1 and later',
-        );
-      } else {
-        debugCompilationApi('enabled (Angular %s)', angularFullVersion);
-      }
+      debugCompilationApi('enabled (Angular %s)', angularFullVersion);
 
       // Angular Compilation API handles TypeScript transforms — disable
       // esbuild/oxc so they don't compete.
@@ -586,7 +624,7 @@ export function compilationAPIPlugin(
       // No `resolve.conditions` extension here: the `style` condition is
       // scoped to `.css`-extension requests by
       // `cssExtensionStyleResolverPlugin`, registered once at the
-      // `angular()` factory level. Adding `style` globally caused
+      // `angularCompilationPlugin()` factory level. Adding `style` globally caused
       // Tailwind v4's JS plugin resolver to pick the `style` exports of
       // packages such as `tailwindcss-primeui`, which then crashed Node's
       // ESM loader when it tried to import the resulting `.css` file.
@@ -655,7 +693,8 @@ export function compilationAPIPlugin(
     },
     async buildStart() {
       if (!isVitestVscode) {
-        await performCompilation(resolvedConfig);
+        pendingCompilation = performCompilation(resolvedConfig);
+        await pendingCompilation;
         pendingCompilation = null;
         initialCompilation = true;
       }
@@ -776,10 +815,16 @@ export function compilationAPIPlugin(
       filter: {
         id: {
           include: [TS_EXT_REGEX],
-          exclude: [/node_modules/, 'type=script', '@ng/component'],
+          exclude: [
+            /node_modules/,
+            'type=script',
+            '@ng/component',
+            /[?&]raw\b/,
+          ],
         },
       },
       async handler(code, id) {
+        if (/[?&]raw\b/.test(id)) return;
         if (transformFilter && !transformFilter(code, id)) {
           return;
         }
@@ -851,9 +896,37 @@ export function compilationAPIPlugin(
         };
       },
     },
-    closeBundle() {
-      angularCompilation?.close?.();
+    async closeBundle() {
+      await compilationLock;
+      await angularCompilation?.close?.();
       angularCompilation = undefined;
+      outputFiles.clear();
+      classNames.clear();
+      sourceFileCache.clear();
+      tsconfigResolver.invalidateAll();
+      stylesheetRegistry = undefined;
+      pendingCompilation = null;
+      initialCompilation = false;
     },
   };
+
+  return [
+    cssExtensionStyleResolverPlugin(),
+    replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
+    virtualModulesPlugin({ jit: pluginOptions.jit }),
+    compilerPlugin,
+    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    ...(isTest && !isStackBlitz
+      ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
+      : []),
+    pluginOptions.jit &&
+      jitPlugin({ inlineStylesExtension: pluginOptions.inlineStylesExtension }),
+    buildOptimizerPlugin({
+      supportedBrowsers: pluginOptions.supportedBrowsers,
+      jit: pluginOptions.jit,
+    }),
+    routerPlugin(),
+    nxFolderPlugin(),
+    encapsulationPlugin(),
+  ].filter(Boolean) as Plugin[];
 }
