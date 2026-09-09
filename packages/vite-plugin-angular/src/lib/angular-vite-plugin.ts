@@ -33,6 +33,7 @@ import {
 } from './component-resolvers.js';
 import {
   augmentHostWithCaching,
+  augmentHostWithModuleResolution,
   augmentHostWithResources,
   augmentProgramWithVersioning,
   mergeTransformers,
@@ -77,6 +78,7 @@ import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   TS_EXT_REGEX,
+  EXCLUDED_TS_EXT_REGEX,
   createTsConfigGetter,
   getTsConfigPath,
   createDepOptimizerConfig,
@@ -410,7 +412,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           ),
         );
         server.watcher.on('add', invalidateCompilationOnFsChange);
-        server.watcher.on('unlink', invalidateCompilationOnFsChange);
+        server.watcher.on('unlink', (file) => {
+          const id = normalizePath(file);
+          outputFiles.delete(id);
+          fileTransformMap.delete(id);
+          sourceFileCache.delete(id);
+          invalidateCompilationOnFsChange(file);
+        });
         server.watcher.on('change', (file) => {
           if (file.includes('tsconfig')) {
             invalidateTsconfigCaches();
@@ -1381,6 +1389,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return file;
         },
       });
+      augmentHostWithModuleResolution(host, tsCompilerOptions);
       cachedHost = host;
       cachedHostKey = hostKey;
 
@@ -1663,9 +1672,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 }
 
 const COMPONENT_RESOURCE_EXT_REGEX = /\.(html|htm|css|scss|sass|less)$/;
-// Spec files stay included — a newly added spec must join the program's
-// root names in Vitest watch mode.
-const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
 
 export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
