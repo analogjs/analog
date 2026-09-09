@@ -1,3 +1,9 @@
+## [2.7.3-beta.1](https://github.com/analogjs/analog/compare/v2.7.2...v2.7.3-beta.1) (2026-09-09)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit source-linked workspace packages ([#2544](https://github.com/analogjs/analog/issues/2544)) ([e26a1f5](https://github.com/analogjs/analog/commit/e26a1f5499f7b06a983f836fe69ed4363f04722c))
+
 ## [2.7.2](https://github.com/analogjs/analog/compare/v2.7.1...v2.7.2) (2026-09-08)
 
 ### Bug Fixes
