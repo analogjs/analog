@@ -70,7 +70,7 @@ describe('typed route generation', () => {
     ).toContain('interface AnalogRouteTable');
   });
   it('rejects runtime module output paths', () => {
-    expect(() => typedRoutes({ outFile: 'src/routeTree.gen.ts' })).toThrow(
+    expect(() => typedRoutes({ outFile: 'src/routes.ts' })).toThrow(
       'must end in .d.ts',
     );
   });

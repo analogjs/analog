@@ -42,8 +42,6 @@ analog({
 
 Custom output paths must end in `.d.ts` and be included in the relevant tsconfigs.
 
-If you used the earlier experimental implementation, remove its `routeTree.gen.ts` file and injected entry import when switching to the declaration file.
-
 ## Build links and navigate
 
 ```ts
