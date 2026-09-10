@@ -32,14 +32,14 @@ analog({
 import { injectNavigate, routePath } from '@analogjs/router';
 
 const link = routePath('/products/[id]', { params: { id: '42' } });
-// link.path === '/products/42'
+// link.path is ['/', 'products', '42']
 
 // Inside an Angular injection context:
 const navigate = injectNavigate();
 navigate('/products/[id]', { params: { id: '42' } }, { replaceUrl: true });
 ```
 
-Bind the returned link properties separately:
+The path contains Angular router commands with unencoded segments. Bind the returned link properties separately:
 
 ```html
 <a

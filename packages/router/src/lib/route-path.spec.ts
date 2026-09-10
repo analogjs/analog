@@ -1,3 +1,5 @@
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
 import { buildUrl, buildRouteLink } from './route-path';
@@ -71,7 +73,7 @@ describe('buildUrl', () => {
         buildUrl('/docs/[...slug]', {
           params: { slug: ['hello world', 'foo&bar'] },
         }),
-      ).toBe('/docs/hello%20world/foo%26bar');
+      ).toBe('/docs/hello%20world/foo&bar');
     });
 
     it('should reject empty arrays for required catch-all params', () => {
@@ -183,9 +185,11 @@ describe('buildUrl', () => {
       expect(buildUrl('')).toBe('/');
     });
 
-    it('should strip bracket syntax when no params provided', () => {
-      expect(buildUrl('/users/[id]')).toBe('/users');
-      expect(buildUrl('/docs/[...slug]')).toBe('/docs');
+    it('should reject missing required params', () => {
+      expect(() => buildUrl('/users/[id]')).toThrow(/Missing required param/);
+      expect(() => buildUrl('/docs/[...slug]')).toThrow(
+        /Missing required catch-all param/,
+      );
     });
   });
 });
@@ -194,7 +198,7 @@ describe('buildUrl', () => {
 describe('buildRouteLink', () => {
   it('should return path only for static routes', () => {
     expect(buildRouteLink('/about')).toEqual({
-      path: '/about',
+      path: ['/', 'about'],
       queryParams: null,
       fragment: undefined,
     });
@@ -202,7 +206,7 @@ describe('buildRouteLink', () => {
 
   it('should resolve dynamic params in path', () => {
     const result = buildRouteLink('/users/[id]', { params: { id: '42' } });
-    expect(result.path).toBe('/users/42');
+    expect(result.path).toEqual(['/', 'users', '42']);
     expect(result.queryParams).toBeNull();
     expect(result.fragment).toBeUndefined();
   });
@@ -211,13 +215,13 @@ describe('buildRouteLink', () => {
     const result = buildRouteLink('/users', {
       query: { page: '1', limit: '10' },
     });
-    expect(result.path).toBe('/users');
+    expect(result.path).toEqual(['/', 'users']);
     expect(result.queryParams).toEqual({ page: '1', limit: '10' });
   });
 
   it('should separate fragment from path', () => {
     const result = buildRouteLink('/about', { hash: 'team' });
-    expect(result.path).toBe('/about');
+    expect(result.path).toEqual(['/', 'about']);
     expect(result.fragment).toBe('team');
   });
 
@@ -229,7 +233,7 @@ describe('buildRouteLink', () => {
         hash: 'bio',
       }),
     ).toEqual({
-      path: '/users/42',
+      path: ['/', 'users', '42'],
       queryParams: { tab: 'profile' },
       fragment: 'bio',
     });
@@ -252,5 +256,26 @@ describe('buildRouteLink', () => {
       query: { tag: ['js', 'ts'] },
     });
     expect(result.queryParams).toEqual({ tag: ['js', 'ts'] });
+  });
+});
+
+describe('Angular link serialization', () => {
+  it('uses the same URL for routerLink commands and navigation', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    const router = TestBed.inject(Router);
+    for (const id of ['hello world', 'a/b', '%', '(aux)', '..']) {
+      const options = {
+        params: { id },
+        query: { q: ['a&b', 'a/b'] },
+        hash: 'hello world',
+      };
+      const link = buildRouteLink('/users/[id]', options);
+      const tree = router.createUrlTree(link.path, {
+        queryParams: link.queryParams,
+        fragment: link.fragment,
+      });
+      expect(router.serializeUrl(tree)).toBe(buildUrl('/users/[id]', options));
+      expect(tree.root.children['primary'].segments[1].path).toBe(id);
+    }
   });
 });

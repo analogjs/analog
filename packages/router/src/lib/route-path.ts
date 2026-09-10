@@ -1,3 +1,11 @@
+import {
+  DefaultUrlSerializer,
+  PRIMARY_OUTLET,
+  UrlSegment,
+  UrlSegmentGroup,
+  UrlTree,
+} from '@angular/router';
+
 /**
  * Typed route path utilities for Analog.
  *
@@ -115,7 +123,7 @@ export type RoutePathArgs<P extends string = string> =
  * to Angular's `[routerLink]`, `[queryParams]`, and `[fragment]` inputs.
  */
 export interface RouteLinkResult {
-  path: string;
+  path: string[];
   queryParams: Record<string, string | string[]> | null;
   fragment: string | undefined;
 }
@@ -128,13 +136,13 @@ export interface RouteLinkResult {
  *
  * @example
  * routePath('/about')
- * // → { path: '/about', queryParams: null, fragment: undefined }
+ * // → { path: ['/', 'about'], queryParams: null, fragment: undefined }
  *
  * routePath('/users/[id]', { params: { id: '42' } })
- * // → { path: '/users/42', queryParams: null, fragment: undefined }
+ * // → { path: ['/', 'users', '42'], queryParams: null, fragment: undefined }
  *
  * routePath('/users/[id]', { params: { id: '42' }, query: { tab: 'settings' }, hash: 'bio' })
- * // → { path: '/users/42', queryParams: { tab: 'settings' }, fragment: 'bio' }
+ * // → { path: ['/', 'users', '42'], queryParams: { tab: 'settings' }, fragment: 'bio' }
  *
  * @example Template usage
  * ```html
@@ -182,100 +190,40 @@ export function buildRouteLink(
   };
 }
 
-/**
- * Resolves param placeholders and normalises slashes.
- * Returns only the path — no query string or hash.
- */
 function buildPath(
   path: string,
-  params?: Record<string, string | string[] | undefined>,
-): string {
-  let url = path;
-
-  if (params) {
-    // Replace [[...param]] — optional catch-all
-    url = url.replace(/\[\[\.\.\.([^\]]+)\]\]/g, (_, name) => {
-      const value = params[name];
-      if (value == null) return '';
-      if (Array.isArray(value)) {
-        return value.map((v) => encodeURIComponent(v)).join('/');
-      }
-      return encodeURIComponent(String(value));
-    });
-
-    // Replace [...param] — required catch-all
-    url = url.replace(/\[\.\.\.([^\]]+)\]/g, (_, name) => {
-      const value = params[name];
-      if (value == null) {
+  params: Record<string, string | string[] | undefined> = {},
+): string[] {
+  const segments = path
+    .split('/')
+    .filter(Boolean)
+    .flatMap((segment) => {
+      const optional = segment.match(/^\[\[\.\.\.([^\]]+)\]\]$/);
+      const catchAll = segment.match(/^\[\.\.\.([^\]]+)\]$/);
+      const dynamic = segment.match(/^\[([^\]]+)\]$/);
+      const match = optional ?? catchAll ?? dynamic;
+      if (!match) return [segment];
+      const value = params[match[1]];
+      if (value == null || (Array.isArray(value) && !value.length)) {
+        if (optional) return [];
         throw new Error(
-          `Missing required catch-all param "${name}" for path "${path}"`,
+          `Missing required ${catchAll ? 'catch-all ' : ''}param "${match[1]}" for path "${path}"`,
         );
       }
-      if (Array.isArray(value)) {
-        if (value.length === 0) {
-          throw new Error(
-            `Missing required catch-all param "${name}" for path "${path}"`,
-          );
-        }
-        return value.map((v) => encodeURIComponent(v)).join('/');
-      }
-      return encodeURIComponent(String(value));
+      return Array.isArray(value) ? value : [value];
     });
-
-    // Replace [param] — dynamic param
-    url = url.replace(/\[([^\]]+)\]/g, (_, name) => {
-      const value = params[name];
-      if (value == null) {
-        throw new Error(`Missing required param "${name}" for path "${path}"`);
-      }
-      return encodeURIComponent(String(value));
-    });
-  } else {
-    // Strip bracket syntax when no params provided
-    url = url.replace(/\[\[\.\.\.([^\]]+)\]\]/g, '');
-    url = url.replace(/\[\.\.\.([^\]]+)\]/g, '');
-    url = url.replace(/\[([^\]]+)\]/g, '');
-  }
-
-  // Clean up double/trailing slashes
-  url = url.replace(/\/+/g, '/');
-  if (url.length > 1 && url.endsWith('/')) {
-    url = url.slice(0, -1);
-  }
-  if (!url.startsWith('/')) {
-    url = '/' + url;
-  }
-
-  return url;
+  // A separate root command keeps slashes inside parameter values in one segment.
+  return ['/', ...segments];
 }
 
-/**
- * Internal URL builder. Separated from `routePath` so it can be
- * used without generic constraints (e.g., in `injectNavigate`).
- */
+/** Internal URL serialization for programmatic navigation. */
 export function buildUrl(path: string, options?: RoutePathOptionsBase): string {
-  let url = buildPath(path, options?.params);
-
-  if (options?.query) {
-    const parts: string[] = [];
-    for (const [key, value] of Object.entries(options.query)) {
-      if (value === undefined) continue;
-      if (Array.isArray(value)) {
-        for (const v of value) {
-          parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(v)}`);
-        }
-      } else {
-        parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
-      }
-    }
-    if (parts.length > 0) {
-      url += '?' + parts.join('&');
-    }
-  }
-
-  if (options?.hash) {
-    url += '#' + options.hash;
-  }
-
-  return url;
+  const link = buildRouteLink(path, options);
+  const segments = link.path.slice(1).map((path) => new UrlSegment(path, {}));
+  const root = new UrlSegmentGroup([], {
+    [PRIMARY_OUTLET]: new UrlSegmentGroup(segments, {}),
+  });
+  return new DefaultUrlSerializer().serialize(
+    new UrlTree(root, link.queryParams ?? {}, link.fragment ?? null),
+  );
 }
