@@ -778,15 +778,18 @@ describe('generateRouteTableDeclaration', () => {
     expect(output).not.toContain('routeParamsSchema');
   });
 
-  it('should set paramsOutput same as params when no schema', () => {
+  it('emits only the parameter and query fields needed by consumers', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/users/[id].page.ts',
     ]);
 
     const output = generateRouteTableDeclaration(manifest);
 
-    // Both params and paramsOutput are filename-derived
     expect(output).toContain('params: { id: string }');
-    expect(output).toContain('paramsOutput: { id: string }');
+    expect(output).toContain(
+      'query: Record<string, string | string[] | undefined>',
+    );
+    expect(output).not.toContain('paramsOutput');
+    expect(output).not.toContain('queryOutput');
   });
 });

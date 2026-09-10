@@ -47,10 +47,6 @@ export type {
   AnalogRouteTable,
   AnalogRoutePath,
   RoutePathOptions,
-  RoutePathArgs,
-  RouteParamsOutput,
-  RouteQueryOutput,
-  RouteLinkResult,
 } from './lib/route-path';
 export { injectNavigate } from './lib/inject-navigate';
 export { injectParams, injectQuery } from './lib/inject-typed-params';

@@ -51,7 +51,7 @@ describe('typed route generation', () => {
     expect(entry).toContain("import type {} from './routeTree.gen';");
     const generated = readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8');
     expect(generated).toContain('"/users/[id]"');
-    expect(generated).toContain('paramsOutput: { id: string }');
+    expect(generated).toContain('params: { id: string }');
     expect(parseSync('routeTree.gen.ts', generated).errors).toEqual([]);
     configure(root);
     expect(readFileSync(join(root, 'src/main.ts'), 'utf8')).toBe(entry);
@@ -64,7 +64,7 @@ describe('typed route generation', () => {
     );
     configure(root);
     const generated = readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8');
-    expect(generated).toContain('paramsOutput: { id: string }');
+    expect(generated).toContain('params: { id: string }');
     expect(generated).not.toContain('InferOutput');
   });
   it('supports custom output paths and a first production build', () => {
@@ -160,15 +160,21 @@ it('type-checks generated routes and rejects invalid paths, params, and navigati
       fixture,
       `
       import './routeTree.gen';
-      import { routePath, type RouteParamsOutput } from '@analogjs/router';
+      import { routePath } from '@analogjs/router';
       import { injectNavigate } from '${normalizeImport(routerSource + '/inject-navigate')}';
+      import { injectParams, injectQuery } from '${normalizeImport(routerSource + '/inject-typed-params')}';
+      const params = injectParams('/users/[id]');
+      const query = injectQuery('/users/[id]');
       routePath('/about');
       routePath('/users/[id]', {params: {id: '42'}});
       routePath('/shop/[[...category]]');
       routePath('/docs/[...slug]', {params: {slug: ['a', 'b']}});
-      const id: RouteParamsOutput<'/users/[id]'> = {id: '42'};
+      const id: ReturnType<typeof params> = {id: '42'};
       // @ts-expect-error raw values are strings, not schema output numbers
-      const invalidId: RouteParamsOutput<'/users/[id]'> = {id: 42};
+      const invalidId: ReturnType<typeof params> = {id: 42};
+      const page: string | string[] | undefined = query()['page'];
+      // @ts-expect-error query values remain raw strings
+      const invalidPage: number = query()['page'];
       // @ts-expect-error unknown route
       routePath('/missing');
       // @ts-expect-error missing required options

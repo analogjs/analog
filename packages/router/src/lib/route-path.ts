@@ -41,11 +41,9 @@ export interface RoutePathOptionsBase {
 /** Raw parameter types from the generated route table. */
 export type RouteParamsOutput<P extends string> =
   P extends keyof AnalogRouteTable
-    ? AnalogRouteTable[P] extends { paramsOutput: infer O }
-      ? O
-      : AnalogRouteTable[P] extends { params: infer Params }
-        ? Params
-        : Record<string, unknown>
+    ? AnalogRouteTable[P] extends { params: infer Params }
+      ? Params
+      : Record<string, unknown>
     : Record<string, unknown>;
 
 /**
@@ -53,7 +51,7 @@ export type RouteParamsOutput<P extends string> =
  */
 export type RouteQueryOutput<P extends string> =
   P extends keyof AnalogRouteTable
-    ? AnalogRouteTable[P] extends { queryOutput: infer O }
+    ? AnalogRouteTable[P] extends { query: infer O }
       ? O
       : Record<string, string | string[] | undefined>
     : Record<string, string | string[] | undefined>;

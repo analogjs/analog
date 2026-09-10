@@ -370,14 +370,9 @@ export function generateRouteTableDeclaration(manifest: RouteManifest): string {
     const paramsType = generateParamsType(route.params);
     const queryType = 'Record<string, string | string[] | undefined>';
 
-    const paramsOutputType = paramsType;
-    const queryOutputType = queryType;
-
     lines.push(`    ${JSON.stringify(route.fullPath)}: {`);
     lines.push(`      params: ${paramsType};`);
-    lines.push(`      paramsOutput: ${paramsOutputType};`);
     lines.push(`      query: ${queryType};`);
-    lines.push(`      queryOutput: ${queryOutputType};`);
     lines.push(`    };`);
   }
 
