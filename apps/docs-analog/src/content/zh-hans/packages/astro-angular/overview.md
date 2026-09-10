@@ -346,7 +346,7 @@ import { Component } from '@angular/core';
 export class CardComponent {}
 ```
 
-```
+```html
 ---
 import { CardComponent } from '../components/card.component';
 ---
