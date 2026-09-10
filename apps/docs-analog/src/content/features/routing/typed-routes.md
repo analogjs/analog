@@ -67,15 +67,7 @@ Use these helpers in a component rendered by the specified route. The path narro
 
 Values remain raw Angular router values. Exporting a schema does not validate or coerce these signals. For example, `"42"` stays a string.
 
-Optional development warnings for missing required parameters can be enabled with:
-
-```ts
-import { provideFileRouter, withTypedRouter } from '@analogjs/router';
-
-provideFileRouter(withTypedRouter({ strictRouteParams: true }));
-```
-
-The warning checks parameter presence, not schema validity or route identity. Type checking comes from the generated table and does not require `withTypedRouter()`.
+Type checking comes from the generated table. No additional router provider is required.
 
 ## Compatibility
 

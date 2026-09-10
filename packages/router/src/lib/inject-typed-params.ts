@@ -1,14 +1,13 @@
-import { inject, Injector, isDevMode, Signal } from '@angular/core';
+import { inject, Injector, Signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { combineLatest, map, of, take } from 'rxjs';
+import { combineLatest, map, of } from 'rxjs';
 
 import type {
   AnalogRoutePath,
   RouteParamsOutput,
   RouteQueryOutput,
 } from './route-path';
-import { TYPED_ROUTER } from './typed-router';
 
 function extractRouteParams(
   routePath: string,
@@ -38,10 +37,6 @@ export function injectParams<P extends AnalogRoutePath>(
   const route = injector
     ? injector.get(ActivatedRoute)
     : inject(ActivatedRoute);
-
-  const config = injector
-    ? injector.get(TYPED_ROUTER, null)
-    : inject(TYPED_ROUTER, { optional: true });
   const ancestors = route.pathFromRoot ?? [route];
   const wildcard = ancestors.find((entry) => entry.routeConfig?.path === '**');
   return toSignal(
@@ -60,16 +55,6 @@ export function injectParams<P extends AnalogRoutePath>(
               params[param.name] = segments.map((segment) => segment.path);
             }
           }
-          if (
-            isDevMode() &&
-            config?.strictRouteParams &&
-            param.type !== 'optionalCatchAll' &&
-            !(param.name in params)
-          ) {
-            console.warn(
-              `[Analog] injectParams('${_from}'): expected param "${param.name}" is not present in the active route's params.`,
-            );
-          }
         }
         return params as RouteParamsOutput<P>;
       }),
@@ -87,22 +72,6 @@ export function injectQuery<P extends AnalogRoutePath>(
   const route = injector
     ? injector.get(ActivatedRoute)
     : inject(ActivatedRoute);
-
-  const config = injector
-    ? injector.get(TYPED_ROUTER, null)
-    : inject(TYPED_ROUTER, { optional: true });
-  if (isDevMode() && config?.strictRouteParams) {
-    route.params.pipe(take(1)).subscribe((params) => {
-      for (const param of extractRouteParams(_from)) {
-        if (param.type === 'dynamic' && !(param.name in params)) {
-          console.warn(
-            `[Analog] injectQuery('${_from}'): expected param "${param.name}" is not present in the active route's params.`,
-          );
-          break;
-        }
-      }
-    });
-  }
   return toSignal(
     route.queryParams.pipe(map((params) => params as RouteQueryOutput<P>)),
     { requireSync: true, injector },

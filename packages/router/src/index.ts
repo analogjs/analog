@@ -54,5 +54,3 @@ export type {
 } from './lib/route-path';
 export { injectNavigate } from './lib/inject-navigate';
 export { injectParams, injectQuery } from './lib/inject-typed-params';
-export { withTypedRouter } from './lib/typed-router';
-export type { TypedRouterOptions } from './lib/typed-router';
