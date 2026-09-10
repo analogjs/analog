@@ -45,7 +45,7 @@ function isRoutePathOptionsBase(value: unknown): value is RoutePathOptionsBase {
  * const navigate = injectNavigate();
  *
  * navigate('/users/[id]', { params: { id: '42' } });   // ✅
- * navigate('/users/[id]', { params: { id: 42 } });     // ❌ type error
+ * navigate('/users/[id]', { params: { id: 42 } });     // ✅
  *
  * // With navigation extras
  * navigate('/users/[id]', { params: { id: '42' } }, { replaceUrl: true });

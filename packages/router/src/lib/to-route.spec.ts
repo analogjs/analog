@@ -211,6 +211,26 @@ describe('buildRouteLink', () => {
     expect(result.fragment).toBeUndefined();
   });
 
+  it.each([0, 42, -1, 1.5])(
+    'normalizes numeric parameter %s to a string',
+    (id) => {
+      expect(buildRouteLink('/users/[id]', { params: { id } }).path).toEqual([
+        '/',
+        'users',
+        String(id),
+      ]);
+      expect(buildUrl('/users/[id]', { params: { id } })).toBe(`/users/${id}`);
+    },
+  );
+
+  it('normalizes numeric catch-all segments without mutating the input', () => {
+    const slug = ['a/b', 0, 42];
+    expect(buildUrl('/docs/[...slug]', { params: { slug } })).toBe(
+      '/docs/a%2Fb/0/42',
+    );
+    expect(slug).toEqual(['a/b', 0, 42]);
+  });
+
   it('should separate query params from path', () => {
     const result = buildRouteLink('/users', {
       query: { page: '1', limit: '10' },

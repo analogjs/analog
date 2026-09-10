@@ -67,25 +67,34 @@ function setup() {
 }
 
 describe('LinkTo', () => {
-  it('builds encoded hrefs and delegates navigation and extras to RouterLink', async () => {
-    const { fixture, anchor, router } = setup();
-    fixture.componentInstance.destination.set({
-      path: '/users/[id]',
-      params: { id: 'a/b' },
-      query: { tab: 'a b' },
-      hash: 'details',
-    });
-    fixture.detectChanges();
-    expect(anchor.getAttribute('href')).toBe('/users/a%2Fb?tab=a%20b#details');
-    const navigate = vi.spyOn(router, 'navigateByUrl');
-    anchor.click();
-    await fixture.whenStable();
-    expect(router.url).toBe('/users/a%2Fb?tab=a%20b#details');
-    expect(navigate).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ replaceUrl: true, state: { source: 'link' } }),
-    );
-  });
+  it.each([
+    ['a/b', '/users/a%2Fb?tab=a%20b#details'],
+    [0, '/users/0?tab=a%20b#details'],
+  ])(
+    'builds hrefs and delegates navigation for param %s',
+    async (id, expectedUrl) => {
+      const { fixture, anchor, router } = setup();
+      fixture.componentInstance.destination.set({
+        path: '/users/[id]',
+        params: { id },
+        query: { tab: 'a b' },
+        hash: 'details',
+      });
+      fixture.detectChanges();
+      expect(anchor.getAttribute('href')).toBe(expectedUrl);
+      const navigate = vi.spyOn(router, 'navigateByUrl');
+      anchor.click();
+      await fixture.whenStable();
+      expect(router.url).toBe(expectedUrl);
+      expect(navigate).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          replaceUrl: true,
+          state: { source: 'link' },
+        }),
+      );
+    },
+  );
 
   it('updates active classes on the link and its ancestor when params change', async () => {
     const { fixture, anchor, nav, router } = setup();

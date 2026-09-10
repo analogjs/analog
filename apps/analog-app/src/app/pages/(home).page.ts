@@ -23,7 +23,7 @@ export const routeMeta: RouteMeta = {
             [title]="product.name + ' details'"
             [linkTo]="{
               path: '/products/[productId]',
-              params: { productId: product.id.toString() },
+              params: { productId: product.id },
             }"
           >
             {{ product.name }}

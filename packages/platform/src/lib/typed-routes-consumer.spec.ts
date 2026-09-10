@@ -81,6 +81,9 @@ describe('typed routing consumer integration', () => {
       import { toRoute, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
       toRoute('/about');
       toRoute('/users/[id]', { params: { id: '42' } });
+      toRoute('/users/[id]', { params: { id: 0 } });
+      toRoute('/docs/[...slug]', { params: { slug: ['a', 42] } });
+      toRoute('/shop/[[...category]]', { params: { category: [0, 'shoes'] } });
       toRoute('/docs/[...slug]', { params: { slug: ['a/b'] } });
       toRoute('/shop/[[...category]]');
       const params = injectParams('/users/[id]');
@@ -90,14 +93,20 @@ describe('typed routing consumer integration', () => {
       const navigate = injectNavigate();
       navigate('/about', { replaceUrl: true });
       navigate('/users/[id]', { params: { id: '42' } }, { replaceUrl: true });
+      navigate('/users/[id]', { params: { id: 42 } });
+      navigate('/docs/[...slug]', { params: { slug: [1, 'a'] } });
+      // @ts-expect-error navigation params must be strings or numbers
+      navigate('/users/[id]', { params: { id: false } });
+      // @ts-expect-error catch-all entries must be strings or numbers
+      toRoute('/docs/[...slug]', { params: { slug: [true] } });
       // @ts-expect-error unknown route
       toRoute('/missing');
       // @ts-expect-error required params
       toRoute('/users/[id]');
       // @ts-expect-error incorrect param name
       toRoute('/users/[id]', { params: { other: '42' } });
-      // @ts-expect-error params are raw strings
-      toRoute('/users/[id]', { params: { id: 42 } });
+      // @ts-expect-error params must be strings or numbers
+      toRoute('/users/[id]', { params: { id: true } });
       // @ts-expect-error catch-all requires an array
       toRoute('/docs/[...slug]', { params: { slug: 'a/b' } });
       // @ts-expect-error optional catch-all still requires an array when present
@@ -256,7 +265,8 @@ describe('typed routing consumer integration', () => {
       'valid destinations',
       `<a [linkTo]="{ path: '/about' }"></a>
       <a [linkTo]="{ path: '/users/[id]', params: { id: '42' }, query: { tab: 'bio' }, hash: 'details' }" routerLinkActive="active"></a>
-      <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b'] } }"></a>
+      <a [linkTo]="{ path: '/users/[id]', params: { id: 0 } }"></a>
+      <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b', 42] } }"></a>
       <a [linkTo]="{ path: '/shop/[[...category]]' }"></a>
       <a [linkTo]="null"></a>`,
       false,
@@ -270,7 +280,7 @@ describe('typed routing consumer integration', () => {
     ],
     [
       'wrong param type',
-      `<a [linkTo]="{ path: '/users/[id]', params: { id: 42 } }"></a>`,
+      `<a [linkTo]="{ path: '/users/[id]', params: { id: true } }"></a>`,
       true,
     ],
     [
@@ -328,15 +338,15 @@ describe('typed routing consumer integration', () => {
     const path = join(root, 'src/consumer.ts');
     writeFileSync(
       path,
-      readFileSync(path, 'utf8').replace("id: '42'", 'id: 42'),
+      readFileSync(path, 'utf8').replace("id: '42'", 'id: true'),
     );
     expect(compile(root).messages.join('\n')).toContain(
-      "Type 'number' is not assignable to type 'string'",
+      "Type 'boolean' is not assignable to type 'string | number'",
     );
     writeFileSync(
       path,
       readFileSync(path, 'utf8').replace(
-        "'/users/[id]', { params: { id: 42 } }",
+        "'/users/[id]', { params: { id: true } }",
         "'/missing'",
       ),
     );

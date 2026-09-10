@@ -42,14 +42,14 @@ analog({
 
 Custom output paths must end in `.d.ts` and be included in the relevant tsconfigs.
 
-## Declarative links
+## Build links
 
 Import `LinkTo` from `@analogjs/router` into your component's `imports` and bind a destination to `[linkTo]`:
 
 ```html
 <a [linkTo]="{ path: '/shipping' }">Shipping</a>
 <a
-  [linkTo]="{ path: '/products/[id]', params: { id: product.id.toString() } }"
+  [linkTo]="{ path: '/products/[id]', params: { id: product.id } }"
   routerLinkActive="active"
 >
   Details
@@ -60,32 +60,31 @@ The generated route table checks the path and its required parameters together. 
 
 `LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
 
-## Build links and navigate
+Dynamic parameters accept strings or numbers. Numbers are converted to strings when building links and navigating. Catch-all parameters accept arrays of string or number segments; optional catch-all parameters may be omitted. Query values are strings or string arrays, and `hash` supplies the fragment. URL path segments are encoded automatically.
+
+## Navigate programmatically
+
+Use `injectNavigate` inside an Angular injection context:
 
 ```ts
-import { injectNavigate, toRoute } from '@analogjs/router';
+import { injectNavigate } from '@analogjs/router';
 
-const link = toRoute('/products/[id]', { params: { id: '42' } });
-// link.path is ['/', 'products', '42']
-
-// Inside an Angular injection context:
 const navigate = injectNavigate();
-navigate('/products/[id]', { params: { id: '42' } }, { replaceUrl: true });
+navigate('/products/[id]', { params: { id: 42 } }, { replaceUrl: true });
 ```
 
-The path contains Angular router commands with unencoded segments. Bind the returned link properties separately:
+## Build link data in TypeScript
 
-```html
-<a
-  [routerLink]="link.path"
-  [queryParams]="link.queryParams"
-  [fragment]="link.fragment"
->
-  Product
-</a>
+Use `toRoute` when you need link data in TypeScript. It does not require an injection context:
+
+```ts
+import { toRoute } from '@analogjs/router';
+
+const link = toRoute('/products/[id]', { params: { id: 42 } });
+// link.path is ['/', 'products', '42']
 ```
 
-Dynamic parameters are required strings. Catch-all parameters use arrays of path segments; optional catch-all parameters may be omitted. Query values are strings or string arrays, and `hash` supplies the fragment. URL path segments are encoded automatically.
+The result contains Angular router commands in `path`, plus `queryParams` and `fragment`. These properties can be passed to Angular's router APIs. For template links, use `[linkTo]` as shown above.
 
 ## Read parameters as signals
 

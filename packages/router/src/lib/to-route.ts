@@ -38,7 +38,7 @@ export type AnalogRoutePath = Extract<keyof AnalogRouteTable, string>;
  * Options for building a route URL.
  */
 export interface RoutePathOptionsBase {
-  params?: Record<string, string | string[] | undefined>;
+  params?: Record<string, string | number | (string | number)[] | undefined>;
   query?: Record<string, string | string[] | undefined>;
   hash?: string;
 }
@@ -76,6 +76,16 @@ type HasRequiredRouteParams<Params> = [RequiredRouteParamKeys<Params>] extends [
   ? false
   : true;
 
+type RouteParamInput<T> = T extends string
+  ? string | number
+  : T extends string[]
+    ? (string | number)[]
+    : T;
+
+type RouteParamsInput<Params> = {
+  [K in keyof Params]: RouteParamInput<Params[K]>;
+};
+
 /**
  * Typed options that infer params from the route table when available.
  */
@@ -89,12 +99,12 @@ export type RoutePathOptions<P extends string = string> =
           }
         : HasRequiredRouteParams<Params> extends true
           ? {
-              params: Params;
+              params: RouteParamsInput<Params>;
               query?: RouteQueryOutput<P>;
               hash?: string;
             }
           : {
-              params?: Params;
+              params?: RouteParamsInput<Params>;
               query?: RouteQueryOutput<P>;
               hash?: string;
             }
@@ -193,7 +203,7 @@ export function buildRouteLink(
 
 function buildPath(
   path: string,
-  params: Record<string, string | string[] | undefined> = {},
+  params: RoutePathOptionsBase['params'] = {},
 ): string[] {
   const segments = path
     .split('/')
@@ -211,7 +221,7 @@ function buildPath(
           `Missing required ${catchAll ? 'catch-all ' : ''}param "${match[1]}" for path "${path}"`,
         );
       }
-      return Array.isArray(value) ? value : [value];
+      return Array.isArray(value) ? value.map(String) : [String(value)];
     });
   // A separate root command keeps slashes inside parameter values in one segment.
   return ['/', ...segments];

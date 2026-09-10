@@ -77,6 +77,11 @@ describe('catch-all navigation round trips', () => {
         slug: ['a/b', '(aux)', '%'],
       });
 
+      await component.navigate(pattern as any, {
+        params: { team: 0, slug: ['a/b', 42] },
+      });
+      expect(component.params()).toEqual({ team: '0', slug: ['a/b', '42'] });
+
       if (catchAll === '[[...slug]]') {
         const base = await harness.navigateByUrl('/one', Page);
         expect(base.params()).toEqual({ team: 'one' });
