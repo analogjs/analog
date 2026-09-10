@@ -1,3 +1,9 @@
+## [2.7.3-beta.2](https://github.com/analogjs/analog/compare/v2.7.3-beta.1...v2.7.3-beta.2) (2026-09-10)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preprocess styles with the top-level resolved config ([#2557](https://github.com/analogjs/analog/issues/2557)) ([d05e143](https://github.com/analogjs/analog/commit/d05e1430fbb8515f80411c32649874741cdd4ef9))
+
 ## [2.7.3-beta.1](https://github.com/analogjs/analog/compare/v2.7.2...v2.7.3-beta.1) (2026-09-09)
 
 ### Bug Fixes
