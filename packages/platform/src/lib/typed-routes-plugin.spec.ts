@@ -96,12 +96,16 @@ describe('typed route generation', () => {
     const root = fixture();
     const plugin = configure(root);
     const listeners = new Map<string, (path: string) => void>();
-    (plugin.configureServer as Function)({
-      watcher: {
-        on: (event: string, fn: (path: string) => void) =>
-          listeners.set(event, fn),
-      },
-    });
+    if (typeof plugin.configureServer === 'function')
+      plugin.configureServer.call(
+        {} as never,
+        {
+          watcher: {
+            on: (event: string, fn: (path: string) => void) =>
+              listeners.set(event, fn),
+          },
+        } as never,
+      );
     const file = join(root, 'src/app/pages/about.page.ts');
     writeFileSync(file, 'export default class About {}');
     listeners.get('add')!(file);
@@ -140,7 +144,13 @@ it('type-checks generated routes and rejects invalid paths, params, and navigati
       );
     }
     const plugin = typedRoutes({ workspaceRoot: root });
-    (plugin.config as Function).call({}, { root }, { command: 'serve' });
+    if (typeof plugin.config === 'function') {
+      plugin.config.call(
+        {} as never,
+        { root },
+        { command: 'serve', mode: 'development' },
+      );
+    }
     const routerSource = resolve(
       import.meta.dirname,
       '../../../router/src/lib',
