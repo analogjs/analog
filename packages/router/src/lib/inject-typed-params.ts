@@ -9,21 +9,21 @@ import type {
   RouteQueryOutput,
 } from './to-route';
 
-function extractRouteParams(
+function extractCatchAllParams(
   routePath: string,
-): { name: string; type: 'dynamic' | 'catchAll' | 'optionalCatchAll' }[] {
+): { name: string; type: 'catchAll' | 'optionalCatchAll' }[] {
   const params: {
     name: string;
-    type: 'dynamic' | 'catchAll' | 'optionalCatchAll';
+    type: 'catchAll' | 'optionalCatchAll';
   }[] = [];
-  for (const match of routePath.matchAll(/\[\[\.\.\.([^\]]+)\]\]/g)) {
-    params.push({ name: match[1], type: 'optionalCatchAll' });
-  }
-  for (const match of routePath.matchAll(/(?<!\[)\[\.\.\.([^\]]+)\](?!\])/g)) {
-    params.push({ name: match[1], type: 'catchAll' });
-  }
-  for (const match of routePath.matchAll(/(?<!\[)\[(?!\.)([^\]]+)\](?!\])/g)) {
-    params.push({ name: match[1], type: 'dynamic' });
+  for (const segment of routePath.split('/')) {
+    const optional = segment.match(/^\[\[\.\.\.([^\]]+)\]\]$/);
+    const required = segment.match(/^\[\.\.\.([^\]]+)\]$/);
+    if (optional) {
+      params.push({ name: optional[1], type: 'optionalCatchAll' });
+    } else if (required) {
+      params.push({ name: required[1], type: 'catchAll' });
+    }
   }
   return params;
 }
@@ -38,6 +38,7 @@ export function injectParams<P extends AnalogRoutePath>(
     ? injector.get(ActivatedRoute)
     : inject(ActivatedRoute);
   const ancestors = route.pathFromRoot ?? [route];
+  const catchAllParams = extractCatchAllParams(_from);
   return toSignal(
     combineLatest([
       combineLatest(ancestors.map((entry) => entry.params)),
@@ -45,8 +46,7 @@ export function injectParams<P extends AnalogRoutePath>(
     ]).pipe(
       map(([values, segments]) => {
         const params = Object.assign({}, ...values);
-        for (const param of extractRouteParams(_from)) {
-          if (param.type === 'dynamic') continue;
+        for (const param of catchAllParams) {
           const source = ancestors.findIndex((entry, index) =>
             param.type === 'catchAll'
               ? entry.routeConfig?.path === '**'

@@ -103,3 +103,29 @@ it('reads optional catch-all segments without splitting decoded slashes', () => 
   );
   expect(value()).toEqual({ id: '42', slug: ['a/b'] });
 });
+
+it.each([
+  ['prefixed segment', '/prefix[[...slug]]'],
+  ['suffixed segment', '/[[...slug]]suffix'],
+  ['repeated unclosed segments', '/' + '[[...'.repeat(20_000)],
+])('ignores malformed catch-all patterns: %s', (_name, pattern) => {
+  const params = new BehaviorSubject({ slug: 'a/b' });
+  TestBed.configureTestingModule({
+    providers: [
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          params,
+          url: new BehaviorSubject([new UrlSegment('a/b', {})]),
+          routeConfig: { matcher: () => null },
+        },
+      },
+    ],
+  });
+  const value = TestBed.runInInjectionContext(() =>
+    injectParams(pattern as any),
+  );
+  expect(value()).toEqual({ slug: 'a/b' });
+  params.next({ slug: 'c/d' });
+  expect(value()).toEqual({ slug: 'c/d' });
+});
