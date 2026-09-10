@@ -10,6 +10,42 @@ API routes are defined in the `src/server/routes/api` folder. API routes are als
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
+## Validating an API Route with a Schema
+
+`defineApiRoute` adds Standard Schema validation to an API handler. For example,
+with Zod 3.24+:
+
+```ts
+// src/server/routes/api/users.post.ts
+import { defineApiRoute } from '@analogjs/router/server/actions';
+import { z } from 'zod';
+
+export default defineApiRoute({
+  body: z.object({ name: z.string().min(1) }),
+  handler: ({ body }) => ({ name: body.name }),
+});
+```
+
+- `params`, `query`, and `body` validate their respective request values and infer
+  the corresponding handler argument types. Body validation runs for methods
+  other than GET and HEAD.
+- `input` validates query parameters for GET/HEAD, or the body for other methods,
+  and provides its result as `data`. If separate schemas are also configured,
+  they are validated too. Without `input`, `data` uses the validated query for
+  GET/HEAD, or the validated body (falling back to query) for other methods.
+- Repeated query and form fields remain arrays. JSON, URL-encoded forms, and
+  multipart forms are supported. Empty or unparseable bodies fall back to `{}`.
+- Invalid input returns HTTP 422 with a Standard Schema issues array and the
+  `X-Analog-Errors` header, without calling the handler.
+- Plain return values become JSON responses. A returned `Response`, including
+  one from `json`, `redirect`, or `fail`, passes through unchanged.
+- An optional `output` schema checks plain return values in development and tests.
+  Failures produce a warning; they do not change the response. Output validation
+  does not run in production.
+
+Schemas may validate asynchronously. The handler also receives the original h3
+`event` for cookies, headers, and other request operations.
+
 ## Defining XML Content
 
 To create an RSS feed for your site, set the `content-type` to be `text/xml` and Analog serves up the correct content type for the route.

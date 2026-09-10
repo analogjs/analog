@@ -107,6 +107,36 @@ export async function action({ event }: PageServerAction) {
 - The `redirect` function returns a redirect response to the client. This should be an absolute path.
 - The `fail` function is used for returning form validation errors.
 
+### Validating a Form Action with a Schema
+
+Use `defineAction` to parse JSON or form data and validate it with a Standard
+Schema-compatible library, such as Zod 3.24+ or Valibot. The handler receives the
+schema's inferred output type, including transformed values.
+
+```ts
+// src/app/pages/newsletter.server.ts
+import { defineAction, json } from '@analogjs/router/server/actions';
+import { z } from 'zod';
+
+export const action = defineAction({
+  schema: z.object({ email: z.string().email() }),
+  handler: ({ data }) => json({ email: data.email }),
+});
+```
+
+An optional `params` schema validates route parameters. The handler also receives
+`params`, `req`, `res`, `fetch`, and `event`, just like a regular `PageServerAction`.
+Both synchronous and asynchronous schemas are supported. Without a `schema`,
+`data` contains the parsed request body.
+
+Invalid input returns HTTP 422 with the `X-Analog-Errors` header and an array of
+Standard Schema issues. The handler is not called. The existing `FormAction`
+directive emits this array through `onError`; each issue includes a `message` and
+an optional `path`. Existing actions returning `fail()` keep their own error shape.
+
+Repeated form fields are preserved as arrays, including file fields. Empty or
+unparseable bodies fall back to `{}`, which is then validated by the schema.
+
 ### Handling Multiple Forms
 
 To handle multiple forms on the same page, add a hidden input to distinguish each form.

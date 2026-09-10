@@ -4,5 +4,6 @@
   "assets": ["*.md", "migrations/migration.json"],
   "lib": {
     "entryFile": "src/index.ts"
-  }
+  },
+  "allowedNonPeerDependencies": ["@standard-schema/spec"]
 }
