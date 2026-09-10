@@ -426,6 +426,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        // Vite keys its CSS preprocessor worker cache by the top-level resolved
+        // config object. Passing `this.environment.config` misses that cache
+        // and falls back to a worker Vite never closes, which keeps Vitest
+        // from exiting after AOT tests with `.scss` styleUrls. (#2556)
         if (!jit) {
           styleTransform = (code: string, filename: string) =>
             preprocessCSS(code, filename, resolvedConfig);
@@ -1226,11 +1230,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Each pass creates a new builder/program, so previously emitted output
     // can go stale — only dedupe emits within a single pass.
     emittedIds = new Set<string>();
-
-    if (!jit) {
-      styleTransform = (code: string, filename: string) =>
-        preprocessCSS(code, filename, config);
-    }
 
     const discardIncrementalProgram = shouldDiscardIncrementalProgram({
       externalRuntimeStylesNowEnabled: shouldEnableExternalRuntimeStyles({

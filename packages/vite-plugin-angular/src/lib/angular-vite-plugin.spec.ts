@@ -3,8 +3,16 @@ import * as realFs from 'node:fs';
 import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { normalizePath, resolveConfig } from 'vite';
+import { normalizePath, preprocessCSS, resolveConfig } from 'vite';
 import { NgtscProgram } from '@angular/compiler-cli';
+
+vi.mock('vite', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vite')>();
+  return {
+    ...actual,
+    preprocessCSS: vi.fn(actual.preprocessCSS),
+  };
+});
 
 vi.mock('@angular/compiler-cli', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@angular/compiler-cli')>();
@@ -1386,6 +1394,39 @@ export class AppComponent {}
 
     expect(compiled?.code).toContain('ɵcmp');
     expect(released).toBeUndefined();
+  }, 60_000);
+
+  it('preprocesses styles with the top-level resolved config (#2556)', async () => {
+    // Vite keys its CSS preprocessor worker cache by the top-level config
+    // object, so `this.environment.config` (a distinct object) must never be
+    // handed to `preprocessCSS` — that falls back to a worker Vite never
+    // closes and keeps Vitest from exiting.
+    vi.mocked(preprocessCSS).mockClear();
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig.environments['client'] },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    await mainPlugin.buildStart.call(ctx);
+
+    expect(ctx.environment.config).not.toBe(resolvedConfig);
+    expect(vi.mocked(preprocessCSS)).toHaveBeenCalled();
+    for (const [, , config] of vi.mocked(preprocessCSS).mock.calls) {
+      expect(config).toBe(resolvedConfig);
+    }
   }, 60_000);
 
   it('handles missing this.environment gracefully', async () => {
