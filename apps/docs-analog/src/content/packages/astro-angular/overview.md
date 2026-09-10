@@ -455,7 +455,7 @@ import { Component } from '@angular/core';
 export class CardComponent {}
 ```
 
-```astro
+```
 ---
 import { CardComponent } from '../components/card.component';
 ---
