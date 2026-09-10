@@ -54,8 +54,8 @@ function isRoutePathOptionsBase(value: unknown): value is RoutePathOptionsBase {
 export function injectNavigate(): TypedNavigate {
   const router = inject(Router);
 
-  const navigate = ((
-    path: AnalogRoutePath,
+  const navigate: TypedNavigate = (
+    path: string,
     ...args: unknown[]
   ): Promise<boolean> => {
     let options: RoutePathOptionsBase | undefined;
@@ -74,7 +74,7 @@ export function injectNavigate(): TypedNavigate {
 
     const url = buildUrl(path as string, options);
     return router.navigateByUrl(url, extras);
-  }) as TypedNavigate;
+  };
 
   return navigate;
 }

@@ -14,15 +14,14 @@ import {
  * - The `AnalogRoutePath` union type
  * - The `routePath()` URL builder function
  *
- * No Angular dependencies — can be used in any context.
+ * Link construction does not require an injection context.
  */
 
 /**
  * Base interface for the typed route table.
  *
- * This interface is augmented by generated code in `src/routeTree.gen.ts`.
- * When no routes are generated, it is empty and `AnalogRoutePath` falls
- * back to `string`.
+ * This interface is augmented by generated code in `src/routeTree.gen.d.ts`.
+ * Without the generated declaration, typed helpers reject route paths.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface, @typescript-eslint/no-empty-object-type
 export interface AnalogRouteTable {}
@@ -31,11 +30,9 @@ export interface AnalogRouteTable {}
  * Union of all valid route paths.
  *
  * When routes are generated, this is a string literal union.
- * When no routes are generated, this falls back to `string`.
+ * Without the generated declaration, this is `never`.
  */
-export type AnalogRoutePath = keyof AnalogRouteTable extends never
-  ? string
-  : Extract<keyof AnalogRouteTable, string>;
+export type AnalogRoutePath = Extract<keyof AnalogRouteTable, string>;
 
 /**
  * Options for building a route URL.
