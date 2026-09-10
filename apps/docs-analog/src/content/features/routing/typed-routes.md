@@ -1,4 +1,4 @@
-# Typed Routes
+# Type-safe Routing
 
 Typed routing is an opt-in experimental feature that adds checked route paths and parameters to Analog's file router. It is disabled by default. Its APIs and generated types may change while the feature is experimental.
 
