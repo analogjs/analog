@@ -1,6 +1,8 @@
 # Typed Routes
 
-Typed routing is an opt-in experiment that adds checked route paths and parameters to Analog's file router. Enable it in your existing Vite configuration:
+Typed routing is an opt-in experimental feature that adds checked route paths and parameters to Analog's file router. It is disabled by default. Its APIs and generated types may change while the feature is experimental.
+
+Enable it explicitly with `experimental.typedRouter` in your existing Vite configuration:
 
 ```ts
 import analog from '@analogjs/platform';
@@ -67,7 +69,7 @@ Use these helpers in a component rendered by the specified route. The path narro
 
 Values remain raw Angular router values. Exporting a schema does not validate or coerce these signals. For example, `"42"` stays a string.
 
-Type checking comes from the generated table. No additional router provider is required.
+Type checking comes from the generated table. The `experimental.typedRouter` option enables generation for the feature as a whole; no additional router provider or per-helper experimental flag is required.
 
 ## Compatibility
 
