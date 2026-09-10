@@ -7,7 +7,7 @@ import {
   VITE,
   VITE_TSCONFIG_PATHS,
   VITEST_BROWSER_PLAYWRIGHT,
-  VITEST_V4,
+  VITEST_V5,
 } from './versions';
 
 export interface DependencyOptions {
@@ -27,7 +27,7 @@ export function getDevDependencies(
   const deps: Record<string, string> = {
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
     vite: VITE,
-    vitest: VITEST_V4,
+    vitest: VITEST_V5,
     'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
   };
 

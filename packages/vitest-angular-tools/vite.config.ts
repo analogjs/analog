@@ -43,7 +43,6 @@ export default defineConfig(({ mode }) => {
       globalSetup: 'src/test-global-setup.ts',
       include: ['**/*.spec.ts'],
       exclude: ['**/files/**/*.spec.ts'],
-      cacheDir: '../../node_modules/.vitest',
       testTimeout: 10000,
     },
     define: {

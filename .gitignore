@@ -57,6 +57,7 @@ stats.html
 **/playwright/.cache/
 
 # Vitest browser screenshots/attachments
+.vitest/
 **/__screenshots__/
 **/.vitest-attachments/
 

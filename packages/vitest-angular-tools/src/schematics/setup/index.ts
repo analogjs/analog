@@ -80,6 +80,17 @@ function updateAngularJson(tree: Tree, projectName: string): void {
   tree.overwrite('angular.json', JSON.stringify(workspace, null, 2) + '\n');
 }
 
+function ignoreVitestOutput(tree: Tree): void {
+  const file = '.gitignore';
+  const contents = tree.read(file)?.toString('utf8') ?? '';
+  if (contents.split(/\r?\n/).includes('.vitest/')) return;
+  const prefix =
+    !contents || contents.endsWith('\n') ? contents : `${contents}\n`;
+  const updated = `${prefix}.vitest/\n`;
+  if (tree.exists(file)) tree.overwrite(file, updated);
+  else tree.create(file, updated);
+}
+
 function generateFiles(
   projectRoot: string,
   majorAngularVersion: number,
@@ -118,6 +129,7 @@ export function setupSchematic(options: Schema): Rule {
 
     // Update angular.json test target
     updateAngularJson(tree, options.project);
+    ignoreVitestOutput(tree);
 
     // Schedule package install
     context.addTask(new NodePackageInstallTask());

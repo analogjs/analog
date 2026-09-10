@@ -2,6 +2,11 @@
 
 Analog supports [Vitest](https://vitest.dev) for running unit tests.
 
+Current starters use Vitest 5; version-specific Angular starters retain their
+existing versions. Vitest 5 requires Node.js 22.12+ and Vite 6.4+. See the
+[migration notes](/docs/features/testing/vitest#migrating-to-vitest-5) for mock
+defaults, browser assertions, and the ignored `.vitest/` output directory.
+
 ## Vitest Features
 
 Vitest supports many features:

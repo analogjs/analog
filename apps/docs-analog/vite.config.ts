@@ -2,6 +2,7 @@
 
 import { resolve } from 'node:path';
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
 import tailwindcss from '@tailwindcss/vite';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { defineConfig } from 'vite';
@@ -28,6 +29,7 @@ export default defineConfig(({ mode }) => ({
     target: ['es2020'],
   },
   plugins: [
+    angular(),
     analog({
       static: true,
       i18n: {
@@ -149,9 +151,6 @@ export default defineConfig(({ mode }) => ({
     environment: 'jsdom',
     setupFiles: ['src/test-setup.ts'],
     include: ['**/*.spec.ts'],
-    cache: {
-      dir: `../../node_modules/.vitest`,
-    },
   },
   define: {
     'import.meta.vitest': mode !== 'production',

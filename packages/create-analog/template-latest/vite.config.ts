@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog(),
     angular(),
-    nitro(),
+    ...(mode === 'test' ? [] : [nitro()]),
 __TAILWIND_PLUGIN__  ],
   test: {
     globals: true,

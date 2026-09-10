@@ -23,7 +23,10 @@ interface CustomMatchers<R = unknown> {
 
 declare module 'vitest' {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
-  interface Assertion<T = any> extends CustomMatchers<T> {}
+  interface Assertion<
+    R extends void | Promise<void> = void,
+    T = unknown,
+  > extends CustomMatchers<R> {}
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
   interface AsymmetricMatchersContaining extends CustomMatchers {}
 }

@@ -2,17 +2,34 @@
 
 [Vitest](https://vitest.dev) kann mit wenigen Schritten zu bestehenden Angular-Workspaces hinzugefügt werden.
 
+## Migration auf Vitest 5
+
+Die aktuellen Vorlagen und Generatoren verwenden Vitest 5. Versionsgebundene
+Angular-Vorlagen behalten ihre bisherigen Versionen; die Integration unterstützt
+weiterhin ihre Vitest-1–4-Peer-Bereiche. Vitest 5 benötigt Node.js 22.12 und
+Vite 6.4 oder neuer. Halte `vitest` und die `@vitest/*`-Pakete auf derselben Version.
+
+- Ignoriere `.vitest/` für Berichte und Anhänge. Verwende Vites `cacheDir` auf
+  oberster Ebene statt `test.cache` oder `test.cacheDir`.
+- `clearMocks` ist standardmäßig aktiv. Richte Mock-Aufrufe pro Test ein und
+  platziere `vi.mock`, `vi.unmock` und `vi.hoisted` auf Modulebene.
+- Warte auf Promise-Assertions. Browser-Textprüfungen sind exakt;
+  `toMatchTextContent` unterstützt Teiltexte und reguläre Ausdrücke.
+- Öffne die Vitest UI über die vom Runner ausgegebene authentifizierte URL.
+
+Weitere Änderungen: [Vitest-5-Migrationsanleitung](https://vitest.dev/guide/migration/).
+
 ## Verwendung eines Schemas/Generators
 
 Vitest kann mit Hilfe eines Schemas/Generators für Angular CLI- oder Nx-Workspaces installiert und eingerichtet werden.
 
-Installiere zunächst das Paket `@analogjs/platform`:
+Installiere zunächst das Paket `@analogjs/vitest-angular`:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -20,7 +37,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -28,7 +45,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -37,7 +54,7 @@ pnpm install -w @analogjs/platform --save-dev
 Führe anschließend das Schema aus, um die Vite-Konfiguration und die Testkonfigurationsdateien einzurichten und die Testkonfiguration zu aktualisieren.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 Gehe dann zu [Tests durchführen](#tests-durchführen)
@@ -156,7 +173,7 @@ Installiere dann die erforderlichen Pakete für die Ausführung von Tests im Bro
   <TabItem value="npm">
 
 ```shell
-npm install @vitest/browser playwright --save-dev
+npm install @vitest/browser-playwright@^5.0.0 playwright --save-dev
 ```
 
   </TabItem>
@@ -164,7 +181,7 @@ npm install @vitest/browser playwright --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @vitest/browser playwright --dev
+yarn add @vitest/browser-playwright@^5.0.0 playwright --dev
 ```
 
   </TabItem>
@@ -172,7 +189,7 @@ yarn add @vitest/browser playwright --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @vitest/browser playwright
+pnpm install -w @vitest/browser-playwright@^5.0.0 playwright
 ```
 
   </TabItem>
@@ -185,6 +202,7 @@ Aktualisiere das Objekt `test` in der Datei `vite.config.ts`.
 
 ```ts
 /// <reference types="vitest" />
+import { playwright } from '@vitest/browser-playwright';
 export default defineConfig(({ mode }) => ({
   plugins: [angular()],
   test: {
@@ -196,9 +214,9 @@ export default defineConfig(({ mode }) => ({
     // Vitest browser config
     browser: {
       enabled: true,
-      name: 'chromium',
+      instances: [{ browser: 'chromium' }],
       headless: false, // set to true in CI
-      provider: 'playwright',
+      provider: playwright(),
     },
   },
   define: {

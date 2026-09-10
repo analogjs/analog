@@ -13,9 +13,6 @@ export default defineConfig(({ mode }) => {
       include: ['**/*.spec.ts'],
       testTimeout: 30000,
       hookTimeout: 30000,
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',

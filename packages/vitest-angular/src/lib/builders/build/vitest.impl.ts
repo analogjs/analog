@@ -39,12 +39,16 @@ async function* vitestApplicationBuilder(
   const extraArgs = await getExtraArgs(options);
   const workspaceRoot = context.workspaceRoot;
   const projectRoot = projectConfig['root'];
-  const setupFile = path.relative(projectRoot, options.setupFile);
+  const absoluteProjectRoot = path.resolve(workspaceRoot, projectRoot || '.');
+  const absoluteSetupFile = path.resolve(workspaceRoot, options.setupFile);
+  const setupFile = path.relative(absoluteProjectRoot, absoluteSetupFile);
 
   const config: VitestConfig = {
-    root: `${projectRoot || '.'}`,
+    root: absoluteProjectRoot,
     watch: options.watch === true,
-    config: options.configFile,
+    config: options.configFile
+      ? path.resolve(workspaceRoot, options.configFile)
+      : undefined,
     setupFiles: [setupFile],
     globals: true,
     pool: 'vmThreads',
@@ -62,7 +66,7 @@ async function* vitestApplicationBuilder(
   });
 
   const testFiles = [
-    path.relative(workspaceRoot, options.setupFile),
+    path.relative(workspaceRoot, absoluteSetupFile),
     ...includes.map((inc) => path.relative(workspaceRoot, inc)),
   ];
 
@@ -76,6 +80,7 @@ async function* vitestApplicationBuilder(
   const outputFiles = new Map();
 
   const viteConfig: any = {
+    root: absoluteProjectRoot,
     plugins: [
       (await createAngularMemoryPlugin({
         angularVersion,
@@ -94,10 +99,15 @@ async function* vitestApplicationBuilder(
       progress: false,
       prerender: false,
       optimization: false,
+      externalPackages: true,
+      externalDependencies: ['vitest'],
       outputPath: `.angular/.vitest/${projectConfig['name']}`,
       outExtension: 'mjs',
       outputHashing: 2, // None
-      tsConfig: path.relative(workspaceRoot, options.tsConfig),
+      tsConfig: path.relative(
+        workspaceRoot,
+        path.resolve(workspaceRoot, options.tsConfig),
+      ),
       watch: options.watch === true,
       entryPoints,
       allowedCommonJsDependencies: ['@analogjs/vitest-angular/setup-zone'],

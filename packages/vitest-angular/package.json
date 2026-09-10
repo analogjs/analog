@@ -52,12 +52,18 @@
     "save": "devDependencies"
   },
   "dependencies": {
-    "oxc-transform": "catalog:"
+    "jsonc-parser": "catalog:",
+    "oxc-transform": "catalog:",
+    "semver": "catalog:",
+    "tinyglobby": "catalog:"
   },
   "peerDependencies": {
     "@analogjs/vite-plugin-angular": "catalog:peerVitestAngular",
     "@angular-devkit/architect": "catalog:peerVitestAngular",
     "@angular-devkit/schematics": "catalog:peerVitestAngular",
+    "@angular/core": "catalog:peerCompat",
+    "@angular/platform-browser": "catalog:peerCompat",
+    "vite": "catalog:peerVitestAngular",
     "vitest": "catalog:peerVitestAngular",
     "zone.js": "catalog:peerVitestAngular"
   },

@@ -2,6 +2,23 @@
 
 [Vitest](https://vitest.dev) puede ser añadido a **_cualquier_** proyecto Angular existente con unos pocos pasos.
 
+## Migración a Vitest 5
+
+Las plantillas y los generadores actuales utilizan Vitest 5. Las plantillas de
+versiones específicas de Angular conservan sus versiones anteriores y la
+integración mantiene sus rangos de compatibilidad con Vitest 1–4. Vitest 5 requiere
+Node.js 22.12 y Vite 6.4 o posteriores. Alinea `vitest` y los paquetes `@vitest/*`.
+
+- Ignora `.vitest/`, donde se guardan informes y adjuntos. Configura la caché de
+  Vite con `cacheDir` en el nivel superior; elimina `test.cache` y `test.cacheDir`.
+- `clearMocks` está activado por defecto. Prepara los mocks en cada prueba y
+  coloca `vi.mock`, `vi.unmock` y `vi.hoisted` en el nivel superior del módulo.
+- Espera las aserciones de promesas. Las comparaciones de texto del navegador
+  son exactas; usa `toMatchTextContent` para subcadenas o expresiones regulares.
+- Abre la interfaz de Vitest con la URL autenticada que muestra el ejecutor.
+
+Consulta la [guía de migración de Vitest 5](https://vitest.dev/guide/migration/).
+
 ## Configuración Automatizada Usando un Schematic/Generator
 
 Vitest puede ser instalado y configurado usando un schematic/generator para Angular CLI o espacios de trabajo Nx.

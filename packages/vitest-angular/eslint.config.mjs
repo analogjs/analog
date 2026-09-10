@@ -32,7 +32,19 @@ export default [
   {
     files: ['**/*.json'],
     rules: {
-      '@nx/dependency-checks': 'error',
+      '@nx/dependency-checks': [
+        'error',
+        {
+          // These integration peers are used by consumer configs and the
+          // separately built schematics packaged inside this distribution.
+          ignoredDependencies: [
+            '@analogjs/vite-plugin-angular',
+            '@angular-devkit/schematics',
+            'jsonc-parser',
+            'semver',
+          ],
+        },
+      ],
     },
     languageOptions: {
       parser: await import('jsonc-eslint-parser'),

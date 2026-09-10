@@ -27,6 +27,8 @@ export default defineConfig(async ({ mode }) => {
     plugins: [angular()],
     test: {
       reporters: ['default'],
+      // Zone patches native APIs; process isolation prevents stale VM globals.
+      pool: 'forks',
       globals: true,
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
