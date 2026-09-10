@@ -142,8 +142,12 @@ export interface RouteLinkResult {
  * // → { path: ['/', 'users', '42'], queryParams: { tab: 'settings' }, fragment: 'bio' }
  *
  * @example Template usage
+ * Compute the link in the component:
+ * ```ts
+ * readonly link = routePath('/users/[id]', { params: { id: '42' } });
+ * ```
+ *
  * ```html
- * @let link = routePath('/users/[id]', { params: { id: userId } });
  * <a [routerLink]="link.path" [queryParams]="link.queryParams" [fragment]="link.fragment">
  * ```
  */
