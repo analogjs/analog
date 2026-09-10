@@ -51,6 +51,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       analog({
         apiPrefix: 'api',
+        experimental: { typedRouter: true },
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         fileReplacements,
@@ -72,7 +73,7 @@ export default defineConfig(({ mode }) => {
         },
         vite: {
           inlineStylesExtension: 'scss',
-          fastCompile: true,
+          fastCompile: false,
           experimental: {
             useAngularCompilationAPI: false,
           },

@@ -1,8 +1,8 @@
 import type { RouteMeta } from '@analogjs/router';
-import { injectLoad } from '@analogjs/router';
+import { injectLoad, routePath } from '@analogjs/router';
 import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLinkWithHref } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import type { load } from './(home).server';
@@ -13,7 +13,7 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   selector: 'analogjs-product-list',
-  imports: [ProductAlertsComponent, RouterLinkWithHref],
+  imports: [ProductAlertsComponent, RouterLink],
   template: `
     <h2>Products</h2>
 
@@ -22,7 +22,11 @@ export const routeMeta: RouteMeta = {
         <h3>
           <a
             [title]="product.name + ' details'"
-            [routerLink]="['/products', product.id]"
+            [routerLink]="
+              routePath('/products/[productId]', {
+                params: { productId: product.id.toString() },
+              }).path
+            "
           >
             {{ product.name }}
           </a>
@@ -50,6 +54,7 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
+  readonly routePath = routePath;
   data = toSignal(injectLoad<typeof load>(), { requireSync: true });
 
   share() {
