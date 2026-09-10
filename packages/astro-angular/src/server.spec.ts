@@ -59,6 +59,16 @@ const renderers: [string, Render][] = [
   ],
 ];
 
+// Regression: passing native `projectableNodes` for a root component must not
+// trip Angular's NG0503 check, which only covers components nested inside a
+// serialized template. The host is annotated for hydration as usual.
+it('server-ngh should annotate the host for hydration with projected content', async () => {
+  const { html } = await renderers[1][1]({}, children);
+
+  expect(html).toMatch(/<app-card [^>]*ngh="\d+"/);
+  expect(html).toContain('Is content projection cool?');
+});
+
 describe.each(renderers)('%s renderToStaticMarkup', (_name, render) => {
   it('should bind inputs and project children', async () => {
     const { html } = await render({ title: 'Card', ignored: 'x' }, children);
