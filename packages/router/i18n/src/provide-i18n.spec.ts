@@ -1,3 +1,4 @@
+import { ɵregisterI18nComponentDef } from './index';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
   loadTranslationsRuntime,
@@ -7,7 +8,6 @@ import {
   replaceLocaleInPath,
   resolveI18nConfig,
   I18nConfig,
-  ɵregisterI18nComponentDef,
   ɵresetI18nComponentDefCache,
   getI18nComponentDefRegistrySize,
   clearI18nComponentDefRegistry,

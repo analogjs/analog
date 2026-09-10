@@ -65,6 +65,17 @@ describe('analogNitroPlugin', () => {
     rmSync(workspaceRoot, { recursive: true, force: true });
   });
 
+  it('provides configured locales to client and SSR runtime providers', () => {
+    const plugin = analogNitroPlugin({
+      workspaceRoot,
+      i18n: { defaultLocale: 'en', locales: ['en', 'de'] },
+    });
+    expect(callConfig(plugin, projectRoot).define).toEqual({
+      ANALOG_I18N_DEFAULT_LOCALE: '"en"',
+      ANALOG_I18N_LOCALES: '["en","de"]',
+    });
+  });
+
   it('exposes the expected plugin shape', () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
     expect(plugin.name).toBe('@analogjs/nitro');
@@ -75,11 +86,34 @@ describe('analogNitroPlugin', () => {
     expect(typeof (plugin as any).nitro.setup).toBe('function');
   });
 
+  it('closes the development Nitro instance once when Vite closes its environments', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+    const close = vi.fn().mockResolvedValue(undefined);
+    const nitroMock = {
+      options: {
+        rootDir: projectRoot,
+        buildDir: join(projectRoot, '.nitro'),
+        handlers: [],
+        scanDirs: [],
+        virtual: {},
+        renderer: {},
+        dev: true,
+      },
+      hooks: { hook: vi.fn() },
+      close,
+    };
+    await (plugin as any).nitro.setup(nitroMock);
+    const hook = plugin.closeBundle as () => Promise<void>;
+    await Promise.all([hook(), hook()]);
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
   it('registers the SSR service entry and linker optimizeDeps when ssr=true', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
+    expect(overrides.environments.ssr.build.rollupOptions.input.index).toMatch(
       /\.analog\/__ssr-entry\.mjs$/,
     );
     expect(overrides.environments.ssr.optimizeDeps.include).toContain(
@@ -147,7 +181,7 @@ describe('analogNitroPlugin', () => {
     // ship markup pointing at an entry that a build does not emit.
     expect(code).toContain('/assets/main-abc.js');
     expect(code).not.toContain('id=\\"app\\"');
-    expect(code).toContain("'x-analog-no-ssr'");
+    expect(code).not.toContain("req.headers.get('x-analog-no-ssr')");
   });
 
   it('fails loudly when a build produced no client document', () => {

@@ -33,7 +33,7 @@
     "typecheck:all": "nx run-many --target typecheck --all"
   },
   "engines": {
-    "node": "^24.3.0",
+    "node": "^24.15.0 || ^26.0.0",
     "pnpm": "^10.0.0"
   },
   "packageManager": "pnpm@10.33.0",
@@ -162,6 +162,7 @@
     "conventional-changelog": "catalog:",
     "cpy-cli": "catalog:",
     "effect": "catalog:",
+    "env-runner": "0.2.1",
     "es-toolkit": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
@@ -185,6 +186,7 @@
     "marked-mangle": "catalog:",
     "marked-shiki": "catalog:",
     "md4x": "catalog:",
+    "miniflare": "4.20260730.0",
     "minimist": "catalog:",
     "ng-packagr": "catalog:",
     "nitro": "catalog:",
@@ -214,6 +216,7 @@
     "semantic-release-replace-plugin": "catalog:",
     "sharp": "catalog:",
     "shiki": "catalog:",
+    "srvx": "catalog:",
     "start-server-and-test": "catalog:",
     "storybook": "catalog:",
     "tailwindcss": "catalog:",
@@ -229,6 +232,7 @@
     "vite-tsconfig-paths": "catalog:",
     "vitefu": "catalog:",
     "vitest": "catalog:",
+    "wrangler": "4.127.1",
     "xmlbuilder2": "catalog:"
   },
   "pnpm": {
@@ -248,8 +252,13 @@
       "oxc-transform",
       "sharp",
       "unrs-resolver",
-      "vite-tsconfig-paths"
-    ]
+      "vite-tsconfig-paths",
+      "workerd"
+    ],
+    "patchedDependencies": {
+      "env-runner@0.2.1": "patches/env-runner@0.2.1.patch",
+      "srvx@1.0.3": "patches/srvx@1.0.3.patch"
+    }
   },
   "overrides": {
     "@angular/animations": "$@angular/animations",

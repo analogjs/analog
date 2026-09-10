@@ -3,7 +3,7 @@ import MagicString from 'magic-string';
 
 /**
  * Vite plugin that instruments compiled Angular component definitions with
- * calls to `registerI18nComponentDef()` from `@analogjs/router`. This
+ * calls to `registerI18nComponentDef()` from `@analogjs/router/i18n`. This
  * populates a process-level registry of component definitions that the
  * server renderer uses to null cached `tView` objects between SSR requests,
  * allowing `$localize` tagged templates in `consts()` to re-evaluate with
@@ -41,7 +41,7 @@ export function i18nComponentRegistryPlugin(): Plugin {
       // shift line numbers for frames that land inside the user's code.
       const s = new MagicString(code);
       s.prepend(
-        `import { ɵregisterI18nComponentDef as __analog_i18n_reg } from '@analogjs/router';\n`,
+        `import { ɵregisterI18nComponentDef as __analog_i18n_reg } from '@analogjs/router/i18n';\n`,
       );
       s.append(`\n${registrations}\n`);
 

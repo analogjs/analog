@@ -1,4 +1,4 @@
-import type { NitroConfig, RollupConfig } from 'nitro/types';
+import type { NitroConfig } from 'nitro/types';
 import { build, createDevServer, createNitro } from 'nitro/builder';
 import * as vite from 'vite';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
@@ -170,59 +170,6 @@ function cloneUserConfig(userConfig: UserConfig): UserConfig {
   } as UserConfig;
 }
 
-/**
- * Creates a `rollup:before` hook that marks specified packages as external
- * in Nitro's bundler config (applied to both the server build and the
- * prerender build).
- *
- * ## Subpath matching (Rolldown compatibility)
- *
- * When `bundlerConfig.external` is an **array**, Rollup automatically
- * prefix-matches entries — `'rxjs'` in the array will also externalise
- * `'rxjs/operators'`, `'rxjs/internal/Observable'`, etc.
- *
- * Rolldown (the default bundler in Nitro v3) does **not** do this. It
- * treats array entries as exact strings. To keep behaviour consistent
- * across both bundlers, the **function** branch already needed explicit
- * subpath matching. We now use the same `isExternal` helper for all
- * branches so that `'rxjs'` reliably matches `'rxjs/operators'`
- * regardless of whether the existing `external` value is a function,
- * array, or absent.
- *
- * Without this, the Nitro prerender build fails on Windows CI with:
- *
- *   [RESOLVE_ERROR] Could not resolve 'rxjs/operators'
- */
-function createRollupBeforeHook(externalEntries: string[]) {
-  const isExternal = (source: string) =>
-    externalEntries.some(
-      (entry) => source === entry || source.startsWith(entry + '/'),
-    );
-
-  return (_nitro: unknown, bundlerConfig: RollupConfig) => {
-    sanitizeNitroBundlerConfig(_nitro, bundlerConfig);
-
-    if (externalEntries.length === 0) {
-      return;
-    }
-
-    const existing = bundlerConfig.external;
-    if (!existing) {
-      bundlerConfig.external = externalEntries;
-    } else if (typeof existing === 'function') {
-      bundlerConfig.external = (
-        source: string,
-        importer: string | undefined,
-        isResolved: boolean,
-      ) => existing(source, importer, isResolved) || isExternal(source);
-    } else if (Array.isArray(existing)) {
-      bundlerConfig.external = [...existing, ...externalEntries];
-    } else {
-      bundlerConfig.external = [existing as string, ...externalEntries];
-    }
-  };
-}
-
 function appendNoExternals(
   noExternals: NitroConfig['noExternals'],
   ...entries: string[]
@@ -234,89 +181,6 @@ function appendNoExternals(
   return Array.isArray(noExternals)
     ? [...noExternals, ...entries]
     : noExternals;
-}
-
-/**
- * Patches Nitro's internal Rollup/Rolldown bundler config to work around
- * incompatibilities in the Nitro v3 alpha series.
- *
- * Called from the `rollup:before` hook, this function runs against the *final*
- * bundler config that Nitro assembles for its server/prerender builds — it
- * does NOT touch the normal Vite client or SSR environment configs.
- *
- * Each workaround is narrowly scoped and safe to remove once the corresponding
- * upstream Nitro issue is resolved.
- */
-function sanitizeNitroBundlerConfig(
-  _nitro: unknown,
-  bundlerConfig: RollupConfig,
-) {
-  const output = bundlerConfig['output'];
-  if (!output || Array.isArray(output) || typeof output !== 'object') {
-    return;
-  }
-
-  // ── 1. Remove invalid `output.codeSplitting` ────────────────────────
-  //
-  // Nitro 3.0.1-alpha.2 adds `output.codeSplitting` to its internal bundler
-  // config, but Rolldown rejects it as an unknown key:
-  //
-  //   Warning: Invalid output options (1 issue found)
-  //   - For the "codeSplitting". Invalid key: Expected never but received "codeSplitting".
-  //
-  // Analog never sets this option. Removing it restores default bundler
-  // behavior without changing any Analog semantics.
-  if ('codeSplitting' in output) {
-    delete (output as Record<string, unknown>)['codeSplitting'];
-  }
-
-  // ── 2. Remove invalid `output.manualChunks` ─────────────────────────
-  //
-  // Nitro's default config enables manual chunking for node_modules. Under
-  // Nitro v3 alpha + Rollup 4.59 this crashes during the prerender rebundle:
-  //
-  //   Cannot read properties of undefined (reading 'included')
-  //
-  // A single server bundle is acceptable for Analog's use case, so we strip
-  // `manualChunks` until the upstream bug is fixed.
-  if ('manualChunks' in output) {
-    delete (output as Record<string, unknown>)['manualChunks'];
-  }
-
-  // ── 3. Escape route params in `output.chunkFileNames` ───────────────
-  //
-  // Nitro's `getChunkName()` derives chunk filenames from route patterns,
-  // using its internal `routeToFsPath()` helper to convert route params
-  // (`:productId` → `[productId]`) and catch-alls (`**` → `[...]`).
-  //
-  // Rollup/Rolldown interprets *any* `[token]` in the string returned by a
-  // `chunkFileNames` function as a placeholder. Only a handful are valid —
-  // `[name]`, `[hash]`, `[format]`, `[ext]` — so route-derived tokens like
-  // `[productId]` or `[...]` trigger a build error:
-  //
-  //   "[productId]" is not a valid placeholder in the "output.chunkFileNames" pattern.
-  //
-  // We wrap the original function to replace non-standard `[token]` patterns
-  // with `_token_`, preserving the intended filename while avoiding the
-  // placeholder validation error.
-  //
-  // Example: `_routes/products/[productId].mjs` → `_routes/products/_productId_.mjs`
-  const VALID_ROLLUP_PLACEHOLDER = /^\[(?:name|hash|format|ext)\]$/;
-  const chunkFileNames = (output as Record<string, unknown>)['chunkFileNames'];
-  if (typeof chunkFileNames === 'function') {
-    const originalFn = chunkFileNames as (...args: unknown[]) => unknown;
-    (output as Record<string, unknown>)['chunkFileNames'] = (
-      ...args: unknown[]
-    ) => {
-      const result = originalFn(...args);
-      if (typeof result !== 'string') return result;
-      return result.replace(/\[[^\]]+\]/g, (match: string) =>
-        VALID_ROLLUP_PLACEHOLDER.test(match)
-          ? match
-          : `_${match.slice(1, -1)}_`,
-      );
-    };
-  }
 }
 
 function resolveClientOutputPath(
@@ -645,7 +509,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let clientOutputPath = '';
   let clientIndexHtml: string | undefined;
   let legacyClientSubBuild = false;
-  const rollupExternalEntries: string[] = [];
   const sitemapRoutes: string[] = [];
   const routeSitemaps: Record<
     string,
@@ -653,6 +516,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   > = {};
   const routeSourceFiles: Record<string, string> = {};
   let rootDir = workspaceRoot;
+  let closeDevServer: (() => Promise<void>) | undefined;
 
   return [
     (options?.ssr
@@ -679,7 +543,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         // with.
         config = cloneUserConfig(userConfig);
         isTest = isTest ? isTest : mode === 'test';
-        rollupExternalEntries.length = 0;
         clientIndexHtml = undefined;
         sitemapRoutes.length = 0;
         for (const key of Object.keys(routeSitemaps)) {
@@ -762,13 +625,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             : {};
 
         nitroConfig = {
-          rootDir: normalizePath(rootDir),
+          rootDir: normalizePath(resolvedConfigRoot),
           preset: buildPreset,
           compatibilityDate: '2025-11-19',
           logLevel: nitroOptions?.logLevel || 0,
           serverDir: normalizePath(`${sourceRoot}/server`),
           scanDirs: [
-            normalizePath(`${rootDir}/${sourceRoot}/server`),
+            normalizePath(resolve(resolvedConfigRoot, sourceRoot, 'server')),
             ...(options?.additionalAPIDirs || []).map((dir) =>
               normalizePath(`${workspaceRoot}${dir}`),
             ),
@@ -791,9 +654,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           // Analog provides its own renderer handler; prevent Nitro v3 from
           // auto-detecting index.html in rootDir and adding a conflicting one.
           renderer: false,
-          hooks: {
-            'rollup:before': createRollupBeforeHook(rollupExternalEntries),
-          },
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -1013,18 +873,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           //      is `false`, but prerender routes exist and the prerender
           //      build still processes the SSR entry.
           //
-          // Without this block:
-          //   - `rxjs` is never externalised → RESOLVE_ERROR in the
-          //     Nitro prerender build (especially on Windows CI).
-          //   - `moduleSideEffects` for zone.js is never set → zone.js
-          //     side-effects may be tree-shaken.
-          //   - The handlers list is not reassembled with page endpoints
-          //     + the renderer catch-all.
-          //
-          // The widened condition covers all supported build paths:
-          //   - `ssrBuild`                             → SSR-only build
-          //   - `options?.ssr`                         → Environment API SSR
-          //   - `nitroConfig.prerender?.routes?.length` → prerender-only
           if (
             ssrBuild ||
             options?.ssr ||
@@ -1041,19 +889,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'std-env',
               );
             }
-
-            rollupExternalEntries.push(
-              'rxjs',
-              'node-fetch-native/dist/polyfill',
-              // sharp is a native module with platform-specific binaries
-              // (e.g. @img/sharp-darwin-arm64).  pnpm creates symlinks for
-              // ALL optional platform deps but only installs the matching
-              // one — leaving broken symlinks that crash Nitro's bundler
-              // with ENOENT during realpath().  Externalizing sharp avoids
-              // bundling it entirely; it resolves from node_modules at
-              // runtime instead.
-              'sharp',
-            );
 
             nitroConfig = {
               ...nitroConfig,
@@ -1074,6 +909,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig,
           nitroOptions as Record<string, any>,
         );
+        for (const rule of Object.values(nitroConfig.routeRules ?? {})) {
+          if (typeof rule.ssr === 'boolean') {
+            rule.headers = {
+              ...rule.headers,
+              'x-analog-no-ssr': String(!rule.ssr),
+            };
+          }
+          if (typeof rule.streaming === 'boolean') {
+            rule.headers = {
+              ...rule.headers,
+              'x-analog-no-streaming': String(!rule.streaming),
+            };
+          }
+        }
 
         // Only configure Vite 8 environments + builder on the top-level
         // build invocation. When buildApp's builder.build() calls re-enter
@@ -1331,8 +1180,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             dev: true,
             // Nitro's Vite builder now rejects `build()` in dev mode, but Analog's
             // dev integration still relies on the builder-driven reload hooks.
-            // Force the server worker onto Rollup for this dev-only path.
-            builder: 'rollup',
+            // Use Nitro's standalone builder for the API worker.
+            builder: 'rolldown',
             ...nitroConfig,
           });
           const server = createDevServer(nitro);
@@ -1405,6 +1254,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           viteServer.watcher.on('add', onNitroSourceChange);
           viteServer.watcher.on('change', onNitroSourceChange);
           viteServer.watcher.on('unlink', onNitroSourceChange);
+          closeDevServer = async () => {
+            viteServer.watcher.off('add', onNitroSourceChange);
+            viteServer.watcher.off('change', onNitroSourceChange);
+            viteServer.watcher.off('unlink', onNitroSourceChange);
+            viteServer.httpServer?.off('upgrade', server.upgrade);
+            await nitroRebuildPromise;
+            await nitro.close();
+          };
 
           const apiHandler = async (
             req: IncomingMessage,
@@ -1412,7 +1269,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           ) => {
             // Nitro v3's dev server is fetch-first, so adapt Vite's Node
             // request once and let Nitro respond with a standard Web Response.
-            const response = await server.fetch(toWebRequest(req));
+            const response = await server.fetch(toWebRequest(req, res));
             await writeWebResponseToNode(res, response);
           };
 
@@ -1451,6 +1308,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       },
 
       async closeBundle() {
+        if (closeDevServer) {
+          const close = closeDevServer;
+          closeDevServer = undefined;
+          await close();
+        }
+
         if (legacyClientSubBuild) {
           return;
         }

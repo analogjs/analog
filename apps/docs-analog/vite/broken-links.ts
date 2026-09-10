@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { resolve, posix } from 'node:path';
 import type { Plugin } from 'vite';
+import type { NitroModule } from 'nitro/types';
 
 const HREF_PATTERN = /\bhref="(\/[^"]*)"/g;
 const SRC_PATTERN = /\bsrc="(\/[^"]*)"/g;
@@ -45,46 +46,52 @@ function targetExists(distRoot: string, href: string): boolean {
  * Throws (fails the build) on any miss. External URLs and anchors are
  * ignored.
  */
-export function brokenLinksPlugin(options: BrokenLinksOptions): Plugin {
+export function brokenLinksPlugin(
+  options: BrokenLinksOptions,
+): Plugin & { nitro: NitroModule } {
   const { distDir, maxReported = 30 } = options;
   return {
     name: '@analogjs/content:broken-links',
     apply: 'build',
-    closeBundle() {
-      if (!existsSync(distDir)) {
-        this.warn?.('broken-links: dist not found, skipping');
-        return;
-      }
+    nitro: {
+      setup(nitro) {
+        nitro.hooks.hook('compiled', () => {
+          if (!existsSync(distDir)) {
+            nitro.logger.warn('broken-links: dist not found, skipping');
+            return;
+          }
 
-      const broken: { file: string; href: string }[] = [];
-      for (const file of walk(distDir)) {
-        const html = readFileSync(file, 'utf8');
-        for (const pattern of [HREF_PATTERN, SRC_PATTERN]) {
-          pattern.lastIndex = 0;
-          let m: RegExpExecArray | null;
-          while ((m = pattern.exec(html)) !== null) {
-            const href = m[1];
-            if (!targetExists(distDir, href)) {
-              broken.push({ file: file.replace(distDir, ''), href });
+          const broken: { file: string; href: string }[] = [];
+          for (const file of walk(distDir)) {
+            const html = readFileSync(file, 'utf8');
+            for (const pattern of [HREF_PATTERN, SRC_PATTERN]) {
+              pattern.lastIndex = 0;
+              let m: RegExpExecArray | null;
+              while ((m = pattern.exec(html)) !== null) {
+                const href = m[1];
+                if (!targetExists(distDir, href)) {
+                  broken.push({ file: file.replace(distDir, ''), href });
+                }
+              }
             }
           }
-        }
-      }
 
-      if (broken.length > 0) {
-        const summary = broken
-          .slice(0, maxReported)
-          .map((b) => `  ${b.file}: ${b.href}`)
-          .join('\n');
-        const more =
-          broken.length > maxReported
-            ? `\n  ... and ${broken.length - maxReported} more`
-            : '';
-        this.error?.(
-          `broken-links: ${broken.length} broken internal link(s):\n${summary}${more}`,
-        );
-      }
-      this.info?.(`broken-links: ${broken.length} broken links`);
+          if (broken.length > 0) {
+            const summary = broken
+              .slice(0, maxReported)
+              .map((b) => `  ${b.file}: ${b.href}`)
+              .join('\n');
+            const more =
+              broken.length > maxReported
+                ? `\n  ... and ${broken.length - maxReported} more`
+                : '';
+            throw new Error(
+              `broken-links: ${broken.length} broken internal link(s):\n${summary}${more}`,
+            );
+          }
+          nitro.logger.info(`broken-links: ${broken.length} broken links`);
+        });
+      },
     },
   };
 }

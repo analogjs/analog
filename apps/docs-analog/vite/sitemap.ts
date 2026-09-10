@@ -1,6 +1,7 @@
 import { readdirSync, statSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, relative } from 'node:path';
 import type { Plugin } from 'vite';
+import type { NitroModule } from 'nitro/types';
 
 export interface SitemapOptions {
   /** Public site origin, e.g. `https://analogjs.org`. No trailing slash. */
@@ -35,7 +36,9 @@ function walk(dir: string, out: string[] = []): string[] {
  * Emits a sitemap.xml with `<xhtml:link rel="alternate" hreflang="...">`
  * entries for every locale that has a translation of each doc.
  */
-export function sitemapPlugin(options: SitemapOptions): Plugin {
+export function sitemapPlugin(
+  options: SitemapOptions,
+): Plugin & { nitro: NitroModule } {
   const {
     siteUrl,
     contentDir,
@@ -53,46 +56,57 @@ export function sitemapPlugin(options: SitemapOptions): Plugin {
   return {
     name: '@analogjs/content:sitemap',
     apply: 'build',
-    closeBundle() {
-      const entries = new Map<string, DocEntry>();
-      for (const file of walk(contentDir)) {
-        const rel = relative(contentDir, file).replace(/\.md$/, '');
-        const parts = rel.split('/');
-        let locale: string = defaultLocale;
-        let slug = rel;
-        if (localeSet.has(parts[0])) {
-          locale = parts[0];
-          slug = parts.slice(1).join('/');
-        }
-        if (!slug) continue;
-        const entry = entries.get(slug) ?? { slug, locales: new Set<string>() };
-        entry.locales.add(locale);
-        entries.set(slug, entry);
-      }
+    nitro: {
+      setup(nitro) {
+        nitro.hooks.hook('compiled', () => {
+          const entries = new Map<string, DocEntry>();
+          for (const file of walk(contentDir)) {
+            const rel = relative(contentDir, file).replace(/\.md$/, '');
+            const parts = rel.split('/');
+            let locale: string = defaultLocale;
+            let slug = rel;
+            if (localeSet.has(parts[0])) {
+              locale = parts[0];
+              slug = parts.slice(1).join('/');
+            }
+            if (!slug) continue;
+            const entry = entries.get(slug) ?? {
+              slug,
+              locales: new Set<string>(),
+            };
+            entry.locales.add(locale);
+            entries.set(slug, entry);
+          }
 
-      const urls: string[] = [];
-      for (const entry of entries.values()) {
-        const localesInOrder = [
-          ...(entry.locales.has(defaultLocale) ? [defaultLocale] : []),
-          ...locales.filter((l) => entry.locales.has(l)),
-        ];
-        for (const loc of localesInOrder) {
-          const href = url(loc, entry.slug);
-          const alternates = localesInOrder
-            .map(
-              (al) =>
-                `    <xhtml:link rel="alternate" hreflang="${al}" href="${url(al, entry.slug)}"/>`,
-            )
-            .join('\n');
-          urls.push(`  <url>\n    <loc>${href}</loc>\n${alternates}\n  </url>`);
-        }
-      }
+          const urls: string[] = [];
+          for (const entry of entries.values()) {
+            const localesInOrder = [
+              ...(entry.locales.has(defaultLocale) ? [defaultLocale] : []),
+              ...locales.filter((l) => entry.locales.has(l)),
+            ];
+            for (const loc of localesInOrder) {
+              const href = url(loc, entry.slug);
+              const alternates = localesInOrder
+                .map(
+                  (al) =>
+                    `    <xhtml:link rel="alternate" hreflang="${al}" href="${url(al, entry.slug)}"/>`,
+                )
+                .join('\n');
+              urls.push(
+                `  <url>\n    <loc>${href}</loc>\n${alternates}\n  </url>`,
+              );
+            }
+          }
 
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`;
+          const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`;
 
-      mkdirSync(distDir, { recursive: true });
-      writeFileSync(resolve(distDir, 'sitemap.xml'), xml, 'utf8');
-      this.info?.(`sitemap.xml: ${entries.size} docs, ${urls.length} URLs`);
+          mkdirSync(distDir, { recursive: true });
+          writeFileSync(resolve(distDir, 'sitemap.xml'), xml, 'utf8');
+          nitro.logger.info(
+            `sitemap.xml: ${entries.size} docs, ${urls.length} URLs`,
+          );
+        });
+      },
     },
   };
 }

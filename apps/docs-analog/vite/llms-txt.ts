@@ -7,6 +7,7 @@ import {
 } from 'node:fs';
 import { dirname, resolve, relative } from 'node:path';
 import type { Plugin } from 'vite';
+import type { NitroModule } from 'nitro/types';
 
 export interface LlmsTxtOptions {
   /** Public site origin, e.g. `https://analogjs.org`. No trailing slash. */
@@ -69,83 +70,89 @@ function stripFrontmatter(text: string): {
  *
  * Translated docs are excluded (per the llms.txt convention).
  */
-export function llmsTxtPlugin(options: LlmsTxtOptions): Plugin {
+export function llmsTxtPlugin(
+  options: LlmsTxtOptions,
+): Plugin & { nitro: NitroModule } {
   const { siteUrl, siteName, contentDir, distDir, skipLocales } = options;
   const skip = new Set<string>(skipLocales);
 
   return {
     name: '@analogjs/content:llms-txt',
     apply: 'build',
-    closeBundle() {
-      const docs: {
-        slug: string;
-        title: string;
-        description?: string;
-        body: string;
-      }[] = [];
-      for (const file of walk(contentDir)) {
-        const rel = relative(contentDir, file).replace(/\.md$/, '');
-        const parts = rel.split('/');
-        if (skip.has(parts[0])) continue;
-        const raw = readFileSync(file, 'utf8');
-        const { body, title, description } = stripFrontmatter(raw);
-        docs.push({
-          slug: rel,
-          title: title ?? rel,
-          description,
-          body,
+    nitro: {
+      setup(nitro) {
+        nitro.hooks.hook('compiled', () => {
+          const docs: {
+            slug: string;
+            title: string;
+            description?: string;
+            body: string;
+          }[] = [];
+          for (const file of walk(contentDir)) {
+            const rel = relative(contentDir, file).replace(/\.md$/, '');
+            const parts = rel.split('/');
+            if (skip.has(parts[0])) continue;
+            const raw = readFileSync(file, 'utf8');
+            const { body, title, description } = stripFrontmatter(raw);
+            docs.push({
+              slug: rel,
+              title: title ?? rel,
+              description,
+              body,
+            });
+          }
+
+          docs.sort((a, b) => a.slug.localeCompare(b.slug));
+
+          const indexEntries = docs
+            .map(
+              (d) =>
+                `- [${d.title}](${siteUrl}/docs/${d.slug}): ${d.description ?? d.title}`,
+            )
+            .join('\n');
+          const llmsTxt = `# ${siteName}\n\n## Docs\n\n${indexEntries}\n`;
+          writeFileSync(resolve(distDir, 'llms.txt'), llmsTxt, 'utf8');
+
+          const fullEntries = docs
+            .map(
+              (d) =>
+                `# ${d.title}\n\nURL: ${siteUrl}/docs/${d.slug}\n\n${d.body.trim()}`,
+            )
+            .join('\n---\n\n');
+          writeFileSync(resolve(distDir, 'llms-full.txt'), fullEntries, 'utf8');
+
+          // Section-scoped indexes: one llms.txt per multi-page top-level section
+          // (e.g. /docs/features/llms.txt) so a retrieval pipeline can pull just
+          // the relevant section instead of the whole corpus.
+          const sections = new Map<string, typeof docs>();
+          for (const doc of docs) {
+            const section = doc.slug.split('/')[0];
+            const group = sections.get(section);
+            if (group) group.push(doc);
+            else sections.set(section, [doc]);
+          }
+
+          let sectionCount = 0;
+          for (const [section, sectionDocs] of sections) {
+            if (sectionDocs.length < 2) continue;
+            const entries = sectionDocs
+              .map(
+                (d) =>
+                  `- [${d.title}](${siteUrl}/docs/${d.slug}): ${d.description ?? d.title}`,
+              )
+              .join('\n');
+            const sectionTxt = `# ${siteName}\n\n## ${section}\n\n${entries}\n`;
+            const outPath = resolve(distDir, 'docs', section, 'llms.txt');
+            mkdirSync(dirname(outPath), { recursive: true });
+            writeFileSync(outPath, sectionTxt, 'utf8');
+            sectionCount++;
+          }
+
+          nitro.logger.info(
+            `llms.txt: indexed ${docs.length} docs, ${sectionCount} section indexes`,
+          );
         });
-      }
-
-      docs.sort((a, b) => a.slug.localeCompare(b.slug));
-
-      const indexEntries = docs
-        .map(
-          (d) =>
-            `- [${d.title}](${siteUrl}/docs/${d.slug}): ${d.description ?? d.title}`,
-        )
-        .join('\n');
-      const llmsTxt = `# ${siteName}\n\n## Docs\n\n${indexEntries}\n`;
-      writeFileSync(resolve(distDir, 'llms.txt'), llmsTxt, 'utf8');
-
-      const fullEntries = docs
-        .map(
-          (d) =>
-            `# ${d.title}\n\nURL: ${siteUrl}/docs/${d.slug}\n\n${d.body.trim()}`,
-        )
-        .join('\n---\n\n');
-      writeFileSync(resolve(distDir, 'llms-full.txt'), fullEntries, 'utf8');
-
-      // Section-scoped indexes: one llms.txt per multi-page top-level section
-      // (e.g. /docs/features/llms.txt) so a retrieval pipeline can pull just
-      // the relevant section instead of the whole corpus.
-      const sections = new Map<string, typeof docs>();
-      for (const doc of docs) {
-        const section = doc.slug.split('/')[0];
-        const group = sections.get(section);
-        if (group) group.push(doc);
-        else sections.set(section, [doc]);
-      }
-
-      let sectionCount = 0;
-      for (const [section, sectionDocs] of sections) {
-        if (sectionDocs.length < 2) continue;
-        const entries = sectionDocs
-          .map(
-            (d) =>
-              `- [${d.title}](${siteUrl}/docs/${d.slug}): ${d.description ?? d.title}`,
-          )
-          .join('\n');
-        const sectionTxt = `# ${siteName}\n\n## ${section}\n\n${entries}\n`;
-        const outPath = resolve(distDir, 'docs', section, 'llms.txt');
-        mkdirSync(dirname(outPath), { recursive: true });
-        writeFileSync(outPath, sectionTxt, 'utf8');
-        sectionCount++;
-      }
-
-      this.info?.(
-        `llms.txt: indexed ${docs.length} docs, ${sectionCount} section indexes`,
-      );
+      },
     },
   };
 }

@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { pageEndpointsPlugin } from './page-endpoints-plugin';
@@ -15,7 +16,9 @@ describe('pageEndpointsPlugin', () => {
     expect(result?.code).toContain(
       'export default defineHandler(async(event) => {',
     );
-    expect(result?.code).toContain(`import { createFetch } from 'ofetch';`);
+    expect(result?.code).toContain(
+      `import { createFetch } from ${JSON.stringify(fileURLToPath(import.meta.resolve('ofetch')))};`,
+    );
     expect(result?.code).toContain('fetchWithEvent');
     expect(result?.code).toContain('const serverFetch = createFetch');
     expect(result?.code).toContain('fetch: serverFetch');

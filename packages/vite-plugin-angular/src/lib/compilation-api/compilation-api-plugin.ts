@@ -640,6 +640,7 @@ export function angularCompilationPlugin(
                   plugins: [
                     createRolldownCompilerPlugin(
                       compilerPluginOptions,
+                      isTest,
                       !pluginOptions.isAstroIntegration,
                     ),
                   ],

@@ -44,7 +44,8 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "sharp": ">=0.32.0"
+    "sharp": ">=0.32.0",
+    "vite": "catalog:peerCompat"
   },
   "peerDependenciesMeta": {
     "sharp": {
@@ -54,11 +55,13 @@
   "dependencies": {
     "defu": "catalog:",
     "h3": "catalog:",
+    "magic-string": "catalog:",
     "nitro": "catalog:",
     "obug": "catalog:",
     "ofetch": "catalog:",
     "oxc-parser": "catalog:",
-    "radix3": "catalog:",
+    "srvx": "catalog:",
+    "tinyglobby": "catalog:",
     "xmlbuilder2": "catalog:"
   },
   "ng-update": {

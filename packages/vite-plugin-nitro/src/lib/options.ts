@@ -15,6 +15,7 @@ export interface I18nPrerenderOptions {
 }
 
 export interface Options {
+  i18n?: I18nPrerenderOptions;
   ssr?: boolean;
   ssrBuildDir?: string;
   /**

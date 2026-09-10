@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 /**
  * Code snippet emitted into virtual modules to create a request-scoped
  * fetch using ofetch's `createFetch` + h3's `fetchWithEvent`.
@@ -32,7 +33,7 @@ export const SERVER_FETCH_FACTORY_SNIPPET = `
  */
 export function ssrRenderer() {
   return `
-import { createFetch } from 'ofetch';
+import { createFetch } from ${JSON.stringify(fileURLToPath(import.meta.resolve('ofetch')))};
 import { defineHandler, fetchWithEvent } from 'nitro/h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
@@ -43,7 +44,7 @@ const normalizeHtmlRequestUrl = (url) =>
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  const noSSR = event.res.headers.get('x-analog-no-ssr');
+  const noSSR = event.context.routeRules?.headers?.['x-analog-no-ssr'];
   const requestPath = normalizeHtmlRequestUrl(event.path);
 
   if (noSSR === 'true') {
@@ -71,7 +72,7 @@ export default defineHandler(async (event) => {
   const res = event.node?.res;
 ${SERVER_FETCH_FACTORY_SNIPPET}
 
-  const html = await renderer(requestPath, template, { req, res, fetch: serverFetch });
+  const html = await renderer(requestPath, template, { req, res, fetch: serverFetch, signal: event.req.signal, streaming: event.context.routeRules?.headers?.['x-analog-no-streaming'] !== 'true' });
 
   return html;
 });`;

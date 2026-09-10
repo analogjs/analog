@@ -49,6 +49,29 @@
         "cwd": "packages/platform",
         "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
       }
+    },
+    "nitro-conformance": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build", "vite-plugin-nitro:build"],
+      "cache": false,
+      "options": {
+        "command": "node tools/scripts/nitro-conformance.mts"
+      }
+    },
+    "nitro-patches": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/scripts/nitro-patches.mts"
+      }
+    },
+    "nitro-cloudflare": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build", "vite-plugin-nitro:build"],
+      "cache": false,
+      "options": {
+        "command": "node tools/scripts/nitro-conformance.mts --cloudflare"
+      }
     }
   }
 }

@@ -75,6 +75,58 @@ describe('angularVitePlugin', () => {
   });
 });
 
+describe('Rolldown optimizer mode and lifecycle', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each([
+    [false, false],
+    [false, true],
+    [true, false],
+    [true, true],
+  ])(
+    'passes test mode independently of compilation API (%s, %s)',
+    async (useAngularCompilationAPI, isTest) => {
+      vi.stubEnv('NODE_ENV', isTest ? 'test' : 'development');
+      vi.stubEnv('VITEST', isTest ? 'true' : '');
+      const tempRoot = mkdtempSync(join(tmpdir(), 'analog-linker-mode-'));
+      const tsconfig = join(tempRoot, 'tsconfig.json');
+      writeFileSync(tsconfig, JSON.stringify({ compilerOptions: {} }));
+      try {
+        const plugin = angular({
+          tsconfig,
+          experimental: { useAngularCompilationAPI },
+        }).find(
+          (p) =>
+            p.name ===
+            (useAngularCompilationAPI
+              ? '@analogjs/vite-plugin-angular-compilation-api'
+              : '@analogjs/vite-plugin-angular'),
+        )!;
+        const hook =
+          typeof plugin.config === 'function'
+            ? plugin.config
+            : plugin.config!.handler;
+        const config = await hook.call(
+          {} as never,
+          {},
+          { command: 'serve', mode: 'development' },
+        );
+        const optimizer = config!.optimizeDeps!.rolldownOptions!
+          .plugins![0] as Plugin;
+        expect(Boolean(optimizer.load)).toBe(!isTest);
+        expect(optimizer.buildEnd).toBeDefined();
+        const close =
+          typeof optimizer.buildEnd === 'function'
+            ? optimizer.buildEnd
+            : optimizer.buildEnd!.handler;
+        await close.call({} as never);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  );
+});
+
 describe('liveReload option', () => {
   beforeEach(() => {
     process.env['NODE_ENV'] = 'development';

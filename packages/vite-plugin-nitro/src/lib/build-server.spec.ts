@@ -26,7 +26,7 @@ describe('buildServer', () => {
     vi.restoreAllMocks();
   });
 
-  it('forces rollup bundler and builds successfully', async () => {
+  it('defaults to rolldown and builds successfully', async () => {
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-build-server-'));
     const outputDir = resolve(workspaceRoot, '.output');
     const serverDir = resolve(outputDir, 'server');
@@ -36,6 +36,7 @@ describe('buildServer', () => {
     mkdirSync(publicDir, { recursive: true });
 
     vi.mocked(createNitro).mockResolvedValue({
+      hooks: { hook: vi.fn() },
       options: {
         framework: {
           name: 'nitro',
@@ -62,7 +63,7 @@ describe('buildServer', () => {
 
       expect(createNitro).toHaveBeenCalledWith(
         expect.objectContaining({
-          builder: 'rollup',
+          builder: 'rolldown',
         }),
       );
       expect(build).toHaveBeenCalled();

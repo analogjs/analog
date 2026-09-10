@@ -1,4 +1,4 @@
-import { PrerenderRoute } from 'nitropack';
+import type { PrerenderRoute } from 'nitro/types';
 import { I18nPrerenderOptions } from '../options.js';
 
 /**

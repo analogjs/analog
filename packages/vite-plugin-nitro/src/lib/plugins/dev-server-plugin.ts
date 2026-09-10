@@ -10,9 +10,7 @@ import {
 } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
-import { defu } from 'defu';
-import type { NitroRouteRules } from 'nitro/types';
+import { createRouteRulesMatcher, normalizeRouteRules } from 'h3/rules';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { registerI18nWatcher } from '../utils/register-i18n-watcher.js';
@@ -29,6 +27,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
   let config: UserConfig;
   let root: string;
   let isTest = false;
+  let matchRouteRules: ReturnType<typeof createRouteRulesMatcher>;
 
   return {
     name: 'analogjs-dev-ssr-plugin',
@@ -36,6 +35,21 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       isTest = isTest ? isTest : mode === 'test';
+      matchRouteRules = createRouteRulesMatcher(
+        normalizeRouteRules(
+          Object.fromEntries(
+            Object.entries(options.routeRules ?? {}).map(([path, rule]) => [
+              path,
+              {
+                ...(typeof rule.ssr === 'boolean'
+                  ? { headers: { 'x-analog-no-ssr': String(!rule.ssr) } }
+                  : {}),
+              },
+            ]),
+          ),
+        ),
+        { baseURL: userConfig.base },
+      );
       return {
         appType: 'custom',
         resolve: {
@@ -70,19 +84,16 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             template,
           );
 
-          const _routeRulesMatcher = toRouteMatcher(
-            createRadixRouter({ routes: options.routeRules }),
-          );
-          const _getRouteRules = (path: string) =>
-            defu(
-              {},
-              ..._routeRulesMatcher.matchAll(path).reverse(),
-            ) as NitroRouteRules;
-
           try {
             let result: string | Response;
             // Check for route rules explicitly disabling SSR
-            if (_getRouteRules(req.originalUrl as string).ssr === false) {
+            if (
+              matchRouteRules(
+                req.method ?? 'GET',
+                new URL(req.originalUrl ?? req.url ?? '/', 'http://localhost')
+                  .pathname,
+              ).routeRules.headers?.['x-analog-no-ssr'] === 'true'
+            ) {
               result = template;
             } else {
               const entryServer = (

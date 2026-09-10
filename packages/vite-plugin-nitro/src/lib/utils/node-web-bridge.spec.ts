@@ -14,6 +14,18 @@ describe('toWebRequest', () => {
         host: 'example.com',
         'x-forwarded-proto': 'https',
       },
+      rawHeaders: [
+        ':authority',
+        'example.com',
+        ':method',
+        'GET',
+        ':path',
+        '/blog',
+        'accept',
+        'text/html',
+        'host',
+        'example.com',
+      ],
       method: 'GET',
       url: '/blog',
     } as IncomingMessage;

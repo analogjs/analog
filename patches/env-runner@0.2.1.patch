@@ -1,0 +1,39 @@
+diff --git a/dist/_chunks/miniflare-runner.mjs b/dist/_chunks/miniflare-runner.mjs
+index 0bf102478621ae17148cb8b3b0a0336c10c93553..97566aa688141876d2398a04903919ec4775ea8f 100644
+--- a/dist/_chunks/miniflare-runner.mjs
++++ b/dist/_chunks/miniflare-runner.mjs
+@@ -409,6 +409,25 @@ var MiniflareEnvRunner = class extends BaseEnvRunner {
+ 		if (!this.#miniflare || this.closed) return new Response("miniflare env runner is unavailable", { status: 503 });
+ 		const resolved = this._resolveFetchInput(input);
+ 		const url = typeof resolved === "string" ? resolved : resolved instanceof URL ? resolved.href : resolved.url;
++		if (typeof resolved !== "string" && !(resolved instanceof URL)) {
++			const request = new Request(new Request(url, {
++				method: resolved.method,
++				headers: resolved.headers,
++				body: resolved.body,
++				redirect: resolved.redirect,
++				signal: resolved.signal,
++				duplex: "half"
++			}), init);
++			init = {
++				...init,
++				method: request.method,
++				headers: request.headers,
++				body: request.body,
++				redirect: request.redirect,
++				signal: request.signal,
++				duplex: "half"
++			};
++		}
+ 		const res = await this.#miniflare.dispatchFetch(url, init);
+ 		if (res instanceof Response) return res;
+ 		return new Response(res.body, {
+@@ -571,7 +590,7 @@ var MiniflareEnvRunner = class extends BaseEnvRunner {
+ 				}
+ 				options.durableObjects = autoDOs;
+ 			}
+-			options.script = generateWrapper(resolvedEntry, {
++			options.script = generateWrapper(resolvedEntry.replaceAll("\\", "/"), {
+ 				dynamicOnly: true,
+ 				captureErrors: this.#captureErrors,
+ 				exports: detectedExports

@@ -54,7 +54,7 @@ export async function registerDevServerMiddleware(
     );
 
     viteServer.middlewares.use(async (req, res, next) => {
-      const response = await app.fetch(toWebRequest(req));
+      const response = await app.fetch(toWebRequest(req, res));
 
       if (response.headers.get(PASSTHROUGH_HEADER) === '1') {
         next();
