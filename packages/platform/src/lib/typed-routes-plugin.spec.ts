@@ -75,6 +75,17 @@ describe('typed route generation', () => {
     );
     configure(root, 'build', { outFile: 'generated/routes.ts' });
   });
+  it('allows production builds with grouped pages sharing a URL', () => {
+    const root = fixture();
+    for (const group of ['admin', 'user']) {
+      mkdirSync(join(root, `src/app/pages/(${group})`));
+      writeFileSync(
+        join(root, `src/app/pages/(${group})/dashboard.page.ts`),
+        'export default class Page {}',
+      );
+    }
+    expect(() => configure(root, 'build')).not.toThrow();
+  });
   it('rejects stale production output without rewriting it', () => {
     const root = fixture();
     configure(root);

@@ -196,6 +196,9 @@ export function generateRouteManifest(
     const params = extractRouteParams(fullPath);
     const id = filenameToRouteId(filename);
     const isPathlessLayout = isPathlessLayoutId(id);
+    // Different pathless branches can select the same URL with canMatch guards.
+    const groupScope = id.slice(0, id.lastIndexOf(')') + 1);
+    const collisionKey = JSON.stringify([fullPath, groupScope]);
 
     const currentPriority = getPriority(filename);
 
@@ -204,8 +207,8 @@ export function generateRouteManifest(
     // fullPath without collision. The Angular router handles them as nested
     // layout routes, not competing page components.
     if (!isPathlessLayout) {
-      if (seenByFullPath.has(fullPath)) {
-        const winner = seenByFullPath.get(fullPath)!;
+      if (seenByFullPath.has(collisionKey)) {
+        const winner = seenByFullPath.get(collisionKey)!;
         if (winner.filename === filename) {
           continue;
         }
@@ -241,7 +244,7 @@ export function generateRouteManifest(
         );
         continue;
       }
-      seenByFullPath.set(fullPath, { filename, priority: currentPriority });
+      seenByFullPath.set(collisionKey, { filename, priority: currentPriority });
     }
 
     routes.push({

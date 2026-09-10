@@ -793,3 +793,25 @@ describe('generateRouteTableDeclaration', () => {
     expect(output).not.toContain('queryOutput');
   });
 });
+
+describe('guarded route branches', () => {
+  it('keeps grouped pages with the same URL and emits one navigation type', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(admin).page.ts',
+      '/src/app/pages/(admin)/dashboard.page.ts',
+      '/src/app/pages/(user).page.ts',
+      '/src/app/pages/(user)/dashboard.page.ts',
+    ]);
+    expect(manifest.collisions).toEqual([]);
+    const pages = manifest.routes.filter(
+      (route) => route.fullPath === '/dashboard',
+    );
+    expect(pages.map((route) => route.parentId).sort()).toEqual([
+      '/(admin)',
+      '/(user)',
+    ]);
+    expect(
+      generateRouteTableDeclaration(manifest).match(/"\/dashboard":/g),
+    ).toHaveLength(1);
+  });
+});
