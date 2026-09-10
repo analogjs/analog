@@ -466,7 +466,7 @@ import { CardComponent } from '../components/card.component';
 </CardComponent>
 ```
 
-Content that does not match any `select` is projected into the default `<ng-content>`. Without a default slot it is dropped, as in Angular.
+Content that does not match any `select` is projected into the default `<ng-content>`. Without a default slot it is dropped, as in Angular. `ngProjectAs` is honored as well.
 
 Astro's `slot` attribute is not needed to target a slot. Astro removes the attribute before rendering, so use Angular selectors such as attributes, classes, or element names instead.
 

@@ -357,7 +357,7 @@ import { CardComponent } from '../components/card.component';
 </CardComponent>
 ```
 
-未匹配任何 `select` 的内容会被投影到默认的 `<ng-content>` 中。如果没有默认插槽，这些内容会像在 Angular 中一样被丢弃。
+未匹配任何 `select` 的内容会被投影到默认的 `<ng-content>` 中。如果没有默认插槽，这些内容会像在 Angular 中一样被丢弃。同样支持 `ngProjectAs`。
 
 不需要使用 Astro 的 `slot` 属性来指定插槽。Astro 会在渲染前移除该属性，请改用 Angular 选择器，例如属性、class 或元素名。
 

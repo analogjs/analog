@@ -112,6 +112,24 @@ describe('buildProjectableNodes', () => {
     expect(names(nodes[0])).toEqual(['P']);
   });
 
+  it('should honor ngProjectAs instead of the element selector', () => {
+    const nodes = buildProjectableNodes(
+      mirror,
+      {
+        default:
+          '<div ngProjectAs="[question]">Q</div>' +
+          '<div ngProjectAs="footer">F1</div>' +
+          '<div ngProjectAs=".footer">F2</div>' +
+          '<p question ngProjectAs="span">Body</p>',
+      },
+      document,
+    )!;
+
+    expect(nodes[0].map((n) => n.textContent)).toEqual(['Q']);
+    expect(nodes[1].map((n) => n.textContent)).toEqual(['F1', 'F2']);
+    expect(nodes[2].map((n) => n.textContent)).toEqual(['Body']);
+  });
+
   it('should preserve elements that need a parsing context', () => {
     const nodes = buildProjectableNodes(
       mirror,

@@ -69,10 +69,41 @@ function matches(node: Node, selector: string): boolean {
     return false;
   }
 
+  const element = node as Element;
+
   try {
-    return (node as Element).matches(selector);
+    // As in Angular, `ngProjectAs` replaces the element's own selector.
+    const projectAs = element.getAttribute('ngProjectAs');
+    const subject = projectAs
+      ? createProbe(projectAs, element.ownerDocument)
+      : element;
+
+    return subject.matches(selector);
   } catch {
     // `ngContentSelectors` may contain selectors that `matches()` rejects.
     return false;
   }
+}
+
+const SELECTOR_PART =
+  /#([\w-]+)|\.([\w-]+)|\[([\w-]+)(?:=["']?([^"'\]]*)["']?)?\]/g;
+
+// Builds an element matching the simple CSS selector held by `ngProjectAs`.
+function createProbe(projectAs: string, document: Document): Element {
+  const tag = /^[a-zA-Z][\w-]*/.exec(projectAs)?.[0];
+  const probe = document.createElement(tag || 'div');
+
+  for (const [, id, className, attr, value] of projectAs.matchAll(
+    SELECTOR_PART,
+  )) {
+    if (id) {
+      probe.id = id;
+    } else if (className) {
+      probe.classList.add(className);
+    } else if (attr) {
+      probe.setAttribute(attr, value ?? '');
+    }
+  }
+
+  return probe;
 }
