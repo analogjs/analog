@@ -116,7 +116,7 @@ export function filenameToRouteId(filename: string): string {
   );
 
   const brackets: string[] = [];
-  path = path.replace(/\[\[?\.{0,3}[^\]]*\]?\]/g, (match) => {
+  path = path.replace(/\(.*?\)|\[\[?\.{0,3}[^\]]*\]?\]/g, (match) => {
     brackets.push(match);
     // eslint-disable-next-line no-control-regex
     return `\0B${brackets.length - 1}\0`;
@@ -318,13 +318,10 @@ function canonicalRoutesByFullPath(
   return map;
 }
 
-// Matches group names like (auth), (home) — intentionally excludes dots and
-// brackets so names like (auth.v2) or ([id]) are NOT treated as pathless
-// layouts. Dot-containing names collide with dynamic-segment syntax.
 function isPathlessLayoutId(id: string): boolean {
   const segments = id.split('/').filter(Boolean);
   if (segments.length === 0) return false;
-  return /^\([^.[\]]+\)$/.test(segments[segments.length - 1]);
+  return /^\([^)]*\)$/.test(segments[segments.length - 1]);
 }
 
 function getRouteWeight(path: string): number {

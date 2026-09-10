@@ -827,3 +827,18 @@ describe('guarded route branches', () => {
     ).toHaveLength(1);
   });
 });
+
+it('preserves dotted group identities and keeps their index pages', () => {
+  const manifest = generateRouteManifest([
+    '/src/app/pages/(auth.v2).page.ts',
+    '/src/app/pages/(auth.v2)/index.page.ts',
+    '/src/app/pages/(auth.v2)/login.page.ts',
+  ]);
+  expect(manifest.collisions).toEqual([]);
+  expect(
+    manifest.routes.find((route) => route.id === '/(auth.v2)')?.isGroup,
+  ).toBe(true);
+  expect(
+    manifest.routes.find((route) => route.fullPath === '/login')?.parentId,
+  ).toBe('/(auth.v2)');
+});
