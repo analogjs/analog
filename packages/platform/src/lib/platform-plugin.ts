@@ -99,11 +99,11 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
-    ...(platformOptions.experimental?.typedRouter
+    ...(platformOptions.experimental?.typedRouting
       ? [
           typedRoutes({
-            ...(typeof platformOptions.experimental.typedRouter === 'object'
-              ? platformOptions.experimental.typedRouter
+            ...(typeof platformOptions.experimental.typedRouting === 'object'
+              ? platformOptions.experimental.typedRouting
               : {}),
             workspaceRoot: platformOptions.workspaceRoot,
             additionalPagesDirs: platformOptions.additionalPagesDirs,

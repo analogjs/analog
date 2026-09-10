@@ -70,9 +70,9 @@ describe('platformPlugin', () => {
   });
   it.each([undefined, false])(
     'leaves route generation disabled for %s',
-    async (typedRouter) => {
+    async (typedRouting) => {
       const { platformPlugin } = await setup();
-      const plugins = platformPlugin({ experimental: { typedRouter } });
+      const plugins = platformPlugin({ experimental: { typedRouting } });
       expect(
         plugins.some((plugin) => plugin?.name === 'analog-typed-routes'),
       ).toBe(false);
@@ -90,7 +90,7 @@ describe('platformPlugin', () => {
       const { platformPlugin } = await setup();
       const plugins = platformPlugin({
         ...options,
-        experimental: { typedRouter: true },
+        experimental: { typedRouting: true },
       });
       expect(plugins[0].name).toBe('analog-typed-routes');
     },

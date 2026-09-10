@@ -51,7 +51,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       analog({
         apiPrefix: 'api',
-        experimental: { typedRouter: true },
+        experimental: { typedRouting: true },
         additionalPagesDirs: ['/libs/shared/feature'],
         additionalAPIDirs: ['/libs/shared/feature/src/api'],
         fileReplacements,

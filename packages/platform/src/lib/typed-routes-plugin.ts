@@ -13,14 +13,14 @@ import {
   generateRouteTableDeclaration,
 } from './route-manifest.js';
 
-export interface TypedRouterOptions {
+export interface TypedRoutingOptions {
   /** Generated declaration path (.d.ts), relative to the app root. */
   outFile?: string;
   /** Fail builds when a checked-in route table is stale. Defaults to true. */
   verifyOnBuild?: boolean;
 }
 
-export interface TypedRoutesPluginOptions extends TypedRouterOptions {
+export interface TypedRoutesPluginOptions extends TypedRoutingOptions {
   workspaceRoot?: string;
   additionalPagesDirs?: string[];
   additionalContentDirs?: string[];

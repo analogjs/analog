@@ -2,14 +2,14 @@
 
 Typed routing is an opt-in experimental feature that adds checked route paths and parameters to Analog's file router. It is disabled by default. Its APIs and generated types may change while the feature is experimental.
 
-Enable it explicitly with `experimental.typedRouter` in your existing Vite configuration:
+Enable it explicitly with `experimental.typedRouting` in your existing Vite configuration:
 
 ```ts
 import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [analog({ experimental: { typedRouter: true } })],
+  plugins: [analog({ experimental: { typedRouting: true } })],
 });
 ```
 
@@ -32,7 +32,7 @@ To customize the output or allow regeneration during builds:
 ```ts
 analog({
   experimental: {
-    typedRouter: {
+    typedRouting: {
       outFile: 'src/routeTree.gen.d.ts',
       verifyOnBuild: false,
     },
@@ -101,7 +101,7 @@ Use these helpers in a component rendered by the specified route. The path narro
 
 Values remain raw Angular router values. Exporting a schema does not validate or coerce these signals. For example, `"42"` stays a string.
 
-Type checking comes from the generated table. The `experimental.typedRouter` option enables generation for the feature as a whole; no additional router provider or per-helper experimental flag is required.
+Type checking comes from the generated table. The `experimental.typedRouting` option enables generation for the feature as a whole; no additional router provider or per-helper experimental flag is required.
 
 ## Compatibility
 
