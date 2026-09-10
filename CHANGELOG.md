@@ -1,3 +1,9 @@
+# [3.0.0-alpha.87](https://github.com/analogjs/analog/compare/v3.0.0-alpha.86...v3.0.0-alpha.87) (2026-09-10)
+
+### Features
+
+- **vite-plugin-angular:** export experimental Angular compilation plugin ([#2559](https://github.com/analogjs/analog/issues/2559)) ([d66bac9](https://github.com/analogjs/analog/commit/d66bac923de15cd7dd394ade18ca4df57a36892b))
+
 # [3.0.0-alpha.86](https://github.com/analogjs/analog/compare/v3.0.0-alpha.85...v3.0.0-alpha.86) (2026-09-04)
 
 ### Bug Fixes
