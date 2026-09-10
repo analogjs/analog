@@ -549,13 +549,21 @@ describe('createFsWatcherCacheInvalidator', () => {
     } = setup();
 
     invalidate('/project/src/assets/logo.png');
-    invalidate('/project/src/app/types.d.ts');
     invalidate('/project/src/app/data.json');
     await vi.runAllTimersAsync();
 
     expect(invalidateFsCaches).not.toHaveBeenCalled();
     expect(invalidateTsconfigCaches).not.toHaveBeenCalled();
     expect(performCompilation).not.toHaveBeenCalled();
+  });
+
+  it('recompiles when generated declarations change the program', async () => {
+    const { invalidateTsconfigCaches, performCompilation, invalidate } =
+      setup();
+    invalidate('/project/src/routeTree.gen.d.ts');
+    expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    await vi.runAllTimersAsync();
+    expect(performCompilation).toHaveBeenCalledOnce();
   });
 
   it('recompiles when a spec file is added so it joins the program', async () => {
@@ -1357,6 +1365,68 @@ export class AppComponent {}
     expect(entry.originalLine).toBe(7);
     expect(entry.originalColumn).toBe(13);
     expect(sources).toContain(normalizePath(templatePath));
+  }, 60_000);
+
+  it('refreshes diagnostics when a declaration changes without restarting', async () => {
+    const declaration = path.join(fixtureDir, 'src/routes.d.ts');
+    realFs.writeFileSync(declaration, "type RoutePath = '/about';");
+    const tsconfig = path.join(fixtureDir, 'tsconfig.json');
+    const config = JSON.parse(realFs.readFileSync(tsconfig, 'utf8'));
+    config.include = ['src/**/*.d.ts'];
+    realFs.writeFileSync(tsconfig, JSON.stringify(config));
+    const code = `
+      import { Component } from '@angular/core';
+      @Component({ standalone: true, template: '' })
+      export class AppComponent { path: RoutePath = '/about'; }
+    `;
+    realFs.writeFileSync(componentPath, code);
+    const mainPlugin = createAppBuildPlugin({ disableTypeChecking: false });
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      {
+        configFile: false,
+        root: fixtureDir,
+        mode: 'development',
+      },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+    expect(ctx.error).not.toHaveBeenCalled();
+
+    const server = {
+      moduleGraph: { invalidateAll: vi.fn() },
+      ws: { send: vi.fn() },
+    };
+    realFs.writeFileSync(declaration, "type RoutePath = '/renamed';");
+    await mainPlugin.handleHotUpdate({
+      file: declaration,
+      modules: [],
+      server,
+    });
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+    expect(ctx.error).toHaveBeenCalledWith(
+      expect.stringContaining('is not assignable'),
+    );
+    expect(server.moduleGraph.invalidateAll).toHaveBeenCalledOnce();
+    expect(server.ws.send).toHaveBeenCalledWith({ type: 'full-reload' });
+
+    ctx.error.mockClear();
+    realFs.writeFileSync(declaration, "type RoutePath = '/about';");
+    await mainPlugin.handleHotUpdate({
+      file: declaration,
+      modules: [],
+      server,
+    });
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+    expect(ctx.error).not.toHaveBeenCalled();
   }, 60_000);
 
   it('releases production compilation output at buildEnd', async () => {
