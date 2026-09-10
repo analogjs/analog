@@ -8,6 +8,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseSync } from 'oxc-parser';
+import { format } from 'prettier';
 import { afterEach, describe, expect, it } from 'vitest';
 import { typedRoutes } from './typed-routes-plugin.js';
 
@@ -85,6 +86,23 @@ describe('typed route generation', () => {
       );
     }
     expect(() => configure(root, 'build')).not.toThrow();
+  });
+  it('preserves formatted declarations but rejects changed types', async () => {
+    const root = fixture();
+    configure(root);
+    const outputPath = join(root, 'src/routeTree.gen.ts');
+    const formatted = await format(readFileSync(outputPath, 'utf8'), {
+      parser: 'typescript',
+      singleQuote: true,
+      semi: false,
+      printWidth: 40,
+    });
+    writeFileSync(outputPath, formatted);
+    expect(() => configure(root, 'build')).not.toThrow();
+    configure(root);
+    expect(readFileSync(outputPath, 'utf8')).toBe(formatted);
+    writeFileSync(outputPath, formatted.replace('id: string', 'id: number'));
+    expect(() => configure(root, 'build')).toThrow('Stale route file');
   });
   it('rejects stale production output without rewriting it', () => {
     const root = fixture();

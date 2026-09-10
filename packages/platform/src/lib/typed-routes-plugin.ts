@@ -82,7 +82,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
     const outputPath = join(root, outFile);
     const exists = existsSync(outputPath);
     const current = exists ? readFileSync(outputPath, 'utf8') : '';
-    if (current.replace(/\r\n/g, '\n') !== output) {
+    if (current !== output && !sameDeclarations(current, output)) {
       if (exists && command === 'build' && (options.verifyOnBuild ?? true)) {
         throw new Error(
           `[analog] Stale route file: ${outFile}. Run the dev server to regenerate it before building.`,
@@ -122,4 +122,16 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       }
     },
   };
+}
+
+function sameDeclarations(current: string, output: string): boolean {
+  const left = parseSync('routeTree.gen.ts', current);
+  const right = parseSync('routeTree.gen.ts', output);
+  if (left.errors.length || right.errors.length) return false;
+  const withoutFormatting = (key: string, value: unknown) =>
+    key === 'start' || key === 'end' || key === 'raw' ? undefined : value;
+  return (
+    JSON.stringify(left.program, withoutFormatting) ===
+    JSON.stringify(right.program, withoutFormatting)
+  );
 }
