@@ -1,17 +1,22 @@
-import { Route } from '@angular/router';
+import { Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Route, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { injectParams } from './inject-typed-params';
+import { injectNavigate } from './inject-navigate';
+import { buildRouteLink } from './route-path';
 import { describe, expect, it } from 'vitest';
 
-import { filenameToRoutePath } from '../../../platform/src/lib/route-manifest';
 import { createRoutes } from './routes';
 
 describe('typed filename paths', () => {
   it.each([
-    'index/details',
-    'docs/index/details',
-    'reindex',
-    '(auth.v2)/login',
-    'prefix(group)/details',
-  ])('matches runtime route configuration for %s', (filename) => {
+    ['index/details', '/details'],
+    ['docs/index/details', '/docs/details'],
+    ['reindex', '/re'],
+    ['(auth.v2)/login', '/login'],
+    ['prefix(group)/details', '/prefix/details'],
+  ])('matches runtime route configuration for %s', (filename, expected) => {
     const file = `/src/app/pages/${filename}.page.ts`;
     const routes = createRoutes({
       [file]: async () => ({ default: class Page {} }),
@@ -23,6 +28,59 @@ describe('typed filename paths', () => {
       ];
     }
     const runtimePath = '/' + leafPath(routes[0]).filter(Boolean).join('/');
-    expect(filenameToRoutePath(file)).toBe(runtimePath);
+    expect(runtimePath).toBe(expected);
   });
+});
+
+describe('catch-all navigation round trips', () => {
+  it.each(['[...slug]', '[[...slug]]'])(
+    'preserves decoded segments for %s',
+    async (catchAll) => {
+      const pattern = `/[team]/${catchAll}`;
+      @Component({ standalone: true, template: '' })
+      class Page {
+        params = injectParams(pattern as any);
+        navigate = injectNavigate();
+      }
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter(
+            createRoutes({
+              [`/src/app/pages/[team]/${catchAll}.page.ts`]: async () => ({
+                default: Page,
+              }),
+            }),
+          ),
+        ],
+      });
+      const harness = await RouterTestingHarness.create();
+      const router = TestBed.inject(Router);
+      const link = buildRouteLink(pattern, {
+        params: { team: 'one', slug: ['a/b', 'c d'] },
+      });
+      const component = await harness.navigateByUrl(
+        router.serializeUrl(
+          router.createUrlTree(link.path, {
+            queryParams: link.queryParams,
+            fragment: link.fragment,
+          }),
+        ),
+        Page,
+      );
+      expect(component.params()).toEqual({ team: 'one', slug: ['a/b', 'c d'] });
+
+      await component.navigate(pattern as any, {
+        params: { team: 'two', slug: ['a/b', '(aux)', '%'] },
+      });
+      expect(component.params()).toEqual({
+        team: 'two',
+        slug: ['a/b', '(aux)', '%'],
+      });
+
+      if (catchAll === '[[...slug]]') {
+        const base = await harness.navigateByUrl('/one', Page);
+        expect(base.params()).toEqual({ team: 'one' });
+      }
+    },
+  );
 });

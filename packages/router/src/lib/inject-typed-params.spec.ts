@@ -84,13 +84,22 @@ it('normalizes beta wildcard segments and inherits parent parameters', () => {
   expect(value()).toEqual({ team: 'one', slug: ['a', 'b'] });
 });
 
-it('normalizes optional catch-all strings without coercing dynamic values', () => {
+it('reads optional catch-all segments without splitting decoded slashes', () => {
   const params = new BehaviorSubject({ id: '42', slug: 'a/b' });
   TestBed.configureTestingModule({
-    providers: [{ provide: ActivatedRoute, useValue: { params } }],
+    providers: [
+      {
+        provide: ActivatedRoute,
+        useValue: {
+          params,
+          url: new BehaviorSubject([new UrlSegment('a/b', {})]),
+          routeConfig: { matcher: () => null },
+        },
+      },
+    ],
   });
   const value = TestBed.runInInjectionContext(() =>
     injectParams('/[id]/[[...slug]]' as any),
   );
-  expect(value()).toEqual({ id: '42', slug: ['a', 'b'] });
+  expect(value()).toEqual({ id: '42', slug: ['a/b'] });
 });

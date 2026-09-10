@@ -38,22 +38,25 @@ export function injectParams<P extends AnalogRoutePath>(
     ? injector.get(ActivatedRoute)
     : inject(ActivatedRoute);
   const ancestors = route.pathFromRoot ?? [route];
-  const wildcard = ancestors.find((entry) => entry.routeConfig?.path === '**');
   return toSignal(
     combineLatest([
       combineLatest(ancestors.map((entry) => entry.params)),
-      wildcard?.url ?? of([]),
+      combineLatest(ancestors.map((entry) => entry.url ?? of([]))),
     ]).pipe(
       map(([values, segments]) => {
         const params = Object.assign({}, ...values);
         for (const param of extractRouteParams(_from)) {
-          if (param.type !== 'dynamic') {
-            const value = params[param.name];
-            if (typeof value === 'string') {
-              params[param.name] = value ? value.split('/') : [];
-            } else if (param.type === 'catchAll' && wildcard) {
-              params[param.name] = segments.map((segment) => segment.path);
-            }
+          if (param.type === 'dynamic') continue;
+          const source = ancestors.findIndex((entry, index) =>
+            param.type === 'catchAll'
+              ? entry.routeConfig?.path === '**'
+              : !!entry.routeConfig?.matcher &&
+                values[index][param.name] != null,
+          );
+          if (source !== -1) {
+            params[param.name] = segments[source].map(
+              (segment) => segment.path,
+            );
           }
         }
         return params as RouteParamsOutput<P>;
