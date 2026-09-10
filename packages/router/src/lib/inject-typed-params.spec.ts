@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { injectParams, injectQuery } from './inject-typed-params';
-import { EXPERIMENTAL_TYPED_ROUTER } from './typed-router';
+import { TYPED_ROUTER } from './typed-router';
 
 describe('injectParams', () => {
   afterEach(() => {
@@ -35,7 +35,7 @@ describe('injectParams', () => {
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
         {
-          provide: EXPERIMENTAL_TYPED_ROUTER,
+          provide: TYPED_ROUTER,
           useValue: { strictRouteParams: true },
         },
       ],
@@ -73,7 +73,7 @@ describe('injectParams', () => {
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
         {
-          provide: EXPERIMENTAL_TYPED_ROUTER,
+          provide: TYPED_ROUTER,
           useValue: { strictRouteParams: true },
         },
       ],
@@ -94,7 +94,7 @@ describe('injectParams', () => {
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
         {
-          provide: EXPERIMENTAL_TYPED_ROUTER,
+          provide: TYPED_ROUTER,
           useValue: { strictRouteParams: true },
         },
       ],
@@ -115,7 +115,7 @@ describe('injectParams', () => {
       providers: [
         { provide: ActivatedRoute, useValue: { params: params$ } },
         {
-          provide: EXPERIMENTAL_TYPED_ROUTER,
+          provide: TYPED_ROUTER,
           useValue: { strictRouteParams: true },
         },
       ],
@@ -170,7 +170,7 @@ describe('injectQuery', () => {
           useValue: { params: params$, queryParams: queryParams$ },
         },
         {
-          provide: EXPERIMENTAL_TYPED_ROUTER,
+          provide: TYPED_ROUTER,
           useValue: { strictRouteParams: true },
         },
       ],

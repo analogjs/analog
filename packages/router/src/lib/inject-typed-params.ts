@@ -8,7 +8,7 @@ import type {
   RouteParamsOutput,
   RouteQueryOutput,
 } from './route-path';
-import { EXPERIMENTAL_TYPED_ROUTER } from './typed-router';
+import { TYPED_ROUTER } from './typed-router';
 
 function extractRouteParams(
   routePath: string,
@@ -40,8 +40,8 @@ export function injectParams<P extends AnalogRoutePath>(
     : inject(ActivatedRoute);
 
   const config = injector
-    ? injector.get(EXPERIMENTAL_TYPED_ROUTER, null)
-    : inject(EXPERIMENTAL_TYPED_ROUTER, { optional: true });
+    ? injector.get(TYPED_ROUTER, null)
+    : inject(TYPED_ROUTER, { optional: true });
   const ancestors = route.pathFromRoot ?? [route];
   const wildcard = ancestors.find((entry) => entry.routeConfig?.path === '**');
   return toSignal(
@@ -89,8 +89,8 @@ export function injectQuery<P extends AnalogRoutePath>(
     : inject(ActivatedRoute);
 
   const config = injector
-    ? injector.get(EXPERIMENTAL_TYPED_ROUTER, null)
-    : inject(EXPERIMENTAL_TYPED_ROUTER, { optional: true });
+    ? injector.get(TYPED_ROUTER, null)
+    : inject(TYPED_ROUTER, { optional: true });
   if (isDevMode() && config?.strictRouteParams) {
     route.params.pipe(take(1)).subscribe((params) => {
       for (const param of extractRouteParams(_from)) {

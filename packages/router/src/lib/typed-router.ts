@@ -6,8 +6,8 @@ export interface TypedRouterOptions {
   strictRouteParams?: boolean;
 }
 
-export const EXPERIMENTAL_TYPED_ROUTER = new InjectionToken<TypedRouterOptions>(
-  'EXPERIMENTAL_TYPED_ROUTER',
+export const TYPED_ROUTER = new InjectionToken<TypedRouterOptions>(
+  'TYPED_ROUTER',
 );
 
 export function withTypedRouter(
@@ -15,6 +15,6 @@ export function withTypedRouter(
 ): RouterFeatures {
   return {
     ɵkind: 102 as number,
-    ɵproviders: [{ provide: EXPERIMENTAL_TYPED_ROUTER, useValue: options }],
+    ɵproviders: [{ provide: TYPED_ROUTER, useValue: options }],
   };
 }
