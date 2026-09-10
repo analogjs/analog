@@ -61,7 +61,6 @@
     "@mdx-js/react": "3.1.1",
     "@nx/angular": "23.2.0",
     "@nx/devkit": "23.2.0",
-    "@standard-schema/spec": "^1.1.0",
     "@trpc/client": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "ajv-formats": "^3.0.1",

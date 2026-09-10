@@ -1,7 +1,7 @@
 // @vitest-environment node
 
 import { describe, it, expect, vi } from 'vitest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import { defineApiRoute } from './define-api-route';
 
 function createMockSchema<T>(

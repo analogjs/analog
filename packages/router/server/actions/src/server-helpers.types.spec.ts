@@ -10,9 +10,16 @@ it('preserves schema inference in the built server actions entry point', () => {
     '../../../../../typed-server-helpers-consumer.ts',
   );
   const source = `
-    import { defineAction, defineApiRoute, json, type PageServerAction } from '@analogjs/router/server/actions';
+    import { defineAction, defineApiRoute, json, type PageServerAction, type StandardSchemaV1 } from '@analogjs/router/server/actions';
     import { z } from 'zod';
     import type { H3Event } from 'h3';
+
+    const countSchema: StandardSchemaV1<string, number> = z.string().transform(Number);
+
+    defineAction({ schema: countSchema, handler: ({ data }) => {
+      const count: number = data;
+      return json({ count });
+    } });
 
     const action: (context: PageServerAction) => Promise<Response> = defineAction({
       schema: z.object({ count: z.string().transform(Number) }),
