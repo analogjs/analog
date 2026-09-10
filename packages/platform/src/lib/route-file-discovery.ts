@@ -37,7 +37,7 @@ export function createRouteFileDiscovery(
   let appLocalFilesCache = new Set<string>();
   let initialized = false;
   const joinDir = (dir: string) =>
-    dir.startsWith(workspaceRoot)
+    isWithinDir(dir, workspaceRoot)
       ? normalizePath(dir)
       : dir.startsWith('/')
         ? normalizePath(`${workspaceRoot}${dir}`)
@@ -47,10 +47,10 @@ export function createRouteFileDiscovery(
 
   function normalizePath_(absolutePath: string): string {
     const normalized = normalizePath(absolutePath);
-    if (normalized.startsWith(root)) {
+    if (isWithinDir(normalized, root)) {
       return normalized.slice(root.length);
     }
-    if (normalized.startsWith(workspaceRoot)) {
+    if (isWithinDir(normalized, workspaceRoot)) {
       return normalized.slice(workspaceRoot.length);
     }
     return normalized;
@@ -60,38 +60,41 @@ export function createRouteFileDiscovery(
     return path === dir || path.startsWith(`${dir}/`);
   }
 
+  function getAppLocalFileKind(path: string): 'route' | 'content' | null {
+    if (
+      path.endsWith('.md') &&
+      ['src/app/routes', 'src/app/pages', 'src/content'].some((dir) =>
+        isWithinDir(path, `${root}/${dir}`),
+      )
+    )
+      return 'content';
+    if (
+      (path.endsWith('.ts') &&
+        ['app/routes', 'src/app/routes'].some((dir) =>
+          isWithinDir(path, `${root}/${dir}`),
+        )) ||
+      (path.endsWith('.page.ts') && isWithinDir(path, `${root}/src/app/pages`))
+    )
+      return 'route';
+    return null;
+  }
+
   function getDiscoveredFileKind(path: string): 'route' | 'content' | null {
     const normalized = normalizePath(path);
-
+    const localKind = getAppLocalFileKind(normalized);
+    if (localKind) return localKind;
     if (
       normalized.endsWith('.md') &&
-      (normalized.includes('/src/app/routes/') ||
-        normalized.includes('/src/app/pages/') ||
-        normalized.includes('/src/content/') ||
-        additionalContentRoots.some((dir) => isWithinDir(normalized, dir)))
+      additionalContentRoots.some((dir) => isWithinDir(normalized, dir))
     ) {
       return 'content';
     }
-
-    if (
-      (normalized.includes('/app/routes/') ||
-        normalized.includes('/src/app/routes/')) &&
-      normalized.endsWith('.ts')
-    ) {
-      return 'route';
-    }
-
-    // Keep the dev watcher aligned with the build-time route scan. In
-    // particular, `src/server/routes/**` must stay out of typed route codegen
-    // because Nitro API handlers are not client-navigable pages.
     if (
       normalized.endsWith('.page.ts') &&
-      (normalized.includes('/src/app/pages/') ||
-        additionalPagesRoots.some((dir) => isWithinDir(normalized, dir)))
+      additionalPagesRoots.some((dir) => isWithinDir(normalized, dir))
     ) {
       return 'route';
     }
-
     return null;
   }
 
@@ -151,7 +154,7 @@ export function createRouteFileDiscovery(
 
   function isAppLocalByPath(absolutePath: string): boolean {
     const normalized = normalizePath(absolutePath);
-    return normalized.startsWith(root);
+    return getAppLocalFileKind(normalized) !== null;
   }
 
   function ensureInitialized(): void {
