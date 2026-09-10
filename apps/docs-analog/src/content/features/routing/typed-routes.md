@@ -45,9 +45,9 @@ Custom output paths must end in `.d.ts` and be included in the relevant tsconfig
 ## Build links and navigate
 
 ```ts
-import { injectNavigate, routePath } from '@analogjs/router';
+import { injectNavigate, toRoute } from '@analogjs/router';
 
-const link = routePath('/products/[id]', { params: { id: '42' } });
+const link = toRoute('/products/[id]', { params: { id: '42' } });
 // link.path is ['/', 'products', '42']
 
 // Inside an Angular injection context:

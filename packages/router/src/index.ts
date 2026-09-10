@@ -42,11 +42,11 @@ export type {
   StandardSchemaV1,
 } from './lib/server-fn/types';
 
-export { routePath } from './lib/route-path';
+export { toRoute } from './lib/to-route';
 export type {
   AnalogRouteTable,
   AnalogRoutePath,
   RoutePathOptions,
-} from './lib/route-path';
+} from './lib/to-route';
 export { injectNavigate } from './lib/inject-navigate';
 export { injectParams, injectQuery } from './lib/inject-typed-params';

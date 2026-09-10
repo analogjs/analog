@@ -1,5 +1,5 @@
 import type { RouteMeta } from '@analogjs/router';
-import { injectLoad, routePath } from '@analogjs/router';
+import { injectLoad, toRoute } from '@analogjs/router';
 import { Component, computed } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -56,7 +56,7 @@ export default class ProductListComponent {
   readonly products = computed(() =>
     this.data().products.map((product) => ({
       ...product,
-      link: routePath('/products/[productId]', {
+      link: toRoute('/products/[productId]', {
         params: { productId: product.id.toString() },
       }),
     })),

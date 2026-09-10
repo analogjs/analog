@@ -12,7 +12,7 @@ import {
  * This module provides:
  * - The `AnalogRouteTable` base interface (augmented by generated code)
  * - The `AnalogRoutePath` union type
- * - The `routePath()` URL builder function
+ * - The `toRoute()` URL builder function
  *
  * Link construction does not require an injection context.
  */
@@ -116,7 +116,7 @@ export type RoutePathArgs<P extends string = string> =
     : [options?: RoutePathOptionsBase];
 
 /**
- * Result of `routePath()` — contains properties that map directly
+ * Result of `toRoute()` — contains properties that map directly
  * to Angular's `[routerLink]`, `[queryParams]`, and `[fragment]` inputs.
  */
 export interface RouteLinkResult {
@@ -132,26 +132,26 @@ export interface RouteLinkResult {
  * direct use with Angular's routerLink directive inputs.
  *
  * @example
- * routePath('/about')
+ * toRoute('/about')
  * // → { path: ['/', 'about'], queryParams: null, fragment: undefined }
  *
- * routePath('/users/[id]', { params: { id: '42' } })
+ * toRoute('/users/[id]', { params: { id: '42' } })
  * // → { path: ['/', 'users', '42'], queryParams: null, fragment: undefined }
  *
- * routePath('/users/[id]', { params: { id: '42' }, query: { tab: 'settings' }, hash: 'bio' })
+ * toRoute('/users/[id]', { params: { id: '42' }, query: { tab: 'settings' }, hash: 'bio' })
  * // → { path: ['/', 'users', '42'], queryParams: { tab: 'settings' }, fragment: 'bio' }
  *
  * @example Template usage
  * Compute the link in the component:
  * ```ts
- * readonly link = routePath('/users/[id]', { params: { id: '42' } });
+ * readonly link = toRoute('/users/[id]', { params: { id: '42' } });
  * ```
  *
  * ```html
  * <a [routerLink]="link.path" [queryParams]="link.queryParams" [fragment]="link.fragment">
  * ```
  */
-export function routePath<P extends AnalogRoutePath>(
+export function toRoute<P extends AnalogRoutePath>(
   path: P,
   ...args: RoutePathArgs<P>
 ): RouteLinkResult {

@@ -4,7 +4,7 @@ import { provideRouter, Route, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { injectParams } from './inject-typed-params';
 import { injectNavigate } from './inject-navigate';
-import { buildRouteLink } from './route-path';
+import { buildRouteLink } from './to-route';
 import { describe, expect, it } from 'vitest';
 
 import { createRoutes } from './routes';

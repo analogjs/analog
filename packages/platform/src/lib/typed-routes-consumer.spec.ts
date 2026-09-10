@@ -78,11 +78,11 @@ describe('typed routing consumer integration', () => {
     writeFileSync(
       join(root, 'src/consumer.ts'),
       `
-      import { routePath, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
-      routePath('/about');
-      routePath('/users/[id]', { params: { id: '42' } });
-      routePath('/docs/[...slug]', { params: { slug: ['a/b'] } });
-      routePath('/shop/[[...category]]');
+      import { toRoute, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
+      toRoute('/about');
+      toRoute('/users/[id]', { params: { id: '42' } });
+      toRoute('/docs/[...slug]', { params: { slug: ['a/b'] } });
+      toRoute('/shop/[[...category]]');
       const params = injectParams('/users/[id]');
       const id: string = params().id;
       const query = injectQuery('/users/[id]');
@@ -91,19 +91,19 @@ describe('typed routing consumer integration', () => {
       navigate('/about', { replaceUrl: true });
       navigate('/users/[id]', { params: { id: '42' } }, { replaceUrl: true });
       // @ts-expect-error unknown route
-      routePath('/missing');
+      toRoute('/missing');
       // @ts-expect-error required params
-      routePath('/users/[id]');
+      toRoute('/users/[id]');
       // @ts-expect-error incorrect param name
-      routePath('/users/[id]', { params: { other: '42' } });
+      toRoute('/users/[id]', { params: { other: '42' } });
       // @ts-expect-error params are raw strings
-      routePath('/users/[id]', { params: { id: 42 } });
+      toRoute('/users/[id]', { params: { id: 42 } });
       // @ts-expect-error catch-all requires an array
-      routePath('/docs/[...slug]', { params: { slug: 'a/b' } });
+      toRoute('/docs/[...slug]', { params: { slug: 'a/b' } });
       // @ts-expect-error optional catch-all still requires an array when present
-      routePath('/shop/[[...category]]', { params: { category: 'shoes' } });
+      toRoute('/shop/[[...category]]', { params: { category: 'shoes' } });
       // @ts-expect-error static route has no params
-      routePath('/about', { params: { id: '42' } });
+      toRoute('/about', { params: { id: '42' } });
       // @ts-expect-error signal params are strings
       const numericId: number = params().id;
       // @ts-expect-error query is not coerced
@@ -205,9 +205,9 @@ describe('typed routing consumer integration', () => {
     writeFileSync(
       join(root, 'src/consumer.ts'),
       `
-      import { routePath, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
+      import { toRoute, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
       // @ts-expect-error route declarations are missing
-      routePath('/about');
+      toRoute('/about');
       // @ts-expect-error route declarations are missing
       injectNavigate()('/about');
       // @ts-expect-error route declarations are missing
@@ -258,12 +258,12 @@ describe('typed routing consumer integration', () => {
       `
       import { Component } from '@angular/core';
       import { RouterLink } from '@angular/router';
-      import { routePath } from '@analogjs/router';
+      import { toRoute } from '@analogjs/router';
       @Component({
         standalone: true, imports: [RouterLink],
-        template: \`<a [routerLink]="routePath('/users/[id]', { params: { id: '42' } }).path">User</a>\`,
+        template: \`<a [routerLink]="toRoute('/users/[id]', { params: { id: '42' } }).path">User</a>\`,
       })
-      export class Consumer { routePath = routePath; }
+      export class Consumer { toRoute = toRoute; }
     `,
     );
     await configure(root);
@@ -290,7 +290,7 @@ describe('typed routing consumer integration', () => {
     const root = fixture();
     writeFileSync(
       join(root, 'src/consumer.ts'),
-      "import { routePath } from '@analogjs/router'; routePath('/new');",
+      "import { toRoute } from '@analogjs/router'; toRoute('/new');",
     );
     const plugin = await configure(root);
     let previous: NgtscProgram | undefined;
@@ -325,7 +325,7 @@ describe('typed routing consumer integration', () => {
     expect(diagnostics().join('\n')).toContain('"/new"');
     writeFileSync(
       join(root, 'src/consumer.ts'),
-      "import { routePath } from '@analogjs/router'; routePath('/renamed');",
+      "import { toRoute } from '@analogjs/router'; toRoute('/renamed');",
     );
     expect(diagnostics()).toEqual([]);
     rmSync(renamed);

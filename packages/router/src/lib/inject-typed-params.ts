@@ -7,7 +7,7 @@ import type {
   AnalogRoutePath,
   RouteParamsOutput,
   RouteQueryOutput,
-} from './route-path';
+} from './to-route';
 
 function extractRouteParams(
   routePath: string,

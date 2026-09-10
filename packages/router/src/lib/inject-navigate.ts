@@ -5,8 +5,8 @@ import type {
   AnalogRoutePath,
   RoutePathArgs,
   RoutePathOptionsBase,
-} from './route-path';
-import { buildUrl } from './route-path';
+} from './to-route';
+import { buildUrl } from './to-route';
 
 type NavigateWithExtrasArgs<P extends AnalogRoutePath> =
   [] extends RoutePathArgs<P>

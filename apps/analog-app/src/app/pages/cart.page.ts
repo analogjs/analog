@@ -1,4 +1,4 @@
-import { routePath } from '@analogjs/router';
+import { toRoute } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -42,7 +42,7 @@ export default class CartComponent {
   private readonly cartService = inject(CartService);
   private readonly formBuilder = inject(FormBuilder);
 
-  readonly shippingLink = routePath('/shipping');
+  readonly shippingLink = toRoute('/shipping');
   items = this.cartService.getItems();
 
   checkoutForm = this.formBuilder.group({

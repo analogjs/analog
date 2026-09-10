@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { describe, expect, it } from 'vitest';
 
-import { buildUrl, buildRouteLink } from './route-path';
+import { buildUrl, buildRouteLink } from './to-route';
 
-// Test the internal buildUrl directly since routePath's type
+// Test the internal buildUrl directly since toRoute's type
 // constraints depend on the generated route table augmentation.
 describe('buildUrl', () => {
   describe('static routes', () => {
@@ -194,7 +194,7 @@ describe('buildUrl', () => {
   });
 });
 
-// Test buildRouteLink directly (same logic as routePath, without generic constraints).
+// Test buildRouteLink directly (same logic as toRoute, without generic constraints).
 describe('buildRouteLink', () => {
   it('should return path only for static routes', () => {
     expect(buildRouteLink('/about')).toEqual({
