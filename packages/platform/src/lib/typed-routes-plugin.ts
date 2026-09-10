@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
+import { readConfiguration } from '@angular/compiler-cli';
 import { parseSync } from 'oxc-parser';
 import { normalizePath, type Plugin } from 'vite';
 
@@ -13,7 +14,7 @@ import {
 } from './route-manifest.js';
 
 export interface TypedRouterOptions {
-  /** Generated module path, relative to the app root. */
+  /** Generated declaration path (.d.ts), relative to the app root. */
   outFile?: string;
   /** Fail builds when a checked-in route table is stale. Defaults to true. */
   verifyOnBuild?: boolean;
@@ -27,42 +28,38 @@ export interface TypedRoutesPluginOptions extends TypedRouterOptions {
 
 export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
   const workspaceRoot = normalizePath(options.workspaceRoot ?? process.cwd());
-  const outFile = options.outFile ?? 'src/routeTree.gen.ts';
+  const outFile = options.outFile ?? 'src/routeTree.gen.d.ts';
+  if (!outFile.endsWith('.d.ts')) {
+    throw new Error(
+      '[analog] Typed routing outFile must end in .d.ts. Include this declaration in your application tsconfig.',
+    );
+  }
   let root: string;
   let command: 'build' | 'serve';
   let discovery: RouteFileDiscovery;
 
-  function ensureEntryImport(): void {
-    for (const entry of ['src/main.ts', 'src/main.server.ts']) {
-      const entryPath = join(root, entry);
-      if (!existsSync(entryPath)) continue;
-      let specifier = normalizePath(
-        relative(dirname(entryPath), join(root, outFile)),
-      ).replace(/\.ts$/, '');
-      if (!specifier.startsWith('.')) specifier = './' + specifier;
-      const source = readFileSync(entryPath, 'utf8');
-      const { program, errors } = parseSync(entryPath, source);
-      if (errors.length)
-        throw new Error(
-          `[analog] Cannot add typed route import to invalid entry: ${entry}`,
-        );
-      const hasImport = program.body.some(
-        (node) =>
-          node.type === 'ImportDeclaration' &&
-          node.source.value.replace(/\.(ts|js)$/, '') === specifier,
+  let getTsConfigPath: (() => string) | undefined;
+
+  function verifyTypeInclusion(): void {
+    if (!getTsConfigPath) return;
+    const tsconfig = getTsConfigPath();
+    const { rootNames, errors } = readConfiguration(tsconfig);
+    if (errors.length) {
+      throw new Error(
+        `[analog] Cannot verify typed routing: unable to read ${tsconfig}.`,
       );
-      if (!hasImport) {
-        // Append a type-only import after complete statements, never inside a multiline import.
-        writeFileSync(
-          entryPath,
-          `${source}\nimport type {} from '${specifier}';\n`,
-        );
-      }
-      return;
     }
-    throw new Error(
-      '[analog] Typed routing requires src/main.ts or src/main.server.ts to include the generated route table.',
-    );
+    const outputPath = normalizePath(resolve(root, outFile));
+    if (
+      !rootNames.some((file) => normalizePath(resolve(file)) === outputPath)
+    ) {
+      const declaration = normalizePath(
+        relative(dirname(tsconfig), outputPath),
+      );
+      throw new Error(
+        `[analog] Typed route declaration is not included in ${tsconfig}. Add "${declaration}" to its "files" or "include" list so typed routing is available to the compiler and editor.`,
+      );
+    }
   }
 
   function generate(): void {
@@ -91,7 +88,6 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       mkdirSync(dirname(outputPath), { recursive: true });
       writeFileSync(outputPath, output);
     }
-    ensureEntryImport();
   }
 
   return {
@@ -105,14 +101,30 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         additionalPagesDirs: options.additionalPagesDirs ?? [],
         additionalContentDirs: options.additionalContentDirs ?? [],
       });
-      // Include the augmentation before Angular creates its TypeScript program.
+      // Generate before Angular reads the application tsconfig.
       generate();
+    },
+    configResolved(config) {
+      const compiler = config.plugins.find(
+        (plugin) =>
+          plugin.name === '@analogjs/vite-plugin-angular' ||
+          plugin.name === '@analogjs/vite-plugin-angular-fast-compile',
+      );
+      getTsConfigPath = compiler?.api?.getTsConfigPath;
+      if (compiler && !getTsConfigPath) {
+        throw new Error(
+          '[analog] Typed routing requires a matching @analogjs/vite-plugin-angular version to verify the application tsconfig.',
+        );
+      }
+      verifyTypeInclusion();
     },
     buildStart() {
       discovery.reset();
       generate();
+      verifyTypeInclusion();
     },
     configureServer(server) {
+      server.watcher.add(join(root, outFile));
       for (const event of ['add', 'change', 'unlink'] as const) {
         server.watcher.on(event, (path) => {
           if (!discovery.getDiscoveredFileKind(path)) return;
@@ -125,8 +137,8 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
 }
 
 function sameDeclarations(current: string, output: string): boolean {
-  const left = parseSync('routeTree.gen.ts', current);
-  const right = parseSync('routeTree.gen.ts', output);
+  const left = parseSync('routeTree.gen.d.ts', current);
+  const right = parseSync('routeTree.gen.d.ts', output);
   if (left.errors.length || right.errors.length) return false;
   const withoutFormatting = (key: string, value: unknown) =>
     key === 'start' || key === 'end' || key === 'raw' ? undefined : value;

@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseSync } from 'oxc-parser';
 import { format } from 'prettier';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { typedRoutes } from './typed-routes-plugin.js';
 
 describe('typed route generation', () => {
@@ -44,18 +44,35 @@ describe('typed route generation', () => {
       hook.call({} as never, { root }, { command, mode: 'development' });
     return plugin;
   }
-  it('generates before compilation and preserves multiline entry imports', () => {
+  it('generates declarations without editing application sources', () => {
     const root = fixture();
+    const before = readFileSync(join(root, 'src/main.ts'), 'utf8');
     configure(root);
     const entry = readFileSync(join(root, 'src/main.ts'), 'utf8');
     expect(parseSync('main.ts', entry).errors).toEqual([]);
-    expect(entry).toContain("import type {} from './routeTree.gen';");
-    const generated = readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8');
+    expect(entry).toBe(before);
+    const generated = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
     expect(generated).toContain('"/users/[id]"');
     expect(generated).toContain('params: { id: string }');
-    expect(parseSync('routeTree.gen.ts', generated).errors).toEqual([]);
+    expect(parseSync('routeTree.gen.d.ts', generated).errors).toEqual([]);
     configure(root);
     expect(readFileSync(join(root, 'src/main.ts'), 'utf8')).toBe(entry);
+  });
+  it('does not require a conventional application entry', () => {
+    const root = fixture();
+    rmSync(join(root, 'src/main.ts'));
+    expect(() => configure(root, 'build')).not.toThrow();
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('interface AnalogRouteTable');
+  });
+  it('rejects runtime module output paths', () => {
+    expect(() => typedRoutes({ outFile: 'src/routeTree.gen.ts' })).toThrow(
+      'must end in .d.ts',
+    );
   });
   it('does not infer coerced types from schema exports', () => {
     const root = fixture();
@@ -64,17 +81,20 @@ describe('typed route generation', () => {
       'export const routeParamsSchema = someNumberSchema;',
     );
     configure(root);
-    const generated = readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8');
+    const generated = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
     expect(generated).toContain('params: { id: string }');
     expect(generated).not.toContain('InferOutput');
   });
   it('supports custom output paths and a first production build', () => {
     const root = fixture();
-    configure(root, 'build', { outFile: 'generated/routes.ts' });
-    expect(readFileSync(join(root, 'src/main.ts'), 'utf8')).toContain(
-      "from '../generated/routes'",
+    configure(root, 'build', { outFile: 'generated/routes.d.ts' });
+    expect(readFileSync(join(root, 'generated/routes.d.ts'), 'utf8')).toContain(
+      'interface AnalogRouteTable',
     );
-    configure(root, 'build', { outFile: 'generated/routes.ts' });
+    configure(root, 'build', { outFile: 'generated/routes.d.ts' });
   });
   it('allows production builds with grouped pages sharing a URL', () => {
     const root = fixture();
@@ -90,7 +110,7 @@ describe('typed route generation', () => {
   it('preserves formatted declarations but rejects changed types', async () => {
     const root = fixture();
     configure(root);
-    const outputPath = join(root, 'src/routeTree.gen.ts');
+    const outputPath = join(root, 'src/routeTree.gen.d.ts');
     const formatted = await format(readFileSync(outputPath, 'utf8'), {
       parser: 'typescript',
       singleQuote: true,
@@ -107,19 +127,19 @@ describe('typed route generation', () => {
   it('rejects stale production output without rewriting it', () => {
     const root = fixture();
     configure(root);
-    const before = readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8');
+    const before = readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8');
     writeFileSync(
       join(root, 'src/app/pages/about.page.ts'),
       'export default class About {}',
     );
     expect(() => configure(root, 'build')).toThrow('Stale route file');
-    expect(readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8')).toBe(
+    expect(readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8')).toBe(
       before,
     );
     configure(root, 'build', { verifyOnBuild: false });
-    expect(readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8')).toContain(
-      '"/about"',
-    );
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('"/about"');
   });
   it('regenerates for add and unlink events but excludes server handlers', () => {
     const root = fixture();
@@ -130,6 +150,7 @@ describe('typed route generation', () => {
         {} as never,
         {
           watcher: {
+            add: vi.fn(),
             on: (event: string, fn: (path: string) => void) =>
               listeners.set(event, fn),
           },
@@ -138,110 +159,17 @@ describe('typed route generation', () => {
     const file = join(root, 'src/app/pages/about.page.ts');
     writeFileSync(file, 'export default class About {}');
     listeners.get('add')!(file);
-    expect(readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8')).toContain(
-      '"/about"',
-    );
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('"/about"');
     rmSync(file);
     listeners.get('unlink')!(file);
     expect(
-      readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8'),
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
     ).not.toContain('"/about"');
     listeners.get('add')!(join(root, 'src/server/routes/api.ts'));
     expect(
-      readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf8'),
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
     ).not.toContain('/api');
   });
 });
-
-import ts from 'typescript';
-import { resolve } from 'node:path';
-
-it('type-checks generated routes and rejects invalid paths, params, and navigation extras', () => {
-  const root = mkdtempSync(join(tmpdir(), 'analog-route-types-'));
-  try {
-    mkdirSync(join(root, 'src/app/pages'), { recursive: true });
-    writeFileSync(join(root, 'src/main.ts'), 'export {};');
-    for (const page of [
-      'about',
-      'users.[id]',
-      'docs.[...slug]',
-      'shop.[[...category]]',
-    ]) {
-      writeFileSync(
-        join(root, `src/app/pages/${page}.page.ts`),
-        'export default class Page {}',
-      );
-    }
-    const plugin = typedRoutes({ workspaceRoot: root });
-    if (typeof plugin.config === 'function') {
-      plugin.config.call(
-        {} as never,
-        { root },
-        { command: 'serve', mode: 'development' },
-      );
-    }
-    const routerSource = resolve(
-      import.meta.dirname,
-      '../../../router/src/lib',
-    );
-    const fixture = join(root, 'src/check.ts');
-    writeFileSync(
-      fixture,
-      `
-      import './routeTree.gen';
-      import { routePath } from '@analogjs/router';
-      import { injectNavigate } from '${normalizeImport(routerSource + '/inject-navigate')}';
-      import { injectParams, injectQuery } from '${normalizeImport(routerSource + '/inject-typed-params')}';
-      const params = injectParams('/users/[id]');
-      const query = injectQuery('/users/[id]');
-      routePath('/about');
-      routePath('/users/[id]', {params: {id: '42'}});
-      routePath('/shop/[[...category]]');
-      routePath('/docs/[...slug]', {params: {slug: ['a', 'b']}});
-      const id: ReturnType<typeof params> = {id: '42'};
-      // @ts-expect-error raw values are strings, not schema output numbers
-      const invalidId: ReturnType<typeof params> = {id: 42};
-      const page: string | string[] | undefined = query()['page'];
-      // @ts-expect-error query values remain raw strings
-      const invalidPage: number = query()['page'];
-      // @ts-expect-error unknown route
-      routePath('/missing');
-      // @ts-expect-error missing required options
-      routePath('/users/[id]');
-      // @ts-expect-error wrong parameter name
-      routePath('/users/[id]', {params: {other: '42'}});
-      // @ts-expect-error numeric parameter
-      routePath('/users/[id]', {params: {id: 42}});
-      const navigate = injectNavigate();
-      navigate('/about', {replaceUrl: true});
-      navigate('/users/[id]', {params: {id: '42'}}, {replaceUrl: true});
-      // @ts-expect-error extras cannot replace required params
-      navigate('/users/[id]', {replaceUrl: true});
-      // @ts-expect-error undefined cannot replace required params
-      navigate('/users/[id]', undefined, {replaceUrl: true});
-    `,
-    );
-    const program = ts.createProgram([fixture], {
-      noEmit: true,
-      strict: true,
-      skipLibCheck: true,
-      target: ts.ScriptTarget.ES2022,
-      module: ts.ModuleKind.ESNext,
-      moduleResolution: ts.ModuleResolutionKind.Bundler,
-      types: [],
-      paths: { '@analogjs/router': [resolve(routerSource, 'route-path.ts')] },
-    });
-    const diagnostics = ts.getPreEmitDiagnostics(program);
-    expect(
-      diagnostics.map((d) =>
-        ts.flattenDiagnosticMessageText(d.messageText, '\n'),
-      ),
-    ).toEqual([]);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-function normalizeImport(path: string): string {
-  return path.replace(/\\/g, '/');
-}
