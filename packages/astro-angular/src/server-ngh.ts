@@ -29,6 +29,7 @@ import {
   createInputBindings,
   getComponentElementTag,
 } from './create-component.ts';
+import { buildProjectableNodes } from './projection.ts';
 
 const require = createRequire(import.meta.url);
 let jsActionContractScript: string | undefined = undefined;
@@ -57,7 +58,7 @@ async function renderToStaticMarkup(
     hydrationFeatures?: () => HydrationFeature<HydrationFeatureKind>[];
   },
   props: Record<string, unknown>,
-  _children: unknown,
+  children: unknown,
   metadata?: AstroComponentMetadata,
 ) {
   const mirror = reflectComponentType(Component);
@@ -84,6 +85,7 @@ async function renderToStaticMarkup(
   document.body.innerHTML = `${getHydrationScript()}<${elementTag} ${ID_PROP_NAME}="${ngAppId}"></${elementTag}>`;
 
   const hostElement = document.querySelector(elementTag) as Element;
+  const projectableNodes = buildProjectableNodes(mirror, children, document);
 
   const bootstrap = async (context?: BootstrapContext) => {
     const appRef = await createApplication(
@@ -108,6 +110,7 @@ async function renderToStaticMarkup(
     const componentRef = createComponent(Component, {
       environmentInjector: appRef.injector,
       hostElement,
+      projectableNodes,
       bindings: createInputBindings(mirror, props),
     });
 

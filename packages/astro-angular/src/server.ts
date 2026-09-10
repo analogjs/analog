@@ -23,6 +23,7 @@ import {
   createInputBindings,
   getComponentElementTag,
 } from './create-component.ts';
+import { buildProjectableNodes } from './projection.ts';
 
 function check(
   Component: ComponentType<unknown>,
@@ -37,7 +38,7 @@ async function renderToStaticMarkup(
     renderProviders: (Provider | EnvironmentProviders)[];
   },
   props: Record<string, unknown>,
-  _children: unknown,
+  children: unknown,
 ) {
   const mirror = reflectComponentType(Component);
 
@@ -53,6 +54,7 @@ async function renderToStaticMarkup(
   document.body.innerHTML = `<${elementTag}></${elementTag}>`;
 
   const hostElement = document.querySelector(elementTag) as Element;
+  const projectableNodes = buildProjectableNodes(mirror, children, document);
 
   const bootstrap = async (context?: BootstrapContext) => {
     const appRef = await createApplication(
@@ -70,6 +72,7 @@ async function renderToStaticMarkup(
     const componentRef = createComponent(Component, {
       environmentInjector: appRef.injector,
       hostElement,
+      projectableNodes,
       bindings: createInputBindings(mirror, props),
     });
 

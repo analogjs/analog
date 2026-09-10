@@ -428,7 +428,46 @@ import { HelloComponent } from "../../components/hello.component.ts";
 
 > Important: In `.mdx` files the component import must end with the `.ts` suffix. Otherwise the dynamic import of the component will fail and the component won't be hydrated.
 
+## Content Projection
+
+Children passed to an Angular component in an Astro file are projected into the component's `ng-content` slots. Angular's own `select` semantics apply, so existing components work unchanged.
+
+```ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-card',
+  template: `
+    <div class="card">
+      <div class="card__header">
+        <ng-content select="[question]"></ng-content>
+      </div>
+      <div class="card__body">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  `,
+})
+export class CardComponent {}
+```
+
+```astro
+---
+import { CardComponent } from '../components/card.component';
+---
+
+<CardComponent client:visible>
+  <p question>Is content projection cool?</p>
+  <p>Let's learn about content projection!</p>
+</CardComponent>
+```
+
+Content that does not match any `select` is projected into the default `<ng-content>`. Without a default slot it is dropped, as in Angular.
+
+Astro's `slot` attribute is not needed to target a slot. Astro removes the attribute before rendering, so use Angular selectors such as attributes, classes, or element names instead.
+
+> Note: for hydrated islands, Astro also emits the projected content in an inert `<template data-astro-template>` so it is available on the client. The slot markup therefore appears twice in the HTML response of hydrated components.
+
 ## Current Limitations
 
 - Only standalone Angular components in version v14.2+ are supported
-- Content projection to island components is not supported
