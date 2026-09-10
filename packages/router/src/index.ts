@@ -43,6 +43,7 @@ export type {
 } from './lib/server-fn/types';
 
 export { toRoute } from './lib/to-route';
+export { LinkTo } from './lib/link-to.directive';
 export type {
   AnalogRouteTable,
   AnalogRoutePath,

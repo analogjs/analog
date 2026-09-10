@@ -1,8 +1,7 @@
 import type { RouteMeta } from '@analogjs/router';
-import { injectLoad, toRoute } from '@analogjs/router';
-import { Component, computed } from '@angular/core';
+import { injectLoad, LinkTo } from '@analogjs/router';
+import { Component } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 
 import { ProductAlertsComponent } from '../product-alerts/product-alerts.component';
 import type { load } from './(home).server';
@@ -13,16 +12,19 @@ export const routeMeta: RouteMeta = {
 
 @Component({
   selector: 'analogjs-product-list',
-  imports: [ProductAlertsComponent, RouterLink],
+  imports: [ProductAlertsComponent, LinkTo],
   template: `
     <h2>Products</h2>
 
-    @for (product of products(); track product.id) {
+    @for (product of data().products; track product.id) {
       <div>
         <h3>
           <a
             [title]="product.name + ' details'"
-            [routerLink]="product.link.path"
+            [linkTo]="{
+              path: '/products/[productId]',
+              params: { productId: product.id.toString() },
+            }"
           >
             {{ product.name }}
           </a>
@@ -50,17 +52,9 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class ProductListComponent {
-  private readonly data = toSignal(injectLoad<typeof load>(), {
+  readonly data = toSignal(injectLoad<typeof load>(), {
     requireSync: true,
   });
-  readonly products = computed(() =>
-    this.data().products.map((product) => ({
-      ...product,
-      link: toRoute('/products/[productId]', {
-        params: { productId: product.id.toString() },
-      }),
-    })),
-  );
 
   share() {
     window.alert('The product has been shared!');

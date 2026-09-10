@@ -251,6 +251,63 @@ describe('typed routing consumer integration', () => {
     expect(compile(root).messages).toEqual([]);
   });
 
+  it.each([
+    [
+      'valid destinations',
+      `<a [linkTo]="{ path: '/about' }"></a>
+      <a [linkTo]="{ path: '/users/[id]', params: { id: '42' }, query: { tab: 'bio' }, hash: 'details' }" routerLinkActive="active"></a>
+      <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b'] } }"></a>
+      <a [linkTo]="{ path: '/shop/[[...category]]' }"></a>
+      <a [linkTo]="null"></a>`,
+      false,
+    ],
+    ['unknown path', `<a [linkTo]="{ path: '/missing' }"></a>`, true],
+    ['missing params', `<a [linkTo]="{ path: '/users/[id]' }"></a>`, true],
+    [
+      'wrong param name',
+      `<a [linkTo]="{ path: '/users/[id]', params: { other: '42' } }"></a>`,
+      true,
+    ],
+    [
+      'wrong param type',
+      `<a [linkTo]="{ path: '/users/[id]', params: { id: 42 } }"></a>`,
+      true,
+    ],
+    [
+      'catch-all string',
+      `<a [linkTo]="{ path: '/docs/[...slug]', params: { slug: 'a/b' } }"></a>`,
+      true,
+    ],
+    [
+      'static route params',
+      `<a [linkTo]="{ path: '/about', params: { id: '42' } }"></a>`,
+      true,
+    ],
+  ])('checks LinkTo templates: %s', async (_name, template, invalid) => {
+    const root = fixture();
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { Component } from '@angular/core';
+      import { RouterLinkActive } from '@angular/router';
+      import { LinkTo } from '@analogjs/router';
+      @Component({ standalone: true, imports: [LinkTo, RouterLinkActive], template: \`${template}\` })
+      export class Consumer {}
+    `,
+    );
+    await configure(root);
+    const messages = compile(root).messages;
+    if (invalid) {
+      expect(messages.join('\n')).toMatch(
+        /not assignable|missing|does not exist/,
+      );
+    } else {
+      expect(messages).toEqual([]);
+      rmSync(join(root, 'src/routeTree.gen.d.ts'));
+      expect(compile(root).messages.join('\n')).toContain('not assignable');
+    }
+  });
+
   it('checks typed route calls in Angular templates', async () => {
     const root = fixture();
     writeFileSync(

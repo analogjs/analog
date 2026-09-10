@@ -42,6 +42,24 @@ analog({
 
 Custom output paths must end in `.d.ts` and be included in the relevant tsconfigs.
 
+## Declarative links
+
+Import `LinkTo` from `@analogjs/router` into your component's `imports` and bind a destination to `[linkTo]`:
+
+```html
+<a [linkTo]="{ path: '/shipping' }">Shipping</a>
+<a
+  [linkTo]="{ path: '/products/[id]', params: { id: product.id.toString() } }"
+  routerLinkActive="active"
+>
+  Details
+</a>
+```
+
+The generated route table checks the path and its required parameters together. Use `query` and `hash` in the destination for query parameters and fragments. Binding `null` or `undefined` disables the link.
+
+`LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
+
 ## Build links and navigate
 
 ```ts

@@ -1,19 +1,18 @@
-import { toRoute } from '@analogjs/router';
+import { LinkTo } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 
 import { CartService } from '../cart.service';
 
 @Component({
   selector: 'analogjs-cart',
-  imports: [RouterLink, CurrencyPipe, ReactiveFormsModule],
+  imports: [LinkTo, CurrencyPipe, ReactiveFormsModule],
   template: `
     <h3>Cart</h3>
 
     <p>
-      <a [routerLink]="shippingLink.path">Shipping Prices</a>
+      <a [linkTo]="{ path: '/shipping' }">Shipping Prices</a>
     </p>
 
     @for (item of items; track $index) {
@@ -42,7 +41,6 @@ export default class CartComponent {
   private readonly cartService = inject(CartService);
   private readonly formBuilder = inject(FormBuilder);
 
-  readonly shippingLink = toRoute('/shipping');
   items = this.cartService.getItems();
 
   checkoutForm = this.formBuilder.group({
