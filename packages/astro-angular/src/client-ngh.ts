@@ -6,7 +6,6 @@ import {
   Type,
   APP_ID,
   createComponent,
-  APP_BOOTSTRAP_LISTENER,
 } from '@angular/core';
 import {
   createApplication,
@@ -17,6 +16,7 @@ import {
 import {
   createComponentBindings,
   getComponentElementTag,
+  registerRootComponent,
 } from './create-component.ts';
 import { ID_PROP_NAME } from './id.ts';
 import { ensureSsrIntegrityMarker } from './ssr-integrity.ts';
@@ -73,13 +73,7 @@ export default (element: HTMLElement) => {
           bindings: createComponentBindings(mirror, props, hostElement),
         });
 
-        appRef.attachView(componentRef.hostView);
-
-        appRef.components.push(componentRef);
-
-        appRef.injector
-          .get(APP_BOOTSTRAP_LISTENER, [])
-          .forEach((cb) => cb(componentRef));
+        registerRootComponent(appRef, componentRef);
       })
       .catch((error) => {
         console.error('Failed to hydrate Angular component:', error);

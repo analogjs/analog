@@ -28,6 +28,7 @@ import { ID_PROP_NAME } from './id.ts';
 import {
   createInputBindings,
   getComponentElementTag,
+  registerRootComponent,
 } from './create-component.ts';
 import { buildProjectableNodes } from './projection.ts';
 
@@ -114,8 +115,7 @@ async function renderToStaticMarkup(
       bindings: createInputBindings(mirror, props),
     });
 
-    appRef.attachView(componentRef.hostView);
-    appRef.components.push(componentRef);
+    registerRootComponent(appRef, componentRef);
 
     return appRef;
   };

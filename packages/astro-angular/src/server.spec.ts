@@ -1,5 +1,5 @@
 import '@angular/compiler';
-import { Component } from '@angular/core';
+import { APP_BOOTSTRAP_LISTENER, Component } from '@angular/core';
 import type { SSRResult } from 'astro';
 import server from './server';
 import serverNgh from './server-ngh';
@@ -93,5 +93,45 @@ describe.each(renderers)('%s renderToStaticMarkup', (_name, render) => {
     const { html } = await render({}, {});
 
     expect(html).toMatch(/<div class="card__body">Fallback<\/div>/);
+  });
+});
+
+describe('APP_BOOTSTRAP_LISTENER', () => {
+  const listener = vi.fn();
+
+  const ListenerComponent = Component({
+    selector: 'app-listener',
+    template: `<p>Listener</p>`,
+  })(
+    class ListenerComponent {
+      static renderProviders = [
+        { provide: APP_BOOTSTRAP_LISTENER, useValue: listener, multi: true },
+      ];
+    },
+  );
+
+  beforeEach(() => listener.mockClear());
+
+  it('server should invoke bootstrap listeners with the component ref', async () => {
+    await server.renderToStaticMarkup(ListenerComponent as any, {}, {});
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].instance).toBeInstanceOf(
+      ListenerComponent,
+    );
+  });
+
+  it('server-ngh should invoke bootstrap listeners with the component ref', async () => {
+    await serverNgh.renderToStaticMarkup.call(
+      { result: {} as SSRResult },
+      ListenerComponent,
+      {},
+      {},
+    );
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].instance).toBeInstanceOf(
+      ListenerComponent,
+    );
   });
 });
