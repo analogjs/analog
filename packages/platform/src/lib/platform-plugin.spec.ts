@@ -68,4 +68,31 @@ describe('platformPlugin', () => {
       nitroOptions.routeRules['/streamed'].headers['x-analog-no-streaming'],
     ).toBeUndefined();
   });
+  it.each([undefined, false])(
+    'leaves route generation disabled for %s',
+    async (typedRouter) => {
+      const { platformPlugin } = await setup();
+      const plugins = platformPlugin({ experimental: { typedRouter } });
+      expect(
+        plugins.some((plugin) => plugin?.name === 'analog-typed-routes'),
+      ).toBe(false);
+    },
+  );
+
+  it.each([
+    {},
+    { vite: false },
+    { vite: { fastCompile: true } },
+    { vite: { experimental: { useAngularCompilationAPI: true } } },
+  ])(
+    'adds code generation before compiler plugins with %j',
+    async (options) => {
+      const { platformPlugin } = await setup();
+      const plugins = platformPlugin({
+        ...options,
+        experimental: { typedRouter: true },
+      });
+      expect(plugins[0].name).toBe('analog-typed-routes');
+    },
+  );
 });

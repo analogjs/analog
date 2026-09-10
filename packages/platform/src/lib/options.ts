@@ -154,6 +154,10 @@ export interface Options {
    * Opt-in experimental features that are not yet stable.
    */
   experimental?: {
+    /** Opt into generated route types and typed navigation helpers. */
+    typedRouter?:
+      | boolean
+      | import('./typed-routes-plugin.js').TypedRouterOptions;
     /**
      * Opt into progressive streaming SSR. When enabled, the SSR build patches
      * `@angular/core` with a per-`@defer` block resolution hook so
