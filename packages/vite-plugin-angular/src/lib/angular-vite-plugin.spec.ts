@@ -1075,7 +1075,7 @@ describe('encapsulation plugin', () => {
 // =============================================================================
 // hasComponent detection
 //
-// When useAngularCompilationAPI is enabled, the Vite transform hook receives
+// When angularCompilationPlugin is enabled, the Vite transform hook receives
 // already-compiled code (decorators stripped), so hasComponent is always false.
 // This suite is behavior documentation for both compilation paths rather than
 // a regression harness for `hasComponent`.
@@ -1092,7 +1092,7 @@ describe('hasComponent detection behavior docs', () => {
     expect(rawTs.includes('@Component')).toBe(true);
   });
 
-  it('documents missing @Component detection in compiled output (useAngularCompilationAPI path)', () => {
+  it('documents missing @Component detection in compiled output (angularCompilationPlugin path)', () => {
     // Simulates what the Vite transform hook sees after Angular compilation.
     // `@Component` becomes `ɵɵdefineComponent()`, so the naive string check
     // returns false. This is expected documented behavior for that path.

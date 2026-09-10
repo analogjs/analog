@@ -119,16 +119,13 @@ async function setupLiveReloadPlugin(options: {
     };
   });
 
-  const { angular } = await import('./angular-vite-plugin');
-  const plugin = angular({
+  const { angularCompilationPlugin } = await import('./compilation-api/index');
+  const plugin = angularCompilationPlugin({
     liveReload: true,
     include: options.include,
     tsconfig: resolvedTsconfig,
     inlineStylesExtension: 'css',
     workspaceRoot: resolvedWorkspaceRoot,
-    experimental: {
-      useAngularCompilationAPI: true,
-    },
   }).find(
     (entry) => entry.name === '@analogjs/vite-plugin-angular-compilation-api',
   ) as any;

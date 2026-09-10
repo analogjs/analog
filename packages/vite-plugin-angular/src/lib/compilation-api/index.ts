@@ -1,4 +1,4 @@
 export {
-  compilationAPIPlugin,
-  type CompilationAPIPluginOptions,
+  angularCompilationPlugin,
+  type AngularCompilationPluginOptions,
 } from './compilation-api-plugin.js';

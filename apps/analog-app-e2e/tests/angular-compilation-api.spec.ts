@@ -23,9 +23,7 @@ test.afterAll(() => cleanup());
 test.beforeEach(() => cleanup());
 
 test.describe('Angular Compilation API', () => {
-  test('serves the home page (confirms dev server is using useAngularCompilationAPI)', async ({
-    page,
-  }) => {
+  test('serves the home page', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('h2').first()).toContainText('Products');
   });

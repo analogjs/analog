@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import angular from '@analogjs/vite-plugin-angular';
+import { angularCompilationPlugin } from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
@@ -26,11 +26,8 @@ export default defineConfig(() => {
           highlighter: 'shiki',
         },
       }),
-      angular({
+      angularCompilationPlugin({
         liveReload: true,
-        experimental: {
-          useAngularCompilationAPI: true,
-        },
       }),
       nitro(),
     ],

@@ -11,13 +11,40 @@ const originalVitestEnv = process.env['VITEST'];
 let cachedViteActual: typeof import('vite');
 let cachedDevkitActual: typeof import('../utils/devkit.js');
 
-describe('compilationAPIPlugin', () => {
+describe('angularCompilationPlugin', () => {
   let tempRoot: string;
+  let angularCompilationPlugin: typeof import('../../index.js').angularCompilationPlugin;
+
+  function getCompilerPlugin(
+    options: Parameters<typeof angularCompilationPlugin>[0],
+  ) {
+    return angularCompilationPlugin(options).find(
+      (plugin) =>
+        plugin.name === '@analogjs/vite-plugin-angular-compilation-api',
+    )!;
+  }
+
+  async function configure(plugin: ReturnType<typeof getCompilerPlugin>) {
+    await (plugin.config as any)(
+      { root: tempRoot, mode: 'development' },
+      { command: 'serve', mode: 'development' },
+    );
+    await (plugin.configResolved as any)({
+      root: tempRoot,
+      cacheDir: join(tempRoot, '.vite'),
+      mode: 'development',
+      build: {},
+      server: { hmr: true },
+      plugins: [],
+    });
+  }
 
   beforeEach(async () => {
     process.env['NODE_ENV'] = 'development';
     delete process.env['VITEST'];
     vi.resetModules();
+    createAngularCompilationMock.mockReset();
+    preprocessCSSMock.mockReset();
 
     tempRoot = mkdtempSync(join(tmpdir(), 'analog-compilation-api-'));
     writeFileSync(
@@ -47,6 +74,7 @@ describe('compilationAPIPlugin', () => {
       angularFullVersion: 200100,
       createAngularCompilation: createAngularCompilationMock,
     }));
+    ({ angularCompilationPlugin } = await import('../../index.js'));
   });
 
   afterEach(() => {
@@ -54,6 +82,8 @@ describe('compilationAPIPlugin', () => {
     if (originalVitestEnv !== undefined) {
       process.env['VITEST'] = originalVitestEnv;
     }
+    vi.doUnmock('vite');
+    vi.doUnmock('../utils/devkit.js');
     vi.restoreAllMocks();
     if (tempRoot) {
       try {
@@ -65,10 +95,8 @@ describe('compilationAPIPlugin', () => {
   });
 
   it('creates a plugin with the correct name and enforce', async () => {
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -76,8 +104,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -86,10 +112,8 @@ describe('compilationAPIPlugin', () => {
   });
 
   it('has required Vite plugin hooks', async () => {
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -97,8 +121,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -114,10 +136,8 @@ describe('compilationAPIPlugin', () => {
   });
 
   it('config hook disables esbuild/oxc', async () => {
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -125,8 +145,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -156,10 +174,8 @@ describe('compilationAPIPlugin', () => {
       emitAffectedFiles: emitAffectedFilesMock,
     });
 
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -167,8 +183,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -197,10 +211,8 @@ describe('compilationAPIPlugin', () => {
 
   it('hands the stylesheet registry to analog.setup configurators', async () => {
     const configure = vi.fn();
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -208,8 +220,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -268,10 +278,8 @@ describe('compilationAPIPlugin', () => {
       emitAffectedFiles: vi.fn().mockResolvedValue([]),
     });
 
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -279,8 +287,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -346,10 +352,8 @@ describe('compilationAPIPlugin', () => {
       emitAffectedFiles: emitAffectedFilesMock,
     });
 
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -357,8 +361,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -412,10 +414,8 @@ describe('compilationAPIPlugin', () => {
         ]),
     });
 
-    const { compilationAPIPlugin } =
-      await import('./compilation-api-plugin.js');
-    const plugin = compilationAPIPlugin({
-      tsconfigGetter: () => join(tempRoot, 'tsconfig.json'),
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
       workspaceRoot: tempRoot,
       inlineStylesExtension: 'css',
       jit: false,
@@ -423,8 +423,6 @@ describe('compilationAPIPlugin', () => {
       disableTypeChecking: true,
       supportedBrowsers: ['safari 15'],
       fileReplacements: [],
-      isTest: false,
-      isAstroIntegration: false,
       include: [],
     });
 
@@ -455,5 +453,150 @@ describe('compilationAPIPlugin', () => {
 
     expect(result.code).toBe('export const appConfig = {};');
     expect(warn).not.toHaveBeenCalled();
+  });
+  it('exports a complete plugin set with one compiler and one HMR middleware', () => {
+    const plugins = angularCompilationPlugin();
+    const names = plugins.map((plugin) => plugin.name);
+    expect(
+      names.filter(
+        (name) => name === '@analogjs/vite-plugin-angular-compilation-api',
+      ),
+    ).toHaveLength(1);
+    expect(
+      names.filter((name) => name === 'analogjs-live-reload-plugin'),
+    ).toHaveLength(1);
+    expect(names).not.toContain('@analogjs/vite-plugin-angular');
+    expect(
+      angularCompilationPlugin({ liveReload: false }).map(
+        (plugin) => plugin.name,
+      ),
+    ).not.toContain('analogjs-live-reload-plugin');
+  });
+
+  it.each([
+    [200000, createAngularCompilationMock],
+    [200100, undefined],
+  ])(
+    'rejects an unsupported Compilation API (%s)',
+    async (version, createCompilation) => {
+      vi.resetModules();
+      vi.doMock('../utils/devkit.js', () => ({
+        ...cachedDevkitActual,
+        angularFullVersion: version,
+        createAngularCompilation: createCompilation,
+      }));
+      const { angularCompilationPlugin: unsupportedPlugin } =
+        await import('../../index.js');
+      expect(() => unsupportedPlugin()).toThrow(
+        'requires Angular v20.1 or later',
+      );
+    },
+  );
+
+  it('shares HMR output with its middleware and keeps instances isolated', async () => {
+    const filename = join(tempRoot, 'app.component.ts');
+    const hmrCode = 'export const update = true;';
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: vi.fn().mockResolvedValue({
+        templateUpdates: new Map([
+          [encodeURIComponent(filename) + '@AppComponent', hmrCode],
+        ]),
+      }),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi
+        .fn()
+        .mockResolvedValue([{ filename, contents: 'compiled' }]),
+      close: vi.fn(),
+    });
+    const options = { tsconfig: join(tempRoot, 'tsconfig.json'), jit: false };
+    const first = angularCompilationPlugin(options);
+    const second = angularCompilationPlugin(options);
+    const compiler = first.find(
+      (plugin) =>
+        plugin.name === '@analogjs/vite-plugin-angular-compilation-api',
+    )!;
+    await configure(compiler);
+    await (compiler.buildStart as any)();
+    const request =
+      'file:///@ng/component?c=' +
+      encodeURIComponent(filename + '@AppComponent');
+    const firstMiddleware = first.find(
+      (plugin) => plugin.name === 'analogjs-live-reload-plugin',
+    )!;
+    const secondMiddleware = second.find(
+      (plugin) => plugin.name === 'analogjs-live-reload-plugin',
+    )!;
+    expect((firstMiddleware.load as any)('\0' + request, { ssr: true })).toBe(
+      hmrCode,
+    );
+    expect((secondMiddleware.load as any)('\0' + request, { ssr: true })).toBe(
+      '',
+    );
+    await (compiler.closeBundle as any)();
+    expect((firstMiddleware.load as any)('\0' + request, { ssr: true })).toBe(
+      '',
+    );
+  });
+
+  it('waits for initial compilation, preserves raw imports, and awaits cleanup', async () => {
+    const filename = join(tempRoot, 'app.ts');
+    let finishInitialize!: () => void;
+    const initialize = vi.fn(
+      () =>
+        new Promise<object>((resolve) => {
+          finishInitialize = () => resolve({});
+        }),
+    );
+    let finishClose!: () => void;
+    const close = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishClose = resolve;
+        }),
+    );
+    createAngularCompilationMock.mockResolvedValue({
+      initialize,
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi
+        .fn()
+        .mockResolvedValue([{ filename, contents: 'compiled' }]),
+      close,
+    });
+    const compiler = getCompilerPlugin({
+      tsconfig: join(tempRoot, 'tsconfig.json'),
+      jit: false,
+    });
+    await configure(compiler);
+    const building = (compiler.buildStart as any)();
+    await vi.waitFor(() => expect(initialize).toHaveBeenCalledOnce());
+    const transform = (compiler.transform as any).handler;
+    const context = { warn: vi.fn(), error: vi.fn() };
+    await expect(
+      transform.call(context, 'export default "source";', filename + '?raw'),
+    ).resolves.toBeUndefined();
+    let transformed = false;
+    const transforming = transform
+      .call(context, 'source', filename + '?component')
+      .then((result: any) => {
+        transformed = true;
+        return result;
+      });
+    await Promise.resolve();
+    expect(transformed).toBe(false);
+    finishInitialize();
+    await building;
+    await expect(transforming).resolves.toEqual({
+      code: 'compiled',
+      map: null,
+    });
+    let closed = false;
+    const closing = (compiler.closeBundle as any)().then(() => {
+      closed = true;
+    });
+    await vi.waitFor(() => expect(close).toHaveBeenCalledOnce());
+    expect(closed).toBe(false);
+    finishClose();
+    await closing;
+    expect(closed).toBe(true);
   });
 });

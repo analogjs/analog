@@ -1,7 +1,9 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import angular from '@analogjs/vite-plugin-angular';
+import angular, {
+  angularCompilationPlugin,
+} from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
@@ -132,14 +134,8 @@ export default defineConfig(({ mode }) => ({
       },
       ssr: false,
     }),
-    angular({
+    (USE_COMPILATION_API ? angularCompilationPlugin : angular)({
       liveReload: LIVE_RELOAD,
-      experimental: {
-        // Required to reproduce #2293: @apply inside :host with Tailwind
-        // prefix configuration requires the Angular Compilation API path
-        // for style externalization.
-        useAngularCompilationAPI: USE_COMPILATION_API,
-      },
     }),
     angularTailwind({
       prefixes: ['tdbg:'],

@@ -2,7 +2,8 @@
  * Integration tests for the Angular Compilation API path.
  *
  * These tests run against the live dev server (http://localhost:43000) which
- * is started with `useAngularCompilationAPI: true` in the analog-app config.
+ * should be started with `angularCompilationPlugin()` in the analog-app config
+ * when exercising the Compilation API.
  *
  * They verify:
  *  1. The dev server compiles and serves pages via the Compilation API
@@ -90,7 +91,7 @@ function cleanup() {
 }
 
 describe('Angular Compilation API', () => {
-  test('serves the home page (confirms dev server is using useAngularCompilationAPI)', async () => {
+  test('serves the home page', async () => {
     await page.goto('/');
     expect(await page.locator('h2').first().textContent()).toContain(
       'Products',

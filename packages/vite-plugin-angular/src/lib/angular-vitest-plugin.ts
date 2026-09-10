@@ -121,7 +121,7 @@ export function angularVitestEsbuildPlugin(): Plugin {
 /**
  * Post-processing pass that converts any `.ts` files Angular's compilation
  * skipped (e.g. files without Angular decorators when
- * `useAngularCompilationAPI` is on) into runnable JS via esbuild/OXC.
+ * `angularCompilationPlugin()` is used) into runnable JS via esbuild/OXC.
  *
  * Files Angular already compiled have a sourcemap available via
  * `getInMap` — we skip those here to avoid breaking the chain Vite is

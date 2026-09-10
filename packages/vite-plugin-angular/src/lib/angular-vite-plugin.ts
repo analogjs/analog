@@ -54,7 +54,6 @@ import {
   type TransformFilter,
 } from './analog-plugin-interop.js';
 
-import { compilationAPIPlugin } from './compilation-api/index.js';
 import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
@@ -178,9 +177,6 @@ export interface PluginOptions {
    * - `'partial'`: Emit partial declarations for library publishing.
    */
   fastCompileMode?: 'full' | 'partial';
-  experimental?: {
-    useAngularCompilationAPI?: boolean;
-  };
   /**
    * Enable debug logging for specific scopes.
    *
@@ -242,8 +238,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     liveReload,
     disableTypeChecking: options?.disableTypeChecking ?? true,
     fileReplacements: options?.fileReplacements ?? [],
-    useAngularCompilationAPI:
-      options?.experimental?.useAngularCompilationAPI ?? false,
     fastCompile: options?.fastCompile ?? false,
     fastCompileMode: options?.fastCompileMode ?? 'full',
     // Set on each compilation from preprocessors registered by Vite plugins
@@ -1122,15 +1116,6 @@ export function angular(options?: PluginOptions): Plugin[] {
             return;
           }
 
-          // When the Angular Compilation API path is active the transform hook
-          // receives already-analyzed code, so files without Angular decorators
-          // have nothing to do here — skip them before any further work.
-          if (pluginOptions.useAngularCompilationAPI) {
-            if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
-              return;
-            }
-          }
-
           // Encapsulation of component stylesheets is handled by the
           // separate '@analogjs/vite-plugin-angular:encapsulation' plugin
           // with enforce: 'post'. This ensures @tailwindcss/vite (enforce:
@@ -1326,34 +1311,19 @@ export function angular(options?: PluginOptions): Plugin[] {
     };
   }
 
-  const compilationPlugin = pluginOptions.useAngularCompilationAPI
-    ? compilationAPIPlugin({
+  const compilationPlugin = pluginOptions.fastCompile
+    ? fastCompilePlugin({
         tsconfigGetter: pluginOptions.tsconfigGetter,
         workspaceRoot: pluginOptions.workspaceRoot,
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         jit,
         liveReload: pluginOptions.liveReload,
-        disableTypeChecking: pluginOptions.disableTypeChecking,
         supportedBrowsers: pluginOptions.supportedBrowsers,
-        fileReplacements: pluginOptions.fileReplacements,
         isTest,
         isAstroIntegration,
-        include: pluginOptions.include,
-        debug: options?.debug,
+        fastCompileMode: pluginOptions.fastCompileMode,
       })
-    : pluginOptions.fastCompile
-      ? fastCompilePlugin({
-          tsconfigGetter: pluginOptions.tsconfigGetter,
-          workspaceRoot: pluginOptions.workspaceRoot,
-          inlineStylesExtension: pluginOptions.inlineStylesExtension,
-          jit,
-          liveReload: pluginOptions.liveReload,
-          supportedBrowsers: pluginOptions.supportedBrowsers,
-          isTest,
-          isAstroIntegration,
-          fastCompileMode: pluginOptions.fastCompileMode,
-        })
-      : angularPlugin();
+    : angularPlugin();
 
   return [
     // Scope the `style` package-export condition to `.css`-extension
