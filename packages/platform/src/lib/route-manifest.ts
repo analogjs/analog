@@ -91,23 +91,12 @@ export function filenameToRoutePath(filename: string): string {
     // eslint-disable-next-line no-control-regex
     return `\0B${brackets.length - 1}\0`;
   });
-  path = path.replace(/\./g, '/');
+  // Match beta's toSegment ordering: strip index and named empty segments
+  // before expanding dot notation, at every nesting level.
+  path = path.replace(/index|\(.*?\)/g, '').replace(/\./g, '/');
   // eslint-disable-next-line no-control-regex
   path = path.replace(/\0B(\d+)\0/g, (_, idx) => brackets[Number(idx)]);
-
-  const segments = path.split('/').filter(Boolean);
-  const processed: string[] = [];
-
-  for (const segment of segments) {
-    if (/^\([^.[\]]*\)$/.test(segment)) continue;
-    processed.push(segment);
-  }
-
-  if (processed.length > 0 && processed[processed.length - 1] === 'index') {
-    processed.pop();
-  }
-
-  return '/' + processed.join('/');
+  return '/' + path.split('/').filter(Boolean).join('/');
 }
 
 /**

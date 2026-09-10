@@ -31,6 +31,18 @@ describe('filenameToRoutePath', () => {
     });
   });
 
+  it.each([
+    ['index/details', '/details'],
+    ['docs/index/details', '/docs/details'],
+    ['reindex', '/re'],
+    ['(auth.v2)/login', '/login'],
+    ['prefix(group)/details', '/prefix/details'],
+  ])('matches beta filename normalization for %s', (filename, expected) => {
+    expect(filenameToRoutePath(`/src/app/pages/${filename}.page.ts`)).toBe(
+      expected,
+    );
+  });
+
   describe('group segments', () => {
     it('should strip named index/group route', () => {
       expect(filenameToRoutePath('/app/routes/(home).ts')).toBe('/');
