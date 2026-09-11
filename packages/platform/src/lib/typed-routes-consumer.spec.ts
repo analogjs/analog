@@ -275,7 +275,10 @@ describe('typed routing consumer integration', () => {
   it.each([
     [
       'valid destinations',
-      `<a [linkTo]="{ path: '/about' }"></a>
+      `<a linkTo="/"></a>
+      <a linkTo="/about"></a>
+      <a [linkTo]="'/settings/profile'"></a>
+      <a [linkTo]="{ path: '/about' }"></a>
       <a [linkTo]="{ path: '/users/[id]', params: { id: '42' }, query: { tab: 'bio' }, hash: 'details' }" routerLinkActive="active"></a>
       <a [linkTo]="{ path: '/users/[id]', params: { id: 0 } }"></a>
       <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b', 42] } }"></a>
@@ -308,7 +311,16 @@ describe('typed routing consumer integration', () => {
       `<a [linkTo]="{ path: '/about', params: { id: '42' } }"></a>`,
       true,
     ],
-    ['plain string', `<a linkTo="/about"></a>`, true],
+    ['unknown static path', `<a linkTo="/missing"></a>`, true],
+    ['dynamic path string', `<a linkTo="/users/[id]"></a>`, true],
+    ['resolved dynamic string', `<a linkTo="/users/42"></a>`, true],
+    ['catch-all string path', `<a linkTo="/docs/[...slug]"></a>`, true],
+    [
+      'optional catch-all string path',
+      `<a linkTo="/shop/[[...category]]"></a>`,
+      true,
+    ],
+    ['unrestricted string', `<a [linkTo]="uncheckedPath"></a>`, true],
     ['positional commands', `<a [linkTo]="['/users', 42]"></a>`, true],
     [
       'missing nested param',
@@ -349,7 +361,10 @@ describe('typed routing consumer integration', () => {
       import { RouterLinkActive } from '@angular/router';
       import { LinkTo } from '@analogjs/router';
       @Component({ standalone: true, imports: [LinkTo, RouterLinkActive], template: \`${template}\` })
-      export class Consumer { readonly destination = { path: '/users/[id]', params: { id: 42 } } as const; }
+      export class Consumer {
+        readonly destination = { path: '/users/[id]', params: { id: 42 } } as const;
+        readonly uncheckedPath: string = '/about';
+      }
     `,
     );
     await configure(root);

@@ -42,7 +42,7 @@ class Page {}
 class Host {
   // Runtime fixtures have no generated table; consumer tests check the input type.
   readonly destination = signal<
-    ({ path: string } & RoutePathOptionsBase) | null | undefined
+    string | ({ path: string } & RoutePathOptionsBase) | null | undefined
   >({ path: '/users/[id]', params: { id: 'one' } });
   readonly target = signal('_self');
 }
@@ -50,7 +50,12 @@ class Host {
 function setup() {
   TestBed.configureTestingModule({
     imports: [Host],
-    providers: [provideRouter([{ path: 'users/:id', component: Page }])],
+    providers: [
+      provideRouter([
+        { path: 'users/:id', component: Page },
+        { path: 'about', component: Page },
+      ]),
+    ],
   });
   const fixture = TestBed.createComponent(Host);
   fixture.detectChanges();
@@ -67,6 +72,32 @@ function setup() {
 }
 
 describe('LinkTo', () => {
+  it('navigates to static strings and clears previous query and fragment values', async () => {
+    const { fixture, anchor, nav, router } = setup();
+    fixture.componentInstance.destination.set({
+      path: '/users/[id]',
+      params: { id: 'one' },
+      query: { tab: 'details' },
+      hash: 'bio',
+    });
+    fixture.detectChanges();
+    expect(anchor.getAttribute('href')).toBe('/users/one?tab=details#bio');
+
+    fixture.componentInstance.destination.set('/about');
+    fixture.detectChanges();
+    expect(anchor.getAttribute('href')).toBe('/about');
+    anchor.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(router.url).toBe('/about');
+    expect(anchor.classList.contains('active')).toBe(true);
+    expect(nav.classList.contains('parent-active')).toBe(true);
+
+    fixture.componentInstance.destination.set(null);
+    fixture.detectChanges();
+    expect(anchor.hasAttribute('href')).toBe(false);
+  });
+
   it.each([
     ['a/b', '/users/a%2Fb?tab=a%20b#details'],
     [0, '/users/0?tab=a%20b#details'],

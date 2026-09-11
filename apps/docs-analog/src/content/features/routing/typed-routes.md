@@ -47,7 +47,7 @@ Custom output paths must end in `.d.ts` and be included in the relevant tsconfig
 Import `LinkTo` from `@analogjs/router` into your component's `imports` and bind a destination to `[linkTo]`:
 
 ```html
-<a [linkTo]="{ path: '/shipping' }">Shipping</a>
+<a linkTo="/shipping">Shipping</a>
 <a
   [linkTo]="{
     path: '/products/[id]',
@@ -61,7 +61,7 @@ Import `LinkTo` from `@analogjs/router` into your component's `imports` and bind
 </a>
 ```
 
-The generated route table checks the path, required named parameters, and their value types together. `LinkTo` accepts this destination object rather than strings, positional command arrays, or `UrlTree` values. Use `query` and `hash` in the destination for query parameters and fragments. Binding `null` or `undefined` disables the link.
+The generated route table checks the path, required named parameters, and their value types together. Static routes accept string shorthand, such as `linkTo="/shipping"` or `[linkTo]="'/shipping'"`. Only generated routes with no parameters allow this shorthand; dynamic and catch-all routes require a destination object. Unknown paths, unrestricted `string` values, positional command arrays, and `UrlTree` values are rejected with `strictTemplates` enabled. Use the destination object with `query` and `hash` to add query parameters and fragments, including for static routes. Binding `null` or `undefined` disables the link.
 
 `LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
 

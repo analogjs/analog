@@ -10,12 +10,19 @@ import { RouterLink } from '@angular/router';
 import {
   AnalogRoutePath,
   buildRouteLink,
+  RouteParamsOutput,
   RoutePathOptions,
   RoutePathOptionsBase,
 } from './to-route';
 
 type LinkToDestination = {
   [P in AnalogRoutePath]: { path: P } & RoutePathOptions<P>;
+}[AnalogRoutePath];
+
+type StaticRoutePath = {
+  [P in AnalogRoutePath]: RouteParamsOutput<P> extends Record<string, never>
+    ? P
+    : never;
 }[AnalogRoutePath];
 
 @Directive({
@@ -37,17 +44,21 @@ type LinkToDestination = {
   ],
 })
 export class LinkTo implements OnChanges {
-  readonly linkTo: InputSignal<LinkToDestination | null | undefined> =
-    input.required<LinkToDestination | null | undefined>();
+  readonly linkTo: InputSignal<
+    StaticRoutePath | LinkToDestination | null | undefined
+  > = input.required<StaticRoutePath | LinkToDestination | null | undefined>();
   private readonly routerLink = inject(RouterLink);
 
   ngOnChanges(): void {
     const destination = this.linkTo() as
+      | string
       | ({ path: string } & RoutePathOptionsBase)
       | null
       | undefined;
     const link = destination
-      ? buildRouteLink(destination.path, destination)
+      ? typeof destination === 'string'
+        ? buildRouteLink(destination)
+        : buildRouteLink(destination.path, destination)
       : null;
 
     this.routerLink.routerLink = link?.path ?? null;
