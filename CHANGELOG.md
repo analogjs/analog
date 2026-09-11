@@ -1,3 +1,10 @@
+# [2.8.0-beta.1](https://github.com/analogjs/analog/compare/v2.7.3-beta.2...v2.8.0-beta.1) (2026-09-11)
+
+### Features
+
+- **router:** add opt-in type-safe routing ([#2561](https://github.com/analogjs/analog/issues/2561)) ([e0a512a](https://github.com/analogjs/analog/commit/e0a512a00e49f5d4fc3c6522382632dea61dc770))
+- **router:** add TanStack Query integration ([#2552](https://github.com/analogjs/analog/issues/2552)) ([d0cfbd6](https://github.com/analogjs/analog/commit/d0cfbd6456913badea31cc86f16d84b4c04dae14))
+
 ## [2.7.3-beta.2](https://github.com/analogjs/analog/compare/v2.7.3-beta.1...v2.7.3-beta.2) (2026-09-10)
 
 ### Bug Fixes
