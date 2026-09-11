@@ -87,6 +87,12 @@ describe('typed routing consumer integration', () => {
       toRoute('/users/[id]', { params: { id: '42' } });
       toRoute('/users/[id]', { params: { id: 0 } });
       toRoute('/docs/[...slug]', { params: { slug: ['a', 42] } });
+      toRoute('/shop/[[...category]]', { params: { category: [] } });
+      // @ts-expect-error required catch-all must have at least one segment
+      toRoute('/docs/[...slug]', { params: { slug: [] } });
+      const unnecessaryParams = { params: { id: 42 } };
+      // @ts-expect-error static routes reject params even through variables
+      toRoute('/about', unnecessaryParams);
       toRoute('/shop/[[...category]]', { params: { category: [0, 'shoes'] } });
       toRoute('/docs/[...slug]', { params: { slug: ['a/b'] } });
       toRoute('/shop/[[...category]]');
@@ -99,6 +105,8 @@ describe('typed routing consumer integration', () => {
       navigate('/users/[id]', { params: { id: '42' } }, { replaceUrl: true });
       navigate('/users/[id]', { params: { id: 42 } });
       navigate('/docs/[...slug]', { params: { slug: [1, 'a'] } });
+      // @ts-expect-error navigation also requires non-empty catch-all params
+      navigate('/docs/[...slug]', { params: { slug: [] } });
       // @ts-expect-error navigation params must be strings or numbers
       navigate('/users/[id]', { params: { id: false } });
       // @ts-expect-error catch-all entries must be strings or numbers
@@ -266,45 +274,72 @@ describe('typed routing consumer integration', () => {
 
   it.each([
     [
-      'valid commands',
-      `<a linkTo="/"></a>
-      <a linkTo="/about"></a>
-      <a [linkTo]="['/users', 42]" [queryParams]="{ tab: 'bio', page: 2 }" fragment="details" routerLinkActive="active"></a>
-      <a [linkTo]="['/users', 'a/b']"></a>
-      <a [linkTo]="['/docs', 'a/b', 42]"></a>
-      <a [linkTo]="['/shop']"></a>
-      <a linkTo="/shop"></a>
-      <a [linkTo]="['/shop', 'shoes', 42]"></a>
-      <a [linkTo]="['/settings/profile']"></a>
-      <a [linkTo]="['/settings', 'profile']"></a>
-      <a [linkTo]="['/', 'settings', 'profile']"></a>
-      <a [linkTo]="['/users', 42, 'posts', 7]"></a>
-      <a [linkTo]="['/', 'acme', 'dashboard']"></a>
-      <a [linkTo]="commands"></a>
+      'valid destinations',
+      `<a [linkTo]="{ path: '/about' }"></a>
+      <a [linkTo]="{ path: '/users/[id]', params: { id: '42' }, query: { tab: 'bio' }, hash: 'details' }" routerLinkActive="active"></a>
+      <a [linkTo]="{ path: '/users/[id]', params: { id: 0 } }"></a>
+      <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b', 42] } }"></a>
+      <a [linkTo]="{ path: '/shop/[[...category]]' }"></a>
+      <a [linkTo]="{ path: '/shop/[[...category]]', params: { category: [] } }"></a>
+      <a [linkTo]="{ path: '/users/[id]/posts/[postId]', params: { id: 42, postId: 7 } }"></a>
+      <a [linkTo]="destination"></a>
       <a [linkTo]="null"></a>`,
       false,
     ],
-    ['unknown string', `<a linkTo="/missing"></a>`, true],
-    ['unknown commands', `<a [linkTo]="['/missing']"></a>`, true],
-    ['missing param', `<a [linkTo]="['/users']"></a>`, true],
+    ['unknown path', `<a [linkTo]="{ path: '/missing' }"></a>`, true],
+    ['missing params', `<a [linkTo]="{ path: '/users/[id]' }"></a>`, true],
     [
-      'wrong param position',
-      `<a [linkTo]="['/users', 'posts', 42]"></a>`,
+      'wrong param name',
+      `<a [linkTo]="{ path: '/users/[id]', params: { other: '42' } }"></a>`,
       true,
     ],
-    ['wrong param type', `<a [linkTo]="['/users', true]"></a>`, true],
-    ['missing catch-all', `<a [linkTo]="['/docs']"></a>`, true],
-    ['wrong catch-all type', `<a [linkTo]="['/docs', true]"></a>`, true],
-    ['extra static segment', `<a [linkTo]="['/about', 42]"></a>`, true],
-    ['relative commands', `<a [linkTo]="['users', 42]"></a>`, true],
-    ['relative string', `<a linkTo="../about"></a>`, true],
-    ['unresolved pattern', `<a linkTo="/users/[id]"></a>`, true],
     [
-      'outlet commands',
-      `<a [linkTo]="['/users', { outlets: { primary: '42' } }]"></a>`,
+      'wrong param type',
+      `<a [linkTo]="{ path: '/users/[id]', params: { id: true } }"></a>`,
       true,
     ],
-    ['old destination object', `<a [linkTo]="{ path: '/about' }"></a>`, true],
+    [
+      'catch-all string',
+      `<a [linkTo]="{ path: '/docs/[...slug]', params: { slug: 'a/b' } }"></a>`,
+      true,
+    ],
+    [
+      'static route params',
+      `<a [linkTo]="{ path: '/about', params: { id: '42' } }"></a>`,
+      true,
+    ],
+    ['plain string', `<a linkTo="/about"></a>`, true],
+    ['positional commands', `<a [linkTo]="['/users', 42]"></a>`, true],
+    [
+      'missing nested param',
+      `<a [linkTo]="{ path: '/users/[id]/posts/[postId]', params: { id: 42 } }"></a>`,
+      true,
+    ],
+    [
+      'extra param',
+      `<a [linkTo]="{ path: '/users/[id]', params: { id: 42, postId: 7 } }"></a>`,
+      true,
+    ],
+    [
+      'empty required catch-all',
+      `<a [linkTo]="{ path: '/docs/[...slug]', params: { slug: [] } }"></a>`,
+      true,
+    ],
+    [
+      'wrong query value',
+      `<a [linkTo]="{ path: '/users/[id]', params: { id: 42 }, query: { tab: true } }"></a>`,
+      true,
+    ],
+    [
+      'wrong fragment value',
+      `<a [linkTo]="{ path: '/about', hash: 42 }"></a>`,
+      true,
+    ],
+    [
+      'separate query override',
+      `<a [linkTo]="{ path: '/about' }" [queryParams]="{ tab: true }"></a>`,
+      true,
+    ],
   ])('checks LinkTo templates: %s', async (_name, template, invalid) => {
     const root = fixture();
     writeFileSync(
@@ -314,14 +349,14 @@ describe('typed routing consumer integration', () => {
       import { RouterLinkActive } from '@angular/router';
       import { LinkTo } from '@analogjs/router';
       @Component({ standalone: true, imports: [LinkTo, RouterLinkActive], template: \`${template}\` })
-      export class Consumer { readonly commands = ['/users', 42] as const; }
+      export class Consumer { readonly destination = { path: '/users/[id]', params: { id: 42 } } as const; }
     `,
     );
     await configure(root);
     const messages = compile(root).messages;
     if (invalid) {
       expect(messages.join('\n')).toMatch(
-        /not assignable|missing|does not exist/,
+        /not assignable|missing|does not exist|isn't a known property/,
       );
     } else {
       expect(messages).toEqual([]);

@@ -10,6 +10,8 @@ import {
 } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
+import { RoutePathOptionsBase } from './to-route';
+
 // Use the packaged directive so signal input metadata is compiled by Angular.
 const { LinkTo } =
   await vi.importActual<typeof import('./link-to.directive')>(
@@ -25,9 +27,7 @@ class Page {}
   template: `
     <nav routerLinkActive="parent-active">
       <a
-        [linkTo]="$any(commands())"
-        [queryParams]="query()"
-        [fragment]="fragment()"
+        [linkTo]="$any(destination())"
         routerLinkActive="active"
         [target]="target()"
         [replaceUrl]="true"
@@ -41,24 +41,16 @@ class Page {}
 })
 class Host {
   // Runtime fixtures have no generated table; consumer tests check the input type.
-  readonly commands = signal<
-    string | readonly (string | number)[] | null | undefined
-  >(['/users', 'one']);
-  readonly query = signal<Record<string, unknown> | null>(null);
-  readonly fragment = signal<string | undefined>(undefined);
+  readonly destination = signal<
+    ({ path: string } & RoutePathOptionsBase) | null | undefined
+  >({ path: '/users/[id]', params: { id: 'one' } });
   readonly target = signal('_self');
 }
 
 function setup() {
   TestBed.configureTestingModule({
     imports: [Host],
-    providers: [
-      provideRouter([
-        { path: 'users/:id', component: Page },
-        { path: 'about', component: Page },
-        { path: 'docs', children: [{ path: '**', component: Page }] },
-      ]),
-    ],
+    providers: [provideRouter([{ path: 'users/:id', component: Page }])],
   });
   const fixture = TestBed.createComponent(Host);
   fixture.detectChanges();
@@ -82,9 +74,12 @@ describe('LinkTo', () => {
     'builds hrefs and delegates navigation for param %s',
     async (id, expectedUrl) => {
       const { fixture, anchor, router } = setup();
-      fixture.componentInstance.commands.set(['/users', id]);
-      fixture.componentInstance.query.set({ tab: 'a b' });
-      fixture.componentInstance.fragment.set('details');
+      fixture.componentInstance.destination.set({
+        path: '/users/[id]',
+        params: { id },
+        query: { tab: 'a b' },
+        hash: 'details',
+      });
       fixture.detectChanges();
       expect(anchor.getAttribute('href')).toBe(expectedUrl);
       const navigate = vi.spyOn(router, 'navigateByUrl');
@@ -109,7 +104,10 @@ describe('LinkTo', () => {
     expect(anchor.classList.contains('active')).toBe(true);
     expect(nav.classList.contains('parent-active')).toBe(true);
 
-    fixture.componentInstance.commands.set(['/users', 'two']);
+    fixture.componentInstance.destination.set({
+      path: '/users/[id]',
+      params: { id: 'two' },
+    });
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -117,56 +115,57 @@ describe('LinkTo', () => {
     expect(anchor.classList.contains('active')).toBe(false);
     expect(nav.classList.contains('parent-active')).toBe(false);
 
-    fixture.componentInstance.commands.set(['/users', 'one']);
+    fixture.componentInstance.destination.set({
+      path: '/users/[id]',
+      params: { id: 'one' },
+    });
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     expect(nav.classList.contains('parent-active')).toBe(true);
-    fixture.componentInstance.query.set({ tab: 'details' });
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(anchor.classList.contains('active')).toBe(false);
-    expect(nav.classList.contains('parent-active')).toBe(false);
   });
 
-  it('updates query and fragment independently and supports disabling links', () => {
+  it('clears query and fragment and supports disabling and re-enabling links', () => {
     const { fixture, anchor, routerLink } = setup();
-    fixture.componentInstance.query.set({ tab: 'details' });
-    fixture.componentInstance.fragment.set('bio');
+    fixture.componentInstance.destination.set({
+      path: '/users/[id]',
+      params: { id: 'one' },
+      query: { tab: 'details' },
+      hash: 'bio',
+    });
     fixture.detectChanges();
     expect(anchor.getAttribute('href')).toBe('/users/one?tab=details#bio');
     for (const value of [null, undefined]) {
-      fixture.componentInstance.commands.set(value);
+      fixture.componentInstance.destination.set(value);
       fixture.detectChanges();
       expect(anchor.hasAttribute('href')).toBe(false);
       expect(routerLink.urlTree).toBeNull();
-      fixture.componentInstance.commands.set(['/users', 'two']);
+      fixture.componentInstance.destination.set({
+        path: '/users/[id]',
+        params: { id: 'two' },
+      });
       fixture.detectChanges();
-      expect(anchor.getAttribute('href')).toBe('/users/two?tab=details#bio');
+      expect(anchor.getAttribute('href')).toBe('/users/two');
     }
-    fixture.componentInstance.query.set(null);
-    fixture.componentInstance.fragment.set(undefined);
-    fixture.detectChanges();
-    expect(anchor.getAttribute('href')).toBe('/users/two');
   });
 
-  it.each([
-    ['/about', '/about'],
-    [['/', 'users', 'a/b'], '/users/a%2Fb'],
-    [['/docs', 'a/b', 42], '/docs/a%2Fb/42'],
-  ] as const)(
-    'delegates absolute command forms %j to Angular',
-    async (commands, expectedUrl) => {
-      const { fixture, anchor, router } = setup();
-      fixture.componentInstance.commands.set(commands);
+  it('updates active classes when only the query changes', async () => {
+    const { fixture, anchor, nav, router } = setup();
+    await router.navigateByUrl('/users/one?tab=details');
+    for (const tab of ['details', 'settings', 'details']) {
+      fixture.componentInstance.destination.set({
+        path: '/users/[id]',
+        params: { id: 'one' },
+        query: { tab },
+      });
       fixture.detectChanges();
-      expect(anchor.getAttribute('href')).toBe(expectedUrl);
-      anchor.click();
       await fixture.whenStable();
-      expect(router.url).toBe(expectedUrl);
-    },
-  );
+      fixture.detectChanges();
+      expect(anchor.getAttribute('href')).toBe(`/users/one?tab=${tab}`);
+      expect(anchor.classList.contains('active')).toBe(tab === 'details');
+      expect(nav.classList.contains('parent-active')).toBe(tab === 'details');
+    }
+  });
 
   it('preserves native handling of modifier clicks and non-self targets', () => {
     const { fixture, router, routerLink, anchor } = setup();

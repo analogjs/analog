@@ -76,14 +76,14 @@ type HasRequiredRouteParams<Params> = [RequiredRouteParamKeys<Params>] extends [
   ? false
   : true;
 
-type RouteParamInput<T> = T extends string
-  ? string | number
-  : T extends string[]
-    ? (string | number)[]
-    : T;
-
 type RouteParamsInput<Params> = {
-  [K in keyof Params]: RouteParamInput<Params[K]>;
+  [K in keyof Params]: Exclude<Params[K], undefined> extends string[]
+    ? undefined extends Params[K]
+      ? (string | number)[]
+      : [string | number, ...(string | number)[]]
+    : Exclude<Params[K], undefined> extends string
+      ? string | number
+      : Params[K];
 };
 
 /**
@@ -94,6 +94,7 @@ export type RoutePathOptions<P extends string = string> =
     ? AnalogRouteTable[P] extends { params: infer Params }
       ? Params extends Record<string, never>
         ? {
+            params?: never;
             query?: RouteQueryOutput<P>;
             hash?: string;
           }
