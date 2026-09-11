@@ -13,12 +13,6 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
-      server: {
-        deps: {
-          // Published router code uses Vite's import.meta.env during navigation.
-          inline: ['@analogjs/router'],
-        },
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',

@@ -16,13 +16,13 @@ Analog supports server-side handling of form submissions and validation.
 
 ## Setting up the Form
 
-To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directive collects the `FormData` and submits it using the form's method and destination.
+To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directives handles collecting the `FormData` and sending a `POST` request to the server.
 
 The directive emits after processing the form:
 
 - `onSuccess`: when the form is processing on the server and returns a success response.
 - `onError`: when the form returns an error response.
-- `state`: emits `submitting`, `success`, `error`, `redirect`, or `navigate` as the submission progresses.
+- `onStateChange`: when the form is submitted.
 
 The example page below submits an email for a newsletter signup.
 
@@ -45,7 +45,7 @@ type FormErrors =
         method="post"
         (onSuccess)="onSuccess()"
         (onError)="onError($any($event))"
-        (state)="$event === 'submitting' && errors.set(undefined)"
+        (onStateChange)="errors.set(undefined)"
       >
         <div>
           <label for="email"> Email </label>
@@ -78,31 +78,6 @@ export default class NewsletterComponent {
 ```
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
-
-### Submission Destinations and State
-
-Without an explicit `action`, POST submissions use the current page's server
-endpoint and GET submissions navigate to the current route. Set `action` or bind
-`[action]` to choose a different destination:
-
-```html
-<form method="post" action="/api/newsletter">
-  <input type="email" name="email" />
-  <button type="submit">Subscribe</button>
-</form>
-```
-
-GET forms retain the destination's query parameters and fragment, and preserve
-repeated field names as multiple query values. POST forms retain repeated values
-in `FormData`. Same-origin destinations and redirects use Angular navigation;
-external navigation uses the browser. Redirects retain their query parameters
-and fragment.
-
-The directive sets `data-state="idle"` initially, updates it during submission,
-and sets `aria-busy="true"` while awaiting a response. You can style these
-attributes or subscribe to the `state` output. `FormActionState` is exported for
-typing state handlers. Response parsing and network failures emit `error` and
-clear the busy state.
 
 ## Handling the Form Action
 
