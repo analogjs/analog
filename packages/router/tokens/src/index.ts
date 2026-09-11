@@ -26,6 +26,17 @@ export const API_PREFIX = new InjectionToken<string>(
 
 export const LOCALE = new InjectionToken<string>('@analogjs/router Locale');
 
+/** @internal A live view exposed only to the progressive SSR renderer. */
+export interface ɵResourceTrackingView {
+  anchor: Node;
+  nodes: () => readonly Node[];
+}
+
+/** @internal Request-scoped; absent during buffered SSR and client rendering. */
+export const ɵRESOURCE_TRACKING_STREAM = new InjectionToken<{
+  register(view: ɵResourceTrackingView): { update(): void; destroy(): void };
+}>('@analogjs/router Resource Tracking Stream');
+
 export function injectRequest() {
   return inject(REQUEST, { optional: true });
 }

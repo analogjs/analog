@@ -93,6 +93,11 @@ export function getSidebar(): SidebarNode[] {
               id: 'features/data-fetching/server-functions',
               label: $localize`:@@sidebar.server-functions:Server Functions`,
             },
+            {
+              kind: 'doc',
+              id: 'features/data-fetching/declarative-resource-tracking',
+              label: $localize`:@@sidebar.declarative-resource-tracking:Declarative Resource Tracking`,
+            },
           ],
         },
         {

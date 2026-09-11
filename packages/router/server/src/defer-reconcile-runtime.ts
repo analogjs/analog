@@ -8,6 +8,8 @@
  *      `window.__analogPaint("ID")` — this runtime paints the block into the
  *      streaming region immediately, so content appears progressively and out
  *      of document order;
+ *      resource tracking scopes instead paint a shell and replace comment-delimited
+ *      ranges in place, preserving surrounding previews;
  *   3. the authoritative document tail: the app's resolved `<head>` in a
  *      `<template data-analog-head>` and the hydration-annotated body in a
  *      `<template data-analog-authoritative>`, followed by
@@ -22,9 +24,43 @@
  */
 export const DEFER_RECONCILE_RUNTIME = /* js */ `
 (function () {
+  var hasResourceTrackingShell = false;
+  var hydrating;
+  var hydrationComments = [];
   function region() {
     return document.querySelector('[data-analog-stream]');
   }
+  window.__analogShell = function () {
+    var tpl = document.querySelector('template[data-analog-shell]');
+    var r = region();
+    if (!tpl || !r) return;
+    hasResourceTrackingShell = true;
+    r.replaceChildren(tpl.content.cloneNode(true));
+    tpl.remove();
+  };
+  window.__analogSettle = function (id) {
+    var tpl = document.querySelector('template[data-analog-settled="' + id + '"]');
+    var r = region();
+    if (!tpl || !r) return;
+    var walker = document.createTreeWalker(r, 128);
+    var start;
+    var end;
+    while (walker.nextNode()) {
+      if (walker.currentNode.data === 'analog-settled:' + id) start = walker.currentNode;
+      if (walker.currentNode.data === '/analog-settled:' + id) end = walker.currentNode;
+    }
+    if (start && end && start.parentNode === end.parentNode) {
+      var node = start.nextSibling;
+      while (node && node !== end) {
+        var next = node.nextSibling;
+        node.remove();
+        node = next;
+      }
+      end.parentNode.insertBefore(tpl.content.cloneNode(true), end);
+    }
+    // A hidden child is included in its parent's later snapshot.
+    tpl.remove();
+  };
   window.__analogPaint = function (id) {
     var tpl = document.querySelector('template[data-analog-defer="' + id + '"]');
     var r = region();
@@ -81,10 +117,34 @@ export const DEFER_RECONCILE_RUNTIME = /* js */ `
   window.__analogFinalize = function () {
     var auth = document.querySelector('template[data-analog-authoritative]');
     if (!auth) return;
+    var preview = region();
+    if (hasResourceTrackingShell && preview) {
+      // Bootstrap finds the authoritative root first. Keep the preview visible
+      // while uncached resources revalidate, without exposing loading flashes.
+      hydrating = document.createElement('div');
+      hydrating.hidden = true;
+      hydrating.setAttribute('data-analog-hydrating', '');
+      hydrating.appendChild(auth.content.cloneNode(true));
+      // Angular's document-integrity comments must remain direct body children.
+      Array.from(hydrating.childNodes).forEach(function (node) {
+        if (node.nodeType === 8) hydrationComments.push(node);
+      });
+      preview.inert = true;
+      document.body.replaceChildren(...hydrationComments, hydrating, preview);
+      return;
+    }
     // Replace the entire body — preview region, block templates and runtime
     // scripts — with just the authoritative body, so the reconciled DOM matches
     // a buffered render byte-for-byte before hydration boots.
     document.body.replaceChildren(auth.content.cloneNode(true));
+  };
+  window.__analogHydrationReady = function () {
+    if (!hydrating) return;
+    var content = document.createDocumentFragment();
+    while (hydrating.firstChild) content.appendChild(hydrating.firstChild);
+    document.body.replaceChildren(...hydrationComments, content);
+    hydrating = null;
+    delete window.__analogHydrationReady;
   };
 })();
 `;

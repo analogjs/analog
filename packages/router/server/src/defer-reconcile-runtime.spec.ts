@@ -11,6 +11,8 @@ type Runtime = {
   __analogPaint: (id: string) => void;
   __analogReconcileHead: () => void;
   __analogFinalize: () => void;
+  __analogShell: () => void;
+  __analogHydrationReady: () => void;
 };
 const rt = () => window as unknown as Runtime;
 
@@ -78,6 +80,32 @@ describe('DEFER_RECONCILE_RUNTIME', () => {
   });
 
   describe('__analogFinalize', () => {
+    it('keeps resource tracking previews visible until hydration finishes, then reveals the live DOM', () => {
+      document.body.innerHTML =
+        '<div data-analog-stream></div>' +
+        '<template data-analog-shell><main>Server error</main></template>';
+      rt().__analogShell();
+      document.body.insertAdjacentHTML(
+        'beforeend',
+        '<template data-analog-authoritative><!--nghm--><main>Server error</main></template>',
+      );
+      rt().__analogFinalize();
+      expect(document.body.firstChild?.nodeType).toBe(Node.COMMENT_NODE);
+      const hydrated = document.querySelector('main')!;
+      hydrated.textContent = 'Client loading';
+      const host = hydrated.parentElement!;
+      expect(host.hidden).toBe(true);
+      expect(document.querySelector('[data-analog-stream]')?.textContent).toBe(
+        'Server error',
+      );
+      hydrated.textContent = 'Client error';
+      rt().__analogHydrationReady();
+      expect(document.querySelector('main')).toBe(hydrated);
+      expect(document.body.textContent).toBe('Client error');
+      expect(document.querySelector('[data-analog-stream]')).toBeNull();
+      expect(document.querySelector('[data-analog-hydrating]')).toBeNull();
+    });
+
     it('swaps the body to the authoritative document', () => {
       document.body.innerHTML =
         '<div data-analog-stream></div>' +

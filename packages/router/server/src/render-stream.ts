@@ -9,6 +9,8 @@
  *   2. each `@defer (hydrate …)` block's content is flushed the moment it
  *      resolves on the server — out of document order — while later blocks are
  *      still pending (proven: a slow block does not hold back an early one);
+ *      `*untilSettled` also flushes a page shell with loading views, followed
+ *      by in-place scope updates as registered resources settle;
  *   3. once the app is stable, the authoritative, fully hydration-annotated
  *      document is flushed as the tail. This is byte-identical to a buffered
  *      `renderApplication`, and is what Angular's incremental hydration runs
@@ -40,10 +42,14 @@ import {
   renderApplication,
   platformServer,
   INITIAL_CONFIG,
+  PlatformState,
   ɵrenderInternal as renderInternal,
 } from '@angular/platform-server';
 import type { PlatformRef, ApplicationRef } from '@angular/core';
-import type { ServerContext } from '@analogjs/router/tokens';
+import {
+  ɵRESOURCE_TRACKING_STREAM,
+  type ServerContext,
+} from '@analogjs/router/tokens';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import { provideServerContext } from './provide-server-context';
@@ -51,6 +57,7 @@ import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
 import { afterBodyOpen, bodyInner, headInner } from './utils/stream-html';
 import { isLikelyBot, streamingDisabledByRoute } from './utils/stream-request';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
+import { ResourceTrackingStream } from './resource-tracking-stream';
 
 // Optional chaining: the server-function dispatch endpoint imports this entry
 // from a Nitro bundle, where `import.meta.env` is not defined at all.
@@ -225,6 +232,7 @@ export function renderStream(
     return new ReadableStream<Uint8Array>({
       async start(controller) {
         const enqueue = (s: string) => controller.enqueue(encoder.encode(s));
+        const resourceTracking = new ResourceTrackingStream(enqueue);
 
         // The capture handler fires once per @defer block as it resolves. The
         // block's DOM is not filled until the next change-detection tick, so we
@@ -264,6 +272,7 @@ export function renderStream(
             { provide: INITIAL_CONFIG, useValue: { document, url } },
             provideServerContext(serverContext),
             platformProviders,
+            { provide: ɵRESOURCE_TRACKING_STREAM, useValue: resourceTracking },
           ]);
 
           // 1. Flush the head + reconcile runtime immediately (before the app is
@@ -280,8 +289,12 @@ export function renderStream(
             // 2. Bootstrap + render. Blocks resolve out of order during this
             //    phase and flush via the capture handler above.
             appRef = await bootstrap({ platformRef } as BootstrapContext);
+            resourceTracking.start(
+              platformRef.injector.get(PlatformState).getDocument(),
+            );
             await appRef.whenStable();
             await Promise.all(pendingFlushes);
+            resourceTracking.finish();
             // Stop capturing before serializing the tail so late resolutions
             // triggered by the hydration pass are not streamed as extra blocks.
             capturing = false;
@@ -313,6 +326,7 @@ export function renderStream(
             );
             controller.error(err);
           } finally {
+            resourceTracking.stop();
             await asyncDestroyPlatform(platformRef);
             if (!errored) controller.close();
           }
