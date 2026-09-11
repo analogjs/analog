@@ -134,6 +134,8 @@
     "@swc/core": "1.15.18",
     "@swc/helpers": "0.5.19",
     "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/angular-query-experimental": "^5.95.0",
+    "@tanstack/query-core": "^5.95.0",
     "@types/babel__core": "^7.20.5",
     "@types/hast": "^3.0.4",
     "@types/marked": "^5.0.2",

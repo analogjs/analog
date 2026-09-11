@@ -109,6 +109,30 @@ export default defineEventHandler((event) => {
 });
 ```
 
+## Typed API Routes
+
+Use `defineServerRoute` from `@analogjs/router/server/actions` to validate the request with any [Standard Schema](https://standardschema.dev) library, such as Valibot or Zod, and return JSON from the handler. Validation failures respond with a `422` status and the schema issues.
+
+```ts
+// /server/routes/api/v1/todos.get.ts
+import { defineServerRoute } from '@analogjs/router/server/actions';
+import * as v from 'valibot';
+
+export const route = defineServerRoute({
+  query: v.object({ scope: v.optional(v.string(), 'default') }),
+  handler: ({ query }) => getTodos(query.scope),
+});
+
+export default route;
+```
+
+- `query` validates the URL search params and `body` validates the request body for `POST`, `PUT`, and `PATCH` requests.
+- `input` validates the body, or the search params on `GET`, and provides the result as `data`.
+- `params` validates the dynamic route params.
+- `output` validates the returned value in development and logs a warning on mismatch.
+
+Returning a `Response` from the handler sends it unchanged. Exporting the `route` lets the [TanStack Query integration](/docs/integrations/tanstack-query) infer the query, body, and result types on the client.
+
 ## Catch-all Routes
 
 Catch-all routes are helpful for fallback route handling.
