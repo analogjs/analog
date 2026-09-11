@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 
 import type { EnvironmentProviders, Provider, Type } from '@angular/core';
 import {
+  createComponent,
   reflectComponentType,
   provideZonelessChangeDetection,
   DOCUMENT,
@@ -15,7 +16,7 @@ import {
   platformServer,
 } from '@angular/platform-server';
 import {
-  bootstrapApplication,
+  createApplication,
   type HydrationFeature,
   type HydrationFeatureKind,
   provideClientHydration,
@@ -23,9 +24,13 @@ import {
 } from '@angular/platform-browser';
 import type { AstroComponentMetadata, SSRLoadedRendererValue } from 'astro';
 import { getContext, incrementId, type RendererContext } from './context.ts';
-import { provideBootstrapListener } from './server-providers.ts';
 import { ID_PROP_NAME } from './id.ts';
-import { getComponentElementTag } from './create-component.ts';
+import {
+  createInputBindings,
+  getComponentElementTag,
+  registerRootComponent,
+} from './create-component.ts';
+import { buildProjectableNodes } from './projection.ts';
 
 const require = createRequire(import.meta.url);
 let jsActionContractScript: string | undefined = undefined;
@@ -54,7 +59,7 @@ async function renderToStaticMarkup(
     hydrationFeatures?: () => HydrationFeature<HydrationFeatureKind>[];
   },
   props: Record<string, unknown>,
-  _children: unknown,
+  children: unknown,
   metadata?: AstroComponentMetadata,
 ) {
   const mirror = reflectComponentType(Component);
@@ -80,12 +85,13 @@ async function renderToStaticMarkup(
   // Incremental hydration requires the event dispatch script to be present.
   document.body.innerHTML = `${getHydrationScript()}<${elementTag} ${ID_PROP_NAME}="${ngAppId}"></${elementTag}>`;
 
-  const bootstrap = (context?: BootstrapContext) =>
-    bootstrapApplication(
-      Component,
+  const hostElement = document.querySelector(elementTag) as Element;
+  const projectableNodes = buildProjectableNodes(mirror, children, document);
+
+  const bootstrap = async (context?: BootstrapContext) => {
+    const appRef = await createApplication(
       {
         providers: [
-          provideBootstrapListener(mirror, props),
           provideServerRendering(),
           { provide: ɵSERVER_CONTEXT, useValue: 'analog' },
           provideZonelessChangeDetection(),
@@ -101,6 +107,18 @@ async function renderToStaticMarkup(
       },
       context,
     );
+
+    const componentRef = createComponent(Component, {
+      environmentInjector: appRef.injector,
+      hostElement,
+      projectableNodes,
+      bindings: createInputBindings(mirror, props),
+    });
+
+    registerRootComponent(appRef, componentRef);
+
+    return appRef;
+  };
 
   const html = await renderApplication(bootstrap, {
     document,
