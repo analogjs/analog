@@ -76,6 +76,14 @@ export default defineConfig({
 | Library / partial builds (`fastCompileMode`) | ✅ Emits partial declarations for library publishing            |
 | Compile-time template type checking          | ❌ Use the Angular Language Service in your editor              |
 
+### Boundary blocks
+
+Fast compilation supports `@boundary` and `@error` blocks when the installed
+`@angular/compiler` supports them (verified with `22.2.0-next.7`). Deferred
+components inside error blocks are loaded lazily, while components also used
+outside a `@defer` body remain eager dependencies. Older compilers, including
+Angular 22.1, do not support this syntax.
+
 ### Building a library
 
 For a library build, set `fastCompileMode: 'partial'` so the compiler emits partial `ɵɵngDeclare*` declarations instead of final Ivy definitions:

@@ -7,7 +7,7 @@ import {
 import { compile as rawCompile } from './compile';
 import { scanFile } from './registry';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
-import { ANGULAR_MAJOR } from './angular-version';
+import { ANGULAR_MAJOR, SUPPORTS_BOUNDARY_BLOCKS } from './angular-version';
 
 // Angular 19 ships several features in fundamentally different shapes
 // from v20+: `@defer` dependency emission predates the
@@ -867,6 +867,72 @@ describe('@Component', () => {
         expect(result.code).not.toContain('import("./heavy-widget")');
       },
     );
+  });
+
+  describe.skipIf(!SUPPORTS_BOUNDARY_BLOCKS)('@boundary', () => {
+    it('compiles error conditions and retry aliases', () => {
+      const result = compile(
+        `
+        import { Component } from '@angular/core';
+        @Component({
+          template: \`
+            @boundary { Main }
+            @error (let err, retry = $reset; when err.message === '404') {
+              <button (click)="retry()">{{ err.message }}</button>
+            }
+            @error { Fallback }
+          \`
+        })
+        export class BoundaryComponent {}
+        `,
+        'boundary.ts',
+      );
+
+      expect(result).toContain('ɵɵboundaryCreate(');
+      expect(result).toContain('ɵɵboundaryUpdate(');
+      expect(result).toContain('.error.message === "404"');
+      expect(result).toContain('.$reset()');
+      expect(result).toContain('ctx.$error.message');
+    });
+
+    it.each([
+      {
+        description: 'loads a component deferred inside an error block',
+        template: '@boundary { Main } @error { @defer { <heavy-widget /> } }',
+        lazy: true,
+      },
+      {
+        description: 'keeps a component used in an error block eager',
+        template:
+          '@defer { <heavy-widget /> } @boundary { Main } @error { <heavy-widget /> }',
+        lazy: false,
+      },
+      {
+        description: 'loads a boundary error component inside a defer block',
+        template: '@defer { @boundary { Main } @error { <heavy-widget /> } }',
+        lazy: true,
+      },
+    ])('$description', ({ template, lazy }) => {
+      const registry = buildRegistry({
+        'heavy-widget.ts': `
+          import { Component } from '@angular/core';
+          @Component({ selector: 'heavy-widget', template: 'Heavy' })
+          export class HeavyWidget {}
+        `,
+      });
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        import { HeavyWidget } from './heavy-widget';
+        @Component({ template: ${JSON.stringify(template)}, imports: [HeavyWidget] })
+        export class BoundaryComponent {}
+        `,
+        'boundary-defer.ts',
+        { registry },
+      );
+
+      expect(result.code.includes('import("./heavy-widget")')).toBe(lazy);
+    });
   });
 
   describe('Content Projection', () => {

@@ -1,7 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { compile, type CompileOptions } from './compile';
 import { scanFile, type ComponentRegistry } from './registry';
-import { angularVersionAtLeast } from './angular-version';
+import {
+  angularVersionAtLeast,
+  SUPPORTS_BOUNDARY_BLOCKS,
+} from './angular-version';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -300,6 +303,7 @@ function loadTestCaseGroups(
 // Categories to test (focus on features this compiler supports)
 const CATEGORIES = [
   'r3_view_compiler_control_flow',
+  'r3_view_compiler_boundaries',
   'r3_view_compiler_bindings',
   'r3_view_compiler_listener',
   'r3_view_compiler_template',
@@ -384,6 +388,8 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
 
     const minMajor = CATEGORY_MIN_MAJOR[category];
     if (minMajor && !angularVersionAtLeast(minMajor)) continue;
+    if (category === 'r3_view_compiler_boundaries' && !SUPPORTS_BOUNDARY_BLOCKS)
+      continue;
 
     const groups = loadTestCaseGroups(
       categoryDir,
