@@ -41,3 +41,13 @@ export type {
   ServerFnMethod,
   StandardSchemaV1,
 } from './lib/server-fn/types';
+
+export { toRoute } from './lib/to-route';
+export { LinkTo } from './lib/link-to.directive';
+export type {
+  AnalogRouteTable,
+  AnalogRoutePath,
+  RoutePathOptions,
+} from './lib/to-route';
+export { injectNavigate } from './lib/inject-navigate';
+export { injectParams, injectQuery } from './lib/inject-typed-params';

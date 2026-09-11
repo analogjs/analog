@@ -259,6 +259,11 @@ export function getSidebar(): SidebarNode[] {
           id: 'integrations/storybook/index',
           label: $localize`:@@sidebar.storybook:Storybook`,
         },
+        {
+          kind: 'doc',
+          id: 'integrations/tanstack-query/index',
+          label: $localize`:@@sidebar.tanstack-query:TanStack Query`,
+        },
       ],
     },
     {
