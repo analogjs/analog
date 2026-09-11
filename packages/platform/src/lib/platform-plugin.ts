@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import viteNitroPlugin from '@analogjs/vite-plugin-nitro';
 import angular from '@analogjs/vite-plugin-angular';
 
+import { typedRoutes } from './typed-routes-plugin.js';
 import { Options } from './options.js';
 import { routerPlugin } from './router-plugin.js';
 import {
@@ -98,6 +99,18 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   }
 
   return [
+    ...(platformOptions.experimental?.typedRouting
+      ? [
+          typedRoutes({
+            ...(typeof platformOptions.experimental.typedRouting === 'object'
+              ? platformOptions.experimental.typedRouting
+              : {}),
+            workspaceRoot: platformOptions.workspaceRoot,
+            additionalPagesDirs: platformOptions.additionalPagesDirs,
+            additionalContentDirs: platformOptions.additionalContentDirs,
+          }),
+        ]
+      : []),
     ...viteNitroPlugin(platformOptions, nitroOptions),
     ...(platformOptions.ssr ? [ssrBuildPlugin(), ...injectHTMLPlugin()] : []),
     ...(platformOptions.ssr && platformOptions.experimental?.streaming

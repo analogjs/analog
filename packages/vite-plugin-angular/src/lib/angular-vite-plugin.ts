@@ -330,6 +330,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      api: { getTsConfigPath: resolveTsConfigPath },
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd = isProdMode(config.mode);
@@ -411,7 +412,12 @@ export function angular(options?: PluginOptions): Plugin[] {
               `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
           ),
         );
-        server.watcher.on('add', invalidateCompilationOnFsChange);
+        server.watcher.on('add', (file) => {
+          if (EXCLUDED_TS_EXT_REGEX.test(file)) {
+            sourceFileCache.invalidate(new Set([normalizePath(file)]));
+          }
+          invalidateCompilationOnFsChange(file);
+        });
         server.watcher.on('unlink', (file) => {
           const id = normalizePath(file);
           outputFiles.delete(id);
@@ -475,9 +481,18 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
-          let [fileId] = ctx.file.split('?');
+          const [fileId] = ctx.file.split('?');
 
           pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+
+          if (EXCLUDED_TS_EXT_REGEX.test(fileId)) {
+            await pendingCompilation;
+            pendingCompilation = null;
+            // Declaration dependencies have no runtime modules for Vite to invalidate.
+            ctx.server.moduleGraph.invalidateAll();
+            ctx.server.ws.send({ type: 'full-reload' });
+            return [];
+          }
 
           let result;
 
@@ -1421,9 +1436,12 @@ export function angular(options?: PluginOptions): Plugin[] {
      */
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
-    const oldBuilder = discardIncrementalProgram
-      ? undefined
-      : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
+    // Declaration changes can invalidate diagnostics in unchanged consumers.
+    const oldBuilder =
+      discardIncrementalProgram ||
+      ids?.some((id) => EXCLUDED_TS_EXT_REGEX.test(id))
+        ? undefined
+        : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1686,7 +1704,7 @@ export function createFsWatcherCacheInvalidator(
 
   return (file: string) => {
     const affectsProgram =
-      (TS_EXT_REGEX.test(file) && !EXCLUDED_TS_EXT_REGEX.test(file)) ||
+      TS_EXT_REGEX.test(file) ||
       COMPONENT_RESOURCE_EXT_REGEX.test(file) ||
       basename(file).includes('tsconfig') ||
       !!includeFilter?.(file);
@@ -1963,7 +1981,7 @@ export function getFileMetadata(
             cached.hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(
               node as any,
             );
-            if (!!cached.hmrUpdateCode) {
+            if (cached.hmrUpdateCode) {
               cached.className = (node as any).name.getText();
               cached.hmrEligible = true;
             }
