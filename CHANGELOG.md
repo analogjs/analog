@@ -1,3 +1,9 @@
+# [2.8.0-beta.2](https://github.com/analogjs/analog/compare/v2.8.0-beta.1...v2.8.0-beta.2) (2026-09-11)
+
+### Features
+
+- **router:** add typed action and API route helpers ([#2562](https://github.com/analogjs/analog/issues/2562)) ([1335448](https://github.com/analogjs/analog/commit/1335448136a656d76c8142b562c614280aeb45b5))
+
 # [2.8.0-beta.1](https://github.com/analogjs/analog/compare/v2.7.3-beta.2...v2.8.0-beta.1) (2026-09-11)
 
 ### Features
