@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import { describe, it, expect } from 'vitest';
 import type { StandardSchemaV1 } from './standard-schema';
 import { validateWithSchema } from './validate';

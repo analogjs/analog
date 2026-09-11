@@ -17,3 +17,14 @@ export type {
 } from './define-page-load';
 export { validateWithSchema } from './validate';
 export type { StandardSchemaV1 } from './standard-schema';
+export {
+  defineAction,
+  type DefineActionContext,
+  type DefineActionOptions,
+} from './define-action';
+export {
+  defineApiRoute,
+  type DefineApiRouteContext,
+  type DefineApiRouteOptions,
+  type DefineApiRouteResult,
+} from './define-api-route';

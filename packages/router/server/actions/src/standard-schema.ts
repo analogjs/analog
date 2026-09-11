@@ -6,6 +6,7 @@ export interface StandardSchemaV1<Input = unknown, Output = Input> {
   readonly '~standard': StandardSchemaV1.Props<Input, Output>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace -- Preserve the Standard Schema interface's declaration merging.
 export declare namespace StandardSchemaV1 {
   export interface Props<Input = unknown, Output = Input> {
     readonly version: 1;

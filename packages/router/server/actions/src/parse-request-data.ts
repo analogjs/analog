@@ -55,7 +55,7 @@ function isFormContentType(contentType: string): boolean {
 export function parseSearchParams(
   searchParams: URLSearchParams,
 ): Record<string, ParsedRequestValue> {
-  const result: Record<string, ParsedRequestValue> = {};
+  const result: Record<string, ParsedRequestValue> = Object.create(null);
   searchParams.forEach((value, key) => {
     appendEntry(result, key, value);
   });
@@ -65,7 +65,7 @@ export function parseSearchParams(
 export function parseFormData(
   formData: FormData,
 ): Record<string, ParsedRequestValue> {
-  const result: Record<string, ParsedRequestValue> = {};
+  const result: Record<string, ParsedRequestValue> = Object.create(null);
   formData.forEach((value, key) => {
     appendEntry(result, key, value as RequestEntryValue);
   });
