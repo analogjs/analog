@@ -1,3 +1,9 @@
+# [2.8.0-beta.3](https://github.com/analogjs/analog/compare/v2.8.0-beta.2...v2.8.0-beta.3) (2026-09-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** handle boundary conformance and deferred dependencies ([#2564](https://github.com/analogjs/analog/issues/2564)) ([3901663](https://github.com/analogjs/analog/commit/390166344a6392d2943d19e0801b9fb87adac0b4))
+
 # [2.8.0-beta.2](https://github.com/analogjs/analog/compare/v2.8.0-beta.1...v2.8.0-beta.2) (2026-09-11)
 
 ### Features
