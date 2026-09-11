@@ -16,7 +16,7 @@ Analog supports server-side handling of form submissions and validation.
 
 ## Setting up the Form
 
-To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directive handles collecting the `FormData` and sending a `POST` request to the server.
+To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directive collects the `FormData` and submits it using the form's method and destination.
 
 The directive emits after processing the form:
 
@@ -203,6 +203,11 @@ Bind `(onError)="onError($event)"` on the form and render the messages:
 `'profile.name.0'` when you need to normalize an individual issue path. These
 helpers accept Standard Schema issue arrays; existing actions that return custom
 error objects with `fail()` can keep their existing error handlers.
+
+Field names use dots to separate path segments without escaping. A literal key
+such as `['profile.name']` and a nested path `['profile', 'name']` both map to
+`'profile.name'`. If your schema distinguishes these keys, use the original issue
+paths to display their messages separately.
 
 ### Handling Multiple Forms
 

@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
+import { ANALOG_META_KEY } from './endpoints';
 
 export type FormActionState =
   | 'submitting'
@@ -107,9 +108,10 @@ export class FormAction {
       return new URL(explicitAction, window.location.href).toString();
     }
 
-    if (this.route) {
+    const snapshot = this.route.snapshot;
+    if (snapshot.routeConfig && ANALOG_META_KEY in snapshot.routeConfig) {
       return runInInjectionContext(this.injector, () =>
-        injectRouteEndpointURL(this.route.snapshot),
+        injectRouteEndpointURL(snapshot),
       ).pathname;
     }
 

@@ -125,6 +125,30 @@ describe('FormAction', () => {
     expect(form.hasAttribute('aria-busy')).toBe(false);
   });
 
+  it('uses the fallback endpoint on routes without Analog metadata', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response('ok'));
+    vi.stubGlobal('fetch', fetch);
+    const { fixture, page, form, submit } = await setup('/plain');
+    vi.stubGlobal('window', {
+      location: {
+        href: new URL('/plain', window.location.href).href,
+        origin: window.location.origin,
+        pathname: '/plain',
+      },
+    });
+
+    submit();
+    await vi.waitFor(() =>
+      expect(page.states).toEqual(['submitting', 'success']),
+    );
+    expect(fetch).toHaveBeenCalledWith('/api/_analog/pages/plain', {
+      method: 'post',
+      body: expect.any(FormData),
+    });
+    fixture.detectChanges();
+    expect(form.hasAttribute('aria-busy')).toBe(false);
+  });
+
   it('honors the current action input and native action attribute', async () => {
     const fetch = vi.fn().mockResolvedValue(new Response('ok'));
     vi.stubGlobal('fetch', fetch);
