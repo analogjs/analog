@@ -65,8 +65,12 @@ describe('typed routing consumer integration', () => {
       );
     }
     for (const page of [
+      'index',
       'about',
+      'settings.profile',
+      '[tenant].dashboard',
       'users.[id]',
+      'users.[id].posts.[postId]',
       'docs.[...slug]',
       'shop.[[...category]]',
     ]) {
@@ -262,37 +266,45 @@ describe('typed routing consumer integration', () => {
 
   it.each([
     [
-      'valid destinations',
-      `<a [linkTo]="{ path: '/about' }"></a>
-      <a [linkTo]="{ path: '/users/[id]', params: { id: '42' }, query: { tab: 'bio' }, hash: 'details' }" routerLinkActive="active"></a>
-      <a [linkTo]="{ path: '/users/[id]', params: { id: 0 } }"></a>
-      <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b', 42] } }"></a>
-      <a [linkTo]="{ path: '/shop/[[...category]]' }"></a>
+      'valid commands',
+      `<a linkTo="/"></a>
+      <a linkTo="/about"></a>
+      <a [linkTo]="['/users', 42]" [queryParams]="{ tab: 'bio', page: 2 }" fragment="details" routerLinkActive="active"></a>
+      <a [linkTo]="['/users', 'a/b']"></a>
+      <a [linkTo]="['/docs', 'a/b', 42]"></a>
+      <a [linkTo]="['/shop']"></a>
+      <a linkTo="/shop"></a>
+      <a [linkTo]="['/shop', 'shoes', 42]"></a>
+      <a [linkTo]="['/settings/profile']"></a>
+      <a [linkTo]="['/settings', 'profile']"></a>
+      <a [linkTo]="['/', 'settings', 'profile']"></a>
+      <a [linkTo]="['/users', 42, 'posts', 7]"></a>
+      <a [linkTo]="['/', 'acme', 'dashboard']"></a>
+      <a [linkTo]="commands"></a>
       <a [linkTo]="null"></a>`,
       false,
     ],
-    ['unknown path', `<a [linkTo]="{ path: '/missing' }"></a>`, true],
-    ['missing params', `<a [linkTo]="{ path: '/users/[id]' }"></a>`, true],
+    ['unknown string', `<a linkTo="/missing"></a>`, true],
+    ['unknown commands', `<a [linkTo]="['/missing']"></a>`, true],
+    ['missing param', `<a [linkTo]="['/users']"></a>`, true],
     [
-      'wrong param name',
-      `<a [linkTo]="{ path: '/users/[id]', params: { other: '42' } }"></a>`,
+      'wrong param position',
+      `<a [linkTo]="['/users', 'posts', 42]"></a>`,
       true,
     ],
+    ['wrong param type', `<a [linkTo]="['/users', true]"></a>`, true],
+    ['missing catch-all', `<a [linkTo]="['/docs']"></a>`, true],
+    ['wrong catch-all type', `<a [linkTo]="['/docs', true]"></a>`, true],
+    ['extra static segment', `<a [linkTo]="['/about', 42]"></a>`, true],
+    ['relative commands', `<a [linkTo]="['users', 42]"></a>`, true],
+    ['relative string', `<a linkTo="../about"></a>`, true],
+    ['unresolved pattern', `<a linkTo="/users/[id]"></a>`, true],
     [
-      'wrong param type',
-      `<a [linkTo]="{ path: '/users/[id]', params: { id: true } }"></a>`,
+      'outlet commands',
+      `<a [linkTo]="['/users', { outlets: { primary: '42' } }]"></a>`,
       true,
     ],
-    [
-      'catch-all string',
-      `<a [linkTo]="{ path: '/docs/[...slug]', params: { slug: 'a/b' } }"></a>`,
-      true,
-    ],
-    [
-      'static route params',
-      `<a [linkTo]="{ path: '/about', params: { id: '42' } }"></a>`,
-      true,
-    ],
+    ['old destination object', `<a [linkTo]="{ path: '/about' }"></a>`, true],
   ])('checks LinkTo templates: %s', async (_name, template, invalid) => {
     const root = fixture();
     writeFileSync(
@@ -302,7 +314,7 @@ describe('typed routing consumer integration', () => {
       import { RouterLinkActive } from '@angular/router';
       import { LinkTo } from '@analogjs/router';
       @Component({ standalone: true, imports: [LinkTo, RouterLinkActive], template: \`${template}\` })
-      export class Consumer {}
+      export class Consumer { readonly commands = ['/users', 42] as const; }
     `,
     );
     await configure(root);

@@ -12,7 +12,7 @@ import { CartService } from '../cart.service';
     <h3>Cart</h3>
 
     <p>
-      <a [linkTo]="{ path: '/shipping' }">Shipping Prices</a>
+      <a linkTo="/shipping">Shipping Prices</a>
     </p>
 
     @for (item of items; track $index) {

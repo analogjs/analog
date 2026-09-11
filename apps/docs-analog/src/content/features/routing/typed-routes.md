@@ -44,23 +44,29 @@ Custom output paths must end in `.d.ts` and be included in the relevant tsconfig
 
 ## Build links
 
-Import `LinkTo` from `@analogjs/router` into your component's `imports` and bind a destination to `[linkTo]`:
+Import `LinkTo` from `@analogjs/router` into your component's `imports` and use Angular-style absolute paths and command arrays with `[linkTo]`:
 
 ```html
-<a [linkTo]="{ path: '/shipping' }">Shipping</a>
+<a linkTo="/shipping">Shipping</a>
 <a
-  [linkTo]="{ path: '/products/[id]', params: { id: product.id } }"
+  [linkTo]="['/products', product.id]"
+  [queryParams]="{ tab: 'details' }"
+  fragment="reviews"
   routerLinkActive="active"
 >
   Details
 </a>
 ```
 
-The generated route table checks the path and its required parameters together. Use `query` and `hash` in the destination for query parameters and fragments. Binding `null` or `undefined` disables the link.
+The generated route table checks static paths, required positional parameters, and command order. String inputs are for static destinations; use command arrays for dynamic values. Binding `null` or `undefined` disables the link.
 
-`LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
+Leading static segments can be combined in the first command: `['/settings/profile']` and `['/settings', 'profile']` are equivalent. Use `['/', tenant, 'dashboard']` for a route whose first segment is dynamic. For command arrays stored in component properties, use `as const` to preserve their tuple types.
 
-Dynamic parameters accept strings or numbers. Numbers are converted to strings when building links and navigating. Catch-all parameters accept arrays of string or number segments; optional catch-all parameters may be omitted. Query values are strings or string arrays, and `hash` supplies the fragment. URL path segments are encoded automatically.
+`LinkTo` supports a typed subset of Angular's absolute commands. Relative paths, matrix parameters, outlet objects, and `UrlTree` inputs use Angular's `RouterLink` directly.
+
+`LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParams`, `fragment`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
+
+Dynamic parameters accept strings or numbers. Catch-all routes require one or more string or number commands after their static prefix; optional catch-all routes allow those commands to be omitted. Angular handles URL serialization and encoding, including query parameters and fragments.
 
 ## Navigate programmatically
 
@@ -85,6 +91,8 @@ const link = toRoute('/products/[id]', { params: { id: 42 } });
 ```
 
 The result contains Angular router commands in `path`, plus `queryParams` and `fragment`. These properties can be passed to Angular's router APIs. For template links, use `[linkTo]` as shown above.
+
+`toRoute` and `injectNavigate` use named `params`, with arrays for catch-all parameters. Their `query` option accepts strings or string arrays, and `hash` supplies the fragment. Numeric path parameters are normalized to strings.
 
 ## Read parameters as signals
 

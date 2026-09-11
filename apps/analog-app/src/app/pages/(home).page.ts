@@ -21,10 +21,7 @@ export const routeMeta: RouteMeta = {
         <h3>
           <a
             [title]="product.name + ' details'"
-            [linkTo]="{
-              path: '/products/[productId]',
-              params: { productId: product.id },
-            }"
+            [linkTo]="['/products', product.id]"
           >
             {{ product.name }}
           </a>
