@@ -16,13 +16,13 @@ Analog supports server-side handling of form submissions and validation.
 
 ## Setting up the Form
 
-To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directives handles collecting the `FormData` and sending a `POST` request to the server.
+To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directive collects `FormData` and handles GET navigation or POST submission to the current page.
 
 The directive emits after processing the form:
 
 - `onSuccess`: when the form is processing on the server and returns a success response.
 - `onError`: when the form returns an error response.
-- `onStateChange`: when the form is submitted.
+- `state`: emits `submitting`, `success`, `error`, `redirect`, or `navigate` as the submission progresses.
 
 The example page below submits an email for a newsletter signup.
 
@@ -45,7 +45,7 @@ type FormErrors =
         method="post"
         (onSuccess)="onSuccess()"
         (onError)="onError($any($event))"
-        (onStateChange)="errors.set(undefined)"
+        (state)="$event === 'submitting' && errors.set(undefined)"
       >
         <div>
           <label for="email"> Email </label>
@@ -78,6 +78,50 @@ export default class NewsletterComponent {
 ```
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
+
+### Opting Into Enhanced Forms
+
+Set `[enhanceForm]="true"` to enable enhanced form handling. It defaults to
+`false` in v2, so existing forms keep their current behavior. Enhanced handling
+is planned to become the default in v3; `[enhanceForm]="false"` explicitly selects
+the existing behavior.
+
+```html
+<form
+  method="post"
+  action="/api/newsletter"
+  [enhanceForm]="true"
+  (onSuccess)="onSuccess($event)"
+  (onError)="onError($event)"
+>
+  <input name="email" type="email" />
+  <button type="submit">Subscribe</button>
+</form>
+```
+
+Import `FormAction` in the component's `imports`, as with existing forms. The
+flag configures the same directive. It enables all of the following:
+
+- Use `action` or `[action]` as the submission destination. Without an action,
+  POST uses the current page endpoint and GET uses the current route.
+- Preserve repeated GET fields as multiple query values. Submitted fields
+  replace existing values with the same name; other destination query parameters
+  and the fragment are retained.
+- Preserve complete redirect URLs, including query parameters and fragments.
+  Same-origin GET destinations and redirects use Angular navigation with
+  `onSameUrlNavigation: 'reload'`; external destinations use browser navigation.
+- Set `data-state="idle"` initially and update it with submission state. Set
+  `aria-busy="true"` while submitting, then remove it when processing completes.
+- Emit `error` after network or response-parsing failures, clearing busy state.
+
+The directive manages `data-state` and `aria-busy` only while enhancement is
+enabled. Disabling it restores the previous attribute values. Use the `state`
+output to track progress in either mode; `FormActionState` is exported for typing
+state handlers.
+
+With the flag omitted or set to `false`, forms retain beta's page endpoint,
+GET query replacement and last-value handling for repeated fields, and
+pathname-only Angular redirects. The directive does not modify state attributes.
 
 ## Handling the Form Action
 
@@ -136,6 +180,53 @@ an optional `path`. Existing actions returning `fail()` keep their own error sha
 
 Repeated form fields are preserved as arrays, including file fields. Empty or
 unparseable bodies fall back to `{}`, which is then validated by the schema.
+
+### Displaying Validation Errors
+
+Use `issuesToFieldErrors` and `issuesToFormErrors` to display the issues returned
+by `defineAction`. Field paths become dot-separated names, and multiple messages
+for the same field remain in order. Issues without a path are form-level errors.
+
+```ts
+import { signal } from '@angular/core';
+import {
+  issuesToFieldErrors,
+  issuesToFormErrors,
+  type ValidationFieldErrors,
+} from '@analogjs/router';
+import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
+
+// Inside the component handling a defineAction form:
+fieldErrors = signal<ValidationFieldErrors>({});
+formErrors = signal<string[]>([]);
+
+onError(result: unknown) {
+  // This form's defineAction handler returns Standard Schema issues.
+  const issues = result as ReadonlyArray<StandardSchemaV1.Issue>;
+  this.fieldErrors.set(issuesToFieldErrors(issues));
+  this.formErrors.set(issuesToFormErrors(issues));
+}
+```
+
+Bind `(onError)="onError($event)"` on the form and render the messages:
+
+```html
+@for (message of fieldErrors()['email'] ?? []; track $index) {
+<p>{{ message }}</p>
+} @for (message of formErrors(); track $index) {
+<p>{{ message }}</p>
+}
+```
+
+`issuePathToFieldName(['profile', { key: 'name' }, 0])` returns
+`'profile.name.0'` when you need to normalize an individual issue path. These
+helpers accept Standard Schema issue arrays; existing actions that return custom
+error objects with `fail()` can keep their existing error handlers.
+
+Field names use dots to separate path segments without escaping. A literal key
+such as `['profile.name']` and a nested path `['profile', 'name']` both map to
+`'profile.name'`. If your schema distinguishes these keys, use the original issue
+paths to display their messages separately.
 
 ### Handling Multiple Forms
 
