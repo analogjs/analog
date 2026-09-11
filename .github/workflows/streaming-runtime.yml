@@ -1,0 +1,55 @@
+name: Streaming runtime compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'packages/platform/**'
+      - 'packages/router/**'
+      - 'packages/vite-plugin-angular/**'
+      - 'apps/streaming-app/**'
+      - 'apps/streaming-app-e2e-playwright/**'
+      - 'tools/fixtures/streaming-runtime/**'
+      - 'tools/scripts/streaming-runtime-*.mjs'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/streaming-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        angular: ['21', '22']
+    env:
+      CI: 'true'
+      NX_DAEMON: 'false'
+      NX_NO_CLOUD: 'true'
+      PLAYWRIGHT_SKIP_BROWSER_GC: '1'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec nx run platform:streaming-smoke --runtime=all --angular=${{ matrix.angular }}
+      - if: matrix.angular == '22'
+        run: pnpm exec nx run streaming-app-e2e-playwright:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: streaming-angular-${{ matrix.angular }}
+          path: |
+            dist/streaming-runtime/**/result.json
+            dist/streaming-runtime/**/pnpm-lock.yaml
+          if-no-files-found: warn

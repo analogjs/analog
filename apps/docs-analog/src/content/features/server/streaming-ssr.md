@@ -8,6 +8,10 @@ The document head is sent immediately, each `@defer (hydrate …)` block is sent
 the moment it resolves on the server, and the authoritative document arrives
 last, so a slow block never holds back the rest of the page.
 
+Application module assets are preloaded with the shell, but execute only after
+the authoritative body is installed. A failed or incomplete stream therefore
+shows its error view without starting Angular against a missing application root.
+
 :::info Experimental
 
 Streaming SSR is experimental and opt-in. It requires **Angular 21 or later**
@@ -19,15 +23,25 @@ path is unchanged.
 
 ## Enabling streaming
 
+For Cloudflare Module and Durable Worker presets, use Nitro's generated Wrangler
+configuration and keep server output separate from public assets. Deployment
+scripts that referenced the former Pages-shaped `dist/_worker.js` location must
+follow the generated configuration instead. Cloudflare Pages retains its own
+`_worker.js` layout. Native server-function dispatch requires a Node request and
+response context; streaming SSR alone does not make those functions portable to
+Worker runtimes.
+
 Enable the `experimental.streaming` option in your Vite config:
 
 ```ts
 // vite.config.ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [analog({ experimental: { streaming: true } })],
+  plugins: [analog({ experimental: { streaming: true } }), angular(), nitro()],
 });
 ```
 
@@ -35,6 +49,7 @@ Then use `renderStream` instead of `render` in `main.server.ts`:
 
 ```ts
 // src/main.server.ts
+import '@angular/platform-server/init';
 import { renderStream } from '@analogjs/router/server';
 import { config } from './app/app.config.server';
 import { AppComponent } from './app/app.component';
@@ -85,8 +100,8 @@ resolves, and hydrated on the client when its trigger fires:
 
 A block backed by asynchronous data (for example an
 [`httpResource`](https://angular.dev/guide/http/http-resource)) keeps the render
-pending until its data resolves, so the block streams with its final content and
-the page's time-to-first-byte is unaffected.
+pending until its data resolves. Its early preview may still show loading state;
+the authoritative tail contains the settled data and hydration state.
 
 ## Title and meta
 
@@ -105,18 +120,65 @@ render (no streaming, but SSR and hydration still work):
 ```ts
 // vite.config.ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [
     analog({
       experimental: { streaming: true },
-      nitro: {
-        routeRules: {
-          '/report': { streaming: false },
-        },
+    }),
+    angular(),
+    nitro({
+      routeRules: {
+        '/report': { streaming: false },
       },
     }),
   ],
 });
 ```
+
+An explicit `streaming: true` rule overrides an inherited opt-out. Route policy
+comes from the host's matched rules, not caller-provided headers. Cancelling the
+response body or aborting the host request disposes the rendering platform and
+cancels queued block flushes. Failures after the shell has been sent error the
+stream for direct renderer consumers. The native HTTP adapter opts into a generic
+failure marker so the browser can show an incomplete-document error; it cannot
+change the already-committed HTTP status. Unexpected EOF after the preview
+runtime arrives is handled the same way.
+
+## Prerendering
+
+Nitro prerendering always writes the fully buffered document, even when a route
+enables streaming. Static HTML therefore contains its final content and hydration
+state without requiring the browser to assemble streaming templates. This
+prerender-only policy does not disable streaming for request-time rendering.
+
+## Cloudflare Workers
+
+Use zoneless Angular and enable incoming request cancellation in the generated
+Worker configuration:
+
+```ts
+nitro({
+  preset: 'cloudflare-module',
+  cloudflare: {
+    wrangler: {
+      compatibility_flags: ['nodejs_compat', 'enable_request_signal'],
+    },
+  },
+});
+```
+
+The native Nitro integration passes Cloudflare's `waitUntil` into the render
+context. While a streamed render is pending, the renderer emits a small HTML
+comment once per second. Workers observe disconnected clients on a subsequent
+write, so a silent data operation must not prevent that notification. The
+request lifetime remains held until the Angular platform has been disposed;
+completion, failure and cancellation stop the comments and release that lifetime.
+
+Custom edge hosts can supply the optional `ServerContext.waitUntil` callback for
+the same handoff. Hosts without it do not emit these comments. This rendering
+support does not remove the native server-function dispatcher's requirement for
+Node-compatible request and response objects.

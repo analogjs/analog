@@ -153,6 +153,11 @@ export interface Options {
    */
   experimental?: {
     /**
+     * Enable Angular's per-defer-block capture transform for renderStream().
+     * Requires Angular 21 or newer and SSR. Buffered render() remains unchanged.
+     */
+    streaming?: boolean;
+    /**
      * Enable typed route table generation for type-safe navigation.
      *
      * When enabled, `@analogjs/platform` generates a single route module

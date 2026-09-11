@@ -1,5 +1,16 @@
 import type { ServerRequest } from '../../tokens/src/index.js';
-import { getBaseUrl, getRequestProtocol } from './provide-server-context';
+import {
+  getBaseUrl,
+  getRequestProtocol,
+  provideServerContext,
+} from './provide-server-context';
+import { Injector, inject } from '@angular/core';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
+import { SERVER_FN_DISPATCHER } from '../../src/lib/server-fn/dispatcher';
+import { REQUEST, RESPONSE } from '../../tokens/src/index.js';
+import { serverFn } from './server-fn/server-fn';
+import { serverFnRegistry } from './server-fn/registry';
 
 function createRequest({
   headers = {},
@@ -19,6 +30,32 @@ function createRequest({
 }
 
 describe('provideServerContext', () => {
+  it('provides an in-process server-function dispatcher with this request context', async () => {
+    const socket = new Socket();
+    const req = Object.assign(new IncomingMessage(socket), {
+      originalUrl: '/test',
+    });
+    const res = new ServerResponse(req);
+    const parent = Injector.create({
+      providers: provideServerContext({ req, res }),
+    });
+    const fn = serverFn({ id: 'request-provider-test' }, () => ({
+      sameRequest: inject(REQUEST) === req,
+      sameResponse: inject(RESPONSE) === res,
+    }));
+    try {
+      const dispatcher = parent.get(SERVER_FN_DISPATCHER);
+      expect(dispatcher).not.toBeNull();
+      expect(await dispatcher!(fn, undefined, parent)).toEqual({
+        sameRequest: true,
+        sameResponse: true,
+      });
+    } finally {
+      parent.destroy();
+      serverFnRegistry.delete(fn.id);
+      socket.destroy();
+    }
+  });
   it('prefers forwarded host and protocol headers', () => {
     const req = createRequest({
       headers: {

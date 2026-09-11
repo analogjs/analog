@@ -1,7 +1,8 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig(() => {
@@ -25,15 +26,15 @@ export default defineConfig(() => {
         prerender: {
           routes: [],
         },
-        // Opt a route out of streaming — it falls back to a buffered render.
-        nitro: {
-          routeRules: {
-            '/buffered': { streaming: false },
-            '/fn-buffered': { streaming: false },
-          },
+      }),
+      angular(),
+      nitro({
+        // Render these routes fully before committing response headers.
+        routeRules: {
+          '/buffered': { streaming: false },
+          '/fn-buffered': { streaming: false },
         },
       }),
-      nxViteTsPaths(),
     ],
   };
 });

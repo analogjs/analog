@@ -163,6 +163,19 @@ Query params, mutation bodies, and response shapes are all inferred from the ser
 
 Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
 
+If progressive rendering has already sent its shell,
+the HTTP host emits a generic failure trailer and disposes the application; its HTTP status can no
+longer change. The host opts into this framing through `ServerContext.renderErrorsAsHtml`;
+direct renderer calls retain their stream-error behavior by default.
+Use buffered rendering when the page requires its final load status
+before response headers are sent.
+Some HTTP adapters expose an errored stream as ordinary EOF. The progressive
+browser runtime therefore requires the authoritative completion tail; if the
+document ends without it, the preview becomes a generic, non-indexable error view.
+Progressive responses use identity encoding and `Cache-Control: no-store, no-transform`
+so compression cannot hold back the shell or cache an incomplete document.
+Explicitly buffered routes and static assets retain their normal encoding policy.
+
 ```ts
 // src/app/pages/posts.server.ts
 import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';

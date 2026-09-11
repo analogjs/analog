@@ -58,7 +58,8 @@ export function buildOptimizerPlugin({
                 ngDevMode: 'false',
                 ngJitMode: 'false',
                 ngI18nClosureMode: 'false',
-                ngServerMode: `${!!userConfig.build?.ssr}`,
+                // Vite's environment-specific define owns ngServerMode.
+                // Shared transforms must not fold server code to false.
               }
             : undefined,
         },

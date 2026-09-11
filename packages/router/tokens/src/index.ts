@@ -16,6 +16,14 @@ export type ServerContext = {
   req: ServerRequest;
   res: ServerResponse;
   fetch?: ServerInternalFetch;
+  /** Trusted route policy supplied by the SSR host. */
+  streaming?: boolean;
+  /** Aborted when the host request is cancelled. */
+  signal?: AbortSignal;
+  /** Edge-host lifetime handoff for stream cleanup after client cancellation. */
+  waitUntil?: (task: Promise<void>) => void;
+  /** HTTP hosts can finish a failed progressive document with a safe HTML trailer. */
+  renderErrorsAsHtml?: boolean;
 };
 
 export const REQUEST: InjectionToken<ServerRequest> =

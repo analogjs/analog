@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 const {
   analogNitroPluginSpy,
@@ -90,6 +93,54 @@ describe('platformPlugin', () => {
     );
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
     expect(injectHTMLPluginSpy).not.toHaveBeenCalled();
+  });
+
+  it('registers the streaming transform only for explicit SSR streaming', () => {
+    expect(platformPlugin().map((plugin) => plugin.name)).not.toContain(
+      'analogjs-defer-streaming',
+    );
+    expect(
+      platformPlugin({ experimental: { streaming: false } }).map(
+        (plugin) => plugin.name,
+      ),
+    ).not.toContain('analogjs-defer-streaming');
+    expect(
+      platformPlugin({ ssr: false, experimental: { streaming: true } }).map(
+        (plugin) => plugin.name,
+      ),
+    ).not.toContain('analogjs-defer-streaming');
+    expect(
+      platformPlugin({ experimental: { streaming: true } }).map(
+        (plugin) => plugin.name,
+      ),
+    ).toContain('analogjs-defer-streaming');
+  });
+
+  it('refuses an unsupported Angular version only when streaming is enabled', () => {
+    const workspaceRoot = mkdtempSync(
+      join(tmpdir(), 'analog-streaming-version-'),
+    );
+    try {
+      const core = join(workspaceRoot, 'node_modules/@angular/core');
+      mkdirSync(core, { recursive: true });
+      writeFileSync(
+        join(core, 'package.json'),
+        JSON.stringify({ version: '20.0.0' }),
+      );
+      expect(() =>
+        platformPlugin({ workspaceRoot, experimental: { streaming: true } }),
+      ).toThrow('requires Angular 21 or newer');
+      expect(() => platformPlugin({ workspaceRoot })).not.toThrow();
+      expect(() =>
+        platformPlugin({
+          workspaceRoot,
+          ssr: false,
+          experimental: { streaming: true },
+        }),
+      ).not.toThrow();
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
   });
 
   it('passes through explicit additional route dirs when discoverRoutes is true', () => {

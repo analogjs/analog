@@ -1,4 +1,4 @@
-import { eventHandler } from 'h3';
+import { eventHandler } from 'nitro/h3';
 
 // Simulate a slow data source (~600ms) so Block B's `httpResource` keeps the
 // app unstable until it resolves. This is a genuine per-request delay: the head

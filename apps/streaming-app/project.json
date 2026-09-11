@@ -8,7 +8,7 @@
   "implicitDependencies": ["platform", "router"],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/streaming-app/.nitro",
@@ -28,7 +28,8 @@
           "sourcemap": false,
           "mode": "production"
         }
-      }
+      },
+      "dependsOn": ["platform:build", "router:build"]
     },
     "serve": {
       "executor": "@nx/vite:dev-server",

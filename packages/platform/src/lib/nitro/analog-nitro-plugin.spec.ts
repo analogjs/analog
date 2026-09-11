@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,12 +25,17 @@ function callConfig(plugin: any, root: string, command = 'build') {
     : hook?.handler({ root }, env);
 }
 
-function callWriteBundle(plugin: any, envName: string, bundle: any) {
+function callWriteBundle(
+  plugin: any,
+  envName: string,
+  bundle: any,
+  dir?: string,
+) {
   const hook = plugin.writeBundle;
   const ctx = { environment: { name: envName } };
   return typeof hook === 'function'
-    ? hook.call(ctx, {} as any, bundle)
-    : hook?.handler.call(ctx, {} as any, bundle);
+    ? hook.call(ctx, { dir }, bundle)
+    : hook?.handler.call(ctx, { dir }, bundle);
 }
 
 function callResolveId(plugin: any, id: string) {
@@ -79,9 +90,10 @@ describe('analogNitroPlugin', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
-      /\.analog\/__ssr-entry\.mjs$/,
-    );
+    expect(overrides.environments.ssr.build.rollupOptions.input).toEqual({
+      index: join(projectRoot, '.analog/__ssr-entry.mjs'),
+    });
+    expect(overrides.experimental).toBeUndefined();
     expect(overrides.environments.ssr.optimizeDeps.include).toContain(
       '@angular/core',
     );
@@ -150,6 +162,30 @@ describe('analogNitroPlugin', () => {
     expect(code).toContain("'x-analog-no-ssr'");
   });
 
+  it.each([true, false])(
+    'keeps the public client shell only when SSR is disabled (ssr=%s)',
+    (ssr) => {
+      const output = join(workspaceRoot, 'client-output');
+      mkdirSync(output, { recursive: true });
+      for (const suffix of ['', '.br', '.gz'])
+        writeFileSync(join(output, `index.html${suffix}`), 'client shell');
+      const plugin = analogNitroPlugin({ workspaceRoot, ssr });
+      callConfig(plugin, projectRoot);
+      callWriteBundle(
+        plugin,
+        'client',
+        { 'index.html': { type: 'asset', source: 'client shell' } },
+        output,
+      );
+      for (const suffix of ['', '.br', '.gz'])
+        expect(existsSync(join(output, `index.html${suffix}`))).toBe(!ssr);
+      expect(existsSync(join(workspaceRoot, 'index.html'))).toBe(true);
+      expect(callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')).toContain(
+        'client shell',
+      );
+    },
+  );
+
   it('fails loudly when a build produced no client document', () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
     callConfig(plugin, projectRoot);
@@ -165,6 +201,57 @@ describe('analogNitroPlugin', () => {
 
     const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry');
     expect(code).toContain('id=\\"app\\"');
+  });
+
+  it('passes trusted streaming policy and the request signal through the built wrapper', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+    const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')
+      .split('\n')
+      .filter((line: string) => !line.startsWith('import '))
+      .join('\n')
+      .replace('export default', 'return');
+    const renderer = vi.fn(async () => 'rendered');
+    const previousFetch = globalThis.$fetch;
+    try {
+      const service = new Function(
+        'renderer',
+        'createFetch',
+        'nitroServerFetch',
+        code,
+      )(renderer, () => vi.fn(), vi.fn());
+      const abort = new AbortController();
+      const request = new Request('http://localhost/stream?test=1', {
+        headers: { 'x-analog-no-streaming': 'true' },
+        signal: abort.signal,
+      });
+      const tasks: Promise<void>[] = [];
+      const node = { req: { headers: {}, originalUrl: '' }, res: {} };
+      const edge = {
+        tasks,
+        waitUntil(task: Promise<void>) {
+          this.tasks.push(task);
+        },
+      };
+      Object.defineProperty(request, 'runtime', {
+        value: { node, cloudflare: { context: edge } },
+      });
+      expect(await (await service.fetch(request)).text()).toBe('rendered');
+      const context = renderer.mock.calls[0][2];
+      expect(context.streaming).toBe(false);
+      expect(context.signal).toBe(request.signal);
+      expect(context.renderErrorsAsHtml).toBe(true);
+      expect(context.req).toBe(node.req);
+      expect(context.res).toBe(node.res);
+      expect(context.req.originalUrl).toBe('/stream?test=1');
+      const task = Promise.resolve();
+      context.waitUntil(task);
+      expect(tasks).toEqual([task]);
+      abort.abort();
+      expect(context.signal.aborted).toBe(true);
+    } finally {
+      globalThis.$fetch = previousFetch;
+    }
   });
 
   it('registers page handlers and the page-endpoints rollup plugin in nitro setup', async () => {
@@ -198,9 +285,54 @@ describe('analogNitroPlugin', () => {
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
   });
 
+  it.each([true, false])(
+    'prevents compression buffering for progressive responses (enabled=%s)',
+    async (streaming) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      const code = callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry')
+        .split('\n')
+        .filter((line: string) => !line.startsWith('import '))
+        .join('\n')
+        .replace('export default', 'return');
+      const previousFetch = globalThis.$fetch;
+      try {
+        const renderer = vi.fn(
+          async () =>
+            new ReadableStream({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('shell'));
+                controller.close();
+              },
+            }),
+        );
+        const service = new Function(
+          'renderer',
+          'createFetch',
+          'nitroServerFetch',
+          code,
+        )(renderer, () => vi.fn(), vi.fn());
+        const response = await service.fetch(
+          new Request('http://localhost/stream', {
+            headers: streaming ? {} : { 'x-analog-no-streaming': 'true' },
+          }),
+        );
+        expect(response.headers.get('content-encoding')).toBe(
+          streaming ? 'identity' : null,
+        );
+        expect(response.headers.get('cache-control')).toBe(
+          streaming ? 'no-store, no-transform' : null,
+        );
+        expect(await response.text()).toBe('shell');
+      } finally {
+        globalThis.$fetch = previousFetch;
+      }
+    },
+  );
+
   it('hides the virtual renderer from prerender path resolution and restores it', async () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
-    callConfig(plugin, projectRoot);
+    callConfig(plugin, projectRoot, 'serve');
 
     const hookFn = vi.fn();
     const nitroMock: any = {
@@ -229,11 +361,21 @@ describe('analogNitroPlugin', () => {
     for (const hook of hooksFor('prerender:config')) hook(prerendererConfig);
     expect(prerendererConfig.renderer).toBe(false);
 
-    const prerenderer: any = { options: { renderer: undefined } };
+    const originalVirtual = nitroMock.options.virtual;
+    const prerenderer: any = {
+      options: { renderer: undefined, virtual: originalVirtual },
+    };
     for (const hook of hooksFor('prerender:init')) hook(prerenderer);
     expect(prerenderer.options.renderer).toEqual({
       handler: '#analog/ssr-renderer',
     });
+    expect(prerenderer.options.virtual).not.toBe(originalVirtual);
+    expect(prerenderer.options.virtual['#analog/ssr-renderer']()).toContain(
+      "const noStreaming = 'true'",
+    );
+    expect(originalVirtual['#analog/ssr-renderer']()).not.toContain(
+      "const noStreaming = 'true'",
+    );
   });
 
   it('stamps route rule headers for ssr and streaming opt-outs', () => {
@@ -241,7 +383,12 @@ describe('analogNitroPlugin', () => {
       options: {
         routeRules: {
           '/buffered': { streaming: false },
+          '/streamed': { streaming: true },
           '/no-ssr': { ssr: false },
+          '/no-ssr/help': {
+            ssr: true,
+            headers: { 'x-analog-no-ssr': 'true', 'x-example': 'retained' },
+          },
           '/default': {},
         },
       },
@@ -252,8 +399,15 @@ describe('analogNitroPlugin', () => {
     expect(nitroMock.options.routeRules['/buffered'].headers).toEqual({
       'x-analog-no-streaming': 'true',
     });
+    expect(nitroMock.options.routeRules['/streamed'].headers).toEqual({
+      'x-analog-no-streaming': 'false',
+    });
     expect(nitroMock.options.routeRules['/no-ssr'].headers).toEqual({
       'x-analog-no-ssr': 'true',
+    });
+    expect(nitroMock.options.routeRules['/no-ssr/help'].headers).toEqual({
+      'x-analog-no-ssr': 'false',
+      'x-example': 'retained',
     });
     expect(nitroMock.options.routeRules['/default'].headers).toBeUndefined();
   });

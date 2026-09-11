@@ -1,11 +1,12 @@
 /// <reference types="vitest" />
 
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: 'tests',
+    root: fileURLToPath(new URL('./tests', import.meta.url)),
     test: {
       reporters: ['default'],
       globals: true,

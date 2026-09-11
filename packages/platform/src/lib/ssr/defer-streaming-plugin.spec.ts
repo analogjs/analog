@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   injectDeferStreamingHook,
   inspectAngularCoreModule,
@@ -14,7 +14,7 @@ describe('streamingSupportedOnAngular', () => {
     );
   });
 
-  it('rejects versions below the floor (v20 inlines the profiler anchor)', () => {
+  it('rejects versions below the qualified floor', () => {
     expect(streamingSupportedOnAngular(MIN_STREAMING_ANGULAR_MAJOR - 1)).toBe(
       false,
     );
@@ -81,6 +81,46 @@ describe('injectDeferStreamingHook', () => {
     expect(out).toContain('function applyDeferBlockState(');
     expect(out).toContain('profiler(ProfilerEvent.DeferBlockStateEnd);');
     expect(out.length).toBeGreaterThan(bundle.length);
+  });
+
+  it('captures the named function with numeric profiler events and a Unicode prefix', () => {
+    const numeric =
+      '/* 测试 🙂 */ function unrelated() { profiler(ProfilerEvent.DeferBlockStateEnd); }\n' +
+      bundle.replace(
+        'profiler(ProfilerEvent.DeferBlockStateEnd);',
+        'profiler(913);',
+      );
+    const out = injectDeferStreamingHook(numeric);
+    expect(out).not.toBeNull();
+    const capture = vi.fn();
+    const apply = new Function(
+      'globalThis',
+      'ngServerMode',
+      'DeferBlockState',
+      'SSR_UNIQUE_ID',
+      'renderDeferBlockState',
+      'profiler',
+      `${out}; return applyDeferBlockState;`,
+    )(
+      { __analogSsrDeferCapture: capture },
+      true,
+      { Complete: 2 },
+      0,
+      () => {},
+      () => {},
+    );
+    const container = [];
+    apply(2, ['block'], container, {}, {});
+    expect(capture).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ ssrUniqueId: 'block', lContainer: container }),
+    );
+    apply(1, ['loading'], [], {}, {});
+    expect(capture).toHaveBeenCalledOnce();
+  });
+
+  it('does not install the hook twice in repeated transformations', () => {
+    const once = injectDeferStreamingHook(bundle)!;
+    expect(injectDeferStreamingHook(once)).toBe(once);
   });
 });
 
