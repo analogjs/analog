@@ -16,13 +16,13 @@ Analog supports server-side handling of form submissions and validation.
 
 ## Setting up the Form
 
-To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directives handles collecting the `FormData` and sending a `POST` request to the server.
+To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directive collects `FormData` and handles GET navigation or POST submission to the current page.
 
 The directive emits after processing the form:
 
 - `onSuccess`: when the form is processing on the server and returns a success response.
 - `onError`: when the form returns an error response.
-- `onStateChange`: when the form is submitted.
+- `state`: emits `submitting`, `success`, `error`, `redirect`, or `navigate` as the submission progresses.
 
 The example page below submits an email for a newsletter signup.
 
@@ -45,7 +45,7 @@ type FormErrors =
         method="post"
         (onSuccess)="onSuccess()"
         (onError)="onError($any($event))"
-        (onStateChange)="errors.set(undefined)"
+        (state)="$event === 'submitting' && errors.set(undefined)"
       >
         <div>
           <label for="email"> Email </label>
@@ -78,6 +78,50 @@ export default class NewsletterComponent {
 ```
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
+
+### Opting Into Enhanced Forms
+
+Set `[enhanceForm]="true"` to enable enhanced form handling. It defaults to
+`false` in v2, so existing forms keep their current behavior. Enhanced handling
+is planned to become the default in v3; `[enhanceForm]="false"` explicitly selects
+the existing behavior.
+
+```html
+<form
+  method="post"
+  action="/api/newsletter"
+  [enhanceForm]="true"
+  (onSuccess)="onSuccess($event)"
+  (onError)="onError($event)"
+>
+  <input name="email" type="email" />
+  <button type="submit">Subscribe</button>
+</form>
+```
+
+Import `FormAction` in the component's `imports`, as with existing forms. The
+flag configures the same directive. It enables all of the following:
+
+- Use `action` or `[action]` as the submission destination. Without an action,
+  POST uses the current page endpoint and GET uses the current route.
+- Preserve repeated GET fields as multiple query values. Submitted fields
+  replace existing values with the same name; other destination query parameters
+  and the fragment are retained.
+- Preserve complete redirect URLs, including query parameters and fragments.
+  Same-origin GET destinations and redirects use Angular navigation with
+  `onSameUrlNavigation: 'reload'`; external destinations use browser navigation.
+- Set `data-state="idle"` initially and update it with submission state. Set
+  `aria-busy="true"` while submitting, then remove it when processing completes.
+- Emit `error` after network or response-parsing failures, clearing busy state.
+
+The directive manages `data-state` and `aria-busy` only while enhancement is
+enabled. Disabling it restores the previous attribute values. Use the `state`
+output to track progress in either mode; `FormActionState` is exported for typing
+state handlers.
+
+With the flag omitted or set to `false`, forms retain beta's page endpoint,
+GET query replacement and last-value handling for repeated fields, and
+pathname-only Angular redirects. The directive does not modify state attributes.
 
 ## Handling the Form Action
 
