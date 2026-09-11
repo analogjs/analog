@@ -16,13 +16,13 @@ Analog supports server-side handling of form submissions and validation.
 
 ## Setting up the Form
 
-To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directives handles collecting the `FormData` and sending a `POST` request to the server.
+To handle form submissions, use the `FormAction` directive from the `@analogjs/router` package. The directive handles collecting the `FormData` and sending a `POST` request to the server.
 
 The directive emits after processing the form:
 
 - `onSuccess`: when the form is processing on the server and returns a success response.
 - `onError`: when the form returns an error response.
-- `onStateChange`: when the form is submitted.
+- `state`: emits `submitting`, `success`, `error`, `redirect`, or `navigate` as the submission progresses.
 
 The example page below submits an email for a newsletter signup.
 
@@ -45,7 +45,7 @@ type FormErrors =
         method="post"
         (onSuccess)="onSuccess()"
         (onError)="onError($any($event))"
-        (onStateChange)="errors.set(undefined)"
+        (state)="$event === 'submitting' && errors.set(undefined)"
       >
         <div>
           <label for="email"> Email </label>
@@ -78,6 +78,31 @@ export default class NewsletterComponent {
 ```
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
+
+### Submission Destinations and State
+
+Without an explicit `action`, POST submissions use the current page's server
+endpoint and GET submissions navigate to the current route. Set `action` or bind
+`[action]` to choose a different destination:
+
+```html
+<form method="post" action="/api/newsletter">
+  <input type="email" name="email" />
+  <button type="submit">Subscribe</button>
+</form>
+```
+
+GET forms retain the destination's query parameters and fragment, and preserve
+repeated field names as multiple query values. POST forms retain repeated values
+in `FormData`. Same-origin destinations and redirects use Angular navigation;
+external navigation uses the browser. Redirects retain their query parameters
+and fragment.
+
+The directive sets `data-state="idle"` initially, updates it during submission,
+and sets `aria-busy="true"` while awaiting a response. You can style these
+attributes or subscribe to the `state` output. `FormActionState` is exported for
+typing state handlers. Response parsing and network failures emit `error` and
+clear the busy state.
 
 ## Handling the Form Action
 
@@ -136,6 +161,48 @@ an optional `path`. Existing actions returning `fail()` keep their own error sha
 
 Repeated form fields are preserved as arrays, including file fields. Empty or
 unparseable bodies fall back to `{}`, which is then validated by the schema.
+
+### Displaying Validation Errors
+
+Use `issuesToFieldErrors` and `issuesToFormErrors` to display the issues returned
+by `defineAction`. Field paths become dot-separated names, and multiple messages
+for the same field remain in order. Issues without a path are form-level errors.
+
+```ts
+import { signal } from '@angular/core';
+import {
+  issuesToFieldErrors,
+  issuesToFormErrors,
+  type ValidationFieldErrors,
+} from '@analogjs/router';
+import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
+
+// Inside the component handling a defineAction form:
+fieldErrors = signal<ValidationFieldErrors>({});
+formErrors = signal<string[]>([]);
+
+onError(result: unknown) {
+  // This form's defineAction handler returns Standard Schema issues.
+  const issues = result as ReadonlyArray<StandardSchemaV1.Issue>;
+  this.fieldErrors.set(issuesToFieldErrors(issues));
+  this.formErrors.set(issuesToFormErrors(issues));
+}
+```
+
+Bind `(onError)="onError($event)"` on the form and render the messages:
+
+```html
+@for (message of fieldErrors()['email'] ?? []; track $index) {
+<p>{{ message }}</p>
+} @for (message of formErrors(); track $index) {
+<p>{{ message }}</p>
+}
+```
+
+`issuePathToFieldName(['profile', { key: 'name' }, 0])` returns
+`'profile.name.0'` when you need to normalize an individual issue path. These
+helpers accept Standard Schema issue arrays; existing actions that return custom
+error objects with `fail()` can keep their existing error handlers.
 
 ### Handling Multiple Forms
 
