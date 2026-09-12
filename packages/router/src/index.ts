@@ -1,11 +1,7 @@
 export type { RouteExport } from './lib/models';
 export type { Files } from './lib/route-files';
 export { routes, createRoutes } from './lib/routes';
-export {
-  defineRouteMeta,
-  injectActivatedRoute,
-  injectRouter,
-} from './lib/define-route';
+export { injectActivatedRoute, injectRouter } from './lib/define-route';
 export type { RouteMeta } from './lib/models';
 export { provideFileRouter, withExtraRoutes } from './lib/provide-file-router';
 export type { MetaTag } from './lib/meta-tags';

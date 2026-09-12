@@ -9,7 +9,7 @@ Analog works best when route files clearly express whether they are pages, layou
 ## Prefer the canonical route shape
 
 - Default-export the page component from each `.page.ts` file.
-- Keep route metadata in `export const routeMeta = { ... }` or `defineRouteMeta({ ... })`.
+- Keep route metadata in `export const routeMeta: RouteMeta = { ... }` with `RouteMeta` imported from `@analogjs/router`.
 - Treat `routeMeta.redirectTo` pages as redirect-only modules.
 - Keep JSON-LD in `routeMeta.jsonLd` instead of exporting legacy top-level `routeJsonLd` values.
 - When a page file is acting as a layout shell, import `RouterOutlet` and render a `<router-outlet>`.
@@ -17,8 +17,9 @@ Analog works best when route files clearly express whether they are pages, layou
 ```ts
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import type { RouteMeta } from '@analogjs/router';
 
-export const routeMeta = {
+export const routeMeta: RouteMeta = {
   title: 'Products',
 };
 
@@ -34,7 +35,9 @@ export default class ProductsPage {}
 Redirect route files are clearer when they only export `routeMeta`.
 
 ```ts
-export const routeMeta = {
+import type { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = {
   redirectTo: '/home',
   pathMatch: 'full',
 };
