@@ -6,6 +6,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { platform } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
@@ -189,6 +190,32 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 ],
               }
             : {}),
+          modules: [
+            (nitro) => {
+              nitro.hooks.hook('rollup:before', (_nitro, rollupConfig) => {
+                if (!nitro.options.node || nitro.options.noExternals) return;
+                rollupConfig.plugins = [
+                  {
+                    name: 'analog-typescript-external',
+                    resolveId(source) {
+                      if (source !== 'typescript') return null;
+                      const entry = createRequire(
+                        resolve(workspaceRoot, rootDir, 'package.json'),
+                      ).resolve(source);
+                      // Nitro retains this array for tracing. Add the compiler
+                      // only when imported, including in relocated deployments.
+                      const traceInclude =
+                        nitro.options.externals.traceInclude!;
+                      if (!traceInclude.includes(entry))
+                        traceInclude.push(entry);
+                      return { id: source, external: true };
+                    },
+                  },
+                  rollupConfig.plugins,
+                ];
+              });
+            },
+          ],
           rollupConfig: {
             onwarn(warning) {
               if (
@@ -439,6 +466,8 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroConfig,
           nitroOptions as Record<string, any>,
         );
+        nitroConfig.externals ??= {};
+        nitroConfig.externals.traceInclude ??= [];
 
         return {
           environments: {
