@@ -52,16 +52,19 @@ export function buildOptimizerPlugin({
               ngServerMode: `${!!userConfig.build?.ssr}`,
             }
           : {},
-        [jsTransformConfigKey]: {
-          define: isProd
-            ? {
-                ngDevMode: 'false',
-                ngJitMode: 'false',
-                ngI18nClosureMode: 'false',
-                ngServerMode: `${!!userConfig.build?.ssr}`,
-              }
-            : undefined,
-        },
+        [jsTransformConfigKey]:
+          userConfig[jsTransformConfigKey] === false
+            ? false
+            : {
+                define: isProd
+                  ? {
+                      ngDevMode: 'false',
+                      ngJitMode: 'false',
+                      ngI18nClosureMode: 'false',
+                      ngServerMode: `${!!userConfig.build?.ssr}`,
+                    }
+                  : undefined,
+              },
       } as UserConfig;
     },
     // The top-level define keys `ngServerMode` off the legacy `build.ssr`
