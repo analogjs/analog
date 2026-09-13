@@ -145,6 +145,7 @@ describe('buildProjectableNodes', () => {
       template: `
         <ng-content select="card-title.primary[data-size=lg]" />
         <ng-content select="[question]:not(.hidden)" />
+        <ng-content select="button:not([disabled])" />
         <ng-content />
       `,
     })(class CompoundComponent {});
@@ -157,14 +158,21 @@ describe('buildProjectableNodes', () => {
           '<p ngProjectAs="card-title.primary[data-size=lg]">A</p>' +
           '<p ngProjectAs="card-title.primary">Partial</p>' +
           '<p ngProjectAs="[question]:not(.hidden)">B</p>' +
-          '<p ngProjectAs="[question]">No not</p>',
+          '<p ngProjectAs="[question]">No not</p>' +
+          '<p ngProjectAs="button:not([disabled])">C</p>' +
+          '<p ngProjectAs="button[disabled]">Not negated</p>',
       },
       document,
     )!;
 
     expect(nodes[0].map((n) => n.textContent)).toEqual(['A']);
     expect(nodes[1].map((n) => n.textContent)).toEqual(['B']);
-    expect(nodes[2].map((n) => n.textContent)).toEqual(['Partial', 'No not']);
+    expect(nodes[2].map((n) => n.textContent)).toEqual(['C']);
+    expect(nodes[3].map((n) => n.textContent)).toEqual([
+      'Partial',
+      'No not',
+      'Not negated',
+    ]);
   });
 
   it('should route unmatched content to the last default slot', () => {
