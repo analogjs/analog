@@ -69,6 +69,28 @@ it('server-ngh should annotate the host for hydration with projected content', a
   expect(html).toContain('Is content projection cool?');
 });
 
+it('server-ngh should only mark projected nodes for hydrated islands', async () => {
+  const hydrated = await serverNgh.renderToStaticMarkup.call(
+    { result: {} as SSRResult },
+    CardComponent,
+    { 'data-analog-id': 'card-1' },
+    children,
+    { hydrate: 'load' } as any,
+  );
+  const stat = await serverNgh.renderToStaticMarkup.call(
+    { result: {} as SSRResult },
+    CardComponent,
+    { 'data-analog-id': 'card-1' },
+    children,
+  );
+
+  expect(hydrated.html).toMatch(
+    /<!--analog-slot:card-1:0--><p question="">[^<]*<\/p><!--\/analog-slot:card-1:0-->/,
+  );
+  expect(hydrated.html).toContain('<!--analog-slot:card-1:1-->');
+  expect(stat.html).not.toContain('analog-slot:');
+});
+
 describe.each(renderers)('%s renderToStaticMarkup', (_name, render) => {
   it('should bind inputs and project children', async () => {
     const { html } = await render({ title: 'Card', ignored: 'x' }, children);

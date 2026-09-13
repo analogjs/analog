@@ -20,7 +20,7 @@ import {
 } from './create-component.ts';
 import { ID_PROP_NAME } from './id.ts';
 import { ensureSsrIntegrityMarker } from './ssr-integrity.ts';
-import { buildProjectableNodes } from './projection.ts';
+import { buildProjectableNodes, collectProjectedNodes } from './projection.ts';
 
 export default (element: HTMLElement) => {
   return (
@@ -52,7 +52,14 @@ export default (element: HTMLElement) => {
 
     const ngAppId = hostElement?.getAttribute(ID_PROP_NAME);
 
-    createApplication({
+    // Hydration reuses the server-rendered DOM, so hand Angular the projected
+    // nodes it already rendered instead of freshly parsed copies.
+    const projectableNodes =
+      (reuseDom && ngAppId
+        ? collectProjectedNodes(hostElement, mirror, ngAppId)
+        : undefined) ?? buildProjectableNodes(mirror, slots, document);
+
+    return createApplication({
       providers: [
         provideZonelessChangeDetection(),
         reuseDom
@@ -69,11 +76,13 @@ export default (element: HTMLElement) => {
         const componentRef = createComponent(Component, {
           environmentInjector: appRef.injector,
           hostElement,
-          projectableNodes: buildProjectableNodes(mirror, slots, document),
+          projectableNodes,
           bindings: createComponentBindings(mirror, props, hostElement),
         });
 
         registerRootComponent(appRef, componentRef);
+
+        return appRef;
       })
       .catch((error) => {
         console.error('Failed to hydrate Angular component:', error);

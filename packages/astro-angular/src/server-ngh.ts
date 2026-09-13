@@ -30,7 +30,7 @@ import {
   getComponentElementTag,
   registerRootComponent,
 } from './create-component.ts';
-import { buildProjectableNodes } from './projection.ts';
+import { buildProjectableNodes, markProjectableNodes } from './projection.ts';
 
 const require = createRequire(import.meta.url);
 let jsActionContractScript: string | undefined = undefined;
@@ -86,7 +86,15 @@ async function renderToStaticMarkup(
   document.body.innerHTML = `${getHydrationScript()}<${elementTag} ${ID_PROP_NAME}="${ngAppId}"></${elementTag}>`;
 
   const hostElement = document.querySelector(elementTag) as Element;
-  const projectableNodes = buildProjectableNodes(mirror, children, document);
+  let projectableNodes = buildProjectableNodes(mirror, children, document);
+
+  if (metadata?.hydrate && projectableNodes) {
+    projectableNodes = markProjectableNodes(
+      projectableNodes,
+      String(ngAppId),
+      document,
+    );
+  }
 
   const bootstrap = async (context?: BootstrapContext) => {
     const appRef = await createApplication(
