@@ -10,6 +10,7 @@ import {
   Plugin,
   preprocessCSS,
   ResolvedConfig,
+  ViteDevServer,
 } from 'vite';
 
 import {
@@ -34,6 +35,7 @@ import {
   getTsConfigPath,
   createDepOptimizerConfig,
   isProdMode,
+  resolveTsConfigExtendsChain,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
@@ -70,6 +72,16 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  /**
+   * Called when the resolved tsconfig file itself changes during a watch
+   * session. `fastCompile` has no live tsconfig-reactivity of its own —
+   * this exists purely so callers that separately cache something derived
+   * from this tsconfig (e.g. the Vitest sourcemap plugin's fallback
+   * compiler options, keyed off this same plugin's `api.getTsConfigPath`)
+   * can invalidate it too, rather than serving stale settings until the
+   * dev/test server restarts.
+   */
+  onTsconfigChanged?: () => void;
 }
 
 /**
@@ -91,6 +103,11 @@ export function fastCompilePlugin(
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
+  // Always-current record of the resolved tsconfig's `extends` chain,
+  // kept in step by `watchTsConfigExtendsChain` — the authoritative
+  // membership list `reactToPossibleTsConfigChange` checks against,
+  // since an `extends` target can be named anything at all.
+  let knownChain: string[] = [];
 
   // fast-compile plugin state
   const registry: ComponentRegistry = new Map();
@@ -678,6 +695,75 @@ export function fastCompilePlugin(
     );
   }
 
+  /**
+   * Explicitly adds every file in the resolved tsconfig's `extends` chain
+   * to `server.watcher` — Vite's own watcher only observes its project
+   * root and a handful of config dependencies by default, so a chain
+   * target outside that root (a monorepo's shared `tsconfig.base.json`,
+   * most commonly) would otherwise never be watched at all.
+   * `server.watcher.add` on an already-watched path is a no-op, so this
+   * is safe to call repeatedly (`configureServer`, then again on every
+   * config-shaped edit in `handleHotUpdate`, since that very edit could
+   * have pointed `extends` at a different file than before).
+   */
+  function watchTsConfigExtendsChain(server: ViteDevServer) {
+    knownChain = resolveTsConfigExtendsChain(resolveTsConfigPath());
+    for (const configPath of knownChain) {
+      server.watcher.add(configPath);
+    }
+  }
+
+  /**
+   * Called from the `'add'`/`'unlink'` watcher events (this
+   * fast-compile-specific `configureServer`, above) as well as
+   * `handleHotUpdate` (below): many editors save atomically (unlink then
+   * add a new inode at the same path) rather than emitting a single
+   * content `'change'`, and either shape has to invalidate
+   * `vitestFallbackCompilerOptions` just the same, or a replaced extended
+   * config leaves it silently stale.
+   *
+   * A file already known to be in the chain always reacts, regardless of
+   * what it's named — an `extends` target can be named anything at all
+   * (e.g. `compiler-options.jsonc`, or no extension whatsoever), which a
+   * name/extension heuristic alone can't recognize. A file *not* yet
+   * known reacts only if it looks config-shaped: the leaf tsconfig itself
+   * (almost always literally named `tsconfig*.json`) is what widens
+   * `knownChain` to begin with when its own `extends` value changes, so
+   * from then on a target under any name is recognized by chain
+   * membership above, not by this heuristic.
+   */
+  function reactToPossibleTsConfigChange(
+    file: string,
+    server: ViteDevServer,
+    { reresolveChain }: { reresolveChain: boolean } = { reresolveChain: true },
+  ) {
+    const normalizedFile = normalizePath(file);
+    const isKnownChainMember = knownChain.some(
+      (configPath) => normalizePath(configPath) === normalizedFile,
+    );
+    if (
+      !isKnownChainMember &&
+      normalizedFile !== normalizePath(resolveTsConfigPath()) &&
+      !file.endsWith('.json')
+    ) {
+      return;
+    }
+    pluginOptions.onTsconfigChanged?.();
+    // `reresolveChain` must be false for an `'unlink'` event:
+    // `resolveExtendsTarget`'s existence check (an extensionless or
+    // `.jsonc` target only gets `.json` appended when it doesn't exist as
+    // given) would otherwise see the file mid-atomic-save (unlinked, not
+    // yet replaced) as genuinely missing and recompute `knownChain` with
+    // a guessed, wrong path in its place — losing the correct one before
+    // the paired `'add'` for the very same atomic save ever arrives to
+    // put it back. The cache itself is still invalidated above so
+    // nothing stale lingers; only re-resolving the chain waits for an
+    // event where the file plausibly exists again (`'add'`/`'change'`).
+    if (reresolveChain) {
+      watchTsConfigExtendsChain(server);
+    }
+  }
+
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
     api: { getTsConfigPath: resolveTsConfigPath },
@@ -718,11 +804,25 @@ export function fastCompilePlugin(
       resolvedConfig = config;
     },
     configureServer(server) {
+      // Vite's watcher only observes its project root and a handful of
+      // config dependencies by default — a monorepo's tsconfig `extends`
+      // chain (e.g. a shared `tsconfig.base.json` above the project root)
+      // can sit entirely outside that root, so a live edit to it would
+      // otherwise never even reach `handleHotUpdate` below. Explicitly
+      // watching every file in the chain makes Vite observe them
+      // regardless of root. `handleHotUpdate` re-runs this on every
+      // config-shaped edit too — that edit could itself have pointed
+      // `extends` at a different file (`server.watcher.add` on an
+      // already-watched path is a no-op).
+      watchTsConfigExtendsChain(server);
+
       // Watch for new .ts files and scan them into the registry. Use
       // the barrel-aware scanner so a newly added re-export entry
       // (`export * from './x'`) also expands its underlying directive
       // classes — otherwise the registry stays stale until restart.
       server.watcher.on('add', async (filePath) => {
+        reactToPossibleTsConfigChange(filePath, server);
+
         if (
           filePath.endsWith('.ts') &&
           !filePath.endsWith('.spec.ts') &&
@@ -730,6 +830,17 @@ export function fastCompilePlugin(
         ) {
           await scanBarrelExports(filePath, new Set(), true);
         }
+      });
+      // Many editors save atomically (unlink then add a new inode with
+      // the same path) rather than emitting a single `'change'` —
+      // `handleHotUpdate` below only fires for the latter, so a
+      // replaced tsconfig or `extends` target needs its own reaction
+      // here too, or it leaves `vitestFallbackCompilerOptions` silently
+      // stale until restart.
+      server.watcher.on('unlink', (filePath) => {
+        reactToPossibleTsConfigChange(filePath, server, {
+          reresolveChain: false,
+        });
       });
     },
     async buildStart() {
@@ -741,6 +852,8 @@ export function fastCompilePlugin(
       }
     },
     async handleHotUpdate(ctx) {
+      reactToPossibleTsConfigChange(ctx.file, ctx.server);
+
       // Resource file changes → invalidate parent .ts module
       if (resourceToSource.has(ctx.file)) {
         const parentSource = resourceToSource.get(ctx.file)!;

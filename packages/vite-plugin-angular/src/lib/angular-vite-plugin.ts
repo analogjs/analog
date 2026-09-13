@@ -83,6 +83,8 @@ import {
   getTsConfigPath,
   createDepOptimizerConfig,
   isProdMode,
+  resolveTsConfigExtendsChain,
+  findNearestPackageJson,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
@@ -214,6 +216,19 @@ export function angular(options?: PluginOptions): Plugin[] {
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
   let includeCache: string[] = [];
+  // Cache for the Vitest sourcemap plugin's own tsconfig read (see
+  // `angularVitestPlugins` below) — `null` means "not read yet", distinct
+  // from a successful read that found no compiler options at all.
+  // Coverage can call this fallback once per untested decorated file, and
+  // re-reading + reparsing the same tsconfig from disk every time doesn't
+  // scale to a large app with many such files.
+  let vitestFallbackCompilerOptions: ts.CompilerOptions | undefined | null =
+    null;
+  // Cache for this same fallback's package-identity check (see
+  // `angularVitestPlugins` below) — the app's own nearest `package.json`,
+  // compared against a candidate file's own to tell whether it belongs to
+  // a genuinely different package. `null` means "not read yet".
+  let appPackageRoot: string | undefined | null = null;
   function invalidateFsCaches() {
     includeCache = [];
   }
@@ -223,6 +238,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     tsconfigOptionsCache.clear();
     cachedHost = undefined;
     cachedHostKey = undefined;
+    vitestFallbackCompilerOptions = null;
+    appPackageRoot = null;
   }
   let watchMode = false;
   let testWatchMode = isTestWatchMode();
@@ -400,6 +417,83 @@ export function angular(options?: PluginOptions): Plugin[] {
       configureServer(server) {
         viteServer = server;
 
+        // Vite's watcher only observes its project root and a handful of
+        // config dependencies by default — a monorepo's tsconfig `extends`
+        // chain (e.g. a shared `tsconfig.base.json` above the project
+        // root) can sit entirely outside that root, so a live edit to it
+        // would otherwise never even reach the `'change'` handler below.
+        // Explicitly watching every file in the chain makes Vite observe
+        // them regardless of root. `knownChain` is also what
+        // `reactToPossibleTsConfigChange` below checks membership
+        // against — kept as the authoritative, always-current record of
+        // what this chain actually contains (an `extends` target can be
+        // named anything at all, e.g. `compiler-options.jsonc` or even an
+        // extensionless file, so name/extension pattern-matching alone
+        // can't recognize every one).
+        let knownChain: string[] = [];
+        const watchTsConfigExtendsChain = () => {
+          knownChain = resolveTsConfigExtendsChain(resolveTsConfigPath());
+          for (const configPath of knownChain) {
+            server.watcher.add(configPath);
+          }
+        };
+        watchTsConfigExtendsChain();
+
+        // Called from `'add'`/`'unlink'` too, not only `'change'`: many
+        // editors save atomically (unlink then add a new inode with the
+        // same path) rather than emitting a single `'change'`, and either
+        // event on a config file has to invalidate
+        // `vitestFallbackCompilerOptions` just the same, or a replaced
+        // extended config leaves it silently stale. Deliberately separate
+        // from `invalidateCompilationOnFsChange` below, which stays
+        // narrowly scoped to real tsconfig-named files for the far more
+        // expensive full-program `performCompilation` it can trigger —
+        // this only ever does the cheap tsconfig-cache clear (and, when
+        // it fires, a `resolveTsConfigExtendsChain` re-read — no more
+        // costly than that recompile trigger's own tsconfig read).
+        //
+        // A file already known to be in the chain always reacts,
+        // regardless of what it's named — this is what actually closes
+        // the gap a name/extension heuristic alone can't. A file *not*
+        // yet known reacts only if it looks config-shaped: the leaf
+        // tsconfig itself (almost always literally named `tsconfig*.json`)
+        // is what widens `knownChain` to begin with when its own
+        // `extends` value changes, so from then on a target under any
+        // name is recognized by chain membership above, not by this
+        // heuristic.
+        //
+        // `reresolveChain` must be false for an `'unlink'` event:
+        // `resolveExtendsTarget`'s existence check (an extensionless or
+        // `.jsonc` target only gets `.json` appended when it doesn't
+        // exist as given) would otherwise see the file mid-atomic-save
+        // (unlinked, not yet replaced) as genuinely missing and
+        // recompute `knownChain` with a guessed, wrong path in its
+        // place — losing the correct one before the paired `'add'` for
+        // the very same atomic save ever arrives to put it back. The
+        // cache itself is still invalidated so nothing stale lingers;
+        // only re-resolving the chain waits for a event where the file
+        // plausibly exists again (`'add'`/`'change'`).
+        const reactToPossibleTsConfigChange = (
+          file: string,
+          { reresolveChain }: { reresolveChain: boolean },
+        ) => {
+          const normalizedFile = normalizePath(file);
+          const isKnownChainMember = knownChain.some(
+            (configPath) => normalizePath(configPath) === normalizedFile,
+          );
+          if (
+            !isKnownChainMember &&
+            !file.includes('tsconfig') &&
+            !file.endsWith('.json')
+          ) {
+            return;
+          }
+          invalidateTsconfigCaches();
+          if (reresolveChain) {
+            watchTsConfigExtendsChain();
+          }
+        };
+
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
         // cached tsconfig root names before recompiling.
@@ -416,6 +510,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (EXCLUDED_TS_EXT_REGEX.test(file)) {
             sourceFileCache.invalidate(new Set([normalizePath(file)]));
           }
+          reactToPossibleTsConfigChange(file, { reresolveChain: true });
           invalidateCompilationOnFsChange(file);
         });
         server.watcher.on('unlink', (file) => {
@@ -423,13 +518,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           outputFiles.delete(id);
           fileTransformMap.delete(id);
           sourceFileCache.delete(id);
+          reactToPossibleTsConfigChange(file, { reresolveChain: false });
           invalidateCompilationOnFsChange(file);
         });
-        server.watcher.on('change', (file) => {
-          if (file.includes('tsconfig')) {
-            invalidateTsconfigCaches();
-          }
-        });
+        server.watcher.on('change', (file) =>
+          reactToPossibleTsConfigChange(file, { reresolveChain: true }),
+        );
       },
       async buildStart() {
         // Vite keys its CSS preprocessor worker cache by the top-level resolved
@@ -947,6 +1041,13 @@ export function angular(options?: PluginOptions): Plugin[] {
         isTest,
         isAstroIntegration,
         fastCompileMode: pluginOptions.fastCompileMode,
+        // `fastCompile` has no tsconfig-file watcher of its own — this is
+        // the one place a live edit to it during a watch session can
+        // still reach the Vitest sourcemap plugin's own cached compiler
+        // options (see `angularVitestPlugins` below).
+        onTsconfigChanged: () => {
+          vitestFallbackCompilerOptions = null;
+        },
       })
     : angularPlugin();
 
@@ -960,7 +1061,67 @@ export function angular(options?: PluginOptions): Plugin[] {
     // when tests/Angular version gates disable the HMR compilation flags.
     options?.liveReload && encapsulateComponentStylesPlugin(),
     ...(isTest && !isStackBlitz
-      ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
+      ? angularVitestPlugins(
+          (id) => outputFiles.get(normalizePath(id))?.map,
+          // Read fresh, through whichever compilation strategy is
+          // actually active, rather than depending on either one to have
+          // populated a side channel: `fastCompile` (the default under
+          // `isTest`) runs an entirely separate plugin
+          // (`fastCompilePlugin`) with its own, unrelated
+          // `resolveTsConfigPath`/`tsConfigResolutionContext` — it never
+          // touches this file's own copies at all, in JIT mode or
+          // otherwise. Both plugin variants expose the same
+          // `api.getTsConfigPath()` (see each one's `config` hook) for
+          // exactly this reason, so calling it on `compilationPlugin`
+          // — whichever one that is — resolves the real tsconfig
+          // regardless. Without this, the fallback would silently drop
+          // to TypeScript's own defaults (standard decorators), which
+          // discard a constructor parameter decorator like
+          // `@Inject(TOKEN)` — untested dependency-injection metadata
+          // disappearing without even an error. Cached (see
+          // `invalidateTsconfigCaches`) since coverage can call this
+          // once per untested decorated file in the app.
+          () => {
+            if (vitestFallbackCompilerOptions !== null) {
+              return vitestFallbackCompilerOptions;
+            }
+            try {
+              const tsconfigPath = (
+                compilationPlugin as Plugin & {
+                  api?: { getTsConfigPath?: () => string };
+                }
+              ).api?.getTsConfigPath?.();
+              vitestFallbackCompilerOptions = tsconfigPath
+                ? compilerCli.readConfiguration(tsconfigPath).options
+                : undefined;
+            } catch {
+              vitestFallbackCompilerOptions = undefined;
+            }
+            return vitestFallbackCompilerOptions;
+          },
+          // Same resolved tsconfig path as above, walked up to the
+          // nearest `package.json` — the real package this app's own
+          // source belongs to, whatever a candidate file's own nearest
+          // one is compared against.
+          () => {
+            if (appPackageRoot !== null) {
+              return appPackageRoot;
+            }
+            try {
+              const tsconfigPath = (
+                compilationPlugin as Plugin & {
+                  api?: { getTsConfigPath?: () => string };
+                }
+              ).api?.getTsConfigPath?.();
+              appPackageRoot = tsconfigPath
+                ? findNearestPackageJson(dirname(tsconfigPath))
+                : undefined;
+            } catch {
+              appPackageRoot = undefined;
+            }
+            return appPackageRoot;
+          },
+        )
       : []),
     (jit &&
       jitPlugin({

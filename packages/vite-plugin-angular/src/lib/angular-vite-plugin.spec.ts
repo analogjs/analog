@@ -4,7 +4,7 @@ import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { normalizePath, preprocessCSS, resolveConfig } from 'vite';
-import { NgtscProgram } from '@angular/compiler-cli';
+import { NgtscProgram, readConfiguration } from '@angular/compiler-cli';
 
 vi.mock('vite', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vite')>();
@@ -23,6 +23,7 @@ vi.mock('@angular/compiler-cli', async (importOriginal) => {
     ) {
       return new actual.NgtscProgram(...args);
     }),
+    readConfiguration: vi.fn(actual.readConfiguration),
   };
 });
 
@@ -1244,6 +1245,9 @@ export class AppComponent {}
       const watchers = new Map<string, (file: string) => void>();
       mainPlugin.configureServer({
         watcher: {
+          add: () => {
+            /* not exercised by this test */
+          },
           on: (event: string, handler: (file: string) => void) =>
             watchers.set(event, handler),
         },
@@ -1529,4 +1533,1401 @@ export class AppComponent {}
 
     expect(result?.code).toContain('ɵcmp');
   }, 60_000);
+});
+
+describe('vitest coverage regression (#2555)', () => {
+  // `@vitest/coverage-v8` transforms every file matching `coverage.include`
+  // that no test loaded, to report it as uncovered. In the installed
+  // `@vitest/coverage-v8@4.0.18` (`node_modules/@vitest/coverage-v8/dist/
+  // provider.js`), `getCoverageMapForUncoveredFiles` (:99) calls
+  // `getSources`, which transforms the file through
+  // `project.vite.environments[environment].transformRequest(filepath)`
+  // (:233) — the exact call this test drives below via
+  // `sourcemapPlugin.transform`/the real dev server's `transformRequest`
+  // in the sibling e2e test — then `remapCoverage` (:127) parses the
+  // transformed output with `parseAstAsync(result.code)` (:133); on a
+  // throw it logs `Failed to parse ${filename}. Excluding it from
+  // coverage.` (:135) and drops the file entirely — the reported
+  // PARSE_ERROR. A component outside the TypeScript program (e.g. one no
+  // spec imports) used to reach that call as raw, untranspiled
+  // TypeScript: the main plugin hands it off with a warning, and the
+  // Vitest sourcemap plugin's OXC/esbuild fallback either threw on
+  // parameter decorators or emitted an `@oxc-project/runtime` import
+  // that isn't a project dependency, so `parseAstAsync` above failed and
+  // coverage-v8 dropped the file.
+  const fixtureDir = path.resolve(
+    import.meta.dirname,
+    '../../../..',
+    'tmp',
+    'vpa-vitest-coverage-2555',
+  );
+  const appComponentPath = normalizePath(
+    path.join(fixtureDir, 'src', 'app.component.ts'),
+  );
+  const untestedComponentPath = normalizePath(
+    path.join(fixtureDir, 'src', 'untested.component.ts'),
+  );
+
+  beforeEach(() => {
+    realFs.rmSync(fixtureDir, { recursive: true, force: true });
+    realFs.mkdirSync(path.join(fixtureDir, 'src'), { recursive: true });
+    realFs.writeFileSync(
+      path.join(fixtureDir, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        // Only app.component.ts is in the program — untested.component.ts
+        // below is deliberately not referenced from `files`/`include` or
+        // from any spec, matching the shape reported in #2555.
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      appComponentPath,
+      `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  template: '<h1>hello</h1>',
+})
+export class AppComponent {}
+`,
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      untestedComponentPath,
+      `import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
+
+export const TOKEN = new InjectionToken<string>('TOKEN');
+
+@Component({ selector: 'app-untested', template: '<p>untested</p>' })
+export class UntestedComponent implements OnInit {
+  production: boolean = false;
+
+  constructor(@Inject(TOKEN) private readonly token: string) {}
+
+  ngOnInit(): void {
+    console.log(this.token);
+  }
+}
+`,
+      'utf-8',
+    );
+  });
+
+  afterEach(() => {
+    releaseCssPreprocessorWorkers();
+    realFs.rmSync(fixtureDir, { recursive: true, force: true });
+  });
+
+  it('lets the Vitest sourcemap plugin recover a file the Angular program skipped', async () => {
+    // Unlike `createAppBuildPlugin` elsewhere in this file, VITEST/NODE_ENV
+    // are left untouched (this file already runs under Vitest) so `isTest`
+    // is true and `angularVitestPlugins(...)` are registered below — that
+    // registration, and the compiler options it now receives, are what
+    // #2555's fix relies on.
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+    expect(mainPlugin).toBeDefined();
+    expect(sourcemapPlugin).toBeDefined();
+
+    // `command: 'serve'` (what Vitest actually runs under) turns on
+    // `watchMode`, which is what makes the plugin's initial compilation
+    // eagerly emit every root file into `outputFiles` while `isTest` is
+    // true — the on-demand `outputFile` callback used for real (non-test)
+    // builds is only wired up when `isTest` is false.
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'test' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    await mainPlugin.buildStart.call(ctx);
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    const mainResult = await mainPlugin.transform.handler.call(
+      ctx,
+      untestedCode,
+      untestedComponentPath,
+    );
+
+    // Not in the program: the main plugin hands it off, warning because it
+    // still has Angular decorators.
+    expect(mainResult).toBeUndefined();
+    expect(ctx.warn).toHaveBeenCalledTimes(1);
+    expect(ctx.warn.mock.calls[0][0]).toContain(
+      'is not in the TypeScript program',
+    );
+
+    // This is the next call in the real pipeline `@vitest/coverage-v8`
+    // drives (same code, unchanged, walking the rest of the plugin
+    // list) — `getSources`'s own transform call
+    // (`transformRequest`/`provider.js:233`, cited above) reaches this
+    // same plugin the same way.
+    const sourcemapResult = await sourcemapPlugin.transform(
+      untestedCode,
+      untestedComponentPath,
+    );
+
+    expect(sourcemapResult?.code).toBeDefined();
+    // `remapCoverage`'s own parse call (`provider.js:133`, cited above) —
+    // a throw here is exactly what coverage-v8 reports as a PARSE_ERROR
+    // and excludes the file for.
+    const { parseAstAsync } = await import('vite');
+    await expect(parseAstAsync(sourcemapResult.code)).resolves.toBeDefined();
+    expect(sourcemapResult.code).not.toContain('implements');
+    expect(sourcemapResult.code).not.toContain('@oxc-project/runtime');
+
+    // The in-program file is unaffected: still compiled by the main
+    // plugin (JIT is the default under `isTest`, hence `__decorate`
+    // rather than `ɵcmp`).
+    const appResult = await mainPlugin.transform.handler.call(
+      ctx,
+      realFs.readFileSync(appComponentPath, 'utf-8'),
+      appComponentPath,
+    );
+    expect(appResult?.code).toContain('__decorate');
+    expect(appResult?.code).toContain('Component(');
+
+    await mainPlugin.buildEnd.call(ctx);
+  }, 60_000);
+
+  // Regression: the project-root containment check that keeps this
+  // fallback from applying this app's own compiler options to a
+  // workspace-linked dependency's files (see the tests further below)
+  // must not, in fixing that, start rejecting an ordinary layout where
+  // the tsconfig itself lives somewhere other than the source it
+  // actually covers — a shared `tsconfig.spec.json` under its own
+  // `config/` directory, `include`ing `../src/**/*.ts`, is a real,
+  // valid TypeScript project, not a foreign one. The boundary has to be
+  // the resolved Vite project root, not `dirname` of the tsconfig path.
+  it('still applies compiler options to a decorated file when the tsconfig itself lives in a different directory than its source', async () => {
+    const configDir = path.join(fixtureDir, 'config');
+    realFs.mkdirSync(configDir, { recursive: true });
+    realFs.writeFileSync(
+      path.join(configDir, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        // Only `app.component.ts` is in the program, matching the
+        // sibling fixtures above — `untested.component.ts` deliberately
+        // isn't referenced, so the main plugin still skips it and this
+        // fallback still has to recover it.
+        files: ['../src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: path.join(configDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'test' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    const sourcemapResult = await sourcemapPlugin.transform(
+      untestedCode,
+      untestedComponentPath,
+    );
+
+    expect(sourcemapResult?.code).toBeDefined();
+    const { parseAstAsync } = await import('vite');
+    await expect(parseAstAsync(sourcemapResult.code)).resolves.toBeDefined();
+    // The fixture's tsconfig sets `experimentalDecorators: true` — the
+    // injection call must survive lowering, proving this file was still
+    // transpiled with the app's own compiler options despite the
+    // tsconfig living in a different directory than `src/`.
+    expect(sourcemapResult.code).toContain('Inject(TOKEN)');
+    expect(sourcemapResult.code).toContain('__param');
+
+    await mainPlugin.buildEnd.call(ctx);
+  }, 60_000);
+
+  // Regression: Vite's own watcher only observes its project root and a
+  // handful of config dependencies by default — a monorepo's tsconfig
+  // `extends` chain (e.g. a shared `tsconfig.base.json` above the
+  // project root) can sit entirely outside that root, so a live edit to
+  // it would otherwise never even reach the `'change'` handler that
+  // invalidates `vitestFallbackCompilerOptions`. `configureServer` must
+  // explicitly add every file in the chain to the watcher so Vite
+  // observes them regardless of root.
+  it('watches the tsconfig extends chain explicitly, not just the leaf (default strategy)', async () => {
+    const baseTsconfigPath = path.join(fixtureDir, 'tsconfig.base.json');
+    realFs.writeFileSync(
+      baseTsconfigPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      path.join(fixtureDir, 'tsconfig.json'),
+      JSON.stringify({
+        extends: './tsconfig.base.json',
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const watchedPaths: string[] = [];
+    mainPlugin.configureServer({
+      watcher: {
+        add: (p: string) => watchedPaths.push(normalizePath(p)),
+        on: () => {
+          /* not exercised by this test */
+        },
+      },
+    });
+
+    expect(watchedPaths).toContain(
+      normalizePath(path.join(fixtureDir, 'tsconfig.json')),
+    );
+    expect(watchedPaths).toContain(normalizePath(baseTsconfigPath));
+  });
+
+  // Regression: the chain above is only known at the moment it's first
+  // resolved — an edit that points `extends` at a *different* file (not
+  // just a content edit to an already-known one) must re-resolve the
+  // chain and start watching the new target too, or a later edit to it
+  // would never be observed either.
+  it('starts watching a newly introduced extends target after a tsconfig edit (default strategy)', async () => {
+    const originalBasePath = path.join(
+      fixtureDir,
+      'tsconfig.original-base.json',
+    );
+    realFs.writeFileSync(
+      originalBasePath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const compilerOptions = {
+      target: 'ES2022',
+      module: 'ES2022',
+      moduleResolution: 'bundler',
+      experimentalDecorators: true,
+      skipLibCheck: true,
+      types: [],
+    };
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.original-base.json',
+        compilerOptions,
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const watchedPaths: string[] = [];
+    const watchers = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        add: (p: string) => watchedPaths.push(normalizePath(p)),
+        on: (event: string, handler: (file: string) => void) =>
+          watchers.set(event, handler),
+      },
+    });
+
+    expect(watchedPaths).toContain(normalizePath(originalBasePath));
+
+    const newBasePath = path.join(fixtureDir, 'tsconfig.new-base.json');
+    realFs.writeFileSync(
+      newBasePath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.new-base.json',
+        compilerOptions,
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+    watchers.get('change')?.(normalizePath(tsconfigPath));
+
+    expect(watchedPaths).toContain(normalizePath(newBasePath));
+  });
+
+  // Regression: `fastCompile` (the default under `isTest`, i.e. real
+  // Vitest usage) never runs `performCompilation`/`performAngularCompilation`
+  // at all in JIT mode — those are the only two places that used to hand
+  // resolved compiler options to the sourcemap plugin. Without its own
+  // route to the real tsconfig, the fallback would silently fall back to
+  // TypeScript's own defaults (standard decorators), which drop a
+  // constructor parameter decorator like `@Inject(TOKEN)` — untested
+  // dependency-injection metadata disappearing without even an error.
+  it('preserves constructor injection metadata under fastCompile (no side-channel to depend on)', async () => {
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+    expect(fastCompilePlugin).toBeDefined();
+    expect(sourcemapPlugin).toBeDefined();
+
+    // Vite always calls `config` on every registered plugin before any
+    // `transform` hook fires — `fastCompilePlugin` is the one that
+    // resolves the real tsconfig path here (`compilationPlugin.api`),
+    // not the legacy `angularPlugin`, which this array doesn't even
+    // contain when `fastCompile` is on.
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    const sourcemapResult = await sourcemapPlugin.transform(
+      untestedCode,
+      untestedComponentPath,
+    );
+
+    expect(sourcemapResult?.code).toBeDefined();
+    const { parseAstAsync } = await import('vite');
+    await expect(parseAstAsync(sourcemapResult.code)).resolves.toBeDefined();
+    // The fixture's tsconfig sets `experimentalDecorators: true` (Angular's
+    // own CLI default) — the injection call must survive lowering, not be
+    // silently discarded as it would be under TypeScript's own default of
+    // standard decorators.
+    expect(sourcemapResult.code).toContain('Inject(TOKEN)');
+    expect(sourcemapResult.code).toContain('__param');
+  });
+
+  // Regression: coverage calls this fallback once per untested decorated
+  // file in the app — re-reading and reparsing the same tsconfig from disk
+  // every time doesn't scale to a large app with many such files.
+  it('reads the tsconfig at most once across multiple untested files', async () => {
+    const secondUntestedComponentPath = normalizePath(
+      path.join(fixtureDir, 'src', 'untested-2.component.ts'),
+    );
+    realFs.writeFileSync(
+      secondUntestedComponentPath,
+      `import { Component, Inject, InjectionToken } from '@angular/core';
+
+export const TOKEN2 = new InjectionToken<string>('TOKEN2');
+
+@Component({ selector: 'app-untested-2', template: '<p>untested 2</p>' })
+export class UntestedComponent2 {
+  constructor(@Inject(TOKEN2) private readonly token: string) {}
+}
+`,
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    vi.mocked(readConfiguration).mockClear();
+
+    await sourcemapPlugin.transform(
+      realFs.readFileSync(untestedComponentPath, 'utf-8'),
+      untestedComponentPath,
+    );
+    await sourcemapPlugin.transform(
+      realFs.readFileSync(secondUntestedComponentPath, 'utf-8'),
+      secondUntestedComponentPath,
+    );
+
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+  });
+
+  // Regression: the *default* (non-`fastCompile`) compilation strategy has
+  // its own `configureServer` watcher that only invalidated
+  // `vitestFallbackCompilerOptions` (via `invalidateTsconfigCaches`) for a
+  // file whose path contains `tsconfig` — an `extends` target under any
+  // other name, which TypeScript allows (e.g. `compiler-options.json`),
+  // left this cache stale until restart even though the main compilation
+  // program's own tsconfig cache has the identical problem.
+  it('invalidates the cached tsconfig when an arbitrarily named extended config changes (default strategy)', async () => {
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'test' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    vi.mocked(readConfiguration).mockClear();
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    const watchers = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+        on: (event: string, handler: (file: string) => void) =>
+          watchers.set(event, handler),
+      },
+    });
+    watchers.get('change')?.(
+      normalizePath(path.join(fixtureDir, 'compiler-options.json')),
+    );
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+
+    await mainPlugin.buildEnd.call(ctx);
+  });
+
+  // Regression: many editors save atomically (unlink then add a new
+  // inode at the same path) rather than emitting a single `'change'` —
+  // the invalidation above must react the same way to that shape too, or
+  // an atomically-replaced, arbitrarily-named extended config leaves
+  // `vitestFallbackCompilerOptions` silently stale.
+  it('invalidates the cached tsconfig on an atomic-save unlink/add of an arbitrarily named extended config (default strategy)', async () => {
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'test' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    vi.mocked(readConfiguration).mockClear();
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    const watchers = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+        on: (event: string, handler: (file: string) => void) =>
+          watchers.set(event, handler),
+      },
+    });
+
+    const arbitraryConfigPath = normalizePath(
+      path.join(fixtureDir, 'compiler-options.json'),
+    );
+    watchers.get('unlink')?.(arbitraryConfigPath);
+    watchers.get('add')?.(arbitraryConfigPath);
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+
+    await mainPlugin.buildEnd.call(ctx);
+  });
+
+  // Regression: an `extends` target can use a JSON-family extension other
+  // than `.json` (`.jsonc`) or none at all — a name/extension heuristic
+  // alone can't recognize every one, but a file already known to be part
+  // of the resolved chain (as this one is, once `configureServer` first
+  // resolves it) reacts regardless of its own name.
+  it('invalidates the cached tsconfig when a .jsonc extended config changes (default strategy)', async () => {
+    const baseJsoncPath = path.join(fixtureDir, 'tsconfig.base.jsonc');
+    realFs.writeFileSync(
+      baseJsoncPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      path.join(fixtureDir, 'tsconfig.json'),
+      JSON.stringify({
+        extends: './tsconfig.base.jsonc',
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'test' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    vi.mocked(readConfiguration).mockClear();
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    const watchers = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+        on: (event: string, handler: (file: string) => void) =>
+          watchers.set(event, handler),
+      },
+    });
+
+    watchers.get('change')?.(normalizePath(baseJsoncPath));
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+
+    await mainPlugin.buildEnd.call(ctx);
+  });
+
+  // Regression: a real atomic-save unlink briefly makes the `.jsonc`
+  // extended config genuinely not exist on disk. If that momentary
+  // absence were treated as "this target doesn't exist" and used to
+  // re-resolve the chain right then, `resolveExtendsTarget`'s existence
+  // check would guess a wrong, `.json`-appended path in its place —
+  // losing the real one before the paired `'add'` for the same save
+  // ever arrives to restore it. A later edit to the real file would then
+  // go unrecognized. This physically removes and recreates the file
+  // (not just simulated events) to reproduce the exact race.
+  it('does not lose a .jsonc extended config from the watched chain across a real atomic-save unlink/add cycle (default strategy)', async () => {
+    const baseJsoncPath = path.join(fixtureDir, 'tsconfig.base.jsonc');
+    realFs.writeFileSync(
+      baseJsoncPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      path.join(fixtureDir, 'tsconfig.json'),
+      JSON.stringify({
+        extends: './tsconfig.base.jsonc',
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+      workspaceRoot: fixtureDir,
+    });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'test' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    vi.mocked(readConfiguration).mockClear();
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    const watchers = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+        on: (event: string, handler: (file: string) => void) =>
+          watchers.set(event, handler),
+      },
+    });
+
+    const normalizedBaseJsoncPath = normalizePath(baseJsoncPath);
+
+    // Physically remove the file — genuinely missing, not simulated.
+    realFs.unlinkSync(baseJsoncPath);
+    watchers.get('unlink')?.(normalizedBaseJsoncPath);
+
+    // A cache read *between* the unlink and the add — the cache is still
+    // invalidated even mid-atomic-save.
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+
+    // Physically recreate it, completing the atomic save.
+    realFs.writeFileSync(
+      baseJsoncPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    watchers.get('add')?.(normalizedBaseJsoncPath);
+
+    // The real assertion: a *later*, ordinary edit to the same file must
+    // still be recognized as a chain member — proving the unlink didn't
+    // corrupt the chain with a guessed, wrong path in its place.
+    watchers.get('change')?.(normalizedBaseJsoncPath);
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(3);
+
+    await mainPlugin.buildEnd.call(ctx);
+  });
+
+  // Regression: `fastCompile` has no tsconfig-file watcher of its own — a
+  // live edit to it during a watch session must still reach the cache
+  // above (via `onTsconfigChanged`), or the fallback would keep serving
+  // whatever settings were resolved when the session started.
+  it('invalidates the cached tsconfig when fastCompile reports it changed', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    await fastCompilePlugin.handleHotUpdate({
+      file: normalizePath(tsconfigPath),
+      modules: [],
+      server: {
+        watcher: {
+          add: () => {
+            /* not exercised by this test */
+          },
+        },
+        moduleGraph: { getModuleById: () => undefined },
+      },
+    });
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: same gap as the default strategy's own `configureServer`
+  // (above) — `fastCompile`'s watcher only observes its project root and a
+  // handful of config dependencies by default, so an `extends` target
+  // outside that root would never reach `handleHotUpdate` to invalidate
+  // the cache tested above.
+  it('watches the tsconfig extends chain explicitly, not just the leaf (fastCompile)', async () => {
+    const baseTsconfigPath = path.join(fixtureDir, 'tsconfig.base.json');
+    realFs.writeFileSync(
+      baseTsconfigPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.base.json',
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const watchedPaths: string[] = [];
+    fastCompilePlugin.configureServer({
+      watcher: {
+        add: (p: string) => watchedPaths.push(normalizePath(p)),
+        on: () => {
+          /* not exercised by this test */
+        },
+      },
+    });
+
+    expect(watchedPaths).toContain(normalizePath(tsconfigPath));
+    expect(watchedPaths).toContain(normalizePath(baseTsconfigPath));
+  });
+
+  // Regression: same gap as the default strategy's own equivalent test
+  // above — the chain is only known at the moment it's first resolved,
+  // so an edit that points `extends` at a *different* file must
+  // re-resolve the chain through `handleHotUpdate` and start watching the
+  // new target too.
+  it('starts watching a newly introduced extends target after a tsconfig edit (fastCompile)', async () => {
+    const originalBasePath = path.join(
+      fixtureDir,
+      'tsconfig.original-base.json',
+    );
+    realFs.writeFileSync(
+      originalBasePath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const compilerOptions = {
+      target: 'ES2022',
+      module: 'ES2022',
+      moduleResolution: 'bundler',
+      experimentalDecorators: true,
+      skipLibCheck: true,
+      types: [],
+    };
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.original-base.json',
+        compilerOptions,
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const watchedPaths: string[] = [];
+    fastCompilePlugin.configureServer({
+      watcher: {
+        add: (p: string) => watchedPaths.push(normalizePath(p)),
+        on: () => {
+          /* not exercised by this test */
+        },
+      },
+    });
+
+    expect(watchedPaths).toContain(normalizePath(originalBasePath));
+
+    const newBasePath = path.join(fixtureDir, 'tsconfig.new-base.json');
+    realFs.writeFileSync(
+      newBasePath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.new-base.json',
+        compilerOptions,
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    await fastCompilePlugin.handleHotUpdate({
+      file: normalizePath(tsconfigPath),
+      modules: [],
+      server: {
+        watcher: { add: (p: string) => watchedPaths.push(normalizePath(p)) },
+        moduleGraph: { getModuleById: () => undefined },
+      },
+    });
+
+    expect(watchedPaths).toContain(normalizePath(newBasePath));
+  });
+
+  // Regression: `readConfiguration` follows an `extends` chain, so a
+  // parent config (e.g. `tsconfig.base.json`) can supply the very
+  // decorator/target/class-field/JSX settings this fallback relies on.
+  // `fastCompile` has no way to enumerate that chain's member files, so
+  // invalidation has to react to any `.json` edit, not only the exact
+  // leaf path this project resolved or names shaped like `tsconfig*.json`
+  // — TypeScript doesn't require an `extends` target to look like one.
+  it('invalidates the cached tsconfig when an extended config file changes', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const baseTsconfigPath = path.join(fixtureDir, 'tsconfig.base.json');
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    // Not the leaf tsconfig this project resolved — a sibling base config
+    // an `extends` chain could pull settings from.
+    await fastCompilePlugin.handleHotUpdate({
+      file: normalizePath(baseTsconfigPath),
+      modules: [],
+      server: {
+        watcher: {
+          add: () => {
+            /* not exercised by this test */
+          },
+        },
+        moduleGraph: { getModuleById: () => undefined },
+      },
+    });
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: TypeScript doesn't require an `extends` target's
+  // filename to look like a tsconfig at all (e.g.
+  // `"extends": "./compiler-options.json"`), so matching on a
+  // `tsconfig*.json`-shaped name would miss it and keep serving stale
+  // settings until restart.
+  it('invalidates the cached tsconfig when an arbitrarily named extended config changes', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const arbitraryConfigPath = path.join(fixtureDir, 'compiler-options.json');
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    await fastCompilePlugin.handleHotUpdate({
+      file: normalizePath(arbitraryConfigPath),
+      modules: [],
+      server: {
+        watcher: {
+          add: () => {
+            /* not exercised by this test */
+          },
+        },
+        moduleGraph: { getModuleById: () => undefined },
+      },
+    });
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: same atomic-save gap as the default strategy's own
+  // equivalent test above — `handleHotUpdate` only fires for a genuine
+  // `'change'` event, so an editor that replaces a file via unlink+add
+  // needs its own reaction through the fast-compile-specific
+  // `configureServer` watcher, or it leaves
+  // `vitestFallbackCompilerOptions` silently stale.
+  it('invalidates the cached tsconfig on an atomic-save unlink/add of an arbitrarily named extended config (fastCompile)', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    const watchers = new Map<string, (file: string) => void | Promise<void>>();
+    fastCompilePlugin.configureServer({
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+        on: (event: string, handler: (file: string) => void | Promise<void>) =>
+          watchers.set(event, handler),
+      },
+    });
+
+    const arbitraryConfigPath = normalizePath(
+      path.join(fixtureDir, 'compiler-options.json'),
+    );
+    await watchers.get('unlink')?.(arbitraryConfigPath);
+    await watchers.get('add')?.(arbitraryConfigPath);
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: same gap as the default strategy's own equivalent test
+  // above — an `extends` target can use a JSON-family extension other
+  // than `.json` (`.jsonc`), which a name/extension heuristic alone
+  // can't recognize, but chain membership does once `configureServer`
+  // first resolves it.
+  it('invalidates the cached tsconfig when a .jsonc extended config changes (fastCompile)', async () => {
+    const baseJsoncPath = path.join(fixtureDir, 'tsconfig.base.jsonc');
+    realFs.writeFileSync(
+      baseJsoncPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.base.jsonc',
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const watchedPaths: string[] = [];
+    fastCompilePlugin.configureServer({
+      watcher: {
+        add: (p: string) => watchedPaths.push(normalizePath(p)),
+        on: () => {
+          /* not exercised by this test */
+        },
+      },
+    });
+    expect(watchedPaths).toContain(normalizePath(baseJsoncPath));
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    await fastCompilePlugin.handleHotUpdate({
+      file: normalizePath(baseJsoncPath),
+      modules: [],
+      server: {
+        watcher: {
+          add: () => {
+            /* not exercised by this test */
+          },
+        },
+        moduleGraph: { getModuleById: () => undefined },
+      },
+    });
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+  });
+
+  // Regression: same real atomic-save race as the default strategy's own
+  // equivalent test above — a physically unlinked `.jsonc` extended
+  // config must not corrupt the watched chain before the paired `'add'`
+  // for the same save restores it, or a later edit to the real file goes
+  // unrecognized.
+  it('does not lose a .jsonc extended config from the watched chain across a real atomic-save unlink/add cycle (fastCompile)', async () => {
+    const baseJsoncPath = path.join(fixtureDir, 'tsconfig.base.jsonc');
+    realFs.writeFileSync(
+      baseJsoncPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    realFs.writeFileSync(
+      tsconfigPath,
+      JSON.stringify({
+        extends: './tsconfig.base.jsonc',
+        compilerOptions: {
+          target: 'ES2022',
+          module: 'ES2022',
+          moduleResolution: 'bundler',
+          experimentalDecorators: true,
+          skipLibCheck: true,
+          types: [],
+        },
+        files: ['src/app.component.ts'],
+      }),
+      'utf-8',
+    );
+
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    const watchers = new Map<string, (file: string) => void | Promise<void>>();
+    fastCompilePlugin.configureServer({
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+        on: (event: string, handler: (file: string) => void | Promise<void>) =>
+          watchers.set(event, handler),
+      },
+    });
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    const normalizedBaseJsoncPath = normalizePath(baseJsoncPath);
+    const fakeServer = {
+      watcher: {
+        add: () => {
+          /* not exercised by this test */
+        },
+      },
+      moduleGraph: { getModuleById: () => undefined },
+    };
+
+    // Physically remove the file — genuinely missing, not simulated.
+    realFs.unlinkSync(baseJsoncPath);
+    await watchers.get('unlink')?.(normalizedBaseJsoncPath);
+
+    // A cache read *between* the unlink and the add.
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(2);
+
+    // Physically recreate it, completing the atomic save.
+    realFs.writeFileSync(
+      baseJsoncPath,
+      JSON.stringify({ compilerOptions: {} }),
+      'utf-8',
+    );
+    await watchers.get('add')?.(normalizedBaseJsoncPath);
+
+    // The real assertion: a *later*, ordinary edit to the same file must
+    // still be recognized as a chain member.
+    await fastCompilePlugin.handleHotUpdate({
+      file: normalizedBaseJsoncPath,
+      modules: [],
+      server: fakeServer,
+    });
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(3);
+  });
+
+  // Control: a non-JSON edit (e.g. a component's own source) isn't
+  // treated as a possible config dependency and shouldn't force a
+  // spurious re-read on every unrelated file change.
+  it('does not invalidate the cached tsconfig for an unrelated source file change', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const plugins = angular({
+      tsconfig: tsconfigPath,
+      workspaceRoot: fixtureDir,
+      fastCompile: true,
+    });
+    const fastCompilePlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vite-plugin-angular-fast-compile',
+    ) as any;
+    const sourcemapPlugin = plugins.find(
+      (p) => (p as any)?.name === '@analogjs/vitest-angular-sourcemap-plugin',
+    ) as any;
+
+    await fastCompilePlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'serve' },
+    );
+
+    vi.mocked(readConfiguration).mockClear();
+
+    const untestedCode = realFs.readFileSync(untestedComponentPath, 'utf-8');
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+
+    await fastCompilePlugin.handleHotUpdate({
+      file: untestedComponentPath,
+      modules: [],
+      server: {
+        watcher: {
+          add: () => {
+            /* not exercised by this test */
+          },
+        },
+        moduleGraph: { getModuleById: () => undefined },
+      },
+    });
+
+    await sourcemapPlugin.transform(untestedCode, untestedComponentPath);
+    expect(readConfiguration).toHaveBeenCalledTimes(1);
+  });
 });
