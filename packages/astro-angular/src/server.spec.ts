@@ -97,41 +97,59 @@ describe.each(renderers)('%s renderToStaticMarkup', (_name, render) => {
 });
 
 describe('APP_BOOTSTRAP_LISTENER', () => {
-  const listener = vi.fn();
+  const seen: { title: string; initialized: boolean; text: string }[] = [];
+  const listener = (ref: {
+    instance: { title: string; initialized: boolean };
+    location: { nativeElement: Element };
+  }) =>
+    seen.push({
+      title: ref.instance.title,
+      initialized: ref.instance.initialized,
+      text: ref.location.nativeElement.textContent ?? '',
+    });
 
   const ListenerComponent = Component({
     selector: 'app-listener',
-    template: `<p>Listener</p>`,
+    inputs: ['title'],
+    template: `<p>{{ title }}</p>`,
   })(
     class ListenerComponent {
       static renderProviders = [
         { provide: APP_BOOTSTRAP_LISTENER, useValue: listener, multi: true },
       ];
+      title = '';
+      initialized = false;
+
+      ngOnInit() {
+        this.initialized = true;
+      }
     },
   );
 
-  beforeEach(() => listener.mockClear());
+  beforeEach(() => (seen.length = 0));
 
-  it('server should invoke bootstrap listeners with the component ref', async () => {
-    await server.renderToStaticMarkup(ListenerComponent as any, {}, {});
-
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener.mock.calls[0][0].instance).toBeInstanceOf(
-      ListenerComponent,
+  it('server should notify listeners after the initial render', async () => {
+    await server.renderToStaticMarkup(
+      ListenerComponent as any,
+      { title: 'Ready' },
+      {},
     );
+
+    expect(seen).toEqual([
+      { title: 'Ready', initialized: true, text: 'Ready' },
+    ]);
   });
 
-  it('server-ngh should invoke bootstrap listeners with the component ref', async () => {
+  it('server-ngh should notify listeners after the initial render', async () => {
     await serverNgh.renderToStaticMarkup.call(
       { result: {} as SSRResult },
       ListenerComponent,
-      {},
+      { title: 'Ready' },
       {},
     );
 
-    expect(listener).toHaveBeenCalledTimes(1);
-    expect(listener.mock.calls[0][0].instance).toBeInstanceOf(
-      ListenerComponent,
-    );
+    expect(seen).toEqual([
+      { title: 'Ready', initialized: true, text: 'Ready' },
+    ]);
   });
 });

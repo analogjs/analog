@@ -70,13 +70,15 @@ export function createComponentBindings(
 /**
  * Registers a component created with `createComponent` as a root component,
  * the way `bootstrapApplication` does: attach the view, track it on the
- * application and notify `APP_BOOTSTRAP_LISTENER`s such as the router's.
+ * application, run the initial change detection and notify
+ * `APP_BOOTSTRAP_LISTENER`s such as the router's.
  */
 export function registerRootComponent(
   appRef: ApplicationRef,
   componentRef: ComponentRef<unknown>,
 ): void {
   appRef.attachView(componentRef.hostView);
+  appRef.tick();
   appRef.components.push(componentRef);
   appRef.injector
     .get(APP_BOOTSTRAP_LISTENER, [])
