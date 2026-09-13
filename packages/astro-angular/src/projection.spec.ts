@@ -17,6 +17,15 @@ const HeaderOnlyComponent = Component({
   template: `<ng-content select="[question]" />`,
 })(class HeaderOnlyComponent {});
 
+const TwoDefaultsComponent = Component({
+  selector: 'app-two-defaults',
+  template: `
+    <ng-content />
+    <ng-content select="[question]" />
+    <ng-content />
+  `,
+})(class TwoDefaultsComponent {});
+
 const PlainComponent = Component({
   selector: 'app-plain',
   template: `<p>No projection</p>`,
@@ -128,6 +137,25 @@ describe('buildProjectableNodes', () => {
     expect(nodes[0].map((n) => n.textContent)).toEqual(['Q']);
     expect(nodes[1].map((n) => n.textContent)).toEqual(['F1', 'F2']);
     expect(nodes[2].map((n) => n.textContent)).toEqual(['Body']);
+  });
+
+  it('should route unmatched content to the last default slot', () => {
+    const twoDefaultsMirror = reflectComponentType(TwoDefaultsComponent)!;
+
+    const nodes = buildProjectableNodes(
+      twoDefaultsMirror,
+      { default: '<p question>Q</p><p>Body</p>Text' },
+      document,
+    )!;
+
+    expect(twoDefaultsMirror.ngContentSelectors).toEqual([
+      '*',
+      '[question]',
+      '*',
+    ]);
+    expect(names(nodes[0])).toEqual([]);
+    expect(names(nodes[1])).toEqual(['P']);
+    expect(names(nodes[2])).toEqual(['P', '#text(Text)']);
   });
 
   it('should preserve elements that need a parsing context', () => {

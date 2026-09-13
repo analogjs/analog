@@ -26,7 +26,8 @@ export function buildProjectableNodes(
   }
 
   const projectableNodes: Node[][] = selectors.map(() => []);
-  const wildcardIndex = selectors.indexOf('*');
+  // As in Angular, unmatched content goes to the last default slot.
+  const wildcardIndex = selectors.lastIndexOf('*');
 
   for (const node of parseSlots(slots, document)) {
     // Angular drops whitespace-only text nodes between elements at compile
@@ -36,7 +37,7 @@ export function buildProjectableNodes(
     }
 
     const matched = selectors.findIndex(
-      (selector, index) => index !== wildcardIndex && matches(node, selector),
+      (selector) => selector !== '*' && matches(node, selector),
     );
     const target = matched > -1 ? matched : wildcardIndex;
 
