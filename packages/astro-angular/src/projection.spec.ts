@@ -139,6 +139,34 @@ describe('buildProjectableNodes', () => {
     expect(nodes[2].map((n) => n.textContent)).toEqual(['Body']);
   });
 
+  it('should compare ngProjectAs structurally, like Angular', () => {
+    const CompoundComponent = Component({
+      selector: 'app-compound',
+      template: `
+        <ng-content select="card-title.primary[data-size=lg]" />
+        <ng-content select="[question]:not(.hidden)" />
+        <ng-content />
+      `,
+    })(class CompoundComponent {});
+    const compoundMirror = reflectComponentType(CompoundComponent)!;
+
+    const nodes = buildProjectableNodes(
+      compoundMirror,
+      {
+        default:
+          '<p ngProjectAs="card-title.primary[data-size=lg]">A</p>' +
+          '<p ngProjectAs="card-title.primary">Partial</p>' +
+          '<p ngProjectAs="[question]:not(.hidden)">B</p>' +
+          '<p ngProjectAs="[question]">No not</p>',
+      },
+      document,
+    )!;
+
+    expect(nodes[0].map((n) => n.textContent)).toEqual(['A']);
+    expect(nodes[1].map((n) => n.textContent)).toEqual(['B']);
+    expect(nodes[2].map((n) => n.textContent)).toEqual(['Partial', 'No not']);
+  });
+
   it('should route unmatched content to the last default slot', () => {
     const twoDefaultsMirror = reflectComponentType(TwoDefaultsComponent)!;
 

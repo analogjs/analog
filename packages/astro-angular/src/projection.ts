@@ -1,4 +1,5 @@
 import type { ComponentMirror } from '@angular/core';
+import { isSameSelector, parseSelectorList } from './selector.ts';
 
 const ELEMENT_NODE = 1;
 const TEXT_NODE = 3;
@@ -71,40 +72,21 @@ function matches(node: Node, selector: string): boolean {
   }
 
   const element = node as Element;
+  const projectAs = element.getAttribute('ngProjectAs');
+
+  // As in Angular, `ngProjectAs` replaces the element's own selector and is
+  // compared structurally against the `select` list.
+  if (projectAs !== null) {
+    const [alias] = parseSelectorList(projectAs);
+    return parseSelectorList(selector).some((candidate) =>
+      isSameSelector(alias, candidate),
+    );
+  }
 
   try {
-    // As in Angular, `ngProjectAs` replaces the element's own selector.
-    const projectAs = element.getAttribute('ngProjectAs');
-    const subject = projectAs
-      ? createProbe(projectAs, element.ownerDocument)
-      : element;
-
-    return subject.matches(selector);
+    return element.matches(selector);
   } catch {
     // `ngContentSelectors` may contain selectors that `matches()` rejects.
     return false;
   }
-}
-
-const SELECTOR_PART =
-  /#([\w-]+)|\.([\w-]+)|\[([\w-]+)(?:=["']?([^"'\]]*)["']?)?\]/g;
-
-// Builds an element matching the simple CSS selector held by `ngProjectAs`.
-function createProbe(projectAs: string, document: Document): Element {
-  const tag = /^[a-zA-Z][\w-]*/.exec(projectAs)?.[0];
-  const probe = document.createElement(tag || 'div');
-
-  for (const [, id, className, attr, value] of projectAs.matchAll(
-    SELECTOR_PART,
-  )) {
-    if (id) {
-      probe.id = id;
-    } else if (className) {
-      probe.classList.add(className);
-    } else if (attr) {
-      probe.setAttribute(attr, value ?? '');
-    }
-  }
-
-  return probe;
 }
