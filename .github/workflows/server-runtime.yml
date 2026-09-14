@@ -1,0 +1,48 @@
+name: Server runtime contracts
+
+on:
+  pull_request:
+    paths:
+      - 'packages/platform/**'
+      - 'packages/router/**'
+      - 'packages/vite-plugin-angular/**'
+      - 'apps/analog-app/**'
+      - 'apps/analog-app-e2e/**'
+      - 'tools/scripts/server-function-http-smoke.mjs'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/server-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  node:
+    runs-on: ubuntu-latest
+    env:
+      CI: 'true'
+      NX_DAEMON: 'false'
+      NX_NO_CLOUD: 'true'
+      PLAYWRIGHT_SKIP_BROWSER_GC: '1'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec nx run-many -t test,typecheck,lint -p platform,router
+      - run: pnpm exec nx run analog-app-e2e:server-functions
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec nx run analog-app-e2e:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: server-runtime-contracts
+          path: |
+            dist/apps/analog-app/server-function-http-result.json
+            apps/analog-app-e2e/playwright-report/
+            dist/.playwright/apps/analog-app-e2e/output/
+          if-no-files-found: warn

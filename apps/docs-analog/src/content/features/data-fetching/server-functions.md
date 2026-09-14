@@ -12,6 +12,13 @@ Server functions require Angular v19 or higher, as the client half is built on `
 
 Server functions are defined with `serverFn` from `@analogjs/router/server` in any `.server.ts` file under `src`. They can live alongside an existing `load` or `action`.
 
+With `analog()`, `angular()`, and `nitro()` configured together, Analog registers
+the `/_analog/fn/:id` handler before the first HTTP call. A page does not need
+to import or render the function first. Discovery includes directly exported
+server functions and excludes load-only and unrelated server modules. Add
+workspace-relative directories with
+`analog({ additionalServerFnDirs: ['libs/catalog/src'] })`.
+
 ```ts
 // src/app/server-fns/products.server.ts
 import { serverFn } from '@analogjs/router/server';
@@ -46,6 +53,16 @@ export const search = serverFn(
 The `input` schema is any [Standard Schema](https://standardschema.dev) validator; valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected without the handler ever running.
 
 Input travels in the request body, so any server function that takes input uses `POST`. `GET` is reserved for input-less reads, where it buys HTTP and CDN cacheability.
+
+Inputs and ordinary return values must be JSON-serializable. Strings, empty
+strings, `null`, booleans, numbers, arrays, and objects retain their JSON meaning.
+POST calls use `application/json`; object inputs remain objects in Angular's
+interceptor pipeline before HTTP serialization.
+
+An explicitly returned `Response` retains its status and headers, including
+redirects and separate `Set-Cookie` headers. A 204 response has no body. Explicit
+non-JSON content types keep their response format; JSON responses also preserve
+primitive values such as `Response.json(null, { status: 201 })`.
 
 ## Calling a Server Function
 
@@ -119,6 +136,13 @@ export const getGreeting = serverFn(async () => {
 `REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
 
 Handlers resolve dependencies from **your app's own server config**. There is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
+
+The split integration reads the named `config` export from either
+`src/app/app.config.server.ts` or `src/app.config.server.ts`. Keep one canonical
+file and use it from `main.server.ts`; having both fails the build as ambiguous.
+Without either file, the HTTP application starts with an empty provider list.
+Request and response tokens are created for each call. Native server functions
+require a Node request/response context.
 
 ## Adding Interceptors
 

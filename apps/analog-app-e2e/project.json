@@ -5,6 +5,14 @@
   "projectType": "application",
   "tags": [],
   "targets": {
+    "server-functions": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["analog-app:build"],
+      "options": {
+        "command": "node tools/scripts/server-function-http-smoke.mjs"
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]

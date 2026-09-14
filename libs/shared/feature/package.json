@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
+  "dependencies": {
+    "@analogjs/content": "workspace:*"
+  },
   "devDependencies": {
     "@analogjs/vitest-angular": "workspace:*"
   },

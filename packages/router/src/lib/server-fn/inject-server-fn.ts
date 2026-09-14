@@ -44,7 +44,15 @@ export class ServerFnClient {
     const request$ =
       fn.method === 'GET'
         ? this.http.get<Out>(fn.url)
-        : this.http.post<Out>(fn.url, input ?? {});
+        : this.http.post<Out>(
+            fn.url,
+            typeof input === 'string' || input === null
+              ? JSON.stringify(input)
+              : input === undefined
+                ? {}
+                : input,
+            { headers: { 'Content-Type': 'application/json' } },
+          );
     return firstValueFrom(request$);
   }
 

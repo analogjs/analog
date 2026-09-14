@@ -10,6 +10,8 @@ export function clearClientPageEndpointsPlugin(): Plugin {
 
   return {
     name: 'analogjs-platform-clear-client-page-endpoint',
+    // Angular must cache the original source before the client proxy replaces it.
+    enforce: 'post',
     config() {
       return {
         build: {

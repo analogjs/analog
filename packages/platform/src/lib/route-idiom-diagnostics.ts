@@ -1,4 +1,4 @@
-import { parseSync, type OxcError, type Severity } from 'oxc-parser';
+import { parseSync, type OxcError } from 'oxc-parser';
 import { relative } from 'node:path';
 import { normalizePath } from 'vite';
 
@@ -150,7 +150,7 @@ function toParseDiagnostic(error: OxcError): AnalogRouteIdiomDiagnostic {
   };
 }
 
-const severityError: Severity = 'Error';
+const severityError = 'Error';
 
 function isLikelyLayoutRoute(filename: string, routeFiles: string[]): boolean {
   if (!PAGE_FILE_RE.test(filename)) {
