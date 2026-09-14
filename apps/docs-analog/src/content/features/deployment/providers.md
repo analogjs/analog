@@ -147,7 +147,7 @@ Analog supports deploying on [Netlify](https://netlify.com/) with no additional 
 <Tabs groupId="porject-type">
   <TabItem label="Create analog" value="create-analog">
 Configuration is easiest when using [Netlify CLI](https://developers.netlify.com/cli/).
-    
+
 1. Start by running this command:
 
 ```bash

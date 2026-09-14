@@ -445,11 +445,7 @@ import analog from '@analogjs/platform';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [
-    analog({
-      /* ... */
-    }),
-  ],
+  plugins: [analog({/* ... */})],
 });
 ```
 
@@ -464,15 +460,9 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [
-    analog({
-      /* ... */
-    }),
-    angular({
-      /* ... vite object */
-    }),
-    nitro({
-      /* ... nitro object*/
-    }),
+    analog({/* ... */}),
+    angular({/* ... vite object */}),
+    nitro({/* ... nitro object*/}),
   ],
 });
 ```

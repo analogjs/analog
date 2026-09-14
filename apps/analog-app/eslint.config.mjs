@@ -36,11 +36,11 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'analogjs',
+          prefix: ['analogjs', 'app', 'storybook'],
           style: 'kebab-case',
         },
       ],
-      '@angular-eslint/prefer-standalone': 'off',
+      '@angular-eslint/prefer-standalone': 'error',
     },
   },
   ...angular.configs.templateRecommended.map((config) => ({

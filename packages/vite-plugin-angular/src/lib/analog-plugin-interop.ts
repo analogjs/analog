@@ -149,6 +149,7 @@ export async function runAnalogSetupHooks(
     } catch (error) {
       throw new Error(
         `[analog] analog.setup() from plugin "${plugin.name}" failed: ${describeError(error)}`,
+        { cause: error },
       );
     }
 
@@ -191,6 +192,7 @@ function wrapStylePreprocessor(
     } catch (error) {
       throw new Error(
         `[analog] Style preprocessor from plugin "${pluginName}" failed for "${filename}": ${describeError(error)}`,
+        { cause: error },
       );
     }
   };
@@ -206,6 +208,7 @@ function wrapRegistryConfigurator(
     } catch (error) {
       throw new Error(
         `[analog] Stylesheet registry configurator from plugin "${pluginName}" failed: ${describeError(error)}`,
+        { cause: error },
       );
     }
   };

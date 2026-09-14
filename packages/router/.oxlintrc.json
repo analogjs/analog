@@ -1,0 +1,61 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "jsPlugins": [
+    {
+      "name": "@angular-eslint",
+      "specifier": "@angular-eslint/eslint-plugin"
+    }
+  ],
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "type": "attribute",
+            "prefix": "analogjs",
+            "style": "camelCase"
+          }
+        ],
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": "analogjs",
+            "style": "kebab-case"
+          }
+        ],
+        "@angular-eslint/use-component-selector": "error",
+        "@angular-eslint/prefer-standalone": "error"
+      }
+    },
+    {
+      "files": ["src/**/pages/**/*.ts", "src/**/*.page.ts"],
+      "rules": {
+        "@angular-eslint/use-component-selector": "off"
+      }
+    },
+    {
+      "files": [
+        "server/src/utils/stream-request.ts",
+        "tanstack-query/src/constants.ts"
+      ],
+      "rules": {
+        "typescript/no-inferrable-types": "off",
+        "typescript/prefer-as-const": "off"
+      }
+    },
+    {
+      "files": ["src/lib/server-fn/types.ts"],
+      "rules": {
+        "typescript/no-empty-object-type": [
+          "error",
+          {
+            "allowWithName": "^ServerFnContext$"
+          }
+        ]
+      }
+    }
+  ]
+}

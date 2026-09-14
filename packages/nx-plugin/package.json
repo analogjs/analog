@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "main": "src/index.js",
   "devDependencies": {
-    "es-toolkit": "catalog:"
+    "es-toolkit": "catalog:",
+    "prettier": "3.8.2"
   }
 }

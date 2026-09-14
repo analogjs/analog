@@ -1,0 +1,54 @@
+{
+  "extends": ["../../.oxlintrc.json"],
+  "jsPlugins": [
+    {
+      "name": "@angular-eslint",
+      "specifier": "@angular-eslint/eslint-plugin"
+    }
+  ],
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "@angular-eslint/use-component-selector": "error",
+        "@angular-eslint/prefer-standalone": "error"
+      }
+    },
+    {
+      "files": ["src/**/pages/**/*.ts", "src/**/*.page.ts"],
+      "rules": {
+        "@angular-eslint/use-component-selector": "off"
+      }
+    },
+    {
+      "files": ["src/lib/compiler/conformance.spec.ts"],
+      "rules": {
+        "vitest/valid-title": [
+          "error",
+          {
+            "ignoreTypeOfDescribeName": true,
+            "ignoreTypeOfTestName": true
+          }
+        ],
+        "vitest/no-conditional-expect": "off"
+      }
+    },
+    {
+      "files": ["src/lib/compiler/ngmodule.spec.ts"],
+      "rules": {
+        "vitest/no-conditional-expect": "off"
+      }
+    },
+    {
+      "files": ["src/lib/utils/safe-module-paths.spec.ts"],
+      "rules": {
+        "vitest/expect-expect": [
+          "error",
+          {
+            "assertFunctionNames": ["expect", "markStylePathSafe"]
+          }
+        ]
+      }
+    }
+  ]
+}

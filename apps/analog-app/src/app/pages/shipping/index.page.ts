@@ -6,7 +6,7 @@ import { ShippingService } from './shipping-service';
 @Component({
   selector: 'analogjs-shipping',
   imports: [CurrencyPipe, AsyncPipe],
-  templateUrl: './shipping.html',
+  templateUrl: './shipping.component.html',
   styleUrls: ['./shipping.scss'],
 })
 export default class ShippingComponent {

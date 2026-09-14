@@ -16,7 +16,7 @@ describe('setup-vitest generator', () => {
   let tree: Tree;
 
   beforeEach(() => {
-    tree = createTreeWithEmptyWorkspace();
+    tree = createTreeWithEmptyWorkspace({ formatter: 'prettier' });
 
     // Setup mock Angular project
     addProjectConfiguration(tree, 'test-app', {

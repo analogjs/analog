@@ -1,0 +1,7 @@
+{
+  "name": "analog-app-e2e-playwright",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/analog-app-e2e-playwright/tests",
+  "projectType": "application",
+  "targets": {}
+}

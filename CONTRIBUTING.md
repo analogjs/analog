@@ -45,6 +45,30 @@ Analog uses [Vitest](https://vitest.dev) for tests. To test all projects locally
 pnpm test
 ```
 
+### Formatting and linting
+
+The workspace uses Oxfmt through Nx. Run `pnpm format` to format all files and
+`pnpm format:check` to check them. Git hooks use the same Oxfmt configuration
+for staged files; the recommended Oxc editor extension provides formatting and
+lint fixes. Name external Angular templates `*.component.html` so Oxfmt selects
+the Angular parser; plain `.html` files use the HTML parser. Astro formatting is
+not supported by Oxfmt yet.
+
+Run `pnpm lint` for all lint checks, or select a layer:
+
+- `pnpm lint:check`: cached Oxlint tasks for every project and workspace scripts.
+- `pnpm lint:types`: the same checks with the type-aware engine enabled.
+- `pnpm lint:legacy`: ESLint checks, including inline/external Angular templates,
+  JSON dependency checks, and rules not covered by Oxlint.
+
+For one project, use `pnpm nx oxlint <project>` and `pnpm nx lint <project>`.
+Project `.oxlintrc.json` files extend the root config so Nx can track the shared
+rules in its cache. Nx module boundaries run through the Oxlint bridge. ESLint
+remains necessary because Oxlint does not lint Angular templates or JSON.
+
+Generated starter projects retain their own formatter choices. Generator tests
+keep Prettier as a test dependency and also exercise Oxfmt workspaces.
+
 ## Contributing to the docs and analogjs.org website
 
 ### Folder structure

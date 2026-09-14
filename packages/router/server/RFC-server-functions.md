@@ -399,9 +399,7 @@ so requests still ride `HttpClient` and its interceptors. This is the client hal
 of every server function: a normal Angular resource.
 
 ```ts
-@Component({
-  /* … */
-})
+@Component({/* … */})
 export class ProductCard {
   id = input.required<string>();
   protected product = injectServerFn(getProduct, () => ({ id: this.id() }));
@@ -465,9 +463,7 @@ the read overload means a mutation is never accidentally created by forgetting a
 args factory, and the call site reads as what it is — a write:
 
 ```ts
-@Component({
-  /* … */
-})
+@Component({/* … */})
 export class Checkout {
   private place = injectServerFnMutation(placeOrder); // POST serverFn → callable
   async submit(sku: string, qty: number) {
@@ -763,9 +759,7 @@ export const placeOrder = serverFn(
 import { injectServerFnMutation } from '@analogjs/router';
 import { placeOrder } from './orders.server';
 
-@Component({
-  /* … */
-})
+@Component({/* … */})
 export default class CheckoutPage {
   private place = injectServerFnMutation(placeOrder); // imperative write form
   async submit(sku: string, qty: number) {

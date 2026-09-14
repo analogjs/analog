@@ -191,9 +191,7 @@ export const load = definePageLoadQueries({
 import { injectQuery } from '@tanstack/angular-query-experimental';
 import { postsQuery } from './posts.server';
 
-@Component({
-  /* ... */
-})
+@Component({/* ... */})
 export default class PostsPage {
   readonly posts = injectQuery(() => postsQuery);
 }

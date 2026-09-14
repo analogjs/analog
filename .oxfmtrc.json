@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "trailingComma": "all",
+  "printWidth": 80,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "/dist",
+    "/coverage",
+    ".astro",
+    ".docusaurus/",
+    "pnpm-lock.yaml",
+    "/.nx/cache",
+    ".angular",
+    "/.nx/workspace-data",
+    "/packages/create-analog/template-*",
+    ".vite-inspect",
+    ".all-contributorsrc",
+    "**/routeTree.gen.ts",
+    ".nx/self-healing"
+  ]
+}

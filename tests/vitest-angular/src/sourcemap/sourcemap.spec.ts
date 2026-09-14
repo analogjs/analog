@@ -29,7 +29,7 @@ function parseSpecLine(stack: string): number | null {
 }
 
 test('error stack maps back to the original TypeScript line', () => {
-  let stack = '';
+  let stack: string;
   try {
     throw new Error('sourcemap probe');
   } catch (e) {

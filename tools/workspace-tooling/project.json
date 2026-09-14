@@ -1,0 +1,12 @@
+{
+  "name": "workspace-tooling",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "oxlint": {
+      "command": "oxlint --ignore-pattern /apps --ignore-pattern /packages --ignore-pattern /libs --ignore-pattern /tests .",
+      "options": { "cwd": "." },
+      "cache": true,
+      "inputs": ["{workspaceRoot}/**/*"]
+    }
+  }
+}

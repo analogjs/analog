@@ -21,7 +21,7 @@ concurrency:
 jobs:
   # Coordinator. Checkout / install / orchestration only — all cacheable Nx work
   # (lint, build, test, e2e) is distributed to Nx Agents defined in
-  # .nx/workflows/agents.yaml. Prettier stays local (non-Nx) but is recorded so
+  # .nx/workflows/agents.yaml. Formatting stays on the coordinator and is recorded so
   # it shows up in the Nx Cloud run.
   main:
     runs-on: ubuntu-latest
@@ -54,18 +54,24 @@ jobs:
           --require-explicit-completion
           --stop-agents-after="e2e"
 
-      # Non-Nx check: runs on the coordinator, recorded into the Nx Cloud run.
-      - name: Prettier
-        run: pnpm exec nx-cloud record -- pnpm prettier:check
+      # Formatting runs on the coordinator, recorded into the Nx Cloud run.
+      - name: Format
+        run: pnpm exec nx-cloud record -- pnpm format:check
 
       # Distributed across agents. Kept as separate commands because each target
-      # has a distinct project filter (lint excludes content/platform/router;
-      # build excludes astro-app; e2e is limited to analog-app-e2e/blog-app-e2e),
+      # has a distinct project filter (build excludes astro-app; e2e is limited
+      # to analog-app-e2e/blog-app-e2e),
       # which a single run-many cannot express. Ordering (test/e2e depend on
       # build) is modeled by the Nx task graph, so no coordinator-level gating is
       # needed. --parallel values are preserved as per-agent task concurrency.
+      - name: Oxlint
+        run: pnpm lint:check
+
+      - name: Oxlint (type-aware)
+        run: pnpm lint:types
+
       - name: Lint
-        run: pnpm exec nx run-many --target lint --all --exclude=content,platform,router
+        run: pnpm exec nx run-many --target lint --all
 
       - name: Build
         run: pnpm exec nx run-many --target build --all --parallel=1 --exclude=astro-app
