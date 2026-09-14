@@ -442,16 +442,24 @@ export function angularVitestSourcemapPlugin(
       // by accident) is read and used instead, so this fallback still
       // lowers its decorators correctly, just with settings that are
       // actually this other package's own rather than the app's.
+      // A file with no ancestor `package.json` at all (`filePackageRoot`
+      // undefined) hasn't been shown to belong to any package other than
+      // the app's — nothing here proves it's foreign, so it's treated the
+      // same as "same package" rather than "different", which would
+      // otherwise bound `resolveNearestTsConfigOptions` to just the
+      // file's own directory and silently fall back to TypeScript's bare
+      // defaults instead of the app's real compiler options.
       const filePackageRoot = findNearestPackageJson(dirname(bareId));
       const appPackageRoot = getAppPackageRoot?.();
       const isInDifferentPackage =
         !!appPackageRoot &&
-        normalizePath(filePackageRoot ?? '') !== normalizePath(appPackageRoot);
+        !!filePackageRoot &&
+        normalizePath(filePackageRoot) !== normalizePath(appPackageRoot);
       const effectiveGetCompilerOptions = isInDifferentPackage
         ? () =>
             resolveNearestTsConfigOptions(
               dirname(bareId),
-              filePackageRoot ? dirname(filePackageRoot) : dirname(bareId),
+              dirname(filePackageRoot as string),
             )
         : getCompilerOptions;
 

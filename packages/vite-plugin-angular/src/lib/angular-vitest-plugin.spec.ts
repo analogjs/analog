@@ -8,6 +8,7 @@ import {
 } from './angular-vitest-plugin';
 import { defineConfig, resolveConfig } from 'vite';
 import ts from 'typescript';
+import { findNearestPackageJson } from './utils/plugin-config.js';
 
 // Simulates Vite 6/7 (no `transformWithOxc` export at all) for one test
 // below, without touching every other test in this file — a real ESM
@@ -855,6 +856,39 @@ globalThis.__capturedArgsLength = capturedArgsLength;
         expect(await runAndCaptureArgsLength(result.code)).toBe(2);
       } finally {
         rmSync(boundaryWorkspaceRoot, { recursive: true, force: true });
+      }
+    });
+
+    it("still applies this app's compiler options to a file with no ancestor package.json at all", async () => {
+      // A directory with no `package.json` anywhere above it up to the
+      // real filesystem root — `findNearestPackageJson` returns
+      // `undefined` for it, which is not proof the file belongs to some
+      // other package; it should still be treated as this app's own.
+      const orphanDir = mkdtempSync(join(tmpdir(), 'analog-package-orphan-'));
+      try {
+        expect(findNearestPackageJson(orphanDir)).toBeUndefined();
+
+        const filePath = join(orphanDir, 'widget.ts');
+
+        const plugin = angularVitestSourcemapPlugin(
+          () => undefined,
+          () => ({
+            target: ts.ScriptTarget.ES2022,
+            experimentalDecorators: true,
+          }),
+          () => appPackageJsonPath,
+        );
+
+        const result = await (plugin.transform as any)(
+          argCountDecoratorSource,
+          filePath,
+        );
+
+        expect(result?.code).toBeDefined();
+        await assertParsesAsCoverageWould(result.code);
+        expect(await runAndCaptureArgsLength(result.code)).toBe(1);
+      } finally {
+        rmSync(orphanDir, { recursive: true, force: true });
       }
     });
 
