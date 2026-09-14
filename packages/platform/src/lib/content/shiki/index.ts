@@ -44,7 +44,7 @@ export function getShikiHighlighter({
 
   if (skipLangs.length > 0) {
     highlighter.langs = highlighter.langs.filter(
-      (lang) => !skipLangs.includes(lang),
+      (lang) => !skipLangs.some((skipped) => skipped === lang),
     );
   }
 

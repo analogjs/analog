@@ -2,6 +2,55 @@
 
 Analog supports server-side rendering during development and building for production.
 
+## Rendering failures
+
+An unhandled Angular navigation or resolver error rejects `render()`.
+The application is disposed, and Analog's Nitro adapter returns a generic HTML
+error document. An integer `statusCode` or `status` between 400 and 599 is
+preserved; other values produce HTTP 500. The response has `Cache-Control:
+no-store` and `X-Robots-Tag: noindex`, and contains no exception details or
+client bootstrap scripts. The original error remains available in server logs.
+
+For example, a product resolver can report a missing product:
+
+```ts
+export const routeMeta: RouteMeta = {
+  resolve: {
+    product: async (route) => {
+      const product = await getProduct(route.paramMap.get('id'));
+      if (!product) {
+        throw Object.assign(new Error('Product was not found'), {
+          statusCode: 404,
+        });
+      }
+      return product;
+    },
+  },
+};
+```
+
+Navigation errors handled by Angular's `withNavigationErrorHandler` and a
+successful redirect render the destination normally. Failure state belongs to
+one render and does not affect a concurrent request.
+
+## Built server entries
+
+The Nitro adapter reads the emitted SSR service from the Vite server build. It
+recognizes `main.server.mjs`, `main.server.js`, `index.mjs`, and `index.js` in
+that order, or a single custom `.js`/`.mjs` entry. Missing output and ambiguous
+custom entries fail the build with the directory and candidate names. Source
+maps are not entries.
+
+For Worker presets, Analog respects Nitro's `node: false` or `noExternals: true`
+dependency policy. Node-specific externalization remains enabled for Node
+targets; this does not make Node-only application dependencies Worker-compatible.
+
+Cloudflare Module and Durable Worker presets also retain Nitro's separate server
+and public asset directories. Use the generated Wrangler configuration when
+deploying them. Cloudflare Pages keeps its `_worker.js` convention; that Pages
+layout must not be applied to Module Workers because their asset uploader would
+include server files.
+
 ## Transforming Packages for SSR Compatibility
 
 Some dependencies may need additional transforms to work for server-side rendering. If you receive an error during SSR in development, one option is to add the package(s) to the `ssr.noExternal` array in the Vite config.
@@ -28,8 +77,16 @@ For more information about externals with SSR, check out the [Vite documentation
 
 SSR is enabled by default. For a hybrid approach, you can specify some routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
 
+In Analog v3, configure these rules on the separate Nitro plugin. A more specific
+`ssr: true` rule enables server rendering under a parent rule that disables it.
+
 ```ts
 // https://vitejs.dev/config/
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
+
 export default defineConfig(({ mode }) => ({
   // ...other config
   plugins: [
@@ -37,14 +94,18 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         routes: ['/', '/404.html'],
       },
-      nitro: {
-        routeRules: {
-          // All admin URLs are only rendered on the client
-          '/admin/**': { ssr: false },
+    }),
+    angular(),
+    nitro({
+      routeRules: {
+        // All admin URLs are only rendered on the client
+        '/admin/**': { ssr: false },
 
-          // Render a 404 page as a fallback page
-          '/404.html': { ssr: false },
-        },
+        // A specific child can opt back into server rendering
+        '/admin/help': { ssr: true },
+
+        // Render a 404 page as a fallback page
+        '/404.html': { ssr: false },
       },
     }),
   ],

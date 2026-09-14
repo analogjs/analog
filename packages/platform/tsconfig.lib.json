@@ -6,6 +6,8 @@
     "inlineSourceMap": true,
     "sourceMap": false,
     "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true,
     "types": [],
     "isolatedDeclarations": true,
     "allowSyntheticDefaultImports": true,

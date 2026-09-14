@@ -7,12 +7,6 @@ export interface DiscoveredLibraryRoutes {
   additionalAPIDirs: string[];
 }
 
-const empty: DiscoveredLibraryRoutes = Object.freeze({
-  additionalPagesDirs: Object.freeze([] as string[]),
-  additionalContentDirs: Object.freeze([] as string[]),
-  additionalAPIDirs: Object.freeze([] as string[]),
-});
-
 const discoverableLibRouteDirs = [
   'libs/**/src/pages',
   'libs/**/src/content',

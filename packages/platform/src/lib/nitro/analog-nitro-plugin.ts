@@ -203,20 +203,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       };
 
       if (ssr) {
-        // Two-pronged registration: `experimental.vite.services.ssr.entry`
-        // is the documented hook, but nitro/vite's setupNitroContext also
-        // accepts an `environments.ssr.build.rollupOptions.input` entry
-        // (see node_modules/nitro/dist/vite.mjs:710-734). When `analog()`
-        // and `nitro()` are invoked separately, the `services` slot on
-        // `nitro()`'s pluginConfig is empty, so the rollupOptions.input
-        // path is how we get our wrapper entry recognized.
-        overrides.experimental = {
-          vite: {
-            services: {
-              ssr: { entry: ssrEntryMarkerPath },
-            },
-          },
-        };
+        // Nitro discovers this service from the Vite environment input.
+        // experimental.vite.services belongs to nitro()'s own configuration,
+        // not Vite's experimental options returned by this hook.
         (overrides.environments as Record<string, unknown>)['ssr'] = {
           build: {
             outDir: resolve(
@@ -345,9 +334,8 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // `apps/<name>/.vercel/output/` and the deploy can't find them.
           // Hoist to workspace root and apply Analog's runtime defaults.
           if (preset.includes('vercel')) {
-            const vercel = (nitro.options as { vercel?: Record<string, any> })
-              .vercel;
-            (nitro.options as { vercel?: Record<string, any> }).vercel = {
+            const vercel = nitro.options.vercel;
+            nitro.options.vercel = {
               ...vercel,
               entryFormat: vercel?.entryFormat ?? 'node',
               functions: {
@@ -391,13 +379,13 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
             };
           }
 
-          // Cloudflare Pages/Workers presets anchor their output at
+          // Cloudflare Pages presets anchor their output at
           // `{{rootDir}}/dist` or `{{rootDir}}/.output`, which puts the
           // deploy tree at `apps/<name>/...` for Nx monorepos. Hoist to
           // `<workspaceRoot>/dist/<rootDir>/` so `wrangler pages deploy
           // dist/<rootDir>` from the workspace root finds `_worker.js/`
           // alongside the static assets.
-          if (preset.includes('cloudflare')) {
+          if (preset.includes('cloudflare-pages')) {
             const cfDir = resolve(
               context.workspaceRoot,
               'dist',
@@ -517,7 +505,12 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           if (Array.isArray(rollupConfig.plugins)) {
             rollupConfig.plugins.push(pageEndpointsPlugin());
           }
-          applyAnalogNitroExternals(rollupConfig);
+          if (
+            nitro.options.node !== false &&
+            nitro.options.noExternals !== true
+          ) {
+            applyAnalogNitroExternals(rollupConfig);
+          }
           sanitizeNitroBundlerConfig(rollupConfig);
         });
 
@@ -591,7 +584,7 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
  * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
  * nitro/vite's `prodSetup`).
  */
-function generateSsrRendererVirtual(template: string): string {
+export function generateSsrRendererVirtual(template: string): string {
   return `
 import { defineHandler } from 'nitro/h3';
 import ssr from '#analog/ssr';
@@ -600,14 +593,26 @@ const TEMPLATE = ${JSON.stringify(template)};
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  // 'x-analog-no-ssr' is stamped on response headers by
-  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // applies routeRule headers to the response before the renderer fires,
-  // so we can short-circuit by reading them here.
-  if (event.res.headers.get('x-analog-no-ssr') === 'true') {
+  // Matched header rules are available before response middleware applies them.
+  const noSsr = event.context.routeRules?.headers?.['x-analog-no-ssr']
+    ?? event.res.headers.get('x-analog-no-ssr');
+  if (noSsr === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
+  if (event.req.headers.has('x-analog-no-ssr')) {
+    const headers = new Headers(event.req.headers);
+    headers.delete('x-analog-no-ssr');
+    // Copy public fields because server Request adapters lack native constructor state.
+    const request = new Request(event.req.url, {
+      method: event.req.method,
+      headers,
+      signal: event.req.signal,
+      ...(event.req.method === 'GET' || event.req.method === 'HEAD' ? {} : { body: event.req.body, duplex: 'half' }),
+    });
+    if (event.req.runtime) Object.defineProperty(request, 'runtime', { value: event.req.runtime });
+    return service.fetch(request);
+  }
   return service.fetch(event.req);
 });
 `;
@@ -624,7 +629,9 @@ export default defineHandler(async (event) => {
  *   filesystem. By the time Nitro's bundlers ask for \`#analog/ssr\`, Vite has
  *   already produced \`<buildDir>/vite/services/ssr/<entry>.mjs\`.
  */
-function generateSsrServiceVirtual(nitro: Nitro): string {
+export function generateSsrServiceVirtual(nitro: {
+  options: Pick<Nitro['options'], 'dev' | 'buildDir'>;
+}): string {
   if (nitro.options.dev) {
     return `
 import { fetchViteEnv } from 'nitro/vite/runtime';
@@ -650,14 +657,28 @@ export default {
 
   const ssrDir = resolve(nitro.options.buildDir, 'vite/services/ssr');
   if (!existsSync(ssrDir)) {
-    return `export default { async fetch() { throw new Error('Analog SSR service directory missing: ${ssrDir}'); } };`;
+    throw new Error(`Analog SSR service directory missing: ${ssrDir}`);
   }
-  const entries = readdirSync(ssrDir).filter((f) => f.endsWith('.mjs'));
+  const entries = readdirSync(ssrDir).filter(
+    (f) => f.endsWith('.mjs') || f.endsWith('.js'),
+  );
   if (entries.length === 0) {
-    return `export default { async fetch() { throw new Error('No Analog SSR entry file built in: ${ssrDir}'); } };`;
+    throw new Error(`No Analog SSR entry file built in: ${ssrDir}`);
   }
-  // Prefer 'main.server.mjs' if present; otherwise take the only entry.
-  const entry = entries.find((f) => f === 'main.server.mjs') ?? entries[0];
+  const preferred = [
+    'main.server.mjs',
+    'main.server.js',
+    'index.mjs',
+    'index.js',
+  ];
+  const entry =
+    preferred.find((name) => entries.includes(name)) ??
+    (entries.length === 1 ? entries[0] : undefined);
+  if (entry === undefined) {
+    throw new Error(
+      `Ambiguous Analog SSR entry in ${ssrDir}: ${entries.sort().join(', ')}`,
+    );
+  }
   const entryPath = resolve(ssrDir, entry);
   return `export { default } from ${JSON.stringify(entryPath)};`;
 }
@@ -748,7 +769,8 @@ function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
 
 /**
  * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
- * any rule with `ssr: false`, and `x-analog-no-streaming: true` onto any rule
+ * any rule with `ssr: false`, resetting it for explicit `ssr: true`, and
+ * `x-analog-no-streaming: true` onto any rule
  * with `streaming: false`. Kept as response-header hints for downstream
  * consumers (CDN, edge logic); the actual SSR short-circuit happens inside
  * the SSR renderer virtual above, and the router falls back to a buffered
@@ -768,8 +790,11 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   if (!routeRules) return;
 
   for (const rule of Object.values(routeRules)) {
-    if (rule?.ssr === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    if (typeof rule?.ssr === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-ssr': String(!rule.ssr),
+      };
     }
     if (rule?.streaming === false) {
       rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
@@ -874,9 +899,11 @@ export default {
       });
     } catch (err) {
       console.error('[analog ssr]', err);
-      return new Response(TEMPLATE, {
-        status: 500,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
+      const errorStatus = err?.statusCode ?? err?.status;
+      const status = Number.isInteger(errorStatus) && errorStatus >= 400 && errorStatus <= 599 ? errorStatus : 500;
+      return new Response('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Unable to load this page</title></head><body><h1>Unable to load this page</h1><p>The request could not be completed.</p></body></html>', {
+        status,
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' },
       });
     }
   },
@@ -906,10 +933,7 @@ async function wirePrerender(
       })
     : collected;
 
-  const nitroPrerender = (nitro.options.prerender ??= {}) as Record<
-    string,
-    any
-  >;
+  const nitroPrerender = (nitro.options.prerender ??= {});
   nitroPrerender.routes ??= [];
   nitroPrerender.routes.push(...expanded);
   if (prerender?.discover ?? false) {
@@ -923,9 +947,7 @@ async function wirePrerender(
   // straight back out — the route never reaches the renderer at all. Drop it
   // once the assets are in place and before the first route is rendered, so
   // the prerendered document takes its place.
-  const prerendersRoot = (nitroPrerender.routes as string[]).some(
-    (route) => route === '/',
-  );
+  const prerendersRoot = nitroPrerender.routes.some((route) => route === '/');
 
   if ((options.ssr ?? true) && prerendersRoot) {
     nitro.hooks.hook('prerender:init', () => {
@@ -983,11 +1005,7 @@ async function wirePrerender(
 }
 
 async function collectRoutes(
-  routesInput: Options['prerender'] extends infer P
-    ? P extends { routes?: infer R }
-      ? R
-      : never
-    : never,
+  routesInput: NonNullable<Options['prerender']>['routes'],
   context: NitroPluginContext,
   apiPrefix: string,
 ): Promise<{
