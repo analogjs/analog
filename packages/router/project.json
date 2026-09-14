@@ -7,6 +7,14 @@
   "prefix": "analogjs",
   "tags": ["type:release"],
   "targets": {
+    "consumer-types": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node tools/scripts/router-contract-typecheck.mjs"
+      }
+    },
     "assert-deps": {
       "executor": "nx:run-commands",
       "options": {

@@ -95,11 +95,20 @@ export default class Checkout {
 
 Both helpers must be called in an injection context, and both dispatch through `HttpClient`, so client `HttpInterceptorFn`s apply and `HttpTestingController` works in tests.
 
+Changing a resource's input or destroying the resource unsubscribes its pending
+browser HTTP request. Imperative callers can pass an optional `AbortSignal` to
+`ServerFnClient.call(fn, input, signal)`. Aborting does not undo a server-side
+write, and mutations are not retried automatically.
+
 ### Hydration
 
 A read resolved while rendering on the server is transferred to the client and used as the resource's first value, so the browser does not refetch it on hydration. This works for `GET` and `POST` reads alike and needs no transfer cache configuration.
 
 During server-side rendering, calls skip HTTP entirely and run in-process in the same request injector as the render.
+
+An aborted in-process read discards its result instead of transferring a stale
+hydration value. It does not interrupt the handler's own asynchronous work.
+Hydration entries distinguish `null` input from an input-less read.
 
 ## Using Dependency Injection
 
@@ -119,6 +128,11 @@ export const getGreeting = serverFn(async () => {
 `REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
 
 Handlers resolve dependencies from **your app's own server config**. There is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
+
+The dispatcher destroys its child request injector after the handler succeeds or
+fails, including after consuming a returned `Response` body. Request-scoped
+`DestroyRef` callbacks run then; application-scoped services retain their
+application lifetime.
 
 ## Adding Interceptors
 

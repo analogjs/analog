@@ -73,6 +73,18 @@ export const appConfig: ApplicationConfig = {
 
 `provideAnalogQuery()` rehydrates the TanStack Query cache from `TransferState` on the client, preventing duplicate fetches after SSR navigation.
 
+The native SSR host supplies a request-scoped fetch. Local subrequests inherit
+the original cookies, authorization and custom headers; explicit request headers
+take precedence. Hop-by-hop and inherited body-framing headers are excluded.
+External URLs use standard fetch with only explicitly supplied credentials.
+Request bodies, runtime context for local calls, and cancellation remain attached
+to their request. Do not store the injected fetch in a module-level variable.
+
+The SSR cookie interceptor preserves existing headers and explicit cookies. It
+adds incoming cookies only for same-origin Analog page endpoints, including when
+an absolute URL is used; a matching path on another origin receives no automatic
+cookie forwarding.
+
 :::warning Pass a factory, not a `new QueryClient()` instance.
 `provideTanStackQuery(new QueryClient())` evaluates the constructor once at module-load time, so every SSR request on the same Node process shares the same cache and leaks query state between responses. Wrapping the client in an `InjectionToken` with `factory: () => new QueryClient()` gives each `bootstrapApplication` call its own client.
 :::
@@ -159,9 +171,34 @@ export default class TodosComponent {
 
 Query params, mutation bodies, and response shapes are all inferred from the server route definition with no manual type duplication.
 
+`serverQueryOptions` and `serverInfiniteQueryOptions` forward TanStack Query
+cancellation to Angular's HTTP subscription. Cancelling a query or removing its
+last observer aborts an in-flight request. HTTP errors retain their status and
+body; configure retries through the query or mutation options as usual.
+
+The Query helpers disable HTTP transfer caching for their requests. Both Angular
+and Analog's request-context interceptor honor this setting, leaving TanStack's
+dehydrated state as the cache owner. Other HTTP requests retain their existing
+transfer-cache behavior unless they also set `transferCache: false`.
+
 ## Prefetching Queries in `load()`
 
 Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
+
+When nested loads prefetch the same key, TanStack's cache timestamps determine
+which value is retained. The server transfers that resolved cache to the browser;
+an older child payload does not replace newer parent or application-prefetched data.
+
+Unhandled navigation or page-load errors reject buffered SSR instead of producing
+an empty successful page. The native production wrapper preserves error statuses
+from 400 through 599 and returns a generic, non-cacheable, non-indexable error
+document without server details. A navigation error recovered by a router redirect
+can still render normally.
+
+For Worker builds, Analog respects Nitro's non-Node or `noExternals: true` target
+policy. Dependencies used by generated page-load endpoints, including RxJS, are
+bundled instead of requiring a runtime `node_modules` directory. Native-only
+dependencies still need a compatible target or a separate adapter.
 
 ```ts
 // src/app/pages/posts.server.ts

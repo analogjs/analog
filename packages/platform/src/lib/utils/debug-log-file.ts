@@ -10,6 +10,11 @@ import type { Debugger } from 'obug';
 
 const TRUNCATED_KEY = '__analogDebugLogTruncated';
 const WRAPPED_KEY = '__analogFileLogWrapped';
+
+interface FileLogDebugger extends Debugger {
+  __analogFileLogWrapped?: string;
+  __analogOriginalLog?: Debugger['log'];
+}
 // eslint-disable-next-line no-control-regex
 const ANSI_RE = /\x1B\[[0-9;]*[A-Za-z]|\x1B\].*?\x07/g;
 
@@ -31,12 +36,12 @@ function ensureTruncated(filePath: string): void {
 }
 
 function wrapLog(dbg: Debugger, filePath: string): void {
-  const rec = dbg as Record<string, unknown>;
+  const rec: FileLogDebugger = dbg;
   if (rec[WRAPPED_KEY] === filePath) return;
 
   const originalLog =
     rec[WRAPPED_KEY] && rec['__analogOriginalLog']
-      ? (rec['__analogOriginalLog'] as Debugger['log'])
+      ? rec['__analogOriginalLog']
       : dbg.log;
 
   rec['__analogOriginalLog'] = originalLog;

@@ -1,5 +1,6 @@
 import { HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { TransferState } from '@angular/core';
 import { lastValueFrom, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -28,6 +29,54 @@ describe('requestContextInterceptor', () => {
       (globalThis as typeof globalThis & { $fetch?: unknown }).$fetch =
         originalFetch;
     }
+  });
+
+  it('does not create an Analog transfer-cache entry when transferCache is false', async () => {
+    const raw = vi
+      .fn()
+      .mockResolvedValue({ _data: { value: 'query-owned' }, headers: {} });
+    (
+      globalThis as typeof globalThis & { $fetch?: { raw: typeof raw } }
+    ).$fetch = { raw };
+    const request = new HttpRequest('GET', '/api/value', null, {
+      transferCache: false,
+    });
+    await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(request, () => of(null as never)),
+      ),
+    );
+    expect(TestBed.inject(TransferState).toJson()).toBe('{}');
+  });
+
+  it('ignores an existing Analog cache entry when transferCache is false on the client', async () => {
+    const raw = vi
+      .fn()
+      .mockResolvedValue({ _data: { value: 'cached' }, headers: {} });
+    (
+      globalThis as typeof globalThis & { $fetch?: { raw: typeof raw } }
+    ).$fetch = { raw };
+    await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(new HttpRequest('GET', '/api/value'), () =>
+          of(null as never),
+        ),
+      ),
+    );
+    delete (globalThis as typeof globalThis & { $fetch?: unknown }).$fetch;
+    const next = vi.fn(() =>
+      of(new HttpResponse({ body: { value: 'fresh' } })),
+    );
+    const response = await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(
+          new HttpRequest('GET', '/api/value', null, { transferCache: false }),
+          next,
+        ),
+      ),
+    );
+    expect(next).toHaveBeenCalledOnce();
+    expect(response).toMatchObject({ body: { value: 'fresh' } });
   });
 
   it('forwards HttpRequest params during prerender requests', async () => {
