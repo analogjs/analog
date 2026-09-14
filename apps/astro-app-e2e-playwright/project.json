@@ -6,7 +6,13 @@
   "tags": [],
   "targets": {
     "vitest": {
-      "executor": "@nx/vitest:test"
+      "executor": "@nx/vitest:test",
+      "inputs": [
+        "default",
+        {
+          "env": "ASTRO_TEST_URL"
+        }
+      ]
     },
     "e2e": {
       "executor": "nx:run-commands",

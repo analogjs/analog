@@ -44,6 +44,7 @@ function normalizeRendererEntrypoints(integration) {
 // https://astro.build/config
 export default defineConfig({
   outDir: '../../dist/apps/astro-app',
+  compressHTML: true,
   vite: {
     server: {
       watch: {

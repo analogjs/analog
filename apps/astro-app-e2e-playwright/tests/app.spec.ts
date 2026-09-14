@@ -1,4 +1,4 @@
-import { chromium, Browser, Page } from 'playwright';
+import { chromium, type Browser, type Page } from 'playwright';
 import {
   afterAll,
   afterEach,
@@ -6,12 +6,12 @@ import {
   beforeEach,
   expect,
   test,
-  describe,
 } from 'vitest';
 
 let browser: Browser;
 let page: Page;
-const baseURL = 'http://localhost:43030';
+const baseURL = process.env['ASTRO_TEST_URL'] ?? 'http://localhost:43030';
+let errors: string[];
 
 beforeAll(async () => {
   browser = await chromium.launch();
@@ -21,66 +21,63 @@ afterAll(async () => {
 });
 
 beforeEach(async () => {
-  page = await browser.newPage({
-    baseURL,
-  });
-  await page.goto('/');
+  page = await browser.newPage({ baseURL });
+  errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
 });
 afterEach(async () => {
   await page.close();
+  expect(errors).toEqual([]);
 });
 
-describe.skip('AstroApp', () => {
-  describe('Given the user has navigated to the home page', () => {
-    test('Then client side rendered CardComponent is rendered', async () => {
-      const componentLocator = page.locator(
-        'astro-island[component-export="CardComponent"]',
-      );
-      await expect(
-        componentLocator.locator('>> text=Angular (Client Side)'),
-      ).toContain(/Angular \(Client Side\)/i);
-    });
-
-    test('Then server side rendered CardComponent is rendered', async () => {
-      const componentLocator = page.locator('astro-card');
-      await expect(
-        componentLocator.locator('>> text=Angular (server side binding)'),
-      ).toContain(/Angular \(server side binding\)/i);
-    });
-
-    test.skip('Then client side rendered CardComponent should emit an event on click', async () => {
-      const console = waitForConsole();
-      const componentLocator = page.locator(
-        '[data-analog-id=card-component-1]',
-      );
-      const elementLocator = componentLocator.locator('li');
-      await elementLocator.click();
-
-      await expect(await console).toBe(
-        'event received from card-component-1: clicked',
-      );
-    });
-  });
-  describe('Given the user has navigated to the test MDX page', () => {
-    beforeEach(async () => {
-      await page.goto('/test');
-    });
-
-    it('Then an Angular component should be rendered', async () => {
-      const componentLocator = page.locator('astro-card');
-      await expect(componentLocator.locator('>> text=Angular')).toContain(
-        /Angular/,
-      );
-    });
-  });
+test('prerenders Angular and React without JavaScript', async () => {
+  const response = await page.request.get('/');
+  expect(response.status()).toBe(200);
+  const html = await response.text();
+  expect(html).toContain('Angular (server side binding)');
+  expect(html).toContain('Angular (Client Side)');
+  expect(html).toContain('src/pages');
 });
 
-async function waitForConsole(): Promise<string> {
-  return new Promise(function (resolve) {
-    page.on('console', (msg) => {
-      if (msg.type() === 'log') {
-        resolve(msg.text());
-      }
-    });
+// Also fails on the Astro 6 baseline; tracked in analogjs/analog#2536.
+test.skip('hydrates a visible Angular island and forwards output events', async () => {
+  await page.goto('/');
+  const island = page.locator('astro-island[component-export="CardComponent"]');
+  await island.scrollIntoViewIfNeeded();
+  await expect.poll(() => island.getAttribute('ssr')).toBeNull();
+  const event = page.waitForEvent('console', {
+    predicate: (message) =>
+      message.text() === 'event received from card-component-1: clicked',
   });
-}
+  await island.locator('li').dispatchEvent('click');
+  expect((await event).text()).toContain('clicked');
+});
+
+test('renders MDX Angular islands and preserves the focused node during hydration', async () => {
+  await page.goto('/test');
+  await expect
+    .poll(() => page.locator('astro-parent').textContent())
+    .toContain('Angular');
+  await expect
+    .poll(() => page.locator('astro-client-only').textContent())
+    .toContain('only rendered on the client');
+  const component = page.locator('astro-hydration-test');
+  const input = await component.locator('input').elementHandle();
+  expect(input).not.toBeNull();
+  await input!.focus();
+  await expect.poll(() => component.textContent()).toContain('hydrated: true');
+  expect(await input!.evaluate((node) => node === document.activeElement)).toBe(
+    true,
+  );
+});
+
+// Also fails on the Astro 6 baseline; tracked in analogjs/analog#2536.
+test.skip('replays incremental hydration events', async () => {
+  await page.goto('/test');
+  const incremental = page.locator('astro-incremental-hydration-test button');
+  await incremental.click();
+  await expect.poll(() => incremental.textContent()).toContain('Count: 1');
+  await expect
+    .poll(() => incremental.textContent())
+    .toContain('hydrated: true');
+});
