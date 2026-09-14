@@ -242,6 +242,10 @@ describe('analogNitroPlugin', () => {
         routeRules: {
           '/buffered': { streaming: false },
           '/no-ssr': { ssr: false },
+          '/no-ssr/help': {
+            ssr: true,
+            headers: { 'x-analog-no-ssr': 'true', 'x-example': 'retained' },
+          },
           '/default': {},
         },
       },
@@ -254,6 +258,10 @@ describe('analogNitroPlugin', () => {
     });
     expect(nitroMock.options.routeRules['/no-ssr'].headers).toEqual({
       'x-analog-no-ssr': 'true',
+    });
+    expect(nitroMock.options.routeRules['/no-ssr/help'].headers).toEqual({
+      'x-analog-no-ssr': 'false',
+      'x-example': 'retained',
     });
     expect(nitroMock.options.routeRules['/default'].headers).toBeUndefined();
   });
