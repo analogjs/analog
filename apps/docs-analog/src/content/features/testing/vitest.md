@@ -322,11 +322,11 @@ pnpm test
 
 ## Test Coverage
 
-When measuring coverage with `@vitest/coverage-v8` (for example, `vitest run --coverage`), its `coverage.include` option — or its own default, if you don't set one — can match source files that `tsconfig.spec.json` does not `include`. This is the same narrow `include` (`src/**/*.spec.ts`) that the Angular CLI's own `ng generate` schematic uses, so it isn't specific to Analog projects.
+When measuring coverage with `@vitest/coverage-v8` (for example, `vitest run --coverage`), its `coverage.include` option — or its own default, if you don't set one — can match source files that `tsconfig.spec.json` does not `include`. This is the same narrow source-file pattern (`include: ["src/**/*.spec.ts", "src/**/*.d.ts"]`) that the Angular CLI's own `ng generate` schematic uses, so it isn't specific to Analog projects.
 
 A file outside that tsconfig's TypeScript program — a component with no `.spec.ts` file importing it, for example — is skipped by the Angular compiler with a warning:
 
-```
+```text
 [@analogjs/vite-plugin-angular]: "src/app/unused.component.ts" contains Angular decorators but is not in the TypeScript program. Ensure it is included in your tsconfig.
 ```
 
