@@ -1,3 +1,9 @@
+# [2.8.0-beta.5](https://github.com/analogjs/analog/compare/v2.8.0-beta.4...v2.8.0-beta.5) (2026-09-15)
+
+### Features
+
+- **astro-angular:** support content projection for island components ([#2560](https://github.com/analogjs/analog/issues/2560)) ([96ed98d](https://github.com/analogjs/analog/commit/96ed98db2a2b60918cf21d36ba60f5de532177e8))
+
 # [2.8.0-beta.4](https://github.com/analogjs/analog/compare/v2.8.0-beta.3...v2.8.0-beta.4) (2026-09-15)
 
 ### Features
