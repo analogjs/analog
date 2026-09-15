@@ -320,6 +320,35 @@ pnpm test
 
 [![Angular Testing Course](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
 
+## Test Coverage
+
+When measuring coverage with `@vitest/coverage-v8` (for example, `vitest run --coverage`), its `coverage.include` option — or its own default, if you don't set one — can match source files that `tsconfig.spec.json` does not `include`. This is the same narrow `include` (`src/**/*.spec.ts`) that the Angular CLI's own `ng generate` schematic uses, so it isn't specific to Analog projects.
+
+A file outside that tsconfig's TypeScript program — a component with no `.spec.ts` file importing it, for example — is skipped by the Angular compiler with a warning:
+
+```
+[@analogjs/vite-plugin-angular]: "src/app/unused.component.ts" contains Angular decorators but is not in the TypeScript program. Ensure it is included in your tsconfig.
+```
+
+Coverage then falls back to parsing that file's raw, uncompiled source, which can fail outright for a component using decorators (a constructor parameter decorated with `@Inject()`, for instance) instead of simply reporting it at 0% coverage.
+
+To make sure coverage can see every file it measures, widen `include` in `tsconfig.spec.json` to also cover the source files `coverage.include` matches, not just spec files:
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "target": "es2022",
+    "types": ["vitest/globals", "node"]
+  },
+  "files": ["src/test-setup.ts"],
+  "include": ["src/**/*.ts"]
+}
+```
+
+This brings every source file into the same Angular program used for your tests, so the existing compiler handles it correctly — including files no spec currently imports.
+
 ## Snapshot Testing
 
 For snapshot testing you can use `toMatchSnapshot` from `expect` API.
