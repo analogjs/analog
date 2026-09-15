@@ -468,6 +468,42 @@ Astro's `slot` attribute is not needed to target a slot. Astro removes the attri
 
 > Note: for hydrated islands, Astro also emits the projected content in an inert `<template data-astro-template>` so it is available on the client. The slot markup therefore appears twice in the HTML response of hydrated components.
 
+### Components in Projected Content
+
+Angular components used inside the slot are rendered and hydrated as islands of their own, the same way nested React, Vue or Svelte components behave in Astro. The parent component only receives their markup, so `@ContentChild`, `@ContentChildren`, input and output bindings, and dependency injection do not cross the island boundary.
+
+```html
+---
+import { CardComponent } from '../components/card.component';
+import { BadgeComponent } from '../components/badge.component';
+---
+
+<!-- Two separate islands: the card cannot query or bind to the badge -->
+<CardComponent client:visible>
+  <BadgeComponent client:visible label="New" />
+</CardComponent>
+```
+
+For a real parent and child relationship, compose the components in an Angular template and use that component as the island.
+
+```ts
+import { Component } from '@angular/core';
+import { CardComponent } from './card.component';
+import { BadgeComponent } from './badge.component';
+
+@Component({
+  selector: 'app-card-with-badge',
+  imports: [CardComponent, BadgeComponent],
+  template: `
+    <app-card>
+      <app-badge label="New" />
+    </app-card>
+  `,
+})
+export class CardWithBadgeComponent {}
+```
+
 ## Current Limitations
 
 - Only standalone Angular components in version v14.2+ are supported
+- Angular components inside projected content are separate islands. Content queries, bindings and dependency injection from the parent component do not reach them, see [Components in Projected Content](#components-in-projected-content)

@@ -363,6 +363,42 @@ import { CardComponent } from '../components/card.component';
 
 > 注意：对于需要水合 (hydrate) 的 island，Astro 还会把投影内容输出到一个惰性的 `<template data-astro-template>` 中，以便客户端使用。因此在水合组件的 HTML 响应中，插槽标记会出现两次。
 
+### 投影内容中的组件
+
+在插槽中使用的 Angular 组件会作为独立的 island 进行渲染和水合，这与 Astro 中嵌套的 React、Vue 或 Svelte 组件的行为一致。父组件只会收到它们的标记，因此 `@ContentChild`、`@ContentChildren`、输入/输出绑定以及依赖注入都不会跨越 island 边界。
+
+```html
+---
+import { CardComponent } from '../components/card.component';
+import { BadgeComponent } from '../components/badge.component';
+---
+
+<!-- 两个独立的 island：card 无法查询或绑定 badge -->
+<CardComponent client:visible>
+  <BadgeComponent client:visible label="New" />
+</CardComponent>
+```
+
+如果需要真正的父子关系，请在 Angular 模板中组合这些组件，并将该组件用作 island。
+
+```ts
+import { Component } from '@angular/core';
+import { CardComponent } from './card.component';
+import { BadgeComponent } from './badge.component';
+
+@Component({
+  selector: 'app-card-with-badge',
+  imports: [CardComponent, BadgeComponent],
+  template: `
+    <app-card>
+      <app-badge label="New" />
+    </app-card>
+  `,
+})
+export class CardWithBadgeComponent {}
+```
+
 ## 当前限制
 
 - 仅支持 v14.2+ 版本的 standalone Angular 组件
+- 投影内容中的 Angular 组件是独立的 island。父组件的内容查询、绑定和依赖注入无法到达它们，参见[投影内容中的组件](#投影内容中的组件)
