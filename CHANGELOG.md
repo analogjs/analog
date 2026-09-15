@@ -1,3 +1,9 @@
+# [2.8.0-beta.4](https://github.com/analogjs/analog/compare/v2.8.0-beta.3...v2.8.0-beta.4) (2026-09-15)
+
+### Features
+
+- **router:** add opt-in form enhancements and validation helpers ([#2565](https://github.com/analogjs/analog/issues/2565)) ([f0cd5bb](https://github.com/analogjs/analog/commit/f0cd5bbc50bfdb5c1033117c3a8c2b804b6b1f8c))
+
 # [2.8.0-beta.3](https://github.com/analogjs/analog/compare/v2.8.0-beta.2...v2.8.0-beta.3) (2026-09-11)
 
 ### Bug Fixes
