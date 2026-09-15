@@ -6,7 +6,6 @@ import {
   Type,
   APP_ID,
   createComponent,
-  APP_BOOTSTRAP_LISTENER,
 } from '@angular/core';
 import {
   createApplication,
@@ -17,9 +16,11 @@ import {
 import {
   createComponentBindings,
   getComponentElementTag,
+  registerRootComponent,
 } from './create-component.ts';
 import { ID_PROP_NAME } from './id.ts';
 import { ensureSsrIntegrityMarker } from './ssr-integrity.ts';
+import { buildProjectableNodes, collectProjectedNodes } from './projection.ts';
 
 export default (element: HTMLElement) => {
   return (
@@ -28,6 +29,7 @@ export default (element: HTMLElement) => {
       hydrationFeatures?: () => HydrationFeature<HydrationFeatureKind>[];
     },
     props?: Record<string, unknown>,
+    slots?: unknown,
   ) => {
     const mirror = reflectComponentType(Component);
 
@@ -50,7 +52,14 @@ export default (element: HTMLElement) => {
 
     const ngAppId = hostElement?.getAttribute(ID_PROP_NAME);
 
-    createApplication({
+    // Hydration reuses the server-rendered DOM, so hand Angular the projected
+    // nodes it already rendered instead of freshly parsed copies.
+    const projectableNodes =
+      (reuseDom && ngAppId
+        ? collectProjectedNodes(hostElement, mirror, ngAppId)
+        : undefined) ?? buildProjectableNodes(mirror, slots, document);
+
+    return createApplication({
       providers: [
         provideZonelessChangeDetection(),
         reuseDom
@@ -67,16 +76,13 @@ export default (element: HTMLElement) => {
         const componentRef = createComponent(Component, {
           environmentInjector: appRef.injector,
           hostElement,
+          projectableNodes,
           bindings: createComponentBindings(mirror, props, hostElement),
         });
 
-        appRef.attachView(componentRef.hostView);
+        registerRootComponent(appRef, componentRef);
 
-        appRef.components.push(componentRef);
-
-        appRef.injector
-          .get(APP_BOOTSTRAP_LISTENER, [])
-          .forEach((cb) => cb(componentRef));
+        return appRef;
       })
       .catch((error) => {
         console.error('Failed to hydrate Angular component:', error);

@@ -323,7 +323,82 @@ pubDate: 'Sep 22 2022'
 
 > 重要提示：在 `.mdx` 文件中，组件导入必须以 `.ts` 后缀结尾。否则，组件的动态导入将失败，组件将不会被 hydrate。
 
+## 内容投影 (Content Projection)
+
+在 Astro 文件中传递给 Angular 组件的子内容会被投影到组件的 `ng-content` 插槽中。Angular 自身的 `select` 语义同样适用，因此现有组件无需任何修改。
+
+```ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-card',
+  template: `
+    <div class="card">
+      <div class="card__header">
+        <ng-content select="[question]"></ng-content>
+      </div>
+      <div class="card__body">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  `,
+})
+export class CardComponent {}
+```
+
+```html
+---
+import { CardComponent } from '../components/card.component';
+---
+
+<CardComponent client:visible>
+  <p question>Is content projection cool?</p>
+  <p>Let's learn about content projection!</p>
+</CardComponent>
+```
+
+未匹配任何 `select` 的内容会被投影到默认的 `<ng-content>` 中。如果没有默认插槽，这些内容会像在 Angular 中一样被丢弃。同样支持 `ngProjectAs`。
+
+不需要使用 Astro 的 `slot` 属性来指定插槽。Astro 会在渲染前移除该属性，请改用 Angular 选择器，例如属性、class 或元素名。
+
+> 注意：对于需要水合 (hydrate) 的 island，Astro 还会把投影内容输出到一个惰性的 `<template data-astro-template>` 中，以便客户端使用。因此在水合组件的 HTML 响应中，插槽标记会出现两次。
+
+### 投影内容中的组件
+
+在插槽中使用的 Angular 组件会作为独立的 island 进行渲染和水合，这与 Astro 中嵌套的 React、Vue 或 Svelte 组件的行为一致。父组件只会收到它们的标记，因此 `@ContentChild`、`@ContentChildren`、输入/输出绑定以及依赖注入都不会跨越 island 边界。
+
+```html
+---
+import { CardComponent } from '../components/card.component';
+import { BadgeComponent } from '../components/badge.component';
+---
+
+<!-- 两个独立的 island：card 无法查询或绑定 badge -->
+<CardComponent client:visible>
+  <BadgeComponent client:visible label="New" />
+</CardComponent>
+```
+
+如果需要真正的父子关系，请在 Angular 模板中组合这些组件，并将该组件用作 island。
+
+```ts
+import { Component } from '@angular/core';
+import { CardComponent } from './card.component';
+import { BadgeComponent } from './badge.component';
+
+@Component({
+  selector: 'app-card-with-badge',
+  imports: [CardComponent, BadgeComponent],
+  template: `
+    <app-card>
+      <app-badge label="New" />
+    </app-card>
+  `,
+})
+export class CardWithBadgeComponent {}
+```
+
 ## 当前限制
 
 - 仅支持 v14.2+ 版本的 standalone Angular 组件
-- 不支持向 island 组件进行内容投影 (Content projection)
+- 投影内容中的 Angular 组件是独立的 island。父组件的内容查询、绑定和依赖注入无法到达它们，参见[投影内容中的组件](#投影内容中的组件)
