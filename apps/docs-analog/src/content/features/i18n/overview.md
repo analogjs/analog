@@ -285,13 +285,15 @@ analog({
 });
 ```
 
-The build starts a temporary worker pool and closes it when prerendering finishes. A hybrid deployment starts a separate pool for runtime SSR. With `static: true`, only the generated public files are deployed; no worker process is needed to serve them. Requests within a locale remain concurrent, and different locales use separate JavaScript contexts in both phases.
+The build starts a temporary worker pool and closes it when prerendering finishes or fails. A hybrid deployment starts a separate pool for runtime SSR. With `static: true`, only the generated public files are deployed; no worker process is needed to serve them. Requests within a locale remain concurrent, and different locales use separate JavaScript contexts in both phases.
 
 ### Runtime behavior and limits
 
 Keep the normal `render(App, config)` server entry. Build and start the generated `dist/analog/server/index.mjs` as usual (Nx apps use their configured output directory). The server prepares its workers before listening, chooses a worker using the URL locale or `Accept-Language`, and forwards the real HTTP request. Each worker loads its translations once and renders requests concurrently without clearing translations or resetting Angular template caches. The first entry in `locales` is the source language and does not call the loader.
 
 This mode consumes additional memory and initializes Nitro plugins separately in each locale worker. Worker listeners use HTTP TCP. Terminate HTTPS at a reverse proxy; direct TLS and Unix socket listeners are not supported. Ordinary HTTP response streams are forwarded incrementally. Development rendering and other hosting presets retain their existing behavior.
+
+The incoming connection address is preserved as `event.context.clientAddress` for H3’s `getRequestIP()`. Forwarded headers are passed through unchanged; behind a trusted reverse proxy, read its forwarded address explicitly because H3 gives `clientAddress` precedence.
 
 `SIGINT` and `SIGTERM` drain requests and close worker resources, with a 30-second shutdown deadline. An unexpected worker failure shuts down the server with a failing exit status; use your deployment's process supervisor to restart it.
 
