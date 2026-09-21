@@ -160,6 +160,48 @@ export default class IndexPage {
 }
 ```
 
+## Concurrent server rendering (experimental)
+
+Angular's runtime `$localize` translations and compiled template caches are shared within a JavaScript context. Overlapping SSR requests in different locales can therefore produce mixed-language pages. Loading translations per request does not isolate them.
+
+For a production **Node server**, opt into one fixed-locale worker per supported locale:
+
+```ts
+analog({
+  prerender: { routes: [] },
+  nitro: { preset: 'node-server' },
+  i18n: {
+    defaultLocale: 'es',
+    locales: ['es', 'en'],
+    workers: { loader: './src/i18n.ts' },
+  },
+});
+```
+
+The loader module exports a default function returning a message ID-to-string map. Its path is relative to the app root. Keep this module independent of your Angular application: translations load **before** the server entry and its components are imported.
+
+```ts
+// src/i18n.ts
+export default async function loadTranslations(locale: string) {
+  if (locale === 'en') return (await import('./i18n/en.json')).default;
+  return {};
+}
+```
+
+Reuse that loader in your existing app configuration:
+
+```ts
+import loadTranslations from '../i18n';
+
+provideI18n({ loader: loadTranslations });
+```
+
+Keep the normal `render(App, config)` server entry. Build and start the generated `dist/analog/server/index.mjs` as usual (Nx apps use their configured output directory). The server prepares its workers before listening, chooses a worker using the URL locale or `Accept-Language`, and forwards the real HTTP request. Each worker loads its translations once and renders requests concurrently without clearing translations or resetting Angular template caches. The first entry in `locales` is the source language and does not call the loader.
+
+This mode consumes additional memory and initializes Nitro plugins separately in each locale worker. It currently supports production HTTP Node servers only, without prerendering, scheduled tasks, WebSockets, or experimental progressive Angular streaming. Terminate HTTPS at a reverse proxy; direct TLS and Unix socket listeners are not supported. Ordinary HTTP response streams are forwarded incrementally. Development rendering and other hosting presets retain their existing behavior.
+
+`SIGINT` and `SIGTERM` drain requests and close worker resources, with a 30-second shutdown deadline. An unexpected worker failure shuts down the server with a failing exit status; use your deployment's process supervisor to restart it.
+
 ## Switching Locale at Runtime
 
 Angular's `$localize` resolves translations at template evaluation time, so switching locale requires a full page navigation to re-evaluate all templates with the correct translations.

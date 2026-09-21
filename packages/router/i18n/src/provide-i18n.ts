@@ -10,6 +10,7 @@ import { LOCALE, REQUEST, ServerRequest } from '@analogjs/router/tokens';
 
 declare const ANALOG_I18N_DEFAULT_LOCALE: string;
 declare const ANALOG_I18N_LOCALES: string[];
+declare const ANALOG_I18N_FIXED_LOCALE: string | undefined;
 
 /**
  * Configuration for runtime i18n support.
@@ -119,6 +120,18 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
     { provide: I18N_CONFIG, useValue: resolved },
     ...localeProviders,
     provideAppInitializer(async () => {
+      if (
+        typeof ANALOG_I18N_FIXED_LOCALE !== 'undefined' &&
+        ANALOG_I18N_FIXED_LOCALE
+      ) {
+        // The worker entry loads translations before importing the application.
+        if (!resolved.locales.includes(ANALOG_I18N_FIXED_LOCALE)) {
+          throw new Error(
+            'The i18n worker locale must be included in provideI18n().',
+          );
+        }
+        return;
+      }
       const locale = resolveActiveLocale(resolved);
       await initI18n(resolved, locale);
     }),

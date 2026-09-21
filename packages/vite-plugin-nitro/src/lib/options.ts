@@ -1,6 +1,8 @@
 import { PrerenderRoute } from 'nitropack';
 
 export interface I18nPrerenderOptions {
+  /** Experimental Node SSR workers; path to the translation loader module. */
+  workers?: { loader: string };
   /**
    * The default/source locale for the application.
    */

@@ -46,6 +46,12 @@ export interface PrerenderOptions {
 
 export interface I18nOptions {
   /**
+   * Experimental Node SSR isolation. The module's default export loads a
+   * locale's translations before importing the app in its dedicated worker.
+   * Requires the node-server preset and prerender.routes: [].
+   */
+  workers?: { loader: string };
+  /**
    * The default/source locale for the application.
    */
   defaultLocale: string;

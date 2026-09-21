@@ -10,6 +10,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
 import {
+  I18N_WORKER_SSR_ENTRY,
+  i18nWorkerSsrEntry,
+} from './utils/i18n-workers.js';
+import {
   Options,
   PrerenderContentDir,
   PrerenderContentFile,
@@ -76,6 +80,37 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let rootDir = workspaceRoot;
 
   return [
+    ...(options?.i18n?.workers
+      ? [
+          {
+            name: 'analog-i18n-worker-entry',
+            apply: 'build' as const,
+            resolveId(id: string) {
+              return id === I18N_WORKER_SSR_ENTRY ? '\0' + id : undefined;
+            },
+            load(id: string) {
+              if (
+                id !== '\0' + I18N_WORKER_SSR_ENTRY ||
+                !options?.i18n?.workers
+              )
+                return;
+              return i18nWorkerSsrEntry(
+                normalizePath(
+                  resolve(
+                    workspaceRoot,
+                    rootDir,
+                    options.entryServer || `${sourceRoot}/main.server.ts`,
+                  ),
+                ),
+                normalizePath(
+                  resolve(workspaceRoot, rootDir, options.i18n.workers.loader),
+                ),
+                options.i18n,
+              );
+            },
+          },
+        ]
+      : []),
     (options?.ssr
       ? devServerPlugin({
           entryServer: options?.entryServer,
@@ -453,13 +488,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               build: {
                 ssr: true,
                 rollupOptions: {
-                  input:
-                    options?.entryServer ||
-                    resolve(
-                      workspaceRoot,
-                      rootDir,
-                      `${sourceRoot}/main.server.ts`,
-                    ),
+                  input: options?.i18n?.workers
+                    ? { 'main.server': I18N_WORKER_SSR_ENTRY }
+                    : options?.entryServer ||
+                      resolve(
+                        workspaceRoot,
+                        rootDir,
+                        `${sourceRoot}/main.server.ts`,
+                      ),
                 },
                 outDir:
                   options?.ssrBuildDir ||
@@ -657,9 +693,13 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
     },
     {
       name: '@analogjs/vite-plugin-nitro-api-prefix',
-      config() {
+      config(_, { command }) {
         return {
           define: {
+            ANALOG_I18N_FIXED_LOCALE:
+              command === 'build' && options?.i18n?.workers
+                ? "(typeof window === 'undefined' ? globalThis.process?.env?.ANALOG_I18N_LOCALE : undefined)"
+                : 'undefined',
             ANALOG_API_PREFIX: `"${baseURL.substring(1)}${apiPrefix.substring(1)}"`,
             ...(options?.i18n
               ? {

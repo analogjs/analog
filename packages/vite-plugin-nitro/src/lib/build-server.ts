@@ -2,15 +2,44 @@ import { NitroConfig, copyPublicAssets, prerender } from 'nitropack';
 import { createNitro, build, prepare } from 'nitropack';
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
+import { validateI18nWorkers } from './utils/i18n-workers.js';
 
 export async function buildServer(
   options?: Options,
-  nitroConfig?: NitroConfig,
+  nitroConfig: NitroConfig = {},
   routeSourceFiles?: Record<string, string>,
 ) {
+  if (options?.i18n?.workers) {
+    validateI18nWorkers(options, nitroConfig);
+    nitroConfig = {
+      ...nitroConfig,
+      entry: fileURLToPath(
+        new URL('./runtime/locale-worker-entry.mjs', import.meta.url),
+      ),
+      externals: {
+        ...nitroConfig.externals,
+        inline: [...(nitroConfig.externals?.inline ?? []), '@analogjs/router'],
+      },
+      replace: {
+        ...nitroConfig.replace,
+        ANALOG_I18N_FIXED_LOCALE: "process.env['ANALOG_I18N_LOCALE']",
+        ANALOG_I18N_DEFAULT_LOCALE: JSON.stringify(options.i18n.defaultLocale),
+        ANALOG_I18N_LOCALES: JSON.stringify(options.i18n.locales),
+      },
+      virtual: {
+        ...nitroConfig.virtual,
+        '#analog/i18n-workers': `export default ${JSON.stringify({
+          locales: options.i18n.locales,
+          defaultLocale: options.i18n.defaultLocale,
+          baseURL: nitroConfig.baseURL || '/',
+        })}`,
+      },
+    };
+  }
   const nitro = await createNitro({
     dev: false,
     preset: process.env['BUILD_PRESET'],

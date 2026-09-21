@@ -13,6 +13,8 @@ import { SERVER_FN_DISPATCHER } from '@analogjs/router';
 
 import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 
+declare const ANALOG_I18N_FIXED_LOCALE: string | undefined;
+
 export function provideServerContext({
   req,
   res,
@@ -21,7 +23,10 @@ export function provideServerContext({
   res: ServerResponse;
 }): StaticProvider[] {
   const baseUrl = getBaseUrl(req);
-  const locale = detectLocale(req);
+  const locale =
+    (typeof ANALOG_I18N_FIXED_LOCALE !== 'undefined' &&
+      ANALOG_I18N_FIXED_LOCALE) ||
+    detectLocale(req);
 
   // Optional chaining: a Nitro-bundled caller has no `import.meta.env` at all.
   if (import.meta.env?.DEV) {

@@ -142,7 +142,16 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     serverModePlugin(),
     ssrXhrBuildPlugin() as Plugin,
     clearClientPageEndpointsPlugin() as Plugin,
-    ...(platformOptions.i18n ? [i18nDefRegistryPlugin()] : []),
+    ...(platformOptions.i18n
+      ? [
+          {
+            ...i18nDefRegistryPlugin(),
+            ...(platformOptions.i18n.workers
+              ? { apply: 'serve' as const }
+              : {}),
+          },
+        ]
+      : []),
     ...(platformOptions.i18n?.extract
       ? [i18nExtractPlugin(platformOptions.i18n)]
       : []),
