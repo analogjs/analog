@@ -51,7 +51,11 @@ describe('locale worker prerender cleanup', () => {
       try {
         await writeFile(
           join(directory, 'index.mjs'),
-          `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(join(directory, 'imported'))}, 'imported'); export async function closePrerenderer() { writeFileSync(${JSON.stringify(join(directory, 'closed'))}, 'closed'); }`,
+          `import { writeFileSync } from 'node:fs';
+writeFileSync(new URL('./imported', import.meta.url), 'imported');
+export async function closePrerenderer() {
+  writeFileSync(new URL('./closed', import.meta.url), 'closed');
+}`,
         );
         await expect(
           buildServer(
