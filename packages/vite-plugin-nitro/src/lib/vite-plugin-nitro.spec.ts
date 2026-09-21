@@ -9,11 +9,11 @@ import {
 } from './vite-nitro-plugin.spec.data';
 import { nitro } from './vite-plugin-nitro';
 
-describe('nitro', () => {
-  vi.mock('./build-ssr');
-  vi.mock('./build-server');
-  vi.mock('./build-sitemap');
+vi.mock('./build-ssr');
+vi.mock('./build-server');
+vi.mock('./build-sitemap');
 
+describe('nitro', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -241,8 +241,7 @@ describe('nitro', () => {
   describe.skip('preset output', () => {
     it('should use the analog output paths when preset is not vercel', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, {});
@@ -264,8 +263,7 @@ describe('nitro', () => {
 
     it('should use the workspace root option when it is set', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/some-other-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/some-other-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({ workspaceRoot: '/custom-root-directory' }, {});
@@ -288,8 +286,7 @@ describe('nitro', () => {
 
     it('should use the .vercel output paths when preset is vercel', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, { preset: 'vercel' });
@@ -311,8 +308,7 @@ describe('nitro', () => {
 
     it('should use the .vercel output paths when preset is vercel-edge', async () => {
       // Arrange
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, { preset: 'vercel-edge' });
@@ -335,8 +331,7 @@ describe('nitro', () => {
     it('should use the .vercel output paths when preset is VERCEL environment variable is set', async () => {
       // Arrange
       vi.stubEnv('VERCEL', '1');
-      vi.mock('process');
-      process.cwd = vi.fn().mockReturnValue('/custom-root-directory');
+      vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
       const plugin = nitro({}, {});
