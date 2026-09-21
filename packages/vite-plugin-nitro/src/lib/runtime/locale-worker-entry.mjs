@@ -1,9 +1,8 @@
 import { isMainThread, parentPort } from 'node:worker_threads';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
-import { toNodeListener } from 'h3';
 import config from '#analog/i18n-workers';
-import { createLocaleServer } from './locale-workers.mjs';
+import { createLocaleListener, createLocaleServer } from './locale-workers.mjs';
 
 export let localFetch;
 export let closePrerenderer;
@@ -59,7 +58,7 @@ if (isMainThread) {
   ).i18nReady;
   const { useNitroApp } = await import('nitropack/runtime');
   const app = useNitroApp();
-  const server = createServer(toNodeListener(app.h3App));
+  const server = createServer(createLocaleListener(app.h3App));
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   parentPort.on('message', async (message) => {

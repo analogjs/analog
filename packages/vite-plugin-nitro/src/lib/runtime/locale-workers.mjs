@@ -1,5 +1,20 @@
 import { Agent, createServer, request } from 'node:http';
 import { Worker } from 'node:worker_threads';
+import { toNodeListener } from 'h3';
+
+const CLIENT_ADDRESS_HEADER = 'x-analog-client-address';
+
+export function createLocaleListener(app) {
+  return toNodeListener({
+    ...app,
+    handler(event) {
+      const address = event.node.req.headers[CLIENT_ADDRESS_HEADER];
+      delete event.node.req.headers[CLIENT_ADDRESS_HEADER];
+      if (address) event.context.clientAddress = address;
+      return app.handler(event);
+    },
+  });
+}
 
 export function selectLocale(
   url,
@@ -44,7 +59,10 @@ export async function createLocaleServer(entry, config) {
         port: ports.get(locale),
         path: req.url,
         method: req.method,
-        headers: req.headers,
+        headers: {
+          ...req.headers,
+          [CLIENT_ADDRESS_HEADER]: req.socket.remoteAddress,
+        },
         agent,
       },
       (response) => {

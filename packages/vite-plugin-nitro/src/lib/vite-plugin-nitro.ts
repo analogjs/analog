@@ -499,7 +499,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         return {
           define: {
             ANALOG_I18N_FIXED_LOCALE: i18nWorkers
-              ? "(typeof window === 'undefined' ? globalThis.process?.env?.ANALOG_I18N_LOCALE : undefined)"
+              ? 'globalThis.process.env.ANALOG_I18N_LOCALE'
               : 'undefined',
           },
           environments: {

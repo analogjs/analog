@@ -7,10 +7,18 @@ const entry = new URL(
   `data:text/javascript,${encodeURIComponent(`
     import { createServer } from 'node:http';
     import { parentPort } from 'node:worker_threads';
+    import { createApp, eventHandler, getRequestIP } from ${JSON.stringify(import.meta.resolve('h3'))};
+    import { createLocaleListener } from ${JSON.stringify(new URL('../runtime/locale-workers.mjs', import.meta.url).href)};
     const locale = process.env.ANALOG_I18N_LOCALE;
     if (locale === 'broken') throw new Error('Worker startup failed');
     let active = 0;
-    const server = createServer(async (req, res) => {
+    const app = createApp();
+    app.use(eventHandler(async event => {
+      const { req, res } = event.node;
+      if (req.url.endsWith('/ip')) {
+        return { ip: getRequestIP(event), privateHeader: req.headers['x-analog-client-address'] ?? null,
+          forwarded: req.headers['x-forwarded-for'] };
+      }
       if (req.url.endsWith('/stream')) {
         res.write(locale + ':first');
         setTimeout(() => res.end(':last'), 100);
@@ -23,7 +31,8 @@ const entry = new URL(
       active--;
       res.writeHead(201, { 'set-cookie': ['first=1', 'second=2'] });
       res.end(JSON.stringify({ locale, concurrent, body, host: req.headers.host }));
-    });
+    }));
+    const server = createServer(createLocaleListener(app));
     parentPort.on('message', () => server.close(() => parentPort.close()));
     server.listen(0, '127.0.0.1', () => {
       parentPort.postMessage({ type: 'ready', port: server.address().port });
@@ -77,6 +86,25 @@ describe('locale worker HTTP transport', () => {
           ),
         ).toBeGreaterThan(1);
       }
+    } finally {
+      await pool.close();
+    }
+  });
+
+  it('preserves the client address and overwrites spoofed internal metadata', async () => {
+    const pool = await start();
+    try {
+      const response = await fetch(`${pool.url}/en/ip`, {
+        headers: {
+          'x-analog-client-address': '203.0.113.99',
+          'x-forwarded-for': '198.51.100.42',
+        },
+      });
+      expect(await response.json()).toEqual({
+        ip: '127.0.0.1',
+        privateHeader: null,
+        forwarded: '198.51.100.42',
+      });
     } finally {
       await pool.close();
     }
