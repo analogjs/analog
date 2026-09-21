@@ -1,4 +1,10 @@
-import { NitroConfig, build, createDevServer, createNitro } from 'nitropack';
+import {
+  NitroConfig,
+  build,
+  createDevServer,
+  createNitro,
+  loadOptions,
+} from 'nitropack';
 import { App, toNodeListener } from 'h3';
 import type { Plugin, UserConfig, ViteDevServer } from 'vite';
 import { mergeConfig, normalizePath } from 'vite';
@@ -9,6 +15,11 @@ import { existsSync, readFileSync } from 'node:fs';
 
 import { buildServer } from './build-server.js';
 import { buildSSRApp } from './build-ssr.js';
+import {
+  I18N_WORKER_SSR_ENTRY,
+  i18nWorkerSsrEntry,
+  resolveI18nWorkers,
+} from './utils/i18n-workers.js';
 import {
   Options,
   PrerenderContentDir,
@@ -60,6 +71,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
       ? options?.useAPIMiddleware
       : true;
 
+  let i18nWorkers = false;
   let isBuild = false;
   let isServe = false;
   let ssrBuild = false;
@@ -76,6 +88,34 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let rootDir = workspaceRoot;
 
   return [
+    ...(options?.i18n?.loader
+      ? [
+          {
+            name: 'analog-i18n-worker-entry',
+            apply: 'build' as const,
+            resolveId(id: string) {
+              return id === I18N_WORKER_SSR_ENTRY ? '\0' + id : undefined;
+            },
+            load(id: string) {
+              if (id !== '\0' + I18N_WORKER_SSR_ENTRY || !options?.i18n?.loader)
+                return;
+              return i18nWorkerSsrEntry(
+                normalizePath(
+                  resolve(
+                    workspaceRoot,
+                    rootDir,
+                    options.entryServer || `${sourceRoot}/main.server.ts`,
+                  ),
+                ),
+                normalizePath(
+                  resolve(workspaceRoot, rootDir, options.i18n.loader),
+                ),
+                options.i18n,
+              );
+            },
+          },
+        ]
+      : []),
     (options?.ssr
       ? devServerPlugin({
           entryServer: options?.entryServer,
@@ -440,7 +480,28 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           nitroOptions as Record<string, any>,
         );
 
+        i18nWorkers = false;
+        if (
+          isBuild &&
+          options?.i18n &&
+          options.i18n.workers !== false &&
+          (options.i18n.loader || options.i18n.workers === true)
+        ) {
+          const resolvedNitro = await loadOptions({
+            dev: false,
+            preset: process.env['BUILD_PRESET'],
+            ...nitroConfig,
+          });
+          i18nWorkers = resolveI18nWorkers(options, resolvedNitro);
+          nitroConfig.preset = resolvedNitro.preset;
+        }
+
         return {
+          define: {
+            ANALOG_I18N_FIXED_LOCALE: i18nWorkers
+              ? 'globalThis.process.env.ANALOG_I18N_LOCALE'
+              : 'undefined',
+          },
           environments: {
             client: {
               build: {
@@ -453,13 +514,14 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               build: {
                 ssr: true,
                 rollupOptions: {
-                  input:
-                    options?.entryServer ||
-                    resolve(
-                      workspaceRoot,
-                      rootDir,
-                      `${sourceRoot}/main.server.ts`,
-                    ),
+                  input: i18nWorkers
+                    ? { 'main.server': I18N_WORKER_SSR_ENTRY }
+                    : options?.entryServer ||
+                      resolve(
+                        workspaceRoot,
+                        rootDir,
+                        `${sourceRoot}/main.server.ts`,
+                      ),
                 },
                 outDir:
                   options?.ssrBuildDir ||
@@ -497,7 +559,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 '#analog/ssr': ssrEntry,
               };
 
-              await buildServer(options, nitroConfig, routeSourceFiles);
+              await buildServer(
+                options,
+                nitroConfig,
+                routeSourceFiles,
+                i18nWorkers,
+              );
 
               if (
                 nitroConfig.prerender?.routes?.length &&
@@ -610,7 +677,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         if (isBuild) {
           if (options?.ssr) {
             console.log('Building SSR application...');
-            await buildSSRApp(config, options);
+            await buildSSRApp(config, options, i18nWorkers);
           }
 
           if (
@@ -647,7 +714,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             '#analog/ssr': ssrEntry,
           };
 
-          await buildServer(options, nitroConfig, routeSourceFiles);
+          await buildServer(
+            options,
+            nitroConfig,
+            routeSourceFiles,
+            i18nWorkers,
+          );
 
           console.log(
             `\n\nThe '@analogjs/platform' server has been successfully built.`,

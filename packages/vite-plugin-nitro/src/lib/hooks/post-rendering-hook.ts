@@ -4,9 +4,7 @@ export function addPostRenderingHooks(
   nitro: Nitro,
   hooks: ((pr: PrerenderRoute) => Promise<void>)[],
 ): void {
-  hooks.forEach((hook: (preRoute: PrerenderRoute) => void) => {
-    nitro.hooks.hook('prerender:generate', (route: PrerenderRoute) => {
-      hook(route);
-    });
+  hooks.forEach((hook) => {
+    nitro.hooks.hook('prerender:generate', hook);
   });
 }
