@@ -1,4 +1,5 @@
 import { once } from 'node:events';
+import { get, type IncomingMessage } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { describe, expect, it } from 'vitest';
 import { createLocaleServer } from '../runtime/locale-workers.mjs';
@@ -15,6 +16,12 @@ const entry = new URL(
     const app = createApp();
     app.use(eventHandler(async event => {
       const { req, res } = event.node;
+      if (req.url.endsWith('/connection')) {
+        res.setHeader('connection', 'keep-alive, x-worker-hop');
+        res.setHeader('keep-alive', 'timeout=999');
+        res.setHeader('x-worker-hop', 'private');
+        return { port: req.socket.remotePort, clientHop: req.headers['x-client-hop'] ?? null };
+      }
       if (req.url.endsWith('/ip')) {
         return { ip: getRequestIP(event), privateHeader: req.headers['x-analog-client-address'] ?? null,
           forwarded: req.headers['x-forwarded-for'] };
@@ -105,6 +112,39 @@ describe('locale worker HTTP transport', () => {
         privateHeader: null,
         forwarded: '198.51.100.42',
       });
+    } finally {
+      await pool.close();
+    }
+  });
+
+  it('reuses upstream connections and strips connection-specific headers', async () => {
+    const pool = await start();
+    try {
+      const ports = [];
+      for (let request = 0; request < 2; request++) {
+        const response = await new Promise<IncomingMessage>(
+          (resolve, reject) => {
+            get(
+              `${pool.url}/en/connection`,
+              {
+                headers: {
+                  connection: 'close, x-client-hop',
+                  'x-client-hop': 'private',
+                },
+              },
+              resolve,
+            ).on('error', reject);
+          },
+        );
+        expect(response.headers['x-worker-hop']).toBeUndefined();
+        expect(response.headers['keep-alive']).toBeUndefined();
+        let body = '';
+        for await (const chunk of response) body += chunk;
+        const result = JSON.parse(body);
+        expect(result.clientHop).toBeNull();
+        ports.push(result.port);
+      }
+      expect(ports[0]).toBe(ports[1]);
     } finally {
       await pool.close();
     }

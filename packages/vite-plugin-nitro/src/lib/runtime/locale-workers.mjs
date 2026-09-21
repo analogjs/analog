@@ -3,6 +3,27 @@ import { Worker } from 'node:worker_threads';
 import { toNodeListener } from 'h3';
 
 const CLIENT_ADDRESS_HEADER = 'x-analog-client-address';
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+]);
+
+function proxyHeaders(headers) {
+  const connectionHeaders = new Set(
+    headers.connection?.split(',').map((name) => name.trim().toLowerCase()),
+  );
+  return Object.fromEntries(
+    Object.entries(headers).filter(
+      ([name]) => !HOP_BY_HOP_HEADERS.has(name) && !connectionHeaders.has(name),
+    ),
+  );
+}
 
 export function createLocaleListener(app) {
   return toNodeListener({
@@ -60,7 +81,7 @@ export async function createLocaleServer(entry, config) {
         path: req.url,
         method: req.method,
         headers: {
-          ...req.headers,
+          ...proxyHeaders(req.headers),
           [CLIENT_ADDRESS_HEADER]: req.socket.remoteAddress,
         },
         agent,
@@ -69,7 +90,7 @@ export async function createLocaleServer(entry, config) {
         res.writeHead(
           response.statusCode,
           response.statusMessage,
-          response.rawHeaders,
+          proxyHeaders(response.headers),
         );
         response.on('error', (error) => res.destroy(error));
         response.pipe(res);

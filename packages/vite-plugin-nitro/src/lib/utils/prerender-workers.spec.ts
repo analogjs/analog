@@ -15,7 +15,8 @@ const lifecycle = vi.hoisted(() => ({
 vi.mock('nitropack', () => ({
   createNitro: async () => ({
     hooks: {
-      hook: (_: string, callback: typeof lifecycle.init) => {
+      hook: (name: string, callback: typeof lifecycle.init) => {
+        expect(name).toBe('prerender:init');
         lifecycle.init = callback;
         return lifecycle.unhook;
       },
@@ -28,7 +29,8 @@ vi.mock('nitropack', () => ({
     lifecycle.init?.({
       options: { output: { serverDir: lifecycle.serverDir } },
       hooks: {
-        hook: (_: string, callback: typeof lifecycle.compiled) => {
+        hook: (name: string, callback: typeof lifecycle.compiled) => {
+          expect(name).toBe('compiled');
           lifecycle.compiled = callback;
         },
       },
