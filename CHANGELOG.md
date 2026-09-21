@@ -1,3 +1,9 @@
+# [2.8.0-beta.6](https://github.com/analogjs/analog/compare/v2.8.0-beta.5...v2.8.0-beta.6) (2026-09-21)
+
+### Bug Fixes
+
+- **platform:** isolate concurrent i18n rendering with locale workers ([#2572](https://github.com/analogjs/analog/issues/2572)) ([6deb462](https://github.com/analogjs/analog/commit/6deb462e8b209ee5169ad411dd5df8703e3e876b))
+
 # [2.8.0-beta.5](https://github.com/analogjs/analog/compare/v2.8.0-beta.4...v2.8.0-beta.5) (2026-09-15)
 
 ### Features
