@@ -8,11 +8,8 @@ export function validateI18nWorkers(options: Options, nitro: NitroConfig) {
   if (!options.i18n?.loader) {
     throw new Error('i18n.workers requires an i18n.loader module.');
   }
-  if (!options.ssr || options.static || nitro.preset !== 'node-server') {
+  if (!options.ssr || nitro.preset !== 'node-server') {
     throw new Error('i18n.workers requires SSR and the node-server preset.');
-  }
-  if (nitro.prerender?.routes?.length || nitro.prerender?.crawlLinks) {
-    throw new Error('i18n.workers requires prerender: { routes: [] }.');
   }
   if (
     options.experimental?.streaming ||

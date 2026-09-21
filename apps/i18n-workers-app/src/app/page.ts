@@ -1,6 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { injectRequest, injectResponse } from '@analogjs/router/tokens';
+import {
+  injectLocale,
+  injectRequest,
+  injectResponse,
+} from '@analogjs/router/tokens';
 import type { RouteMeta } from '@analogjs/router';
 let active = 0;
 export const routeMeta: RouteMeta = {
@@ -21,14 +25,17 @@ export const routeMeta: RouteMeta = {
         );
         res.setHeader('set-cookie', ['first=1; Path=/', 'second=2; Path=/']);
       }
-      return $localize`:@@code:Espanol code`;
+      return { message: $localize`:@@code:Espanol code`, active: concurrent };
     },
   },
 };
 @Component({
   template: `<h2 id="late" i18n="@@late">Espanol late</h2>
-    <p id="code">{{ message }}</p>`,
+    <p id="code">{{ result.message }}</p>
+    <p id="active">{{ result.active }}</p>
+    <a [href]="'/' + locale + '/prerender/crawled'">Crawled page</a>`,
 })
 export default class Page {
-  message = inject(ActivatedRoute).snapshot.data['message'];
+  result = inject(ActivatedRoute).snapshot.data['message'];
+  locale = injectLocale();
 }

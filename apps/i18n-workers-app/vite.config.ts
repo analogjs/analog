@@ -7,7 +7,11 @@ export default defineConfig({
   build: { outDir: '../../dist/apps/i18n-workers-app/client' },
   plugins: [
     analog({
-      prerender: { routes: [] },
+      prerender: {
+        routes: Array.from({ length: 12 }, (_, id) => `/prerender/${id}`),
+        discover: true,
+      },
+      nitro: { prerender: { concurrency: 8, failOnError: true } },
       i18n: {
         defaultLocale: 'es',
         locales: ['es', 'en'],

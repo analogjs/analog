@@ -51,13 +51,13 @@ describe('worker build constraints', () => {
       );
     },
   );
-  it('rejects prerendering rather than silently producing incorrect locales', () => {
+  it('supports concurrent prerendering and link crawling', () => {
     expect(() =>
       validateI18nWorkers(options, {
         preset: 'node-server',
-        prerender: { routes: ['/'] },
+        prerender: { routes: ['/'], crawlLinks: true, concurrency: 8 },
       }),
-    ).toThrow('prerender');
+    ).not.toThrow();
   });
   it('rejects progressive streaming and invalid locale configuration', () => {
     expect(() =>
@@ -119,7 +119,6 @@ describe('automatic worker selection', () => {
   });
 
   it.each([
-    { preset: 'node-server', prerender: { routes: ['/'] } },
     { preset: 'node-server', experimental: { websocket: true } },
     { preset: 'node-server', scheduledTasks: { '* * * * *': ['task'] } },
     { preset: 'node-cluster' },
@@ -132,6 +131,20 @@ describe('automatic worker selection', () => {
         nitro,
       ),
     ).toThrow();
+  });
+
+  it('enables workers for static output and hybrid SSR with prerendered routes', () => {
+    for (const staticOutput of [false, true]) {
+      expect(
+        resolveI18nWorkers(
+          { ...options, static: staticOutput },
+          {
+            preset: 'node-server',
+            prerender: { routes: ['/'], crawlLinks: true, concurrency: 8 },
+          },
+        ),
+      ).toBe(true);
+    }
   });
 
   it('requires a loader when workers are explicitly requested', () => {

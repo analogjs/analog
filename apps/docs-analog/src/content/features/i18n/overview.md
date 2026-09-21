@@ -60,7 +60,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [
     analog({
-      prerender: { routes: [] },
       i18n: {
         defaultLocale: 'en',
         locales: ['en', 'fr', 'de'],
@@ -71,7 +70,7 @@ export default defineConfig({
 });
 ```
 
-This example serves pages through SSR without prerendering. For eligible production Node-server builds, the loader path automatically enables isolated locale workers. See [concurrent server rendering](#concurrent-server-rendering-experimental) for supported configurations and the opt-out. For static output, see [prerendering](#prerendering).
+Keep your existing prerender routes. For eligible production Node-server builds, the loader path automatically enables isolated locale workers for both build-time prerendering and runtime SSR. See [concurrent server rendering](#concurrent-server-rendering-experimental) for supported configurations and the opt-out. For static output, see [prerendering](#prerendering).
 
 ### 5. Register the runtime provider
 
@@ -232,9 +231,8 @@ Analog resolves Nitro's deployment configuration before compiling the applicatio
 Automatic workers require all of the following:
 
 - The resolved Nitro preset is `node-server`.
-- SSR is enabled and `static` is disabled.
+- SSR is enabled. Both hybrid SSR and `static: true` output are supported.
 - `i18n.loader` is configured and `locales` contains at least two languages.
-- Prerendering is disabled with `prerender: { routes: [] }` and no link crawling.
 - Progressive Angular streaming, WebSockets, and scheduled tasks are disabled.
 
 Serverless and edge presets, `node-cluster`, and middleware presets do not enable workers automatically. To deploy a standalone Node server explicitly, set `nitro: { preset: 'node-server' }` in `analog()`.
@@ -251,7 +249,6 @@ For example, add `workers: false` alongside the loader to opt out:
 
 ```ts
 analog({
-  prerender: { routes: [] },
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'fr', 'de'],
@@ -268,9 +265,27 @@ Existing configurations without `i18n.loader` retain their current behavior. Opt
 1. Move the existing `provideI18n()` loader into a module such as `src/i18n.ts`, exported as its default function.
 2. Keep passing that function to `provideI18n()`.
 3. Add `loader: './src/i18n.ts'` to the platform's `i18n` configuration. This path is relative to the app root.
-4. For runtime Node SSR, disable prerendering and rebuild.
+4. Keep your existing prerender configuration and rebuild.
 
 Keep the loader independent of application imports: the worker must load translations **before** importing the server entry or its components. Existing inline loaders remain supported, but they cannot enable workers automatically without a separate module path.
+
+### Prerendering alongside SSR
+
+Prerendering does not disable workers. Nitro keeps its existing route scheduling, link crawling, and output generation, while locale workers isolate each render. Configure build-time concurrency through Nitro as usual:
+
+```ts
+analog({
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'fr', 'de'],
+    loader: './src/i18n.ts',
+  },
+  prerender: { routes: ['/', '/about'], discover: true },
+  nitro: { prerender: { concurrency: 8 } },
+});
+```
+
+The build starts a temporary worker pool and closes it when prerendering finishes. A hybrid deployment starts a separate pool for runtime SSR. With `static: true`, only the generated public files are deployed; no worker process is needed to serve them. Requests within a locale remain concurrent, and different locales use separate JavaScript contexts in both phases.
 
 ### Runtime behavior and limits
 
@@ -496,7 +511,7 @@ Development uses the existing SSR path rather than fixed-locale workers. The Ana
 
 ## Prerendering
 
-When `i18n` is configured in the platform options, prerendering automatically generates locale-prefixed variants for each route. Prerendering does not use fixed-locale workers. If you also configure `i18n.loader`, automatic mode falls back with a warning; set `workers: false` to choose the existing path explicitly.
+When `i18n` is configured in the platform options, prerendering automatically generates locale-prefixed variants for each route. When fixed-locale workers are enabled, Nitro sends prerender requests through those workers, including routes discovered by crawling.
 
 ```ts
 // https://vitejs.dev/config/

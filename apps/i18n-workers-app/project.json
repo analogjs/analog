@@ -57,6 +57,11 @@
     "e2e": {
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/tools/scripts/validate-i18n-workers.mjs"
+      ],
       "options": {
         "command": "node tools/scripts/validate-i18n-workers.mjs"
       }

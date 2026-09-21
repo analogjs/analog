@@ -2,7 +2,48 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { deriveServerFnId } from '@analogjs/vite-plugin-nitro/server-fn-id';
+
+function assertPageLocale(html, locale, path) {
+  assert.match(html, new RegExp(`<html[^>]*lang="${locale}"`));
+  for (const id of ['early', 'late', 'code', 'module']) {
+    const text = html.match(
+      new RegExp(`<[^>]+id="${id}"[^>]*>(.*?)<\\/`, 's'),
+    )?.[1];
+    assert.equal(
+      text,
+      `${locale === 'en' ? 'English' : 'Espanol'} ${id}`,
+      `${path}: ${id}`,
+    );
+  }
+}
+
+const prerendered = new Map();
+for (const prefix of ['en', 'es', '']) {
+  const locale = prefix || 'es';
+  const active = [];
+  const ids = Array.from({ length: 12 }, (_, id) => String(id));
+  if (prefix) ids.push('crawled');
+  for (const id of ids) {
+    const path = `${prefix ? '/' + prefix : ''}/prerender/${id}`;
+    const html = readFileSync(
+      resolve(`dist/apps/i18n-workers-app/analog/public${path}/index.html`),
+      'utf8',
+    );
+    assertPageLocale(html, locale, path);
+    active.push(Number(html.match(/id="active"[^>]*>(\d+)</)?.[1]));
+    prerendered.set(path, html);
+  }
+  assert(
+    Math.max(...active) > 1,
+    `${locale}: prerendering must remain concurrent`,
+  );
+}
+console.log(
+  `Validated ${prerendered.size} prerendered pages, including crawled links.`,
+);
+if (process.argv.includes('--prerender-only')) process.exit(0);
 
 const entry = resolve('dist/apps/i18n-workers-app/analog/server/index.mjs');
 const child = spawn(process.execPath, [entry], {
@@ -28,11 +69,13 @@ try {
     });
   });
   const base = `http://127.0.0.1:${port}`;
-  async function page(
-    locale,
-    path = locale === 'en' ? '/en' : '/',
-    headers = {},
-  ) {
+  for (const locale of ['en', 'es']) {
+    const path = `/${locale}/prerender/0`;
+    const response = await fetch(base + path);
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), prerendered.get(path));
+  }
+  async function page(locale, path = `/${locale}`, headers = {}) {
     const requestId = crypto.randomUUID();
     const response = await fetch(base + path, {
       headers: { ...headers, 'x-request-id': requestId },
@@ -41,17 +84,7 @@ try {
     assert.equal(response.headers.get('x-request-id'), requestId);
     assert.equal(response.headers.getSetCookie().length, 2);
     const html = await response.text();
-    assert.match(html, new RegExp(`<html[^>]*lang="${locale}"`));
-    for (const id of ['early', 'late', 'code', 'module']) {
-      const text = html.match(
-        new RegExp(`<[^>]+id="${id}"[^>]*>(.*?)<\\/`, 's'),
-      )?.[1];
-      assert.equal(
-        text,
-        `${locale === 'en' ? 'English' : 'Espanol'} ${id}`,
-        `${path}: ${id}`,
-      );
-    }
+    assertPageLocale(html, locale, path);
     return Number(response.headers.get('x-active-renders'));
   }
   const started = performance.now();
@@ -71,8 +104,8 @@ try {
       'Same-locale rendering must remain concurrent',
     );
   }
-  await page('en', '/', { 'accept-language': 'en,es;q=0.5' });
-  await page('es', '/', { 'accept-language': 'de,en;q=0.5' });
+  await page('en', '/runtime', { 'accept-language': 'en,es;q=0.5' });
+  await page('es', '/runtime', { 'accept-language': 'de,en;q=0.5' });
   await page('es', '/es', { 'accept-language': 'en' });
   await page('es', '/de', { 'accept-language': 'en' });
 
@@ -157,6 +190,7 @@ try {
       {
         passed: true,
         mixedRequests: 120,
+        prerenderedPages: prerendered.size,
         mixedMs: Math.round(mixedMs),
         diagnostics,
       },
