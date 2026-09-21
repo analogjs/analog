@@ -1,3 +1,9 @@
+# [2.8.0-beta.7](https://github.com/analogjs/analog/compare/v2.8.0-beta.6...v2.8.0-beta.7) (2026-09-21)
+
+### Features
+
+- **vitest-angular:** add support for Vitest 5 ([#2573](https://github.com/analogjs/analog/issues/2573)) ([a02502a](https://github.com/analogjs/analog/commit/a02502ab77a04bd5899fab0c9283e8827d414fd7))
+
 # [2.8.0-beta.6](https://github.com/analogjs/analog/compare/v2.8.0-beta.5...v2.8.0-beta.6) (2026-09-21)
 
 ### Bug Fixes
