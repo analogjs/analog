@@ -70,7 +70,7 @@ export default defineConfig({
 });
 ```
 
-Keep your existing prerender routes. For eligible production Node-server builds, the loader path automatically enables isolated locale workers for both build-time prerendering and runtime SSR. See [concurrent server rendering](#concurrent-server-rendering) for supported configurations and the opt-out. For static output, see [prerendering](#prerendering).
+The loader path enables [locale workers](#concurrent-server-rendering) automatically for supported production Node builds, including prerendering.
 
 ### 5. Register the runtime provider
 
@@ -88,15 +88,13 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-`provideI18n()` reads `defaultLocale` and `locales` from the platform configuration. You can also supply them explicitly:
+`provideI18n()` reads locales from the platform configuration, or accepts them explicitly:
 
 | Property        | Type                                                                            | Description                                                                      |
 | --------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `defaultLocale` | `string`                                                                        | Fallback locale; optional when configured in the platform                        |
 | `locales`       | `string[]`                                                                      | Supported locales, with the source language first; optional with platform config |
 | `loader`        | `(locale: string) => Promise<Record<string, string>> \| Record<string, string>` | Required function returning translations for a locale                            |
-
-The platform's `i18n.loader` is a **module path**, while `provideI18n({ loader })` takes the exported **function**. Both are needed for automatic workers with browser and development support.
 
 ## Using Translations in Templates
 
@@ -220,82 +218,32 @@ export default class IndexPage {
 
 ## Concurrent server rendering
 
-Angular's runtime `$localize` translations and compiled template caches are shared within a JavaScript context. Overlapping SSR requests in different locales can therefore produce mixed-language pages. Loading translations per request does not isolate them.
+Angular's `$localize` state is shared within a JavaScript context, so overlapping SSR requests in different locales can produce mixed-language pages. Locale workers isolate each language while keeping requests concurrent. Keep the usual `render(App, config)` server entry.
 
-The shared loader in [Setup](#setup) automatically enables one worker per supported locale for eligible production builds. Each worker has its own JavaScript context and stays on one locale.
+### Worker selection
 
-### Automatic selection
+The shared loader in [Setup](#setup) automatically enables workers when:
 
-Analog resolves Nitro's deployment configuration before compiling the application. Selection uses the deployment preset, including environment overrides and provider detection; it does not depend on whether the build machine runs Node.js.
-
-Automatic workers require all of the following:
-
-- The resolved Nitro preset is `node-server`.
-- SSR is enabled. Both hybrid SSR and `static: true` output are supported.
-- `i18n.loader` is configured and `locales` contains at least two languages.
+- The resolved Nitro preset is `node-server` and SSR is enabled.
+- `i18n.loader` is configured with at least two locales.
 - Progressive Angular streaming, WebSockets, and scheduled tasks are disabled.
 
-Serverless and edge presets, `node-cluster`, and middleware presets do not enable workers automatically. To deploy a standalone Node server explicitly, set `nitro: { preset: 'node-server' }` in `analog()`.
+Selection follows the deployment preset. To target a standalone Node server explicitly, set `nitro: { preset: 'node-server' }` in `analog()`.
 
-### Override worker selection
+| `i18n.workers` | Behavior                                                             |
+| -------------- | -------------------------------------------------------------------- |
+| Omitted        | Automatic when eligible; unsupported setups warn and fall back       |
+| `false`        | Disables workers                                                     |
+| `true`         | Requires a supported worker configuration; fails the build otherwise |
 
-| `i18n.workers` | Behavior                                                                                                      |
-| -------------- | ------------------------------------------------------------------------------------------------------------- |
-| Omitted        | Enables workers automatically when eligible; warns and uses existing rendering for unsupported configurations |
-| `false`        | Disables workers and preserves existing rendering                                                             |
-| `true`         | Requires a loader and a supported worker configuration; fails the build otherwise                             |
+Existing configurations without `i18n.loader` are unchanged. To adopt workers, export your existing loader from a shared module, pass it to `provideI18n()`, and add its path to the platform configuration as shown in [Setup](#setup). Without workers, concurrent SSR requests in different locales remain unisolated.
 
-For example, add `workers: false` alongside the loader to opt out:
+### Deployment limits
 
-```ts
-analog({
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'fr', 'de'],
-    loader: './src/i18n.ts',
-    workers: false,
-  },
-});
-```
-
-Existing configurations without `i18n.loader` retain their current behavior. Opting out or falling back does not isolate concurrent SSR requests in different locales. Set `workers: true` if a deployment should fail to build rather than fall back.
-
-### Migrate an existing application
-
-1. Move the existing `provideI18n()` loader into a module such as `src/i18n.ts`, exported as its default function.
-2. Keep passing that function to `provideI18n()`.
-3. Add `loader: './src/i18n.ts'` to the platform's `i18n` configuration. This path is relative to the app root.
-4. Keep your existing prerender configuration and rebuild.
-
-Keep the loader independent of application imports: the worker must load translations **before** importing the server entry or its components. Existing inline loaders remain supported, but they cannot enable workers automatically without a separate module path.
-
-### Prerendering alongside SSR
-
-Prerendering does not disable workers. Nitro keeps its existing route scheduling, link crawling, and output generation, while locale workers isolate each render. Configure build-time concurrency through Nitro as usual:
-
-```ts
-analog({
-  i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'fr', 'de'],
-    loader: './src/i18n.ts',
-  },
-  prerender: { routes: ['/', '/about'], discover: true },
-  nitro: { prerender: { concurrency: 8 } },
-});
-```
-
-The build starts a temporary worker pool and closes it when prerendering finishes or fails. A hybrid deployment starts a separate pool for runtime SSR. With `static: true`, only the generated public files are deployed; no worker process is needed to serve them. Requests within a locale remain concurrent, and different locales use separate JavaScript contexts in both phases.
-
-### Runtime behavior and limits
-
-Keep the normal `render(App, config)` server entry. Build and start the generated `dist/analog/server/index.mjs` as usual (Nx apps use their configured output directory). The server prepares its workers before listening, chooses a worker using the URL locale or `Accept-Language`, and forwards the real HTTP request. Each worker loads its translations once and renders requests concurrently without clearing translations or resetting Angular template caches. The first entry in `locales` is the source language and does not call the loader.
-
-This mode consumes additional memory and initializes Nitro plugins separately in each locale worker. Worker listeners use HTTP TCP. Terminate HTTPS at a reverse proxy; direct TLS and Unix socket listeners are not supported. Ordinary HTTP response streams are forwarded incrementally. Development rendering and other hosting presets retain their existing behavior.
-
-The incoming connection address is preserved as `event.context.clientAddress` for H3’s `getRequestIP()`. Forwarded headers are passed through unchanged; behind a trusted reverse proxy, read its forwarded address explicitly because H3 gives `clientAddress` precedence.
-
-`SIGINT` and `SIGTERM` drain requests and close worker resources, with a 30-second shutdown deadline. An unexpected worker failure shuts down the server with a failing exit status; use your deployment's process supervisor to restart it.
+- Each locale worker uses additional memory and initializes its own Nitro plugins.
+- Workers use HTTP TCP. Terminate TLS at a reverse proxy; direct TLS and Unix sockets are unsupported. HTTP response streaming is supported.
+- H3's `getRequestIP()` uses the incoming connection address from `event.context.clientAddress`. Forwarded headers are preserved, but behind a trusted reverse proxy, read its forwarded address explicitly: H3 gives `clientAddress` precedence.
+- Shutdown drains requests for up to 30 seconds. An unexpected worker failure stops the server; use a process supervisor to restart it.
 
 ## Switching Locale at Runtime
 
@@ -513,7 +461,7 @@ Development uses the existing SSR path rather than fixed-locale workers. The Ana
 
 ## Prerendering
 
-When `i18n` is configured in the platform options, prerendering automatically generates locale-prefixed variants for each route. When fixed-locale workers are enabled, Nitro sends prerender requests through those workers, including routes discovered by crawling.
+When `i18n` is configured, prerendering generates locale-prefixed variants for each route. Locale workers support parallel prerendering and crawling; configure concurrency with `nitro.prerender.concurrency`. With `static: true`, workers run only during the build and the deployed output needs no Node server.
 
 ```ts
 // https://vitejs.dev/config/
@@ -543,7 +491,7 @@ This configuration will:
 
 ## Platform Configuration
 
-The `i18n` options in `analog()` configure locale detection, message extraction, prerendering, and production SSR workers:
+Configure `i18n` in `analog()`:
 
 | Property        | Type                  | Description                                                                                          |
 | --------------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -552,5 +500,3 @@ The `i18n` options in `analog()` configure locale detection, message extraction,
 | `loader`        | `string`              | Optional translation-loader module path relative to the app root; enables automatic worker selection |
 | `workers`       | `boolean`             | Omit for automatic selection, use `false` to opt out, or `true` to require workers                   |
 | `extract`       | `{ format, outFile }` | Optional [message extraction](#extracting-messages) settings                                         |
-
-The platform supplies `defaultLocale` and `locales` to `provideI18n()`. The runtime provider still requires the loader function, as shown in [Setup](#setup).
