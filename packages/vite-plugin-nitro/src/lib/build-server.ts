@@ -12,8 +12,9 @@ export async function buildServer(
   options?: Options,
   nitroConfig: NitroConfig = {},
   routeSourceFiles?: Record<string, string>,
+  i18nWorkers = false,
 ) {
-  if (options?.i18n?.workers) {
+  if (i18nWorkers && options?.i18n) {
     validateI18nWorkers(options, nitroConfig);
     nitroConfig = {
       ...nitroConfig,

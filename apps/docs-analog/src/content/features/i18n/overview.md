@@ -164,19 +164,22 @@ export default class IndexPage {
 
 Angular's runtime `$localize` translations and compiled template caches are shared within a JavaScript context. Overlapping SSR requests in different locales can therefore produce mixed-language pages. Loading translations per request does not isolate them.
 
-For a production **Node server**, opt into one fixed-locale worker per supported locale:
+For eligible production **Node server** builds, configuring a translation loader automatically enables one fixed-locale worker per supported locale:
 
 ```ts
 analog({
   prerender: { routes: [] },
-  nitro: { preset: 'node-server' },
   i18n: {
     defaultLocale: 'es',
     locales: ['es', 'en'],
-    workers: { loader: './src/i18n.ts' },
+    loader: './src/i18n.ts',
   },
 });
 ```
+
+Worker selection uses Nitro's resolved deployment preset, including environment overrides and automatic provider detection. It requires `node-server`, SSR, multiple locales, a loader, and no prerendering, progressive Angular streaming, WebSockets, or scheduled tasks. The decision is made before compiling the app. Existing configurations without `i18n.loader` retain their current behavior.
+
+Set `i18n.workers: false` to opt out, or `i18n.workers: true` to require isolation and fail the build when the configuration is unsupported. Automatic mode warns and retains existing rendering for unsupported configurations; that fallback does not fix concurrent cross-locale SSR. The loader still needs to be provided to `provideI18n()` for browser and development rendering.
 
 The loader module exports a default function returning a message ID-to-string map. Its path is relative to the app root. Keep this module independent of your Angular application: translations load **before** the server entry and its components are imported.
 

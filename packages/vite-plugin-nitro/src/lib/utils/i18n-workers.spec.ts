@@ -1,12 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { loadOptions } from 'nitropack';
 import { selectLocale } from '../runtime/locale-workers.mjs';
-import { validateI18nWorkers } from './i18n-workers.js';
+import { resolveI18nWorkers, validateI18nWorkers } from './i18n-workers.js';
 import type { Options } from '../options.js';
 
 const i18n = {
   defaultLocale: 'es',
   locales: ['es', 'en'],
-  workers: { loader: './src/i18n.ts' },
+  loader: './src/i18n.ts',
 };
 
 describe('fixed-locale worker routing', () => {
@@ -71,5 +72,74 @@ describe('worker build constraints', () => {
         { preset: 'node-server' },
       ),
     ).toThrow('defaultLocale');
+  });
+});
+
+describe('automatic worker selection', () => {
+  const options: Options = { ssr: true, i18n };
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('uses Nitro defaults and normalizes preset aliases before selection', async () => {
+    const nitro = await loadOptions({
+      preset: 'node_server',
+      prerender: { routes: [] },
+    });
+    expect(nitro.preset).toBe('node-server');
+    expect(resolveI18nWorkers(options, nitro)).toBe(true);
+  });
+
+  it('respects an environment-selected deployment and an explicit override', async () => {
+    vi.stubEnv('NITRO_PRESET', 'vercel');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const nitro = await loadOptions({ prerender: { routes: [] } });
+    expect(nitro.preset).toBe('vercel');
+    expect(resolveI18nWorkers(options, nitro)).toBe(false);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('unisolated'));
+    const explicit = await loadOptions({
+      preset: 'node-server',
+      prerender: { routes: [] },
+    });
+    expect(resolveI18nWorkers(options, explicit)).toBe(true);
+  });
+
+  it.each([
+    { ...i18n, workers: false },
+    { ...i18n, loader: undefined },
+    { ...i18n, locales: ['es'] },
+  ])('keeps existing behavior when disabled or unnecessary: %j', (config) => {
+    expect(
+      resolveI18nWorkers(
+        { ...options, i18n: config },
+        { preset: 'node-server' },
+      ),
+    ).toBe(false);
+  });
+
+  it.each([
+    { preset: 'node-server', prerender: { routes: ['/'] } },
+    { preset: 'node-server', experimental: { websocket: true } },
+    { preset: 'node-server', scheduledTasks: { '* * * * *': ['task'] } },
+    { preset: 'node-cluster' },
+  ])('falls back for unsupported automatic configurations: %j', (nitro) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    expect(resolveI18nWorkers(options, nitro)).toBe(false);
+    expect(() =>
+      resolveI18nWorkers(
+        { ...options, i18n: { ...i18n, workers: true } },
+        nitro,
+      ),
+    ).toThrow();
+  });
+
+  it('requires a loader when workers are explicitly requested', () => {
+    expect(() =>
+      resolveI18nWorkers(
+        { ...options, i18n: { ...i18n, loader: undefined, workers: true } },
+        { preset: 'node-server' },
+      ),
+    ).toThrow('i18n.loader');
   });
 });

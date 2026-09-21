@@ -57,19 +57,25 @@ export function ssrBuildPlugin(): Plugin {
  * Only transforms `@angular/core` modules in SSR builds.
  */
 export function i18nDefRegistryPlugin(): Plugin {
+  let fixedLocale = false;
   const DETECT_MARKER = 'GENERATED_COMP_IDS.set(compId, componentDef.type);';
   const RETURN_STMT = 'return compId;\n}';
 
   return {
     name: 'analogjs-i18n-def-registry',
     enforce: 'post',
+    configResolved(config) {
+      const locale = config.define?.['ANALOG_I18N_FIXED_LOCALE'];
+      fixedLocale =
+        config.command === 'build' && !!locale && locale !== 'undefined';
+    },
 
     transform: {
       filter: {
         id: /\/@angular\/core\//,
       },
       handler(code, id, options) {
-        if (!options?.ssr) return;
+        if (fixedLocale || !options?.ssr) return;
         if (!code.includes(DETECT_MARKER)) return;
 
         return {

@@ -45,12 +45,14 @@ export interface PrerenderOptions {
 }
 
 export interface I18nOptions {
+  /** Path to the translation loader module, relative to the app root. */
+  loader?: string;
   /**
-   * Experimental Node SSR isolation. The module's default export loads a
-   * locale's translations before importing the app in its dedicated worker.
-   * Requires the node-server preset and prerender.routes: [].
+   * Experimental fixed-locale SSR workers. Automatically enabled for supported
+   * Node server builds with a loader and multiple locales. Set false to opt out.
+   * Set true to require workers and fail on unsupported configurations.
    */
-  workers?: { loader: string };
+  workers?: boolean;
   /**
    * The default/source locale for the application.
    */

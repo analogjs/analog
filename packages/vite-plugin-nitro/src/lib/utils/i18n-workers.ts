@@ -5,11 +5,11 @@ import type { Options, I18nPrerenderOptions } from '../options.js';
 export const I18N_WORKER_SSR_ENTRY = 'virtual:analog-i18n/main.server';
 
 export function validateI18nWorkers(options: Options, nitro: NitroConfig) {
-  if (!options.i18n?.workers) return;
+  if (!options.i18n?.loader) {
+    throw new Error('i18n.workers requires an i18n.loader module.');
+  }
   if (!options.ssr || options.static || nitro.preset !== 'node-server') {
-    throw new Error(
-      'i18n.workers requires SSR and the explicit node-server preset.',
-    );
+    throw new Error('i18n.workers requires SSR and the node-server preset.');
   }
   if (nitro.prerender?.routes?.length || nitro.prerender?.crawlLinks) {
     throw new Error('i18n.workers requires prerender: { routes: [] }.');
@@ -17,7 +17,7 @@ export function validateI18nWorkers(options: Options, nitro: NitroConfig) {
   if (
     options.experimental?.streaming ||
     nitro.experimental?.websocket ||
-    nitro.scheduledTasks
+    Object.keys(nitro.scheduledTasks ?? {}).length
   ) {
     throw new Error(
       'i18n.workers does not support experimental streaming, WebSockets, or scheduled tasks.',
@@ -32,6 +32,26 @@ export function validateI18nWorkers(options: Options, nitro: NitroConfig) {
     throw new Error(
       'i18n.workers requires unique locales including defaultLocale.',
     );
+  }
+}
+
+export function resolveI18nWorkers(
+  options: Options,
+  nitro: NitroConfig,
+): boolean {
+  const i18n = options.i18n;
+  if (!i18n || i18n.workers === false) return false;
+  if (i18n.workers !== true && (!i18n.loader || i18n.locales.length < 2))
+    return false;
+  try {
+    validateI18nWorkers(options, nitro);
+    return true;
+  } catch (error) {
+    if (i18n.workers === true) throw error;
+    console.warn(
+      `[@analogjs/platform] Automatic i18n workers disabled: ${(error as Error).message} Concurrent cross-locale SSR remains unisolated.`,
+    );
+    return false;
   }
 }
 

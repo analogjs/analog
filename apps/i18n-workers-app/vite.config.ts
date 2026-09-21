@@ -8,11 +8,10 @@ export default defineConfig({
   plugins: [
     analog({
       prerender: { routes: [] },
-      nitro: { preset: 'node-server' },
       i18n: {
         defaultLocale: 'es',
         locales: ['es', 'en'],
-        workers: { loader: './src/i18n.ts' },
+        loader: './src/i18n.ts',
       },
     }),
     viteTsConfigPaths(),
