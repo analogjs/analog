@@ -1,9 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "types": ["vite/client", "@angular/localize", "node"]
-  },
-  "files": ["src/main.ts", "src/main.server.ts"],
-  "include": ["src/**/*.ts"]
-}

@@ -48,7 +48,7 @@ export interface I18nOptions {
   /** Path to the translation loader module, relative to the app root. */
   loader?: string;
   /**
-   * Experimental fixed-locale SSR workers. Automatically enabled for supported
+   * Fixed-locale SSR workers. Automatically enabled for supported
    * Node server builds with a loader and multiple locales. Set false to opt out.
    * Set true to require workers and fail on unsupported configurations.
    */

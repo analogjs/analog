@@ -70,7 +70,7 @@ export default defineConfig({
 });
 ```
 
-Keep your existing prerender routes. For eligible production Node-server builds, the loader path automatically enables isolated locale workers for both build-time prerendering and runtime SSR. See [concurrent server rendering](#concurrent-server-rendering-experimental) for supported configurations and the opt-out. For static output, see [prerendering](#prerendering).
+Keep your existing prerender routes. For eligible production Node-server builds, the loader path automatically enables isolated locale workers for both build-time prerendering and runtime SSR. See [concurrent server rendering](#concurrent-server-rendering) for supported configurations and the opt-out. For static output, see [prerendering](#prerendering).
 
 ### 5. Register the runtime provider
 
@@ -218,7 +218,7 @@ export default class IndexPage {
 }
 ```
 
-## Concurrent server rendering (experimental)
+## Concurrent server rendering
 
 Angular's runtime `$localize` translations and compiled template caches are shared within a JavaScript context. Overlapping SSR requests in different locales can therefore produce mixed-language pages. Loading translations per request does not isolate them.
 
