@@ -6,13 +6,13 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     root: import.meta.dirname,
+    cacheDir: '../../node_modules/.vitest',
     test: {
       reporters: ['default'],
       globals: true,
       environment: 'node',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
-      cacheDir: `../../node_modules/.vitest`,
     },
     define: {
       'import.meta.vitest': mode !== 'production',

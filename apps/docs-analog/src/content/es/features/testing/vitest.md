@@ -2,6 +2,16 @@
 
 [Vitest](https://vitest.dev) puede ser añadido a **_cualquier_** proyecto Angular existente con unos pocos pasos.
 
+## Soporte para Vitest 5
+
+Analog soporta Vitest 5. Los proyectos nuevos usan Vitest 5, que requiere Node.js 22.12 o superior y Vite 6.4 o superior. Los proyectos existentes pueden seguir usando versiones anteriores de Vitest compatibles.
+
+Vitest 5 borra el historial de llamadas de los mocks antes de cada prueba por defecto (`clearMocks: true`), sin restablecer sus implementaciones. Evita que las pruebas dependan de llamadas realizadas en pruebas anteriores. Los informes y artefactos del navegador se guardan por defecto en `.vitest/`; añade este directorio a `.gitignore`.
+
+En el modo navegador, `toHaveTextContent` compara el texto exacto. Usa `toMatchTextContent` para subcadenas o expresiones regulares y espera las aserciones asíncronas con `await`.
+
+Consulta la [guía de migración de Vitest](https://vitest.dev/guide/migration/) para más detalles.
+
 ## Configuración Automatizada Usando un Schematic/Generator
 
 Vitest puede ser instalado y configurado usando un schematic/generator para Angular CLI o espacios de trabajo Nx.

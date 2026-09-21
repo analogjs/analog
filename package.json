@@ -147,9 +147,9 @@
     "@typescript-eslint/eslint-plugin": "8.69.0",
     "@typescript-eslint/parser": "8.69.0",
     "@typescript-eslint/utils": "^8.69.0",
-    "@vitest/browser-playwright": "4.0.18",
-    "@vitest/coverage-v8": "4.0.18",
-    "@vitest/ui": "4.0.18",
+    "@vitest/browser-playwright": "5.0.0",
+    "@vitest/coverage-v8": "5.0.0",
+    "@vitest/ui": "5.0.0",
     "all-contributors-cli": "^6.26.1",
     "angular-eslint": "^22.0.0",
     "astro": "6.0.4",
@@ -214,7 +214,7 @@
     "vite-plugin-static-copy": "4.1.1",
     "vite-tsconfig-paths": "6.1.1",
     "vitefu": "^1.1.2",
-    "vitest": "4.0.18",
+    "vitest": "5.0.0",
     "webpack-bundle-analyzer": "^5.2.0",
     "xmlbuilder2": "^4.0.3"
   }

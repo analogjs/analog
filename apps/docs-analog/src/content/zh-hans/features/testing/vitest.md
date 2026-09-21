@@ -6,6 +6,16 @@ title: 添加Vitest
 
 通过几个步骤，[Vitest](https://vitest.dev) 可以被添加到现有的 Angular 工作区。
 
+## Vitest 5 支持
+
+Analog 支持 Vitest 5。新项目使用 Vitest 5，需要 Node.js 22.12 或更高版本以及 Vite 6.4 或更高版本。现有项目可以继续使用受支持的旧版 Vitest。
+
+Vitest 5 默认在每次测试前清除模拟函数的调用记录（`clearMocks: true`），但保留其实现。测试不应依赖其他测试的调用记录。报告和浏览器产物默认保存到 `.vitest/`，请将此目录添加到 `.gitignore`。
+
+在浏览器模式中，`toHaveTextContent` 匹配完整文本。匹配子字符串或正则表达式时，请使用 `toMatchTextContent`，并使用 `await` 等待异步断言。
+
+完整升级说明请参阅 [Vitest 迁移指南](https://vitest.dev/guide/migration/)。
+
 ## 使用原理器/生成器
 
 通过 Angular CLI 或者 Nx 工作区的原理器/生成器来安装和设置 Vitest。
