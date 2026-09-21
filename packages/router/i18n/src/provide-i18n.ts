@@ -121,6 +121,7 @@ export function provideI18n(config: I18nConfig): EnvironmentProviders {
     ...localeProviders,
     provideAppInitializer(async () => {
       if (
+        typeof window === 'undefined' &&
         typeof ANALOG_I18N_FIXED_LOCALE !== 'undefined' &&
         ANALOG_I18N_FIXED_LOCALE
       ) {
