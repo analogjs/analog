@@ -2,10 +2,6 @@
 
 Analog 支持使用 [Vitest](https://vitest.dev) 运行单元测试。
 
-## Vitest 5 支持
-
-Analog 支持 Vitest 5。新项目使用 Vitest 5，需要 Node.js 22.12 或更高版本以及 Vite 6.4 或更高版本。现有项目可以继续使用受支持的旧版 Vitest。
-
 ## Vitest 功能
 
 Vitest 支持许多功能：

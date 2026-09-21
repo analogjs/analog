@@ -2,16 +2,6 @@
 
 [Vitest](https://vitest.dev) kann mit wenigen Schritten zu bestehenden Angular-Workspaces hinzugefügt werden.
 
-## Unterstützung für Vitest 5
-
-Analog unterstützt Vitest 5. Neue Projekte verwenden Vitest 5, das Node.js ab Version 22.12 und Vite ab Version 6.4 benötigt. Bestehende Projekte können weiterhin unterstützte ältere Vitest-Versionen verwenden.
-
-Vitest 5 löscht standardmäßig den Aufrufverlauf von Mocks vor jedem Test (`clearMocks: true`), ohne deren Implementierung zurückzusetzen. Tests sollten nicht von Aufrufen früherer Tests abhängen. Reporter-Ausgaben und Browser-Artefakte werden standardmäßig in `.vitest/` gespeichert; füge dieses Verzeichnis zu `.gitignore` hinzu.
-
-Im Browser-Modus prüft `toHaveTextContent` den exakten Text. Verwende `toMatchTextContent` für Teilzeichenfolgen oder reguläre Ausdrücke und `await` für asynchrone Assertions.
-
-Weitere Hinweise enthält die [Vitest-Migrationsanleitung](https://vitest.dev/guide/migration/).
-
 ## Verwendung eines Schemas/Generators
 
 Vitest kann mit Hilfe eines Schemas/Generators für Angular CLI- oder Nx-Workspaces installiert und eingerichtet werden.

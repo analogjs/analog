@@ -2,10 +2,6 @@
 
 Analog supports [Vitest](https://vitest.dev) for running unit tests.
 
-## Vitest 5 support
-
-Analog supports Vitest 5. New projects use Vitest 5, which requires Node.js 22.12 or newer and Vite 6.4 or newer. Existing projects can continue using supported earlier Vitest versions.
-
 ## Vitest Features
 
 Vitest supports many features:
