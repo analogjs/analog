@@ -1,3 +1,9 @@
+## [2.7.4](https://github.com/analogjs/analog/compare/v2.7.3...v2.7.4) (2026-09-24)
+
+### Bug Fixes
+
+- **vitest-angular:** support Vitest 5 peer dependency ([d1cdf92](https://github.com/analogjs/analog/commit/d1cdf929e8627320f00c3e63dfce78c9521a051e))
+
 ## [2.7.3](https://github.com/analogjs/analog/compare/v2.7.2...v2.7.3) (2026-09-24)
 
 ### Bug Fixes
