@@ -59,6 +59,18 @@
 
 - **vite-plugin-angular:** emit source-linked workspace packages ([#2544](https://github.com/analogjs/analog/issues/2544)) ([e26a1f5](https://github.com/analogjs/analog/commit/e26a1f5499f7b06a983f836fe69ed4363f04722c))
 
+## [2.7.4](https://github.com/analogjs/analog/compare/v2.7.3...v2.7.4) (2026-09-24)
+
+### Bug Fixes
+
+- **vitest-angular:** support Vitest 5 peer dependency ([d1cdf92](https://github.com/analogjs/analog/commit/d1cdf929e8627320f00c3e63dfce78c9521a051e))
+
+## [2.7.3](https://github.com/analogjs/analog/compare/v2.7.2...v2.7.3) (2026-09-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support Angular 22.2 transformer and source caches ([#2576](https://github.com/analogjs/analog/issues/2576)) ([cfd19bb](https://github.com/analogjs/analog/commit/cfd19bb74b70b4968fe20e1c14e8937349f1660c))
+
 ## [2.7.2](https://github.com/analogjs/analog/compare/v2.7.1...v2.7.2) (2026-09-08)
 
 ### Bug Fixes
