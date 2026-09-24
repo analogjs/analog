@@ -1,3 +1,10 @@
+# [3.0.0-alpha.88](https://github.com/analogjs/analog/compare/v3.0.0-alpha.87...v3.0.0-alpha.88) (2026-09-24)
+
+### Bug Fixes
+
+- **platform:** await SSR dependency optimizer readiness in dev ([#2580](https://github.com/analogjs/analog/issues/2580)) ([7eb5d7e](https://github.com/analogjs/analog/commit/7eb5d7e88150ba9d0f70e821212ff1392de3ef20))
+- **vite-plugin-angular:** restore alpha dependency linker configuration ([#2579](https://github.com/analogjs/analog/issues/2579)) ([55f189d](https://github.com/analogjs/analog/commit/55f189d4ca154fb370b174a04a7758267b6d12d0))
+
 # [3.0.0-alpha.87](https://github.com/analogjs/analog/compare/v3.0.0-alpha.86...v3.0.0-alpha.87) (2026-09-10)
 
 ### Features
