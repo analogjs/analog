@@ -1,3 +1,9 @@
+# [2.8.0-beta.8](https://github.com/analogjs/analog/compare/v2.8.0-beta.7...v2.8.0-beta.8) (2026-09-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support Angular 22.2 transformer and source caches ([#2576](https://github.com/analogjs/analog/issues/2576)) ([00c2002](https://github.com/analogjs/analog/commit/00c2002b3a12e0cb7f1d5671ecb62bf68fe44c61))
+
 # [2.8.0-beta.7](https://github.com/analogjs/analog/compare/v2.8.0-beta.6...v2.8.0-beta.7) (2026-09-21)
 
 ### Features
