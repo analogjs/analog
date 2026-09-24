@@ -59,7 +59,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
         activateDeferredDebug(command);
       },
     },
-    analogNitroPlugin(platformOptions),
+    ...(!isTest ? [analogNitroPlugin(platformOptions)] : []),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),

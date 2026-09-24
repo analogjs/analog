@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   analogNitroPluginSpy,
@@ -57,6 +57,8 @@ import { platformPlugin } from './platform-plugin.js';
 describe('platformPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('VITEST', undefined);
     analogNitroPluginSpy.mockReturnValue({ name: '@analogjs/nitro' });
     ssrBuildPluginSpy.mockReturnValue([]);
     injectHTMLPluginSpy.mockReturnValue([]);
@@ -70,6 +72,25 @@ describe('platformPlugin', () => {
     clearClientPageEndpointsPluginSpy.mockReturnValue({
       name: 'analogjs-platform-clear-client-page-endpoint',
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it.each([
+    { NODE_ENV: 'test', VITEST: undefined },
+    { NODE_ENV: 'development', VITEST: 'true' },
+  ])('does not register Nitro when testing with %j', ({ NODE_ENV, VITEST }) => {
+    vi.stubEnv('NODE_ENV', NODE_ENV);
+    vi.stubEnv('VITEST', VITEST);
+
+    const plugins = platformPlugin();
+
+    expect(analogNitroPluginSpy).not.toHaveBeenCalled();
+    expect(plugins.some((plugin) => plugin.name === '@analogjs/nitro')).toBe(
+      false,
+    );
   });
 
   it('defaults ssr to true and passes that value to the composed plugins', () => {
