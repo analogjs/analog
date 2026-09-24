@@ -16,13 +16,16 @@ export function routerPlugin(): Plugin {
     },
   };
   const persistentDir = resolveTransformCacheDir(process.cwd());
-  const javascriptTransformer = new JavaScriptTransformer(
-    { jit: true },
-    1,
-    persistentDir
-      ? withMemoryLayer(createPersistentTransformCache(persistentDir))
-      : memoryOnly,
-  );
+  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
+  function getTransformer() {
+    return (javascriptTransformer ??= new JavaScriptTransformer(
+      { jit: true },
+      1,
+      persistentDir
+        ? withMemoryLayer(createPersistentTransformCache(persistentDir))
+        : memoryOnly,
+    ));
+  }
 
   /**
    * Transforms Angular packages the didn't get picked up by Vite's pre-optimization.
@@ -32,7 +35,7 @@ export function routerPlugin(): Plugin {
     enforce: 'pre',
     apply: 'serve',
     buildEnd() {
-      return javascriptTransformer.close();
+      return javascriptTransformer?.close();
     },
     transform: {
       filter: {
@@ -40,7 +43,7 @@ export function routerPlugin(): Plugin {
       },
       async handler(_code: string, id: string) {
         const path = id.split('?')[0];
-        const contents = await javascriptTransformer.transformFile(path);
+        const contents = await getTransformer().transformFile(path);
 
         return {
           code: Buffer.from(contents).toString('utf-8'),
