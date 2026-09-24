@@ -30,6 +30,7 @@ import {
 } from './angular-vite-plugin';
 import { normalizeIncludeGlob } from './utils/tsconfig-resolver';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
+import * as rolldownUtils from './utils/rolldown.js';
 
 const hmrPluginNames = ['analogjs-live-reload-plugin'];
 const originalNodeEnv = process.env['NODE_ENV'];
@@ -72,6 +73,58 @@ describe('angularVitePlugin', () => {
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }
+  });
+
+  describe('rolldown dependency optimizer', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    it.each([
+      { isTest: false, isAstroIntegration: false },
+      { isTest: true, isAstroIntegration: false },
+      { isTest: false, isAstroIntegration: true },
+      { isTest: true, isAstroIntegration: true },
+    ])(
+      'configures linker and cleanup hooks with isTest=$isTest and isAstroIntegration=$isAstroIntegration',
+      async ({ isTest, isAstroIntegration }) => {
+        vi.stubEnv('NODE_ENV', isTest ? 'test' : 'development');
+        vi.stubEnv('VITEST', undefined);
+        vi.stubEnv('ANALOG_ASTRO', String(isAstroIntegration));
+        vi.spyOn(rolldownUtils, 'isRolldown').mockReturnValue(true);
+
+        const tempRoot = mkdtempSync(join(tmpdir(), 'analog-rolldown-deps-'));
+        const tsconfigPath = join(tempRoot, 'tsconfig.json');
+        writeFileSync(tsconfigPath, '{ "compilerOptions": {} }', 'utf-8');
+
+        try {
+          const plugin = angular({ tsconfig: tsconfigPath }).find(
+            (p) => p.name === '@analogjs/vite-plugin-angular',
+          ) as Plugin;
+          const configHook =
+            typeof plugin.config === 'function'
+              ? plugin.config
+              : (plugin.config as any)?.handler;
+          const config = await configHook?.call(
+            {} as any,
+            { resolve: {} },
+            { command: 'serve', mode: 'development' },
+          );
+          const optimizerPlugin = config?.optimizeDeps?.rolldownOptions
+            ?.plugins?.[0] as Plugin;
+
+          expect(typeof optimizerPlugin.load).toBe(
+            isTest ? 'undefined' : 'object',
+          );
+          expect(typeof optimizerPlugin.buildEnd).toBe(
+            isAstroIntegration ? 'undefined' : 'function',
+          );
+        } finally {
+          rmSync(tempRoot, { recursive: true, force: true });
+        }
+      },
+    );
   });
 });
 
