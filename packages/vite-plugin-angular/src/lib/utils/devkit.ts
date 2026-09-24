@@ -19,7 +19,7 @@ let sourceFileCache: any;
 let cjt: Function;
 let jt: any;
 let createAngularCompilation: Function;
-let usesTransformOptions = false;
+const usesTransformOptions = angularFullVersion >= 220200;
 let initializeHash: (() => Promise<void>) | undefined;
 
 if (angularMajor < 17) {
@@ -57,11 +57,6 @@ if (angularMajor < 17) {
   jt = JavaScriptTransformer;
   createAngularCompilation = createAngularCompilationFn;
 
-  const [buildMajor, buildMinor] = require('@angular/build/package.json')
-    .version.split('.')
-    .map(Number);
-  usesTransformOptions =
-    buildMajor > 22 || (buildMajor === 22 && buildMinor >= 2);
   if (usesTransformOptions) {
     ({ initializeHash } = require(
       join(

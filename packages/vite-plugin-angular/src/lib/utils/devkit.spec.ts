@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => {
   const transformData = vi.fn();
   const close = vi.fn();
   return {
-    buildVersion: '22.2.0',
+    angularVersion: { major: '22', minor: '2', patch: '0' },
     initializeHash: vi.fn(),
     construct,
     transformFile,
@@ -30,14 +30,12 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('@angular/compiler-cli', () => ({
-  VERSION: { major: '22', minor: '2', patch: '0' },
+  VERSION: mocks.angularVersion,
 }));
 vi.mock('node:module', () => ({
   createRequire: () =>
     Object.assign(
       (id: string) => {
-        if (id === '@angular/build/package.json')
-          return { version: mocks.buildVersion };
         if (id === '@angular/build/private')
           return { JavaScriptTransformer: mocks.JavaScriptTransformer };
         if (id.endsWith('/src/utils/hash.js'))
@@ -52,11 +50,15 @@ describe('JavaScriptTransformer compatibility', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.resetAllMocks();
-    mocks.buildVersion = '22.2.0';
+    Object.assign(mocks.angularVersion, {
+      major: '22',
+      minor: '2',
+      patch: '0',
+    });
   });
 
-  it('uses the resolved build version and preserves the legacy API', async () => {
-    mocks.buildVersion = '22.1.8';
+  it('preserves the legacy API before Angular 22.2', async () => {
+    Object.assign(mocks.angularVersion, { minor: '1', patch: '8' });
     const { JavaScriptTransformer } = await import('./devkit');
     const options = { jit: true };
     const cache = { get: vi.fn(), put: vi.fn() };
