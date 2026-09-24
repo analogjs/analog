@@ -27,12 +27,12 @@ function callWriteBundle(plugin: any, envName: string, bundle: any) {
     : hook?.handler.call(ctx, {} as any, bundle);
 }
 
-function callResolveId(plugin: any, id: string) {
+function callResolveId(plugin: any, id: string, environment = { name: 'ssr' }) {
   const hook = plugin.resolveId;
   if (typeof hook === 'function') {
-    return hook.call({} as any, id, undefined, {} as any);
+    return hook.call({ environment } as any, id, undefined, {} as any);
   }
-  return hook?.handler.call({} as any, id, undefined, {} as any);
+  return hook?.handler.call({ environment } as any, id, undefined, {} as any);
 }
 
 function callLoad(plugin: any, id: string) {
@@ -122,6 +122,103 @@ describe('analogNitroPlugin', () => {
       '\0virtual:@analogjs/nitro/ssr-entry',
     );
     expect(callResolveId(plugin, '/some/other/path.ts')).toBeNull();
+  });
+
+  it.each(['entry', 'configureServer'])(
+    'waits for the first optimizer run when %s starts it',
+    async (firstCaller) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      let finish!: () => void;
+      const pending = new Promise<void>((resolve) => (finish = resolve));
+      const init = vi
+        .fn()
+        .mockReturnValueOnce(pending)
+        .mockResolvedValue(undefined);
+      const environment = { name: 'ssr', depsOptimizer: { init } };
+      const markerPath = join(workspaceRoot, '.analog/__ssr-entry.mjs');
+      const configureServer = () =>
+        (plugin.configureServer as any)({ environments: { ssr: environment } });
+
+      if (firstCaller === 'configureServer') configureServer();
+      const entry = callResolveId(plugin, markerPath, environment);
+      if (firstCaller === 'entry') configureServer();
+      const virtualEntry = callResolveId(
+        plugin,
+        '\0virtual:@analogjs/nitro/ssr-entry',
+        environment,
+      );
+      const resolved = vi.fn();
+      entry.then(resolved);
+      virtualEntry.then(resolved);
+      expect(init).toHaveBeenCalledTimes(1);
+
+      // Vite's listen() calls init() again without awaiting the first run.
+      await init();
+      expect(resolved).not.toHaveBeenCalled();
+      expect(callResolveId(plugin, '@angular/core', environment)).toBeNull();
+
+      finish();
+      await expect(entry).resolves.toBe('\0virtual:@analogjs/nitro/ssr-entry');
+      await expect(virtualEntry).resolves.toBe(
+        '\0virtual:@analogjs/nitro/ssr-entry',
+      );
+      expect(resolved).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it('propagates a failed optimizer run to every SSR entry request', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+    const error = new Error('optimization failed');
+    const init = vi
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValue(undefined);
+    const environment = { name: 'ssr', depsOptimizer: { init } };
+    (plugin.configureServer as any)({ environments: { ssr: environment } });
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await expect(
+        callResolveId(
+          plugin,
+          join(workspaceRoot, '.analog/__ssr-entry.mjs'),
+          environment,
+        ),
+      ).rejects.toBe(error);
+    }
+    expect(init).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['build', true, 'ssr'],
+    ['serve', false, 'ssr'],
+    ['serve', true, 'client'],
+    ['serve', true, 'nitro'],
+  ] as const)(
+    'does not gate %s entry resolution with ssr=%s in %s',
+    (command, ssr, name) => {
+      const plugin = analogNitroPlugin({ workspaceRoot, ssr });
+      callConfig(plugin, projectRoot, command);
+      const init = vi.fn();
+      const environment = { name, depsOptimizer: { init } };
+      expect(
+        callResolveId(
+          plugin,
+          join(workspaceRoot, '.analog/__ssr-entry.mjs'),
+          environment,
+        ),
+      ).toBe('\0virtual:@analogjs/nitro/ssr-entry');
+      expect(init).not.toHaveBeenCalled();
+    },
+  );
+
+  it('allows dev SSR without a dependency optimizer', async () => {
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot, 'serve');
+    await expect(
+      callResolveId(plugin, join(workspaceRoot, '.analog/__ssr-entry.mjs')),
+    ).resolves.toBe('\0virtual:@analogjs/nitro/ssr-entry');
   });
 
   it('emits a wrapper that imports the user main.server.ts and inlines the built template', () => {
