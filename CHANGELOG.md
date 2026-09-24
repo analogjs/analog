@@ -1,3 +1,9 @@
+## [2.7.3](https://github.com/analogjs/analog/compare/v2.7.2...v2.7.3) (2026-09-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support Angular 22.2 transformer and source caches ([#2576](https://github.com/analogjs/analog/issues/2576)) ([cfd19bb](https://github.com/analogjs/analog/commit/cfd19bb74b70b4968fe20e1c14e8937349f1660c))
+
 ## [2.7.2](https://github.com/analogjs/analog/compare/v2.7.1...v2.7.2) (2026-09-08)
 
 ### Bug Fixes
