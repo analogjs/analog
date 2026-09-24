@@ -229,6 +229,14 @@ export function angular(options?: PluginOptions): Plugin[] {
   let inlineComponentStyles: Map<string, string> | undefined;
   let externalComponentStyles: Map<string, string> | undefined;
   const sourceFileCache: SourceFileCacheType = new SourceFileCache();
+  const tsSourceFileCache = new Map<string, ts.SourceFile>();
+
+  function invalidateSourceFiles(files: Set<string>) {
+    for (const file of files) {
+      tsSourceFileCache.delete(normalizePath(file));
+    }
+    sourceFileCache.invalidate(files);
+  }
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const isStackBlitz = !!process.versions['webcontainer'];
@@ -295,6 +303,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     emittedIds.clear();
     fileTransformMap.clear();
     sourceFileCache.clear();
+    tsSourceFileCache.clear();
     sourceFileCache.modifiedFiles.clear();
     sourceFileCache.babelFileCache?.clear();
     sourceFileCache.typeScriptFileCache?.clear();
@@ -414,7 +423,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         );
         server.watcher.on('add', (file) => {
           if (EXCLUDED_TS_EXT_REGEX.test(file)) {
-            sourceFileCache.invalidate(new Set([normalizePath(file)]));
+            invalidateSourceFiles(new Set([normalizePath(file)]));
           }
           invalidateCompilationOnFsChange(file);
         });
@@ -422,7 +431,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           const id = normalizePath(file);
           outputFiles.delete(id);
           fileTransformMap.delete(id);
-          sourceFileCache.delete(id);
+          tsSourceFileCache.delete(id);
           invalidateCompilationOnFsChange(file);
         });
         server.watcher.on('change', (file) => {
@@ -1030,7 +1039,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ? new Set(ids.map((file) => normalizePath(file)))
       : undefined;
     if (modifiedFiles?.size) {
-      sourceFileCache.invalidate(modifiedFiles);
+      invalidateSourceFiles(modifiedFiles);
     }
     // Notify Angular of modified files before re-initialization so it can
     // scope its incremental analysis.
@@ -1279,7 +1288,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     // `build.sourcemap` so production builds can emit maps for Sentry / etc.
     const emitSourceMaps = !isProd || !!config.build.sourcemap;
     const modifiedFiles = new Set<string>(ids ?? []);
-    sourceFileCache.invalidate(modifiedFiles);
+    invalidateSourceFiles(modifiedFiles);
 
     if (ids?.length) {
       for (const id of ids || []) {
@@ -1409,7 +1418,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       // Only store cache if in watch mode
       if (watchMode) {
-        augmentHostWithCaching(host, sourceFileCache);
+        augmentHostWithCaching(host, tsSourceFileCache);
       }
     }
 
