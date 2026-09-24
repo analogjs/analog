@@ -7,6 +7,7 @@ import { marked } from 'marked';
 import { gfmHeadingId } from 'marked-gfm-heading-id';
 import { mangle } from 'marked-mangle';
 import { MarkedContentHighlighter } from './marked-content-highlighter';
+import { escapeHtml, sanitizeLanguage } from './utils/escape-html';
 
 @Injectable()
 export class MarkedSetupService {
@@ -20,19 +21,20 @@ export class MarkedSetupService {
     renderer.code = ({ text, lang }) => {
       // Let's do a language based detection like on GitHub
       // So we can still have non-interpreted mermaid code
-      if (lang === 'mermaid') {
-        return '<pre class="mermaid">' + text + '</pre>';
+      const language = sanitizeLanguage(lang);
+      if (language === 'mermaid') {
+        return '<pre class="mermaid">' + escapeHtml(text) + '</pre>';
       }
 
-      if (!lang) {
-        return '<pre><code>' + text + '</code></pre>';
+      if (!language) {
+        return '<pre><code>' + escapeHtml(text) + '</code></pre>';
       }
 
       if (this.highlighter?.augmentCodeBlock) {
-        return this.highlighter?.augmentCodeBlock(text, lang);
+        return this.highlighter?.augmentCodeBlock(text, language);
       }
 
-      return `<pre class="language-${lang}"><code class="language-${lang}">${text}</code></pre>`;
+      return `<pre class="language-${language}"><code class="language-${language}">${escapeHtml(text)}</code></pre>`;
     };
 
     const extensions = [gfmHeadingId(), mangle()];

@@ -8,29 +8,25 @@ export async function addAngularApp(
   const isNx = tree.exists('/nx.json');
   const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
 
-  const appOptions: typeof import('@nx/angular/src/generators/application/schema') =
-    {
-      name: options.analogAppName,
-      directory: `${appsDir}/${options.analogAppName}`,
-      linter: !isNx || process.env['NODE_ENV'] === 'test' ? 'none' : 'eslint',
-      e2eTestRunner: 'none',
-      unitTestRunner: 'vitest',
-      standalone: true,
-      ssr: false,
-      bundler: 'esbuild',
-      serverRouting: false,
-      skipFormat: true,
-      tags: options.tags,
-    };
-
-  await (
-    await import(
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      '@nx/angular/generators'
-    )
-  ).applicationGenerator(tree, {
-    ...appOptions,
+  const { applicationGenerator } = await import('@nx/angular/generators');
+  type ApplicationSchema = Parameters<typeof applicationGenerator>[1];
+  const appOptions: ApplicationSchema = {
+    name: options.analogAppName,
     directory: `${appsDir}/${options.analogAppName}`,
-  });
+    linter: !isNx
+      ? 'none'
+      : (options.linter ??
+        (process.env['NODE_ENV'] === 'test' ? 'none' : 'eslint')),
+    // Analog sets up its own Vitest configuration in the init generator, so the
+    // Angular generator should not scaffold a test runner. Nx 23 also removed
+    // the `'vitest'` option in favour of `'vitest-angular'`/`'vitest-analog'`.
+    unitTestRunner: 'none' as ApplicationSchema['unitTestRunner'],
+    standalone: true,
+    ssr: false,
+    bundler: 'esbuild',
+    skipFormat: true,
+    tags: options.tags,
+  };
+
+  await applicationGenerator(tree, appOptions);
 }

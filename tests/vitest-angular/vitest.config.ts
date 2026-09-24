@@ -1,4 +1,4 @@
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, Plugin } from 'vitest/config';
 import aotProject from './src/aot/vitest.project';
@@ -10,7 +10,9 @@ import sourcemapProject from './src/sourcemap/vitest.project';
 export default defineConfig({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/tests/vitest-angular',
-  plugins: [nxCopyAssetsPlugin(['*.md'])] as Plugin[],
+  plugins: [
+    viteStaticCopy({ targets: [{ src: '*.md', dest: '.' }] }),
+  ] as Plugin[],
   test: {
     watch: false,
     globals: true,

@@ -30,6 +30,7 @@ import {
   isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
@@ -52,6 +53,19 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+}
+
+/**
+ * Directory that `compilerOptions.paths` targets resolve against. Mirrors
+ * TypeScript: `baseUrl` when set, otherwise the directory of the config
+ * that declares `paths` (`pathsBasePath`, since `baseUrl` is optional
+ * from TS 4.1).
+ */
+export function getPathsBasePath(
+  options: { baseUrl?: string; pathsBasePath?: string } | undefined,
+  fallback: string,
+): string {
+  return options?.baseUrl ?? options?.pathsBasePath ?? fallback;
 }
 
 export function fastCompilePlugin(
@@ -199,7 +213,7 @@ export function fastCompilePlugin(
     // silently drops it because arrays don't have a directive def.
     const candidates = new Set<string>(config.rootNames);
     const tsPaths = config.options?.paths;
-    const baseUrl = (config.options?.baseUrl ?? projectRoot) as string;
+    const baseUrl = getPathsBasePath(config.options, projectRoot);
     // Cold-start dedup caches shared by the three scan phases below
     // (candidates scan, walkImports, scanBarrelExports). Scoped to this
     // init call only — HMR/watcher re-scans must hit disk fresh.
@@ -604,17 +618,25 @@ export function fastCompilePlugin(
       resourceToSource.set(dep, id);
     }
 
-    // Strip TypeScript-only syntax
+    // Strip TypeScript-only syntax and compose the compiler map with the
+    // final generated code so downstream breakpoints map back to the source.
     const stripped = vite.transformWithOxc
-      ? await vite.transformWithOxc(result.code, id, {
-          lang: 'ts',
-          sourcemap: false,
-          decorator: { legacy: false, emitDecoratorMetadata: false },
-        })
-      : await vite.transformWithEsbuild(result.code, id, {
-          loader: 'ts',
-          sourcemap: false,
-        });
+      ? await vite.transformWithOxc(
+          result.code,
+          id,
+          {
+            lang: 'ts',
+            sourcemap: true,
+            decorator: { legacy: false, emitDecoratorMetadata: false },
+          },
+          result.map,
+        )
+      : await vite.transformWithEsbuild(
+          result.code,
+          id,
+          { loader: 'ts', sourcemap: true },
+          result.map,
+        );
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
@@ -628,7 +650,7 @@ export function fastCompilePlugin(
       }
     }
 
-    return { code: outputCode, map: result.map };
+    return { code: outputCode, map: stripped.map };
   }
 
   function resolveTsConfigPath() {
@@ -700,6 +722,11 @@ export function fastCompilePlugin(
     },
     async buildStart() {
       await initFastCompile();
+    },
+    closeBundle() {
+      if (!watchMode) {
+        releaseCssPreprocessorWorkers();
+      }
     },
     async handleHotUpdate(ctx) {
       // Resource file changes → invalidate parent .ts module

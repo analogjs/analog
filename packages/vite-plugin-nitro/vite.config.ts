@@ -3,7 +3,7 @@ import path from 'node:path';
 import { defineConfig, normalizePath } from 'vite';
 
 export default defineConfig(() => ({
-  root: __dirname,
+  root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/vite-plugin-nitro',
   build: {
     target: 'esnext',

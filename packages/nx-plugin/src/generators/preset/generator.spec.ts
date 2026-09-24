@@ -12,7 +12,7 @@ describe('preset generator', () => {
     options: AnalogNxApplicationGeneratorOptions,
     nxVersion = '21.0.0',
   ) => {
-    const tree = createTreeWithEmptyWorkspace();
+    const tree = createTreeWithEmptyWorkspace({ formatter: 'prettier' });
     addDependenciesToPackageJson(tree, { nx: nxVersion }, {});
     await generator(tree, options);
     const config = readProjectConfiguration(tree, options.analogAppName);

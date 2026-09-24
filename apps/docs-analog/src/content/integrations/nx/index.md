@@ -84,6 +84,37 @@ Next, use the application generator to scaffold a new application:
 npx nx g @analogjs/platform:application analog-app
 ```
 
+### Generator Options
+
+Both the preset and the application generator accept the following options:
+
+| Option        | Description                                                                                          | Default  |
+| ------------- | ---------------------------------------------------------------------------------------------------- | -------- |
+| `addTailwind` | Adds [TailwindCSS](https://tailwindcss.com) and its configuration to the application.                | `false`  |
+| `linter`      | The linter to set up for the application: `eslint`, `oxlint`, or `none`. `oxlint` requires Nx 23.2+. | `eslint` |
+| `tags`        | Comma-separated Nx project tags, used with the `@nx/enforce-module-boundaries` lint rule.            |          |
+
+To generate an application linted with [oxlint](https://oxc.rs/docs/guide/usage/linter) through the `@nx/oxlint` plugin:
+
+```shell
+npx nx g @analogjs/platform:application analog-app --linter=oxlint
+```
+
+## Updating Nx
+
+Analog supports Nx 23.2 and newer inferred targets and migrations. Update the workspace with `nx migrate`, and run the migrations it generates:
+
+```shell
+npx nx migrate latest
+npx nx migrate --run-migrations
+```
+
+Nx 23.2 adds the `--run-migration` flag to run a single migration by name, such as the `@nx/vitest` migration that replaces `__dirname` with `import.meta.dirname` in the `vite.config.ts` files:
+
+```shell
+npx nx migrate --run-migration update-23-2-0-use-import-meta-dirname
+```
+
 ## Agent Context
 
 Both the preset and the application generator scaffold `AGENTS.md` and `CLAUDE.md` files that point AI coding assistants at the framework conventions shipped in `node_modules/@analogjs/platform/AGENTS.md`.

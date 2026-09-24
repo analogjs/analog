@@ -275,12 +275,12 @@ export default config;
 
 ### With Nx
 
-In Nx workspaces, normal workspace library imports already resolve in Storybook. You usually do not need to add `nxViteTsPaths()` just to resolve workspace packages.
+In Nx workspaces, normal workspace library imports already resolve in Storybook. You usually do not need to add `viteTsConfigPaths()` just to resolve workspace packages.
 
-If your workspace still depends on custom `compilerOptions.paths` aliases beyond those normal workspace package imports, add the `nxViteTsPaths` plugin from `@nx/vite` in `.storybook/main.ts`:
+If your workspace still depends on custom `compilerOptions.paths` aliases beyond those normal workspace package imports, add the `viteTsConfigPaths` plugin from `vite-tsconfig-paths` in `.storybook/main.ts`:
 
 ```ts
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { UserConfig, mergeConfig } from 'vite';
 
 import type { StorybookConfig } from '@analogjs/storybook-angular';
@@ -289,7 +289,7 @@ const config: StorybookConfig = {
   // ... other config, addons, etc.
   async viteFinal(config: UserConfig) {
     return mergeConfig(config, {
-      plugins: [nxViteTsPaths()],
+      plugins: [viteTsConfigPaths()],
     });
   },
 };
@@ -297,11 +297,11 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-`nxViteTsPaths()` is only for custom TypeScript path aliases. It does not replace Storybook's `styles` option or SCSS `loadPaths`, so shared Sass setup usually needs:
+`viteTsConfigPaths()` is only for custom TypeScript path aliases. It does not replace Storybook's `styles` option or SCSS `loadPaths`, so shared Sass setup usually needs:
 
 - `styles` for global Storybook stylesheets
 - `stylePreprocessorOptions.loadPaths` for Sass import roots
-- `nxViteTsPaths()` only if you still rely on custom TS/Angular aliases instead of normal workspace package imports
+- `viteTsConfigPaths()` only if you still rely on custom TS/Angular aliases instead of normal workspace package imports
 
 If styles still do not load as expected, enable scoped preset logging before running Storybook or the Storybook build:
 

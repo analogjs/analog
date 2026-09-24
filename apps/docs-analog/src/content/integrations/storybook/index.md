@@ -304,16 +304,16 @@ export default config;
 
 ### With Nx
 
-In Nx workspaces, normal workspace library imports already resolve in Storybook. You usually do not need to add `nxViteTsPaths()` just to resolve workspace packages.
+In Nx workspaces, normal workspace library imports already resolve in Storybook. You usually do not need to add `viteTsConfigPaths()` just to resolve workspace packages.
 
-If your workspace still depends on custom `compilerOptions.paths` aliases beyond those normal workspace package imports, add the `nxViteTsPaths` plugin from `@nx/vite` in `.storybook/main.ts`:
+If your workspace still depends on custom `compilerOptions.paths` aliases beyond those normal workspace package imports, add the `viteTsConfigPaths` plugin from `vite-tsconfig-paths` in `.storybook/main.ts`:
 
 ```ts
 const config: StorybookConfig = {
   // ... other config, addons, etc.
   async viteFinal(config: UserConfig) {
     return mergeConfig(config, {
-      plugins: [nxViteTsPaths()],
+      plugins: [viteTsConfigPaths()],
     });
   },
 };
@@ -321,11 +321,11 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-`nxViteTsPaths()` is only for custom TypeScript path aliases. It does not replace Storybook's `styles` option or SCSS `loadPaths`, so shared Sass setups usually need:
+`viteTsConfigPaths()` is only for custom TypeScript path aliases. It does not replace Storybook's `styles` option or SCSS `loadPaths`, so shared Sass setups usually need:
 
 - `styles` for global Storybook stylesheets
 - `stylePreprocessorOptions.loadPaths` for Sass import roots
-- `nxViteTsPaths()` only if you still rely on custom TS/Angular aliases instead of normal workspace package imports
+- `viteTsConfigPaths()` only if you still rely on custom TS/Angular aliases instead of normal workspace package imports
 
 If styles still do not load as expected, enable scoped preset logging before running Storybook or the Storybook build:
 
@@ -505,6 +505,14 @@ npm run test-storybook
 ```
 
 You can also run tests directly in the Storybook UI. Start Storybook and use the "Run Tests" button in the sidebar, or navigate to a story to see interaction tests run automatically in the Interactions panel.
+
+#### With Nx
+
+In an Nx workspace using the `@nx/storybook/plugin` inferred targets, Nx 23.2 and newer detects `@storybook/addon-vitest` in the project's `.storybook/main.ts` and infers the `test-storybook` target as `vitest run --project=storybook`, so no target needs to be added to the `project.json`. Run the interaction tests with:
+
+```sh
+npx nx test-storybook your-app
+```
 
 ## Building with Angular in Development Mode
 

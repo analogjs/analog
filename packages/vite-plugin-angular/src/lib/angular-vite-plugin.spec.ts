@@ -1,15 +1,23 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
+import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
-import { normalizePath, preprocessCSS, type Plugin } from 'vite';
+import { normalizePath, preprocessCSS, resolveConfig, type Plugin } from 'vite';
 
-vi.mock('vite', async () => {
-  const actual = await vi.importActual<typeof import('vite')>('vite');
+vi.mock('./utils/devkit.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./utils/devkit.js')>();
   return {
     ...actual,
-    preprocessCSS: vi.fn(async (code: string) => ({ code, deps: new Set() })),
+    // Exercise compilation without Map methods, as with Angular 22.2's cache.
+    SourceFileCache: class {
+      private cache = new actual.SourceFileCache();
+      modifiedFiles = this.cache.modifiedFiles;
+      typeScriptFileCache = this.cache.typeScriptFileCache;
+      invalidate = this.cache.invalidate.bind(this.cache);
+      clear = this.cache.clear.bind(this.cache);
+    },
   };
 });
 
@@ -1178,6 +1186,12 @@ describe('buildStart initial compilation', () => {
   const componentPath = normalizePath(
     path.join(fixtureDir, 'src', 'app.component.ts'),
   );
+  const templatePath = normalizePath(
+    path.join(fixtureDir, 'src', 'app.component.html'),
+  );
+  const stylePath = normalizePath(
+    path.join(fixtureDir, 'src', 'app.component.scss'),
+  );
 
   beforeEach(() => {
     realFs.rmSync(fixtureDir, { recursive: true, force: true });
@@ -1204,10 +1218,17 @@ describe('buildStart initial compilation', () => {
 @Component({
   selector: 'app-root',
   standalone: true,
-  template: '<h1>hello</h1>',
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {}
 `,
+      'utf-8',
+    );
+    realFs.writeFileSync(templatePath, '<h1>hello</h1>', 'utf-8');
+    realFs.writeFileSync(
+      stylePath,
+      '$color: red; h1 { color: $color; }',
       'utf-8',
     );
   });
@@ -1243,15 +1264,22 @@ export class AppComponent {}
       { root: fixtureDir, build: {} },
       { command: 'build' },
     );
-    mainPlugin.configResolved({
+    const resolvedConfig = {
       root: fixtureDir,
       mode: 'production',
       build: {},
       server: { watch: {} },
       safeModulePaths: new Set(),
-    });
+      css: {},
+    };
+    mainPlugin.configResolved(resolvedConfig);
 
-    const ctx = { warn: vi.fn(), error: vi.fn(), addWatchFile: vi.fn() };
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
     const code = realFs.readFileSync(componentPath, 'utf-8');
 
     // Deliberately don't await `buildStart` — this is the racing plugin's view.
@@ -1265,5 +1293,201 @@ export class AppComponent {}
 
     expect(result?.code).toContain('ɵcmp');
     expect(ctx.warn).not.toHaveBeenCalled();
+  }, 60_000);
+
+  it('emits sourcemaps for production builds when build.sourcemap is enabled', async () => {
+    const mainPlugin = createAppBuildPlugin();
+    realFs.writeFileSync(
+      componentPath,
+      `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  templateUrl: './app.component.html',
+})
+export class AppComponent {}
+`,
+      'utf-8',
+    );
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: { sourcemap: true } },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: { sourcemap: true },
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+      css: {},
+    };
+    mainPlugin.configResolved(resolvedConfig);
+
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+
+    await mainPlugin.buildStart.call(ctx);
+    const result = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+
+    expect(result?.code).toContain('ɵcmp');
+    const generatedOffset = result.code.indexOf('AppComponent');
+    const generatedBeforeTarget = result.code.slice(0, generatedOffset);
+    const generatedLine = generatedBeforeTarget.split('\n').length - 1;
+    const generatedColumn =
+      generatedOffset - generatedBeforeTarget.lastIndexOf('\n') - 1;
+    const entry = new SourceMap(JSON.parse(result.map)).findEntry(
+      generatedLine,
+      generatedColumn,
+    );
+    const sources = JSON.parse(result.map).sources as string[];
+
+    expect(entry.originalSource).toBe(normalizePath(componentPath));
+    expect(entry.originalLine).toBe(7);
+    expect(entry.originalColumn).toBe(13);
+    expect(sources).toContain(normalizePath(templatePath));
+  }, 60_000);
+
+  it('evicts deleted source files before recompiling a recreated file', async () => {
+    const mainPlugin = createAppBuildPlugin();
+    const source = (value: string) => `
+      import { Component } from '@angular/core';
+      @Component({ standalone: true, template: '' })
+      export class AppComponent { value = '${value}'; }
+    `;
+    realFs.writeFileSync(componentPath, source('before-delete'));
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'development' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const listeners = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        on: (event: string, listener: (file: string) => void) =>
+          listeners.set(event, listener),
+      },
+    });
+    await mainPlugin.buildStart.call(ctx);
+    const before = await mainPlugin.transform.handler.call(
+      ctx,
+      source('before-delete'),
+      componentPath,
+    );
+    expect(before.code).toContain('before-delete');
+
+    realFs.unlinkSync(componentPath);
+    vi.useFakeTimers();
+    try {
+      listeners.get('unlink')!(componentPath);
+    } finally {
+      // Recompile explicitly below instead of waiting for the filesystem debounce.
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+    realFs.writeFileSync(componentPath, source('after-recreate'));
+    await mainPlugin.buildStart.call(ctx);
+    const after = await mainPlugin.transform.handler.call(
+      ctx,
+      source('after-recreate'),
+      componentPath,
+    );
+    expect(after.code).toContain('after-recreate');
+    expect(after.code).not.toContain('before-delete');
+    expect(ctx.error).not.toHaveBeenCalled();
+  }, 60_000);
+
+  it('releases production compilation output at buildEnd', async () => {
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+      css: {},
+    };
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+
+    await mainPlugin.buildStart.call(ctx);
+    const compiled = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+    await mainPlugin.buildEnd.call(ctx);
+    const released = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+
+    expect(compiled?.code).toContain('ɵcmp');
+    expect(released).toBeUndefined();
+  }, 60_000);
+
+  it('handles missing this.environment gracefully', async () => {
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+      css: {},
+      plugins: [],
+    };
+    mainPlugin.configResolved(resolvedConfig);
+
+    // Context without this.environment (e.g. older Vite or minimal test harness)
+    const ctx = {
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+
+    await mainPlugin.buildStart.call(ctx);
+    const result = await mainPlugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+
+    expect(result?.code).toContain('ɵcmp');
   }, 60_000);
 });

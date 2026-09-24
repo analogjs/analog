@@ -118,18 +118,39 @@ As of Angular v21, `Zoneless` change detection is the default for new projects.
 Use the following setup:
 
 ```ts
+// src/test-setup.ts
+import '@angular/compiler';
+
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 setupTestBed();
 ```
 
 ### Zone.js setup
 
-If you are using `Zone.js` for change detection, import the `setup-zone` script. This script automatically includes support for setting up snapshot tests.
+If you are using `Zone.js` for change detection, import the `setup-zone` script before setting up the `TestBed`. This script patches the test environment for `Zone.js` helpers such as `fakeAsync`, and automatically includes support for setting up snapshot tests.
 
 ```ts
+// src/test-setup.ts
+import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
+
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 setupTestBed({
   zoneless: false,
 });
 ```
+
+The two side effect imports must come first. If your formatter sorts side effect imports below named imports, keep them in a separate import group with a blank line, or exclude `src/test-setup.ts` from import sorting.
+
+:::warning
+
+With `Zone.js`, use Vitest's global test functions, with `globals: true` set in the `vite.config.ts`, and `vitest/globals` added to the `types` array in the `tsconfig.spec.json`. Importing `describe`, `it`, `beforeEach`, and other functions from `vitest` directly bypasses the `Zone.js` patching, and `fakeAsync` fails with the error `Expected to be running in 'ProxyZone', but it was not found`.
+
+Zoneless tests have no such restriction. When migrating to zoneless change detection, you can switch back to importing the functions from `vitest`.
+
+:::
 
 ### Configuration Options
 
@@ -393,11 +414,28 @@ export default defineConfig(({ mode }) => ({
 
 ### With Nx
 
-For Nx workspaces, import and use the `nxViteTsPaths` plugin from the `@nx/vite` package.
+Nx workspaces use the same `vite-tsconfig-paths` plugin. The `nxViteTsPaths` plugin from `@nx/vite` is deprecated and is removed in Nx 24, so replace it with `viteTsConfigPaths()`.
 
 ```ts
 /// <reference types="vitest" />
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
 export default defineConfig(({ mode }) => ({
-  plugins: [angular(), nxViteTsPaths()],
+  root: import.meta.dirname,
+  plugins: [angular(), viteTsConfigPaths()],
 }));
+```
+
+Use `import.meta.dirname` instead of `__dirname` for the project `root`, so the config also loads with Vite's native config loader. The `@analogjs/platform` generators emit `import.meta.dirname`, and Nx 23.2 ships the `update-23-2-0-use-import-meta-dirname` migration that rewrites existing configs.
+
+Vitest 4 removed the `vitest.workspace` file. To run the tests of multiple projects from the workspace root, list them in the `test.projects` option of a root `vitest.config.ts`, which is also what Nx 23.2 generates:
+
+```ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    projects: ['apps/**/vite.config.ts', 'libs/**/vite.config.ts'],
+  },
+});
 ```

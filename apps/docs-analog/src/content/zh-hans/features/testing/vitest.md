@@ -359,11 +359,13 @@ export default defineConfig(({ mode }) => ({
 
 ### 使用 Nx
 
-对于 Nx 工作区，从 `@nx/vite` 包中导入并使用 `nxViteTsPaths` 插件。
+Nx 工作区使用相同的 `vite-tsconfig-paths` 插件。`@nx/vite` 包中的 `nxViteTsPaths` 插件已弃用，并将在 Nx 24 中移除，请替换为 `viteTsConfigPaths()`。
 
 ```ts
 /// <reference types="vitest" />
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
 export default defineConfig(({ mode }) => ({
-  plugins: [angular(), nxViteTsPaths()],
+  plugins: [angular(), viteTsConfigPaths()],
 }));
 ```

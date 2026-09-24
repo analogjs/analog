@@ -394,8 +394,8 @@ export function angularCompilationPlugin(
 
           return stylesheetResult?.code || '';
         },
-        processWebWorker(_workerFile: string, _containingFile: string) {
-          return '';
+        processWebWorker(workerFile: string) {
+          return workerFile;
         },
       },
       (tsCompilerOptions: Record<string, unknown>) => {

@@ -110,7 +110,7 @@ describe('setup schematic', () => {
     });
   });
 
-  it('should create vite.config.mts with vite-tsconfig-paths for non-Nx', async () => {
+  it('should create vite.config.mts with vite-tsconfig-paths', async () => {
     const resultTree = await runner.runSchematic(
       'setup',
       { project: 'test-app' },
@@ -142,7 +142,6 @@ describe('setup schematic', () => {
       tree,
     );
 
-    expect(resultTree.exists('/vite.config.mts')).toBeTruthy();
     const viteConfig = resultTree.readContent('/vite.config.mts');
     expect(viteConfig).toContain(
       "import angular from '@analogjs/vite-plugin-angular'",

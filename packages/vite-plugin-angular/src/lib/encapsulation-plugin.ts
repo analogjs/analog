@@ -1,4 +1,4 @@
-import * as ngCompiler from '@angular/compiler';
+import { encapsulateStyle } from '@angular/compiler';
 import { Plugin } from 'vite';
 import { debugStylesV } from './utils/debug.js';
 
@@ -8,19 +8,28 @@ export function isComponentStyleSheet(id: string): boolean {
 
 export function getComponentStyleSheetMeta(id: string): {
   componentId: string;
-  encapsulation: 'emulated' | 'shadow' | 'none';
+  encapsulation: 'emulated' | 'shadow' | 'none' | undefined;
 } {
-  const params = new URL(id, 'http://localhost').searchParams;
+  const queryIndex = id.indexOf('?');
+  const params = new URLSearchParams(
+    queryIndex === -1 ? '' : id.slice(queryIndex + 1),
+  );
   const encapsulationMapping = {
     '0': 'emulated',
     '2': 'none',
     '3': 'shadow',
-  };
+  } as const;
+  const encapsulationKey = params.get('e') as
+    | keyof typeof encapsulationMapping
+    | null;
+
   return {
-    componentId: params.get('ngcomp')!,
-    encapsulation: encapsulationMapping[
-      params.get('e') as keyof typeof encapsulationMapping
-    ] as 'emulated' | 'shadow' | 'none',
+    // Angular component IDs may contain `^`. Vite ids sometimes keep the
+    // percent-encoded form (`%5E`) even after query parsing.
+    componentId: (params.get('ngcomp') ?? '').replaceAll('%5E', '^'),
+    encapsulation: encapsulationKey
+      ? encapsulationMapping[encapsulationKey]
+      : undefined,
   };
 }
 
@@ -47,7 +56,7 @@ export function encapsulationPlugin(): Plugin {
             stylesheet: id.split('?')[0],
             componentId,
           });
-          const encapsulated = ngCompiler.encapsulateStyle(code, componentId);
+          const encapsulated = encapsulateViteCssOutput(code, componentId);
           return {
             code: encapsulated,
             map: null,
@@ -56,4 +65,27 @@ export function encapsulationPlugin(): Plugin {
       }
     },
   };
+}
+
+/**
+ * Encapsulate either a Vite CSS JS module (`const __vite__css = "..."`)
+ * or a raw CSS string produced by `?direct` stylesheet requests.
+ */
+export function encapsulateViteCssOutput(
+  code: string,
+  componentId: string,
+): string {
+  const VITE_CSS_CONST_RE = /const __vite__css\s*=\s*("(?:\\.|[^"\\])*")/;
+  const match = VITE_CSS_CONST_RE.exec(code);
+  if (match) {
+    const css = JSON.parse(match[1]) as string;
+    const encapsulated = encapsulateStyle(css, componentId);
+    return (
+      code.slice(0, match.index) +
+      `const __vite__css = ${JSON.stringify(encapsulated)}` +
+      code.slice(match.index + match[0].length)
+    );
+  }
+
+  return encapsulateStyle(code, componentId);
 }

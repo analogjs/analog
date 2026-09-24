@@ -52,7 +52,9 @@ import { afterBodyOpen, bodyInner, headInner } from './utils/stream-html';
 import { isLikelyBot, streamingDisabledByRoute } from './utils/stream-request';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
 
-if (import.meta.env.PROD) {
+// Optional chaining: the server-function dispatch endpoint imports this entry
+// from a Nitro bundle, where `import.meta.env` is not defined at all.
+if (import.meta.env?.PROD) {
   enableProdMode();
 }
 
@@ -116,7 +118,7 @@ function installCaptureDispatcher(): void {
 
 let warnedMissingPrimitive = false;
 function warnMissingPrimitiveOnce(): void {
-  if (warnedMissingPrimitive || !import.meta.env.DEV) return;
+  if (warnedMissingPrimitive || !import.meta.env?.DEV) return;
   warnedMissingPrimitive = true;
   console.warn(
     '[@analogjs/router] renderStream: the streaming hook was not found on ' +

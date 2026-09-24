@@ -1063,7 +1063,7 @@ export function compile(
             type: classRef,
             typeArgumentCount: 0,
             providedIn: {
-              expression: new o.LiteralExpr(meta.providedIn || 'root'),
+              expression: new o.LiteralExpr(meta.providedIn ?? null),
               forwardRef: 0,
             },
           };

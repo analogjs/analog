@@ -92,19 +92,69 @@ export class LanguageSwitcherComponent {
 
 ## URL-Based Locale Routing
 
-To serve different locales at distinct URL paths (e.g., `/en/about`, `/fr/about`), use a locale prefix in your routes. Analog's locale detection will extract the locale from the first URL path segment if it matches a valid BCP 47 language tag (e.g., `en`, `fr`, `en-US`, `zh-CN`).
+Locale detection chooses translations; it does not add locale segments to the file router. For `/en/about` and `/fr/about` to match a page, include that segment in your page structure.
+
+### Explicit pages under `[locale]`
+
+Use a dynamic `[locale]` directory when each URL has its own page component:
+
+```text
+src/app/pages/
+├── index.page.ts
+└── [locale]/
+    ├── index.page.ts
+    ├── about.page.ts
+    └── products/
+        └── [id].page.ts
+```
+
+| File                             | Route                   | Example URL       |
+| -------------------------------- | ----------------------- | ----------------- |
+| `index.page.ts`                  | `/`                     | `/`               |
+| `[locale]/index.page.ts`         | `/:locale`              | `/fr`             |
+| `[locale]/about.page.ts`         | `/:locale/about`        | `/fr/about`       |
+| `[locale]/products/[id].page.ts` | `/:locale/products/:id` | `/fr/products/42` |
+
+For example, the same about page renders in each locale:
+
+```ts
+// src/app/pages/[locale]/about.page.ts
+import { Component } from '@angular/core';
+
+@Component({
+  standalone: true,
+  template: `<h1 i18n="@@aboutTitle">About us</h1>`,
+})
+export default class AboutPage {}
+```
+
+Configure the same supported locales in the platform's `i18n` options and `provideI18n()`. A dynamic route parameter accepts any segment: `[locale]` alone does not restrict URLs to your supported languages. Add application route guards if unsupported prefixes should redirect or return a not-found page.
+
+A componentless `[locale]` directory needs no layout file. If you add `[locale].page.ts` as a shared layout, import `RouterOutlet` from `@angular/router` and render `<router-outlet />` for its child pages.
+
+### Catch-all content routes
+
+For a content-driven site where one component resolves many slugs, use `[locale]/[...slug].page.ts`. It captures the remaining path, such as `/fr/guides/getting-started`, in one wildcard route. Your component must resolve the requested content and handle missing content; a catch-all does not create a separate component for each page. See [nested content routes](/docs/features/routing/content#hierarchical-nested-content) for the content-loading pattern.
+
+For ordinary application pages such as checkout, account, and product details, prefer the explicit page structure above. You do not need a catch-all solely to enable localization.
+
+### Redirecting the root URL
 
 A common pattern is to redirect the root URL to the user's preferred locale:
 
 ```ts
 // src/app/pages/index.page.ts
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { injectLocale } from '@analogjs/router/tokens';
+
 @Component({
   template: '',
 })
 export default class IndexPage {
   constructor() {
     const router = inject(Router);
-    const locale = inject(LOCALE, { optional: true }) ?? 'en';
+    const locale = injectLocale() ?? 'en';
     router.navigate([locale]);
   }
 }
@@ -322,7 +372,7 @@ During development, the Analog dev server provides full i18n support:
 
 - **`<html lang>` injection**: the `lang` attribute on the `<html>` tag is set automatically based on the detected locale for each request.
 - **Translation file HMR**: editing translation files in `i18n/` directories (`.json`, `.xlf`, `.xmb`, `.arb`) triggers an automatic page reload so changes are reflected immediately.
-- **Locale-prefixed routes**: URLs like `http://localhost:5173/fr/about` work out of the box. The SSR middleware detects the locale and loads the correct translations.
+- **Locale-prefixed routes**: URLs like `http://localhost:5173/fr/about` work when your file routes include the locale segment, as shown above. The SSR middleware detects the locale and loads the correct translations.
 
 ## Prerendering
 

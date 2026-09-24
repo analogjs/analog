@@ -206,6 +206,8 @@ describe('angularCompilationPlugin', () => {
 
     expect(createAngularCompilationMock).toHaveBeenCalledOnce();
     expect(initializeMock).toHaveBeenCalledOnce();
+    const hostOptions = initializeMock.mock.calls[0][1];
+    expect(hostOptions.processWebWorker('./worker.ts')).toBe('./worker.ts');
     expect(emitAffectedFilesMock).toHaveBeenCalledOnce();
   });
 

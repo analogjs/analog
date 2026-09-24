@@ -28,6 +28,7 @@ import {
   ResolvedConfig,
   ViteDevServer,
 } from 'vite';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
 import { jitPlugin } from './angular-jit-plugin.js';
 import {
@@ -308,6 +309,14 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   let stylesheetRegistry: AnalogStylesheetRegistry | undefined;
   const sourceFileCache: SourceFileCacheType = new SourceFileCache();
+  const tsSourceFileCache = new Map<string, ts.SourceFile>();
+
+  function invalidateSourceFiles(files: Set<string>) {
+    for (const file of files) {
+      tsSourceFileCache.delete(normalizePath(file));
+    }
+    sourceFileCache.invalidate(files);
+  }
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
@@ -529,6 +538,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         );
         server.watcher.on('add', invalidateCompilationOnFsChange);
         server.watcher.on('unlink', (file) => {
+          const id = normalizePath(file);
+          outputFiles.delete(id);
+          tsSourceFileCache.delete(id);
+          sourceFileCache.invalidate(new Set([id]));
           evictDeletedFileMetadata(file, {
             classNamesMap: classNames as Map<string, string>,
             fileTransformMap,
@@ -544,12 +557,31 @@ export function angular(options?: PluginOptions): Plugin[] {
       async buildStart() {
         // Defer the first compilation in test mode
         if (!isVitestVscode) {
-          pendingCompilation = performCompilation(resolvedConfig);
+          pendingCompilation = performCompilation(
+            this.environment?.config ?? resolvedConfig,
+          );
           await pendingCompilation;
           pendingCompilation = null;
 
           initialCompilation = true;
         }
+      },
+      buildEnd() {
+        if (watchMode) return;
+        nextProgram = undefined;
+        cachedHost = undefined;
+        cachedHostKey = undefined;
+        outputFile = undefined;
+        outputFiles.clear();
+        fileTransformMap.clear();
+        tsSourceFileCache.clear();
+        sourceFileCache.clear();
+        sourceFileCache.modifiedFiles.clear();
+        sourceFileCache.babelFileCache?.clear();
+        sourceFileCache.typeScriptFileCache?.clear();
+        sourceFileCache.referencedFiles = undefined;
+        tsconfigResolver.invalidateAll();
+        releaseCssPreprocessorWorkers();
       },
       async handleHotUpdate(ctx) {
         if (isIgnoredHmrFile(ctx.file)) {
@@ -1138,7 +1170,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           if (isTest) {
             if (isVitestVscode && !initialCompilation) {
               // Do full initial compilation
-              pendingCompilation = performCompilation(resolvedConfig);
+              pendingCompilation = performCompilation(
+                this.environment?.config ?? resolvedConfig,
+              );
               initialCompilation = true;
             }
 
@@ -1147,7 +1181,10 @@ export function angular(options?: PluginOptions): Plugin[] {
               const invalidated = tsMod.lastInvalidationTimestamp;
 
               if (testWatchMode && invalidated) {
-                pendingCompilation = performCompilation(resolvedConfig, [id]);
+                pendingCompilation = performCompilation(
+                  this.environment?.config ?? resolvedConfig,
+                  [id],
+                );
               }
             }
           }
@@ -1297,7 +1334,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
           return {
             code: data,
-            map: typescriptResult.map ?? null,
+            map: typescriptResult.map
+              ? normalizeSourceMapSources(typescriptResult.map, id)
+              : null,
           };
         },
       },
@@ -1308,8 +1347,27 @@ export function angular(options?: PluginOptions): Plugin[] {
             writeFileSync(declarationPath, data, 'utf-8');
           },
         );
+        declarationFiles.length = 0;
+        if (!watchMode) releaseCssPreprocessorWorkers();
       },
     };
+  }
+
+  function normalizeSourceMapSources(map: string, id: string): string {
+    const sourceMap = JSON.parse(map) as {
+      sources?: string[];
+      sourceRoot?: string;
+    };
+    const sourceDirectory = dirname(id);
+    const sourceRoot = sourceMap.sourceRoot ?? '';
+    sourceMap.sources = sourceMap.sources?.map((source) => {
+      if (isAbsolute(source) || /^[a-z][a-z\d+.-]*:/i.test(source)) {
+        return normalizePath(source);
+      }
+      return normalizePath(resolve(sourceDirectory, sourceRoot, source));
+    });
+    delete sourceMap.sourceRoot;
+    return JSON.stringify(sourceMap);
   }
 
   const compilationPlugin = pluginOptions.fastCompile
@@ -1402,9 +1460,13 @@ export function angular(options?: PluginOptions): Plugin[] {
    * It should not be called concurrently. Use `performCompilation` which wraps this method in a lock to ensure only one compilation runs at a time.
    */
   async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
+    if (!jit) {
+      styleTransform = (code: string, filename: string) =>
+        preprocessCSS(code, filename, config);
+    }
     const isProd = config.mode === 'production';
     const modifiedFiles = new Set<string>(ids ?? []);
-    sourceFileCache.invalidate(modifiedFiles);
+    invalidateSourceFiles(modifiedFiles);
 
     if (ids?.length) {
       for (const id of ids || []) {
@@ -1497,7 +1559,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       // Only store cache if in watch mode
       if (watchMode) {
-        augmentHostWithCaching(host, sourceFileCache);
+        augmentHostWithCaching(host, tsSourceFileCache);
       }
     }
 
@@ -2192,7 +2254,7 @@ type ComponentStylesheetHmrOutcome = 'css-update' | 'full-reload';
 
 function logComponentStylesheetHmrOutcome(details: {
   file: string;
-  encapsulation: string;
+  encapsulation: string | undefined;
   diagnosis: ReturnType<typeof diagnoseComponentStylesheetPipeline>;
   outcome: ComponentStylesheetHmrOutcome;
   directModuleId?: string;

@@ -9,3 +9,8 @@ export const belowMinimumSupportedNxVersion = (nxVersion: string): boolean =>
 export const belowMinimumSupportedAngularVersion = (
   angularVersion: string,
 ): boolean => lt(coerce(angularVersion)!, MINIMUM_SUPPORTED_ANGULAR_VERSION);
+
+export const MINIMUM_SUPPORTED_OXLINT_NX_VERSION = '23.2.0';
+export const belowMinimumSupportedOxlintNxVersion = (
+  nxVersion: string,
+): boolean => lt(coerce(nxVersion)!, MINIMUM_SUPPORTED_OXLINT_NX_VERSION);

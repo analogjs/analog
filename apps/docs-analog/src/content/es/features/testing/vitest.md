@@ -382,11 +382,13 @@ export default defineConfig(({ mode }) => ({
 
 ### Con Nx
 
-Para espacios de trabajo Nx, importa y usa el plugin `nxViteTsPaths` del paquete `@nx/vite`.
+Los espacios de trabajo Nx usan el mismo plugin `vite-tsconfig-paths`. El plugin `nxViteTsPaths` del paquete `@nx/vite` está obsoleto y se elimina en Nx 24, así que reemplázalo por `viteTsConfigPaths()`.
 
 ```ts
 /// <reference types="vitest" />
+import viteTsConfigPaths from 'vite-tsconfig-paths';
+
 export default defineConfig(({ mode }) => ({
-  plugins: [angular(), nxViteTsPaths()],
+  plugins: [angular(), viteTsConfigPaths()],
 }));
 ```

@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { defineConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 
@@ -17,7 +17,9 @@ export default defineConfig(({ command, mode }) => {
     cacheDir: '../../node_modules/.vite/libs/top-bar',
     plugins: [
       angular({ jit: false, tsconfig }),
-      nxCopyAssetsPlugin(['*.md', 'package.json']),
+      viteStaticCopy({
+        targets: [{ src: ['*.md', 'package.json'], dest: '.' }],
+      }),
     ],
     resolve: {
       mainFields: ['module'],

@@ -7,6 +7,7 @@ import { debugStyles } from './utils/debug.js';
 import { discoverAnalogIntegrations } from './analog-plugin-interop.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
 export function jitPlugin({
   inlineStylesExtension,
@@ -79,6 +80,11 @@ export function jitPlugin({
       }
 
       return;
+    },
+    closeBundle() {
+      if (!this.meta?.watchMode) {
+        releaseCssPreprocessorWorkers();
+      }
     },
   };
 }

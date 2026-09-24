@@ -808,11 +808,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               serverFnIdPlugin(normalizePath(resolve(workspaceRoot, rootDir))),
             ],
           },
-          handlers: [...pageHandlers],
+          ...(hasServerFns
+            ? {
+                moduleSideEffects: [
+                  '@angular/compiler',
+                  ...serverFnModules.map((m) => normalizePath(m.file)),
+                ],
+              }
+            : {}),
+          handlers: [...pageHandlers, ...serverFnHandlers],
           routeRules: undefined,
           virtual: {
             '#ANALOG_SSR_RENDERER': ssrRenderer(),
             '#ANALOG_CLIENT_RENDERER': clientRenderer(),
+            ...serverFnVirtual,
           },
         };
 
@@ -1059,6 +1068,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               ...nitroConfig,
               handlers: [
                 ...pageHandlers,
+                ...serverFnHandlers,
                 // Preserve the renderer catch-all handler added above
                 {
                   handler: rendererHandler,

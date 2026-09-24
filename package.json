@@ -226,6 +226,7 @@
     "vite": "catalog:",
     "vite-plugin-eslint": "catalog:",
     "vite-plugin-inspect": "catalog:",
+    "vite-plugin-static-copy": "catalog:",
     "vite-tsconfig-paths": "catalog:",
     "vitefu": "catalog:",
     "vitest": "catalog:",
