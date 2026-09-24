@@ -3,7 +3,22 @@ import * as realFs from 'node:fs';
 import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { normalizePath } from 'vite';
+import { normalizePath, resolveConfig } from 'vite';
+
+vi.mock('./utils/devkit.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./utils/devkit.js')>();
+  return {
+    ...actual,
+    // Exercise compilation without Map methods, as with Angular 22.2's cache.
+    SourceFileCache: class {
+      private cache = new actual.SourceFileCache();
+      modifiedFiles = this.cache.modifiedFiles;
+      typeScriptFileCache = this.cache.typeScriptFileCache;
+      invalidate = this.cache.invalidate.bind(this.cache);
+      clear = this.cache.clear.bind(this.cache);
+    },
+  };
+});
 
 import type ts from 'typescript';
 import * as tsModule from 'typescript';
@@ -1179,6 +1194,62 @@ export class AppComponent {}
     expect(entry.originalLine).toBe(7);
     expect(entry.originalColumn).toBe(13);
     expect(sources).toContain(normalizePath(templatePath));
+  }, 60_000);
+
+  it('evicts deleted source files before recompiling a recreated file', async () => {
+    const mainPlugin = createAppBuildPlugin();
+    const source = (value: string) => `
+      import { Component } from '@angular/core';
+      @Component({ standalone: true, template: '' })
+      export class AppComponent { value = '${value}'; }
+    `;
+    realFs.writeFileSync(componentPath, source('before-delete'));
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'development' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const listeners = new Map<string, (file: string) => void>();
+    mainPlugin.configureServer({
+      watcher: {
+        on: (event: string, listener: (file: string) => void) =>
+          listeners.set(event, listener),
+      },
+    });
+    await mainPlugin.buildStart.call(ctx);
+    const before = await mainPlugin.transform.handler.call(
+      ctx,
+      source('before-delete'),
+      componentPath,
+    );
+    expect(before.code).toContain('before-delete');
+
+    realFs.unlinkSync(componentPath);
+    vi.useFakeTimers();
+    try {
+      listeners.get('unlink')!(componentPath);
+    } finally {
+      // Recompile explicitly below instead of waiting for the filesystem debounce.
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+    realFs.writeFileSync(componentPath, source('after-recreate'));
+    await mainPlugin.buildStart.call(ctx);
+    const after = await mainPlugin.transform.handler.call(
+      ctx,
+      source('after-recreate'),
+      componentPath,
+    );
+    expect(after.code).toContain('after-recreate');
+    expect(after.code).not.toContain('before-delete');
+    expect(ctx.error).not.toHaveBeenCalled();
   }, 60_000);
 
   it('releases production compilation output at buildEnd', async () => {

@@ -8,7 +8,7 @@ const debugCache = createDebug('analog-transform-cache');
 
 /**
  * The `{ get, put }` shape `@angular/build`'s `JavaScriptTransformer`
- * accepts as its third constructor argument. Keys are SHA-256 digests the
+ * accepts. Keys are content hashes the
  * transformer derives from the file bytes plus every option that affects
  * output, so entries are immutable and never need invalidation — but the
  * digest does NOT cover the linker version, so stores must be namespaced
