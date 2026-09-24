@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { basename, dirname, relative, resolve } from 'node:path';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
-import type { Plugin, UserConfig } from 'vite';
+import type { DevEnvironment, Plugin, UserConfig } from 'vite';
 
 import type { Options } from '../options.js';
 import { SERVER_MODE_ID } from '../../server-mode-plugin.js';
@@ -69,11 +69,22 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   let ssrEntryMarkerPath = '';
   let userPublicDir: string | undefined;
   let isBuild = false;
+  const ssrDepsReady = new WeakMap<DevEnvironment, Promise<void>>();
   // The document the client environment emitted for this build, captured in
   // `writeBundle` below. A build must render around this rather than the
   // source document: the source points at the unbundled entry, which only
   // resolves while Vite is serving.
   let builtIndexHtml: string | undefined;
+
+  function waitForSsrDeps(environment: DevEnvironment): Promise<void> {
+    let ready = ssrDepsReady.get(environment);
+    if (!ready) {
+      // Vite's subsequent init() calls return before the first run finishes.
+      ready = Promise.resolve(environment.depsOptimizer?.init());
+      ssrDepsReady.set(environment, ready);
+    }
+    return ready;
+  }
 
   function refreshContext(viteRoot: string | undefined) {
     const root = viteRoot ?? process.cwd();
@@ -241,8 +252,21 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       return overrides;
     },
 
+    configureServer(server) {
+      const environment = server.environments['ssr'];
+      if (ssr && environment) {
+        // Capture initialization before listen(); entry resolution propagates failures.
+        void waitForSsrDeps(environment).catch(() => undefined);
+      }
+    },
+
     resolveId(id) {
       if (id === ssrEntryMarkerPath || id === SSR_ENTRY_VIRTUAL_ID) {
+        if (ssr && !isBuild && this.environment.name === 'ssr') {
+          return waitForSsrDeps(this.environment as DevEnvironment).then(
+            () => SSR_ENTRY_VIRTUAL_ID,
+          );
+        }
         return SSR_ENTRY_VIRTUAL_ID;
       }
       return null;
