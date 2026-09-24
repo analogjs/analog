@@ -1,3 +1,10 @@
+# [2.8.0-beta.9](https://github.com/analogjs/analog/compare/v2.8.0-beta.8...v2.8.0-beta.9) (2026-09-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support Angular 22.2 transformer and source caches ([#2576](https://github.com/analogjs/analog/issues/2576)) ([cfd19bb](https://github.com/analogjs/analog/commit/cfd19bb74b70b4968fe20e1c14e8937349f1660c))
+- **vitest-angular:** support Vitest 5 peer dependency ([d1cdf92](https://github.com/analogjs/analog/commit/d1cdf929e8627320f00c3e63dfce78c9521a051e))
+
 # [2.8.0-beta.8](https://github.com/analogjs/analog/compare/v2.8.0-beta.7...v2.8.0-beta.8) (2026-09-24)
 
 ### Bug Fixes
