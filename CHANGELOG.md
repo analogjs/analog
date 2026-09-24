@@ -1,3 +1,9 @@
+# [3.0.0-alpha.90](https://github.com/analogjs/analog/compare/v3.0.0-alpha.89...v3.0.0-alpha.90) (2026-09-24)
+
+### Bug Fixes
+
+- **platform:** skip Nitro integration during tests ([220c6bc](https://github.com/analogjs/analog/commit/220c6bcd3116f936b72d7584ad1b853879c5a699))
+
 # [3.0.0-alpha.89](https://github.com/analogjs/analog/compare/v3.0.0-alpha.88...v3.0.0-alpha.89) (2026-09-24)
 
 ### Bug Fixes
