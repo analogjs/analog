@@ -1,3 +1,21 @@
+# [3.0.0-alpha.89](https://github.com/analogjs/analog/compare/v3.0.0-alpha.88...v3.0.0-alpha.89) (2026-09-24)
+
+### Bug Fixes
+
+- **content:** escape html in the marked code renderer ([7c6febf](https://github.com/analogjs/analog/commit/7c6febf13456e488f5be0e2647fbb1446e7d75d4))
+- **content:** escape mermaid output and add sha-256 digest tests ([0688cb0](https://github.com/analogjs/analog/commit/0688cb0ba622a8594f1294acc66cfa728a794fbe))
+- **content:** resolve fragment-only anchor hrefs against the current document, not <base href> ([#2501](https://github.com/analogjs/analog/issues/2501)) ([83d299a](https://github.com/analogjs/analog/commit/83d299a4c111546ecc9ac658bf7269124e207215))
+- **router:** guard import.meta.env access in streaming SSR renderer ([#2495](https://github.com/analogjs/analog/issues/2495)) ([b18f2be](https://github.com/analogjs/analog/commit/b18f2be3a835ac06d57e074a2c2bb48f1e41d7f6))
+- **router:** serialize cache-key fields unambiguously ([5509aeb](https://github.com/analogjs/analog/commit/5509aeb5847ce40210c98e7b51a0e7061cd7e580))
+- **router:** use SHA-256 for TransferState cache keys ([76f54a6](https://github.com/analogjs/analog/commit/76f54a6fe56813dac024a00034249aff1656b950))
+- **vite-plugin-angular:** fix hmr plus :host styles in .scss issue ([#2493](https://github.com/analogjs/analog/issues/2493)) ([a0e2115](https://github.com/analogjs/analog/commit/a0e21150a3fa20c2c177335d2385260331369621))
+- **vite-plugin-angular:** preserve source maps across TypeScript transforms ([#2506](https://github.com/analogjs/analog/issues/2506)) ([cad322b](https://github.com/analogjs/analog/commit/cad322b2dff5af4d6c7a2b095ee36bcfca5840e2))
+- **vite-plugin-angular:** return worker path unchanged from processWebWorker ([#2488](https://github.com/analogjs/analog/issues/2488)) ([2851c69](https://github.com/analogjs/analog/commit/2851c698d8204735568330211ae6b81e833bc9d5))
+- **vite-plugin-angular:** support Angular 22.2 transformer and source caches ([#2576](https://github.com/analogjs/analog/issues/2576)) ([cfd19bb](https://github.com/analogjs/analog/commit/cfd19bb74b70b4968fe20e1c14e8937349f1660c))
+- **vite-plugin-angular:** use null for default providedIn setting for Injectable ([#2515](https://github.com/analogjs/analog/issues/2515)) ([c555ba6](https://github.com/analogjs/analog/commit/c555ba67efdb8f876f3b99c63e07326389e417bd))
+- **vite-plugin-nitro:** exclude load-only server-function hosts ([#2543](https://github.com/analogjs/analog/issues/2543)) ([68d67c5](https://github.com/analogjs/analog/commit/68d67c51171a88d7f87a0ae09e2bfdf317147f49))
+- **vitest-angular:** support Vitest 5 peer dependency ([d1cdf92](https://github.com/analogjs/analog/commit/d1cdf929e8627320f00c3e63dfce78c9521a051e))
+
 # [3.0.0-alpha.88](https://github.com/analogjs/analog/compare/v3.0.0-alpha.87...v3.0.0-alpha.88) (2026-09-24)
 
 ### Bug Fixes
