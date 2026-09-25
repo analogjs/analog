@@ -1,3 +1,8 @@
+// Keep the plugin placeholders at module scope so library bundlers do not
+// inline the empty objects into the getters before Vite replaces them.
+let ANALOG_CONTENT_FILE_LIST = {};
+let ANALOG_CONTENT_ROUTE_FILES = {};
+
 /**
  * Returns the list of content files by filename with ?analog-content-list=true.
  * We use the query param to transform the return into an array of
@@ -6,8 +11,6 @@
  * @returns
  */
 export const getContentFilesList = () => {
-  let ANALOG_CONTENT_FILE_LIST = {};
-
   return ANALOG_CONTENT_FILE_LIST as Record<string, Record<string, any>>;
 };
 
@@ -17,7 +20,5 @@ export const getContentFilesList = () => {
  * @returns
  */
 export const getContentFiles = () => {
-  let ANALOG_CONTENT_ROUTE_FILES = {};
-
   return ANALOG_CONTENT_ROUTE_FILES;
 };
