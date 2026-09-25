@@ -1,3 +1,9 @@
+## [2.7.5](https://github.com/analogjs/analog/compare/v2.7.4...v2.7.5) (2026-09-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** lazily create JavaScript transformers ([722c16e](https://github.com/analogjs/analog/commit/722c16e8d5a0803841e06e4f4c4384bfa1d64df4)), closes [#2581](https://github.com/analogjs/analog/issues/2581)
+
 ## [2.7.4](https://github.com/analogjs/analog/compare/v2.7.3...v2.7.4) (2026-09-24)
 
 ### Bug Fixes
