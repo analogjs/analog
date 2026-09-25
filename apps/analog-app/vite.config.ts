@@ -94,6 +94,7 @@ export default defineConfig(async ({ mode, command }) => {
       }),
       nitro({
         routeRules: {
+          '/products/**': { ssr: true },
           '/client': { ssr: false },
           '/cart/**': { ssr: false },
           '/404.html': { ssr: false },
