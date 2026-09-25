@@ -213,15 +213,6 @@ function unwrapRouteMetaObject(
     return initializer;
   }
 
-  if (
-    initializer.type === 'CallExpression' &&
-    initializer.callee?.type === 'Identifier' &&
-    initializer.callee.name === 'defineRouteMeta'
-  ) {
-    const firstArgument = initializer.arguments?.[0];
-    return firstArgument?.type === 'ObjectExpression' ? firstArgument : null;
-  }
-
   return null;
 }
 
