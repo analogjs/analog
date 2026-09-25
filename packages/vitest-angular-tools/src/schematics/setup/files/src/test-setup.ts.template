@@ -5,7 +5,7 @@ import '@analogjs/vitest-angular/setup-serializers';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 <% if (browserMode) { %>
-setupTestBed({ browserMode: true });
+setupTestBed({ teardown: { destroyAfterEach: false } });
 <% } else { %>
 setupTestBed();
 <% } %>

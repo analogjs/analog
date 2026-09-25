@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => {
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/vitest-angular-tools',
+    resolve: {
+      alias: {
+        '@analogjs/vitest-angular/setup-testbed': path.resolve(
+          __dirname,
+          '../vitest-angular/setup-testbed.ts',
+        ),
+      },
+    },
     build: {
       target: 'esnext',
       outDir: '../../dist/packages/vitest-angular-tools',
