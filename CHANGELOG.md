@@ -1,3 +1,9 @@
+# [2.8.0-beta.11](https://github.com/analogjs/analog/compare/v2.8.0-beta.10...v2.8.0-beta.11) (2026-09-25)
+
+### Bug Fixes
+
+- **content:** restore docs content loading and hydration ([#2586](https://github.com/analogjs/analog/issues/2586)) ([ababebb](https://github.com/analogjs/analog/commit/ababebb3ab611a2f0417ed283ef493f43d3e52b3))
+
 # [2.8.0-beta.10](https://github.com/analogjs/analog/compare/v2.8.0-beta.9...v2.8.0-beta.10) (2026-09-25)
 
 ### Bug Fixes
