@@ -30,6 +30,9 @@ vi.mock('./utils/devkit.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./utils/devkit.js')>();
   return {
     ...actual,
+    // Zone patches MessagePort in this suite; compile in-process.
+    createAngularCompilation: (jit: boolean, browserOnly: boolean) =>
+      actual.createAngularCompilation(jit, browserOnly, false),
     // Exercise compilation without Map methods, as with Angular 22.2's cache.
     SourceFileCache: class {
       private cache = new actual.SourceFileCache();
@@ -1315,6 +1318,66 @@ export class AppComponent {}
     await buildStart;
 
     expect(result?.code).toContain('ɵcmp');
+    expect(ctx.warn).not.toHaveBeenCalled();
+  }, 60_000);
+
+  it('emits JavaScript through the compilation API with isolatedModules enabled', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const tsconfig = JSON.parse(realFs.readFileSync(tsconfigPath, 'utf-8'));
+    Object.assign(tsconfig.compilerOptions, {
+      isolatedModules: true,
+      declaration: true,
+      mapRoot: './maps',
+      sourceRoot: './src',
+    });
+    realFs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig));
+    realFs.writeFileSync(
+      componentPath,
+      realFs
+        .readFileSync(componentPath, 'utf-8')
+        .replace("  styleUrl: './app.component.scss',", ''),
+    );
+    const mainPlugin = createAppBuildPlugin({
+      experimental: { useAngularCompilationAPI: true },
+    });
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+      css: {},
+    };
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    let result;
+    try {
+      await mainPlugin.buildStart.call(ctx);
+      result = await mainPlugin.transform.handler.call(
+        ctx,
+        realFs.readFileSync(componentPath, 'utf-8'),
+        componentPath,
+      );
+    } finally {
+      await mainPlugin.buildEnd.call(ctx);
+      await mainPlugin.closeBundle();
+    }
+
+    expect(result.code).toContain('ɵɵdefineComponent');
+    expect(result.code).toContain('hello');
+    expect(result.code).not.toContain('declare class');
+    expect(result.code).not.toContain(': any');
+    expect(ctx.error).not.toHaveBeenCalled();
     expect(ctx.warn).not.toHaveBeenCalled();
   }, 60_000);
 

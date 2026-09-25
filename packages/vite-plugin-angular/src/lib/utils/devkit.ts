@@ -55,7 +55,10 @@ if (angularMajor < 17) {
   sourceFileCache = SourceFileCache;
   cjt = createJitResourceTransformer;
   jt = JavaScriptTransformer;
-  createAngularCompilation = createAngularCompilationFn;
+  createAngularCompilation = async (...args: unknown[]) => {
+    await initializeHash?.();
+    return createAngularCompilationFn(...args);
+  };
 
   if (usesTransformOptions) {
     ({ initializeHash } = require(

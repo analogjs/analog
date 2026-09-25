@@ -1048,6 +1048,35 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
+    const transformCompilerOptions = (
+      tsCompilerOptions: compilerCli.CompilerOptions,
+    ) => {
+      applyLiveReloadCompilerOptions(tsCompilerOptions, {
+        liveReload: pluginOptions.liveReload,
+        watchMode,
+        initialCompilationDone: liveReloadExternalStyles,
+      });
+
+      if (tsCompilerOptions.compilationMode === 'partial') {
+        tsCompilerOptions['supportTestBed'] = true;
+        tsCompilerOptions['supportJitMode'] = true;
+      }
+
+      // Force TypeScript to strip type annotations from emitted JavaScript.
+      if (!isTest) {
+        tsCompilerOptions['isolatedModules'] = false;
+      }
+
+      // Angular disables sourcemaps; inherited roots would trigger TS5069.
+      tsCompilerOptions['mapRoot'] = '';
+      tsCompilerOptions['sourceRoot'] = '';
+
+      if (isTest) {
+        tsCompilerOptions['supportTestBed'] = true;
+      }
+
+      return tsCompilerOptions;
+    };
     const compilationResult = await angularCompilation.initialize(
       resolvedTsConfigPath,
       {
@@ -1108,59 +1137,22 @@ export function angular(options?: PluginOptions): Plugin[] {
           return workerFile;
         },
       },
-      (tsCompilerOptions) => {
-        applyLiveReloadCompilerOptions(tsCompilerOptions, {
-          liveReload: pluginOptions.liveReload,
-          watchMode,
-          initialCompilationDone: liveReloadExternalStyles,
-        });
-
-        if (tsCompilerOptions.compilationMode === 'partial') {
-          // These options can't be false in partial mode
-          tsCompilerOptions['supportTestBed'] = true;
-          tsCompilerOptions['supportJitMode'] = true;
-        }
-
-        // The Angular Compilation API path must NOT enable declaration emit for
-        // library builds. Unlike the legacy path, it has no mechanism to write
-        // `.d.ts` files to disk, and `@angular/build`'s `emitAffectedFiles()`
-        // keys outputs by source file (last-write-wins) — so a `.d.ts` would
-        // overwrite the `.js` content for the same source, feeding declaration
-        // text back to Vite as if it were the module source. Enabling
-        // `inlineSources` here is also invalid: this path forces `sourceMap`
-        // off, so an unpaired `inlineSources` trips TS5051. Because declaration
-        // emit never runs here, an explicit `declaration: false` (#2348/#2352)
-        // is already the effective state. See #2324.
-
-        // Force whole-program TypeScript transpilation. `@angular/build`'s
-        // `emitAffectedFiles()` skips full TS emit when `isolatedModules` is on
-        // and no sourcemap is set, instead printing Angular-only transforms that
-        // leave TS type annotations in the output. Analog returns that emitted
-        // content to Vite/Rolldown as the module source, so the leftover types
-        // (e.g. `App_Factory(__ngFactoryType__: any)`) fail to parse. Disabling
-        // `isolatedModules` for emit makes TypeScript strip types, matching the
-        // legacy path. Currently-working builds are unaffected (they already
-        // have it off); only the otherwise-broken `isolatedModules: true` case
-        // changes. The user's editor/`tsc` still enforces it. See #2324.
-        if (!isTest) {
-          tsCompilerOptions['isolatedModules'] = false;
-        }
-
-        // Mirror the legacy `readConfiguration` path (#2322): `@angular/build`'s
-        // `loadConfiguration()` forces `sourceMap`/`declarationMap` off but does
-        // not clear an inherited `mapRoot`/`sourceRoot`, so a monorepo base
-        // tsconfig that sets either trips TS5069 here. Sourcemaps are already
-        // off in this path, so clearing them is safe. See #2449.
-        tsCompilerOptions['mapRoot'] = '';
-        tsCompilerOptions['sourceRoot'] = '';
-
-        if (isTest) {
-          // Allow `TestBed.overrideXXX()` APIs.
-          tsCompilerOptions['supportTestBed'] = true;
-        }
-
-        return tsCompilerOptions;
-      },
+      angularFullVersion >= 220200
+        ? {
+            enableHmr: pluginOptions.liveReload && watchMode,
+            externalRuntimeStyles: shouldEnableExternalRuntimeStyles({
+              liveReload: pluginOptions.liveReload,
+              watchMode,
+              initialCompilationDone: liveReloadExternalStyles,
+            }),
+            includeTestMetadata:
+              isTest || (pluginOptions.liveReload && watchMode),
+            // Force TypeScript emit without adding coverage instrumentation.
+            instrumentForCoverage: !isTest,
+          }
+        : (transformCompilerOptions as unknown as Parameters<
+            typeof angularCompilation.initialize
+          >[2]),
     );
 
     compilationResult.externalStylesheets?.forEach((value, key) => {
