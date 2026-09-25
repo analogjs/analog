@@ -9,6 +9,7 @@ import { I18nPrerenderOptions } from '../options.js';
  *
  * The default locale's routes are included both with and without the prefix
  * so that `/about` and `/en/about` both render.
+ * Routes that already have a configured locale prefix are kept as-is.
  *
  * @param routes - The original routes to expand
  * @param i18n - The i18n prerender configuration
@@ -18,28 +19,31 @@ export function expandRoutesWithLocales(
   routes: string[],
   i18n: I18nPrerenderOptions,
 ): string[] {
-  const expanded: string[] = [];
+  const expanded = new Set<string>();
 
   for (const route of routes) {
-    // Skip API routes — they don't need locale prefixes
-    if (route.includes('/_analog/') || route.startsWith('/api/')) {
-      expanded.push(route);
+    // API routes and explicitly localized routes don't need locale prefixes.
+    const firstSegment = route.split('/').filter(Boolean)[0];
+    if (
+      route.includes('/_analog/') ||
+      route.startsWith('/api/') ||
+      i18n.locales.includes(firstSegment)
+    ) {
+      expanded.add(route);
       continue;
     }
 
     for (const locale of i18n.locales) {
       const prefix = `/${locale}`;
       const localizedRoute = route === '/' ? prefix : `${prefix}${route}`;
-      expanded.push(localizedRoute);
+      expanded.add(localizedRoute);
     }
 
     // Keep the unprefixed route for the default locale
-    if (!expanded.includes(route)) {
-      expanded.push(route);
-    }
+    expanded.add(route);
   }
 
-  return expanded;
+  return [...expanded];
 }
 
 /**

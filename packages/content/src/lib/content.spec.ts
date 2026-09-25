@@ -5,13 +5,18 @@ import {
   TestBed,
 } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { expect } from 'vitest';
-import { Observable, of } from 'rxjs';
+import { ApplicationRef } from '@angular/core';
+import { afterEach, expect, vi } from 'vitest';
+import { BehaviorSubject, lastValueFrom, Observable, of } from 'rxjs';
 
 import { CONTENT_FILES_TOKEN } from './content-files-token';
 import { injectContent } from './content';
 import { ContentFile } from './content-file';
-import { ContentRenderer, NoopContentRenderer } from './content-renderer';
+import {
+  ContentRenderer,
+  NoopContentRenderer,
+  RenderedContent,
+} from './content-renderer';
 import { RenderTaskService } from './render-task.service';
 
 describe('injectContent', () => {
@@ -241,6 +246,79 @@ Body content`),
     flushMicrotasks();
     flush();
   }));
+
+  describe('render task cleanup', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    it.each([false, true])(
+      'becomes stable after content rendering completes with SSR=%s',
+      async (ssr) => {
+        vi.stubEnv('SSR', ssr);
+        const { injectContent } = setup({
+          customParam: { customFilename: 'test' },
+          contentFiles: {
+            '/src/content/test.md': () => Promise.resolve('# Test content'),
+          },
+        });
+        let finishRendering!: (content: RenderedContent) => void;
+        vi.spyOn(TestBed.inject(ContentRenderer), 'render').mockReturnValue(
+          new Promise((resolve) => (finishRendering = resolve)),
+        );
+        let stable = false;
+        const stability = TestBed.inject(ApplicationRef).isStable.subscribe(
+          (value) => (stable = value),
+        );
+        const content = lastValueFrom(injectContent());
+        await new Promise((resolve) => setTimeout(resolve, 20));
+
+        expect(stable).toBe(false);
+
+        finishRendering({ content: '# Test content', toc: [] });
+
+        expect(await content).toEqual(
+          expect.objectContaining({ content: '# Test content' }),
+        );
+        expect(stable).toBe(true);
+        stability.unsubscribe();
+      },
+    );
+
+    it('becomes stable after each client-side route change', async () => {
+      vi.stubEnv('SSR', false);
+      const { injectContent } = setup({
+        contentFiles: {
+          '/src/content/first.md': () => Promise.resolve('First page'),
+          '/src/content/second.md': () => Promise.resolve('Second page'),
+        },
+      });
+      const params = new BehaviorSubject(convertToParamMap({ slug: 'first' }));
+      TestBed.overrideProvider(ActivatedRoute, {
+        useValue: { paramMap: params },
+      });
+      let stable = false;
+      const stability = TestBed.inject(ApplicationRef).isStable.subscribe(
+        (value) => (stable = value),
+      );
+      const onContent = vi.fn();
+      const content = injectContent().subscribe(onContent);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(stable).toBe(true);
+      params.next(convertToParamMap({ slug: 'second' }));
+      expect(stable).toBe(false);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(onContent).toHaveBeenLastCalledWith(
+        expect.objectContaining({ content: 'Second page' }),
+      );
+      expect(stable).toBe(true);
+      content.unsubscribe();
+      stability.unsubscribe();
+    });
+  });
 
   function setup(
     args: Partial<{
