@@ -3,7 +3,6 @@
 import { resolve } from 'node:path';
 import analog from '@analogjs/platform';
 import tailwindcss from '@tailwindcss/vite';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
 import {
   admonitionExtension,
@@ -22,6 +21,9 @@ const NON_DEFAULT_LOCALES = ['de', 'es', 'pt-br', 'zh-hans'] as const;
 
 export default defineConfig(({ mode }) => ({
   root: import.meta.dirname,
+  resolve: {
+    tsconfigPaths: true,
+  },
   build: {
     outDir: '../../dist/apps/docs-analog/client',
     reportCompressedSize: true,
@@ -137,7 +139,6 @@ export default defineConfig(({ mode }) => ({
     }),
     brokenLinksPlugin({ distDir: CLIENT_DIST }),
     tailwindcss(),
-    viteTsConfigPaths(),
   ],
   test: {
     reporters: ['default'],
