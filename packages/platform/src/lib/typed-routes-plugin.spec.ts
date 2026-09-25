@@ -141,7 +141,39 @@ describe('typed route generation', () => {
       readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
     ).toContain('"/about"');
   });
-  it('regenerates for add and unlink events but excludes server handlers', () => {
+  it('references routeMeta and load exports from page modules', () => {
+    const root = fixture();
+    const pages = join(root, 'src/app/pages');
+    writeFileSync(
+      join(pages, 'users.[id].page.ts'),
+      'const routeMeta = {};\nexport { routeMeta };\nexport default class Page {}',
+    );
+    writeFileSync(
+      join(pages, 'users.[id].server.ts'),
+      'export async function load() { return {}; }',
+    );
+    writeFileSync(
+      join(pages, 'about.page.ts'),
+      '// routeMeta\nexport default class Page {}',
+    );
+    writeFileSync(
+      join(pages, 'about.server.ts'),
+      'export type load = () => void;',
+    );
+    configure(root);
+    const generated = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
+    expect(generated).toContain(
+      'routeMeta: typeof import("./app/pages/users.[id].page").routeMeta;',
+    );
+    expect(generated).toContain(
+      'load: typeof import("./app/pages/users.[id].server").load;',
+    );
+    expect(generated.match(/typeof import/g)).toHaveLength(2);
+  });
+  it('regenerates for route and page load changes but excludes server handlers', () => {
     const root = fixture();
     const plugin = configure(root);
     const listeners = new Map<string, (path: string) => void>();
@@ -171,5 +203,11 @@ describe('typed route generation', () => {
     expect(
       readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
     ).not.toContain('/api');
+    const load = join(root, 'src/app/pages/users.[id].server.ts');
+    writeFileSync(load, 'export const load = async () => ({});');
+    listeners.get('add')!(load);
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('load: typeof import("./app/pages/users.[id].server").load;');
   });
 });

@@ -75,8 +75,27 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         `[analog] Route collisions detected: ${collisions.map((c) => `${c.fullPath}: ${c.keptFile}, ${c.droppedFile}`).join('; ')}`,
       );
     }
-    const output = generateRouteTableDeclaration(manifest);
     const outputPath = join(root, outFile);
+    const output = generateRouteTableDeclaration(manifest, (filename) => {
+      const pageFile = [
+        join(root, filename),
+        join(workspaceRoot, filename),
+        filename,
+      ].find((file) => existsSync(file));
+      if (!pageFile) return undefined;
+      const serverFile = pageFile.replace(/\.page\.ts$/, '.server.ts');
+      return {
+        routeMeta: hasNamedExport(pageFile, 'routeMeta')
+          ? toImportSpecifier(dirname(outputPath), pageFile)
+          : undefined,
+        load:
+          serverFile !== pageFile &&
+          existsSync(serverFile) &&
+          hasNamedExport(serverFile, 'load')
+            ? toImportSpecifier(dirname(outputPath), serverFile)
+            : undefined,
+      };
+    });
     const exists = existsSync(outputPath);
     const current = exists ? readFileSync(outputPath, 'utf8') : '';
     if (current !== output && !sameDeclarations(current, output)) {
@@ -134,6 +153,42 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       }
     },
   };
+}
+
+function toImportSpecifier(fromDir: string, file: string): string {
+  const specifier = normalizePath(relative(fromDir, file)).replace(/\.ts$/, '');
+  return specifier.startsWith('.') ? specifier : `./${specifier}`;
+}
+
+function hasNamedExport(file: string, name: string): boolean {
+  const source = readFileSync(file, 'utf8');
+  if (!source.includes(name)) return false;
+  const { program, errors } = parseSync(file, source);
+  if (errors.length) return false;
+  return program.body.some((statement) => {
+    if (
+      statement.type !== 'ExportNamedDeclaration' ||
+      statement.exportKind === 'type'
+    ) {
+      return false;
+    }
+    const declaration = statement.declaration;
+    if (declaration?.type === 'VariableDeclaration') {
+      return declaration.declarations.some(
+        (item) => item.id.type === 'Identifier' && item.id.name === name,
+      );
+    }
+    if (declaration?.type === 'FunctionDeclaration') {
+      return declaration.id?.name === name;
+    }
+    return statement.specifiers.some(
+      (specifier) =>
+        specifier.exportKind !== 'type' &&
+        (specifier.exported.type === 'Identifier'
+          ? specifier.exported.name
+          : specifier.exported.value) === name,
+    );
+  });
 }
 
 function sameDeclarations(current: string, output: string): boolean {

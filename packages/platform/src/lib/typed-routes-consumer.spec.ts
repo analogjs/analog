@@ -16,7 +16,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { typedRoutes } from './typed-routes-plugin.js';
 
-describe('typed routing consumer integration', () => {
+describe('typed routing consumer integration', { timeout: 20_000 }, () => {
   const roots: string[] = [];
   afterEach(() =>
     roots
@@ -82,7 +82,7 @@ describe('typed routing consumer integration', () => {
     writeFileSync(
       join(root, 'src/consumer.ts'),
       `
-      import { toRoute, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
+      import { toRoute, injectNavigate, injectParams, injectQuery, injectRouteData } from '@analogjs/router';
       toRoute('/about');
       toRoute('/users/[id]', { params: { id: '42' } });
       toRoute('/users/[id]', { params: { id: 0 } });
@@ -100,10 +100,17 @@ describe('typed routing consumer integration', () => {
       const id: string = params().id;
       const query = injectQuery('/users/[id]');
       const page: string | string[] | undefined = query()['page'];
+      const untypedParams: Record<string, string | undefined> = injectParams()();
+      const untypedQuery: Record<string, string | string[] | undefined> = injectQuery()();
+      const untypedData: Record<string, unknown> = injectRouteData()();
       const navigate = injectNavigate();
       navigate('/about', { replaceUrl: true });
       navigate('/users/[id]', { params: { id: '42' } }, { replaceUrl: true });
       navigate('/users/[id]', { params: { id: 42 } });
+      navigate('/about', { query: { q: 'x' } }, { queryParamsHandling: 'merge', preserveFragment: true });
+      navigate('/about', { queryParamsHandling: 'preserve' });
+      navigate('/about', { query: { page: 2, archived: true, tag: ['a', 1] } });
+      navigate('/about', { query: { q: null } }, { queryParamsHandling: 'merge' });
       navigate('/docs/[...slug]', { params: { slug: [1, 'a'] } });
       // @ts-expect-error navigation also requires non-empty catch-all params
       navigate('/docs/[...slug]', { params: { slug: [] } });
@@ -137,6 +144,14 @@ describe('typed routing consumer integration', () => {
       injectParams('/missing');
       // @ts-expect-error query helpers also require a known route
       injectQuery('/missing');
+      // @ts-expect-error untyped params may be missing
+      const untypedId: string = injectParams()()['id'];
+      // @ts-expect-error typed query replaces queryParams
+      navigate('/about', undefined, { queryParams: { q: 'x' } });
+      // @ts-expect-error query values are strings, numbers, or booleans
+      toRoute('/about', { query: { since: new Date() } });
+      // @ts-expect-error functional updaters need injectNavigate(from)
+      navigate('/users/[id]', { params: () => ({ id: '42' }) });
     `,
     );
     return root;
@@ -226,7 +241,7 @@ describe('typed routing consumer integration', () => {
     writeFileSync(
       join(root, 'src/consumer.ts'),
       `
-      import { toRoute, injectNavigate, injectParams, injectQuery } from '@analogjs/router';
+      import { toRoute, injectNavigate, injectParams, injectQuery, injectRouteData } from '@analogjs/router';
       // @ts-expect-error route declarations are missing
       toRoute('/about');
       // @ts-expect-error route declarations are missing
@@ -235,6 +250,9 @@ describe('typed routing consumer integration', () => {
       injectParams('/about');
       // @ts-expect-error route declarations are missing
       injectQuery('/about');
+      injectParams();
+      injectQuery();
+      injectRouteData();
     `,
     );
     expect(compile(root).messages).toEqual([]);
@@ -272,6 +290,214 @@ describe('typed routing consumer integration', () => {
     expect(compile(root).messages).toEqual([]);
   });
 
+  it('types route data, resolver results, and load results from page and layout modules', async () => {
+    const root = fixture();
+    const pages = join(root, 'src/app/pages');
+    writeFileSync(
+      join(pages, 'users.[id].page.ts'),
+      `
+      import type { ResolveFn } from '@angular/router';
+      import type { RouteMeta } from '@analogjs/router';
+      import { resource } from '@angular/core';
+      import { of } from 'rxjs';
+      const profile: ResolveFn<{ bio: string }> = () => ({ bio: 'hi' });
+      export const routeMeta = {
+        data: { section: 'users' as const, count: 1, total: 'static' },
+        resolve: {
+          greeting: () => Promise.resolve('hello'),
+          tags: () => of(['a', 'b']),
+          total: () => 42,
+          profile,
+          load: () => 'shadowed',
+        },
+        resources: () => ({
+          feed: resource({ loader: async () => ({ items: ['a', 'b'] }) }),
+        }),
+      } satisfies RouteMeta;
+      export default class Page {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'users.[id].server.ts'),
+      "export const load = async () => ({ user: { name: 'Ada' }, visits: 3 });",
+    );
+    writeFileSync(
+      join(pages, 'about.page.ts'),
+      `
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta: RouteMeta = { data: { title: 'About' } };
+      export default class Page {}
+    `,
+    );
+    mkdirSync(join(pages, 'blog'));
+    writeFileSync(
+      join(pages, 'blog.page.ts'),
+      `
+      import { resource } from '@angular/core';
+      export const routeMeta = {
+        data: { title: 'Blog', section: 'blog' as const },
+        resolve: { nav: () => ['home'] },
+        resources: () => ({
+          theme: resource({ loader: async () => 'dark' }),
+        }),
+      };
+      export default class Layout {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'blog.server.ts'),
+      'export const load = async () => ({ layoutOnly: true });',
+    );
+    writeFileSync(
+      join(pages, 'blog/index.page.ts'),
+      "export const routeMeta = { data: { title: 'Posts' } };\nexport default class Page {}",
+    );
+    writeFileSync(
+      join(pages, 'blog/[slug].page.ts'),
+      `
+      import { resource } from '@angular/core';
+      export const routeMeta = {
+        data: { section: 'post' as const },
+        resources: () => ({
+          likes: resource({ loader: async () => 10 }),
+        }),
+      };
+      export default class Page {}
+    `,
+    );
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { injectLoad, injectResources, injectRouteData } from '@analogjs/router';
+      import type { ResourceRef } from '@angular/core';
+      import type { load } from './app/pages/users.[id].server';
+      const data = injectRouteData('/users/[id]');
+      const section: 'users' = data().section;
+      const count: number = data().count;
+      const greeting: string = data().greeting;
+      const tags: string[] = data().tags;
+      const total: number = data().total;
+      const bio: string = data().profile.bio;
+      const name: string = data().load.user.name;
+      injectLoad('/users/[id]').subscribe((result) => {
+        const visits: number = result.visits;
+      });
+      injectLoad<typeof load>().subscribe((result) => {
+        const visits: number = result.visits;
+      });
+      const title: unknown = injectRouteData('/about')()['title'];
+      const post = injectRouteData('/blog/[slug]');
+      const postTitle: string = post().title;
+      const postSection: 'post' = post().section;
+      const nav: string[] = post().nav;
+
+      const userRes = injectResources('/users/[id]');
+      const feedRes: ResourceRef<{ items: string[] } | undefined> = userRes.feed;
+      const feedItems: string[] | undefined = userRes.feed.value()?.items;
+
+      const blogRes = injectResources('/blog/[slug]');
+      const likesRes: ResourceRef<number | undefined> = blogRes.likes;
+      // @ts-expect-error layout resources are not inherited by child routes
+      blogRes.theme;
+
+      // @ts-expect-error unknown resource key is rejected
+      userRes.missing;
+      // @ts-expect-error wrong resource value type is rejected
+      const invalidFeed: number = userRes.feed.value();
+
+      // @ts-expect-error unknown data keys are rejected
+      data().missing;
+      // @ts-expect-error the server load result replaces resolve.load
+      const shadowed: string = data().load;
+      // @ts-expect-error annotated RouteMeta data values are unknown
+      const titleString: string = injectRouteData('/about')()['title'];
+      // @ts-expect-error routes without a server load are rejected
+      injectLoad('/about');
+      // @ts-expect-error page data overrides layout data
+      const blogSection: 'blog' = post().section;
+      // @ts-expect-error layout load results are not inherited
+      post().load;
+      // @ts-expect-error a layout and its index page share /blog, so it has no typed data keys
+      injectRouteData('/blog')().title;
+      // @ts-expect-error shared URLs have no typed load either
+      injectLoad('/blog');
+      // @ts-expect-error data helpers require a known route
+      injectRouteData('/missing');
+    `,
+    );
+    await configure(root);
+    const declaration = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
+    expect(declaration).toContain(
+      `routeMeta: typeof import("./app/pages/users.[id].page").routeMeta;`,
+    );
+    expect(declaration).toContain(
+      `load: typeof import("./app/pages/users.[id].server").load;`,
+    );
+    expect(declaration).toContain(
+      `layoutRouteMeta: [typeof import("./app/pages/blog.page").routeMeta];`,
+    );
+    expect(compile(root).messages).toEqual([]);
+  });
+
+  it('checks scoped navigation targets and inherited params', async () => {
+    const root = fixture();
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { injectNavigate } from '@analogjs/router';
+      const fromUser = injectNavigate('/users/[id]');
+      fromUser('.');
+      fromUser('.', { params: { id: 43 } }, { replaceUrl: true });
+      fromUser('.', { replaceUrl: true });
+      fromUser('./posts/[postId]', { params: { postId: 7 } });
+      fromUser('../..', { query: { ref: 'user' } });
+      fromUser('../../about');
+      fromUser('/users/[id]/posts/[postId]', { params: { postId: 7 } });
+      fromUser('/about');
+      const fromPost = injectNavigate('/users/[id]/posts/[postId]');
+      fromPost('../..');
+      fromPost('.', { params: { postId: 8 } });
+      injectNavigate('/')('./settings/profile');
+      injectNavigate('/docs/[...slug]')('.');
+      injectNavigate('/[tenant]/dashboard')('.');
+      // @ts-expect-error params not shared with the current route are required
+      fromUser('./posts/[postId]');
+      // @ts-expect-error params are not inherited after the paths diverge
+      fromUser('/[tenant]/dashboard');
+      // @ts-expect-error relative targets must be routes
+      fromUser('./missing');
+      // @ts-expect-error there is no /users route
+      fromUser('..');
+      // @ts-expect-error relative paths start with ./ or ../
+      fromUser('posts/[postId]', { params: { postId: 7 } });
+      // @ts-expect-error each target has one relative form, via the nearest shared ancestor
+      fromUser('../[id]');
+      // @ts-expect-error inherited params keep their types
+      fromUser('.', { params: { id: true } });
+      // @ts-expect-error static targets reject params
+      fromUser('../../about', { params: { id: 1 } });
+      // @ts-expect-error scoped navigation requires a known route
+      injectNavigate('/missing');
+      fromUser('.', { params: (prev) => ({ id: Number(prev.id) + 1 }) });
+      fromUser('./posts/[postId]', { params: (prev) => ({ postId: prev.id }) });
+      fromUser('.', { query: (prev) => ({ ...prev, tab: 'bio' }) }, { queryParamsHandling: 'merge' });
+      fromPost('.', { params: ({ id, postId }) => ({ id, postId: Number(postId) + 1 }) });
+      // @ts-expect-error updater results are checked against the target's params
+      fromUser('./posts/[postId]', { params: (prev) => ({ id: prev.id }) });
+      // @ts-expect-error prev holds the current route's params
+      fromUser('.', { params: (prev) => ({ id: prev.postId }) });
+      fromUser('.', { query: (prev) => ({ ...prev, page: 2 }) });
+      // @ts-expect-error updated query values are still checked
+      fromUser('.', { query: (prev) => ({ ...prev, since: new Date() }) });
+    `,
+    );
+    await configure(root);
+    expect(compile(root).messages).toEqual([]);
+  });
+
   it.each([
     [
       'valid destinations',
@@ -280,6 +506,7 @@ describe('typed routing consumer integration', () => {
       <a [linkTo]="'/settings/profile'"></a>
       <a [linkTo]="{ path: '/about' }"></a>
       <a [linkTo]="{ path: '/users/[id]', params: { id: '42' }, query: { tab: 'bio' }, hash: 'details' }" routerLinkActive="active"></a>
+      <a [linkTo]="{ path: '/about', query: { page: 2, archived: true } }"></a>
       <a [linkTo]="{ path: '/users/[id]', params: { id: 0 } }"></a>
       <a [linkTo]="{ path: '/docs/[...slug]', params: { slug: ['a/b', 42] } }"></a>
       <a [linkTo]="{ path: '/shop/[[...category]]' }"></a>
@@ -289,6 +516,42 @@ describe('typed routing consumer integration', () => {
       <a [linkTo]="null"></a>`,
       false,
     ],
+    [
+      'valid scoped destinations',
+      `<a from="/users/[id]" linkTo="."></a>
+      <a from="/users/[id]" linkTo="../../about"></a>
+      <a from="/users/[id]" [linkTo]="{ path: '.', params: { id: 43 }, query: { tab: 'bio' } }"></a>
+      <a from="/users/[id]" [linkTo]="{ path: './posts/[postId]', params: { postId: 7 } }" routerLinkActive="active"></a>
+      <a from="/users/[id]" [linkTo]="{ path: '/users/[id]/posts/[postId]', params: { postId: 7 } }"></a>
+      <a from="/users/[id]" linkTo="/about"></a>
+      <a from="/users/[id]/posts/[postId]" linkTo="../.."></a>
+      <a from="/docs/[...slug]" linkTo="."></a>
+      <a [from]="'/users/[id]'" [linkTo]="null"></a>`,
+      false,
+    ],
+    [
+      'scoped target missing unshared params',
+      `<a from="/users/[id]" linkTo="./posts/[postId]"></a>`,
+      true,
+    ],
+    [
+      'scoped target params after divergence',
+      `<a from="/users/[id]" [linkTo]="{ path: '/[tenant]/dashboard' }"></a>`,
+      true,
+    ],
+    [
+      'unknown relative target',
+      `<a from="/users/[id]" linkTo="./missing"></a>`,
+      true,
+    ],
+    ['missing parent route', `<a from="/users/[id]" linkTo=".."></a>`, true],
+    [
+      'wrong inherited param type',
+      `<a from="/users/[id]" [linkTo]="{ path: '.', params: { id: true } }"></a>`,
+      true,
+    ],
+    ['unknown scope', `<a from="/missing" linkTo="/about"></a>`, true],
+    ['relative target without scope', `<a linkTo="."></a>`, true],
     ['unknown path', `<a [linkTo]="{ path: '/missing' }"></a>`, true],
     ['missing params', `<a [linkTo]="{ path: '/users/[id]' }"></a>`, true],
     [
@@ -339,7 +602,7 @@ describe('typed routing consumer integration', () => {
     ],
     [
       'wrong query value',
-      `<a [linkTo]="{ path: '/users/[id]', params: { id: 42 }, query: { tab: true } }"></a>`,
+      `<a [linkTo]="{ path: '/users/[id]', params: { id: 42 }, query: { tab: { id: 1 } } }"></a>`,
       true,
     ],
     [

@@ -8,6 +8,7 @@ import {
   RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RoutePathOptionsBase } from './to-route';
@@ -208,5 +209,64 @@ describe('LinkTo', () => {
     expect(anchor.getAttribute('target')).toBe('_blank');
     expect(routerLink.onClick(0, false, false, false, false)).toBe(true);
     expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('LinkTo with from', () => {
+  @Component({
+    standalone: true,
+    imports: [LinkTo],
+    template: `
+      <a id="self" from="/users/[id]" linkTo=".">Self</a>
+      <a id="posts" from="/users/[id]" linkTo="./posts">Posts</a>
+      <a id="parent" from="/users/[id]" linkTo="..">Users</a>
+      <a
+        id="other"
+        from="/users/[id]"
+        [linkTo]="{ path: '.', params: { id: 'two' }, query: { tab: 'bio' } }"
+        >Other</a
+      >
+    `,
+  })
+  class UserPage {}
+
+  it('resolves relative destinations and follows the current params', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          { path: 'users', component: Page },
+          { path: 'users/:id', component: UserPage },
+          { path: 'users/:id/posts', component: Page },
+        ]),
+      ],
+    });
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/users/one', UserPage);
+    const hrefs = () =>
+      ['self', 'posts', 'parent', 'other'].map((id) =>
+        harness
+          .routeNativeElement!.querySelector(`#${id}`)!
+          .getAttribute('href'),
+      );
+    expect(hrefs()).toEqual([
+      '/users/one',
+      '/users/one/posts',
+      '/users',
+      '/users/two?tab=bio',
+    ]);
+
+    await harness.navigateByUrl('/users/two', UserPage);
+    harness.detectChanges();
+    expect(hrefs()).toEqual([
+      '/users/two',
+      '/users/two/posts',
+      '/users',
+      '/users/two?tab=bio',
+    ]);
+
+    const router = TestBed.inject(Router);
+    harness.routeNativeElement!.querySelector<HTMLElement>('#posts')!.click();
+    await harness.fixture.whenStable();
+    expect(router.url).toBe('/users/two/posts');
   });
 });

@@ -65,7 +65,7 @@ The generated route table checks the path, required named parameters, and their 
 
 `LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
 
-Dynamic parameters accept strings or numbers. Numbers are converted to strings when building links and navigating. Required catch-all parameters accept non-empty arrays of string or number segments; optional catch-all parameters may be omitted or empty. For required catch-all arrays stored in variables, use the tuple type `[string | number, ...(string | number)[]]` to preserve the non-empty guarantee. Query values are strings or string arrays, and `hash` supplies the fragment. URL path segments are encoded automatically.
+Dynamic parameters accept strings or numbers. Numbers are converted to strings when building links and navigating. Required catch-all parameters accept non-empty arrays of string or number segments; optional catch-all parameters may be omitted or empty. For required catch-all arrays stored in variables, use the tuple type `[string | number, ...(string | number)[]]` to preserve the non-empty guarantee. Query values are strings, numbers, booleans, or arrays of them. Like parameters, they are converted to strings, so they read back as strings. A `null` or `undefined` value omits the key, or removes it when `queryParamsHandling` is `'merge'`. `hash` supplies the fragment. URL path segments are encoded automatically.
 
 ## Navigate programmatically
 
@@ -76,7 +76,10 @@ import { injectNavigate } from '@analogjs/router';
 
 const navigate = injectNavigate();
 navigate('/products/[id]', { params: { id: 42 } }, { replaceUrl: true });
+navigate('/search', { query: { page: 2 } }, { queryParamsHandling: 'merge' });
 ```
+
+The last argument accepts Angular's navigation options, such as `replaceUrl` and `state`, plus `queryParamsHandling` and `preserveFragment`. Use `query` and `hash` in place of `queryParams` and `fragment`.
 
 ## Build link data in TypeScript
 
@@ -105,7 +108,90 @@ Use these helpers in a component rendered by the specified route. The path narro
 
 Values remain raw Angular router values. Exporting a schema does not validate or coerce these signals. For example, `"42"` stays a string.
 
+Without a path, `injectParams()`, `injectQuery()`, `injectRouteData()`, and `injectResources()` return untyped values for the current route, for example in a component shared by several routes. Catch-all segments need a path: a catch-all route has no parameter name at runtime, so `injectParams()` omits required catch-alls and does not split optional ones into arrays.
+
 Type checking comes from the generated table. The `experimental.typedRouting` option enables generation for the feature as a whole; no additional router provider or per-helper experimental flag is required.
+
+## Read route data and load results
+
+`injectRouteData` reads the page's route data as a signal. Its type comes from the page module and its [layout routes](/docs/features/routing/overview#layout-routes): static `routeMeta.data`, resolved `routeMeta.resolve` values, and the page's server `load` result under `load`.
+
+```ts
+// src/app/pages/products.page.ts (layout)
+import type { RouteMeta } from '@analogjs/router';
+
+export const routeMeta = { data: { section: 'catalog' } } satisfies RouteMeta;
+```
+
+```ts
+// src/app/pages/products/[id].page.ts
+import { Component, inject } from '@angular/core';
+import { injectRouteData, type RouteMeta } from '@analogjs/router';
+
+export const routeMeta = {
+  resolve: { related: () => inject(ProductsService).related() },
+} satisfies RouteMeta;
+
+@Component({ template: `{{ data().section }}` })
+export default class ProductPage {
+  readonly data = injectRouteData('/products/[id]');
+  // data().related and data().load are typed as well.
+}
+```
+
+Use `satisfies RouteMeta` instead of a `RouteMeta` annotation. An annotation widens the object, so data values are typed as `unknown`.
+
+`injectLoad` also accepts a route path. The result is typed from the page's `.server.ts` `load` function, so the page does not need to import it:
+
+```ts
+readonly product = toSignal(injectLoad('/products/[id]'), { requireSync: true });
+```
+
+Paths without a server `load` function are rejected. The generated declaration references page and `.server.ts` modules with `typeof import()`, so they must type-check under each application tsconfig. Adding or removing a `routeMeta` or `load` export regenerates the declaration during development.
+
+As with Angular's route data inheritance, a page's keys override the same keys from its layouts. `load` is always the page's own result. When several files define the same URL, such as a layout and its index page (`products.page.ts` and `products/index.page.ts`), `injectRouteData` has no typed keys for that path and `injectLoad` rejects it. Use `injectRouteData()` without a path or `injectLoad<typeof load>()` there.
+
+## Access route resources
+
+When using Angular's `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources`:
+
+```ts
+import { injectResources } from '@analogjs/router';
+
+const resources = injectResources('/products/[id]');
+// resources.user is a typed Resource instance
+const user = resources.user.value();
+```
+
+Calling `injectResources()` without a route path returns untyped route resources.
+
+## Navigate relative to the current route
+
+Pass the current page's path to `injectNavigate`, or bind it to `from` on `LinkTo`, to navigate relative to it:
+
+```ts
+// src/app/pages/users/[id].page.ts
+const navigate = injectNavigate('/users/[id]');
+navigate('./posts/[postId]', { params: { postId: 7 } }); // /users/42/posts/7
+navigate('.', { query: { tab: 'bio' } }); // /users/42?tab=bio
+navigate('../../about');
+```
+
+```html
+<a from="/users/[id]" linkTo=".">Profile</a>
+<a from="/users/[id]" [linkTo]="{ path: '.', params: { id: nextId } }">Next</a>
+```
+
+Relative targets resolve against the `from` path pattern: `.` is the route itself, `./child` is below it, and `..` or `../sibling` go through its ancestors. Each target has one relative form, through the nearest shared ancestor, and must be a generated route. Absolute paths remain available.
+
+Parameters in the leading segments shared by `from` and the target default to their current values, so they become optional. Parameters after the paths diverge are required, and explicit values override inherited ones. As with `injectParams`, use `from` in a component rendered by that route.
+
+With `injectNavigate(from)`, `params` and `query` can also be functions. They receive the current route's typed params or query and return the target's values:
+
+```ts
+navigate('.', { params: (prev) => ({ id: Number(prev.id) + 1 }) }); // /users/43
+navigate('.', { query: ({ tab, ...rest }) => rest }); // drops tab, keeps the rest
+```
 
 ## Compatibility
 

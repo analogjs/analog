@@ -46,6 +46,20 @@ describe('createRouteFileDiscovery', () => {
     ).toBe('content');
   });
 
+  it('tracks page server files without treating them as routes', () => {
+    const file =
+      '/workspace/apps/analog-app/src/app/pages/users/[id].server.ts';
+    expect(discovery.getDiscoveredFileKind(file)).toBe('server');
+    expect(
+      discovery.getDiscoveredFileKind(
+        '/workspace/libs/shared/feature/src/pages/blog/[slug].server.ts',
+      ),
+    ).toBe('server');
+
+    discovery.updateDiscoveredFile(file, 'add');
+    expect(discovery.getRouteFiles()).toEqual([]);
+  });
+
   it('classifies app-local files via isAppLocal after updateDiscoveredFile', () => {
     const localDiscovery = createRouteFileDiscovery({
       root: '/workspace/apps/analog-app',
