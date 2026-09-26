@@ -168,15 +168,19 @@ describe('serverFn inside @defer (hydrate on immediate)', () => {
     expect(response.headers.get('content-encoding')).toBe('identity');
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
-    const first = decoder.decode((await reader.read()).value);
-    expect(first).toContain('data-analog-stream');
-    expect(first).not.toContain('<template data-analog-authoritative>');
-    let html = first;
+    let html = '';
+    while (!html.includes('data-analog-stream')) {
+      const chunk = await reader.read();
+      expect(chunk.done, 'stream ended before the shell marker').toBe(false);
+      html += decoder.decode(chunk.value, { stream: true });
+    }
+    expect(html).not.toContain('<template data-analog-authoritative>');
     for (;;) {
       const chunk = await reader.read();
       if (chunk.done) break;
       html += decoder.decode(chunk.value, { stream: true });
     }
+    html += decoder.decode();
     const block = html.indexOf('<template data-analog-defer=');
     const tail = html.indexOf('<template data-analog-authoritative>');
     expect(block).toBeGreaterThan(0);
