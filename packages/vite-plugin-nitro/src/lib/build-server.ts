@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Options } from './options.js';
 import { addPostRenderingHooks } from './hooks/post-rendering-hook.js';
 import { validateI18nWorkers } from './utils/i18n-workers.js';
+import { createSsrStreamRenderer } from './utils/renderers.js';
 
 export async function buildServer(
   options?: Options,
@@ -48,6 +49,14 @@ export async function buildServer(
   });
 
   try {
+    if (options?.experimental?.streaming) {
+      nitro.hooks.hook('prerender:init', (renderer) => {
+        renderer.options.virtual = {
+          ...renderer.options.virtual,
+          '#ANALOG_SSR_RENDERER': createSsrStreamRenderer(true),
+        };
+      });
+    }
     if (options?.prerender?.postRenderingHooks) {
       addPostRenderingHooks(nitro, options.prerender.postRenderingHooks);
     }

@@ -96,6 +96,20 @@ the streamed document once the render completes, before hydration runs. Search
 engine crawlers are served a buffered render with a fully resolved head instead
 of the streamed shell.
 
+## Completion and cancellation
+
+Bootstrap modules are preloaded with the shell and execute after the complete,
+hydration-ready document is installed. If rendering fails or the document is
+truncated, the browser shows a generic error view instead of bootstrapping an
+incomplete page. A disconnected client cancels pending streaming work and
+disposes the Angular platform.
+
+Progressive HTTP responses use `Cache-Control: no-store, no-transform` and
+identity encoding so intermediaries do not cache partial HTML or buffer it for
+compression. Prerendered pages and routes with `streaming: false` produce complete
+buffered documents. Use a buffered route when its final HTTP status must be known
+before sending response headers.
+
 ## Opting a route out of streaming
 
 Disable streaming for specific routes with a `streaming: false` route rule, the
