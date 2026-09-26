@@ -134,6 +134,7 @@ export function inspectAngularCoreModule(
 export function deferStreamingPlugin(): Plugin {
   const applied = new Set<string>();
   const warnedDrift = new Set<string>();
+  let ssrBuild = false;
   return {
     name: 'analogjs-defer-streaming',
     enforce: 'post',
@@ -143,17 +144,21 @@ export function deferStreamingPlugin(): Plugin {
         environments: { ssr: { optimizeDeps: { exclude: ['@angular/core'] } } },
       };
     },
+    configResolved(config) {
+      ssrBuild = !!config.build.ssr;
+    },
     transform: {
       filter: {
         id: /\/@angular\/core\//,
       },
       handler(code, _id, options) {
         if (!options?.ssr) return;
+        const environment = this.environment?.name ?? 'ssr';
         const info = analyzeDeferRuntime(code);
         if (info.kind === 'not-target') return;
         if (info.kind === 'drifted') {
-          if (!warnedDrift.has(this.environment.name)) {
-            warnedDrift.add(this.environment.name);
+          if (!warnedDrift.has(environment)) {
+            warnedDrift.add(environment);
             this.warn(
               `experimental streaming SSR: found @angular/core's @defer runtime ` +
                 `but could not apply the resolution hook (${info.reason}). The ` +
@@ -164,18 +169,17 @@ export function deferStreamingPlugin(): Plugin {
           return;
         }
         const out = patchDeferRuntime(code, info.offset);
-        applied.add(this.environment.name);
+        applied.add(environment);
         return { code: out };
       },
     },
     buildEnd() {
       // Require coverage from the SSR service. A later Nitro rebundle may
       // also encounter Angular modules imported by endpoint handlers.
-      if (this.environment.name !== 'ssr') return;
-      if (
-        !applied.has(this.environment.name) &&
-        !warnedDrift.has(this.environment.name)
-      ) {
+      const environment =
+        this.environment?.name ?? (ssrBuild ? 'ssr' : 'client');
+      if (environment !== 'ssr') return;
+      if (!applied.has(environment) && !warnedDrift.has(environment)) {
         this.warn(
           `experimental streaming SSR is enabled but @angular/core's @defer ` +
             `runtime module was never encountered during the SSR build, so the ` +

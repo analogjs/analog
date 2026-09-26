@@ -1,10 +1,87 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ResolvedConfig } from 'vite';
 import {
+  deferStreamingPlugin,
   injectDeferStreamingHook,
   inspectAngularCoreModule,
   streamingSupportedOnAngular,
   MIN_STREAMING_ANGULAR_MAJOR,
 } from './defer-streaming-plugin.js';
+
+describe('deferStreamingPlugin environment compatibility', () => {
+  const bundle = [
+    'function applyDeferBlockState(newState, lDetails, lContainer, tNode, hostLView) {',
+    '  profiler(ProfilerEvent.DeferBlockStateEnd);',
+    '}',
+    'function collectNativeNodesInLContainer(lContainer, result) {}',
+  ].join('\n');
+
+  function setup(ssr: boolean, environment?: { name: string }) {
+    const plugin = deferStreamingPlugin();
+    const context = { warn: vi.fn(), environment };
+    const configResolved = plugin.configResolved;
+    if (typeof configResolved === 'function') {
+      configResolved({ build: { ssr } } as ResolvedConfig);
+    }
+    const transform =
+      typeof plugin.transform === 'function'
+        ? plugin.transform
+        : plugin.transform!.handler;
+    const buildEnd =
+      typeof plugin.buildEnd === 'function'
+        ? plugin.buildEnd
+        : plugin.buildEnd!.handler;
+    return {
+      warn: context.warn,
+      transform: (code: string) =>
+        transform.call(context as never, code, '/@angular/core/core.mjs', {
+          ssr,
+        }),
+      buildEnd: () => buildEnd.call(context as never),
+    };
+  }
+
+  it.each([undefined, { name: 'ssr' }])(
+    'patches SSR with environment %j',
+    async (environment) => {
+      const plugin = setup(true, environment);
+      expect(await plugin.transform(bundle)).toEqual({
+        code: expect.stringContaining('__analogSsrDeferCapture'),
+      });
+      await plugin.buildEnd();
+      expect(plugin.warn).not.toHaveBeenCalled();
+    },
+  );
+
+  it('warns once for drift on Vite 5', async () => {
+    const plugin = setup(true);
+    const drifted = bundle.replace(
+      'profiler(ProfilerEvent.DeferBlockStateEnd);',
+      '',
+    );
+    await plugin.transform(drifted);
+    await plugin.transform(drifted);
+    await plugin.buildEnd();
+    expect(plugin.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining('could not apply the resolution hook'),
+    );
+  });
+
+  it('warns for missing SSR coverage on Vite 5', async () => {
+    const plugin = setup(true);
+    await plugin.buildEnd();
+    expect(plugin.warn).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining('was never encountered'),
+    );
+  });
+
+  it('leaves the Vite 5 client build unchanged and quiet', async () => {
+    const plugin = setup(false);
+    expect(await plugin.transform(bundle)).toBeUndefined();
+    await plugin.buildEnd();
+    expect(plugin.warn).not.toHaveBeenCalled();
+  });
+});
 
 describe('streamingSupportedOnAngular', () => {
   it('supports the floor version and above', () => {
