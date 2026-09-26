@@ -11,7 +11,7 @@ last, so a slow block never holds back the rest of the page.
 :::info Experimental
 
 Streaming SSR is experimental and opt-in. It requires **Angular 21 or later**
-and builds on [incremental hydration](https://angular.dev/guide/incremental-hydration).
+and **Vite 6 or later**, and builds on [incremental hydration](https://angular.dev/guide/incremental-hydration).
 The default buffered [Server Side Rendering](/docs/features/server/server-side-rendering)
 path is unchanged.
 

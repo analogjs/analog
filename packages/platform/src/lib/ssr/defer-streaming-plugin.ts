@@ -134,7 +134,6 @@ export function inspectAngularCoreModule(
 export function deferStreamingPlugin(): Plugin {
   const applied = new Set<string>();
   const warnedDrift = new Set<string>();
-  let ssrBuild = false;
   return {
     name: 'analogjs-defer-streaming',
     enforce: 'post',
@@ -144,16 +143,13 @@ export function deferStreamingPlugin(): Plugin {
         environments: { ssr: { optimizeDeps: { exclude: ['@angular/core'] } } },
       };
     },
-    configResolved(config) {
-      ssrBuild = !!config.build.ssr;
-    },
     transform: {
       filter: {
         id: /\/@angular\/core\//,
       },
       handler(code, _id, options) {
         if (!options?.ssr) return;
-        const environment = this.environment?.name ?? 'ssr';
+        const environment = this.environment.name;
         const info = analyzeDeferRuntime(code);
         if (info.kind === 'not-target') return;
         if (info.kind === 'drifted') {
@@ -176,8 +172,7 @@ export function deferStreamingPlugin(): Plugin {
     buildEnd() {
       // Require coverage from the SSR service. A later Nitro rebundle may
       // also encounter Angular modules imported by endpoint handlers.
-      const environment =
-        this.environment?.name ?? (ssrBuild ? 'ssr' : 'client');
+      const environment = this.environment.name;
       if (environment !== 'ssr') return;
       if (!applied.has(environment) && !warnedDrift.has(environment)) {
         this.warn(
