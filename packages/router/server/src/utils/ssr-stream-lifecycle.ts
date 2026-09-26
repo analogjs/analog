@@ -45,10 +45,12 @@ export function createSsrStream(options: {
 
   function fail(error: unknown, aborted = false): void {
     if (state !== 'rendering' && state !== 'closing') return;
+    const documentComplete = state === 'closing';
     state = 'failed';
     if (options.errorHtml && !aborted) {
       console.error('[analog ssr]', error);
-      controller.enqueue(encoder.encode(options.errorHtml));
+      if (!documentComplete)
+        controller.enqueue(encoder.encode(options.errorHtml));
       controller.close();
     } else {
       controller.error(error);

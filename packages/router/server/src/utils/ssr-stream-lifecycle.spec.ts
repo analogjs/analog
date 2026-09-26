@@ -113,4 +113,27 @@ describe('SSR stream ownership', () => {
     });
     await expect(new Response(body).text()).rejects.toBe(failed);
   });
+
+  it('preserves completed HTML when platform cleanup fails', async () => {
+    const failed = new Error('platform disposal failed');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const html = '<html><body>complete</body></html>';
+    const destroy = vi.fn(async () => {
+      throw failed;
+    });
+    try {
+      const body = createSsrStream({
+        errorHtml: '<script>window.__analogFail()</script>',
+        destroy,
+        render: async (writer) => {
+          writer.enqueue(html);
+        },
+      });
+      expect(await new Response(body).text()).toBe(html);
+      expect(log).toHaveBeenCalledExactlyOnceWith('[analog ssr]', failed);
+      expect(destroy).toHaveBeenCalledOnce();
+    } finally {
+      log.mockRestore();
+    }
+  });
 });
