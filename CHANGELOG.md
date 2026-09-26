@@ -1,3 +1,9 @@
+# [2.8.0-beta.12](https://github.com/analogjs/analog/compare/v2.8.0-beta.11...v2.8.0-beta.12) (2026-09-26)
+
+### Bug Fixes
+
+- **router:** harden experimental streaming SSR ([#2587](https://github.com/analogjs/analog/issues/2587)) ([e0a9939](https://github.com/analogjs/analog/commit/e0a993900850c712b035338994a8378a525356d4)), closes [#2531](https://github.com/analogjs/analog/issues/2531)
+
 # [2.8.0-beta.11](https://github.com/analogjs/analog/compare/v2.8.0-beta.10...v2.8.0-beta.11) (2026-09-25)
 
 ### Bug Fixes
