@@ -1,3 +1,9 @@
+# [2.8.0-beta.15](https://github.com/analogjs/analog/compare/v2.8.0-beta.14...v2.8.0-beta.15) (2026-09-28)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** batch compilation and hot update notifications ([#2594](https://github.com/analogjs/analog/issues/2594)) ([2344881](https://github.com/analogjs/analog/commit/23448814f671c4b0b2ab8b38db5613deea919672))
+
 # [2.8.0-beta.14](https://github.com/analogjs/analog/compare/v2.8.0-beta.13...v2.8.0-beta.14) (2026-09-28)
 
 ### Bug Fixes
