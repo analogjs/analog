@@ -104,6 +104,7 @@ Reusable agent workflows live in `.agents/skills/`:
 - Keep changes minimal and targeted.
 - Backward compatibility is critical for new features, allowing progressive adoption.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
+- Treat simplicity as a completion requirement. Before implementing, choose the smallest design that preserves the required behavior. Minimize mutable state, derive redundant values, make ownership explicit, and separate distinct responsibilities with small private functions. Aggregate or deduplicate data when it arrives where practical. Prefer clear names and named types over assertions and complex inferred types. Before reporting completion, review your own diff and simplify unnecessary state, intermediate collections, branching, and abstractions. Validate the simplified implementation.
 - Always scan existing codebase for examples and patterns for implementation.
 - Prefer using existing Angular APIs, with wrappers where needed.
 - Strongly prefer AST parsing instead of regex for complex file manipulation and traversal.
