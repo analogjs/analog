@@ -1,3 +1,9 @@
+# [2.8.0-beta.13](https://github.com/analogjs/analog/compare/v2.8.0-beta.12...v2.8.0-beta.13) (2026-09-28)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** release compilation API program after emit in builds ([#2590](https://github.com/analogjs/analog/issues/2590)) ([14d7f4c](https://github.com/analogjs/analog/commit/14d7f4ca0202e3afe5ae14fd0811161bbfcbedbf))
+
 # [2.8.0-beta.12](https://github.com/analogjs/analog/compare/v2.8.0-beta.11...v2.8.0-beta.12) (2026-09-26)
 
 ### Bug Fixes
