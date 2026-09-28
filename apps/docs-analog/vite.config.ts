@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     analog({
       static: true,
+      experimental: { typedRouting: true },
       i18n: {
         defaultLocale: 'en',
         locales: ['en', 'de', 'es', 'pt-br', 'zh-hans'],

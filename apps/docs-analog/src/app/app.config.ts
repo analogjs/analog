@@ -37,6 +37,7 @@ import { injectSwitchLocale } from '@analogjs/router/i18n';
 import { resolveActiveLocale, SUPPORTED_LOCALES } from './locale';
 import { ScrollRestorer } from './scroll';
 import { getSidebar } from './sidebar';
+import { docsLink } from './docs/routes';
 
 // Picking a locale from the marketing home (`/`) hard-reloads to
 // `/<locale>/` — this route renders the same HomePage so the URL keeps
@@ -133,11 +134,11 @@ export const appConfig: ApplicationConfig = {
       headerNav: [
         {
           label: $localize`:@@nav.docs:Docs`,
-          routerLink: '/docs/introduction',
+          linkTo: docsLink('introduction'),
         },
         {
           label: $localize`:@@nav.support:Support`,
-          routerLink: '/docs/support',
+          linkTo: docsLink('support'),
         },
         { label: 'GitHub', href: 'https://github.com/analogjs/analog' },
         { label: 'Discord', href: 'https://chat.analogjs.org' },
@@ -155,11 +156,11 @@ export const appConfig: ApplicationConfig = {
             items: [
               {
                 label: $localize`:@@sidebar.introduction:Introduction`,
-                routerLink: '/docs/introduction',
+                linkTo: docsLink('introduction'),
               },
               {
                 label: $localize`:@@sidebar.getting-started:Getting Started`,
-                routerLink: '/docs/getting-started',
+                linkTo: docsLink('getting-started'),
               },
               { label: 'llms.txt', href: 'https://analogjs.org/llms.txt' },
               {
@@ -173,15 +174,15 @@ export const appConfig: ApplicationConfig = {
             items: [
               {
                 label: $localize`:@@sidebar.contributors:Contributors`,
-                routerLink: '/docs/contributors',
+                linkTo: docsLink('contributors'),
               },
               {
                 label: $localize`:@@footer.contributing:Contributing`,
-                routerLink: '/docs/contributing',
+                linkTo: docsLink('contributing'),
               },
               {
                 label: $localize`:@@footer.sponsoring:Sponsoring`,
-                routerLink: '/docs/sponsoring',
+                linkTo: docsLink('sponsoring'),
               },
             ],
           },

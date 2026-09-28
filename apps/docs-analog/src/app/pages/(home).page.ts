@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { LinkTo } from '@analogjs/router';
 import { FileBasedRouting } from '../components/FileBasedRouting';
 import { FullStackExample } from '../components/FullStackExample';
 import { Terminal } from '../components/Terminal';
@@ -86,7 +86,7 @@ const SPONSORS: Sponsor[] = [
 ];
 
 @Component({
-  imports: [RouterLink, FileBasedRouting, FullStackExample, Terminal],
+  imports: [LinkTo, FileBasedRouting, FullStackExample, Terminal],
   template: `
     <section
       class="relative overflow-hidden px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-24"
@@ -126,7 +126,10 @@ const SPONSORS: Sponsor[] = [
             class="mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10 lg:justify-start"
           >
             <a
-              routerLink="/docs/introduction"
+              [linkTo]="{
+                path: '/docs/[[...slug]]',
+                params: { slug: ['introduction'] },
+              }"
               class="inline-flex items-center rounded-md bg-[var(--surface-inverted)] px-5 py-2.5 text-sm font-semibold text-[var(--surface-inverted-fg)] shadow hover:bg-[var(--surface-inverted-hover)] sm:px-6 sm:py-3 sm:text-base"
               i18n="@@home.cta.docs"
             >
