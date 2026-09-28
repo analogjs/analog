@@ -1,3 +1,9 @@
+# [2.8.0-beta.14](https://github.com/analogjs/analog/compare/v2.8.0-beta.13...v2.8.0-beta.14) (2026-09-28)
+
+### Bug Fixes
+
+- **vitest-angular:** use Vite 8 in setup schematic ([#2592](https://github.com/analogjs/analog/issues/2592)) ([82abd74](https://github.com/analogjs/analog/commit/82abd7453b54f6c220ac9fdcf863546c548ff49e))
+
 # [2.8.0-beta.13](https://github.com/analogjs/analog/compare/v2.8.0-beta.12...v2.8.0-beta.13) (2026-09-28)
 
 ### Bug Fixes
