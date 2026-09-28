@@ -1,8 +1,8 @@
 import {
+  type ActivatedRoute,
   DefaultUrlSerializer,
   PRIMARY_OUTLET,
   type ResolveFn,
-  type ResourceResult,
   UrlSegment,
   UrlSegmentGroup,
   UrlTree,
@@ -236,7 +236,9 @@ export type RouteResourcesOutput<P extends string> =
     ? AnalogRouteTable[P] extends { routeMeta: infer Meta }
       ? Simplify<RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
       : EmptyObject
-    : ResourceResult;
+    : ActivatedRoute extends { resources: infer Resources }
+      ? Resources
+      : EmptyObject;
 
 type SplitPath<S extends string> = S extends ''
   ? []

@@ -370,6 +370,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       `
       import { injectLoad, injectResources, injectRouteData } from '@analogjs/router';
       import type { ResourceRef } from '@angular/core';
+      import type { ActivatedRoute } from '@angular/router';
       import type { load } from './app/pages/users.[id].server';
       const data = injectRouteData('/users/[id]');
       const section: 'users' = data().section;
@@ -392,6 +393,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       const nav: string[] = post().nav;
 
       const userRes = injectResources('/users/[id]');
+      const untypedResources: ActivatedRoute['resources'] = injectResources();
       const feedRes: ResourceRef<{ items: string[] } | undefined> = userRes.feed;
       const feedItems: string[] | undefined = userRes.feed.value()?.items;
 

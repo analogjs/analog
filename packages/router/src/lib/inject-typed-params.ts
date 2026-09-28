@@ -1,5 +1,5 @@
 import { inject, Injector, Signal } from '@angular/core';
-import { ActivatedRoute, type ResourceResult } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { combineLatest, map, Observable, of } from 'rxjs';
 
@@ -141,13 +141,15 @@ export function injectResources<P extends AnalogRoutePath>(
   options?: InjectOptions,
 ): RouteResourcesOutput<P>;
 /** Access untyped route resources. */
-export function injectResources(options?: InjectOptions): ResourceResult;
+export function injectResources(
+  options?: InjectOptions,
+): RouteResourcesOutput<string>;
 export function injectResources(
   fromOrOptions?: string | InjectOptions,
   options?: InjectOptions,
 ): unknown {
   const { route } = resolveArgs(fromOrOptions, options);
-  return route.resources ?? {};
+  return 'resources' in route ? (route.resources ?? {}) : {};
 }
 
 export { injectResources as injectRouteResources };

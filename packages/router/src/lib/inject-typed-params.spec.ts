@@ -72,6 +72,15 @@ describe('injectRouteData', () => {
 });
 
 describe('injectResources', () => {
+  it('returns an empty object on Angular versions without route resources', () => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: ActivatedRoute, useValue: {} }],
+    });
+
+    const resources = TestBed.runInInjectionContext(() => injectResources());
+    expect(resources).toEqual({});
+  });
+
   it('returns resources from ActivatedRoute', () => {
     const userRes = { value: () => ({ id: 42 }) };
     TestBed.configureTestingModule({

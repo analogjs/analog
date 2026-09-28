@@ -153,7 +153,7 @@ As with Angular's route data inheritance, a page's keys override the same keys f
 
 ## Access route resources
 
-When using Angular's `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources`:
+On Angular 22.2+, when using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources`:
 
 ```ts
 import { injectResources } from '@analogjs/router';
@@ -163,7 +163,7 @@ const resources = injectResources('/products/[id]');
 const user = resources.user.value();
 ```
 
-Calling `injectResources()` without a route path returns untyped route resources.
+Calling `injectResources()` without a route path returns untyped route resources. On older Angular versions without router resources, it returns an empty object. The other typed-routing helpers do not require router resources.
 
 ## Navigate relative to the current route
 
