@@ -92,6 +92,7 @@ import {
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
 import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
+import { createHotUpdateBatcher } from './hot-update-batch.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -271,6 +272,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     | undefined;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
+  const hotUpdates = createHotUpdateBatcher((ids) =>
+    performCompilation(resolvedConfig, ids),
+  );
   // Persistent Angular Compilation API instance. Kept alive across rebuilds in
   // watch/test mode so Angular can diff previous state and emit
   // `templateUpdates` for HMR. One-shot builds close it right after emit.
@@ -409,6 +413,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+        hotUpdates.configureServer(server);
 
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
@@ -493,22 +498,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         if (TS_EXT_REGEX.test(ctx.file)) {
           const [fileId] = ctx.file.split('?');
 
-          pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+          await hotUpdates.schedule(ctx.file, [fileId]);
 
           if (EXCLUDED_TS_EXT_REGEX.test(fileId)) {
-            await pendingCompilation;
-            pendingCompilation = null;
             // Declaration dependencies have no runtime modules for Vite to invalidate.
             ctx.server.moduleGraph.invalidateAll();
-            ctx.server.ws.send({ type: 'full-reload' });
+            ctx.server.ws.send({ type: 'full-reload', triggeredBy: fileId });
             return [];
           }
 
           let result;
 
           if (pluginOptions.liveReload) {
-            await pendingCompilation;
-            pendingCompilation = null;
             result = fileEmitter(fileId);
           }
 
@@ -604,15 +605,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          pendingCompilation = performCompilation(resolvedConfig, [
+          if (mods.length === 0 && updates.length === 0) return mods;
+
+          await hotUpdates.schedule(ctx.file, [
             ...mods.map((mod) => mod.id as string),
             ...updates,
           ]);
 
           if (updates.length > 0) {
-            await pendingCompilation;
-            pendingCompilation = null;
-
             updates.forEach((updateId) => {
               const impRelativeFileId = `${normalizePath(
                 relative(process.cwd(), updateId),
@@ -818,6 +818,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
           }
+          await hotUpdates.wait();
 
           const typescriptResult = fileEmitter(id);
 
@@ -910,6 +911,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       closeBundle() {
+        hotUpdates.close();
         declarationFiles.forEach(
           ({ declarationFileDir, declarationPath, data }) => {
             mkdirSync(declarationFileDir, { recursive: true });

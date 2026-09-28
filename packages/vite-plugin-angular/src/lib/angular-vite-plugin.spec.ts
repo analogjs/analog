@@ -1505,6 +1505,74 @@ export class AppComponent {}
     expect(sources).toContain(normalizePath(templatePath));
   }, 60_000);
 
+  it('compiles mixed component and template edits once and serves every updated component', async () => {
+    const components = Array.from({ length: 10 }, (_, index) => {
+      const id = normalizePath(path.join(fixtureDir, `src/burst${index}.ts`));
+      const template = id.replace('.ts', '.html');
+      const code = `import { Component } from '@angular/core';
+        @Component({ standalone: true, templateUrl: './burst${index}.html' })
+        export class Burst${index} { value = 'before'; }`;
+      realFs.writeFileSync(id, code);
+      realFs.writeFileSync(template, '<p>before</p>');
+      realFs.appendFileSync(
+        componentPath,
+        `\nexport { Burst${index} } from './burst${index}';`,
+      );
+      return { id, template, code };
+    });
+    const mainPlugin = createAppBuildPlugin();
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'development' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const server = { moduleGraph: { invalidateModule: vi.fn() } };
+    try {
+      await mainPlugin.buildStart.call(ctx);
+      for (const { id, code } of components) {
+        await mainPlugin.transform.handler.call(ctx, code, id);
+      }
+      vi.mocked(NgtscProgram).mockClear();
+      const updates = components.map(({ id, template, code }, index) => {
+        const resource = index % 2 === 1;
+        realFs.writeFileSync(
+          resource ? template : id,
+          resource ? '<p>after</p>' : code.replace('before', 'after'),
+        );
+        const owner = { id };
+        return mainPlugin.handleHotUpdate({
+          file: resource ? template : id,
+          modules: resource ? [{ importers: new Set([owner]) }] : [owner],
+          server,
+        });
+      });
+      // Transforms must also wait when the debounce window is still open.
+      const output = Promise.all(
+        components.map(({ id }) =>
+          mainPlugin.transform.handler.call(
+            ctx,
+            realFs.readFileSync(id, 'utf8'),
+            id,
+          ),
+        ),
+      );
+      await Promise.all(updates);
+      expect(NgtscProgram).toHaveBeenCalledOnce();
+      for (const result of await output) expect(result.code).toContain('after');
+      expect(ctx.error).not.toHaveBeenCalled();
+    } finally {
+      await mainPlugin.buildEnd.call(ctx);
+      mainPlugin.closeBundle();
+    }
+  }, 60_000);
+
   it('refreshes diagnostics when a declaration changes without restarting', async () => {
     const declaration = path.join(fixtureDir, 'src/routes.d.ts');
     realFs.writeFileSync(declaration, "type RoutePath = '/about';");
@@ -1554,7 +1622,10 @@ export class AppComponent {}
       expect.stringContaining('is not assignable'),
     );
     expect(server.moduleGraph.invalidateAll).toHaveBeenCalledOnce();
-    expect(server.ws.send).toHaveBeenCalledWith({ type: 'full-reload' });
+    expect(server.ws.send).toHaveBeenCalledWith({
+      type: 'full-reload',
+      triggeredBy: declaration,
+    });
 
     ctx.error.mockClear();
     realFs.writeFileSync(declaration, "type RoutePath = '/about';");

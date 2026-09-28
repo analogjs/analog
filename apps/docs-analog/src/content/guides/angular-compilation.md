@@ -27,6 +27,14 @@ export default defineConfig({
 
 The default path runs Angular's compiler through the Angular Compilation API. It performs **full TypeScript and template type checking** (including `strictTemplates`), emits declaration files, and supports i18n message extraction. Use it when you want compile-time safety: wrong template bindings, missing inputs, and type mismatches fail the build.
 
+### Editing multiple files
+
+During development, the default compilation path groups component and resource
+changes received within a 100 ms quiet window into one compilation. Reload and
+HMR notifications are coalesced after compilation, so saving several files at
+once avoids compiling separately for every file. Changes received during a
+compilation are queued for the next batch. This behavior requires no configuration.
+
 ## Fast compile
 
 Fast compile swaps Angular's compiler for an in-tree, single-pass transform. Instead of constructing a full `ts.Program`, it extracts each file's decorator metadata and generates Ivy definitions directly through `@angular/compiler`'s lowering APIs. It produces equivalent Ivy output and reduces cold-build and hot-rebuild times.
