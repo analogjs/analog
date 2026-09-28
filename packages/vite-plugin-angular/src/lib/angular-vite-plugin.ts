@@ -271,8 +271,9 @@ export function angular(options?: PluginOptions): Plugin[] {
     | undefined;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
-  // Persistent Angular Compilation API instance. Kept alive across rebuilds so
-  // Angular can diff previous state and emit `templateUpdates` for HMR.
+  // Persistent Angular Compilation API instance. Kept alive across rebuilds in
+  // watch/test mode so Angular can diff previous state and emit
+  // `templateUpdates` for HMR. One-shot builds close it right after emit.
   // Previously the compilation was recreated on every pass, which meant Angular
   // never had prior state and could never produce HMR payloads.
   let angularCompilation:
@@ -1016,9 +1017,10 @@ export function angular(options?: PluginOptions): Plugin[] {
    * Perform compilation using Angular's private Compilation API.
    *
    * Key differences from the standard `performCompilation` path:
-   *  1. The compilation instance is reused across rebuilds (nullish-coalescing
-   *     assignment below) so Angular retains prior state and can diff it to
-   *     produce `templateUpdates` for HMR.
+   *  1. In watch/test mode the compilation instance is reused across rebuilds
+   *     (nullish-coalescing assignment below) so Angular retains prior state
+   *     and can diff it to produce `templateUpdates` for HMR. One-shot builds
+   *     close it once emit completes.
    *  2. `ids` (modified files) are forwarded to both the source-file cache and
    *     `angularCompilation.update()` so that incremental re-analysis is
    *     scoped to what actually changed.
@@ -1212,6 +1214,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         hmrUpdateCode: templateUpdate?.code,
         hmrEligible: !!templateUpdate?.code,
       });
+    }
+
+    // In a regular build (not watch or test), nothing recompiles after this
+    // point: every compiled file and its diagnostics are already stored in
+    // `outputFiles`. Close the Angular compilation now, so its memory (several
+    // GB on large apps) is freed before the bundler renders chunks rather than
+    // at `buildEnd`. Don't call the full `releaseCompilation()` here: it also
+    // clears `outputFiles`, which `transform` keeps reading until the build ends.
+    if (!watchMode && !isTest) {
+      await angularCompilation.close?.();
+      angularCompilation = undefined;
     }
   }
 
