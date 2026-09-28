@@ -68,7 +68,7 @@ describe('setup schematic', () => {
     expect(packageJson.devDependencies).toMatchObject({
       '@analogjs/vite-plugin-angular': expect.anything(),
       jsdom: '^22.0.0',
-      vite: '^7.0.0',
+      vite: '^8.0.0',
       vitest: '^5.0.0',
       'vite-tsconfig-paths': '^4.2.0',
     });
