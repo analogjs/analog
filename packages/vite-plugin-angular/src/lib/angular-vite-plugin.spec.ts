@@ -26,13 +26,21 @@ vi.mock('@angular/compiler-cli', async (importOriginal) => {
   };
 });
 
+// Spy attached to every compilation the plugin creates. The in-process
+// compilation used here has no `close`, so this also stands in for the
+// worker-backed one's teardown.
+const compilationClose = vi.hoisted(() => vi.fn());
+
 vi.mock('./utils/devkit.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./utils/devkit.js')>();
   return {
     ...actual,
     // Zone patches MessagePort in this suite; compile in-process.
-    createAngularCompilation: (jit: boolean, browserOnly: boolean) =>
-      actual.createAngularCompilation(jit, browserOnly, false),
+    createAngularCompilation: async (jit: boolean, browserOnly: boolean) =>
+      Object.assign(
+        await actual.createAngularCompilation(jit, browserOnly, false),
+        { close: compilationClose },
+      ),
     // Exercise compilation without Map methods, as with Angular 22.2's cache.
     SourceFileCache: class {
       private cache = new actual.SourceFileCache();
@@ -1320,6 +1328,58 @@ export class AppComponent {}
     expect(result?.code).toContain('ɵcmp');
     expect(ctx.warn).not.toHaveBeenCalled();
   }, 60_000);
+
+  it.each([
+    { command: 'build', closesAfterBuildStart: 1 },
+    { command: 'serve', closesAfterBuildStart: 0 },
+  ])(
+    'closes the compilation API program after emit only for one-shot builds ($command)',
+    async ({ command, closesAfterBuildStart }) => {
+      const mainPlugin = createAppBuildPlugin({
+        experimental: { useAngularCompilationAPI: true },
+      });
+      await mainPlugin.config({ root: fixtureDir, build: {} }, { command });
+      const resolvedConfig = {
+        root: fixtureDir,
+        mode: 'production',
+        build: {},
+        server: { watch: {} },
+        safeModulePaths: new Set(),
+        css: {},
+      };
+      mainPlugin.configResolved(resolvedConfig);
+      const ctx = {
+        environment: { config: resolvedConfig },
+        warn: vi.fn(),
+        error: vi.fn(),
+        addWatchFile: vi.fn(),
+      };
+      compilationClose.mockClear();
+
+      let result;
+      try {
+        await mainPlugin.buildStart.call(ctx);
+        expect(compilationClose).toHaveBeenCalledTimes(closesAfterBuildStart);
+
+        // Emit output must outlive the compilation.
+        result = await mainPlugin.transform.handler.call(
+          ctx,
+          realFs.readFileSync(componentPath, 'utf-8'),
+          componentPath,
+        );
+      } finally {
+        await mainPlugin.buildEnd.call(ctx);
+        await mainPlugin.closeBundle();
+      }
+
+      expect(result?.code).toContain('ɵɵdefineComponent');
+      // `buildEnd` must not close an already-released compilation again.
+      if (command === 'build') {
+        expect(compilationClose).toHaveBeenCalledTimes(1);
+      }
+    },
+    60_000,
+  );
 
   it('emits JavaScript through the compilation API with isolatedModules enabled', async () => {
     const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
