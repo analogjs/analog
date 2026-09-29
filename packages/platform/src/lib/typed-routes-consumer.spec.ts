@@ -553,6 +553,11 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       true,
     ],
     ['unknown scope', `<a from="/missing" linkTo="/about"></a>`, true],
+    [
+      'unrestricted scope',
+      `<a [from]="uncheckedPath" linkTo="/about"></a>`,
+      true,
+    ],
     ['relative target without scope', `<a linkTo="."></a>`, true],
     ['unknown path', `<a [linkTo]="{ path: '/missing' }"></a>`, true],
     ['missing params', `<a [linkTo]="{ path: '/users/[id]' }"></a>`, true],
@@ -643,6 +648,37 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       rmSync(join(root, 'src/routeTree.gen.d.ts'));
       expect(compile(root).messages.join('\n')).toContain('not assignable');
     }
+  });
+
+  it('bounds template type expansion for large route tables', async () => {
+    const root = fixture();
+    for (let i = 0; i < 100; i++) {
+      writeFileSync(
+        join(root, `src/app/pages/docs.section${i}.overview.page.ts`),
+        'export default class Page {}',
+      );
+    }
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { Component } from '@angular/core';
+      import { LinkTo, type LinkToInput } from '@analogjs/router';
+      @Component({
+        imports: [LinkTo],
+        template: '<a [linkTo]="destination"></a>',
+      })
+      export class Consumer {
+        readonly destination: LinkToInput = { path: '/about' };
+      }
+      `,
+    );
+    await configure(root);
+    const { program, messages } = compile(root);
+    expect(messages).toEqual([]);
+    // Catch expansion across every possible starting route for an unscoped link.
+    expect(
+      program.compiler.getCurrentProgram().getInstantiationCount(),
+    ).toBeLessThan(2_000_000);
   });
 
   it('checks typed route calls in Angular templates', async () => {

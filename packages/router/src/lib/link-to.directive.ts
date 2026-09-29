@@ -47,7 +47,7 @@ type ScopedStaticTarget<From extends AnalogRoutePath> = {
 }[ScopedRouteTarget<From>];
 
 /** Destinations accepted by `[linkTo]`, relative to `From` when provided. */
-export type LinkToInput<From extends AnalogRoutePath | undefined = undefined> =
+export type LinkToInput<From = undefined> =
   // Angular infers `any` for `From` when the `from` input is not bound.
   | (unknown extends From
       ? StaticRoutePath | LinkToDestination
@@ -75,13 +75,15 @@ export type LinkToInput<From extends AnalogRoutePath | undefined = undefined> =
     },
   ],
 })
-export class LinkTo<From extends AnalogRoutePath | undefined = undefined>
-  implements OnChanges, OnDestroy
-{
+export class LinkTo<From = undefined> implements OnChanges, OnDestroy {
   readonly linkTo: InputSignal<LinkToInput<From>> =
     input.required<LinkToInput<From>>();
   /** The current route's path. Enables relative destinations and param inheritance. */
-  readonly from: InputSignal<From | undefined> = input<From>();
+  // Constrain the input, not the generic, to avoid expanding every route pair
+  // while Angular infers the scope of an unscoped link.
+  readonly from: InputSignal<(From & AnalogRoutePath) | undefined> = input<
+    From & AnalogRoutePath
+  >();
   private readonly routerLink = inject(RouterLink);
   private readonly route = inject(ActivatedRoute);
   private currentParams: Record<string, unknown> = {};
