@@ -1,3 +1,9 @@
+# [2.8.0-beta.16](https://github.com/analogjs/analog/compare/v2.8.0-beta.15...v2.8.0-beta.16) (2026-09-29)
+
+### Features
+
+- **router:** add typed route data and relative navigation ([#2596](https://github.com/analogjs/analog/issues/2596)) ([92023cf](https://github.com/analogjs/analog/commit/92023cf0fdc6629beab332c51466263cebfdced8))
+
 # [2.8.0-beta.15](https://github.com/analogjs/analog/compare/v2.8.0-beta.14...v2.8.0-beta.15) (2026-09-28)
 
 ### Performance Improvements
