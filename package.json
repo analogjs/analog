@@ -19,8 +19,7 @@
     "contributors:add": "all-contributors add",
     "contributors:generate": "all-contributors generate",
     "prettify": "prettier --write .",
-    "prettier:check": "prettier --check .",
-    "build:test": "nx build ng-app --skip-nx-cache"
+    "prettier:check": "prettier --check ."
   },
   "engines": {
     "node": "^22.22.3 || ^24.15.0 || ^26.0.0",

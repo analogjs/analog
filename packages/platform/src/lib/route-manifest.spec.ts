@@ -804,6 +804,59 @@ describe('generateRouteTableDeclaration', () => {
     expect(output).not.toContain('paramsOutput');
     expect(output).not.toContain('queryOutput');
   });
+
+  it('adds module types only for URLs defined by a single file', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/about.page.ts',
+      '/src/app/pages/blog.page.ts',
+      '/src/app/pages/blog/index.page.ts',
+      '/src/app/pages/(admin)/dashboard.page.ts',
+      '/src/app/pages/(user)/dashboard.page.ts',
+    ]);
+    expect([...manifest.sharedFullPaths].sort()).toEqual([
+      '/blog',
+      '/dashboard',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest, (filename) => ({
+      routeMeta: `.${filenameToRouteId(filename)}.page`,
+      load: `.${filenameToRouteId(filename)}.server`,
+    }));
+
+    expect(output).toContain(
+      'routeMeta: typeof import("./about.page").routeMeta;',
+    );
+    expect(output).toContain('load: typeof import("./about.server").load;');
+    expect(output.match(/typeof import/g)).toHaveLength(2);
+  });
+
+  it('adds routeMeta types from the layouts that wrap a page', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/users.page.ts',
+      '/src/app/pages/users/index.page.ts',
+      '/src/app/pages/users/[id].page.ts',
+      '/src/app/pages/users/[id]/posts.page.ts',
+      '/src/app/pages/users.settings.page.ts',
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(auth)/login.page.ts',
+    ]);
+    const layouts = (fullPath: string) =>
+      manifest.canonicalByFullPath.get(fullPath)?.layouts;
+    expect(layouts('/users/[id]/posts')).toEqual([
+      '/src/app/pages/users.page.ts',
+      '/src/app/pages/users/[id].page.ts',
+    ]);
+    expect(layouts('/login')).toEqual(['/src/app/pages/(auth).page.ts']);
+    // Dot notation does not nest under a layout.
+    expect(layouts('/users/settings')).toEqual([]);
+
+    const output = generateRouteTableDeclaration(manifest, (filename) => ({
+      routeMeta: `.${filenameToRouteId(filename)}.page`,
+    }));
+    expect(output).toContain(
+      'layoutRouteMeta: [typeof import("./users.page").routeMeta, typeof import("./users/[id].page").routeMeta];',
+    );
+  });
 });
 
 describe('guarded route branches', () => {

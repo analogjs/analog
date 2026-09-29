@@ -9,10 +9,13 @@ export interface RouteFileDiscoveryOptions {
   additionalContentDirs: string[];
 }
 
+export type RouteFileKind = 'route' | 'content' | 'server';
+
 export interface RouteFileDiscovery {
   getRouteFiles(): string[];
   getContentFiles(): string[];
-  getDiscoveredFileKind(path: string): 'route' | 'content' | null;
+  /** `server` marks page `.server.ts` files, which affect `load` types only. */
+  getDiscoveredFileKind(path: string): RouteFileKind | null;
   updateDiscoveredFile(path: string, event: 'add' | 'change' | 'unlink'): void;
   /**
    * Returns true if the normalized filename was discovered from an app-local
@@ -79,7 +82,7 @@ export function createRouteFileDiscovery(
     return null;
   }
 
-  function getDiscoveredFileKind(path: string): 'route' | 'content' | null {
+  function getDiscoveredFileKind(path: string): RouteFileKind | null {
     const normalized = normalizePath(path);
     const localKind = getAppLocalFileKind(normalized);
     if (localKind) return localKind;
@@ -94,6 +97,14 @@ export function createRouteFileDiscovery(
       additionalPagesRoots.some((dir) => isWithinDir(normalized, dir))
     ) {
       return 'route';
+    }
+    if (
+      normalized.endsWith('.server.ts') &&
+      [`${root}/src/app/pages`, ...additionalPagesRoots].some((dir) =>
+        isWithinDir(normalized, dir),
+      )
+    ) {
+      return 'server';
     }
     return null;
   }
@@ -178,7 +189,7 @@ export function createRouteFileDiscovery(
       return [...contentFilesCache].sort();
     },
 
-    getDiscoveredFileKind(path: string): 'route' | 'content' | null {
+    getDiscoveredFileKind(path: string): RouteFileKind | null {
       return getDiscoveredFileKind(path);
     },
 
@@ -188,7 +199,7 @@ export function createRouteFileDiscovery(
     ): void {
       ensureInitialized();
       const kind = getDiscoveredFileKind(path);
-      if (!kind) {
+      if (!kind || kind === 'server') {
         return;
       }
 

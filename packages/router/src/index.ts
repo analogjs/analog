@@ -49,11 +49,20 @@ export type {
 } from './lib/server-fn/types';
 
 export { toRoute } from './lib/to-route';
-export { LinkTo } from './lib/link-to.directive';
+export { LinkTo, type LinkToInput } from './lib/link-to.directive';
 export type {
   AnalogRouteTable,
   AnalogRoutePath,
+  RouteDataOutput,
+  RouteLoadOutput,
   RoutePathOptions,
+  RouteResourcesOutput,
 } from './lib/to-route';
 export { injectNavigate } from './lib/inject-navigate';
-export { injectParams, injectQuery } from './lib/inject-typed-params';
+export {
+  injectParams,
+  injectQuery,
+  injectResources,
+  injectRouteData,
+  injectRouteResources,
+} from './lib/inject-typed-params';

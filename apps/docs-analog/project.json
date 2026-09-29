@@ -5,7 +5,7 @@
   "sourceRoot": "apps/docs-analog/src",
   "prefix": "docs",
   "tags": [],
-  "implicitDependencies": ["vitest-angular"],
+  "implicitDependencies": ["vitest-angular", "platform", "router"],
   "targets": {
     "build": {
       "executor": "@nx/vite:build",

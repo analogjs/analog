@@ -18,6 +18,7 @@ declare module '@analogjs/router' {
     '/newsletter': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/newsletter.server').load;
     };
     '/package': {
       params: Record<string, never>;
@@ -26,6 +27,7 @@ declare module '@analogjs/router' {
     '/search': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/search.server').load;
     };
     '/server-functions': {
       params: Record<string, never>;
@@ -34,6 +36,7 @@ declare module '@analogjs/router' {
     '/shipping': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/shipping/index.server').load;
     };
     '/sign-up': {
       params: Record<string, never>;
@@ -42,6 +45,7 @@ declare module '@analogjs/router' {
     '/test': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('../../../libs/shared/feature/src/pages/test.server').load;
     };
     '/blog/[slug]': {
       params: { slug: string };
@@ -50,14 +54,17 @@ declare module '@analogjs/router' {
     '/products/[productId]': {
       params: { productId: string };
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/products.[productId].server').load;
     };
     '/[...slug]': {
       params: { slug: string[] };
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/[...slug].server').load;
     };
     '/shipping/[...slug]': {
       params: { slug: string[] };
       query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/shipping/[...slug].server').load;
     };
   }
 }

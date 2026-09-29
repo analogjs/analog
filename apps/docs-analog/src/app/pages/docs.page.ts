@@ -7,6 +7,6 @@ import { DocsLayoutShell, redirectDocsRoot } from '../docs';
 })
 export default class DocsLayoutPage {
   constructor() {
-    redirectDocsRoot(() => '/docs');
+    redirectDocsRoot();
   }
 }

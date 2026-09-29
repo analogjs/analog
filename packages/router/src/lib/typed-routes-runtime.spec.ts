@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Route, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { provideRouter, Route, Router, RouterOutlet } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { injectParams } from './inject-typed-params';
+import { injectLoad } from './inject-load';
+import { injectParams, injectRouteData } from './inject-typed-params';
 import { injectNavigate } from './inject-navigate';
 import { buildRouteLink } from './to-route';
 import { describe, expect, it } from 'vitest';
@@ -88,4 +91,65 @@ describe('catch-all navigation round trips', () => {
       }
     },
   );
+});
+
+describe('route data', () => {
+  it('merges layout data with page data, resolver results, and load', async () => {
+    @Component({
+      standalone: true,
+      imports: [RouterOutlet],
+      template: '<router-outlet />',
+    })
+    class Layout {}
+    @Component({ standalone: true, template: '' })
+    class Page {
+      data = injectRouteData('/users/[id]' as any);
+      load = toSignal(injectLoad('/users/[id]' as any));
+    }
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(
+          createRoutes({
+            '/src/app/pages/users.page.ts': async () => ({
+              default: Layout,
+              routeMeta: {
+                data: { section: 'layout', area: 'admin' },
+                resolve: {
+                  greeting: () => 'layout',
+                  nav: () => Promise.resolve(['home']),
+                },
+              },
+            }),
+            '/src/app/pages/users/index.page.ts': async () => ({
+              default: Page,
+              routeMeta: { data: { title: 'Users' } },
+            }),
+            '/src/app/pages/users/[id].page.ts': async () => ({
+              default: Page,
+              routeMeta: {
+                data: { section: 'users', greeting: 'static' },
+                resolve: { greeting: () => Promise.resolve('hello') },
+              },
+            }),
+          }),
+        ),
+      ],
+    });
+    const harness = await RouterTestingHarness.create();
+    const page = () =>
+      harness.routeDebugElement!.query(By.directive(Page))
+        .componentInstance as Page;
+    await harness.navigateByUrl('/users/42');
+    expect(page().data()).toMatchObject({
+      area: 'admin',
+      nav: ['home'],
+      section: 'users',
+      greeting: 'hello',
+      load: {},
+    });
+    expect(page().load()).toEqual({});
+
+    await harness.navigateByUrl('/users');
+    expect(page().data()).toMatchObject({ section: 'layout', title: 'Users' });
+  });
 });

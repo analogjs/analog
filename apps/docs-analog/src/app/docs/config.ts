@@ -6,6 +6,7 @@ import {
   makeEnvironmentProviders,
 } from '@angular/core';
 import type { SidebarNode } from './sidebar';
+import type { LinkToInput } from '@analogjs/router';
 
 export interface DocsBrandConfig {
   /** Display name in the header */
@@ -15,7 +16,7 @@ export interface DocsBrandConfig {
   /** Alt text on the logo image */
   logoAlt?: string;
   /** Route to navigate to when the header logo is clicked. Defaults to `/`. */
-  homeLink?: string;
+  homeLink?: LinkToInput;
 }
 
 export interface DocsLocale {
@@ -51,8 +52,8 @@ export interface DocsNavLink {
   label: string;
   /** External URL — renders as a target=_blank anchor */
   href?: string;
-  /** Internal route — renders as a routerLink */
-  routerLink?: string;
+  /** Typed internal route. */
+  linkTo?: LinkToInput;
 }
 
 export interface DocsFooterColumn {
