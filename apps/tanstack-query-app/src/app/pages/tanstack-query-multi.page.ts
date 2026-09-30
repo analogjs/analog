@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery } from '@tanstack/angular-query';
 import { serverQueryOptions } from '@analogjs/router/tanstack-query';
 
 import type { route } from '../../server/routes/api/v1/query-posts';

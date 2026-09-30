@@ -1,4 +1,3 @@
-export { provideServerAnalogQuery } from './provide-server-analog-query';
 export {
   definePageLoadQueries,
   ANALOG_QUERIES_KEY,

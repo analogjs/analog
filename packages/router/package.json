@@ -74,7 +74,7 @@
     "@angular/platform-server": "^20.0.0 || ^21.0.0 || ^22.0.0",
     "@angular/router": "^20.0.0 || ^21.0.0 || ^22.0.0",
     "@standard-schema/spec": "catalog:",
-    "@tanstack/angular-query-experimental": ">=5.95.0",
+    "@tanstack/angular-query": "^5.0.0-rc.0",
     "h3": "^1.13.0 || ^2.0.0-rc.0",
     "schema-dts": "catalog:"
   },
@@ -88,7 +88,7 @@
     "@standard-schema/spec": {
       "optional": true
     },
-    "@tanstack/angular-query-experimental": {
+    "@tanstack/angular-query": {
       "optional": true
     },
     "h3": {

@@ -1,5 +1,5 @@
-import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
-import type { DehydratedState } from '@tanstack/angular-query-experimental';
+import { QueryClient, dehydrate } from '@tanstack/angular-query';
+import type { DehydratedState } from '@tanstack/angular-query';
 import type { H3Event, H3EventContext } from 'h3';
 import type { $Fetch } from 'ofetch';
 
@@ -64,7 +64,7 @@ export interface DefinePageLoadQueriesOptions<
  * ```ts
  * // src/app/pages/posts.server.ts
  * import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
- * import { queryOptions } from '@tanstack/angular-query-experimental';
+ * import { queryOptions } from '@tanstack/angular-query';
  *
  * export const postsQuery = queryOptions({
  *   queryKey: ['posts'],

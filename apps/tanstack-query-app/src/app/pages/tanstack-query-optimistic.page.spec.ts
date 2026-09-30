@@ -6,10 +6,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import {
-  QueryClient,
-  provideTanStackQuery,
-} from '@tanstack/angular-query-experimental';
+import { QueryClient, provideTanStackQuery } from '@tanstack/angular-query';
 import { of } from 'rxjs';
 import TanStackQueryOptimisticPageComponent from './tanstack-query-optimistic.page';
 
@@ -23,7 +20,7 @@ describe('TanStackQueryOptimisticPageComponent', () => {
         provideZonelessChangeDetection(),
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideTanStackQuery(new QueryClient()),
+        provideTanStackQuery(() => new QueryClient()),
         {
           provide: ActivatedRoute,
           useValue: {

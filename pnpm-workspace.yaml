@@ -58,8 +58,8 @@ catalog:
   '@tailwindcss/postcss': ^4.2.2
   '@tailwindcss/vite': ^4.2.2
   '@standard-schema/spec': ^1.1.0
-  '@tanstack/angular-query-experimental': ^5.95.2
-  '@tanstack/query-core': ^5.95.2
+  '@tanstack/angular-query': 5.0.0-rc.0
+  '@tanstack/query-core': 5.103.2
   '@types/hast': ^3.0.4
   '@types/node': ^25.5.0
   '@types/prismjs': ^1.26.6
