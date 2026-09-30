@@ -7,7 +7,7 @@ import type {
   DefaultError,
   InfiniteData,
   QueryKey,
-} from '@tanstack/angular-query-experimental';
+} from '@tanstack/angular-query';
 import type {
   ServerRouteHandler,
   InferRouteQuery,

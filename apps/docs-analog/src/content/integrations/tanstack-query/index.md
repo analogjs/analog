@@ -10,7 +10,7 @@ Use route `load` functions when data should be resolved before the page componen
   <TabItem value="npm">
 
 ```shell
-npm install @tanstack/angular-query-experimental
+npm install @tanstack/angular-query
 ```
 
   </TabItem>
@@ -18,7 +18,7 @@ npm install @tanstack/angular-query-experimental
   <TabItem label="yarn" value="yarn">
 
 ```shell
-yarn add @tanstack/angular-query-experimental
+yarn add @tanstack/angular-query
 ```
 
   </TabItem>
@@ -26,7 +26,7 @@ yarn add @tanstack/angular-query-experimental
   <TabItem value="pnpm">
 
 ```shell
-pnpm add @tanstack/angular-query-experimental
+pnpm add @tanstack/angular-query
 ```
 
   </TabItem>
@@ -34,7 +34,7 @@ pnpm add @tanstack/angular-query-experimental
 
 ## Step 2: Configure the Client Provider
 
-Add TanStack Query and the Analog hydration provider to your application config.
+Add TanStack Query and the Analog route-load provider to your application config.
 
 ```ts
 import {
@@ -42,22 +42,10 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import { InjectionToken } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
 import { requestContextInterceptor } from '@analogjs/router';
 import { provideAnalogQuery } from '@analogjs/router/tanstack-query';
-import {
-  QueryClient,
-  provideTanStackQuery,
-} from '@tanstack/angular-query-experimental';
-
-// Per-injector `QueryClient` factory. `bootstrapApplication` creates a
-// fresh root injector per SSR request, so each request gets its own
-// `QueryClient` and request state can't leak across responses. On the
-// browser this still resolves to a single instance for the app.
-const QUERY_CLIENT = new InjectionToken<QueryClient>('QueryClient', {
-  factory: () => new QueryClient(),
-});
+import { QueryClient, provideTanStackQuery } from '@tanstack/angular-query';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -65,38 +53,17 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([requestContextInterceptor]),
     ),
-    provideTanStackQuery(QUERY_CLIENT),
+    provideTanStackQuery(() => new QueryClient()),
     provideAnalogQuery(),
   ],
 };
 ```
 
-`provideAnalogQuery()` rehydrates the TanStack Query cache from `TransferState` on the client, preventing duplicate fetches after SSR navigation.
+`provideTanStackQuery()` automatically transfers the server query cache to the browser using Angular's `TransferState`. Its factory creates a separate `QueryClient` per application injector, keeping SSR requests isolated. No additional server query provider is needed.
 
-:::warning Pass a factory, not a `new QueryClient()` instance.
-`provideTanStackQuery(new QueryClient())` evaluates the constructor once at module-load time, so every SSR request on the same Node process shares the same cache and leaks query state between responses. Wrapping the client in an `InjectionToken` with `factory: () => new QueryClient()` gives each `bootstrapApplication` call its own client.
-:::
+`provideAnalogQuery()` merges query caches returned by Analog page load handlers into the active client during route resolution. Include it when using `definePageLoadQueries`; component-issued queries only need `provideTanStackQuery()`.
 
-## Step 3: Configure the Server Provider
-
-Add `provideServerAnalogQuery()` to the server application config so prefetched query state is transferred during hydration.
-
-```ts
-import type { ApplicationConfig } from '@angular/core';
-import { mergeApplicationConfig } from '@angular/core';
-import { provideServerRendering } from '@angular/platform-server';
-import { provideServerAnalogQuery } from '@analogjs/router/tanstack-query/server';
-
-import { appConfig } from './app.config';
-
-const serverConfig: ApplicationConfig = {
-  providers: [provideServerRendering(), provideServerAnalogQuery()],
-};
-
-export const config = mergeApplicationConfig(appConfig, serverConfig);
-```
-
-## Step 4: Query Server Routes
+## Step 3: Query Server Routes
 
 Use `injectQuery` and `injectMutation` from TanStack Query against Analog server routes in your components.
 
@@ -104,7 +71,7 @@ Use `injectQuery` and `injectMutation` from TanStack Query against Analog server
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery } from '@tanstack/angular-query';
 
 @Component({
   template: `
@@ -133,7 +100,7 @@ Use `serverQueryOptions` and `serverMutationOptions` from `@analogjs/router/tans
 ```ts
 import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery } from '@tanstack/angular-query';
 import { serverQueryOptions } from '@analogjs/router/tanstack-query';
 import type { route } from '../../server/routes/api/v1/todos.get';
 
@@ -161,12 +128,12 @@ Query params, mutation bodies, and response shapes are all inferred from the ser
 
 ## Prefetching Queries in `load()`
 
-Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render — no SSR-to-client refetch, no in-component request waterfall.
+Use `definePageLoadQueries` in a `.server.ts` file to prefetch TanStack Query queries during the Nitro `load()` handler. The dehydrated cache rides along on the route's load result and is merged into the active `QueryClient` on `ResolveEnd`, so components reading the same query options find a warm cache on first render. TanStack Query hydrates that cache in the browser; Analog page-load requests have their own navigation lifecycle.
 
 ```ts
 // src/app/pages/posts.server.ts
 import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
-import { queryOptions } from '@tanstack/angular-query-experimental';
+import { queryOptions } from '@tanstack/angular-query';
 
 export const postsQuery = queryOptions({
   queryKey: ['posts'],
@@ -184,7 +151,7 @@ export const load = definePageLoadQueries({
 ```ts
 // src/app/pages/posts.page.ts
 import { Component } from '@angular/core';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery } from '@tanstack/angular-query';
 
 import { postsQuery } from './posts.server';
 

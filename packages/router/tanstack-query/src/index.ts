@@ -1,7 +1,4 @@
-export {
-  ANALOG_QUERY_STATE_KEY,
-  provideAnalogQuery,
-} from './provide-analog-query.js';
+export { provideAnalogQuery } from './provide-analog-query.js';
 
 export {
   serverQueryOptions,
