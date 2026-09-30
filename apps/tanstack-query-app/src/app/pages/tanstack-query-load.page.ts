@@ -126,7 +126,7 @@ export default class TanStackQueryLoadPage {
   readonly postsQuery = injectQuery(() =>
     serverQueryOptions<typeof postsRoute>(this.http, '/api/v1/query-posts', {
       queryKey: ['analog-query-load-posts', this.scope()] as const,
-      query: { scope: this.scope() },
+      query: { scope: this.scope(), postId: '', author: '' },
       staleTime: 60_000,
     }),
   );
