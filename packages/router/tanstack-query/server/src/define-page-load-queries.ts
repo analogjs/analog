@@ -20,6 +20,16 @@ export interface PageLoadQueriesResult<TData> {
   data: TData;
 }
 
+export interface PageLoadQueries<TData> {
+  (ctx: {
+    params: H3EventContext['params'];
+    req: NodeContext['req'];
+    res: NonNullable<NodeContext['res']>;
+    fetch: $Fetch;
+    event: H3Event;
+  }): Promise<PageLoadQueriesResult<TData> | Response>;
+}
+
 export interface DefinePageLoadQueriesOptions<
   TParamsSchema extends OptionalSchema,
   TQuerySchema extends OptionalSchema,
@@ -77,13 +87,7 @@ export function definePageLoadQueries<
   TData = void,
 >(
   options: DefinePageLoadQueriesOptions<TParamsSchema, TQuerySchema, TData>,
-): (ctx: {
-  params: H3EventContext['params'];
-  req: NodeContext['req'];
-  res: NonNullable<NodeContext['res']>;
-  fetch: $Fetch;
-  event: H3Event;
-}) => Promise<PageLoadQueriesResult<TData> | Response> {
+): PageLoadQueries<TData> {
   return definePageLoad({
     params: options.params,
     query: options.query,

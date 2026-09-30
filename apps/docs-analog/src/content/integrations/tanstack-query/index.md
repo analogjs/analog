@@ -88,10 +88,32 @@ export default class QueryPageComponent {
   readonly query = injectQuery(() => ({
     queryKey: ['echo'],
     queryFn: () =>
-      lastValueFrom(this.http.get<{ message: string }>('/api/v1/echo')),
+      lastValueFrom(
+        this.http.get<{ message: string }>('/api/v1/echo', {
+          transferCache: false,
+        }),
+      ),
   }));
 }
 ```
+
+Set `transferCache: false` for HTTP requests managed by TanStack Query. Its query cache already transfers SSR results; restoring a second HTTP cache after a mutation could return stale data. The `serverQueryOptions` and `serverInfiniteQueryOptions` helpers set this automatically.
+
+You can also disable Angular's HTTP transfer cache globally with [`withNoHttpTransferCache`](https://angular.dev/api/platform-browser/withNoHttpTransferCache):
+
+```ts
+import {
+  provideClientHydration,
+  withNoHttpTransferCache,
+} from '@angular/platform-browser';
+
+// In your application providers:
+provideClientHydration(withNoHttpTransferCache());
+```
+
+This disables Angular's HTTP transfer cache for all requests. Keep `transferCache: false` on Query-managed requests when using Analog's `requestContextInterceptor`, which also maintains its own transfer cache. TanStack Query's cache hydration remains enabled.
+
+For selective Angular HTTP caching, use [`withHttpTransferCacheOptions`](https://angular.dev/api/platform-browser/withHttpTransferCacheOptions) with a request `filter`.
 
 ## Typed Server Routes
 

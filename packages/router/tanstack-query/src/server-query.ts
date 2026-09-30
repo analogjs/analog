@@ -54,6 +54,7 @@ export function serverQueryOptions<
       lastValueFrom(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, query as Record<string, any>),
+          { transferCache: false },
         ),
       ),
   } as CreateQueryOptions<InferRouteResult<TRoute>, TError, TData, TQueryKey>;
@@ -134,6 +135,7 @@ export function serverInfiniteQueryOptions<
       lastValueFrom(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, buildQuery(context) as Record<string, any>),
+          { transferCache: false },
         ),
       ),
   } as CreateInfiniteQueryOptions<
