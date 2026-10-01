@@ -1,3 +1,32 @@
+# [2.8.0](https://github.com/analogjs/analog/compare/v2.7.5...v2.8.0) (2026-10-01)
+
+### Bug Fixes
+
+- **content:** restore docs content loading and hydration ([#2586](https://github.com/analogjs/analog/issues/2586)) ([ababebb](https://github.com/analogjs/analog/commit/ababebb3ab611a2f0417ed283ef493f43d3e52b3))
+- **platform:** isolate concurrent i18n rendering with locale workers ([#2572](https://github.com/analogjs/analog/issues/2572)) ([6deb462](https://github.com/analogjs/analog/commit/6deb462e8b209ee5169ad411dd5df8703e3e876b))
+- **router:** harden experimental streaming SSR ([#2587](https://github.com/analogjs/analog/issues/2587)) ([e0a9939](https://github.com/analogjs/analog/commit/e0a993900850c712b035338994a8378a525356d4)), closes [#2531](https://github.com/analogjs/analog/issues/2531)
+- **vite-plugin-angular:** emit source-linked workspace packages ([#2544](https://github.com/analogjs/analog/issues/2544)) ([e26a1f5](https://github.com/analogjs/analog/commit/e26a1f5499f7b06a983f836fe69ed4363f04722c))
+- **vite-plugin-angular:** handle boundary conformance and deferred dependencies ([#2564](https://github.com/analogjs/analog/issues/2564)) ([3901663](https://github.com/analogjs/analog/commit/390166344a6392d2943d19e0801b9fb87adac0b4))
+- **vite-plugin-angular:** lazily create JavaScript transformers ([#2582](https://github.com/analogjs/analog/issues/2582)) ([4a1c52c](https://github.com/analogjs/analog/commit/4a1c52cae5d9994ddb539c4a8c8a56fe9f176de8))
+- **vite-plugin-angular:** preprocess styles with the top-level resolved config ([#2557](https://github.com/analogjs/analog/issues/2557)) ([d05e143](https://github.com/analogjs/analog/commit/d05e1430fbb8515f80411c32649874741cdd4ef9))
+- **vite-plugin-angular:** release compilation API program after emit in builds ([#2590](https://github.com/analogjs/analog/issues/2590)) ([14d7f4c](https://github.com/analogjs/analog/commit/14d7f4ca0202e3afe5ae14fd0811161bbfcbedbf))
+- **vite-plugin-angular:** support Angular 22.2 transformer and source caches ([#2576](https://github.com/analogjs/analog/issues/2576)) ([00c2002](https://github.com/analogjs/analog/commit/00c2002b3a12e0cb7f1d5671ecb62bf68fe44c61))
+- **vitest-angular:** use Vite 8 in setup schematic ([#2592](https://github.com/analogjs/analog/issues/2592)) ([82abd74](https://github.com/analogjs/analog/commit/82abd7453b54f6c220ac9fdcf863546c548ff49e))
+
+### Features
+
+- **astro-angular:** support content projection for island components ([#2560](https://github.com/analogjs/analog/issues/2560)) ([96ed98d](https://github.com/analogjs/analog/commit/96ed98db2a2b60918cf21d36ba60f5de532177e8))
+- **router:** add opt-in form enhancements and validation helpers ([#2565](https://github.com/analogjs/analog/issues/2565)) ([f0cd5bb](https://github.com/analogjs/analog/commit/f0cd5bbc50bfdb5c1033117c3a8c2b804b6b1f8c))
+- **router:** add opt-in type-safe routing ([#2561](https://github.com/analogjs/analog/issues/2561)) ([e0a512a](https://github.com/analogjs/analog/commit/e0a512a00e49f5d4fc3c6522382632dea61dc770))
+- **router:** add TanStack Query integration ([#2552](https://github.com/analogjs/analog/issues/2552)) ([d0cfbd6](https://github.com/analogjs/analog/commit/d0cfbd6456913badea31cc86f16d84b4c04dae14))
+- **router:** add typed action and API route helpers ([#2562](https://github.com/analogjs/analog/issues/2562)) ([1335448](https://github.com/analogjs/analog/commit/1335448136a656d76c8142b562c614280aeb45b5))
+- **router:** add typed route data and relative navigation ([#2596](https://github.com/analogjs/analog/issues/2596)) ([92023cf](https://github.com/analogjs/analog/commit/92023cf0fdc6629beab332c51466263cebfdced8))
+- **vitest-angular:** add support for Vitest 5 ([#2573](https://github.com/analogjs/analog/issues/2573)) ([a02502a](https://github.com/analogjs/analog/commit/a02502ab77a04bd5899fab0c9283e8827d414fd7))
+
+### Performance Improvements
+
+- **vite-plugin-angular:** batch compilation and hot update notifications ([#2594](https://github.com/analogjs/analog/issues/2594)) ([2344881](https://github.com/analogjs/analog/commit/23448814f671c4b0b2ab8b38db5613deea919672))
+
 # [2.8.0-beta.16](https://github.com/analogjs/analog/compare/v2.8.0-beta.15...v2.8.0-beta.16) (2026-09-29)
 
 ### Features
@@ -107,6 +136,12 @@
 ### Bug Fixes
 
 - **vite-plugin-angular:** emit source-linked workspace packages ([#2544](https://github.com/analogjs/analog/issues/2544)) ([e26a1f5](https://github.com/analogjs/analog/commit/e26a1f5499f7b06a983f836fe69ed4363f04722c))
+
+## [2.7.5](https://github.com/analogjs/analog/compare/v2.7.4...v2.7.5) (2026-09-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** lazily create JavaScript transformers ([722c16e](https://github.com/analogjs/analog/commit/722c16e8d5a0803841e06e4f4c4384bfa1d64df4)), closes [#2581](https://github.com/analogjs/analog/issues/2581)
 
 ## [2.7.4](https://github.com/analogjs/analog/compare/v2.7.3...v2.7.4) (2026-09-24)
 
