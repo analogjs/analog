@@ -122,7 +122,9 @@ export function requestContextInterceptor(
           };
           const transferResponse = new HttpResponse(cacheResponse);
 
-          transferState.set(storeKey, cacheResponse);
+          if (req.transferCache !== false) {
+            transferState.set(storeKey, cacheResponse);
+          }
           return transferResponse;
         }),
     );
@@ -139,7 +141,8 @@ export function requestContextInterceptor(
     const { pathname, search } = toAbsoluteUrl(req.urlWithParams);
     const cacheKey = makeCacheKey(req, `${pathname}${search}`);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
-    const cacheRestoreResponse = transferState.get(storeKey, null);
+    const cacheRestoreResponse =
+      req.transferCache !== false ? transferState.get(storeKey, null) : null;
 
     if (cacheRestoreResponse) {
       transferState.remove(storeKey);

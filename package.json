@@ -73,7 +73,7 @@
     "@nx/devkit": "catalog:",
     "@standard-schema/spec": "catalog:",
     "@tailwindcss/postcss": "catalog:",
-    "@tanstack/angular-query-experimental": "catalog:",
+    "@tanstack/angular-query": "catalog:",
     "@tanstack/query-core": "catalog:",
     "ajv-formats": "catalog:",
     "defu": "catalog:",

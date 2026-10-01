@@ -12,7 +12,7 @@ import {
   QueryClient,
   injectMutation,
   injectQuery,
-} from '@tanstack/angular-query-experimental';
+} from '@tanstack/angular-query';
 import {
   serverQueryOptions,
   serverMutationOptions,

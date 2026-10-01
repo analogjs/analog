@@ -36,6 +36,8 @@ export function depsPlugin(options?: Options): Plugin[] {
               '@ng-web-apis/**',
               '@taiga-ui/**',
               '@tanstack/angular-query-experimental',
+              '@tanstack/angular-query',
+              '@tanstack/angular-query-devtools',
             ],
             // The server pre-bundle is resolved separately from the client
             // one, so a secondary entry point left out of it loads its own

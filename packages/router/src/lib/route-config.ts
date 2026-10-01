@@ -1,4 +1,10 @@
-import { inject } from '@angular/core';
+import {
+  PLATFORM_ID,
+  TransferState,
+  inject,
+  makeStateKey,
+} from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -60,20 +66,36 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
       if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY]?.endpointKey]) {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
-        const internalFetch = injectInternalServerFetch();
-
-        if (internalFetch) {
-          return internalFetch(`${url.pathname}${url.search}`);
+        const transferState = inject(TransferState);
+        const isServer = isPlatformServer(inject(PLATFORM_ID));
+        const stateKey = makeStateKey<unknown>(
+          `analog-load:${url.pathname}${url.search}`,
+        );
+        if (!isServer && transferState.hasKey(stateKey)) {
+          const data = transferState.get(stateKey, null);
+          transferState.remove(stateKey);
+          return data;
         }
 
+        const internalFetch = injectInternalServerFetch();
         const globalFetch = (
           globalThis as unknown as { $fetch?: ServerInternalFetch }
         ).$fetch;
-        if (!!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] && globalFetch) {
-          return globalFetch(`${url.pathname}${url.search}`);
-        }
+        const serverFetch =
+          internalFetch ??
+          (import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL']
+            ? globalFetch
+            : undefined);
+        const data = serverFetch
+          ? await serverFetch(`${url.pathname}${url.search}`)
+          : await firstValueFrom(
+              http.get(`${url.href}`, { transferCache: false }),
+            );
 
-        return firstValueFrom(http.get(`${url.href}`));
+        if (isServer) {
+          transferState.set(stateKey, data);
+        }
+        return data;
       }
 
       return {};
