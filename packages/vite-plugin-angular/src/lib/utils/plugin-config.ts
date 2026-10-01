@@ -26,6 +26,10 @@ import {
  */
 export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
 
+// Spec files stay included — a newly added spec must join the program's
+// root names in Vitest watch mode.
+export const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
+
 /**
  * Resolves whether Angular should be compiled for production. An explicit
  * `development` mode wins over an ambient production `NODE_ENV` (e.g. set by

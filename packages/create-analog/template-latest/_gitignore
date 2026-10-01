@@ -45,3 +45,6 @@ Thumbs.db
 
 # Environment files
 .env*
+
+# Vitest output
+.vitest/

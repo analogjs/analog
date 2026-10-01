@@ -1,5 +1,8 @@
 import * as o from '@angular/compiler';
 
+// Boundary blocks were introduced during the Angular 22.2 prereleases.
+export const SUPPORTS_BOUNDARY_BLOCKS = 'TmplAstBoundaryBlock' in o;
+
 // Detect the installed @angular/compiler major version once at module load
 // time and expose helpers for version-aware code paths.
 //

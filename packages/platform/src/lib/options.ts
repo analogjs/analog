@@ -45,6 +45,14 @@ export interface PrerenderOptions {
 }
 
 export interface I18nOptions {
+  /** Path to the translation loader module, relative to the app root. */
+  loader?: string;
+  /**
+   * Fixed-locale SSR workers. Automatically enabled for supported
+   * Node server builds with a loader and multiple locales. Set false to opt out.
+   * Set true to require workers and fail on unsupported configurations.
+   */
+  workers?: boolean;
   /**
    * The default/source locale for the application.
    */
@@ -154,6 +162,10 @@ export interface Options {
    * Opt-in experimental features that are not yet stable.
    */
   experimental?: {
+    /** Opt into generated route types and typed navigation helpers. */
+    typedRouting?:
+      | boolean
+      | import('./typed-routes-plugin.js').TypedRoutingOptions;
     /**
      * Opt into progressive streaming SSR. When enabled, the SSR build patches
      * `@angular/core` with a per-`@defer` block resolution hook so

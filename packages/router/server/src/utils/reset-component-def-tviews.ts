@@ -1,3 +1,5 @@
+declare const ANALOG_I18N_FIXED_LOCALE: string | undefined;
+
 /**
  * Nulls `def.tView` on every component definition that Angular has
  * compiled in this process. Angular caches the result of `consts()` on
@@ -12,6 +14,11 @@
  * prevents registration on the server.
  */
 export function resetComponentDefTViews(): void {
+  if (
+    typeof ANALOG_I18N_FIXED_LOCALE !== 'undefined' &&
+    ANALOG_I18N_FIXED_LOCALE
+  )
+    return;
   const defs = (globalThis as any).__ngComponentDefs as Set<any> | undefined;
   if (!defs) return;
   for (const def of defs) {

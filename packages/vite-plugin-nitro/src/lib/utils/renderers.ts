@@ -20,7 +20,10 @@ export default eventHandler(async (event) => {
   return html;
 });`;
 
-export const ssrStreamRenderer = `
+export const ssrStreamRenderer = createSsrStreamRenderer();
+
+export function createSsrStreamRenderer(prerender = false): string {
+  return `
 import { eventHandler, getResponseHeader, setResponseHeader } from 'h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
@@ -34,21 +37,40 @@ export default eventHandler(async (event) => {
     return template;
   }
 
-  // renderer (main.server.ts default export via renderStream) returns a
-  // ReadableStream that flushes the head first, then each @defer block as it
-  // resolves. Returning the stream from the handler streams it to the client.
-  const stream = await renderer(event.node.req.url, template, {
-    req: event.node.req,
-    res: event.node.res,
-  });
+  const noStreaming = ${prerender} || getResponseHeader(event, 'x-analog-no-streaming') === 'true';
+  const abort = new AbortController();
+  const response = event.node.res;
+  const cleanup = () => {
+    response.removeListener('close', disconnected);
+    response.removeListener('finish', cleanup);
+  };
+  const disconnected = () => {
+    cleanup();
+    if (!response.writableEnded) abort.abort();
+  };
+  response.once('close', disconnected);
+  response.once('finish', cleanup);
+
+  let stream;
+  try {
+    stream = await renderer(event.node.req.url, template, {
+      req: event.node.req,
+      res: response,
+      streaming: !noStreaming,
+      signal: abort.signal,
+      renderErrorsAsHtml: true,
+    });
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
 
   setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
 
   // A \`streaming: false\` route rule sets this header; renderStream then emits
   // the buffered render() output as a single chunk. Collect it into a string so
   // the response is a normal buffered document (content-length), not chunked.
-  const noStreaming = getResponseHeader(event, 'x-analog-no-streaming');
-  if (noStreaming === 'true') {
+  if (noStreaming) {
     const reader = stream.getReader();
     const decoder = new TextDecoder();
     let html = '';
@@ -61,10 +83,11 @@ export default eventHandler(async (event) => {
     return html;
   }
 
-  // Let the runtime frame the response (h3 sets chunked TE for the Node preset;
-  // HTTP/2 and edge runtimes forbid an explicit Transfer-Encoding header).
+  setResponseHeader(event, 'content-encoding', 'identity');
+  setResponseHeader(event, 'cache-control', 'no-store, no-transform');
   return stream;
 });`;
+}
 
 export const clientRenderer = `
 import { eventHandler } from 'h3';

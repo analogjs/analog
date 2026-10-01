@@ -11,7 +11,13 @@
     "moduleResolution": "bundler",
     "paths": {
       "@analogjs/content": ["./node_modules/@analogjs/content"],
-      "@analogjs/router/tokens": ["../../packages/router/tokens/src/index.ts"]
+      "@analogjs/router/tokens": ["../../packages/router/tokens/src/index.ts"],
+      "@analogjs/router/server/actions": [
+        "../../packages/router/server/actions/src/index.ts"
+      ],
+      "@analogjs/router/tanstack-query": [
+        "../../packages/router/tanstack-query/src/index.ts"
+      ]
     }
   },
   "exclude": ["vite.config.ts", "**/*.test.ts", "**/*.spec.ts"],

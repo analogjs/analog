@@ -3,7 +3,7 @@
 import { inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { from, Observable, of } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { finalize, map, switchMap, tap } from 'rxjs/operators';
 
 import { ContentFile } from './content-file';
 import { ContentRenderer } from './content-renderer';
@@ -97,6 +97,11 @@ function getContentFile<
         content: contentFile.default,
         toc: [],
       });
+    }),
+    finalize(() => {
+      if (import.meta.env.SSR !== true) {
+        renderTaskService.clearRenderTask(contentTask);
+      }
     }),
   );
 }

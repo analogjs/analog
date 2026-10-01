@@ -33,6 +33,7 @@ import {
 } from './component-resolvers.js';
 import {
   augmentHostWithCaching,
+  augmentHostWithModuleResolution,
   augmentHostWithResources,
   augmentProgramWithVersioning,
   mergeTransformers,
@@ -77,6 +78,7 @@ import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   TS_EXT_REGEX,
+  EXCLUDED_TS_EXT_REGEX,
   createTsConfigGetter,
   getTsConfigPath,
   createDepOptimizerConfig,
@@ -90,6 +92,7 @@ import {
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
 import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
+import { createHotUpdateBatcher } from './hot-update-batch.js';
 
 export enum DiagnosticModes {
   None = 0,
@@ -269,8 +272,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     | undefined;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
-  // Persistent Angular Compilation API instance. Kept alive across rebuilds so
-  // Angular can diff previous state and emit `templateUpdates` for HMR.
+  const hotUpdates = createHotUpdateBatcher((ids) =>
+    performCompilation(resolvedConfig, ids),
+  );
+  // Persistent Angular Compilation API instance. Kept alive across rebuilds in
+  // watch/test mode so Angular can diff previous state and emit
+  // `templateUpdates` for HMR. One-shot builds close it right after emit.
   // Previously the compilation was recreated on every pass, which meant Angular
   // never had prior state and could never produce HMR payloads.
   let angularCompilation:
@@ -337,6 +344,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      api: { getTsConfigPath: resolveTsConfigPath },
       async config(config, { command }) {
         watchMode = command === 'serve';
         isProd = isProdMode(config.mode);
@@ -405,6 +413,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+        hotUpdates.configureServer(server);
 
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
@@ -418,7 +427,12 @@ export function angular(options?: PluginOptions): Plugin[] {
               `${normalizePath(resolve(pluginOptions.workspaceRoot))}${glob}`,
           ),
         );
-        server.watcher.on('add', invalidateCompilationOnFsChange);
+        server.watcher.on('add', (file) => {
+          if (EXCLUDED_TS_EXT_REGEX.test(file)) {
+            invalidateSourceFiles(new Set([normalizePath(file)]));
+          }
+          invalidateCompilationOnFsChange(file);
+        });
         server.watcher.on('unlink', (file) => {
           const id = normalizePath(file);
           outputFiles.delete(id);
@@ -433,6 +447,10 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        // Vite keys its CSS preprocessor worker cache by the top-level resolved
+        // config object. Passing `this.environment.config` misses that cache
+        // and falls back to a worker Vite never closes, which keeps Vitest
+        // from exiting after AOT tests with `.scss` styleUrls. (#2556)
         if (!jit) {
           styleTransform = (code: string, filename: string) =>
             preprocessCSS(code, filename, resolvedConfig);
@@ -478,15 +496,20 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       async handleHotUpdate(ctx) {
         if (TS_EXT_REGEX.test(ctx.file)) {
-          let [fileId] = ctx.file.split('?');
+          const [fileId] = ctx.file.split('?');
 
-          pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+          await hotUpdates.schedule(ctx.file, [fileId]);
+
+          if (EXCLUDED_TS_EXT_REGEX.test(fileId)) {
+            // Declaration dependencies have no runtime modules for Vite to invalidate.
+            ctx.server.moduleGraph.invalidateAll();
+            ctx.server.ws.send({ type: 'full-reload', triggeredBy: fileId });
+            return [];
+          }
 
           let result;
 
           if (pluginOptions.liveReload) {
-            await pendingCompilation;
-            pendingCompilation = null;
             result = fileEmitter(fileId);
           }
 
@@ -582,15 +605,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             });
           });
 
-          pendingCompilation = performCompilation(resolvedConfig, [
+          if (mods.length === 0 && updates.length === 0) return mods;
+
+          await hotUpdates.schedule(ctx.file, [
             ...mods.map((mod) => mod.id as string),
             ...updates,
           ]);
 
           if (updates.length > 0) {
-            await pendingCompilation;
-            pendingCompilation = null;
-
             updates.forEach((updateId) => {
               const impRelativeFileId = `${normalizePath(
                 relative(process.cwd(), updateId),
@@ -796,6 +818,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
           }
+          await hotUpdates.wait();
 
           const typescriptResult = fileEmitter(id);
 
@@ -888,6 +911,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       closeBundle() {
+        hotUpdates.close();
         declarationFiles.forEach(
           ({ declarationFileDir, declarationPath, data }) => {
             mkdirSync(declarationFileDir, { recursive: true });
@@ -995,9 +1019,10 @@ export function angular(options?: PluginOptions): Plugin[] {
    * Perform compilation using Angular's private Compilation API.
    *
    * Key differences from the standard `performCompilation` path:
-   *  1. The compilation instance is reused across rebuilds (nullish-coalescing
-   *     assignment below) so Angular retains prior state and can diff it to
-   *     produce `templateUpdates` for HMR.
+   *  1. In watch/test mode the compilation instance is reused across rebuilds
+   *     (nullish-coalescing assignment below) so Angular retains prior state
+   *     and can diff it to produce `templateUpdates` for HMR. One-shot builds
+   *     close it once emit completes.
    *  2. `ids` (modified files) are forwarded to both the source-file cache and
    *     `angularCompilation.update()` so that incremental re-analysis is
    *     scoped to what actually changed.
@@ -1027,6 +1052,35 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     const resolvedTsConfigPath = resolveTsConfigPath();
+    const transformCompilerOptions = (
+      tsCompilerOptions: compilerCli.CompilerOptions,
+    ) => {
+      applyLiveReloadCompilerOptions(tsCompilerOptions, {
+        liveReload: pluginOptions.liveReload,
+        watchMode,
+        initialCompilationDone: liveReloadExternalStyles,
+      });
+
+      if (tsCompilerOptions.compilationMode === 'partial') {
+        tsCompilerOptions['supportTestBed'] = true;
+        tsCompilerOptions['supportJitMode'] = true;
+      }
+
+      // Force TypeScript to strip type annotations from emitted JavaScript.
+      if (!isTest) {
+        tsCompilerOptions['isolatedModules'] = false;
+      }
+
+      // Angular disables sourcemaps; inherited roots would trigger TS5069.
+      tsCompilerOptions['mapRoot'] = '';
+      tsCompilerOptions['sourceRoot'] = '';
+
+      if (isTest) {
+        tsCompilerOptions['supportTestBed'] = true;
+      }
+
+      return tsCompilerOptions;
+    };
     const compilationResult = await angularCompilation.initialize(
       resolvedTsConfigPath,
       {
@@ -1087,59 +1141,22 @@ export function angular(options?: PluginOptions): Plugin[] {
           return workerFile;
         },
       },
-      (tsCompilerOptions) => {
-        applyLiveReloadCompilerOptions(tsCompilerOptions, {
-          liveReload: pluginOptions.liveReload,
-          watchMode,
-          initialCompilationDone: liveReloadExternalStyles,
-        });
-
-        if (tsCompilerOptions.compilationMode === 'partial') {
-          // These options can't be false in partial mode
-          tsCompilerOptions['supportTestBed'] = true;
-          tsCompilerOptions['supportJitMode'] = true;
-        }
-
-        // The Angular Compilation API path must NOT enable declaration emit for
-        // library builds. Unlike the legacy path, it has no mechanism to write
-        // `.d.ts` files to disk, and `@angular/build`'s `emitAffectedFiles()`
-        // keys outputs by source file (last-write-wins) — so a `.d.ts` would
-        // overwrite the `.js` content for the same source, feeding declaration
-        // text back to Vite as if it were the module source. Enabling
-        // `inlineSources` here is also invalid: this path forces `sourceMap`
-        // off, so an unpaired `inlineSources` trips TS5051. Because declaration
-        // emit never runs here, an explicit `declaration: false` (#2348/#2352)
-        // is already the effective state. See #2324.
-
-        // Force whole-program TypeScript transpilation. `@angular/build`'s
-        // `emitAffectedFiles()` skips full TS emit when `isolatedModules` is on
-        // and no sourcemap is set, instead printing Angular-only transforms that
-        // leave TS type annotations in the output. Analog returns that emitted
-        // content to Vite/Rolldown as the module source, so the leftover types
-        // (e.g. `App_Factory(__ngFactoryType__: any)`) fail to parse. Disabling
-        // `isolatedModules` for emit makes TypeScript strip types, matching the
-        // legacy path. Currently-working builds are unaffected (they already
-        // have it off); only the otherwise-broken `isolatedModules: true` case
-        // changes. The user's editor/`tsc` still enforces it. See #2324.
-        if (!isTest) {
-          tsCompilerOptions['isolatedModules'] = false;
-        }
-
-        // Mirror the legacy `readConfiguration` path (#2322): `@angular/build`'s
-        // `loadConfiguration()` forces `sourceMap`/`declarationMap` off but does
-        // not clear an inherited `mapRoot`/`sourceRoot`, so a monorepo base
-        // tsconfig that sets either trips TS5069 here. Sourcemaps are already
-        // off in this path, so clearing them is safe. See #2449.
-        tsCompilerOptions['mapRoot'] = '';
-        tsCompilerOptions['sourceRoot'] = '';
-
-        if (isTest) {
-          // Allow `TestBed.overrideXXX()` APIs.
-          tsCompilerOptions['supportTestBed'] = true;
-        }
-
-        return tsCompilerOptions;
-      },
+      angularFullVersion >= 220200
+        ? {
+            enableHmr: pluginOptions.liveReload && watchMode,
+            externalRuntimeStyles: shouldEnableExternalRuntimeStyles({
+              liveReload: pluginOptions.liveReload,
+              watchMode,
+              initialCompilationDone: liveReloadExternalStyles,
+            }),
+            includeTestMetadata:
+              isTest || (pluginOptions.liveReload && watchMode),
+            // Force TypeScript emit without adding coverage instrumentation.
+            instrumentForCoverage: !isTest,
+          }
+        : (transformCompilerOptions as unknown as Parameters<
+            typeof angularCompilation.initialize
+          >[2]),
     );
 
     compilationResult.externalStylesheets?.forEach((value, key) => {
@@ -1200,6 +1217,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         hmrEligible: !!templateUpdate?.code,
       });
     }
+
+    // In a regular build (not watch or test), nothing recompiles after this
+    // point: every compiled file and its diagnostics are already stored in
+    // `outputFiles`. Close the Angular compilation now, so its memory (several
+    // GB on large apps) is freed before the bundler renders chunks rather than
+    // at `buildEnd`. Don't call the full `releaseCompilation()` here: it also
+    // clears `outputFiles`, which `transform` keeps reading until the build ends.
+    if (!watchMode && !isTest) {
+      await angularCompilation.close?.();
+      angularCompilation = undefined;
+    }
   }
 
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
@@ -1233,11 +1261,6 @@ export function angular(options?: PluginOptions): Plugin[] {
     // Each pass creates a new builder/program, so previously emitted output
     // can go stale — only dedupe emits within a single pass.
     emittedIds = new Set<string>();
-
-    if (!jit) {
-      styleTransform = (code: string, filename: string) =>
-        preprocessCSS(code, filename, config);
-    }
 
     const discardIncrementalProgram = shouldDiscardIncrementalProgram({
       externalRuntimeStylesNowEnabled: shouldEnableExternalRuntimeStyles({
@@ -1396,6 +1419,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return file;
         },
       });
+      augmentHostWithModuleResolution(host, tsCompilerOptions);
       cachedHost = host;
       cachedHostKey = hostKey;
 
@@ -1428,9 +1452,12 @@ export function angular(options?: PluginOptions): Plugin[] {
      */
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
-    const oldBuilder = discardIncrementalProgram
-      ? undefined
-      : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
+    // Declaration changes can invalidate diagnostics in unchanged consumers.
+    const oldBuilder =
+      discardIncrementalProgram ||
+      ids?.some((id) => EXCLUDED_TS_EXT_REGEX.test(id))
+        ? undefined
+        : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1678,9 +1705,6 @@ export function angular(options?: PluginOptions): Plugin[] {
 }
 
 const COMPONENT_RESOURCE_EXT_REGEX = /\.(html|htm|css|scss|sass|less)$/;
-// Spec files stay included — a newly added spec must join the program's
-// root names in Vitest watch mode.
-const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
 
 export function createFsWatcherCacheInvalidator(
   invalidateFsCaches: () => void,
@@ -1696,7 +1720,7 @@ export function createFsWatcherCacheInvalidator(
 
   return (file: string) => {
     const affectsProgram =
-      (TS_EXT_REGEX.test(file) && !EXCLUDED_TS_EXT_REGEX.test(file)) ||
+      TS_EXT_REGEX.test(file) ||
       COMPONENT_RESOURCE_EXT_REGEX.test(file) ||
       basename(file).includes('tsconfig') ||
       !!includeFilter?.(file);
@@ -1973,7 +1997,7 @@ export function getFileMetadata(
             cached.hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(
               node as any,
             );
-            if (!!cached.hmrUpdateCode) {
+            if (cached.hmrUpdateCode) {
               cached.className = (node as any).name.getText();
               cached.hmrEligible = true;
             }

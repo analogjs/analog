@@ -3,12 +3,44 @@ import * as realFs from 'node:fs';
 import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { normalizePath, resolveConfig } from 'vite';
+import { normalizePath, preprocessCSS, resolveConfig } from 'vite';
+import { NgtscProgram } from '@angular/compiler-cli';
+
+vi.mock('vite', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('vite')>();
+  return {
+    ...actual,
+    preprocessCSS: vi.fn(actual.preprocessCSS),
+  };
+});
+
+vi.mock('@angular/compiler-cli', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@angular/compiler-cli')>();
+  return {
+    ...actual,
+    NgtscProgram: vi.fn(function (
+      ...args: ConstructorParameters<typeof actual.NgtscProgram>
+    ) {
+      return new actual.NgtscProgram(...args);
+    }),
+  };
+});
+
+// Spy attached to every compilation the plugin creates. The in-process
+// compilation used here has no `close`, so this also stands in for the
+// worker-backed one's teardown.
+const compilationClose = vi.hoisted(() => vi.fn());
 
 vi.mock('./utils/devkit.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./utils/devkit.js')>();
   return {
     ...actual,
+    // Zone patches MessagePort in this suite; compile in-process.
+    createAngularCompilation: async (jit: boolean, browserOnly: boolean) =>
+      Object.assign(
+        await actual.createAngularCompilation(jit, browserOnly, false),
+        { close: compilationClose },
+      ),
     // Exercise compilation without Map methods, as with Angular 22.2's cache.
     SourceFileCache: class {
       private cache = new actual.SourceFileCache();
@@ -33,8 +65,10 @@ import {
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
+  type PluginOptions,
 } from './angular-vite-plugin';
 import type { EmitFileResult } from './models';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers';
 
 describe('angularVitePlugin', () => {
   it('should work', () => {
@@ -541,13 +575,21 @@ describe('createFsWatcherCacheInvalidator', () => {
     } = setup();
 
     invalidate('/project/src/assets/logo.png');
-    invalidate('/project/src/app/types.d.ts');
     invalidate('/project/src/app/data.json');
     await vi.runAllTimersAsync();
 
     expect(invalidateFsCaches).not.toHaveBeenCalled();
     expect(invalidateTsconfigCaches).not.toHaveBeenCalled();
     expect(performCompilation).not.toHaveBeenCalled();
+  });
+
+  it('recompiles when generated declarations change the program', async () => {
+    const { invalidateTsconfigCaches, performCompilation, invalidate } =
+      setup();
+    invalidate('/project/src/routeTree.gen.d.ts');
+    expect(invalidateTsconfigCaches).toHaveBeenCalledOnce();
+    await vi.runAllTimersAsync();
+    expect(performCompilation).toHaveBeenCalledOnce();
   });
 
   it('recompiles when a spec file is added so it joins the program', async () => {
@@ -1072,12 +1114,13 @@ export class AppComponent {}
   });
 
   afterEach(() => {
+    releaseCssPreprocessorWorkers();
     realFs.rmSync(fixtureDir, { recursive: true, force: true });
   });
 
   // The plugin reads these at creation time to pick the AOT/JIT path, so an
   // app build has to be simulated by clearing Vitest's own markers.
-  function createAppBuildPlugin() {
+  function createAppBuildPlugin(options: PluginOptions = {}) {
     const { VITEST, NODE_ENV } = process.env;
     delete process.env['VITEST'];
     delete process.env['NODE_ENV'];
@@ -1086,6 +1129,7 @@ export class AppComponent {}
       return angular({
         tsconfig: path.join(fixtureDir, 'tsconfig.json'),
         workspaceRoot: fixtureDir,
+        ...options,
       }).find((p) => p.name === '@analogjs/vite-plugin-angular') as any;
     } finally {
       process.env['VITEST'] = VITEST as string;
@@ -1095,6 +1139,162 @@ export class AppComponent {}
     }
   }
 
+  it.each([
+    { command: 'build', jit: false },
+    { command: 'serve', jit: false },
+    { command: 'build', jit: true },
+    { command: 'serve', jit: true },
+  ] as const)(
+    'emits source-linked workspace packages in $command mode (jit=$jit)',
+    async ({ command, jit }) => {
+      const libDir = path.join(fixtureDir, 'lib');
+      realFs.mkdirSync(libDir, { recursive: true });
+      realFs.mkdirSync(path.join(fixtureDir, 'node_modules'), {
+        recursive: true,
+      });
+      realFs.writeFileSync(
+        path.join(libDir, 'package.json'),
+        JSON.stringify({
+          name: 'linked-lib',
+          type: 'module',
+          exports: {
+            '.': './index.ts',
+            './types': './types.d.ts',
+            './*': './*.ts',
+          },
+        }),
+      );
+      realFs.writeFileSync(
+        path.join(libDir, 'index.ts'),
+        "export { DemoDirective } from './directive';",
+      );
+      realFs.writeFileSync(
+        path.join(libDir, 'directive.ts'),
+        "import { Directive } from '@angular/core'; @Directive({ selector: '[demo]', standalone: true }) export class DemoDirective {}",
+      );
+      const declarationPath = path.join(libDir, 'types.d.ts');
+      realFs.writeFileSync(
+        declarationPath,
+        'export interface LinkedType { value: string; }',
+      );
+      const installedDir = path.join(fixtureDir, 'node_modules/installed-lib');
+      realFs.mkdirSync(installedDir, { recursive: true });
+      realFs.writeFileSync(
+        path.join(installedDir, 'package.json'),
+        JSON.stringify({ name: 'installed-lib', exports: './index.ts' }),
+      );
+      const installedPath = path.join(installedDir, 'index.ts');
+      realFs.writeFileSync(installedPath, 'export const installed = 42;');
+      realFs.symlinkSync(
+        libDir,
+        path.join(fixtureDir, 'node_modules/linked-lib'),
+        'junction',
+      );
+      realFs.appendFileSync(
+        componentPath,
+        "\nexport { DemoDirective } from 'linked-lib';\nexport type { LinkedType } from 'linked-lib/types';\nexport { installed } from 'installed-lib';",
+      );
+      const entries = Array.from({ length: 8 }, (_, index) => `entry${index}`);
+      for (const entry of entries) {
+        realFs.writeFileSync(
+          path.join(libDir, `${entry}.ts`),
+          `export const ${entry} = 42;`,
+        );
+        realFs.appendFileSync(
+          componentPath,
+          `\nexport { ${entry} } from 'linked-lib/${entry}';`,
+        );
+      }
+      vi.mocked(NgtscProgram).mockClear();
+      const mainPlugin = createAppBuildPlugin({
+        disableTypeChecking: false,
+        jit,
+      });
+      await mainPlugin.config({ root: fixtureDir, build: {} }, { command });
+      const resolvedConfig = await resolveConfig(
+        { configFile: false, root: fixtureDir, mode: 'production' },
+        command,
+      );
+      mainPlugin.configResolved(resolvedConfig);
+      const ctx = {
+        environment: { config: resolvedConfig },
+        warn: vi.fn(),
+        error: vi.fn(),
+        addWatchFile: vi.fn(),
+      };
+      await mainPlugin.buildStart.call(ctx);
+      if (!jit) {
+        const program = vi
+          .mocked(NgtscProgram)
+          .mock.results[0].value.getTsProgram();
+        for (const externalPath of [declarationPath, installedPath]) {
+          const sourceFile = program.getSourceFile(normalizePath(externalPath));
+          expect(sourceFile).toBeDefined();
+          expect(program.isSourceFileFromExternalLibrary(sourceFile)).toBe(
+            true,
+          );
+        }
+      }
+      const transform = async (name: string) => {
+        const id = normalizePath(path.join(libDir, name));
+        return mainPlugin.transform.handler.call(
+          ctx,
+          realFs.readFileSync(id, 'utf8'),
+          id,
+        );
+      };
+      expect((await transform('index.ts'))?.code).toContain('DemoDirective');
+      expect((await transform('directive.ts'))?.code).toContain(
+        jit ? '__decorate' : 'ɵdir',
+      );
+      expect((await transform('index.ts'))?.code).toContain('DemoDirective');
+      const results = await Promise.all(
+        entries.map((entry) => transform(`${entry}.ts`)),
+      );
+      results.forEach((result, index) =>
+        expect(result?.code).toContain(`${entries[index]} = 42`),
+      );
+      expect(NgtscProgram).toHaveBeenCalledTimes(jit ? 0 : 1);
+      realFs.appendFileSync(
+        path.join(libDir, 'directive.ts'),
+        '\nexport const updated = 42;',
+      );
+      await mainPlugin.handleHotUpdate({
+        file: normalizePath(path.join(libDir, 'directive.ts')),
+        modules: [],
+      });
+      expect((await transform('directive.ts'))?.code).toContain('updated = 42');
+      expect(NgtscProgram).toHaveBeenCalledTimes(jit ? 0 : 2);
+      await mainPlugin.buildEnd.call(ctx);
+      expect(ctx.error).not.toHaveBeenCalled();
+      const watchers = new Map<string, (file: string) => void>();
+      mainPlugin.configureServer({
+        watcher: {
+          on: (event: string, handler: (file: string) => void) =>
+            watchers.set(event, handler),
+        },
+      });
+      const barrel = normalizePath(path.join(libDir, 'index.ts'));
+      realFs.rmSync(barrel);
+      vi.useFakeTimers();
+      try {
+        const unlink = watchers.get('unlink');
+        expect(unlink).toBeDefined();
+        unlink?.(barrel);
+        await vi.advanceTimersByTimeAsync(100);
+        await mainPlugin.buildStart.call(ctx);
+        expect(
+          await mainPlugin.transform.handler.call(ctx, '', barrel),
+        ).toBeUndefined();
+      } finally {
+        vi.useRealTimers();
+      }
+      await mainPlugin.buildEnd.call(ctx);
+      expect(ctx.warn).not.toHaveBeenCalled();
+    },
+    60_000,
+  );
+
   it('waits for the initial compilation before emitting a transform result', async () => {
     const mainPlugin = createAppBuildPlugin();
 
@@ -1102,14 +1302,10 @@ export class AppComponent {}
       { root: fixtureDir, build: {} },
       { command: 'build' },
     );
-    const resolvedConfig = {
-      root: fixtureDir,
-      mode: 'production',
-      build: {},
-      server: { watch: {} },
-      safeModulePaths: new Set(),
-      css: {},
-    };
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
     mainPlugin.configResolved(resolvedConfig);
 
     const ctx = {
@@ -1133,6 +1329,118 @@ export class AppComponent {}
     expect(ctx.warn).not.toHaveBeenCalled();
   }, 60_000);
 
+  it.each([
+    { command: 'build', closesAfterBuildStart: 1 },
+    { command: 'serve', closesAfterBuildStart: 0 },
+  ])(
+    'closes the compilation API program after emit only for one-shot builds ($command)',
+    async ({ command, closesAfterBuildStart }) => {
+      const mainPlugin = createAppBuildPlugin({
+        experimental: { useAngularCompilationAPI: true },
+      });
+      await mainPlugin.config({ root: fixtureDir, build: {} }, { command });
+      const resolvedConfig = {
+        root: fixtureDir,
+        mode: 'production',
+        build: {},
+        server: { watch: {} },
+        safeModulePaths: new Set(),
+        css: {},
+      };
+      mainPlugin.configResolved(resolvedConfig);
+      const ctx = {
+        environment: { config: resolvedConfig },
+        warn: vi.fn(),
+        error: vi.fn(),
+        addWatchFile: vi.fn(),
+      };
+      compilationClose.mockClear();
+
+      let result;
+      try {
+        await mainPlugin.buildStart.call(ctx);
+        expect(compilationClose).toHaveBeenCalledTimes(closesAfterBuildStart);
+
+        // Emit output must outlive the compilation.
+        result = await mainPlugin.transform.handler.call(
+          ctx,
+          realFs.readFileSync(componentPath, 'utf-8'),
+          componentPath,
+        );
+      } finally {
+        await mainPlugin.buildEnd.call(ctx);
+        await mainPlugin.closeBundle();
+      }
+
+      expect(result?.code).toContain('ɵɵdefineComponent');
+      // `buildEnd` must not close an already-released compilation again.
+      if (command === 'build') {
+        expect(compilationClose).toHaveBeenCalledTimes(1);
+      }
+    },
+    60_000,
+  );
+
+  it('emits JavaScript through the compilation API with isolatedModules enabled', async () => {
+    const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
+    const tsconfig = JSON.parse(realFs.readFileSync(tsconfigPath, 'utf-8'));
+    Object.assign(tsconfig.compilerOptions, {
+      isolatedModules: true,
+      declaration: true,
+      mapRoot: './maps',
+      sourceRoot: './src',
+    });
+    realFs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig));
+    realFs.writeFileSync(
+      componentPath,
+      realFs
+        .readFileSync(componentPath, 'utf-8')
+        .replace("  styleUrl: './app.component.scss',", ''),
+    );
+    const mainPlugin = createAppBuildPlugin({
+      experimental: { useAngularCompilationAPI: true },
+    });
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = {
+      root: fixtureDir,
+      mode: 'production',
+      build: {},
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+      css: {},
+    };
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    let result;
+    try {
+      await mainPlugin.buildStart.call(ctx);
+      result = await mainPlugin.transform.handler.call(
+        ctx,
+        realFs.readFileSync(componentPath, 'utf-8'),
+        componentPath,
+      );
+    } finally {
+      await mainPlugin.buildEnd.call(ctx);
+      await mainPlugin.closeBundle();
+    }
+
+    expect(result.code).toContain('ɵɵdefineComponent');
+    expect(result.code).toContain('hello');
+    expect(result.code).not.toContain('declare class');
+    expect(result.code).not.toContain(': any');
+    expect(ctx.error).not.toHaveBeenCalled();
+    expect(ctx.warn).not.toHaveBeenCalled();
+  }, 60_000);
+
   it('emits sourcemaps for production builds when build.sourcemap is enabled', async () => {
     const mainPlugin = createAppBuildPlugin();
     realFs.writeFileSync(
@@ -1153,14 +1461,15 @@ export class AppComponent {}
       { root: fixtureDir, build: { sourcemap: true } },
       { command: 'build' },
     );
-    const resolvedConfig = {
-      root: fixtureDir,
-      mode: 'production',
-      build: { sourcemap: true },
-      server: { watch: {} },
-      safeModulePaths: new Set(),
-      css: {},
-    };
+    const resolvedConfig = await resolveConfig(
+      {
+        configFile: false,
+        root: fixtureDir,
+        mode: 'production',
+        build: { sourcemap: true },
+      },
+      'build',
+    );
     mainPlugin.configResolved(resolvedConfig);
 
     const ctx = {
@@ -1194,6 +1503,139 @@ export class AppComponent {}
     expect(entry.originalLine).toBe(7);
     expect(entry.originalColumn).toBe(13);
     expect(sources).toContain(normalizePath(templatePath));
+  }, 60_000);
+
+  it('compiles mixed component and template edits once and serves every updated component', async () => {
+    const components = Array.from({ length: 10 }, (_, index) => {
+      const id = normalizePath(path.join(fixtureDir, `src/burst${index}.ts`));
+      const template = id.replace('.ts', '.html');
+      const code = `import { Component } from '@angular/core';
+        @Component({ standalone: true, templateUrl: './burst${index}.html' })
+        export class Burst${index} { value = 'before'; }`;
+      realFs.writeFileSync(id, code);
+      realFs.writeFileSync(template, '<p>before</p>');
+      realFs.appendFileSync(
+        componentPath,
+        `\nexport { Burst${index} } from './burst${index}';`,
+      );
+      return { id, template, code };
+    });
+    const mainPlugin = createAppBuildPlugin();
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'development' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const server = { moduleGraph: { invalidateModule: vi.fn() } };
+    try {
+      await mainPlugin.buildStart.call(ctx);
+      for (const { id, code } of components) {
+        await mainPlugin.transform.handler.call(ctx, code, id);
+      }
+      vi.mocked(NgtscProgram).mockClear();
+      const updates = components.map(({ id, template, code }, index) => {
+        const resource = index % 2 === 1;
+        realFs.writeFileSync(
+          resource ? template : id,
+          resource ? '<p>after</p>' : code.replace('before', 'after'),
+        );
+        const owner = { id };
+        return mainPlugin.handleHotUpdate({
+          file: resource ? template : id,
+          modules: resource ? [{ importers: new Set([owner]) }] : [owner],
+          server,
+        });
+      });
+      // Transforms must also wait when the debounce window is still open.
+      const output = Promise.all(
+        components.map(({ id }) =>
+          mainPlugin.transform.handler.call(
+            ctx,
+            realFs.readFileSync(id, 'utf8'),
+            id,
+          ),
+        ),
+      );
+      await Promise.all(updates);
+      expect(NgtscProgram).toHaveBeenCalledOnce();
+      for (const result of await output) expect(result.code).toContain('after');
+      expect(ctx.error).not.toHaveBeenCalled();
+    } finally {
+      await mainPlugin.buildEnd.call(ctx);
+      mainPlugin.closeBundle();
+    }
+  }, 60_000);
+
+  it('refreshes diagnostics when a declaration changes without restarting', async () => {
+    const declaration = path.join(fixtureDir, 'src/routes.d.ts');
+    realFs.writeFileSync(declaration, "type RoutePath = '/about';");
+    const tsconfig = path.join(fixtureDir, 'tsconfig.json');
+    const config = JSON.parse(realFs.readFileSync(tsconfig, 'utf8'));
+    config.include = ['src/**/*.d.ts'];
+    realFs.writeFileSync(tsconfig, JSON.stringify(config));
+    const code = `
+      import { Component } from '@angular/core';
+      @Component({ standalone: true, template: '' })
+      export class AppComponent { path: RoutePath = '/about'; }
+    `;
+    realFs.writeFileSync(componentPath, code);
+    const mainPlugin = createAppBuildPlugin({ disableTypeChecking: false });
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      {
+        configFile: false,
+        root: fixtureDir,
+        mode: 'development',
+      },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+    expect(ctx.error).not.toHaveBeenCalled();
+
+    const server = {
+      moduleGraph: { invalidateAll: vi.fn() },
+      ws: { send: vi.fn() },
+    };
+    realFs.writeFileSync(declaration, "type RoutePath = '/renamed';");
+    await mainPlugin.handleHotUpdate({
+      file: declaration,
+      modules: [],
+      server,
+    });
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+    expect(ctx.error).toHaveBeenCalledWith(
+      expect.stringContaining('is not assignable'),
+    );
+    expect(server.moduleGraph.invalidateAll).toHaveBeenCalledOnce();
+    expect(server.ws.send).toHaveBeenCalledWith({
+      type: 'full-reload',
+      triggeredBy: declaration,
+    });
+
+    ctx.error.mockClear();
+    realFs.writeFileSync(declaration, "type RoutePath = '/about';");
+    await mainPlugin.handleHotUpdate({
+      file: declaration,
+      modules: [],
+      server,
+    });
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+    expect(ctx.error).not.toHaveBeenCalled();
   }, 60_000);
 
   it('evicts deleted source files before recompiling a recreated file', async () => {
@@ -1259,14 +1701,10 @@ export class AppComponent {}
       { root: fixtureDir, build: {} },
       { command: 'build' },
     );
-    const resolvedConfig = {
-      root: fixtureDir,
-      mode: 'production',
-      build: {},
-      server: { watch: {} },
-      safeModulePaths: new Set(),
-      css: {},
-    };
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
     mainPlugin.configResolved(resolvedConfig);
     const ctx = {
       environment: { config: resolvedConfig },
@@ -1293,6 +1731,39 @@ export class AppComponent {}
     expect(released).toBeUndefined();
   }, 60_000);
 
+  it('preprocesses styles with the top-level resolved config (#2556)', async () => {
+    // Vite keys its CSS preprocessor worker cache by the top-level config
+    // object, so `this.environment.config` (a distinct object) must never be
+    // handed to `preprocessCSS` — that falls back to a worker Vite never
+    // closes and keeps Vitest from exiting.
+    vi.mocked(preprocessCSS).mockClear();
+    const mainPlugin = createAppBuildPlugin();
+
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig.environments['client'] },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    await mainPlugin.buildStart.call(ctx);
+
+    expect(ctx.environment.config).not.toBe(resolvedConfig);
+    expect(vi.mocked(preprocessCSS)).toHaveBeenCalled();
+    for (const [, , config] of vi.mocked(preprocessCSS).mock.calls) {
+      expect(config).toBe(resolvedConfig);
+    }
+  }, 60_000);
+
   it('handles missing this.environment gracefully', async () => {
     const mainPlugin = createAppBuildPlugin();
 
@@ -1300,15 +1771,10 @@ export class AppComponent {}
       { root: fixtureDir, build: {} },
       { command: 'build' },
     );
-    const resolvedConfig = {
-      root: fixtureDir,
-      mode: 'production',
-      build: {},
-      server: { watch: {} },
-      safeModulePaths: new Set(),
-      css: {},
-      plugins: [],
-    };
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
     mainPlugin.configResolved(resolvedConfig);
 
     // Context without this.environment (e.g. older Vite or minimal test harness)

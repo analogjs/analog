@@ -14,7 +14,13 @@ export { injectLoad } from './lib/inject-load';
 export { getLoadResolver } from './lib/get-load-resolver';
 export { requestContextInterceptor } from './lib/request-context';
 export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
-export { FormAction } from './lib/form-action.directive';
+export { FormAction, type FormActionState } from './lib/form-action.directive';
+export {
+  issuesToFieldErrors,
+  issuesToFormErrors,
+  issuePathToFieldName,
+  type ValidationFieldErrors,
+} from './lib/validation-errors';
 export { injectDebugRoutes } from './lib/debug/routes';
 export { withDebugRoutes } from './lib/debug';
 // Server Functions (issue #2422) — client transport + shared type surface.
@@ -41,3 +47,22 @@ export type {
   ServerFnMethod,
   StandardSchemaV1,
 } from './lib/server-fn/types';
+
+export { toRoute } from './lib/to-route';
+export { LinkTo, type LinkToInput } from './lib/link-to.directive';
+export type {
+  AnalogRouteTable,
+  AnalogRoutePath,
+  RouteDataOutput,
+  RouteLoadOutput,
+  RoutePathOptions,
+  RouteResourcesOutput,
+} from './lib/to-route';
+export { injectNavigate } from './lib/inject-navigate';
+export {
+  injectParams,
+  injectQuery,
+  injectResources,
+  injectRouteData,
+  injectRouteResources,
+} from './lib/inject-typed-params';

@@ -11,7 +11,7 @@ last, so a slow block never holds back the rest of the page.
 :::info Experimental
 
 Streaming SSR is experimental and opt-in. It requires **Angular 21 or later**
-and builds on [incremental hydration](https://angular.dev/guide/incremental-hydration).
+and **Vite 6 or later**, and builds on [incremental hydration](https://angular.dev/guide/incremental-hydration).
 The default buffered [Server Side Rendering](/docs/features/server/server-side-rendering)
 path is unchanged.
 
@@ -95,6 +95,20 @@ during render (via the `Title`/`Meta` services or route metadata) is applied to
 the streamed document once the render completes, before hydration runs. Search
 engine crawlers are served a buffered render with a fully resolved head instead
 of the streamed shell.
+
+## Completion and cancellation
+
+Bootstrap modules are preloaded with the shell and execute after the complete,
+hydration-ready document is installed. If rendering fails or the document is
+truncated, the browser shows a generic error view instead of bootstrapping an
+incomplete page. A disconnected client cancels pending streaming work and
+disposes the Angular platform.
+
+Progressive HTTP responses use `Cache-Control: no-store, no-transform` and
+identity encoding so intermediaries do not cache partial HTML or buffer it for
+compression. Prerendered pages and routes with `streaming: false` produce complete
+buffered documents. Use a buffered route when its final HTTP status must be known
+before sending response headers.
 
 ## Opting a route out of streaming
 

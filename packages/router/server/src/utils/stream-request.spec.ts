@@ -38,6 +38,15 @@ describe('isLikelyBot', () => {
 });
 
 describe('streamingDisabledByRoute', () => {
+  it('uses explicit host policy before legacy Node response headers', () => {
+    expect(streamingDisabledByRoute({ ...ctx(), streaming: false })).toBe(true);
+    expect(
+      streamingDisabledByRoute({
+        ...ctx({}, { 'x-analog-no-streaming': 'true' }),
+        streaming: true,
+      }),
+    ).toBe(false);
+  });
   it('is true when the x-analog-no-streaming header is "true"', () => {
     expect(
       streamingDisabledByRoute(ctx({}, { 'x-analog-no-streaming': 'true' })),

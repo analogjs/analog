@@ -25,6 +25,19 @@ describe('postRenderingHook', () => {
     expect(nitroMock.hooks.hook).not.toHaveBeenCalled();
   });
 
+  it('returns asynchronous hook failures to Nitro', async () => {
+    const hooks = { hook: vi.fn() };
+    addPostRenderingHooks({ hooks } as unknown as Nitro, [
+      async () => {
+        await Promise.resolve();
+        throw new Error('Post-render failed');
+      },
+    ]);
+    await expect(hooks.hook.mock.calls[0][1](genRoute)).rejects.toThrow(
+      'Post-render failed',
+    );
+  });
+
   it('should call provided hooks', () => {
     addPostRenderingHooks(nitroMock, [mockFunc1, mockFunc2]);
     expect(mockFunc1).toHaveBeenCalledWith(genRoute);

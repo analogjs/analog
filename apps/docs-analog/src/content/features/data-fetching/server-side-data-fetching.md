@@ -23,6 +23,23 @@ export const load = async ({
 };
 ```
 
+## Validating Params and Query
+
+Use `definePageLoad` from `@analogjs/router/server/actions` to validate the route params and query with a [Standard Schema](https://standardschema.dev) before the handler runs. The validated values are typed in the handler, and a validation failure responds with a `422` status and the schema issues.
+
+```ts
+// src/app/pages/users/[id].server.ts
+import { definePageLoad } from '@analogjs/router/server/actions';
+import * as v from 'valibot';
+
+export const load = definePageLoad({
+  params: v.object({ id: v.pipe(v.string(), v.regex(/^\d+$/)) }),
+  handler: async ({ params, fetch }) => {
+    return fetch(`/api/v1/users/${params.id}`);
+  },
+});
+```
+
 ## Injecting the Data
 
 Accessing the data fetched on the server can be done using the `injectLoad` function provided by `@analogjs/router`.

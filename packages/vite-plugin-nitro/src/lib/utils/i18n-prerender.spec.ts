@@ -58,10 +58,31 @@ describe('expandRoutesWithLocales', () => {
   });
 
   it('should not duplicate routes', () => {
-    const result = expandRoutesWithLocales(['/about'], i18n);
-    const aboutRoutes = result.filter((r) => r === '/about');
+    const result = expandRoutesWithLocales(
+      ['/about', '/fr/about', '/about', '/api/users', '/api/users'],
+      i18n,
+    );
 
-    expect(aboutRoutes.length).toBeLessThanOrEqual(1);
+    expect(result).toEqual([
+      '/en/about',
+      '/fr/about',
+      '/de/about',
+      '/about',
+      '/api/users',
+    ]);
+  });
+
+  it('should preserve explicitly localized routes without expanding them again', () => {
+    const routes = ['/fr', '/de/', '/en/about', '/fr/docs/introduction'];
+
+    expect(expandRoutesWithLocales(routes, i18n)).toEqual(routes);
+  });
+
+  it('should match only a complete configured locale segment', () => {
+    const result = expandRoutesWithLocales(['/france/about'], i18n);
+
+    expect(result).toContain('/fr/france/about');
+    expect(result).toContain('/france/about');
   });
 });
 

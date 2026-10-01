@@ -1,6 +1,10 @@
 import { PrerenderRoute } from 'nitropack';
 
 export interface I18nPrerenderOptions {
+  /** Path to the translation loader module, relative to the app root. */
+  loader?: string;
+  /** Automatic when eligible; false disables workers, true requires them. */
+  workers?: boolean;
   /**
    * The default/source locale for the application.
    */

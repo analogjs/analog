@@ -1,8 +1,8 @@
-import { injectActivatedRoute } from '@analogjs/router';
+import { injectParams } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import type { OnInit } from '@angular/core';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 
 import { CartService } from '../cart.service';
@@ -24,30 +24,20 @@ import type { Product } from '../products';
     }
   `,
 })
-export default class ProductDetailsComponent implements OnInit {
-  private readonly route = injectActivatedRoute();
+export default class ProductDetailsComponent {
+  private readonly params = injectParams('/products/[productId]');
   private readonly cartService = inject(CartService);
   private readonly http = inject(HttpClient);
 
-  product = signal<Product | undefined>(undefined);
-
-  ngOnInit() {
-    // First get the product id from the current route.
-    const routeParams = this.route.parent!.snapshot!.paramMap;
-    const productIdFromRoute = Number(routeParams.get('productId'));
-
-    this.http
-      .get<Product[]>('/api/v1/products')
-      .pipe(catchError(() => of([])))
-      .subscribe((products) => {
-        // Find the product that correspond with the id provided in route.
-        const product = products.find(
-          (product) => product.id === productIdFromRoute,
-        );
-
-        this.product.set(product);
-      });
-  }
+  private readonly products = toSignal(
+    this.http.get<Product[]>('/api/v1/products').pipe(catchError(() => of([]))),
+    { initialValue: [] },
+  );
+  readonly product = computed(() =>
+    this.products().find(
+      (product) => product.id === Number(this.params().productId),
+    ),
+  );
 
   addToCart(product: Product) {
     this.cartService.addToCart(product);

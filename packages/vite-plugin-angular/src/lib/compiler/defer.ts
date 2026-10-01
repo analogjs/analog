@@ -19,6 +19,7 @@ export function collectDeferBlocks(nodes: any[]): any[] {
     // DeferredBlock: children, placeholder/loading/error (each has children)
     if (Array.isArray(node.children)) node.children.forEach(walk);
     if (Array.isArray(node.branches)) node.branches.forEach(walk);
+    if (Array.isArray(node.errorBlocks)) node.errorBlocks.forEach(walk);
     if (Array.isArray(node.groups)) node.groups.forEach(walk);
     if (Array.isArray(node.cases)) node.cases.forEach(walk);
     if (node.empty?.children) node.empty.children.forEach(walk);
@@ -60,6 +61,7 @@ export function collectElementNames(
     if (node.constructor?.name === 'Element') result.add(node.name);
     if (Array.isArray(node.children)) node.children.forEach(walk);
     if (Array.isArray(node.branches)) node.branches.forEach(walk);
+    if (Array.isArray(node.errorBlocks)) node.errorBlocks.forEach(walk);
     if (Array.isArray(node.groups)) node.groups.forEach(walk);
     if (Array.isArray(node.cases)) node.cases.forEach(walk);
     if (node.empty?.children) node.empty.children.forEach(walk);

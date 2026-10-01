@@ -5,6 +5,8 @@ import { FocusHydrationTestComponent } from '../components/focus-hydration-test.
 import { IncrementalHydrationTestComponent } from '../components/incremental-hydration-test.component.ts';
 import { SkipHydrationTestComponent } from '../components/skip-hydration-test.component.ts';
 import { TodosComponent } from '../components/todos.component.ts';
+import { ContentProjectionTestComponent } from '../components/content-projection-test.component.ts';
+import { CounterComponent } from '../components/counter.component.ts';
 
 Angular Component in an MDX file
 
@@ -37,6 +39,16 @@ Angular Component in an MDX file
 <SkipHydrationTestComponent client:load />
 
 <ClientOnlyComponent client:only="@analogjs/astro-angular" />
+
+<p>
+  The component below projects its children into `ng-content` slots. The nested
+  counter is an island of its own inside the projected content.
+</p>
+<ContentProjectionTestComponent client:load>
+  <p question>Is content projection cool?</p>
+  <p>Let's learn about content projection!</p>
+  <CounterComponent client:load />
+</ContentProjectionTestComponent>
 
 <p>
   The component below makes an HTTP call on the server. This should be cached

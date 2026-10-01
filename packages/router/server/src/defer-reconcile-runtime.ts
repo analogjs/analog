@@ -22,9 +22,48 @@
  */
 export const DEFER_RECONCILE_RUNTIME = /* js */ `
 (function () {
+  var completed = false;
+  var headModules = [];
+  function activateModule(source) {
+    var script = document.createElement('script');
+    Array.from(source.attributes).forEach(function (attr) {
+      script.setAttribute(attr.name, attr.value);
+    });
+    if (source.hasAttribute('nonce')) script.nonce = source.nonce;
+    if (!source.hasAttribute('async')) script.async = false;
+    script.textContent = source.textContent;
+    return script;
+  }
   function region() {
     return document.querySelector('[data-analog-stream]');
   }
+  function showError() {
+    document.title = 'Unable to load this page';
+    var robots = document.head.querySelector('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement('meta');
+      robots.setAttribute('name', 'robots');
+      document.head.appendChild(robots);
+    }
+    robots.setAttribute('content', 'noindex');
+    var error = document.createElement('main');
+    error.setAttribute('data-analog-render-error', '');
+    error.setAttribute('role', 'alert');
+    var heading = document.createElement('h1');
+    heading.textContent = 'Unable to load this page';
+    var message = document.createElement('p');
+    message.textContent = 'The page could not finish loading.';
+    error.appendChild(heading);
+    error.appendChild(message);
+    document.body.replaceChildren(error);
+  }
+  function checkCompletion() {
+    if (!completed && region()) showError();
+  }
+  window.__analogFail = showError;
+  // A Worker HTTP adapter can turn a stream error into ordinary EOF. The
+  // authoritative tail, rather than transport completion, proves SSR success.
+  document.addEventListener('DOMContentLoaded', checkCompletion, { once: true });
   window.__analogPaint = function (id) {
     var tpl = document.querySelector('template[data-analog-defer="' + id + '"]');
     var r = region();
@@ -43,6 +82,9 @@ export const DEFER_RECONCILE_RUNTIME = /* js */ `
     if (!tpl) return;
     var frag = tpl.content;
     var head = document.head;
+    frag.querySelectorAll('script[type="module"]').forEach(function (script) {
+      headModules.push(script.cloneNode(true));
+    });
     var title = frag.querySelector('title');
     if (title) document.title = title.textContent || '';
     function metaKey(m) {
@@ -81,10 +123,21 @@ export const DEFER_RECONCILE_RUNTIME = /* js */ `
   window.__analogFinalize = function () {
     var auth = document.querySelector('template[data-analog-authoritative]');
     if (!auth) return;
+    completed = true;
+    document.removeEventListener('DOMContentLoaded', checkCompletion);
     // Replace the entire body — preview region, block templates and runtime
     // scripts — with just the authoritative body, so the reconciled DOM matches
     // a buffered render byte-for-byte before hydration boots.
-    document.body.replaceChildren(auth.content.cloneNode(true));
+    var body = auth.content.cloneNode(true);
+    var bodyModules = Array.from(body.querySelectorAll('script[type="module"]'));
+    document.body.replaceChildren(body);
+    headModules.forEach(function (script) {
+      document.head.appendChild(activateModule(script));
+    });
+    headModules = [];
+    bodyModules.forEach(function (script) {
+      script.replaceWith(activateModule(script));
+    });
   };
 })();
 `;

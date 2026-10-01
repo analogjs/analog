@@ -1,0 +1,51 @@
+{
+  "name": "typed-router-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/typed-router-app/src",
+  "prefix": "analogjs",
+  "tags": [],
+  "implicitDependencies": ["platform", "router"],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/typed-router-app/.nitro",
+        "{workspaceRoot}/dist/apps/typed-router-app/ssr",
+        "{workspaceRoot}/dist/apps/typed-router-app/analog"
+      ],
+      "options": {
+        "configFile": "apps/typed-router-app/vite.config.ts",
+        "outputPath": "dist/apps/typed-router-app/client"
+      },
+      "defaultConfiguration": "production",
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "typed-router-app:build",
+        "port": 3030
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "typed-router-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "typed-router-app:build:production"
+        }
+      }
+    }
+  }
+}

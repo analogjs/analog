@@ -48,7 +48,7 @@
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", { "target": "build", "projects": ["router"] }],
       "executor": "@nx/vitest:test"
     },
     "version": {
