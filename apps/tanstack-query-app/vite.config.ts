@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       tailwindcss(),
       analog({
+        experimental: { typedRouting: true },
         apiPrefix: 'api',
       }),
       angular(),

@@ -409,6 +409,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
+      api: { getTsConfigPath: resolveTsConfigPath },
       async config(config, { command }) {
         activateDeferredDebug(command);
         watchMode = command === 'serve';

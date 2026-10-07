@@ -667,6 +667,7 @@ export function fastCompilePlugin(
 
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
+    api: { getTsConfigPath: resolveTsConfigPath },
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';

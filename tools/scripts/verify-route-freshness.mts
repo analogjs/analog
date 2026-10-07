@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Verifies that checked-in routeTree.gen.ts files are fresh.
+ * Verifies that checked-in routeTree.gen.d.ts files are fresh.
  *
  * Run this script after build or route generation to detect stale
  * generated route files that no longer match the current route sources.
@@ -9,7 +9,7 @@
  * Usage:
  *   node tools/scripts/verify-route-freshness.mts
  *
- * Exit code 1 if any routeTree.gen.ts file has uncommitted changes,
+ * Exit code 1 if any routeTree.gen.d.ts file has uncommitted changes,
  * meaning the checked-in version was stale relative to the actual routes.
  *
  * Typical CI integration:
@@ -20,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 
 const diff = execFileSync(
   'git',
-  ['diff', '--name-only', '--', '**/routeTree.gen.ts'],
+  ['diff', '--name-only', '--', '**/routeTree.gen.d.ts'],
   {
     encoding: 'utf-8',
   },
@@ -32,7 +32,7 @@ if (diff) {
     console.error(`  - ${file}`);
   }
   console.error(
-    '\nThe checked-in routeTree.gen.ts files do not match the current route sources.',
+    '\nThe checked-in routeTree.gen.d.ts files do not match the current route sources.',
   );
   console.error(
     'Regenerate route files (pnpm build) and commit the updated output.',

@@ -1,10 +1,6 @@
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
-import {
-  provideFileRouter,
-  withTypedRouter,
-  withLoaderCaching,
-} from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
 import { withContentRoutes } from '@analogjs/router/content';
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig } from '@angular/core';
@@ -24,9 +20,6 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(
       withContentRoutes(),
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
-      // Experimental: TanStack Router-inspired typed routes
-      withTypedRouter(),
-      withLoaderCaching({ defaultStaleTime: 60_000 }),
     ),
   ],
 };

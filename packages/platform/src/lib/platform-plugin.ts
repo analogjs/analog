@@ -16,7 +16,7 @@ import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js'
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
-import { routeGenerationPlugin } from './route-generation-plugin.js';
+import { typedRoutes } from './typed-routes-plugin.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
 import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
 
@@ -49,10 +49,22 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
   };
 
   debugPlatform('experimental options resolved', {
-    typedRouter: platformOptions.experimental?.typedRouter,
+    typedRouting: platformOptions.experimental?.typedRouting,
   });
 
   return [
+    ...(platformOptions.experimental?.typedRouting
+      ? [
+          typedRoutes({
+            ...(typeof platformOptions.experimental.typedRouting === 'object'
+              ? platformOptions.experimental.typedRouting
+              : {}),
+            workspaceRoot: platformOptions.workspaceRoot,
+            additionalPagesDirs: platformOptions.additionalPagesDirs,
+            additionalContentDirs: platformOptions.additionalContentDirs,
+          }),
+        ]
+      : []),
     {
       name: 'analogjs-debug-activate',
       config(_, { command }) {
@@ -66,7 +78,6 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),
     analogIntegrationPlugin(platformOptions),
-    routeGenerationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
     ...serverModePlugin(),

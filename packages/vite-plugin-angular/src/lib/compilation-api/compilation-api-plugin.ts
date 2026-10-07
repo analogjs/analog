@@ -584,6 +584,7 @@ export function angularCompilationPlugin(
 
   const compilerPlugin: Plugin = {
     name: '@analogjs/vite-plugin-angular-compilation-api',
+    api: { getTsConfigPath: resolveTsConfigPath },
     enforce: 'pre' as const,
     async config(config, { command }) {
       activateDeferredDebug(command);

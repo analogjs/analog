@@ -6,7 +6,7 @@ const {
   injectHTMLPluginSpy,
   depsPluginSpy,
   routerPluginSpy,
-  routeGenerationPluginSpy,
+  typedRoutesSpy,
   contentPluginSpy,
   serverModePluginSpy,
   clearClientPageEndpointsPluginSpy,
@@ -16,7 +16,7 @@ const {
   injectHTMLPluginSpy: vi.fn(() => []),
   depsPluginSpy: vi.fn(() => []),
   routerPluginSpy: vi.fn(() => []),
-  routeGenerationPluginSpy: vi.fn(() => ({ name: 'analog-route-generation' })),
+  typedRoutesSpy: vi.fn(() => ({ name: 'analog-typed-routes' })),
   contentPluginSpy: vi.fn(() => []),
   serverModePluginSpy: vi.fn(() => []),
   clearClientPageEndpointsPluginSpy: vi.fn(() => ({
@@ -39,8 +39,8 @@ vi.mock('./deps-plugin.js', () => ({
 vi.mock('./router-plugin.js', () => ({
   routerPlugin: routerPluginSpy,
 }));
-vi.mock('./route-generation-plugin.js', () => ({
-  routeGenerationPlugin: routeGenerationPluginSpy,
+vi.mock('./typed-routes-plugin.js', () => ({
+  typedRoutes: typedRoutesSpy,
 }));
 vi.mock('./content-plugin.js', () => ({
   contentPlugin: contentPluginSpy,
@@ -64,8 +64,8 @@ describe('platformPlugin', () => {
     injectHTMLPluginSpy.mockReturnValue([]);
     depsPluginSpy.mockReturnValue([]);
     routerPluginSpy.mockReturnValue([]);
-    routeGenerationPluginSpy.mockReturnValue({
-      name: 'analog-route-generation',
+    typedRoutesSpy.mockReturnValue({
+      name: 'analog-typed-routes',
     });
     contentPluginSpy.mockReturnValue([]);
     serverModePluginSpy.mockReturnValue([]);
@@ -137,6 +137,36 @@ describe('platformPlugin', () => {
         additionalContentDirs: ['/libs/shared/feature/src/content'],
       }),
     );
+  });
+
+  it.each([undefined, false])(
+    'keeps typed routing opt-in (%s)',
+    (typedRouting) => {
+      const plugins = platformPlugin({ experimental: { typedRouting } });
+      expect(typedRoutesSpy).not.toHaveBeenCalled();
+      expect(
+        plugins.some((plugin) => plugin.name === 'analog-typed-routes'),
+      ).toBe(false);
+    },
+  );
+
+  it('passes library directories to beta typed routing before other plugins', () => {
+    const plugins = platformPlugin({
+      workspaceRoot: '/workspace',
+      additionalPagesDirs: ['/libs/shared/feature'],
+      additionalContentDirs: ['/libs/shared/feature/src/content'],
+      experimental: {
+        typedRouting: { outFile: 'src/routes.d.ts', verifyOnBuild: false },
+      },
+    });
+    expect(typedRoutesSpy).toHaveBeenCalledWith({
+      workspaceRoot: '/workspace',
+      additionalPagesDirs: ['/libs/shared/feature'],
+      additionalContentDirs: ['/libs/shared/feature/src/content'],
+      outFile: 'src/routes.d.ts',
+      verifyOnBuild: false,
+    });
+    expect(plugins[0].name).toBe('analog-typed-routes');
   });
 
   function getIntegrationPlugin(

@@ -1,638 +1,238 @@
-# Typed Routes (Experimental)
+# Type-safe Routing
 
-Analog supports experimental type-safe routing features that provide autocomplete, typed params, and typed query params across your entire application. These features are inspired by [TanStack Router's](https://tanstack.com/router) type-safe navigation system.
+Typed routing is an opt-in experimental feature that adds checked route paths and parameters to Analog's file router. It is disabled by default. Its APIs and generated types may change while the feature is experimental.
 
-:::warning
-
-These APIs are experimental and subject to change. Enable them explicitly via feature flags.
-
-:::
-
-## Setup
-
-Typed routes require a **runtime** feature that activates the typed navigation APIs. The **build-time** route type generation is enabled by default.
-
-### 1. Route Type Generation (enabled by default)
-
-Typed route generation ships as part of `@analogjs/platform` and is **enabled by
-default**. When `experimental.typedRouter` is omitted or set to `true`, the
-build generates a `src/routeTree.gen.ts` file with typed params and query params
-for each file-based route.
-
-:::caution Breaking Change
-
-In previous versions, typed route generation was opt-in and required explicitly
-setting `experimental.typedRouter: true`. It is now enabled by default.
-
-If you do not want typed route generation, opt out explicitly:
+Enable it explicitly with `experimental.typedRouting` in your existing Vite configuration:
 
 ```ts
-// vite.config.ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
-export default defineConfig(() => ({
+export default defineConfig({
   plugins: [
-    analog({
-      experimental: {
-        typedRouter: false,
-      },
-    }),
+    analog({ experimental: { typedRouting: true } }),
+    angular(),
+    nitro(),
   ],
-}));
-```
-
-If you previously had no `typedRouter` configuration, the first build will
-generate `src/routeTree.gen.ts` and inject imports into `src/main.ts` /
-`src/main.server.ts`. Subsequent production builds verify the generated file is
-still fresh — if your routes changed, the build will fail so you can review
-the update and rerun. To avoid this, either opt out or commit the generated
-`routeTree.gen.ts` to your repository.
-
-:::
-
-The previous build-time imports from `@analogjs/vite-plugin-routes` and
-`@analogjs/router/manifest` are no longer supported. Typed route generation now
-ships as part of the `@analogjs/platform` integration only.
-
-You can also enable it explicitly or pass configuration options:
-
-```ts
-// vite.config.ts
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-
-export default defineConfig(() => ({
-  plugins: [
-    analog({
-      // ...other options
-      experimental: {
-        typedRouter: true,
-      },
-    }),
-  ],
-}));
-```
-
-When enabled, the first build generates a `src/routeTree.gen.ts` file that augments `AnalogRouteTable` with typed params and query for each file-based route. This is similar to TanStack Router's `routeTree.gen.ts` codegen.
-
-Subsequent production builds verify that an existing checked-in `routeTree.gen.ts` is still fresh. If the route sources changed, Analog rewrites the file and fails the build so you can review the generated update and rerun the build with the fresh output in place.
-
-This is the only generated route artifact. Optional features such as
-`jsonLdManifest` change the contents of `routeTree.gen.ts` instead of creating
-additional files like `routes.gen.ts` or `route-jsonld.gen.ts`.
-
-You can customize the output path by passing an options object instead of `true`:
-
-```ts
-experimental: {
-  typedRouter: {
-    outFile: 'src/generated/routeTree.gen.ts',
-  },
-},
-```
-
-If you need the previous "always rewrite during build" behavior, disable the
-freshness guard explicitly:
-
-```ts
-experimental: {
-  typedRouter: {
-    verifyOnBuild: false,
-  },
-},
-```
-
-### 2. Enable Typed Router Features
-
-In your `app.config.ts`, add `withTypedRouter()` to `provideFileRouter()`:
-
-```ts
-// src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import { provideFileRouter, withTypedRouter } from '@analogjs/router';
-
-export const appConfig: ApplicationConfig = {
-  providers: [provideFileRouter(withTypedRouter())],
-};
-```
-
-### Strict Mode
-
-Enable strict mode to log warnings in development when navigating to routes with params that don't match the generated route table:
-
-```ts
-provideFileRouter(withTypedRouter({ strictRouteParams: true }));
-```
-
-## Supported Route Patterns
-
-The typed route system supports all Analog file-based route conventions:
-
-| Pattern            | Example file                         | Generated path          |
-| ------------------ | ------------------------------------ | ----------------------- |
-| Static             | `pages/about.page.ts`                | `/about`                |
-| Index              | `pages/index.page.ts`                | `/`                     |
-| Dynamic            | `pages/users/[id].page.ts`           | `/users/[id]`           |
-| Dot-notation       | `pages/blog.[slug].page.ts`          | `/blog/[slug]`          |
-| Catch-all          | `pages/docs/[...slug].page.ts`       | `/docs/[...slug]`       |
-| Optional catch-all | `pages/shop/[[...category]].page.ts` | `/shop/[[...category]]` |
-| Route group        | `pages/(auth)/login.page.ts`         | `/login`                |
-| Content            | `content/guides/intro.md`            | `/guides/intro`         |
-
-Route groups are stripped from the URL path but preserved in the
-structural route id. Content routes (`.md` files) are included in
-the route table alongside page routes.
-
-## Type-Safe Navigation
-
-### `routePath()` — Build Typed Route Links
-
-The `routePath()` function builds a route link object with full type checking on route params.
-The returned object separates path, query params, and fragment for direct use with Angular's
-`[routerLink]`, `[queryParams]`, and `[fragment]` directives:
-
-```ts
-import { routePath } from '@analogjs/router';
-
-// Static route
-routePath('/about');
-// → { path: '/about', queryParams: null, fragment: undefined }
-
-// Dynamic route — params are required and typed
-routePath('/users/[id]', { params: { id: '42' } });
-// → { path: '/users/42', queryParams: null, fragment: undefined }
-
-// With query params and hash
-routePath('/users/[id]', {
-  params: { id: '42' },
-  query: { tab: 'settings' },
-  hash: 'top',
 });
-// → { path: '/users/42', queryParams: { tab: 'settings' }, fragment: 'top' }
 ```
 
-Use in templates with `@let`:
+Analog generates `src/routeTree.gen.d.ts`. Include it in each tsconfig that checks your application, including separate browser, server, and test configurations. Add it to your existing `files` list, or ensure an `include` pattern covers it:
 
-```html
-@let link = routePath('/users/[id]', { params: { id: userId }, query: { tab:
-'settings' } });
-<a
-  [routerLink]="link.path"
-  [queryParams]="link.queryParams"
-  [fragment]="link.fragment"
->
-  User Profile
-</a>
-```
-
-When the route table is generated, `routePath()` autocompletes valid route paths and enforces that required params are provided.
-
-### `injectNavigate()` — Type-Safe Navigation
-
-`injectNavigate()` returns a typed navigate function:
-
-```ts
-import { Component } from '@angular/core';
-import { injectNavigate } from '@analogjs/router';
-
-@Component({
-  template: `<button (click)="goToUser()">View User</button>`,
-})
-export default class UserListComponent {
-  private navigate = injectNavigate();
-
-  goToUser() {
-    // Autocomplete on paths, type-checked params
-    this.navigate('/users/[id]', { params: { id: '42' } });
-  }
-
-  replaceCurrentRoute() {
-    // Pass Angular NavigationBehaviorOptions as a third argument
-    this.navigate(
-      '/users/[id]',
-      { params: { id: '42' } },
-      { replaceUrl: true },
-    );
-  }
+```json
+{
+  "include": ["src/**/*.d.ts"]
 }
 ```
 
-## Typed Params and Query Injection
+Preserve your other `files` and `include` entries. Paths are relative to the tsconfig declaring them. Inherited lists apply unless a child tsconfig overrides them.
 
-### `injectParams()` — Typed Route Params as a Signal
+Analog checks inclusion in the tsconfig selected by its Angular compiler plugin and reports an error with the path to add when it is missing. Application entry files are not modified, and components do not need to import the declaration.
 
-Inspired by TanStack Router's `useParams({ from: '/path' })`, this function returns route params as a typed Angular signal:
+Keep the generated file in source control. Start the dev server to generate it before running standalone type checks. Page additions, renames, and removals regenerate the declaration during development. Production builds reject stale checked-in route tables; the first build can generate a missing table.
 
-```ts
-import { Component } from '@angular/core';
-import { injectParams } from '@analogjs/router';
-
-@Component({
-  template: `<h1>User {{ params().id }}</h1>`,
-})
-export default class UserPageComponent {
-  // The `from` string constrains the return type
-  readonly params = injectParams('/users/[id]');
-  // params() → { id: string }
-}
-```
-
-The `from` parameter is used purely for TypeScript type inference. At runtime, params are read from the current `ActivatedRoute`. Use this inside a component rendered by the specified route.
-
-### `injectQuery()` — Typed Query Params as a Signal
-
-Similar to TanStack Router's `useSearch({ from: '/path' })`, this reads validated query params:
-
-```ts
-import { Component, computed } from '@angular/core';
-import { injectQuery } from '@analogjs/router';
-
-@Component({
-  template: `
-    <div>Page {{ page() }}</div>
-    <div>Status: {{ query().status }}</div>
-  `,
-})
-export default class IssuesPageComponent {
-  readonly query = injectQuery('/issues');
-  readonly page = computed(() => this.query().page);
-}
-```
-
-When a route exports a `routeQuerySchema`, the return type reflects the validated output shape instead of raw string values.
-
-## Route Context
-
-### `withRouteContext()` — Shared Context for All Routes
-
-Inspired by TanStack Router's `createRootRouteWithContext<T>()`, you can provide a typed context object available to all routes via dependency injection:
-
-```ts
-// src/app/app.config.ts
-import { ApplicationConfig, inject } from '@angular/core';
-import {
-  provideFileRouter,
-  withTypedRouter,
-  withRouteContext,
-} from '@analogjs/router';
-import { AuthService } from './auth.service';
-import { AnalyticsService } from './analytics.service';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(
-      withTypedRouter(),
-      withRouteContext({
-        auth: inject(AuthService),
-        analytics: inject(AnalyticsService),
-      }),
-    ),
-  ],
-};
-```
-
-### `injectRouteContext()` — Access the Context
-
-Retrieve the context in any component or service:
-
-```ts
-import { Component } from '@angular/core';
-import { injectRouteContext } from '@analogjs/router';
-import { AuthService } from '../auth.service';
-import { AnalyticsService } from '../analytics.service';
-
-@Component({
-  template: `<h1>Dashboard</h1>`,
-})
-export default class DashboardComponent {
-  private ctx = injectRouteContext<{
-    auth: AuthService;
-    analytics: AnalyticsService;
-  }>();
-
-  constructor() {
-    this.ctx.analytics.trackPageView();
-  }
-}
-```
-
-In TanStack Router, context accumulates through the route tree via `beforeLoad`. In Analog, the context is provided at the root level and is available everywhere via Angular's dependency injection.
-
-## Loader Caching
-
-### `withLoaderCaching()` — Cache Server-Loaded Data
-
-Inspired by TanStack Router's `defaultStaleTime` and `defaultGcTime` options, you can configure how server-loaded route data is cached:
-
-```ts
-// src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import {
-  provideFileRouter,
-  withTypedRouter,
-  withLoaderCaching,
-} from '@analogjs/router';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(
-      withTypedRouter(),
-      withLoaderCaching({
-        defaultStaleTime: 30_000, // 30s before data is considered stale
-        defaultGcTime: 300_000, // 5min cache retention after leaving route
-        defaultPendingMs: 200, // 200ms delay before showing loading UI
-      }),
-    ),
-  ],
-};
-```
-
-| Option             | Default   | Description                                                                                             |
-| ------------------ | --------- | ------------------------------------------------------------------------------------------------------- |
-| `defaultStaleTime` | `0`       | Time (ms) before loader data is considered stale. While fresh, returning to a route uses cached data.   |
-| `defaultGcTime`    | `300_000` | Time (ms) to retain unused loader data after leaving a route.                                           |
-| `defaultPendingMs` | `0`       | Delay (ms) before showing loading indicators during route transitions. Prevents flash of loading state. |
-
-## Multi-Library Route Composition
-
-Routes can be composed from multiple directories using
-`additionalPagesDirs` and `additionalContentDirs`:
+To customize the output or allow regeneration during builds:
 
 ```ts
 analog({
-  additionalPagesDirs: ['/libs/shared/feature/src/pages'],
-  additionalContentDirs: ['/libs/shared/content'],
   experimental: {
-    typedRouter: true,
+    typedRouting: {
+      outFile: 'src/routeTree.gen.d.ts',
+      verifyOnBuild: false,
+    },
   },
 });
 ```
 
-Routes from additional directories are included in the generated
-route table alongside app-local routes. When two files resolve to
-the same URL path, app-local routes take precedence and a warning
-is logged:
+Custom output paths must end in `.d.ts` and be included in the relevant tsconfigs.
 
-```text
-[Analog] Route collision: '/blog/[slug]' is defined by both
-'/src/app/pages/blog/[slug].page.ts' and
-'/libs/shared/feature/src/pages/blog/[slug].page.ts'.
-Keeping '/src/app/pages/blog/[slug].page.ts' based on
-route source precedence and skipping duplicate.
+## Build links
+
+Import `LinkTo` from `@analogjs/router` into your component's `imports` and bind a destination to `[linkTo]`:
+
+```html
+<a linkTo="/shipping">Shipping</a>
+<a
+  [linkTo]="{
+    path: '/products/[id]',
+    params: { id: product.id },
+    query: { tab: 'details' },
+    hash: 'reviews'
+  }"
+  routerLinkActive="active"
+>
+  Details
+</a>
 ```
 
-## Route Import Auto-Injection
+The generated route table checks the path, required named parameters, and their value types together. Static routes accept string shorthand, such as `linkTo="/shipping"` or `[linkTo]="'/shipping'"`. Only generated routes with no parameters allow this shorthand; dynamic and catch-all routes require a destination object. Unknown paths, unrestricted `string` values, positional command arrays, and `UrlTree` values are rejected with `strictTemplates` enabled. Use the destination object with `query` and `hash` to add query parameters and fragments, including for static routes. Binding `null` or `undefined` disables the link.
 
-The generated `routeTree.gen.ts` uses `declare module` augmentation
-to extend `AnalogRouteTable`. For the augmentation to take effect,
-the file must be part of the TypeScript program.
+`LinkTo` composes Angular's `RouterLink`, preserving href generation, navigation, modifier clicks, and target behavior. It exposes `target`, `queryParamsHandling`, `preserveFragment`, `skipLocationChange`, `replaceUrl`, and `state`. Import Angular's `RouterLinkActive` separately to use active classes on the link or an ancestor. Use `[linkTo]` on its own; do not also apply `[routerLink]` to the same element.
 
-The plugin automatically adds a side-effect import to your entry
-file (`src/main.ts` or `src/main.server.ts`) during the first
-build:
+Dynamic parameters accept strings or numbers. Numbers are converted to strings when building links and navigating. Required catch-all parameters accept non-empty arrays of string or number segments; optional catch-all parameters may be omitted or empty. For required catch-all arrays stored in variables, use the tuple type `[string | number, ...(string | number)[]]` to preserve the non-empty guarantee. Query values are strings, numbers, booleans, or arrays of them. Like parameters, they are converted to strings, so they read back as strings. A `null` or `undefined` value omits the key, or removes it when `queryParamsHandling` is `'merge'`. `hash` supplies the fragment. URL path segments are encoded automatically.
+
+## Navigate programmatically
+
+Use `injectNavigate` inside an Angular injection context:
 
 ```ts
-import './routeTree.gen';
+import { injectNavigate } from '@analogjs/router';
+
+const navigate = injectNavigate();
+navigate('/products/[id]', { params: { id: 42 } }, { replaceUrl: true });
+navigate('/search', { query: { page: 2 } }, { queryParamsHandling: 'merge' });
 ```
 
-If neither entry file exists, a warning is printed with manual
-instructions. When using a custom `outFile`, the import path is
-computed automatically.
+The last argument accepts Angular's navigation options, such as `replaceUrl` and `state`, plus `queryParamsHandling` and `preserveFragment`. Use `query` and `hash` in place of `queryParams` and `fragment`.
 
-## CI Staleness Verification
+## Build link data in TypeScript
 
-The `verify` option provides a strict CI mode that fails without
-writing when the generated file would change:
+Use `toRoute` when you need link data in TypeScript. It does not require an injection context:
 
 ```ts
-typedRoutes({ verify: true });
+import { toRoute } from '@analogjs/router';
+
+const link = toRoute('/products/[id]', { params: { id: 42 } });
+// link.path is ['/', 'products', '42']
 ```
 
-This is useful in CI pipelines where you want to ensure checked-in
-route files are always fresh:
+The result contains Angular router commands in `path`, plus `queryParams` and `fragment`. These properties can be passed to Angular's router APIs. For template links, use `[linkTo]` as shown above.
 
-```bash
-# Build (regenerates), then verify no git changes
-pnpm build
-node tools/scripts/verify-route-freshness.mts
-```
-
-The default `verifyOnBuild: true` behavior writes the fresh file
-during production builds and then fails so you can review and
-commit the update. Set `verifyOnBuild: false` if you prefer silent
-regeneration.
-
-## Generated Route Tree Metadata
-
-In addition to the `AnalogRouteTable` navigation surface, `routeTree.gen.ts` also exports a richer metadata-oriented route tree for tooling and plugins.
-
-### Interfaces and Types
-
-The generated file includes:
-
-| Export                       | Description                                          |
-| ---------------------------- | ---------------------------------------------------- |
-| `AnalogGeneratedRouteRecord` | Generic interface for route metadata records         |
-| `AnalogFileRoutesById`       | Routes indexed by structural id                      |
-| `AnalogFileRoutesByFullPath` | Type map from resolved navigation path to route data |
-| `AnalogRouteTreeId`          | Union type of all route ids                          |
-| `AnalogRouteTreeFullPath`    | Union type of all full paths                         |
-| `analogRouteTree`            | Runtime object with `byId` and `byFullPath`          |
-
-### Route Record Shape
-
-Each route record in `analogRouteTree.byId` contains:
+## Read parameters as signals
 
 ```ts
-{
-  id: string;          // Structural route id (preserves groups/index)
-  path: string;        // Local path relative to parent
-  fullPath: string;    // Resolved navigation path
-  parentId: string | null;
-  children: readonly string[];
-  sourceFile: string;
-  kind: 'page' | 'content';
-  hasParamsSchema: boolean;
-  hasQuerySchema: boolean;
-  hasJsonLd: boolean;
-  isIndex: boolean;
-  isGroup: boolean;
-  isCatchAll: boolean;
-  isOptionalCatchAll: boolean;
-}
+import { injectParams, injectQuery } from '@analogjs/router';
+
+const params = injectParams('/products/[id]');
+const query = injectQuery('/products/[id]');
+// params().id is a string; query()['page'] is a raw query value.
 ```
 
-### Usage
+Use these helpers in a component rendered by the specified route. The path narrows TypeScript types; it does not select another active route. Parameters include ancestor parameters, and catch-all values are normalized to arrays. The helpers accept `{ injector }` when called outside an injection context.
 
-The route tree is useful for structure-aware tooling such as breadcrumb generation, sidebar navigation, route analysis, or build-time manifests. At runtime, `analogRouteTree.byFullPath[path]` returns the corresponding route id, which you can use to access the full record in `analogRouteTree.byId`:
+Values remain raw Angular router values. Exporting a schema does not validate or coerce these signals. For example, `"42"` stays a string.
+
+Without a path, `injectParams()`, `injectQuery()`, `injectRouteData()`, and `injectResources()` return untyped values for the current route, for example in a component shared by several routes. Catch-all segments need a path: a catch-all route has no parameter name at runtime, so `injectParams()` omits required catch-alls and does not split optional ones into arrays.
+
+Type checking comes from the generated table. The `experimental.typedRouting` option enables generation for the feature as a whole; no additional router provider or per-helper experimental flag is required.
+
+## Read route data and load results
+
+`injectRouteData` reads the page's route data as a signal. Its type comes from the page module and its [layout routes](/docs/features/routing/overview#layout-routes): static `routeMeta.data`, resolved `routeMeta.resolve` values, and the page's server `load` result under `load`.
 
 ```ts
-import { analogRouteTree } from '../routeTree.gen';
+// src/app/pages/products.page.ts (layout)
+import type { RouteMeta } from '@analogjs/router';
 
-// Look up a route by its full path
-const routeId = analogRouteTree.byFullPath['/users/[id]'];
-const route = analogRouteTree.byId[routeId];
-
-// Walk children
-for (const childId of route.children) {
-  const child = analogRouteTree.byId[childId];
-  console.log(child.fullPath);
-}
+export const routeMeta = { data: { section: 'catalog' } } satisfies RouteMeta;
 ```
 
-This metadata surface is additive — projects that only use `routePath()` and `injectNavigate()` can ignore it.
-
-## Typed JSON-LD with `schema-dts`
-
-Route JSON-LD authoring supports fully typed structured data using [`schema-dts`](https://github.com/google/schema-dts):
-
 ```ts
-import type { WebPage, WithContext } from 'schema-dts';
+// src/app/pages/products/[id].page.ts
+import { Component, inject } from '@angular/core';
+import { injectRouteData, type RouteMeta } from '@analogjs/router';
 
 export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Products',
-  } satisfies WithContext<WebPage>,
-};
+  resolve: { related: () => inject(ProductsService).related() },
+} satisfies RouteMeta;
+
+@Component({ template: `{{ data().section }}` })
+export default class ProductPage {
+  readonly data = injectRouteData('/products/[id]');
+  // data().related and data().load are typed as well.
+}
 ```
 
-The `AnalogJsonLdDocument` type exported from `@analogjs/router` accepts:
+Use `satisfies RouteMeta` instead of a `RouteMeta` annotation. An annotation widens the object, so data values are typed as `unknown`.
 
-- `WithContext<Thing>` — single Schema.org node
-- `Graph` — `@graph`-based document
-- `Array<WithContext<Thing>>` — multiple nodes
-
-When `jsonLdManifest` is enabled, the generated `routeTree.gen.ts` file includes typed manifest entries using `schema-dts` types instead of generic `Record<string, unknown>`.
-
-Install `schema-dts` as a dev dependency to enable typed JSON-LD:
-
-```bash
-npm install -D schema-dts
-```
-
-Existing plain-object JSON-LD continues to work at runtime. The typed surface provides stronger author-time checking for new code.
-
-## How Types Flow
-
-The type safety pipeline works as follows:
-
-```text
-1. File: src/app/pages/users/[id].page.ts
-   └── Export: routeParamsSchema = v.object({ id: v.pipe(v.string(), ...) })
-
-2. Build (experimental.typedRouter: true):
-   └── Generates src/routeTree.gen.ts
-       └── Augments AnalogRouteTable with:
-           '/users/[id]': {
-             params: { id: string }
-             paramsOutput: { id: string }
-           }
-
-3. Runtime:
-   ├── routePath('/users/[id]', { params: { id: '42' } })
-   │     → { path: '/users/42', queryParams, fragment, ... }    ✅ typed route object
-   ├── navigate('/users/[id]', { params: { id: 42 } })          ❌ type error
-   ├── navigate('/users/[id]', { params: { id: '42' } })        ✅ typed (via injectNavigate())
-   ├── injectParams('/users/[id]')  → Signal<{ id: string }>
-   └── template: [routerLink]="link.path"
-```
-
-When no route table is generated (i.e., `experimental.typedRouter` is not enabled), all path types fall back to `string` and params are untyped — existing code continues to work without changes.
-
-## Comparison with TanStack Router
-
-| Concept            | TanStack Router                      | Analog (Experimental)                                                    |
-| ------------------ | ------------------------------------ | ------------------------------------------------------------------------ |
-| Type registration  | `Register` interface augmentation    | `AnalogRouteTable` augmentation                                          |
-| Route codegen      | `routeTree.gen.ts`                   | `src/routeTree.gen.ts`                                                   |
-| Type-safe navigate | `<Link to="/path" params={...}>`     | `injectNavigate()` / `routePath()`                                       |
-| Typed params       | `useParams({ from: '/path' })`       | `injectParams('/path')`                                                  |
-| Typed search       | `useSearch({ from: '/path' })`       | `injectQuery('/path')`                                                   |
-| Root context       | `createRootRouteWithContext<T>()`    | `withRouteContext(ctx)`                                                  |
-| Loader caching     | `defaultStaleTime` / `defaultGcTime` | `withLoaderCaching(options)`                                             |
-| Strict mode        | `useParams({ strict: true })`        | `withTypedRouter({ strictRouteParams: true })`                           |
-| Schema validation  | Validator adapters (Zod, Valibot)    | [Standard Schema](/docs/features/data-fetching/validation) (any library) |
-
-## Full Example
+`injectLoad` also accepts a route path. The result is typed from the page's `.server.ts` `load` function, so the page does not need to import it:
 
 ```ts
-// vite.config.ts
-import analog from '@analogjs/platform';
-import { defineConfig } from 'vite';
-
-export default defineConfig(() => ({
-  plugins: [
-    analog({
-      experimental: {
-        typedRouter: true,
-      },
-    }),
-  ],
-}));
+readonly product = toSignal(injectLoad('/products/[id]'), { requireSync: true });
 ```
+
+Paths without a server `load` function are rejected. The generated declaration references page and `.server.ts` modules with `typeof import()`, so they must type-check under each application tsconfig. Adding or removing a `routeMeta` or `load` export regenerates the declaration during development.
+
+As with Angular's route data inheritance, a page's keys override the same keys from its layouts. `load` is always the page's own result. When several files define the same URL, such as a layout and its index page (`products.page.ts` and `products/index.page.ts`), `injectRouteData` has no typed keys for that path and `injectLoad` rejects it. Use `injectRouteData()` without a path or `injectLoad<typeof load>()` there.
+
+## Access route resources
+
+On Angular 22.2+, when using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources`:
 
 ```ts
-// src/app/app.config.ts
-import { ApplicationConfig } from '@angular/core';
-import {
-  provideFileRouter,
-  withTypedRouter,
-  withLoaderCaching,
-} from '@analogjs/router';
+import { injectResources } from '@analogjs/router';
 
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(
-      withTypedRouter({ strictRouteParams: true }),
-      withLoaderCaching({
-        defaultStaleTime: 30_000,
-        defaultPendingMs: 200,
-      }),
-    ),
-  ],
-};
+const resources = injectResources('/products/[id]');
+// resources.user is a typed Resource instance
+const user = resources.user.value();
 ```
+
+Calling `injectResources()` without a route path returns untyped route resources. On older Angular versions without router resources, it returns an empty object. The other typed-routing helpers do not require router resources.
+
+## Navigate relative to the current route
+
+Pass the current page's path to `injectNavigate`, or bind it to `from` on `LinkTo`, to navigate relative to it:
 
 ```ts
 // src/app/pages/users/[id].page.ts
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { injectParams, routePath } from '@analogjs/router';
-
-@Component({
-  imports: [RouterLink],
-  template: `
-    <h1>User {{ params().id }}</h1>
-
-    @let nextLink = routePath('/users/[id]', { params: { id: nextUserId } });
-    <a [routerLink]="nextLink.path">Next User</a>
-  `,
-})
-export default class UserPageComponent {
-  readonly params = injectParams('/users/[id]');
-
-  get nextUserId() {
-    return String(Number(this.params().id) + 1);
-  }
-}
+const navigate = injectNavigate('/users/[id]');
+navigate('./posts/[postId]', { params: { postId: 7 } }); // /users/42/posts/7
+navigate('.', { query: { tab: 'bio' } }); // /users/42?tab=bio
+navigate('../../about');
 ```
+
+```html
+<a from="/users/[id]" linkTo=".">Profile</a>
+<a from="/users/[id]" [linkTo]="{ path: '.', params: { id: nextId } }">Next</a>
+```
+
+Relative targets resolve against the `from` path pattern: `.` is the route itself, `./child` is below it, and `..` or `../sibling` go through its ancestors. Each target has one relative form, through the nearest shared ancestor, and must be a generated route. Absolute paths remain available.
+
+Parameters in the leading segments shared by `from` and the target default to their current values, so they become optional. Parameters after the paths diverge are required, and explicit values override inherited ones. As with `injectParams`, use `from` in a component rendered by that route.
+
+With `injectNavigate(from)`, `params` and `query` can also be functions. They receive the current route's typed params or query and return the target's values:
 
 ```ts
-// src/app/pages/users/[id].server.ts
-import { definePageLoad } from '@analogjs/router/server/actions';
-import * as v from 'valibot';
+navigate('.', { params: (prev) => ({ id: Number(prev.id) + 1 }) }); // /users/43
+navigate('.', { query: ({ tab, ...rest }) => rest }); // drops tab, keeps the rest
+```
 
-export const routeParamsSchema = v.object({
-  id: v.pipe(v.string(), v.regex(/^\d+$/)),
-});
+## Compatibility
 
-export const load = definePageLoad({
-  params: routeParamsSchema,
-  handler: async ({ params, fetch }) => {
-    return fetch(`/api/users/${params.id}`);
-  },
+Existing file routing, Markdown routes, Nitro configuration, and Angular compiler options remain unchanged. Additional page and content directories participate in generation. Without the generated declaration in the TypeScript program, typed helper calls fail to compile. Use Angular's existing router APIs for navigation without generated route types.
+
+## Type checking
+
+Use Angular's compiler with your application tsconfig to check TypeScript and templates:
+
+```sh
+pnpm exec ngc -p tsconfig.app.json --noEmit
+```
+
+Template checking requires `angularCompilerOptions.strictTemplates: true`. If you use `fastCompile` or disable type checking in Vite, run this check separately; enabling typed routing does not override those compiler settings.
+
+## Routes from workspace libraries
+
+Keep library discovery explicit. Pass the directories returned by `discoverLibraryRoutes()` to `analog()`; the same directories feed the runtime router and typed route generation. Angular receives the library page globs through `analog.setup()`.
+
+```ts
+import { resolve } from 'node:path';
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
+
+const workspaceRoot = resolve(__dirname, '../..');
+const libraries = discoverLibraryRoutes(workspaceRoot);
+
+analog({
+  workspaceRoot,
+  ...libraries,
+  experimental: { typedRouting: true },
 });
 ```
+
+## Migrating from the earlier v3 alpha implementation
+
+Replace `experimental.typedRouter` with `experimental.typedRouting` and `routePath()` with `toRoute()`, or use `LinkTo` in templates. Remove `withTypedRouter()`, `withRouteContext()`, and `withLoaderCaching()` from the router providers. For shared context, use Angular dependency injection instead of `injectRouteContext()`.
+
+Delete the old `routeTree.gen.ts` and its runtime imports, then start the dev server to generate `routeTree.gen.d.ts`. Include the declaration in the application tsconfig. Generated runtime route trees and JSON-LD manifests are no longer emitted; route-level `jsonLd` and `routeJsonLd` metadata continue to work.

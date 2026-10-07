@@ -22,6 +22,7 @@ export default defineConfig(() => {
     },
     plugins: [
       analog({
+        experimental: { typedRouting: true },
         content: {
           highlighter: 'shiki',
         },

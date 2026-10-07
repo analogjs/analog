@@ -1,849 +1,247 @@
 import {
-  existsSync,
   mkdtempSync,
   mkdirSync,
+  writeFileSync,
   readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
+import { parseSync } from 'oxc-parser';
+import { format } from 'prettier';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-
 import { typedRoutes } from './typed-routes-plugin.js';
+import { discoverLibraryRoutes } from './discover-library-routes.js';
 
-describe('typedRoutes', () => {
-  const tempDirs: string[] = [];
-  type PluginCommand = 'build' | 'serve';
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-
-    while (tempDirs.length > 0) {
-      rmSync(tempDirs.pop() as string, { recursive: true, force: true });
-    }
-  });
-
-  function createFixture(options?: { skipMainTs?: boolean }): string {
+describe('typed route generation', () => {
+  const roots: string[] = [];
+  afterEach(() =>
+    roots
+      .splice(0)
+      .forEach((root) => rmSync(root, { recursive: true, force: true })),
+  );
+  function fixture() {
     const root = mkdtempSync(join(tmpdir(), 'analog-typed-routes-'));
-    tempDirs.push(root);
+    roots.push(root);
     mkdirSync(join(root, 'src/app/pages'), { recursive: true });
-    if (!options?.skipMainTs) {
-      writeFileSync(
-        join(root, 'src/main.ts'),
-        `import 'zone.js';\nimport { bootstrapApplication } from '@angular/platform-browser';\n\nbootstrapApplication(AppComponent);\n`,
-        'utf-8',
-      );
-    }
+    writeFileSync(
+      join(root, 'src/main.ts'),
+      "import {\n bootstrapApplication\n} from '@angular/platform-browser';\n",
+    );
+    writeFileSync(
+      join(root, 'src/app/pages/users.[id].page.ts'),
+      'export default class Page {}',
+    );
     return root;
   }
-
-  function writeFixtureFile(
+  function configure(
     root: string,
-    relativePath: string,
-    content: string,
-  ): void {
-    const filePath = join(root, relativePath);
-    mkdirSync(dirname(filePath), { recursive: true });
-    writeFileSync(filePath, content, 'utf-8');
-  }
-
-  function createPlugin(
-    root: string,
-    options: Parameters<typeof typedRoutes>[0] = {},
-    command: PluginCommand = 'build',
+    command: 'build' | 'serve' = 'serve',
+    options = {},
   ) {
-    const plugin = typedRoutes({
-      workspaceRoot: root,
-      ...options,
-    });
-
-    const configHook = plugin.config;
-    if (typeof configHook === 'function') {
-      configHook.call({} as never, { root: '.' }, {
-        command,
-      } as never);
-    } else {
-      configHook?.handler.call({} as never, { root: '.' }, {
-        command,
-      } as never);
-    }
-
+    const plugin = typedRoutes({ workspaceRoot: root, ...options });
+    const hook = plugin.config;
+    if (typeof hook === 'function')
+      hook.call({} as never, { root }, { command, mode: 'development' });
     return plugin;
   }
-
-  function runBuildStart(plugin: ReturnType<typeof typedRoutes>): void {
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const buildStartHook = plugin.buildStart;
-    if (typeof buildStartHook === 'function') {
-      buildStartHook.call({} as never, {} as never);
-    } else {
-      buildStartHook?.handler.call({} as never, {} as never);
+  it('generates declarations without editing application sources', () => {
+    const root = fixture();
+    const before = readFileSync(join(root, 'src/main.ts'), 'utf8');
+    configure(root);
+    const entry = readFileSync(join(root, 'src/main.ts'), 'utf8');
+    expect(parseSync('main.ts', entry).errors).toEqual([]);
+    expect(entry).toBe(before);
+    const generated = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
+    expect(generated).toContain('"/users/[id]"');
+    expect(generated).toContain('params: { id: string }');
+    expect(parseSync('routeTree.gen.d.ts', generated).errors).toEqual([]);
+    configure(root);
+    expect(readFileSync(join(root, 'src/main.ts'), 'utf8')).toBe(entry);
+  });
+  it('generates declarations for discovered library pages and content, excluding APIs', () => {
+    const root = fixture();
+    for (const dir of ['pages', 'content', 'api']) {
+      mkdirSync(join(root, `libs/shared/src/${dir}`), { recursive: true });
     }
-  }
-
-  function generateRoutesFile(
-    root: string,
-    options: Parameters<typeof typedRoutes>[0] = {},
-    command: PluginCommand = 'build',
-  ): string {
-    const plugin = createPlugin(root, options, command);
-    runBuildStart(plugin);
-
-    return readFileSync(
-      join(root, options.outFile ?? 'src/routeTree.gen.ts'),
-      'utf-8',
+    writeFileSync(
+      join(root, 'libs/shared/src/pages/library.[id].page.ts'),
+      'export const routeMeta = { data: { shared: true } }; export default class Page {}',
     );
-  }
+    writeFileSync(
+      join(root, 'libs/shared/src/pages/library.[id].server.ts'),
+      'export const load = async () => ({ shared: true });',
+    );
+    writeFileSync(
+      join(root, 'libs/shared/src/content/guide.md'),
+      '# Library guide',
+    );
+    writeFileSync(
+      join(root, 'libs/shared/src/api/private.ts'),
+      'export default () => null;',
+    );
 
-  function createWatcherServer() {
-    const listeners: Record<
-      'add' | 'change' | 'unlink',
-      Array<(path: string) => void>
-    > = {
-      add: [],
-      change: [],
-      unlink: [],
-    };
+    configure(root, 'build', discoverLibraryRoutes(root));
 
-    return {
-      server: {
-        watcher: {
-          on(event: 'add' | 'change' | 'unlink', cb: (path: string) => void) {
-            listeners[event].push(cb);
+    const output = readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8');
+    expect(output).toContain('"/library/[id]"');
+    expect(output).toContain('params: { id: string }');
+    expect(output).toContain('library.[id].page").routeMeta');
+    expect(output).toContain('library.[id].server").load');
+    expect(output).toContain('"/guide"');
+    expect(output).not.toContain('private');
+  });
+
+  it('does not require a conventional application entry', () => {
+    const root = fixture();
+    rmSync(join(root, 'src/main.ts'));
+    expect(() => configure(root, 'build')).not.toThrow();
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('interface AnalogRouteTable');
+  });
+  it('rejects runtime module output paths', () => {
+    expect(() => typedRoutes({ outFile: 'src/routes.ts' })).toThrow(
+      'must end in .d.ts',
+    );
+  });
+  it('does not infer coerced types from schema exports', () => {
+    const root = fixture();
+    writeFileSync(
+      join(root, 'src/app/pages/users.[id].page.ts'),
+      'export const routeParamsSchema = someNumberSchema;',
+    );
+    configure(root);
+    const generated = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
+    expect(generated).toContain('params: { id: string }');
+    expect(generated).not.toContain('InferOutput');
+  });
+  it('supports custom output paths and a first production build', () => {
+    const root = fixture();
+    configure(root, 'build', { outFile: 'generated/routes.d.ts' });
+    expect(readFileSync(join(root, 'generated/routes.d.ts'), 'utf8')).toContain(
+      'interface AnalogRouteTable',
+    );
+    configure(root, 'build', { outFile: 'generated/routes.d.ts' });
+  });
+  it('allows production builds with grouped pages sharing a URL', () => {
+    const root = fixture();
+    for (const group of ['admin', 'user']) {
+      mkdirSync(join(root, `src/app/pages/(${group})`));
+      writeFileSync(
+        join(root, `src/app/pages/(${group})/dashboard.page.ts`),
+        'export default class Page {}',
+      );
+    }
+    expect(() => configure(root, 'build')).not.toThrow();
+  });
+  it('preserves formatted declarations but rejects changed types', async () => {
+    const root = fixture();
+    configure(root);
+    const outputPath = join(root, 'src/routeTree.gen.d.ts');
+    const formatted = await format(readFileSync(outputPath, 'utf8'), {
+      parser: 'typescript',
+      singleQuote: true,
+      semi: false,
+      printWidth: 40,
+    });
+    writeFileSync(outputPath, formatted);
+    expect(() => configure(root, 'build')).not.toThrow();
+    configure(root);
+    expect(readFileSync(outputPath, 'utf8')).toBe(formatted);
+    writeFileSync(outputPath, formatted.replace('id: string', 'id: number'));
+    expect(() => configure(root, 'build')).toThrow('Stale route file');
+  });
+  it('rejects stale production output without rewriting it', () => {
+    const root = fixture();
+    configure(root);
+    const before = readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8');
+    writeFileSync(
+      join(root, 'src/app/pages/about.page.ts'),
+      'export default class About {}',
+    );
+    expect(() => configure(root, 'build')).toThrow('Stale route file');
+    expect(readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8')).toBe(
+      before,
+    );
+    configure(root, 'build', { verifyOnBuild: false });
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('"/about"');
+  });
+  it('references routeMeta and load exports from page modules', () => {
+    const root = fixture();
+    const pages = join(root, 'src/app/pages');
+    writeFileSync(
+      join(pages, 'users.[id].page.ts'),
+      'const routeMeta = {};\nexport { routeMeta };\nexport default class Page {}',
+    );
+    writeFileSync(
+      join(pages, 'users.[id].server.ts'),
+      'export async function load() { return {}; }',
+    );
+    writeFileSync(
+      join(pages, 'about.page.ts'),
+      '// routeMeta\nexport default class Page {}',
+    );
+    writeFileSync(
+      join(pages, 'about.server.ts'),
+      'export type load = () => void;',
+    );
+    configure(root);
+    const generated = readFileSync(
+      join(root, 'src/routeTree.gen.d.ts'),
+      'utf8',
+    );
+    expect(generated).toContain(
+      'routeMeta: typeof import("./app/pages/users.[id].page").routeMeta;',
+    );
+    expect(generated).toContain(
+      'load: typeof import("./app/pages/users.[id].server").load;',
+    );
+    expect(generated.match(/typeof import/g)).toHaveLength(2);
+  });
+  it('regenerates for route and page load changes but excludes server handlers', () => {
+    const root = fixture();
+    const plugin = configure(root);
+    const listeners = new Map<string, (path: string) => void>();
+    if (typeof plugin.configureServer === 'function')
+      plugin.configureServer.call(
+        {} as never,
+        {
+          watcher: {
+            add: vi.fn(),
+            on: (event: string, fn: (path: string) => void) =>
+              listeners.set(event, fn),
           },
-        },
-      } as never,
-      emit(event: 'add' | 'change' | 'unlink', path: string) {
-        listeners[event].forEach((cb) => cb(path));
-      },
-    };
-  }
-
-  it('includes the JSON-LD manifest in the generated routes file by default', () => {
-    const root = createFixture();
-    writeFixtureFile(
-      root,
-      'src/app/pages/index.page.ts',
-      `export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    identifier: 'home-page',
-  },
-};
-
-export default class HomePage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'src/app/pages/users/[id].page.ts',
-      `export default class UserPage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'src/app/pages/users/[id]/settings.page.ts',
-      `export default class UserSettingsPage {}
-`,
-    );
-
-    const output = generateRoutesFile(root);
-
-    expect(output).toContain(
-      "import * as routeModule0 from './app/pages/index.page';",
-    );
-    expect(output).toContain('interface AnalogRouteTable');
-    expect(output).toContain('interface AnalogFileRoutesById');
-    expect(output).toContain('export const analogRouteTree = {');
-    expect(output).toContain("'/': {");
-    expect(output).toContain('"/users/[id]/settings"');
-    expect(output).toContain('parentId: "/users/[id]"');
-    expect(output).toContain('export const routeJsonLdManifest = new Map');
-    expect(output).toContain("['/', { routePath: '/',");
-  });
-
-  it('produces deterministic output across repeated generations', () => {
-    const root = createFixture();
-    writeFixtureFile(
-      root,
-      'src/app/pages/index.page.ts',
-      `export default class HomePage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'src/app/pages/users/[id].page.ts',
-      `export default class UserPage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'src/app/pages/users/[id]/settings.page.ts',
-      `export default class UserSettingsPage {}
-`,
-    );
-
-    const first = generateRoutesFile(root);
-    const second = generateRoutesFile(root);
-
-    expect(first).toBe(second);
-  });
-
-  it('writes a single combined routeTree output file', () => {
-    const root = createFixture();
-    writeFixtureFile(
-      root,
-      'src/app/pages/index.page.ts',
-      `export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-  },
-};
-
-export default class HomePage {}
-`,
-    );
-
-    generateRoutesFile(root);
-
-    expect(existsSync(join(root, 'src/routeTree.gen.ts'))).toBe(true);
-    expect(existsSync(join(root, 'src/routes.gen.ts'))).toBe(false);
-    expect(existsSync(join(root, '.analog/route-jsonld.gen.ts'))).toBe(false);
-  });
-
-  it('omits only the JSON-LD manifest section when jsonLdManifest is false', () => {
-    const root = createFixture();
-    writeFixtureFile(
-      root,
-      'src/app/pages/index.page.ts',
-      `export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    identifier: 'home-page',
-  },
-};
-
-export default class HomePage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'src/app/pages/users/[id].page.ts',
-      `export default class UserPage {}
-`,
-    );
-
-    const output = generateRoutesFile(root, { jsonLdManifest: false });
-
-    expect(output).toContain('interface AnalogRouteTable');
-    expect(output).toContain('interface AnalogFileRoutesById');
-    expect(output).toContain('export const analogRouteTree = {');
-    expect(output).toContain("'/': {");
-    expect(output).not.toContain('export const routeJsonLdManifest = new Map');
-    expect(output).not.toContain(
-      "import * as routeModule0 from './app/pages/index.page';",
-    );
-  });
-
-  it('generates schema-dts typed JSON-LD manifest in the output', () => {
-    const root = createFixture();
-    writeFixtureFile(
-      root,
-      'src/app/pages/index.page.ts',
-      `export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Home',
-  },
-};
-
-export default class HomePage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'src/app/pages/about.page.ts',
-      `export default class AboutPage {}
-`,
-    );
-
-    const output = generateRoutesFile(root);
-
-    expect(output).toContain(
-      "import type { Graph, Thing, WithContext } from 'schema-dts';",
-    );
-    expect(output).toContain(
-      'export type AnalogJsonLdDocument = WithContext<Thing> | Graph | Array<WithContext<Thing>>;',
-    );
-    expect(output).toContain('AnalogJsonLdDocument[]');
-    expect(output).toContain('export const routeJsonLdManifest = new Map');
-  });
-
-  describe('ensureEntryImport', () => {
-    it('injects route tree import into src/main.ts when missing', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import 'zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-import { AppComponent } from './app/app.component';
-
-bootstrapApplication(AppComponent);
-`,
+        } as never,
       );
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, {}, 'serve');
-
-      const mainContent = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      expect(mainContent).toContain("import './routeTree.gen';");
-    });
-
-    it('does not duplicate import when already present', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import 'zone.js';
-import './routeTree.gen';
-import { bootstrapApplication } from '@angular/platform-browser';
-
-bootstrapApplication(AppComponent);
-`,
-      );
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, {}, 'serve');
-
-      const mainContent = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      const matches = mainContent.match(/import '\.\/routeTree\.gen'/g);
-      expect(matches).toHaveLength(1);
-    });
-
-    it('recognises existing import with .ts extension', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import './routeTree.gen.ts';
-import { bootstrapApplication } from '@angular/platform-browser';
-
-bootstrapApplication(AppComponent);
-`,
-      );
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, {}, 'serve');
-
-      const mainContent = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      const matches = mainContent.match(/routeTree\.gen/g);
-      expect(matches).toHaveLength(1);
-    });
-
-    it('falls back to src/main.server.ts when src/main.ts is missing', () => {
-      const root = createFixture({ skipMainTs: true });
-      writeFixtureFile(
-        root,
-        'src/main.server.ts',
-        `import '@angular/platform-server/init';
-import { render } from '@analogjs/router/server';
-
-export default render(AppComponent, config);
-`,
-      );
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, {}, 'serve');
-
-      expect(existsSync(join(root, 'src/main.ts'))).toBe(false);
-      const serverContent = readFileSync(
-        join(root, 'src/main.server.ts'),
-        'utf-8',
-      );
-      expect(serverContent).toContain("import './routeTree.gen';");
-    });
-
-    it('warns when no entry file is found', () => {
-      const root = createFixture({ skipMainTs: true });
-      const warnSpy = vi
-        .spyOn(console, 'warn')
-        .mockImplementation(() => undefined);
-
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, {}, 'serve');
-
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Could not find an entry file'),
-      );
-    });
-
-    it('computes correct import path for custom outFile', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import 'zone.js';
-
-bootstrapApplication(AppComponent);
-`,
-      );
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, { outFile: 'src/generated/routes.ts' }, 'serve');
-
-      const mainContent = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      expect(mainContent).toContain("import './generated/routes';");
-    });
-
-    it('inserts import after the last existing import line', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import 'zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-
-const app = bootstrapApplication(AppComponent);
-`,
-      );
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, {}, 'serve');
-
-      const mainContent = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      const lines = mainContent.split('\n');
-      const importIndex = lines.findIndex((l) =>
-        l.includes("import './routeTree.gen'"),
-      );
-      const lastOriginalImport = lines.findIndex((l) =>
-        l.includes('bootstrapApplication'),
-      );
-      expect(importIndex).toBe(lastOriginalImport + 1);
-    });
-
-    it('does not mutate app entry files during verify runs', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, { verifyOnBuild: false });
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import 'zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-
-bootstrapApplication(AppComponent);
-`,
-      );
-
-      const before = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      const plugin = createPlugin(root, { verify: true });
-
-      expect(() => runBuildStart(plugin)).not.toThrow();
-      expect(readFileSync(join(root, 'src/main.ts'), 'utf-8')).toBe(before);
-    });
-
-    it('does not mutate app entry files during build freshness checks', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      writeFixtureFile(
-        root,
-        'src/main.ts',
-        `import 'zone.js';
-import { bootstrapApplication } from '@angular/platform-browser';
-
-bootstrapApplication(AppComponent);
-`,
-      );
-
-      const before = readFileSync(join(root, 'src/main.ts'), 'utf-8');
-      const plugin = createPlugin(root);
-
-      expect(() => runBuildStart(plugin)).not.toThrow();
-      expect(readFileSync(join(root, 'src/main.ts'), 'utf-8')).toBe(before);
-    });
-  });
-
-  describe('absolute path leak prevention', () => {
-    it('does not leak absolute paths for additionalPagesDirs routes', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-      writeFixtureFile(
-        root,
-        'libs/shared/feature/src/pages/example.page.ts',
-        `export default class ExamplePage {}
-`,
-      );
-
-      const output = generateRoutesFile(root, {
-        additionalPagesDirs: ['/libs/shared/feature/src/pages'],
-      });
-
-      expect(output).not.toContain(root);
-      expect(output).toContain("'/example'");
-      expect(output).toContain(
-        'sourceFile: "/libs/shared/feature/src/pages/example.page.ts"',
-      );
-    });
-
-    it('does not leak absolute paths for additionalContentDirs files', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-      writeFixtureFile(
-        root,
-        'libs/shared/content/guides/intro.md',
-        `---
-title: Intro
----
-# Intro
-`,
-      );
-
-      const output = generateRoutesFile(root, {
-        additionalContentDirs: ['/libs/shared/content'],
-      });
-
-      expect(output).not.toContain(root);
-      expect(output).toContain('/guides/intro');
-      expect(output).toContain(
-        'sourceFile: "/libs/shared/content/guides/intro.md"',
-      );
-    });
-
-    it('does not leak absolute paths when mixing app and additional dirs', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-      writeFixtureFile(
-        root,
-        'src/app/pages/about.page.ts',
-        `export default class AboutPage {}
-`,
-      );
-      writeFixtureFile(
-        root,
-        'libs/feature/src/pages/dashboard.page.ts',
-        `export default class DashboardPage {}
-`,
-      );
-      writeFixtureFile(
-        root,
-        'libs/content/posts/hello.md',
-        `---
-title: Hello
----
-# Hello
-`,
-      );
-
-      const output = generateRoutesFile(root, {
-        additionalPagesDirs: ['/libs/feature/src/pages'],
-        additionalContentDirs: ['/libs/content'],
-      });
-
-      expect(output).not.toContain(root);
-      expect(output).toContain("'/': {");
-      expect(output).toContain("'/about'");
-      expect(output).toContain("'/dashboard'");
-      expect(output).toContain('/posts/hello');
-      expect(output).toContain('sourceFile: "/src/app/pages/index.page.ts"');
-      expect(output).toContain('sourceFile: "/src/app/pages/about.page.ts"');
-      expect(output).toContain(
-        'sourceFile: "/libs/feature/src/pages/dashboard.page.ts"',
-      );
-      expect(output).toContain('sourceFile: "/libs/content/posts/hello.md"');
-    });
-  });
-
-  describe('staleness detection', () => {
-    it('throws when generated output differs from existing file', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root);
-      writeFixtureFile(
-        root,
-        'src/app/pages/about.page.ts',
-        `export default class AboutPage {}
-`,
-      );
-
-      expect(() => generateRoutesFile(root, { verify: true })).toThrow(
-        /Stale route file detected/,
-      );
-    });
-
-    it('does not throw when generated output matches existing file', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root);
-      expect(() => generateRoutesFile(root, { verify: true })).not.toThrow();
-    });
-
-    it('allows the first build to create the generated file', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      expect(() => generateRoutesFile(root)).not.toThrow();
-      expect(existsSync(join(root, 'src/routeTree.gen.ts'))).toBe(true);
-    });
-
-    it('fails a build after regenerating a stale checked-in file by default', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root);
-      writeFixtureFile(
-        root,
-        'src/app/pages/about.page.ts',
-        `export default class AboutPage {}
-`,
-      );
-
-      expect(() => generateRoutesFile(root)).toThrow(
-        /Stale route file detected during build/,
-      );
-      expect(
-        readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf-8'),
-      ).toContain("'/about'");
-    });
-
-    it('does not fail a fresh build when verifyOnBuild is enabled', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      generateRoutesFile(root, { verifyOnBuild: false });
-      expect(() => generateRoutesFile(root)).not.toThrow();
-    });
-
-    it('keeps dev watch regeneration self-healing', () => {
-      const root = createFixture();
-      writeFixtureFile(
-        root,
-        'src/app/pages/index.page.ts',
-        `export default class HomePage {}
-`,
-      );
-
-      const plugin = createPlugin(root, {}, 'serve');
-      runBuildStart(plugin);
-
-      const { server, emit } = createWatcherServer();
-      const configureServerHook = plugin.configureServer;
-      if (typeof configureServerHook === 'function') {
-        configureServerHook.call({} as never, server);
-      } else {
-        configureServerHook?.handler.call({} as never, server);
-      }
-
-      const routePath = join(root, 'src/app/pages/about.page.ts');
-      writeFixtureFile(
-        root,
-        'src/app/pages/about.page.ts',
-        `export default class AboutPage {}
-`,
-      );
-
-      expect(() => emit('add', routePath)).not.toThrow();
-      expect(
-        readFileSync(join(root, 'src/routeTree.gen.ts'), 'utf-8'),
-      ).toContain("'/about'");
-    });
-  });
-
-  it('fails build when same-priority files collide on the same route path', () => {
-    const root = createFixture();
-    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-
-    // Both files are app-local (same priority) and resolve to /test
-    writeFixtureFile(
-      root,
-      'src/app/pages/test.page.ts',
-      `export default class TestPage {}\n`,
-    );
-    writeFixtureFile(
-      root,
-      'src/content/test.md',
-      `---\ntitle: Test\n---\nContent\n`,
-    );
-
-    expect(() =>
-      generateRoutesFile(root, {
-        additionalContentDirs: [],
-      }),
-    ).toThrow('Route collisions detected during build');
-  });
-
-  it('prefers app-local routes over additional pages dirs and warns on collisions', () => {
-    const root = createFixture();
-    const warnSpy = vi
-      .spyOn(console, 'warn')
-      .mockImplementation(() => undefined);
-
-    writeFixtureFile(
-      root,
-      'src/app/pages/blog/[slug].page.ts',
-      `export default class AppBlogPage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'libs/shared/feature/src/pages/blog/[slug].page.ts',
-      `export default class SharedBlogPage {}
-`,
-    );
-
-    const output = generateRoutesFile(root, {
-      additionalPagesDirs: ['/libs/shared/feature/src/pages'],
-    });
-
-    expect(output).toContain(
-      'sourceFile: "/src/app/pages/blog/[slug].page.ts"',
-    );
-    expect(output).not.toContain(
-      'sourceFile: "/libs/shared/feature/src/pages/blog/[slug].page.ts"',
-    );
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "Keeping '/src/app/pages/blog/[slug].page.ts' based on route source precedence",
-      ),
-    );
-  });
-
-  it('keeps JSON-LD entries aligned with manifest collision winners', () => {
-    const root = createFixture();
-    writeFixtureFile(
-      root,
-      'src/app/pages/blog/[slug].page.ts',
-      `export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    identifier: 'app-blog-page',
-  },
-};
-
-export default class AppBlogPage {}
-`,
-    );
-    writeFixtureFile(
-      root,
-      'libs/shared/feature/src/pages/blog/[slug].page.ts',
-      `export const routeMeta = {
-  jsonLd: {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    identifier: 'shared-blog-page',
-  },
-};
-
-export default class SharedBlogPage {}
-`,
-    );
-
-    const output = generateRoutesFile(root, {
-      additionalPagesDirs: ['/libs/shared/feature/src/pages'],
-    });
-
-    expect(output).toContain(
-      "['/blog/[slug]', { routePath: '/blog/[slug]', sourceFile: '/src/app/pages/blog/[slug].page.ts'",
-    );
-    expect(output).not.toContain('shared-blog-page');
-    expect(output).not.toContain(
-      "sourceFile: '/libs/shared/feature/src/pages/blog/[slug].page.ts'",
-    );
+    const file = join(root, 'src/app/pages/about.page.ts');
+    writeFileSync(file, 'export default class About {}');
+    listeners.get('add')!(file);
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('"/about"');
+    rmSync(file);
+    listeners.get('unlink')!(file);
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).not.toContain('"/about"');
+    listeners.get('add')!(join(root, 'src/server/routes/api.ts'));
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).not.toContain('/api');
+    const load = join(root, 'src/app/pages/users.[id].server.ts');
+    writeFileSync(load, 'export const load = async () => ({});');
+    listeners.get('add')!(load);
+    expect(
+      readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8'),
+    ).toContain('load: typeof import("./app/pages/users.[id].server").load;');
   });
 });

@@ -46,6 +46,20 @@ describe('createRouteFileDiscovery', () => {
     ).toBe('content');
   });
 
+  it('tracks page server files without treating them as routes', () => {
+    const file =
+      '/workspace/apps/analog-app/src/app/pages/users/[id].server.ts';
+    expect(discovery.getDiscoveredFileKind(file)).toBe('server');
+    expect(
+      discovery.getDiscoveredFileKind(
+        '/workspace/libs/shared/feature/src/pages/blog/[slug].server.ts',
+      ),
+    ).toBe('server');
+
+    discovery.updateDiscoveredFile(file, 'add');
+    expect(discovery.getRouteFiles()).toEqual([]);
+  });
+
   it('classifies app-local files via isAppLocal after updateDiscoveredFile', () => {
     const localDiscovery = createRouteFileDiscovery({
       root: '/workspace/apps/analog-app',
@@ -91,5 +105,48 @@ describe('createRouteFileDiscovery', () => {
         '/workspace/libs/shared/feature/src/content/post.md',
       ),
     ).toBe('content');
+  });
+});
+
+describe('watcher scope', () => {
+  it('ignores sibling apps and similarly prefixed roots', () => {
+    const discovery = createRouteFileDiscovery({
+      root: '/workspace/apps/app',
+      workspaceRoot: '/workspace',
+      additionalPagesDirs: [],
+      additionalContentDirs: [],
+    });
+    for (const app of ['other', 'app-extra']) {
+      for (const file of [
+        'src/app/pages/about.page.ts',
+        'app/routes/about.ts',
+        'src/content/post.md',
+      ]) {
+        const path = `/workspace/apps/${app}/${file}`;
+        expect(discovery.getDiscoveredFileKind(path)).toBeNull();
+        discovery.updateDiscoveredFile(path, 'add');
+      }
+    }
+    expect(discovery.getRouteFiles()).toEqual([]);
+    expect(discovery.getContentFiles()).toEqual([]);
+  });
+
+  it('keeps explicitly shared sibling directories at workspace-relative paths', () => {
+    const discovery = createRouteFileDiscovery({
+      root: '/workspace/apps/app',
+      workspaceRoot: '/workspace',
+      additionalPagesDirs: ['/apps/app-extra/src/app/pages'],
+      additionalContentDirs: [],
+    });
+    discovery.updateDiscoveredFile(
+      '/workspace/apps/app-extra/src/app/pages/about.page.ts',
+      'add',
+    );
+    expect(discovery.getRouteFiles()).toEqual([
+      '/apps/app-extra/src/app/pages/about.page.ts',
+    ]);
+    expect(
+      discovery.isAppLocal('/apps/app-extra/src/app/pages/about.page.ts'),
+    ).toBe(false);
   });
 });

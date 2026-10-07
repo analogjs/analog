@@ -13,9 +13,6 @@ import {
   provideFileRouter,
   withExtraRoutes,
   withDebugRoutes,
-  withTypedRouter,
-  withRouteContext,
-  withLoaderCaching,
   requestContextInterceptor,
 } from '@analogjs/router';
 import { withContentRoutes } from '@analogjs/router/content';
@@ -32,14 +29,6 @@ export const appConfig: ApplicationConfig = {
       withDebugRoutes(),
       withContentRoutes(),
       withExtraRoutes(fallbackRoutes),
-      // Experimental: TanStack Router-inspired features
-      withTypedRouter({ strictRouteParams: true }),
-      withRouteContext({ appName: 'analog-app' }),
-      withLoaderCaching({
-        defaultStaleTime: 30_000,
-        defaultGcTime: 300_000,
-        defaultPendingMs: 200,
-      }),
     ),
     provideHttpClient(
       withFetch(),

@@ -128,6 +128,7 @@ export default defineConfig(({ mode }) => ({
   })(),
   plugins: [
     analog({
+      experimental: { typedRouting: true },
       apiPrefix: 'api',
       prerender: {
         routes: [],

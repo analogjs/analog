@@ -143,60 +143,13 @@ export interface Options {
    * the LOCALE injection token.
    */
   i18n?: I18nOptions;
-  /**
-   * Experimental features. These APIs are subject to change.
-   *
-   * `@analogjs/platform` is the default rollout and orchestration surface for
-   * Analog-owned experiments. These flags may delegate to dedicated feature
-   * plugins or forward options into lower-level integrations while preserving
-   * a single Analog-first authoring surface.
-   */
+  /** Opt-in experimental features. */
   experimental?: {
-    /**
-     * Enable typed route table generation for type-safe navigation.
-     *
-     * When enabled, `@analogjs/platform` generates a single route module
-     * that augments `AnalogRouteTable` with typed params and query for each
-     * file-based route. JSON-LD manifest generation is configured on the same
-     * object so both codegen features share one generated file.
-     *
-     * - `true` — generates `src/routeTree.gen.ts` with `routeJsonLdManifest`
-     * - `TypedRouterOptions` — customize output path or disable just the
-     *   JSON-LD manifest piece
-     *
-     * Unlocks type-safe usage of:
-     * - `routePath()` — build route link objects for `[routerLink]`
-     * - `injectNavigate()` — typed navigation
-     * - `injectParams(from)` — typed params signal
-     * - `injectQuery(from)` — typed query signal
-     *
-     * Inspired by TanStack Router's `routeTree.gen.ts` codegen.
-     */
-    typedRouter?: boolean | TypedRouterOptions;
+    /** Generate route declarations and enable typed navigation helpers. */
+    typedRouting?:
+      | boolean
+      | import('./typed-routes-plugin.js').TypedRoutingOptions;
   };
-}
-
-export interface TypedRouterOptions {
-  /**
-   * Output path for the single generated route module,
-   * relative to the app root.
-   *
-   * @default 'src/routeTree.gen.ts'
-   */
-  outFile?: string;
-  /**
-   * Include generated `routeJsonLdManifest` data in the generated route file.
-   *
-   * @default true
-   */
-  jsonLdManifest?: boolean;
-  /**
-   * Fail production builds after regenerating a stale checked-in route file.
-   * Development and watch mode continue to update the file automatically.
-   *
-   * @default true
-   */
-  verifyOnBuild?: boolean;
 }
 
 export type {

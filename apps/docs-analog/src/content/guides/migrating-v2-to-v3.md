@@ -136,7 +136,7 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 | `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})` (first arg)                                                                            |
 | `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
 
-`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouter`.
+`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
 
 #### Workspace library globs
 
@@ -331,4 +331,5 @@ Keep automated migration tooling focused on the breaking changes above:
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
-- treat optional helpers such as `withTypedRouter`, `withRouteContext`, `withLoaderCaching`, `withDebugRoutes`, and `liveReload` as opt-in rather than mandatory rewrites
+- typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
+- treat `withDebugRoutes` and `liveReload` as opt-in rather than mandatory rewrites

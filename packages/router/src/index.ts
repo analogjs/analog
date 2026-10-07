@@ -55,32 +55,21 @@ export type {
   StandardSchemaV1,
 } from './lib/server-fn/types';
 
-// Typed file routes
+export { toRoute } from './lib/to-route';
+export { LinkTo, type LinkToInput } from './lib/link-to.directive';
 export type {
   AnalogRouteTable,
   AnalogRoutePath,
+  RouteDataOutput,
+  RouteLoadOutput,
   RoutePathOptions,
-  RoutePathArgs,
-  RoutePathOptionsBase,
-  RouteParamsOutput,
-  RouteQueryOutput,
-  RouteLinkResult,
-} from './lib/route-path';
-export { routePath } from './lib/route-path';
+  RouteResourcesOutput,
+} from './lib/to-route';
 export { injectNavigate } from './lib/inject-navigate';
-
-// Experimental features (TanStack Router-inspired)
 export {
-  withTypedRouter,
-  withRouteContext,
-  withLoaderCaching,
-  EXPERIMENTAL_TYPED_ROUTER,
-  EXPERIMENTAL_ROUTE_CONTEXT,
-  EXPERIMENTAL_LOADER_CACHE,
-} from './lib/experimental';
-export type {
-  TypedRouterOptions,
-  LoaderCacheOptions,
-} from './lib/experimental';
-export { injectParams, injectQuery } from './lib/inject-typed-params';
-export { injectRouteContext } from './lib/inject-route-context';
+  injectParams,
+  injectQuery,
+  injectResources,
+  injectRouteData,
+  injectRouteResources,
+} from './lib/inject-typed-params';

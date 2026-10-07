@@ -1,5 +1,5 @@
 import type { RouteMeta } from '@analogjs/router';
-import { routePath } from '@analogjs/router';
+import { toRoute } from '@analogjs/router';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { WebPage, WithContext } from 'schema-dts';
@@ -22,7 +22,7 @@ export const routeMeta: RouteMeta = {
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    @let probeLink = routePath('/probe');
+    @let probeLink = toRoute('/probe');
     <main class="home-shell">
       <section class="hero-card">
         <p class="eyebrow">Analog SSR debug home</p>
@@ -105,5 +105,5 @@ export const routeMeta: RouteMeta = {
   ],
 })
 export default class HomeComponent {
-  protected readonly routePath = routePath;
+  protected readonly toRoute = toRoute;
 }

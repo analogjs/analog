@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { contentFilesResource } from '@analogjs/content/resources';
-import { routePath } from '@analogjs/router';
+import { toRoute } from '@analogjs/router';
 
 import { PostAttributes } from './models';
 
@@ -16,7 +16,7 @@ import { PostAttributes } from './models';
       @for (post of contentFilesResource.value(); track post.slug) {
         <li>
           @let postLink =
-            routePath('/blog/[slug]', {
+            toRoute('/blog/[slug]', {
               params: { slug: post.slug },
             });
           <a [routerLink]="postLink.path"> {{ post.attributes.title }}</a>
@@ -26,7 +26,7 @@ import { PostAttributes } from './models';
   `,
 })
 export default class BlogComponent implements OnInit {
-  readonly routePath = routePath;
+  readonly toRoute = toRoute;
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   readonly contentFilesResource = contentFilesResource<PostAttributes>(

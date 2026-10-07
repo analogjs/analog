@@ -6,9 +6,6 @@ import {
   extractRouteParams,
   generateRouteManifest,
   generateRouteTableDeclaration,
-  generateRouteTreeDeclaration,
-  detectSchemaExports,
-  formatManifestSummary,
 } from './route-manifest.js';
 
 describe('filenameToRoutePath', () => {
@@ -32,6 +29,20 @@ describe('filenameToRoutePath', () => {
         '/products',
       );
     });
+  });
+
+  it.each([
+    ['index/details', '/details'],
+    ['docs/index/details', '/docs/details'],
+    ['reindex', '/reindex'],
+    ['index(group)', '/'],
+    ['(group)index', '/'],
+    ['(auth.v2)/login', '/login'],
+    ['prefix(group)/details', '/prefix/details'],
+  ])('matches beta filename normalization for %s', (filename, expected) => {
+    expect(filenameToRoutePath(`/src/app/pages/${filename}.page.ts`)).toBe(
+      expected,
+    );
   });
 
   describe('group segments', () => {
@@ -391,16 +402,12 @@ describe('generateRouteManifest', () => {
     // The canonical selection (used for AnalogRouteTable / byFullPath) must
     // pick exactly one. Tiebreaker picks alphabetically-first id: /(auth).
     const tableOutput = generateRouteTableDeclaration(manifest);
-    const treeOutput = generateRouteTreeDeclaration(manifest);
 
     // Exactly one entry for '/' in AnalogRouteTable
-    const tableMatches = tableOutput.match(/'\/':\s*\{/g) ?? [];
+    const tableMatches = tableOutput.match(/"\/":\s*\{/g) ?? [];
     expect(tableMatches).toHaveLength(1);
 
-    // Exactly one entry for '/' in byFullPath — the /(auth) layout wins
-    expect(treeOutput).toContain('"/": "/(auth)"');
-    const byFullPathMatches = treeOutput.match(/"\/": "\/\([^"]+\)"/g) ?? [];
-    expect(byFullPathMatches).toHaveLength(1);
+    expect(manifest.canonicalByFullPath.get('/')?.id).toBe('/(auth)');
   });
 
   it('should preserve pathless layout with its nested children', () => {
@@ -476,7 +483,6 @@ describe('generateRouteManifest', () => {
         '/src/app/pages/blog/[slug].page.ts',
         '/libs/shared/feature/src/pages/blog/[slug].page.ts',
       ],
-      undefined,
       (filename) => (filename.startsWith('/libs/shared/') ? 0 : 1),
     );
 
@@ -717,8 +723,8 @@ describe('generateRouteTableDeclaration', () => {
     );
     expect(output).toContain("declare module '@analogjs/router'");
     expect(output).toContain('interface AnalogRouteTable');
-    expect(output).toContain("'/': {");
-    expect(output).toContain("'/about': {");
+    expect(output).toContain('"/": {');
+    expect(output).toContain('"/about": {');
     expect(output).toContain('Record<string, never>');
     expect(output).toContain('export {};');
   });
@@ -730,7 +736,7 @@ describe('generateRouteTableDeclaration', () => {
 
     const output = generateRouteTableDeclaration(manifest);
 
-    expect(output).toContain("'/users/[id]': {");
+    expect(output).toContain('"/users/[id]": {');
     expect(output).toContain('{ id: string }');
   });
 
@@ -741,7 +747,7 @@ describe('generateRouteTableDeclaration', () => {
 
     const output = generateRouteTableDeclaration(manifest);
 
-    expect(output).toContain("'/docs/[...slug]': {");
+    expect(output).toContain('"/docs/[...slug]": {');
     expect(output).toContain('{ slug: string[] }');
   });
 
@@ -752,7 +758,7 @@ describe('generateRouteTableDeclaration', () => {
 
     const output = generateRouteTableDeclaration(manifest);
 
-    expect(output).toContain("'/shop/[[...category]]': {");
+    expect(output).toContain('"/shop/[[...category]]": {');
     expect(output).toContain('{ category?: string[] }');
   });
 
@@ -763,7 +769,7 @@ describe('generateRouteTableDeclaration', () => {
 
     const output = generateRouteTableDeclaration(manifest);
 
-    expect(output).toContain("'page-not-found': string[]");
+    expect(output).toContain('"page-not-found": string[]');
   });
 
   it('should generate multiple params for complex routes', () => {
@@ -777,330 +783,117 @@ describe('generateRouteTableDeclaration', () => {
     expect(output).toContain('productId: string');
   });
 
-  it('should generate schema references when detected', () => {
-    const manifest = generateRouteManifest(
-      ['/src/app/pages/users/[id].page.ts'],
-      () => ({ hasParamsSchema: true, hasQuerySchema: false }),
-    );
-
-    const output = generateRouteTableDeclaration(manifest);
-
-    expect(output).toContain(
-      "import type { StandardSchemaV1 } from '@standard-schema/spec'",
-    );
-    expect(output).toContain(
-      "import type { routeParamsSchema as _p0 } from '../src/app/pages/users/[id].page'",
-    );
-    // params stays filename-derived for navigation input
-    expect(output).toContain('params: { id: string }');
-    // paramsOutput uses schema InferOutput for runtime
-    expect(output).toContain(
-      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
-    );
-    // query/queryOutput remain default (no query schema)
-    expect(output).toContain(
-      'query: Record<string, string | string[] | undefined>',
-    );
-    expect(output).toContain(
-      'queryOutput: Record<string, string | string[] | undefined>',
-    );
-  });
-
-  it('should generate both schema references', () => {
-    const manifest = generateRouteManifest(
-      ['/src/app/pages/products/[id].page.ts'],
-      () => ({ hasParamsSchema: true, hasQuerySchema: true }),
-    );
-
-    const output = generateRouteTableDeclaration(manifest);
-
-    expect(output).toContain('routeParamsSchema as _p0');
-    expect(output).toContain('routeQuerySchema as _q0');
-    // params always filename-derived
-    expect(output).toContain('params: { id: string }');
-    // Output types use schema InferOutput
-    expect(output).toContain(
-      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
-    );
-    expect(output).toContain(
-      'queryOutput: StandardSchemaV1.InferOutput<typeof _q0>',
-    );
-  });
-
   it('should not import StandardSchemaV1 when no schemas', () => {
     const manifest = generateRouteManifest(['/app/routes/about.ts']);
 
     const output = generateRouteTableDeclaration(manifest);
 
     expect(output).not.toContain('StandardSchemaV1');
-    expect(output).not.toContain('import type');
+    expect(output).not.toContain('routeParamsSchema');
   });
 
-  it('should set paramsOutput same as params when no schema', () => {
+  it('emits only the parameter and query fields needed by consumers', () => {
     const manifest = generateRouteManifest([
       '/src/app/pages/users/[id].page.ts',
     ]);
 
     const output = generateRouteTableDeclaration(manifest);
 
-    // Both params and paramsOutput are filename-derived
     expect(output).toContain('params: { id: string }');
-    expect(output).toContain('paramsOutput: { id: string }');
+    expect(output).toContain(
+      'query: Record<string, string | string[] | undefined>',
+    );
+    expect(output).not.toContain('paramsOutput');
+    expect(output).not.toContain('queryOutput');
   });
 
-  it('should mix schema and non-schema routes', () => {
-    const manifest = generateRouteManifest(
-      ['/app/routes/about.ts', '/src/app/pages/users/[id].page.ts'],
-      (filename) => {
-        if (filename.includes('[id]')) {
-          return { hasParamsSchema: true, hasQuerySchema: false };
-        }
-        return { hasParamsSchema: false, hasQuerySchema: false };
-      },
-    );
-
-    const output = generateRouteTableDeclaration(manifest);
-
-    // about uses default params type
-    expect(output).toContain(
-      "'/about': {\n      params: Record<string, never>",
-    );
-    // users/[id]: params is still filename-derived, paramsOutput uses schema
-    expect(output).toContain(
-      'paramsOutput: StandardSchemaV1.InferOutput<typeof _p0>',
-    );
-  });
-});
-
-describe('generateRouteTreeDeclaration', () => {
-  it('should generate typed route metadata indexes and runtime tree data', () => {
-    const manifest = generateRouteManifest(
-      [
-        '/src/app/pages/(home).page.ts',
-        '/src/app/pages/users/[id].page.ts',
-        '/src/app/pages/users/[id]/settings.page.ts',
-        '/src/content/guides/deployment.md',
-      ],
-      (filename) => ({
-        hasParamsSchema: filename.includes('[id].page.ts'),
-        hasQuerySchema: filename.includes('settings.page.ts'),
-      }),
-    );
-
-    const output = generateRouteTreeDeclaration(manifest, {
-      jsonLdFiles: [
-        '/src/app/pages/(home).page.ts',
-        '/src/app/pages/users/[id].page.ts',
-      ],
-    });
-
-    expect(output).toContain(
-      '// This file is auto-generated by @analogjs/platform',
-    );
-    expect(output).toContain('export interface AnalogGeneratedRouteRecord<');
-    expect(output).toContain('export interface AnalogFileRoutesById {');
-    expect(output).toContain('export interface AnalogFileRoutesByFullPath {');
-    expect(output).not.toContain('export interface AnalogFileRoutesByTo {');
-    expect(output).toContain('export const analogRouteTree = {');
-    expect(output).toContain('"/(home)"');
-    expect(output).toContain('fullPath: "/"');
-    expect(output).toContain('path: "settings"');
-    expect(output).toContain('parentId: "/users/[id]"');
-    expect(output).toContain('children: ["/users/[id]/settings"] as const');
-    expect(output).toContain('kind: "content"');
-    expect(output).toContain('hasJsonLd: true');
-    expect(output).toContain('hasQuerySchema: true');
-  });
-
-  it('should mark routes with hasJsonLd based on jsonLdFiles', () => {
+  it('adds module types only for URLs defined by a single file', () => {
     const manifest = generateRouteManifest([
-      '/src/app/pages/index.page.ts',
       '/src/app/pages/about.page.ts',
+      '/src/app/pages/blog.page.ts',
+      '/src/app/pages/blog/index.page.ts',
+      '/src/app/pages/(admin)/dashboard.page.ts',
+      '/src/app/pages/(user)/dashboard.page.ts',
+    ]);
+    expect([...manifest.sharedFullPaths].sort()).toEqual([
+      '/blog',
+      '/dashboard',
+    ]);
+
+    const output = generateRouteTableDeclaration(manifest, (filename) => ({
+      routeMeta: `.${filenameToRouteId(filename)}.page`,
+      load: `.${filenameToRouteId(filename)}.server`,
+    }));
+
+    expect(output).toContain(
+      'routeMeta: typeof import("./about.page").routeMeta;',
+    );
+    expect(output).toContain('load: typeof import("./about.server").load;');
+    expect(output.match(/typeof import/g)).toHaveLength(2);
+  });
+
+  it('adds routeMeta types from the layouts that wrap a page', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/users.page.ts',
+      '/src/app/pages/users/index.page.ts',
+      '/src/app/pages/users/[id].page.ts',
+      '/src/app/pages/users/[id]/posts.page.ts',
+      '/src/app/pages/users.settings.page.ts',
+      '/src/app/pages/(auth).page.ts',
+      '/src/app/pages/(auth)/login.page.ts',
+    ]);
+    const layouts = (fullPath: string) =>
+      manifest.canonicalByFullPath.get(fullPath)?.layouts;
+    expect(layouts('/users/[id]/posts')).toEqual([
+      '/src/app/pages/users.page.ts',
       '/src/app/pages/users/[id].page.ts',
     ]);
+    expect(layouts('/login')).toEqual(['/src/app/pages/(auth).page.ts']);
+    // Dot notation does not nest under a layout.
+    expect(layouts('/users/settings')).toEqual([]);
 
-    const output = generateRouteTreeDeclaration(manifest, {
-      jsonLdFiles: ['/src/app/pages/index.page.ts'],
-    });
-
-    // Home route should have hasJsonLd: true
-    expect(output).toMatch(/id: "\/index"[\s\S]*?hasJsonLd: true/);
-    // About and users should have hasJsonLd: false
-    expect(output).toMatch(/id: "\/about"[\s\S]*?hasJsonLd: false/);
-    expect(output).toMatch(/id: "\/users\/\[id\]"[\s\S]*?hasJsonLd: false/);
-  });
-
-  it('should set all hasJsonLd to false when jsonLdFiles is empty', () => {
-    const manifest = generateRouteManifest([
-      '/src/app/pages/index.page.ts',
-      '/src/app/pages/about.page.ts',
-    ]);
-
-    const output = generateRouteTreeDeclaration(manifest);
-
-    expect(output).not.toContain('hasJsonLd: true');
-    expect(output).toContain('hasJsonLd: false');
-  });
-
-  it('should generate AnalogRouteTreeId and AnalogRouteTreeFullPath type aliases without ByTo duplicate', () => {
-    const manifest = generateRouteManifest([
-      '/src/app/pages/index.page.ts',
-      '/src/app/pages/about.page.ts',
-    ]);
-
-    const output = generateRouteTreeDeclaration(manifest);
-
-    expect(output).toContain(
-      'export type AnalogRouteTreeId = keyof AnalogFileRoutesById;',
-    );
-    expect(output).toContain(
-      'export type AnalogRouteTreeFullPath = keyof AnalogFileRoutesByFullPath;',
-    );
-    expect(output).not.toContain('AnalogRouteTreeTo');
-    expect(output).not.toContain('AnalogFileRoutesByTo');
-  });
-});
-
-describe('detectSchemaExports', () => {
-  it('should detect routeParamsSchema export', () => {
-    const content = `
-import * as v from 'valibot';
-export const routeParamsSchema = v.object({
-  id: v.string(),
-});
-`;
-    const result = detectSchemaExports(content);
-    expect(result.hasParamsSchema).toBe(true);
-    expect(result.hasQuerySchema).toBe(false);
-  });
-
-  it('should detect routeQuerySchema export', () => {
-    const content = `
-import * as v from 'valibot';
-export const routeQuerySchema = v.object({
-  tab: v.optional(v.string()),
-});
-`;
-    const result = detectSchemaExports(content);
-    expect(result.hasParamsSchema).toBe(false);
-    expect(result.hasQuerySchema).toBe(true);
-  });
-
-  it('should detect both schemas', () => {
-    const content = `
-import * as v from 'valibot';
-export const routeParamsSchema = v.object({ id: v.string() });
-export const routeQuerySchema = v.object({ tab: v.string() });
-`;
-    const result = detectSchemaExports(content);
-    expect(result.hasParamsSchema).toBe(true);
-    expect(result.hasQuerySchema).toBe(true);
-  });
-
-  it('should return false for no schema exports', () => {
-    const content = `
-export default class UserPage {}
-export const routeMeta = { title: 'Users' };
-`;
-    const result = detectSchemaExports(content);
-    expect(result.hasParamsSchema).toBe(false);
-    expect(result.hasQuerySchema).toBe(false);
-  });
-
-  it('should not match non-exported schemas', () => {
-    const content = `
-const routeParamsSchema = v.object({ id: v.string() });
-`;
-    const result = detectSchemaExports(content);
-    expect(result.hasParamsSchema).toBe(false);
-  });
-
-  it('should not match commented-out exports', () => {
-    // The regex does a simple check; single-line comments
-    // would still contain the text but on a comment line.
-    // For now, the simple regex may false-positive on comments.
-    // This is acceptable for v1.
-    const content = `
-// export const routeParamsSchema = v.object({});
-`;
-    // Simple regex doesn't filter comments — acceptable for v1
-    const result = detectSchemaExports(content);
-    expect(result.hasParamsSchema).toBe(true);
-  });
-});
-
-describe('formatManifestSummary', () => {
-  it('should produce a human-readable summary', () => {
-    const manifest = generateRouteManifest(
-      [
-        '/app/routes/index.ts',
-        '/app/routes/about.ts',
-        '/src/app/pages/users/[id].page.ts',
-      ],
-      (filename) => {
-        if (filename.includes('[id]')) {
-          return { hasParamsSchema: true, hasQuerySchema: false };
-        }
-        return { hasParamsSchema: false, hasQuerySchema: false };
-      },
-    );
-
-    const summary = formatManifestSummary(manifest);
-
-    expect(summary).toContain('[Analog] Generated typed routes:');
-    expect(summary).toContain('3 routes (2 static, 1 dynamic)');
-    expect(summary).toContain('1 with schema validation');
-    expect(summary).toContain('/users/[id] [params-schema]');
-    expect(summary).toContain('/about');
-    expect(summary).toContain('/');
-  });
-
-  it('should not show schema count when none present', () => {
-    const manifest = generateRouteManifest(['/app/routes/about.ts']);
-
-    const summary = formatManifestSummary(manifest);
-
-    expect(summary).not.toContain('with schema');
-    expect(summary).toContain('1 routes (1 static, 0 dynamic)');
-  });
-});
-
-describe('dev diagnostics', () => {
-  it('should warn when schema exists on static route', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
-      /* noop */
-    });
-
-    generateRouteManifest(['/app/routes/about.ts'], () => ({
-      hasParamsSchema: true,
-      hasQuerySchema: false,
+    const output = generateRouteTableDeclaration(manifest, (filename) => ({
+      routeMeta: `.${filenameToRouteId(filename)}.page`,
     }));
-
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining(
-        'exports routeParamsSchema but has no dynamic params',
-      ),
+    expect(output).toContain(
+      'layoutRouteMeta: [typeof import("./users.page").routeMeta, typeof import("./users/[id].page").routeMeta];',
     );
-
-    spy.mockRestore();
   });
+});
 
-  it('should not warn when schema matches dynamic params', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {
-      /* noop */
-    });
-
-    generateRouteManifest(['/src/app/pages/users/[id].page.ts'], () => ({
-      hasParamsSchema: true,
-      hasQuerySchema: false,
-    }));
-
-    // Should not have warnings about schema mismatch
-    const schemaCalls = spy.mock.calls.filter((call) =>
-      String(call[0]).includes('routeParamsSchema'),
+describe('guarded route branches', () => {
+  it('keeps grouped pages with the same URL and emits one navigation type', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/(admin).page.ts',
+      '/src/app/pages/(admin)/dashboard.page.ts',
+      '/src/app/pages/(user).page.ts',
+      '/src/app/pages/(user)/dashboard.page.ts',
+    ]);
+    expect(manifest.collisions).toEqual([]);
+    const pages = manifest.routes.filter(
+      (route) => route.fullPath === '/dashboard',
     );
-    expect(schemaCalls).toHaveLength(0);
-
-    spy.mockRestore();
+    expect(pages.map((route) => route.parentId).sort()).toEqual([
+      '/(admin)',
+      '/(user)',
+    ]);
+    expect(
+      generateRouteTableDeclaration(manifest).match(/"\/dashboard":/g),
+    ).toHaveLength(1);
   });
+});
+
+it('preserves dotted group identities and keeps their index pages', () => {
+  const manifest = generateRouteManifest([
+    '/src/app/pages/(auth.v2).page.ts',
+    '/src/app/pages/(auth.v2)/index.page.ts',
+    '/src/app/pages/(auth.v2)/login.page.ts',
+  ]);
+  expect(manifest.collisions).toEqual([]);
+  expect(
+    manifest.routes.find((route) => route.id === '/(auth.v2)')?.isGroup,
+  ).toBe(true);
+  expect(
+    manifest.routes.find((route) => route.fullPath === '/login')?.parentId,
+  ).toBe('/(auth.v2)');
 });

@@ -83,7 +83,7 @@ export default defineConfig(async ({ mode, command }) => {
           },
         },
         experimental: {
-          typedRouter: true,
+          typedRouting: true,
         },
       }),
       angular({
