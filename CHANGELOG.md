@@ -1,3 +1,14 @@
+# [3.0.0-alpha.91](https://github.com/analogjs/analog/compare/v3.0.0-alpha.90...v3.0.0-alpha.91) (2026-10-07)
+
+- feat(router)!: align alpha typed routing with beta ([04fb0e9](https://github.com/analogjs/analog/commit/04fb0e93a3276948038f08d8c318c909b37bbc5c))
+
+### BREAKING CHANGES
+
+- Replace experimental.typedRouter with experimental.typedRouting
+  and routePath with toRoute or LinkTo. Remove the old experimental router providers
+  and runtime routeTree.gen.ts imports. Include the generated routeTree.gen.d.ts
+  declaration in application tsconfigs.
+
 # [3.0.0-alpha.90](https://github.com/analogjs/analog/compare/v3.0.0-alpha.89...v3.0.0-alpha.90) (2026-09-24)
 
 ### Bug Fixes
