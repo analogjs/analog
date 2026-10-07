@@ -65,6 +65,7 @@ import {
   mapTemplateUpdatesToFiles,
   toAngularCompilationFileReplacements,
   isTestWatchMode,
+  getBrowserModeCliOverride,
   type PluginOptions,
 } from './angular-vite-plugin';
 import type { EmitFileResult } from './models';
@@ -135,6 +136,34 @@ describe('isTestWatchMode', () => {
     const result = isTestWatchMode(['--watch', 'false']);
 
     expect(result).toBeFalsy();
+  });
+});
+
+describe('getBrowserModeCliOverride', () => {
+  it.each([
+    { args: [], expected: undefined },
+    { args: ['--browser'], expected: true },
+    { args: ['--browser.enabled'], expected: true },
+    { args: ['--browser=true'], expected: true },
+    { args: ['--browser.enabled=true'], expected: true },
+    { args: ['--browser', 'true'], expected: true },
+    { args: ['--browser.enabled', 'true'], expected: true },
+    { args: ['--browser=false'], expected: false },
+    { args: ['--browser.enabled=false'], expected: false },
+    { args: ['--browser', 'false'], expected: false },
+    { args: ['--browser.enabled', 'false'], expected: false },
+    { args: ['--no-browser'], expected: false },
+    { args: ['--no-browser.enabled'], expected: false },
+    { args: ['--browser', '--browser.enabled=false'], expected: false },
+    { args: ['--browser.enabled=false', '--browser'], expected: true },
+    { args: ['--browser.enabled', 'component.spec.ts'], expected: true },
+    { args: ['--browser=chromium'], expected: undefined },
+    { args: ['--browser', 'chromium'], expected: undefined },
+    { args: ['--browser.headless'], expected: undefined },
+    { args: ['--', '--browser.enabled'], expected: undefined },
+    { args: ['src/browser.enabled.spec.ts'], expected: undefined },
+  ])('resolves $args to $expected', ({ args, expected }) => {
+    expect(getBrowserModeCliOverride(args)).toBe(expected);
   });
 });
 
@@ -1138,6 +1167,103 @@ export class AppComponent {}
       }
     }
   }
+
+  it.each([
+    { browser: { enabled: true }, cli: [], vscode: undefined, deferred: true },
+    {
+      browser: { enabled: false },
+      cli: [],
+      vscode: undefined,
+      deferred: false,
+    },
+    { browser: undefined, cli: [], vscode: undefined, deferred: false },
+    { browser: { enabled: false }, cli: [], vscode: '1', deferred: true },
+    {
+      browser: {},
+      cli: ['--browser.enabled'],
+      vscode: undefined,
+      deferred: true,
+    },
+    {
+      browser: { enabled: false },
+      cli: ['--browser'],
+      vscode: undefined,
+      deferred: true,
+    },
+    {
+      browser: { enabled: true },
+      cli: ['--browser.enabled=false'],
+      vscode: undefined,
+      deferred: false,
+    },
+    {
+      browser: undefined,
+      cli: ['--browser.enabled'],
+      vscode: undefined,
+      deferred: false,
+    },
+  ])(
+    'compiles on demand only for browser/VS Code tests (browser=$browser, cli=$cli, vscode=$vscode)',
+    async ({ browser, cli, vscode, deferred }) => {
+      vi.stubEnv('VITEST_VSCODE', vscode);
+      const argv = process.argv;
+      process.argv = [...argv.slice(0, 2), ...cli];
+      vi.mocked(NgtscProgram).mockClear();
+      const plugins = [];
+
+      try {
+        const config = await resolveConfig(
+          {
+            configFile: false,
+            root: fixtureDir,
+            test: { browser, watch: false },
+          },
+          'serve',
+        );
+        const ctx = {
+          environment: { config },
+          warn: vi.fn(),
+          error: vi.fn(),
+          addWatchFile: vi.fn(),
+        };
+
+        // Model Vitest's main and browser servers sharing the project config.
+        for (let i = 0; i < 2; i++) {
+          const plugin = angular({
+            tsconfig: path.join(fixtureDir, 'tsconfig.json'),
+            workspaceRoot: fixtureDir,
+            jit: false,
+          })[0] as any;
+          plugins.push(plugin);
+          await plugin.config({ root: fixtureDir }, { command: 'serve' });
+          plugin.configResolved(config);
+          await plugin.buildStart.call(ctx);
+        }
+
+        expect(NgtscProgram).toHaveBeenCalledTimes(deferred ? 0 : 2);
+
+        const code = realFs.readFileSync(componentPath, 'utf-8');
+        const browserPlugin = plugins[1];
+        const results = await Promise.all(
+          Array.from({ length: 3 }, () =>
+            browserPlugin.transform.handler.call(ctx, code, componentPath),
+          ),
+        );
+        for (const result of results) {
+          expect(result?.code).toContain('ɵcmp');
+        }
+        expect(NgtscProgram).toHaveBeenCalledTimes(deferred ? 1 : 2);
+        expect(ctx.error).not.toHaveBeenCalled();
+      } finally {
+        process.argv = argv;
+        for (const plugin of plugins) {
+          await plugin.buildEnd.call({});
+        }
+        vi.unstubAllEnvs();
+      }
+    },
+    60_000,
+  );
 
   it.each([
     { command: 'build', jit: false },
