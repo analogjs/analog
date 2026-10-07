@@ -1,3 +1,9 @@
+## [2.8.1-beta.1](https://github.com/analogjs/analog/compare/v2.8.0...v2.8.1-beta.1) (2026-10-07)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** defer compilation in Vitest browser mode ([#2604](https://github.com/analogjs/analog/issues/2604)) ([0dcbacc](https://github.com/analogjs/analog/commit/0dcbacc05496ded4145f87b29ef2422aefcc3c9b))
+
 # [2.8.0](https://github.com/analogjs/analog/compare/v2.7.5...v2.8.0) (2026-10-01)
 
 ### Bug Fixes
