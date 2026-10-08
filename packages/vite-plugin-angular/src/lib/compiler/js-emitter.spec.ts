@@ -17,6 +17,9 @@ const HAS_EXPONENTIATION =
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
 
+const HAS_OPTIONAL_CHAINING_OUTPUT =
+  'isOptional' in new o.ReadPropExpr(new o.ReadVarExpr('x'), 'y');
+
 const UNARY_OPERATORS = o.UnaryOperator as unknown as Record<
   string,
   o.UnaryOperator
@@ -365,6 +368,100 @@ describe('JSEmitter – unary operators', () => {
         const expr = toStringOf(unary(decrement, count, true));
         expect(evaluate(expr, ctx)).toBe('4');
         expect(ctx.count).toBe(4);
+      });
+    },
+  );
+});
+
+describe('JSEmitter – optional chaining', () => {
+  const ctxProp = (name: string) => new o.ReadPropExpr(v('ctx'), name);
+  const optionalProp = (receiver: o.Expression, name: string) =>
+    new o.ReadPropExpr(receiver, name, null, null, undefined, true);
+  const optionalKey = (receiver: o.Expression, index: o.Expression) =>
+    new o.ReadKeyExpr(receiver, index, null, null, undefined, true);
+  const optionalCall = (fn: o.Expression, ...args: o.Expression[]) =>
+    new o.InvokeFunctionExpr(fn, args, null, null, false, undefined, true);
+  const evaluate = (expr: o.Expression, ctx: Record<string, unknown>) =>
+    new Function('ctx', 'return ' + emitAngularExpr(expr))(ctx);
+
+  describe.skipIf(!HAS_OPTIONAL_CHAINING_OUTPUT)(
+    'optional member access',
+    () => {
+      it('emits an optional property read: a?.b', () => {
+        expect(emitAngularExpr(optionalProp(v('a'), 'b'))).toBe('a?.b');
+      });
+
+      it('emits an optional keyed read: a?.[0]', () => {
+        expect(emitAngularExpr(optionalKey(v('a'), lit(0)))).toBe('a?.[0]');
+      });
+
+      it('emits an optional call: a?.(1)', () => {
+        expect(emitAngularExpr(optionalCall(v('a'), lit(1)))).toBe('a?.(1)');
+      });
+
+      it('keeps an optional call on a function expression: (() => {})?.()', () => {
+        const fn = new o.FunctionExpr([], []);
+        expect(emitAngularExpr(optionalCall(fn))).toBe('(() => {})?.()');
+      });
+
+      it('emits a mixed chain: a?.b?.[0]?.()', () => {
+        const expr = optionalCall(
+          optionalKey(optionalProp(v('a'), 'b'), lit(0)),
+        );
+        expect(emitAngularExpr(expr)).toBe('a?.b?.[0]?.()');
+      });
+
+      it('keeps non-optional access unchanged: a.b, a[0], a(1)', () => {
+        expect(emitAngularExpr(new o.ReadPropExpr(v('a'), 'b'))).toBe('a.b');
+        expect(emitAngularExpr(new o.ReadKeyExpr(v('a'), lit(0)))).toBe('a[0]');
+        expect(
+          emitAngularExpr(new o.InvokeFunctionExpr(v('a'), [lit(1)])),
+        ).toBe('a(1)');
+      });
+
+      it('short-circuits the rest of the chain: ctx.nul?.b.c', () => {
+        const expr = new o.ReadPropExpr(optionalProp(ctxProp('nul'), 'b'), 'c');
+        expect(emitAngularExpr(expr)).toBe('ctx.nul?.b.c');
+        expect(evaluate(expr, { nul: null })).toBeUndefined();
+      });
+
+      it('returns undefined instead of throwing for a nullish receiver', () => {
+        const ctx = { nul: null, obj: {} };
+        expect(
+          evaluate(optionalProp(ctxProp('nul'), 'a'), ctx),
+        ).toBeUndefined();
+        expect(
+          evaluate(optionalKey(ctxProp('nul'), lit(0)), ctx),
+        ).toBeUndefined();
+        expect(evaluate(optionalCall(ctxProp('nul')), ctx)).toBeUndefined();
+        expect(
+          evaluate(optionalCall(optionalProp(ctxProp('obj'), 'fn')), ctx),
+        ).toBeUndefined();
+      });
+
+      it('reads through a non-nullish receiver', () => {
+        const ctx = { obj: { a: { b: 2 }, list: [7], fn: () => 9 } };
+        expect(
+          evaluate(optionalProp(optionalProp(ctxProp('obj'), 'a'), 'b'), ctx),
+        ).toBe(2);
+        expect(
+          evaluate(
+            optionalKey(optionalProp(ctxProp('obj'), 'list'), lit(0)),
+            ctx,
+          ),
+        ).toBe(7);
+        expect(
+          evaluate(optionalCall(optionalProp(ctxProp('obj'), 'fn')), ctx),
+        ).toBe(9);
+      });
+
+      it('ends the chain at explicit parentheses: (a?.b).c', () => {
+        const expr = new o.ReadPropExpr(
+          new o.ParenthesizedExpr(optionalProp(ctxProp('nul'), 'b')),
+          'c',
+        );
+        expect(emitAngularExpr(expr)).toBe('(ctx.nul?.b).c');
+        expect(() => evaluate(expr, { nul: null })).toThrow(TypeError);
       });
     },
   );

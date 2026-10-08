@@ -296,9 +296,9 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       ast.fn instanceof o.FunctionExpr ||
       ast.fn instanceof o.WrappedNodeExpr
     ) {
-      return '(' + fn + ')(' + args + ')';
+      return '(' + fn + ')' + (ast.isOptional ? '?.(' : '(') + args + ')';
     }
-    return fn + '(' + args + ')';
+    return fn + (ast.isOptional ? '?.(' : '(') + args + ')';
   }
   visitReadVarExpr(ast: o.ReadVarExpr) {
     if (ast.name === 'this') return 'this';
@@ -307,13 +307,17 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitReadPropExpr(ast: o.ReadPropExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
-    return emitReceiverForMemberAccess(ast.receiver, receiver) + '.' + ast.name;
+    return (
+      emitReceiverForMemberAccess(ast.receiver, receiver) +
+      (ast.isOptional ? '?.' : '.') +
+      ast.name
+    );
   }
   visitReadKeyExpr(ast: o.ReadKeyExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
     return (
       emitReceiverForMemberAccess(ast.receiver, receiver) +
-      '[' +
+      (ast.isOptional ? '?.[' : '[') +
       ast.index.visitExpression(this, null) +
       ']'
     );
