@@ -8,7 +8,11 @@ import {
 import { compile as rawCompile } from './compile';
 import { scanFile } from './registry';
 import { inlineResourceUrls, extractInlineStyles } from './resource-inliner';
-import { ANGULAR_MAJOR, SUPPORTS_BOUNDARY_BLOCKS } from './angular-version';
+import {
+  ANGULAR_MAJOR,
+  SUPPORTS_BOUNDARY_BLOCKS,
+  SUPPORTS_INCREMENT_DECREMENT,
+} from './angular-version';
 
 // Angular 19 ships several features in fundamentally different shapes
 // from v20+: `@defer` dependency emission predates the
@@ -3517,6 +3521,66 @@ describe.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
     });
   },
 );
+
+describe('unary operators in templates', () => {
+  const compileListener = (expression: string) =>
+    compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-unary',
+        template: '<button (click)="result = ${expression}">Go</button>'
+      })
+      export class UnaryComponent {
+        count = 1;
+        result = '';
+      }
+    `,
+      'unary.ts',
+    );
+
+  const syntaxErrors = (code: string) =>
+    (
+      ts.transpileModule(code, {
+        fileName: 'compiled.js',
+        reportDiagnostics: true,
+        compilerOptions: {
+          allowJs: true,
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+        },
+      }).diagnostics ?? []
+    ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n'));
+
+  it.each([
+    ['(-count).toFixed(1)', '(-(ctx.count)).toFixed(1)'],
+    ['(+count).toFixed(1)', '(+(ctx.count)).toFixed(1)'],
+  ])('keeps the grouping of %s', (expression, emitted) => {
+    const result = compileListener(expression);
+
+    expectCompiles(result);
+    expect(result).toContain(emitted);
+    expect(syntaxErrors(result)).toEqual([]);
+  });
+
+  describe.skipIf(!SUPPORTS_INCREMENT_DECREMENT)(
+    'increment and decrement',
+    () => {
+      it.each([
+        ['(count++).toString()', '((ctx.count)++).toString()'],
+        ['(++count).toString()', '(++(ctx.count)).toString()'],
+        ['(count--).toString()', '((ctx.count)--).toString()'],
+        ['(--count).toString()', '(--(ctx.count)).toString()'],
+      ])('keeps the grouping of %s', (expression, emitted) => {
+        const result = compileListener(expression);
+
+        expectCompiles(result);
+        expect(result).toContain(emitted);
+        expect(syntaxErrors(result)).toEqual([]);
+      });
+    },
+  );
+});
 
 describe.skipIf(ANGULAR_MAJOR < 22)('optional chaining in templates', () => {
   const compileListener = (expression: string) =>
