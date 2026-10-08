@@ -1,3 +1,9 @@
+## [2.8.1-beta.3](https://github.com/analogjs/analog/compare/v2.8.1-beta.2...v2.8.1-beta.3) (2026-10-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit unary operators by operator and position ([#2606](https://github.com/analogjs/analog/issues/2606)) ([4f3fd76](https://github.com/analogjs/analog/commit/4f3fd7659293451e91b237e4d2bbe62f2fbb3b0f))
+
 ## [2.8.1-beta.2](https://github.com/analogjs/analog/compare/v2.8.1-beta.1...v2.8.1-beta.2) (2026-10-08)
 
 ### Bug Fixes
