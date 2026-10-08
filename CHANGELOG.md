@@ -1,3 +1,9 @@
+## [2.8.1-beta.2](https://github.com/analogjs/analog/compare/v2.8.1-beta.1...v2.8.1-beta.2) (2026-10-08)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** use http namespace URIs in generated sitemap.xml ([#2605](https://github.com/analogjs/analog/issues/2605)) ([de7bd15](https://github.com/analogjs/analog/commit/de7bd15ad07c22926216b189b5be738d39270ef4))
+
 ## [2.8.1-beta.1](https://github.com/analogjs/analog/compare/v2.8.0...v2.8.1-beta.1) (2026-10-07)
 
 ### Bug Fixes
