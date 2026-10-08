@@ -28,8 +28,16 @@ For more information about externals with SSR, check out the [Vite documentation
 
 SSR is enabled by default. For a hybrid approach, you can specify some routes to only be rendered client-side, and not be server side rendered. This is done through the `routeRules` configuration object by specifying an `ssr` option.
 
+In Analog v3, configure these rules on the separate Nitro plugin. A more specific
+`ssr: true` rule enables server rendering under a parent rule that disables it.
+
 ```ts
 // https://vitejs.dev/config/
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
+
 export default defineConfig(({ mode }) => ({
   // ...other config
   plugins: [
@@ -37,14 +45,18 @@ export default defineConfig(({ mode }) => ({
       prerender: {
         routes: ['/', '/404.html'],
       },
-      nitro: {
-        routeRules: {
-          // All admin URLs are only rendered on the client
-          '/admin/**': { ssr: false },
+    }),
+    angular(),
+    nitro({
+      routeRules: {
+        // All admin URLs are only rendered on the client
+        '/admin/**': { ssr: false },
 
-          // Render a 404 page as a fallback page
-          '/404.html': { ssr: false },
-        },
+        // A specific child can opt back into server rendering
+        '/admin/help': { ssr: true },
+
+        // Render a 404 page as a fallback page
+        '/404.html': { ssr: false },
       },
     }),
   ],
