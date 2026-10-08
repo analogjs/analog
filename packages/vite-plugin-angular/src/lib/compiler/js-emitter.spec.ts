@@ -16,9 +16,18 @@ const HAS_EXPONENTIATION =
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
 
+const UNARY_OPERATORS = o.UnaryOperator as unknown as Record<
+  string,
+  o.UnaryOperator
+>;
+const HAS_INCREMENT_DECREMENT =
+  typeof UNARY_OPERATORS['Increment'] === 'number';
+
 function bin(op: o.BinaryOperator, lhs: o.Expression, rhs: o.Expression) {
   return new o.BinaryOperatorExpr(op, lhs, rhs);
 }
+const unary = (op: o.UnaryOperator, expr: o.Expression, isPrefix = true) =>
+  Object.assign(new o.UnaryOperatorExpr(op, expr), { isPrefix });
 const v = (name: string) => new o.ReadVarExpr(name);
 const lit = (val: number | string | boolean | null | undefined) =>
   new o.LiteralExpr(val);
@@ -252,6 +261,53 @@ describe('JSEmitter – operator precedence', () => {
         lit(0),
       );
       expect(emitAngularExpr(expr)).toBe('(a + b)[0]');
+    });
+  });
+});
+
+describe('JSEmitter – unary operators', () => {
+  it('emits unary plus as +(x)', () => {
+    expect(emitAngularExpr(unary(o.UnaryOperator.Plus, v('x')))).toBe('+(x)');
+  });
+
+  it('emits unary minus as -(x)', () => {
+    expect(emitAngularExpr(unary(o.UnaryOperator.Minus, v('x')))).toBe('-(x)');
+  });
+
+  it('keeps the operand parenthesized: -(a + b)', () => {
+    const expr = unary(
+      o.UnaryOperator.Minus,
+      bin(o.BinaryOperator.Plus, v('a'), v('b')),
+    );
+    expect(emitAngularExpr(expr)).toBe('-(a + b)');
+  });
+
+  it('throws for a unary operator the installed Angular does not define', () => {
+    const expr = unary(99 as o.UnaryOperator, v('x'));
+    expect(() => emitAngularExpr(expr)).toThrow(
+      /Unsupported UnaryOperator value 99/,
+    );
+  });
+
+  describe.skipIf(!HAS_INCREMENT_DECREMENT)('increment and decrement', () => {
+    it('emits prefix increment: ++(count)', () => {
+      const expr = unary(UNARY_OPERATORS['Increment'], v('count'), true);
+      expect(emitAngularExpr(expr)).toBe('++(count)');
+    });
+
+    it('emits postfix increment: (count)++', () => {
+      const expr = unary(UNARY_OPERATORS['Increment'], v('count'), false);
+      expect(emitAngularExpr(expr)).toBe('(count)++');
+    });
+
+    it('emits prefix decrement: --(count)', () => {
+      const expr = unary(UNARY_OPERATORS['Decrement'], v('count'), true);
+      expect(emitAngularExpr(expr)).toBe('--(count)');
+    });
+
+    it('emits postfix decrement: (count)--', () => {
+      const expr = unary(UNARY_OPERATORS['Decrement'], v('count'), false);
+      expect(emitAngularExpr(expr)).toBe('(count)--');
     });
   });
 });
