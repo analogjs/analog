@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import * as ts from 'typescript';
 import {
   compileCode as compile,
   expectCompiles,
@@ -3516,3 +3517,72 @@ describe.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
     });
   },
 );
+
+describe.skipIf(ANGULAR_MAJOR < 22)('optional chaining in templates', () => {
+  const compileListener = (expression: string) =>
+    compile(
+      `
+      import { Component } from '@angular/core';
+      @Component({
+        selector: 'app-optional',
+        template: '<button (click)="r = ${expression}">Go</button>'
+      })
+      export class OptionalComponent {
+        r = '';
+      }
+    `,
+      'optional.ts',
+    );
+
+  const emittedExpression = (code: string) => {
+    const match = code.match(/ctx\.r = ([\s\S]*?)\);\}\)/);
+    expect(match).not.toBeNull();
+    return match![1];
+  };
+
+  const run = (code: string, ctx: Record<string, unknown>) =>
+    new Function('ctx', 'return (' + emittedExpression(code) + ');')(ctx);
+
+  const syntaxErrors = (code: string) =>
+    (
+      ts.transpileModule(code, {
+        fileName: 'compiled.js',
+        reportDiagnostics: true,
+        compilerOptions: {
+          allowJs: true,
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+        },
+      }).diagnostics ?? []
+    ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n'));
+
+  const present = {
+    user: { name: 'Ada', profile: { name: 'Lovelace' } },
+    items: [7],
+    fn: () => 9,
+  };
+  const absent = { user: null, items: null, fn: null };
+
+  it.each([
+    ['user?.name', 'Ada'],
+    ['user?.profile.name', 'Lovelace'],
+    ['items?.[0]', 7],
+    ['fn?.()', 9],
+  ])('reads %s from a present value', (expression, expected) => {
+    const result = compileListener(expression);
+
+    expectCompiles(result);
+    expect(syntaxErrors(result)).toEqual([]);
+    expect(run(result, present)).toBe(expected);
+  });
+
+  it.each(['user?.name', 'user?.profile.name', 'items?.[0]', 'fn?.()'])(
+    'does not throw for %s when the receiver is null',
+    (expression) => {
+      const result = compileListener(expression);
+
+      expect(() => run(result, absent)).not.toThrow();
+      expect(run(result, absent) ?? undefined).toBeUndefined();
+    },
+  );
+});
