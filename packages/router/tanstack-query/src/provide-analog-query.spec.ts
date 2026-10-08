@@ -1,30 +1,25 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  ApplicationRef,
-  PLATFORM_ID,
-  TransferState,
-  makeStateKey,
-} from '@angular/core';
+import { PLATFORM_ID, TransferState, makeStateKey } from '@angular/core';
 import {
   ResolveEnd,
   Router,
   type ActivatedRouteSnapshot,
   type RouterStateSnapshot,
 } from '@angular/router';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   QueryClient,
   dehydrate,
   provideTanStackQuery,
-} from '@tanstack/angular-query-experimental';
+  withHydrationKey,
+} from '@tanstack/angular-query';
 
 import { ANALOG_QUERIES_KEY } from './constants';
-import {
-  ANALOG_QUERY_STATE_KEY,
-  provideAnalogQuery,
-} from './provide-analog-query';
-import { provideServerAnalogQuery } from './provide-server-analog-query';
+import { provideAnalogQuery } from './provide-analog-query';
+
+const QUERY_STATE_KEY =
+  makeStateKey<ReturnType<typeof dehydrate>>('test_query_state');
 
 function makeSnapshot(
   data: Record<string, unknown>,
@@ -57,12 +52,15 @@ describe('TanStack Query SSR integration', () => {
       queryFn: async () => ['analog'],
     });
 
-    transferState.set(ANALOG_QUERY_STATE_KEY, dehydrate(seedClient));
+    transferState.set(QUERY_STATE_KEY, dehydrate(seedClient));
 
     TestBed.configureTestingModule({
       providers: [
         { provide: TransferState, useValue: transferState },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });
@@ -70,48 +68,32 @@ describe('TanStack Query SSR integration', () => {
     const hydratedClient = TestBed.inject(QueryClient);
 
     expect(hydratedClient.getQueryData(['todos'])).toEqual(['analog']);
-    expect(transferState.hasKey(ANALOG_QUERY_STATE_KEY)).toBe(false);
+    expect(transferState.hasKey(QUERY_STATE_KEY)).toBe(false);
   });
 
-  it('serializes the QueryClient into TransferState on first post-render app-stable', async () => {
+  it('serializes component-issued queries using TanStack hydration without an Analog server provider', async () => {
     const transferState = new TransferState();
     const queryClient = new QueryClient();
-    const stateKey = makeStateKey<any>('analog_query_state');
-    const isStable = new BehaviorSubject<boolean>(true);
-
-    await queryClient.prefetchQuery({
-      queryKey: ['todos'],
-      queryFn: async () => ['analog'],
-    });
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
         { provide: TransferState, useValue: transferState },
-        {
-          provide: ApplicationRef,
-          useValue: { isStable, onDestroy: () => {} },
-        },
-        provideTanStackQuery(queryClient),
-        provideServerAnalogQuery(),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
       ],
     });
+    TestBed.inject(QueryClient);
 
-    // Force the environment initializers to run.
-    TestBed.inject(TransferState);
+    queryClient.setQueryData(['todos'], ['analog']);
+    expect(transferState.hasKey(QUERY_STATE_KEY)).toBe(false);
+    transferState.toJson();
 
-    // Initial stable transitions should be ignored (`skipWhile`).
-    expect(transferState.hasKey(stateKey)).toBe(false);
-
-    // First unstable transition (rendering kicks off).
-    isStable.next(false);
-    expect(transferState.hasKey(stateKey)).toBe(false);
-
-    // Post-render stable: dehydrate fires.
-    isStable.next(true);
-
-    const dehydratedState = transferState.get(stateKey, null);
+    const dehydratedState = transferState.get(QUERY_STATE_KEY, null);
     expect(dehydratedState?.queries).toHaveLength(1);
-    expect(dehydratedState?.queries[0]?.queryKey).toEqual(['todos']);
+    expect(dehydratedState?.queries[0]?.state.data).toEqual(['analog']);
   });
 
   it('hydrates the QueryClient from route data on ResolveEnd', async () => {
@@ -128,7 +110,10 @@ describe('TanStack Query SSR integration', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { events } },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });
@@ -166,7 +151,10 @@ describe('TanStack Query SSR integration', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { events } },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });
@@ -185,7 +173,7 @@ describe('TanStack Query SSR integration', () => {
     expect(queryClient.getQueryData(['posts'])).toEqual(['a', 'b']);
   });
 
-  it('keeps the later entry when parent and child prefetch the same queryHash (last-writer-wins)', async () => {
+  it('serializes the freshest entry when parent and child prefetch the same queryHash', async () => {
     const events = new Subject<unknown>();
     const queryClient = new QueryClient();
     const transferState = new TransferState();
@@ -199,9 +187,8 @@ describe('TanStack Query SSR integration', () => {
 
     // Child prefetched the same queryKey with fresher data.
     const childSeed = new QueryClient();
-    await childSeed.prefetchQuery({
-      queryKey: ['posts'],
-      queryFn: async () => ['fresh'],
+    childSeed.setQueryData(['posts'], ['fresh'], {
+      updatedAt: Date.now() + 1,
     });
 
     TestBed.configureTestingModule({
@@ -209,7 +196,10 @@ describe('TanStack Query SSR integration', () => {
         { provide: PLATFORM_ID, useValue: 'server' },
         { provide: TransferState, useValue: transferState },
         { provide: Router, useValue: { events } },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });
@@ -224,15 +214,16 @@ describe('TanStack Query SSR integration', () => {
     );
     emitResolveEnd(events, root);
 
+    transferState.toJson();
     const stored = transferState.get<ReturnType<typeof dehydrate> | null>(
-      ANALOG_QUERY_STATE_KEY,
+      QUERY_STATE_KEY,
       null,
     );
     expect(stored?.queries).toHaveLength(1);
     expect(stored?.queries[0]?.state.data).toEqual(['fresh']);
   });
 
-  it('mirrors hydrated load payloads into TransferState on the server', async () => {
+  it('serializes route-load and component-issued queries together on the server', async () => {
     const events = new Subject<unknown>();
     const queryClient = new QueryClient();
     const transferState = new TransferState();
@@ -249,7 +240,10 @@ describe('TanStack Query SSR integration', () => {
         { provide: PLATFORM_ID, useValue: 'server' },
         { provide: TransferState, useValue: transferState },
         { provide: Router, useValue: { events } },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });
@@ -262,12 +256,15 @@ describe('TanStack Query SSR integration', () => {
       }),
     );
 
+    queryClient.setQueryData(['component-query'], ['component']);
+    transferState.toJson();
     const stored = transferState.get<typeof dehydratedState | null>(
-      ANALOG_QUERY_STATE_KEY,
+      QUERY_STATE_KEY,
       null,
     );
-    expect(stored?.queries).toHaveLength(1);
+    expect(stored?.queries).toHaveLength(2);
     expect(stored?.queries[0]?.queryKey).toEqual(['posts']);
+    expect(stored?.queries[1]?.queryKey).toEqual(['component-query']);
     expect(queryClient.getQueryData(['posts'])).toEqual([{ id: 1 }]);
   });
 
@@ -287,7 +284,10 @@ describe('TanStack Query SSR integration', () => {
         { provide: PLATFORM_ID, useValue: 'browser' },
         { provide: TransferState, useValue: transferState },
         { provide: Router, useValue: { events } },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });
@@ -300,7 +300,8 @@ describe('TanStack Query SSR integration', () => {
       }),
     );
 
-    expect(transferState.hasKey(ANALOG_QUERY_STATE_KEY)).toBe(false);
+    transferState.toJson();
+    expect(transferState.hasKey(QUERY_STATE_KEY)).toBe(false);
     expect(queryClient.getQueryData(['posts'])).toEqual([{ id: 1 }]);
   });
 
@@ -311,7 +312,10 @@ describe('TanStack Query SSR integration', () => {
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { events } },
-        provideTanStackQuery(queryClient),
+        provideTanStackQuery(
+          () => queryClient,
+          withHydrationKey('test_query_state'),
+        ),
         provideAnalogQuery(),
       ],
     });

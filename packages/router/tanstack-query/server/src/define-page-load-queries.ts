@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
-import type { DehydratedState } from '@tanstack/angular-query-experimental';
+import { QueryClient, dehydrate } from '@tanstack/angular-query';
+import type { DehydratedState } from '@tanstack/angular-query';
 import type { H3Event, H3EventContext } from 'nitro/h3';
 import type { $Fetch } from 'ofetch';
 
@@ -18,6 +18,16 @@ type OptionalSchema = StandardSchemaV1 | undefined;
 export interface PageLoadQueriesResult<TData> {
   __analogQueries: DehydratedState;
   data: TData;
+}
+
+export interface PageLoadQueries<TData> {
+  (ctx: {
+    params: H3EventContext['params'];
+    req: NodeContext['req'];
+    res: NonNullable<NodeContext['res']>;
+    fetch: $Fetch;
+    event: H3Event;
+  }): Promise<PageLoadQueriesResult<TData> | Response>;
 }
 
 export interface DefinePageLoadQueriesOptions<
@@ -56,7 +66,7 @@ export interface DefinePageLoadQueriesOptions<
  * ```ts
  * // src/app/pages/posts.server.ts
  * import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
- * import { queryOptions } from '@tanstack/angular-query-experimental';
+ * import { queryOptions } from '@tanstack/angular-query';
  *
  * export const postsQuery = queryOptions({
  *   queryKey: ['posts'],
@@ -77,13 +87,7 @@ export function definePageLoadQueries<
   TData = void,
 >(
   options: DefinePageLoadQueriesOptions<TParamsSchema, TQuerySchema, TData>,
-): (ctx: {
-  params: H3EventContext['params'];
-  req: NodeContext['req'];
-  res: NonNullable<NodeContext['res']>;
-  fetch: $Fetch;
-  event: H3Event;
-}) => Promise<PageLoadQueriesResult<TData> | Response> {
+): PageLoadQueries<TData> {
   return definePageLoad({
     params: options.params,
     query: options.query,
