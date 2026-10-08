@@ -466,7 +466,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
 
     const operand = '(' + ast.expr.visitExpression(this, null) + ')';
     const isPostfix = 'isPrefix' in ast && ast.isPrefix === false;
-    return isPostfix ? operand + op : op + operand;
+    return '(' + (isPostfix ? operand + op : op + operand) + ')';
   }
   visitInstantiateExpr(ast: o.InstantiateExpr) {
     return (
