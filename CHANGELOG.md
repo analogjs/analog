@@ -1,3 +1,9 @@
+## [2.8.1-beta.4](https://github.com/analogjs/analog/compare/v2.8.1-beta.3...v2.8.1-beta.4) (2026-10-08)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit optional chaining for safe navigation ([#2608](https://github.com/analogjs/analog/issues/2608)) ([fc5eefa](https://github.com/analogjs/analog/commit/fc5eefa44bdc5013018180fd7c0a147a603231a3))
+
 ## [2.8.1-beta.3](https://github.com/analogjs/analog/compare/v2.8.1-beta.2...v2.8.1-beta.3) (2026-10-08)
 
 ### Bug Fixes
