@@ -140,15 +140,19 @@ export async function appGenerator(
     {},
   );
 
-  updateJson<{ dependencies: Record<string, string> }>(
-    tree,
-    '/package.json',
-    (json) => {
-      json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+  updateJson<{
+    dependencies: Record<string, string>;
+    overrides?: Record<string, unknown>;
+  }>(tree, '/package.json', (json) => {
+    json.dependencies['@angular/platform-server'] = `~${angularVersion}`;
+    json.overrides = {
+      ...json.overrides,
+      vite: '$vite',
+      vitest: '$vitest',
+    };
 
-      return json;
-    },
-  );
+    return json;
+  });
 
   updateIndex(tree, normalizedOptions.analogAppName);
 
