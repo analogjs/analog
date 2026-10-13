@@ -1,3 +1,9 @@
+## [2.8.1-beta.5](https://github.com/analogjs/analog/compare/v2.8.1-beta.4...v2.8.1-beta.5) (2026-10-13)
+
+### Bug Fixes
+
+- **nx-plugin:** add root vite and vitest overrides ([#2610](https://github.com/analogjs/analog/issues/2610)) ([ba6f833](https://github.com/analogjs/analog/commit/ba6f8332f2706df844e669ebcce6661284d2b4c0))
+
 ## [2.8.1-beta.4](https://github.com/analogjs/analog/compare/v2.8.1-beta.3...v2.8.1-beta.4) (2026-10-08)
 
 ### Bug Fixes
