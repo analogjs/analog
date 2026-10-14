@@ -71,6 +71,11 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
         activateDeferredDebug(command);
       },
     },
+    // `nitro()` from `@analogjs/vite-plugin-nitro` reads these as its defaults.
+    {
+      name: '@analogjs/platform-options',
+      api: { analogOptions: platformOptions },
+    },
     ...(!isTest ? [analogNitroPlugin(platformOptions)] : []),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
@@ -80,7 +85,7 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     analogIntegrationPlugin(platformOptions),
     ...contentPlugin(platformOptions?.content, platformOptions),
     ...(platformOptions.i18n ? [i18nComponentRegistryPlugin()] : []),
-    ...serverModePlugin(),
+    ...serverModePlugin(platformOptions.entryServer),
     clearClientPageEndpointsPlugin(),
   ];
 }

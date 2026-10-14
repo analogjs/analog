@@ -34,9 +34,7 @@
     "@analogjs/vite-plugin-angular": "workspace:*",
     "es-toolkit": "catalog:",
     "front-matter": "catalog:",
-    "h3": "catalog:",
     "magic-string": "catalog:",
-    "nitro": "catalog:",
     "obug": "catalog:",
     "ofetch": "catalog:",
     "oxc-parser": "catalog:",
@@ -46,7 +44,9 @@
     "xmlbuilder2": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "catalog:"
+    "@babel/core": "catalog:",
+    "h3": "catalog:",
+    "nitro": "catalog:"
   },
   "peerDependencies": {
     "@nx/angular": "catalog:peerCompat",
@@ -57,6 +57,7 @@
     "marked-highlight": "catalog:",
     "marked-mangle": "catalog:",
     "marked-shiki": "catalog:",
+    "nitro": "catalog:",
     "shiki": "catalog:",
     "vite": "catalog:peerCompat"
   },
@@ -70,16 +71,19 @@
     "@nx/vite": {
       "optional": true
     },
-    "shiki": {
+    "marked-highlight": {
       "optional": true
     },
     "marked-shiki": {
       "optional": true
     },
+    "nitro": {
+      "optional": true
+    },
     "prismjs": {
       "optional": true
     },
-    "marked-highlight": {
+    "shiki": {
       "optional": true
     }
   },

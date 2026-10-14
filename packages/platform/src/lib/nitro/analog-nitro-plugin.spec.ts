@@ -14,9 +14,10 @@ function callConfig(plugin: any, root: string, command = 'build') {
     command,
     mode: command === 'build' ? 'production' : 'development',
   };
+  const config = { root, plugins: [[{ name: 'nitro:main' }]] };
   return typeof hook === 'function'
-    ? hook({ root }, env)
-    : hook?.handler({ root }, env);
+    ? hook(config, env)
+    : hook?.handler(config, env);
 }
 
 function callWriteBundle(plugin: any, envName: string, bundle: any) {
@@ -75,22 +76,22 @@ describe('analogNitroPlugin', () => {
     expect(typeof (plugin as any).nitro.setup).toBe('function');
   });
 
-  it('registers the SSR service entry and linker optimizeDeps when ssr=true', () => {
+  it('stays inactive without nitro() from nitro/vite', () => {
+    const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
+    const hook = plugin.config as (...args: unknown[]) => unknown;
+
+    expect(
+      hook({ root: projectRoot, plugins: [] }, { command: 'build' }),
+    ).toBeUndefined();
+  });
+
+  it('registers the SSR service entry when ssr=true', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
     expect(overrides.experimental.vite.services.ssr.entry).toMatch(
       /\.analog\/__ssr-entry\.mjs$/,
     );
-    expect(overrides.environments.ssr.optimizeDeps.include).toContain(
-      '@angular/core',
-    );
-    expect(overrides.environments.ssr.optimizeDeps.include).toContain(
-      '@angular/platform-server',
-    );
-    expect(
-      overrides.environments.ssr.optimizeDeps.rolldownOptions.plugins,
-    ).toHaveLength(1);
   });
 
   it('does not configure SSR overrides when ssr=false', () => {

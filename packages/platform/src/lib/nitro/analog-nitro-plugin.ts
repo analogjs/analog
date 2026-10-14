@@ -1,11 +1,14 @@
 import { existsSync, readFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { basename, dirname, relative, resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import type { Nitro, NitroEventHandler, PrerenderRoute } from 'nitro/types';
 import type { DevEnvironment, Plugin, UserConfig } from 'vite';
 
 import type { Options } from '../options.js';
 import { SERVER_MODE_ID } from '../../server-mode-plugin.js';
+import { injectServerFnIds } from '../inject-server-fn-ids.js';
+import { serverFnFileId } from '../server-fn-id.js';
 import type {
   PrerenderContentDir,
   PrerenderContentFile,
@@ -21,22 +24,14 @@ import {
   expandRoutesWithLocales,
   createI18nPostRenderingHook,
 } from './i18n-prerender.js';
-import { angularLinkerPlugin } from './angular-linker-plugin.js';
+import { getServerFnHandlers } from './get-server-fn-handlers.js';
+import {
+  buildServerFnDispatchModule,
+  getServerFnDispatchHandler,
+  SERVER_FN_DISPATCH_VIRTUAL,
+} from './server-fn-endpoints.js';
 
 const SSR_ENTRY_VIRTUAL_ID = '\0virtual:@analogjs/nitro/ssr-entry';
-
-/**
- * Angular packages that ship in partial-compilation form and must pass
- * through the linker before the SSR / nitro bundle can execute without
- * JIT. Wired into `ssr.optimizeDeps.rolldownOptions.plugins`.
- */
-const ANGULAR_SSR_DEPS = [
-  '@angular/compiler',
-  '@angular/core',
-  '@angular/common',
-  '@angular/platform-browser',
-  '@angular/platform-server',
-];
 
 interface NitroPluginContext {
   workspaceRoot: string;
@@ -69,6 +64,10 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   let ssrEntryMarkerPath = '';
   let userPublicDir: string | undefined;
   let isBuild = false;
+  // Only active alongside `nitro()` from `nitro/vite`; apps on Nitro v2 use
+  // `@analogjs/vite-plugin-nitro` instead.
+  let enabled = false;
+  let nitroH3Resolver: Plugin;
   const ssrDepsReady = new WeakMap<DevEnvironment, Promise<void>>();
   // The document the client environment emitted for this build, captured in
   // `writeBundle` below. A build must render around this rather than the
@@ -146,8 +145,15 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     enforce: 'pre',
 
     config(userConfig, configEnv) {
+      enabled = hasNitroVitePlugin(userConfig);
+      if (!enabled) {
+        return;
+      }
       refreshContext(userConfig.root);
       isBuild = configEnv?.command === 'build';
+      nitroH3Resolver = nitroH3Plugin(
+        resolve(context.workspaceRoot, context.rootDir),
+      );
 
       // Capture the user's Vite `publicDir` so the nitro `setup()` hook can
       // register it as a Nitro `publicAssets` source. nitro/vite forces the
@@ -240,12 +246,6 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
               input: { index: ssrEntryMarkerPath },
             },
           },
-          optimizeDeps: {
-            include: ANGULAR_SSR_DEPS,
-            rolldownOptions: {
-              plugins: [angularLinkerPlugin()],
-            },
-          },
         };
       }
 
@@ -254,13 +254,21 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 
     configureServer(server) {
       const environment = server.environments['ssr'];
-      if (ssr && environment) {
+      if (enabled && ssr && environment) {
         // Capture initialization before listen(); entry resolution propagates failures.
         void waitForSsrDeps(environment).catch(() => undefined);
       }
     },
 
-    resolveId(id) {
+    resolveId(id, importer, resolveOptions) {
+      if (enabled && id === 'h3') {
+        return (nitroH3Resolver.resolveId as ResolveIdHook).call(
+          this,
+          id,
+          importer,
+          resolveOptions,
+        );
+      }
       if (id === ssrEntryMarkerPath || id === SSR_ENTRY_VIRTUAL_ID) {
         if (ssr && !isBuild && this.environment.name === 'ssr') {
           return waitForSsrDeps(this.environment as DevEnvironment).then(
@@ -287,8 +295,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
     // emits the document. `writeBundle` runs once every `generateBundle` has.
     writeBundle(_outputOptions, bundle) {
       if (
+        !enabled ||
         (this as { environment?: { name?: string } }).environment?.name !==
-        'client'
+          'client'
       ) {
         return;
       }
@@ -524,22 +533,29 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           additionalPagesDirs: options.additionalPagesDirs,
         });
         nitro.options.handlers.push(...pageHandlers);
+        registerServerFns(nitro, context);
 
         const serverDir = resolve(
           context.workspaceRoot,
           context.rootDir,
           `${context.sourceRoot}/server`,
         );
-        if (
-          existsSync(serverDir) &&
-          !nitro.options.scanDirs.includes(serverDir)
-        ) {
-          nitro.options.scanDirs.push(serverDir);
+        const apiDirs = (options.additionalAPIDirs ?? []).map((dir) =>
+          resolve(context.workspaceRoot, `.${dir}`),
+        );
+        for (const dir of [serverDir, ...apiDirs]) {
+          if (existsSync(dir) && !nitro.options.scanDirs.includes(dir)) {
+            nitro.options.scanDirs.push(dir);
+          }
         }
 
         nitro.hooks.hook('rollup:before', (_n, rollupConfig: any) => {
           if (Array.isArray(rollupConfig.plugins)) {
-            rollupConfig.plugins.push(pageEndpointsPlugin());
+            rollupConfig.plugins.push(
+              nitroH3Resolver,
+              pageEndpointsPlugin(),
+              serverFnIdPlugin(resolve(context.workspaceRoot, context.rootDir)),
+            );
           }
           applyAnalogNitroExternals(rollupConfig);
           sanitizeNitroBundlerConfig(rollupConfig);
@@ -580,6 +596,9 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           // handler before the prerenderer syncs its routes.
           nitro.hooks.hook('prerender:config', (prerendererConfig) => {
             prerendererConfig.renderer = false;
+            // The prerender instance is created from the raw user config, so
+            // pass along the rules carrying the `ssr: false` headers.
+            prerendererConfig.routeRules = nitro.options.routeRules;
           });
           nitro.hooks.hook('prerender:init', (prerenderer) => {
             prerenderer.options.renderer = { handler: '#analog/ssr-renderer' };
@@ -608,6 +627,81 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
   return plugin;
 }
 
+function hasNitroVitePlugin(userConfig: UserConfig): boolean {
+  const plugins = ((userConfig.plugins ?? []) as unknown[]).flat(Infinity) as (
+    | { name?: string }
+    | null
+    | undefined
+  )[];
+  return plugins.some((plugin) => plugin?.name === 'nitro:main');
+}
+
+type ResolveIdHook = Extract<NonNullable<Plugin['resolveId']>, Function>;
+
+/**
+ * Resolves `h3` from Nitro's own package, so server code always uses the h3
+ * version the server runs on.
+ */
+function nitroH3Plugin(root: string): Plugin {
+  let nitroPackageJson: string | undefined;
+  return {
+    name: 'analogjs-nitro-h3',
+    resolveId(id, _importer, resolveOptions) {
+      if (id !== 'h3') {
+        return null;
+      }
+      nitroPackageJson ??= createRequire(join(root, 'noop.js')).resolve(
+        'nitro/package.json',
+      );
+      return this.resolve(id, nitroPackageJson, {
+        ...resolveOptions,
+        skipSelf: true,
+      });
+    },
+  };
+}
+
+/**
+ * Registers the `/_analog/fn/:id` dispatch handler when the app defines server
+ * functions in `*.server.ts` files.
+ */
+function registerServerFns(nitro: Nitro, context: NitroPluginContext): void {
+  const modules = getServerFnHandlers(context);
+  if (!modules.length) {
+    return;
+  }
+
+  const root = resolve(context.workspaceRoot, context.rootDir);
+  const appConfigModule = [
+    `${root}/${context.sourceRoot}/app/app.config.server.ts`,
+    `${root}/${context.sourceRoot}/app.config.server.ts`,
+  ].find((candidate) => existsSync(candidate));
+
+  nitro.options.handlers.push(getServerFnDispatchHandler());
+  nitro.options.virtual[SERVER_FN_DISPATCH_VIRTUAL] =
+    buildServerFnDispatchModule({ modules, appConfigModule });
+}
+
+/**
+ * Stamps the derived id into each `serverFn` in the Nitro server bundle, so it
+ * registers under the route the client calls.
+ */
+function serverFnIdPlugin(projectRoot: string): {
+  name: string;
+  transform(code: string, id: string): { code: string; map: null } | undefined;
+} {
+  return {
+    name: 'analogjs-server-fn-id',
+    transform(code, id) {
+      if (!id.endsWith('.server.ts')) {
+        return;
+      }
+      const injected = injectServerFnIds(code, serverFnFileId(id, projectRoot));
+      return injected ? { code: injected.code, map: null } : undefined;
+    },
+  };
+}
+
 /**
  * Builds the h3 handler installed as Nitro's `renderer.handler`. Short-circuits
  * `ssr: false` routes to the raw client template; otherwise dispatches the
@@ -618,17 +712,18 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
 function generateSsrRendererVirtual(template: string): string {
   return `
 import { defineHandler } from 'nitro/h3';
+import { getRouteRules } from 'nitro/app';
 import ssr from '#analog/ssr';
 
 const TEMPLATE = ${JSON.stringify(template)};
 
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  // 'x-analog-no-ssr' is stamped on response headers by
+  // 'x-analog-no-ssr' is stamped on the route rule headers by
   // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // applies routeRule headers to the response before the renderer fires,
-  // so we can short-circuit by reading them here.
-  if (event.res.headers.get('x-analog-no-ssr') === 'true') {
+  // writes those headers after the handler runs, so read the matched rules.
+  const { routeRules } = getRouteRules(event.req.method, event.url.pathname);
+  if (routeRules?.headers?.['x-analog-no-ssr'] === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
