@@ -1,4 +1,5 @@
-import { Plugin } from 'vite';
+import { resolve } from 'node:path';
+import { Plugin, normalizePath } from 'vite';
 
 export const SERVER_MODE_ID = 'virtual:@analogjs/platform/server-mode';
 const RESOLVED_SERVER_MODE_ID = `\0${SERVER_MODE_ID}`;
@@ -13,10 +14,28 @@ const RESOLVED_SERVER_MODE_ID = `\0${SERVER_MODE_ID}`;
  * first so the flag is set before any application module evaluates. A text
  * replacement cannot do this because Angular is pre-bundled for SSR.
  */
-export function serverModePlugin(): Plugin[] {
+export function serverModePlugin(entryServer?: string): Plugin[] {
+  let entryServerPath = '';
+
   return [
     {
       name: 'analogjs-server-mode-plugin',
+      configResolved(config) {
+        entryServerPath = normalizePath(
+          resolve(config.root, entryServer ?? 'src/main.server.ts'),
+        );
+      },
+      // Nitro v2 builds `main.server.ts` as the SSR entry directly, so set the
+      // flag there too.
+      transform(code, id, options) {
+        if (options?.ssr && normalizePath(id) === entryServerPath) {
+          return {
+            code: `import ${JSON.stringify(SERVER_MODE_ID)};\n${code}`,
+            map: null,
+          };
+        }
+        return undefined;
+      },
       resolveId(id) {
         return id === SERVER_MODE_ID ? RESOLVED_SERVER_MODE_ID : undefined;
       },

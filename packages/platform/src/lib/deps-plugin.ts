@@ -2,9 +2,17 @@ import { VERSION } from '@angular/compiler-cli';
 import type { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
+import { angularLinkerPlugin } from './nitro/angular-linker-plugin.js';
 import { Options } from './options.js';
 import { debugPlatform } from './utils/debug.js';
-import { getJsTransformConfigKey } from './utils/rolldown.js';
+import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
+
+const ANGULAR_LINKED_SSR_DEPS = [
+  '@angular/compiler',
+  '@angular/core',
+  '@angular/platform-browser',
+  '@angular/platform-server',
+];
 
 export function depsPlugin(options?: Options): Plugin[] {
   const workspaceRoot =
@@ -41,14 +49,20 @@ export function depsPlugin(options?: Options): Plugin[] {
             // one, so a secondary entry point left out of it loads its own
             // copy of `@angular/core`. `inject()` then runs against a runtime
             // with no active injection context and SSR fails with NG0203.
+            // With Rolldown, the rest of Angular is pre-bundled too and the
+            // partial-compilation packages are linked, so the server needs no JIT.
             optimizeDeps: {
               include: [
+                ...(isRolldown() ? ANGULAR_LINKED_SSR_DEPS : []),
                 '@angular/common',
                 '@angular/common/http',
                 ...(Number(VERSION.major) > 15
                   ? ['@angular/core/rxjs-interop']
                   : []),
               ],
+              ...(isRolldown()
+                ? { rolldownOptions: { plugins: [angularLinkerPlugin()] } }
+                : {}),
             },
           },
           optimizeDeps: {

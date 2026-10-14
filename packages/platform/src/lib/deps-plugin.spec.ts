@@ -18,3 +18,15 @@ describe('depsPlugin oxc config', () => {
     expect(result.oxc).toEqual({ exclude: ['**/*.ts', '**/*.js'] });
   });
 });
+
+describe('depsPlugin ssr config', () => {
+  it('pre-bundles and links Angular for the server', () => {
+    const plugins = depsPlugin();
+    const result = (plugins[0].config as any)();
+
+    expect(result.ssr.optimizeDeps.include).toEqual(
+      expect.arrayContaining(['@angular/core', '@angular/platform-server']),
+    );
+    expect(result.ssr.optimizeDeps.rolldownOptions.plugins).toHaveLength(1);
+  });
+});
