@@ -1,4 +1,4 @@
-import { readBody, readFormData, toRequest as h3ToRequest } from 'nitro/h3';
+import { getRequestURL, readBody, readFormData } from 'h3';
 
 type RequestEntryValue = string | File;
 type ParsedRequestValue = RequestEntryValue | RequestEntryValue[];
@@ -23,21 +23,25 @@ function appendEntry(
   target[key] = [existingValue, value];
 }
 
-function getRequest(event: { method: string; headers: Headers }): Request {
-  const maybeRequest = (event as unknown as { request?: Request }).request;
-  if (maybeRequest) {
-    return maybeRequest;
-  }
-  return h3ToRequest(event as Parameters<typeof h3ToRequest>[0]);
+// h3 v2 exposes the web Request as `event.req`; h3 v1 has no web Request on
+// Node, so callers fall back to the h3 helpers shared by both versions.
+function getRequest(event: {
+  method: string;
+  headers: Headers;
+}): Request | undefined {
+  const { request, req } = event as unknown as {
+    request?: Request;
+    req?: unknown;
+  };
+  return request ?? (req instanceof Request ? req : undefined);
 }
 
 function getContentType(event: { method: string; headers: Headers }): string {
   const request = getRequest(event);
 
   return (
-    request.headers.get('content-type') ??
-    event.headers.get('content-type') ??
-    event.headers.get('Content-Type') ??
+    request?.headers.get('content-type') ??
+    event.headers?.get('content-type') ??
     ''
   );
 }
@@ -84,7 +88,10 @@ export async function parseRequestData(event: {
   const method = event.method.toUpperCase();
 
   if (method === 'GET' || method === 'HEAD') {
-    const url = new URL(request.url, 'http://localhost');
+    const url = new URL(
+      request?.url ?? getRequestURL(httpEvent).href,
+      'http://localhost',
+    );
     return parseSearchParams(url.searchParams);
   }
 
@@ -95,7 +102,7 @@ export async function parseRequestData(event: {
       return (await readBody(httpEvent)) ?? {};
     } catch {
       try {
-        return await request.json();
+        return (await request?.json()) ?? {};
       } catch {
         return {};
       }
@@ -106,7 +113,7 @@ export async function parseRequestData(event: {
     try {
       return parseFormData(await readFormData(h3Event));
     } catch {
-      if (typeof request.formData === 'function') {
+      if (request) {
         return parseFormData(await request.formData());
       }
 
@@ -118,7 +125,7 @@ export async function parseRequestData(event: {
     return (await readBody(httpEvent)) ?? {};
   } catch {
     try {
-      return await request.json();
+      return (await request?.json()) ?? {};
     } catch {
       return {};
     }

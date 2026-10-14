@@ -17,7 +17,7 @@ function makeCtx(
     res: {} as never,
     fetch: globalThis.fetch as never,
     // `definePageLoad` reads the URL via `getRequestURL(event)`; the
-    // `nitro/h3` helper falls back to `event.request.url` when the H3
+    // `h3` helper falls back to `event.request.url` when the H3
     // accessor cannot resolve a node request — that's the path used here.
     event: { request: new Request(url) } as never,
   };

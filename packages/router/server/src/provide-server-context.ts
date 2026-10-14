@@ -11,6 +11,9 @@ import {
   ServerRequest,
   ServerResponse,
 } from '../../tokens/src/index.js';
+import { SERVER_FN_DISPATCHER } from '@analogjs/router';
+
+import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 
 function getHeaderValue(
   value: string | string[] | undefined,
@@ -65,6 +68,11 @@ export function provideServerContext({
     { provide: RESPONSE, useValue: res },
     { provide: BASE_URL, useValue: baseUrl },
     { provide: INTERNAL_FETCH, useValue: fetch },
+    // Server functions called while rendering run in-process, in this injector.
+    {
+      provide: SERVER_FN_DISPATCHER,
+      useValue: createServerFnDispatcher(req, res),
+    },
     ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
   ];
 }

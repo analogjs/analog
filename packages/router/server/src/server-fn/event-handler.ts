@@ -5,7 +5,7 @@ import {
   readBody,
   type EventHandler,
   type H3Event,
-} from 'nitro/h3';
+} from 'h3';
 
 import { dispatchServerFn } from './dispatch';
 import { assertNodeContext } from './node-context';

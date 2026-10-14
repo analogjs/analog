@@ -1,4 +1,10 @@
-import { TransferState, inject, makeStateKey } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  PLATFORM_ID,
+  TransferState,
+  inject,
+  makeStateKey,
+} from '@angular/core';
 import {
   HttpEvent,
   HttpHandlerFn,
@@ -9,7 +15,7 @@ import {
 
 import { from, Observable, of } from 'rxjs';
 
-import type { HTTPMethod } from 'nitro/h3';
+import type { HTTPMethod } from 'h3';
 
 import {
   injectBaseURL,
@@ -72,6 +78,7 @@ export function requestContextInterceptor(
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
+  const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   const nitroGlobal = globalThis as typeof globalThis & {
     $fetch?: ServerInternalFetch;
   };
@@ -129,10 +136,7 @@ export function requestContextInterceptor(
   }
 
   // on the client
-  if (
-    !import.meta.env.SSR &&
-    (req.url.startsWith('/') || req.url.includes('/_analog/'))
-  ) {
+  if (isBrowser && (req.url.startsWith('/') || req.url.includes('/_analog/'))) {
     // /_analog/ requests are full URLs
     const toAbsoluteUrl = (url: string) => new URL(url, window.location.origin);
     const requestUrl = toAbsoluteUrl(req.url).href;

@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from '@standard-schema/spec';
-import type { H3Event } from 'nitro/h3';
+import type { H3Event } from 'h3';
 import { fail, json } from './actions';
 import { parseRequestData, parseSearchParams } from './parse-request-data';
 import { validateWithSchema } from './validate';

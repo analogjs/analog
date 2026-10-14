@@ -4,7 +4,7 @@ import {
   type StaticProvider,
 } from '@angular/core';
 import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
-import type { H3Event } from 'nitro/h3';
+import type { H3Event } from 'h3';
 
 import { detectLocale, getBaseUrl } from '../provide-server-context';
 import { serverFnRegistry } from './registry';
