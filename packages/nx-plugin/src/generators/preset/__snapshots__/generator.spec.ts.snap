@@ -101,6 +101,8 @@ exports[`preset generator > should match vite.config.ts 1`] = `
 "/// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
 
 import tailwindcss from '@tailwindcss/vite';
@@ -120,7 +122,7 @@ export default defineConfig(({ mode }) => {
         allow: ['.'],
       },
     },
-    plugins: [analog(), tailwindcss()],
+    plugins: [analog(), angular(), nitro(), tailwindcss()],
     test: {
       globals: true,
       environment: 'jsdom',

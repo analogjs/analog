@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
 <% if (addTailwind) { %>
 import tailwindcss from '@tailwindcss/vite';
@@ -23,6 +25,8 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog(),
+      angular(),
+      nitro(),
       <% if (addTailwind) { %>
       tailwindcss(),
       <% } %>

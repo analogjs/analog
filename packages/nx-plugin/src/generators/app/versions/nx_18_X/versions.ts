@@ -20,6 +20,8 @@ export const V18_X_POSTCSS = '^8.5.6';
 
 // devDependencies
 export const V18_X_ANALOG_JS_PLATFORM = '^3.0.0-alpha.91';
+export const V18_X_ANALOG_JS_VITE_PLUGIN_NITRO = '^3.0.0-alpha.91';
+export const V18_X_H3 = '^1.13.0';
 export const V18_X_ANGULAR_DEVKIT_BUILD_ANGULAR = '^19.0.0';
 export const V18_X_NX_VITE = '^21.0.0';
 export const V18_X_NX_LINTER = '^21.0.0';
