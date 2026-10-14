@@ -15,6 +15,8 @@ import { SERVER_FN_DISPATCHER } from '@analogjs/router';
 
 import { createServerFnDispatcher } from './server-fn/ssr-dispatcher';
 
+declare const ANALOG_I18N_FIXED_LOCALE: string | undefined;
+
 function getHeaderValue(
   value: string | string[] | undefined,
 ): string | undefined {
@@ -55,7 +57,11 @@ export function provideServerContext({
   fetch?: ServerInternalFetch;
 }): StaticProvider[] {
   const baseUrl = getBaseUrl(req);
-  const locale = detectLocale(req);
+  // A locale worker from @analogjs/vite-plugin-nitro renders a single locale.
+  const locale =
+    (typeof ANALOG_I18N_FIXED_LOCALE !== 'undefined' &&
+      ANALOG_I18N_FIXED_LOCALE) ||
+    detectLocale(req);
 
   // Optional chaining: a Nitro-bundled caller has no `import.meta.env` at all.
   if (import.meta.env?.DEV) {

@@ -1,5 +1,9 @@
-import type { ServerRequest } from '../../tokens/src/index.js';
-import { getBaseUrl, getRequestProtocol } from './provide-server-context';
+import { LOCALE, type ServerRequest } from '../../tokens/src/index.js';
+import {
+  getBaseUrl,
+  getRequestProtocol,
+  provideServerContext,
+} from './provide-server-context';
 
 function createRequest({
   headers = {},
@@ -51,5 +55,16 @@ describe('provideServerContext', () => {
     });
 
     expect(getRequestProtocol(req, { xForwardedProto: false })).toBe('http');
+  });
+
+  it('uses the locale of a locale worker over the request', () => {
+    vi.stubGlobal('ANALOG_I18N_FIXED_LOCALE', 'fr');
+    const providers = provideServerContext({
+      req: createRequest({ originalUrl: '/de/about' }),
+      res: {} as never,
+    });
+    vi.unstubAllGlobals();
+
+    expect(providers).toContainEqual({ provide: LOCALE, useValue: 'fr' });
   });
 });
