@@ -105,16 +105,17 @@ render (no streaming, but SSR and hydration still work):
 ```ts
 // vite.config.ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [
-    analog({
-      experimental: { streaming: true },
-      nitro: {
-        routeRules: {
-          '/report': { streaming: false },
-        },
+    analog({ experimental: { streaming: true } }),
+    angular(),
+    nitro({
+      routeRules: {
+        '/report': { streaming: false },
       },
     }),
   ],

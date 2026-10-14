@@ -178,10 +178,11 @@ export default defineConfig(({ mode }) => ({
           '/404.html',
         ],
       },
-      nitro: {
-        routeRules: {
-          '/404.html': { ssr: false },
-        },
+    }),
+    angular(),
+    nitro({
+      routeRules: {
+        '/404.html': { ssr: false },
       },
     }),
   ],

@@ -257,10 +257,10 @@ There might be a case where Vercel doesn't load the preset automatically. In tha
 export default defineConfig(({ mode }) => ({
   /// ...other config
   plugins: [
-    analog({
-      nitro: {
-        preset: 'vercel',
-      },
+    analog(),
+    angular(),
+    nitro({
+      preset: 'vercel',
     }),
   ],
 }));
@@ -408,10 +408,10 @@ You can find more details in the [Firebase documentation](https://firebase.googl
 
 Ensure that you set up Firebase functions as described in the previous section. Next, you must [configure Nitro](overview) correctly for Firebase Cloud Functions to work.
 
-In `vite.config.ts` update the `nitro` property with the configuration options that fit your needs, like your Node.js version and preferred region.
+In `vite.config.ts` pass the configuration options that fit your needs, like your Node.js version and preferred region, to the `nitro()` plugin.
 
 ```js [vite.config.ts]
-nitro: {
+nitro({
   preset: 'firebase',
   firebase: {
     nodeVersion: '20',
@@ -421,7 +421,7 @@ nitro: {
       maxInstances: 100,
     },
   },
-},
+}),
 ```
 
 ### Alternatively, multiple AnalogJS projects (/app1, /app2) in a single Firebase Hosting site

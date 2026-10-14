@@ -7,7 +7,7 @@ Enable it explicitly with `experimental.typedRouting` in your existing Vite conf
 ```ts
 import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
-import { nitro } from 'nitro/vite';
+import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

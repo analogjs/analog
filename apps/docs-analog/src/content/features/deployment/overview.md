@@ -35,10 +35,10 @@ BUILD_PRESET=node-server
 ```ts
 export default defineConfig({
   plugins: [
-    analog({
-      nitro: {
-        preset: 'node-server',
-      },
+    analog(),
+    angular(),
+    nitro({
+      preset: 'node-server',
     }),
   ],
 });
