@@ -1,5 +1,6 @@
 import { nitro } from './lib/vite-plugin-nitro.js';
 export { nitro } from './lib/vite-plugin-nitro.js';
+export type { NitroPluginOptions } from './lib/vite-plugin-nitro.js';
 export type {
   Options,
   SitemapConfig,

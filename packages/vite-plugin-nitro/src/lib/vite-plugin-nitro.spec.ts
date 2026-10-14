@@ -43,9 +43,9 @@ describe('nitro', () => {
       );
     });
 
-    it('prefers the options passed to nitro()', async () => {
+    it('prefers the analog options passed to nitro()', async () => {
       const config = await runConfig(
-        nitro({ entryServer: '/app/src/main-custom.server.ts' }),
+        nitro({ analog: { entryServer: '/app/src/main-custom.server.ts' } }),
       );
 
       expect(config.environments.ssr.build.rollupOptions.input).toBe(
@@ -56,7 +56,7 @@ describe('nitro', () => {
     it('stamps ssr: false route rules as a response header', async () => {
       const { buildServer } = await import('./build-server');
       const config = await runConfig(
-        nitro({}, { routeRules: { '/client': { ssr: false } } }),
+        nitro({ routeRules: { '/client': { ssr: false } } }),
       );
       await config.builder.buildApp({
         build: vi.fn(),
@@ -67,6 +67,19 @@ describe('nitro', () => {
       expect(nitroConfig.routeRules?.['/client']?.headers).toEqual({
         'x-analog-no-ssr': 'true',
       });
+    });
+
+    it('treats static as the Analog option', async () => {
+      const { buildServer } = await import('./build-server');
+      const config = await runConfig(nitro({ static: true }));
+      await config.builder.buildApp({
+        build: vi.fn(),
+        environments: { client: {} },
+      });
+
+      const [options, nitroConfig] = vi.mocked(buildServer).mock.calls.at(-1)!;
+      expect(options?.static).toBe(true);
+      expect(nitroConfig.static).toBeUndefined();
     });
   });
 
@@ -88,7 +101,7 @@ describe('nitro', () => {
       const { buildServerImportSpy, buildSitemapImportSpy } =
         await mockBuildFunctions();
       const plugin = nitro({
-        ssr: true,
+        analog: { ssr: true },
       });
 
       // Act
@@ -116,7 +129,7 @@ describe('nitro', () => {
       const { buildServerImportSpy, buildSitemapImportSpy } =
         await mockBuildFunctions();
       const plugin = nitro({
-        ssr: false,
+        analog: { ssr: false },
       });
 
       // Act
@@ -150,8 +163,7 @@ describe('nitro', () => {
         },
       };
       const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
+        analog: { ssr: true, ...prerenderRoutes },
       });
 
       // Act
@@ -189,8 +201,7 @@ describe('nitro', () => {
         },
       };
       const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
+        analog: { ssr: true, ...prerenderRoutes },
       });
 
       // Act
@@ -250,8 +261,7 @@ describe('nitro', () => {
             },
           };
           const plugin = nitro({
-            ssr: true,
-            ...prerenderRoutes,
+            analog: { ssr: true, ...prerenderRoutes },
           });
 
           // Act
@@ -292,7 +302,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, {});
+      const plugin = nitro();
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -314,7 +324,9 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/some-other-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({ workspaceRoot: '/custom-root-directory' }, {});
+      const plugin = nitro({
+        analog: { workspaceRoot: '/custom-root-directory' },
+      });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -337,7 +349,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, { preset: 'vercel' });
+      const plugin = nitro({ preset: 'vercel' });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -359,7 +371,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, { preset: 'vercel-edge' });
+      const plugin = nitro({ preset: 'vercel-edge' });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -382,7 +394,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, {});
+      const plugin = nitro();
 
       // Act
       await runConfigAndCloseBundle(plugin);

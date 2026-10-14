@@ -157,7 +157,9 @@ describe('getServerFnHandlers', () => {
             ? `import { serverFn as defineFn } from '@analogjs/router/server'; export const getData = defineFn(async () => []);`
             : ''),
       );
-      const plugin = nitro({ ssr: false, useAPIMiddleware: false })[0] as any;
+      const plugin = nitro({
+        analog: { ssr: false, useAPIMiddleware: false },
+      })[0] as any;
       const config = await plugin.config(
         { root: workspaceRoot, build: {} },
         { command: 'build', mode: 'production' },
@@ -203,7 +205,9 @@ describe('getServerFnHandlers', () => {
        export const getData = serverFn(async () => []);`,
     );
 
-    const plugin = nitro({ ssr: false, useAPIMiddleware: false })[0] as any;
+    const plugin = nitro({
+      analog: { ssr: false, useAPIMiddleware: false },
+    })[0] as any;
     const config = await plugin.config(
       { root: workspaceRoot, build: {} },
       { command: 'build', mode: 'production' },

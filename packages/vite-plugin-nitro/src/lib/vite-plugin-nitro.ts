@@ -59,12 +59,19 @@ let clientOutputPath = '';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export function nitro(
-  pluginOptions?: Options,
-  pluginNitroOptions?: NitroConfig,
-): Plugin[] {
-  let options = pluginOptions;
+export interface NitroPluginOptions extends NitroConfig {
+  /**
+   * Analog options for apps that don't use `analog()` from
+   * `@analogjs/platform`. They override the options passed to `analog()`.
+   */
+  analog?: Options;
+}
+
+export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
+  // Nitro's `static` means the same as Analog's: prerender without a server.
+  const { analog, static: isStatic, ...pluginNitroOptions } = pluginOptions;
   const nitroOptions = withAnalogRouteRuleHeaders(pluginNitroOptions);
+  let options: Options | undefined;
   let workspaceRoot = process.cwd();
   let sourceRoot = 'src';
   let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
@@ -92,7 +99,11 @@ export function nitro(
   // Options passed to `analog()` are the defaults, so an Analog app configures
   // SSR, prerendering and API routes in one place.
   function resolveOptions(userConfig: UserConfig) {
-    options = { ...getAnalogOptions(userConfig), ...pluginOptions };
+    options = {
+      ...getAnalogOptions(userConfig),
+      ...(isStatic === undefined ? {} : { static: isStatic }),
+      ...analog,
+    };
     workspaceRoot = options.workspaceRoot ?? process.cwd();
     sourceRoot = options.sourceRoot ?? 'src';
     apiPrefix = `/${options.apiPrefix || 'api'}`;
@@ -881,10 +892,8 @@ function getAnalogOptions(userConfig: UserConfig): Options | undefined {
  * Stamps `ssr: false` and `streaming: false` route rules as response headers,
  * which the renderers read to skip SSR or streaming for matching routes.
  */
-function withAnalogRouteRuleHeaders(
-  nitroOptions: NitroConfig | undefined,
-): NitroConfig | undefined {
-  if (!nitroOptions?.routeRules) {
+function withAnalogRouteRuleHeaders(nitroOptions: NitroConfig): NitroConfig {
+  if (!nitroOptions.routeRules) {
     return nitroOptions;
   }
 
