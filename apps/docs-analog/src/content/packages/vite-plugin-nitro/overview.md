@@ -31,10 +31,12 @@ export default defineConfig({
   plugins: [
     react(),
     nitro({
-      ssr: true,
-      entryServer: 'src/main.server.tsx',
-      prerender: {
-        routes: ['/'],
+      analog: {
+        ssr: true,
+        entryServer: 'src/main.server.tsx',
+        prerender: {
+          routes: ['/'],
+        },
       },
     }),
   ],
@@ -94,7 +96,7 @@ The API route can be accessed as `/api/v1/hello`.
 
 ## Usage with Analog
 
-In an Analog app, add `nitro()` after `analog()` and `angular()`. The options passed to `analog()`, such as `ssr`, `prerender`, and `apiPrefix`, are used as defaults, and options passed to `nitro()` override them. The second argument is the Nitro config.
+In an Analog app, add `nitro()` after `analog()` and `angular()`. The options passed to `analog()`, such as `ssr`, `prerender`, and `apiPrefix`, are used by `nitro()`, which takes the Nitro config. Without `analog()`, pass these options under `analog` as shown above.
 
 ```ts
 // vite.config.ts
@@ -107,12 +109,12 @@ export default defineConfig({
   plugins: [
     analog({ prerender: { routes: ['/'] } }),
     angular(),
-    nitro({}, { routeRules: { '/admin/**': { ssr: false } } }),
+    nitro({ routeRules: { '/admin/**': { ssr: false } } }),
   ],
 });
 ```
 
-This plugin uses Nitro v2 and h3 v1. To use Nitro v3, use `nitro()` from `nitro/vite` instead.
+This plugin uses Nitro v2 and h3 v1. To use Nitro v3, import `nitro()` from `nitro/vite` instead; the config passed to it stays the same.
 
 ## Custom Source Root Directory
 
@@ -127,9 +129,11 @@ import nitro from '@analogjs/vite-plugin-nitro';
 export default defineConfig({
   plugins: [
     nitro({
-      ssr: true,
-      entryServer: 'app/main.server.tsx',
-      sourceRoot: 'app',
+      analog: {
+        ssr: true,
+        entryServer: 'app/main.server.tsx',
+        sourceRoot: 'app',
+      },
     }),
   ],
 });

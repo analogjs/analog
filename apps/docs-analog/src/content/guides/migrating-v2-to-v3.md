@@ -98,17 +98,12 @@ export default defineConfig(() => ({
         { replace: 'src/environment.ts', with: 'src/environment.prod.ts' },
       ],
     }),
-    nitro(
-      {},
-      {
-        routeRules: { '/admin/**': { ssr: false } },
-      },
-    ),
+    nitro({
+      routeRules: { '/admin/**': { ssr: false } },
+    }),
   ],
 }));
 ```
-
-The first argument of `nitro()` overrides the options read from `analog()`, and the second argument is the Nitro config.
 
 Add `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` to the app's `devDependencies`:
 
@@ -132,7 +127,7 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 | `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
 | `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angularCompilationPlugin()`                                                                          |
 | `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
-| `analog({ nitro: {...} })`                                                                                                                       | `nitro({}, {...})` (second arg)                                                                       |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                                                                                        |
 | `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
 
 `analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
@@ -160,7 +155,7 @@ plugins: [
 
 #### Using Nitro v3
 
-To run on Nitro v3, use `nitro()` from `nitro/vite` instead. Analog detects it and configures Nitro v3 for SSR, prerendering, API routes, page endpoints, and server functions. Nitro v3 options are passed directly to `nitro()`:
+To run on Nitro v3, import `nitro()` from `nitro/vite` instead. Analog detects it and configures Nitro v3 for SSR, prerendering, API routes, page endpoints, and server functions. The config passed to `nitro()` stays the same:
 
 ```ts
 import analog from '@analogjs/platform';
@@ -340,7 +335,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - require Angular v17 or newer before applying v3 changes
 - replace deep or internal imports with public package entrypoints
 - split `analog()` into `analog() + angular() + nitro()`, moving each option to the plugin that now owns it (see [plugin separation](#analog-angular-and-nitro-are-now-separate-plugins))
-- import `nitro()` from `@analogjs/vite-plugin-nitro` and move `analog({ nitro: {...} })` to its second argument
+- import `nitro()` from `@analogjs/vite-plugin-nitro` and move `analog({ nitro: {...} })` to its argument
 - add `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` to app `devDependencies` (the separated shape imports them directly)
 - leave apps already using `nitro()` from `nitro/vite` on Nitro v3
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content

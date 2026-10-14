@@ -30,15 +30,12 @@ export default defineConfig(() => {
       }),
       angular(),
       // Opt a route out of streaming — it falls back to a buffered render.
-      nitro(
-        {},
-        {
-          routeRules: {
-            '/buffered': { streaming: false },
-            '/fn-buffered': { streaming: false },
-          },
+      nitro({
+        routeRules: {
+          '/buffered': { streaming: false },
+          '/fn-buffered': { streaming: false },
         },
-      ),
+      }),
       viteTsConfigPaths(),
     ],
   };

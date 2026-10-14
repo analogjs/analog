@@ -14,14 +14,11 @@ export default defineConfig({
   plugins: [
     analog(),
     angular(),
-    nitro(
-      {},
-      {
-        experimental: {
-          websocket: true,
-        },
+    nitro({
+      experimental: {
+        websocket: true,
       },
-    ),
+    }),
   ],
   // ...
 });

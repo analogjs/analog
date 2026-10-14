@@ -92,16 +92,13 @@ export default defineConfig(async ({ mode, command }) => {
         fileReplacements,
         fastCompile: true,
       }),
-      nitro(
-        {},
-        {
-          routeRules: {
-            '/client': { ssr: false },
-            '/cart/**': { ssr: false },
-            '/404.html': { ssr: false },
-          },
+      nitro({
+        routeRules: {
+          '/client': { ssr: false },
+          '/cart/**': { ssr: false },
+          '/404.html': { ssr: false },
         },
-      ),
+      }),
       {
         ...((
           await import('rollup-plugin-visualizer')
