@@ -1,4 +1,4 @@
-import type { Nitro } from 'nitro/types';
+import { Nitro } from 'nitropack';
 import { vi } from 'vitest';
 
 import { addPostRenderingHooks } from './post-rendering-hook';
@@ -23,6 +23,19 @@ describe('postRenderingHook', () => {
   it('should not attempt to call nitro mocks if no callbacks provided', () => {
     addPostRenderingHooks(nitroMock, []);
     expect(nitroMock.hooks.hook).not.toHaveBeenCalled();
+  });
+
+  it('returns asynchronous hook failures to Nitro', async () => {
+    const hooks = { hook: vi.fn() };
+    addPostRenderingHooks({ hooks } as unknown as Nitro, [
+      async () => {
+        await Promise.resolve();
+        throw new Error('Post-render failed');
+      },
+    ]);
+    await expect(hooks.hook.mock.calls[0][1](genRoute)).rejects.toThrow(
+      'Post-render failed',
+    );
   });
 
   it('should call provided hooks', () => {

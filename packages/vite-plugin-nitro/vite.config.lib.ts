@@ -26,6 +26,16 @@ function copyAssetsPlugin(): Plugin {
         join(pkgDir, 'migrations/migration.json'),
         join(migrationsDir, 'migration.json'),
       );
+
+      // Locale worker runtime files are loaded by path, not bundled
+      const runtimeDir = join(outDir, 'src/lib/runtime');
+      mkdirSync(runtimeDir, { recursive: true });
+      for (const file of ['locale-workers.mjs', 'locale-worker-entry.mjs']) {
+        copyFileSync(
+          join(pkgDir, 'src/lib/runtime', file),
+          join(runtimeDir, file),
+        );
+      }
     },
   };
 }
@@ -44,7 +54,6 @@ export default defineConfig({
       // drops the leading `src/` segment on Windows.
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
-        'src/lib/utils/debug': resolve(pkgDir, 'src/lib/utils/debug.ts'),
         'src/lib/utils/derive-server-fn-id': resolve(
           pkgDir,
           'src/lib/utils/derive-server-fn-id.ts',

@@ -1,7 +1,10 @@
-import type { PrerenderRoute } from 'nitro/types';
-import type { UserConfig } from 'vite';
+import { PrerenderRoute } from 'nitropack';
 
 export interface I18nPrerenderOptions {
+  /** Path to the translation loader module, relative to the app root. */
+  loader?: string;
+  /** Automatic when eligible; false disables workers, true requires them. */
+  workers?: boolean;
   /**
    * The default/source locale for the application.
    */
@@ -46,12 +49,35 @@ export interface Options {
    */
   additionalServerFnDirs?: string[];
   apiPrefix?: string;
+
   /**
-   * Vite-native build passthrough. Rolldown-only options such as
-   * `build.rolldownOptions.output.codeSplitting` are forwarded when present.
+   * Toggles internal API middleware.
+   * If disabled, a proxy request is used to route /api
+   * requests to / in the production server build.
+   *
+   * @deprecated
+   * Use the src/server/routes/api folder
+   * for API routes.
    */
-  vite?: {
-    build?: UserConfig['build'];
+  useAPIMiddleware?: boolean;
+
+  /**
+   * i18n configuration for locale-aware prerendering.
+   * When set, routes are expanded with locale prefixes and
+   * prerendered HTML receives the appropriate `lang` attribute.
+   */
+  i18n?: I18nPrerenderOptions;
+
+  /**
+   * Opt-in experimental features that are not yet stable.
+   */
+  experimental?: {
+    /**
+     * Use the streaming SSR renderer (`ssrStreamRenderer`) so the server entry's
+     * `renderStream` default export streams the response. Requires the server
+     * entry to use `renderStream` from `@analogjs/router/server`.
+     */
+    streaming?: boolean;
   };
 }
 
@@ -74,44 +100,8 @@ export interface PrerenderOptions {
   postRenderingHooks?: ((routes: PrerenderRoute) => Promise<void>)[];
 }
 
-export type SitemapPriority = number | `${number}`;
-
-export interface SitemapRouteDefinition {
-  route: string;
-  lastmod?: string;
-  changefreq?:
-    | 'always'
-    | 'hourly'
-    | 'daily'
-    | 'weekly'
-    | 'monthly'
-    | 'yearly'
-    | 'never';
-  priority?: SitemapPriority;
-}
-
-export interface SitemapEntry extends SitemapRouteDefinition {
-  loc: string;
-}
-
-export type SitemapRouteInput = string | SitemapRouteDefinition | undefined;
-export type SitemapRouteSource =
-  | SitemapRouteInput[]
-  | (() => Promise<SitemapRouteInput[]>);
-export type SitemapExcludeRule =
-  | string
-  | RegExp
-  | ((entry: SitemapEntry) => boolean | Promise<boolean>);
-export type SitemapTransform = (
-  entry: SitemapEntry,
-) => SitemapRouteDefinition | false | Promise<SitemapRouteDefinition | false>;
-
 export interface SitemapConfig {
   host: string;
-  include?: SitemapRouteSource;
-  exclude?: SitemapExcludeRule[];
-  defaults?: PrerenderSitemapConfig;
-  transform?: SitemapTransform;
 }
 
 export interface PrerenderContentDir {
@@ -183,7 +173,7 @@ export interface PrerenderSitemapConfig {
     | 'monthly'
     | 'yearly'
     | 'never';
-  priority?: SitemapPriority;
+  priority?: string;
 }
 
 export interface PrerenderRouteConfig {

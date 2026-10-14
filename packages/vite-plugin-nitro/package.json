@@ -10,11 +10,6 @@
       "import": "./dist/src/index.js",
       "default": "./dist/src/index.js"
     },
-    "./internal": {
-      "types": "./dist/src/lib/utils/debug.d.ts",
-      "import": "./dist/src/lib/utils/debug.js",
-      "default": "./dist/src/lib/utils/debug.js"
-    },
     "./server-fn-id": {
       "types": "./dist/src/lib/utils/derive-server-fn-id.d.ts",
       "import": "./dist/src/lib/utils/derive-server-fn-id.js",
@@ -53,12 +48,12 @@
   },
   "dependencies": {
     "defu": "catalog:",
-    "h3": "catalog:",
-    "nitro": "catalog:",
-    "obug": "catalog:",
-    "ofetch": "catalog:",
+    "h3": "catalog:nitroV2",
+    "magic-string": "catalog:",
+    "nitropack": "catalog:nitroV2",
     "oxc-parser": "catalog:",
     "radix3": "catalog:",
+    "tinyglobby": "catalog:",
     "xmlbuilder2": "catalog:"
   },
   "ng-update": {

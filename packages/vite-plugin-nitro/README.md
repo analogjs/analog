@@ -81,12 +81,34 @@ and are exposed under the default `/api` prefix.
 
 ```ts
 // src/server/routes/api/v1/hello
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(() => ({ message: 'Hello World' }));
+export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
 The API route can be accessed as `/api/v1/hello`.
+
+## Usage with Analog
+
+In an Analog app, add `nitro()` after `analog()` and `angular()`. The options passed to `analog()`, such as `ssr`, `prerender`, and `apiPrefix`, are used as defaults, and options passed to `nitro()` override them. The second argument is the Nitro config.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
+
+export default defineConfig({
+  plugins: [
+    analog({ prerender: { routes: ['/'] } }),
+    angular(),
+    nitro({}, { routeRules: { '/admin/**': { ssr: false } } }),
+  ],
+});
+```
+
+This plugin uses Nitro v2 and h3 v1. To use Nitro v3, use `nitro()` from `nitro/vite` instead.
 
 ## Custom Source Root Directory
 

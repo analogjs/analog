@@ -8,10 +8,16 @@ import { injectServerFnIds } from '../utils/inject-server-fn-ids.js';
  * plugin; this covers the separate Nitro server graph the dispatch handler pulls
  * the modules into.
  */
-export function serverFnIdPlugin(projectRoot: string) {
+export function serverFnIdPlugin(projectRoot: string): {
+  name: string;
+  transform(code: string, id: string): { code: string; map: null } | undefined;
+} {
   return {
     name: 'analogjs-server-fn-id',
-    transform(code: string, id: string) {
+    transform(
+      code: string,
+      id: string,
+    ): { code: string; map: null } | undefined {
       if (!id.endsWith('.server.ts')) {
         return;
       }

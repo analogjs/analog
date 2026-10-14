@@ -10,22 +10,22 @@ import {
 } from 'vite';
 import { resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
+import { createEvent, sendWebResponse } from 'h3';
 import { createRouter as createRadixRouter, toRouteMatcher } from 'radix3';
 import { defu } from 'defu';
-import type { NitroRouteRules } from 'nitro/types';
+import { NitroRouteRules } from 'nitropack';
 
 import { registerDevServerMiddleware } from '../utils/register-dev-middleware.js';
 import { registerI18nWatcher } from '../utils/register-i18n-watcher.js';
-import { writeWebResponseToNode } from '../utils/node-web-bridge.js';
 import { Options } from '../options.js';
 import { detectLocaleFromRoute, setHtmlLang } from '../utils/i18n-prerender.js';
 
 type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
 
-export function devServerPlugin(options: ServerOptions): Plugin {
-  const workspaceRoot = options?.workspaceRoot || process.cwd();
-  const sourceRoot = options?.sourceRoot ?? 'src';
-  const index = options.index || 'index.html';
+export function devServerPlugin(getOptions: () => ServerOptions): Plugin {
+  let options: ServerOptions;
+  let sourceRoot: string;
+  let index: string;
   let config: UserConfig;
   let root: string;
   let isTest = false;
@@ -33,11 +33,17 @@ export function devServerPlugin(options: ServerOptions): Plugin {
   return {
     name: 'analogjs-dev-ssr-plugin',
     config(userConfig, { mode }) {
+      options = getOptions();
+      if (!options.ssr) {
+        return;
+      }
+      const workspaceRoot = options.workspaceRoot || process.cwd();
+      sourceRoot = options.sourceRoot ?? 'src';
+      index = options.index || 'index.html';
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       isTest = isTest ? isTest : mode === 'test';
       return {
-        appType: 'custom',
         resolve: {
           alias: {
             '~analog/entry-server':
@@ -47,7 +53,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       };
     },
     configureServer(viteServer) {
-      if (isTest) {
+      if (isTest || !options.ssr) {
         return;
       }
 
@@ -95,7 +101,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
             }
 
             if (result instanceof Response) {
-              await writeWebResponseToNode(res, result);
+              sendWebResponse(createEvent(req, res), result);
               return;
             }
 

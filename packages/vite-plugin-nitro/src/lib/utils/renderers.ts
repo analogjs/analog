@@ -1,96 +1,144 @@
-/**
- * Code snippet emitted into virtual modules to create a request-scoped
- * fetch using ofetch's `createFetch` + h3's `fetchWithEvent`.
- *
- * Shared between the SSR renderer and page-endpoint virtual modules so
- * the fetch-wiring logic stays in sync.
- *
- * The emitted variable is named `serverFetch` — callers should reference it
- * by that name.
- */
-export const SERVER_FETCH_FACTORY_SNIPPET = `
-  const serverFetch = createFetch({
-    fetch: (resource, init) => {
-      const url = resource instanceof Request ? resource.url : resource.toString();
-      return fetchWithEvent(event, url, init);
-    }
-  });`;
-
-/**
- * SSR renderer virtual module content.
- *
- * This code runs inside Nitro's server runtime (Node.js context) where
- * event.node is always populated. In h3 v2, event.node is typed as optional,
- * so we use h3's first-class event properties (event.path, event.method) where
- * possible and apply optional chaining when accessing the Node.js context for
- * the Angular renderer which requires raw req/res objects.
- *
- * h3 v2 idiomatic APIs used:
- * - defineHandler (replaces defineEventHandler / eventHandler)
- * - event.path (replaces event.node.req.url)
- * - getResponseHeader compat shim (still available in h3 v2)
- */
-export function ssrRenderer() {
-  return `
-import { createFetch } from 'ofetch';
-import { defineHandler, fetchWithEvent } from 'nitro/h3';
+export const ssrRenderer = `
+import { eventHandler, getResponseHeader } from 'h3';
 // @ts-ignore
 import renderer from '#analog/ssr';
+// @ts-ignore
 import template from '#analog/index';
 
-const normalizeHtmlRequestUrl = (url) =>
-  url.replace(/\\/index\\.html(?=$|[?#])/, '/');
-
-export default defineHandler(async (event) => {
-  event.res.headers.set('content-type', 'text/html; charset=utf-8');
-  const noSSR = event.res.headers.get('x-analog-no-ssr');
-  const requestPath = normalizeHtmlRequestUrl(event.path);
+export default eventHandler(async (event) => {
+  const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
 
   if (noSSR === 'true') {
     return template;
   }
 
-  // event.path is the canonical h3 v2 way to access the request URL.
-  // event.node?.req and event.node?.res are needed by the Angular SSR renderer
-  // which operates on raw Node.js request/response objects.
-  // During prerendering (Nitro v3 fetch-based pipeline), event.node is undefined.
-  // The Angular renderer requires a req object with at least { headers, url },
-  // so we provide a minimal stub to avoid runtime errors in prerender context.
-  const req = event.node?.req
-    ? {
-        ...event.node.req,
-        url: requestPath,
-        originalUrl: requestPath,
-      }
-    : {
-    headers: { host: 'localhost' },
-    url: requestPath,
-    originalUrl: requestPath,
-    connection: {},
-  };
-  const res = event.node?.res;
-${SERVER_FETCH_FACTORY_SNIPPET}
-
-  const html = await renderer(requestPath, template, { req, res, fetch: serverFetch });
+  const html = await renderer(event.node.req.url, template, {
+    req: event.node.req,
+    res: event.node.res,
+  });
 
   return html;
 });`;
-}
 
-/**
- * Client-only renderer virtual module content.
- *
- * Used when SSR is disabled — simply serves the static index.html template
- * for every route, letting the client-side Angular router handle navigation.
- */
-export function clientRenderer() {
+export const ssrStreamRenderer: string = createSsrStreamRenderer();
+
+export function createSsrStreamRenderer(prerender = false): string {
   return `
-import { defineHandler } from 'nitro/h3';
+import { eventHandler, getResponseHeader, setResponseHeader } from 'h3';
+// @ts-ignore
+import renderer from '#analog/ssr';
+// @ts-ignore
 import template from '#analog/index';
 
-export default defineHandler(async (event) => {
-  event.res.headers.set('content-type', 'text/html; charset=utf-8');
+export default eventHandler(async (event) => {
+  const noSSR = getResponseHeader(event, 'x-analog-no-ssr');
+
+  if (noSSR === 'true') {
+    return template;
+  }
+
+  const noStreaming = ${prerender} || getResponseHeader(event, 'x-analog-no-streaming') === 'true';
+  const abort = new AbortController();
+  const response = event.node.res;
+  const cleanup = () => {
+    response.removeListener('close', disconnected);
+    response.removeListener('finish', cleanup);
+  };
+  const disconnected = () => {
+    cleanup();
+    if (!response.writableEnded) abort.abort();
+  };
+  response.once('close', disconnected);
+  response.once('finish', cleanup);
+
+  let stream;
+  try {
+    stream = await renderer(event.node.req.url, template, {
+      req: event.node.req,
+      res: response,
+      streaming: !noStreaming,
+      signal: abort.signal,
+      renderErrorsAsHtml: true,
+    });
+  } catch (error) {
+    cleanup();
+    throw error;
+  }
+
+  setResponseHeader(event, 'content-type', 'text/html;charset=utf-8');
+
+  // A \`streaming: false\` route rule sets this header; renderStream then emits
+  // the buffered render() output as a single chunk. Collect it into a string so
+  // the response is a normal buffered document (content-length), not chunked.
+  if (noStreaming) {
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    let html = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      html += decoder.decode(value, { stream: true });
+    }
+    html += decoder.decode();
+    return html;
+  }
+
+  setResponseHeader(event, 'content-encoding', 'identity');
+  setResponseHeader(event, 'cache-control', 'no-store, no-transform');
+  return stream;
+});`;
+}
+
+export const clientRenderer = `
+import { eventHandler } from 'h3';
+
+// @ts-ignore
+import template from '#analog/index';
+
+export default eventHandler(async () => {
   return template;
 });
 `;
-}
+
+export const apiMiddleware = `
+import { createError, eventHandler, proxyRequest } from 'h3';
+import { useRuntimeConfig } from '#imports';
+
+export default eventHandler(async (event) => {
+  const prefix = useRuntimeConfig().prefix;
+  const apiPrefix = \`\${prefix}/\${useRuntimeConfig().apiPrefix}\`;
+
+  const url = event.node.req.url || '';
+
+  // only match the prefix on a path boundary, otherwise a URL such as
+  // '/apihttp://internal-host' would pass startsWith() and be forwarded verbatim
+  if (
+    url === apiPrefix ||
+    url.startsWith(\`\${apiPrefix}/\`) ||
+    url.startsWith(\`\${apiPrefix}?\`)
+  ) {
+    let reqUrl = url.slice(apiPrefix.length);
+    if (reqUrl === '' || reqUrl.startsWith('?')) {
+      reqUrl = \`/\${reqUrl}\`;
+    }
+
+    // reject absolute and protocol-relative targets to prevent SSRF
+    if (!reqUrl.startsWith('/') || reqUrl.startsWith('//')) {
+      throw createError({ statusCode: 400, statusMessage: 'Invalid API route' });
+    }
+
+    if (
+      event.node.req.method === 'GET' &&
+      // in the case of XML routes, we want to proxy the request so that nitro gets the correct headers
+      // and can render the XML correctly as a static asset
+      !event.node.req.url?.endsWith('.xml')
+    ) {
+      return $fetch(reqUrl, { headers: event.node.req.headers });
+    }
+
+    return proxyRequest(event, reqUrl, {
+      // @ts-ignore
+      fetch: $fetch.native,
+    });
+  }
+});`;

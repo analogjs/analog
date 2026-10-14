@@ -1,17 +1,8 @@
 import { nitro } from './lib/vite-plugin-nitro.js';
-export { debugInstances } from './lib/utils/debug.js';
 export { nitro } from './lib/vite-plugin-nitro.js';
 export type {
   Options,
   SitemapConfig,
-  SitemapEntry,
-  SitemapExcludeRule,
-  SitemapPriority,
-  SitemapRouteDefinition,
-  SitemapRouteInput,
-  SitemapRouteSource,
-  SitemapTransform,
-  PrerenderSitemapConfig,
   PrerenderRouteConfig,
   PrerenderContentDir,
   PrerenderContentFile,
@@ -29,10 +20,8 @@ export {
   type InjectServerFnIdsResult,
 } from './lib/utils/inject-server-fn-ids.js';
 
-// Nitro's NitroRouteConfig and NitroRouteRules are aliases of h3's route rule
-// types, so custom rule names are declared on h3 as its docs describe.
-declare module 'h3/rules' {
-  interface RouteRuleConfig {
+declare module 'nitropack' {
+  interface NitroRouteConfig {
     ssr?: boolean;
     /**
      * Disable progressive streaming SSR for matching routes (falls back to a
@@ -41,7 +30,7 @@ declare module 'h3/rules' {
     streaming?: boolean;
   }
 
-  interface RouteRules {
+  interface NitroRouteRules {
     ssr?: boolean;
     streaming?: boolean;
   }

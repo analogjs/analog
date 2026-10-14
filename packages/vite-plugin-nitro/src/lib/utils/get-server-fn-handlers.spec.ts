@@ -19,16 +19,6 @@ describe('getServerFnHandlers', () => {
 
   beforeEach(() => {
     workspaceRoot = mkdtempSync(join(tmpdir(), 'analog-server-fn-'));
-    mkdirSync(join(workspaceRoot, 'ssr'));
-    writeFileSync(
-      join(workspaceRoot, 'ssr/main.server.mjs'),
-      'export default () => {};',
-    );
-    mkdirSync(join(workspaceRoot, 'client'));
-    writeFileSync(
-      join(workspaceRoot, 'client/index.html'),
-      '<app-root></app-root>',
-    );
     mkdirSync(join(workspaceRoot, 'src/app/server-fns'), { recursive: true });
     mkdirSync(join(workspaceRoot, 'src/app/pages/shipping'), {
       recursive: true,
@@ -167,13 +157,9 @@ describe('getServerFnHandlers', () => {
             ? `import { serverFn as defineFn } from '@analogjs/router/server'; export const getData = defineFn(async () => []);`
             : ''),
       );
-      const plugin = nitro({
-        ssr: false,
-        useAPIMiddleware: false,
-        ssrBuildDir: join(workspaceRoot, 'ssr'),
-      })[1] as any;
+      const plugin = nitro({ ssr: false, useAPIMiddleware: false })[0] as any;
       const config = await plugin.config(
-        { root: workspaceRoot, build: { outDir: 'client' } },
+        { root: workspaceRoot, build: {} },
         { command: 'build', mode: 'production' },
       );
       await config.builder.buildApp({
@@ -217,13 +203,9 @@ describe('getServerFnHandlers', () => {
        export const getData = serverFn(async () => []);`,
     );
 
-    const plugin = nitro({
-      ssr: false,
-      useAPIMiddleware: false,
-      ssrBuildDir: join(workspaceRoot, 'ssr'),
-    })[1] as any;
+    const plugin = nitro({ ssr: false, useAPIMiddleware: false })[0] as any;
     const config = await plugin.config(
-      { root: workspaceRoot, build: { outDir: 'client' } },
+      { root: workspaceRoot, build: {} },
       { command: 'build', mode: 'production' },
     );
     await config.builder.buildApp({
