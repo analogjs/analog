@@ -44,6 +44,12 @@ describe('streamingDisabledByRoute', () => {
     ).toBe(true);
   });
 
+  it('is true when the header is forwarded on the request', () => {
+    expect(
+      streamingDisabledByRoute(ctx({ 'x-analog-no-streaming': 'true' })),
+    ).toBe(true);
+  });
+
   it('is false when the header is absent', () => {
     expect(streamingDisabledByRoute(ctx({}, {}))).toBe(false);
   });

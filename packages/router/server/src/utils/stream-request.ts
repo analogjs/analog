@@ -27,10 +27,14 @@ export function isLikelyBot(serverContext: ServerContext): boolean {
  * rule. The platform plugin translates that rule into an `x-analog-no-streaming`
  * response header (mirroring how `ssr: false` becomes `x-analog-no-ssr`); when
  * present, `renderStream` produces the buffered `render()` output for this
- * route instead of streaming.
+ * route instead of streaming. On Nitro v3, which renders without a Node
+ * response, the header is forwarded on the request instead.
  */
 export function streamingDisabledByRoute(
   serverContext: ServerContext,
 ): boolean {
-  return serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true';
+  return (
+    serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true' ||
+    serverContext?.req?.headers?.['x-analog-no-streaming'] === 'true'
+  );
 }
