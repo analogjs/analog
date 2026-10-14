@@ -1,5 +1,5 @@
-import { defineHandler } from 'nitro/h3';
+import { defineEventHandler } from 'h3';
 
 import { getProducts } from '../../../lib/products';
 
-export default defineHandler(() => getProducts());
+export default defineEventHandler(() => getProducts());

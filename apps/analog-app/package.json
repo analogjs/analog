@@ -7,13 +7,14 @@
     "@analogjs/my-package": "workspace:*",
     "@analogjs/router": "workspace:*",
     "@analogjs/top-bar": "workspace:*",
-    "es-toolkit": "catalog:"
+    "es-toolkit": "catalog:",
+    "h3": "catalog:nitroV2"
   },
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
     "@analogjs/storybook-angular": "workspace:*",
     "@analogjs/vite-plugin-angular": "workspace:*",
-    "@analogjs/vitest-angular": "workspace:*",
-    "nitro": "catalog:"
+    "@analogjs/vite-plugin-nitro": "workspace:*",
+    "@analogjs/vitest-angular": "workspace:*"
   }
 }

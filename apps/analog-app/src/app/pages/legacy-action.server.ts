@@ -1,3 +1,4 @@
+import { readFormData } from 'h3';
 import {
   type PageServerAction,
   fail,
@@ -16,7 +17,7 @@ export type LegacyActionError =
   | undefined;
 
 export async function action({ event }: PageServerAction) {
-  const body = await event.req.formData();
+  const body = await readFormData(event);
   const email = body.get('email');
 
   if (typeof email !== 'string' || email.length === 0) {

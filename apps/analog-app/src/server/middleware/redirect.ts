@@ -1,9 +1,9 @@
-import { defineHandler, redirect } from 'nitro/h3';
+import { defineEventHandler, sendRedirect, setResponseHeader } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   if (event.path === '/checkout') {
-    event.res.headers.set('x-analog-test', 'true');
-    return redirect('/cart', 302);
+    setResponseHeader(event, 'x-analog-test', 'true');
+    return sendRedirect(event, '/cart', 302);
   }
 
   return undefined;

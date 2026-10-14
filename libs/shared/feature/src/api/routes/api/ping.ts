@@ -1,3 +1,3 @@
-import { defineHandler } from 'nitro/h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(() => 'pong');
+export default defineEventHandler(() => 'pong');

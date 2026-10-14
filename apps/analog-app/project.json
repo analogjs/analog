@@ -11,6 +11,7 @@
       "dependsOn": [
         "platform:build",
         "router:build",
+        "vite-plugin-nitro:build",
         "my-package:build",
         "top-bar:build"
       ],

@@ -1,9 +1,9 @@
-import { createEventStream, defineHandler } from 'nitro/h3';
+import { createEventStream, defineEventHandler } from 'h3';
 
 import { getServices, SERVICES_SOURCE_PATH } from '../../../lib/services';
 import { watchDemoSourceFile } from '../../../lib/demo-data';
 
-export default defineHandler(async (event) => {
+export default defineEventHandler(async (event) => {
   const eventStream = createEventStream(event);
   let lastPayload = '';
 

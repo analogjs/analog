@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
+  "dependencies": {
+    "@analogjs/content": "workspace:*",
+    "h3": "catalog:nitroV2"
+  },
   "devDependencies": {
     "@analogjs/vitest-angular": "workspace:*"
   },
