@@ -4,8 +4,12 @@ import * as ts from 'typescript';
 
 const ANALOG_PLATFORM_IMPORT = `from '@analogjs/platform'`;
 const ANGULAR_PLUGIN_IMPORT = `from '@analogjs/vite-plugin-angular'`;
-const NITRO_VITE_IMPORT = `from 'nitro/vite'`;
+const NITRO_IMPORTS = [
+  `from '@analogjs/vite-plugin-nitro'`,
+  `from 'nitro/vite'`,
+];
 const ANGULAR_PLUGIN_PKG = '@analogjs/vite-plugin-angular';
+const NITRO_PLUGIN_PKG = '@analogjs/vite-plugin-nitro';
 const MIGRATION_DOC_URL =
   'https://analogjs.org/docs/guides/migrating-v2-to-v3#analog-angular-and-nitro-are-now-separate-plugins';
 
@@ -25,7 +29,7 @@ function usesLegacyPluginShape(source: string): boolean {
   }
   if (
     source.includes(ANGULAR_PLUGIN_IMPORT) &&
-    source.includes(NITRO_VITE_IMPORT)
+    NITRO_IMPORTS.some((nitroImport) => source.includes(nitroImport))
   ) {
     return false;
   }
@@ -65,14 +69,20 @@ function addDependencies(tree: Tree, context: SchematicContext): boolean {
   };
   let changed = false;
 
-  if (!getDepVersion(pkg, ANGULAR_PLUGIN_PKG)) {
-    // Match the @analogjs/platform pin so the angular plugin stays aligned
-    // with the rest of the Analog packages already in this workspace.
-    const platformVersion = getDepVersion(pkg, '@analogjs/platform') ?? '*';
-    devDeps[ANGULAR_PLUGIN_PKG] = platformVersion;
+  // Match the @analogjs/platform pin so the plugins stay aligned with the
+  // rest of the Analog packages already in this workspace.
+  const platformVersion = getDepVersion(pkg, '@analogjs/platform') ?? '*';
+  const missingPlugins = [ANGULAR_PLUGIN_PKG, NITRO_PLUGIN_PKG].filter(
+    (name) =>
+      !getDepVersion(pkg, name) &&
+      // Apps already on Nitro v3 keep `nitro()` from `nitro/vite`.
+      !(name === NITRO_PLUGIN_PKG && getDepVersion(pkg, 'nitro')),
+  );
+  for (const name of missingPlugins) {
+    devDeps[name] = platformVersion;
     changed = true;
     context.logger.info(
-      `Added '${ANGULAR_PLUGIN_PKG}': '${platformVersion}' to devDependencies.`,
+      `Added '${name}': '${platformVersion}' to devDependencies.`,
     );
   }
 
@@ -165,7 +175,10 @@ function tryTransformViteConfig(
           analogImportEnd = node.end;
         } else if (ml.text === '@analogjs/vite-plugin-angular') {
           angularImported = true;
-        } else if (ml.text === 'nitro/vite') {
+        } else if (
+          ml.text === '@analogjs/vite-plugin-nitro' ||
+          ml.text === 'nitro/vite'
+        ) {
           nitroImported = true;
         }
       }
@@ -236,7 +249,7 @@ function tryTransformViteConfig(
   const parts: string[] = [newAnalogCall];
   if (viteValueText !== null) parts.push(`angular(${viteValueText})`);
   else parts.push('angular()');
-  if (nitroValueText !== null) parts.push(`nitro(${nitroValueText})`);
+  if (nitroValueText !== null) parts.push(`nitro({}, ${nitroValueText})`);
   else parts.push('nitro()');
   const replacement = parts.join(`,\n${indent}`);
 
@@ -247,7 +260,7 @@ function tryTransformViteConfig(
     importsToAdd.push(`import angular from '@analogjs/vite-plugin-angular';`);
   }
   if (!nitroImported) {
-    importsToAdd.push(`import { nitro } from 'nitro/vite';`);
+    importsToAdd.push(`import nitro from '@analogjs/vite-plugin-nitro';`);
   }
   if (importsToAdd.length > 0) {
     edits.push({

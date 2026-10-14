@@ -68,9 +68,9 @@ describe('migrate-to-separated-plugins', () => {
     expect(pkg.devDependencies['@analogjs/vite-plugin-angular']).toBe(
       PLATFORM_VERSION,
     );
-    // The schematic does not pin `nitro` — npm/yarn pick it up as a transitive
-    // of @analogjs/platform; pnpm users add it themselves following the
-    // migration guide.
+    expect(pkg.devDependencies['@analogjs/vite-plugin-nitro']).toBe(
+      PLATFORM_VERSION,
+    );
     expect(pkg.devDependencies['nitro']).toBeUndefined();
     expect(infoLogs.join('\n')).toContain('/vite.config.ts');
     expect(infoLogs.join('\n')).toContain('migrating-v2-to-v3');
@@ -241,7 +241,9 @@ describe('migrate-to-separated-plugins', () => {
       expect(result).toContain(
         `import angular from '@analogjs/vite-plugin-angular';`,
       );
-      expect(result).toContain(`import { nitro } from 'nitro/vite';`);
+      expect(result).toContain(
+        `import nitro from '@analogjs/vite-plugin-nitro';`,
+      );
       expect(result).toContain(`angular({ fastCompile: true })`);
       expect(result).toContain(`nitro()`);
       expect(result).not.toContain(`vite: { fastCompile: true }`);
@@ -270,7 +272,7 @@ describe('migrate-to-separated-plugins', () => {
       migrateToSeparatedPlugins()(tree, context);
 
       const result = tree.readContent('/vite.config.ts');
-      expect(result).toContain(`nitro({ preset: 'node-server' })`);
+      expect(result).toContain(`nitro({}, { preset: 'node-server' })`);
       expect(result).toContain(`angular()`);
       expect(result).not.toContain(`nitro: { preset: 'node-server' }`);
       expect(result).toContain(`apiPrefix: 'api'`);
@@ -305,7 +307,7 @@ describe('migrate-to-separated-plugins', () => {
         `angular({ fastCompile: true, liveReload: true })`,
       );
       expect(result).toContain(
-        `nitro({ routeRules: { '/admin/**': { ssr: false } } })`,
+        `nitro({}, { routeRules: { '/admin/**': { ssr: false } } })`,
       );
       // Remaining analog options stay on analog().
       expect(result).toMatch(/analog\(\{[\s\S]*apiPrefix: 'api'/);
@@ -339,7 +341,9 @@ describe('migrate-to-separated-plugins', () => {
       expect(result).toContain(
         `import angular from '@analogjs/vite-plugin-angular';`,
       );
-      expect(result).toContain(`import { nitro } from 'nitro/vite';`);
+      expect(result).toContain(
+        `import nitro from '@analogjs/vite-plugin-nitro';`,
+      );
       expect(result).toMatch(/analog\(\),\s+angular\(\),\s+nitro\(\)/);
     });
 
@@ -416,7 +420,9 @@ describe('migrate-to-separated-plugins', () => {
       );
       expect(angularImports?.length).toBe(1);
       // The nitro import is still added since it wasn't there.
-      expect(result).toContain(`import { nitro } from 'nitro/vite';`);
+      expect(result).toContain(
+        `import nitro from '@analogjs/vite-plugin-nitro';`,
+      );
     });
   });
 });
