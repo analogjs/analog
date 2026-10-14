@@ -45,6 +45,12 @@ const config: UserConfigExport = defineConfig({
     lib: {
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
+        // Loaded by `ng update` / `nx migrate` from migrations/migration.json.
+        'migrations/migrate-to-separated-plugins/migrate-to-separated-plugins':
+          resolve(
+            pkgDir,
+            'migrations/migrate-to-separated-plugins/migrate-to-separated-plugins.ts',
+          ),
       },
       formats: ['es' as const],
     },

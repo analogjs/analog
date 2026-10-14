@@ -1,5 +1,6 @@
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
-import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
+// The explicit file path resolves when this runs as native ESM.
+import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks/index.js';
 import * as ts from 'typescript';
 
 const ANALOG_PLATFORM_IMPORT = `from '@analogjs/platform'`;
