@@ -7,9 +7,9 @@ Analog supports defining API routes that can be used to serve data to the applic
 API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based, and are exposed under the default `/api` prefix.
 
 ```ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(() => ({ message: 'Hello World' }));
+export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
 ## Defining XML Content
@@ -19,14 +19,14 @@ To create an RSS feed for your site, set the `content-type` to be `text/xml` and
 ```ts
 //server/routes/api/rss.xml.ts
 
-import { defineHandler } from 'h3';
+import { defineEventHandler, setResponseHeader } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 </rss>
   `;
-  event.res.headers.set('content-type', 'text/xml');
+  setResponseHeader(event, 'content-type', 'text/xml');
   return feedString;
 });
 ```
@@ -59,9 +59,9 @@ Dynamic API routes are defined by using the filename as the route path enclosed 
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(
+export default defineEventHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
@@ -70,9 +70,9 @@ Another way to access route parameters is by reading them from `event.context.pa
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   const name = event.context.params?.['name'] ?? 'friend';
   return `Hello, ${name}!`;
 });
@@ -86,9 +86,9 @@ File names can be suffixed with `.get`, `.post`, `.put`, `.delete`, etc. to matc
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(async (event) => {
+export default defineEventHandler(async (event) => {
   const id = event.context.params?.['id'];
   // TODO: fetch user by id
   return `User profile of ${id}!`;
@@ -99,10 +99,10 @@ export default defineHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
-import { defineHandler } from 'h3';
+import { defineEventHandler, readBody } from 'h3';
 
-export default defineHandler(async (event) => {
-  const body = await event.req.json();
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event);
   // TODO: Handle body and add user
   return { updated: true };
 });
@@ -116,9 +116,9 @@ Sample query `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
 // routes/api/v1/query.ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   const param1 = event.url.searchParams.get('param1');
   const param2 = event.url.searchParams.get('param2');
 
@@ -159,9 +159,9 @@ Catch-all routes are helpful for fallback route handling.
 
 ```ts
 // routes/api/[...].ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(() => `Default page`);
+export default defineEventHandler(() => `Default page`);
 ```
 
 ## Error Handling
@@ -171,9 +171,9 @@ To return other error codes, throw an exception with `createError`.
 
 ```ts
 // routes/api/v1/[id].ts
-import { createError, defineHandler } from 'h3';
+import { createError, defineEventHandler } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   const param = event.context.params?.['id'];
   const id = Number.parseInt(param ?? '', 10);
 

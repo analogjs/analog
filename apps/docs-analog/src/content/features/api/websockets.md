@@ -4,7 +4,7 @@ Analog also supports `WebSockets` and `Server-Sent Events` through Nitro.
 
 ## Enabling WebSockets
 
-Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) is experimental and it can be enabled in the `analog` plugin:
+Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) is experimental and it can be enabled in the Nitro config passed to the `nitro` plugin:
 
 `vite.config.ts`
 
@@ -12,14 +12,16 @@ Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) i
 export default defineConfig({
   // ...
   plugins: [
-    analog({
-      // ...
-      nitro: {
+    analog(),
+    angular(),
+    nitro(
+      {},
+      {
         experimental: {
           websocket: true,
         },
       },
-    }),
+    ),
   ],
   // ...
 });
@@ -85,9 +87,9 @@ Server-sent event handlers can be created using the `createEventStream` function
 
 ```typescript
 // src/server/routes/api/sse.ts
-import { createEventStream, defineHandler } from 'h3';
+import { createEventStream, defineEventHandler } from 'h3';
 
-export default defineHandler(async (event) => {
+export default defineEventHandler(async (event) => {
   const eventStream = createEventStream(event);
 
   const interval = setInterval(async () => {

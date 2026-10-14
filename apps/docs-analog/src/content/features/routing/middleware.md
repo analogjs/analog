@@ -26,15 +26,15 @@ Also, if not present, add the middleware files to `include` array in the `tsconf
 }
 ```
 
-Middleware is defined using the `defineHandler` function.
+Middleware is defined using the `defineEventHandler` function.
 
 ```ts
-import { defineHandler, redirect } from 'h3';
+import { defineEventHandler, sendRedirect, setResponseHeader } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   if (event.path === '/checkout') {
-    event.res.headers.set('x-analog-checkout', 'true');
-    return redirect('/cart', 302);
+    setResponseHeader(event, 'x-analog-checkout', 'true');
+    return sendRedirect(event, '/cart', 302);
   }
 
   return undefined;
@@ -49,16 +49,16 @@ export default defineHandler((event) => {
 Middleware can only be applied to specific routes using filtering.
 
 ```ts
-import { defineHandler, getCookie, redirect } from 'h3';
+import { defineEventHandler, getCookie, sendRedirect } from 'h3';
 
-export default defineHandler(async (event) => {
+export default defineEventHandler(async (event) => {
   // Only execute for /admin routes
   if (event.path.startsWith('/admin')) {
     const isLoggedIn = getCookie(event, 'authToken');
 
     // check auth and redirect
     if (!isLoggedIn) {
-      return redirect('/login', 302);
+      return sendRedirect(event, '/login', 302);
     }
   }
 });
@@ -69,9 +69,9 @@ export default defineHandler(async (event) => {
 Use the `process.env` global to access environment variables inside the middleware functions. Both server-only and publicly accessible environment variables defined in `.env` files can be read from the middleware.
 
 ```ts
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler((event) => {
+export default defineEventHandler((event) => {
   console.log('Path:', event.path);
   console.log(
     'Server Only Environment Variable:',

@@ -49,9 +49,9 @@ Next, define an API route in the `src/server/routes/api` directory.
 ```ts
 // src/server/routes/api/v1/og-images.ts
 import { ImageResponse } from '@analogjs/content/og';
-import { defineHandler } from 'h3';
+import { defineEventHandler } from 'h3';
 
-export default defineHandler(async (event) => {
+export default defineEventHandler(async (event) => {
   const fontFile = await fetch(
     'https://og-playground.vercel.app/inter-latin-ext-700-normal.woff',
   );
