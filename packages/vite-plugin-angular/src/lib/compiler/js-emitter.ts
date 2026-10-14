@@ -93,6 +93,19 @@ for (const [name, str, precedence] of OP_DEFINITIONS) {
   }
 }
 
+const UNARY_OP_STR = new Map<number, string>();
+
+for (const [name, str] of [
+  ['Plus', '+'],
+  ['Minus', '-'],
+  ['Increment', '++'],
+  ['Decrement', '--'],
+] as const) {
+  const value = (o.UnaryOperator as Record<string, unknown>)[name];
+  if (typeof value !== 'number') continue;
+  UNARY_OP_STR.set(value, str);
+}
+
 /** Returns true when `op` represents any kind of assignment (`=`, `+=`, etc.). */
 function isAssignmentOperator(op: o.BinaryOperator): boolean {
   return ASSIGNMENT_OP_VALUES.has(op);
@@ -283,9 +296,9 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       ast.fn instanceof o.FunctionExpr ||
       ast.fn instanceof o.WrappedNodeExpr
     ) {
-      return '(' + fn + ')(' + args + ')';
+      return '(' + fn + ')' + (ast.isOptional ? '?.(' : '(') + args + ')';
     }
-    return fn + '(' + args + ')';
+    return fn + (ast.isOptional ? '?.(' : '(') + args + ')';
   }
   visitReadVarExpr(ast: o.ReadVarExpr) {
     if (ast.name === 'this') return 'this';
@@ -294,13 +307,17 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
   }
   visitReadPropExpr(ast: o.ReadPropExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
-    return emitReceiverForMemberAccess(ast.receiver, receiver) + '.' + ast.name;
+    return (
+      emitReceiverForMemberAccess(ast.receiver, receiver) +
+      (ast.isOptional ? '?.' : '.') +
+      ast.name
+    );
   }
   visitReadKeyExpr(ast: o.ReadKeyExpr) {
     const receiver = ast.receiver.visitExpression(this, null);
     return (
       emitReceiverForMemberAccess(ast.receiver, receiver) +
-      '[' +
+      (ast.isOptional ? '?.[' : '[') +
       ast.index.visitExpression(this, null) +
       ']'
     );
@@ -443,7 +460,17 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     return 'typeof ' + ast.expr.visitExpression(this, null);
   }
   visitUnaryOperatorExpr(ast: o.UnaryOperatorExpr) {
-    return '-(' + ast.expr.visitExpression(this, null) + ')';
+    const op = UNARY_OP_STR.get(ast.operator);
+    if (op === undefined) {
+      throw new Error(
+        `[fast-compile] Unsupported UnaryOperator value ${ast.operator} ` +
+          `on @angular/compiler ${o.VERSION?.full ?? '(unknown version)'}`,
+      );
+    }
+
+    const operand = '(' + ast.expr.visitExpression(this, null) + ')';
+    const isPostfix = 'isPrefix' in ast && ast.isPrefix === false;
+    return '(' + (isPostfix ? operand + op : op + operand) + ')';
   }
   visitInstantiateExpr(ast: o.InstantiateExpr) {
     return (

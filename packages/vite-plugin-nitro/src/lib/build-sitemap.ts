@@ -149,10 +149,10 @@ function createXml(
   includeXhtml = false,
 ): XMLBuilder {
   const attrs: Record<string, string> = {
-    xmlns: 'https://www.sitemaps.org/schemas/sitemap/0.9',
+    xmlns: 'http://www.sitemaps.org/schemas/sitemap/0.9',
   };
   if (includeXhtml) {
-    attrs['xmlns:xhtml'] = 'https://www.w3.org/1999/xhtml';
+    attrs['xmlns:xhtml'] = 'http://www.w3.org/1999/xhtml';
   }
 
   return create({ version: '1.0', encoding: 'UTF-8' })

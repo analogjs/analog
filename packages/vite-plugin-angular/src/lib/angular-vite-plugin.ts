@@ -240,6 +240,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
+  let deferInitialCompilation = isVitestVscode;
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
 
@@ -400,6 +401,12 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (isTest) {
+          const browser = (config as any).test?.browser;
+          deferInitialCompilation =
+            isVitestVscode ||
+            (!!browser &&
+              (getBrowserModeCliOverride() ?? browser.enabled) === true);
+
           // set test watch mode
           // - vite override from vitest-angular
           // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
@@ -456,8 +463,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             preprocessCSS(code, filename, resolvedConfig);
         }
 
-        // Defer the first compilation in test mode
-        if (!isVitestVscode) {
+        // Browser mode also creates a server that may never transform TypeScript.
+        if (!deferInitialCompilation) {
           pendingCompilation = performCompilation(
             this.environment?.config ?? resolvedConfig,
           );
@@ -772,7 +779,7 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for test(Vitest)
            */
           if (isTest) {
-            if (isVitestVscode && !initialCompilation) {
+            if (deferInitialCompilation && !initialCompilation) {
               // Do full initial compilation
               pendingCompilation = performCompilation(
                 this.environment?.config ?? resolvedConfig,
@@ -2110,4 +2117,36 @@ export function isTestWatchMode(args = process.argv) {
   }
 
   return true;
+}
+
+export function getBrowserModeCliOverride(
+  args = process.argv.slice(2),
+): boolean | undefined {
+  let enabled: boolean | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--') {
+      break;
+    }
+
+    const [flag, inlineValue] = args[i].split('=', 2);
+    if (flag === '--no-browser' || flag === '--no-browser.enabled') {
+      enabled = false;
+    } else if (flag === '--browser' || flag === '--browser.enabled') {
+      const value = inlineValue ?? args[i + 1];
+      if (value === 'false' || (flag === '--browser' && value === 'no')) {
+        enabled = false;
+      } else if (
+        flag === '--browser.enabled' ||
+        value === undefined ||
+        value.startsWith('-') ||
+        value === 'true' ||
+        value === 'yes'
+      ) {
+        enabled = true;
+      }
+    }
+  }
+
+  return enabled;
 }

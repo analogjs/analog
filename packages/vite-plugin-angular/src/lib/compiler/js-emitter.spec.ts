@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as o from '@angular/compiler';
+import { SUPPORTS_INCREMENT_DECREMENT } from './angular-version';
 import { emitAngularExpr } from './js-emitter';
 
 // Version-aware test gates. Angular's `BinaryOperator` enum is missing
@@ -16,9 +17,19 @@ const HAS_EXPONENTIATION =
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
 
+const HAS_OPTIONAL_CHAINING_OUTPUT =
+  'isOptional' in new o.ReadPropExpr(new o.ReadVarExpr('x'), 'y');
+
+const UNARY_OPERATORS = o.UnaryOperator as unknown as Record<
+  string,
+  o.UnaryOperator
+>;
+
 function bin(op: o.BinaryOperator, lhs: o.Expression, rhs: o.Expression) {
   return new o.BinaryOperatorExpr(op, lhs, rhs);
 }
+const unary = (op: o.UnaryOperator, expr: o.Expression, isPrefix = true) =>
+  Object.assign(new o.UnaryOperatorExpr(op, expr), { isPrefix });
 const v = (name: string) => new o.ReadVarExpr(name);
 const lit = (val: number | string | boolean | null | undefined) =>
   new o.LiteralExpr(val);
@@ -254,4 +265,204 @@ describe('JSEmitter – operator precedence', () => {
       expect(emitAngularExpr(expr)).toBe('(a + b)[0]');
     });
   });
+});
+
+describe('JSEmitter – unary operators', () => {
+  const count = new o.ReadPropExpr(v('ctx'), 'count');
+  const evaluate = (expr: o.Expression, ctx: Record<string, unknown>) =>
+    new Function('ctx', 'return ' + emitAngularExpr(expr))(ctx);
+  const toStringOf = (expr: o.Expression) =>
+    new o.InvokeFunctionExpr(new o.ReadPropExpr(expr, 'toString'), []);
+
+  it('emits unary plus as (+(x))', () => {
+    expect(emitAngularExpr(unary(o.UnaryOperator.Plus, v('x')))).toBe('(+(x))');
+  });
+
+  it('emits unary minus as (-(x))', () => {
+    expect(emitAngularExpr(unary(o.UnaryOperator.Minus, v('x')))).toBe(
+      '(-(x))',
+    );
+  });
+
+  it('keeps the operand parenthesized: (-(a + b))', () => {
+    const expr = unary(
+      o.UnaryOperator.Minus,
+      bin(o.BinaryOperator.Plus, v('a'), v('b')),
+    );
+    expect(emitAngularExpr(expr)).toBe('(-(a + b))');
+  });
+
+  it('keeps the grouping when the result is a member receiver', () => {
+    const expr = toStringOf(unary(o.UnaryOperator.Minus, count));
+    expect(emitAngularExpr(expr)).toBe('(-(ctx.count)).toString()');
+    expect(evaluate(expr, { count: 3 })).toBe('-3');
+  });
+
+  it('keeps the grouping when the result is an indexed receiver', () => {
+    const expr = new o.ReadKeyExpr(unary(o.UnaryOperator.Minus, count), lit(0));
+    expect(emitAngularExpr(expr)).toBe('(-(ctx.count))[0]');
+  });
+
+  it('throws for a unary operator the installed Angular does not define', () => {
+    const expr = unary(99 as o.UnaryOperator, v('x'));
+    expect(() => emitAngularExpr(expr)).toThrow(
+      /Unsupported UnaryOperator value 99/,
+    );
+  });
+
+  describe.skipIf(!SUPPORTS_INCREMENT_DECREMENT)(
+    'increment and decrement',
+    () => {
+      const increment = UNARY_OPERATORS['Increment'];
+      const decrement = UNARY_OPERATORS['Decrement'];
+
+      it('emits prefix increment: (++(count))', () => {
+        expect(emitAngularExpr(unary(increment, v('count'), true))).toBe(
+          '(++(count))',
+        );
+      });
+
+      it('emits postfix increment: ((count)++)', () => {
+        expect(emitAngularExpr(unary(increment, v('count'), false))).toBe(
+          '((count)++)',
+        );
+      });
+
+      it('emits prefix decrement: (--(count))', () => {
+        expect(emitAngularExpr(unary(decrement, v('count'), true))).toBe(
+          '(--(count))',
+        );
+      });
+
+      it('emits postfix decrement: ((count)--)', () => {
+        expect(emitAngularExpr(unary(decrement, v('count'), false))).toBe(
+          '((count)--)',
+        );
+      });
+
+      it('applies postfix increment before member access', () => {
+        const ctx = { count: 5 };
+        const expr = toStringOf(unary(increment, count, false));
+        expect(emitAngularExpr(expr)).toBe('((ctx.count)++).toString()');
+        expect(evaluate(expr, ctx)).toBe('5');
+        expect(ctx.count).toBe(6);
+      });
+
+      it('applies prefix increment before member access', () => {
+        const ctx = { count: 5 };
+        const expr = toStringOf(unary(increment, count, true));
+        expect(emitAngularExpr(expr)).toBe('(++(ctx.count)).toString()');
+        expect(evaluate(expr, ctx)).toBe('6');
+        expect(ctx.count).toBe(6);
+      });
+
+      it('applies postfix decrement before member access', () => {
+        const ctx = { count: 5 };
+        const expr = toStringOf(unary(decrement, count, false));
+        expect(evaluate(expr, ctx)).toBe('5');
+        expect(ctx.count).toBe(4);
+      });
+
+      it('applies prefix decrement before member access', () => {
+        const ctx = { count: 5 };
+        const expr = toStringOf(unary(decrement, count, true));
+        expect(evaluate(expr, ctx)).toBe('4');
+        expect(ctx.count).toBe(4);
+      });
+    },
+  );
+});
+
+describe('JSEmitter – optional chaining', () => {
+  const ctxProp = (name: string) => new o.ReadPropExpr(v('ctx'), name);
+  const optionalProp = (receiver: o.Expression, name: string) =>
+    new o.ReadPropExpr(receiver, name, null, null, undefined, true);
+  const optionalKey = (receiver: o.Expression, index: o.Expression) =>
+    new o.ReadKeyExpr(receiver, index, null, null, undefined, true);
+  const optionalCall = (fn: o.Expression, ...args: o.Expression[]) =>
+    new o.InvokeFunctionExpr(fn, args, null, null, false, undefined, true);
+  const evaluate = (expr: o.Expression, ctx: Record<string, unknown>) =>
+    new Function('ctx', 'return ' + emitAngularExpr(expr))(ctx);
+
+  describe.skipIf(!HAS_OPTIONAL_CHAINING_OUTPUT)(
+    'optional member access',
+    () => {
+      it('emits an optional property read: a?.b', () => {
+        expect(emitAngularExpr(optionalProp(v('a'), 'b'))).toBe('a?.b');
+      });
+
+      it('emits an optional keyed read: a?.[0]', () => {
+        expect(emitAngularExpr(optionalKey(v('a'), lit(0)))).toBe('a?.[0]');
+      });
+
+      it('emits an optional call: a?.(1)', () => {
+        expect(emitAngularExpr(optionalCall(v('a'), lit(1)))).toBe('a?.(1)');
+      });
+
+      it('keeps an optional call on a function expression: (() => {})?.()', () => {
+        const fn = new o.FunctionExpr([], []);
+        expect(emitAngularExpr(optionalCall(fn))).toBe('(() => {})?.()');
+      });
+
+      it('emits a mixed chain: a?.b?.[0]?.()', () => {
+        const expr = optionalCall(
+          optionalKey(optionalProp(v('a'), 'b'), lit(0)),
+        );
+        expect(emitAngularExpr(expr)).toBe('a?.b?.[0]?.()');
+      });
+
+      it('keeps non-optional access unchanged: a.b, a[0], a(1)', () => {
+        expect(emitAngularExpr(new o.ReadPropExpr(v('a'), 'b'))).toBe('a.b');
+        expect(emitAngularExpr(new o.ReadKeyExpr(v('a'), lit(0)))).toBe('a[0]');
+        expect(
+          emitAngularExpr(new o.InvokeFunctionExpr(v('a'), [lit(1)])),
+        ).toBe('a(1)');
+      });
+
+      it('short-circuits the rest of the chain: ctx.nul?.b.c', () => {
+        const expr = new o.ReadPropExpr(optionalProp(ctxProp('nul'), 'b'), 'c');
+        expect(emitAngularExpr(expr)).toBe('ctx.nul?.b.c');
+        expect(evaluate(expr, { nul: null })).toBeUndefined();
+      });
+
+      it('returns undefined instead of throwing for a nullish receiver', () => {
+        const ctx = { nul: null, obj: {} };
+        expect(
+          evaluate(optionalProp(ctxProp('nul'), 'a'), ctx),
+        ).toBeUndefined();
+        expect(
+          evaluate(optionalKey(ctxProp('nul'), lit(0)), ctx),
+        ).toBeUndefined();
+        expect(evaluate(optionalCall(ctxProp('nul')), ctx)).toBeUndefined();
+        expect(
+          evaluate(optionalCall(optionalProp(ctxProp('obj'), 'fn')), ctx),
+        ).toBeUndefined();
+      });
+
+      it('reads through a non-nullish receiver', () => {
+        const ctx = { obj: { a: { b: 2 }, list: [7], fn: () => 9 } };
+        expect(
+          evaluate(optionalProp(optionalProp(ctxProp('obj'), 'a'), 'b'), ctx),
+        ).toBe(2);
+        expect(
+          evaluate(
+            optionalKey(optionalProp(ctxProp('obj'), 'list'), lit(0)),
+            ctx,
+          ),
+        ).toBe(7);
+        expect(
+          evaluate(optionalCall(optionalProp(ctxProp('obj'), 'fn')), ctx),
+        ).toBe(9);
+      });
+
+      it('ends the chain at explicit parentheses: (a?.b).c', () => {
+        const expr = new o.ReadPropExpr(
+          new o.ParenthesizedExpr(optionalProp(ctxProp('nul'), 'b')),
+          'c',
+        );
+        expect(emitAngularExpr(expr)).toBe('(ctx.nul?.b).c');
+        expect(() => evaluate(expr, { nul: null })).toThrow(TypeError);
+      });
+    },
+  );
 });

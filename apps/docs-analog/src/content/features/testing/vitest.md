@@ -284,6 +284,50 @@ setupTestBed({
 
 This keeps the component rendered after tests complete, allowing you to visually inspect the final state in the browser preview.
 
+## Reducing TypeScript Checking During Test Startup
+
+The Angular plugin defaults to `disableTypeChecking: true`, which limits the diagnostics it reports. TypeScript can still perform semantic checking while emitting JavaScript. In large workspaces, especially those that import other libraries through TypeScript path mappings, this can add to test startup time.
+
+For the default JIT test compilation, you can opt out of full TypeScript checking with [`noCheck`](https://www.typescriptlang.org/tsconfig/noCheck.html), available in TypeScript 5.6 and later. Create a separate `tsconfig.vitest.json` next to your existing `tsconfig.spec.json`:
+
+```json
+{
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "noCheck": true
+  }
+}
+```
+
+Point the Angular plugin in your test configuration to this file. Keep your existing Vitest settings and other plugins:
+
+```ts
+import { resolve } from 'node:path';
+import angular from '@analogjs/vite-plugin-angular';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [
+    angular({
+      tsconfig: resolve(import.meta.dirname, 'tsconfig.vitest.json'),
+    }),
+  ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+  },
+});
+```
+
+Keep `noCheck` out of the original `tsconfig.spec.json` so editors and a separate type-check command continue to report type errors:
+
+```shell
+tsc --project tsconfig.spec.json --noEmit
+```
+
+`noCheck` still reports critical parse and emit errors. This is an opt-in setting for JIT tests; it does not change the plugin defaults or replace Angular template checking for AOT builds.
+
 ## Running Tests
 
 To run unit tests, use the `test` command:

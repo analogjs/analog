@@ -71,13 +71,6 @@ const SPONSORS: Sponsor[] = [
     scale: 'h-16',
   },
   {
-    name: 'Snyder Tech',
-    logo: '/img/logos/snyder-logo.dark.svg',
-    logoDark: '/img/logos/snyder-logo.light.svg',
-    url: 'https://snyder.tech',
-    scale: 'h-16',
-  },
-  {
     name: 'CodeRabbit',
     logo: '/img/logos/coderabbit.svg',
     url: 'https://coderabbit.link/analogjs',
