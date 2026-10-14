@@ -272,7 +272,7 @@ describe('migrate-to-separated-plugins', () => {
       migrateToSeparatedPlugins()(tree, context);
 
       const result = tree.readContent('/vite.config.ts');
-      expect(result).toContain(`nitro({}, { preset: 'node-server' })`);
+      expect(result).toContain(`nitro({ preset: 'node-server' })`);
       expect(result).toContain(`angular()`);
       expect(result).not.toContain(`nitro: { preset: 'node-server' }`);
       expect(result).toContain(`apiPrefix: 'api'`);
@@ -307,7 +307,7 @@ describe('migrate-to-separated-plugins', () => {
         `angular({ fastCompile: true, liveReload: true })`,
       );
       expect(result).toContain(
-        `nitro({}, { routeRules: { '/admin/**': { ssr: false } } })`,
+        `nitro({ routeRules: { '/admin/**': { ssr: false } } })`,
       );
       // Remaining analog options stay on analog().
       expect(result).toMatch(/analog\(\{[\s\S]*apiPrefix: 'api'/);

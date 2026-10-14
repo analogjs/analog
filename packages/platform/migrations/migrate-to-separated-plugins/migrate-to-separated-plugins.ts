@@ -249,7 +249,7 @@ function tryTransformViteConfig(
   const parts: string[] = [newAnalogCall];
   if (viteValueText !== null) parts.push(`angular(${viteValueText})`);
   else parts.push('angular()');
-  if (nitroValueText !== null) parts.push(`nitro({}, ${nitroValueText})`);
+  if (nitroValueText !== null) parts.push(`nitro(${nitroValueText})`);
   else parts.push('nitro()');
   const replacement = parts.join(`,\n${indent}`);
 
