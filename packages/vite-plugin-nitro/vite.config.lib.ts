@@ -54,6 +54,11 @@ export default defineConfig({
       // drops the leading `src/` segment on Windows.
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
+        // Loaded by `ng update` / `nx migrate` from migrations/migration.json.
+        'migrations/update-nitro-options/update-nitro-options': resolve(
+          pkgDir,
+          'migrations/update-nitro-options/update-nitro-options.ts',
+        ),
         'src/lib/utils/derive-server-fn-id': resolve(
           pkgDir,
           'src/lib/utils/derive-server-fn-id.ts',

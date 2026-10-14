@@ -37,6 +37,9 @@ export default defineConfig(() => ({
   test: {
     reporters: ['default'],
     globals: true,
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    include: [
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'migrations/**/*.spec.ts',
+    ],
   },
 }));
