@@ -1,3 +1,4 @@
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { NitroConfig } from 'nitropack';
 import type { Options, I18nPrerenderOptions } from '../options.js';
@@ -64,7 +65,7 @@ export function i18nWorkerSsrEntry(
 import '@angular/localize/init';
 import { loadTranslations } from '@angular/localize';
 import load from ${JSON.stringify(loader)};
-import { setHtmlLang } from ${JSON.stringify(fileURLToPath(new URL('./i18n-prerender.js', import.meta.url)))};
+import { setHtmlLang } from ${JSON.stringify(join(dirname(fileURLToPath(import.meta.url)), 'i18n-prerender.js'))};
 
 const locale = process.env['ANALOG_I18N_LOCALE'];
 let renderer;
