@@ -1,3 +1,35 @@
+# [3.0.0-alpha.92](https://github.com/analogjs/analog/compare/v3.0.0-alpha.91...v3.0.0-alpha.92) (2026-10-14)
+
+- feat(vite-plugin-nitro)!: take the Nitro config as the only argument ([23b6e55](https://github.com/analogjs/analog/commit/23b6e554c51207d6e7121df06391f8428c9b55f3))
+
+### Bug Fixes
+
+- **platform:** pass the nitro option as the nitro() argument in migration ([a017699](https://github.com/analogjs/analog/commit/a017699af4fa70d3eac80372d59c2f9a017bdc7d))
+- **platform:** prepare Angular SSR independently of the Nitro version ([8668481](https://github.com/analogjs/analog/commit/866848144b8fc6c09739841195e5fe2674d7ce7b))
+- **platform:** ship the separated plugins migration code ([4e5cc00](https://github.com/analogjs/analog/commit/4e5cc0077081e486fb842aaca36085f4318ef30b))
+- **platform:** stamp server function ids after Angular compilation ([d2ac4ab](https://github.com/analogjs/analog/commit/d2ac4ab982a7b4fe3d46e29cb5921a07e74979b7))
+- **router:** read the streaming opt-out from the request ([f996745](https://github.com/analogjs/analog/commit/f996745ba665bbf8f4709d069f619555ced2d41c))
+- **router:** support Nitro v2 and v3 in server utilities ([883a4fc](https://github.com/analogjs/analog/commit/883a4fcb941834beee9d5f0638020fedd7db79fa))
+- **router:** use the locale of a locale worker ([57dec63](https://github.com/analogjs/analog/commit/57dec63afd22b15b1219bfee12f51897b49e8c5b))
+- **vite-plugin-nitro:** resolve locale worker runtime files from the build ([1b4858c](https://github.com/analogjs/analog/commit/1b4858cf6e63d7ebe608d5258722e4d46d67f147))
+
+### Features
+
+- **create-analog:** scaffold nitro() from @analogjs/vite-plugin-nitro ([00664de](https://github.com/analogjs/analog/commit/00664de9dc87758753d7711e13730416f78da7bc))
+- **nx-plugin:** scaffold angular() and nitro() in the app generator ([6981cb2](https://github.com/analogjs/analog/commit/6981cb21346d522f2db578fa7a226286fba9201f))
+- **platform:** add nitro() from @analogjs/vite-plugin-nitro in migration ([e92e9cf](https://github.com/analogjs/analog/commit/e92e9cf7f139b6536a676d0c33d1434e00041e0a))
+- **platform:** support Nitro v2 and Nitro v3 ([49d46a1](https://github.com/analogjs/analog/commit/49d46a1023763f965336b07f779af0746ba17ac2))
+- **platform:** support streaming SSR on Nitro v2 and v3 ([0005804](https://github.com/analogjs/analog/commit/0005804461e8bf3a5dde26ab23434677ccb11328))
+- **vite-plugin-nitro:** add a migration to the single nitro() argument ([51c3572](https://github.com/analogjs/analog/commit/51c3572b4d041abae1c180688a9b6a575556625c))
+- **vite-plugin-nitro:** run on Nitro v2 alongside analog() ([68cec0b](https://github.com/analogjs/analog/commit/68cec0b627a70259dd8619ad032ac983e4939e63))
+
+### BREAKING CHANGES
+
+- `nitro(options, nitroConfig)` is now
+  `nitro({ ...nitroConfig, analog: options })`.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Claude-Session: https://claude.ai/code/session_01PEGnL2vLDZ7JfQYYCZKfhj
+
 # [3.0.0-alpha.91](https://github.com/analogjs/analog/compare/v3.0.0-alpha.90...v3.0.0-alpha.91) (2026-10-07)
 
 - feat(router)!: align alpha typed routing with beta ([04fb0e9](https://github.com/analogjs/analog/commit/04fb0e93a3276948038f08d8c318c909b37bbc5c))
