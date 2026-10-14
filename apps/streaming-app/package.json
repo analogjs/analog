@@ -3,9 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "dependencies": {
-    "@analogjs/router": "workspace:*"
+    "@analogjs/router": "workspace:*",
+    "h3": "catalog:nitroV2"
   },
   "devDependencies": {
-    "@analogjs/platform": "workspace:*"
+    "@analogjs/platform": "workspace:*",
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vite-plugin-nitro": "workspace:*"
   }
 }

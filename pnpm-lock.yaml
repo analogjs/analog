@@ -1241,10 +1241,19 @@ importers:
       '@analogjs/router':
         specifier: workspace:*
         version: link:../../packages/router
+      h3:
+        specifier: catalog:nitroV2
+        version: 1.15.11
     devDependencies:
       '@analogjs/platform':
         specifier: workspace:*
         version: link:../../packages/platform
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
+      '@analogjs/vite-plugin-nitro':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-nitro
 
   apps/tailwind-debug-app:
     dependencies:
