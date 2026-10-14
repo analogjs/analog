@@ -603,6 +603,21 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           nitro.hooks.hook('prerender:init', (prerenderer) => {
             prerenderer.options.renderer = { handler: '#analog/ssr-renderer' };
           });
+
+          // The client build emits an `index.html` shell, and copying the
+          // public assets puts it in the output directory. Nitro answers from
+          // the public assets ahead of the renderer, so `/` would be served
+          // that shell instead of being rendered. Nitro calls this hook once
+          // the assets are in place, before prerendering and the server build.
+          nitro.hooks.hook('prerender:routes', () => {
+            const publicDir = resolve(nitro.options.output.publicDir);
+            for (const extension of ['', '.br', '.gz']) {
+              const indexFile = resolve(publicDir, `index.html${extension}`);
+              if (existsSync(indexFile)) {
+                unlinkSync(indexFile);
+              }
+            }
+          });
         }
         // When ssr === false, Nitro's auto-detected template-serving
         // renderer is exactly what we want (serve the raw index.html for
@@ -727,6 +742,15 @@ export default defineHandler(async (event) => {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
+  // The SSR service renders without a Node response, so forward the
+  // \`streaming: false\` rule on the request for the renderer to read.
+  if (routeRules?.headers?.['x-analog-no-streaming'] === 'true') {
+    const headers = new Headers(event.req.headers);
+    headers.set('x-analog-no-streaming', 'true');
+    return service.fetch(
+      new Request(event.req.url, { method: event.req.method, headers }),
+    );
+  }
   return service.fetch(event.req);
 });
 `;
@@ -1033,31 +1057,6 @@ async function wirePrerender(
   nitroPrerender.routes.push(...expanded);
   if (prerender?.discover ?? false) {
     nitroPrerender.crawlLinks = true;
-  }
-
-  // The client build emits an `index.html` shell, and copying the public
-  // assets puts it in the output directory before anything is prerendered.
-  // Nitro answers from the public assets ahead of the renderer, so the
-  // prerenderer's own request for `/` is served that shell and writes it
-  // straight back out — the route never reaches the renderer at all. Drop it
-  // once the assets are in place and before the first route is rendered, so
-  // the prerendered document takes its place.
-  const prerendersRoot = (nitroPrerender.routes as string[]).some(
-    (route) => route === '/',
-  );
-
-  if ((options.ssr ?? true) && prerendersRoot) {
-    nitro.hooks.hook('prerender:init', () => {
-      const publicDir = resolve(nitro.options.output.publicDir);
-
-      for (const extension of ['', '.br', '.gz']) {
-        const indexFile = resolve(publicDir, `index.html${extension}`);
-
-        if (existsSync(indexFile)) {
-          unlinkSync(indexFile);
-        }
-      }
-    });
   }
 
   if (prerender?.postRenderingHooks?.length) {

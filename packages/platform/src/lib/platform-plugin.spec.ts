@@ -113,6 +113,16 @@ describe('platformPlugin', () => {
     expect(injectHTMLPluginSpy).not.toHaveBeenCalled();
   });
 
+  it('registers the streaming plugin when experimental.streaming is on', () => {
+    const hasStreaming = (plugins: { name: string }[]) =>
+      plugins.some((plugin) => plugin.name === 'analogjs-defer-streaming');
+
+    expect(hasStreaming(platformPlugin())).toBe(false);
+    expect(
+      hasStreaming(platformPlugin({ experimental: { streaming: true } })),
+    ).toBe(true);
+  });
+
   it('passes through explicit additional route dirs when discoverRoutes is true', () => {
     platformPlugin({
       discoverRoutes: true,

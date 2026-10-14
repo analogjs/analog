@@ -15,6 +15,11 @@ import { contentPlugin } from './content-plugin.js';
 import { clearClientPageEndpointsPlugin } from './clear-client-page-endpoint.js';
 import { depsPlugin } from './deps-plugin.js';
 import { injectHTMLPlugin } from './ssr/inject-html-plugin.js';
+import {
+  deferStreamingPlugin,
+  MIN_STREAMING_ANGULAR_MAJOR,
+  streamingSupportedOnAngular,
+} from './ssr/defer-streaming-plugin.js';
 import { serverModePlugin } from '../server-mode-plugin.js';
 import { typedRoutes } from './typed-routes-plugin.js';
 import { i18nComponentRegistryPlugin } from './i18n-component-registry-plugin.js';
@@ -48,6 +53,25 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...opts,
   };
 
+  // Streaming patches the compiled @angular/core, which needs a supported
+  // Angular version. Turn it off otherwise so the renderer stays buffered.
+  if (platformOptions.ssr && platformOptions.experimental?.streaming) {
+    const major = getAngularCoreMajor(
+      platformOptions.workspaceRoot ?? process.cwd(),
+    );
+    if (!streamingSupportedOnAngular(major)) {
+      console.warn(
+        `[@analogjs/platform] experimental.streaming requires Angular ` +
+          `${MIN_STREAMING_ANGULAR_MAJOR}+ (detected v${major}); streaming is ` +
+          `disabled and rendering falls back to buffered SSR.`,
+      );
+      platformOptions.experimental = {
+        ...platformOptions.experimental,
+        streaming: false,
+      };
+    }
+  }
+
   debugPlatform('experimental options resolved', {
     typedRouting: platformOptions.experimental?.typedRouting,
   });
@@ -79,6 +103,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
     ...(!isTest ? [analogNitroPlugin(platformOptions)] : []),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
+      : []),
+    ...(platformOptions.ssr && platformOptions.experimental?.streaming
+      ? [deferStreamingPlugin()]
       : []),
     ...(!isTest ? depsPlugin(platformOptions) : []),
     ...routerPlugin(platformOptions),

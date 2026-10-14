@@ -149,6 +149,14 @@ export interface Options {
     typedRouting?:
       | boolean
       | import('./typed-routes-plugin.js').TypedRoutingOptions;
+    /**
+     * Opt into progressive streaming SSR. When enabled, the SSR build patches
+     * `@angular/core` with a per-`@defer` block resolution hook so
+     * `@analogjs/router`'s `renderStream` can flush the document head first and
+     * each `@defer (hydrate …)` block as it resolves on the server. Has no
+     * effect unless the server entry uses `renderStream`.
+     */
+    streaming?: boolean;
   };
 }
 
