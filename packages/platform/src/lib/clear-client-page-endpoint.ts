@@ -10,6 +10,9 @@ export function clearClientPageEndpointsPlugin(): Plugin {
 
   return {
     name: 'analogjs-platform-clear-client-page-endpoint',
+    // After Angular compilation, which re-emits `.server.ts` files from its own
+    // program and would otherwise drop this transform's output.
+    enforce: 'post',
     config() {
       return {
         build: {
