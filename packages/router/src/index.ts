@@ -18,17 +18,16 @@ export { injectLoad, injectLoadData } from './lib/inject-load';
 export { getLoadResolver } from './lib/get-load-resolver';
 export { requestContextInterceptor } from './lib/request-context';
 export { injectRouteEndpointURL } from './lib/inject-route-endpoint-url';
-export { FormAction } from './lib/form-action.directive';
-export type { FormActionState } from './lib/form-action.directive';
-export { injectDebugRoutes } from './lib/debug/routes';
-export { withDebugRoutes } from './lib/debug';
-export type { AnalogJsonLdDocument } from './lib/json-ld';
+export { FormAction, type FormActionState } from './lib/form-action.directive';
 export {
   issuesToFieldErrors,
   issuesToFormErrors,
   issuePathToFieldName,
+  type ValidationFieldErrors,
 } from './lib/validation-errors';
-export type { ValidationFieldErrors } from './lib/validation-errors';
+export { injectDebugRoutes } from './lib/debug/routes';
+export { withDebugRoutes } from './lib/debug';
+export type { AnalogJsonLdDocument } from './lib/json-ld';
 
 // Server Functions (issue #2422) — client transport + shared type surface.
 export {

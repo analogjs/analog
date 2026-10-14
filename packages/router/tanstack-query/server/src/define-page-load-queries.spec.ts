@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
 import { QueryClient } from '@tanstack/angular-query-experimental';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -16,10 +16,12 @@ function makeCtx(
     req: {} as never,
     res: {} as never,
     fetch: globalThis.fetch as never,
-    // `definePageLoad` reads the URL via `getRequestURL(event)`; the
-    // `h3` helper falls back to `event.request.url` when the H3
-    // accessor cannot resolve a node request — that's the path used here.
-    event: { request: new Request(url) } as never,
+    // `definePageLoad` reads the URL from `event.web.request` when the
+    // event carries a web request, which is the path used here.
+    event: {
+      web: { request: new Request(url), url: new URL(url) },
+      node: { req: {}, res: {} },
+    } as never,
   };
 }
 

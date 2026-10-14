@@ -12,6 +12,42 @@ import { defineEventHandler } from 'h3';
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
+## Validating an API Route with a Schema
+
+`defineApiRoute` adds Standard Schema validation to an API handler. For example,
+with Zod 3.24+:
+
+```ts
+// src/server/routes/api/users.post.ts
+import { defineApiRoute } from '@analogjs/router/server/actions';
+import { z } from 'zod';
+
+export default defineApiRoute({
+  body: z.object({ name: z.string().min(1) }),
+  handler: ({ body }) => ({ name: body.name }),
+});
+```
+
+- `params`, `query`, and `body` validate their respective request values and infer
+  the corresponding handler argument types. Body validation runs for methods
+  other than GET and HEAD.
+- `input` validates query parameters for GET/HEAD, or the body for other methods,
+  and provides its result as `data`. If separate schemas are also configured,
+  they are validated too. Without `input`, `data` uses the validated query for
+  GET/HEAD, or the validated body (falling back to query) for other methods.
+- Repeated query and form fields remain arrays. JSON, URL-encoded forms, and
+  multipart forms are supported. Empty or unparseable bodies fall back to `{}`.
+- Invalid input returns HTTP 422 with a Standard Schema issues array and the
+  `X-Analog-Errors` header, without calling the handler.
+- Plain return values become JSON responses. A returned `Response`, including
+  one from `json`, `redirect`, or `fail`, passes through unchanged.
+- An optional `output` schema checks plain return values in development and tests.
+  Failures produce a warning; they do not change the response. Output validation
+  does not run in production.
+
+Schemas may validate asynchronously. The handler also receives the original h3
+`event` for cookies, headers, and other request operations.
+
 ## Defining XML Content
 
 To create an RSS feed for your site, set the `content-type` to be `text/xml` and Analog serves up the correct content type for the route.
@@ -126,32 +162,29 @@ export default defineEventHandler((event) => {
 });
 ```
 
-## Validated API Routes
+## Typed API Routes
 
-For route handlers that need runtime validation and typed inputs, use `defineApiRoute()` from `@analogjs/router/server/actions`. It can validate route `params`, query strings, request bodies, and response payloads with any Standard Schema-compatible library.
+Use `defineServerRoute` from `@analogjs/router/server/actions` to validate the request with any [Standard Schema](https://standardschema.dev) library, such as Valibot or Zod, and return JSON from the handler. Validation failures respond with a `422` status and the schema issues.
 
 ```ts
-// src/server/routes/api/v1/users/[id].put.ts
-import { defineApiRoute } from '@analogjs/router/server/actions';
+// /server/routes/api/v1/todos.get.ts
+import { defineServerRoute } from '@analogjs/router/server/actions';
 import * as v from 'valibot';
 
-export default defineApiRoute({
-  params: v.object({
-    id: v.pipe(
-      v.string(),
-      v.transform((value) => Number(value)),
-    ),
-  }),
-  body: v.object({
-    name: v.pipe(v.string(), v.minLength(1)),
-  }),
-  handler: async ({ params, body }) => {
-    return updateUser(params.id, body.name);
-  },
+export const route = defineServerRoute({
+  query: v.object({ scope: v.optional(v.string(), 'default') }),
+  handler: ({ query }) => getTodos(query.scope),
 });
+
+export default route;
 ```
 
-For the full validation guide, including server actions, content frontmatter, and Standard Schema examples, see [Schema Validation](../data-fetching/validation).
+- `query` validates the URL search params and `body` validates the request body for `POST`, `PUT`, and `PATCH` requests.
+- `input` validates the body, or the search params on `GET`, and provides the result as `data`.
+- `params` validates the dynamic route params.
+- `output` validates the returned value in development and logs a warning on mismatch.
+
+Returning a `Response` from the handler sends it unchanged. Exporting the `route` lets the [TanStack Query integration](/docs/integrations/tanstack-query) infer the query, body, and result types on the client.
 
 ## Catch-all Routes
 

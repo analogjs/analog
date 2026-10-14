@@ -1,5 +1,7 @@
+// @vitest-environment node
+
 import { describe, it, expect, vi } from 'vitest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import { defineAction } from './define-action';
 import { json } from './actions';
 
@@ -26,11 +28,13 @@ function createMockContext(body: unknown, contentType = 'application/json') {
     }) as any,
     event: {
       headers: new Headers({ 'content-type': contentType }),
-      request: new Request('http://localhost/test', {
-        method: 'POST',
-        headers: { 'content-type': contentType },
-        body: bodyStr,
-      }),
+      web: {
+        request: new Request('http://localhost/test', {
+          method: 'POST',
+          headers: { 'content-type': contentType },
+          body: bodyStr,
+        }),
+      },
       method: 'POST',
     } as any,
   };
@@ -95,13 +99,15 @@ describe('defineAction', () => {
         headers: new Headers({
           'content-type': 'application/x-www-form-urlencoded',
         }),
-        request: new Request('http://localhost/test', {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/x-www-form-urlencoded',
-          },
-          body: formBody,
-        }),
+        web: {
+          request: new Request('http://localhost/test', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/x-www-form-urlencoded',
+            },
+            body: formBody,
+          }),
+        },
         method: 'POST',
       } as any,
     };
@@ -134,13 +140,15 @@ describe('defineAction', () => {
         headers: new Headers({
           'content-type': 'application/x-www-form-urlencoded',
         }),
-        request: new Request('http://localhost/test', {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/x-www-form-urlencoded',
-          },
-          body: formBody,
-        }),
+        web: {
+          request: new Request('http://localhost/test', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/x-www-form-urlencoded',
+            },
+            body: formBody,
+          }),
+        },
         method: 'POST',
       } as any,
     };
@@ -224,11 +232,13 @@ describe('defineAction', () => {
       }) as any,
       event: {
         headers: new Headers({ 'content-type': 'text/plain' }),
-        request: new Request('http://localhost/test', {
-          method: 'POST',
-          headers: { 'content-type': 'text/plain' },
-          body: 'not json',
-        }),
+        web: {
+          request: new Request('http://localhost/test', {
+            method: 'POST',
+            headers: { 'content-type': 'text/plain' },
+            body: 'not json',
+          }),
+        },
         method: 'POST',
       } as any,
     };
@@ -256,11 +266,13 @@ describe('defineAction', () => {
         headers: new Headers({
           'content-type': 'application/json; charset=utf-8',
         }),
-        request: new Request('http://localhost/test', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json; charset=utf-8' },
-          body: JSON.stringify({ name: 'UTF8' }),
-        }),
+        web: {
+          request: new Request('http://localhost/test', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json; charset=utf-8' },
+            body: JSON.stringify({ name: 'UTF8' }),
+          }),
+        },
         method: 'POST',
       } as any,
     };

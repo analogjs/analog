@@ -21,34 +21,34 @@ packages:
 catalog:
   # Keep the Angular runtime/compiler patch set aligned so compiler-cli,
   # language-service, and the framework runtime all resolve the same release.
-  '@angular/animations': 22.1.5
-  '@angular/cdk': 22.1.5
-  '@angular/common': 22.1.5
-  '@angular/compiler': 22.1.5
-  '@angular/core': 22.1.5
-  '@angular/forms': 22.1.5
-  '@angular/localize': 22.1.5
-  '@angular/material': 22.1.5
-  '@angular/platform-browser': 22.1.5
-  '@angular/platform-browser-dynamic': 22.1.5
-  '@angular/platform-server': 22.1.5
-  '@angular/router': 22.1.5
-  '@angular/ssr': 22.1.7
+  '@angular/animations': 22.2.0
+  '@angular/cdk': 22.2.0
+  '@angular/common': 22.2.0
+  '@angular/compiler': 22.2.0
+  '@angular/core': 22.2.0
+  '@angular/forms': 22.2.0
+  '@angular/localize': 22.2.0
+  '@angular/material': 22.2.0
+  '@angular/platform-browser': 22.2.0
+  '@angular/platform-browser-dynamic': 22.2.0
+  '@angular/platform-server': 22.2.0
+  '@angular/router': 22.2.0
+  '@angular/ssr': 22.2.0
   '@astrojs/mdx': ^5.0.3
   '@astrojs/markdown-component': ^1.0.5
   '@astrojs/react': ^5.0.2
   '@mdx-js/react': 3.1.1
-  '@nx/angular': 23.2.0
-  '@nx/devkit': 23.2.0
-  '@nx/eslint': 23.2.0
-  '@nx/eslint-plugin': 23.2.0
-  '@nx/js': 23.2.0
-  '@nx/playwright': 23.2.0
-  '@nx/plugin': 23.2.0
-  '@nx/storybook': 23.2.0
-  '@nx/vite': 23.2.0
-  '@nx/vitest': 23.2.0
-  '@nx/web': 23.2.0
+  '@nx/angular': 23.2.1
+  '@nx/devkit': 23.2.1
+  '@nx/eslint': 23.2.1
+  '@nx/eslint-plugin': 23.2.1
+  '@nx/js': 23.2.1
+  '@nx/playwright': 23.2.1
+  '@nx/plugin': 23.2.1
+  '@nx/storybook': 23.2.1
+  '@nx/vite': 23.2.1
+  '@nx/vitest': 23.2.1
+  '@nx/web': 23.2.1
   '@oxc-angular/vite': ^0.0.23
   '@oxc-project/runtime': ^0.124.0
   '@playwright/test': ^1.58.2
@@ -69,17 +69,17 @@ catalog:
   '@vitest/browser-playwright': 4.1.4
   '@vitest/coverage-v8': 4.1.4
   '@vitest/ui': 4.1.4
-  '@angular-devkit/architect': 0.2201.7
-  '@angular-devkit/build-angular': 22.1.7
-  '@angular-devkit/core': 22.1.7
-  '@angular-devkit/schematics': 22.1.7
-  '@angular-eslint/eslint-plugin': 22.2.0
-  '@angular-eslint/eslint-plugin-template': 22.2.0
-  '@angular-eslint/template-parser': 22.2.0
-  '@angular/build': 22.1.7
-  '@angular/cli': 22.1.7
-  '@angular/compiler-cli': 22.1.5
-  '@angular/language-service': 22.1.5
+  '@angular-devkit/architect': 0.2202.0
+  '@angular-devkit/build-angular': 22.2.0
+  '@angular-devkit/core': 22.2.0
+  '@angular-devkit/schematics': 22.2.0
+  '@angular-eslint/eslint-plugin': 22.5.0
+  '@angular-eslint/eslint-plugin-template': 22.5.0
+  '@angular-eslint/template-parser': 22.5.0
+  '@angular/build': 22.2.0
+  '@angular/cli': 22.2.0
+  '@angular/compiler-cli': 22.2.0
+  '@angular/language-service': 22.2.0
   '@babel/core': ^8.0.0
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
@@ -87,7 +87,7 @@ catalog:
   '@eslint/eslintrc': ^3.3.5
   '@eslint/js': ^10.0.1
   '@netlify/functions': ^5.1.5
-  '@schematics/angular': 22.1.7
+  '@schematics/angular': 22.2.0
   '@semantic-release/changelog': ^6.0.3
   '@semantic-release/exec': ^7.1.0
   '@semantic-release/git': ^10.0.1
@@ -102,7 +102,7 @@ catalog:
   ajv: ^8.18.0
   ajv-formats: ^3.0.1
   all-contributors-cli: ^6.26.1
-  angular-eslint: ^22.0.0
+  angular-eslint: ^22.5.0
   astro: 6.1.5
   conventional-changelog: ^7.2.0
   cpy-cli: ^7.0.0
@@ -138,10 +138,10 @@ catalog:
   md4x: ^0.0.25
   mermaid: ^11.13.0
   minimist: ^1.2.8
-  ng-packagr: 22.1.1
+  ng-packagr: 22.2.1
   h3: ^2.0.1-rc.31
   nitro: 3.0.260903-beta
-  nx: 23.2.0
+  nx: 23.2.1
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
   oxc-parser: ^0.124.0
@@ -198,17 +198,17 @@ catalog:
   zone.js: ^0.16.3
 
 overrides:
-  '@angular/animations': 22.1.5
-  '@angular/common': 22.1.5
-  '@angular/compiler': 22.1.5
-  '@angular/core': 22.1.5
-  '@angular/forms': 22.1.5
-  '@angular/platform-browser': 22.1.5
-  '@angular/platform-browser-dynamic': 22.1.5
-  '@angular/platform-server': 22.1.5
-  '@angular/router': 22.1.5
-  '@angular/compiler-cli': 22.1.5
-  '@angular/language-service': 22.1.5
+  '@angular/animations': 22.2.0
+  '@angular/common': 22.2.0
+  '@angular/compiler': 22.2.0
+  '@angular/core': 22.2.0
+  '@angular/forms': 22.2.0
+  '@angular/platform-browser': 22.2.0
+  '@angular/platform-browser-dynamic': 22.2.0
+  '@angular/platform-server': 22.2.0
+  '@angular/router': 22.2.0
+  '@angular/compiler-cli': 22.2.0
+  '@angular/language-service': 22.2.0
 
 catalogs:
   nitroV2:

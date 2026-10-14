@@ -4,6 +4,7 @@ import Card from '../components/Card.astro';
 import { CardComponent } from '../components/card.component.ts';
 import { Instructions } from '../components/Instructions';
 import { TodosComponent } from '../components/todos.component.ts';
+import { ContentProjectionTestComponent } from '../components/content-projection-test.component.ts';
 
 const serverSideTitle = 'Angular (server side binding)';
 ---
@@ -46,6 +47,18 @@ const serverSideTitle = 'Angular (server side binding)';
         body="Build with Angular. ❤️"
       />
 		</ul>
+
+		<ContentProjectionTestComponent title="Static island">
+			<p question>Is content projection cool?</p>
+			<p>Let's learn about content projection!</p>
+		</ContentProjectionTestComponent>
+
+		<ContentProjectionTestComponent client:load title="Hydrated island">
+			<p question>Is content projection cool?</p>
+			<p>Let's learn about content projection!</p>
+		</ContentProjectionTestComponent>
+
+		<ContentProjectionTestComponent title="Text only">Hello World</ContentProjectionTestComponent>
 	</main>
 
 	<TodosComponent />

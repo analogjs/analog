@@ -41,6 +41,7 @@ import {
 } from './component-resolvers.js';
 import {
   augmentHostWithCaching,
+  augmentHostWithModuleResolution,
   augmentHostWithResources,
   augmentProgramWithVersioning,
   mergeTransformers,
@@ -84,6 +85,7 @@ import {
 } from './utils/debug.js';
 import {
   createTsConfigGetter,
+  EXCLUDED_TS_EXT_REGEX,
   getTsConfigPath,
   isProdMode,
   TS_EXT_REGEX,
@@ -129,6 +131,7 @@ export {
   refreshStylesheetRegistryForFile,
   describeStylesheetContent,
   isTestWatchMode,
+  getBrowserModeCliOverride,
 } from './utils/compilation-shared.js';
 import {
   DiagnosticModes,
@@ -137,11 +140,13 @@ import {
   describeStylesheetContent,
   refreshStylesheetRegistryForFile,
   isTestWatchMode,
+  getBrowserModeCliOverride,
 } from './utils/compilation-shared.js';
 import {
   loadVirtualRawModule,
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
+import { createHotUpdateBatcher } from './hot-update-batch.js';
 
 export interface PluginOptions {
   tsconfig?: string | (() => string);
@@ -318,6 +323,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     sourceFileCache.invalidate(files);
   }
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
+  let deferInitialCompilation = isVitestVscode;
   const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
 
@@ -378,6 +384,9 @@ export function angular(options?: PluginOptions): Plugin[] {
   ) => Promise<vite.PreprocessCSSResult>;
   let pendingCompilation: Promise<void> | null;
   let compilationLock = Promise.resolve();
+  const hotUpdates = createHotUpdateBatcher((ids) =>
+    performCompilation(resolvedConfig, ids),
+  );
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -515,6 +524,12 @@ export function angular(options?: PluginOptions): Plugin[] {
         }
 
         if (isTest) {
+          const browser = (config as any).test?.browser;
+          deferInitialCompilation =
+            isVitestVscode ||
+            (!!browser &&
+              (getBrowserModeCliOverride() ?? browser.enabled) === true);
+
           // set test watch mode
           // - vite override from vitest-angular
           // - @nx/vite executor set server.watch explicitly to undefined (watch)/null (watch=false)
@@ -528,6 +543,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       },
       configureServer(server) {
         viteServer = server;
+        hotUpdates.configureServer(server);
 
         // Add/unlink changes the TypeScript program shape, not just file
         // contents, so we need to invalidate both include discovery and the
@@ -537,7 +553,12 @@ export function angular(options?: PluginOptions): Plugin[] {
           invalidateTsconfigCaches,
           () => performCompilation(resolvedConfig),
         );
-        server.watcher.on('add', invalidateCompilationOnFsChange);
+        server.watcher.on('add', (file) => {
+          if (EXCLUDED_TS_EXT_REGEX.test(file)) {
+            invalidateSourceFiles(new Set([normalizePath(file)]));
+          }
+          return invalidateCompilationOnFsChange();
+        });
         server.watcher.on('unlink', (file) => {
           const id = normalizePath(file);
           outputFiles.delete(id);
@@ -556,8 +577,17 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
-        // Defer the first compilation in test mode
-        if (!isVitestVscode) {
+        // Vite keys its CSS preprocessor worker cache by the top-level resolved
+        // config object. Passing `this.environment.config` misses that cache
+        // and falls back to a worker Vite never closes, which keeps Vitest
+        // from exiting after AOT tests with `.scss` styleUrls. (#2556)
+        if (!jit) {
+          styleTransform = (code: string, filename: string) =>
+            preprocessCSS(code, filename, resolvedConfig);
+        }
+
+        // Browser mode also creates a server that may never transform TypeScript.
+        if (!deferInitialCompilation) {
           pendingCompilation = performCompilation(
             this.environment?.config ?? resolvedConfig,
           );
@@ -594,13 +624,18 @@ export function angular(options?: PluginOptions): Plugin[] {
           const [fileId] = ctx.file.split('?');
           debugHmr('TS file changed', { file: ctx.file, fileId });
 
-          pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+          await hotUpdates.schedule(ctx.file, [fileId]);
+
+          if (EXCLUDED_TS_EXT_REGEX.test(fileId)) {
+            // Declaration dependencies have no runtime modules for Vite to invalidate.
+            ctx.server.moduleGraph.invalidateAll();
+            ctx.server.ws.send({ type: 'full-reload', triggeredBy: fileId });
+            return [];
+          }
 
           let result;
 
           if (shouldEnableLiveReload()) {
-            await pendingCompilation;
-            pendingCompilation = null;
             result = fileEmitter(fileId);
             debugHmr('TS file emitted', {
               fileId,
@@ -898,9 +933,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                 ctx.server.moduleGraph.invalidateModule(mod),
               );
 
-              pendingCompilation = performCompilation(resolvedConfig, ownerIds);
-              await pendingCompilation;
-              pendingCompilation = null;
+              await hotUpdates.schedule(ctx.file, ownerIds);
 
               const updates = ownerIds.filter((id) => classNames.get(id));
               debugHmrV('template owner recompilation result', {
@@ -958,15 +991,14 @@ export function angular(options?: PluginOptions): Plugin[] {
             mods: mods.map((mod) => mod.id),
           });
 
-          pendingCompilation = performCompilation(resolvedConfig, [
-            ...mods.map((mod) => mod.id).filter(Boolean),
+          if (mods.length === 0 && updates.length === 0) return mods;
+
+          await hotUpdates.schedule(ctx.file, [
+            ...mods.map((mod) => mod.id as string),
             ...updates,
           ]);
 
           if (updates.length > 0) {
-            await pendingCompilation;
-            pendingCompilation = null;
-
             debugHmr('resource importer component updates', {
               file: ctx.file,
               updateCount: updates.length,
@@ -1169,7 +1201,7 @@ export function angular(options?: PluginOptions): Plugin[] {
            * for test(Vitest)
            */
           if (isTest) {
-            if (isVitestVscode && !initialCompilation) {
+            if (deferInitialCompilation && !initialCompilation) {
               // Do full initial compilation
               pendingCompilation = performCompilation(
                 this.environment?.config ?? resolvedConfig,
@@ -1220,6 +1252,7 @@ export function angular(options?: PluginOptions): Plugin[] {
             await pendingCompilation;
             pendingCompilation = null;
           }
+          await hotUpdates.wait();
 
           const typescriptResult = fileEmitter(id);
           if (!typescriptResult) {
@@ -1342,6 +1375,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       closeBundle() {
+        hotUpdates.close();
         declarationFiles.forEach(
           ({ declarationFileDir, declarationPath, data }) => {
             mkdirSync(declarationFileDir, { recursive: true });
@@ -1461,10 +1495,6 @@ export function angular(options?: PluginOptions): Plugin[] {
    * It should not be called concurrently. Use `performCompilation` which wraps this method in a lock to ensure only one compilation runs at a time.
    */
   async function _doPerformCompilation(config: ResolvedConfig, ids?: string[]) {
-    if (!jit) {
-      styleTransform = (code: string, filename: string) =>
-        preprocessCSS(code, filename, config);
-    }
     const isProd = config.mode === 'production';
     const modifiedFiles = new Set<string>(ids ?? []);
     invalidateSourceFiles(modifiedFiles);
@@ -1555,6 +1585,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           return file;
         },
       });
+      augmentHostWithModuleResolution(host, tsCompilerOptions);
       cachedHost = host;
       cachedHostKey = hostKey;
 
@@ -1593,8 +1624,10 @@ export function angular(options?: PluginOptions): Plugin[] {
      */
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
-    const oldBuilder =
-      builder ?? ts.readBuilderProgram(tsCompilerOptions, host);
+    // Declaration changes can invalidate diagnostics in unchanged consumers.
+    const oldBuilder = ids?.some((id) => EXCLUDED_TS_EXT_REGEX.test(id))
+      ? undefined
+      : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler

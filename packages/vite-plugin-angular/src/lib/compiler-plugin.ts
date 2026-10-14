@@ -24,18 +24,21 @@ export function createCompilerPlugin(
   closeTransformer: boolean,
   cache?: TransformCacheStore,
 ): EsbuildPlugin {
-  const javascriptTransformer = new JavaScriptTransformer(
-    { ...pluginOptions, jit: true },
-    1,
-    cache,
-  );
+  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
+  function getTransformer() {
+    return (javascriptTransformer ??= new JavaScriptTransformer(
+      { ...pluginOptions, jit: true },
+      1,
+      cache,
+    ));
+  }
 
   return {
     name: 'analogjs-angular-esbuild-deps-optimizer-plugin',
     async setup(build: PluginBuild) {
       if (!isTest) {
         build.onLoad({ filter: /\.[cm]?js$/ }, async (args) => {
-          const contents = await javascriptTransformer.transformFile(args.path);
+          const contents = await getTransformer().transformFile(args.path);
 
           return {
             contents,
@@ -45,7 +48,7 @@ export function createCompilerPlugin(
       }
 
       if (closeTransformer) {
-        build.onEnd(() => javascriptTransformer.close());
+        build.onEnd(() => javascriptTransformer?.close());
       }
     },
   };
@@ -57,11 +60,14 @@ export function createRolldownCompilerPlugin(
   closeTransformer: boolean,
   cache?: TransformCacheStore,
 ): Rolldown.Plugin {
-  const javascriptTransformer = new JavaScriptTransformer(
-    { ...pluginOptions, jit: true },
-    1,
-    cache,
-  );
+  let javascriptTransformer: InstanceType<typeof JavaScriptTransformer>;
+  function getTransformer() {
+    return (javascriptTransformer ??= new JavaScriptTransformer(
+      { ...pluginOptions, jit: true },
+      1,
+      cache,
+    ));
+  }
 
   const plugin: Rolldown.Plugin = {
     name: 'analogjs-rolldown-deps-optimizer-plugin',
@@ -73,7 +79,7 @@ export function createRolldownCompilerPlugin(
         id: /\.[cm]?js$/,
       },
       async handler(id) {
-        const contents = await javascriptTransformer.transformFile(id);
+        const contents = await getTransformer().transformFile(id);
 
         return {
           code: Buffer.from(contents).toString('utf-8'),
@@ -84,7 +90,7 @@ export function createRolldownCompilerPlugin(
   }
 
   if (closeTransformer) {
-    plugin.buildEnd = () => javascriptTransformer.close();
+    plugin.buildEnd = () => javascriptTransformer?.close();
   }
 
   return plugin;

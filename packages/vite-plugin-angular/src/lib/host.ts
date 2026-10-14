@@ -16,6 +16,62 @@ import {
 } from './stylesheet-registry.js';
 import { debugStyles } from './utils/debug.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
+import { EXCLUDED_TS_EXT_REGEX, TS_EXT_REGEX } from './utils/plugin-config.js';
+
+export function augmentHostWithModuleResolution(
+  host: ts.CompilerHost,
+  options: ts.CompilerOptions,
+): void {
+  const resolutionCache = ts.createModuleResolutionCache(
+    host.getCurrentDirectory(),
+    host.getCanonicalFileName.bind(host),
+    options,
+  );
+  host.getModuleResolutionCache = () => resolutionCache;
+  host.resolveModuleNameLiterals = (
+    literals,
+    containingFile,
+    redirectedReference,
+    compilerOptions,
+    containingSourceFile,
+  ) =>
+    literals.map((literal) => {
+      const resolution: ts.ResolvedModuleWithFailedLookupLocations =
+        ts.resolveModuleName(
+          literal.text,
+          containingFile,
+          compilerOptions,
+          host,
+          resolutionCache,
+          redirectedReference,
+          ts.getModeForUsageLocation(
+            containingSourceFile,
+            literal,
+            compilerOptions,
+          ),
+        );
+      const resolvedModule = resolution.resolvedModule;
+      if (
+        resolvedModule?.isExternalLibraryImport &&
+        TS_EXT_REGEX.test(resolvedModule.resolvedFileName) &&
+        !EXCLUDED_TS_EXT_REGEX.test(resolvedModule.resolvedFileName) &&
+        !normalizePath(resolvedModule.resolvedFileName).includes(
+          '/node_modules/',
+        )
+      ) {
+        // A workspace symlink resolves to source outside node_modules.
+        // Classify it before program creation so TypeScript emits it.
+        return {
+          ...resolution,
+          resolvedModule: {
+            ...resolvedModule,
+            isExternalLibraryImport: false,
+          },
+        };
+      }
+      return resolution;
+    });
+}
 
 export function augmentHostWithResources(
   host: ts.CompilerHost,

@@ -1,13 +1,13 @@
+import { LinkTo } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterLinkWithHref } from '@angular/router';
 
 import { CartService } from '../cart.service';
 
 @Component({
   selector: 'analogjs-cart',
-  imports: [RouterLinkWithHref, CurrencyPipe, ReactiveFormsModule],
+  imports: [LinkTo, CurrencyPipe, ReactiveFormsModule],
   template: `
     <section class="cart-shell">
       <div class="cart-header">

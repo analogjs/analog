@@ -1,11 +1,10 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
-import type { H3Event, H3EventContext } from 'h3';
-import type { $Fetch } from 'ofetch';
+import type { StandardSchemaV1 } from './standard-schema';
+import type { H3EventContext } from 'h3';
+import type { PageServerAction } from './actions';
 import { fail } from './actions';
 import { parseRequestData } from './parse-request-data';
 import { validateWithSchema } from './validate';
 
-type NodeContext = NonNullable<H3Event['node']>;
 type OptionalSchema = StandardSchemaV1 | undefined;
 type InferSchema<
   TSchema extends OptionalSchema,
@@ -20,10 +19,10 @@ export interface DefineActionContext<
 > {
   data: InferSchema<TSchema, Record<string, unknown>>;
   params: InferSchema<TParamsSchema, H3EventContext['params']>;
-  req: NodeContext['req'];
-  res: NonNullable<NodeContext['res']>;
-  fetch: $Fetch;
-  event: H3Event;
+  req: PageServerAction['req'];
+  res: PageServerAction['res'];
+  fetch: PageServerAction['fetch'];
+  event: PageServerAction['event'];
 }
 
 export interface DefineActionOptions<
@@ -76,13 +75,7 @@ export function defineAction<
     return (params ?? {}) as Params | Record<string, never>;
   }
 
-  return async (ctx: {
-    params: H3EventContext['params'];
-    req: NodeContext['req'];
-    res: NonNullable<NodeContext['res']>;
-    fetch: $Fetch;
-    event: H3Event;
-  }): Promise<Response> => {
+  return async (ctx: PageServerAction): Promise<Response> => {
     const rawParams = getParams(ctx.params);
 
     if (options.params) {
@@ -101,13 +94,7 @@ async function handleValidatedRequest<
   TSchema extends OptionalSchema = undefined,
   TParamsSchema extends OptionalSchema = undefined,
 >(
-  ctx: {
-    params: H3EventContext['params'];
-    req: NodeContext['req'];
-    res: NonNullable<NodeContext['res']>;
-    fetch: $Fetch;
-    event: H3Event;
-  },
+  ctx: PageServerAction,
   options: DefineActionOptions<TSchema, TParamsSchema>,
   params: InferSchema<TParamsSchema, H3EventContext['params']>,
 ) {

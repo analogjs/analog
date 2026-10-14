@@ -89,3 +89,6 @@ gradle.properties
 .nx/polygraph
 .nx/self-healing
 .nx/migrate-runs
+
+# Vitest output
+.vitest/

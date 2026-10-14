@@ -1,3 +1,6 @@
+import type { LinkToInput } from '@analogjs/router';
+import { docsLink } from './routes';
+
 export type SidebarDoc = {
   kind: 'doc';
   id: string;
@@ -19,7 +22,7 @@ export type SidebarNode = SidebarDoc | SidebarCategory | SidebarBreak;
 export type FlatSidebarEntry = {
   id: string;
   label: string;
-  href: string;
+  linkTo: LinkToInput;
   parents: string[];
 };
 
@@ -44,8 +47,12 @@ function walk(
 ): void {
   for (const node of nodes) {
     if (node.kind === 'doc') {
-      const href = locale ? `/${locale}/docs/${node.id}` : `/docs/${node.id}`;
-      out.push({ id: node.id, label: node.label, href, parents });
+      out.push({
+        id: node.id,
+        label: node.label,
+        linkTo: docsLink(node.id, locale),
+        parents,
+      });
     } else if (node.kind === 'category') {
       walk(node.items, locale, [...parents, node.label], out);
     }

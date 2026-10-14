@@ -1,16 +1,23 @@
 import {
+  booleanAttribute,
   Directive,
+  effect,
+  ElementRef,
   inject,
+  Injector,
   input,
+  InputSignal,
+  InputSignalWithTransform,
   output,
+  OutputEmitterRef,
+  Renderer2,
+  runInInjectionContext,
   signal,
-  type InputSignal,
-  type OutputEmitterRef,
-  type WritableSignal,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
+import { ANALOG_META_KEY } from './endpoints';
 
 export type FormActionState =
   | 'submitting'
@@ -21,67 +28,118 @@ export type FormActionState =
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'form[action],form[method]',
+  selector: 'form[action],form[method],form[enhanceForm]',
   host: {
     '(submit)': `submitted($event)`,
-    '[attr.data-state]': 'currentState()',
-    '[attr.aria-busy]': 'currentState() === "submitting" ? "true" : null',
   },
   standalone: true,
 })
 export class FormAction {
   action: InputSignal<string> = input<string>('');
+  enhanceForm: InputSignalWithTransform<boolean, unknown> = input(false, {
+    transform: booleanAttribute,
+  });
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   onSuccess: OutputEmitterRef<unknown> = output<unknown>();
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   onError: OutputEmitterRef<unknown> = output<unknown>();
   state: OutputEmitterRef<FormActionState> = output<FormActionState>();
+  private currentState = signal<FormActionState | 'idle'>('idle');
+  private injector = inject(Injector);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  protected currentState: WritableSignal<FormActionState | 'idle'> = signal<
-    FormActionState | 'idle'
-  >('idle');
-  /** Cached during construction (injection context) so inject() works. */
-  private _endpointUrl = this.route
-    ? injectRouteEndpointURL(this.route.snapshot)
-    : undefined;
+  private path = this._getPath();
 
-  submitted($event: SubmitEvent): void {
+  constructor() {
+    const form = inject(ElementRef<HTMLFormElement>).nativeElement;
+    const renderer = inject(Renderer2);
+    effect((onCleanup) => {
+      if (!this.enhanceForm()) {
+        return;
+      }
+
+      const previous = {
+        'data-state': form.getAttribute('data-state'),
+        'aria-busy': form.getAttribute('aria-busy'),
+      };
+      const state = this.currentState();
+      renderer.setAttribute(form, 'data-state', state);
+      if (state === 'submitting') {
+        renderer.setAttribute(form, 'aria-busy', 'true');
+      } else {
+        renderer.removeAttribute(form, 'aria-busy');
+      }
+      onCleanup(() => {
+        for (const [name, value] of Object.entries(previous)) {
+          if (value === null) {
+            renderer.removeAttribute(form, name);
+          } else {
+            renderer.setAttribute(form, name, value);
+          }
+        }
+      });
+    });
+  }
+
+  submitted($event: any): void {
     $event.preventDefault();
 
-    const form = $event.target as HTMLFormElement;
     this._emitState('submitting');
-    const body = new FormData(form);
+    const body = new FormData($event.target);
 
-    if (form.method.toUpperCase() === 'GET') {
-      this._handleGet(body, this._getGetPath(form));
+    if (this.enhanceForm()) {
+      const form = $event.target as HTMLFormElement;
+      try {
+        const action =
+          this.action().trim() || form.getAttribute('action')?.trim();
+        if (form.method.toUpperCase() === 'GET') {
+          this._handleEnhancedGet(body, action || this.router.url);
+        } else {
+          const path = action
+            ? new URL(action, window.location.href).toString()
+            : this._getPath();
+          void this._handleEnhancedPost(body, path, form.method);
+        }
+      } catch {
+        this._emitState('error');
+      }
+      return;
+    }
+
+    if ($event.target.method.toUpperCase() === 'GET') {
+      this._handleGet(body, this.router.url);
     } else {
-      this._handlePost(body, this._getPostPath(form), form.method);
+      this._handlePost(body, this.path, $event);
     }
   }
 
   private _handleGet(body: FormData, path: string) {
-    const url = new URL(path, window.location.href);
-    const params = new URLSearchParams(url.search);
-    body.forEach((value, key) => {
-      params.append(key, value instanceof File ? value.name : value);
-    });
-    url.search = params.toString();
+    const params: Params = {};
+    body.forEach((formVal, formKey) => (params[formKey] = formVal));
 
     this._emitState('navigate');
-    this._navigateTo(url);
+    const url = path.split('?')[0];
+    this.router.navigate([url], {
+      queryParams: params,
+      onSameUrlNavigation: 'reload',
+    });
   }
 
-  private _handlePost(body: FormData, path: string, method: string) {
+  private _handlePost(
+    body: FormData,
+    path: string,
+    $event: { target: HTMLFormElement } & Event,
+  ) {
     fetch(path, {
-      method,
+      method: $event.target.method,
       body,
     })
       .then((res) => {
         if (res.ok) {
           if (res.redirected) {
+            const redirectUrl = new URL(res.url).pathname;
             this._emitState('redirect');
-            this._navigateTo(new URL(res.url, window.location.href));
+            this.router.navigate([redirectUrl]);
           } else if (this._isJSON(res.headers.get('Content-type'))) {
             res.json().then((result) => {
               this.onSuccess.emit(result);
@@ -109,27 +167,57 @@ export class FormAction {
       });
   }
 
-  private _getExplicitAction(form: HTMLFormElement) {
-    const explicitAction =
-      this.action().trim() || form.getAttribute('action')?.trim();
-    return explicitAction || undefined;
-  }
-
-  private _getGetPath(form: HTMLFormElement) {
-    return this._getExplicitAction(form) ?? this.router.url;
-  }
-
-  private _getPostPath(form: HTMLFormElement) {
-    const explicitAction = this._getExplicitAction(form);
-    if (explicitAction) {
-      return new URL(explicitAction, window.location.href).toString();
-    }
-
-    if (this._endpointUrl) {
-      return this._endpointUrl.pathname;
+  private _getPath() {
+    const snapshot = this.route.snapshot;
+    if (snapshot.routeConfig && ANALOG_META_KEY in snapshot.routeConfig) {
+      return runInInjectionContext(this.injector, () =>
+        injectRouteEndpointURL(snapshot),
+      ).pathname;
     }
 
     return `/api/_analog/pages${window.location.pathname}`;
+  }
+
+  private _handleEnhancedGet(body: FormData, path: string) {
+    const url = new URL(path, window.location.href);
+    const params = new URLSearchParams(url.search);
+    body.forEach((_value, key) => params.delete(key));
+    body.forEach((value, key) => {
+      params.append(key, value instanceof File ? value.name : value);
+    });
+    url.search = params.toString();
+
+    this._emitState('navigate');
+    this._navigateTo(url);
+  }
+
+  private async _handleEnhancedPost(
+    body: FormData,
+    path: string,
+    method: string,
+  ) {
+    try {
+      const response = await fetch(path, { method, body });
+      if (response.ok) {
+        if (response.redirected) {
+          this._emitState('redirect');
+          this._navigateTo(new URL(response.url, window.location.href));
+        } else {
+          const result = this._isJSON(response.headers.get('Content-type'))
+            ? await response.json()
+            : await response.text();
+          this.onSuccess.emit(result);
+          this._emitState('success');
+        }
+      } else {
+        if (response.headers.get('X-Analog-Errors')) {
+          this.onError.emit(await response.json());
+        }
+        this._emitState('error');
+      }
+    } catch {
+      this._emitState('error');
+    }
   }
 
   private _emitState(state: FormActionState) {

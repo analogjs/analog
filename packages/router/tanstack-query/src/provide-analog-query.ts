@@ -14,7 +14,7 @@ import type { ActivatedRouteSnapshot } from '@angular/router';
 import { QueryClient, hydrate } from '@tanstack/angular-query-experimental';
 import type { DehydratedState } from '@tanstack/angular-query-experimental';
 
-import { ANALOG_QUERIES_KEY } from './constants.js';
+import { ANALOG_QUERIES_KEY } from './constants';
 
 export const ANALOG_QUERY_STATE_KEY: StateKey<DehydratedState> =
   makeStateKey<DehydratedState>('analog_query_state');

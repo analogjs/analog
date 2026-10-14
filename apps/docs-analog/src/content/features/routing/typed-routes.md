@@ -6,16 +6,10 @@ Enable it explicitly with `experimental.typedRouting` in your existing Vite conf
 
 ```ts
 import analog from '@analogjs/platform';
-import angular from '@analogjs/vite-plugin-angular';
-import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [
-    analog({ experimental: { typedRouting: true } }),
-    angular(),
-    nitro(),
-  ],
+  plugins: [analog({ experimental: { typedRouting: true } })],
 });
 ```
 
@@ -212,27 +206,3 @@ pnpm exec ngc -p tsconfig.app.json --noEmit
 ```
 
 Template checking requires `angularCompilerOptions.strictTemplates: true`. If you use `fastCompile` or disable type checking in Vite, run this check separately; enabling typed routing does not override those compiler settings.
-
-## Routes from workspace libraries
-
-Keep library discovery explicit. Pass the directories returned by `discoverLibraryRoutes()` to `analog()`; the same directories feed the runtime router and typed route generation. Angular receives the library page globs through `analog.setup()`.
-
-```ts
-import { resolve } from 'node:path';
-import analog, { discoverLibraryRoutes } from '@analogjs/platform';
-
-const workspaceRoot = resolve(__dirname, '../..');
-const libraries = discoverLibraryRoutes(workspaceRoot);
-
-analog({
-  workspaceRoot,
-  ...libraries,
-  experimental: { typedRouting: true },
-});
-```
-
-## Migrating from the earlier v3 alpha implementation
-
-Replace `experimental.typedRouter` with `experimental.typedRouting` and `routePath()` with `toRoute()`, or use `LinkTo` in templates. Remove `withTypedRouter()`, `withRouteContext()`, and `withLoaderCaching()` from the router providers. For shared context, use Angular dependency injection instead of `injectRouteContext()`.
-
-Delete the old `routeTree.gen.ts` and its runtime imports, then start the dev server to generate `routeTree.gen.d.ts`. Include the declaration in the application tsconfig. Generated runtime route trees and JSON-LD manifests are no longer emitted; route-level `jsonLd` and `routeJsonLd` metadata continue to work.

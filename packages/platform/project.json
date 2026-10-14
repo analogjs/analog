@@ -34,7 +34,10 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": ["vite-plugin-angular:build"]
+      "dependsOn": [
+        "vite-plugin-angular:build",
+        { "target": "build", "projects": ["router"] }
+      ]
     },
     "version": {
       "executor": "@jscutlery/semver:version",

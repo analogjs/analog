@@ -25,11 +25,7 @@ This skill **prepares and opens the PR only**. It does not create branches and d
   (Prefer the repo's own prettier if installed; fall back to `npx` when deps aren't installed.)
 - Stage the intended files explicitly (`git add <paths>`) — don't blindly `git add -A`.
 - Write a **conventional commit** message: `<type>(<scope>): <summary>`, with a body explaining the _why_, and `Closes #<issue>` if one applies.
-- End every commit message with the required footer:
-
-  ```
-  Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-  ```
+- Do not add co-author trailers or generated-by attribution to commits or PR descriptions.
 
 - If commits already exist and there's nothing new to add, skip committing.
 
@@ -50,12 +46,6 @@ This skill **prepares and opens the PR only**. It does not create branches and d
   <filled-out template>
   EOF
   )"
-  ```
-
-- End the PR **body** with:
-
-  ```
-  🤖 Generated with [Claude Code](https://claude.com/claude-code)
   ```
 
 - Opening a PR is an outward-facing action. If the user hasn't clearly authorized it this turn, confirm the title and base branch before running `gh pr create`. Report the resulting PR URL.

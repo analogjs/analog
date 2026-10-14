@@ -13,7 +13,7 @@ import type {
   InferRouteQuery,
   InferRouteBody,
   InferRouteResult,
-} from '../../server/actions/src/index.js';
+} from '@analogjs/router/server/actions';
 
 function buildUrl(base: string, params?: Record<string, unknown>): string {
   if (!params) return base;

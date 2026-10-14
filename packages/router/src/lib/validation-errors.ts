@@ -28,7 +28,7 @@ export function issuesToFieldErrors(
     errors[fieldName] ??= [];
     errors[fieldName].push(issue.message);
     return errors;
-  }, {});
+  }, Object.create(null));
 }
 
 export function issuesToFormErrors(

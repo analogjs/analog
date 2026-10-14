@@ -33,6 +33,10 @@ export function isLikelyBot(serverContext: ServerContext): boolean {
 export function streamingDisabledByRoute(
   serverContext: ServerContext,
 ): boolean {
+  if (serverContext?.streaming !== undefined) {
+    return !serverContext.streaming;
+  }
+
   return (
     serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true' ||
     serverContext?.req?.headers?.['x-analog-no-streaming'] === 'true'

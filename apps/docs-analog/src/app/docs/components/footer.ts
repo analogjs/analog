@@ -1,11 +1,12 @@
 import { Component, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { LinkTo } from '@analogjs/router';
 import { injectDocsConfig } from '../config';
 import { useLocaleSignal } from '../locale';
+import { localizeDocsLink } from '../routes';
 
 @Component({
   selector: 'docs-footer',
-  imports: [RouterLink],
+  imports: [LinkTo],
   template: `
     <footer
       class="border-t px-6 py-10"
@@ -42,9 +43,9 @@ import { useLocaleSignal } from '../locale';
               <ul class="space-y-2 text-sm">
                 @for (item of col.items; track item.label) {
                   <li>
-                    @if (item.routerLink) {
+                    @if (item.linkTo) {
                       <a
-                        [routerLink]="localizedLink(item.routerLink)"
+                        [linkTo]="localizeDocsLink(item.linkTo, locale())"
                         class="hover:underline"
                         >{{ item.label }}</a
                       >
@@ -77,17 +78,11 @@ import { useLocaleSignal } from '../locale';
 })
 export class Footer {
   private readonly config = injectDocsConfig();
-  private readonly locale = useLocaleSignal();
+  protected readonly locale = useLocaleSignal();
+  protected readonly localizeDocsLink = localizeDocsLink;
   protected readonly brand = computed(() => this.config.footer?.brand);
   protected readonly columns = computed(
     () => this.config.footer?.columns ?? [],
   );
   protected readonly legalLine = computed(() => this.config.footer?.legalLine);
-
-  /** Prefix internal routes with the active locale so non-default readers
-   * stay in their language instead of jumping to the English route. */
-  protected localizedLink(link: string): string {
-    const loc = this.locale();
-    return loc && link.startsWith('/') ? `/${loc}${link}` : link;
-  }
 }

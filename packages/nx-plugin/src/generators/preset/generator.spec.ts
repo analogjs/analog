@@ -82,5 +82,11 @@ describe('preset generator', () => {
     const packageJson = JSON.parse(tree.read('/package.json').toString());
 
     expect(packageJson['devDependencies']['@nx/vite']).toBe('^23.0.0');
+    expect(packageJson['devDependencies']['vitest']).toBe('^5.0.0');
+    expect(packageJson['devDependencies']['@vitest/coverage-v8']).toBe(
+      '^5.0.0',
+    );
+    expect(packageJson['devDependencies']['@vitest/ui']).toBe('^5.0.0');
+    expect(tree.read('.gitignore', 'utf-8')).toContain('.vitest/');
   });
 });

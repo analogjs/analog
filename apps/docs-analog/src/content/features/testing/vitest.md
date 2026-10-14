@@ -286,6 +286,50 @@ setupTestBed({
 
 This keeps the component rendered after tests complete, allowing you to visually inspect the final state in the browser preview.
 
+## Reducing TypeScript Checking During Test Startup
+
+The Angular plugin defaults to `disableTypeChecking: true`, which limits the diagnostics it reports. TypeScript can still perform semantic checking while emitting JavaScript. In large workspaces, especially those that import other libraries through TypeScript path mappings, this can add to test startup time.
+
+For the default JIT test compilation, you can opt out of full TypeScript checking with [`noCheck`](https://www.typescriptlang.org/tsconfig/noCheck.html), available in TypeScript 5.6 and later. Create a separate `tsconfig.vitest.json` next to your existing `tsconfig.spec.json`:
+
+```json
+{
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "noCheck": true
+  }
+}
+```
+
+Point the Angular plugin in your test configuration to this file. Keep your existing Vitest settings and other plugins:
+
+```ts
+import { resolve } from 'node:path';
+import angular from '@analogjs/vite-plugin-angular';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  plugins: [
+    angular({
+      tsconfig: resolve(import.meta.dirname, 'tsconfig.vitest.json'),
+    }),
+  ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['src/test-setup.ts'],
+  },
+});
+```
+
+Keep `noCheck` out of the original `tsconfig.spec.json` so editors and a separate type-check command continue to report type errors:
+
+```shell
+tsc --project tsconfig.spec.json --noEmit
+```
+
+`noCheck` still reports critical parse and emit errors. This is an opt-in setting for JIT tests; it does not change the plugin defaults or replace Angular template checking for AOT builds.
+
 ## Running Tests
 
 To run unit tests, use the `test` command:
@@ -321,6 +365,35 @@ pnpm test
 <strong>Hungry for more? Check out Younes Jaaidi's [video course](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7) on Angular testing.</strong>
 
 [![Angular Testing Course](/img/pragmatic-angular-testing-banner-2.jpg)](https://courses.marmicode.io/courses/pragmatic-angular-testing?ref=ec72c7)
+
+## Test Coverage
+
+When measuring coverage with `@vitest/coverage-v8` (for example, `vitest run --coverage`), its `coverage.include` option — or its own default, if you don't set one — can match source files that `tsconfig.spec.json` does not `include`. This is the same narrow source-file pattern (`include: ["src/**/*.spec.ts", "src/**/*.d.ts"]`) that the Angular CLI's own `ng generate` schematic uses, so it isn't specific to Analog projects.
+
+A file outside that tsconfig's TypeScript program — a component with no `.spec.ts` file importing it, for example — is skipped by the Angular compiler with a warning:
+
+```text
+[@analogjs/vite-plugin-angular]: "src/app/unused.component.ts" contains Angular decorators but is not in the TypeScript program. Ensure it is included in your tsconfig.
+```
+
+Coverage then falls back to parsing that file's raw, uncompiled source, which can fail outright for a component using decorators (a constructor parameter decorated with `@Inject()`, for instance) instead of simply reporting it at 0% coverage.
+
+To make sure coverage can see every file it measures, widen `include` in `tsconfig.spec.json` to also cover the source files `coverage.include` matches, not just spec files:
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "target": "es2022",
+    "types": ["vitest/globals", "node"]
+  },
+  "files": ["src/test-setup.ts"],
+  "include": ["src/**/*.ts"]
+}
+```
+
+This brings every source file into the same Angular program used for your tests, so the existing compiler handles it correctly — including files no spec currently imports.
 
 ## Snapshot Testing
 

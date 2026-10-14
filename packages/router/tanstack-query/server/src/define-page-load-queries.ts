@@ -1,4 +1,3 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
 import type { DehydratedState } from '@tanstack/angular-query-experimental';
 import type { H3Event, H3EventContext } from 'h3';
@@ -7,12 +6,12 @@ import type { $Fetch } from 'ofetch';
 import {
   definePageLoad,
   type PageLoadContext,
-} from '../../../server/actions/src/index.js';
-import { ANALOG_QUERIES_KEY } from '../../src/constants.js';
+  type StandardSchemaV1,
+} from '@analogjs/router/server/actions';
+import { ANALOG_QUERIES_KEY } from '@analogjs/router/tanstack-query';
 
-export { ANALOG_QUERIES_KEY } from '../../src/constants.js';
+export { ANALOG_QUERIES_KEY } from '@analogjs/router/tanstack-query';
 
-type NodeContext = NonNullable<H3Event['node']>;
 type OptionalSchema = StandardSchemaV1 | undefined;
 
 export interface PageLoadQueriesResult<TData> {
@@ -79,8 +78,8 @@ export function definePageLoadQueries<
   options: DefinePageLoadQueriesOptions<TParamsSchema, TQuerySchema, TData>,
 ): (ctx: {
   params: H3EventContext['params'];
-  req: NodeContext['req'];
-  res: NonNullable<NodeContext['res']>;
+  req: H3Event['node']['req'];
+  res: H3Event['node']['res'];
   fetch: $Fetch;
   event: H3Event;
 }) => Promise<PageLoadQueriesResult<TData> | Response> {

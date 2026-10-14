@@ -7,6 +7,20 @@ import {
 } from './validation-errors';
 
 describe('validation-errors', () => {
+  it('handles empty issues and prototype-named fields', () => {
+    expect(issuesToFieldErrors([])).toEqual({});
+    expect(issuesToFormErrors([])).toEqual([]);
+    const fields = issuesToFieldErrors([
+      { message: 'Required', path: ['__proto__'] },
+      { message: 'Invalid', path: ['constructor'] },
+      { message: 'Again', path: ['constructor'] },
+      { message: 'Form error' },
+    ]);
+    expect(fields['__proto__']).toEqual(['Required']);
+    expect(fields['constructor']).toEqual(['Invalid', 'Again']);
+    expect(Object.keys(fields)).toEqual(['__proto__', 'constructor']);
+  });
+
   it('converts issue paths to field names', () => {
     expect(issuePathToFieldName(['user', { key: 'address' }, 'zip', 0])).toBe(
       'user.address.zip.0',

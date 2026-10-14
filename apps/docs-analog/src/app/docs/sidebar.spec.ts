@@ -19,19 +19,25 @@ const nodes: SidebarNode[] = [
 ];
 
 describe('flattenSidebar', () => {
-  it('produces an ordered list with default-locale hrefs when no locale is given', () => {
+  it('produces ordered typed links with nested slug segments', () => {
     const flat = flattenSidebar(nodes, null);
-    expect(flat.map((e) => e.href)).toEqual([
-      '/docs/introduction',
-      '/docs/guides/forms',
-      '/docs/guides/routing',
+    expect(flat.map((e) => e.linkTo)).toEqual([
+      { path: '/docs/[[...slug]]', params: { slug: ['introduction'] } },
+      { path: '/docs/[[...slug]]', params: { slug: ['guides', 'forms'] } },
+      { path: '/docs/[[...slug]]', params: { slug: ['guides', 'routing'] } },
     ]);
   });
 
-  it('prefixes hrefs with the active locale', () => {
+  it('includes the active locale in typed route params', () => {
     const flat = flattenSidebar(nodes, 'es');
-    expect(flat[0].href).toBe('/es/docs/introduction');
-    expect(flat[2].href).toBe('/es/docs/guides/routing');
+    expect(flat[0].linkTo).toEqual({
+      path: '/[locale]/docs/[[...slug]]',
+      params: { locale: 'es', slug: ['introduction'] },
+    });
+    expect(flat[2].linkTo).toEqual({
+      path: '/[locale]/docs/[[...slug]]',
+      params: { locale: 'es', slug: ['guides', 'routing'] },
+    });
   });
 
   it('records the ancestor category labels of each entry', () => {

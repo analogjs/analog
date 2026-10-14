@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3';
 import { getRequestURL, readBody, readFormData } from 'h3';
 
 type RequestEntryValue = string | File;
@@ -23,24 +24,23 @@ function appendEntry(
   target[key] = [existingValue, value];
 }
 
-// h3 v2 exposes the web Request as `event.req`; h3 v1 has no web Request on
-// Node, so callers fall back to the h3 helpers shared by both versions.
-function getRequest(event: {
-  method: string;
-  headers: Headers;
-}): Request | undefined {
-  const { request, req } = event as unknown as {
-    request?: Request;
+// h3 v2 exposes the web Request as `event.req`; h3 v1 only has it on web
+// runtimes, so callers fall back to the h3 helpers shared by both versions.
+function getRequest(event: H3Event): Request | undefined {
+  const { web, req } = event as unknown as {
+    web?: { request?: Request };
     req?: unknown;
   };
-  return request ?? (req instanceof Request ? req : undefined);
+  return web?.request ?? (req instanceof Request ? req : undefined);
 }
 
-function getContentType(event: { method: string; headers: Headers }): string {
-  const request = getRequest(event);
+export function getRequestUrl(event: H3Event): string {
+  return getRequest(event)?.url ?? getRequestURL(event).href;
+}
 
+function getContentType(event: H3Event): string {
   return (
-    request?.headers.get('content-type') ??
+    getRequest(event)?.headers.get('content-type') ??
     event.headers?.get('content-type') ??
     ''
   );
@@ -61,7 +61,7 @@ function isFormContentType(contentType: string): boolean {
 export function parseSearchParams(
   searchParams: URLSearchParams,
 ): Record<string, ParsedRequestValue> {
-  const result: Record<string, ParsedRequestValue> = {};
+  const result: Record<string, ParsedRequestValue> = Object.create(null);
   searchParams.forEach((value, key) => {
     appendEntry(result, key, value);
   });
@@ -71,27 +71,18 @@ export function parseSearchParams(
 export function parseFormData(
   formData: FormData,
 ): Record<string, ParsedRequestValue> {
-  const result: Record<string, ParsedRequestValue> = {};
+  const result: Record<string, ParsedRequestValue> = Object.create(null);
   formData.forEach((value, key) => {
     appendEntry(result, key, value as RequestEntryValue);
   });
   return result;
 }
 
-export async function parseRequestData(event: {
-  method: string;
-  headers: Headers;
-}): Promise<unknown> {
-  const request = getRequest(event);
-  const httpEvent = event as unknown as Parameters<typeof readBody>[0];
-  const h3Event = event as unknown as Parameters<typeof readFormData>[0];
+export async function parseRequestData(event: H3Event): Promise<unknown> {
   const method = event.method.toUpperCase();
 
   if (method === 'GET' || method === 'HEAD') {
-    const url = new URL(
-      request?.url ?? getRequestURL(httpEvent).href,
-      'http://localhost',
-    );
+    const url = new URL(getRequestUrl(event), 'http://localhost');
     return parseSearchParams(url.searchParams);
   }
 
@@ -99,10 +90,10 @@ export async function parseRequestData(event: {
 
   if (isJsonContentType(contentType)) {
     try {
-      return (await readBody(httpEvent)) ?? {};
+      return (await readBody(event)) ?? {};
     } catch {
       try {
-        return (await request?.json()) ?? {};
+        return (await getRequest(event)?.json()) ?? {};
       } catch {
         return {};
       }
@@ -111,10 +102,15 @@ export async function parseRequestData(event: {
 
   if (isFormContentType(contentType)) {
     try {
-      return parseFormData(await readFormData(h3Event));
+      return parseFormData(await readFormData(event));
     } catch {
+      const request = getRequest(event);
       if (request) {
-        return parseFormData(await request.formData());
+        try {
+          return parseFormData(await request.formData());
+        } catch {
+          return {};
+        }
       }
 
       return {};
@@ -122,10 +118,10 @@ export async function parseRequestData(event: {
   }
 
   try {
-    return (await readBody(httpEvent)) ?? {};
+    return (await readBody(event)) ?? {};
   } catch {
     try {
-      return (await request?.json()) ?? {};
+      return (await getRequest(event)?.json()) ?? {};
     } catch {
       return {};
     }

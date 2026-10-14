@@ -9,9 +9,6 @@ import { DocsLayoutShell, redirectDocsRoot } from '../../docs';
 export default class LocaleDocsLayoutPage {
   constructor() {
     const route = inject(ActivatedRoute);
-    redirectDocsRoot(() => {
-      const locale = route.snapshot.paramMap.get('locale');
-      return locale ? `/${locale}/docs` : null;
-    });
+    redirectDocsRoot(() => route.snapshot.paramMap.get('locale'));
   }
 }

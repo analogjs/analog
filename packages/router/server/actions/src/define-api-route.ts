@@ -1,7 +1,11 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import type { H3Event } from 'h3';
 import { fail, json } from './actions';
-import { parseRequestData, parseSearchParams } from './parse-request-data';
+import {
+  getRequestUrl,
+  parseRequestData,
+  parseSearchParams,
+} from './parse-request-data';
 import { validateWithSchema } from './validate';
 
 export type DefineApiRouteResult = Response | unknown;
@@ -81,17 +85,12 @@ function warnOnOutputIssues(issues: ReadonlyArray<StandardSchemaV1.Issue>) {
   );
 }
 
-function getRequestUrl(event: H3Event) {
-  return (event as H3Event & { request: Request }).request.url;
-}
-
 /**
  * Creates an h3-compatible event handler with Standard Schema validation.
  *
  * - `input` schema validates the request body (POST/PUT/PATCH) or query
  *   params (GET). Returns 422 with `StandardSchemaV1.Issue[]` on failure.
- * - `output` schema validates the response in development only (stripped
- *   in production for zero overhead). Logs a warning on mismatch.
+ * - `output` schema validates the response in development and tests only. Logs a warning on mismatch.
  * - Plain return values are serialized with `json(...)`; raw `Response`
  *   objects are returned unchanged.
  *
@@ -151,43 +150,49 @@ export function defineApiRoute<
       params = paramsResult.value;
     }
 
+    const requestData =
+      options.input || (options.body && method !== 'GET' && method !== 'HEAD')
+        ? await parseRequestData(event)
+        : undefined;
+
     if (options.input) {
-      data = await parseRequestData(event);
+      data = requestData;
 
       const inputResult = await validateWithSchema(options.input, data);
       if (inputResult.issues) {
         return fail(422, inputResult.issues);
       }
       data = inputResult.value;
-    } else {
-      if (options.query) {
-        const url = new URL(getRequestUrl(event), 'http://localhost');
-        const queryResult = await validateWithSchema(
-          options.query,
-          parseSearchParams(url.searchParams),
-        );
-        if (queryResult.issues) {
-          return fail(422, queryResult.issues);
-        }
-        query = queryResult.value;
-      }
+    }
 
-      if (options.body && method !== 'GET' && method !== 'HEAD') {
-        body = await parseRequestData(event);
-        const bodyResult = await validateWithSchema(options.body, body);
-        if (bodyResult.issues) {
-          return fail(422, bodyResult.issues);
-        }
-        body = bodyResult.value;
+    if (options.query) {
+      const url = new URL(getRequestUrl(event), 'http://localhost');
+      const queryResult = await validateWithSchema(
+        options.query,
+        parseSearchParams(url.searchParams),
+      );
+      if (queryResult.issues) {
+        return fail(422, queryResult.issues);
       }
+      query = queryResult.value;
+    }
 
-      if (method === 'GET' || method === 'HEAD') {
-        data = query;
-      } else if (body !== undefined) {
-        data = body;
-      } else {
-        data = query;
+    if (options.body && method !== 'GET' && method !== 'HEAD') {
+      body = requestData;
+      const bodyResult = await validateWithSchema(options.body, body);
+      if (bodyResult.issues) {
+        return fail(422, bodyResult.issues);
       }
+      body = bodyResult.value;
+    }
+
+    if (!options.input) {
+      data =
+        method === 'GET' || method === 'HEAD'
+          ? query
+          : body !== undefined
+            ? body
+            : query;
     }
 
     const result = await options.handler({

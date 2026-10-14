@@ -64,7 +64,9 @@ import {
   refreshStylesheetRegistryForFile,
   DiagnosticModes,
   isTestWatchMode,
+  getBrowserModeCliOverride,
 } from '../utils/compilation-shared.js';
+import { createHotUpdateBatcher } from '../hot-update-batch.js';
 import { angularVitestPlugins } from '../angular-vitest-plugin.js';
 import { buildOptimizerPlugin } from '../angular-build-optimizer-plugin.js';
 import { jitPlugin } from '../angular-jit-plugin.js';
@@ -151,6 +153,9 @@ export function angularCompilationPlugin(
   let pendingCompilation: Promise<void> | null = null;
   let initialCompilation = false;
   let viteServer: ViteDevServer | undefined;
+  const hotUpdates = createHotUpdateBatcher((ids) =>
+    performCompilation(resolvedConfig, ids),
+  );
 
   const tsconfigResolver = new TsconfigResolver({
     workspaceRoot: pluginOptions.workspaceRoot,
@@ -159,6 +164,7 @@ export function angularCompilationPlugin(
     isTest,
   });
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
+  let deferInitialCompilation = isVitestVscode;
   let testWatchMode = isTestWatchMode();
 
   function hasViteHmrTransport(): boolean {
@@ -305,6 +311,45 @@ export function angularCompilationPlugin(
       compilationApiTsConfigPath,
       modifiedFileCount: modifiedFiles?.size ?? 0,
     });
+    const transformCompilerOptions = (
+      tsCompilerOptions: Record<string, unknown>,
+    ) => {
+      if (shouldExternalizeStyles()) {
+        tsCompilerOptions['externalRuntimeStyles'] = true;
+      }
+
+      if (shouldEnableLiveReload()) {
+        tsCompilerOptions['_enableHmr'] = true;
+        tsCompilerOptions['supportTestBed'] = true;
+      }
+
+      debugCompiler('tsCompilerOptions (compilation API)', {
+        liveReload: pluginOptions.liveReload,
+        viteHmr: hasViteHmrTransport(),
+        externalizeStylesRequested,
+        watchMode,
+        shouldExternalize: shouldExternalizeStyles(),
+        externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
+        hmrEnabled: !!tsCompilerOptions['_enableHmr'],
+      });
+
+      if (tsCompilerOptions['compilationMode'] === 'partial') {
+        tsCompilerOptions['supportTestBed'] = true;
+        tsCompilerOptions['supportJitMode'] = true;
+      }
+
+      if (!isTest && resolvedConfig.build?.lib) {
+        tsCompilerOptions['declaration'] = true;
+        tsCompilerOptions['declarationMap'] = watchMode;
+        tsCompilerOptions['inlineSources'] = true;
+      }
+
+      if (isTest) {
+        tsCompilerOptions['supportTestBed'] = true;
+      }
+
+      return tsCompilerOptions;
+    };
     const compilationResult = await compilation.initialize(
       compilationApiTsConfigPath,
       {
@@ -398,43 +443,16 @@ export function angularCompilationPlugin(
           return workerFile;
         },
       },
-      (tsCompilerOptions: Record<string, unknown>) => {
-        if (shouldExternalizeStyles()) {
-          tsCompilerOptions['externalRuntimeStyles'] = true;
-        }
-
-        if (shouldEnableLiveReload()) {
-          tsCompilerOptions['_enableHmr'] = true;
-          tsCompilerOptions['supportTestBed'] = true;
-        }
-
-        debugCompiler('tsCompilerOptions (compilation API)', {
-          liveReload: pluginOptions.liveReload,
-          viteHmr: hasViteHmrTransport(),
-          externalizeStylesRequested,
-          watchMode,
-          shouldExternalize: shouldExternalizeStyles(),
-          externalRuntimeStyles: !!tsCompilerOptions['externalRuntimeStyles'],
-          hmrEnabled: !!tsCompilerOptions['_enableHmr'],
-        });
-
-        if (tsCompilerOptions['compilationMode'] === 'partial') {
-          tsCompilerOptions['supportTestBed'] = true;
-          tsCompilerOptions['supportJitMode'] = true;
-        }
-
-        if (!isTest && resolvedConfig.build?.lib) {
-          tsCompilerOptions['declaration'] = true;
-          tsCompilerOptions['declarationMap'] = watchMode;
-          tsCompilerOptions['inlineSources'] = true;
-        }
-
-        if (isTest) {
-          tsCompilerOptions['supportTestBed'] = true;
-        }
-
-        return tsCompilerOptions;
-      },
+      angularFullVersion >= 220200
+        ? {
+            enableHmr: shouldEnableLiveReload(),
+            externalRuntimeStyles: shouldExternalizeStyles(),
+            includeTestMetadata: isTest || shouldEnableLiveReload(),
+            instrumentForCoverage: !isTest,
+          }
+        : (transformCompilerOptions as unknown as Parameters<
+            typeof compilation.initialize
+          >[2]),
     );
 
     // Preprocess external stylesheets for Tailwind CSS @reference
@@ -534,6 +552,12 @@ export function angularCompilationPlugin(
         hmrUpdateCode: templateUpdate?.code,
         hmrEligible: !!templateUpdate?.code,
       });
+    }
+
+    // Free the compilation before chunks render; `transform` still reads `outputFiles`.
+    if (!watchMode && !isTest) {
+      await compilation.close?.();
+      angularCompilation = undefined;
     }
   }
 
@@ -671,6 +695,12 @@ export function angularCompilationPlugin(
       debugStyles('stylesheet registry initialized (Angular Compilation API)');
 
       if (isTest) {
+        const browser = (config as any).test?.browser;
+        deferInitialCompilation =
+          isVitestVscode ||
+          (!!browser &&
+            (getBrowserModeCliOverride() ?? browser.enabled) === true);
+
         testWatchMode =
           !(config.server.watch === null) ||
           (config as any).test?.watch === true ||
@@ -679,6 +709,7 @@ export function angularCompilationPlugin(
     },
     configureServer(server) {
       viteServer = server;
+      hotUpdates.configureServer(server);
 
       const invalidateCompilation = async () => {
         tsconfigResolver.invalidateAll();
@@ -693,7 +724,7 @@ export function angularCompilationPlugin(
       });
     },
     async buildStart() {
-      if (!isVitestVscode) {
+      if (!deferInitialCompilation) {
         pendingCompilation = performCompilation(resolvedConfig);
         await pendingCompilation;
         pendingCompilation = null;
@@ -710,13 +741,11 @@ export function angularCompilationPlugin(
         const [fileId] = ctx.file.split('?');
         debugHmr('TS file changed', { file: ctx.file, fileId });
 
-        pendingCompilation = performCompilation(resolvedConfig, [fileId]);
+        await hotUpdates.schedule(ctx.file, [fileId]);
 
         let result;
 
         if (shouldEnableLiveReload()) {
-          await pendingCompilation;
-          pendingCompilation = null;
           result = fileEmitter(fileId);
           debugHmr('TS file emitted', {
             fileId,
@@ -842,7 +871,7 @@ export function angularCompilationPlugin(
         }
 
         if (isTest) {
-          if (isVitestVscode && !initialCompilation) {
+          if (deferInitialCompilation && !initialCompilation) {
             pendingCompilation = performCompilation(resolvedConfig);
             initialCompilation = true;
           }
@@ -860,6 +889,7 @@ export function angularCompilationPlugin(
           await pendingCompilation;
           pendingCompilation = null;
         }
+        await hotUpdates.wait();
 
         const typescriptResult = fileEmitter(id);
         if (!typescriptResult) {
@@ -898,6 +928,7 @@ export function angularCompilationPlugin(
       },
     },
     async closeBundle() {
+      hotUpdates.close();
       await compilationLock;
       await angularCompilation?.close?.();
       angularCompilation = undefined;

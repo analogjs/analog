@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import { ANALOG_DOCS_CONFIG, type DocsConfig } from '../config';
 import { Footer } from './footer';
+import { docsLink } from '../routes';
 
 function setup(config: DocsConfig) {
   TestBed.configureTestingModule({
@@ -27,7 +28,7 @@ const localizedConfig: DocsConfig = {
   },
   footer: {
     columns: [
-      { title: 'Docs', items: [{ label: 'Intro', routerLink: '/docs/intro' }] },
+      { title: 'Docs', items: [{ label: 'Intro', linkTo: docsLink('intro') }] },
     ],
   },
 };
@@ -40,7 +41,7 @@ describe('Footer', () => {
         columns: [
           {
             title: 'Docs',
-            items: [{ label: 'Intro', routerLink: '/docs/intro' }],
+            items: [{ label: 'Intro', linkTo: docsLink('intro') }],
           },
           {
             title: 'More',
@@ -84,5 +85,33 @@ describe('Footer', () => {
       .querySelector('a[href]')
       .getAttribute('href');
     expect(href).toBe('/de/docs/intro');
+  });
+
+  it('preserves query and fragment values while localizing nested docs links', async () => {
+    const fixture = setup({
+      ...localizedConfig,
+      footer: {
+        columns: [
+          {
+            title: 'Docs',
+            items: [
+              {
+                label: 'Routing',
+                linkTo: {
+                  ...docsLink('guides/routing'),
+                  query: { view: 'compact' },
+                  hash: 'examples',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    await TestBed.inject(Router).navigateByUrl('/de/docs/intro');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe(
+      '/de/docs/guides/routing?view=compact#examples',
+    );
   });
 });

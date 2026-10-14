@@ -547,7 +547,6 @@ export function fastCompilePlugin(
     // whenever a style needs a non-`css` preprocessor — either the configured
     // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
     // own extension.
-    let resolvedStyles: Map<string, string> | undefined;
     let resolvedInlineStyles: Map<number, string> | undefined;
 
     const inlineExt = pluginOptions.inlineStylesExtension;
@@ -606,7 +605,6 @@ export function fastCompilePlugin(
 
     const result = compile(code, id, {
       registry: compileRegistry,
-      resolvedStyles,
       resolvedInlineStyles,
       useDefineForClassFields,
       compilationMode: pluginOptions.fastCompileMode,

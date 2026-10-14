@@ -1,19 +1,16 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  NavigationEnd,
-  Router,
-  RouterLink,
-  RouterLinkActive,
-} from '@angular/router';
+import { NavigationEnd, Router, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith, tap } from 'rxjs/operators';
 import { injectDocsConfig } from '../config';
 import { useLocaleSignal } from '../locale';
 import type { SidebarCategory, SidebarNode } from '../sidebar';
+import { LinkTo, toRoute } from '@analogjs/router';
+import { docsLink } from '../routes';
 
 @Component({
   selector: 'docs-sidebar',
-  imports: [RouterLink, RouterLinkActive, Sidebar],
+  imports: [LinkTo, RouterLinkActive, Sidebar],
   template: `
     <nav [class]="depth() === 0 ? 'text-[15px]' : 'text-[14px]'">
       <ul
@@ -30,7 +27,7 @@ import type { SidebarCategory, SidebarNode } from '../sidebar';
           @if (node.kind === 'doc') {
             <li>
               <a
-                [routerLink]="hrefFor(node.id)"
+                [linkTo]="docsLink(node.id, locale())"
                 routerLinkActive="font-medium !text-[var(--brand)]"
                 [routerLinkActiveOptions]="{ exact: true }"
                 class="block rounded px-2 py-1 text-[var(--fg-muted)] hover:bg-[var(--bg-subtle)] hover:text-[var(--fg)]"
@@ -85,7 +82,8 @@ export class Sidebar {
   readonly activeTrail = input(false);
 
   private readonly config = injectDocsConfig();
-  private readonly locale = useLocaleSignal();
+  protected readonly locale = useLocaleSignal();
+  protected readonly docsLink = docsLink;
   private readonly router = inject(Router);
 
   private readonly currentUrl = toSignal(
@@ -112,8 +110,10 @@ export class Sidebar {
   private readonly overrides = signal(new Map<string, boolean>());
 
   protected hrefFor(id: string): string {
-    const loc = this.locale();
-    return loc ? `/${loc}/docs/${id}` : `/docs/${id}`;
+    const link = docsLink(id, this.locale());
+    return this.router.serializeUrl(
+      this.router.createUrlTree(toRoute(link.path, link).path),
+    );
   }
 
   protected nodeKey(node: SidebarNode, index: number): string {

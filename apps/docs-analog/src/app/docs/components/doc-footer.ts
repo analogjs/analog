@@ -1,12 +1,12 @@
 import { Component, computed, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { LinkTo } from '@analogjs/router';
 import { injectDocsConfig } from '../config';
 import { useLocaleSignal } from '../locale';
 import { findSidebarIndex, flattenSidebar } from '../sidebar';
 
 @Component({
   selector: 'docs-doc-footer',
-  imports: [RouterLink],
+  imports: [LinkTo],
   template: `
     @if (prev() || next()) {
       <nav
@@ -14,7 +14,7 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
       >
         @if (prev(); as p) {
           <a
-            [routerLink]="p.href"
+            [linkTo]="p.linkTo"
             class="flex flex-col rounded border p-3 transition hover:bg-[var(--bg-subtle)]"
           >
             <span class="text-xs text-[var(--fg-muted)]">
@@ -36,7 +36,7 @@ import { findSidebarIndex, flattenSidebar } from '../sidebar';
         }
         @if (next(); as n) {
           <a
-            [routerLink]="n.href"
+            [linkTo]="n.linkTo"
             class="flex flex-col items-end rounded border p-3 text-right transition hover:bg-[var(--bg-subtle)]"
           >
             <span class="text-xs text-[var(--fg-muted)]">

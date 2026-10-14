@@ -3,6 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { SidebarDrawer } from './components/sidebar-drawer';
+import { injectNavigate } from '@analogjs/router';
+import { docsLink } from './routes';
 
 /**
  * Shared shell for the localized and non-localized docs layout pages:
@@ -27,16 +29,20 @@ export class DocsLayoutShell {}
 /**
  * Redirects the docs root (e.g. `/docs` or `/<locale>/docs`) to its
  * introduction page so inbound links don't render an empty article.
- * `getBase` returns the current locale-aware base path (or null when it
- * shouldn't redirect). Runs on mount and every subsequent navigation.
+ * Runs on mount and every subsequent navigation.
  */
-export function redirectDocsRoot(getBase: () => string | null): void {
+export function redirectDocsRoot(
+  getLocale: () => string | null = () => null,
+): void {
   const router = inject(Router);
+  const navigate = injectNavigate();
   const redirect = () => {
-    const base = getBase();
+    const locale = getLocale();
+    const base = locale ? `/${locale}/docs` : '/docs';
     const url = router.url.split('?')[0].replace(/\/$/, '');
-    if (base && url === base) {
-      router.navigate([`${base}/introduction`], { replaceUrl: true });
+    if (url === base) {
+      const link = docsLink('introduction', locale);
+      navigate(link.path, link, { replaceUrl: true });
     }
   };
   redirect();

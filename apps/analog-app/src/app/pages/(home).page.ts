@@ -3,7 +3,6 @@ import { injectLoad, toRoute } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLinkWithHref } from '@angular/router';
 
 import { LiveServicesService } from '../live-services.service';
 import { LiveProductsService } from '../live-products.service';

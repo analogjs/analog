@@ -23,8 +23,10 @@ type FormErrors =
     } @else {
       <form
         method="post"
+        [enhanceForm]="true"
         (onSuccess)="onSuccess($any($event))"
         (onError)="onError($any($event))"
+        (state)="$event === 'submitting' && errors.set(undefined)"
       >
         <div>
           <label for="email"> Email </label>

@@ -14,31 +14,87 @@ npm install @angular/localize
 
 ### 2. Initialize `$localize`
 
-Import the `$localize` polyfill in your application's entry point (`src/main.ts` or `src/main.server.ts`):
+Import the `$localize` polyfill before your application imports in both entry points, `src/main.ts` and `src/main.server.ts`:
 
 ```ts
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideFileRouter(),
-    provideI18n({
-      defaultLocale: 'en',
-      locales: ['en', 'fr', 'de'],
-      loader: async (locale) => {
-        const translations = await import(`../i18n/${locale}.json`);
-        return translations.default;
+import '@angular/localize/init';
+```
+
+### 3. Create a shared translation loader
+
+Create translation files such as `src/i18n/fr.json` and `src/i18n/de.json`. Each file contains a message ID-to-string map:
+
+```json
+{
+  "greeting": "Bonjour",
+  "farewell": "Au revoir"
+}
+```
+
+Export a loader from a module that does not import your application:
+
+```ts
+// src/i18n.ts
+export default async function loadTranslations(locale: string) {
+  switch (locale) {
+    case 'fr':
+      return (await import('./i18n/fr.json')).default;
+    case 'de':
+      return (await import('./i18n/de.json')).default;
+    default:
+      return {};
+  }
+}
+```
+
+The first entry in `locales` is the source language. Its messages are already in your templates, so the loader is not called for that locale.
+
+### 4. Configure the platform
+
+Configure your locales and the loader module's path in `vite.config.ts`:
+
+```ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      i18n: {
+        defaultLocale: 'en',
+        locales: ['en', 'fr', 'de'],
+        loader: './src/i18n.ts',
       },
     }),
   ],
+});
+```
+
+The loader path enables [locale workers](#concurrent-server-rendering) automatically for supported production Node builds, including prerendering.
+
+### 5. Register the runtime provider
+
+Pass the same loader function to `provideI18n()` for browser and development rendering:
+
+```ts
+// src/app/app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideFileRouter } from '@analogjs/router';
+import { provideI18n } from '@analogjs/router/i18n';
+import loadTranslations from '../i18n';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideFileRouter(), provideI18n({ loader: loadTranslations })],
 };
 ```
 
-The `provideI18n()` function accepts an `I18nConfig` object with the following properties:
+`provideI18n()` reads locales from the platform configuration, or accepts them explicitly:
 
-| Property        | Type                                                                            | Description                                     |
-| --------------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `defaultLocale` | `string`                                                                        | The default locale when none is detected        |
-| `locales`       | `string[]`                                                                      | List of supported locale identifiers            |
-| `loader`        | `(locale: string) => Promise<Record<string, string>> \| Record<string, string>` | Function that returns translations for a locale |
+| Property        | Type                                                                            | Description                                                                      |
+| --------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `defaultLocale` | `string`                                                                        | Fallback locale; optional when configured in the platform                        |
+| `locales`       | `string[]`                                                                      | Supported locales, with the source language first; optional with platform config |
+| `loader`        | `(locale: string) => Promise<Record<string, string>> \| Record<string, string>` | Required function returning translations for a locale                            |
 
 ## Using Translations in Templates
 
@@ -159,6 +215,35 @@ export default class IndexPage {
   }
 }
 ```
+
+## Concurrent server rendering
+
+Angular's `$localize` state is shared within a JavaScript context, so overlapping SSR requests in different locales can produce mixed-language pages. Locale workers isolate each language while keeping requests concurrent. Keep the usual `render(App, config)` server entry.
+
+### Worker selection
+
+The shared loader in [Setup](#setup) automatically enables workers when:
+
+- The resolved Nitro preset is `node-server` and SSR is enabled.
+- `i18n.loader` is configured with at least two locales.
+- Progressive Angular streaming, WebSockets, and scheduled tasks are disabled.
+
+Selection follows the deployment preset. To target a standalone Node server explicitly, set `nitro: { preset: 'node-server' }` in `analog()`.
+
+| `i18n.workers` | Behavior                                                             |
+| -------------- | -------------------------------------------------------------------- |
+| Omitted        | Automatic when eligible; unsupported setups warn and fall back       |
+| `false`        | Disables workers                                                     |
+| `true`         | Requires a supported worker configuration; fails the build otherwise |
+
+Existing configurations without `i18n.loader` are unchanged. To adopt workers, export your existing loader from a shared module, pass it to `provideI18n()`, and add its path to the platform configuration as shown in [Setup](#setup). Without workers, concurrent SSR requests in different locales remain unisolated.
+
+### Deployment limits
+
+- Each locale worker uses additional memory and initializes its own Nitro plugins.
+- Workers use HTTP TCP. Terminate TLS at a reverse proxy; direct TLS and Unix sockets are unsupported. HTTP response streaming is supported.
+- H3's `getRequestIP()` uses the incoming connection address from `event.context.clientAddress`. Forwarded headers are preserved, but behind a trusted reverse proxy, read its forwarded address explicitly: H3 gives `clientAddress` precedence.
+- Shutdown drains requests for up to 30 seconds. An unexpected worker failure stops the server; use a process supervisor to restart it.
 
 ## Switching Locale at Runtime
 
@@ -368,7 +453,7 @@ analog({
 
 ## Development
 
-During development, the Analog dev server provides full i18n support:
+Development uses the existing SSR path rather than fixed-locale workers. The Analog dev server provides:
 
 - **`<html lang>` injection**: the `lang` attribute on the `<html>` tag is set automatically based on the detected locale for each request.
 - **Translation file HMR**: editing translation files in `i18n/` directories (`.json`, `.xlf`, `.xmb`, `.arb`) triggers an automatic page reload so changes are reflected immediately.
@@ -376,7 +461,7 @@ During development, the Analog dev server provides full i18n support:
 
 ## Prerendering
 
-When `i18n` is configured in the platform options, prerendering automatically generates locale-prefixed variants for each route.
+When `i18n` is configured, prerendering generates locale-prefixed variants for each route. Locale workers support parallel prerendering and crawling; configure concurrency with `nitro.prerender.concurrency`. With `static: true`, workers run only during the build and the deployed output needs no Node server.
 
 ```ts
 // https://vitejs.dev/config/
@@ -406,20 +491,12 @@ This configuration will:
 
 ## Platform Configuration
 
-You can declare your supported locales in the platform plugin options in `vite.config.ts`:
+Configure `i18n` in `analog()`:
 
-```ts
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    analog({
-      i18n: {
-        defaultLocale: 'en',
-        locales: ['en', 'fr', 'de'],
-      },
-    }),
-  ],
-}));
-```
-
-This makes the i18n configuration available to the build pipeline for locale detection during SSR and message extraction.
+| Property        | Type                  | Description                                                                                          |
+| --------------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `defaultLocale` | `string`              | Locale used when no supported locale is selected                                                     |
+| `locales`       | `string[]`            | Supported locales; the first is the source language                                                  |
+| `loader`        | `string`              | Optional translation-loader module path relative to the app root; enables automatic worker selection |
+| `workers`       | `boolean`             | Omit for automatic selection, use `false` to opt out, or `true` to require workers                   |
+| `extract`       | `{ format, outFile }` | Optional [message extraction](#extracting-messages) settings                                         |

@@ -1,12 +1,10 @@
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import type { H3Event, H3EventContext } from 'h3';
-import { getRequestURL } from 'h3';
 import type { $Fetch } from 'ofetch';
 import { fail } from './actions';
-import { parseSearchParams } from './parse-request-data';
+import { getRequestUrl, parseSearchParams } from './parse-request-data';
 import { validateWithSchema } from './validate';
 
-type NodeContext = NonNullable<H3Event['node']>;
 type OptionalSchema = StandardSchemaV1 | undefined;
 type InferSchema<
   TSchema extends OptionalSchema,
@@ -24,8 +22,8 @@ export interface PageLoadContext<
     TQuerySchema,
     Record<string, string | string[] | undefined>
   >;
-  req: NodeContext['req'];
-  res: NonNullable<NodeContext['res']>;
+  req: H3Event['node']['req'];
+  res: H3Event['node']['res'];
   fetch: $Fetch;
   event: H3Event;
 }
@@ -46,9 +44,9 @@ export interface DefinePageLoadOptions<
  * Creates a typed page server load function with optional
  * Standard Schema validation for route params and query.
  *
- * Follows the same validation patterns as `defineAction` and
- * `defineServerRoute`: validates before invoking the handler,
- * returns `fail(422, issues)` on validation failure.
+ * Follows the same validation pattern as `defineServerRoute`:
+ * validates before invoking the handler and returns
+ * `fail(422, issues)` on validation failure.
  *
  * @example
  * ```typescript
@@ -78,8 +76,8 @@ export function definePageLoad<
   options: DefinePageLoadOptions<TParamsSchema, TQuerySchema, TResult>,
 ): (ctx: {
   params: H3EventContext['params'];
-  req: NodeContext['req'];
-  res: NonNullable<NodeContext['res']>;
+  req: H3Event['node']['req'];
+  res: H3Event['node']['res'];
   fetch: $Fetch;
   event: H3Event;
 }) => Promise<TResult | Response> {
@@ -91,20 +89,14 @@ export function definePageLoad<
 
   return async (ctx: {
     params: H3EventContext['params'];
-    req: NodeContext['req'];
-    res: NonNullable<NodeContext['res']>;
+    req: H3Event['node']['req'];
+    res: H3Event['node']['res'];
     fetch: $Fetch;
     event: H3Event;
   }) => {
     let params: unknown = ctx.params ?? {};
 
-    let requestUrl: string;
-    try {
-      requestUrl = getRequestURL(ctx.event).href;
-    } catch {
-      requestUrl = (ctx.event as H3Event & { request: Request }).request.url;
-    }
-    const url = new URL(requestUrl, 'http://localhost');
+    const url = new URL(getRequestUrl(ctx.event), 'http://localhost');
     let query: unknown = parseSearchParams(url.searchParams);
 
     // Validate params

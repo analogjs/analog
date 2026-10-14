@@ -239,3 +239,35 @@ export function isTestWatchMode(args = process.argv): boolean {
 
   return true;
 }
+
+export function getBrowserModeCliOverride(
+  args = process.argv.slice(2),
+): boolean | undefined {
+  let enabled: boolean | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--') {
+      break;
+    }
+
+    const [flag, inlineValue] = args[i].split('=', 2);
+    if (flag === '--no-browser' || flag === '--no-browser.enabled') {
+      enabled = false;
+    } else if (flag === '--browser' || flag === '--browser.enabled') {
+      const value = inlineValue ?? args[i + 1];
+      if (value === 'false' || (flag === '--browser' && value === 'no')) {
+        enabled = false;
+      } else if (
+        flag === '--browser.enabled' ||
+        value === undefined ||
+        value.startsWith('-') ||
+        value === 'true' ||
+        value === 'yes'
+      ) {
+        enabled = true;
+      }
+    }
+  }
+
+  return enabled;
+}

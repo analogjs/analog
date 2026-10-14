@@ -30,15 +30,17 @@ Routes are file-based. A file in `src/app/pages/` ending in `.page.ts` becomes a
 
 Read route params with `inject(ActivatedRoute)` from `@angular/router`.
 
-Define per-route metadata (title, meta tags, guards, resolvers) by exporting a `RouteMeta`:
+Define per-route metadata (title, meta tags, guards, resolvers) by exporting a `routeMeta` that satisfies `RouteMeta`:
 
 ```ts
 import { RouteMeta } from '@analogjs/router';
 
-export const routeMeta: RouteMeta = {
+export const routeMeta = {
   title: 'Products',
-};
+} satisfies RouteMeta;
 ```
+
+Prefer `satisfies` over a `RouteMeta` annotation, which widens `data` and `resolve` types.
 
 ## Server & API routes
 

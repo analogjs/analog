@@ -8,6 +8,7 @@ import {
 import { ApplicationRef, createComponent } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import { Observable, Subject, takeUntil } from 'rxjs';
+import { buildProjectableNodes } from './projection.ts';
 
 export default (
   element: HTMLElement,
@@ -16,15 +17,22 @@ export default (
     clientProviders?: (Provider | EnvironmentProviders)[];
   },
   props?: Record<string, unknown>,
-  _childHTML?: unknown,
+  slots?: unknown,
 ) => void) => {
   return (
     Component: ComponentType<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
-    _childHTML?: unknown,
+    slots?: unknown,
   ): void => {
+    const mirror = reflectComponentType(Component);
+
+    if (!mirror) {
+      // Not an Angular component
+      return;
+    }
+
     createApplication({
       providers: [
         provideZonelessChangeDetection(),
@@ -34,10 +42,10 @@ export default (
       const componentRef = createComponent(Component, {
         environmentInjector: appRef.injector,
         hostElement: element,
+        projectableNodes: buildProjectableNodes(mirror, slots, document),
       });
 
-      const mirror = reflectComponentType(Component);
-      if (props && mirror) {
+      if (props) {
         for (const [key, value] of Object.entries(props)) {
           if (
             mirror.inputs.some(
@@ -50,7 +58,7 @@ export default (
         }
       }
 
-      if (mirror?.outputs.length && props?.['data-analog-id']) {
+      if (mirror.outputs.length && props?.['data-analog-id']) {
         const destroySubject = new Subject<void>();
         element.setAttribute(
           'data-analog-id',

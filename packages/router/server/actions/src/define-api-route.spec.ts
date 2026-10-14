@@ -1,5 +1,7 @@
+// @vitest-environment node
+
 import { describe, it, expect, vi } from 'vitest';
-import type { StandardSchemaV1 } from '@standard-schema/spec';
+import type { StandardSchemaV1 } from './standard-schema';
 import { defineApiRoute } from './define-api-route';
 
 function createMockSchema<T>(
@@ -42,7 +44,7 @@ function createMockEvent(
   return {
     method,
     headers: request.headers,
-    request,
+    web: { request },
     context: {
       params,
     },
@@ -493,11 +495,13 @@ describe('defineApiRoute', () => {
     const event = {
       method: 'POST',
       headers: new Headers({ 'content-type': 'text/plain' }),
-      request: new Request('http://localhost/api/test', {
-        method: 'POST',
-        headers: { 'content-type': 'text/plain' },
-        body: 'not json at all',
-      }),
+      web: {
+        request: new Request('http://localhost/api/test', {
+          method: 'POST',
+          headers: { 'content-type': 'text/plain' },
+          body: 'not json at all',
+        }),
+      },
     } as any;
 
     await route(event);
@@ -546,7 +550,7 @@ describe('defineApiRoute', () => {
     const event = {
       method: 'POST',
       headers: requestHeaders,
-      request,
+      web: { request },
     } as any;
 
     const route = defineApiRoute({ input, handler });

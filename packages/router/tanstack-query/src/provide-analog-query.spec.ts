@@ -24,7 +24,7 @@ import {
   ANALOG_QUERY_STATE_KEY,
   provideAnalogQuery,
 } from './provide-analog-query';
-import { provideServerAnalogQuery } from './provide-server-analog-query';
+import { provideServerAnalogQuery } from '../server/src/provide-server-analog-query';
 
 function makeSnapshot(
   data: Record<string, unknown>,

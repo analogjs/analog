@@ -62,6 +62,7 @@ async function setupLegacyTransformPlugin() {
 
   vi.doMock('./host.js', () => ({
     augmentHostWithCaching: vi.fn(),
+    augmentHostWithModuleResolution: vi.fn(),
     augmentHostWithResources: vi.fn(),
     augmentProgramWithVersioning: vi.fn(),
     mergeTransformers: vi.fn(() => ({})),
