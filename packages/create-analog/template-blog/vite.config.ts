@@ -3,7 +3,7 @@
 import { defineConfig } from 'vite';
 __TAILWIND_IMPORT__import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
-import { nitro } from 'nitro/vite';
+import nitro from '@analogjs/vite-plugin-nitro';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({

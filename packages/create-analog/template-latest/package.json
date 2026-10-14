@@ -38,6 +38,7 @@
   "devDependencies": {
     "@analogjs/platform": "^3.0.0-alpha.91",
     "@analogjs/vite-plugin-angular": "^3.0.0-alpha.91",
+    "@analogjs/vite-plugin-nitro": "^3.0.0-alpha.91",
     "@analogjs/vitest-angular": "^3.0.0-alpha.91",
     "@angular/build": "^22.0.0",
     "@angular/cli": "^22.0.0",

@@ -43,7 +43,8 @@
   "devDependencies": {
     "@analogjs/platform": "workspace:*",
     "@analogjs/vite-plugin-angular": "workspace:*",
-    "nitro": "catalog:"
+    "@analogjs/vite-plugin-nitro": "workspace:*",
+    "h3": "catalog:nitroV2"
   },
   "publishConfig": {
     "access": "public",
