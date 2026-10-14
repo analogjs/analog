@@ -1,3 +1,13 @@
+## [2.8.1](https://github.com/analogjs/analog/compare/v2.8.0...v2.8.1) (2026-10-14)
+
+### Bug Fixes
+
+- **nx-plugin:** add root vite and vitest overrides ([#2610](https://github.com/analogjs/analog/issues/2610)) ([ba6f833](https://github.com/analogjs/analog/commit/ba6f8332f2706df844e669ebcce6661284d2b4c0))
+- **vite-plugin-angular:** defer compilation in Vitest browser mode ([#2604](https://github.com/analogjs/analog/issues/2604)) ([0dcbacc](https://github.com/analogjs/analog/commit/0dcbacc05496ded4145f87b29ef2422aefcc3c9b))
+- **vite-plugin-angular:** emit optional chaining for safe navigation ([#2608](https://github.com/analogjs/analog/issues/2608)) ([fc5eefa](https://github.com/analogjs/analog/commit/fc5eefa44bdc5013018180fd7c0a147a603231a3))
+- **vite-plugin-angular:** emit unary operators by operator and position ([#2606](https://github.com/analogjs/analog/issues/2606)) ([4f3fd76](https://github.com/analogjs/analog/commit/4f3fd7659293451e91b237e4d2bbe62f2fbb3b0f))
+- **vite-plugin-nitro:** use http namespace URIs in generated sitemap.xml ([#2605](https://github.com/analogjs/analog/issues/2605)) ([de7bd15](https://github.com/analogjs/analog/commit/de7bd15ad07c22926216b189b5be738d39270ef4))
+
 ## [2.8.1-beta.5](https://github.com/analogjs/analog/compare/v2.8.1-beta.4...v2.8.1-beta.5) (2026-10-13)
 
 ### Bug Fixes
