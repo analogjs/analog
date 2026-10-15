@@ -765,7 +765,8 @@ export default defineHandler(async (event) => {
  *   service module isn't on disk yet, so we delegate to the runner.
  * - Build / prerender: re-export the built SSR entry directly from the
  *   filesystem. By the time Nitro's bundlers ask for \`#analog/ssr\`, Vite has
- *   already produced \`<buildDir>/vite/services/ssr/<entry>.mjs\`.
+ *   already produced \`<buildDir>/vite/services/ssr/<entry>.mjs\` (or \`.js\`
+ *   when the app's package.json sets \`"type": "module"\`).
  */
 function generateSsrServiceVirtual(nitro: Nitro): string {
   if (nitro.options.dev) {
@@ -795,12 +796,13 @@ export default {
   if (!existsSync(ssrDir)) {
     return `export default { async fetch() { throw new Error('Analog SSR service directory missing: ${ssrDir}'); } };`;
   }
-  const entries = readdirSync(ssrDir).filter((f) => f.endsWith('.mjs'));
+  const entries = readdirSync(ssrDir).filter((f) => /\.m?js$/.test(f));
   if (entries.length === 0) {
     return `export default { async fetch() { throw new Error('No Analog SSR entry file built in: ${ssrDir}'); } };`;
   }
-  // Prefer 'main.server.mjs' if present; otherwise take the only entry.
-  const entry = entries.find((f) => f === 'main.server.mjs') ?? entries[0];
+  // Prefer 'main.server' if present; otherwise take the only entry.
+  const entry =
+    entries.find((f) => /^main\.server\.m?js$/.test(f)) ?? entries[0];
   const entryPath = resolve(ssrDir, entry);
   return `export { default } from ${JSON.stringify(entryPath)};`;
 }

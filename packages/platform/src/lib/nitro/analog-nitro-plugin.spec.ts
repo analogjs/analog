@@ -296,6 +296,35 @@ describe('analogNitroPlugin', () => {
     expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
   });
 
+  it('resolves a built SSR entry emitted with a .js extension', async () => {
+    const buildDir = join(projectRoot, '.nitro');
+    const ssrDir = join(buildDir, 'vite/services/ssr');
+    mkdirSync(ssrDir, { recursive: true });
+    writeFileSync(join(ssrDir, 'index.js'), 'export default {};');
+
+    const plugin = analogNitroPlugin({ workspaceRoot });
+    callConfig(plugin, projectRoot);
+
+    const nitroMock: any = {
+      options: {
+        rootDir: projectRoot,
+        buildDir,
+        handlers: [],
+        scanDirs: [],
+        virtual: {},
+        renderer: {},
+        dev: false,
+      },
+      hooks: { hook: vi.fn() },
+    };
+
+    await (plugin as any).nitro.setup(nitroMock);
+
+    expect(nitroMock.options.virtual['#analog/ssr']()).toBe(
+      `export { default } from ${JSON.stringify(join(ssrDir, 'index.js'))};`,
+    );
+  });
+
   it('hides the virtual renderer from prerender path resolution and restores it', async () => {
     const plugin = analogNitroPlugin({ workspaceRoot });
     callConfig(plugin, projectRoot);
