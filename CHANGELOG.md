@@ -1,3 +1,9 @@
+# [3.0.0-alpha.94](https://github.com/analogjs/analog/compare/v3.0.0-alpha.93...v3.0.0-alpha.94) (2026-10-15)
+
+### Bug Fixes
+
+- **platform:** resolve built SSR entry with a .js extension on Nitro v3 ([c2c282c](https://github.com/analogjs/analog/commit/c2c282c3699e979018d2dfb9d3680c8588a780e4))
+
 # [3.0.0-alpha.93](https://github.com/analogjs/analog/compare/v3.0.0-alpha.92...v3.0.0-alpha.93) (2026-10-14)
 
 ### Bug Fixes
