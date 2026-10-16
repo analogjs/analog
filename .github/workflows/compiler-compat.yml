@@ -42,6 +42,7 @@ name: Compiler Compatibility Tests
 on:
   workflow_dispatch:
   pull_request:
+    branches: [beta]
     paths:
       - 'packages/vite-plugin-angular/src/lib/compiler/**'
       - 'package.json'
