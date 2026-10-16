@@ -1207,6 +1207,9 @@ importers:
       '@analogjs/router':
         specifier: workspace:*
         version: link:../../packages/router
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
       '@analogjs/vitest-angular':
         specifier: workspace:*
         version: link:../../packages/vitest-angular

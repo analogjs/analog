@@ -2,6 +2,7 @@
 
 import { resolve } from 'node:path';
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import {
@@ -96,6 +97,7 @@ export default defineConfig(({ mode }) => ({
         },
       },
     }),
+    angular(),
     copyMarkdownPlugin({
       entries: [
         {
