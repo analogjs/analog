@@ -28,7 +28,7 @@ export async function initializeAngularWorkspace(
   }
 
   if (belowMinimumSupportedAngularVersion(angularVersion)) {
-    throw new Error(stripIndents`Analog only supports Angular v17 and higher`);
+    throw new Error(stripIndents`Analog only supports Angular v20 and higher`);
   }
 
   return angularVersion;

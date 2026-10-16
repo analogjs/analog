@@ -1,24 +1,6 @@
 import { lt } from 'semver';
 import { stripIndents } from '@nx/devkit';
 import {
-  V17_X_ANALOG_JS_PLATFORM,
-  V17_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-  V17_X_ANALOG_JS_VITEST_ANGULAR,
-  V17_X_JSDOM,
-  V17_X_NX_VITE,
-  V17_X_VITE_TSCONFIG_PATHS,
-  V17_X_VITEST,
-} from './ng_17_X/versions';
-import {
-  V18_X_ANALOG_JS_PLATFORM,
-  V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-  V18_X_NX_VITE,
-  V18_X_JSDOM,
-  V18_X_VITE_TSCONFIG_PATHS,
-  V18_X_VITEST,
-  V18_X_ANALOG_JS_VITEST_ANGULAR,
-} from './ng_18_X/versions';
-import {
   V19_X_ANALOG_JS_PLATFORM,
   V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
   V19_X_ANALOG_JS_VITEST_ANGULAR,
@@ -63,44 +45,12 @@ const getDevDependencies = (
   escapedAngularVersion: string,
   escapedNxVersion: string | null,
 ) => {
-  // fail out for versions <17.0.0
-  if (lt(escapedAngularVersion, '17.0.0')) {
-    throw new Error(stripIndents`Angular v17.0.0 or newer is required.`);
+  // fail out for versions <20.0.0
+  if (lt(escapedAngularVersion, '20.0.0')) {
+    throw new Error(stripIndents`Angular v20.0.0 or newer is required.`);
   }
 
-  // install 17.x deps for versions <18.0.0
-  if (lt(escapedAngularVersion, '18.0.0')) {
-    return {
-      '@analogjs/platform': V17_X_ANALOG_JS_PLATFORM,
-      '@analogjs/vite-plugin-angular': V17_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-      '@analogjs/vitest-angular': V17_X_ANALOG_JS_VITEST_ANGULAR,
-      '@nx/vite': V17_X_NX_VITE,
-      jsdom: V17_X_JSDOM,
-      'vite-tsconfig-paths': V17_X_VITE_TSCONFIG_PATHS,
-      vite: V19_X_VITE,
-      vitest: V17_X_VITEST,
-      '@vitest/coverage-v8': V17_X_VITEST,
-      '@vitest/ui': V17_X_VITEST,
-    };
-  }
-
-  // install 18.x deps for versions <19.0.0
-  if (lt(escapedAngularVersion, '19.0.0')) {
-    return {
-      '@analogjs/platform': V18_X_ANALOG_JS_PLATFORM,
-      '@analogjs/vite-plugin-angular': V18_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-      '@analogjs/vitest-angular': V18_X_ANALOG_JS_VITEST_ANGULAR,
-      '@nx/vite': V18_X_NX_VITE,
-      jsdom: V18_X_JSDOM,
-      'vite-tsconfig-paths': V18_X_VITE_TSCONFIG_PATHS,
-      vite: V19_X_VITE,
-      vitest: V18_X_VITEST,
-      '@vitest/coverage-v8': V18_X_VITEST,
-      '@vitest/ui': V17_X_VITEST,
-    };
-  }
-
-  // return latest 19.x deps for versions >=19.0.0
+  // return latest deps for versions >=20.0.0
   return {
     '@analogjs/platform': V19_X_ANALOG_JS_PLATFORM,
     '@analogjs/vite-plugin-angular': V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,

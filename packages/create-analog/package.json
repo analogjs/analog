@@ -10,9 +10,6 @@
   },
   "files": [
     "index.js",
-    "template-angular-v17",
-    "template-angular-v18",
-    "template-angular-v19",
     "template-angular-v20",
     "template-blog",
     "template-latest",

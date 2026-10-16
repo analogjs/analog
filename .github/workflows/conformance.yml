@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        angular-major: [17, 18, 19, 20, 21, 'latest', 'next']
+        angular-major: [20, 21, 'latest', 'next']
 
     name: Angular ${{ matrix.angular-major }}
 

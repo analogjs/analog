@@ -29,8 +29,7 @@ async function* vitestApplicationBuilder(
   process.env['TEST'] = 'true';
   process.env['VITEST'] = 'true';
 
-  const { buildApplicationInternal, angularVersion } =
-    await getBuildApplicationFunction();
+  const { buildApplicationInternal } = await getBuildApplicationFunction();
   const { startVitest } = await (Function(
     'return import("vitest/node")',
   )() as Promise<typeof import('vitest/node')>);
@@ -70,7 +69,6 @@ async function* vitestApplicationBuilder(
     projectRoot: projectRoot,
     testFiles,
     context,
-    angularVersion,
   });
 
   const outputFiles = new Map();
@@ -78,7 +76,6 @@ async function* vitestApplicationBuilder(
   const viteConfig: any = {
     plugins: [
       (await createAngularMemoryPlugin({
-        angularVersion,
         workspaceRoot,
         outputFiles,
       })) as Plugin,
@@ -222,17 +219,11 @@ function generateEntryPoints({
   projectRoot,
   testFiles,
   context,
-  angularVersion,
 }: {
   projectRoot: string;
   testFiles: string[];
   context: any;
-  angularVersion: number;
 }) {
-  if (angularVersion < 19) {
-    return testFiles;
-  }
-
   const seen = new Set();
 
   return new Map(

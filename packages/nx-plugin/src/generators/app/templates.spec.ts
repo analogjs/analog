@@ -109,10 +109,10 @@ describe('generator templates', () => {
       ).toBeGreaterThanOrEqual(17);
     });
 
-    it('minimum Angular version is at least 17', () => {
+    it('minimum Angular version is at least 20', () => {
       expect(
         Number(MINIMUM_SUPPORTED_ANGULAR_VERSION.split('.')[0]),
-      ).toBeGreaterThanOrEqual(17);
+      ).toBeGreaterThanOrEqual(20);
     });
   });
 });

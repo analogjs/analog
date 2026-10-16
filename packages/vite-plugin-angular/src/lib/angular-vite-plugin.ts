@@ -104,7 +104,6 @@ import { type SourceFileCache as SourceFileCacheType } from './utils/source-file
 
 const require = createRequire(import.meta.url);
 
-import { pendingTasksPlugin } from './angular-pending-tasks.plugin.js';
 import { liveReloadPlugin } from './live-reload-plugin.js';
 import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
@@ -389,19 +388,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   );
   function angularPlugin(): Plugin {
     let isProd = false;
-
-    if (angularFullVersion < 190000 && pluginOptions.liveReload) {
-      // Angular < 19 does not support externalRuntimeStyles or _enableHmr.
-      debugHmr('hmr disabled: Angular version does not support HMR APIs', {
-        angularVersion: angularFullVersion,
-        isTest,
-      });
-      console.warn(
-        '[@analogjs/vite-plugin-angular]: HMR was disabled because Angular v19+ is required for externalRuntimeStyles/_enableHmr support. Detected Angular version: %s.',
-        angularFullVersion,
-      );
-      pluginOptions.liveReload = false;
-    }
 
     if (isTest) {
       // Test mode: disable HMR because
@@ -1452,7 +1438,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       jit,
     }),
     routerPlugin(),
-    angularFullVersion < 190004 && pendingTasksPlugin(),
     nxFolderPlugin(),
     encapsulationPlugin(),
   ].filter(Boolean) as Plugin[];

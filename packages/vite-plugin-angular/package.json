@@ -24,13 +24,9 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@angular-devkit/build-angular": "catalog:peerAngularBuilders",
     "@angular/build": "catalog:peerAngularBuilders"
   },
   "peerDependenciesMeta": {
-    "@angular-devkit/build-angular": {
-      "optional": true
-    },
     "@angular/build": {
       "optional": true
     },

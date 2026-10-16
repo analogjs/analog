@@ -1,4 +1,4 @@
-import { injectActivatedRoute, injectLoad } from '@analogjs/router';
+import { injectLoad, injectParams } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -124,20 +124,17 @@ export const routeJsonLd = (route: {
   ],
 })
 export default class ProductDetailsComponent {
-  private readonly route = injectActivatedRoute();
+  private readonly params = injectParams('/products/[productId]');
   private readonly cartService = inject(CartService);
   private readonly liveProducts = inject(LiveProductsService);
   private readonly initialData = toSignal(injectLoad<typeof load>(), {
     requireSync: true,
   });
-  private readonly productIdFromRoute = Number(
-    this.route.parent?.snapshot.paramMap.get('productId'),
-  );
 
   readonly product = computed<Product | undefined>(() =>
     this.liveProducts
       .products()
-      .find((product) => product.id === this.productIdFromRoute),
+      .find((product) => product.id === Number(this.params().productId)),
   );
 
   constructor() {

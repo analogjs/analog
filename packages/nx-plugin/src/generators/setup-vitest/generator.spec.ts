@@ -29,7 +29,7 @@ describe('setup-vitest generator', () => {
     // Add package.json with Angular dependencies
     writeJson(tree, 'package.json', {
       dependencies: {
-        '@angular/core': '19.0.0',
+        '@angular/core': '20.0.0',
         '@nx/angular': '20.0.0',
         nx: '20.0.0',
       },
@@ -139,7 +139,7 @@ describe('setup-vitest generator', () => {
     // Setup with Nx 20.5
     writeJson(tree, 'package.json', {
       dependencies: {
-        '@angular/core': '19.0.0',
+        '@angular/core': '20.0.0',
         '@nx/angular': '20.5.0',
       },
       devDependencies: {},
@@ -164,17 +164,18 @@ describe('setup-vitest generator', () => {
     const setupContent = tree.read('test-app/src/test-setup.ts', 'utf-8');
     expect(setupContent).toEqual(
       [
+        `import '@angular/compiler';`,
         `import '@analogjs/vitest-angular/setup-zone';`,
         '',
         'import {',
-        '  BrowserDynamicTestingModule,',
-        '  platformBrowserDynamicTesting,',
-        `} from '@angular/platform-browser-dynamic/testing';`,
+        '  BrowserTestingModule,',
+        '  platformBrowserTesting,',
+        `} from '@angular/platform-browser/testing';`,
         `import { getTestBed } from '@angular/core/testing';`,
         '',
         'getTestBed().initTestEnvironment(',
-        '  BrowserDynamicTestingModule,',
-        '  platformBrowserDynamicTesting(),',
+        '  BrowserTestingModule,',
+        '  platformBrowserTesting(),',
         ');',
         '',
       ].join('\n'),
