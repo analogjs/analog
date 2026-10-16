@@ -28,10 +28,8 @@ Adding or updating a package requires some extra step if its part of `dependenci
 ### Add/Update package.json to latest version for template application used with create-analog
 
 - Go to `packages/create-analog`
-- There are 2 templates as of now
-  - `packages/create-analog/template-angular-v17`
-  - `packages/create-analog/template-blog`
-- Go to `package.json` and Add/Update the package in both templates
+- Each `template-*` directory is a starter template (e.g. `template-latest`, `template-blog`, `template-minimal`)
+- Go to `package.json` and Add/Update the package in each template
 
 ## Add/Update version and tests for nx-plugin
 

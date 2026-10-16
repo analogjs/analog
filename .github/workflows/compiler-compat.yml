@@ -22,7 +22,7 @@ name: Compiler Compatibility Tests
 #     core with the matrix compiler would fail before our compiler runs.
 #
 # Matrix policy:
-#   - Each numeric slot pins the FLOOR of a supported major (e.g. 19.0.0).
+#   - Each numeric slot pins the FLOOR of a supported major (e.g. 20.0.0).
 #     Pinning the floor gives a reproducible, deterministic CI signal —
 #     "the lowest supported version of major N still works." Bumping the
 #     floor when peerDependencies changes is a deliberate choice that
@@ -70,13 +70,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Numeric slots cover the supported peerDependencies range. v17/v18
-        # use the latest LTS patches that real users are most likely on
-        # (the floor versions, e.g. 17.0.0/18.0.0, predate the
-        # signal-input array shape and aren't worth supporting). v19/v20
-        # use the floor of the major as a deterministic CI signal.
-        angular-version:
-          ['17.3.12', '18.2.14', '19.0.0', '20.0.0', '21.0.0', 'next']
+        # Numeric slots cover the supported peerDependencies range, pinned
+        # to the floor of each major as a deterministic CI signal.
+        angular-version: ['20.0.0', '21.0.0', 'next']
 
     name: Angular ${{ matrix.angular-version }}
 

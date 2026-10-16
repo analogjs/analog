@@ -31,7 +31,9 @@ nx migrate @analogjs/platform@latest
 
 ### Angular version support
 
-Analog v3 no longer supports Angular v16. Upgrade the workspace to Angular v17 or newer before adopting the stable v3 line.
+Analog v3 requires Angular v20 or newer. The supported range is `^20.0.0 || ^21.0.0 || ^22.0.0`, and support for Angular v16–v19 has been removed. Upgrade the workspace to Angular v20 or newer before adopting the stable v3 line. Projects that need to stay on Angular v17–v19 should remain on Analog v2.x.
+
+The `@angular-devkit/build-angular` fallback in `@analogjs/vite-plugin-angular` has also been removed; `@angular/build` is used for all supported Angular versions.
 
 ### Removed Analog SFC support
 
@@ -332,7 +334,7 @@ Match the current template line for your Angular major instead of assuming one r
 
 Keep automated migration tooling focused on the breaking changes above:
 
-- require Angular v17 or newer before applying v3 changes
+- require Angular v20 or newer before applying v3 changes
 - replace deep or internal imports with public package entrypoints
 - split `analog()` into `analog() + angular() + nitro()`, moving each option to the plugin that now owns it (see [plugin separation](#analog-angular-and-nitro-are-now-separate-plugins))
 - import `nitro()` from `@analogjs/vite-plugin-nitro` and move `analog({ nitro: {...} })` to its argument

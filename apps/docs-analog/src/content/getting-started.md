@@ -7,7 +7,7 @@ Creating an Analog project can be done with minimal steps.
 Analog requires the following Node and Angular versions:
 
 - Node 22 and higher is recommended
-- Angular v17 or higher
+- Angular v20 or higher
 
 ## Creating a New Application
 

@@ -16,9 +16,6 @@ const versionFiles = [
 ];
 
 const replacementFiles = [
-  'packages/create-analog/template-angular-v17/package.json',
-  'packages/create-analog/template-angular-v18/package.json',
-  'packages/create-analog/template-angular-v19/package.json',
   'packages/create-analog/template-angular-v20/package.json',
   'packages/create-analog/template-blog/package.json',
   'packages/create-analog/template-latest/package.json',
@@ -162,9 +159,6 @@ export default {
           'packages/astro-angular/package.json',
           'packages/content/package.json',
           'packages/create-analog/package.json',
-          'packages/create-analog/template-angular-v17/package.json',
-          'packages/create-analog/template-angular-v18/package.json',
-          'packages/create-analog/template-angular-v19/package.json',
           'packages/create-analog/template-angular-v20/package.json',
           'packages/create-analog/template-blog/package.json',
           'packages/create-analog/template-latest/package.json',

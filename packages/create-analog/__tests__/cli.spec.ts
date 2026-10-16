@@ -63,7 +63,7 @@ const expectTailwindScaffold = () => {
   );
 };
 
-// Angular v18 starter template
+// Latest starter template
 let templateFiles = readdirSync(join(CLI_PATH, 'template-latest'));
 templateFiles.push('.git');
 // _gitignore is renamed to .gitignore

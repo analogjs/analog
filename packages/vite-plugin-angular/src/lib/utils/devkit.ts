@@ -4,7 +4,6 @@ import { dirname, join } from 'node:path';
 import type { JavaScriptTransformer as AngularJavaScriptTransformer } from '@angular/build/private';
 import type { CompilerPluginOptions } from './compiler-plugin-options.js';
 import type { TransformCacheStore } from './transform-cache.js';
-import * as sfc from './source-file-cache.js';
 
 const require = createRequire(import.meta.url);
 
@@ -15,63 +14,36 @@ const padVersion = (version: number) => String(version).padStart(2, '0');
 const angularFullVersion = Number(
   `${angularMajor}${padVersion(angularMinor)}${padVersion(angularPatch)}`,
 );
-let sourceFileCache: any;
-let cjt: (...args: any[]) => any;
-let jt: any;
-let createAngularCompilation: (...args: any[]) => any;
 const usesTransformOptions = angularFullVersion >= 220200;
 let initializeHash: (() => Promise<void>) | undefined;
 
-if (angularMajor < 17) {
-  throw new Error('AnalogJS is not compatible with Angular v16 and lower');
-} else if (angularMajor >= 17 && angularMajor < 18) {
-  const cp = require('@angular-devkit/build-angular/src/tools/esbuild/angular/compiler-plugin.js');
-  const {
-    createJitResourceTransformer,
-  } = require('@angular-devkit/build-angular/src/tools/esbuild/angular/jit-resource-transformer.js');
-  const {
-    JavaScriptTransformer,
-  } = require('@angular-devkit/build-angular/src/tools/esbuild/javascript-transformer.js');
+if (angularMajor < 20) {
+  throw new Error('AnalogJS is not compatible with Angular v19 and lower');
+}
 
-  /**
-   * Workaround for compatibility with Angular 17.0+
-   */
-  if (typeof cp['SourceFileCache'] !== 'undefined') {
-    sourceFileCache = cp.SourceFileCache;
-  } else {
-    sourceFileCache = sfc.SourceFileCache;
-  }
+const {
+  createJitResourceTransformer,
+  JavaScriptTransformer: AngularJavaScriptTransformerClass,
+  SourceFileCache,
+  createAngularCompilation: createAngularCompilationFn,
+} = require('@angular/build/private');
 
-  cjt = createJitResourceTransformer;
-  jt = JavaScriptTransformer;
-} else {
-  const {
-    createJitResourceTransformer,
-    JavaScriptTransformer,
-    SourceFileCache,
-    createAngularCompilation: createAngularCompilationFn,
-  } = require('@angular/build/private');
+const createAngularCompilation = async (...args: unknown[]) => {
+  await initializeHash?.();
+  return createAngularCompilationFn(...args);
+};
 
-  sourceFileCache = SourceFileCache;
-  cjt = createJitResourceTransformer;
-  jt = JavaScriptTransformer;
-  createAngularCompilation = async (...args: unknown[]) => {
-    await initializeHash?.();
-    return createAngularCompilationFn(...args);
-  };
-
-  if (usesTransformOptions) {
-    ({ initializeHash } = require(
-      join(
-        dirname(require.resolve('@angular/build/package.json')),
-        'src/utils/hash.js',
-      ),
-    ));
-  }
+if (usesTransformOptions) {
+  ({ initializeHash } = require(
+    join(
+      dirname(require.resolve('@angular/build/package.json')),
+      'src/utils/hash.js',
+    ),
+  ));
 }
 
 // Keep Angular's private transformer API differences at the compatibility boundary.
-class JavaScriptTransformer extends jt {
+class JavaScriptTransformer extends AngularJavaScriptTransformerClass {
   constructor(
     options: Partial<
       ConstructorParameters<typeof AngularJavaScriptTransformer>[0]
@@ -140,9 +112,9 @@ class JavaScriptTransformer extends jt {
 }
 
 export {
-  cjt as createJitResourceTransformer,
+  createJitResourceTransformer,
   JavaScriptTransformer,
-  sourceFileCache as SourceFileCache,
+  SourceFileCache,
   CompilerPluginOptions,
   angularMajor,
   angularMinor,

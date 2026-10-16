@@ -56,7 +56,6 @@ import {
 } from './metadata.js';
 import { buildDeferDependencyMap } from './defer.js';
 import { debugCompile, debugEmit } from './debug.js';
-import { ANGULAR_MAJOR } from './angular-version.js';
 
 /**
  * COMPLETE EXHAUSTIVE ANGULAR LITE COMPILER
@@ -323,14 +322,6 @@ export function compile(
     classEnd: number; // Position of closing } in original source
   }
   const classResults: ClassCompileResult[] = [];
-  // Per-class hoisted helper statements returned via R3CompiledExpression.statements
-  // (e.g. nested template helper functions for `@if`/`@for`/`@switch` blocks).
-  // Older Angular majors (≤19) return these on `cmp.statements` rather than
-  // pushing them into the shared ConstantPool, so we collect them here and
-  // emit them alongside the constant-pool helpers in step 3. Without this,
-  // any component with control-flow blocks references undefined symbols like
-  // `MyComponent_Conditional_0_Template`.
-  const hoistedHelpers: string[] = [];
   // Track synthetic imports needed for NgModule export expansion.
   // Maps exported class name → import specifier.
   const syntheticImports = new Map<string, string>();
@@ -645,19 +636,9 @@ export function compile(
           // ngtsc, and surviving tree-shaking (unlike a separate, droppable
           // `ɵɵsetComponentScope` call).
           //
-          // The real "non-standalone" signal is the owning-module lookup below:
-          // a component listed in an @NgModule's `declarations` is non-standalone
-          // by definition (Angular forbids declaring a standalone component). The
-          // `meta.standalone` flag can't be trusted to detect this — the metadata
-          // default is `true`, so an *omitted* flag (the common pre-v19 form,
-          // where it defaulted to false) is indistinguishable from explicit
-          // `true`. So gate cheaply: on v19+ a declared component must set
-          // `standalone: false`, so only run the lookup for those; pre-v19 the
-          // flag is unreliable, so run it for every component (the lookup itself
-          // filters out genuinely standalone ones — they aren't declared).
-          const mightBeNonStandalone =
-            meta.standalone === false || ANGULAR_MAJOR < 19;
-          if (!isPartial && mightBeNonStandalone && registry) {
+          // A component declared in an @NgModule must set
+          // `standalone: false`, so only those need the owning-module lookup.
+          if (!isPartial && meta.standalone === false && registry) {
             let owningModule:
               | { declarations?: string[]; imports?: string[] }
               | undefined;
@@ -885,29 +866,10 @@ export function compile(
             i18nUseExternalIds: opts.i18nUseExternalIds ?? false,
             relativeContextFilePath: fileName,
             controlCreate: null,
-          };
-
-          if (ANGULAR_MAJOR < 18) {
-            // Angular v17 reads `meta.deferBlocks`, `meta.deferrableTypes`,
-            // and `meta.deferBlockDepsEmitMode` as flat top-level fields on
-            // the component metadata; v18 nested them under `meta.defer`.
-            // `compileComponentFromMetadata` on v17 reads `.size` on the two
-            // Maps unconditionally (compiler.mjs ~30770), so the fields must
-            // exist as Maps even for components that don't use @defer.
-            // Empty Maps are sufficient for the no-@defer case — components
-            // that actually use @defer on v17 are not supported (the v17
-            // @defer ABI is significantly different from v18+ and is not
-            // worth back-porting per the minimum-effort policy).
-            componentMeta.deferBlocks = new Map();
-            componentMeta.deferrableTypes = new Map();
-            componentMeta.deferBlockDepsEmitMode = 0;
-          }
-
-          if (ANGULAR_MAJOR >= 20) {
-            componentMeta.hasDirectiveDependencies =
+            hasDirectiveDependencies:
               declarations.length > 0 ||
-              (Array.isArray(meta.imports) && meta.imports.length > 0);
-          }
+              (Array.isArray(meta.imports) && meta.imports.length > 0),
+          };
 
           if (isPartial) {
             // Partial compilation accesses .inputs, .outputs, .exportAs on
@@ -932,9 +894,6 @@ export function compile(
             ivyCode.push(
               `static ɵcmp = /*@__PURE__*/ ${emitAngularExpr(cmp.expression)}`,
             );
-            for (const stmt of cmp.statements ?? []) {
-              hoistedHelpers.push(emitAngularStmt(stmt));
-            }
           } else {
             const cmp = compileComponentFromMetadata(
               componentMeta,
@@ -944,15 +903,6 @@ export function compile(
             ivyCode.push(
               `static ɵcmp = /*@__PURE__*/ ${emitAngularExpr(cmp.expression)}`,
             );
-            // Hoist nested template helper functions returned via
-            // R3CompiledExpression.statements. On Angular ≤19 these contain
-            // `*_Conditional_*_Template`, `*_For_*_Template`, etc. functions
-            // that the component definition references; on Angular ≥20 they
-            // are typically pushed into the shared constantPool instead and
-            // this loop is a no-op.
-            for (const stmt of cmp.statements ?? []) {
-              hoistedHelpers.push(emitAngularStmt(stmt));
-            }
           }
           break;
         }
@@ -1498,9 +1448,6 @@ export function compile(
   // side-effect statements (setClassMetadata IIFEs) that go after.
   const helpers: string[] = [];
   const sideEffects: string[] = [];
-  // Per-class hoisted helpers (nested template functions) come first so they
-  // are available when subsequent constant-pool helpers reference them.
-  helpers.push(...hoistedHelpers);
   for (const s of constantPool.statements) {
     const code = emitAngularStmt(s);
     if (

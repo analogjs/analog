@@ -169,7 +169,7 @@ The generator writes this target. Add `includeDeps: true` to also report diagnos
 
 ### Angular versions
 
-Fast compile is validated against Angular `17`, `18`, `19`, `20`, `21`, `22`, and `next` on every PR. Components that use `@defer` at runtime require Angular 18+.
+Fast compile is validated against Angular `20`, `21`, `22`, and `next` on every PR.
 
 For overall Angular/Analog/Vite version support, see [Version Compatibility](/docs/guides/compatibility).
 

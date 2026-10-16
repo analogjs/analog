@@ -13,7 +13,6 @@ import { AngularMemoryOutputFiles } from '../utils';
 
 interface AngularMemoryPluginOptions {
   workspaceRoot?: string;
-  angularVersion: number;
   outputFiles: AngularMemoryOutputFiles;
   external?: string[];
 }
@@ -78,15 +77,11 @@ export async function createAngularMemoryPlugin(
     load(id: string) {
       const [file] = id.split('?', 1);
       const relativeFile =
-        options.angularVersion < 19
-          ? normalizePath(relative(projectRoot, file))
-              .replace(/^.*\//, '')
-              .replace('.ts', '.js')
-          : 'spec-' +
-            normalizePath(relative(projectRoot, file))
-              .replace('.ts', '.js')
-              .replace(/^[./]+/, '_')
-              .replace(/\//g, '-');
+        'spec-' +
+        normalizePath(relative(projectRoot, file))
+          .replace('.ts', '.js')
+          .replace(/^[./]+/, '_')
+          .replace(/\//g, '-');
 
       const codeContents =
         outputFiles.get(relativeFile)?.contents ||

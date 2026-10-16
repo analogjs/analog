@@ -4,10 +4,6 @@ Server functions are typed, validated operations that run on the server and are 
 
 Where `load` fetches data for one page and `action` handles one form post, a server function is an arbitrary operation you can call by name.
 
-:::info
-Server functions require Angular v19 or higher, as the client half is built on `resource()`.
-:::
-
 ## Defining a Server Function
 
 Server functions are defined with `serverFn` from `@analogjs/router/server` in any `.server.ts` file under `src`. They can live alongside an existing `load` or `action`.
