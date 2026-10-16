@@ -169,7 +169,7 @@ The generator writes this target. Add `includeDeps: true` to also report diagnos
 
 ### Angular versions
 
-Fast compile is validated against Angular `20`, `21`, `latest`, and `next` conformance fixtures on every PR, and against the `20.0.0` and `21.0.0` compiler APIs on PRs that touch the compiler.
+Fast compile is validated against Angular `20`, `21`, `latest`, and `next` conformance fixtures on PRs that touch the compiler, and against the `20.0.0` and `21.0.0` compiler APIs on `beta`-targeted PRs that touch the compiler.
 
 For overall Angular/Analog/Vite version support, see [Version Compatibility](/docs/guides/compatibility).
 

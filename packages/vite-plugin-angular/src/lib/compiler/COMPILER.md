@@ -12,7 +12,7 @@ export default defineConfig({
 });
 ```
 
-Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler`, `@angular/compiler-cli`, and `@angular/build` `^20.0.0 || ^21.0.0 || ^22.0.0`, `vite` >=6. Compatibility validated against `20.0.0`, `21.0.0`, and `next` on PRs that touch the compiler via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing).
+Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler`, `@angular/compiler-cli`, and `@angular/build` `^20.0.0 || ^21.0.0 || ^22.0.0`, `vite` >=6. Compatibility validated against `20.0.0`, `21.0.0`, and `next` on `beta`-targeted PRs that touch the compiler via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing).
 
 ## Architecture
 
@@ -364,7 +364,7 @@ The compiler detects the installed `@angular/compiler` version at startup and ad
 
 Angular 22 introduced `legacyOptionalChaining` on `R3ComponentMetadata` (external builds default to `false`, which an omitted field also produces) and 22.1 added `foreignImports: R3ForeignComponentMetadata[] | null` plus the `ɵɵforeignComponent`/`ɵɵforeignContent` instructions for the experimental foreign-components feature. `compileComponentFromMetadata` guards the field with a truthiness check (`foreignImports && foreignImports.length > 0`), so omitting it is runtime-safe; templates that use the new `@content` block / foreign components are not supported by the fast compiler.
 
-Supported range: **Angular 20–22**. Conformance tested against **Angular 20-22**, compatibility tested via per-version `pnpm.overrides` matrix on every PR.
+Supported range: **Angular 20–22**. Conformance tested against **Angular 20-22**, compatibility tested via per-version `pnpm.overrides` matrix on `beta`-targeted PRs that touch the compiler.
 
 ## Future Architecture (tsgo)
 
@@ -450,7 +450,7 @@ bash packages/vite-plugin-angular/scripts/setup-conformance.sh next
 npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
 ```
 
-CI runs a matrix of Angular 20, 21, latest, and next on every pull request via `.github/workflows/conformance.yml`.
+CI runs a matrix of Angular 20, 21, latest, and next on pull requests that touch the compiler via `.github/workflows/conformance.yml`.
 
 ### Compatibility Testing
 
@@ -465,4 +465,4 @@ The matrix pins versions as follows:
 - **Numeric slots use the floor of the major** (`20.0.0`, `21.0.0`). These majors are still receiving patches, so pinning the floor gives a deterministic CI signal — _"the lowest supported version of major N still works"_ — without forcing matrix bumps every time Angular ships a patch.
 - **`next`** tracks Angular's prerelease dist-tag and is allowed to fail (early warning when the next major lands a breaking change, without blocking the workflow).
 
-The workflow runs on `pull_request`, `push` to `beta`, and `workflow_dispatch`. When `packages/vite-plugin-angular/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot(s). When a new Angular major ships, add a new floor slot.
+The workflow runs on `pull_request` to `beta`, `push` to `beta`, and `workflow_dispatch`. When `packages/vite-plugin-angular/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot(s). When a new Angular major ships, add a new floor slot.
