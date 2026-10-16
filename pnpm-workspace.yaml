@@ -73,9 +73,9 @@ catalog:
   '@angular-devkit/build-angular': 22.2.0
   '@angular-devkit/core': 22.2.0
   '@angular-devkit/schematics': 22.2.0
-  '@angular-eslint/eslint-plugin': 22.5.0
-  '@angular-eslint/eslint-plugin-template': 22.5.0
-  '@angular-eslint/template-parser': 22.5.0
+  '@angular-eslint/eslint-plugin': 22.6.0
+  '@angular-eslint/eslint-plugin-template': 22.6.0
+  '@angular-eslint/template-parser': 22.6.0
   '@angular/build': 22.2.0
   '@angular/cli': 22.2.0
   '@angular/compiler-cli': 22.2.0
@@ -102,7 +102,7 @@ catalog:
   ajv: ^8.18.0
   ajv-formats: ^3.0.1
   all-contributors-cli: ^6.26.1
-  angular-eslint: ^22.5.0
+  angular-eslint: ^22.6.0
   astro: 6.1.5
   conventional-changelog: ^7.2.0
   cpy-cli: ^7.0.0
