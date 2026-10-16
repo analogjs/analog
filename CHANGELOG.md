@@ -1,3 +1,9 @@
+## [2.8.2-beta.1](https://github.com/analogjs/analog/compare/v2.8.1...v2.8.2-beta.1) (2026-10-16)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** keep JIT inline style payload in test ids ([#2615](https://github.com/analogjs/analog/issues/2615)) ([95f9531](https://github.com/analogjs/analog/commit/95f953121a550d4cb70037afc52f57db3751b77f))
+
 ## [2.8.1](https://github.com/analogjs/analog/compare/v2.8.0...v2.8.1) (2026-10-14)
 
 ### Bug Fixes
