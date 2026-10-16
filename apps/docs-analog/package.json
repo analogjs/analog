@@ -8,6 +8,7 @@
     "@analogjs/platform": "workspace:*",
     "@analogjs/router": "workspace:*",
     "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vite-plugin-nitro": "workspace:*",
     "@analogjs/vitest-angular": "workspace:*",
     "tailwindcss": "^4.2.2"
   }

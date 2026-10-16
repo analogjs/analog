@@ -8,7 +8,7 @@
   "implicitDependencies": ["vitest-angular", "platform", "router"],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/docs-analog/.nitro",
