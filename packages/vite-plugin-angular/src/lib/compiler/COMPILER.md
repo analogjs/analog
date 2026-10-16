@@ -12,7 +12,7 @@ export default defineConfig({
 });
 ```
 
-Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
+Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler`, `@angular/compiler-cli`, and `@angular/build` `^20.0.0 || ^21.0.0 || ^22.0.0`, `vite` >=6. Compatibility validated against `20.0.0`, `21.0.0`, and `next` on PRs that touch the compiler via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing).
 
 ## Architecture
 
@@ -364,7 +364,7 @@ The compiler detects the installed `@angular/compiler` version at startup and ad
 
 Angular 22 introduced `legacyOptionalChaining` on `R3ComponentMetadata` (external builds default to `false`, which an omitted field also produces) and 22.1 added `foreignImports: R3ForeignComponentMetadata[] | null` plus the `ɵɵforeignComponent`/`ɵɵforeignContent` instructions for the experimental foreign-components feature. `compileComponentFromMetadata` guards the field with a truthiness check (`foreignImports && foreignImports.length > 0`), so omitting it is runtime-safe; templates that use the new `@content` block / foreign components are not supported by the fast compiler.
 
-Supported range: **Angular 20+**. Conformance tested against **Angular 20-22**, compatibility tested via per-version `pnpm.overrides` matrix on every PR.
+Supported range: **Angular 20–22**. Conformance tested against **Angular 20-22**, compatibility tested via per-version `pnpm.overrides` matrix on every PR.
 
 ## Future Architecture (tsgo)
 

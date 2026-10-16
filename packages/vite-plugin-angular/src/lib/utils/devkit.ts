@@ -28,10 +28,13 @@ const {
   createAngularCompilation: createAngularCompilationFn,
 } = require('@angular/build/private');
 
-const createAngularCompilation = async (...args: unknown[]) => {
-  await initializeHash?.();
-  return createAngularCompilationFn(...args);
-};
+// `@angular/build` exports `createAngularCompilation` from v20.2.
+const createAngularCompilation =
+  createAngularCompilationFn &&
+  (async (...args: unknown[]) => {
+    await initializeHash?.();
+    return createAngularCompilationFn(...args);
+  });
 
 if (usesTransformOptions) {
   ({ initializeHash } = require(

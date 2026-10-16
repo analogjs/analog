@@ -2,7 +2,7 @@
 
 An existing Angular Single Page Application can be configured to use Analog using a schematic/generator for Angular CLI or Nx workspaces.
 
-> Analog is compatible with Angular v20 and above.
+> Analog is compatible with Angular v20, v21, and v22.
 
 ## Using a Schematic/Generator
 
