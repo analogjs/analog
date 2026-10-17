@@ -33,11 +33,13 @@ function getVitePlugins(): Plugin[] {
 
   const setup = integration.hooks['astro:config:setup'] as (args: {
     addRenderer: () => void;
+    addMiddleware: () => void;
     updateConfig: (cfg: { vite: { plugins?: Plugin[] } }) => void;
   }) => void;
 
   setup({
     addRenderer: () => undefined,
+    addMiddleware: () => undefined,
     updateConfig: (cfg) => {
       plugins = cfg.vite.plugins ?? [];
     },
@@ -71,6 +73,7 @@ describe('astro-angular plugin', () => {
       let viteConfig: any;
       const mockSetup = {
         addRenderer: vi.fn(),
+        addMiddleware: vi.fn(),
         updateConfig: vi.fn(function (config: any) {
           viteConfig = config.vite;
         }),
@@ -91,6 +94,7 @@ describe('astro-angular plugin', () => {
       let viteConfig: any;
       const mockSetup = {
         addRenderer: vi.fn(),
+        addMiddleware: vi.fn(),
         updateConfig: vi.fn(function (config: any) {
           viteConfig = config.vite;
         }),
@@ -104,11 +108,60 @@ describe('astro-angular plugin', () => {
     });
   });
 
+  describe('hydration and style placement defaults', () => {
+    function setup(options?: Parameters<typeof astroPlugin>[0]) {
+      const addRenderer = vi.fn();
+      const addMiddleware = vi.fn();
+      let include: string[] = [];
+      astroPlugin(options).hooks['astro:config:setup']!({
+        addRenderer,
+        addMiddleware,
+        updateConfig: (cfg: any) => {
+          include = cfg.vite.optimizeDeps.include;
+        },
+      } as any);
+      return { renderer: addRenderer.mock.calls[0][0], addMiddleware, include };
+    }
+
+    it('uses Angular hydration and strict style placement by default', () => {
+      const { renderer, addMiddleware, include } = setup();
+
+      expect(renderer.clientEntrypoint).toBe(
+        '@analogjs/astro-angular/client-ngh.js',
+      );
+      expect(renderer.serverEntrypoint).toBe(
+        '@analogjs/astro-angular/server-ngh.js',
+      );
+      expect(include).toContain('@analogjs/astro-angular/client-ngh.js');
+      expect(addMiddleware).toHaveBeenCalledWith({
+        order: 'pre',
+        entrypoint: '@analogjs/astro-angular/middleware',
+      });
+    });
+
+    it('opts out when both options are false', () => {
+      const { renderer, addMiddleware, include } = setup({
+        useAngularHydration: false,
+        strictStylePlacement: false,
+      });
+
+      expect(renderer.clientEntrypoint).toBe(
+        '@analogjs/astro-angular/client.js',
+      );
+      expect(renderer.serverEntrypoint).toBe(
+        '@analogjs/astro-angular/server.js',
+      );
+      expect(include).toContain('@analogjs/astro-angular/client.js');
+      expect(addMiddleware).not.toHaveBeenCalled();
+    });
+  });
+
   describe('transformFilter option', () => {
     function getPlugins(options?: Parameters<typeof astroPlugin>[0]) {
       let plugins: any[] = [];
       astroPlugin(options).hooks['astro:config:setup']!({
         addRenderer: vi.fn(),
+        addMiddleware: vi.fn(),
         updateConfig: (cfg: any) => {
           plugins = cfg.vite.plugins;
         },

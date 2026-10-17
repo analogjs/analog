@@ -177,11 +177,9 @@ export default defineConfig({
 
 ### Strict Style Placement
 
-Angular components can use style scoped to each component instance. By default, these style tags will be inserted adjacent to the component's HTML by `@analogjs/astro-angular`. While this will typically work for modern browsers, it is technically invalid HTML.
+Angular components can use style scoped to each component instance. By default, `@analogjs/astro-angular` moves these component style tags to the document head, because style tags next to the component's HTML in the body are invalid HTML.
 
-To force these component styles to the document head, enable the `strictStylePlacement` option in the integration config.
-
-**Warning:** enabling this option will disable Astro's [streaming](https://docs.astro.build/en/recipes/streaming-improve-page-performance/) mode under SSR.
+**Warning:** strict style placement disables Astro's [streaming](https://docs.astro.build/en/recipes/streaming-improve-page-performance/) mode under SSR. To keep streaming, set the `strictStylePlacement` option to `false`. Component styles are then inserted next to the component's HTML.
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -189,15 +187,15 @@ import { defineConfig } from 'astro/config';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [angular({ strictStylePlacement: true })],
+  integrations: [angular({ strictStylePlacement: false })],
 });
 ```
 
-### Angular Client Hydration (Experimental)
+### Angular Client Hydration
 
-By default, `@analogjs/astro-angular` performs hydration by bootstrapping the component on the client, replacing the DOM that was rendered on the server.
+By default, `@analogjs/astro-angular` hydrates components with Angular's client hydration using [provideClientHydration](https://angular.dev/api/platform-browser/provideClientHydration).
 
-To opt-in to Angular's client hydration, enable the `experimental.useAngularHydration` option in the integration config. This will switch the hydration strategy to use [provideClientHydration](https://angular.dev/api/platform-browser/provideClientHydration).
+To bootstrap components on the client and replace the DOM that was rendered on the server instead, set the `useAngularHydration` option to `false`.
 
 ```js
 import { defineConfig } from 'astro/config';
@@ -205,7 +203,7 @@ import { defineConfig } from 'astro/config';
 import angular from '@analogjs/astro-angular';
 
 export default defineConfig({
-  integrations: [angular({ useAngularHydration: true })],
+  integrations: [angular({ useAngularHydration: false })],
 });
 ```
 
@@ -345,9 +343,9 @@ export class TodosComponent implements OnInit {
 }
 ```
 
-### Client Hydration Features (Experimental)
+### Client Hydration Features
 
-First, make sure the experimental Angular client hydration option is enabled in the integration config. Read more [here](#angular-client-hydration-experimental).
+Hydration features require Angular client hydration, which is enabled by default. Read more [here](#angular-client-hydration).
 
 To add Angular hydration features, add a static property to the component class named `hydrationFeatures`. This should be a function that returns an array of hydration features to enable.
 
