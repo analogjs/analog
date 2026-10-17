@@ -1449,9 +1449,6 @@ importers:
       md4x:
         specifier: catalog:peerContentOptional
         version: 0.0.25
-      prismjs:
-        specifier: 'catalog:'
-        version: 1.30.0
       rxjs:
         specifier: catalog:peerCompat
         version: 7.8.2

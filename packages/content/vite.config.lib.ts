@@ -24,14 +24,6 @@ export default defineConfig({
       entry: {
         'analogjs-content': resolve(import.meta.dirname, 'src/index.ts'),
         'analogjs-content-og': resolve(import.meta.dirname, 'og/src/index.ts'),
-        'analogjs-content-prism-highlighter': resolve(
-          import.meta.dirname,
-          'prism-highlighter/src/index.ts',
-        ),
-        'analogjs-content-shiki-highlighter': resolve(
-          import.meta.dirname,
-          'shiki-highlighter/src/index.ts',
-        ),
         'analogjs-content-mdc': resolve(
           import.meta.dirname,
           'mdc/src/index.ts',
@@ -53,7 +45,6 @@ export default defineConfig({
         /^@angular\/.*/,
         /^@nx\/.*/,
         /^@analogjs\//,
-        /^prismjs/,
         /^marked/,
         /^satori/,
         /^rxjs/,

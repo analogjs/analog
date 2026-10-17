@@ -33,7 +33,6 @@
     "marked-highlight": "catalog:",
     "rxjs": "catalog:peerCompat",
     "@standard-schema/spec": "catalog:",
-    "prismjs": "catalog:",
     "satori": "catalog:peerContentOptional",
     "satori-html": "catalog:",
     "sharp": "catalog:",
@@ -57,9 +56,6 @@
     },
     "sharp": {
       "optional": true
-    },
-    "prismjs": {
-      "optional": true
     }
   },
   "exports": {
@@ -72,16 +68,6 @@
       "types": "./dist/types/og/src/index.d.ts",
       "import": "./dist/fesm2022/analogjs-content-og.mjs",
       "default": "./dist/fesm2022/analogjs-content-og.mjs"
-    },
-    "./prism-highlighter": {
-      "types": "./dist/types/prism-highlighter/src/index.d.ts",
-      "import": "./dist/fesm2022/analogjs-content-prism-highlighter.mjs",
-      "default": "./dist/fesm2022/analogjs-content-prism-highlighter.mjs"
-    },
-    "./shiki-highlighter": {
-      "types": "./dist/types/shiki-highlighter/src/index.d.ts",
-      "import": "./dist/fesm2022/analogjs-content-shiki-highlighter.mjs",
-      "default": "./dist/fesm2022/analogjs-content-shiki-highlighter.mjs"
     },
     "./mdc": {
       "types": "./dist/types/mdc/src/index.d.ts",
