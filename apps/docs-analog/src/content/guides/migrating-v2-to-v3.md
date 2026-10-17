@@ -35,6 +35,16 @@ Analog v3 requires Angular v20 or newer. The supported range is `^20.0.0 || ^21.
 
 The `@angular-devkit/build-angular` fallback in `@analogjs/vite-plugin-angular` has also been removed; `@angular/build` is used for all supported Angular versions.
 
+### Tooling version support
+
+The peer dependency ranges now match the Angular v20 baseline:
+
+- `@analogjs/vitest-angular` requires Vitest `^4.0.7 || ^5.0.0`
+- `@analogjs/platform` and `@analogjs/content` require Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`), and the Nx generators reject older Nx versions
+- `zone.js`, when used, must be `0.15.0` or newer
+
+Upgrade Vitest and Nx before upgrading Analog.
+
 ### Removed Analog SFC support
 
 Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.

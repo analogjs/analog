@@ -102,7 +102,7 @@ npx nx g @analogjs/platform:application analog-app --linter=oxlint
 
 ## Updating Nx
 
-Analog supports Nx 23.2 and newer inferred targets and migrations. Update the workspace with `nx migrate`, and run the migrations it generates:
+Analog requires Nx 23.2 or newer, and supports its inferred targets and migrations. Update the workspace with `nx migrate`, and run the migrations it generates:
 
 ```shell
 npx nx migrate latest
