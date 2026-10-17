@@ -49,24 +49,21 @@ class MyService {
 
 ## Injektor des Anfragekontext
 
-Analog bietet auch `requestContextInterceptor` für den HttpClient, der die Umwandlung jeder URL-Anfrage, die mit einem `/` beginnt, in eine vollständige URL-Anfrage auf dem Server, dem Client und während des Prerenderings übernimmt.
+Analog bietet `requestContextInterceptor` für den HttpClient, der die Umwandlung jeder URL-Anfrage, die mit einem `/` beginnt, in eine vollständige URL-Anfrage auf dem Server, dem Client und während des Prerenderings übernimmt.
 
-Verwende es mit der Funktion `withInterceptors` aus den Paket `@angular/common/http`.
+`provideFileRouter()` registriert den Interceptor automatisch, daher genügt ein einfaches `provideHttpClient()`.
 
 ```ts
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideHttpClient(withFetch()),
     provideClientHydration(),
   ],
 };
 ```
 
-> Stelle sicher, dass der `requestContextInterceptor` der **letzte** im Array der Interceptoren ist.
+> Der Interceptor läuft nach allen Interceptoren, die du mit `withInterceptors()` registrierst, daher musst du ihn nicht selbst hinzufügen.
 
 ## Anfragen erstellen
 

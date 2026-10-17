@@ -3,22 +3,15 @@ import {
   <% if (majorAngularVersion < 21) { %>provideZonelessChangeDetection,<% } %>
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
-import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
 
 export const appConfig: ApplicationConfig = {
   providers: [provideBrowserGlobalErrorListeners(),
     <% if (majorAngularVersion < 21) { %>provideZonelessChangeDetection(),<% } %>
     provideFileRouter(),
     provideClientHydration(),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor])
-    ),
+    provideHttpClient(withFetch()),
   ],
 };

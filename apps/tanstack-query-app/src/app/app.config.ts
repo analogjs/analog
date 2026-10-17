@@ -1,15 +1,11 @@
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { InjectionToken } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
 import {
   provideClientHydration,
   withEventReplay,
 } from '@angular/platform-browser';
-import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
 import { provideAnalogQuery } from '@analogjs/router/tanstack-query';
 import {
   QueryClient,
@@ -29,10 +25,7 @@ const QUERY_CLIENT = new InjectionToken<QueryClient>('QueryClient', {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideHttpClient(withFetch()),
     provideClientHydration(withEventReplay()),
     provideTanStackQuery(QUERY_CLIENT),
     provideAnalogQuery(),

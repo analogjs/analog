@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { API_PREFIX } from '../../tokens/src/index.js';
 
 import { cookieInterceptor } from './cookie-interceptor';
+import { requestContextInterceptor } from './request-context';
 import { updateJsonLdOnRouteChange } from './json-ld';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
 import { createRoutes as createBaseRoutes } from './route-builder';
@@ -126,6 +127,11 @@ export function provideFileRouterWithRoutes(
       updateMetaTagsOnRouteChange(router, meta);
       updateJsonLdOnRouteChange(router, document);
     }),
+    {
+      provide: HTTP_ROOT_INTERCEPTOR_FNS,
+      multi: true,
+      useValue: requestContextInterceptor,
+    },
     {
       provide: HTTP_ROOT_INTERCEPTOR_FNS,
       multi: true,

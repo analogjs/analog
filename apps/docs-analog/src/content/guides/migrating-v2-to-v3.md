@@ -356,11 +356,42 @@ In the v3 line, deployment docs emphasize:
 - passing the build-time base href explicitly in the build command
 - setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
 
+### `requestContextInterceptor` is registered by `provideFileRouter()`
+
+`provideFileRouter()` now registers `requestContextInterceptor` for `HttpClient`, so a plain `provideHttpClient()` resolves relative URLs during SSR and prerendering and reuses SSR responses on the client. `ng update` removes the manual registration from `withInterceptors([...])`, along with `withInterceptors()` when it has no other interceptors.
+
+Before:
+
+```ts
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
+import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
+
+providers: [
+  provideFileRouter(),
+  provideHttpClient(withFetch(), withInterceptors([requestContextInterceptor])),
+];
+```
+
+After:
+
+```ts
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideFileRouter } from '@analogjs/router';
+
+providers: [provideFileRouter(), provideHttpClient(withFetch())];
+```
+
+The interceptor runs after any interceptors you register with `withInterceptors()`.
+
 ### `VITE_ANALOG_PUBLIC_BASE_URL` was removed
 
 Server-side data fetching no longer reads `VITE_ANALOG_PUBLIC_BASE_URL`. Delete it from your `.env` files and CI builds. Page `load` resolvers no longer switch to `globalThis.$fetch` when the variable is set, which bypassed the `HttpClient` transfer cache and caused SSR data to be fetched again on the client.
 
-Make sure your server entry uses `provideServerContext()` and your `HttpClient` setup includes `requestContextInterceptor`, as described in [Server Request Context](/docs/features/data-fetching/overview#server-request-context). The base URL is then derived from each incoming request. If your data fetching must call a different origin than the one serving the app, provide the `BASE_URL` token from `@analogjs/router/tokens` yourself in `app.config.server.ts`.
+Make sure your server entry uses `provideServerContext()` and your app uses `provideFileRouter()`, which registers `requestContextInterceptor`, as described in [Server Request Context](/docs/features/data-fetching/overview#server-request-context). The base URL is then derived from each incoming request. If your data fetching must call a different origin than the one serving the app, provide the `BASE_URL` token from `@analogjs/router/tokens` yourself in `app.config.server.ts`.
 
 ### The `useAPIMiddleware` option was removed
 
@@ -489,6 +520,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content
 - remove `withShikiHighlighter()` / `withPrismHighlighter()` and their `@analogjs/content/*-highlighter` imports
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
+- remove `requestContextInterceptor` from `withInterceptors([...])`, since `provideFileRouter()` registers it
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - replace `defineRouteMeta(...)` with a `RouteMeta`-typed object, and `injectRouter()` / `injectActivatedRoute()` with `inject(Router)` / `inject(ActivatedRoute)`

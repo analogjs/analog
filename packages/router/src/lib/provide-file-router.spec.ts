@@ -1,6 +1,11 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DOCUMENT } from '@angular/common';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { provideLocationMocks } from '@angular/common/testing';
 import { ROUTES, Router } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
@@ -247,5 +252,22 @@ describe('provideFileRouter integration', () => {
         .querySelector('script[data-analog-json-ld]')
         ?.textContent?.includes('Provide File Router Home'),
     ).toBe(true);
+  });
+
+  it('should apply requestContextInterceptor with a plain provideHttpClient()', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideFileRouter(),
+        provideLocationMocks(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+
+    TestBed.inject(HttpClient).get('/api/hello').subscribe();
+
+    TestBed.inject(HttpTestingController)
+      .expectOne(new URL('/api/hello', window.location.origin).href)
+      .flush({});
   });
 });
