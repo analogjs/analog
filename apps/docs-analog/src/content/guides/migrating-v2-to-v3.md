@@ -342,12 +342,6 @@ export default defineConfig({
 });
 ```
 
-### Runtime i18n helpers were removed
-
-The beta runtime i18n helpers are not available in v3. If your app uses `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers such as `withLocale()`, remove that Analog-specific runtime i18n setup before upgrading.
-
-Plan to keep locale routing and translation loading in your own app code, or migrate to Angular's standard i18n and `$localize` approach instead. There is no direct first-party Analog replacement for the removed runtime i18n layer in v3.
-
 ### Legacy Vitest setup path
 
 If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
@@ -531,7 +525,6 @@ Keep automated migration tooling focused on the breaking changes above:
 - remove `withShikiHighlighter()` / `withPrismHighlighter()` and their `@analogjs/content/*-highlighter` imports
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
 - remove `requestContextInterceptor` from `withInterceptors([...])`, since `provideFileRouter()` registers it
-- flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - replace `defineRouteMeta(...)` with a `RouteMeta`-typed object, and `injectRouter()` / `injectActivatedRoute()` with `inject(Router)` / `inject(ActivatedRoute)`
 - replace `setupTestBed({ browserMode })` with `teardown: { destroyAfterEach }`
