@@ -94,50 +94,30 @@ export default {
       {
         replacements: [
           {
-            files: [
-              'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-              'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
-            ],
+            files: ['packages/nx-plugin/src/utils/versions/versions.ts'],
             from: "ANALOG_JS_ROUTER = '.*'",
             to: "ANALOG_JS_ROUTER = '^${nextRelease.version}'",
           },
           {
-            files: [
-              'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-              'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
-            ],
+            files: ['packages/nx-plugin/src/utils/versions/versions.ts'],
             from: "ANALOG_JS_CONTENT = '.*'",
             to: "ANALOG_JS_CONTENT = '^${nextRelease.version}'",
           },
           {
-            files: [
-              'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-              'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
-            ],
+            files: ['packages/nx-plugin/src/utils/versions/versions.ts'],
             from: "ANALOG_JS_PLATFORM = '.*'",
             to: "ANALOG_JS_PLATFORM = '^${nextRelease.version}'",
           },
           {
             files: [
-              'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-            ],
-            from: "ANALOG_JS_VITE_PLUGIN_NITRO = '.*'",
-            to: "ANALOG_JS_VITE_PLUGIN_NITRO = '^${nextRelease.version}'",
-          },
-          {
-            files: [
-              'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-              'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
+              'packages/nx-plugin/src/utils/versions/versions.ts',
               'packages/vitest-angular-tools/src/schematics/utils/versions.ts',
             ],
             from: "ANALOG_JS_VITE_PLUGIN_ANGULAR = '.*'",
             to: "ANALOG_JS_VITE_PLUGIN_ANGULAR = '^${nextRelease.version}'",
           },
           {
-            files: [
-              'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-              'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
-            ],
+            files: ['packages/nx-plugin/src/utils/versions/versions.ts'],
             from: "ANALOG_JS_VITEST_ANGULAR = '.*'",
             to: "ANALOG_JS_VITEST_ANGULAR = '^${nextRelease.version}'",
           },
@@ -171,8 +151,7 @@ export default {
           'packages/vite-plugin-angular/package.json',
           'packages/vite-plugin-nitro/package.json',
           'packages/vitest-angular/package.json',
-          'packages/nx-plugin/src/generators/app/versions/nx_18_X/versions.ts',
-          'packages/nx-plugin/src/utils/versions/ng_19_X/versions.ts',
+          'packages/nx-plugin/src/utils/versions/versions.ts',
           'packages/vitest-angular-tools/src/schematics/utils/versions.ts',
         ],
         message: 'chore: release ${nextRelease.version} [skip ci]',
