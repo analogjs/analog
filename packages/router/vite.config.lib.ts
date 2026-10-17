@@ -51,6 +51,12 @@ export default defineConfig({
           import.meta.dirname,
           'tokens/src/index.ts',
         ),
+        // Loaded by `ng update` from migrations/migration.json.
+        'migrations/remove-request-context-interceptor/remove-request-context-interceptor':
+          resolve(
+            import.meta.dirname,
+            'migrations/remove-request-context-interceptor/remove-request-context-interceptor.ts',
+          ),
       },
       formats: ['es'],
     },
@@ -62,6 +68,7 @@ export default defineConfig({
         /^@tanstack\/.*/,
         /^rxjs/,
         'tslib',
+        'typescript',
         'h3',
         /^nitro\/.*/,
         // Server entries reach for Node builtins. Bundling them lets Vite
@@ -71,7 +78,10 @@ export default defineConfig({
       ],
       output: {
         chunkFileNames: 'fesm2022/[name].mjs',
-        entryFileNames: 'fesm2022/[name].mjs',
+        entryFileNames: (chunk) =>
+          chunk.name.startsWith('migrations/')
+            ? '[name].js'
+            : 'fesm2022/[name].mjs',
       },
     },
   },
