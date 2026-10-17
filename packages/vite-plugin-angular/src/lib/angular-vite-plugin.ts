@@ -148,13 +148,29 @@ import {
 import { createHotUpdateBatcher } from './hot-update-batch.js';
 
 export interface PluginOptions {
-  tsconfig?: string | (() => string);
-  workspaceRoot?: string;
-  inlineStylesExtension?: string;
-  jit?: boolean;
-  supportedBrowsers?: string[];
   /**
-   * Additional files to include in compilation
+   * Path to the tsconfig used for compilation, or a function returning it.
+   * Defaults to `tsconfig.app.json` (`tsconfig.lib.json` for libraries,
+   * `tsconfig.spec.json` in tests).
+   */
+  tsconfig?: string | (() => string);
+  /**
+   * Absolute path to the workspace root. Defaults to `NX_WORKSPACE_ROOT`,
+   * then `process.cwd()`.
+   */
+  workspaceRoot?: string;
+  /**
+   * Stylesheet extension used for inline component `styles`. Defaults to `css`.
+   */
+  inlineStylesExtension?: string;
+  /**
+   * Compile components in JIT mode. Defaults to `true` in tests and `false`
+   * otherwise.
+   */
+  jit?: boolean;
+  /**
+   * Additional files to include in compilation, as globs relative to the
+   * workspace root.
    */
   include?: string[];
   /**
@@ -168,7 +184,15 @@ export interface PluginOptions {
    * available when needed.
    */
   liveReload?: boolean;
+  /**
+   * Skip semantic and Angular template diagnostics during compilation.
+   * Defaults to `true`.
+   */
   disableTypeChecking?: boolean;
+  /**
+   * Replace source files at build time, like `fileReplacements` in
+   * `angular.json`.
+   */
   fileReplacements?: FileReplacement[];
   /**
    * Opt into the fast compile path. Skips Angular's template type-checking
@@ -237,7 +261,6 @@ export function angular(options?: PluginOptions): Plugin[] {
       process.env['NX_WORKSPACE_ROOT'] ??
       process.cwd(),
     inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
-    supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     jit: options?.jit,
     include: options?.include ?? [],
     liveReload,
@@ -1398,7 +1421,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
         jit,
         liveReload: pluginOptions.liveReload,
-        supportedBrowsers: pluginOptions.supportedBrowsers,
         isTest,
         isAstroIntegration,
         fastCompileMode: pluginOptions.fastCompileMode,
@@ -1434,7 +1456,6 @@ export function angular(options?: PluginOptions): Plugin[] {
         inlineStylesExtension: pluginOptions.inlineStylesExtension,
       })) as Plugin,
     buildOptimizerPlugin({
-      supportedBrowsers: pluginOptions.supportedBrowsers,
       jit,
     }),
     routerPlugin(),

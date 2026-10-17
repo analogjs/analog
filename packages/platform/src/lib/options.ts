@@ -99,9 +99,26 @@ export interface Options {
    */
   static?: boolean;
   prerender?: PrerenderOptions;
+  /**
+   * Path to the server entry used for SSR.
+   * @default '<root>/src/main.server.ts'
+   */
   entryServer?: string;
+  /**
+   * Path prefix for API routes.
+   * @default 'api'
+   */
   apiPrefix?: string;
+  /**
+   * HTML document rendered around the app, relative to the project root.
+   * @default 'index.html'
+   */
   index?: string;
+  /**
+   * Absolute path to the workspace root, used to resolve workspace-relative
+   * paths such as `additionalPagesDirs`.
+   * @default process.env.NX_WORKSPACE_ROOT ?? process.cwd()
+   */
   workspaceRoot?: string;
   content?: ContentPluginOptions;
   /**
@@ -123,28 +140,22 @@ export interface Options {
   debug?: DebugOption;
 
   /**
-   * Additional page paths to include
+   * Additional page directories to include, as workspace-relative paths
+   * starting with `/` (e.g. `/libs/shared/feature`). Use
+   * `discoverLibraryRoutes()` to collect the directories of workspace
+   * libraries.
    */
   additionalPagesDirs?: string[];
   /**
-   * Additional page paths to include
+   * Additional content directories to include, as workspace-relative paths
+   * starting with `/`.
    */
   additionalContentDirs?: string[];
   /**
-   * Additional API paths to include
+   * Additional API directories to include, as workspace-relative paths
+   * starting with `/`.
    */
   additionalAPIDirs?: string[];
-  /**
-   * Generate routes from the app's route directories.
-   *
-   * Workspace library route directories are opt-in. Use
-   * `discoverLibraryRoutes()` and pass its result to `additionalPagesDirs`,
-   * `additionalContentDirs`, and `additionalAPIDirs` when an app should
-   * include routes from shared libraries.
-   *
-   * @default false
-   */
-  discoverRoutes?: boolean;
   /**
    * Configuration for runtime i18n support.
    * When set, enables locale detection on SSR and provides

@@ -124,7 +124,8 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog({
+    analog(),
+    angular({
       fileReplacements:
         mode === 'production'
           ? [
@@ -211,7 +212,8 @@ This is separate from Vite's `server.hmr` option, which configures the HMR webso
 export default defineConfig(({ mode }) => ({
   // .. other configuration
   plugins: [
-    analog({
+    analog(),
+    angular({
       liveReload: true,
     }),
   ],

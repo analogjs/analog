@@ -132,11 +132,11 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 | `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                                                                                        |
 | `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
 
-`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
+`analog()` retains `ssr`, `static`, `apiPrefix`, `entryServer`, `index`, `workspaceRoot`, `content`, `prerender`, `i18n`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
 
 #### Workspace library globs
 
-If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
+The `discoverRoutes` option was removed. If your v2 config used `discoverRoutes: true` to compile workspace library pages, use the `discoverLibraryRoutes()` helper exported from `@analogjs/platform` instead. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
 
 ```ts
 import analog, { discoverLibraryRoutes } from '@analogjs/platform';
@@ -368,6 +368,13 @@ The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware 
 
 If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
 
+### Removed no-op options
+
+These options had no effect and were removed. Delete them from your config:
+
+- `analog({ discoverRoutes })`: use [`discoverLibraryRoutes()`](#workspace-library-globs) to include routes from workspace libraries.
+- `angular({ supportedBrowsers })`: no replacement is needed.
+
 ### Removed first-party packages and current compiler gaps
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
@@ -401,6 +408,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
+- remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
 - typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas

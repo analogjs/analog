@@ -82,9 +82,32 @@ const config: StorybookConfig = {
 export default config;
 ```
 
-For current Analog projects, use `framework.options.liveReload` to control Analog's Angular live-reload behavior.
+### Framework Options
 
-This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `framework.options.liveReload` when Storybook needs custom host, port, or path settings.
+`framework.options` configures the Angular compilation for Storybook. These options are passed to `@analogjs/vite-plugin-angular` with Storybook-specific defaults:
+
+| Option                  | Default                                                          | Description                                                                                              |
+| ----------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `jit`                   | `true`                                                           | Compile stories in JIT mode. Set to `false` to compile with AOT.                                         |
+| `liveReload`            | `false`                                                          | Enables Angular component HMR in Storybook.                                                              |
+| `inlineStylesExtension` | `'css'`                                                          | Stylesheet language for inline component `styles`, such as `'scss'`.                                     |
+| `tsconfig`              | the builder's `tsConfig`, then `.storybook/tsconfig.json`        | Path to the tsconfig used for compilation.                                                               |
+| `experimentalZoneless`  | the builder's `experimentalZoneless`, then `true` on Angular 21+ | Bootstrap stories without Zone.js. See [zoneless change detection](#enabling-zoneless-change-detection). |
+
+```ts
+const config: StorybookConfig = {
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {
+      jit: false,
+      liveReload: true,
+      inlineStylesExtension: 'scss',
+    },
+  },
+};
+```
+
+`liveReload` is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `liveReload` when Storybook needs custom host, port, or path settings.
 
 Remove the existing `webpackFinal` config function if present.
 
