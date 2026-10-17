@@ -1,4 +1,3 @@
-import { VERSION } from '@angular/compiler-cli';
 import type { Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
@@ -56,9 +55,7 @@ export function depsPlugin(options?: Options): Plugin[] {
                 ...(isRolldown() ? ANGULAR_LINKED_SSR_DEPS : []),
                 '@angular/common',
                 '@angular/common/http',
-                ...(Number(VERSION.major) > 15
-                  ? ['@angular/core/rxjs-interop']
-                  : []),
+                '@angular/core/rxjs-interop',
               ],
               ...(isRolldown()
                 ? { rolldownOptions: { plugins: [angularLinkerPlugin()] } }
@@ -69,9 +66,7 @@ export function depsPlugin(options?: Options): Plugin[] {
             include: [
               '@angular/common',
               '@angular/common/http',
-              ...(Number(VERSION.major) > 15
-                ? ['@angular/core/rxjs-interop']
-                : []),
+              '@angular/core/rxjs-interop',
               'front-matter',
             ],
             exclude: [

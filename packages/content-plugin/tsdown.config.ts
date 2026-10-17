@@ -8,14 +8,6 @@ const pkgDir = import.meta.dirname;
 export default defineConfig({
   entry: {
     'src/index': resolve(pkgDir, 'src/index.ts'),
-    'src/migrations/update-markdown-version/update-markdown-version': resolve(
-      pkgDir,
-      'src/migrations/update-markdown-version/update-markdown-version.ts',
-    ),
-    'src/migrations/update-markdown-version/compat': resolve(
-      pkgDir,
-      'src/migrations/update-markdown-version/compat.ts',
-    ),
   },
   format: 'cjs',
   target: 'es2022',

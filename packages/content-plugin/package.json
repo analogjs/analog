@@ -7,13 +7,9 @@
     "tsdown": "catalog:"
   },
   "peerDependencies": {
-    "@nx/devkit": "catalog:peerCompat",
     "vite": "catalog:peerCompat"
   },
   "peerDependenciesMeta": {
-    "@nx/devkit": {
-      "optional": true
-    },
     "vite": {
       "optional": true
     }

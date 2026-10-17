@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       include: ['**/*.spec.ts'],
       exclude: ['**/files/**/*.spec.ts'],
+      passWithNoTests: true,
     },
     define: {
       'import.meta.vitest': mode !== 'production',
