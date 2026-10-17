@@ -80,6 +80,7 @@ declare module '@analogjs/router' {
     '/products/[productId]': {
       params: { productId: string };
       query: Record<string, string | string[] | undefined>;
+      routeMeta: typeof import('./app/pages/products.[productId].page').routeMeta;
       load: typeof import('./app/pages/products.[productId].server').load;
     };
     '/[...slug]': {
