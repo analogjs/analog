@@ -53,24 +53,21 @@ class MyService {
 
 ## 请求上下文拦截器 {#request-context-interceptor}
 
-Analog 同样为 HttpClient 提供了 `requestContextInterceptor` 以在服务端，客户端或者渲染阶段将任何以 `/` 打头的 URL 转换成完整 URL 路径。
+Analog 为 HttpClient 提供了 `requestContextInterceptor` 以在服务端，客户端或者渲染阶段将任何以 `/` 打头的 URL 转换成完整 URL 路径。
 
-在 `@angular/common/http` 软件包的 `withInterceptors` 函数中使用。
+`provideFileRouter()` 会自动注册该拦截器，因此只需使用普通的 `provideHttpClient()`。
 
 ```ts
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideHttpClient(withFetch()),
     provideClientHydration(),
   ],
 };
 ```
 
-> 请确保 `requestContextInterceptor` 是拦截器列表中的 **最后一个**。
+> 该拦截器会在你通过 `withInterceptors()` 注册的所有拦截器之后运行，因此无需手动添加。
 
 ## 发起请求
 

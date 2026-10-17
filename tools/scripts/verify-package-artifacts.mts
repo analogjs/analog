@@ -129,6 +129,7 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
     requiredPaths: [
       'packages/router/dist/fesm2022/analogjs-router.mjs',
       'packages/router/dist/migrations/migration.json',
+      'packages/router/dist/migrations/remove-request-context-interceptor/remove-request-context-interceptor.js',
     ],
   },
   'storybook-angular': {

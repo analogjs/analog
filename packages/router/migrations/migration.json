@@ -1,4 +1,10 @@
 {
   "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "schematics": {}
+  "schematics": {
+    "remove-request-context-interceptor": {
+      "version": "3.0.0",
+      "description": "Remove requestContextInterceptor from withInterceptors() now that provideFileRouter() registers it automatically",
+      "factory": "./remove-request-context-interceptor/remove-request-context-interceptor"
+    }
+  }
 }

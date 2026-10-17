@@ -37,14 +37,10 @@ pnpm add @tanstack/angular-query-experimental
 Add TanStack Query and the Analog hydration provider to your application config.
 
 ```ts
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { InjectionToken } from '@angular/core';
 import type { ApplicationConfig } from '@angular/core';
-import { requestContextInterceptor } from '@analogjs/router';
+import { provideFileRouter } from '@analogjs/router';
 import { provideAnalogQuery } from '@analogjs/router/tanstack-query';
 import {
   QueryClient,
@@ -61,10 +57,8 @@ const QUERY_CLIENT = new InjectionToken<QueryClient>('QueryClient', {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideFileRouter(),
+    provideHttpClient(withFetch()),
     provideTanStackQuery(QUERY_CLIENT),
     provideAnalogQuery(),
   ],
