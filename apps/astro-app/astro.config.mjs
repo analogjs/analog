@@ -54,10 +54,7 @@ export default defineConfig({
     },
   },
   integrations: [
-    angular({
-      strictStylePlacement: true,
-      useAngularHydration: true,
-    }),
+    angular(),
     react(),
     {
       name: 'focus-hydration',

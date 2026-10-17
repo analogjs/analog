@@ -17,19 +17,20 @@ interface AngularOptions {
    */
   transformFilter?: TransformFilter;
   /**
-   * Enable stricter rendering, which ensures Angular style tags are added to the document head instead of next to the
-   * component in the body.
+   * Adds Angular style tags to the document head instead of next to the
+   * component in the body. Defaults to `true`.
    *
-   * Enabling this option disables astro's streaming under SSR.
+   * This disables Astro's streaming under SSR. Set to `false` to keep streaming.
    */
   strictStylePlacement?: boolean;
   /**
-   * Use Angular's `provideClientHydration` to hydrate components.
+   * Use Angular's `provideClientHydration` to hydrate components. Defaults to
+   * `true`. Set to `false` to bootstrap components on the client instead.
    */
   useAngularHydration?: boolean;
 }
 
-function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
+function getRenderer(ngHydration: boolean): AstroRenderer {
   return {
     name: '@analogjs/astro-angular',
     clientEntrypoint: ngHydration
@@ -69,7 +70,10 @@ function transformFilterPlugin(
   };
 }
 
-function getViteConfiguration(pluginOptions?: AngularOptions) {
+function getViteConfiguration(
+  ngHydration: boolean,
+  pluginOptions?: AngularOptions,
+) {
   const isRolldown = !!vite.rolldownVersion;
   return {
     [isRolldown ? 'oxc' : 'esbuild']: {
@@ -79,7 +83,7 @@ function getViteConfiguration(pluginOptions?: AngularOptions) {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        pluginOptions?.useAngularHydration
+        ngHydration
           ? '@analogjs/astro-angular/client-ngh.js'
           : '@analogjs/astro-angular/client.js',
       ],
@@ -155,11 +159,12 @@ export default function (options?: AngularOptions): AstroIntegration {
     name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
-        addRenderer(getRenderer(options?.useAngularHydration));
+        const ngHydration = options?.useAngularHydration !== false;
+        addRenderer(getRenderer(ngHydration));
         updateConfig({
-          vite: getViteConfiguration(options),
+          vite: getViteConfiguration(ngHydration, options),
         });
-        if (options?.strictStylePlacement) {
+        if (options?.strictStylePlacement !== false) {
           addMiddleware({
             order: 'pre',
             entrypoint: '@analogjs/astro-angular/middleware',
