@@ -70,8 +70,8 @@ export interface RouteManifest {
  *      (`/libs/shared/feature/src/content/`) uniformly.
  *   2. `[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/]` — non-anchored
  *      fallback for legacy paths where the directory marker appears mid-string.
- *   3. `\.page\.(js|ts|analog|ag)$` — strips page file extensions.
- *   4. `\.(ts|md|analog|ag)$` — strips remaining file extensions.
+ *   3. `\.page\.(js|ts)$` — strips page file extensions.
+ *   4. `\.(ts|md)$` — strips remaining file extensions.
  *
  * Examples:
  * - '/app/routes/index.ts' -> '/'
@@ -85,7 +85,7 @@ export interface RouteManifest {
  */
 export function filenameToRoutePath(filename: string): string {
   let path = filename.replace(
-    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
     '',
   );
 
@@ -117,7 +117,7 @@ export function filenameToRoutePath(filename: string): string {
  */
 export function filenameToRouteId(filename: string): string {
   let path = filename.replace(
-    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
     '',
   );
 
@@ -223,8 +223,8 @@ export function generateRouteManifest(
         // (e.g., docs/index.page.ts) intentionally share the same route
         // path — the layout wraps the index as a parent-child pair.
         const isLayoutIndexPair = (a: string, b: string) => {
-          const indexRe = /\/index\.(page\.)?(ts|js|md|analog|ag)$/;
-          const layoutRe = /\.(page\.)?(ts|js|analog|ag)$/;
+          const indexRe = /\/index\.(page\.)?(ts|js|md)$/;
+          const layoutRe = /\.(page\.)?(ts|js)$/;
           if (indexRe.test(a) && layoutRe.test(b)) {
             const dir = a.replace(indexRe, '');
             const layout = b.replace(layoutRe, '');
@@ -356,7 +356,7 @@ function canonicalRoutesByFullPath(
 /** A route file's path within its pages directory, e.g. `users/[id]`. */
 function toRouteFileKey(filename: string): string {
   return filename.replace(
-    /^.*?[\\/](?:routes|pages|content)[\\/]|\.page\.(?:js|ts|analog|ag)$|\.(?:ts|md|analog|ag)$/g,
+    /^.*?[\\/](?:routes|pages|content)[\\/]|\.page\.(?:js|ts)$|\.(?:ts|md)$/g,
     '',
   );
 }
