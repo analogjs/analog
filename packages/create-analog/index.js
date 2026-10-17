@@ -25,8 +25,7 @@ import prompts from 'prompts';
  * @property {readonly Variant[]} variants
  *
  * @typedef {object} HighlighterConfig
- * @property {string} highlighter
- * @property {string} entryPoint
+ * @property {'prism' | 'shiki'} contentHighlighter
  * @property {Record<string, string>} dependencies
  *
  * @typedef {object} PackageJson
@@ -97,16 +96,14 @@ const APPS = [
 /** @type {Readonly<Record<HighlighterId, HighlighterConfig>>} */
 const HIGHLIGHTERS = {
   prismjs: {
-    highlighter: 'withPrismHighlighter',
-    entryPoint: 'prism-highlighter',
+    contentHighlighter: 'prism',
     dependencies: {
       'marked-highlight': '^2.2.1',
       prismjs: '^1.29.0',
     },
   },
   shiki: {
-    highlighter: 'withShikiHighlighter',
-    entryPoint: 'shiki-highlighter',
+    contentHighlighter: 'shiki',
     dependencies: {
       marked: '^18.0.0',
       'marked-shiki': '^1.1.0',
@@ -532,18 +529,13 @@ function addPnpmDependencies(pkg, template) {
 function ensureSyntaxHighlighter(root, pkg, highlighter) {
   const config = HIGHLIGHTERS[highlighter];
 
-  replacePlaceholders(root, 'src/app/app.config.ts', {
-    __HIGHLIGHTER__: config.highlighter,
-    __HIGHLIGHTER_ENTRY_POINT__: config.entryPoint,
-  });
-
   pkg.dependencies ??= {};
   for (const [name, version] of Object.entries(config.dependencies)) {
     pkg.dependencies[name] = version;
   }
 
   replacePlaceholders(root, 'vite.config.ts', {
-    __CONTENT_HIGHLIGHTER__: highlighter,
+    __CONTENT_HIGHLIGHTER__: config.contentHighlighter,
   });
 }
 
