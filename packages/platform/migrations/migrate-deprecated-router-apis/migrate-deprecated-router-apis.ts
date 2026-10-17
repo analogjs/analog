@@ -42,10 +42,15 @@ function getImportElements(
 function getImportedNames(
   sourceFile: ts.SourceFile,
   moduleName: string,
+  valuesOnly = false,
 ): Set<string> {
   return new Set(
     getNamedImports(sourceFile, moduleName).flatMap((declaration) =>
-      getImportElements(declaration).map((element) => element.name.text),
+      valuesOnly && declaration.importClause?.isTypeOnly
+        ? []
+        : getImportElements(declaration)
+            .filter((element) => !(valuesOnly && element.isTypeOnly))
+            .map((element) => element.name.text),
     ),
   );
 }
@@ -54,6 +59,9 @@ function getImportedNames(
  * Replaces `defineRouteMeta({...})` with the object literal typed as
  * `RouteMeta`, and `injectRouter()` / `injectActivatedRoute()` with
  * `inject(Router)` / `inject(ActivatedRoute)`.
+ *
+ * Returns `null` when the file doesn't use the removed APIs, and the
+ * unchanged source when a non-call reference needs a manual migration.
  */
 export function migrateRouterSource(
   filePath: string,
@@ -88,8 +96,17 @@ export function migrateRouterSource(
   const angularRouterNames = new Set<string>();
   let needsInject = false;
   let needsRouteMeta = false;
+  let hasNonCallReference = false;
 
   function visit(node: ts.Node): void {
+    if (
+      ts.isIdentifier(node) &&
+      removedBindings.has(node.text) &&
+      !ts.isImportSpecifier(node.parent) &&
+      !(ts.isCallExpression(node.parent) && node.parent.expression === node)
+    ) {
+      hasNonCallReference = true;
+    }
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
@@ -100,11 +117,12 @@ export function migrateRouterSource(
       if (api === 'defineRouteMeta') {
         const [routeMeta] = node.arguments;
         if (routeMeta) {
-          edits.push({
-            start: callStart,
-            end: node.end,
-            text: routeMeta.getText(sourceFile),
-          });
+          // Strip only the call wrapper so rewrites nested in the argument
+          // don't overlap this edit.
+          edits.push(
+            { start: callStart, end: routeMeta.getStart(sourceFile), text: '' },
+            { start: routeMeta.end, end: node.end, text: '' },
+          );
           const parent = node.parent;
           if (
             ts.isVariableDeclaration(parent) &&
@@ -133,16 +151,17 @@ export function migrateRouterSource(
     ts.forEachChild(node, visit);
   }
   visit(sourceFile);
+  if (hasNonCallReference) return source;
 
   const routerNames = getImportedNames(sourceFile, ROUTER_PKG);
-  const ngRouterNames = getImportedNames(sourceFile, '@angular/router');
+  const ngRouterNames = getImportedNames(sourceFile, '@angular/router', true);
   const missingTokens = [...angularRouterNames].filter(
     (name) => !ngRouterNames.has(name),
   );
   const addedImports: string[] = [];
   if (
     needsInject &&
-    !getImportedNames(sourceFile, '@angular/core').has('inject')
+    !getImportedNames(sourceFile, '@angular/core', true).has('inject')
   ) {
     addedImports.push(`import { inject } from '@angular/core';`);
   }
@@ -181,7 +200,19 @@ export function migrateRouterSource(
 
 export default function migrateDeprecatedRouterApis(): Rule {
   return (tree: Tree, context: SchematicContext) => {
-    const rewritten = rewriteSourceFiles(tree, ROUTER_PKG, migrateRouterSource);
+    const manual: string[] = [];
+    const rewritten = rewriteSourceFiles(tree, ROUTER_PKG, (path, source) => {
+      const result = migrateRouterSource(path, source);
+      if (result === source) manual.push(path);
+      return result;
+    });
+    if (manual.length > 0) {
+      context.logger.warn(
+        `Migrate the removed @analogjs/router APIs by hand in:\n${manual
+          .map((file) => `  - ${file}`)
+          .join('\n')}\nSee ${MIGRATION_DOC_URL}`,
+      );
+    }
     if (rewritten.length > 0) {
       context.logger.info(
         `Replaced removed @analogjs/router APIs (defineRouteMeta, injectRouter, injectActivatedRoute) in:\n${rewritten

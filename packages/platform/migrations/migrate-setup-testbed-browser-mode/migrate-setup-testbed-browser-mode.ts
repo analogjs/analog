@@ -85,8 +85,13 @@ export function migrateSetupTestBedSource(
         (property) => getPropertyName(property) === 'teardown',
       );
 
-      if (browserMode && ts.isPropertyAssignment(browserMode)) {
-        const value = browserMode.initializer;
+      const value =
+        browserMode && ts.isPropertyAssignment(browserMode)
+          ? browserMode.initializer
+          : browserMode && ts.isShorthandPropertyAssignment(browserMode)
+            ? browserMode.name
+            : undefined;
+      if (browserMode && value) {
         if (hasTeardown || value.kind === ts.SyntaxKind.FalseKeyword) {
           edits.push(removeProperty(options, index, sourceFile));
         } else {

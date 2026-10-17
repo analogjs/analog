@@ -30,6 +30,12 @@ describe('migrate-setup-testbed-browser-mode', () => {
     );
   });
 
+  it('migrates shorthand browserMode', () => {
+    expect(migrate('setupTestBed({ browserMode });')).toBe(
+      `${IMPORT}setupTestBed({ teardown: { destroyAfterEach: !(browserMode) } });`,
+    );
+  });
+
   it('keeps an explicit teardown option', () => {
     expect(
       migrate(

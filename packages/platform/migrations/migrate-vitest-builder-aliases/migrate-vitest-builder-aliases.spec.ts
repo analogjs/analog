@@ -36,6 +36,12 @@ describe('migrate-vitest-builder-aliases', () => {
       }),
     );
     tree.create(
+      '/libs/lib/package.json',
+      JSON.stringify({
+        nx: { targets: { test: { executor: '@analogjs/platform:vitest' } } },
+      }),
+    );
+    tree.create(
       '/package.json',
       JSON.stringify({ devDependencies: { '@analogjs/platform': '^3.0.0' } }),
     );
@@ -52,6 +58,10 @@ describe('migrate-vitest-builder-aliases', () => {
     );
     expect(
       JSON.parse(tree.readContent('/apps/web/project.json')).targets.test
+        .executor,
+    ).toBe('@analogjs/vitest-angular:test');
+    expect(
+      JSON.parse(tree.readContent('/libs/lib/package.json')).nx.targets.test
         .executor,
     ).toBe('@analogjs/vitest-angular:test');
     expect(

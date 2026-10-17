@@ -14,6 +14,7 @@ const WORKSPACE_FILES = [
   'workspace.json',
   'project.json',
   'nx.json',
+  'package.json',
 ];
 
 function isWorkspaceFile(filePath: string): boolean {
