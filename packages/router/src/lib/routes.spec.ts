@@ -19,7 +19,7 @@ describe('routes', () => {
 
   describe('a root static route', () => {
     const files: Files = {
-      '/app/routes/about.ts': () =>
+      '/src/app/pages/about.page.ts': () =>
         Promise.resolve<RouteExport>({
           default: RouteComponent,
           routeMeta: {
@@ -64,7 +64,7 @@ describe('routes', () => {
 
   describe('a root redirect route without default export', () => {
     const files: Files = {
-      '/app/routes/index.ts': () =>
+      '/src/app/pages/index.page.ts': () =>
         Promise.resolve({
           routeMeta: {
             redirectTo: '/blog',
@@ -152,7 +152,7 @@ describe('routes', () => {
 
   describe('a root dynamic route', () => {
     const files: Files = {
-      '/app/routes/blog.[slug].ts': () =>
+      '/src/app/pages/blog.[slug].page.ts': () =>
         Promise.resolve({
           default: RouteComponent,
         }),
@@ -184,8 +184,8 @@ describe('routes', () => {
 
   describe('a root dynamic route with multiple dynamic segments', () => {
     const files: Files = {
-      '/app/routes/categories.[categoryId].products.[productId].ts': () =>
-        Promise.resolve({ default: RouteComponent }),
+      '/src/app/pages/categories.[categoryId].products.[productId].page.ts':
+        () => Promise.resolve({ default: RouteComponent }),
     };
 
     const routes = createRoutes(files);
@@ -270,7 +270,7 @@ describe('routes', () => {
 
   describe('an index route', () => {
     const files: Files = {
-      '/app/routes/index.ts': () =>
+      '/src/app/pages/index.page.ts': () =>
         Promise.resolve({ default: RouteComponent }),
     };
 
@@ -300,7 +300,7 @@ describe('routes', () => {
 
   describe('a named index route', () => {
     const files: Files = {
-      '/app/routes/(home).ts': () =>
+      '/src/app/pages/(home).page.ts': () =>
         Promise.resolve({ default: RouteComponent }),
     };
 
@@ -332,9 +332,9 @@ describe('routes', () => {
     class LayoutComponent {}
 
     const files: Files = {
-      '/app/routes/products.ts': () =>
+      '/src/app/pages/products.page.ts': () =>
         Promise.resolve({ default: LayoutComponent }),
-      '/app/routes/products/[productId].ts': () =>
+      '/src/app/pages/products/[productId].page.ts': () =>
         Promise.resolve({ default: RouteComponent }),
     };
 
@@ -444,7 +444,7 @@ describe('routes', () => {
 
   describe('a catchall route', () => {
     const files: Files = {
-      '/app/routes/[...not-found].ts': () =>
+      '/src/app/pages/[...not-found].page.ts': () =>
         Promise.resolve({
           default: RouteComponent,
         }),
@@ -536,7 +536,7 @@ describe('routes', () => {
 
   describe('an optional catchall route (root)', () => {
     const files: Files = {
-      '/app/routes/[[...slug]].ts': () =>
+      '/src/app/pages/[[...slug]].page.ts': () =>
         Promise.resolve({
           default: RouteComponent,
         }),
@@ -609,7 +609,7 @@ describe('routes', () => {
   describe('a route with meta tags', () => {
     async function setup(routeMeta: RouteMeta) {
       const files: Files = {
-        '/app/routes/index.ts': () =>
+        '/src/app/pages/index.page.ts': () =>
           Promise.resolve({ default: RouteComponent, routeMeta }),
       };
       const moduleRoute = createRoutes(files)[0];
@@ -672,7 +672,7 @@ describe('routes', () => {
   describe('a route with JSON-LD', () => {
     async function setup(fileExport: RouteExport) {
       const files: Files = {
-        '/app/routes/index.ts': () => Promise.resolve(fileExport),
+        '/src/app/pages/index.page.ts': () => Promise.resolve(fileExport),
       };
       const moduleRoute = createRoutes(files)[0];
       const resolvedRoutes = (await moduleRoute.loadChildren?.()) as Route[];
@@ -877,7 +877,7 @@ describe('routes', () => {
     });
 
     it('should log a warning when default export is falsy', async () => {
-      const fileName = '/app/routes/index.ts';
+      const fileName = '/src/app/pages/index.page.ts';
       const files: Files = {
         [fileName]: () => Promise.resolve({} as unknown as RouteExport),
       };
@@ -895,7 +895,7 @@ describe('routes', () => {
     });
 
     it('should not log a warning default export is falsy with a redirect', async () => {
-      const fileName = '/app/routes/index.ts';
+      const fileName = '/src/app/pages/index.page.ts';
       const files: Files = {
         [fileName]: () =>
           Promise.resolve({

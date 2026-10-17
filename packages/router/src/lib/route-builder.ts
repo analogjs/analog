@@ -128,9 +128,7 @@ export function createRoutes<TFile>(
 function getCollisionPriority(filename: string): number {
   if (
     filename.includes('/src/app/pages/') ||
-    filename.includes('/src/app/routes/') ||
     filename.includes('/app/pages/') ||
-    filename.includes('/app/routes/') ||
     filename.includes('/src/content/')
   ) {
     return 0;
@@ -152,7 +150,7 @@ function getCollisionPriority(filename: string): number {
 function toRawPath(filename: string): string {
   return filename
     .replace(
-      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
+      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/]pages|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
       '',
     )
     .replace(/\[\[\.\.\.([^\]]+)\]\]/g, '(opt-$1)')
