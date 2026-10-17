@@ -80,6 +80,12 @@ export default defineConfig({
 });
 ```
 
+Install `prismjs` in your application:
+
+```shell
+npm install prismjs
+```
+
 Import a Prism theme into to your global stylesheet:
 
 ```css
@@ -125,6 +131,7 @@ export default defineConfig({
 Add the `diff-highlight` plugin import to the `app.config.ts`:
 
 ```ts
+import 'prismjs/components/prism-diff';
 import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 

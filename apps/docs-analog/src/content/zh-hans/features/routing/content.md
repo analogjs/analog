@@ -55,6 +55,12 @@ export default defineConfig({
 });
 ```
 
+在应用中安装 `prismjs`：
+
+```shell
+npm install prismjs
+```
+
 将 Prism 主题样式添加到全局样式表里:
 
 ```css
@@ -100,6 +106,7 @@ export default defineConfig({
 在 `app.config.ts` 里导入 `diff-highlight` 插件：
 
 ```ts
+import 'prismjs/components/prism-diff';
 import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
