@@ -1,3 +1,9 @@
+# [3.0.0-alpha.98](https://github.com/analogjs/analog/compare/v3.0.0-alpha.97...v3.0.0-alpha.98) (2026-10-17)
+
+### Bug Fixes
+
+- **router:** keep createRoutes as a public export ([#2645](https://github.com/analogjs/analog/issues/2645)) ([9111f17](https://github.com/analogjs/analog/commit/9111f17458f24bf1606a980f232c802a5ceb991a))
+
 # [3.0.0-alpha.97](https://github.com/analogjs/analog/compare/v3.0.0-alpha.96...v3.0.0-alpha.97) (2026-10-17)
 
 ### Bug Fixes
