@@ -79,6 +79,10 @@ export default class NewsletterComponent {
 
 `FormAction` 指令将表单数据提交到服务器，由其处理程序处理。
 
+### 增强表单
+
+增强的表单处理默认启用。该指令使用 `action` 或 `[action]` 作为提交目标，在提交期间更新 `data-state` 和 `aria-busy` 属性，并保留完整的重定向 URL。使用 `[enhanceForm]="false"` 可以退出并保留之前的行为。
+
 ## 处理表单操作
 
 要处理表单操作，请在包含异步 `action` 函数的 `.page.ts` 文件旁边定义 `.server.ts` 文件，以处理表单提交。

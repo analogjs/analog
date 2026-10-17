@@ -79,6 +79,10 @@ export default class NewsletterComponent {
 
 La directiva `FormAction` envía los datos del formulario al servidor, los cuales son procesados por su manejador (handler).
 
+### Formularios Mejorados
+
+El manejo mejorado de formularios está habilitado por defecto. La directiva respeta `action` o `[action]` como destino del envío, actualiza los atributos `data-state` y `aria-busy` durante el envío y conserva las URLs de redirección completas. Usa `[enhanceForm]="false"` para desactivarlo y mantener el comportamiento anterior.
+
 ## Manejo de la Acción del Formulario
 
 Para manejar la acción del formulario, define el archivo `.server.ts` junto con el archivo `.page.ts` que contiene la función asíncrona `action` para procesar el envío del formulario.

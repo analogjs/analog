@@ -79,6 +79,10 @@ export default class NewsletterComponent {
 
 A diretiva `FormAction` envia os dados do formulário para o servidor, que são processados pelo seu manipulador.
 
+### Formulários Aprimorados
+
+O tratamento aprimorado de formulários é habilitado por padrão. A diretiva usa `action` ou `[action]` como destino do envio, atualiza os atributos `data-state` e `aria-busy` durante o envio e preserva URLs de redirecionamento completas. Use `[enhanceForm]="false"` para desativá-lo e manter o comportamento anterior.
+
 ## Manipulando a Ação do Formulário
 
 Para manipular a ação do formulário, defina o arquivo `.server.ts` no mesmo diretório de `.page.ts`. O arquivo `.serve.ts` contém a função assíncrona `action` para processar o envio do formulário.
