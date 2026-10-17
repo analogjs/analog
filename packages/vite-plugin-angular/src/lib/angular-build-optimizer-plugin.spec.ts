@@ -7,7 +7,6 @@ import {
 
 function createPlugin(): Plugin {
   return buildOptimizerPlugin({
-    supportedBrowsers: [],
     jit: false,
   });
 }

@@ -123,9 +123,8 @@ describe('platformPlugin', () => {
     ).toBe(true);
   });
 
-  it('passes through explicit additional route dirs when discoverRoutes is true', () => {
+  it('passes through explicit additional route dirs', () => {
     platformPlugin({
-      discoverRoutes: true,
       additionalPagesDirs: ['/libs/shared/feature'],
       additionalContentDirs: ['/libs/shared/feature/src/content'],
       additionalAPIDirs: ['/libs/shared/feature/src/api'],

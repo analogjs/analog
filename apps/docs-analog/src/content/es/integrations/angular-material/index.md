@@ -49,7 +49,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     plugins: [
-      analog({
+      analog(),
+      angular({
         inlineStylesExtension: 'scss',
       }),
     ],
