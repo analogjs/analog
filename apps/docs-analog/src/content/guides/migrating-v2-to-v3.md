@@ -40,7 +40,7 @@ The `@angular-devkit/build-angular` fallback in `@analogjs/vite-plugin-angular` 
 The peer dependency ranges now match the Angular v20 baseline:
 
 - `@analogjs/vitest-angular` requires Vitest `^4.0.7 || ^5.0.0`
-- `@analogjs/platform` and `@analogjs/content` require Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`), and the Nx generators reject older Nx versions
+- `@analogjs/platform` and `@analogjs/content` require Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`), and the application and preset generators reject older Nx versions
 - `zone.js`, when used, must be `0.15.0` or newer
 
 Upgrade Vitest and Nx before upgrading Analog.
