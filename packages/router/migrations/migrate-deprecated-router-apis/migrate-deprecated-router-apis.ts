@@ -55,6 +55,44 @@ function getImportedNames(
   );
 }
 
+/** Turns type-only `@angular/router` imports of the injected tokens into value imports. */
+function promoteTypeOnlyTokens(
+  sourceFile: ts.SourceFile,
+  tokens: Set<string>,
+): Edit[] {
+  const edits: Edit[] = [];
+  for (const declaration of getNamedImports(sourceFile, '@angular/router')) {
+    const elements = getImportElements(declaration).filter((element) =>
+      tokens.has(element.name.text),
+    );
+    if (elements.length === 0) continue;
+
+    if (declaration.importClause?.isTypeOnly) {
+      // `import type { A, Router }` -> `import { type A, Router }`
+      const start = declaration.getStart(sourceFile);
+      const typePrefix = /^import\s+type\s+/.exec(
+        declaration.getText(sourceFile),
+      )![0];
+      edits.push({ start, end: start + typePrefix.length, text: 'import ' });
+      for (const element of getImportElements(declaration)) {
+        if (!tokens.has(element.name.text)) {
+          const elementStart = element.getStart(sourceFile);
+          edits.push({ start: elementStart, end: elementStart, text: 'type ' });
+        }
+      }
+    } else {
+      for (const element of elements.filter((element) => element.isTypeOnly)) {
+        edits.push({
+          start: element.getStart(sourceFile),
+          end: element.end,
+          text: element.getText(sourceFile).replace(/^type\s+/, ''),
+        });
+      }
+    }
+  }
+  return edits;
+}
+
 /**
  * Replaces `defineRouteMeta({...})` with the object literal typed as
  * `RouteMeta`, and `injectRouter()` / `injectActivatedRoute()` with
@@ -154,7 +192,8 @@ export function migrateRouterSource(
   if (hasNonCallReference) return source;
 
   const routerNames = getImportedNames(sourceFile, ROUTER_PKG);
-  const ngRouterNames = getImportedNames(sourceFile, '@angular/router', true);
+  edits.push(...promoteTypeOnlyTokens(sourceFile, angularRouterNames));
+  const ngRouterNames = getImportedNames(sourceFile, '@angular/router');
   const missingTokens = [...angularRouterNames].filter(
     (name) => !ngRouterNames.has(name),
   );

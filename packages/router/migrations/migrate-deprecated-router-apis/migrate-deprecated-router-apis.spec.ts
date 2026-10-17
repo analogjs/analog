@@ -45,7 +45,7 @@ export default class HomePage {
 `);
   });
 
-  it('rewrites calls nested in defineRouteMeta and ignores type-only imports', () => {
+  it('rewrites calls nested in defineRouteMeta and promotes type-only token imports', () => {
     const result = migrateRouterSource(
       '/src/app/pages/index.page.ts',
       `import type { Router } from '@angular/router';
@@ -55,12 +55,29 @@ export const routeMeta = defineRouteMeta({ canActivate: [() => !!injectRouter()]
 `,
     );
 
-    expect(result).toBe(`import type { Router } from '@angular/router';
+    expect(result).toBe(`import { Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { type RouteMeta } from '@analogjs/router';
 
 export const routeMeta: RouteMeta = { canActivate: [() => !!inject(Router)] };
+`);
+  });
+
+  it('keeps other names type-only when promoting a token import', () => {
+    const result = migrateRouterSource(
+      '/src/app/app.ts',
+      `import type { UrlTree, ActivatedRoute } from '@angular/router';
+import { injectActivatedRoute } from '@analogjs/router';
+
+export const route = injectActivatedRoute();
+`,
+    );
+
+    expect(result)
+      .toBe(`import { type UrlTree, ActivatedRoute } from '@angular/router';
+import { inject } from '@angular/core';
+
+export const route = inject(ActivatedRoute);
 `);
   });
 
