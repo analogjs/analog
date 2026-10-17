@@ -411,7 +411,7 @@ If your app has a `src/server/routes/api` directory, no change is needed — tha
 
 ### Deprecated router APIs were removed
 
-`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, `routes`, or `createRoutes`. `ng update` rewrites the first three automatically. Files that reference them without calling them, such as `useFactory: injectRouter`, are listed for manual migration and left unchanged, so update every use in those files by hand.
+`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, or `routes`. `ng update` rewrites the first three automatically. Files that reference them without calling them, such as `useFactory: injectRouter`, are listed for manual migration and left unchanged, so update every use in those files by hand.
 
 Before:
 
@@ -439,7 +439,7 @@ export default class HomePage {
 }
 ```
 
-Replace `injectActivatedRoute()` with `inject(ActivatedRoute)`. If you passed `routes` or the result of `createRoutes()` to `provideRouter()`, use `provideFileRouter()` instead.
+Replace `injectActivatedRoute()` with `inject(ActivatedRoute)`. If you passed `routes` to `provideRouter()`, use `provideFileRouter()` instead.
 
 ### Legacy `app/routes` page folders were removed
 
@@ -536,7 +536,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - replace `defineRouteMeta(...)` with a `RouteMeta`-typed object, and `injectRouter()` / `injectActivatedRoute()` with `inject(Router)` / `inject(ActivatedRoute)`
 - replace `setupTestBed({ browserMode })` with `teardown: { destroyAfterEach }`
 - replace the `@analogjs/vite-plugin-angular:vitest`, `@analogjs/platform:vitest`, and `@analogjs/storybook-angular:test-storybook` builders with `@analogjs/vitest-angular:test`
-- flag route files under `app/routes` or `src/app/routes`, `routes` / `createRoutes` imports, `ContentRenderer.getContentHeadings()`, and `MERMAID_IMPORT_TOKEN` for manual migration
+- flag route files under `app/routes` or `src/app/routes`, `routes` imports, `ContentRenderer.getContentHeadings()`, and `MERMAID_IMPORT_TOKEN` for manual migration
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
 - rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
 - remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
