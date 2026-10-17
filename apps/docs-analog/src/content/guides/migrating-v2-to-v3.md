@@ -345,6 +345,20 @@ The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware 
 
 If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
 
+### `defineServerRoute` was replaced by `defineApiRoute`
+
+`defineServerRoute` from `@analogjs/router/server/actions` is removed. `defineApiRoute` accepts the same options, has the same validation and response behavior, and returns a route typed for `InferRouteQuery`, `InferRouteBody`, `InferRouteResult`, and the TanStack Query integration. Rename the import and the call:
+
+```diff
+-import { defineServerRoute } from '@analogjs/router/server/actions';
++import { defineApiRoute } from '@analogjs/router/server/actions';
+
+-export const route = defineServerRoute({
++export const route = defineApiRoute({
+```
+
+The `DefineServerRouteContext`, `DefineServerRouteOptions`, `DefineServerRouteResult`, and `ServerRouteHandler` types are now `DefineApiRouteContext`, `DefineApiRouteOptions`, `DefineApiRouteResult`, and `ApiRouteHandler`.
+
 ### Removed first-party packages and current compiler gaps
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
@@ -377,6 +391,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
+- rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
 - typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
