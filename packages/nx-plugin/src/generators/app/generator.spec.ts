@@ -27,7 +27,7 @@ vi.mock('@nx/angular/generators', async (importOriginal) => {
 describe('nx-plugin generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
-    nxVersion = '21.0.0',
+    nxVersion = '23.2.0',
     standalone = false,
   ) => {
     const tree = createTreeWithEmptyWorkspace({
@@ -159,7 +159,7 @@ describe('nx-plugin generator', () => {
     // oxlint-disable-next-line vitest/expect-expect
     it('creates a default standalone analogjs app in the source directory', async () => {
       const analogAppName = 'analog';
-      const { config, tree } = await setup({ analogAppName }, '18.0.0', true);
+      const { config, tree } = await setup({ analogAppName }, '23.2.0', true);
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
       verifyCoreDependenciesNx_Angular(dependencies, devDependencies);
@@ -229,12 +229,10 @@ describe('nx-plugin generator', () => {
       );
     });
 
-    it('rejects the oxlint linter on Nx versions below 23.2', async () => {
+    it('rejects Nx versions below 23.2', async () => {
       await expect(
-        setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.1.0'),
-      ).rejects.toThrow(
-        'Nx v23.2.0 or newer is required to use the oxlint linter',
-      );
+        setup({ analogAppName: 'my-app' }, '23.1.0'),
+      ).rejects.toThrow('Nx v23.2.0 or newer is required to install Analog');
     });
 
     it('rejects the oxlint linter outside an Nx workspace', async () => {
@@ -252,7 +250,7 @@ describe('nx-plugin generator', () => {
         formatter: 'prettier',
       });
 
-      addDependenciesToPackageJson(tree, {}, { nx: '21.0.0' });
+      addDependenciesToPackageJson(tree, {}, { nx: '23.2.0' });
       tree.write(`apps/${analogAppName}/AGENTS.md`, '# Custom guidance');
 
       await generator(tree, { analogAppName });
