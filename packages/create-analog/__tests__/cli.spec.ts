@@ -218,6 +218,18 @@ test('publishes every template with current @analogjs versions', () => {
   }
 });
 
+test('scaffolds a versioned Angular template', () => {
+  const { stdout } = run(
+    [projectName, '--template', 'angular-v21', '--skipTailwind', 'true'],
+    { cwd: tmpDir },
+  );
+
+  expect(stdout).toContain(`Scaffolding project in ${genPath}`);
+  expect(readGeneratedPackageJson().dependencies['@angular/core']).toBe(
+    '^21.0.0',
+  );
+});
+
 test('configures the blog highlighter at build time only', () => {
   run([projectName, '--template', 'blog', '--skipTailwind', 'true'], {
     cwd: tmpDir,
