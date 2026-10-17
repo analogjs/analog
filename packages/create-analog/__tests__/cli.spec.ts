@@ -218,6 +218,21 @@ test('publishes every template with current @analogjs versions', () => {
   }
 });
 
+test('configures the blog highlighter at build time only', () => {
+  run([projectName, '--template', 'blog', '--skipTailwind', 'true'], {
+    cwd: tmpDir,
+  });
+  const appConfig = readFileSync(
+    join(genPath, 'src/app/app.config.ts'),
+    'utf-8',
+  );
+
+  expect(appConfig).toContain('provideContent(withMarkdownRenderer())');
+  expect(appConfig).not.toContain('Highlighter');
+  expect(readGeneratedViteConfig()).toContain("highlighter: 'prism'");
+  expect(readGeneratedPackageJson().dependencies['prismjs']).toBeDefined();
+});
+
 test('templates wire up the agent context chain', () => {
   // CLAUDE.md -> @AGENTS.md -> node_modules/@analogjs/platform/AGENTS.md
   for (const template of ['latest', 'blog', 'minimal']) {
