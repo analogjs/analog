@@ -282,6 +282,21 @@ If you moved any content-route helpers into app code, import them from `@analogj
 
 If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
 
+### Astro Angular hydration and style placement are on by default
+
+`@analogjs/astro-angular` now enables `useAngularHydration` and `strictStylePlacement` by default.
+
+- Components hydrate with Angular's `provideClientHydration` instead of being bootstrapped on the client to replace the server-rendered DOM. Add `ngSkipHydration` to components that don't support hydration, or set `useAngularHydration: false` to keep the previous behavior.
+- Component style tags are added to the document head. This disables Astro's SSR streaming. If your app relies on streaming, set `strictStylePlacement: false`.
+
+```js
+export default defineConfig({
+  integrations: [
+    angular({ useAngularHydration: false, strictStylePlacement: false }),
+  ],
+});
+```
+
 ### Runtime i18n helpers were removed
 
 The beta runtime i18n helpers are not available in v3. If your app uses `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers such as `withLocale()`, remove that Analog-specific runtime i18n setup before upgrading.
