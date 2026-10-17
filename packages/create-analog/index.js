@@ -10,7 +10,8 @@ import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 
 /**
- * @typedef {'latest' | 'blog' | 'minimal'} Template
+ * @typedef {'latest' | 'blog' | 'minimal'} StarterTemplate
+ * @typedef {StarterTemplate | `angular-v${number}`} Template
  * @typedef {'prismjs' | 'shiki'} HighlighterId
  * @typedef {(value: string) => string} Colorizer
  *
@@ -25,8 +26,7 @@ import prompts from 'prompts';
  * @property {readonly Variant[]} variants
  *
  * @typedef {object} HighlighterConfig
- * @property {string} highlighter
- * @property {string} entryPoint
+ * @property {'prism' | 'shiki'} contentHighlighter
  * @property {Record<string, string>} dependencies
  *
  * @typedef {object} PackageJson
@@ -62,6 +62,7 @@ const DEFAULT_BLOG_HIGHLIGHTER = 'prismjs';
 
 /** @type {readonly Template[]} */
 const H3_TEMPLATES = ['latest', 'blog', 'minimal'];
+const VERSIONED_TEMPLATE = /^angular-v\d+$/;
 
 // Avoids autoconversion to number of the project name by defining that the args
 // non associated with an option ( _ ) needs to be parsed as a string. See #4606
@@ -97,16 +98,14 @@ const APPS = [
 /** @type {Readonly<Record<HighlighterId, HighlighterConfig>>} */
 const HIGHLIGHTERS = {
   prismjs: {
-    highlighter: 'withPrismHighlighter',
-    entryPoint: 'prism-highlighter',
+    contentHighlighter: 'prism',
     dependencies: {
       'marked-highlight': '^2.2.1',
       prismjs: '^1.29.0',
     },
   },
   shiki: {
-    highlighter: 'withShikiHighlighter',
-    entryPoint: 'shiki-highlighter',
+    contentHighlighter: 'shiki',
     dependencies: {
       marked: '^18.0.0',
       'marked-shiki': '^1.1.0',
@@ -532,18 +531,13 @@ function addPnpmDependencies(pkg, template) {
 function ensureSyntaxHighlighter(root, pkg, highlighter) {
   const config = HIGHLIGHTERS[highlighter];
 
-  replacePlaceholders(root, 'src/app/app.config.ts', {
-    __HIGHLIGHTER__: config.highlighter,
-    __HIGHLIGHTER_ENTRY_POINT__: config.entryPoint,
-  });
-
   pkg.dependencies ??= {};
   for (const [name, version] of Object.entries(config.dependencies)) {
     pkg.dependencies[name] = version;
   }
 
   replacePlaceholders(root, 'vite.config.ts', {
-    __CONTENT_HIGHLIGHTER__: highlighter,
+    __CONTENT_HIGHLIGHTER__: config.contentHighlighter,
   });
 }
 
@@ -631,7 +625,15 @@ function resolveTemplate(value) {
  * @returns {value is Template}
  */
 function isTemplate(value) {
-  return value === 'latest' || value === 'blog' || value === 'minimal';
+  if (value === 'latest' || value === 'blog' || value === 'minimal') {
+    return true;
+  }
+
+  return (
+    value !== undefined &&
+    VERSIONED_TEMPLATE.test(value) &&
+    fs.existsSync(path.join(CLI_DIR, `template-${value}`))
+  );
 }
 
 init().catch((error) => {

@@ -11,7 +11,6 @@ describe('fastCompilePlugin source maps', () => {
       inlineStylesExtension: 'css',
       jit: false,
       liveReload: false,
-      supportedBrowsers: [],
       isTest: false,
       isAstroIntegration: false,
     });

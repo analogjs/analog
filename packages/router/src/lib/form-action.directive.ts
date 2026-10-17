@@ -36,7 +36,7 @@ export type FormActionState =
 })
 export class FormAction {
   action: InputSignal<string> = input<string>('');
-  enhanceForm: InputSignalWithTransform<boolean, unknown> = input(false, {
+  enhanceForm: InputSignalWithTransform<boolean, unknown> = input(true, {
     transform: booleanAttribute,
   });
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix

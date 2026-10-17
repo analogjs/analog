@@ -158,7 +158,7 @@ describe('getServerFnHandlers', () => {
             : ''),
       );
       const plugin = nitro({
-        analog: { ssr: false, useAPIMiddleware: false },
+        analog: { ssr: false },
       })[0] as any;
       const config = await plugin.config(
         { root: workspaceRoot, build: {} },
@@ -206,7 +206,7 @@ describe('getServerFnHandlers', () => {
     );
 
     const plugin = nitro({
-      analog: { ssr: false, useAPIMiddleware: false },
+      analog: { ssr: false },
     })[0] as any;
     const config = await plugin.config(
       { root: workspaceRoot, build: {} },

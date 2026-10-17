@@ -34,7 +34,7 @@ pnpm install -w satori satori-html sharp
 
 ## Configuración de una Ruta API
 
-A continuación, define una ruta API en el directorio `src/server/routes`.
+A continuación, define una ruta API en el directorio `src/server/routes/api`.
 
 ```ts
 // src/server/routes/api/v1/og-images.ts

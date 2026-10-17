@@ -4,7 +4,7 @@ Analog 支持定义 API 路由来为应用提供数据。
 
 ## 定义一个 API 路由
 
-API 路由在 `src/server/routes` 目录里定义。API 路由同样是基于文件系统的，并且在开发过程中通过 `/api` 前缀访问。
+API 路由在 `src/server/routes/api` 目录里定义。API 路由同样是基于文件系统的，并且通过默认的 `/api` 前缀访问。
 
 ```ts
 import { defineHandler } from 'h3';
@@ -17,7 +17,7 @@ export default defineHandler(() => ({ message: 'Hello World' }));
 如果要为你的站点提供一个 RSS feed，将 `content-type` 设置为 `text/xml`，Analog 会为内容提供对应的内容类型。
 
 ```ts
-//server/routes/rss.xml.ts
+//server/routes/api/rss.xml.ts
 
 import { defineHandler, setHeader } from 'h3';
 export default defineHandler((event) => {

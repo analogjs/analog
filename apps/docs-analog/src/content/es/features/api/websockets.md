@@ -48,7 +48,7 @@ export default defineConfig({
 Similar a las [rutas de API](/docs/features/api/overview), WebSocket Handlers son definidos en la misma carpeta `src/server/routes/api`.
 
 ```typescript
-// src/server/api/routes/ws/chat.ts
+// src/server/routes/api/ws/chat.ts
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });

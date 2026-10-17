@@ -48,7 +48,7 @@ export default defineConfig({
 类似于 [API 路由](/docs/features/api/overview)，WebSocket 处理程序定义在 `src/server/routes/api` 文件夹中。
 
 ```typescript
-// src/server/api/routes/ws/chat.ts
+// src/server/routes/api/ws/chat.ts
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });

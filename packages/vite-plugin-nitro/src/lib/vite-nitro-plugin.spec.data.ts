@@ -42,12 +42,8 @@ export const mockNitroConfig: NitroConfig = {
       },
     ],
   },
-  routeRules: undefined,
   runtimeConfig: {
     apiPrefix: 'api',
-  },
-  virtual: {
-    '#ANALOG_API_MIDDLEWARE': expect.anything(),
   },
 };
 

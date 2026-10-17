@@ -7,7 +7,6 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { provideFileRouter } from '@analogjs/router';
 import { withContentRoutes } from '@analogjs/router/content';
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-import { __HIGHLIGHTER__ } from '@analogjs/content/__HIGHLIGHTER_ENTRY_POINT__';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -15,6 +14,6 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(withContentRoutes()),
     provideHttpClient(),
     provideClientHydration(withEventReplay()),
-    provideContent(withMarkdownRenderer(), __HIGHLIGHTER__()),
+    provideContent(withMarkdownRenderer()),
   ],
 };

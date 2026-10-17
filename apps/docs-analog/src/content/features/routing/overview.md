@@ -320,6 +320,47 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+## Routes from Workspace Libraries
+
+In a monorepo, pages, content, and API routes can live in workspace libraries. Pass their directories to `analog()` as workspace-relative paths that start with `/`:
+
+| Option                  | Description                                              |
+| ----------------------- | -------------------------------------------------------- |
+| `additionalPagesDirs`   | Directories with `.page.ts` and `.server.ts` route files |
+| `additionalContentDirs` | Directories with markdown content routes                 |
+| `additionalAPIDirs`     | Directories with API routes                              |
+| `workspaceRoot`         | Absolute workspace root these paths resolve against      |
+
+`workspaceRoot` defaults to `NX_WORKSPACE_ROOT`, then `process.cwd()`. Set it when Vite runs from the app directory instead of the workspace root.
+
+`discoverLibraryRoutes()` collects these directories from the `src/pages`, `src/content`, and `src/api` folders of libraries under `libs/`:
+
+```ts
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
+
+const workspaceRoot = resolve(import.meta.dirname, '../..');
+const libs = discoverLibraryRoutes(workspaceRoot);
+
+export default defineConfig({
+  plugins: [
+    analog({
+      workspaceRoot,
+      additionalPagesDirs: libs.additionalPagesDirs,
+      additionalContentDirs: libs.additionalContentDirs,
+      additionalAPIDirs: libs.additionalAPIDirs,
+    }),
+    angular(),
+    nitro(),
+  ],
+});
+```
+
+Library pages are compiled automatically, so `angular()` doesn't need a matching `include`.
+
 ## Visualizing and Debugging Routes
 
 During development, Analog automatically registers a debug route that displays the pages and layouts for your application. Navigate to `/__analog/routes` in the browser to see the routes table. No configuration is needed — the debug route is available in any app using `provideFileRouter()` and is automatically removed from production builds.

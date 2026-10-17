@@ -84,18 +84,15 @@ export default class NewsletterComponent {
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
 
-### Opting Into Enhanced Forms
+### Enhanced Forms
 
-Set `[enhanceForm]="true"` to enable enhanced form handling. It defaults to
-`false` in v2, so existing forms keep their current behavior. Enhanced handling
-is planned to become the default in v3; `[enhanceForm]="false"` explicitly selects
-the existing behavior.
+Enhanced form handling is enabled by default. Set `[enhanceForm]="false"` to
+opt out and keep the previous behavior.
 
 ```html
 <form
   method="post"
   action="/api/newsletter"
-  [enhanceForm]="true"
   (onSuccess)="onSuccess($event)"
   (onError)="onError($event)"
 >
@@ -104,8 +101,8 @@ the existing behavior.
 </form>
 ```
 
-Import `FormAction` in the component's `imports`, as with existing forms. The
-flag configures the same directive. It enables all of the following:
+Import `FormAction` in the component's `imports`. Enhanced handling includes all
+of the following:
 
 - Use `action` or `[action]` as the submission destination. Without an action,
   POST uses the current page endpoint and GET uses the current route.
@@ -124,9 +121,9 @@ enabled. Disabling it restores the previous attribute values. Use the `state`
 output to track progress in either mode; `FormActionState` is exported for typing
 state handlers.
 
-With the flag omitted or set to `false`, forms retain beta's page endpoint,
-GET query replacement and last-value handling for repeated fields, and
-pathname-only Angular redirects. The directive does not modify state attributes.
+With `[enhanceForm]="false"`, forms use the current page endpoint, GET query
+replacement and last-value handling for repeated fields, and pathname-only
+Angular redirects. The directive does not modify state attributes.
 
 ## Handling the Form Action
 

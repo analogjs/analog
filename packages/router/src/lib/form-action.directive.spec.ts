@@ -39,7 +39,7 @@ class FormPage {
   errors: unknown[] = [];
 }
 
-const legacyTemplate = `
+const unboundTemplate = `
   <form [action]="action()" [method]="method()"
     data-state="application-state" aria-busy="false"
     (state)="states.push($event)"
@@ -51,18 +51,18 @@ const legacyTemplate = `
 `;
 
 @Component({
-  selector: 'analogjs-legacy-form-page',
+  selector: 'analogjs-default-form-page',
   standalone: true,
   imports: [FormAction],
-  template: legacyTemplate,
+  template: unboundTemplate,
 })
-class LegacyFormPage extends FormPage {}
+class DefaultFormPage extends FormPage {}
 
 @Component({
   selector: 'analogjs-disabled-form-page',
   standalone: true,
   imports: [FormAction],
-  template: legacyTemplate.replace('<form ', '<form [enhanceForm]="false" '),
+  template: unboundTemplate.replace('<form ', '<form [enhanceForm]="false" '),
 })
 class DisabledFormPage extends FormPage {}
 
@@ -80,7 +80,7 @@ async function setup(
 ) {
   const component =
     mode === 'default'
-      ? LegacyFormPage
+      ? DefaultFormPage
       : mode === 'disabled'
         ? DisabledFormPage
         : FormPage;
@@ -122,7 +122,28 @@ afterEach(() => {
 });
 
 describe('FormAction', () => {
-  describe.each(['default', 'disabled'] as const)('%s mode', (mode) => {
+  it('enhances forms without an explicit enhanceForm binding', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response('ok'));
+    vi.stubGlobal('fetch', fetch);
+    const { fixture, page, form, submit } = await setup(
+      '/newsletter',
+      'default',
+    );
+    expect(form.getAttribute('data-state')).toBe('idle');
+    page.action.set('/different-endpoint');
+    fixture.detectChanges();
+    submit();
+    await vi.waitFor(() =>
+      expect(page.states).toEqual(['submitting', 'success']),
+    );
+    expect(fetch.mock.calls[0][0]).toBe(
+      new URL('/different-endpoint', window.location.href).href,
+    );
+  });
+
+  describe('disabled mode', () => {
+    const mode = 'disabled';
+
     it('keeps the page endpoint and application-owned attributes', async () => {
       const fetch = vi.fn().mockResolvedValue(new Response('ok'));
       vi.stubGlobal('fetch', fetch);

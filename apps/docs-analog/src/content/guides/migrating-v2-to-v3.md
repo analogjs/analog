@@ -132,11 +132,11 @@ These options used to live on `analog()`. Pass them to `angular()` or `nitro()` 
 | `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                                                                                        |
 | `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
 
-`analog()` retains `ssr`, `apiPrefix`, `entryServer`, `content`, `prerender`, `i18n`, `discoverRoutes`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
+`analog()` retains `ssr`, `static`, `apiPrefix`, `entryServer`, `index`, `workspaceRoot`, `content`, `prerender`, `i18n`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
 
 #### Workspace library globs
 
-If your v2 config used `discoverRoutes: true` to compile workspace library pages, the same helper is now exported from `@analogjs/platform`. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
+The `discoverRoutes` option was removed. If your v2 config used `discoverRoutes: true` to compile workspace library pages, use the `discoverLibraryRoutes()` helper exported from `@analogjs/platform` instead. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
 
 ```ts
 import analog, { discoverLibraryRoutes } from '@analogjs/platform';
@@ -247,7 +247,30 @@ export default defineConfig(() => ({
 }));
 ```
 
-If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())` and pair it with the matching highlighter setup for your project, such as `withShikiHighlighter()`.
+If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())`.
+
+The `withShikiHighlighter()` and `withPrismHighlighter()` providers and the `@analogjs/content/shiki-highlighter` and `@analogjs/content/prism-highlighter` entry points were removed. They were no-ops, since highlighting happens at build time through the `analog()` content options. Remove them from `provideContent()`:
+
+```diff-ts
+- import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+-   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
++   provideContent(withMarkdownRenderer()),
+  ],
+};
+```
+
+The `MarkedContentHighlighter` class and `withHighlighter()` provider were also removed from `@analogjs/content`, along with its `marked` and `marked-highlight` peer dependencies. Nothing in the browser used them after highlighting moved to build time; configure highlighting with the `analog()` content options instead.
+
+If you used `withPrismHighlighter()` for Prism's toolbar and copy-to-clipboard plugins in the browser, import them directly in `app.config.ts` instead:
+
+```ts
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+```
 
 If you were relying on older internal imports, switch those to the public `@analogjs/content` entrypoint. For example, import `ContentRenderer` and `TableOfContentItem` from `@analogjs/content`, not `@analogjs/content/lib`.
 
@@ -277,6 +300,18 @@ provideFileRouter(withContentRoutes());
 ```
 
 If you moved any content-route helpers into app code, import them from `@analogjs/router/content` instead of relying on the older `@analogjs/router` layout.
+
+### `FormAction` enhanced form handling is now the default
+
+The `FormAction` directive from `@analogjs/router` now defaults `enhanceForm` to `true`. The directive matches `form[action]` and `form[method]`, so every such form in a component that imports `FormAction` switches to [enhanced form handling](/docs/guides/forms#enhanced-forms). This includes the `action` destination, the `data-state` and `aria-busy` attributes, and the enhanced GET query and redirect handling.
+
+To keep the v2 behavior for a form, set `[enhanceForm]="false"`:
+
+```html
+<form method="post" [enhanceForm]="false">
+  <!-- ... -->
+</form>
+```
 
 ### Astro Angular now targets Angular 20 zoneless change detection
 
@@ -360,9 +395,16 @@ Make sure your server entry uses `provideServerContext()` and your app uses `pro
 
 ### The `useAPIMiddleware` option was removed
 
-The deprecated `useAPIMiddleware` option and the generated `/api` proxy middleware it enabled are removed when using Nitro v3. `@analogjs/vite-plugin-nitro` still accepts it, but it remains deprecated. With Nitro v3, API routes are served exclusively through Nitro's native file-based routing.
+The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware it enabled, and the `routeRules` proxy fallback are removed from both `@analogjs/vite-plugin-nitro` and the Nitro v3 integration. API routes are served exclusively through Nitro's native file-based routing under `src/server/routes/api`.
 
-If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config.
+If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
+
+### Removed no-op options
+
+These options had no effect and were removed. Delete them from your config:
+
+- `analog({ discoverRoutes })`: use [`discoverLibraryRoutes()`](#workspace-library-globs) to include routes from workspace libraries.
+- `angular({ supportedBrowsers })`: no replacement is needed.
 
 ### Removed first-party packages and current compiler gaps
 
@@ -392,10 +434,13 @@ Keep automated migration tooling focused on the breaking changes above:
 - add `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` to app `devDependencies` (the separated shape imports them directly)
 - leave apps already using `nitro()` from `nitro/vite` on Nitro v3
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content
+- remove `withShikiHighlighter()` / `withPrismHighlighter()` and their `@analogjs/content/*-highlighter` imports
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
 - remove `requestContextInterceptor` from `withInterceptors([...])`, since `provideFileRouter()` registers it
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
+- flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
+- remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
 - typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
