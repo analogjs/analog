@@ -1,4 +1,3 @@
-import { VERSION } from '@angular/compiler-cli';
 import { Plugin } from 'vite';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -30,7 +29,5 @@ function eventReplayPlugin(): Plugin {
 }
 
 export function injectHTMLPlugin(): Plugin[] {
-  const hasEventReplay = Number(VERSION.major) >= 18;
-
-  return hasEventReplay ? [eventReplayPlugin()] : [];
+  return [eventReplayPlugin()];
 }
