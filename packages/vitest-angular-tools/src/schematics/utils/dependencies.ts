@@ -20,8 +20,8 @@ export function getDevDependencies(
 ): Record<string, string> {
   const escapedVersion = angularVersion.replace(/[~^]/, '');
 
-  if (lt(escapedVersion, '17.0.0')) {
-    throw new SchematicsException('Angular v17.0.0 or newer is required.');
+  if (lt(escapedVersion, '20.0.0')) {
+    throw new SchematicsException('Angular v20.0.0 or newer is required.');
   }
 
   const deps: Record<string, string> = {
