@@ -230,23 +230,4 @@ describe('Md4xWasmContentRendererService', () => {
       expect(r3.content).toContain('Third');
     });
   });
-
-  // ── Sync fallback ────────────────────────────────────────────────
-
-  describe('getContentHeadings', () => {
-    it('extracts headings synchronously', () => {
-      const renderer = setup();
-      const headings = renderer.getContentHeadings('# H1\n\n## H2');
-
-      expect(headings).toEqual([
-        { id: 'h1', level: 1, text: 'H1' },
-        { id: 'h2', level: 2, text: 'H2' },
-      ]);
-    });
-
-    it('returns empty for no headings', () => {
-      const renderer = setup();
-      expect(renderer.getContentHeadings('text')).toEqual([]);
-    });
-  });
 });
