@@ -14,8 +14,7 @@ export function injectRouteEndpointURL(route: ActivatedRouteSnapshot): URL {
   const segment = parent?.url.map((segment) => segment.path).join('/') || '';
   const url = new URL(
     '',
-    import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] ||
-      baseUrl ||
+    baseUrl ||
       (typeof window !== 'undefined' && window.location.origin
         ? window.location.origin
         : ''),

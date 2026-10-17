@@ -2,10 +2,7 @@ import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import {
-  injectInternalServerFetch,
-  type ServerInternalFetch,
-} from '../../tokens/src/index.js';
+import { injectInternalServerFetch } from '../../tokens/src/index.js';
 
 import {
   DefaultRouteMeta,
@@ -64,13 +61,6 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
 
         if (internalFetch) {
           return internalFetch(`${url.pathname}${url.search}`);
-        }
-
-        const globalFetch = (
-          globalThis as unknown as { $fetch?: ServerInternalFetch }
-        ).$fetch;
-        if (!!import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] && globalFetch) {
-          return globalFetch(`${url.pathname}${url.search}`);
         }
 
         return firstValueFrom(http.get(`${url.href}`));
