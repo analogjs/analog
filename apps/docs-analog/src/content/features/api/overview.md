@@ -61,7 +61,7 @@ import * as v from 'valibot';
 
 export const route = defineApiRoute({
   query: v.object({ scope: v.optional(v.string(), 'default') }),
-  handler: ({ query }) => getTodos(query.scope),
+  handler: ({ query }) => [{ id: 1, title: `${query.scope} todo` }],
 });
 
 export default route;
