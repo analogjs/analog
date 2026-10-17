@@ -30,6 +30,3 @@ export function downlevelPlugin(): {
     },
   };
 }
-
-/** @deprecated Use {@link downlevelPlugin} instead. */
-export const esbuildDownlevelPlugin: typeof downlevelPlugin = downlevelPlugin;

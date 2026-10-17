@@ -170,6 +170,4 @@ export const routeMeta: RouteMeta = {
 };
 ```
 
-For compatibility with earlier experimental work, page modules may also export a top-level `routeJsonLd` value. The preferred API is `routeMeta.jsonLd`.
-
 Analog updates JSON-LD on route changes and includes it in SSR and prerendered HTML. For routes with `ssr: false`, JSON-LD can still be added on the client, but SEO-visible structured data is only guaranteed for SSR or prerendered routes.
