@@ -265,7 +265,7 @@ describe('routerPlugin', () => {
       vi.mocked(globSync)
         .mockReturnValueOnce([
           `${appRoot}/src/app/pages/home.page.ts`,
-          `${appRoot}/src/app/routes/about.ts`,
+          `${appRoot}/src/app/pages/about.page.ts`,
         ])
         .mockReturnValueOnce([]);
 
@@ -276,7 +276,7 @@ describe('routerPlugin', () => {
 
       const keys = extractKeys(result.code);
       expect(keys).toContain('/src/app/pages/home.page.ts');
-      expect(keys).toContain('/src/app/routes/about.ts');
+      expect(keys).toContain('/src/app/pages/about.page.ts');
       keys.forEach((key) => {
         expect(key).not.toContain(workspaceRoot);
       });

@@ -58,20 +58,16 @@ export function routerPlugin(options?: Options): Plugin[] {
   );
   // Returns every directory that can contain route-like files. The root-
   // relative entries are only available after the Vite `config` hook sets
-  // `root`. The short-form fallbacks (`/app/routes`, etc.) let watcher
+  // `root`. The short-form fallbacks (`/src/app/pages`, etc.) let watcher
   // events match before `config` runs — they cover the common convention
   // where paths start with these prefixes.
   const getRouteLikeDirs = () => [
     ...(root
       ? [
-          normalizeWatchedDir(`${root}/app/routes`),
-          normalizeWatchedDir(`${root}/src/app/routes`),
           normalizeWatchedDir(`${root}/src/app/pages`),
           normalizeWatchedDir(`${root}/src/content`),
         ]
       : []),
-    '/app/routes',
-    '/src/app/routes',
     '/src/app/pages',
     '/src/content',
     ...additionalPagesDirs,
@@ -96,8 +92,6 @@ export function routerPlugin(options?: Options): Plugin[] {
   const discoverRouteFiles = () => {
     routeFilesCache ??= globSync(
       [
-        `${root}/app/routes/**/*.ts`,
-        `${root}/src/app/routes/**/*.ts`,
         `${root}/src/app/pages/**/*.page.ts`,
         ...additionalPagesDirs.map((dir) => `${dir}/**/*.page.ts`),
       ],
@@ -109,7 +103,6 @@ export function routerPlugin(options?: Options): Plugin[] {
   const discoverContentRouteFiles = () => {
     contentRouteFilesCache ??= globSync(
       [
-        `${root}/src/app/routes/**/*.md`,
         `${root}/src/app/pages/**/*.md`,
         `${root}/src/content/**/*.md`,
         ...additionalContentDirs.map((dir) => `${dir}/**/*.md`),

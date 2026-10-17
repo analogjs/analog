@@ -11,7 +11,9 @@ import {
 describe('filenameToRoutePath', () => {
   describe('static routes', () => {
     it('should handle a root static route', () => {
-      expect(filenameToRoutePath('/app/routes/about.ts')).toBe('/about');
+      expect(filenameToRoutePath('/src/app/pages/about.page.ts')).toBe(
+        '/about',
+      );
     });
 
     it('should handle a nested static route', () => {
@@ -21,7 +23,7 @@ describe('filenameToRoutePath', () => {
     });
 
     it('should handle an index route', () => {
-      expect(filenameToRoutePath('/app/routes/index.ts')).toBe('/');
+      expect(filenameToRoutePath('/src/app/pages/index.page.ts')).toBe('/');
     });
 
     it('should handle a nested index route', () => {
@@ -47,7 +49,7 @@ describe('filenameToRoutePath', () => {
 
   describe('group segments', () => {
     it('should strip named index/group route', () => {
-      expect(filenameToRoutePath('/app/routes/(home).ts')).toBe('/');
+      expect(filenameToRoutePath('/src/app/pages/(home).page.ts')).toBe('/');
     });
 
     it('should strip single pathless group', () => {
@@ -69,7 +71,7 @@ describe('filenameToRoutePath', () => {
 
   describe('dynamic routes', () => {
     it('should handle a dynamic segment with dot notation', () => {
-      expect(filenameToRoutePath('/app/routes/blog.[slug].ts')).toBe(
+      expect(filenameToRoutePath('/src/app/pages/blog.[slug].page.ts')).toBe(
         '/blog/[slug]',
       );
     });
@@ -83,7 +85,7 @@ describe('filenameToRoutePath', () => {
     it('should handle multiple dynamic segments with dot notation', () => {
       expect(
         filenameToRoutePath(
-          '/app/routes/categories.[categoryId].products.[productId].ts',
+          '/src/app/pages/categories.[categoryId].products.[productId].page.ts',
         ),
       ).toBe('/categories/[categoryId]/products/[productId]');
     });
@@ -103,7 +105,7 @@ describe('filenameToRoutePath', () => {
 
   describe('catch-all routes', () => {
     it('should handle a root catch-all', () => {
-      expect(filenameToRoutePath('/app/routes/[...not-found].ts')).toBe(
+      expect(filenameToRoutePath('/src/app/pages/[...not-found].page.ts')).toBe(
         '/[...not-found]',
       );
     });
@@ -123,7 +125,7 @@ describe('filenameToRoutePath', () => {
 
   describe('optional catch-all routes', () => {
     it('should handle a root optional catch-all', () => {
-      expect(filenameToRoutePath('/app/routes/[[...slug]].ts')).toBe(
+      expect(filenameToRoutePath('/src/app/pages/[[...slug]].page.ts')).toBe(
         '/[[...slug]]',
       );
     });
@@ -169,7 +171,9 @@ describe('filenameToRoutePath', () => {
 
   describe('layout routes', () => {
     it('should handle a layout route', () => {
-      expect(filenameToRoutePath('/app/routes/products.ts')).toBe('/products');
+      expect(filenameToRoutePath('/src/app/pages/products.page.ts')).toBe(
+        '/products',
+      );
     });
   });
 });
@@ -185,7 +189,7 @@ describe('filenameToRouteId', () => {
   });
 
   it('preserves dynamic segments and content paths', () => {
-    expect(filenameToRouteId('/app/routes/blog.[slug].ts')).toBe(
+    expect(filenameToRouteId('/src/app/pages/blog.[slug].page.ts')).toBe(
       '/blog/[slug]',
     );
     expect(filenameToRouteId('/src/content/guides/deployment.md')).toBe(
@@ -259,8 +263,8 @@ describe('generateRouteManifest', () => {
 
   it('should generate manifest entries from filenames', () => {
     const manifest = generateRouteManifest([
-      '/app/routes/index.ts',
-      '/app/routes/about.ts',
+      '/src/app/pages/index.page.ts',
+      '/src/app/pages/about.page.ts',
       '/src/app/pages/users/[id].page.ts',
     ]);
 
@@ -284,9 +288,9 @@ describe('generateRouteManifest', () => {
 
   it('should sort optional catch-all after required catch-all', () => {
     const manifest = generateRouteManifest([
-      '/app/routes/[[...slug]].ts',
-      '/app/routes/[...not-found].ts',
-      '/app/routes/about.ts',
+      '/src/app/pages/[[...slug]].page.ts',
+      '/src/app/pages/[...not-found].page.ts',
+      '/src/app/pages/about.page.ts',
     ]);
 
     expect(manifest.routes[0].fullPath).toBe('/about');
@@ -712,8 +716,8 @@ describe('generateRouteManifest', () => {
 describe('generateRouteTableDeclaration', () => {
   it('should generate valid TypeScript for static routes', () => {
     const manifest = generateRouteManifest([
-      '/app/routes/index.ts',
-      '/app/routes/about.ts',
+      '/src/app/pages/index.page.ts',
+      '/src/app/pages/about.page.ts',
     ]);
 
     const output = generateRouteTableDeclaration(manifest);
@@ -774,7 +778,7 @@ describe('generateRouteTableDeclaration', () => {
 
   it('should generate multiple params for complex routes', () => {
     const manifest = generateRouteManifest([
-      '/app/routes/categories.[categoryId].products.[productId].ts',
+      '/src/app/pages/categories.[categoryId].products.[productId].page.ts',
     ]);
 
     const output = generateRouteTableDeclaration(manifest);
@@ -784,7 +788,7 @@ describe('generateRouteTableDeclaration', () => {
   });
 
   it('should not import StandardSchemaV1 when no schemas', () => {
-    const manifest = generateRouteManifest(['/app/routes/about.ts']);
+    const manifest = generateRouteManifest(['/src/app/pages/about.page.ts']);
 
     const output = generateRouteTableDeclaration(manifest);
 

@@ -172,10 +172,9 @@ function getRouteMetaInfo(
   hasRedirect: boolean;
   redirectTo?: string;
 } | null {
-  const initializer = getExportedBindingInitializer(program, bindingName);
-  const routeMetaNode = unwrapRouteMetaObject(initializer);
+  const routeMetaNode = getExportedBindingInitializer(program, bindingName);
 
-  if (!routeMetaNode) {
+  if (routeMetaNode?.type !== 'ObjectExpression') {
     return null;
   }
 
@@ -198,31 +197,6 @@ function getRouteMetaInfo(
     hasRedirect: typeof redirectTo === 'string' && redirectTo.length > 0,
     redirectTo,
   };
-}
-
-function unwrapRouteMetaObject(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initializer: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any | null {
-  if (!initializer) {
-    return null;
-  }
-
-  if (initializer.type === 'ObjectExpression') {
-    return initializer;
-  }
-
-  if (
-    initializer.type === 'CallExpression' &&
-    initializer.callee?.type === 'Identifier' &&
-    initializer.callee.name === 'defineRouteMeta'
-  ) {
-    const firstArgument = initializer.arguments?.[0];
-    return firstArgument?.type === 'ObjectExpression' ? firstArgument : null;
-  }
-
-  return null;
 }
 
 function getExportedBindingInitializer(
