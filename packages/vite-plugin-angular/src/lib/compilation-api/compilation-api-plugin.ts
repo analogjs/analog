@@ -954,7 +954,6 @@ export function angularCompilationPlugin(
     pluginOptions.jit &&
       jitPlugin({ inlineStylesExtension: pluginOptions.inlineStylesExtension }),
     buildOptimizerPlugin({
-      supportedBrowsers: pluginOptions.supportedBrowsers,
       jit: pluginOptions.jit,
     }),
     routerPlugin(),

@@ -71,6 +71,25 @@ export default defineConfig(({ mode }) => ({
 }));
 ```
 
+## Custom Entry Files
+
+By default, the server renders `src/main.server.ts` around the `index.html` document at the project root. Use `entryServer` and `index` to point at different files:
+
+```ts
+import { resolve } from 'node:path';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    analog({
+      entryServer: resolve(import.meta.dirname, 'src/server/main.server.ts'),
+      index: 'app.html',
+    }),
+  ],
+}));
+```
+
+Use an absolute path for `entryServer`. `index` is relative to the project root, and must also be the HTML input of the client build (`build.rollupOptions.input`).
+
 ## Prerendering routes
 
 With SSR, the `"/"` route is prerendered by default.

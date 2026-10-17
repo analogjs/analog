@@ -128,7 +128,8 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog({
+    analog(),
+    angular({
       fileReplacements:
         mode === 'production'
           ? [
@@ -213,7 +214,8 @@ Angular 支持 HMR/Live reload，在大多数情况下，无需重新加载页�
 export default defineConfig(({ mode }) => ({
   // .. 其他配置
   plugins: [
-    analog({
+    analog(),
+    angular({
       liveReload: true,
     }),
   ],

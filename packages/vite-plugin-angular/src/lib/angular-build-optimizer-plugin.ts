@@ -2,12 +2,7 @@ import type { Plugin, UserConfig } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 import { isProdMode } from './utils/plugin-config.js';
 
-export function buildOptimizerPlugin({
-  jit,
-}: {
-  supportedBrowsers: string[];
-  jit: boolean;
-}): Plugin {
+export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
   const transformers = new Map<
     string,
     InstanceType<typeof JavaScriptTransformer>

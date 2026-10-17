@@ -1,3 +1,9 @@
+# [3.0.0-alpha.96](https://github.com/analogjs/analog/compare/v3.0.0-alpha.95...v3.0.0-alpha.96) (2026-10-17)
+
+### Bug Fixes
+
+- **create-analog:** accept versioned Angular templates ([#2639](https://github.com/analogjs/analog/issues/2639)) ([90bc193](https://github.com/analogjs/analog/commit/90bc193d973f03670ef47ef295719f5b298a3181))
+
 # [3.0.0-alpha.95](https://github.com/analogjs/analog/compare/v3.0.0-alpha.94...v3.0.0-alpha.95) (2026-10-17)
 
 ### Bug Fixes
