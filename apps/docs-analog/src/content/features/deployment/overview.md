@@ -91,9 +91,6 @@ const response = await firstValueFrom(
 
 4. In CI production build
 
-**Do not** set `VITE_ANALOG_PUBLIC_BASE_URL` it should use what is in `vite.config.ts`.
-If `VITE_ANALOG_PUBLIC_BASE_URL` is present during build, ssr data will be refetched on server and client.
-
 ```bash
   # if using nx:
   npx nx run appname:build:production

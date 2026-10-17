@@ -128,14 +128,3 @@ export const routeMeta: RouteMeta = {
   },
 };
 ```
-
-## Overriding the Public Base URL
-
-Analog automatically infers the public base URL to be set when using the server-side data fetching through its [Server Request Context](/docs/features/data-fetching/overview#server-request-context) and [Request Context Interceptor](/docs/features/data-fetching/overview#request-context-interceptor). To explcitly set the base URL, set an environment variable, using a `.env` file to define the public base URL.
-
-```
-// .env
-VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
-```
-
-The environment variable must also be set when building for deployment.
