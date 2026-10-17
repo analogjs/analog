@@ -2,7 +2,7 @@
 
 The AnalogJS Vite Plugin (`@analogjs/vite-plugin-angular`) compiles your Angular components, directives, and pipes to Ivy definitions during the Vite build. It provides two compilation paths:
 
-- **Default compilation**: Angular's own compiler (`ngtsc`), with full compile-time type checking.
+- **Default compilation**: Angular's own compiler (`ngtsc`), with opt-in compile-time type checking.
 - **Fast compile**: an in-tree single-pass compiler that produces the same Ivy output much faster.
 
 Both emit identical Ivy code and identical runtime behavior, because both ultimately call the same `@angular/compiler` lowering APIs.
@@ -25,7 +25,15 @@ export default defineConfig({
 });
 ```
 
-The default path runs Angular's compiler through the Angular Compilation API. It performs **full TypeScript and template type checking** (including `strictTemplates`), emits declaration files, and supports i18n message extraction. Use it when you want compile-time safety: wrong template bindings, missing inputs, and type mismatches fail the build.
+The default path runs Angular's compiler (`ngtsc`) directly. By default it reports only syntax errors, because `disableTypeChecking` defaults to `true`. Set it to `false` to also report TypeScript and Angular template diagnostics, including `strictTemplates` errors, from the Vite build:
+
+```ts
+angular({
+  disableTypeChecking: false,
+});
+```
+
+Library builds (`build.lib`) also emit declaration files.
 
 ### Editing multiple files
 
@@ -58,13 +66,14 @@ export default defineConfig({
 ```
 
 :::note
-In an Analog application, configure the plugin through `@analogjs/platform` instead. Its `analog()` plugin forwards the same `fastCompile` option:
+In an Analog application, pass `fastCompile` to `angular()`, which sits next to `analog()` in the plugins array:
 
 ```ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
 
 export default defineConfig({
-  plugins: [analog({ fastCompile: true })],
+  plugins: [analog(), angular({ fastCompile: true })],
 });
 ```
 
@@ -107,7 +116,7 @@ See [Building an Angular library](/docs/guides/libraries) for the full library w
 
 ## Type checking
 
-Fast compile does not type-check your templates or TypeScript. To catch those errors, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:
+Fast compile does not type-check your templates or TypeScript, and the default path only does so with `disableTypeChecking: false`. To catch those errors without slowing the build, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:
 
 ```bash
 ngc -p tsconfig.app.json --noEmit
@@ -165,6 +174,26 @@ The generator writes this target. Add `includeDeps: true` to also report diagnos
 }
 ```
 
+## Angular Compilation API (experimental)
+
+`angularCompilationPlugin()` compiles through the Angular Compilation API from `@angular/build`, the same API the Angular CLI uses. It requires Angular v20.1 or later with a matching `@angular/build` package installed. Use it in place of `angular()`:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { angularCompilationPlugin } from '@analogjs/vite-plugin-angular';
+
+export default defineConfig({
+  plugins: [angularCompilationPlugin()],
+});
+```
+
+It accepts `tsconfig`, `workspaceRoot`, `inlineStylesExtension`, `jit`, `liveReload`, `disableTypeChecking`, `fileReplacements`, `include`, and `debug`, which behave as they do on `angular()`. Fast compile options are not supported.
+
+:::caution
+This plugin is experimental. Its API and behavior may change in future releases.
+:::
+
 ## Compatibility
 
 ### Angular versions
@@ -175,13 +204,12 @@ For overall Angular/Analog/Vite version support, see [Version Compatibility](/do
 
 ### Default vs fast compile
 
-|                                     | Default                 | Fast compile                          |
-| ----------------------------------- | ----------------------- | ------------------------------------- |
-| Ivy output                          | Full                    | Identical                             |
-| Cold build / hot rebuild            | Standard                | Significantly faster                  |
-| Compile-time template type checking | Yes (`strictTemplates`) | No (use the Angular Language Service) |
-| i18n message extraction             | Yes                     | `$localize` emitted                   |
-| Library / partial builds            | Yes                     | Yes (`fastCompileMode: 'partial'`)    |
+|                                     | Default                               | Fast compile                          |
+| ----------------------------------- | ------------------------------------- | ------------------------------------- |
+| Ivy output                          | Full                                  | Identical                             |
+| Cold build / hot rebuild            | Standard                              | Significantly faster                  |
+| Compile-time template type checking | Opt-in (`disableTypeChecking: false`) | No (use the Angular Language Service) |
+| Library / partial builds            | Yes                                   | Yes (`fastCompileMode: 'partial'`)    |
 
 ## Trade-offs
 
@@ -190,5 +218,5 @@ Fast compile trades compile-time safety for speed.
 
 **No compile-time template type checking.** Fast compile emits identical Ivy output and identical runtime behavior, but it does not validate template bindings, inputs, or types at build time. Run the **Angular Language Service** in your editor to catch these errors as you type; they appear as editor squiggles instead of failing the build.
 
-If you need template type errors to fail your build (for example in CI), add the [type-checking step](#type-checking) or use the default compilation path.
+If you need template type errors to fail your build (for example in CI), add the [type-checking step](#type-checking) or use the default compilation path with `disableTypeChecking: false`.
 :::
