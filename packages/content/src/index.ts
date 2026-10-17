@@ -19,10 +19,6 @@ export {
   parseRawContentFileAsync,
   FrontmatterValidationError,
 } from './lib/parse-raw-content-file';
-export {
-  MarkedContentHighlighter,
-  withHighlighter,
-} from './lib/marked-content-highlighter';
 export { injectContentFilesMap } from './lib/inject-content-files';
 export {
   injectContentListLoader,
