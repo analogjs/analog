@@ -26,9 +26,19 @@
       }
     },
     "serve": {
-      "executor": "nx:run-commands",
+      "executor": "@analogjs/platform:vite-dev-server",
+      "defaultConfiguration": "development",
       "options": {
-        "command": "pnpm exec vite --config apps/tailwind-debug-app/vite.config.ts"
+        "buildTarget": "tailwind-debug-app:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "tailwind-debug-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "tailwind-debug-app:build:production"
+        }
       }
     },
     "lint": {
