@@ -176,7 +176,7 @@ The generator writes this target. Add `includeDeps: true` to also report diagnos
 
 ## Angular Compilation API (experimental)
 
-`angularCompilationPlugin()` compiles through the Angular Compilation API from `@angular/build`, the same API the Angular CLI uses. It requires Angular v20.1 or later. Use it in place of `angular()`:
+`angularCompilationPlugin()` compiles through the Angular Compilation API from `@angular/build`, the same API the Angular CLI uses. It requires Angular v20.1 or later with a matching `@angular/build` package installed. Use it in place of `angular()`:
 
 ```ts
 // vite.config.ts

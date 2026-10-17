@@ -143,7 +143,7 @@ With this configuration, API routes are discovered under the `app/server/routes/
 
 ## Options
 
-These options go under `analog` in `nitro()`, or on `analog()` in an Analog app. Options under `analog` in `nitro()` override the ones passed to `analog()`.
+These options go under `analog` in `nitro()`. In an Analog app, most of them can be set on `analog()` instead; options under `analog` in `nitro()` override the ones passed to `analog()`.
 
 | Option                   | Default                               | Description                                                                                                                                                                            |
 | ------------------------ | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
