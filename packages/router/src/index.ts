@@ -1,7 +1,6 @@
 export type { RouteExport } from './lib/models';
 export type { Files } from './lib/route-files';
-// Private: used by the package's own specs against the published entry.
-export { createRoutes as ɵcreateRoutes } from './lib/routes';
+export { createRoutes } from './lib/routes';
 export type { RouteMeta } from './lib/models';
 export { provideFileRouter, withExtraRoutes } from './lib/provide-file-router';
 export type { MetaTag } from './lib/meta-tags';
