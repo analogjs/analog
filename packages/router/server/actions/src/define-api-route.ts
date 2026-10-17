@@ -9,6 +9,27 @@ import {
 import { validateWithSchema } from './validate';
 
 export type DefineApiRouteResult = Response | unknown;
+
+export interface ApiRouteHandler<
+  TQuery = unknown,
+  TBody = unknown,
+  TResult = unknown,
+> {
+  (event: H3Event): Promise<Response>;
+  readonly _types: {
+    readonly query: TQuery;
+    readonly body: TBody;
+    readonly result: TResult;
+  };
+}
+
+export type InferRouteQuery<T> =
+  T extends ApiRouteHandler<infer Q, any, any> ? Q : never;
+export type InferRouteBody<T> =
+  T extends ApiRouteHandler<any, infer B, any> ? B : never;
+export type InferRouteResult<T> =
+  T extends ApiRouteHandler<any, any, infer R> ? Exclude<R, Response> : never;
+
 type OptionalSchema = StandardSchemaV1 | undefined;
 type InferSchema<
   TSchema extends OptionalSchema,
@@ -134,8 +155,12 @@ export function defineApiRoute<
     TParams,
     TResult
   >,
-) {
-  return async (event: H3Event): Promise<Response> => {
+): ApiRouteHandler<
+  InferSchema<TQuery, undefined>,
+  InferSchema<TBody, undefined>,
+  TResult
+> {
+  return (async (event: H3Event): Promise<Response> => {
     const method = event.method.toUpperCase();
     let data: unknown;
     let query: unknown;
@@ -215,5 +240,9 @@ export function defineApiRoute<
     }
 
     return json(result);
-  };
+  }) as ApiRouteHandler<
+    InferSchema<TQuery, undefined>,
+    InferSchema<TBody, undefined>,
+    TResult
+  >;
 }

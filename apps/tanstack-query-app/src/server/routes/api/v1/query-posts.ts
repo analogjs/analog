@@ -1,4 +1,4 @@
-import { defineServerRoute } from '@analogjs/router/server/actions';
+import { defineApiRoute } from '@analogjs/router/server/actions';
 import * as v from 'valibot';
 
 type Post = {
@@ -45,7 +45,7 @@ const QuerySchema = v.object({
   author: v.optional(v.string(), ''),
 });
 
-export const route = defineServerRoute({
+export const route = defineApiRoute({
   query: QuerySchema,
   handler: ({ query }) => {
     const state = getScopeState(query.scope);

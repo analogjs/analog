@@ -9,7 +9,7 @@ import type {
   QueryKey,
 } from '@tanstack/angular-query-experimental';
 import type {
-  ServerRouteHandler,
+  ApiRouteHandler,
   InferRouteQuery,
   InferRouteBody,
   InferRouteResult,
@@ -35,7 +35,7 @@ function buildUrl(base: string, params?: Record<string, unknown>): string {
 }
 
 export function serverQueryOptions<
-  TRoute extends ServerRouteHandler<any, any, any>,
+  TRoute extends ApiRouteHandler<any, any, any>,
   TError = DefaultError,
   TData = InferRouteResult<TRoute>,
   TQueryKey extends QueryKey = QueryKey,
@@ -60,7 +60,7 @@ export function serverQueryOptions<
 }
 
 export function serverMutationOptions<
-  TRoute extends ServerRouteHandler<any, any, any>,
+  TRoute extends ApiRouteHandler<any, any, any>,
   TError = DefaultError,
   TOnMutateResult = unknown,
 >(
@@ -94,7 +94,7 @@ export function serverMutationOptions<
 }
 
 export function serverInfiniteQueryOptions<
-  TRoute extends ServerRouteHandler<any, any, any>,
+  TRoute extends ApiRouteHandler<any, any, any>,
   TError = DefaultError,
   TData = InfiniteData<InferRouteResult<TRoute>>,
   TQueryKey extends QueryKey = QueryKey,

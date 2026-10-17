@@ -10,7 +10,7 @@ it('preserves schema inference in the built server actions entry point', () => {
     '../../../typed-server-helpers-consumer.ts',
   );
   const source = `
-    import { defineAction, defineApiRoute, json, type PageServerAction, type StandardSchemaV1 } from '@analogjs/router/server/actions';
+    import { defineAction, defineApiRoute, json, type InferRouteQuery, type InferRouteResult, type PageServerAction, type StandardSchemaV1 } from '@analogjs/router/server/actions';
     import { z } from 'zod';
     import type { H3Event } from 'h3';
 
@@ -53,6 +53,12 @@ it('preserves schema inference in the built server actions entry point', () => {
         return { enabled, id, tags, name };
       },
     });
+    const route = defineApiRoute({
+      query: z.object({ q: z.string() }),
+      handler: ({ query }) => ({ length: query.q.length }),
+    });
+    const routeQuery: string = ({} as InferRouteQuery<typeof route>).q;
+    const routeResult: number = ({} as InferRouteResult<typeof route>).length;
     defineAction({ handler: ({ data }) => {
       // @ts-expect-error Unvalidated body values are unknown.
       const count: number = data.count;

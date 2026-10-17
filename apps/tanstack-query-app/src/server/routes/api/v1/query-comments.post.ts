@@ -1,4 +1,4 @@
-import { defineServerRoute } from '@analogjs/router/server/actions';
+import { defineApiRoute } from '@analogjs/router/server/actions';
 import * as v from 'valibot';
 import { getScopeState } from './_query-comments-state';
 import type { Comment } from './_query-comments-state';
@@ -8,7 +8,7 @@ const CreateCommentSchema = v.object({
   text: v.pipe(v.string(), v.nonEmpty('text is required')),
 });
 
-export const route = defineServerRoute({
+export const route = defineApiRoute({
   body: CreateCommentSchema,
   handler: ({ body }) => {
     const state = getScopeState(body.scope);
