@@ -35,7 +35,6 @@ function buildPlugin() {
     inlineStylesExtension: 'css',
     jit: false,
     liveReload: false,
-    supportedBrowsers: [],
     isTest: false,
     isAstroIntegration: false,
   });
@@ -154,7 +153,6 @@ describe('fastCompilePlugin bypass strips TS', () => {
       inlineStylesExtension: 'css',
       jit: true,
       liveReload: false,
-      supportedBrowsers: [],
       isTest: true,
       isAstroIntegration: false,
     });
@@ -208,7 +206,6 @@ export class App {
         inlineStylesExtension: 'css',
         jit: true,
         liveReload: false,
-        supportedBrowsers: [],
         isTest: true,
         isAstroIntegration: false,
       });

@@ -49,7 +49,6 @@ export interface FastCompilePluginOptions {
   inlineStylesExtension: string;
   jit: boolean;
   liveReload: boolean;
-  supportedBrowsers: string[];
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
