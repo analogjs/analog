@@ -185,9 +185,9 @@ plugins: [
 
 Add `nitro` to the app's `devDependencies` instead of `@analogjs/vite-plugin-nitro`. API routes and middleware are written against the h3 version of the Nitro release in use: h3 v1 for Nitro v2 and h3 v2 for Nitro v3. Handlers that only use helpers available in both, such as `defineEventHandler`, `readBody`, `getQuery`, and `getCookie`, work on either.
 
-##### Nx build target
+##### Nx targets
 
-If your app uses `@nx/vite:build` with Nitro v3, switch it to `nx:run-commands` invoking `vite build`. `@nx/vite:build` iterates `builder.environments` but doesn't call `builder.buildApp()` — and `nitro/vite`'s prerender + final Nitro env build orchestration lives in the `buildApp` hook. Without the CLI's `buildApp` invocation, no prerender runs and the SSR/Nitro env outputs are skipped.
+Build Nitro v3 apps with `@analogjs/platform:vite` and serve them with `@analogjs/platform:vite-dev-server`. `nitro/vite` runs prerendering and the server build from Vite's `buildApp` hook. `@analogjs/platform:vite` calls `builder.buildApp()`, but `@nx/vite:build` builds each environment directly, so prerendering and the server output are skipped.
 
 Before (`apps/<app>/project.json`):
 
@@ -195,12 +195,6 @@ Before (`apps/<app>/project.json`):
 {
   "build": {
     "executor": "@nx/vite:build",
-    "outputs": [
-      "{options.outputPath}",
-      "{workspaceRoot}/dist/apps/<app>/.nitro",
-      "{workspaceRoot}/dist/apps/<app>/ssr",
-      "{workspaceRoot}/dist/apps/<app>/analog"
-    ],
     "options": {
       "configFile": "apps/<app>/vite.config.ts",
       "outputPath": "dist/apps/<app>/client"
@@ -214,16 +208,23 @@ After:
 ```json
 {
   "build": {
-    "executor": "nx:run-commands",
-    "outputs": ["{workspaceRoot}/apps/<app>/.output"],
+    "executor": "@analogjs/platform:vite",
+    "outputs": ["{workspaceRoot}/dist/apps/<app>/analog"],
     "options": {
-      "command": "vite build -c apps/<app>/vite.config.ts"
+      "configFile": "apps/<app>/vite.config.ts",
+      "outputPath": "dist/apps/<app>/client"
+    }
+  },
+  "serve": {
+    "executor": "@analogjs/platform:vite-dev-server",
+    "options": {
+      "buildTarget": "<app>:build"
     }
   }
 }
 ```
 
-Also drop the top-level `build.outDir` override in `vite.config.ts`, and add `server.fs.allow` pointing at the workspace root so Vite 8's strict fs allows nitro/vite's env runner to load its own dev runtime through pnpm content-hash paths. Under `nitro/vite`, the client environment's output is relocated to `<rootDir>/.output/public` by Nitro; the legacy `dist/apps/<app>/client` override no longer matches the active output path.
+With the default Node preset, the server output stays in `dist/apps/<app>/analog`, the same layout as Nitro v2.
 
 ### Content rendering now requires an explicit highlighter
 
