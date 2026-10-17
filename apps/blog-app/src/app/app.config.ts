@@ -1,5 +1,4 @@
 import { provideContent, withMarkdownRenderer } from '@analogjs/content';
-import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
 import { provideFileRouter } from '@analogjs/router';
 import { withContentRoutes } from '@analogjs/router/content';
 import { provideHttpClient } from '@angular/common/http';
@@ -15,7 +14,6 @@ export const appConfig: ApplicationConfig = {
       withMarkdownRenderer({
         loadMermaid: !import.meta.env.SSR ? () => import('mermaid') : undefined,
       }),
-      withShikiHighlighter(),
     ),
     provideFileRouter(
       withContentRoutes(),

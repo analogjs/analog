@@ -1,11 +1,3 @@
-import {
-  MarkedContentHighlighter,
-  provideContent,
-  withMarkdownRenderer,
-} from '@analogjs/content';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
 
-export const contentBasicFixture = [
-  MarkedContentHighlighter,
-  provideContent,
-  withMarkdownRenderer,
-];
+export const contentBasicFixture = [provideContent, withMarkdownRenderer];
