@@ -114,14 +114,6 @@ export default defineConfig({
           pkgDir,
           'src/generators/init/compat.ts',
         ),
-        'src/generators/setup-vitest/generator': resolve(
-          pkgDir,
-          'src/generators/setup-vitest/generator.ts',
-        ),
-        'src/generators/setup-vitest/compat': resolve(
-          pkgDir,
-          'src/generators/setup-vitest/compat.ts',
-        ),
         // Architect builders (thin shims re-exporting from vpa)
         'src/builders/vite/vite-build': resolve(
           pkgDir,
@@ -139,14 +131,6 @@ export default defineConfig({
         'src/executors/vite-dev-server/compat': resolve(
           pkgDir,
           'src/executors/vite-dev-server/compat.ts',
-        ),
-        'src/executors/vitest/vitest.impl': resolve(
-          pkgDir,
-          'src/executors/vitest/vitest.impl.ts',
-        ),
-        'src/executors/vitest/compat': resolve(
-          pkgDir,
-          'src/executors/vitest/compat.ts',
         ),
       },
       formats: ['cjs'],

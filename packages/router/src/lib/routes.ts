@@ -2,7 +2,7 @@ import type { Route } from '@angular/router';
 
 import type { RouteExport } from './models';
 import { createRoutes as createBaseRoutes } from './route-builder';
-import { ANALOG_ROUTE_FILES, type Files } from './route-files';
+import type { Files } from './route-files';
 
 /**
  * A function used to parse list of files and create configuration of routes.
@@ -19,5 +19,3 @@ export function createRoutes(files: Files, debug = false): Route[] {
 }
 
 export { ANALOG_ROUTE_FILES } from './route-files';
-
-export const routes: Route[] = createRoutes(ANALOG_ROUTE_FILES);

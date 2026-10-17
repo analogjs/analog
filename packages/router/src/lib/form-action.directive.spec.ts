@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FormActionState } from './form-action.directive';
 
 // Exercise compiled signal inputs and host bindings from the published entry.
-const { FormAction, createRoutes } =
+const { FormAction, ɵcreateRoutes: createRoutes } =
   await vi.importActual<typeof import('@analogjs/router')>('@analogjs/router');
 
 @Component({

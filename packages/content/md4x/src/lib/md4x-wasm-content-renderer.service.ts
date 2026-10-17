@@ -69,21 +69,4 @@ export class Md4xWasmContentRendererService extends ContentRenderer {
       toc,
     };
   }
-
-  override getContentHeadings(content: string): TableOfContentItem[] {
-    const lines = content.split('\n');
-    const toc: TableOfContentItem[] = [];
-    const slugCounts = new Map<string, number>();
-
-    for (const line of lines) {
-      const match = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
-      if (!match) continue;
-      const level = match[1].length;
-      const text = match[2].trim();
-      if (!text) continue;
-      toc.push({ id: makeSlug(text, slugCounts), level, text });
-    }
-
-    return toc;
-  }
 }

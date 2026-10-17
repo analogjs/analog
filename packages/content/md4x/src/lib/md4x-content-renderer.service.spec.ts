@@ -338,50 +338,6 @@ Lorem ipsum 2....
     });
   });
 
-  // ── getContentHeadings (synchronous) ─────────────────────────────
-
-  describe('getContentHeadings', () => {
-    it('extracts headings from raw markdown', () => {
-      const renderer = setup();
-      const headings = renderer.getContentHeadings(
-        '# Title\n\n## Section\n\nParagraph\n\n### Sub',
-      );
-
-      expect(headings).toEqual([
-        { id: 'title', level: 1, text: 'Title' },
-        { id: 'section', level: 2, text: 'Section' },
-        { id: 'sub', level: 3, text: 'Sub' },
-      ]);
-    });
-
-    it('returns empty array for content without headings', () => {
-      const renderer = setup();
-      const headings = renderer.getContentHeadings('Just text.');
-
-      expect(headings).toEqual([]);
-    });
-
-    it('deduplicates slugs in getContentHeadings', () => {
-      const renderer = setup();
-      const headings = renderer.getContentHeadings('# Same\n\n## Same');
-
-      expect(headings[0].id).toBe('same');
-      expect(headings[1].id).toBe('same-1');
-    });
-
-    it('ignores non-heading lines', () => {
-      const renderer = setup();
-      const headings = renderer.getContentHeadings(
-        'Paragraph\n\n```\n# not a heading\n```\n\n# Real Heading',
-      );
-
-      // The regex approach can't distinguish code blocks, but it's a known
-      // limitation — the async render() path uses md4x's native parser which
-      // handles this correctly.
-      expect(headings.some((h) => h.text === 'Real Heading')).toBe(true);
-    });
-  });
-
   // ── Provider integration ─────────────────────────────────────────
 
   describe('provider', () => {

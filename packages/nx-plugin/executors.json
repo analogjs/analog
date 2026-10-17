@@ -9,19 +9,13 @@
       "implementation": "./src/builders/vite/vite-build.js",
       "schema": "./src/builders/vite/schema.json",
       "description": "Build with Vite."
-    },
-    "vitest": "@analogjs/vitest-angular:test"
+    }
   },
   "executors": {
     "vite-dev-server": {
       "implementation": "./src/executors/vite-dev-server/vite-dev-server.impl",
       "schema": "./src/executors/vite-dev-server/schema.json",
       "description": "Vite dev server."
-    },
-    "vitest": {
-      "implementation": "./src/executors/vitest/vitest.impl",
-      "schema": "./src/executors/vitest/schema.json",
-      "description": "Test with Vitest"
     }
   }
 }

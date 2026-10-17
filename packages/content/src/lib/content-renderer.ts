@@ -19,11 +19,6 @@ export abstract class ContentRenderer {
     return { content, toc: [] };
   }
 
-  // Backward-compatible API for consumers that read headings directly.
-  getContentHeadings(_content: string): TableOfContentItem[] {
-    return [];
-  }
-
   // eslint-disable-next-line
   enhance(): void {}
 }
@@ -48,7 +43,7 @@ export class NoopContentRenderer implements ContentRenderer {
 
   async render(content: string): Promise<RenderedContent> {
     this.contentId = this.generateHash(content);
-    const toc = this.getContentHeadings(content);
+    const toc = this.extractHeadings(content);
     const key = makeStateKey<TableOfContentItem[]>(
       `content-headings-${this.contentId}`,
     );
@@ -65,10 +60,6 @@ export class NoopContentRenderer implements ContentRenderer {
   }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   enhance(): void {}
-
-  getContentHeadings(content: string): TableOfContentItem[] {
-    return this.extractHeadings(content);
-  }
 
   private extractHeadings(content: string): TableOfContentItem[] {
     const markdownHeadings = this.extractHeadingsFromMarkdown(content);

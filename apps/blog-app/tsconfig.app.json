@@ -8,10 +8,6 @@
     "composite": false
   },
   "files": ["src/main.ts", "src/main.server.ts"],
-  "include": [
-    "src/**/*.d.ts",
-    "src/app/routes/**/*.ts",
-    "src/app/pages/**/*.page.ts"
-  ],
+  "include": ["src/**/*.d.ts", "src/app/pages/**/*.page.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
 }

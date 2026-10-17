@@ -68,16 +68,16 @@ export interface RouteManifest {
  *      up to and including the first /routes/, /pages/, or /content/ segment.
  *      Handles app-local paths (`/src/app/pages/`) AND additional dirs
  *      (`/libs/shared/feature/src/content/`) uniformly.
- *   2. `[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/]` — non-anchored
- *      fallback for legacy paths where the directory marker appears mid-string.
+ *   2. `[\\/](?:app[\\/]pages|src[\\/]content)[\\/]` — non-anchored
+ *      fallback for paths where the directory marker appears mid-string.
  *   3. `\.page\.(js|ts)$` — strips page file extensions.
  *   4. `\.(ts|md)$` — strips remaining file extensions.
  *
  * Examples:
- * - '/app/routes/index.ts' -> '/'
- * - '/app/routes/about.ts' -> '/about'
+ * - '/src/app/pages/index.page.ts' -> '/'
+ * - '/src/app/pages/about.page.ts' -> '/about'
  * - '/src/app/pages/users/[id].page.ts' -> '/users/[id]'
- * - '/app/routes/blog.[slug].ts' -> '/blog/[slug]'
+ * - '/src/app/pages/blog.[slug].page.ts' -> '/blog/[slug]'
  * - '/src/app/pages/(auth)/login.page.ts' -> '/login'
  * - '/src/app/pages/docs/[...slug].page.ts' -> '/docs/[...slug]'
  * - '/src/app/pages/shop/[[...category]].page.ts' -> '/shop/[[...category]]'
@@ -85,7 +85,7 @@ export interface RouteManifest {
  */
 export function filenameToRoutePath(filename: string): string {
   let path = filename.replace(
-    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
+    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/]pages|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
     '',
   );
 
@@ -117,7 +117,7 @@ export function filenameToRoutePath(filename: string): string {
  */
 export function filenameToRouteId(filename: string): string {
   let path = filename.replace(
-    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
+    /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/]pages|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
     '',
   );
 
@@ -377,9 +377,7 @@ function getRouteWeight(path: string): number {
 function getCollisionPriority(filename: string): number {
   if (
     filename.includes('/src/app/pages/') ||
-    filename.includes('/src/app/routes/') ||
     filename.includes('/app/pages/') ||
-    filename.includes('/app/routes/') ||
     filename.includes('/src/content/')
   ) {
     return 0;

@@ -22,11 +22,6 @@
       "description": "Creates a new Analog page in the given or default project.",
       "aliases": ["p"]
     },
-    "setup-vitest": {
-      "factory": "./src/generators/setup-vitest/generator",
-      "schema": "./src/generators/setup-vitest/schema.json",
-      "description": "Setup the Vitest configuration."
-    },
     "init": {
       "factory": "./src/generators/init/generator",
       "schema": "./src/generators/init/schema.json",
@@ -46,11 +41,6 @@
       "schema": "./src/generators/page/schema.json",
       "description": "Creates a new Analog page in the given or default project.",
       "aliases": ["p"]
-    },
-    "setup-vitest": {
-      "factory": "./src/generators/setup-vitest/compat#setupVitestSchematic",
-      "schema": "./src/generators/setup-vitest/schema.json",
-      "description": "Setup the Vitest configuration."
     },
     "init": {
       "factory": "./src/generators/init/compat#initSchematic",

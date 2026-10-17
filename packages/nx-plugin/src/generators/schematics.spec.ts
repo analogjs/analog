@@ -30,7 +30,7 @@ describe('platform schematics', () => {
     };
 
     expect(Object.keys(collection.generators)).toEqual(
-      expect.arrayContaining(['application', 'page', 'setup-vitest', 'init']),
+      expect.arrayContaining(['application', 'page', 'init']),
     );
     expect(collection.schematics).toMatchObject({
       application: {
@@ -38,9 +38,6 @@ describe('platform schematics', () => {
       },
       page: {
         factory: './src/generators/page/compat#pageSchematic',
-      },
-      'setup-vitest': {
-        factory: './src/generators/setup-vitest/compat#setupVitestSchematic',
       },
       init: {
         factory: './src/generators/init/compat#initSchematic',
@@ -65,14 +62,6 @@ describe('platform schematics', () => {
         ),
       ).href
     );
-    const setupVitestCompat = await import(
-      pathToFileURL(
-        path.join(
-          __dirname,
-          '../../../platform/dist/src/lib/nx-plugin/src/generators/setup-vitest/compat.js',
-        ),
-      ).href
-    );
     const initCompat = await import(
       pathToFileURL(
         path.join(
@@ -84,7 +73,6 @@ describe('platform schematics', () => {
 
     expect(appCompat.applicationSchematic).toBeTypeOf('function');
     expect(pageCompat.pageSchematic).toBeTypeOf('function');
-    expect(setupVitestCompat.setupVitestSchematic).toBeTypeOf('function');
     expect(initCompat.initSchematic).toBeTypeOf('function');
   });
 

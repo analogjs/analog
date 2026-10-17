@@ -66,18 +66,12 @@ export function createRouteFileDiscovery(
   function getAppLocalFileKind(path: string): 'route' | 'content' | null {
     if (
       path.endsWith('.md') &&
-      ['src/app/routes', 'src/app/pages', 'src/content'].some((dir) =>
+      ['src/app/pages', 'src/content'].some((dir) =>
         isWithinDir(path, `${root}/${dir}`),
       )
     )
       return 'content';
-    if (
-      (path.endsWith('.ts') &&
-        ['app/routes', 'src/app/routes'].some((dir) =>
-          isWithinDir(path, `${root}/${dir}`),
-        )) ||
-      (path.endsWith('.page.ts') && isWithinDir(path, `${root}/src/app/pages`))
-    )
+    if (path.endsWith('.page.ts') && isWithinDir(path, `${root}/src/app/pages`))
       return 'route';
     return null;
   }
@@ -110,11 +104,7 @@ export function createRouteFileDiscovery(
   }
 
   function scanRouteFiles(): string[] {
-    const appLocalGlobs = [
-      `${root}/app/routes/**/*.ts`,
-      `${root}/src/app/routes/**/*.ts`,
-      `${root}/src/app/pages/**/*.page.ts`,
-    ];
+    const appLocalGlobs = [`${root}/src/app/pages/**/*.page.ts`];
     const additionalGlobs = additionalPagesDirs.map(
       (dir) => `${joinDir(dir)}/**/*.page.ts`,
     );
@@ -138,7 +128,6 @@ export function createRouteFileDiscovery(
 
   function scanContentFiles(): string[] {
     const appLocalGlobs = [
-      `${root}/src/app/routes/**/*.md`,
       `${root}/src/app/pages/**/*.md`,
       `${root}/src/content/**/*.md`,
     ];

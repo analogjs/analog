@@ -51,6 +51,16 @@ const config: UserConfigExport = defineConfig({
             pkgDir,
             'migrations/migrate-to-separated-plugins/migrate-to-separated-plugins.ts',
           ),
+        'migrations/migrate-setup-testbed-browser-mode/migrate-setup-testbed-browser-mode':
+          resolve(
+            pkgDir,
+            'migrations/migrate-setup-testbed-browser-mode/migrate-setup-testbed-browser-mode.ts',
+          ),
+        'migrations/migrate-vitest-builder-aliases/migrate-vitest-builder-aliases':
+          resolve(
+            pkgDir,
+            'migrations/migrate-vitest-builder-aliases/migrate-vitest-builder-aliases.ts',
+          ),
       },
       formats: ['es' as const],
     },

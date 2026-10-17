@@ -57,6 +57,11 @@ export default defineConfig({
             import.meta.dirname,
             'migrations/remove-request-context-interceptor/remove-request-context-interceptor.ts',
           ),
+        'migrations/migrate-deprecated-router-apis/migrate-deprecated-router-apis':
+          resolve(
+            import.meta.dirname,
+            'migrations/migrate-deprecated-router-apis/migrate-deprecated-router-apis.ts',
+          ),
       },
       formats: ['es'],
     },

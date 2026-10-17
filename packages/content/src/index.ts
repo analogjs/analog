@@ -11,11 +11,7 @@ export type {
 } from './lib/content-renderer';
 export { injectContentFiles } from './lib/inject-content-files';
 export type { InjectContentFilesFilterFunction } from './lib/inject-content-files';
-export {
-  provideContent,
-  withMarkdownRenderer,
-  MERMAID_IMPORT_TOKEN,
-} from './lib/provide-content';
+export { provideContent, withMarkdownRenderer } from './lib/provide-content';
 export { default as MarkdownRouteComponent } from './lib/markdown-route.component';
 export { default as MarkdownComponent } from './lib/markdown.component';
 export {
