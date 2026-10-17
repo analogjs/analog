@@ -40,18 +40,39 @@ Analog is a meta-framework for Angular.
 
 ### PrismJS-Syntaxhervorhebung
 
-Analog unterstützt die Syntaxhervorhebung mit PrismJS. Um die Syntaxhervorhebung mit `PrismJS` zu aktivieren, füge `withPrismHighlighter()` zur Funktion `provideContent()` in `app.config.ts` hinzu.
+Analog unterstützt die Syntaxhervorhebung mit PrismJS. Codeblöcke werden zur Build-Zeit hervorgehoben, einschließlich der `angular`-Grammatik. Um die Syntaxhervorhebung mit `PrismJS` zu aktivieren, setze `highlighter` im Plugin `analog` in der `vite.config.ts` auf `prism`.
 
-```diff-ts
-+ import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... other providers
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withPrismHighlighter()),
+```ts
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'prism',
+      },
+    }),
   ],
-};
+});
+```
+
+Importiere ein Prism-Theme in dein globales Stylesheet:
+
+```css
+@import 'prismjs/themes/prism.css';
+```
+
+Um Prism-Plugins im Browser zu verwenden, wie die Toolbar und den Copy-to-Clipboard-Button, importiere sie direkt in der `app.config.ts`:
+
+```ts
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+```
+
+Und füge das Toolbar-CSS in dein globales Stylesheet ein:
+
+```css
+@import 'prismjs/plugins/toolbar/prism-toolbar.css';
 ```
 
 #### Verwendung des `diff` Highlight Plugins
@@ -66,6 +87,7 @@ export default defineConfig({
   plugins: [
     analog({
       content: {
+        highlighter: 'prism',
         prismOptions: {
           additionalLangs: ['prism-diff'],
         },
@@ -75,21 +97,35 @@ export default defineConfig({
 });
 ```
 
-Fügen den Plugin-Import `diff-highlight` in die `app.config.ts` ein:
+Füge den Plugin-Import `diff-highlight` in die `app.config.ts` ein:
 
 ```ts
-+ import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... other providers
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
-  ],
-};
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
-Um die Syntaxhervorhebung mit `shiki` zu aktivieren, konfiguriere das Plugin `analog` in der `vite.config.ts`.
+Verwende den `diff` language tag, um es hervorzuheben oder `diff-<language>`, um die Diff-Änderungen in einer bestimmten Sprache hervorzuheben.
+
+````md
+```diff
+- This is a sentence.
++ This is a longer sentence.
+```
+
+```diff-typescript
+- const foo = 'bar';
++ const foo = 'baz';
+```
+````
+
+Um geänderte Zeilenhintergründe und nicht nur den Text hervorzuheben, füge diesen Import in dein globales Stylesheet ein:
+
+```css
+@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
+### Shiki Syntax-Hervorhebung
+
+Analog unterstützt auch die Syntaxhervorhebung zur Build-Zeit mit Shiki. Um die Syntaxhervorhebung mit `shiki` zu aktivieren, konfiguriere das Plugin `analog` in der `vite.config.ts`.
 
 ```ts
 export default defineConfig({

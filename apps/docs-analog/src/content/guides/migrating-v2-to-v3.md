@@ -247,7 +247,28 @@ export default defineConfig(() => ({
 }));
 ```
 
-If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())` and pair it with the matching highlighter setup for your project, such as `withShikiHighlighter()`.
+If you are using the markdown renderer in the app itself, keep `provideContent(withMarkdownRenderer())`.
+
+The `withShikiHighlighter()` and `withPrismHighlighter()` providers and the `@analogjs/content/shiki-highlighter` and `@analogjs/content/prism-highlighter` entry points were removed. They were no-ops, since highlighting happens at build time through the `analog()` content options. Remove them from `provideContent()`:
+
+```diff-ts
+- import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+-   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
++   provideContent(withMarkdownRenderer()),
+  ],
+};
+```
+
+If you used `withPrismHighlighter()` for Prism's toolbar and copy-to-clipboard plugins in the browser, import them directly in `app.config.ts` instead:
+
+```ts
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+```
 
 If you were relying on older internal imports, switch those to the public `@analogjs/content` entrypoint. For example, import `ContentRenderer` and `TableOfContentItem` from `@analogjs/content`, not `@analogjs/content/lib`.
 
@@ -341,6 +362,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - add `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` to app `devDependencies` (the separated shape imports them directly)
 - leave apps already using `nitro()` from `nitro/vite` on Nitro v3
 - add explicit `analog({ content: { highlighter: 'shiki' } })` config when the app renders markdown content
+- remove `withShikiHighlighter()` / `withPrismHighlighter()` and their `@analogjs/content/*-highlighter` imports
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
