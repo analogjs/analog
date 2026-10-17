@@ -41,7 +41,6 @@ export function analyzeAnalogRouteFile(
   const program: any = parseResult.program;
   const exportedBindings = collectExportedBindings(program);
   const routeMetaBindingName = exportedBindings.routeMeta;
-  const routeJsonLdBindingName = exportedBindings.routeJsonLd;
   const diagnostics = [...parseDiagnostics];
 
   const routeMetaInfo = routeMetaBindingName
@@ -80,17 +79,6 @@ export function analyzeAnalogRouteFile(
       message: '`routeMeta.redirectTo` should use an absolute path.',
       details:
         'Nested redirects are documented to use absolute targets such as `/cities/new-york`.',
-    });
-  }
-
-  if (routeJsonLdBindingName) {
-    diagnostics.push({
-      code: 'legacy-route-jsonld-export',
-      severity: 'warning',
-      message:
-        'Prefer `routeMeta.jsonLd` over the legacy top-level `routeJsonLd` export.',
-      details:
-        'Keeping JSON-LD inside `routeMeta` makes the route module easier to read and matches the current docs.',
     });
   }
 
@@ -255,11 +243,9 @@ function collectExportedBindings(
 ): {
   hasDefaultExport: boolean;
   routeMeta?: string;
-  routeJsonLd?: string;
 } {
   let hasDefaultExport = false;
   let routeMeta: string | undefined;
-  let routeJsonLd: string | undefined;
 
   for (const statement of program.body ?? []) {
     if (statement?.type === 'ExportDefaultDeclaration') {
@@ -281,10 +267,6 @@ function collectExportedBindings(
         if (declarator.id.name === 'routeMeta') {
           routeMeta = 'routeMeta';
         }
-
-        if (declarator.id.name === 'routeJsonLd') {
-          routeJsonLd = 'routeJsonLd';
-        }
       }
     }
 
@@ -303,17 +285,12 @@ function collectExportedBindings(
       if (specifier.exported.name === 'routeMeta') {
         routeMeta = specifier.local.name;
       }
-
-      if (specifier.exported.name === 'routeJsonLd') {
-        routeJsonLd = specifier.local.name;
-      }
     }
   }
 
   return {
     hasDefaultExport,
     routeMeta,
-    routeJsonLd,
   };
 }
 

@@ -11,7 +11,7 @@ Analog works best when route files clearly express whether they are pages, layou
 - Default-export the page component from each `.page.ts` file.
 - Keep route metadata in `export const routeMeta = { ... }`.
 - Treat `routeMeta.redirectTo` pages as redirect-only modules.
-- Keep JSON-LD in `routeMeta.jsonLd` instead of exporting legacy top-level `routeJsonLd` values.
+- Keep JSON-LD in `routeMeta.jsonLd`.
 - When a page file is acting as a layout shell, import `RouterOutlet` and render a `<router-outlet>`.
 
 ```ts
@@ -86,7 +86,6 @@ Current diagnostics:
 - `missing-default-export`: a `.page.ts` file is neither a redirect route nor a default-exported page component.
 - `redirect-with-component`: a redirect route also exports a component.
 - `relative-redirect`: `routeMeta.redirectTo` is relative instead of absolute.
-- `legacy-route-jsonld-export`: the module exports top-level `routeJsonLd` instead of using `routeMeta.jsonLd`.
 - `layout-without-router-outlet`: a likely layout shell does not reference `RouterOutlet` or `<router-outlet>`.
 
 These checks are intentionally narrow. They are meant to reinforce Analog semantics during `serve`, not turn the framework into a style-policing linter.

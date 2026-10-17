@@ -81,24 +81,6 @@ describe('route-idiom-diagnostics', () => {
     );
   });
 
-  it('warns on the legacy routeJsonLd export', () => {
-    const diagnostics = analyzeAnalogRouteFile({
-      filename: '/workspace/src/app/pages/article.page.ts',
-      code: [
-        'export const routeJsonLd = {',
-        "  '@context': 'https://schema.org',",
-        "  '@type': 'Article',",
-        '};',
-        '',
-        'export default class ArticlePage {}',
-      ].join('\n'),
-    });
-
-    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain(
-      'legacy-route-jsonld-export',
-    );
-  });
-
   it('warns when a layout-looking route does not reference RouterOutlet', () => {
     const diagnostics = analyzeAnalogRouteFile({
       filename: '/workspace/src/app/pages/products.page.ts',
