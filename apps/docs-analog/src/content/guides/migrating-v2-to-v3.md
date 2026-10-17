@@ -438,6 +438,20 @@ The `@analogjs/platform:setup-vitest` generator is also removed. Use `ng g @anal
 provideContent(withMarkdownRenderer({ loadMermaid: () => import('mermaid') }));
 ```
 
+### `defineServerRoute` was replaced by `defineApiRoute`
+
+`defineServerRoute` from `@analogjs/router/server/actions` is removed. `defineApiRoute` accepts the same options, has the same validation and response behavior, and returns a route typed for `InferRouteQuery`, `InferRouteBody`, `InferRouteResult`, and the TanStack Query integration. Rename the import and the call:
+
+```diff
+-import { defineServerRoute } from '@analogjs/router/server/actions';
++import { defineApiRoute } from '@analogjs/router/server/actions';
+
+-export const route = defineServerRoute({
++export const route = defineApiRoute({
+```
+
+The `DefineServerRouteContext`, `DefineServerRouteOptions`, `DefineServerRouteResult`, and `ServerRouteHandler` types are now `DefineApiRouteContext`, `DefineApiRouteOptions`, `DefineApiRouteResult`, and `ApiRouteHandler`.
+
 ### Removed no-op options
 
 These options had no effect and were removed. Delete them from your config:
@@ -482,6 +496,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - replace the `@analogjs/vite-plugin-angular:vitest`, `@analogjs/platform:vitest`, and `@analogjs/storybook-angular:test-storybook` builders with `@analogjs/vitest-angular:test`
 - flag route files under `app/routes` or `src/app/routes`, `routes` / `createRoutes` imports, `ContentRenderer.getContentHeadings()`, and `MERMAID_IMPORT_TOKEN` for manual migration
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
+- rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
 - remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
