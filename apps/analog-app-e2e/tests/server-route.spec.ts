@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('defineServerRoute - /api/v1/echo', () => {
+test.describe('defineApiRoute - /api/v1/echo', () => {
   test('should validate and echo POST body', async ({ request }) => {
     const response = await request.post('/api/v1/echo', {
       data: { message: 'hello' },

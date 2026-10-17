@@ -1,15 +1,5 @@
 export type { PageServerAction } from './actions';
 export { json, redirect, fail } from './actions';
-export { defineServerRoute } from './define-server-route';
-export type {
-  DefineServerRouteContext,
-  DefineServerRouteOptions,
-  DefineServerRouteResult,
-  ServerRouteHandler,
-  InferRouteQuery,
-  InferRouteBody,
-  InferRouteResult,
-} from './define-server-route';
 export { definePageLoad } from './define-page-load';
 export type {
   PageLoadContext,
@@ -27,4 +17,8 @@ export {
   type DefineApiRouteContext,
   type DefineApiRouteOptions,
   type DefineApiRouteResult,
+  type ApiRouteHandler,
+  type InferRouteQuery,
+  type InferRouteBody,
+  type InferRouteResult,
 } from './define-api-route';

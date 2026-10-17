@@ -48,6 +48,29 @@ export default defineApiRoute({
 Schemas may validate asynchronously. The handler also receives the original h3
 `event` for cookies, headers, and other request operations.
 
+### Inferring types on the client
+
+The route returned by `defineApiRoute` carries its validated `query`, `body`, and
+result types. Export it as a named `route` as well as the default export to share
+those types with the client:
+
+```ts
+// src/server/routes/api/v1/todos.get.ts
+import { defineApiRoute } from '@analogjs/router/server/actions';
+import * as v from 'valibot';
+
+export const route = defineApiRoute({
+  query: v.object({ scope: v.optional(v.string(), 'default') }),
+  handler: ({ query }) => [{ id: 1, title: `${query.scope} todo` }],
+});
+
+export default route;
+```
+
+Use `InferRouteQuery`, `InferRouteBody`, and `InferRouteResult` from
+`@analogjs/router/server/actions` with `typeof route`, or pass the route to the
+[TanStack Query integration](/docs/integrations/tanstack-query).
+
 ## Defining XML Content
 
 To create an RSS feed for your site, set the `content-type` to be `text/xml` and Analog serves up the correct content type for the route.
@@ -161,30 +184,6 @@ export default defineEventHandler((event) => {
   return `Hello, ${param1} and ${param2}!`;
 });
 ```
-
-## Typed API Routes
-
-Use `defineServerRoute` from `@analogjs/router/server/actions` to validate the request with any [Standard Schema](https://standardschema.dev) library, such as Valibot or Zod, and return JSON from the handler. Validation failures respond with a `422` status and the schema issues.
-
-```ts
-// /server/routes/api/v1/todos.get.ts
-import { defineServerRoute } from '@analogjs/router/server/actions';
-import * as v from 'valibot';
-
-export const route = defineServerRoute({
-  query: v.object({ scope: v.optional(v.string(), 'default') }),
-  handler: ({ query }) => getTodos(query.scope),
-});
-
-export default route;
-```
-
-- `query` validates the URL search params and `body` validates the request body for `POST`, `PUT`, and `PATCH` requests.
-- `input` validates the body, or the search params on `GET`, and provides the result as `data`.
-- `params` validates the dynamic route params.
-- `output` validates the returned value in development and logs a warning on mismatch.
-
-Returning a `Response` from the handler sends it unchanged. Exporting the `route` lets the [TanStack Query integration](/docs/integrations/tanstack-query) infer the query, body, and result types on the client.
 
 ## Catch-all Routes
 

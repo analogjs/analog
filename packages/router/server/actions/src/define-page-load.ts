@@ -44,7 +44,7 @@ export interface DefinePageLoadOptions<
  * Creates a typed page server load function with optional
  * Standard Schema validation for route params and query.
  *
- * Follows the same validation pattern as `defineServerRoute`:
+ * Follows the same validation pattern as `defineApiRoute`:
  * validates before invoking the handler and returns
  * `fail(422, issues)` on validation failure.
  *
