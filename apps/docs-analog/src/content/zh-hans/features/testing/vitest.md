@@ -41,7 +41,7 @@ pnpm install -w @analogjs/platform --save-dev
 下一步，运行原理器来设置 Vite 配置，测试配置文件并且更新测试配置。
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 然后，[运行测试](#运行测试)

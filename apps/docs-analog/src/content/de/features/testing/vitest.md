@@ -37,7 +37,7 @@ pnpm install -w @analogjs/platform --save-dev
 Führe anschließend das Schema aus, um die Vite-Konfiguration und die Testkonfigurationsdateien einzurichten und die Testkonfiguration zu aktualisieren.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 Gehe dann zu [Tests durchführen](#tests-durchführen)

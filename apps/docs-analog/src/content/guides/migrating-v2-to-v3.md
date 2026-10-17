@@ -368,6 +368,76 @@ The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware 
 
 If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
 
+### Deprecated router APIs were removed
+
+`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, `routes`, or `createRoutes`. `ng update` rewrites the first three automatically.
+
+Before:
+
+```ts
+import { defineRouteMeta, injectRouter } from '@analogjs/router';
+
+export const routeMeta = defineRouteMeta({ title: 'Home' });
+
+export default class HomePage {
+  router = injectRouter();
+}
+```
+
+After:
+
+```ts
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import type { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = { title: 'Home' };
+
+export default class HomePage {
+  router = inject(Router);
+}
+```
+
+Replace `injectActivatedRoute()` with `inject(ActivatedRoute)`. If you passed `routes` or the result of `createRoutes()` to `provideRouter()`, use `provideFileRouter()` instead.
+
+### Legacy `app/routes` page folders were removed
+
+Route discovery no longer reads `app/routes/**/*.ts`, `src/app/routes/**/*.ts`, or `src/app/routes/**/*.md`. Move those files to `src/app/pages`, renaming `.ts` route files to `.page.ts`. Markdown files in `src/app/pages` and `src/content` are unchanged.
+
+### The `setupTestBed` `browserMode` option was removed
+
+`setupTestBed({ browserMode })` from `@analogjs/vitest-angular/setup-testbed` is removed. Use the `teardown` option instead. `ng update` rewrites this automatically.
+
+```ts
+// Before
+setupTestBed({ browserMode: true });
+
+// After
+setupTestBed({ teardown: { destroyAfterEach: false } });
+```
+
+The `@analogjs/vitest-angular:setup` schematic's `--browserMode` flag still configures browser mode and now generates the `teardown` option.
+
+### Vitest builder aliases and the `setup-vitest` generator were removed
+
+The following builder and executor aliases are removed. `ng update` replaces them with `@analogjs/vitest-angular:test` in `angular.json`, `project.json`, and `nx.json`, and adds `@analogjs/vitest-angular` to `devDependencies` if needed.
+
+- `@analogjs/vite-plugin-angular:vitest`
+- `@analogjs/platform:vitest`
+- `@analogjs/storybook-angular:test-storybook`
+
+The `@analogjs/platform:setup-vitest` generator is also removed. Use `ng g @analogjs/vitest-angular:setup` instead.
+
+### Content renderer APIs were removed
+
+`ContentRenderer.getContentHeadings()` is removed. Read the table of contents from `render().toc` or `ContentFile.toc` instead. Custom `ContentRenderer` implementations should return `toc` from `render()`.
+
+`MERMAID_IMPORT_TOKEN` is no longer exported from `@analogjs/content`. Enable Mermaid with `withMarkdownRenderer({ loadMermaid })`:
+
+```ts
+provideContent(withMarkdownRenderer({ loadMermaid: () => import('mermaid') }));
+```
+
 ### Removed first-party packages and current compiler gaps
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
@@ -400,6 +470,10 @@ Keep automated migration tooling focused on the breaking changes above:
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
+- replace `defineRouteMeta(...)` with a `RouteMeta`-typed object, and `injectRouter()` / `injectActivatedRoute()` with `inject(Router)` / `inject(ActivatedRoute)`
+- replace `setupTestBed({ browserMode })` with `teardown: { destroyAfterEach }`
+- replace the `@analogjs/vite-plugin-angular:vitest`, `@analogjs/platform:vitest`, and `@analogjs/storybook-angular:test-storybook` builders with `@analogjs/vitest-angular:test`
+- flag route files under `app/routes` or `src/app/routes`, `routes` / `createRoutes` imports, `ContentRenderer.getContentHeadings()`, and `MERMAID_IMPORT_TOKEN` for manual migration
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
