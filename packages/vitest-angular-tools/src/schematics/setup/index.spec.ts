@@ -342,7 +342,7 @@ describe('setup schematic', () => {
       expect(viteConfig).not.toContain('browser: {');
     });
 
-    it('should create test-setup.ts with browserMode option for Angular 21+', async () => {
+    it('should create test-setup.ts with teardown option in browser mode for Angular 21+', async () => {
       // Update to Angular 21
       tree.overwrite(
         '/package.json',
@@ -361,10 +361,12 @@ describe('setup schematic', () => {
       );
 
       const setupContent = resultTree.readContent('/src/test-setup.ts');
-      expect(setupContent).toContain('setupTestBed({ browserMode: true })');
+      expect(setupContent).toContain(
+        'setupTestBed({ teardown: { destroyAfterEach: false } })',
+      );
     });
 
-    it('should create test-setup.ts without browserMode option when false', async () => {
+    it('should create test-setup.ts without options when browserMode is false', async () => {
       // Update to Angular 21
       tree.overwrite(
         '/package.json',
@@ -384,7 +386,7 @@ describe('setup schematic', () => {
 
       const setupContent = resultTree.readContent('/src/test-setup.ts');
       expect(setupContent).toContain('setupTestBed()');
-      expect(setupContent).not.toContain('browserMode');
+      expect(setupContent).not.toContain('teardown');
     });
   });
 });
