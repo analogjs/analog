@@ -10,7 +10,8 @@ import { fileURLToPath } from 'node:url';
 import prompts from 'prompts';
 
 /**
- * @typedef {'latest' | 'blog' | 'minimal'} Template
+ * @typedef {'latest' | 'blog' | 'minimal'} StarterTemplate
+ * @typedef {StarterTemplate | `angular-v${number}`} Template
  * @typedef {'prismjs' | 'shiki'} HighlighterId
  * @typedef {(value: string) => string} Colorizer
  *
@@ -61,6 +62,7 @@ const DEFAULT_BLOG_HIGHLIGHTER = 'prismjs';
 
 /** @type {readonly Template[]} */
 const H3_TEMPLATES = ['latest', 'blog', 'minimal'];
+const VERSIONED_TEMPLATE = /^angular-v\d+$/;
 
 // Avoids autoconversion to number of the project name by defining that the args
 // non associated with an option ( _ ) needs to be parsed as a string. See #4606
@@ -623,7 +625,15 @@ function resolveTemplate(value) {
  * @returns {value is Template}
  */
 function isTemplate(value) {
-  return value === 'latest' || value === 'blog' || value === 'minimal';
+  if (value === 'latest' || value === 'blog' || value === 'minimal') {
+    return true;
+  }
+
+  return (
+    value !== undefined &&
+    VERSIONED_TEMPLATE.test(value) &&
+    fs.existsSync(path.join(CLI_DIR, `template-${value}`))
+  );
 }
 
 init().catch((error) => {
