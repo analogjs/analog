@@ -278,6 +278,18 @@ provideFileRouter(withContentRoutes());
 
 If you moved any content-route helpers into app code, import them from `@analogjs/router/content` instead of relying on the older `@analogjs/router` layout.
 
+### `FormAction` enhanced form handling is now the default
+
+The `FormAction` directive from `@analogjs/router` now defaults `enhanceForm` to `true`. The directive matches `form[action]` and `form[method]`, so every such form in a component that imports `FormAction` switches to [enhanced form handling](/docs/guides/forms#enhanced-forms). This includes the `action` destination, the `data-state` and `aria-busy` attributes, and the enhanced GET query and redirect handling.
+
+To keep the v2 behavior for a form, set `[enhanceForm]="false"`:
+
+```html
+<form method="post" [enhanceForm]="false">
+  <!-- ... -->
+</form>
+```
+
 ### Astro Angular now targets Angular 20 zoneless change detection
 
 If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
@@ -364,6 +376,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - add `withContentRoutes()` from `@analogjs/router/content` when the app uses markdown page routes
 - flag `analog({ i18n: ... })`, `provideI18n()`, `injectSwitchLocale()`, `loadTranslationsRuntime()`, or content locale helpers as removed v3 APIs
 - rewrite only the legacy `@analogjs/vite-plugin-angular/setup-vitest` setup import
+- flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
 - typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas

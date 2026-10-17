@@ -51,7 +51,6 @@ function isContactActionError(value: unknown): value is ContactActionError {
     } @else {
       <form
         method="post"
-        enhanceForm
         (onSuccess)="handleSuccess($event)"
         (onError)="handleError($event)"
       >
