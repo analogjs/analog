@@ -1,15 +1,15 @@
 import { lt } from 'semver';
 import { stripIndents } from '@nx/devkit';
 import {
-  V19_X_ANALOG_JS_PLATFORM,
-  V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-  V19_X_ANALOG_JS_VITEST_ANGULAR,
-  V19_X_JSDOM,
-  V19_X_VITE_TSCONFIG_PATHS,
-  NX_X_LATEST_VITE,
-  NX_X_LATEST_VITEST,
-  NX_X_LATEST_NX,
-} from './ng_19_X/versions';
+  ANALOG_JS_PLATFORM,
+  ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  ANALOG_JS_VITEST_ANGULAR,
+  JSDOM,
+  VITE_TSCONFIG_PATHS,
+  VITE,
+  VITEST,
+  NX,
+} from './versions';
 
 const devDependencyKeys = [
   '@analogjs/platform',
@@ -36,15 +36,15 @@ export const getAnalogDevDependencies = (
   }
 
   return {
-    '@analogjs/platform': V19_X_ANALOG_JS_PLATFORM,
-    '@analogjs/vite-plugin-angular': V19_X_ANALOG_JS_VITE_PLUGIN_ANGULAR,
-    '@analogjs/vitest-angular': V19_X_ANALOG_JS_VITEST_ANGULAR,
-    '@nx/vite': NX_X_LATEST_NX,
-    jsdom: V19_X_JSDOM,
-    'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,
-    vite: NX_X_LATEST_VITE,
-    vitest: NX_X_LATEST_VITEST,
-    '@vitest/coverage-v8': NX_X_LATEST_VITEST,
-    '@vitest/ui': NX_X_LATEST_VITEST,
+    '@analogjs/platform': ANALOG_JS_PLATFORM,
+    '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
+    '@analogjs/vitest-angular': ANALOG_JS_VITEST_ANGULAR,
+    '@nx/vite': NX,
+    jsdom: JSDOM,
+    'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
+    vite: VITE,
+    vitest: VITEST,
+    '@vitest/coverage-v8': VITEST,
+    '@vitest/ui': VITEST,
   };
 };
