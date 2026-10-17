@@ -309,7 +309,7 @@ In the v3 line, deployment docs emphasize:
 
 ### The `useAPIMiddleware` option was removed
 
-The deprecated `useAPIMiddleware` option and the generated `/api` proxy middleware it enabled are removed when using Nitro v3. `@analogjs/vite-plugin-nitro` still accepts it, but it remains deprecated. With Nitro v3, API routes are served exclusively through Nitro's native file-based routing.
+The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware it enabled, and the `routeRules` proxy fallback are removed from both `@analogjs/vite-plugin-nitro` and the Nitro v3 integration. API routes are served exclusively through Nitro's native file-based routing under `src/server/routes/api`.
 
 If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config.
 

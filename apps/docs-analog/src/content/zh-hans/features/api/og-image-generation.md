@@ -34,7 +34,7 @@ pnpm install -w satori satori-html sharp
 
 ## 设置一个 API 路由
 
-然后，在 `src/server/routes` 目录下定义一个 API 路由。
+然后，在 `src/server/routes/api` 目录下定义一个 API 路由。
 
 ```ts
 // src/server/routes/api/v1/og-images.ts
