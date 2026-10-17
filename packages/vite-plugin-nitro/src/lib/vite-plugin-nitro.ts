@@ -45,7 +45,6 @@ import {
   ssrRenderer,
   ssrStreamRenderer,
   clientRenderer,
-  apiMiddleware,
 } from './utils/renderers.js';
 import {
   expandRoutesWithLocales,
@@ -78,7 +77,6 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
   const baseURL = process.env['NITRO_APP_BASE_URL'] || '';
   const prefix = baseURL ? baseURL.substring(0, baseURL.length - 1) : '';
   let apiPrefix = '/api';
-  let useAPIMiddleware = true;
 
   let i18nWorkers = false;
   let isBuild = false;
@@ -87,7 +85,6 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
   let config: UserConfig;
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
-  let hasAPIDir = false;
   let hasServerFns = false;
   const routeSitemaps: Record<
     string,
@@ -107,7 +104,6 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
     workspaceRoot = options.workspaceRoot ?? process.cwd();
     sourceRoot = options.sourceRoot ?? 'src';
     apiPrefix = `/${options.apiPrefix || 'api'}`;
-    useAPIMiddleware = options.useAPIMiddleware ?? true;
   }
 
   return [
@@ -122,13 +118,6 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
         isTest = isTest ? isTest : mode === 'test';
 
         rootDir = relative(workspaceRoot, config.root || '.') || '.';
-        hasAPIDir = existsSync(
-          resolve(
-            workspaceRoot,
-            rootDir,
-            `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
-          ),
-        );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
@@ -138,7 +127,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
           sourceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
-          hasAPIDir,
+          apiPrefix,
         });
 
         // Server functions: discover every `*.server.ts` module, then register a
@@ -231,35 +220,12 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
               serverFnIdPlugin(normalizePath(resolve(workspaceRoot, rootDir))),
             ],
           },
-          handlers: [
-            ...(hasAPIDir
-              ? []
-              : useAPIMiddleware
-                ? [
-                    {
-                      handler: '#ANALOG_API_MIDDLEWARE',
-                      middleware: true,
-                    },
-                  ]
-                : []),
-            ...pageHandlers,
-            ...serverFnHandlers,
-          ],
-          routeRules: hasAPIDir
-            ? undefined
-            : useAPIMiddleware
-              ? undefined
-              : {
-                  [`${prefix}${apiPrefix}/**`]: {
-                    proxy: { to: '/**' },
-                  },
-                },
+          handlers: [...pageHandlers, ...serverFnHandlers],
           virtual: {
             '#ANALOG_SSR_RENDERER': options?.experimental?.streaming
               ? ssrStreamRenderer
               : ssrRenderer,
             '#ANALOG_CLIENT_RENDERER': clientRenderer,
-            ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
             ...serverFnVirtual,
           },
         };
@@ -445,20 +411,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroConfig.moduleSideEffects ?? []),
               ],
-              handlers: [
-                ...(hasAPIDir
-                  ? []
-                  : useAPIMiddleware
-                    ? [
-                        {
-                          handler: '#ANALOG_API_MIDDLEWARE',
-                          middleware: true,
-                        },
-                      ]
-                    : []),
-                ...pageHandlers,
-                ...serverFnHandlers,
-              ],
+              handlers: [...pageHandlers, ...serverFnHandlers],
             };
           }
         }
@@ -616,24 +569,20 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
             );
           }
 
-          if (hasAPIDir) {
-            viteServer.middlewares.use(
-              (
-                req: IncomingMessage,
-                res: ServerResponse,
-                next: (error?: unknown) => void,
-              ) => {
-                if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
-                  apiHandler(req, res);
-                  return;
-                }
+          viteServer.middlewares.use(
+            (
+              req: IncomingMessage,
+              res: ServerResponse,
+              next: (error?: unknown) => void,
+            ) => {
+              if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
+                apiHandler(req, res);
+                return;
+              }
 
-                next();
-              },
-            );
-          } else {
-            viteServer.middlewares.use(apiPrefix, apiHandler);
-          }
+              next();
+            },
+          );
 
           // handle upgrades if websockets are enabled
           if (nitroOptions?.experimental?.websocket) {

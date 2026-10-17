@@ -4,7 +4,7 @@ Analog admite la definición de rutas de API que se pueden utilizar para servir 
 
 ## Definición de una ruta API
 
-Las rutas API se definen en el directorio `src/server/routes`. Las rutas API también se basan en el sistema de ficheros y se exponen bajo el prefijo `/api` predeterminado en el desarrollo.
+Las rutas API se definen en el directorio `src/server/routes/api`. Las rutas API también se basan en el sistema de ficheros y se exponen bajo el prefijo `/api` predeterminado.
 
 ```ts
 import { defineHandler } from 'h3';

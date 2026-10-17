@@ -4,8 +4,8 @@ Analog unterstützt die Definition von API-Routen, die für die Bereitstellung v
 
 ## Definieren einer API-Route
 
-API-Routen werden im Ordner `src/server/routes` definiert. API-Routen sind ebenfalls dateisystembasiert,
-und werden in der Entwicklung unter dem Standard-Präfix `/api` bereitgestellt.
+API-Routen werden im Ordner `src/server/routes/api` definiert. API-Routen sind ebenfalls dateisystembasiert,
+und werden unter dem Standard-Präfix `/api` bereitgestellt.
 
 ```ts
 import { defineHandler } from 'h3';
@@ -18,7 +18,7 @@ export default defineHandler(() => ({ message: 'Hello World' }));
 Um einen RSS-Feed für Ihre Website zu erstellen, setzen Sie den `content-type` auf `text/xml`, und Analog liefert den richtigen Inhaltstyp für die Route.
 
 ```ts
-//server/routes/rss.xml.ts
+//server/routes/api/rss.xml.ts
 
 import { defineHandler, setHeader } from 'h3';
 export default defineHandler((event) => {

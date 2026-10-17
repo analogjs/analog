@@ -341,9 +341,9 @@ Make sure your server entry uses `provideServerContext()` and your `HttpClient` 
 
 ### The `useAPIMiddleware` option was removed
 
-The deprecated `useAPIMiddleware` option and the generated `/api` proxy middleware it enabled are removed when using Nitro v3. `@analogjs/vite-plugin-nitro` still accepts it, but it remains deprecated. With Nitro v3, API routes are served exclusively through Nitro's native file-based routing.
+The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware it enabled, and the `routeRules` proxy fallback are removed from both `@analogjs/vite-plugin-nitro` and the Nitro v3 integration. API routes are served exclusively through Nitro's native file-based routing under `src/server/routes/api`.
 
-If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config.
+If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
 
 ### Removed first-party packages and current compiler gaps
 
