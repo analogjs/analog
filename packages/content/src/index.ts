@@ -11,7 +11,6 @@ export type {
 } from './lib/content-renderer';
 export { injectContentFiles } from './lib/inject-content-files';
 export type { InjectContentFilesFilterFunction } from './lib/inject-content-files';
-export { MarkdownContentRendererService } from './lib/markdown-content-renderer.service';
 export {
   provideContent,
   withMarkdownRenderer,
@@ -24,7 +23,6 @@ export {
   parseRawContentFileAsync,
   FrontmatterValidationError,
 } from './lib/parse-raw-content-file';
-export { MarkedSetupService } from './lib/marked-setup.service';
 export {
   MarkedContentHighlighter,
   withHighlighter,

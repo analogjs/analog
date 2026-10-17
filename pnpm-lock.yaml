@@ -1443,15 +1443,9 @@ importers:
       marked:
         specifier: 'catalog:'
         version: 18.0.0
-      marked-gfm-heading-id:
-        specifier: 'catalog:'
-        version: 4.1.4(marked@18.0.0)
       marked-highlight:
         specifier: 'catalog:'
         version: 2.2.4(marked@18.0.0)
-      marked-mangle:
-        specifier: 'catalog:'
-        version: 1.1.13(marked@18.0.0)
       md4x:
         specifier: catalog:peerContentOptional
         version: 0.0.25
@@ -1483,9 +1477,6 @@ importers:
 
   packages/content-plugin:
     dependencies:
-      '@nx/devkit':
-        specifier: catalog:peerCompat
-        version: 22.6.5(nx@23.2.1(@swc-node/register@1.11.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2)(@swc/core@1.15.24(@swc/helpers@0.5.21))(@swc/types@0.1.26)(typescript@6.0.3))(@swc/core@1.15.24(@swc/helpers@0.5.21)))
       tsdown:
         specifier: 'catalog:'
         version: 0.21.8(@typescript/native-preview@7.0.0-dev.20260412.1)(oxc-resolver@11.19.1(@emnapi/core@1.11.2)(@emnapi/runtime@1.11.2))(synckit@0.11.12)(typescript@6.0.3)

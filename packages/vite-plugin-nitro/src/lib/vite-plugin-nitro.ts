@@ -584,13 +584,6 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
             },
           );
 
-          viteServer.httpServer?.once('listening', () => {
-            process.env['ANALOG_HOST'] = !viteServer.config.server.host
-              ? 'localhost'
-              : (viteServer.config.server.host as string);
-            process.env['ANALOG_PORT'] = `${viteServer.config.server.port}`;
-          });
-
           // handle upgrades if websockets are enabled
           if (nitroOptions?.experimental?.websocket) {
             viteServer.httpServer?.on('upgrade', server.upgrade);

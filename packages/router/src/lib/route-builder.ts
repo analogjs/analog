@@ -152,7 +152,7 @@ function getCollisionPriority(filename: string): number {
 function toRawPath(filename: string): string {
   return filename
     .replace(
-      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts|analog|ag)$)|(\.(ts|md|analog|ag)$)/g,
+      /^(?:[a-zA-Z]:[\\/])?(.*?)[\\/](?:routes|pages|content)[\\/]|(?:[\\/](?:app[\\/](?:routes|pages)|src[\\/]content)[\\/])|(\.page\.(js|ts)$)|(\.(ts|md)$)/g,
       '',
     )
     .replace(/\[\[\.\.\.([^\]]+)\]\]/g, '(opt-$1)')
@@ -202,14 +202,14 @@ function toRoutes<TFile>(
         module = resolveModule(rawRoute.filename, files[rawRoute.filename]);
       }
 
-      if (/\.page\.(ts|analog|ag)$/.test(rawRoute.filename)) {
+      if (/\.page\.ts$/.test(rawRoute.filename)) {
         const endpointKey = rawRoute.filename.replace(
-          /\.page\.(ts|analog|ag)$/,
+          /\.page\.ts$/,
           ENDPOINT_EXTENSION,
         );
 
         const rawEndpoint = rawRoute.filename
-          .replace(/\.page\.(ts|analog|ag)$/, '')
+          .replace(/\.page\.ts$/, '')
           .replace(/\[\[\.\.\..+\]\]/, '**')
           .replace(/\[\.{3}.+\]/, '**')
           .replace(/^(.*?)\/pages/, '/pages');

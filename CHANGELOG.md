@@ -1,3 +1,9 @@
+# [3.0.0-alpha.95](https://github.com/analogjs/analog/compare/v3.0.0-alpha.94...v3.0.0-alpha.95) (2026-10-17)
+
+### Bug Fixes
+
+- **create-analog:** publish template-angular-v21 ([#2630](https://github.com/analogjs/analog/issues/2630)) ([287e8a7](https://github.com/analogjs/analog/commit/287e8a71f581fbc019ffdf3d8f16f50c03b120e5))
+
 # [3.0.0-alpha.94](https://github.com/analogjs/analog/compare/v3.0.0-alpha.93...v3.0.0-alpha.94) (2026-10-15)
 
 ### Bug Fixes
