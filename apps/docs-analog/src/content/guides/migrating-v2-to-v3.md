@@ -401,7 +401,7 @@ If your app has a `src/server/routes/api` directory, no change is needed — tha
 
 ### Deprecated router APIs were removed
 
-`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, `routes`, or `createRoutes`. `ng update` rewrites the first three automatically.
+`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, `routes`, or `createRoutes`. `ng update` rewrites the first three automatically. Files that reference them without calling them, such as `useFactory: injectRouter`, are listed for manual migration and left unchanged, so update every use in those files by hand.
 
 Before:
 
