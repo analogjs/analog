@@ -3,6 +3,8 @@ import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
 import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks/index.js';
 import * as ts from 'typescript';
 
+import { applyEdits, type Edit } from '../utils/source-edits';
+
 const ANALOG_PLATFORM_IMPORT = `from '@analogjs/platform'`;
 const ANGULAR_PLUGIN_IMPORT = `from '@analogjs/vite-plugin-angular'`;
 const NITRO_IMPORTS = [
@@ -103,22 +105,6 @@ interface TransformResult {
   source: string;
   movedVite: boolean;
   movedNitro: boolean;
-}
-
-interface Edit {
-  start: number;
-  end: number;
-  text: string;
-}
-
-function applyEdits(source: string, edits: Edit[]): string {
-  // Apply right-to-left so earlier offsets stay valid.
-  const sorted = [...edits].sort((a, b) => b.start - a.start);
-  let result = source;
-  for (const edit of sorted) {
-    result = result.slice(0, edit.start) + edit.text + result.slice(edit.end);
-  }
-  return result;
 }
 
 function getLineIndent(source: string, pos: number): string {

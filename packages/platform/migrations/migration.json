@@ -5,6 +5,21 @@
       "version": "3.0.0-alpha.56",
       "description": "Migrate Analog vite.config from a single analog() call to the separated analog() + angular() + nitro() plugin shape",
       "factory": "./migrate-to-separated-plugins/migrate-to-separated-plugins"
+    },
+    "migrate-deprecated-router-apis": {
+      "version": "3.0.0-alpha.96",
+      "description": "Replace the removed defineRouteMeta, injectRouter, and injectActivatedRoute APIs from @analogjs/router",
+      "factory": "./migrate-deprecated-router-apis/migrate-deprecated-router-apis"
+    },
+    "migrate-setup-testbed-browser-mode": {
+      "version": "3.0.0-alpha.96",
+      "description": "Replace the removed setupTestBed({ browserMode }) option with teardown.destroyAfterEach",
+      "factory": "./migrate-setup-testbed-browser-mode/migrate-setup-testbed-browser-mode"
+    },
+    "migrate-vitest-builder-aliases": {
+      "version": "3.0.0-alpha.96",
+      "description": "Replace the removed Vitest builder and executor aliases with @analogjs/vitest-angular:test",
+      "factory": "./migrate-vitest-builder-aliases/migrate-vitest-builder-aliases"
     }
   }
 }
