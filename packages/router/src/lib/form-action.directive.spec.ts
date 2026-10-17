@@ -77,6 +77,7 @@ class Host {}
 async function setup(
   path = '/newsletter',
   mode: 'enhanced' | 'default' | 'disabled' = 'enhanced',
+  apiPrefix = 'api',
 ) {
   const component =
     mode === 'default'
@@ -96,7 +97,7 @@ async function setup(
         }),
       ]),
       provideLocationMocks(),
-      { provide: API_PREFIX, useValue: 'api' },
+      { provide: API_PREFIX, useValue: apiPrefix },
     ],
   });
   const fixture = TestBed.createComponent(Host);
@@ -308,6 +309,28 @@ describe('FormAction', () => {
     });
     fixture.detectChanges();
     expect(form.hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('uses the configured API prefix for the fallback endpoint', async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response('ok'));
+    vi.stubGlobal('fetch', fetch);
+    const { page, submit } = await setup('/plain', 'enhanced', 'custom/api');
+    vi.stubGlobal('window', {
+      location: {
+        href: new URL('/plain', window.location.href).href,
+        origin: window.location.origin,
+        pathname: '/plain',
+      },
+    });
+
+    submit();
+    await vi.waitFor(() =>
+      expect(page.states).toEqual(['submitting', 'success']),
+    );
+    expect(fetch).toHaveBeenCalledWith('/custom/api/_analog/pages/plain', {
+      method: 'post',
+      body: expect.any(FormData),
+    });
   });
 
   it('honors the current action input and native action attribute', async () => {

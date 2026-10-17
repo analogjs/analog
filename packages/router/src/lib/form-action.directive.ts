@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
+import { injectAPIPrefix } from '../../tokens/src/index.js';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 import { ANALOG_META_KEY } from './endpoints';
 
@@ -48,6 +49,7 @@ export class FormAction {
   private injector = inject(Injector);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private apiPrefix = injectAPIPrefix();
   private path = this._getPath();
 
   constructor() {
@@ -175,7 +177,7 @@ export class FormAction {
       ).pathname;
     }
 
-    return `/api/_analog/pages${window.location.pathname}`;
+    return `/${this.apiPrefix}/_analog/pages${window.location.pathname}`;
   }
 
   private _handleEnhancedGet(body: FormData, path: string) {
