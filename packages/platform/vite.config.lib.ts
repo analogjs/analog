@@ -51,11 +51,6 @@ const config: UserConfigExport = defineConfig({
             pkgDir,
             'migrations/migrate-to-separated-plugins/migrate-to-separated-plugins.ts',
           ),
-        'migrations/migrate-deprecated-router-apis/migrate-deprecated-router-apis':
-          resolve(
-            pkgDir,
-            'migrations/migrate-deprecated-router-apis/migrate-deprecated-router-apis.ts',
-          ),
         'migrations/migrate-setup-testbed-browser-mode/migrate-setup-testbed-browser-mode':
           resolve(
             pkgDir,

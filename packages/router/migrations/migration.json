@@ -5,6 +5,11 @@
       "version": "3.0.0",
       "description": "Remove requestContextInterceptor from withInterceptors() now that provideFileRouter() registers it automatically",
       "factory": "./remove-request-context-interceptor/remove-request-context-interceptor"
+    },
+    "migrate-deprecated-router-apis": {
+      "version": "3.0.0-alpha.97",
+      "description": "Replace the removed defineRouteMeta, injectRouter, and injectActivatedRoute APIs from @analogjs/router",
+      "factory": "./migrate-deprecated-router-apis/migrate-deprecated-router-apis"
     }
   }
 }
