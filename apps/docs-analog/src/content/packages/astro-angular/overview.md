@@ -343,9 +343,9 @@ export class TodosComponent implements OnInit {
 }
 ```
 
-### Client Hydration Features (Experimental)
+### Client Hydration Features
 
-First, make sure the experimental Angular client hydration option is enabled in the integration config. Read more [here](#angular-client-hydration-experimental).
+Hydration features require Angular client hydration, which is enabled by default. Read more [here](#angular-client-hydration).
 
 To add Angular hydration features, add a static property to the component class named `hydrationFeatures`. This should be a function that returns an array of hydration features to enable.
 
