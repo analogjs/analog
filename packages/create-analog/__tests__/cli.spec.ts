@@ -199,6 +199,25 @@ test('strips the vite/vitest overrides with --skipViteOverrides', () => {
   expect(pkg.overrides).toBeUndefined();
 });
 
+test('publishes every template with current @analogjs versions', () => {
+  const cliPkg = readJsonSync(join(CLI_PATH, 'package.json'));
+  const templates = readdirSync(CLI_PATH).filter((entry) =>
+    entry.startsWith('template-'),
+  );
+
+  for (const template of templates) {
+    expect(cliPkg.files).toContain(template);
+
+    const pkg = readJsonSync(join(CLI_PATH, template, 'package.json'));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    for (const [name, version] of Object.entries(deps)) {
+      if (name.startsWith('@analogjs/')) {
+        expect(version, `${template} ${name}`).toBe(`^${cliPkg.version}`);
+      }
+    }
+  }
+});
+
 test('templates wire up the agent context chain', () => {
   // CLAUDE.md -> @AGENTS.md -> node_modules/@analogjs/platform/AGENTS.md
   for (const template of ['latest', 'blog', 'minimal']) {

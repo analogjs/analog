@@ -17,6 +17,7 @@ const versionFiles = [
 
 const replacementFiles = [
   'packages/create-analog/template-angular-v20/package.json',
+  'packages/create-analog/template-angular-v21/package.json',
   'packages/create-analog/template-blog/package.json',
   'packages/create-analog/template-latest/package.json',
   'packages/create-analog/template-minimal/package.json',
@@ -160,6 +161,7 @@ export default {
           'packages/content/package.json',
           'packages/create-analog/package.json',
           'packages/create-analog/template-angular-v20/package.json',
+          'packages/create-analog/template-angular-v21/package.json',
           'packages/create-analog/template-blog/package.json',
           'packages/create-analog/template-latest/package.json',
           'packages/create-analog/template-minimal/package.json',
