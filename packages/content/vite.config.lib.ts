@@ -45,7 +45,6 @@ export default defineConfig({
         /^@angular\/.*/,
         /^@nx\/.*/,
         /^@analogjs\//,
-        /^marked/,
         /^satori/,
         /^rxjs/,
         /^md4x/,

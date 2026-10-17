@@ -262,6 +262,8 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+The `MarkedContentHighlighter` class and `withHighlighter()` provider were also removed from `@analogjs/content`, along with its `marked` and `marked-highlight` peer dependencies. Nothing in the browser used them after highlighting moved to build time; configure highlighting with the `analog()` content options instead.
+
 If you used `withPrismHighlighter()` for Prism's toolbar and copy-to-clipboard plugins in the browser, import them directly in `app.config.ts` instead:
 
 ```ts

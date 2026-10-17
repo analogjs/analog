@@ -29,8 +29,6 @@
     "@angular/router": "catalog:peerCompat",
     "@nx/devkit": "catalog:peerCompat",
     "front-matter": "catalog:",
-    "marked": "catalog:",
-    "marked-highlight": "catalog:",
     "rxjs": "catalog:peerCompat",
     "@standard-schema/spec": "catalog:",
     "satori": "catalog:peerContentOptional",

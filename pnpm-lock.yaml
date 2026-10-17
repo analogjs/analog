@@ -1440,12 +1440,6 @@ importers:
       front-matter:
         specifier: 'catalog:'
         version: 4.0.2
-      marked:
-        specifier: 'catalog:'
-        version: 18.0.0
-      marked-highlight:
-        specifier: 'catalog:'
-        version: 2.2.4(marked@18.0.0)
       md4x:
         specifier: catalog:peerContentOptional
         version: 0.0.25
