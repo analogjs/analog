@@ -152,6 +152,7 @@ export class AppComponent {}
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
+      analog(),
       angular({
         inlineStylesExtension: 'scss',
       }),
