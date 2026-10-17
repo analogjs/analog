@@ -50,7 +50,4 @@ export type RouteMeta =
 export type RouteExport = {
   default: Type<unknown>;
   routeMeta?: RouteMeta;
-  routeJsonLd?:
-    | AnalogJsonLdDocument
-    | ResolveFn<AnalogJsonLdDocument | undefined>;
 };

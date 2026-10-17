@@ -1,4 +1,4 @@
-import { injectLoad, injectParams } from '@analogjs/router';
+import { injectLoad, injectParams, type RouteMeta } from '@analogjs/router';
 import { CurrencyPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -8,18 +8,18 @@ import { LiveProductsService } from '../live-products.service';
 import type { Product } from '../products';
 import type { load } from './products.[productId].server';
 
-export const routeJsonLd = (route: {
-  parent?: { paramMap: { get(name: string): string | null } };
-}) => {
-  const productId = route.parent?.paramMap.get('productId') ?? 'unknown';
+export const routeMeta: RouteMeta = {
+  jsonLd: (route) => {
+    const productId = route.parent?.paramMap.get('productId') ?? 'unknown';
 
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    identifier: `analog-product-${productId}`,
-    name: `Analog Product ${productId}`,
-    sku: productId,
-  };
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      identifier: `analog-product-${productId}`,
+      name: `Analog Product ${productId}`,
+      sku: productId,
+    };
+  },
 };
 
 @Component({

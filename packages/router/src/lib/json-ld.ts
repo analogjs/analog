@@ -29,7 +29,7 @@ export type JsonLd = JsonLdObject | JsonLdObject[];
  * `@graph`-based documents (`Graph`), or arrays of nodes.
  *
  * This is the canonical JSON-LD type for route authoring surfaces
- * (`routeMeta.jsonLd`, `routeJsonLd`, generated manifest).
+ * (`routeMeta.jsonLd`, generated manifest).
  *
  * @example
  * ```ts

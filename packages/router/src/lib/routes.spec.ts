@@ -726,48 +726,6 @@ describe('routes', () => {
       });
     });
 
-    it('should merge top-level routeJsonLd exports into routeMeta when needed', async () => {
-      const { resolvedRoute } = await setup({
-        default: RouteComponent,
-        routeJsonLd: {
-          '@context': 'https://schema.org',
-          '@type': 'Event',
-          name: 'AnalogConf',
-        },
-      });
-
-      expect(resolvedRoute.data).toEqual({
-        [ROUTE_JSON_LD_KEY]: {
-          '@context': 'https://schema.org',
-          '@type': 'Event',
-          name: 'AnalogConf',
-        },
-      });
-    });
-
-    it('should prefer routeMeta.jsonLd over top-level routeJsonLd when both are present', async () => {
-      const metaJsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: 'From routeMeta',
-      };
-      const topLevelJsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'Event',
-        name: 'From routeJsonLd',
-      };
-      const { resolvedRoute } = await setup({
-        default: RouteComponent,
-        routeMeta: { jsonLd: metaJsonLd },
-        routeJsonLd: topLevelJsonLd,
-      });
-
-      // routeMeta.jsonLd should win
-      expect(resolvedRoute.data).toEqual({
-        [ROUTE_JSON_LD_KEY]: metaJsonLd,
-      });
-    });
-
     it('should add JSON-LD array with multiple entries to route data', async () => {
       const jsonLdArray = [
         {
@@ -806,24 +764,6 @@ describe('routes', () => {
 
       expect(resolvedRoute.data).toEqual({
         [ROUTE_JSON_LD_KEY]: graph,
-      });
-    });
-
-    it('should add routeJsonLd resolver function to route resolve dictionary', async () => {
-      const jsonLdResolver = () =>
-        of({
-          '@context': 'https://schema.org',
-          '@type': 'Product',
-          name: 'Widget',
-        });
-      const { resolvedRoute } = await setup({
-        default: RouteComponent,
-        routeJsonLd: jsonLdResolver,
-      });
-
-      expect(resolvedRoute.resolve).toEqual({
-        [ROUTE_JSON_LD_KEY]: jsonLdResolver,
-        load: expect.anything(),
       });
     });
   });
