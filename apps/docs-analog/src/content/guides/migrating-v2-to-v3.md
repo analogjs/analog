@@ -319,8 +319,13 @@ In the v3 line, deployment docs emphasize:
 
 - setting `APP_BASE_HREF` from `import.meta.env.BASE_URL`
 - passing the build-time base href explicitly in the build command
-- setting `VITE_ANALOG_PUBLIC_BASE_URL` during CI builds for server-side data fetching
 - setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
+
+### `VITE_ANALOG_PUBLIC_BASE_URL` was removed
+
+Server-side data fetching no longer reads `VITE_ANALOG_PUBLIC_BASE_URL`. Delete it from your `.env` files and CI builds. Page `load` resolvers no longer switch to `globalThis.$fetch` when the variable is set, which bypassed the `HttpClient` transfer cache and caused SSR data to be fetched again on the client.
+
+Make sure your server entry uses `provideServerContext()` and your `HttpClient` setup includes `requestContextInterceptor`, as described in [Server Request Context](/docs/features/data-fetching/overview#server-request-context). The base URL is then derived from each incoming request. If your data fetching must call a different origin than the one serving the app, provide the `BASE_URL` token from `@analogjs/router/tokens` yourself in `app.config.server.ts`.
 
 ### The `useAPIMiddleware` option was removed
 

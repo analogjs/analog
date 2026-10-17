@@ -99,14 +99,3 @@ export const routeMeta: RouteMeta = {
   },
 };
 ```
-
-## Sobrescribir la URL Base Pública
-
-Analog infiere automáticamente la URL base pública que se debe establecer al usar la obtención de datos del lado del servidor a través de su [Contexto de Solicitud del Servidor](/docs/features/data-fetching/overview#server-request-context) y [Interceptor de Contexto de Solicitud](/docs/features/data-fetching/overview#request-context-interceptor). Para establecer explícitamente la URL base, configura una variable de entorno utilizando un archivo `.env` para definir la URL base pública.
-
-```
-// .env
-VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
-```
-
-La variable de entorno también debe estar configurada al construir para despliegue.

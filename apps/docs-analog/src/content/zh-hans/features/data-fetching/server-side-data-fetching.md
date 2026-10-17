@@ -100,15 +100,3 @@ export const routeMeta: RouteMeta = {
   },
 };
 ```
-
-## 复写公开的 Base URL
-
-Analog automatically infers the public base URL to be set when using the server-side data fetching through its [Server Request Context](/docs/features/data-fetching/overview#server-request-context) and [Request Context Interceptor](/docs/features/data-fetching/overview#request-context-interceptor). To explcitly set the base URL, set an environment variable, using a `.env` file to define the public base URL.
-使用服务端数据获取时，Analog 会通过其 [服务器请求上下文](/docs/features/data-fetching/overview#server-request-context) 和 [请求上下文拦截器](/docs/features/data-fetching/overview#request-context-interceptor) 自动推断要设置的 Public Base URL。要显示的设置 Public Base URL，请设置环境变量，使用 `.env` 文件来定义 Public Base URL。
-
-```
-// .env
-VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
-```
-
-部署之前也要先设置好这个环境变量。
