@@ -127,6 +127,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
           sourceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
+          apiPrefix,
         });
 
         // Server functions: discover every `*.server.ts` module, then register a

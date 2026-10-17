@@ -9,6 +9,7 @@ type GetHandlersArgs = {
   sourceRoot: string;
   rootDir: string;
   additionalPagesDirs?: string[];
+  apiPrefix?: string;
 };
 
 /**
@@ -24,6 +25,7 @@ type GetHandlersArgs = {
  * @param sourceRoot The source directory path (e.g., 'src')
  * @param rootDir The project root directory relative to workspace
  * @param additionalPagesDirs Optional array of additional pages directories to scan
+ * @param apiPrefix The API route prefix (defaults to '/api')
  * @returns Array of NitroEventHandler objects with handler paths and route patterns
  *
  * Example usage:
@@ -59,13 +61,14 @@ type GetHandlersArgs = {
  * 3. Converts [...param] to **:param for catch-all routes
  * 4. Converts (group) to -group- for route groups
  * 5. Converts dots to forward slashes
- * 6. Prefixes with /api/_analog/pages
+ * 6. Prefixes with the API prefix and /_analog/pages
  */
 export function getPageHandlers({
   workspaceRoot,
   sourceRoot,
   rootDir,
   additionalPagesDirs,
+  apiPrefix = '/api',
 }: GetHandlersArgs): NitroEventHandler[] {
   // Normalize the project root path for consistent path handling
   const root = normalizePath(resolve(workspaceRoot, rootDir));
@@ -97,7 +100,7 @@ export function getPageHandlers({
     // Return Nitro event handler with absolute handler path and transformed route
     return {
       handler: endpointFile,
-      route: `/api/_analog${route}`,
+      route: `${apiPrefix}/_analog${route}`,
       lazy: true,
     };
   });
