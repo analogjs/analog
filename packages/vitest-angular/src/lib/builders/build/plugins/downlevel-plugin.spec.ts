@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { downlevelPlugin, esbuildDownlevelPlugin } from './downlevel-plugin';
+import { downlevelPlugin } from './downlevel-plugin';
 
 describe('downlevelPlugin', () => {
   const plugin = downlevelPlugin();
@@ -47,9 +47,5 @@ describe('downlevelPlugin', () => {
     expect(result).toBeDefined();
     expect(result!.map).toBeDefined();
     expect(result!.map!.mappings).toBeTruthy();
-  });
-
-  it('exports deprecated esbuildDownlevelPlugin alias', () => {
-    expect(esbuildDownlevelPlugin).toBe(downlevelPlugin);
   });
 });
