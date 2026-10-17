@@ -1,3 +1,9 @@
+# [3.0.0-alpha.97](https://github.com/analogjs/analog/compare/v3.0.0-alpha.96...v3.0.0-alpha.97) (2026-10-17)
+
+### Bug Fixes
+
+- **router:** use the configured API prefix for FormAction fallback endpoints ([#2643](https://github.com/analogjs/analog/issues/2643)) ([a3f01c4](https://github.com/analogjs/analog/commit/a3f01c457e938291fbcff1d13dd9461f8fbd1fde))
+
 # [3.0.0-alpha.96](https://github.com/analogjs/analog/compare/v3.0.0-alpha.95...v3.0.0-alpha.96) (2026-10-17)
 
 ### Bug Fixes
