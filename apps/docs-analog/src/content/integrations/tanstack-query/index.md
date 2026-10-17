@@ -128,16 +128,16 @@ export default class QueryPageComponent {
 
 ## Typed Server Routes
 
-Use `serverQueryOptions` and `serverMutationOptions` from `@analogjs/router/tanstack-query` to get end-to-end type safety between server routes and client queries. Define the server route with `defineServerRoute` from `@analogjs/router/server/actions` and export it so its types can be referenced from the component.
+Use `serverQueryOptions` and `serverMutationOptions` from `@analogjs/router/tanstack-query` to get end-to-end type safety between server routes and client queries. Define the server route with `defineApiRoute` from `@analogjs/router/server/actions` and export it so its types can be referenced from the component.
 
 ```ts
 // src/server/routes/api/v1/todos.get.ts
-import { defineServerRoute } from '@analogjs/router/server/actions';
+import { defineApiRoute } from '@analogjs/router/server/actions';
 import * as v from 'valibot';
 
-export const route = defineServerRoute({
+export const route = defineApiRoute({
   query: v.object({ scope: v.optional(v.string(), 'default') }),
-  handler: ({ query }) => getTodos(query.scope),
+  handler: ({ query }) => [{ id: 1, title: `${query.scope} todo` }],
 });
 
 export default route;

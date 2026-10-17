@@ -14,7 +14,7 @@
 | ------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `provideAnalogQuery()`                      | `tanstack-query/src/provide-analog-query.ts`        | Client-side `ENVIRONMENT_INITIALIZER` that reads `ANALOG_QUERY_STATE_KEY` from `TransferState` and `hydrate(client, state)`s once at bootstrap. |
 | `provideServerAnalogQuery()`                | `tanstack-query/src/provide-server-analog-query.ts` | `BEFORE_APP_SERIALIZED` hook that `dehydrate(queryClient)`s into `TransferState` after SSR render.                                              |
-| `serverQueryOptions` (+ mutation, infinite) | `tanstack-query/src/server-query.ts`                | Builders that take a typed `ServerRouteHandler` + `HttpClient` and infer `query`/`body`/`result` from the server-route definition.              |
+| `serverQueryOptions` (+ mutation, infinite) | `tanstack-query/src/server-query.ts`                | Builders that take a typed `ApiRouteHandler` + `HttpClient` and infer `query`/`body`/`result` from the server-route definition.                 |
 
 Today's supported flow is **fetch-in-component**:
 
