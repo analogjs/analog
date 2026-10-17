@@ -103,10 +103,10 @@ describe('generator templates', () => {
       expect(MINIMUM_SUPPORTED_ANGULAR_VERSION).toBe(MIN_ANGULAR_GUARD);
     });
 
-    it('minimum Nx version is at least 17', () => {
+    it('minimum Nx version is at least 23', () => {
       expect(
         Number(MINIMUM_SUPPORTED_NX_VERSION.split('.')[0]),
-      ).toBeGreaterThanOrEqual(17);
+      ).toBeGreaterThanOrEqual(23);
     });
 
     it('minimum Angular version is at least 20', () => {

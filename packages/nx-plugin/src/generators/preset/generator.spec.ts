@@ -10,7 +10,7 @@ import { AnalogNxApplicationGeneratorOptions } from '../app/schema';
 describe('preset generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
-    nxVersion = '21.0.0',
+    nxVersion = '23.2.0',
   ) => {
     const tree = createTreeWithEmptyWorkspace({ formatter: 'prettier' });
     addDependenciesToPackageJson(tree, { nx: nxVersion }, {});
@@ -68,20 +68,12 @@ describe('preset generator', () => {
     expect(tree.exists('/my-app/CLAUDE.md')).toBe(false);
   });
 
-  it('should use vitest 3 for Nx < 22.3.0', async () => {
+  it('should use @nx/vite 23 and vitest 5', async () => {
     const { tree } = await setup({ analogAppName: 'my-app' });
 
     const packageJson = JSON.parse(tree.read('/package.json').toString());
 
-    expect(packageJson['devDependencies']['vitest']).toBe('^3.0.0');
-  });
-
-  it('should use @nx/vite 23 for Nx >= 23.0.0', async () => {
-    const { tree } = await setup({ analogAppName: 'my-app' }, '23.0.1');
-
-    const packageJson = JSON.parse(tree.read('/package.json').toString());
-
-    expect(packageJson['devDependencies']['@nx/vite']).toBe('^23.0.0');
+    expect(packageJson['devDependencies']['@nx/vite']).toBe('^23.2.0');
     expect(packageJson['devDependencies']['vitest']).toBe('^5.0.0');
     expect(packageJson['devDependencies']['@vitest/coverage-v8']).toBe(
       '^5.0.0',
