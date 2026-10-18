@@ -3389,7 +3389,8 @@ describe('Host bindings from same-file string constants', () => {
       'hostAttrs: ["0", "zero", "example", "true", "role", "button", "aria-live", "polite", 1, "a", "example"]',
     );
     expect(result).toContain('ɵɵclassProp("example", true)');
-    expect(result).toContain('ɵɵdomProperty("title", ctx.label)');
+    // ɵɵhostProperty before Angular 20, ɵɵdomProperty after.
+    expect(result).toMatch(/ɵɵ(dom|host)Property\("title", ctx\.label\)/);
     expect(result).not.toContain('CLASS_NAME"');
   });
 });
