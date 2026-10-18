@@ -3193,6 +3193,22 @@ describe('Ivy definitions as static class members with TDZ hoisting', () => {
       });
     }
   });
+
+  it('keeps hoisted declarations when a type-only import precedes the class', () => {
+    const result = compile(
+      [
+        `import { Component, InjectionToken } from '@angular/core';`,
+        `import { Foo } from './foo';`,
+        `@Component({ selector: 'app-test', template: '', providers: [{ provide: TOKEN, useValue: 1 }] })`,
+        `export class TestComponent { foo?: Foo; }`,
+        `const TOKEN = new InjectionToken<Foo>('t');`,
+      ].join('\n'),
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('const TOKEN = new InjectionToken');
+  });
 });
 
 describe('hostDirectives metadata extraction', () => {
