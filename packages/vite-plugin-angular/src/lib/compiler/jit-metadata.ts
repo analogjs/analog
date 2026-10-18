@@ -103,14 +103,20 @@ export function buildCtorParameters(
       }
     }
 
-    if (typeName && !typeOnlyImports.has(typeName)) {
+    // Extract parameter decorators (may live on TSParameterProperty or the param itself)
+    const paramDecs: any[] = param.decorators || actualParam?.decorators || [];
+    // @Inject supplies the token, so its annotation may be an interface
+    // with no runtime value; referencing it would throw.
+    const hasInject = paramDecs.some(
+      (dec: any) => dec.expression?.callee?.name === 'Inject',
+    );
+
+    if (typeName && !hasInject && !typeOnlyImports.has(typeName)) {
       parts.push(`type: ${typeName}`);
     } else {
       parts.push(`type: undefined`);
     }
 
-    // Extract parameter decorators (may live on TSParameterProperty or the param itself)
-    const paramDecs: any[] = param.decorators || actualParam?.decorators || [];
     if (paramDecs.length > 0) {
       const decEntries = paramDecs
         .map((dec: any) => {
