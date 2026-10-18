@@ -60,6 +60,42 @@ describe('JIT transform preserves @Injectable', () => {
     expect(result).not.toContain('DataService.decorators');
   });
 
+  it('leaves @Injectable constructors alone when DI does not read them', () => {
+    const result = jitTransform(
+      `
+      import { Injectable, Inject, InjectionToken } from '@angular/core';
+      import { Options } from './options';
+      import { Track } from './track';
+
+      export const T = new InjectionToken<string>('t');
+
+      @Injectable({ providedIn: 'root', useFactory: () => new Factoried({}) })
+      export class Factoried {
+        constructor(private opts: Options) {}
+      }
+
+      @Injectable()
+      export class Tracked {
+        constructor(@Track('a') readonly opts: Options) {}
+      }
+
+      @Injectable()
+      export class Overloaded {
+        constructor(t: string);
+        constructor(@Inject(T) public t: string) {}
+      }
+    `,
+      'svc.ts',
+    ).code;
+
+    expect(result).not.toContain('Factoried.ctorParameters');
+    expect(result).not.toContain('Tracked.ctorParameters');
+    expect(result).toContain("@Track('a')");
+    expect(result).toContain(
+      'Overloaded.ctorParameters = () => [{type: undefined, decorators: [{type: Inject, args: [T]}]}]',
+    );
+  });
+
   it('does not emit ctorParameters for a named @Injectable class expression', () => {
     const result = jitTransform(
       `

@@ -53,6 +53,16 @@ function escapeStringLiteral(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
+/** The constructor implementation, skipping overload signatures. */
+export function findConstructor(classNode: any): any {
+  return (classNode.body?.body || []).find(
+    (m: any) =>
+      m.type === 'MethodDefinition' &&
+      m.kind === 'constructor' &&
+      m.value?.body,
+  );
+}
+
 /**
  * Build ctorParameters for constructor DI in JIT format:
  * [{ type: ServiceA }, { type: ServiceB, decorators: [{type: Optional}] }]
@@ -64,10 +74,7 @@ export function buildCtorParameters(
   sourceCode: string,
   typeOnlyImports: Set<string>,
 ): string | null {
-  const members: any[] = classNode.body?.body || [];
-  const ctor = members.find(
-    (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
-  );
+  const ctor = findConstructor(classNode);
   if (!ctor) return null;
 
   const params: any[] = ctor.value?.params?.items || ctor.value?.params || [];

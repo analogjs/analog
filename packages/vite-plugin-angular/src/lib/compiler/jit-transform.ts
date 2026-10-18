@@ -1,7 +1,11 @@
 import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
 import { detectTypeOnlyImportNames } from './type-elision.js';
-import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
+import {
+  buildCtorParameters,
+  buildPropDecorators,
+  findConstructor,
+} from './jit-metadata.js';
 import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 
 export interface JitTransformResult {
@@ -57,28 +61,49 @@ function removeDecorator(ms: MagicString, sourceCode: string, dec: any): void {
   ms.remove(dec.start, trimEnd);
 }
 
-/** Remove constructor parameter decorators once captured in ctorParameters. */
-function removeCtorParamDecorators(
-  ms: MagicString,
-  sourceCode: string,
-  classNode: any,
-): void {
-  const ctor = (classNode.body?.body || []).find(
-    (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
-  );
+const DI_PARAM_DECORATORS = new Set([
+  'Inject',
+  'Optional',
+  'Self',
+  'SkipSelf',
+  'Host',
+  'Attribute',
+]);
+const PROVIDER_KEYS = new Set([
+  'useClass',
+  'useExisting',
+  'useFactory',
+  'useValue',
+]);
+
+function ctorParamDecorators(classNode: any): any[] {
+  const ctor = findConstructor(classNode);
   const params: any[] = ctor?.value?.params?.items || ctor?.value?.params || [];
-  for (const param of params) {
-    // Decorators may live on the TSParameterProperty wrapper or the inner param
-    const allParamDecs: any[] = [
-      ...(param.decorators || []),
-      ...(param.type === 'TSParameterProperty' && param.parameter?.decorators
-        ? param.parameter.decorators
-        : []),
-    ];
-    for (const dec of allParamDecs) {
-      removeDecorator(ms, sourceCode, dec);
-    }
-  }
+  // Decorators may live on the TSParameterProperty wrapper or the inner param
+  return params.flatMap((param: any) => [
+    ...(param.decorators || []),
+    ...(param.type === 'TSParameterProperty' && param.parameter?.decorators
+      ? param.parameter.decorators
+      : []),
+  ]);
+}
+
+/**
+ * Whether an @Injectable/@Service class needs ctorParameters. Skipped when a
+ * provider option replaces the constructor, or when a non-DI parameter
+ * decorator must keep running as written.
+ */
+function needsInjectableCtorParameters(node: any, decorators: any[]): boolean {
+  const dec = decorators.find(isSelfRegisteringDecorator);
+  const options = dec?.expression.arguments?.[0];
+  return (
+    !!dec &&
+    node.type === 'ClassDeclaration' &&
+    !options?.properties?.some((p: any) => PROVIDER_KEYS.has(p.key?.name)) &&
+    ctorParamDecorators(node).every((d: any) =>
+      DI_PARAM_DECORATORS.has(d.expression?.callee?.name),
+    )
+  );
 }
 
 /**
@@ -143,12 +168,13 @@ export function jitTransform(
       // has no runtime DI token unless captured in ctorParameters. A class
       // expression's name is not in scope after it, so only declarations.
       const ctorParams =
-        node.type === 'ClassDeclaration' &&
-        decorators.some(isSelfRegisteringDecorator) &&
+        needsInjectableCtorParameters(node, decorators) &&
         buildCtorParameters(node, sourceCode, typeOnlyImports);
       if (ctorParams) {
         hasAngularClass = true;
-        removeCtorParamDecorators(ms, sourceCode, node);
+        for (const dec of ctorParamDecorators(node)) {
+          removeDecorator(ms, sourceCode, dec);
+        }
         ms.appendLeft(
           node.end,
           `\n${className}.ctorParameters = () => [${ctorParams}];\n`,
@@ -300,7 +326,9 @@ export function jitTransform(
         removeDecorator(ms, sourceCode, dec);
       }
     }
-    removeCtorParamDecorators(ms, sourceCode, node);
+    for (const dec of ctorParamDecorators(node)) {
+      removeDecorator(ms, sourceCode, dec);
+    }
 
     // Insert this class's metadata statements directly after the class body
     // so they execute in the class's own lexical scope. `node.end` is the
