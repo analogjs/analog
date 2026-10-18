@@ -115,6 +115,8 @@ export const viteFinal = async (config: vite.InlineConfig, options: any) => {
           typeof framework.options?.inlineStylesExtension !== 'undefined'
             ? framework.options?.inlineStylesExtension
             : 'css',
+        fastCompile: framework.options?.fastCompile,
+        fastCompileMode: framework.options?.fastCompileMode,
       }),
       angularOptionsPlugin(options, { normalizePath, experimentalZoneless }),
       storybookTransformConfigPlugin(),
