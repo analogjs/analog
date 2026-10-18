@@ -1,3 +1,9 @@
+# [2.9.0-beta.1](https://github.com/analogjs/analog/compare/v2.8.2-beta.1...v2.9.0-beta.1) (2026-10-18)
+
+### Features
+
+- **storybook-angular:** forward fastCompile options to the Angular plugin ([#2651](https://github.com/analogjs/analog/issues/2651)) ([caf4b64](https://github.com/analogjs/analog/commit/caf4b64b773c4c7d7a89a2d8430602c243ead4b2)), closes [#2617](https://github.com/analogjs/analog/issues/2617)
+
 ## [2.8.2-beta.1](https://github.com/analogjs/analog/compare/v2.8.1...v2.8.2-beta.1) (2026-10-16)
 
 ### Bug Fixes
