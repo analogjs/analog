@@ -53,6 +53,16 @@ function escapeStringLiteral(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
+/** The constructor implementation, skipping overload signatures. */
+export function findConstructor(classNode: any): any {
+  return (classNode.body?.body || []).find(
+    (m: any) =>
+      m.type === 'MethodDefinition' &&
+      m.kind === 'constructor' &&
+      m.value?.body,
+  );
+}
+
 /**
  * Build ctorParameters for constructor DI in JIT format:
  * [{ type: ServiceA }, { type: ServiceB, decorators: [{type: Optional}] }]
@@ -64,10 +74,7 @@ export function buildCtorParameters(
   sourceCode: string,
   typeOnlyImports: Set<string>,
 ): string | null {
-  const members: any[] = classNode.body?.body || [];
-  const ctor = members.find(
-    (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
-  );
+  const ctor = findConstructor(classNode);
   if (!ctor) return null;
 
   const params: any[] = ctor.value?.params?.items || ctor.value?.params || [];
@@ -103,14 +110,20 @@ export function buildCtorParameters(
       }
     }
 
-    if (typeName && !typeOnlyImports.has(typeName)) {
+    // Extract parameter decorators (may live on TSParameterProperty or the param itself)
+    const paramDecs: any[] = param.decorators || actualParam?.decorators || [];
+    // @Inject supplies the token, so its annotation may be an interface
+    // with no runtime value; referencing it would throw.
+    const hasInject = paramDecs.some(
+      (dec: any) => dec.expression?.callee?.name === 'Inject',
+    );
+
+    if (typeName && !hasInject && !typeOnlyImports.has(typeName)) {
       parts.push(`type: ${typeName}`);
     } else {
       parts.push(`type: undefined`);
     }
 
-    // Extract parameter decorators (may live on TSParameterProperty or the param itself)
-    const paramDecs: any[] = param.decorators || actualParam?.decorators || [];
     if (paramDecs.length > 0) {
       const decEntries = paramDecs
         .map((dec: any) => {
