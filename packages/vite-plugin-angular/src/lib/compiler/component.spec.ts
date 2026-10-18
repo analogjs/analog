@@ -1,3 +1,4 @@
+import { SourceMap } from 'node:module';
 import { describe, it, expect, vi } from 'vitest';
 import * as ts from 'typescript';
 import {
@@ -3158,6 +3159,55 @@ describe('Ivy definitions as static class members with TDZ hoisting', () => {
     expect(formatterIdx).toBeGreaterThan(-1);
     expect(labelIdx).toBeGreaterThan(-1);
     expect(formatterIdx).toBeLessThan(labelIdx);
+  });
+
+  it('keeps source map positions for hoisted declarations', () => {
+    const lines = [
+      `import { Component } from '@angular/core';`,
+      `@Component({ selector: 'app-test', template: '<p>hi</p>' })`,
+      `export class TestComponent {}`,
+      `const first = 1;`,
+      `function second() {}`,
+    ];
+    // No trailing newline, so the last hoisted statement ends at EOF.
+    const { code, map } = rawCompile(lines.join('\n'), 'test.ts');
+
+    expectCompiles(code);
+    expect(code).toContain(
+      'const first = 1;\nfunction second() {}\nexport class TestComponent',
+    );
+    const sourceMap = new SourceMap(JSON.parse(map.toString()));
+    for (const [name, originalLine] of [
+      ['first', 3],
+      ['second', 4],
+    ] as const) {
+      const offset = code.indexOf(name);
+      const before = code.slice(0, offset);
+      const entry = sourceMap.findEntry(
+        before.split('\n').length - 1,
+        offset - before.lastIndexOf('\n') - 1,
+      );
+      expect(entry).toMatchObject({
+        originalLine,
+        originalColumn: lines[originalLine].indexOf(name),
+      });
+    }
+  });
+
+  it('keeps hoisted declarations when a type-only import precedes the class', () => {
+    const result = compile(
+      [
+        `import { Component, InjectionToken } from '@angular/core';`,
+        `import { Foo } from './foo';`,
+        `@Component({ selector: 'app-test', template: '', providers: [{ provide: TOKEN, useValue: 1 }] })`,
+        `export class TestComponent { foo?: Foo; }`,
+        `const TOKEN = new InjectionToken<Foo>('t');`,
+      ].join('\n'),
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('const TOKEN = new InjectionToken');
   });
 });
 
