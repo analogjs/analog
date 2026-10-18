@@ -1,3 +1,9 @@
+# [2.9.0-beta.3](https://github.com/analogjs/analog/compare/v2.9.0-beta.2...v2.9.0-beta.3) (2026-10-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve source maps for hoisted statements ([#2654](https://github.com/analogjs/analog/issues/2654)) ([df99d9f](https://github.com/analogjs/analog/commit/df99d9fffc31ed56cce0e9d89a59d0f096bb87bd)), closes [#2517](https://github.com/analogjs/analog/issues/2517)
+
 # [2.9.0-beta.2](https://github.com/analogjs/analog/compare/v2.9.0-beta.1...v2.9.0-beta.2) (2026-10-18)
 
 ### Bug Fixes
