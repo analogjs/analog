@@ -3359,6 +3359,30 @@ describe('Host raw embedded quote preservation', () => {
   });
 });
 
+describe('Host bindings from same-file string constants', () => {
+  it('resolves computed keys, interpolated keys, and identifier values', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const CLASS_NAME = 'example';
+      const CLASS_ATTR = \`[class.\${CLASS_NAME}]\`;
+      const ROLE = 'button';
+      @Component({
+        selector: 'app-root',
+        template: '',
+        host: { [CLASS_NAME]: 'true', [CLASS_ATTR]: 'true', role: ROLE },
+      })
+      export class AppComponent {}
+    `,
+      'app.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain('"example", "true", "role", "button"');
+    expect(result).toContain('ɵɵclassProp("example", true)');
+    expect(result).not.toContain('CLASS_NAME"');
+  });
+});
+
 describe('Signal query read/descendants options', () => {
   it('parses `read` option on viewChild', () => {
     const result = compile(

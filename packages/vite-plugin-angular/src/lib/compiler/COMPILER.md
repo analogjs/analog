@@ -146,6 +146,8 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 
 String-typed metadata fields (`template`, `selector`, `templateUrl`, `styles`, `styleUrl`, `styleUrls`, `name`, `exportAs`, `providedIn`) can reference module-level `const` string constants via JS template-literal interpolation, e.g. `template: \`<div class="${twClass}">x</div>\``. Resolution is iterative, so a const may reference earlier-resolved consts (`const a = ...; const b = \`${a} more\`;`). Only bare `Identifier`expressions against`const` declarations are resolved — member access, function calls, and imported values fall back to the existing valText path so the compiler never crashes on unresolvable references.
 
+`host` keys (including computed keys like `[CLASS_NAME]`) and values resolve the same way, plus bare identifiers naming a same-file string `const`. Host entries that cannot be resolved (imported constants, spreads, other expressions) throw a compile error rather than emitting the identifier name; use a string literal or `@HostBinding`/`@HostListener` instead.
+
 ### Signal APIs
 
 | API                                          | Supported                                                               |
