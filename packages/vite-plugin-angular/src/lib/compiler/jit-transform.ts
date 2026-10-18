@@ -140,8 +140,10 @@ export function jitTransform(
     if (angularDecs.length === 0) {
       // @Injectable/@Service keep their decorator, but without a type
       // checker or emitDecoratorMetadata a param typed only by annotation
-      // has no runtime DI token unless captured in ctorParameters.
+      // has no runtime DI token unless captured in ctorParameters. A class
+      // expression's name is not in scope after it, so only declarations.
       const ctorParams =
+        node.type === 'ClassDeclaration' &&
         decorators.some(isSelfRegisteringDecorator) &&
         buildCtorParameters(node, sourceCode, typeOnlyImports);
       if (ctorParams) {

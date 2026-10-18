@@ -60,6 +60,22 @@ describe('JIT transform preserves @Injectable', () => {
     expect(result).not.toContain('DataService.decorators');
   });
 
+  it('does not emit ctorParameters for a named @Injectable class expression', () => {
+    const result = jitTransform(
+      `
+      import { Injectable } from '@angular/core';
+      import { Dep } from './dep';
+
+      export const Outer = @Injectable() class Inner {
+        constructor(readonly dep: Dep) {}
+      };
+    `,
+      'inner.service.ts',
+    ).code;
+
+    expect(result).not.toContain('Inner.ctorParameters');
+  });
+
   it('resolves constructor params typed only by annotation at runtime', async () => {
     const jit = jitTransform(
       `
