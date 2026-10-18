@@ -3375,6 +3375,9 @@ describe('Host bindings from same-file string constants', () => {
           [CLASS_ATTR]: 'true',
           role: ROLE,
           'aria-live': 'polite' as const,
+          '[title]': ('label'),
+          class: 'a ' + CLASS_NAME,
+          0: 'zero',
         },
       })
       export class AppComponent {}
@@ -3383,9 +3386,10 @@ describe('Host bindings from same-file string constants', () => {
     );
     expectCompiles(result);
     expect(result).toContain(
-      '"example", "true", "role", "button", "aria-live", "polite"',
+      'hostAttrs: ["0", "zero", "example", "true", "role", "button", "aria-live", "polite", 1, "a", "example"]',
     );
     expect(result).toContain('ɵɵclassProp("example", true)');
+    expect(result).toContain('ɵɵdomProperty("title", ctx.label)');
     expect(result).not.toContain('CLASS_NAME"');
   });
 });

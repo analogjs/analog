@@ -37,13 +37,23 @@ function getCallApi(call: any): { api: string; required: boolean } | null {
  * Returns `null` if the node is not statically resolvable.
  */
 function stringValue(node: any, consts?: Map<string, string>): string | null {
-  // Type-only wrappers such as `'x' as const` don't change the value.
+  // Type-only wrappers such as `'x' as const` and parentheses don't change the value.
   while (
     node?.type === 'TSAsExpression' ||
-    node?.type === 'TSSatisfiesExpression'
+    node?.type === 'TSSatisfiesExpression' ||
+    node?.type === 'ParenthesizedExpression'
   )
     node = node.expression;
   if (node?.type === 'StringLiteral') return node.value;
+  if (node?.type === 'BinaryExpression' && node.operator === '+') {
+    const operand = (n: any) =>
+      n?.type === 'Identifier'
+        ? (consts?.get(n.name) ?? null)
+        : stringValue(n, consts);
+    const left = operand(node.left);
+    const right = left === null ? null : operand(node.right);
+    return right === null ? null : left + right;
+  }
   if (node?.type === 'Literal' && typeof node.value === 'string')
     return node.value;
   if (node?.type === 'TemplateLiteral') {
@@ -197,7 +207,7 @@ export function extractMetadata(
                   'use a string literal or @HostBinding/@HostListener instead.',
               );
             }
-            meta.hostRaw[hKey.replace(/^['"`]|['"`]$/g, '')] = hVal;
+            meta.hostRaw[String(hKey).replace(/^['"`]|['"`]$/g, '')] = hVal;
           }
         }
         break;
