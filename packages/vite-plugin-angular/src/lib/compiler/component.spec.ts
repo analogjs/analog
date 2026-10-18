@@ -3364,20 +3364,27 @@ describe('Host bindings from same-file string constants', () => {
     const result = compile(
       `
       import { Component } from '@angular/core';
-      const CLASS_NAME = 'example';
+      const CLASS_NAME = 'example' as const;
       const CLASS_ATTR = \`[class.\${CLASS_NAME}]\`;
       const ROLE = 'button';
       @Component({
         selector: 'app-root',
         template: '',
-        host: { [CLASS_NAME]: 'true', [CLASS_ATTR]: 'true', role: ROLE },
+        host: {
+          [CLASS_NAME]: 'true',
+          [CLASS_ATTR]: 'true',
+          role: ROLE,
+          'aria-live': 'polite' as const,
+        },
       })
       export class AppComponent {}
     `,
       'app.ts',
     );
     expectCompiles(result);
-    expect(result).toContain('"example", "true", "role", "button"');
+    expect(result).toContain(
+      '"example", "true", "role", "button", "aria-live", "polite"',
+    );
     expect(result).toContain('ɵɵclassProp("example", true)');
     expect(result).not.toContain('CLASS_NAME"');
   });

@@ -37,6 +37,12 @@ function getCallApi(call: any): { api: string; required: boolean } | null {
  * Returns `null` if the node is not statically resolvable.
  */
 function stringValue(node: any, consts?: Map<string, string>): string | null {
+  // Type-only wrappers such as `'x' as const` don't change the value.
+  while (
+    node?.type === 'TSAsExpression' ||
+    node?.type === 'TSSatisfiesExpression'
+  )
+    node = node.expression;
   if (node?.type === 'StringLiteral') return node.value;
   if (node?.type === 'Literal' && typeof node.value === 'string')
     return node.value;
