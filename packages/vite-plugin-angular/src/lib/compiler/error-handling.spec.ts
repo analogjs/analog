@@ -122,4 +122,21 @@ describe('Error Handling', () => {
       ),
     ).toThrow('[fast-compile] Template parse error');
   });
+
+  it.each([
+    ['imported host key', '[CLASS_NAME]: "true"'],
+    ['imported host value', '"[class.active]": CLASS_NAME'],
+  ])('%s throws instead of emitting the identifier name', (_, entry) => {
+    expect(() =>
+      compile(
+        `
+      import { Component } from '@angular/core';
+      import { CLASS_NAME } from './constants';
+      @Component({ selector: 'app-root', template: '', host: { ${entry} } })
+      export class AppComponent {}
+    `,
+        'app.ts',
+      ),
+    ).toThrow(`Cannot statically resolve host binding \`${entry}\``);
+  });
 });
