@@ -197,6 +197,8 @@ const config: StorybookConfig = {
     },
   },
 };
+
+export default config;
 ```
 
 Fast compile skips Angular's template type-checking, so run type-checking separately if needed.
