@@ -1,3 +1,10 @@
+# [2.9.0-beta.2](https://github.com/analogjs/analog/compare/v2.9.0-beta.1...v2.9.0-beta.2) (2026-10-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit ctorParameters for JIT @Injectable classes ([#2653](https://github.com/analogjs/analog/issues/2653)) ([e09b08a](https://github.com/analogjs/analog/commit/e09b08a3b2a51af02a61facbbbd8955a5ba4dd28)), closes [#2616](https://github.com/analogjs/analog/issues/2616)
+- **vite-plugin-angular:** resolve or reject non-literal host bindings in fast compile ([#2652](https://github.com/analogjs/analog/issues/2652)) ([c785872](https://github.com/analogjs/analog/commit/c785872e6aef1b41afca2c54bd866ac2bc06a83b)), closes [#2513](https://github.com/analogjs/analog/issues/2513)
+
 # [2.9.0-beta.1](https://github.com/analogjs/analog/compare/v2.8.2-beta.1...v2.9.0-beta.1) (2026-10-18)
 
 ### Features
