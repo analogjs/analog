@@ -8,19 +8,6 @@ import { resolve } from 'node:path';
 import type { InlineConfig } from 'vite';
 import { ViteBuildSchema } from './schema';
 
-/**
- * Builder `outputPath` is workspace-relative, matching Angular builders and
- * the Nx `@nx/vite:build` executor that `@analogjs/platform:vite` used in v2.
- * Vite resolves a relative `build.outDir` against `root` (the project root),
- * so resolve it here to keep the output in `<workspaceRoot>/<outputPath>`.
- */
-export function resolveOutDir(
-  workspaceRoot: string,
-  outputPath: string | undefined,
-): string | undefined {
-  return outputPath ? resolve(workspaceRoot, outputPath) : undefined;
-}
-
 async function viteBuilder(
   options: ViteBuildSchema,
   context: BuilderContext,
@@ -62,7 +49,11 @@ async function viteBuilder(
     root: projectConfig.root as string,
     mode,
     build: {
-      outDir: resolveOutDir(context.workspaceRoot, options.outputPath),
+      // outputPath is workspace-relative; Vite resolves a relative outDir
+      // against the project root.
+      outDir: options.outputPath
+        ? resolve(context.workspaceRoot, options.outputPath)
+        : undefined,
       sourcemap: !!buildOptions.sourcemap,
     },
   };
