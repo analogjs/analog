@@ -507,19 +507,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           },
         };
       },
-      // Production builds get `ngServerMode` from the build optimizer plugin,
-      // which only applies to builds. During dev SSR it stays undefined until
-      // `platformServer()` sets it at render time, after the app config has
-      // already evaluated `provideClientHydration()`. That registers the
-      // browser-only event replay listener, which then reads `window` on the
-      // server. Define it up front for server environments in dev. Vitest is
-      // skipped because jsdom component tests run as the browser.
-      configEnvironment(_name, config) {
-        if (watchMode && !isTest && config.consumer === 'server') {
-          return { define: { ngServerMode: 'true' } };
-        }
-        return undefined;
-      },
       configResolved(config) {
         resolvedConfig = config;
 
@@ -1472,6 +1459,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     buildOptimizerPlugin({
       jit,
     }),
+    !isTest && devServerModePlugin(),
     routerPlugin(),
     nxFolderPlugin(),
     encapsulationPlugin(),
@@ -1990,6 +1978,25 @@ export function isModuleForChangedResource(
   return (
     normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
   );
+}
+
+// Production builds get `ngServerMode` from the build optimizer plugin, which
+// only applies to builds. During dev SSR it stays undefined until
+// `platformServer()` sets it at render time, after the app config has already
+// evaluated `provideClientHydration()`. That registers the browser-only event
+// replay listener, which then reads `window` on the server. Vitest is skipped
+// because jsdom component tests run as the browser.
+function devServerModePlugin(): Plugin {
+  return {
+    name: '@analogjs/vite-plugin-angular-dev-server-mode',
+    apply: 'serve',
+    configEnvironment(_name, config) {
+      if (config.consumer === 'server') {
+        return { define: { ngServerMode: 'true' } };
+      }
+      return undefined;
+    },
+  };
 }
 
 function safeStatMtimeMs(file: string): number | undefined {

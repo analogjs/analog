@@ -164,64 +164,40 @@ describe('angularVitePlugin', () => {
       vi.unstubAllEnvs();
     });
 
-    async function configureEnvironment(
-      command: 'serve' | 'build',
-      consumer: 'server' | 'client',
-    ) {
-      const tempRoot = mkdtempSync(join(tmpdir(), 'analog-server-mode-'));
-      const tsconfigPath = join(tempRoot, 'tsconfig.json');
-      writeFileSync(tsconfigPath, '{ "compilerOptions": {} }', 'utf-8');
-
-      try {
-        const plugin = angular({ tsconfig: tsconfigPath }).find(
-          (p) => p.name === '@analogjs/vite-plugin-angular',
-        ) as Plugin;
-        const configHook =
-          typeof plugin.config === 'function'
-            ? plugin.config
-            : (plugin.config as any)?.handler;
-        await configHook?.call(
-          {} as any,
-          { resolve: {} },
-          { command, mode: 'development' },
-        );
-        const configEnvironmentHook = plugin.configEnvironment as (
-          name: string,
-          config: { consumer: string },
-        ) => unknown;
-        return configEnvironmentHook('ssr', { consumer });
-      } finally {
-        rmSync(tempRoot, { recursive: true, force: true });
-      }
+    function findServerModePlugin(options: { fastCompile?: boolean } = {}) {
+      return angular({ tsconfig: 'tsconfig.json', ...options }).find(
+        (p) => p.name === '@analogjs/vite-plugin-angular-dev-server-mode',
+      );
     }
 
-    it('defines ngServerMode for server environments during serve', async () => {
-      vi.stubEnv('NODE_ENV', 'development');
-      vi.stubEnv('VITEST', '');
+    function configureEnvironment(plugin: Plugin, consumer: string) {
+      return (
+        plugin.configEnvironment as (
+          name: string,
+          config: { consumer: string },
+        ) => unknown
+      )('ssr', { consumer });
+    }
 
-      expect(await configureEnvironment('serve', 'server')).toEqual({
-        define: { ngServerMode: 'true' },
-      });
-    });
+    it.each([false, true])(
+      'defines ngServerMode for server environments during serve (fastCompile: %s)',
+      (fastCompile) => {
+        vi.stubEnv('NODE_ENV', 'development');
+        vi.stubEnv('VITEST', '');
+        const plugin = findServerModePlugin({ fastCompile }) as Plugin;
 
-    it('leaves client environments untouched during serve', async () => {
-      vi.stubEnv('NODE_ENV', 'development');
-      vi.stubEnv('VITEST', '');
+        expect(plugin.apply).toBe('serve');
+        expect(configureEnvironment(plugin, 'server')).toEqual({
+          define: { ngServerMode: 'true' },
+        });
+        expect(configureEnvironment(plugin, 'client')).toBeUndefined();
+      },
+    );
 
-      expect(await configureEnvironment('serve', 'client')).toBeUndefined();
-    });
-
-    it('leaves builds to the build optimizer plugin', async () => {
-      vi.stubEnv('NODE_ENV', 'development');
-      vi.stubEnv('VITEST', '');
-
-      expect(await configureEnvironment('build', 'server')).toBeUndefined();
-    });
-
-    it('does not define ngServerMode under Vitest', async () => {
+    it('is not registered under Vitest', () => {
       vi.stubEnv('NODE_ENV', 'test');
 
-      expect(await configureEnvironment('serve', 'server')).toBeUndefined();
+      expect(findServerModePlugin()).toBeUndefined();
     });
   });
 });
