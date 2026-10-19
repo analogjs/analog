@@ -20,6 +20,7 @@ const replacementFiles = [
 
 module.exports = {
   branches: [
+    '2.x',
     'main',
     { name: 'beta', prerelease: true },
     { name: 'alpha', prerelease: true },
