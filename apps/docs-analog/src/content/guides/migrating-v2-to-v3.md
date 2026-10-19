@@ -1,9 +1,45 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Migrating from Analog v2 to v3
 
 For an existing Analog v2 project, update the packages first and then work through the v3 breaking changes that apply to your app.
+
+## Migrating with an AI agent
+
+To have a coding agent run the migration, copy this prompt into it from the root of your workspace:
+
+```text
+Upgrade this Analog v2 workspace to Analog v3 by following
+https://analogjs.org/docs/guides/migrating-v2-to-v3.
+
+Work in this order and stop to report if any step fails:
+
+1. Preflight: confirm the workspace is on Angular v20+ and Node
+   ^22.18.0 || ^24.3.0. If Angular is older than v20, stop and tell me. Analog v3
+   doesn't support it.
+2. Run the official updater first: `ng update @analogjs/platform@latest` or
+   `nx migrate @analogjs/platform@latest` (then `nx migrate --run-migrations`).
+   Don't hand-edit anything the migrations already handle.
+3. For each Vite config that uses `analog()`, split it into `analog()`,
+   `angular()` from `@analogjs/vite-plugin-angular`, and `nitro()` from
+   `@analogjs/vite-plugin-nitro`. Move each option to the plugin that owns it,
+   using the "Options that moved off analog()" table. Add both packages to
+   devDependencies. If an app already imports `nitro()` from `nitro/vite`,
+   leave it on Nitro v3.
+4. Work through each checklist section of the guide that applies to this
+   codebase. Search for each removed API, import, option, builder, and folder
+   it names before deciding a section doesn't apply.
+5. Make only the changes the guide describes. Don't upgrade unrelated
+   dependencies, refactor code, or add new features.
+6. Verify: install dependencies, then run build, test, and lint for every
+   affected project. Fix any failures the migration caused.
+
+When you're done, give me:
+- the changes you made, grouped by checklist section
+- the items the guide says need a manual decision that you didn't change:
+  `@analogjs/trpc`, `FormAction` forms that rely on non-enhanced behavior,
+  `app/routes` folders, references to `injectRouter` that aren't calls, custom
+  base-href deployments, and custom `ContentRenderer` implementations
+- any build, test, or lint failures that are still open
+```
 
 ## Update the workspace packages
 
@@ -29,27 +65,40 @@ nx migrate @analogjs/platform@latest
 
 ## v2 to v3 checklist
 
-### Angular version support
+### General
+
+#### Angular version support
 
 Analog v3 requires Angular v20 or newer. The supported range is `^20.0.0 || ^21.0.0 || ^22.0.0`, and support for Angular v16–v19 has been removed. Upgrade the workspace to Angular v20 or newer before adopting the stable v3 line. Projects that need to stay on Angular v17–v19 should remain on Analog v2.x.
 
 The `@angular-devkit/build-angular` fallback in `@analogjs/vite-plugin-angular` has also been removed; `@angular/build` is used for all supported Angular versions.
 
-### Tooling version support
+#### Tooling version support
 
 The peer dependency ranges now match the Angular v20 baseline:
 
 - `@analogjs/vitest-angular` requires Vitest `^4.0.7 || ^5.0.0`
-- `@analogjs/platform` and `@analogjs/content` require Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`), and the application and preset generators reject older Nx versions
+- `@analogjs/platform` and `@analogjs/content` list Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`) as optional peer dependencies. Only the application and preset generators reject older Nx versions
 - `zone.js`, when used, must be `0.15.0` or newer
 
-Upgrade Vitest and Nx before upgrading Analog.
+#### Template and toolchain baseline shifts
 
-### Removed Analog SFC support
+Your v2 workspace may not meet the v3 Node and tooling floor. The v3 `create-analog` templates use:
 
-Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.
+- Node `^22.18.0 || ^24.3.0`
+- TypeScript `~6.0.0`
+- `vite-tsconfig-paths` `^6.1.1`
+- `marked` `^18.0.0` in content-enabled templates
 
-### `analog()`, `angular()`, and `nitro()` are now separate plugins
+Match the current template line for your Angular major instead of assuming one repo-wide Vite target.
+
+#### `@analogjs/trpc` was removed
+
+If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
+
+### Platform
+
+#### `analog()`, `angular()`, and `nitro()` are now separate plugins
 
 Analog v3 splits the Vite plugin chain into three explicit calls. `analog()` no longer internally invokes `@analogjs/vite-plugin-angular` or `@analogjs/vite-plugin-nitro` — you call them yourself. Pass each plugin only the options it owns.
 
@@ -129,24 +178,23 @@ Add `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` to the app
 }
 ```
 
-#### Options that moved off `analog()`
+##### Options that moved off `analog()`
 
 These options used to live on `analog()`. Pass them to `angular()` or `nitro()` directly:
 
-| v2 location                                                                                                                                      | v3 location                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                                                                 |
-| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
-| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angularCompilationPlugin()`                                                                          |
-| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
-| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                                                                                        |
-| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
+| v2 location                                                                                                                                      | v3 location                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`   |
+| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                        |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angularCompilationPlugin()`            |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                          |
+| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array |
 
 `analog()` retains `ssr`, `static`, `apiPrefix`, `entryServer`, `index`, `workspaceRoot`, `content`, `prerender`, `i18n`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
 
-#### Workspace library globs
+##### Workspace library globs
 
-The `discoverRoutes` option was removed. If your v2 config used `discoverRoutes: true` to compile workspace library pages, use the `discoverLibraryRoutes()` helper exported from `@analogjs/platform` instead. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
+The platform registers the `additionalPagesDirs` globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include` for workspace library pages. To find those directories automatically, use the `discoverLibraryRoutes()` helper exported from `@analogjs/platform`. Call it once and feed the result to `analog()`:
 
 ```ts
 import analog, { discoverLibraryRoutes } from '@analogjs/platform';
@@ -165,7 +213,7 @@ plugins: [
 ];
 ```
 
-#### Using Nitro v3
+##### Using Nitro v3
 
 To run on Nitro v3, import `nitro()` from `nitro/vite` instead. Analog detects it and configures Nitro v3 for SSR, prerendering, API routes, page endpoints, and server functions. The config passed to `nitro()` stays the same:
 
@@ -185,7 +233,7 @@ plugins: [
 
 Add `nitro` to the app's `devDependencies` instead of `@analogjs/vite-plugin-nitro`. API routes and middleware are written against the h3 version of the Nitro release in use: h3 v1 for Nitro v2 and h3 v2 for Nitro v3. Handlers that only use helpers available in both, such as `defineEventHandler`, `readBody`, `getQuery`, and `getCookie`, work on either.
 
-##### Nx targets
+###### Nx targets
 
 Build Nitro v3 apps with `@analogjs/platform:vite` and serve them with `@analogjs/platform:vite-dev-server`. `nitro/vite` runs prerendering and the server build from Vite's `buildApp` hook. `@analogjs/platform:vite` calls `builder.buildApp()`, but `@nx/vite:build` builds each environment directly, so prerendering and the server output are skipped.
 
@@ -226,7 +274,151 @@ After:
 
 With the default Node preset, the server output stays in `dist/apps/<app>/analog`, the same layout as Nitro v2.
 
-### Content rendering now requires an explicit highlighter
+#### Legacy `app/routes` page folders were removed
+
+Route discovery no longer reads `app/routes/**/*.ts`, `src/app/routes/**/*.ts`, or `src/app/routes/**/*.md`. Move those files to `src/app/pages`, renaming `.ts` route files to `.page.ts`. Markdown files in `src/app/pages` and `src/content` are unchanged.
+
+#### Custom base-href deployment flow
+
+If your app is deployed under a custom base URL, re-check that setup against the current deployment docs. The older pattern that relied on hand-editing `apiPrefix`, `injectAPIPrefix()`, and preview commands around the old flow is not the current recommended setup.
+
+In the v3 line, deployment docs emphasize:
+
+- setting `APP_BASE_HREF` from `import.meta.env.BASE_URL`
+- passing the build-time base href explicitly in the build command
+- setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
+
+### Vite Plugin Nitro
+
+#### The `useAPIMiddleware` option was removed
+
+The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware it enabled, and the `routeRules` proxy fallback are removed from both `@analogjs/vite-plugin-nitro` and the Nitro v3 integration. API routes are served exclusively through Nitro's native file-based routing under `src/server/routes/api`.
+
+If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
+
+### Router
+
+#### Content routes now require `withContentRoutes()`
+
+If your v2 app uses markdown page routes such as `.md` files in `src/app/pages`, update the router setup to opt into content routes explicitly.
+
+Before:
+
+```ts
+import { provideFileRouter } from '@analogjs/router';
+
+provideFileRouter();
+```
+
+After:
+
+```ts
+import { provideFileRouter } from '@analogjs/router';
+import { withContentRoutes } from '@analogjs/router/content';
+
+provideFileRouter(withContentRoutes());
+```
+
+If you moved any content-route helpers into app code, import them from `@analogjs/router/content` instead of relying on the older `@analogjs/router` layout.
+
+#### `FormAction` enhanced form handling is now the default
+
+The `FormAction` directive from `@analogjs/router` now defaults `enhanceForm` to `true`. The directive matches `form[action]` and `form[method]`, so every such form in a component that imports `FormAction` switches to [enhanced form handling](/docs/guides/forms#enhanced-forms). This includes the `action` destination, the `data-state` and `aria-busy` attributes, and the enhanced GET query and redirect handling.
+
+To keep the v2 behavior for a form, set `[enhanceForm]="false"`:
+
+```html
+<form method="post" [enhanceForm]="false">
+  <!-- ... -->
+</form>
+```
+
+#### `requestContextInterceptor` is registered by `provideFileRouter()`
+
+`provideFileRouter()` now registers `requestContextInterceptor` for `HttpClient`, so a plain `provideHttpClient()` resolves relative URLs during SSR and prerendering and reuses SSR responses on the client. `ng update` removes the manual registration from `withInterceptors([...])`, along with `withInterceptors()` when it has no other interceptors.
+
+Before:
+
+```ts
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
+import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
+
+providers: [
+  provideFileRouter(),
+  provideHttpClient(withFetch(), withInterceptors([requestContextInterceptor])),
+];
+```
+
+After:
+
+```ts
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideFileRouter } from '@analogjs/router';
+
+providers: [provideFileRouter(), provideHttpClient(withFetch())];
+```
+
+The interceptor runs after any interceptors you register with `withInterceptors()`.
+
+#### `VITE_ANALOG_PUBLIC_BASE_URL` was removed
+
+Server-side data fetching no longer reads `VITE_ANALOG_PUBLIC_BASE_URL`. Delete it from your `.env` files and CI builds. Page `load` resolvers no longer switch to `globalThis.$fetch` when the variable is set, which bypassed the `HttpClient` transfer cache and caused SSR data to be fetched again on the client.
+
+Make sure your server entry uses `provideServerContext()` and your app uses `provideFileRouter()`, which registers `requestContextInterceptor`, as described in [Server Request Context](/docs/features/data-fetching/overview#server-request-context). The base URL is then derived from each incoming request. If your data fetching must call a different origin than the one serving the app, provide the `BASE_URL` token from `@analogjs/router/tokens` yourself in `app.config.server.ts`.
+
+#### Deprecated router APIs were removed
+
+`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, or `routes`. `ng update` rewrites the first three automatically. Files that reference them without calling them, such as `useFactory: injectRouter`, are listed for manual migration and left unchanged, so update every use in those files by hand.
+
+Before:
+
+```ts
+import { defineRouteMeta, injectRouter } from '@analogjs/router';
+
+export const routeMeta = defineRouteMeta({ title: 'Home' });
+
+export default class HomePage {
+  router = injectRouter();
+}
+```
+
+After:
+
+```ts
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import type { RouteMeta } from '@analogjs/router';
+
+export const routeMeta: RouteMeta = { title: 'Home' };
+
+export default class HomePage {
+  router = inject(Router);
+}
+```
+
+Replace `injectActivatedRoute()` with `inject(ActivatedRoute)`. If you passed `routes` to `provideRouter()`, use `provideFileRouter()` instead.
+
+#### `defineServerRoute` was replaced by `defineApiRoute`
+
+`defineServerRoute` from `@analogjs/router/server/actions` is removed. `defineApiRoute` accepts the same options, has the same validation and response behavior, and returns a route typed for `InferRouteQuery`, `InferRouteBody`, `InferRouteResult`, and the TanStack Query integration. Rename the import and the call:
+
+```diff
+-import { defineServerRoute } from '@analogjs/router/server/actions';
++import { defineApiRoute } from '@analogjs/router/server/actions';
+
+-export const route = defineServerRoute({
++export const route = defineApiRoute({
+```
+
+The `DefineServerRouteContext`, `DefineServerRouteOptions`, `DefineServerRouteResult`, and `ServerRouteHandler` types are now `DefineApiRouteContext`, `DefineApiRouteOptions`, `DefineApiRouteResult`, and `ApiRouteHandler`.
+
+### Content
+
+#### Content rendering now requires an explicit highlighter
 
 If your app renders markdown content, configure the content highlighter through the `analog()` plugin in `vite.config.ts`. New blog templates already do this, but older full-stack apps often do not.
 
@@ -289,158 +481,29 @@ If you were relying on older internal imports, switch those to the public `@anal
 import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
 ```
 
-### Content routes now require `withContentRoutes()`
+#### Content renderer APIs were removed
 
-If your v2 app uses markdown page routes such as `.md` files in `src/app/pages`, update the router setup to opt into content routes explicitly.
+`ContentRenderer.getContentHeadings()` is removed. Read the table of contents from `render().toc` or `ContentFile.toc` instead. Custom `ContentRenderer` implementations should return `toc` from `render()`.
 
-Before:
-
-```ts
-import { provideFileRouter } from '@analogjs/router';
-
-provideFileRouter();
-```
-
-After:
+`MERMAID_IMPORT_TOKEN` is no longer exported from `@analogjs/content`. Enable Mermaid with `withMarkdownRenderer({ loadMermaid })`:
 
 ```ts
-import { provideFileRouter } from '@analogjs/router';
-import { withContentRoutes } from '@analogjs/router/content';
-
-provideFileRouter(withContentRoutes());
+provideContent(withMarkdownRenderer({ loadMermaid: () => import('mermaid') }));
 ```
 
-If you moved any content-route helpers into app code, import them from `@analogjs/router/content` instead of relying on the older `@analogjs/router` layout.
+### Vite Plugin Angular
 
-### `FormAction` enhanced form handling is now the default
+#### The `supportedBrowsers` option was removed
 
-The `FormAction` directive from `@analogjs/router` now defaults `enhanceForm` to `true`. The directive matches `form[action]` and `form[method]`, so every such form in a component that imports `FormAction` switches to [enhanced form handling](/docs/guides/forms#enhanced-forms). This includes the `action` destination, the `data-state` and `aria-busy` attributes, and the enhanced GET query and redirect handling.
+`angular({ supportedBrowsers })` had no effect and was removed. Delete it from your config; no replacement is needed.
 
-To keep the v2 behavior for a form, set `[enhanceForm]="false"`:
+### Vitest Angular
 
-```html
-<form method="post" [enhanceForm]="false">
-  <!-- ... -->
-</form>
-```
-
-### Astro Angular now targets Angular 20 zoneless change detection
-
-If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
-
-### Astro Angular hydration and style placement are on by default
-
-`@analogjs/astro-angular` now enables `useAngularHydration` and `strictStylePlacement` by default.
-
-- Components hydrate with Angular's `provideClientHydration` instead of being bootstrapped on the client to replace the server-rendered DOM. Add `ngSkipHydration` to components that don't support hydration, or set `useAngularHydration: false` to keep the previous behavior.
-- Component style tags are added to the document head. This disables Astro's SSR streaming. If your app relies on streaming, set `strictStylePlacement: false`.
-
-```js
-export default defineConfig({
-  integrations: [
-    angular({ useAngularHydration: false, strictStylePlacement: false }),
-  ],
-});
-```
-
-### Legacy Vitest setup path
+#### Legacy Vitest setup path
 
 If your tests still import `@analogjs/vite-plugin-angular/setup-vitest`, migrate them to `@analogjs/vitest-angular/setup-zone`. Current update flows cover this automatically, but older manual setups should be checked explicitly.
 
-### Storybook testing imports
-
-If your test setup already imports `setProjectAnnotations` from `@analogjs/storybook-angular/testing`, that entrypoint remains available in v3. Keep using it, and align the rest of the setup with the current Storybook Vitest docs if needed.
-
-### Custom base-href deployment flow
-
-If your app is deployed under a custom base URL, re-check that setup against the current deployment docs. The older pattern that relied on hand-editing `apiPrefix`, `injectAPIPrefix()`, and preview commands around the old flow is not the current recommended setup.
-
-In the v3 line, deployment docs emphasize:
-
-- setting `APP_BASE_HREF` from `import.meta.env.BASE_URL`
-- passing the build-time base href explicitly in the build command
-- setting `NITRO_APP_BASE_URL` in the runtime container for the deployed prefix
-
-### `requestContextInterceptor` is registered by `provideFileRouter()`
-
-`provideFileRouter()` now registers `requestContextInterceptor` for `HttpClient`, so a plain `provideHttpClient()` resolves relative URLs during SSR and prerendering and reuses SSR responses on the client. `ng update` removes the manual registration from `withInterceptors([...])`, along with `withInterceptors()` when it has no other interceptors.
-
-Before:
-
-```ts
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
-import { provideFileRouter, requestContextInterceptor } from '@analogjs/router';
-
-providers: [
-  provideFileRouter(),
-  provideHttpClient(withFetch(), withInterceptors([requestContextInterceptor])),
-];
-```
-
-After:
-
-```ts
-import { provideHttpClient, withFetch } from '@angular/common/http';
-import { provideFileRouter } from '@analogjs/router';
-
-providers: [provideFileRouter(), provideHttpClient(withFetch())];
-```
-
-The interceptor runs after any interceptors you register with `withInterceptors()`.
-
-### `VITE_ANALOG_PUBLIC_BASE_URL` was removed
-
-Server-side data fetching no longer reads `VITE_ANALOG_PUBLIC_BASE_URL`. Delete it from your `.env` files and CI builds. Page `load` resolvers no longer switch to `globalThis.$fetch` when the variable is set, which bypassed the `HttpClient` transfer cache and caused SSR data to be fetched again on the client.
-
-Make sure your server entry uses `provideServerContext()` and your app uses `provideFileRouter()`, which registers `requestContextInterceptor`, as described in [Server Request Context](/docs/features/data-fetching/overview#server-request-context). The base URL is then derived from each incoming request. If your data fetching must call a different origin than the one serving the app, provide the `BASE_URL` token from `@analogjs/router/tokens` yourself in `app.config.server.ts`.
-
-### The `useAPIMiddleware` option was removed
-
-The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware it enabled, and the `routeRules` proxy fallback are removed from both `@analogjs/vite-plugin-nitro` and the Nitro v3 integration. API routes are served exclusively through Nitro's native file-based routing under `src/server/routes/api`.
-
-If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
-
-### Deprecated router APIs were removed
-
-`@analogjs/router` no longer exports `defineRouteMeta`, `injectRouter`, `injectActivatedRoute`, or `routes`. `ng update` rewrites the first three automatically. Files that reference them without calling them, such as `useFactory: injectRouter`, are listed for manual migration and left unchanged, so update every use in those files by hand.
-
-Before:
-
-```ts
-import { defineRouteMeta, injectRouter } from '@analogjs/router';
-
-export const routeMeta = defineRouteMeta({ title: 'Home' });
-
-export default class HomePage {
-  router = injectRouter();
-}
-```
-
-After:
-
-```ts
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import type { RouteMeta } from '@analogjs/router';
-
-export const routeMeta: RouteMeta = { title: 'Home' };
-
-export default class HomePage {
-  router = inject(Router);
-}
-```
-
-Replace `injectActivatedRoute()` with `inject(ActivatedRoute)`. If you passed `routes` to `provideRouter()`, use `provideFileRouter()` instead.
-
-### Legacy `app/routes` page folders were removed
-
-Route discovery no longer reads `app/routes/**/*.ts`, `src/app/routes/**/*.ts`, or `src/app/routes/**/*.md`. Move those files to `src/app/pages`, renaming `.ts` route files to `.page.ts`. Markdown files in `src/app/pages` and `src/content` are unchanged.
-
-### The `setupTestBed` `browserMode` option was removed
+#### The `setupTestBed` `browserMode` option was removed
 
 `setupTestBed({ browserMode })` from `@analogjs/vitest-angular/setup-testbed` is removed. Use the `teardown` option instead. `ng update` rewrites this automatically.
 
@@ -454,7 +517,7 @@ setupTestBed({ teardown: { destroyAfterEach: false } });
 
 The `@analogjs/vitest-angular:setup` schematic's `--browserMode` flag still configures browser mode and now generates the `teardown` option.
 
-### Vitest builder aliases and the `setup-vitest` generator were removed
+#### Vitest builder aliases and the `setup-vitest` generator were removed
 
 The following builder and executor aliases are removed. `ng update` replaces them with `@analogjs/vitest-angular:test` in `angular.json`, `project.json`, and `nx.json`, and adds `@analogjs/vitest-angular` to `devDependencies` if needed.
 
@@ -464,53 +527,32 @@ The following builder and executor aliases are removed. `ng update` replaces the
 
 The `@analogjs/platform:setup-vitest` generator is also removed. Use `ng g @analogjs/vitest-angular:setup` instead.
 
-### Content renderer APIs were removed
+### Storybook Angular
 
-`ContentRenderer.getContentHeadings()` is removed. Read the table of contents from `render().toc` or `ContentFile.toc` instead. Custom `ContentRenderer` implementations should return `toc` from `render()`.
+#### Storybook testing imports
 
-`MERMAID_IMPORT_TOKEN` is no longer exported from `@analogjs/content`. Enable Mermaid with `withMarkdownRenderer({ loadMermaid })`:
+If your test setup already imports `setProjectAnnotations` from `@analogjs/storybook-angular/testing`, that entrypoint remains available in v3. Keep using it, and align the rest of the setup with the current Storybook Vitest docs if needed.
 
-```ts
-provideContent(withMarkdownRenderer({ loadMermaid: () => import('mermaid') }));
+### Astro Angular
+
+#### Astro Angular now targets Angular 20 zoneless change detection
+
+If you use `@analogjs/astro-angular`, plan the upgrade around Angular 20 and its zoneless baseline. Treat that package as a separate migration stream from a standard Analog app upgrade.
+
+#### Astro Angular hydration and style placement are on by default
+
+`@analogjs/astro-angular` now enables `useAngularHydration` and `strictStylePlacement` by default.
+
+- Components hydrate with Angular's `provideClientHydration` instead of being bootstrapped on the client to replace the server-rendered DOM. Add `ngSkipHydration` to components that don't support hydration, or set `useAngularHydration: false` to keep the previous behavior.
+- Component style tags are added to the document head. This disables Astro's SSR streaming. If your app relies on streaming, set `strictStylePlacement: false`.
+
+```js
+export default defineConfig({
+  integrations: [
+    angular({ useAngularHydration: false, strictStylePlacement: false }),
+  ],
+});
 ```
-
-### `defineServerRoute` was replaced by `defineApiRoute`
-
-`defineServerRoute` from `@analogjs/router/server/actions` is removed. `defineApiRoute` accepts the same options, has the same validation and response behavior, and returns a route typed for `InferRouteQuery`, `InferRouteBody`, `InferRouteResult`, and the TanStack Query integration. Rename the import and the call:
-
-```diff
--import { defineServerRoute } from '@analogjs/router/server/actions';
-+import { defineApiRoute } from '@analogjs/router/server/actions';
-
--export const route = defineServerRoute({
-+export const route = defineApiRoute({
-```
-
-The `DefineServerRouteContext`, `DefineServerRouteOptions`, `DefineServerRouteResult`, and `ServerRouteHandler` types are now `DefineApiRouteContext`, `DefineApiRouteOptions`, `DefineApiRouteResult`, and `ApiRouteHandler`.
-
-### Removed no-op options
-
-These options had no effect and were removed. Delete them from your config:
-
-- `analog({ discoverRoutes })`: use [`discoverLibraryRoutes()`](#workspace-library-globs) to include routes from workspace libraries.
-- `angular({ supportedBrowsers })`: no replacement is needed.
-
-### Removed first-party packages and current compiler gaps
-
-If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
-
-If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, treat that path as not yet ported to the current v3 alpha line. Do not represent it as a stable v3 migration target yet. Use the standard `@analogjs/vite-plugin-angular` path for the v3 alpha migration itself, and treat `angularCompilationPlugin()` as a separate experimental opt-in evaluation rather than a drop-in replacement. Its API and behavior may change in future releases.
-
-### Template and toolchain baseline shifts
-
-Do not assume your v2 workspace can keep the same Node and tooling floor. The `beta -> alpha` template diff shows these practical shifts:
-
-- current templates now require Node `^22.18.0 || ^24.3.0`
-- current templates pin TypeScript `6.0.2`
-- current templates use `vite-tsconfig-paths` `^6.1.1`
-- content-enabled templates now pin `marked` `^17.0.5`
-
-Match the current template line for your Angular major instead of assuming one repo-wide Vite target.
 
 ## Notes for automated migration
 
@@ -533,8 +575,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - flag route files under `app/routes` or `src/app/routes`, `routes` imports, `ContentRenderer.getContentHeadings()`, and `MERMAID_IMPORT_TOKEN` for manual migration
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
 - rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
-- remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
+- remove `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
-- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
-- typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
+- typed routing keeps the v3 `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
 - treat `withDebugRoutes` and `liveReload` as opt-in rather than mandatory rewrites
