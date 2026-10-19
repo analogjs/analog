@@ -158,6 +158,48 @@ describe('angularVitePlugin', () => {
       },
     );
   });
+
+  describe('dev SSR ngServerMode define', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    function findServerModePlugin(options: { fastCompile?: boolean } = {}) {
+      return angular({ tsconfig: 'tsconfig.json', ...options }).find(
+        (p) => p.name === '@analogjs/vite-plugin-angular-dev-server-mode',
+      );
+    }
+
+    function configureEnvironment(plugin: Plugin, consumer: string) {
+      return (
+        plugin.configEnvironment as (
+          name: string,
+          config: { consumer: string },
+        ) => unknown
+      )('ssr', { consumer });
+    }
+
+    it.each([false, true])(
+      'defines ngServerMode for server environments during serve (fastCompile: %s)',
+      (fastCompile) => {
+        vi.stubEnv('NODE_ENV', 'development');
+        vi.stubEnv('VITEST', '');
+        const plugin = findServerModePlugin({ fastCompile }) as Plugin;
+
+        expect(plugin.apply).toBe('serve');
+        expect(configureEnvironment(plugin, 'server')).toEqual({
+          define: { ngServerMode: 'true' },
+        });
+        expect(configureEnvironment(plugin, 'client')).toBeUndefined();
+      },
+    );
+
+    it('is not registered under Vitest', () => {
+      vi.stubEnv('NODE_ENV', 'test');
+
+      expect(findServerModePlugin()).toBeUndefined();
+    });
+  });
 });
 
 describe('liveReload option', () => {

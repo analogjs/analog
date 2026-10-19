@@ -1459,6 +1459,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     buildOptimizerPlugin({
       jit,
     }),
+    !isTest && devServerModePlugin(),
     routerPlugin(),
     nxFolderPlugin(),
     encapsulationPlugin(),
@@ -1977,6 +1978,19 @@ export function isModuleForChangedResource(
   return (
     normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
   );
+}
+
+function devServerModePlugin(): Plugin {
+  return {
+    name: '@analogjs/vite-plugin-angular-dev-server-mode',
+    apply: 'serve',
+    configEnvironment(_name, config) {
+      if (config.consumer === 'server') {
+        return { define: { ngServerMode: 'true' } };
+      }
+      return undefined;
+    },
+  };
 }
 
 function safeStatMtimeMs(file: string): number | undefined {
