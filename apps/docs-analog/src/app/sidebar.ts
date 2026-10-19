@@ -192,6 +192,16 @@ export function getSidebar(): SidebarNode[] {
           id: 'features/updating/overview',
           label: $localize`:@@sidebar.overview:Overview`,
         },
+        {
+          kind: 'doc',
+          id: 'guides/migrating-v2-to-v3',
+          label: $localize`:@@sidebar.migrating-v2-to-v3:Migrating from v2 to v3`,
+        },
+        {
+          kind: 'doc',
+          id: 'guides/migrating-v1-to-v2',
+          label: $localize`:@@sidebar.migrating-v1-to-v2:Migrating from v1 to v2`,
+        },
       ],
     },
     {

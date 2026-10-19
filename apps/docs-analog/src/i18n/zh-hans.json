@@ -59,6 +59,8 @@
   "sidebar.testing-vitest": "使用 Vitest 测试",
   "sidebar.setting-up-vitest": "配置 Vitest",
   "sidebar.updating": "更新",
+  "sidebar.migrating-v2-to-v3": "从 v2 迁移到 v3",
+  "sidebar.migrating-v1-to-v2": "从 v1 迁移到 v2",
   "sidebar.guides": "指南",
   "sidebar.migrating": "将 Angular 应用迁移到 Analog",
   "sidebar.libraries": "构建 Angular 库",
