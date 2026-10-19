@@ -499,16 +499,16 @@ These options had no effect and were removed. Delete them from your config:
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
 
-If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, treat that path as not yet ported to the current v3 alpha line. Do not represent it as a stable v3 migration target yet. Use the standard `@analogjs/vite-plugin-angular` path for the v3 alpha migration itself, and treat `angularCompilationPlugin()` as a separate experimental opt-in evaluation rather than a drop-in replacement. Its API and behavior may change in future releases.
+If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, that path is not available in v3. Remove those options and the dependency, and migrate with the standard `@analogjs/vite-plugin-angular` path. `angularCompilationPlugin()` is a separate experimental opt-in, not a drop-in replacement, and its API and behavior may change in future releases.
 
 ### Template and toolchain baseline shifts
 
-Do not assume your v2 workspace can keep the same Node and tooling floor. The `beta -> alpha` template diff shows these practical shifts:
+Your v2 workspace may not meet the v3 Node and tooling floor. The v3 `create-analog` templates use:
 
-- current templates now require Node `^22.18.0 || ^24.3.0`
-- current templates pin TypeScript `6.0.2`
-- current templates use `vite-tsconfig-paths` `^6.1.1`
-- content-enabled templates now pin `marked` `^17.0.5`
+- Node `^22.18.0 || ^24.3.0`
+- TypeScript `~6.0.0`
+- `vite-tsconfig-paths` `^6.1.1`
+- `marked` `^18.0.0` in content-enabled templates
 
 Match the current template line for your Angular major instead of assuming one repo-wide Vite target.
 
@@ -535,6 +535,6 @@ Keep automated migration tooling focused on the breaking changes above:
 - rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
 - remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
-- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unsupported on the current v3 alpha line rather than removed outright
-- typed routing keeps the beta `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
+- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unavailable in v3
+- typed routing keeps the v3 `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
 - treat `withDebugRoutes` and `liveReload` as opt-in rather than mandatory rewrites
