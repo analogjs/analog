@@ -1,3 +1,436 @@
+# [3.0.0-beta.1](https://github.com/analogjs/analog/compare/v2.9.0...v3.0.0-beta.1) (2026-10-19)
+
+- feat(platform)!: register library page globs with Angular through analog.setup ([88ee690](https://github.com/analogjs/analog/commit/88ee690742a3d66adcd65ae6ffcc71ea2f5a9452))
+- feat(platform)!: remove the style preprocessor module and tailwindPreprocessor ([2f07506](https://github.com/analogjs/analog/commit/2f075063b44851871ef2431d2b280343a45eb8d7))
+- feat(router)!: align alpha typed routing with beta ([04fb0e9](https://github.com/analogjs/analog/commit/04fb0e93a3276948038f08d8c318c909b37bbc5c))
+- feat(vite-plugin-nitro)!: take the Nitro config as the only argument ([23b6e55](https://github.com/analogjs/analog/commit/23b6e554c51207d6e7121df06391f8428c9b55f3))
+
+### Bug Fixes
+
+- add blog-app e2e post listing test and continuous serve config ([273b143](https://github.com/analogjs/analog/commit/273b14324855cb17d4f0b53199ee754c0a6fc85e))
+- add CLAUDE.md to reference AGENTS.md ([715ec17](https://github.com/analogjs/analog/commit/715ec17b69b8947a37a7d7761ff559533c510671))
+- **angular-compiler:** add package.json to release config ([e219ba2](https://github.com/analogjs/analog/commit/e219ba2ed9a20acb427acda2c8a5ac7c6edc04bd))
+- **astro-angular:** add NGH client/server entries and focus hydration directive ([9317bc9](https://github.com/analogjs/analog/commit/9317bc9dd2847649e55a507f6a7e5592c4bc4d10))
+- **astro-angular:** fix type and argument errors in getViteConfiguration ([3f36931](https://github.com/analogjs/analog/commit/3f3693137cbf25487ab6178fe95da7623ba3161b))
+- **astro-angular:** make Astro Angular builds work on Windows CI ([e45fb72](https://github.com/analogjs/analog/commit/e45fb72c3afe63cb6449df2ac50d7021507b86e3))
+- **astro-angular:** restore the server optimizeDeps entry lists ([3c2cdae](https://github.com/analogjs/analog/commit/3c2cdaed9a4cbe0409f801789b5c77565c664aa2))
+- **content-plugin:** use type-only Tree import and update eslint config ([#2154](https://github.com/analogjs/analog/issues/2154)) ([aa42f02](https://github.com/analogjs/analog/commit/aa42f024d36c673e8dd9d2e1a268ee67ca038da0))
+- **content:** align md4x and content tests with local renderer APIs ([eff74be](https://github.com/analogjs/analog/commit/eff74be679b0e62410c1da362d2bc6be3867cf7d))
+- **content:** hoist content file bindings to module scope for Rolldown compatibility ([efc9767](https://github.com/analogjs/analog/commit/efc97673a5d73c37f59503626604f94b5b636e5e))
+- **content:** make content packages build on Windows CI ([ea57af6](https://github.com/analogjs/analog/commit/ea57af69e81094e8f7df8fd069aaeda177a8a35b))
+- **content:** split devtools into a dedicated entrypoint ([8fcf903](https://github.com/analogjs/analog/commit/8fcf90344885549431a2f195d7f12434ce8aa2aa))
+- **create-analog:** accept versioned Angular templates ([#2639](https://github.com/analogjs/analog/issues/2639)) ([90bc193](https://github.com/analogjs/analog/commit/90bc193d973f03670ef47ef295719f5b298a3181))
+- **create-analog:** add nitro and ofetch to dependencies when using pnpm ([9654db2](https://github.com/analogjs/analog/commit/9654db2b9478085e015ee0ecf174ae3ad3f581e9))
+- **create-analog:** add rollup to devDependencies in latest, blog, and minimal templates ([54da765](https://github.com/analogjs/analog/commit/54da7659b5904f85150aec036d64b10dc4c71a44))
+- **create-analog:** pin nitro and ofetch to current prerelease versions ([a57018a](https://github.com/analogjs/analog/commit/a57018a86ab31d229c4bcad053afdbb9ae6ded54))
+- **create-analog:** pin typescript to ~5.9.0 in templates ([4b45a59](https://github.com/analogjs/analog/commit/4b45a5959dbc497eb66cd437d1ae73a488cf9a87))
+- **create-analog:** publish template-angular-v21 ([#2630](https://github.com/analogjs/analog/issues/2630)) ([287e8a7](https://github.com/analogjs/analog/commit/287e8a71f581fbc019ffdf3d8f16f50c03b120e5))
+- **create-analog:** scaffold Tailwind v4 PostCSS config ([2681c11](https://github.com/analogjs/analog/commit/2681c11b7e8c8aa17ffdafb31cfac957173ed703))
+- **create-analog:** scaffold vite-tsconfig-paths 6.1.1 and nitro 3.0.260903-beta ([99d992c](https://github.com/analogjs/analog/commit/99d992c98dea4e0d305eb2c4522b607f9d6b170c))
+- declare the workspace packages docs-analog imports ([7d2f649](https://github.com/analogjs/analog/commit/7d2f6494bbc9bf737e0b21316086d4f8abb68bdc))
+- declare the workspace packages streaming-app imports ([91b94a9](https://github.com/analogjs/analog/commit/91b94a9b39e38ff1f4f490e79d877d7a07269162))
+- disable route type gen in blog app ([aad8a55](https://github.com/analogjs/analog/commit/aad8a55607898d2b42c93c3be27d21b9371d5eb2))
+- fix overrides for nitropack ([0eb4274](https://github.com/analogjs/analog/commit/0eb42742857696c6c0843102af8eaeb1a930d64d))
+- fix release process ([4c610db](https://github.com/analogjs/analog/commit/4c610db4e1e609cd9b6a13fb0f392b3fc76d305e))
+- harden tailwind debug app HMR diagnostics ([aea14b1](https://github.com/analogjs/analog/commit/aea14b1aaf5a7ccb0e3e86a168af0a19fcfe9a81))
+- isolate QueryClient per SSR request via InjectionToken factory ([b382293](https://github.com/analogjs/analog/commit/b382293b581b30164d50456601f481e9c4179ae4))
+- **nx-plugin:** make generator and build configs work on Windows CI ([c9102ae](https://github.com/analogjs/analog/commit/c9102aeb6a75729099e9fabddadf4616aea60d9a))
+- **nx-plugin:** restore Angular schematic compatibility with named exports ([#2183](https://github.com/analogjs/analog/issues/2183)) ([a546f7d](https://github.com/analogjs/analog/commit/a546f7d874e7f4f5e17811d7bc9626b0e6980b13))
+- **nx-plugin:** seed agent context at the workspace root in the preset ([380fcef](https://github.com/analogjs/analog/commit/380fcefefe91a8b26f4d706e1a5b3bf855684663))
+- **platform:** add tailwindCss to options interface ([a7ba1cf](https://github.com/analogjs/analog/commit/a7ba1cfed31071eb0f018051e2c05be881d8c41a))
+- **platform:** await async angular() plugin in platformPlugin ([8b339f9](https://github.com/analogjs/analog/commit/8b339f96f7f5d0191ddb842ff5781b58c1bf4a01))
+- **platform:** await SSR dependency optimizer readiness in dev ([#2580](https://github.com/analogjs/analog/issues/2580)) ([7eb5d7e](https://github.com/analogjs/analog/commit/7eb5d7e88150ba9d0f70e821212ff1392de3ef20))
+- **platform:** build the client environment and render around its output ([1fa842f](https://github.com/analogjs/analog/commit/1fa842f29279d2bd218c4a0d753a343fa84de274))
+- **platform:** cache page-route discovery for diagnostics ([d4e2d25](https://github.com/analogjs/analog/commit/d4e2d25c56fa01a118bf8f58f667f85450dd66c9))
+- **platform:** declare vite-plugin-nitro as a build prerequisite ([de59629](https://github.com/analogjs/analog/commit/de5962948da42ab330721413ab725eb344417568))
+- **platform:** emit debug reload reasons for content changes ([484d8e9](https://github.com/analogjs/analog/commit/484d8e9a5f4d73f2bfcb7729c1874ab1f2cb2750))
+- **platform:** enhance route manifest generation to handle pathless layouts and prevent collisions ([#2181](https://github.com/analogjs/analog/issues/2181)) ([db2de8a](https://github.com/analogjs/analog/commit/db2de8adbcb6de2e3d5f31a111b55c73e4f76fb4))
+- **platform:** keep library routes opt-in ([#2421](https://github.com/analogjs/analog/issues/2421)) ([48b69ab](https://github.com/analogjs/analog/commit/48b69ab056f176fa1d90ea1576762001b9f4b704))
+- **platform:** keep the virtual SSR renderer prerendering on nitro 3.0.260903-beta ([6c69681](https://github.com/analogjs/analog/commit/6c696811656514f0199d6348fce2f0591fd898f9))
+- **platform:** load the Babel release bundled with the Angular compiler for the SSR linker ([d0ccbaa](https://github.com/analogjs/analog/commit/d0ccbaa87148a11bcff52e2b92f893fd58526eab))
+- **platform:** make platform builds work on Windows CI ([5a42fb8](https://github.com/analogjs/analog/commit/5a42fb8616f67e6ed11c6a23e02fb8d74c5e1273))
+- **platform:** make the server-fn transforms self-contained ([78c3bb5](https://github.com/analogjs/analog/commit/78c3bb56eec4fec881ec7e707ee11612bf84fc16))
+- **platform:** normalize route and content map keys to avoid absolute path leaks ([#2139](https://github.com/analogjs/analog/issues/2139)) ([9b06af1](https://github.com/analogjs/analog/commit/9b06af180526bbc3e4d4cf981545639d03b86bf8))
+- **platform:** only generate typed routes when explicitly enabled ([3bded96](https://github.com/analogjs/analog/commit/3bded96b4b663124c4568f175a63710695817d58))
+- **platform:** pass the nitro option as the nitro() argument in migration ([a017699](https://github.com/analogjs/analog/commit/a017699af4fa70d3eac80372d59c2f9a017bdc7d))
+- **platform:** pre-bundle Angular's secondary entry points for SSR ([387d86c](https://github.com/analogjs/analog/commit/387d86c85c56c0f54911b05056aee07f21ba7796))
+- **platform:** prepare Angular SSR independently of the Nitro version ([8668481](https://github.com/analogjs/analog/commit/866848144b8fc6c09739841195e5fe2674d7ce7b))
+- **platform:** prerender the root route again ([14dbb1e](https://github.com/analogjs/analog/commit/14dbb1eeb2b66543edd2b25e8b996c5a6090a5bc))
+- **platform:** refresh route diagnostics on route graph changes ([2262f54](https://github.com/analogjs/analog/commit/2262f54b3802a258ea3034b014a85086779ee5de))
+- **platform:** remove Rolldown replacePlugin from SSR build patch ([#2427](https://github.com/analogjs/analog/issues/2427)) ([1342874](https://github.com/analogjs/analog/commit/13428740fba30e8f55bc784c3611c4c936e6507f))
+- **platform:** repair nitro wiring and complete the streaming route rule ([8e3d8db](https://github.com/analogjs/analog/commit/8e3d8dbf0a5b525ca5e5ea7b1fd0db9193b0e4b5))
+- **platform:** resolve built SSR entry with a .js extension on Nitro v3 ([c2c282c](https://github.com/analogjs/analog/commit/c2c282c3699e979018d2dfb9d3680c8588a780e4))
+- **platform:** restore analog-app action and content examples ([583f75d](https://github.com/analogjs/analog/commit/583f75d69863da1dd4c96425c05010bac793e875))
+- **platform:** run the Nitro dev environment in process ([de516a6](https://github.com/analogjs/analog/commit/de516a6b3d5c63862f33d5533c34d0ac98c71af8))
+- **platform:** safe-access event.context.params in page endpoint wrapper ([5e00e91](https://github.com/analogjs/analog/commit/5e00e91596c246df49c413ad64b40f6e99547890))
+- **platform:** set ngServerMode before the SSR entry evaluates ([07404f4](https://github.com/analogjs/analog/commit/07404f42f96d2a444d9a86eed1bebbe9071f741b))
+- **platform:** ship the separated plugins migration code ([4e5cc00](https://github.com/analogjs/analog/commit/4e5cc0077081e486fb842aaca36085f4318ef30b))
+- **platform:** skip Nitro integration during tests ([220c6bc](https://github.com/analogjs/analog/commit/220c6bcd3116f936b72d7584ad1b853879c5a699))
+- **platform:** stamp server function ids after Angular compilation ([d2ac4ab](https://github.com/analogjs/analog/commit/d2ac4ab982a7b4fe3d46e29cb5921a07e74979b7))
+- remove assert-deps from vite-plugin-angular ([50098fb](https://github.com/analogjs/analog/commit/50098fbbcbaed55129b49dfca176cbbfa620ac83))
+- replace @semantic-release/npm with replace-plugin for version bumps ([9c3e4f2](https://github.com/analogjs/analog/commit/9c3e4f2d55c294f5ac6560db118e64004d0654fe))
+- resolve all oxlint errors ([3800488](https://github.com/analogjs/analog/commit/3800488860cc0ec810a24256e6006cb18cf8179a))
+- resolve stash conflict markers and fix dual Angular version SSR error ([0dfedd3](https://github.com/analogjs/analog/commit/0dfedd35619bf4db6d6e2680079a556409e4fcb7))
+- **router,platform:** add vite-ignore to @angular/localize dynamic imports ([ee29c28](https://github.com/analogjs/analog/commit/ee29c282e597e1743f8884d9dd8cb78a8be5c26e))
+- **router,platform:** use non-literal expressions for @angular/localize dynamic imports ([e6d1f1d](https://github.com/analogjs/analog/commit/e6d1f1d78fa802c4aee3cf324f86d9b7258b6252))
+- **router:** defer route metadata setup during bootstrap ([e5d81b0](https://github.com/analogjs/analog/commit/e5d81b09c3359c5c4cff1ca653ad4e5528003a19))
+- **router:** dehydrate on first post-render app-stable, not BEFORE_APP_SERIALIZED ([c85a625](https://github.com/analogjs/analog/commit/c85a6254ad0a4a7cbd3ddde32049af5efb4686bc))
+- **router:** export the i18n entry point ([f5b1174](https://github.com/analogjs/analog/commit/f5b117432269f9e0e35a91800c812f0b915695e8))
+- **router:** forward prerender params and declare standard-schema peer dependency ([#2247](https://github.com/analogjs/analog/issues/2247)) ([5f8e912](https://github.com/analogjs/analog/commit/5f8e9125540f02211b4aec8b27e75c5eec607e87))
+- **router:** import the $Fetch type from ofetch ([68653ae](https://github.com/analogjs/analog/commit/68653ae4b0e21eb23ea5d0cbf281e3bf4d4a6302))
+- **router:** include query params in the prerender transfer state cache key ([c692635](https://github.com/analogjs/analog/commit/c6926354655bf03a1b316e3dc6d832bc58929032))
+- **router:** keep createRoutes as a public export ([#2645](https://github.com/analogjs/analog/issues/2645)) ([9111f17](https://github.com/analogjs/analog/commit/9111f17458f24bf1606a980f232c802a5ceb991a))
+- **router:** keep Node builtins external in the server bundle ([eeeaaf6](https://github.com/analogjs/analog/commit/eeeaaf69cf2f9f1cedae25734878b838ea977629))
+- **router:** last-writer-wins on duplicate queryHash in TransferState merge ([125807e](https://github.com/analogjs/analog/commit/125807e225ecafd4ba7bf83e165753a096eb6a6c))
+- **router:** make router builds work on Windows CI ([6576c6a](https://github.com/analogjs/analog/commit/6576c6ad0550b090ca2eaa896b5cd54d0c8a4fda))
+- **router:** prefer app routes over shared duplicates ([8201d06](https://github.com/analogjs/analog/commit/8201d067e5c505090e84794489cdee182d6e51a9))
+- **router:** preserve app route precedence in production ([7c7e292](https://github.com/analogjs/analog/commit/7c7e29262bbba5606fea089887793657e4d16faf))
+- **router:** preserve last-wins behavior for equal-priority collisions ([52f8d61](https://github.com/analogjs/analog/commit/52f8d61f2f611443ef864ba44e9f0d74b0dc73d1))
+- **router:** read the streaming opt-out from the request ([f996745](https://github.com/analogjs/analog/commit/f996745ba665bbf8f4709d069f619555ced2d41c))
+- **router:** register route metadata listeners during app init ([f246172](https://github.com/analogjs/analog/commit/f24617235459d4f2f9d629bc63db1dfa8b96ca5a))
+- **router:** repair server functions after the main merge ([a0c3235](https://github.com/analogjs/analog/commit/a0c323543ea4d63233154398641c02ee45391192))
+- **router:** resolve type errors in router build ([b200929](https://github.com/analogjs/analog/commit/b200929ac959e2c93567a90ac06ff8bf1fc18e32))
+- **router:** strip route groups from every page endpoint segment ([9d69dea](https://github.com/analogjs/analog/commit/9d69dead865b2632435a674ece99a61e476c0b11))
+- **router:** support Nitro v2 and v3 in server utilities ([883a4fc](https://github.com/analogjs/analog/commit/883a4fcb941834beee9d5f0638020fedd7db79fa))
+- **router:** use safe header accessor in detectLocale ([3567b81](https://github.com/analogjs/analog/commit/3567b813d1dee6336550ee7c89e233519cdc5c95))
+- **router:** use the configured API prefix for FormAction fallback endpoints ([#2643](https://github.com/analogjs/analog/issues/2643)) ([a3f01c4](https://github.com/analogjs/analog/commit/a3f01c457e938291fbcff1d13dd9461f8fbd1fde))
+- **router:** use the locale of a locale worker ([57dec63](https://github.com/analogjs/analog/commit/57dec63afd22b15b1219bfee12f51897b49e8c5b))
+- **storybook-angular:** forward applyDecorators in testing ([#2236](https://github.com/analogjs/analog/issues/2236)) ([4d3c6c1](https://github.com/analogjs/analog/commit/4d3c6c166c24af8d342864b9f8a5da1349a17c4c))
+- **storybook-angular:** make Storybook builds work on Windows CI ([5f46f59](https://github.com/analogjs/analog/commit/5f46f596e41c85360c72986bf64031664ee8e4d6))
+- **storybook-angular:** update preset for Vite 8 compatibility ([#2153](https://github.com/analogjs/analog/issues/2153)) ([61fbcf0](https://github.com/analogjs/analog/commit/61fbcf0a25be4c245696807d074141ac529bb5f4))
+- **vite-plugin-angular:** centralize stylesheet handling for hmr ([73a004f](https://github.com/analogjs/analog/commit/73a004f1bf82bdd8b3b180b1fe43749931260f4c))
+- **vite-plugin-angular:** construct the JavaScript transformer again ([d342474](https://github.com/analogjs/analog/commit/d34247458169a77869cfd47d751c9862086b3c74))
+- **vite-plugin-angular:** dedupe isTestWatchMode and DRY tailwind injection ([a1c91c6](https://github.com/analogjs/analog/commit/a1c91c61503c62c61a997c0bff5f6b2e9a634b5f))
+- **vite-plugin-angular:** defer liveReload CSS preprocessing to Vite load ([2dcf773](https://github.com/analogjs/analog/commit/2dcf773107db18d3a921c9e44a46804316dcd081))
+- **vite-plugin-angular:** define ngServerMode for server environments ([813dad4](https://github.com/analogjs/analog/commit/813dad46ee3765f6d32257226fcd721a0e75767e))
+- **vite-plugin-angular:** don't include angularPlugin twice in plugin array ([d429a2d](https://github.com/analogjs/analog/commit/d429a2d7c45788d29c51a014ab384a14a9db30c8))
+- **vite-plugin-angular:** ensure [@apply](https://github.com/apply) inside :host works with tailwindCss prefix config ([#2303](https://github.com/analogjs/analog/issues/2303)) ([497badc](https://github.com/analogjs/analog/commit/497badc3ff676a2e6e2810c6c4338c6de2edc187))
+- **vite-plugin-angular:** evict stale metadata on file deletion ([92da97e](https://github.com/analogjs/analog/commit/92da97ec8b67bcd13bbb22080baa6b07a8288b7f))
+- **vite-plugin-angular:** expand Compilation API roots from tsconfig paths and references ([#2290](https://github.com/analogjs/analog/issues/2290)) ([d4350b2](https://github.com/analogjs/analog/commit/d4350b2c84554f327c06e0ede8606fd44003b654))
+- **vite-plugin-angular:** fix NgtscProgram stylesheet resolution for external styles ([#2305](https://github.com/analogjs/analog/issues/2305)) ([9bb7a9c](https://github.com/analogjs/analog/commit/9bb7a9cf49f9fdd16f1dbe6f1444b8f1b3b02ac1))
+- **vite-plugin-angular:** fix the Angular Compilation API dev path ([#2504](https://github.com/analogjs/analog/issues/2504)) ([2f875b5](https://github.com/analogjs/analog/commit/2f875b5f5ed932b231b977fc90dd98579f1cce7e))
+- **vite-plugin-angular:** forward OXC compilation API and fix transform lang ([#2152](https://github.com/analogjs/analog/issues/2152)) ([db054c9](https://github.com/analogjs/analog/commit/db054c97af813e2aa9333450f75626c7fab687e5))
+- **vite-plugin-angular:** gate liveReload stylesheet ids to watch mode ([5568146](https://github.com/analogjs/analog/commit/55681461eb0e89b809def99612d2d71b8632153e))
+- **vite-plugin-angular:** handle > inside quoted class bindings ([2010565](https://github.com/analogjs/analog/commit/2010565a27797fc26ebb5a6af8619c43e3e41d6f))
+- **vite-plugin-angular:** harden Tailwind [@reference](https://github.com/reference) handling and SSR coordination ([#2289](https://github.com/analogjs/analog/issues/2289)) ([4060566](https://github.com/analogjs/analog/commit/4060566895e82741196a1e56b614c184bd3776d7))
+- **vite-plugin-angular:** ignore [class.foo] in ngClass conflict guard ([5ef798d](https://github.com/analogjs/analog/commit/5ef798d7945f72bc8d5cdc9b4daaa871af6a26a1))
+- **vite-plugin-angular:** improve stylesheet registry compatibility with Tailwind ([#2326](https://github.com/analogjs/analog/issues/2326)) ([fe6c528](https://github.com/analogjs/analog/commit/fe6c528b14ebb10495526886ce3deb4e32eaa217))
+- **vite-plugin-angular:** keep optional chaining when emitting expressions ([ff4cdea](https://github.com/analogjs/analog/commit/ff4cdeaf66480916e96123ec7112c00fe42ba896))
+- **vite-plugin-angular:** load virtual raw ids in compilation-api plugin ([4a41cd0](https://github.com/analogjs/analog/commit/4a41cd0ee54217c621e0cd85135a571124b08772))
+- **vite-plugin-angular:** make Angular Vite packages load configs cross-platform ([4afab61](https://github.com/analogjs/analog/commit/4afab617588238d0fa1c36838bd44b466fb25885))
+- **vite-plugin-angular:** migrate legacy setup-vitest users ([#2235](https://github.com/analogjs/analog/issues/2235)) ([73d3a1e](https://github.com/analogjs/analog/commit/73d3a1e9e72e8e6aa8bf54ee7f2a2fa7d77c915a))
+- **vite-plugin-angular:** remove duplicate hmr option ([#2204](https://github.com/analogjs/analog/issues/2204)) ([aa90171](https://github.com/analogjs/analog/commit/aa9017130078f9749756143ffe1ab3307b405649))
+- **vite-plugin-angular:** remove redundant normalizeIncludeGlob import ([81a6ca0](https://github.com/analogjs/analog/commit/81a6ca0b2c1cb018eb97718ee1458a8d9c8bde55))
+- **vite-plugin-angular:** restore alpha dependency linker configuration ([#2579](https://github.com/analogjs/analog/issues/2579)) ([55f189d](https://github.com/analogjs/analog/commit/55f189d4ca154fb370b174a04a7758267b6d12d0))
+- **vite-plugin-angular:** restore imports and declarations lost in the main merge ([46d1968](https://github.com/analogjs/analog/commit/46d1968d37420fe000fe9aec0e37d2abe867c9da))
+- **vite-plugin-angular:** restore missing test imports and mocks ([3d6c721](https://github.com/analogjs/analog/commit/3d6c721f70e4838ca72c7a835ced853c8f63db69))
+- **vite-plugin-angular:** restore rxjs optimizeDeps prebundling ([c994d14](https://github.com/analogjs/analog/commit/c994d1427584df408e1dc431a7d23b780a54b02f))
+- **vite-plugin-angular:** restrict metadata extraction to component decorators ([aec4836](https://github.com/analogjs/analog/commit/aec4836c60a2aa6164a61d0059d6cb939a0d7334))
+- **vite-plugin-angular:** scope `style` package-export condition to .css imports ([#2330](https://github.com/analogjs/analog/issues/2330)) ([0920b62](https://github.com/analogjs/analog/commit/0920b623fc225ceb180ff02fcd25a7ef6f78fdf7))
+- **vite-plugin-angular:** stop matching .tsrx in TS extension regex ([b8b9048](https://github.com/analogjs/analog/commit/b8b9048dd619df5c4562616e900959e61849833e))
+- **vite-plugin-angular:** suppress node_modules sourcemap warnings during dev ([1be0e83](https://github.com/analogjs/analog/commit/1be0e832e1ae85b5534c16915cc497efbea18fb5))
+- **vite-plugin-angular:** use empty string instead of undefined for mapRoot/sourceRoot overrides ([#2320](https://github.com/analogjs/analog/issues/2320)) ([1c210e3](https://github.com/analogjs/analog/commit/1c210e3458da3da8d553b3af73e597df6649a725))
+- **vite-plugin-angular:** wire linker plugin into compilation-API deps optimizer ([39b5a4a](https://github.com/analogjs/analog/commit/39b5a4a9f0cc5d7906107414f7b9053576585920))
+- **vite-plugin-nitro:** align with nitro 3.0.260903-beta ([09847cb](https://github.com/analogjs/analog/commit/09847cb3a4e1f2403c6228d7b200f65e1948861d))
+- **vite-plugin-nitro:** avoid SSR entry lookup for ssr:false apps with empty prerender routes ([4200fd8](https://github.com/analogjs/analog/commit/4200fd8ca8c6bc5e8b135213d467c0bddb7b0c24))
+- **vite-plugin-nitro:** build-output leak in Nitro renderer artifacts ([#2138](https://github.com/analogjs/analog/issues/2138)) ([464265e](https://github.com/analogjs/analog/commit/464265e339ac5286cb15ade950f23014a4b3ea57))
+- **vite-plugin-nitro:** clean alias map, emptyOutDir, dev-server rebuild watcher, and node-web-bridge error handling ([#2141](https://github.com/analogjs/analog/issues/2141)) ([b95e39d](https://github.com/analogjs/analog/commit/b95e39da4e8e20312b358b37c5140cd41e6acfae))
+- **vite-plugin-nitro:** emit the server-fn-id export as a build entry ([d7dc36a](https://github.com/analogjs/analog/commit/d7dc36a4e4163a0f3b0c70c5969beb0d72024659))
+- **vite-plugin-nitro:** enforce path boundary in generated API middleware ([3a4f218](https://github.com/analogjs/analog/commit/3a4f218ce59dc658560926889e9eb44fb403846a))
+- **vite-plugin-nitro:** fail on invalid Vercel build output ([73dd7dd](https://github.com/analogjs/analog/commit/73dd7dd5929fbc0e36dc1bea66fadf6ef85e522c))
+- **vite-plugin-nitro:** make Nitro plugin builds work on Windows CI ([8c6ff82](https://github.com/analogjs/analog/commit/8c6ff82376a1d0c2a89ad0577928df360c7a43c9))
+- **vite-plugin-nitro:** prevent setting headers with keys starting with ':' ([#2180](https://github.com/analogjs/analog/issues/2180)) ([c53a135](https://github.com/analogjs/analog/commit/c53a135f87bf76fe6211c81b6239ecab0066613a))
+- **vite-plugin-nitro:** resolve locale worker runtime files from the build ([1b4858c](https://github.com/analogjs/analog/commit/1b4858cf6e63d7ebe608d5258722e4d46d67f147))
+- **vite-plugin-nitro:** restore server function exports and lost imports ([a2d883b](https://github.com/analogjs/analog/commit/a2d883bd2706ea01f207a43529c7238690ca08d2))
+- **vite-plugin-nitro:** update nitro to 3.0.260415-beta ([#2300](https://github.com/analogjs/analog/issues/2300)) ([d351d28](https://github.com/analogjs/analog/commit/d351d2818a4f13b178f30279b73f67c7967a55f4))
+- **vitest-angular:** clean generated snapshot ids ([#2238](https://github.com/analogjs/analog/issues/2238)) ([775ff97](https://github.com/analogjs/analog/commit/775ff974995f68a57b6d36003dbdd83addb0675d))
+- **vitest-angular:** make Vitest Angular packages work on Windows CI ([eb871bd](https://github.com/analogjs/analog/commit/eb871bd2a378a8bb0240e3ec1195bd7674e60efd))
+- **vitest-angular:** normalize snapshot whitespace ([#2237](https://github.com/analogjs/analog/issues/2237)) ([8853dc0](https://github.com/analogjs/analog/commit/8853dc00eae161178db8a0c9aba21496cb42a272))
+- **vitest-angular:** remove duplicate TestBed init in tanstack-query-app tests ([cc41d7b](https://github.com/analogjs/analog/commit/cc41d7bc055299324d28cb2f82b255804a114a51))
+- **vitest-angular:** repair the test setup entry points after the main merge ([a605658](https://github.com/analogjs/analog/commit/a60565813ad68d3662d4d495be18afeafc0ae7dd))
+- **vitest-angular:** use process.once to prevent listener accumulation ([#2143](https://github.com/analogjs/analog/issues/2143)) ([f434fd6](https://github.com/analogjs/analog/commit/f434fd62c3d85c1fc2dbfae89de65eff1fff3499))
+
+### chore
+
+- latest dependencies, include astro in builds, typescript v6 hygiene ([#2171](https://github.com/analogjs/analog/issues/2171)) ([1d35ba3](https://github.com/analogjs/analog/commit/1d35ba3fbca7f68a67b6b0acb9173d8064273242))
+
+### Features
+
+- add bundle size analysis and comparison workflows with associated scripts and fixtures ([#2230](https://github.com/analogjs/analog/issues/2230)) ([7a8cab1](https://github.com/analogjs/analog/commit/7a8cab1ef46d4498006386cad6ef6c9633775ddc))
+- add logFile option to debug system ([#2228](https://github.com/analogjs/analog/issues/2228)) ([65d7de7](https://github.com/analogjs/analog/commit/65d7de709ca75b41d70fc3c0e601f2621a7b6351))
+- add Vite 8 OXC config support to storybook and astro packages ([#2121](https://github.com/analogjs/analog/issues/2121)) ([62987d3](https://github.com/analogjs/analog/commit/62987d3b63cbf9d38d0106ca9a4f4fe4d004aec1))
+- **astro-angular:** add a transformFilter option registered through analog.setup ([a93e671](https://github.com/analogjs/analog/commit/a93e6715367f9fcdaf5409a46cf7a0e3eea12b03))
+- bump package.json to 3.0.0-alpha ([19472aa](https://github.com/analogjs/analog/commit/19472aab8ab72e1834e902ae34449ffe402dea25))
+- bump to Angular v22 packages ([cd2883b](https://github.com/analogjs/analog/commit/cd2883b549f7be4a4bd7abb005d7bdfa1c4425a6))
+- **content:** add experimental content DevTools browser panel ([#2157](https://github.com/analogjs/analog/issues/2157)) ([d06a07a](https://github.com/analogjs/analog/commit/d06a07ae500dba4f5234865841906684af716331))
+- **content:** add experimental md4x content rendering pipeline ([#2156](https://github.com/analogjs/analog/issues/2156)) ([da1d372](https://github.com/analogjs/analog/commit/da1d3728273fe1fb24c185c33ee418dd6876f312))
+- **content:** enhance content-file-resource and parse-raw-content-file with schema validation ([#2148](https://github.com/analogjs/analog/issues/2148)) ([94d274a](https://github.com/analogjs/analog/commit/94d274a66b166b93797eb01b19caa6b42259adfa))
+- **content:** remove the content devtools entry point ([d09ddd7](https://github.com/analogjs/analog/commit/d09ddd7be824821c939b9a957090515e50d05540))
+- **create-analog:** scaffold nitro() from @analogjs/vite-plugin-nitro ([00664de](https://github.com/analogjs/analog/commit/00664de9dc87758753d7711e13730416f78da7bc))
+- demo app integration with typed routes and live data ([69eac8e](https://github.com/analogjs/analog/commit/69eac8e01362a7f0ead0457191e6578fe2a81e95))
+- demonstrate definePageLoadQueries in tanstack-query-app ([dec315e](https://github.com/analogjs/analog/commit/dec315e00e6de132f2b73aa296454c26a2d45777))
+- **docs:** add AI integrations guide ([#2234](https://github.com/analogjs/analog/issues/2234)) ([29d228b](https://github.com/analogjs/analog/commit/29d228b9a7d552f4e9fc10c03c1d0fbe1fe30910))
+- **nx-plugin:** drop Tailwind v2/v3 support, require v4+ ([d9e607e](https://github.com/analogjs/analog/commit/d9e607eaf3cbeb7789298e059dc2e52667ba37dd))
+- **nx-plugin:** scaffold angular() and nitro() in the app generator ([6981cb2](https://github.com/analogjs/analog/commit/6981cb21346d522f2db578fa7a226286fba9201f))
+- OXC test downlevel, router exports, platform plugin ordering, build improvements ([#2117](https://github.com/analogjs/analog/issues/2117)) ([2044f7b](https://github.com/analogjs/analog/commit/2044f7bd4a784e86c7dbb2efc243ef03b3f82f26))
+- **platform:** add dev-time route idiom diagnostics ([befa033](https://github.com/analogjs/analog/commit/befa033c6e245f99e37e1d257abae506a443832e))
+- **platform:** add generic style-pipeline hooks for community plugins ([#2245](https://github.com/analogjs/analog/issues/2245)) ([df8971a](https://github.com/analogjs/analog/commit/df8971a50be6f00715a01d3ee66ceea07e3c71f0))
+- **platform:** add nitro() from @analogjs/vite-plugin-nitro in migration ([e92e9cf](https://github.com/analogjs/analog/commit/e92e9cf7f139b6536a676d0c33d1434e00041e0a))
+- **platform:** add shiki skipLangs option for analog v3 ([#2239](https://github.com/analogjs/analog/issues/2239)) ([ec6bc0f](https://github.com/analogjs/analog/commit/ec6bc0f60033fe8748e3b5281d70d7289711c907))
+- **platform:** align Vite 8 / Rolldown integration with native Vite APIs ([#2124](https://github.com/analogjs/analog/issues/2124)) ([cd6df36](https://github.com/analogjs/analog/commit/cd6df36ecf3c49847aad247dae750662ab8760de))
+- **platform:** auto-discover library route directories and fail build on route collisions ([#2217](https://github.com/analogjs/analog/issues/2217)) ([4569579](https://github.com/analogjs/analog/commit/4569579273da1524dee691559b7799af76e804c5))
+- **platform:** drop the experimental.stylePipeline option ([6150440](https://github.com/analogjs/analog/commit/6150440e71c35f7e5189732f0d978ad64420f45d))
+- **platform:** export tailwindPreprocessor for Analog Vite config ([971b2a8](https://github.com/analogjs/analog/commit/971b2a82c9c0c76e0a80483b9483503139c9ec7e))
+- **platform:** integrate obug structured debug logging ([#2223](https://github.com/analogjs/analog/issues/2223)) ([9089be2](https://github.com/analogjs/analog/commit/9089be20153465dec55e45afcab91b30115d588d))
+- **platform:** migrate to nitro/vite and split analog() into analog() + angular() + nitro() ([#2343](https://github.com/analogjs/analog/issues/2343)) ([a498926](https://github.com/analogjs/analog/commit/a49892601d06efe6c67d5f5f5aeafdf6c77607cf)), closes [#2035](https://github.com/analogjs/analog/issues/2035) [#2188](https://github.com/analogjs/analog/issues/2188)
+- **platform:** register the content transform filter through analog.setup ([c174d99](https://github.com/analogjs/analog/commit/c174d99e64a3e4bdbf5d3591082093f5e4b21559))
+- **platform:** route manifest generation, typed routes plugin, and JSON-LD manifest ([4dcdc85](https://github.com/analogjs/analog/commit/4dcdc8562542ba2c93c8827f8dccb1e7422736dd))
+- **platform:** simplify deps-plugin and fix shiki highlighter init ([#2150](https://github.com/analogjs/analog/issues/2150)) ([7cc36db](https://github.com/analogjs/analog/commit/7cc36db15113ecb27237524a5032437259a59326))
+- **platform:** support Nitro v2 and Nitro v3 ([49d46a1](https://github.com/analogjs/analog/commit/49d46a1023763f965336b07f779af0746ba17ac2))
+- **platform:** support streaming SSR on Nitro v2 and v3 ([0005804](https://github.com/analogjs/analog/commit/0005804461e8bf3a5dde26ab23434677ccb11328))
+- release 3.0.0-alpha.1 ([9b02f44](https://github.com/analogjs/analog/commit/9b02f442ee5ce7be92ed326aa038b136a6bf9319))
+- **router:** add definePageLoadQueries helper ([1983157](https://github.com/analogjs/analog/commit/1983157434eaed6b04731a44d87481d4e282f42f))
+- **router:** add typed file routes with codegen and Standard Schema validation with JSON-LD support ([#2125](https://github.com/analogjs/analog/issues/2125)) ([9ed63a6](https://github.com/analogjs/analog/commit/9ed63a6b98185e0e5ebc67a09986b6ba65269dca))
+- **router:** add typed route path utilities and validation error handling ([f4c63da](https://github.com/analogjs/analog/commit/f4c63dafdb3a990c21cb3be8d69a8092ff507e04))
+- **router:** add typed server primitives and TanStack Query integration ([#2149](https://github.com/analogjs/analog/issues/2149)) ([79f3e98](https://github.com/analogjs/analog/commit/79f3e98ba409ed96c3c836928db38256e1c7103e))
+- **router:** defineApiRoute with Standard Schema validation ([69873d0](https://github.com/analogjs/analog/commit/69873d0c2f77800de9174884a33fc7586b02a430))
+- **router:** hydrate route-data \_\_analogQueries on ResolveEnd ([f9ba111](https://github.com/analogjs/analog/commit/f9ba111d0ff1498e8ac794dbcb2fc77904729926))
+- **router:** mirror load-prefetched state into TransferState on server ([92d17ee](https://github.com/analogjs/analog/commit/92d17ee9ce2f5f9f1fc58b75caa74b152092e2f0))
+- **router:** split content routing into @analogjs/router/content ([#2216](https://github.com/analogjs/analog/issues/2216)) ([d0aa1af](https://github.com/analogjs/analog/commit/d0aa1af58ca0e07b89d9f4e21ee7701cb2ca19c8))
+- **router:** support for JSON-LD structured data ([38ff618](https://github.com/analogjs/analog/commit/38ff6180ff910f7a0e82421621c7b8e1af760833))
+- **router:** typed navigation, params injection, and experimental APIs ([f7bc325](https://github.com/analogjs/analog/commit/f7bc32514268720f68d7d9ee9994fe627f796f73))
+- **storybook-angular:** add scoped style diagnostics for Nx SCSS setup ([#2243](https://github.com/analogjs/analog/issues/2243)) ([8173b64](https://github.com/analogjs/analog/commit/8173b64c8aa44400fe0620f5fc1d3c5f1f17238c))
+- update Nitro to v3 alpha and h3 to v2 alpha ([bac5729](https://github.com/analogjs/analog/commit/bac57297068e978db01e6e8fda4c1173c4b950fe))
+- **vite-plugin-angular:** add analog.setup interop hook for Vite plugins ([8b9efb8](https://github.com/analogjs/analog/commit/8b9efb85220d88b4d30293bc8e3740cf20274531))
+- **vite-plugin-angular:** add externalizeComponentStyles to the analog.setup context ([740d351](https://github.com/analogjs/analog/commit/740d351d35687bed7a74c6f820f7a7de91a385a1))
+- **vite-plugin-angular:** add globalThis external-registry hook for fastCompile ([3526c03](https://github.com/analogjs/analog/commit/3526c03540dde1adf0d8a4d7874cf685a73922a8))
+- **vite-plugin-angular:** add stylePreprocessor and Tailwind CSS integration for component styles ([#2190](https://github.com/analogjs/analog/issues/2190)) ([b2e4901](https://github.com/analogjs/analog/commit/b2e49019dccb418cd80552a7889fb0637eb7ffff))
+- **vite-plugin-angular:** add tailwindCss preprocessing for component styles ([87b49db](https://github.com/analogjs/analog/commit/87b49db4da45fba3360c895bf3df08dd16b2cc75))
+- **vite-plugin-angular:** expand debug logging controls ([9fa4140](https://github.com/analogjs/analog/commit/9fa4140213783ec5386d1b71ab95a9b3b14e0dd8))
+- **vite-plugin-angular:** export experimental Angular compilation plugin ([#2559](https://github.com/analogjs/analog/issues/2559)) ([d66bac9](https://github.com/analogjs/analog/commit/d66bac923de15cd7dd394ade18ca4df57a36892b))
+- **vite-plugin-angular:** fold the style pipeline into the analog.setup integration ([b55d4cf](https://github.com/analogjs/analog/commit/b55d4cfb4b762a9582cd9d0ec38d2375cc49fbea))
+- **vite-plugin-angular:** improve component stylesheet hmr ([15b0d8e](https://github.com/analogjs/analog/commit/15b0d8e13b02eda5f63490e78a5d5c779fbcc62e))
+- **vite-plugin-angular:** move transform filtering and the external registry to analog.setup ([c633a66](https://github.com/analogjs/analog/commit/c633a6605ab71e871211a0f7d92394dfed78128e))
+- **vite-plugin-angular:** remove the additionalContentDirs and advanced.tsTransformers options ([357e922](https://github.com/analogjs/analog/commit/357e9221cf84d81cb243faad9261df13d0107963))
+- **vite-plugin-nitro:** add a migration to the single nitro() argument ([51c3572](https://github.com/analogjs/analog/commit/51c3572b4d041abae1c180688a9b6a575556625c))
+- **vite-plugin-nitro:** drop Vite <6, refactor plugin, and enhance sitemap ([76a55ea](https://github.com/analogjs/analog/commit/76a55eaf9182897a7c399b797dafb5cbd836e6ff))
+- **vite-plugin-nitro:** run on Nitro v2 alongside analog() ([68cec0b](https://github.com/analogjs/analog/commit/68cec0b627a70259dd8619ad032ac983e4939e63))
+
+### Reverts
+
+- **platform:** stop preferring the built shell as the SSR template ([ae4b279](https://github.com/analogjs/analog/commit/ae4b279d9be1d52373714d0c34602cd45d87bd84))
+- Revert "refactor: take the analog-app demo from the 2.x branch" ([e2bb5e0](https://github.com/analogjs/analog/commit/e2bb5e0b7668c08c083aae5bd0fbc2e48f5fbac2))
+- roll back CI configuration temporarily and disable smoke tests ([#2203](https://github.com/analogjs/analog/issues/2203)) ([5a68f5a](https://github.com/analogjs/analog/commit/5a68f5af771793267add17dc354ad693e6f37986))
+
+### BREAKING CHANGES
+
+- `nitro(options, nitroConfig)` is now
+  `nitro({ ...nitroConfig, analog: options })`.
+  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+  Claude-Session: https://claude.ai/code/session_01PEGnL2vLDZ7JfQYYCZKfhj
+- Replace experimental.typedRouter with experimental.typedRouting
+  and routePath with toRoute or LinkTo. Remove the old experimental router providers
+  and runtime routeTree.gen.ts imports. Include the generated routeTree.gen.d.ts
+  declaration in application tsconfigs.
+- **content:** The experimental @analogjs/content/devtools entry point is removed, along with
+  contentDevToolsPlugin, DevToolsContentRenderer, DEVTOOLS_INNER_RENDERER, and withContentDevTools.
+  Provide your content renderer directly.
+
+BEFORE:
+
+import { withContentDevTools } from '@analogjs/content/devtools';
+
+provideContent(withContentDevTools(MarkdownContentRenderer));
+
+AFTER:
+
+import { withMarkdownRenderer } from '@analogjs/content';
+
+provideContent(withMarkdownRenderer());
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- **vite-plugin-angular:** angular() no longer accepts additionalContentDirs or advanced.tsTransformers. Neither option had
+  any effect: additionalContentDirs was normalized but never read, and the custom TypeScript
+  transformers were never handed to the compiler on any compilation path. Content directories
+  belong to analog(); drop the other option.
+
+BEFORE:
+
+angular({
+additionalContentDirs: ['/libs/shared/content'],
+advanced: { tsTransformers: { before: [myTransformer] } },
+});
+
+AFTER:
+
+analog({ additionalContentDirs: ['/libs/shared/content'] });
+angular();
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- pageGlobs() is no longer exported from @analogjs/platform. Apps no longer need to mirror
+  additionalPagesDirs into angular({ include }); the platform registers the library page globs with
+  Angular itself.
+
+BEFORE:
+
+import analog, { discoverLibraryRoutes, pageGlobs } from '@analogjs/platform';
+
+const libs = discoverLibraryRoutes(workspaceRoot);
+
+plugins: [
+analog({ additionalPagesDirs: libs.additionalPagesDirs }),
+angular({ include: pageGlobs(libs.additionalPagesDirs) }),
+];
+
+AFTER:
+
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
+
+const libs = discoverLibraryRoutes(workspaceRoot);
+
+plugins: [analog({ additionalPagesDirs: libs.additionalPagesDirs }), angular()];
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- @analogjs/platform no longer exports tailwindPreprocessor, TailwindPreprocessorMode,
+  TailwindPreprocessorOptions, StylePreprocessor, StylesheetDependency, StylesheetDiagnostic,
+  StylesheetTransformContext, StylesheetTransformResult, composeStylePreprocessors,
+  normalizeStylesheetDependencies, or normalizeStylesheetTransformResult, and the
+  @analogjs/platform/style-preprocessor subpath export is removed. Import the stylesheet types from
+  @analogjs/vite-plugin-angular and inject Tailwind @reference directives from a Vite plugin's
+  analog.setup() hook.
+
+BEFORE:
+
+import { tailwindPreprocessor } from '@analogjs/platform';
+import type { StylePreprocessor } from '@analogjs/platform/style-preprocessor';
+
+const preprocess: StylePreprocessor = tailwindPreprocessor({
+tailwindRootCss: resolve(\_\_dirname, 'src/styles.css'),
+});
+
+AFTER:
+
+import type { AnalogIntegrationPlugin } from '@analogjs/vite-plugin-angular';
+
+const tailwind: AnalogIntegrationPlugin = {
+name: 'angular-tailwind',
+analog: {
+setup(ctx) {
+ctx.registerStylePreprocessor((code) =>
+code.includes('@apply') ? `@reference "${root}";\n${code}` : code,
+);
+ctx.externalizeComponentStyles();
+},
+},
+};
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- **vite-plugin-angular:** The transformFilter and stylePreprocessor options on angular() have been removed,
+  and the fast compiler no longer reads globalThis.**ANALOG_EXTERNAL_REGISTRY**. Register these from a
+  Vite plugin's analog.setup() hook instead: ctx.registerTransformFilter() replaces transformFilter,
+  ctx.registerStylePreprocessor() replaces stylePreprocessor, and ctx.registerComponentRegistry()
+  replaces the global registry. The @analogjs/astro-angular vite.transformFilter passthrough is gone
+  with it.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- **platform:** The experimental.stylePipeline option on analog() has been removed. Add community
+  style-pipeline plugins to the Vite plugins array directly. @analogjs/platform no longer exports
+  StylePipelineContext, StylePipelineOptions, StylePipelinePluginEntry, StylePipelinePluginFactory,
+  defineStylePipeline, defineStylePipelinePlugins, or resolveStylePipelinePlugins, and the
+  @analogjs/platform/style-pipeline subpath export is gone.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- **vite-plugin-angular:** The stylePipeline option on angular() has been removed. Register stylesheet
+  preprocessors and registry configurators from a Vite plugin's analog.setup() hook instead:
+  ctx.registerStylePreprocessor() replaces preprocessStylesheet and ctx.configureStylesheetRegistry()
+  replaces configureStylesheetRegistry. @analogjs/platform no longer exports
+  AngularStylePipelineContext, AngularStylePipelineOptions, AngularStylePipelinePlugin,
+  StylePipelineStylesheetRegistry, defineAngularStylePipeline, or defineAngularStylePipelinePlugins.
+  The experimental.stylePipeline.plugins list on analog() is unchanged.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q2H1NsaoyHzPzWoLmP42hq
+
+- **platform:** `@analogjs/vite-plugin-nitro` → `nitro/vite`
+
+  `@analogjs/platform`'s `analog()` now bundles Nitro v3's first-party `nitro/vite` plugin instead of `@analogjs/vite-plugin-nitro`. Standalone users
+  (those who used `@analogjs/vite-plugin-nitro` directly) must install `nitro` as a dev dep and add `nitro()` to their Vite plugin chain alongside `analog()`.
+
+BEFORE:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      /* ... */
+    }),
+  ],
+});
+```
+
+AFTER:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [
+    analog({
+      /* ... */
+    }),
+    angular({
+      /* ... vite object */
+    }),
+    nitro({
+      /* ... nitro object*/
+    }),
+  ],
+});
+```
+
+- The `marked` peer dependency in `@analogjs/platform` and `@analogjs/content` has been bumped from `^15.0.x` to `^17.0.5`, skipping the v16 major entirely.
+
+BEFORE:
+
+- Removed the CommonJS build — marked is now ESM-only.
+- Minimum Node.js version raised to Node 20.
+
+AFTER:
+
+- `listItem` renderer signature simplified (child tokens are pre-rendered; the renderer receives a single text string instead of structured sub-tokens).
+- A new `checkbox` token is emitted for task-list items.
+- Loose list text tokens now use the `paragraph` type instead of `text`, which affects custom renderers that match on token type.
+
+* Nitro and h2 dependencies have been updated
+
+BEFORE:
+
+Nitro is on v2, h2 is on v1
+
+AFTER:
+
+Nitro is on v3, h2 is on v2
+
 # [3.0.0-alpha.99](https://github.com/analogjs/analog/compare/v3.0.0-alpha.98...v3.0.0-alpha.99) (2026-10-19)
 
 ### Bug Fixes
