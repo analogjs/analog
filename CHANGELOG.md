@@ -1,3 +1,9 @@
+# [3.0.0-beta.2](https://github.com/analogjs/analog/compare/v3.0.0-beta.1...v3.0.0-beta.2) (2026-10-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** define ngServerMode for server environments in dev ([#2658](https://github.com/analogjs/analog/issues/2658)) ([295291a](https://github.com/analogjs/analog/commit/295291a4d3025bb0d104ddd1f195309a2e442b9c))
+
 # [3.0.0-beta.1](https://github.com/analogjs/analog/compare/v2.9.0...v3.0.0-beta.1) (2026-10-19)
 
 - feat(platform)!: register library page globs with Angular through analog.setup ([88ee690](https://github.com/analogjs/analog/commit/88ee690742a3d66adcd65ae6ffcc71ea2f5a9452))
