@@ -11,15 +11,23 @@ export const JIT_INLINE_STYLE_PREFIX = 'virtual:angular:jit:style:inline;';
 
 const inlineStyles = new Map<string, string>();
 
-export function toJitInlineStyleId(encodedStyles: string): string {
-  const hash = createHash('sha256')
-    .update(encodedStyles)
-    .digest('hex')
-    .slice(0, 16);
+export function toJitInlineStyleId(
+  encodedStyles: string,
+  isTest: boolean,
+): string {
+  if (isTest) {
+    return `${JIT_INLINE_STYLE_PREFIX}${encodedStyles}`;
+  }
+
+  const hash = hashJitInlineStyles(encodedStyles);
   inlineStyles.set(hash, encodedStyles);
   return `${JIT_INLINE_STYLE_PREFIX}${hash}`;
 }
 
-export function getJitInlineStyles(hash: string): string | undefined {
-  return inlineStyles.get(hash);
+export function getJitInlineStyles(idSuffix: string): string {
+  return inlineStyles.get(idSuffix) ?? idSuffix;
+}
+
+export function hashJitInlineStyles(encodedStyles: string): string {
+  return createHash('sha256').update(encodedStyles).digest('hex').slice(0, 16);
 }

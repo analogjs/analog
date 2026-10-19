@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { transform } from 'esbuild';
 import { jitTransform } from './jit-transform';
 
 describe('JIT transform preserves @Injectable', () => {
@@ -57,6 +58,99 @@ describe('JIT transform preserves @Injectable', () => {
     // @Injectable stays, class is otherwise untouched
     expect(result).toContain('@Injectable');
     expect(result).not.toContain('DataService.decorators');
+  });
+
+  it('leaves @Injectable constructors alone when DI does not read them', () => {
+    const result = jitTransform(
+      `
+      import { Injectable, Inject, InjectionToken } from '@angular/core';
+      import { Options } from './options';
+      import { Track } from './track';
+
+      export const T = new InjectionToken<string>('t');
+
+      @Injectable({ providedIn: 'root', useFactory: () => new Factoried({}) })
+      export class Factoried {
+        constructor(private opts: Options) {}
+      }
+
+      @Injectable()
+      export class Tracked {
+        constructor(@Track('a') readonly opts: Options) {}
+      }
+
+      @Injectable()
+      export class Overloaded {
+        constructor(t: string);
+        constructor(@Inject(T) public t: string) {}
+      }
+    `,
+      'svc.ts',
+    ).code;
+
+    expect(result).not.toContain('Factoried.ctorParameters');
+    expect(result).not.toContain('Tracked.ctorParameters');
+    expect(result).toContain("@Track('a')");
+    expect(result).toContain(
+      'Overloaded.ctorParameters = () => [{type: undefined, decorators: [{type: Inject, args: [T]}]}]',
+    );
+  });
+
+  it('does not emit ctorParameters for a named @Injectable class expression', () => {
+    const result = jitTransform(
+      `
+      import { Injectable } from '@angular/core';
+      import { Dep } from './dep';
+
+      export const Outer = @Injectable() class Inner {
+        constructor(readonly dep: Dep) {}
+      };
+    `,
+      'inner.service.ts',
+    ).code;
+
+    expect(result).not.toContain('Inner.ctorParameters');
+  });
+
+  it('resolves constructor params typed only by annotation at runtime', async () => {
+    const jit = jitTransform(
+      `
+      import { Injectable, Inject, InjectionToken } from '@angular/core';
+
+      interface Config { value: string }
+      export const CONFIG = new InjectionToken<Config>('config');
+
+      @Injectable()
+      export class Dep {}
+
+      @Injectable()
+      export class TypedParam {
+        constructor(readonly dep: Dep, @Inject(CONFIG) readonly config: Config) {}
+      }
+    `,
+      'typed-param.service.ts',
+    ).code;
+    const { code } = await transform(jit, {
+      loader: 'ts',
+      format: 'cjs',
+      tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
+    });
+
+    const core = await import('@angular/core');
+    const module = { exports: {} as Record<string, any> };
+    new Function('require', 'module', 'exports', code)(
+      () => core,
+      module,
+      module.exports,
+    );
+    const { Dep, TypedParam, CONFIG } = module.exports;
+    const config = { value: 'x' };
+    const instance = core.Injector.create({
+      providers: [Dep, TypedParam, { provide: CONFIG, useValue: config }],
+    }).get(TypedParam);
+
+    expect(instance.dep).toBeInstanceOf(Dep);
+    expect(instance.config).toBe(config);
   });
 });
 

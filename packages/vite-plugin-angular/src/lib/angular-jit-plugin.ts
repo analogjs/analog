@@ -2,6 +2,7 @@ import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
 import {
   JIT_INLINE_STYLE_PREFIX,
   getJitInlineStyles,
+  hashJitInlineStyles,
 } from './utils/jit-inline-styles.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
@@ -26,13 +27,7 @@ export function jitPlugin({
     },
     async load(id: string) {
       if (id.includes(JIT_INLINE_STYLE_PREFIX)) {
-        const styleIdHash = id.split('style:inline;')[1];
-        const encodedStyles = getJitInlineStyles(styleIdHash);
-
-        if (encodedStyles === undefined) {
-          return;
-        }
-
+        const encodedStyles = getJitInlineStyles(id.split('style:inline;')[1]);
         const decodedStyles = Buffer.from(
           decodeURIComponent(encodedStyles),
           'base64',
@@ -43,7 +38,7 @@ export function jitPlugin({
         try {
           const compiled = await preprocessCSS(
             decodedStyles,
-            `${styleIdHash}.${inlineStylesExtension}?direct`,
+            `${hashJitInlineStyles(encodedStyles)}.${inlineStylesExtension}?direct`,
             config,
           );
           styles = compiled?.code;

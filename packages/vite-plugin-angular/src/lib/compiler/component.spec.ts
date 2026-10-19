@@ -1,3 +1,4 @@
+import { SourceMap } from 'node:module';
 import { describe, it, expect, vi } from 'vitest';
 import * as ts from 'typescript';
 import {
@@ -3159,6 +3160,55 @@ describe('Ivy definitions as static class members with TDZ hoisting', () => {
     expect(labelIdx).toBeGreaterThan(-1);
     expect(formatterIdx).toBeLessThan(labelIdx);
   });
+
+  it('keeps source map positions for hoisted declarations', () => {
+    const lines = [
+      `import { Component } from '@angular/core';`,
+      `@Component({ selector: 'app-test', template: '<p>hi</p>' })`,
+      `export class TestComponent {}`,
+      `const first = 1;`,
+      `function second() {}`,
+    ];
+    // No trailing newline, so the last hoisted statement ends at EOF.
+    const { code, map } = rawCompile(lines.join('\n'), 'test.ts');
+
+    expectCompiles(code);
+    expect(code).toContain(
+      'const first = 1;\nfunction second() {}\nexport class TestComponent',
+    );
+    const sourceMap = new SourceMap(JSON.parse(map.toString()));
+    for (const [name, originalLine] of [
+      ['first', 3],
+      ['second', 4],
+    ] as const) {
+      const offset = code.indexOf(name);
+      const before = code.slice(0, offset);
+      const entry = sourceMap.findEntry(
+        before.split('\n').length - 1,
+        offset - before.lastIndexOf('\n') - 1,
+      );
+      expect(entry).toMatchObject({
+        originalLine,
+        originalColumn: lines[originalLine].indexOf(name),
+      });
+    }
+  });
+
+  it('keeps hoisted declarations when a type-only import precedes the class', () => {
+    const result = compile(
+      [
+        `import { Component, InjectionToken } from '@angular/core';`,
+        `import { Foo } from './foo';`,
+        `@Component({ selector: 'app-test', template: '', providers: [{ provide: TOKEN, useValue: 1 }] })`,
+        `export class TestComponent { foo?: Foo; }`,
+        `const TOKEN = new InjectionToken<Foo>('t');`,
+      ].join('\n'),
+      'test.ts',
+    );
+
+    expectCompiles(result);
+    expect(result).toContain('const TOKEN = new InjectionToken');
+  });
 });
 
 describe('hostDirectives metadata extraction', () => {
@@ -3356,6 +3406,42 @@ describe('Host raw embedded quote preservation', () => {
     // The literal "yes" string in the binding expression must survive
     // (was previously stripped by an over-aggressive quote replacement).
     expect(result).toContain('yes');
+  });
+});
+
+describe('Host bindings from same-file string constants', () => {
+  it('resolves computed keys, interpolated keys, and identifier values', () => {
+    const result = compile(
+      `
+      import { Component } from '@angular/core';
+      const CLASS_NAME = 'example' as const;
+      const CLASS_ATTR = \`[class.\${CLASS_NAME}]\`;
+      const ROLE = 'button';
+      @Component({
+        selector: 'app-root',
+        template: '',
+        host: {
+          [CLASS_NAME]: 'true',
+          [CLASS_ATTR]: 'true',
+          role: ROLE,
+          'aria-live': 'polite' as const,
+          '[title]': ('label'),
+          class: 'a ' + CLASS_NAME,
+          0: 'zero',
+        },
+      })
+      export class AppComponent {}
+    `,
+      'app.ts',
+    );
+    expectCompiles(result);
+    expect(result).toContain(
+      'hostAttrs: ["0", "zero", "example", "true", "role", "button", "aria-live", "polite", 1, "a", "example"]',
+    );
+    expect(result).toContain('ɵɵclassProp("example", true)');
+    // ɵɵhostProperty before Angular 20, ɵɵdomProperty after.
+    expect(result).toMatch(/ɵɵ(dom|host)Property\("title", ctx\.label\)/);
+    expect(result).not.toContain('CLASS_NAME"');
   });
 });
 

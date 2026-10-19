@@ -1,7 +1,11 @@
 import { parseSync } from 'oxc-parser';
 import MagicString from 'magic-string';
 import { detectTypeOnlyImportNames } from './type-elision.js';
-import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
+import {
+  buildCtorParameters,
+  buildPropDecorators,
+  findConstructor,
+} from './jit-metadata.js';
 import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 
 export interface JitTransformResult {
@@ -37,6 +41,69 @@ function findAllClasses(node: any): any[] {
     result.push(...findAllClasses(node[key]));
   }
   return result;
+}
+
+/**
+ * `@Injectable` and `@Service` stay on the class — their decorator functions
+ * self-register ɵprov/ɵfac at class definition time and there is no JIT
+ * compile entry point to call instead.
+ */
+function isSelfRegisteringDecorator(dec: any): boolean {
+  const name: string | undefined = dec.expression?.callee?.name;
+  return name === 'Injectable' || name === 'Service';
+}
+
+/** Remove a decorator along with its trailing whitespace. */
+function removeDecorator(ms: MagicString, sourceCode: string, dec: any): void {
+  let trimEnd: number = dec.end;
+  while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
+    trimEnd++;
+  ms.remove(dec.start, trimEnd);
+}
+
+const DI_PARAM_DECORATORS = new Set([
+  'Inject',
+  'Optional',
+  'Self',
+  'SkipSelf',
+  'Host',
+  'Attribute',
+]);
+const PROVIDER_KEYS = new Set([
+  'useClass',
+  'useExisting',
+  'useFactory',
+  'useValue',
+]);
+
+function ctorParamDecorators(classNode: any): any[] {
+  const ctor = findConstructor(classNode);
+  const params: any[] = ctor?.value?.params?.items || ctor?.value?.params || [];
+  // Decorators may live on the TSParameterProperty wrapper or the inner param
+  return params.flatMap((param: any) => [
+    ...(param.decorators || []),
+    ...(param.type === 'TSParameterProperty' && param.parameter?.decorators
+      ? param.parameter.decorators
+      : []),
+  ]);
+}
+
+/**
+ * Whether an @Injectable/@Service class needs ctorParameters. Skipped when a
+ * provider option replaces the constructor, or when a non-DI parameter
+ * decorator must keep running as written.
+ */
+function needsInjectableCtorParameters(node: any, decorators: any[]): boolean {
+  const dec = decorators.find(isSelfRegisteringDecorator);
+  const options = dec?.expression.arguments?.[0];
+  return (
+    !!dec &&
+    node.type === 'ClassDeclaration' &&
+    !options?.properties?.some((p: any) => PROVIDER_KEYS.has(p.key?.name)) &&
+    ctorParamDecorators(node).every((d: any) =>
+      DI_PARAM_DECORATORS.has(d.expression?.callee?.name),
+    )
+  );
 }
 
 /**
@@ -89,16 +156,32 @@ export function jitTransform(
       const expr = dec.expression;
       if (!expr || expr.type !== 'CallExpression') return false;
       const name: string | undefined = expr.callee?.name;
-      // Keep @Injectable and @Service on the class — their decorator
-      // functions self-register ɵprov/ɵfac at class definition time and
-      // there is no JIT compile entry point to call instead.
-      if (name === 'Injectable' || name === 'Service') return false;
+      if (isSelfRegisteringDecorator(dec)) return false;
       return name !== undefined && ANGULAR_DECORATORS.has(name);
     });
-    if (angularDecs.length === 0) continue;
-
     const className: string | undefined = node.id?.name;
     if (!className) continue;
+
+    if (angularDecs.length === 0) {
+      // @Injectable/@Service keep their decorator, but without a type
+      // checker or emitDecoratorMetadata a param typed only by annotation
+      // has no runtime DI token unless captured in ctorParameters. A class
+      // expression's name is not in scope after it, so only declarations.
+      const ctorParams =
+        needsInjectableCtorParameters(node, decorators) &&
+        buildCtorParameters(node, sourceCode, typeOnlyImports);
+      if (ctorParams) {
+        hasAngularClass = true;
+        for (const dec of ctorParamDecorators(node)) {
+          removeDecorator(ms, sourceCode, dec);
+        }
+        ms.appendLeft(
+          node.end,
+          `\n${className}.ctorParameters = () => [${ctorParams}];\n`,
+        );
+      }
+      continue;
+    }
     hasAngularClass = true;
 
     // Statements emitted for THIS class. Inserted directly after the class
@@ -107,11 +190,7 @@ export function jitTransform(
 
     // 1. Remove Angular decorators from source
     for (const dec of angularDecs) {
-      const start: number = dec.start;
-      let trimEnd: number = dec.end;
-      while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
-        trimEnd++;
-      ms.remove(start, trimEnd);
+      removeDecorator(ms, sourceCode, dec);
     }
 
     // 2. Emit Class.decorators = [{ type: DecName, args: [...] }]
@@ -243,39 +322,12 @@ export function jitTransform(
     //    they have been extracted into static metadata above.
     const members: any[] = node.body?.body || [];
     for (const member of members) {
-      const memberDecs: any[] = member.decorators || [];
-      for (const dec of memberDecs) {
-        const start: number = dec.start;
-        let trimEnd: number = dec.end;
-        while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
-          trimEnd++;
-        ms.remove(start, trimEnd);
+      for (const dec of member.decorators || []) {
+        removeDecorator(ms, sourceCode, dec);
       }
-      // Constructor parameter decorators
-      if (member.type === 'MethodDefinition' && member.kind === 'constructor') {
-        const params: any[] =
-          member.value?.params?.items || member.value?.params || [];
-        for (const param of params) {
-          // Decorators may live on the TSParameterProperty wrapper or the inner param
-          const allParamDecs: any[] = [
-            ...(param.decorators || []),
-            ...(param.type === 'TSParameterProperty' &&
-            param.parameter?.decorators
-              ? param.parameter.decorators
-              : []),
-          ];
-          for (const dec of allParamDecs) {
-            const start: number = dec.start;
-            let trimEnd: number = dec.end;
-            while (
-              trimEnd < sourceCode.length &&
-              /\s/.test(sourceCode[trimEnd])
-            )
-              trimEnd++;
-            ms.remove(start, trimEnd);
-          }
-        }
-      }
+    }
+    for (const dec of ctorParamDecorators(node)) {
+      removeDecorator(ms, sourceCode, dec);
     }
 
     // Insert this class's metadata statements directly after the class body
