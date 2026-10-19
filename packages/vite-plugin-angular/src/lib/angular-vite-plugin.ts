@@ -266,6 +266,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   // keeps Angular's `externalRuntimeStyles: false` path, which preloads
   // hash-remapped styleUrls and throws "Unable to locate component resource".
   let liveReloadProgramHasExternalStyles = false;
+  let activeBuilds = 0;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
   let styleTransform:
@@ -454,6 +455,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         });
       },
       async buildStart() {
+        activeBuilds++;
         // Vite keys its CSS preprocessor worker cache by the top-level resolved
         // config object. Passing `this.environment.config` misses that cache
         // and falls back to a worker Vite never closes, which keeps Vitest
@@ -483,7 +485,11 @@ export function angular(options?: PluginOptions): Plugin[] {
         // `getDiagnosticsForSourceFile` (syntactic-only by default, full
         // semantic + Angular template diagnostics when type checking is on),
         // so reporting itself is unconditional.
-        if (watchMode) {
+        // Environments (e.g. client and ssr) build in parallel and share this
+        // plugin's compilation state, so only report and reset after the last
+        // one ends.
+        activeBuilds = Math.max(0, activeBuilds - 1);
+        if (watchMode || activeBuilds > 0) {
           return;
         }
 
