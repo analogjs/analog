@@ -104,7 +104,10 @@ export function depsPlugin(options?: Options): Plugin[] {
           isBuild: command === 'build',
           viteUserConfig: config,
           isSemiFrameworkPkgByJson(pkgJson) {
-            return pkgJson['module'] && pkgJson['module'].includes('fesm');
+            return (
+              !!pkgJson['peerDependencies']?.['@angular/core'] ||
+              !!pkgJson['module']?.includes('fesm')
+            );
           },
         });
         return pkgConfig;
