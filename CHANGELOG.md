@@ -1,3 +1,9 @@
+# [3.0.0-beta.3](https://github.com/analogjs/analog/compare/v3.0.0-beta.2...v3.0.0-beta.3) (2026-10-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** run setup-vitest migration without @nx/devkit ([#2659](https://github.com/analogjs/analog/issues/2659)) ([4863e70](https://github.com/analogjs/analog/commit/4863e708b09c3c7bed495395b3b6adc211257804))
+
 # [3.0.0-beta.2](https://github.com/analogjs/analog/compare/v3.0.0-beta.1...v3.0.0-beta.2) (2026-10-19)
 
 ### Bug Fixes
