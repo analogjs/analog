@@ -1,3 +1,10 @@
+# [3.0.0-beta.4](https://github.com/analogjs/analog/compare/v3.0.0-beta.3...v3.0.0-beta.4) (2026-10-19)
+
+### Bug Fixes
+
+- **platform:** bundle exports-only Angular libraries for SSR ([#2662](https://github.com/analogjs/analog/issues/2662)) ([f08b0a1](https://github.com/analogjs/analog/commit/f08b0a15aafc324dc7b64398bfe7896d0f0824df))
+- **vite-plugin-angular:** resolve builder outputPath from workspace root ([#2663](https://github.com/analogjs/analog/issues/2663)) ([567c3eb](https://github.com/analogjs/analog/commit/567c3eb28e87a9ee7a0738c4f000f31d0cf6b6a1))
+
 # [3.0.0-beta.3](https://github.com/analogjs/analog/compare/v3.0.0-beta.2...v3.0.0-beta.3) (2026-10-19)
 
 ### Bug Fixes
