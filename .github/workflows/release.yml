@@ -6,6 +6,7 @@ on:
       - beta
       - main
       - alpha
+      - 2.x
 
 permissions:
   contents: read # for checkout
@@ -44,5 +45,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="$(${{ github.ref_name == 'main' }} && echo 'latest' || echo '${{ github.ref_name }}')"
+          TAG="$(${{ github.ref_name == 'main' || github.ref_name == '2.x' }} && echo 'latest' || echo '${{ github.ref_name }}')"
           RELEASE_TAG=$TAG npx semantic-release
