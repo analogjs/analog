@@ -37,7 +37,23 @@ function getCallApi(call: any): { api: string; required: boolean } | null {
  * Returns `null` if the node is not statically resolvable.
  */
 function stringValue(node: any, consts?: Map<string, string>): string | null {
+  // Type-only wrappers such as `'x' as const` and parentheses don't change the value.
+  while (
+    node?.type === 'TSAsExpression' ||
+    node?.type === 'TSSatisfiesExpression' ||
+    node?.type === 'ParenthesizedExpression'
+  )
+    node = node.expression;
   if (node?.type === 'StringLiteral') return node.value;
+  if (node?.type === 'BinaryExpression' && node.operator === '+') {
+    const operand = (n: any) =>
+      n?.type === 'Identifier'
+        ? (consts?.get(n.name) ?? null)
+        : stringValue(n, consts);
+    const left = operand(node.left);
+    const right = left === null ? null : operand(node.right);
+    return right === null ? null : left + right;
+  }
   if (node?.type === 'Literal' && typeof node.value === 'string')
     return node.value;
   if (node?.type === 'TemplateLiteral') {
@@ -121,6 +137,12 @@ function propKeyName(prop: any): string | null {
   return prop.key.name ?? prop.key.value ?? null;
 }
 
+/** Resolve a host key or value to a string literal or same-file string const. */
+function hostString(node: any, consts?: Map<string, string>): string | null {
+  if (node?.type === 'Identifier') return consts?.get(node.name) ?? null;
+  return stringValue(node, consts);
+}
+
 /**
  * Extract decorator metadata from an OXC decorator AST node.
  * Parses @Component, @Directive, @Pipe, @Injectable, @Service, @NgModule arguments.
@@ -171,22 +193,21 @@ export function extractMetadata(
       case 'host':
         if (valNode.type === 'ObjectExpression') {
           for (const hp of valNode.properties || []) {
-            if (hp.type !== 'ObjectProperty' && hp.type !== 'Property')
-              continue;
-            const hKey = propKeyName(hp);
-            if (!hKey) continue;
-            // Prefer the parsed string value so embedded quotes (e.g. the
-            // empty `""` in `'expr ? "" : null'`) survive. Falling back to
-            // the source slice for non-string values keeps prior behavior
-            // for unusual host bindings (e.g. references to constants).
-            const sv = stringValue(hp.value, stringConsts);
-            const hVal =
-              sv !== null
-                ? sv
-                : sourceCode
-                    .slice(hp.value.start, hp.value.end)
-                    .replace(/^['"`]|['"`]$/g, '');
-            meta.hostRaw[hKey.replace(/^['"`]|['"`]$/g, '')] = hVal;
+            const hKey = hp.computed
+              ? hostString(hp.key, stringConsts)
+              : propKeyName(hp);
+            const hVal = hostString(hp.value, stringConsts);
+            // Spreads, imported constants, and other expressions cannot be
+            // evaluated without a ts.Program; fail instead of emitting the
+            // identifier name as the binding.
+            if (hKey === null || hVal === null) {
+              throw new Error(
+                `[fast-compile] Cannot statically resolve host binding \`${sourceCode.slice(hp.start, hp.end)}\`. ` +
+                  'Only string literals and string constants declared in the same file are supported; ' +
+                  'use a string literal or @HostBinding/@HostListener instead.',
+              );
+            }
+            meta.hostRaw[String(hKey).replace(/^['"`]|['"`]$/g, '')] = hVal;
           }
         }
         break;

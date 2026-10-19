@@ -1318,7 +1318,8 @@ export function angular(options?: PluginOptions): Plugin[] {
             // large inline style can't produce an over-long filename (#2459).
             data = data.replace(
               /angular:jit:style:inline;([A-Za-z0-9+/=]*)/g,
-              (_match, encodedStyles) => toJitInlineStyleId(encodedStyles),
+              (_match, encodedStyles) =>
+                toJitInlineStyleId(encodedStyles, isTest),
             );
 
             // Templates use virtual ids (no extension) so Vite's asset/CSS

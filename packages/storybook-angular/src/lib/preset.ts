@@ -125,6 +125,8 @@ export const viteFinal = async (config: any, options: any): Promise<any> => {
           typeof frameworkOptions.inlineStylesExtension !== 'undefined'
             ? frameworkOptions.inlineStylesExtension
             : 'css',
+        fastCompile: frameworkOptions.fastCompile,
+        fastCompileMode: frameworkOptions.fastCompileMode,
       }),
       angularOptionsPlugin(options, {
         normalizePath: vite.normalizePath,

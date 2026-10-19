@@ -27,6 +27,10 @@ export type FrameworkOptions = {
   tsconfig?: string;
   /** Bootstrap stories without Zone.js. */
   experimentalZoneless?: boolean;
+  /** Use the fast compile path of `@analogjs/vite-plugin-angular`. Defaults to `false`. */
+  fastCompile?: boolean;
+  /** Compilation output mode when `fastCompile` is enabled. Defaults to `'full'`. */
+  fastCompileMode?: 'full' | 'partial';
 };
 
 type StorybookConfigFramework = {

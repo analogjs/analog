@@ -239,6 +239,26 @@ To use zoneless change detection for the Storybook, add the `experimentalZoneles
 
 > Zoneless change detection is the default for new projects starting Angular v21.
 
+## Enabling Fast Compilation
+
+To speed up Storybook startup and rebuilds, enable [fast compile](/docs/guides/angular-compilation) in the `framework` options in `.storybook/main.ts`.
+
+```ts
+const config: StorybookConfig = {
+  // other config, addons, etc.
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {
+      fastCompile: true,
+    },
+  },
+};
+
+export default config;
+```
+
+Fast compile skips Angular's template type-checking, so run type-checking separately if needed.
+
 ## Setting up Static Assets
 
 Static assets are configured in the `.storybook/main.ts` file using the `staticDirs` array.

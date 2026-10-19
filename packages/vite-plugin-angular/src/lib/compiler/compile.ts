@@ -1410,9 +1410,10 @@ export function compile(
           nonHoistableNames.add(name);
         }
       } else {
-        const text = stmt.getText(origSourceFile);
-        ms.remove(stmtStart, stmt.getEnd());
-        ms.appendLeft(firstClassPos, text + '\n');
+        // Move rather than re-insert so the statement keeps its source map.
+        // The separating newline is attached to the moved chunk.
+        ms.appendLeft(stmt.getEnd(), '\n');
+        ms.move(stmtStart, stmt.getEnd(), firstClassPos);
       }
     }
   }

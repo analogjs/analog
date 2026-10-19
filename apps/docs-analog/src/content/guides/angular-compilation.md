@@ -92,6 +92,7 @@ export default defineConfig({
 | Cross-file selector resolution               | ✅ Via an in-tree component registry                            |
 | Library / partial builds (`fastCompileMode`) | ✅ Emits partial declarations for library publishing            |
 | Compile-time template type checking          | ❌ Use the Angular Language Service in your editor              |
+| `host` keys/values from imported constants   | ❌ Use a string literal, a same-file `const`, or `@HostBinding` |
 
 ### Boundary blocks
 

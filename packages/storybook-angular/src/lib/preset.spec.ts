@@ -340,6 +340,44 @@ describe('viteFinal', () => {
     });
   });
 
+  describe('angular plugin options', () => {
+    const importWithAngularPluginSpy = async () => {
+      const angular = vi.fn(() => ({ name: 'angular-mock' }));
+      vi.resetModules();
+      registerDependencyMocks();
+      vi.doMock('@analogjs/vite-plugin-angular', () => ({ default: angular }));
+      const mod = await import('./preset');
+      return { angular, viteFinal: mod.viteFinal };
+    };
+
+    it('should forward fastCompile options from framework options', async () => {
+      const { angular, viteFinal } = await importWithAngularPluginSpy();
+      await viteFinal(
+        baseConfig,
+        makeOptions({ fastCompile: true, fastCompileMode: 'partial' }),
+      );
+
+      expect(angular).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fastCompile: true,
+          fastCompileMode: 'partial',
+        }),
+      );
+    });
+
+    it('should leave fastCompile options unset by default', async () => {
+      const { angular, viteFinal } = await importWithAngularPluginSpy();
+      await viteFinal(baseConfig, makeOptions({}));
+
+      expect(angular).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fastCompile: undefined,
+          fastCompileMode: undefined,
+        }),
+      );
+    });
+  });
+
   describe('when angularBuilderContext is undefined', () => {
     it('should not crash during plugin initialization', async () => {
       const config = { plugins: [] };

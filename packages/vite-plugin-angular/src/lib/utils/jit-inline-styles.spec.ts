@@ -12,7 +12,7 @@ describe('toJitInlineStyleId', () => {
       `.a { color: red; }`.repeat(1000),
     ).toString('base64');
 
-    const id = toJitInlineStyleId(encodedStyles);
+    const id = toJitInlineStyleId(encodedStyles, false);
 
     expect(id.startsWith(JIT_INLINE_STYLE_PREFIX)).toBe(true);
     expect(id.length).toBeLessThan(255);
@@ -21,13 +21,21 @@ describe('toJitInlineStyleId', () => {
   it('resolves the hashed id back to the encoded styles', () => {
     const encodedStyles = Buffer.from(`.b { color: blue; }`).toString('base64');
 
-    const id = toJitInlineStyleId(encodedStyles);
+    const id = toJitInlineStyleId(encodedStyles, false);
     const hash = id.split('style:inline;')[1];
 
     expect(getJitInlineStyles(hash)).toBe(encodedStyles);
   });
 
-  it('returns undefined for an unknown hash', () => {
-    expect(getJitInlineStyles('deadbeefdeadbeef')).toBeUndefined();
+  it('keeps the payload in test ids so a fresh process can load them (#2613)', () => {
+    const encodedStyles =
+      Buffer.from(`.c { color: green; }`).toString('base64');
+
+    const id = toJitInlineStyleId(encodedStyles, true);
+
+    expect(id).toBe(`${JIT_INLINE_STYLE_PREFIX}${encodedStyles}`);
+    expect(getJitInlineStyles(id.split('style:inline;')[1])).toBe(
+      encodedStyles,
+    );
   });
 });
