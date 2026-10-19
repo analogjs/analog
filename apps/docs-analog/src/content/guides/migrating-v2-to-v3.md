@@ -5,6 +5,46 @@ import TabItem from '@theme/TabItem';
 
 For an existing Analog v2 project, update the packages first and then work through the v3 breaking changes that apply to your app.
 
+## Migrating with an AI agent
+
+To have a coding agent run the migration, copy this prompt into it from the root of your workspace:
+
+```text
+Upgrade this Analog v2 workspace to Analog v3 by following
+https://analogjs.org/docs/guides/migrating-v2-to-v3.
+
+Work in this order and stop to report if any step fails:
+
+1. Preflight: confirm the workspace is on Angular v20+, Node ^22.18.0 || ^24.3.0,
+   Vitest 4+, and Nx 23.2+ (if Nx is used). If Angular is older than v20, stop and
+   tell me. Analog v3 doesn't support it.
+2. Run the official updater first: `ng update @analogjs/platform@latest` or
+   `nx migrate @analogjs/platform@latest` (then `nx migrate --run-migrations`).
+   Don't hand-edit anything the migrations already handle.
+3. For each Vite config that uses `analog()`, split it into `analog()`,
+   `angular()` from `@analogjs/vite-plugin-angular`, and `nitro()` from
+   `@analogjs/vite-plugin-nitro`. Move each option to the plugin that owns it,
+   using the "Options that moved off analog()" table. Add both packages to
+   devDependencies. If an app already imports `nitro()` from `nitro/vite`,
+   leave it on Nitro v3.
+4. Work through each checklist section of the guide that applies to this
+   codebase. Search for each removed API, import, option, builder, and folder
+   it names before deciding a section doesn't apply.
+5. Make only the changes the guide describes. Don't upgrade unrelated
+   dependencies, refactor code, or add new features.
+6. Verify: install dependencies, then run build, test, and lint for every
+   affected project. Fix any failures the migration caused.
+
+When you're done, give me:
+- the changes you made, grouped by checklist section
+- the items the guide says need a manual decision that you didn't change:
+  `@analogjs/trpc`, the experimental Analog Compiler options, `FormAction`
+  forms that rely on non-enhanced behavior, `app/routes` folders, references to
+  `injectRouter` that aren't calls, custom base-href deployments, and custom
+  `ContentRenderer` implementations
+- any build, test, or lint failures that are still open
+```
+
 ## Update the workspace packages
 
 Use the standard Analog update flow for your workspace type:
