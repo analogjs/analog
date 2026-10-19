@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Migrating from Analog v2 to v3
 
 For an existing Analog v2 project, update the packages first and then work through the v3 breaking changes that apply to your app.
