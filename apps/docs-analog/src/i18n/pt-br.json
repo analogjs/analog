@@ -59,6 +59,8 @@
   "sidebar.testing-vitest": "Testes com Vitest",
   "sidebar.setting-up-vitest": "Configurando o Vitest",
   "sidebar.updating": "Atualizando",
+  "sidebar.migrating-v2-to-v3": "Migrar da v2 para a v3",
+  "sidebar.migrating-v1-to-v2": "Migrar da v1 para a v2",
   "sidebar.guides": "Guias",
   "sidebar.migrating": "Migrar um app Angular para Analog",
   "sidebar.libraries": "Criar uma biblioteca Angular",
