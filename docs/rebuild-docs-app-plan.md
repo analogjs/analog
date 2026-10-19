@@ -34,7 +34,7 @@ Analog for the entire public site (marketing + docs + all 7 locales).
 - Catchall child at `src/app/pages/docs/[...slug].page.ts` resolves the slug
   via `injectContent()`
 - Same pattern under `src/app/pages/[locale]/docs/...`; `[locale]` flows into
-  `withLocale({ loadLocale: () => injectActivatedRoute().snapshot.params['locale'] })`
+  `withLocale({ loadLocale: () => inject(ActivatedRoute).snapshot.params['locale'] })`
 - Nitro `prerender` enumerates all routes from `src/content/**/*.md`; output
   is pure SSG
 - Homepage and marketing pages are normal Analog page components

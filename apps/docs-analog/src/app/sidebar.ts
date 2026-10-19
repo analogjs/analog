@@ -261,6 +261,11 @@ export function getSidebar(): SidebarNode[] {
         },
         {
           kind: 'doc',
+          id: 'integrations/tailwind/index',
+          label: $localize`:@@sidebar.tailwind:Tailwind CSS`,
+        },
+        {
+          kind: 'doc',
           id: 'integrations/tanstack-query/index',
           label: $localize`:@@sidebar.tanstack-query:TanStack Query`,
         },

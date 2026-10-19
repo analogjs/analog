@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   return {
     test: {
       globals: true,
-      environment: 'jsdom',
+      environment: 'node',
       include: ['__tests__/**/*.spec.ts'],
       reporters: ['default'],
     },

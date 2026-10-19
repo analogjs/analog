@@ -1,5 +1,4 @@
 import {
-  convertNxGenerator,
   formatFiles,
   generateFiles,
   getWorkspaceLayout,
@@ -8,6 +7,7 @@ import {
   stripIndents,
   Tree,
 } from '@nx/devkit';
+import { camelCase } from 'es-toolkit';
 import { join } from 'node:path';
 import { AnalogPageGeneratorSchema, NormalizedSchema } from './schema';
 
@@ -27,10 +27,7 @@ function generateFileName(input: string) {
   if (pattern.test(input)) {
     return input.replace(/\[[a-zA-Z0-9-]+\]/, (match) => {
       const wordId = match.slice(1, -1);
-      const camelCaseWordId = wordId.replace(/-([a-zA-Z0-9])/g, (_, letter) =>
-        letter.toUpperCase(),
-      );
-      return `[${camelCaseWordId}]`;
+      return `[${camelCase(wordId)}]`;
     });
   } else {
     return input;
@@ -56,10 +53,10 @@ function addFiles(tree: Tree, options: NormalizedSchema) {
   generateFiles(tree, join(__dirname, 'files'), pageDir, templateOptions);
 }
 
-export async function analogPageGenerator(
+async function analogPageGenerator(
   tree: Tree,
   options: AnalogPageGeneratorSchema,
-) {
+): Promise<void> {
   const normalizedOptions = normalizeOptions(tree, options);
   if (options.redirectPage && !options.redirectPath) {
     throw new Error(
@@ -70,8 +67,5 @@ export async function analogPageGenerator(
 
   await formatFiles(tree);
 }
-
-export const analogPageGeneratorSchematic =
-  convertNxGenerator(analogPageGenerator);
 
 export default analogPageGenerator;

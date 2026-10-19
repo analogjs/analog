@@ -28,7 +28,11 @@ function addFiles(
 ) {
   const isNx = tree.read('/nx.json');
   const projects = getProjects(tree);
-  const projectConfig = projects.get(options.project)!;
+  const projectConfig = projects.get(options.project);
+
+  if (!projectConfig) {
+    throw new Error(`Project "${options.project}" not found.`);
+  }
 
   const templateOptions = {
     ...options,
@@ -56,16 +60,27 @@ function addFiles(
   }
 }
 
-export async function setupAnalogGenerator(
+async function setupAnalogGenerator(
   tree: Tree,
   options: SetupAnalogGeneratorSchema,
-) {
+): Promise<() => void> {
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
-  const majorAngularVersion = major(coerce(angularVersion!)!);
+
+  if (!angularVersion) {
+    throw new Error('@angular/core is not installed.');
+  }
+
+  const coercedVersion = coerce(angularVersion);
+
+  if (!coercedVersion) {
+    throw new Error(`Unable to coerce Angular version: ${angularVersion}`);
+  }
+
+  const majorAngularVersion = major(coercedVersion);
   addAnalogDependencies(
     tree,
-    angularVersion!,
+    angularVersion,
     options.vitest,
     nxVersion ?? undefined,
   );

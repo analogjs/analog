@@ -3,6 +3,7 @@ import { ServerResponse } from 'node:http';
 import { Connect, normalizePath, Plugin, ViteDevServer } from 'vite';
 
 import { EmitFileResult } from './models.js';
+import { debugHmr } from './utils/debug.js';
 
 const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
 const FILE_PREFIX = 'file:';
@@ -18,6 +19,11 @@ export function liveReloadPlugin({
     name: 'analogjs-live-reload-plugin',
     apply: 'serve',
     configureServer(server: ViteDevServer) {
+      if (server.config.server.hmr === false) {
+        debugHmr('middleware disabled: vite server.hmr is false');
+        return;
+      }
+
       const angularComponentMiddleware: Connect.HandleFunction = async (
         req: Connect.IncomingMessage,
         res: ServerResponse<Connect.IncomingMessage>,
@@ -51,6 +57,7 @@ export function liveReloadPlugin({
 
         // don't send an HMR update until the file has been invalidated
         if (!invalidated) {
+          debugHmr('middleware: skipped (not invalidated)', { resolvedId });
           res.setHeader('Content-Type', 'text/javascript');
           res.setHeader('Cache-Control', 'no-cache');
           res.end('');
@@ -58,6 +65,10 @@ export function liveReloadPlugin({
         }
 
         const result = fileEmitter(resolvedId);
+        debugHmr('middleware: served component update', {
+          resolvedId,
+          hasCode: !!result?.hmrUpdateCode,
+        });
         res.setHeader('Content-Type', 'text/javascript');
         res.setHeader('Cache-Control', 'no-cache');
         res.end(`${result?.hmrUpdateCode || ''}`);

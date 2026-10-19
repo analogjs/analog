@@ -562,7 +562,7 @@ describe('JIT Transform', () => {
       // Simulate: the JIT transform output is evaluated and produces a class
       // with static decorators/ctorParameters/propDecorators
       class TestComp {
-        title: string = '';
+        title = '';
         saved: any;
       }
       (TestComp as any).decorators = [

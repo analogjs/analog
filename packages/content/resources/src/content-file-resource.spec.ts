@@ -2,11 +2,13 @@ import { Injectable, InjectionToken, Signal, signal } from '@angular/core';
 import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { CONTENT_FILE_LOADER, ContentRenderer } from '@analogjs/content';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import { of } from 'rxjs';
-import { expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { contentFileResource } from './content-file-resource';
+import { CONTENT_FILE_LOADER } from '../../src/lib/content-file-loader';
+import { ContentRenderer } from '../../src/lib/content-renderer';
 
 const TEST_RESOURCE_TOKEN = new InjectionToken<
   ReturnType<typeof contentFileResource>
@@ -60,7 +62,7 @@ Body content`),
 
   it('returns empty toc for module/object content', async () => {
     const contentFiles = {
-      '/src/content/object-content.agx': () =>
+      '/src/content/object-content.md': () =>
         Promise.resolve({
           default: '<h1>Heading</h1>',
           metadata: { slug: 'object-content' },
@@ -173,6 +175,121 @@ slug: 'docs/reference/api/nested/content'
       toc: [{ id: 'nested-content', level: 1, text: 'Nested Content' }],
     });
   });
+
+  it('supports async schema validation', async () => {
+    const contentFiles = {
+      '/src/content/blog/post.md': () =>
+        Promise.resolve(`---
+title: Hello World
+---
+# Blog Post`),
+    };
+    const schema: StandardSchemaV1<unknown, { title: string; slug: string }> = {
+      '~standard': {
+        version: 1,
+        vendor: 'test',
+        validate: async (value) => {
+          const frontmatter = value as { title: string };
+          return {
+            value: {
+              title: frontmatter.title,
+              slug: 'hello-world',
+            },
+          };
+        },
+      },
+    };
+
+    setup({
+      routeParams: { slug: 'blog/post' },
+      contentFiles,
+      schema,
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    await settleResource(result);
+
+    expect(result.value()).toEqual({
+      filename: '/src/content/blog/post',
+      slug: 'blog/post',
+      attributes: { title: 'Hello World', slug: 'hello-world' },
+      content: '# Blog Post',
+      toc: [{ id: 'blog-post', level: 1, text: 'Blog Post' }],
+    });
+  });
+
+  it('validates module metadata when a schema is provided', async () => {
+    const contentFiles = {
+      '/src/content/guides/intro.md': () =>
+        Promise.resolve({
+          default: '<h1>Intro</h1>',
+          metadata: { title: 'Intro' },
+        }),
+    };
+    const schema: StandardSchemaV1<unknown, { title: string; slug: string }> = {
+      '~standard': {
+        version: 1,
+        vendor: 'test',
+        validate: async (value) => {
+          const frontmatter = value as { title: string };
+          return {
+            value: {
+              title: frontmatter.title,
+              slug: 'intro',
+            },
+          };
+        },
+      },
+    };
+
+    setup({
+      routeParams: { slug: 'guides/intro' },
+      contentFiles,
+      schema,
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    await settleResource(result);
+
+    expect(result.value()).toEqual({
+      filename: '/src/content/guides/intro',
+      slug: 'guides/intro',
+      attributes: { title: 'Intro', slug: 'intro' },
+      content: '<h1>Intro</h1>',
+      toc: [],
+    });
+  });
+
+  it('throws FrontmatterValidationError for invalid module metadata', async () => {
+    const contentFiles = {
+      '/src/content/guides/intro.md': () =>
+        Promise.resolve({
+          default: '<h1>Intro</h1>',
+          metadata: {},
+        }),
+    };
+    const schema: StandardSchemaV1 = {
+      '~standard': {
+        version: 1,
+        vendor: 'test',
+        validate: async () => ({
+          issues: [{ message: 'Title is required', path: ['title'] }],
+        }),
+      },
+    };
+
+    setup({
+      routeParams: { slug: 'guides/intro' },
+      contentFiles,
+      schema,
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+
+    await expect(settleResource(result)).rejects.toThrow(
+      '"guides/intro.md" frontmatter validation failed',
+    );
+  });
 });
 
 function setup(args: {
@@ -182,6 +299,7 @@ function setup(args: {
     () => Promise<string | { default: any; metadata: any }>
   >;
   params?: Signal<string | { customFilename: string }>;
+  schema?: StandardSchemaV1;
 }) {
   TestBed.configureTestingModule({
     providers: [
@@ -202,7 +320,10 @@ function setup(args: {
       },
       {
         provide: TEST_RESOURCE_TOKEN,
-        useFactory: () => contentFileResource(args.params),
+        useFactory: () =>
+          args.schema
+            ? contentFileResource({ params: args.params, schema: args.schema })
+            : contentFileResource(args.params),
       },
     ],
   });

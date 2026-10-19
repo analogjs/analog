@@ -119,7 +119,6 @@ describe('watcher scope', () => {
     for (const app of ['other', 'app-extra']) {
       for (const file of [
         'src/app/pages/about.page.ts',
-        'app/routes/about.ts',
         'src/content/post.md',
       ]) {
         const path = `/workspace/apps/${app}/${file}`;

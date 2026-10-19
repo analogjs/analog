@@ -2,8 +2,13 @@
 
 Analog supports server-side handling of form submissions and validation.
 
-<div class="video-container">
-  <div class="video-responsive-wrapper">
+`FormAction` is a good fit when you want progressive-enhancement-style form
+submissions that post directly to a page action. If you need client-managed
+mutation state, cache invalidation, or optimistic updates, use TanStack Query
+mutations against an Analog server route instead.
+
+<div className="video-container">
+  <div className="video-responsive-wrapper">
     <iframe
       width="560"
       height="315"
@@ -79,18 +84,15 @@ export default class NewsletterComponent {
 
 The `FormAction` directive submits the form data to the server, which is processed by its handler.
 
-### Opting Into Enhanced Forms
+### Enhanced Forms
 
-Set `[enhanceForm]="true"` to enable enhanced form handling. It defaults to
-`false` in v2, so existing forms keep their current behavior. Enhanced handling
-is planned to become the default in v3; `[enhanceForm]="false"` explicitly selects
-the existing behavior.
+Enhanced form handling is enabled by default. Set `[enhanceForm]="false"` to
+opt out and keep the previous behavior.
 
 ```html
 <form
   method="post"
   action="/api/newsletter"
-  [enhanceForm]="true"
   (onSuccess)="onSuccess($event)"
   (onError)="onError($event)"
 >
@@ -99,8 +101,8 @@ the existing behavior.
 </form>
 ```
 
-Import `FormAction` in the component's `imports`, as with existing forms. The
-flag configures the same directive. It enables all of the following:
+Import `FormAction` in the component's `imports`. Enhanced handling includes all
+of the following:
 
 - Use `action` or `[action]` as the submission destination. Without an action,
   POST uses the current page endpoint and GET uses the current route.
@@ -119,20 +121,27 @@ enabled. Disabling it restores the previous attribute values. Use the `state`
 output to track progress in either mode; `FormActionState` is exported for typing
 state handlers.
 
-With the flag omitted or set to `false`, forms retain beta's page endpoint,
-GET query replacement and last-value handling for repeated fields, and
-pathname-only Angular redirects. The directive does not modify state attributes.
+With `[enhanceForm]="false"`, forms use the current page endpoint, GET query
+replacement and last-value handling for repeated fields, and pathname-only
+Angular redirects. The directive does not modify state attributes.
 
 ## Handling the Form Action
 
 To handle the form action, define the `.server.ts` alongside the `.page.ts` file that contains the async `action` function to process the form submission.
 
-In the server action, you can use access environment variables, read cookies, and perform other server-side only operations.
+In the server action, you can access environment variables, read cookies, and perform other server-side only operations.
 
 ```ts
 // src/app/pages/newsletter.server.ts
+import {
+  type PageServerAction,
+  redirect,
+  json,
+  fail,
+} from '@analogjs/router/server/actions';
+
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -249,7 +258,7 @@ In the server action, use the `action` value.
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -292,17 +301,72 @@ export default class NewsletterComponent {
 }
 ```
 
-The query parameter can be accessed through the server form action.
+The query parameter can be accessed through the server load function.
 
 ```ts
 // src/app/pages/search.server.ts
+import type { PageServerLoad } from '@analogjs/router';
+
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm,
   };
+}
+```
+
+## TanStack Query Mutations
+
+When a form submission needs to invalidate cached queries or participate in a
+broader client-side server-state flow, use `injectMutation` with an Analog
+server route.
+
+```ts
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
+import { lastValueFrom } from 'rxjs';
+import {
+  QueryClient,
+  injectMutation,
+} from '@tanstack/angular-query-experimental';
+
+@Component({
+  template: `
+    <button type="button" (click)="save()">Save</button>
+    @if (error()) {
+      <p>{{ error() }}</p>
+    }
+  `,
+})
+export default class MutationExampleComponent {
+  private readonly http = inject(HttpClient);
+  private readonly queryClient = inject(QueryClient);
+
+  readonly error = signal('');
+
+  readonly mutation = injectMutation(() => ({
+    mutationFn: () =>
+      lastValueFrom(
+        this.http.post('/api/v1/query-todos', {
+          scope: 'docs',
+          title: 'Write docs',
+        }),
+      ),
+    onSuccess: () =>
+      this.queryClient.invalidateQueries({
+        queryKey: ['analog-query-todos', 'docs'],
+      }),
+    onError: (err: HttpErrorResponse) => {
+      this.error.set(err.message);
+    },
+  }));
+
+  save() {
+    this.error.set('');
+    this.mutation.mutate();
+  }
 }
 ```

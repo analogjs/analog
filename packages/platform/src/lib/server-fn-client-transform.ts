@@ -1,7 +1,7 @@
 import { parseSync } from 'oxc-parser';
 // Light subpath (no vite/nitro barrel): the built scrub is loaded outside a
 // build too, so it must not pull the plugin graph in.
-import { deriveServerFnId } from '@analogjs/vite-plugin-nitro/server-fn-id';
+import { deriveServerFnId } from './server-fn-id.js';
 
 /**
  * Client-build scrub + proxy generation for server functions.

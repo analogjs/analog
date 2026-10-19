@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-test',
+  selector: 'lib-test',
   standalone: true,
   template: `<p>shared test page works</p>`,
 })

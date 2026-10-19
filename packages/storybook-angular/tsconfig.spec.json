@@ -4,7 +4,8 @@
     "types": ["webpack-env", "node"],
     "typeRoots": ["../../node_modules/@types", "node_modules/@types"],
     "allowJs": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "composite": false
   },
   "include": ["**/*.test.ts", "**/*.d.ts"]
 }

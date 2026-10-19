@@ -14,7 +14,7 @@ import type { ServerContext } from '@analogjs/router/tokens';
  * Nuxt's bot bypass — streaming targets interactive clients, bots get the
  * buffered path whose head is byte-identical to the classic `render()`.
  */
-export const SSR_BOT_RE =
+export const SSR_BOT_RE: RegExp =
   /bot|crawl|spider|slurp|mediapartners|facebookexternalhit|embedly|quora link preview|outbrain|pinterest|vkshare|w3c_validator|whatsapp|telegrambot|lighthouse|google-inspectiontool|headlesschrome|bingpreview/i;
 
 export function isLikelyBot(serverContext: ServerContext): boolean {
@@ -27,12 +27,18 @@ export function isLikelyBot(serverContext: ServerContext): boolean {
  * rule. The platform plugin translates that rule into an `x-analog-no-streaming`
  * response header (mirroring how `ssr: false` becomes `x-analog-no-ssr`); when
  * present, `renderStream` produces the buffered `render()` output for this
- * route instead of streaming.
+ * route instead of streaming. On Nitro v3, which renders without a Node
+ * response, the header is forwarded on the request instead.
  */
 export function streamingDisabledByRoute(
   serverContext: ServerContext,
 ): boolean {
-  return serverContext.streaming === undefined
-    ? serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true'
-    : !serverContext.streaming;
+  if (serverContext?.streaming !== undefined) {
+    return !serverContext.streaming;
+  }
+
+  return (
+    serverContext?.res?.getHeader?.('x-analog-no-streaming') === 'true' ||
+    serverContext?.req?.headers?.['x-analog-no-streaming'] === 'true'
+  );
 }

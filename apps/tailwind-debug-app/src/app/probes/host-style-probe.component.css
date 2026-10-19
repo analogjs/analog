@@ -1,0 +1,17 @@
+@reference "../../styles.css";
+
+:host {
+  @apply tdbg:block tdbg:rounded-[2rem] tdbg:border tdbg:border-emerald-400/30 tdbg:bg-emerald-600 tdbg:p-8 tdbg:text-white tdbg:shadow-2xl tdbg:shadow-emerald-950/40;
+}
+
+.host-probe-kicker {
+  @apply tdbg:mb-3 tdbg:text-xs tdbg:font-bold tdbg:uppercase tdbg:tracking-[0.28em] tdbg:text-white/75;
+}
+
+.host-probe-title {
+  @apply tdbg:text-3xl tdbg:font-semibold tdbg:tracking-tight;
+}
+
+.host-probe-copy {
+  @apply tdbg:mt-4 tdbg:max-w-2xl tdbg:text-sm tdbg:leading-7 tdbg:text-white/85;
+}

@@ -10,11 +10,11 @@ Die Tabelle zeigt die Mindestversion von Nx, die unterstützte Angular-Version u
 
 | Nx Version _(min)_ | Angular Version | Analog Version | Vite Version |
 | ------------------ | --------------- | -------------- | ------------ |
-| 18.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
-| 17.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
-| 16.1.0             | ^16.1.0         | **latest**     | ^5.0.0       |
-| 16.0.0             | ~15.2.X         | **latest**     | ^5.0.0       |
-| 15.2.0             | ~15.2.X         | **latest**     | ^5.0.0       |
+| 18.0.0             | ^17.0.0         | **latest**     | ^6.0.0       |
+| 17.0.0             | ^17.0.0         | **latest**     | ^6.0.0       |
+| 16.1.0             | ^16.1.0         | **latest**     | ^6.0.0       |
+| 16.0.0             | ~15.2.X         | **latest**     | ^6.0.0       |
+| 15.2.0             | ~15.2.X         | **latest**     | ^6.0.0       |
 
 Zusätzlich kann der [Leitfaden von Nx](https://nx.dev/packages/angular/documents/angular-nx-version-matrix) geprüft werden
 um mehr über die Kompatibilität von Nx und Angular zu erfahren.

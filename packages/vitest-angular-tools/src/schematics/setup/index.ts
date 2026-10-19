@@ -17,6 +17,7 @@ import {
   getWorkspace,
   getProject,
   addDevDependencies,
+  isNxWorkspace,
 } from '../utils';
 import { Schema } from './schema';
 
@@ -82,12 +83,14 @@ function updateAngularJson(tree: Tree, projectName: string): void {
 function generateFiles(
   projectRoot: string,
   majorAngularVersion: number,
+  isNx: boolean,
   browserMode: boolean,
 ): Rule {
   return mergeWith(
     apply(url('./files'), [
       applyTemplates({
         majorAngularVersion,
+        isNx,
         browserMode,
       }),
       move(projectRoot),
@@ -103,6 +106,7 @@ export function setupSchematic(options: Schema): Rule {
     const workspace = getWorkspace(tree);
     const project = getProject(workspace, options.project);
     const projectRoot = project.root || '';
+    const isNx = isNxWorkspace(tree);
 
     const browserMode = options.browserMode ?? false;
 
@@ -120,7 +124,7 @@ export function setupSchematic(options: Schema): Rule {
 
     // Generate files
     return chain([
-      generateFiles(projectRoot, majorAngularVersion, browserMode),
+      generateFiles(projectRoot, majorAngularVersion, isNx, browserMode),
     ]);
   };
 }

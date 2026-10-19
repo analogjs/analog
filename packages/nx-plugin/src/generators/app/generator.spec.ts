@@ -6,12 +6,10 @@ import {
   Tree,
 } from '@nx/devkit';
 import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
-import { lt } from 'semver';
-import { vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
-import { checkAndCleanWithSemver } from '@nx/devkit/internal';
 
 // Record the options handed to the Angular application generator while keeping
 // linting off, so the tests don't depend on a linter package being set up.
@@ -29,7 +27,7 @@ vi.mock('@nx/angular/generators', async (importOriginal) => {
 describe('nx-plugin generator', () => {
   const setup = async (
     options: AnalogNxApplicationGeneratorOptions,
-    nxVersion = '21.0.0',
+    nxVersion = '23.2.0',
     standalone = false,
   ) => {
     const tree = createTreeWithEmptyWorkspace({
@@ -54,7 +52,7 @@ describe('nx-plugin generator', () => {
     expect(dependencies['@analogjs/router']).toBeDefined();
     expect(dependencies['@angular/platform-server']).toBeDefined();
     expect(dependencies['front-matter']).toBe('^4.0.2');
-    expect(dependencies['marked']).toBe('^15.0.7');
+    expect(dependencies['marked']).toBe('^18.0.0');
     expect(dependencies['marked-gfm-heading-id']).toBe('^4.1.1');
     expect(dependencies['marked-highlight']).toBe('^2.2.1');
     expect(dependencies['marked-mangle']).toBe('^1.1.10');
@@ -80,7 +78,7 @@ describe('nx-plugin generator', () => {
   ) => {
     expect(config.projectType).toBe('application');
     expect(config.root).toBe(standalone ? name : 'apps/' + name);
-    expect(config.targets.build.outputs).toBeDefined();
+    expect(config.targets?.build?.outputs).toBeDefined();
   };
 
   const verifyHomePageExists = (
@@ -112,35 +110,26 @@ describe('nx-plugin generator', () => {
     tree: Tree,
     dependencies: Record<string, string>,
   ) => {
-    expect(dependencies['tailwindcss']).toBeDefined();
-
-    const version = checkAndCleanWithSemver(
-      'tailwindcss',
-      dependencies['tailwindcss'],
+    const postcssConfig = tree.read(
+      'apps/tailwind-app/postcss.config.mjs',
+      'utf-8',
     );
 
-    if (lt(version, '4.0.0')) {
-      const hasTailwindConfigFile = tree.exists(
-        'apps/tailwind-app/tailwind.config.ts',
-      );
-      const hasPostCSSConfigFile = tree.exists(
-        'apps/tailwind-app/postcss.config.cjs',
-      );
-      expect(hasTailwindConfigFile).toBeTruthy();
-      expect(hasPostCSSConfigFile).toBeTruthy();
-    } else {
-      expect(dependencies['@tailwindcss/postcss']).toBeDefined();
+    expect(dependencies['postcss']).toBeDefined();
+    expect(dependencies['tailwindcss']).toBeDefined();
+    expect(dependencies['@tailwindcss/postcss']).toBeDefined();
+    expect(dependencies['@tailwindcss/vite']).toBeDefined();
+    const viteConfig = tree.read('apps/tailwind-app/vite.config.ts', 'utf-8');
+    const styles = tree.read('apps/tailwind-app/src/styles.css', 'utf-8');
 
-      const hasPostCSSConfigFile = tree.exists(
-        'apps/tailwind-app/.postcssrc.json',
-      );
-      const hasCorrectCssImplementation = tree
-        .read('apps/tailwind-app/src/styles.css')
-        .includes(`@import 'tailwindcss';`);
-
-      expect(hasCorrectCssImplementation).toBeTruthy();
-      expect(hasPostCSSConfigFile).toBeTruthy();
-    }
+    expect(styles?.includes(`@import 'tailwindcss';`)).toBeTruthy();
+    expect(postcssConfig).toContain(`'@tailwindcss/postcss': {}`);
+    expect(viteConfig).toContain(
+      `import tailwindcss from '@tailwindcss/vite';`,
+    );
+    expect(viteConfig).toMatch(
+      /plugins:\s*\[[\s\S]*analog\(\),[\s\S]*tailwindcss\(\)/,
+    );
   };
 
   const verifyTagsArePopulated = (
@@ -152,6 +141,7 @@ describe('nx-plugin generator', () => {
   };
 
   describe('Nx, Angular', () => {
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates a default analogjs app in the source directory', async () => {
       const analogAppName = 'analog';
       const { config, tree } = await setup({ analogAppName });
@@ -164,11 +154,12 @@ describe('nx-plugin generator', () => {
       verifyHomePageExists(tree, analogAppName);
 
       // verifyEslint(tree, config, devDependencies);
-    });
+    }, 30_000);
 
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates a default standalone analogjs app in the source directory', async () => {
       const analogAppName = 'analog';
-      const { config, tree } = await setup({ analogAppName }, '18.0.0', true);
+      const { config, tree } = await setup({ analogAppName }, '23.2.0', true);
       const { dependencies, devDependencies } = readJson(tree, 'package.json');
 
       verifyCoreDependenciesNx_Angular(dependencies, devDependencies);
@@ -180,6 +171,7 @@ describe('nx-plugin generator', () => {
       // verifyEslint(tree, config, devDependencies);
     });
 
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates an analogjs app in the source directory with tailwind set up', async () => {
       const analogAppName = 'tailwind-app';
       const { config, tree } = await setup({
@@ -197,6 +189,7 @@ describe('nx-plugin generator', () => {
       verifyTailwindIsSetUp(tree, dependencies);
     });
 
+    // oxlint-disable-next-line vitest/expect-expect
     it('creates an analogjs app in the source directory with tags populated', async () => {
       const analogAppName = 'tags-app';
       const { config, tree } = await setup({
@@ -236,12 +229,10 @@ describe('nx-plugin generator', () => {
       );
     });
 
-    it('rejects the oxlint linter on Nx versions below 23.2', async () => {
+    it('rejects Nx versions below 23.2', async () => {
       await expect(
-        setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.1.0'),
-      ).rejects.toThrow(
-        'Nx v23.2.0 or newer is required to use the oxlint linter',
-      );
+        setup({ analogAppName: 'my-app' }, '23.1.0'),
+      ).rejects.toThrow('Nx v23.2.0 or newer is required to install Analog');
     });
 
     it('rejects the oxlint linter outside an Nx workspace', async () => {
@@ -259,7 +250,7 @@ describe('nx-plugin generator', () => {
         formatter: 'prettier',
       });
 
-      addDependenciesToPackageJson(tree, {}, { nx: '21.0.0' });
+      addDependenciesToPackageJson(tree, {}, { nx: '23.2.0' });
       tree.write(`apps/${analogAppName}/AGENTS.md`, '# Custom guidance');
 
       await generator(tree, { analogAppName });

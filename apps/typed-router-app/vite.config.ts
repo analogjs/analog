@@ -1,10 +1,15 @@
 import analog from '@analogjs/platform';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 export default defineConfig(() => {
   return {
     root: import.meta.dirname,
+    optimizeDeps: {
+      exclude: getWorkspaceDependencyExcludes(import.meta.dirname),
+    },
     build: {
       outDir: '../../dist/apps/typed-router-app/client',
       reportCompressedSize: true,
@@ -12,7 +17,8 @@ export default defineConfig(() => {
     },
     plugins: [
       analog({ experimental: { typedRouting: true } }),
-      viteTsConfigPaths(),
+      angular(),
+      nitro(),
     ],
   };
 });

@@ -51,24 +51,21 @@ class MyService {
 
 ## Request Context Interceptor
 
-Analog also provides `requestContextInterceptor` for the HttpClient that handles transforming any request to URL beginning with a `/` to a full URL request on the server, client, and during prerendering.
+Analog provides `requestContextInterceptor` for the HttpClient that handles transforming any request to URL beginning with a `/` to a full URL request on the server, client, and during prerendering. During SSR and prerendering, responses are stored in `TransferState` so the client reuses them instead of fetching the data again.
 
-Use it with the `withInterceptors` function from the `@angular/common/http` packages.
+`provideFileRouter()` registers the interceptor automatically, so a plain `provideHttpClient()` is all you need.
 
 ```ts
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideHttpClient(withFetch()),
     provideClientHydration(),
   ],
 };
 ```
 
-> Make sure the `requestContextInterceptor` is **last** in the array of interceptors.
+> The interceptor runs after any interceptors you register with `withInterceptors()`, so you don't need to add it yourself.
 
 ## Making Requests
 
@@ -78,7 +75,9 @@ An example API route that fetches todos.
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-export default eventHandler(async () => {
+import { defineEventHandler } from 'h3';
+
+export default defineEventHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
 

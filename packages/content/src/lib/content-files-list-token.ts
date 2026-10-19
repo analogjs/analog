@@ -11,9 +11,8 @@ function getSlug(filename: string) {
   return base === 'index' ? '' : base;
 }
 
-export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
-  '@analogjs/content Content Files List',
-  {
+export const CONTENT_FILES_LIST_TOKEN: InjectionToken<ContentFile[]> =
+  new InjectionToken<ContentFile[]>('@analogjs/content Content Files List', {
     providedIn: 'root',
     factory() {
       const contentFiles = getContentFilesList();
@@ -29,5 +28,4 @@ export const CONTENT_FILES_LIST_TOKEN = new InjectionToken<ContentFile[]>(
         };
       });
     },
-  },
-);
+  });

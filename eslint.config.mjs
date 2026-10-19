@@ -5,15 +5,36 @@ import angularEslintPlugin from '@angular-eslint/eslint-plugin';
 import angularTemplateEslintPlugin from '@angular-eslint/eslint-plugin-template';
 import js from '@eslint/js';
 import nxEslintPlugin from '@nx/eslint-plugin';
+import oxlint from 'eslint-plugin-oxlint';
+import { createJiti } from 'jiti';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const jiti = createJiti(import.meta.url);
+const oxlintConfig = /** @type {{ default: import('oxlint').OxlintConfig }} */ (
+  await jiti.import('./oxlint.config.ts')
+).default;
 
 const compat = new FlatCompat({
-  baseDirectory: dirname(fileURLToPath(import.meta.url)),
+  baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
 });
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc', '**/apps/docs-analog/src/test-setup.ts'],
+    ignores: [
+      '**/dist',
+      '**/out-tsc',
+      '**/oxlint.config.ts',
+      '**/playwright-report',
+      '**/playwright-report/**',
+    ],
+  },
+  {
+    linterOptions: {
+      // eslint-disable comments are still used by oxlint, so ESLint
+      // should not warn about directives it considers unused.
+      reportUnusedDisableDirectives: 'off',
+    },
   },
   { plugins: { '@nx': nxEslintPlugin } },
   {
@@ -23,7 +44,8 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          allow: [],
+          allowCircularSelfDependency: true,
+          allow: ['../../tools/vite/get-workspace-dependency-excludes.js'],
           depConstraints: [
             {
               sourceTag: '*',
@@ -95,4 +117,6 @@ export default [
       parser: await import('jsonc-eslint-parser'),
     },
   },
+  // Turn off ESLint rules already handled by oxlint
+  ...oxlint.buildFromOxlintConfig(oxlintConfig),
 ];

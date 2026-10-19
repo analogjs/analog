@@ -49,24 +49,21 @@ class MyService {
 
 ## Interceptor de Contexto de Solicitud
 
-Analog también provee `requestContextInterceptor` para el `HttpClient` que maneja la transformación de cualquier solicitud a una URL que comience con una `/` a una solicitud de URL completa en el servidor, cliente y durante el prerenderizado.
+Analog provee `requestContextInterceptor` para el `HttpClient` que maneja la transformación de cualquier solicitud a una URL que comience con una `/` a una solicitud de URL completa en el servidor, cliente y durante el prerenderizado.
 
-Úsalo con la función `withInterceptors` del paquete `@angular/common/http`.
+`provideFileRouter()` registra el interceptor automáticamente, así que basta con un `provideHttpClient()` simple.
 
 ```ts
 export const appConfig: ApplicationConfig = {
   providers: [
     provideFileRouter(withNavigationErrorHandler(console.error)),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideHttpClient(withFetch()),
     provideClientHydration(),
   ],
 };
 ```
 
-> Asegúrate de que el `requestContextInterceptor` esté **último** en el arreglo de interceptores.
+> El interceptor se ejecuta después de cualquier interceptor que registres con `withInterceptors()`, así que no necesitas agregarlo tú mismo.
 
 ## Realizando Solicitudes
 
@@ -76,7 +73,9 @@ Un ejemplo de ruta API que obtiene todos los todos.
 
 ```ts
 // src/server/routes/api/v1/todos.ts -> /api/v1/todos
-export default eventHandler(async () => {
+import { defineHandler } from 'h3';
+
+export default defineHandler(async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/todos');
   const todos = await response.json();
 

@@ -35,7 +35,6 @@ function buildPlugin() {
     inlineStylesExtension: 'css',
     jit: false,
     liveReload: false,
-    supportedBrowsers: [],
     isTest: false,
     isAstroIntegration: false,
   });
@@ -154,7 +153,6 @@ describe('fastCompilePlugin bypass strips TS', () => {
       inlineStylesExtension: 'css',
       jit: true,
       liveReload: false,
-      supportedBrowsers: [],
       isTest: true,
       isAstroIntegration: false,
     });
@@ -208,7 +206,6 @@ export class App {
         inlineStylesExtension: 'css',
         jit: true,
         liveReload: false,
-        supportedBrowsers: [],
         isTest: true,
         isAstroIntegration: false,
       });
@@ -397,6 +394,36 @@ export class ExtComponent {}
 });
 
 describe('fastCompilePlugin transform filter', () => {
+  it('skips modules rejected by an analog.setup transform filter', async () => {
+    vi.clearAllMocks();
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [
+        {
+          name: 'components-only',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerTransformFilter((_code: string, id: string) =>
+                id.includes('src/components'),
+              );
+            },
+          },
+        },
+      ],
+    });
+    const handler = getTransformHandler(plugin);
+
+    const result = await handler.call(
+      { addWatchFile: () => undefined },
+      'export const routes = [];\n',
+      '/src/app/routes.ts',
+    );
+
+    expect(result).toBeUndefined();
+    expect(mockTransformWithOxc).not.toHaveBeenCalled();
+    expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
+  });
+
   it('excludes .ts?raw ids so Vite raw handling stands (#2356)', () => {
     const plugin = buildPlugin();
     const exclude = (plugin.transform as any).filter.id.exclude as unknown[];

@@ -1,8 +1,12 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
 import { defineConfig } from 'vite';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
+<% if (addTailwind) { %>
+import tailwindcss from '@tailwindcss/vite';
+<% } %>
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -21,7 +25,11 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       analog(),
-      viteTsConfigPaths(),
+      angular(),
+      nitro(),
+      <% if (addTailwind) { %>
+      tailwindcss(),
+      <% } %>
     ],
     test: {
       globals: true,

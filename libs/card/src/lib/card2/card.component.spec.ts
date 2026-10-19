@@ -44,7 +44,7 @@ describe('CardComponent', () => {
     expect(component.title).toEqual('card-works');
   });
 
-  it('should create the app', () => {
+  it('should match snapshot', () => {
     expect(fixture).toMatchSnapshot();
   });
 

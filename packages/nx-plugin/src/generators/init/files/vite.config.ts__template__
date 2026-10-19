@@ -2,12 +2,14 @@
 
 import { defineConfig } from 'vite';
 import analog from '@analogjs/platform';
+<% if (!isNx) { %>
 import viteTsConfigPaths from 'vite-tsconfig-paths';
+<% } %>
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: import.meta.dirname,
+    root: __dirname,
     cacheDir: '<%= offsetFromRoot %>node_modules/.vite',
     build: {
       outDir: '<%= offsetFromRoot %>dist/<%= projectRoot %>/client',
@@ -22,7 +24,9 @@ export default defineConfig(({ mode }) => {
           routes: []
         }
       }),
+<% if (!isNx) { %>
       viteTsConfigPaths(),
+<% } %>
     ],
     server: {
       fs: {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { transform } from 'esbuild';
+import { moduleRunnerTransformSync, transformSync } from 'oxc-transform';
 import { jitTransform } from './jit-transform';
 
 describe('JIT transform preserves @Injectable', () => {
@@ -130,20 +130,19 @@ describe('JIT transform preserves @Injectable', () => {
     `,
       'typed-param.service.ts',
     ).code;
-    const { code } = await transform(jit, {
-      loader: 'ts',
-      format: 'cjs',
-      tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
+    const { code: js } = transformSync('typed-param.service.ts', jit, {
+      decorator: { legacy: true },
     });
+    const { code } = moduleRunnerTransformSync('typed-param.service.js', js);
 
     const core = await import('@angular/core');
-    const module = { exports: {} as Record<string, any> };
-    new Function('require', 'module', 'exports', code)(
-      () => core,
-      module,
-      module.exports,
-    );
-    const { Dep, TypedParam, CONFIG } = module.exports;
+    const exports: Record<string, any> = {};
+    await new Function(
+      '__vite_ssr_import__',
+      '__vite_ssr_exports__',
+      `return (async () => {${code}})()`,
+    )((id: string) => import(id), exports);
+    const { Dep, TypedParam, CONFIG } = exports;
     const config = { value: 'x' };
     const instance = core.Injector.create({
       providers: [Dep, TypedParam, { provide: CONFIG, useValue: config }],

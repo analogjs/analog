@@ -5,15 +5,13 @@ import { defineConfig } from 'vite';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    root: import.meta.dirname,
+    root: __dirname,
+    cacheDir: '../../node_modules/.vite/astro-app-e2e-playwright',
     test: {
       reporters: ['default'],
       globals: true,
       environment: 'node',
       include: ['**/*.spec.ts'],
-      cache: {
-        dir: `../../node_modules/.vitest`,
-      },
     },
     define: {
       'import.meta.vitest': mode !== 'production',

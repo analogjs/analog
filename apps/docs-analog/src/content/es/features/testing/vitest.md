@@ -37,7 +37,7 @@ pnpm install -w @analogjs/vitest-angular --save-dev
 A continuación, ejecuta el schematic para configurar la configuración de Vite, archivos de configuración de pruebas y actualizar la configuración de pruebas.
 
 ```shell
-ng g @analogjs/vitest-angular:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 ### Opciones del Schematic

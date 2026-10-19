@@ -8,11 +8,9 @@ export function addAnalogDependencies(
   angularVersion: string,
   vitest: boolean,
   nxVersion?: string,
-) {
-  const devDependencies: Record<string, string> = getAnalogDevDependencies(
-    angularVersion,
-    nxVersion,
-  );
+): void {
+  const devDependencies: Record<string, string> =
+    getAnalogDevDependencies(angularVersion);
   const dependencies = getAnalogDependencies(angularVersion);
 
   if (!nxVersion) {

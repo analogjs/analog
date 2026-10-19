@@ -46,7 +46,7 @@ export async function registerDevServerMiddleware(
   root: string,
   sourceRoot: string,
   viteServer: ViteDevServer,
-) {
+): Promise<void> {
   // Discover all TypeScript middleware files in the server/middleware directory
   // Pattern: looks for any .ts files in server/middleware/**/*.ts
   const middlewareFiles = globSync(

@@ -16,7 +16,6 @@ const HAS_EXPONENTIATION =
   'number';
 const HAS_ASSIGN_OPS =
   typeof (o.BinaryOperator as Record<string, unknown>)['Assign'] === 'number';
-
 const HAS_OPTIONAL_CHAINING_OUTPUT =
   'isOptional' in new o.ReadPropExpr(new o.ReadVarExpr('x'), 'y');
 
@@ -453,6 +452,13 @@ describe('JSEmitter – optional chaining', () => {
         expect(
           evaluate(optionalCall(optionalProp(ctxProp('obj'), 'fn')), ctx),
         ).toBe(9);
+      });
+
+      it('keeps the operator when reading a property off a call result', () => {
+        const call = new o.InvokeFunctionExpr(v('user'), []);
+        expect(emitAngularExpr(optionalProp(call, 'name'))).toBe(
+          'user()?.name',
+        );
       });
 
       it('ends the chain at explicit parentheses: (a?.b).c', () => {

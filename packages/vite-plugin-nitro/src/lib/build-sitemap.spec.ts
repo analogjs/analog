@@ -19,7 +19,7 @@ describe('build sitemap', () => {
 
     await buildSitemap(config, sitemapConfig, ['/about'], 'dist', {});
 
-    const xml = spy.mock.calls[0][1] as string;
+    const xml = spy.mock.calls.at(-1)![1] as string;
     expect(xml).toContain(
       'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
     );
@@ -41,7 +41,7 @@ describe('build sitemap', () => {
       },
     );
 
-    const xml = spy.mock.calls[0][1] as string;
+    const xml = spy.mock.calls.at(-1)![1] as string;
     expect(xml).toContain(
       'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
     );

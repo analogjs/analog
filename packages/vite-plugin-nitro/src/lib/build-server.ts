@@ -14,13 +14,14 @@ export async function buildServer(
   nitroConfig: NitroConfig = {},
   routeSourceFiles?: Record<string, string>,
   i18nWorkers = false,
-) {
+): Promise<void> {
   if (i18nWorkers && options?.i18n) {
     validateI18nWorkers(options, nitroConfig);
     nitroConfig = {
       ...nitroConfig,
-      entry: fileURLToPath(
-        new URL('./runtime/locale-worker-entry.mjs', import.meta.url),
+      entry: join(
+        dirname(fileURLToPath(import.meta.url)),
+        'runtime/locale-worker-entry.mjs',
       ),
       externals: {
         ...nitroConfig.externals,

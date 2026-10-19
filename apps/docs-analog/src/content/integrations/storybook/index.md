@@ -82,6 +82,33 @@ const config: StorybookConfig = {
 export default config;
 ```
 
+### Framework Options
+
+`framework.options` configures the Angular compilation for Storybook. These options are passed to `@analogjs/vite-plugin-angular` with Storybook-specific defaults:
+
+| Option                  | Default                                                          | Description                                                                                              |
+| ----------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `jit`                   | `true`                                                           | Compile stories in JIT mode. Set to `false` to compile with AOT.                                         |
+| `liveReload`            | `false`                                                          | Enables Angular component HMR in Storybook.                                                              |
+| `inlineStylesExtension` | `'css'`                                                          | Stylesheet language for inline component `styles`, such as `'scss'`.                                     |
+| `tsconfig`              | the builder's `tsConfig`, then `.storybook/tsconfig.json`        | Path to the tsconfig used for compilation.                                                               |
+| `experimentalZoneless`  | the builder's `experimentalZoneless`, then `true` on Angular 21+ | Bootstrap stories without Zone.js. See [zoneless change detection](#enabling-zoneless-change-detection). |
+
+```ts
+const config: StorybookConfig = {
+  framework: {
+    name: '@analogjs/storybook-angular',
+    options: {
+      jit: false,
+      liveReload: true,
+      inlineStylesExtension: 'scss',
+    },
+  },
+};
+```
+
+`liveReload` is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `liveReload` when Storybook needs custom host, port, or path settings.
+
 Remove the existing `webpackFinal` config function if present.
 
 Next, update the Storybook targets in the `angular.json` or `project.json`
@@ -129,6 +156,35 @@ To register global styles, add them to the `@analogjs/storybook-angular` builder
       }
     }
 ```
+
+The Storybook preset uses these options for different jobs:
+
+- `styles` entries are imported into Storybook's generated preview module, so use them for global stylesheets that every story should load
+- `stylePreprocessorOptions.loadPaths` are passed to Vite's SCSS preprocessor, so use them for Sass `@use` and `@import` resolution inside `.scss` files
+
+For Nx workspaces with shared SCSS libraries, keep the paths workspace-relative in `project.json`:
+
+```json
+{
+  "storybook": {
+    "executor": "@analogjs/storybook-angular:start-storybook",
+    "options": {
+      "configDir": "libs/shared/ui/.storybook",
+      "styles": [
+        "libs/shared/ui/styles/shared-ui.scss",
+        "libs/shared/ui/.storybook/storybook.scss"
+      ],
+      "stylePreprocessorOptions": {
+        "loadPaths": ["libs/shared/ui/styles"]
+      }
+    }
+  }
+}
+```
+
+Use the `styles` array for actual global stylesheet files. Use `loadPaths` only to help Sass resolve imports from those files; it does not load a stylesheet by itself.
+
+For third-party package styles, prefer bare package imports such as `katex/dist/katex.css` or `@angular/material/prebuilt-themes/deeppurple-amber.css` over `node_modules/...` paths when the package exports them.
 
 ## Enabling Zoneless Change Detection
 
@@ -291,7 +347,40 @@ export default config;
 
 ### With Nx
 
-Nx workspaces use the same `vite-tsconfig-paths` plugin in the `.storybook/main.ts`. The `nxViteTsPaths` plugin from `@nx/vite` is deprecated and is removed in Nx 24, so replace it with `viteTsConfigPaths()`.
+In Nx workspaces, normal workspace library imports already resolve in Storybook. You usually do not need to add `viteTsConfigPaths()` just to resolve workspace packages.
+
+If your workspace still depends on custom `compilerOptions.paths` aliases beyond those normal workspace package imports, add the `viteTsConfigPaths` plugin from `vite-tsconfig-paths` in `.storybook/main.ts`:
+
+```ts
+const config: StorybookConfig = {
+  // ... other config, addons, etc.
+  async viteFinal(config: UserConfig) {
+    return mergeConfig(config, {
+      plugins: [viteTsConfigPaths()],
+    });
+  },
+};
+
+export default config;
+```
+
+`viteTsConfigPaths()` is only for custom TypeScript path aliases. It does not replace Storybook's `styles` option or SCSS `loadPaths`, so shared Sass setups usually need:
+
+- `styles` for global Storybook stylesheets
+- `stylePreprocessorOptions.loadPaths` for Sass import roots
+- `viteTsConfigPaths()` only if you still rely on custom TS/Angular aliases instead of normal workspace package imports
+
+If styles still do not load as expected, enable scoped preset logging before running Storybook or the Storybook build:
+
+```sh
+DEBUG=analog-storybook:styles npm run storybook
+```
+
+This logs the resolved workspace root, SCSS `loadPaths`, and how each `styles` entry was classified:
+
+- `project` when it resolves relative to the Storybook project root
+- `workspace` when it resolves from the workspace root
+- `bare` when it is left as a package import such as `katex/dist/katex.css`
 
 ## Using File Replacements
 

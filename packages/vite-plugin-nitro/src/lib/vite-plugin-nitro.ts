@@ -45,7 +45,6 @@ import {
   ssrRenderer,
   ssrStreamRenderer,
   clientRenderer,
-  apiMiddleware,
 } from './utils/renderers.js';
 import {
   expandRoutesWithLocales,
@@ -59,17 +58,25 @@ let clientOutputPath = '';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
-  const sourceRoot = options?.sourceRoot ?? 'src';
+export interface NitroPluginOptions extends NitroConfig {
+  /**
+   * Analog options for apps that don't use `analog()` from
+   * `@analogjs/platform`. They override the options passed to `analog()`.
+   */
+  analog?: Options;
+}
+
+export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
+  // Nitro's `static` means the same as Analog's: prerender without a server.
+  const { analog, static: isStatic, ...pluginNitroOptions } = pluginOptions;
+  const nitroOptions = withAnalogRouteRuleHeaders(pluginNitroOptions);
+  let options: Options | undefined;
+  let workspaceRoot = process.cwd();
+  let sourceRoot = 'src';
   let isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const baseURL = process.env['NITRO_APP_BASE_URL'] || '';
   const prefix = baseURL ? baseURL.substring(0, baseURL.length - 1) : '';
-  const apiPrefix = `/${options?.apiPrefix || 'api'}`;
-  const useAPIMiddleware =
-    typeof options?.useAPIMiddleware !== 'undefined'
-      ? options?.useAPIMiddleware
-      : true;
+  let apiPrefix = '/api';
 
   let i18nWorkers = false;
   let isBuild = false;
@@ -78,7 +85,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   let config: UserConfig;
   let nitroConfig: NitroConfig;
   let environmentBuild = false;
-  let hasAPIDir = false;
   let hasServerFns = false;
   const routeSitemaps: Record<
     string,
@@ -87,46 +93,24 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
   const routeSourceFiles: Record<string, string> = {};
   let rootDir = workspaceRoot;
 
+  // Options passed to `analog()` are the defaults, so an Analog app configures
+  // SSR, prerendering and API routes in one place.
+  function resolveOptions(userConfig: UserConfig) {
+    options = {
+      ...getAnalogOptions(userConfig),
+      ...(isStatic === undefined ? {} : { static: isStatic }),
+      ...analog,
+    };
+    workspaceRoot = options.workspaceRoot ?? process.cwd();
+    sourceRoot = options.sourceRoot ?? 'src';
+    apiPrefix = `/${options.apiPrefix || 'api'}`;
+  }
+
   return [
-    ...(options?.i18n?.loader
-      ? [
-          {
-            name: 'analog-i18n-worker-entry',
-            apply: 'build' as const,
-            resolveId(id: string) {
-              return id === I18N_WORKER_SSR_ENTRY ? '\0' + id : undefined;
-            },
-            load(id: string) {
-              if (id !== '\0' + I18N_WORKER_SSR_ENTRY || !options?.i18n?.loader)
-                return;
-              return i18nWorkerSsrEntry(
-                normalizePath(
-                  resolve(
-                    workspaceRoot,
-                    rootDir,
-                    options.entryServer || `${sourceRoot}/main.server.ts`,
-                  ),
-                ),
-                normalizePath(
-                  resolve(workspaceRoot, rootDir, options.i18n.loader),
-                ),
-                options.i18n,
-              );
-            },
-          },
-        ]
-      : []),
-    (options?.ssr
-      ? devServerPlugin({
-          entryServer: options?.entryServer,
-          index: options?.index,
-          routeRules: nitroOptions?.routeRules,
-          i18n: options?.i18n,
-        })
-      : false) as Plugin,
     {
       name: '@analogjs/vite-plugin-nitro',
       async config(userConfig, { mode, command }) {
+        resolveOptions(userConfig);
         isServe = command === 'serve';
         isBuild = command === 'build';
         ssrBuild = userConfig.build?.ssr === true;
@@ -134,13 +118,6 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         isTest = isTest ? isTest : mode === 'test';
 
         rootDir = relative(workspaceRoot, config.root || '.') || '.';
-        hasAPIDir = existsSync(
-          resolve(
-            workspaceRoot,
-            rootDir,
-            `${sourceRoot}/server/routes/${options?.apiPrefix || 'api'}`,
-          ),
-        );
         const buildPreset =
           process.env['BUILD_PRESET'] ??
           (nitroOptions?.preset as string | undefined);
@@ -150,7 +127,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
           sourceRoot,
           rootDir,
           additionalPagesDirs: options?.additionalPagesDirs,
-          hasAPIDir,
+          apiPrefix,
         });
 
         // Server functions: discover every `*.server.ts` module, then register a
@@ -243,35 +220,12 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               serverFnIdPlugin(normalizePath(resolve(workspaceRoot, rootDir))),
             ],
           },
-          handlers: [
-            ...(hasAPIDir
-              ? []
-              : useAPIMiddleware
-                ? [
-                    {
-                      handler: '#ANALOG_API_MIDDLEWARE',
-                      middleware: true,
-                    },
-                  ]
-                : []),
-            ...pageHandlers,
-            ...serverFnHandlers,
-          ],
-          routeRules: hasAPIDir
-            ? undefined
-            : useAPIMiddleware
-              ? undefined
-              : {
-                  [`${prefix}${apiPrefix}/**`]: {
-                    proxy: { to: '/**' },
-                  },
-                },
+          handlers: [...pageHandlers, ...serverFnHandlers],
           virtual: {
             '#ANALOG_SSR_RENDERER': options?.experimental?.streaming
               ? ssrStreamRenderer
               : ssrRenderer,
             '#ANALOG_CLIENT_RENDERER': clientRenderer,
-            ...(hasAPIDir ? {} : { '#ANALOG_API_MIDDLEWARE': apiMiddleware }),
             ...serverFnVirtual,
           },
         };
@@ -457,20 +411,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 'zone.js/fesm2015/zone-node',
                 ...(nitroConfig.moduleSideEffects ?? []),
               ],
-              handlers: [
-                ...(hasAPIDir
-                  ? []
-                  : useAPIMiddleware
-                    ? [
-                        {
-                          handler: '#ANALOG_API_MIDDLEWARE',
-                          middleware: true,
-                        },
-                      ]
-                    : []),
-                ...pageHandlers,
-                ...serverFnHandlers,
-              ],
+              handlers: [...pageHandlers, ...serverFnHandlers],
             };
           }
         }
@@ -511,6 +452,7 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
               },
             },
             ssr: {
+              consumer: 'server',
               build: {
                 ssr: true,
                 rollupOptions: {
@@ -627,31 +569,20 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
             );
           }
 
-          if (hasAPIDir) {
-            viteServer.middlewares.use(
-              (
-                req: IncomingMessage,
-                res: ServerResponse,
-                next: (error?: unknown) => void,
-              ) => {
-                if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
-                  apiHandler(req, res);
-                  return;
-                }
+          viteServer.middlewares.use(
+            (
+              req: IncomingMessage,
+              res: ServerResponse,
+              next: (error?: unknown) => void,
+            ) => {
+              if (req.url?.startsWith(`${prefix}${apiPrefix}`)) {
+                apiHandler(req, res);
+                return;
+              }
 
-                next();
-              },
-            );
-          } else {
-            viteServer.middlewares.use(apiPrefix, apiHandler);
-          }
-
-          viteServer.httpServer?.once('listening', () => {
-            process.env['ANALOG_HOST'] = !viteServer.config.server.host
-              ? 'localhost'
-              : (viteServer.config.server.host as string);
-            process.env['ANALOG_PORT'] = `${viteServer.config.server.port}`;
-          });
+              next();
+            },
+          );
 
           // handle upgrades if websockets are enabled
           if (nitroOptions?.experimental?.websocket) {
@@ -727,6 +658,34 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
         }
       },
     },
+    {
+      name: 'analog-i18n-worker-entry',
+      apply: 'build' as const,
+      resolveId(id: string) {
+        return id === I18N_WORKER_SSR_ENTRY && options?.i18n?.loader
+          ? '\0' + id
+          : undefined;
+      },
+      load(id: string) {
+        if (id !== '\0' + I18N_WORKER_SSR_ENTRY || !options?.i18n?.loader)
+          return;
+        return i18nWorkerSsrEntry(
+          normalizePath(
+            resolve(
+              workspaceRoot,
+              rootDir,
+              options.entryServer || `${sourceRoot}/main.server.ts`,
+            ),
+          ),
+          normalizePath(resolve(workspaceRoot, rootDir, options.i18n.loader)),
+          options.i18n,
+        );
+      },
+    },
+    devServerPlugin(() => ({
+      ...options,
+      routeRules: nitroOptions?.routeRules,
+    })),
     {
       name: '@analogjs/vite-plugin-nitro-api-prefix',
       config() {
@@ -856,3 +815,45 @@ const withNetlifyOutputAPI = (
     dir: normalizePath(resolve(workspaceRoot, 'netlify/functions')),
   },
 });
+
+/**
+ * Reads the options passed to `analog()` from `@analogjs/platform`, which
+ * exposes them on its plugin `api`.
+ */
+function getAnalogOptions(userConfig: UserConfig): Options | undefined {
+  const plugins = ((userConfig.plugins ?? []) as unknown[]).flat(Infinity) as (
+    | { api?: { analogOptions?: Options } }
+    | null
+    | undefined
+  )[];
+  return plugins.find((plugin) => plugin?.api?.analogOptions)?.api
+    ?.analogOptions;
+}
+
+/**
+ * Stamps `ssr: false` and `streaming: false` route rules as response headers,
+ * which the renderers read to skip SSR or streaming for matching routes.
+ */
+function withAnalogRouteRuleHeaders(nitroOptions: NitroConfig): NitroConfig {
+  if (!nitroOptions.routeRules) {
+    return nitroOptions;
+  }
+
+  const routeRules = Object.fromEntries(
+    Object.entries(nitroOptions.routeRules).map(([route, rule]) => [
+      route,
+      {
+        ...rule,
+        headers: {
+          ...rule.headers,
+          ...(rule.ssr === false ? { 'x-analog-no-ssr': 'true' } : {}),
+          ...(rule.streaming === false
+            ? { 'x-analog-no-streaming': 'true' }
+            : {}),
+        },
+      },
+    ]),
+  );
+
+  return { ...nitroOptions, routeRules };
+}

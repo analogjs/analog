@@ -1,6 +1,7 @@
 // source: https://github.com/Myrmod/vitejs-theming/blob/master/build-plugins/rollup/replace-files.js
 import { isAbsolute, resolve } from 'node:path';
 import { Plugin } from 'vite';
+import { debugCompiler } from '../utils/debug.js';
 
 export function replaceFiles(
   replacements: FileReplacement[],
@@ -61,7 +62,11 @@ export function replaceFiles(
             id: foundReplace.with,
           };
         } catch (err) {
-          console.error(err);
+          debugCompiler('file replacement error', {
+            error: String(err),
+            source,
+            importer,
+          });
           return null;
         }
       }

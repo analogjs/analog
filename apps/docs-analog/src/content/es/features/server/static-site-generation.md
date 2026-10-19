@@ -276,6 +276,10 @@ Analog soporta hooks de post-renderización durante el proceso de prerenderizaci
 El siguiente código de ejemplo muestra cómo usar `postRenderingHooks` en tu código:
 
 ```ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -304,6 +308,12 @@ A continuación, se muestra un pequeño ejemplo donde podemos añadir un script 
 
 ```ts
 /// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

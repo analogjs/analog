@@ -1,7 +1,7 @@
 import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
 import type { DehydratedState } from '@tanstack/angular-query-experimental';
 import type { H3Event, H3EventContext } from 'h3';
-import type { $Fetch } from 'nitropack';
+import type { $Fetch } from 'ofetch';
 
 import {
   definePageLoad,

@@ -4,6 +4,10 @@ import {
   getJitInlineStyles,
   hashJitInlineStyles,
 } from './utils/jit-inline-styles.js';
+import { debugStyles } from './utils/debug.js';
+import { discoverAnalogIntegrations } from './analog-plugin-interop.js';
+import { preprocessStylesheet } from './stylesheet-registry.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
 export function jitPlugin({
@@ -12,11 +16,16 @@ export function jitPlugin({
   inlineStylesExtension: string;
 }): Plugin {
   let config: ResolvedConfig;
+  let stylePreprocessor: StylePreprocessor | undefined;
 
   return {
     name: '@analogjs/vite-plugin-angular-jit',
     configResolved(_config) {
       config = _config;
+    },
+    async buildStart() {
+      stylePreprocessor = (await discoverAnalogIntegrations(config))
+        .stylePreprocessor;
     },
     resolveId(id: string) {
       if (id.startsWith('virtual:angular')) {
@@ -28,22 +37,39 @@ export function jitPlugin({
     async load(id: string) {
       if (id.includes(JIT_INLINE_STYLE_PREFIX)) {
         const encodedStyles = getJitInlineStyles(id.split('style:inline;')[1]);
+        const styleIdHash = hashJitInlineStyles(encodedStyles);
         const decodedStyles = Buffer.from(
           decodeURIComponent(encodedStyles),
           'base64',
         ).toString();
+        const filename = `${styleIdHash}.${inlineStylesExtension}`;
+        const preprocessed = preprocessStylesheet(
+          decodedStyles,
+          filename,
+          stylePreprocessor,
+          { filename, inline: true },
+        );
 
         let styles: string | undefined = '';
 
         try {
           const compiled = await preprocessCSS(
-            decodedStyles,
-            `${hashJitInlineStyles(encodedStyles)}.${inlineStylesExtension}?direct`,
+            preprocessed,
+            `${filename}?direct`,
             config,
           );
           styles = compiled?.code;
         } catch (e) {
-          console.error(`${e}`);
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          debugStyles('jit css compilation error', {
+            styleIdHash,
+            error: errorMessage,
+          });
+          console.warn(
+            '[@analogjs/vite-plugin-angular]: Failed to preprocess inline JIT stylesheet %s. Returning an empty stylesheet instead. %s',
+            styleIdHash,
+            errorMessage,
+          );
         }
 
         return `export default \`${styles}\``;

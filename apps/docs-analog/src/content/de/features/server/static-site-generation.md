@@ -137,6 +137,10 @@ Analog unterstützt die Post-Rendering-Hooks während des Vorberechnungs-Prozess
 Das folgende Codebeispiel zeigt, wie `postRenderingHooks` im Code verwendet werden können:
 
 ```ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -165,6 +169,12 @@ Nachfolgend ein kleines Beispiel, in dem ein Skript angehängt wird, um Google A
 
 ```ts
 /// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

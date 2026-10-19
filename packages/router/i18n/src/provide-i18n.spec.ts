@@ -7,6 +7,10 @@ import {
   replaceLocaleInPath,
   resolveI18nConfig,
   I18nConfig,
+  ɵregisterI18nComponentDef,
+  ɵresetI18nComponentDefCache,
+  getI18nComponentDefRegistrySize,
+  clearI18nComponentDefRegistry,
 } from './provide-i18n';
 
 describe('loadTranslationsRuntime', () => {
@@ -64,7 +68,9 @@ describe('loadTranslationsRuntime', () => {
 
   it('should warn if $localize is not available', async () => {
     (globalThis as any).$localize = undefined;
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+      /* noop */
+    });
 
     await loadTranslationsRuntime({ 'msg-hello': 'Bonjour' });
 
@@ -250,7 +256,7 @@ describe('detectClientLocale', () => {
 
   it('should return defaultLocale when window is undefined (server)', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     delete globalThis.window;
 
     expect(detectClientLocale(baseConfig as any)).toBe('en');
@@ -260,7 +266,7 @@ describe('detectClientLocale', () => {
 
   it('should detect locale from URL path prefix', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/fr/about' } };
 
     expect(detectClientLocale(baseConfig as any)).toBe('fr');
@@ -270,7 +276,7 @@ describe('detectClientLocale', () => {
 
   it('should return defaultLocale when URL has no locale prefix', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/about' } };
 
     expect(detectClientLocale(baseConfig as any)).toBe('en');
@@ -280,7 +286,7 @@ describe('detectClientLocale', () => {
 
   it('should only match configured locales', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/es/about' } };
 
     expect(detectClientLocale(baseConfig as any)).toBe('en');
@@ -290,7 +296,7 @@ describe('detectClientLocale', () => {
 
   it('should detect locale at root path', () => {
     const originalWindow = globalThis.window;
-    // @ts-ignore
+    // @ts-expect-error - partial window mock
     globalThis.window = { location: { pathname: '/de' } };
 
     expect(detectClientLocale(baseConfig as any)).toBe('de');
@@ -374,5 +380,57 @@ describe('resolveI18nConfig', () => {
     expect(() => resolveI18nConfig({ loader })).toThrow(
       'provideI18n() requires defaultLocale and locales',
     );
+  });
+});
+
+describe('component def registry', () => {
+  beforeEach(() => {
+    clearI18nComponentDefRegistry();
+  });
+
+  it('should null def.tView on registered components when reset', () => {
+    const fakeDef = {
+      template: () => undefined,
+      tView: { someCachedValue: true },
+    };
+    ɵregisterI18nComponentDef(fakeDef);
+    expect(getI18nComponentDefRegistrySize()).toBe(1);
+
+    ɵresetI18nComponentDefCache();
+
+    expect(fakeDef.tView).toBeNull();
+    // The registry itself is intentionally preserved across resets so
+    // that subsequent requests keep clearing the same defs.
+    expect(getI18nComponentDefRegistrySize()).toBe(1);
+  });
+
+  it('should accept a Type with a ɵcmp static and unwrap it', () => {
+    const fakeDef = { template: () => undefined, tView: {} };
+    class FakeComponent {
+      static ɵcmp = fakeDef;
+    }
+
+    ɵregisterI18nComponentDef(FakeComponent);
+    ɵresetI18nComponentDefCache();
+
+    expect(fakeDef.tView).toBeNull();
+  });
+
+  it('should ignore things that are not component defs', () => {
+    ɵregisterI18nComponentDef(null);
+    ɵregisterI18nComponentDef(undefined);
+    ɵregisterI18nComponentDef({ notAComponent: true });
+    ɵregisterI18nComponentDef(class Bare {});
+
+    expect(getI18nComponentDefRegistrySize()).toBe(0);
+  });
+
+  it('should de-duplicate repeated registrations of the same def', () => {
+    const fakeDef = { template: () => undefined, tView: {} };
+    ɵregisterI18nComponentDef(fakeDef);
+    ɵregisterI18nComponentDef(fakeDef);
+    ɵregisterI18nComponentDef(fakeDef);
+
+    expect(getI18nComponentDefRegistrySize()).toBe(1);
   });
 });

@@ -22,7 +22,7 @@ name: Compiler Compatibility Tests
 #     core with the matrix compiler would fail before our compiler runs.
 #
 # Matrix policy:
-#   - Each numeric slot pins the FLOOR of a supported major (e.g. 19.0.0).
+#   - Each numeric slot pins the FLOOR of a supported major (e.g. 20.0.0).
 #     Pinning the floor gives a reproducible, deterministic CI signal —
 #     "the lowest supported version of major N still works." Bumping the
 #     floor when peerDependencies changes is a deliberate choice that
@@ -42,6 +42,7 @@ name: Compiler Compatibility Tests
 on:
   workflow_dispatch:
   pull_request:
+    branches: [beta]
     paths:
       - 'packages/vite-plugin-angular/src/lib/compiler/**'
       - 'package.json'
@@ -70,13 +71,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Numeric slots cover the supported peerDependencies range. v17/v18
-        # use the latest LTS patches that real users are most likely on
-        # (the floor versions, e.g. 17.0.0/18.0.0, predate the
-        # signal-input array shape and aren't worth supporting). v19/v20
-        # use the floor of the major as a deterministic CI signal.
-        angular-version:
-          ['17.3.12', '18.2.14', '19.0.0', '20.0.0', '21.0.0', 'next']
+        # Numeric slots cover the supported peerDependencies range, pinned
+        # to the floor of each major as a deterministic CI signal.
+        angular-version: ['20.0.0', '21.0.0', 'next']
 
     name: Angular ${{ matrix.angular-version }}
 
@@ -96,26 +93,25 @@ jobs:
       - name: Pin @angular/compiler, @angular/compiler-cli and the Angular runtime via pnpm overrides
         # pnpm 11 reads `overrides` from pnpm-workspace.yaml, not from the
         # root package.json `pnpm` field — so the matrix pin must be injected
-        # there. Insert the entries under the existing `overrides:` block
-        # (appending a fresh block if one isn't present).
+        # there. Replace the entries in the existing `overrides:` block
+        # (appending a fresh block if one isn't present) — the workspace already
+        # pins them, and a repeated key is a YAML duplicate-mapping-key error.
         run: |
           node -e "
           const fs = require('fs');
           const f = 'pnpm-workspace.yaml';
           const v = '${{ matrix.angular-version }}';
-          const packages = [
-            '@angular/compiler',
-            '@angular/compiler-cli',
-            '@angular/core',
-            '@angular/common',
-            '@angular/platform-browser',
-            '@angular/platform-browser-dynamic',
-            '@angular/router',
-          ];
+          const pinned = ['@angular/compiler', '@angular/compiler-cli', '@angular/core', '@angular/common', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router'];
           const lines = fs.readFileSync(f, 'utf-8').split('\n');
           let i = lines.findIndex(l => l.trim() === 'overrides:');
           if (i < 0) { lines.push('overrides:'); i = lines.length - 1; }
-          lines.splice(i + 1, 0, ...packages.map(p => \"  '\" + p + \"': '\" + v + \"'\"));
+          let end = i + 1;
+          while (end < lines.length && (lines[end].trim() === '' || /^\s/.test(lines[end]))) end++;
+          const kept = lines.slice(i + 1, end).filter(
+            l => !pinned.includes(l.split(':')[0].trim().replace(/['\"]/g, '')));
+          lines.splice(i + 1, end - i - 1,
+            ...pinned.map(p => \"  '\" + p + \"': '\" + v + \"'\"),
+            ...kept);
           fs.writeFileSync(f, lines.join('\n'));
           console.log(lines.join('\n'));
           "

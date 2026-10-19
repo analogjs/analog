@@ -7,6 +7,7 @@ import {
   resource,
   TransferState,
   type ResourceRef,
+  type StateKey,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -48,7 +49,7 @@ export class ServerFnClient {
   }
 
   /** Key a read's value for TransferState hydration (fn id + input). */
-  stateKey<Out>(fn: ServerFn<unknown, Out>, input: unknown) {
+  stateKey<Out>(fn: ServerFn<unknown, Out>, input: unknown): StateKey<Out> {
     return makeStateKey<Out>(`__analog_fn_${fn.id}_${stableInput(input)}`);
   }
 

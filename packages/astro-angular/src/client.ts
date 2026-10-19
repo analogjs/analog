@@ -10,14 +10,22 @@ import { createApplication } from '@angular/platform-browser';
 import { Observable, Subject, takeUntil } from 'rxjs';
 import { buildProjectableNodes } from './projection.ts';
 
-export default (element: HTMLElement) => {
+export default (
+  element: HTMLElement,
+): ((
+  Component: ComponentType<unknown> & {
+    clientProviders?: (Provider | EnvironmentProviders)[];
+  },
+  props?: Record<string, unknown>,
+  slots?: unknown,
+) => void) => {
   return (
     Component: ComponentType<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
     slots?: unknown,
-  ) => {
+  ): void => {
     const mirror = reflectComponentType(Component);
 
     if (!mirror) {

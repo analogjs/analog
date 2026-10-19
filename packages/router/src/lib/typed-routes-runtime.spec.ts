@@ -16,7 +16,9 @@ describe('typed filename paths', () => {
   it.each([
     ['index/details', '/details'],
     ['docs/index/details', '/docs/details'],
-    ['reindex', '/re'],
+    ['reindex', '/reindex'],
+    ['index(group)', '/'],
+    ['(group)index', '/'],
     ['(auth.v2)/login', '/login'],
     ['prefix(group)/details', '/prefix/details'],
   ])('matches runtime route configuration for %s', (filename, expected) => {

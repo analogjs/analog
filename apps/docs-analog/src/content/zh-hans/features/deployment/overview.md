@@ -91,9 +91,6 @@ const response = await firstValueFrom(
 
 4. 在 CI 生产环境构建
 
-**不要**设置 `VITE_ANALOG_PUBLIC_BASE_URL`，它应该使用 `vite.config.ts` 中的设置。
-如果构建期间存在 `VITE_ANALOG_PUBLIC_BASE_URL`，ssr 数据将在服务器和客户端上重新获取。
-
 ```bash
   # if using nx:
   npx nx run appname:build:production

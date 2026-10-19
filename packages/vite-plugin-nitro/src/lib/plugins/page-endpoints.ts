@@ -1,31 +1,24 @@
-import { buildSync } from 'esbuild';
+import { parseSync } from 'oxc-parser';
 import { normalizePath } from 'vite';
 
 export function pageEndpointsPlugin() {
   return {
     name: 'analogjs-vite-plugin-nitro-rollup-page-endpoint',
-    async transform(_code: string, id: string) {
+    async transform(
+      _code: string,
+      id: string,
+    ): Promise<{ code: string; map: null } | undefined> {
       if (normalizePath(id).includes('/pages/') && id.endsWith('.server.ts')) {
-        const compiled = buildSync({
-          stdin: {
-            contents: _code,
-            sourcefile: id,
-            loader: 'ts',
-          },
-          write: false,
-          metafile: true,
-          platform: 'neutral',
-          format: 'esm',
-          logLevel: 'silent',
+        const result = parseSync(id, _code, {
+          sourceType: 'module',
+          lang: 'ts',
         });
 
-        let fileExports: string[] = [];
-
-        for (const key in compiled.metafile?.outputs) {
-          if (compiled.metafile?.outputs[key].entryPoint) {
-            fileExports = compiled.metafile?.outputs[key].exports;
-          }
-        }
+        const fileExports: string[] = result.module.staticExports.flatMap((e) =>
+          e.entries
+            .filter((entry) => entry.exportName.name !== null)
+            .map((entry) => entry.exportName.name as string),
+        );
 
         const code = `
             import { defineEventHandler } from 'h3';

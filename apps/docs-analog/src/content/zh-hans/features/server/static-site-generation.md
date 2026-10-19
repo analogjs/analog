@@ -214,6 +214,10 @@ Ananlog 支持预渲染处理过程中的 post-rendering 钩子。通过 post-re
 下面的例子展示了如何在代码中使用 `postRenderingHooks`：
 
 ```ts
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
@@ -242,6 +246,12 @@ export default defineConfig(() => {
 
 ```ts
 /// <reference types="vitest" />
+
+import analog from '@analogjs/platform';
+import { defineConfig } from 'vite';
+import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import type { PrerenderRoute } from 'nitro/types';
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {

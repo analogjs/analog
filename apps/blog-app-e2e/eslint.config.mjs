@@ -3,7 +3,7 @@ import playwright from 'eslint-plugin-playwright';
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc'],
+    ignores: ['**/dist', '**/out-tsc', '**/playwright-report'],
   },
   ...baseConfig,
   {

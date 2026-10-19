@@ -166,7 +166,6 @@ Im Folgenden findest du eine Liste der derzeit unterstützten Bereiche:
 - **nx-plugin**
 - **platform**
 - **router**
-- **trpc**
 - **vite-plugin-angular**
 - **vite-plugin-nitro**
 - **vitest-angular**
@@ -180,7 +179,7 @@ Beispiel:
 ```
 feat(scope): commit message
 
-BREAKING CHANGES:
+BREAKING CHANGE:
 
 Describe breaking changes here
 

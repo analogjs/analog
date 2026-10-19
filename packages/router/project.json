@@ -3,44 +3,52 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/router/src",
+  "implicitDependencies": ["vite-plugin-angular", "content"],
   "prefix": "analogjs",
   "tags": ["type:release"],
   "targets": {
-    "build": {
-      "executor": "@angular-devkit/build-angular:ng-packagr",
-      "outputs": ["{workspaceRoot}/node_modules/@analogjs/router"],
+    "assert-deps": {
+      "executor": "nx:run-commands",
       "options": {
-        "project": "packages/router/ng-package.json"
-      },
-      "configurations": {
-        "production": {
-          "tsConfig": "packages/router/tsconfig.lib.prod.json"
-        },
-        "development": {
-          "tsConfig": "packages/router/tsconfig.lib.json"
-        }
-      },
-      "defaultConfiguration": "production"
+        "command": "node tools/scripts/assert-project-dependency.mts router build vite-plugin-angular:build content:build"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        "assert-deps",
+        "vite-plugin-angular:build",
+        "content:build"
+      ],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "commands": [
+          "node tools/scripts/build-lib.mts router",
+          "node tools/scripts/verify-package-artifacts.mts router"
+        ],
+        "parallel": false
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint"
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "dependsOn": [
-        "build",
-        "^build",
-        {
-          "projects": ["vite-plugin-angular"],
-          "target": "build"
-        }
-      ]
+      "dependsOn": ["build", "^build"]
     },
     "version": {
       "executor": "@jscutlery/semver:version",
       "options": {
         "preset": "conventional",
         "tagPrefix": "router@"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/router",
+        "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
       }
     }
   }

@@ -1,7 +1,7 @@
 zerops:
   - setup: docs0
     build:
-      base: nodejs@22
+      base: nodejs@24
       envVariables:
         CI: true
       buildCommands:

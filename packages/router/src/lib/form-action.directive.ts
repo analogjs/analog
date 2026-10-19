@@ -6,13 +6,17 @@ import {
   inject,
   Injector,
   input,
+  InputSignal,
+  InputSignalWithTransform,
   output,
+  OutputEmitterRef,
   Renderer2,
   runInInjectionContext,
   signal,
 } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
+import { injectAPIPrefix } from '../../tokens/src/index.js';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 import { ANALOG_META_KEY } from './endpoints';
 
@@ -32,17 +36,20 @@ export type FormActionState =
   standalone: true,
 })
 export class FormAction {
-  action = input<string>('');
-  enhanceForm = input(false, { transform: booleanAttribute });
+  action: InputSignal<string> = input<string>('');
+  enhanceForm: InputSignalWithTransform<boolean, unknown> = input(true, {
+    transform: booleanAttribute,
+  });
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  onSuccess = output<unknown>();
+  onSuccess: OutputEmitterRef<unknown> = output<unknown>();
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  onError = output<unknown>();
-  state = output<FormActionState>();
+  onError: OutputEmitterRef<unknown> = output<unknown>();
+  state: OutputEmitterRef<FormActionState> = output<FormActionState>();
   private currentState = signal<FormActionState | 'idle'>('idle');
   private injector = inject(Injector);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private apiPrefix = injectAPIPrefix();
   private path = this._getPath();
 
   constructor() {
@@ -76,7 +83,7 @@ export class FormAction {
     });
   }
 
-  submitted($event: any) {
+  submitted($event: any): void {
     $event.preventDefault();
 
     this._emitState('submitting');
@@ -170,7 +177,7 @@ export class FormAction {
       ).pathname;
     }
 
-    return `/api/_analog/pages${window.location.pathname}`;
+    return `/${this.apiPrefix}/_analog/pages${window.location.pathname}`;
   }
 
   private _handleEnhancedGet(body: FormData, path: string) {

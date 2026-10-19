@@ -1,9 +1,9 @@
 import type { ActivatedRouteSnapshot, Route } from '@angular/router';
-import { injectBaseURL, injectAPIPrefix } from '@analogjs/router/tokens';
+import { injectBaseURL, injectAPIPrefix } from '../../tokens/src/index.js';
 
 import { ANALOG_META_KEY } from './endpoints';
 
-export function injectRouteEndpointURL(route: ActivatedRouteSnapshot) {
+export function injectRouteEndpointURL(route: ActivatedRouteSnapshot): URL {
   const routeConfig = route.routeConfig as Route & {
     [ANALOG_META_KEY]: { endpoint: string; endpointKey: string };
   };
@@ -14,8 +14,7 @@ export function injectRouteEndpointURL(route: ActivatedRouteSnapshot) {
   const segment = parent?.url.map((segment) => segment.path).join('/') || '';
   const url = new URL(
     '',
-    import.meta.env['VITE_ANALOG_PUBLIC_BASE_URL'] ||
-      baseUrl ||
+    baseUrl ||
       (typeof window !== 'undefined' && window.location.origin
         ? window.location.origin
         : ''),

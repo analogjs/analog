@@ -1,24 +1,36 @@
-import { fileURLToPath } from 'node:url';
-import viteAngular, { PluginOptions } from '@analogjs/vite-plugin-angular';
+import viteAngular from '@analogjs/vite-plugin-angular';
+import type {
+  AnalogIntegrationPlugin,
+  PluginOptions,
+  TransformFilter,
+} from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
+import * as vite from 'vite';
 
 interface AngularOptions {
   vite?: PluginOptions;
   /**
-   * Enable stricter rendering, which ensures Angular style tags are added to the document head instead of next to the
-   * component in the body.
+   * Restricts which modules Angular compiles. Return `false` to leave a
+   * module to other Astro integrations. Registered with Angular through the
+   * `analog.setup()` hook of an internal Vite plugin.
+   */
+  transformFilter?: TransformFilter;
+  /**
+   * Adds Angular style tags to the document head instead of next to the
+   * component in the body. Defaults to `true`.
    *
-   * Enabling this option disables astro's streaming under SSR.
+   * This disables Astro's streaming under SSR. Set to `false` to keep streaming.
    */
   strictStylePlacement?: boolean;
   /**
-   * Use Angular's `provideClientHydration` to hydrate components.
+   * Use Angular's `provideClientHydration` to hydrate components. Defaults to
+   * `true`. Set to `false` to bootstrap components on the client instead.
    */
   useAngularHydration?: boolean;
 }
 
-function getRenderer(ngHydration: boolean | undefined): AstroRenderer {
+function getRenderer(ngHydration: boolean): AstroRenderer {
   return {
     name: '@analogjs/astro-angular',
     clientEntrypoint: ngHydration
@@ -45,16 +57,33 @@ const SERVER_ENTRYPOINTS = [
  */
 const SERVER_OPTIMIZE_DEPS_EXCLUDE = [...SERVER_ENTRYPOINTS, '@angular/core'];
 
-function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
+function transformFilterPlugin(
+  filter: TransformFilter,
+): AnalogIntegrationPlugin {
   return {
-    esbuild: {
-      jsxDev: true,
+    name: '@analogjs/astro-angular-transform-filter',
+    analog: {
+      setup(ctx) {
+        ctx.registerTransformFilter(filter);
+      },
+    },
+  };
+}
+
+function getViteConfiguration(
+  ngHydration: boolean,
+  pluginOptions?: AngularOptions,
+) {
+  const isRolldown = !!vite.rolldownVersion;
+  return {
+    [isRolldown ? 'oxc' : 'esbuild']: {
+      ...(isRolldown ? { jsx: { development: true } } : { jsxDev: true }),
     },
     optimizeDeps: {
       include: [
         '@angular/platform-browser',
         '@angular/core',
-        options?.useAngularHydration
+        ngHydration
           ? '@analogjs/astro-angular/client-ngh.js'
           : '@analogjs/astro-angular/client.js',
       ],
@@ -62,7 +91,10 @@ function getViteConfiguration(options?: AngularOptions): ViteUserConfig {
     },
 
     plugins: [
-      viteAngular(options?.vite),
+      viteAngular(pluginOptions?.vite),
+      ...(pluginOptions?.transformFilter
+        ? [transformFilterPlugin(pluginOptions.transformFilter)]
+        : []),
       {
         name: '@analogjs/astro-angular-platform-server',
         transform(code: string, id: string) {
@@ -127,14 +159,15 @@ export default function (options?: AngularOptions): AstroIntegration {
     name: '@analogjs/astro-angular',
     hooks: {
       'astro:config:setup': ({ addRenderer, updateConfig, addMiddleware }) => {
-        addRenderer(getRenderer(options?.useAngularHydration));
+        const ngHydration = options?.useAngularHydration !== false;
+        addRenderer(getRenderer(ngHydration));
         updateConfig({
-          vite: getViteConfiguration(options),
+          vite: getViteConfiguration(ngHydration, options),
         });
-        if (options?.strictStylePlacement) {
+        if (options?.strictStylePlacement !== false) {
           addMiddleware({
             order: 'pre',
-            entrypoint: fileURLToPath(import.meta.resolve('./middleware.js')),
+            entrypoint: '@analogjs/astro-angular/middleware',
           });
         }
       },

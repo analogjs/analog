@@ -3,12 +3,11 @@ import type { Plugin } from 'vite';
 import { encapsulateStyle } from '@angular/compiler';
 import { angular } from './angular-vite-plugin';
 import {
-  encapsulateComponentStylesPlugin,
+  encapsulationPlugin as encapsulateComponentStylesPlugin,
   encapsulateViteCssOutput,
   getComponentStyleSheetMeta,
-  getFilenameFromPath,
   isComponentStyleSheet,
-} from './encapsulate-component-styles-plugin';
+} from './encapsulation-plugin';
 
 const HOST_CSS = ':host { display: block; }\n.wrapper { color: red; }';
 const COMPONENT_ID = 'ng-c3153525609';
@@ -28,12 +27,6 @@ describe('component stylesheet id helpers', () => {
     expect(isComponentStyleSheet(EMULATED_ID)).toBe(true);
     expect(isComponentStyleSheet('/src/app/card.component.scss')).toBe(false);
     expect(isComponentStyleSheet('/src/app/card.component.ts')).toBe(false);
-  });
-
-  it('strips the query string and leading slash from a stylesheet path', () => {
-    expect(getFilenameFromPath(EMULATED_ID)).toBe(
-      'src/app/card.component.scss',
-    );
   });
 
   it('maps Angular ViewEncapsulation numbers from the e query param', () => {
@@ -118,9 +111,8 @@ describe('encapsulateViteCssOutput', () => {
 describe('encapsulateComponentStylesPlugin', () => {
   const plugin = encapsulateComponentStylesPlugin();
 
-  it('runs after Vite CSS compilation and only during serve', () => {
-    expect(plugin.name).toBe('analogjs-encapsulate-component-styles');
-    expect(plugin.apply).toBe('serve');
+  it('runs after Vite CSS compilation', () => {
+    expect(plugin.name).toBe('@analogjs/vite-plugin-angular:encapsulation');
     expect(plugin.enforce).toBe('post');
   });
 
@@ -139,15 +131,15 @@ describe('encapsulateComponentStylesPlugin', () => {
   });
 
   it('leaves non-component CSS untouched', () => {
-    expect(runTransform(plugin, HOST_CSS, '/src/styles.scss')).toBeNull();
+    expect(runTransform(plugin, HOST_CSS, '/src/styles.scss')).toBeUndefined();
   });
 
   it('skips ShadowDom and None encapsulation', () => {
     const noneId = `/src/app/card.component.scss?direct&ngcomp=${COMPONENT_ID}&e=2`;
     const shadowId = `/src/app/card.component.scss?direct&ngcomp=${COMPONENT_ID}&e=3`;
 
-    expect(runTransform(plugin, HOST_CSS, noneId)).toBeNull();
-    expect(runTransform(plugin, HOST_CSS, shadowId)).toBeNull();
+    expect(runTransform(plugin, HOST_CSS, noneId)).toBeUndefined();
+    expect(runTransform(plugin, HOST_CSS, shadowId)).toBeUndefined();
   });
 
   it('skips stylesheets without a component id', () => {
@@ -157,7 +149,7 @@ describe('encapsulateComponentStylesPlugin', () => {
         HOST_CSS,
         '/src/app/card.component.scss?ngcomp=&e=0',
       ),
-    ).toBeNull();
+    ).toBeUndefined();
   });
 });
 
@@ -167,18 +159,20 @@ describe('angular() plugin composition', () => {
 
     expect(
       plugins.some(
-        (plugin) => plugin?.name === 'analogjs-encapsulate-component-styles',
+        (plugin) =>
+          plugin?.name === '@analogjs/vite-plugin-angular:encapsulation',
       ),
     ).toBe(true);
   });
 
-  it('does not register the encapsulate plugin by default', () => {
+  it('registers encapsulation for styles requested through analog.setup', () => {
     const plugins = angular();
 
     expect(
       plugins.some(
-        (plugin) => plugin?.name === 'analogjs-encapsulate-component-styles',
+        (plugin) =>
+          plugin?.name === '@analogjs/vite-plugin-angular:encapsulation',
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 });

@@ -25,9 +25,8 @@ export type HeaderBag = Record<string, string | string[] | undefined>;
  * `provideServerFns(withAllowedOrigins([...]))`. Empty by default — the
  * transport is same-origin unless an app opts out explicitly.
  */
-export const SERVER_FN_ALLOWED_ORIGINS = new InjectionToken<string[]>(
-  'SERVER_FN_ALLOWED_ORIGINS',
-);
+export const SERVER_FN_ALLOWED_ORIGINS: InjectionToken<string[]> =
+  new InjectionToken<string[]>('SERVER_FN_ALLOWED_ORIGINS');
 
 /**
  * `withAllowedOrigins([...])` — permit cross-origin browser calls from the

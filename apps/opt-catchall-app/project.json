@@ -7,13 +7,9 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
-      "outputs": [
-        "{options.outputPath}",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/.nitro",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/ssr",
-        "{workspaceRoot}/dist/apps/opt-catchall-app/analog"
-      ],
+      "executor": "@analogjs/platform:vite",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
+      "outputs": ["{workspaceRoot}/dist/apps/opt-catchall-app/analog"],
       "options": {
         "configFile": "apps/opt-catchall-app/vite.config.ts",
         "outputPath": "dist/apps/opt-catchall-app/client"
@@ -31,10 +27,11 @@
     },
     "serve": {
       "executor": "@nx/vite:dev-server",
+      "dependsOn": ["platform:build", "router:build", "content:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "opt-catchall-app:build",
-        "port": 3000
+        "port": 43040
       },
       "configurations": {
         "development": {
@@ -51,8 +48,15 @@
       "options": {
         "buildTarget": "opt-catchall-app:build",
         "parallel": true,
-        "port": 3001,
+        "port": 43041,
         "staticFilePath": "dist/apps/opt-catchall-app/analog/public"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/opt-catchall-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
       }
     }
   }

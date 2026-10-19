@@ -1,4 +1,4 @@
-import nx from '@nx/eslint-plugin';
+import angular from 'angular-eslint';
 import baseConfig from '../../eslint.config.mjs';
 
 export default [
@@ -6,10 +6,13 @@ export default [
     ignores: ['**/dist', '**/out-tsc'],
   },
   ...baseConfig,
-  ...nx.configs['flat/angular'],
-  ...nx.configs['flat/angular-template'],
+  ...angular.configs.tsRecommended.map((config) => ({
+    ...config,
+    files: ['**/*.ts'],
+  })),
   {
     files: ['**/*.ts'],
+    processor: angular.processInlineTemplates,
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
@@ -30,10 +33,10 @@ export default [
       '@angular-eslint/prefer-standalone': 'off',
     },
   },
-  {
+  ...angular.configs.templateRecommended.map((config) => ({
+    ...config,
     files: ['**/*.html'],
-    rules: {},
-  },
+  })),
   {
     ignores: ['**/vite.config.*.timestamp*', '**/vitest.config.*.timestamp*'],
   },

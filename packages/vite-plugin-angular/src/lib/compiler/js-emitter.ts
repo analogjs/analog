@@ -187,7 +187,7 @@ function emitReceiverForMemberAccess(
 const MAKE_TEMPLATE_OBJECT_POLYFILL =
   '(this&&this.__makeTemplateObject||function(e,t){return Object.defineProperty?Object.defineProperty(e,"raw",{value:t}):e.raw=t,e})';
 
-const SINGLE_QUOTE_ESCAPE_RE = /[\\\'\n\r]/g;
+const SINGLE_QUOTE_ESCAPE_RE = /[\\'\n\r]/g;
 
 /** Escape a string for use as a single-quoted string literal. */
 function escapeForLocalize(input: string): string {
@@ -291,14 +291,16 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     // argument list binds to the arrow's *body* (`… => new X(a, b)(args)`)
     // instead of invoking the arrow. Parenthesizing any wrapped callee is
     // always semantically safe.
+    const call = ast.isOptional ? '?.(' : '(';
+
     if (
       ast.fn instanceof o.ArrowFunctionExpr ||
       ast.fn instanceof o.FunctionExpr ||
       ast.fn instanceof o.WrappedNodeExpr
     ) {
-      return '(' + fn + ')' + (ast.isOptional ? '?.(' : '(') + args + ')';
+      return '(' + fn + ')' + call + args + ')';
     }
-    return fn + (ast.isOptional ? '?.(' : '(') + args + ')';
+    return fn + call + args + ')';
   }
   visitReadVarExpr(ast: o.ReadVarExpr) {
     if (ast.name === 'this') return 'this';

@@ -11,7 +11,24 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/another-test': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/cart': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/client': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+      routeMeta: typeof import('./app/pages/client/(client).page').routeMeta;
+    };
+    '/contact': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/legacy-action': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
@@ -33,6 +50,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/shared-test': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/shipping': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -47,13 +68,19 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
       load: typeof import('../../../libs/shared/feature/src/pages/test.server').load;
     };
-    '/blog/[slug]': {
+    '/blog/posts/[slug]': {
       params: { slug: string };
       query: Record<string, string | string[] | undefined>;
+    };
+    '/greet/[name]': {
+      params: { name: string };
+      query: Record<string, string | string[] | undefined>;
+      load: typeof import('./app/pages/greet.[name].server').load;
     };
     '/products/[productId]': {
       params: { productId: string };
       query: Record<string, string | string[] | undefined>;
+      routeMeta: typeof import('./app/pages/products.[productId].page').routeMeta;
       load: typeof import('./app/pages/products.[productId].server').load;
     };
     '/[...slug]': {

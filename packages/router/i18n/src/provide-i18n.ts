@@ -1,6 +1,7 @@
 import {
   EnvironmentProviders,
   InjectionToken,
+  Type,
   assertInInjectionContext,
   inject,
   makeEnvironmentProviders,
@@ -167,10 +168,6 @@ function resolveActiveLocale(config: ResolvedI18nConfig): string {
   return config.defaultLocale;
 }
 
-/**
- * Detects the locale on the client from the URL path prefix.
- * Returns the default locale on the server or when no match is found.
- */
 export function detectClientLocale(config: ResolvedI18nConfig): string {
   if (typeof window === 'undefined') {
     return config.defaultLocale;
@@ -238,7 +235,10 @@ export async function loadTranslationsRuntime(
   }
 
   try {
-    const { loadTranslations } = (await import('@angular/localize')) as {
+    const localizePkg = '@angular/localize';
+    const { loadTranslations } = (await import(
+      /* @vite-ignore */ localizePkg
+    )) as {
       loadTranslations: (t: Record<string, string>) => void;
     };
     loadTranslations(translations);
@@ -254,11 +254,6 @@ export async function loadTranslationsRuntime(
   }
 }
 
-/**
- * Clears any previously loaded translations from `$localize` so that the
- * next render falls through to the source messages until new translations
- * are loaded. Uses `@angular/localize`'s `clearTranslations` when present.
- */
 /** @internal — exported for tests; not re-exported from the package entry. */
 export async function clearTranslationsRuntime(): Promise<void> {
   const $localize = (globalThis as any).$localize;
@@ -266,7 +261,10 @@ export async function clearTranslationsRuntime(): Promise<void> {
     return;
   }
   try {
-    const { clearTranslations } = (await import('@angular/localize')) as {
+    const localizePkg = '@angular/localize';
+    const { clearTranslations } = (await import(
+      /* @vite-ignore */ localizePkg
+    )) as {
       clearTranslations: () => void;
     };
     clearTranslations();
@@ -276,20 +274,38 @@ export async function clearTranslationsRuntime(): Promise<void> {
   }
 }
 
-/**
- * Returns an injectable function that switches the application locale.
- * Reads the configured locales from the I18N_CONFIG token provided
- * by `provideI18n()`.
- *
- * Triggers a full page navigation to the new locale URL so that
- * all $localize templates re-evaluate with the correct translations.
- *
- * Usage:
- * ```typescript
- * const switchLang = injectSwitchLocale();
- * switchLang('fr'); // navigates to /fr/current-path
- * ```
- */
+// ---------------------------------------------------------------------------
+// Component definition registry
+// ---------------------------------------------------------------------------
+
+const componentDefRegistry = new Set<any>();
+
+/** @internal */
+export function ɵregisterI18nComponentDef(typeOrDef: Type<any> | any): void {
+  if (!typeOrDef) return;
+  const def = (typeOrDef as any).ɵcmp ?? typeOrDef;
+  if (def && typeof def === 'object' && 'template' in def) {
+    componentDefRegistry.add(def);
+  }
+}
+
+/** @internal */
+export function ɵresetI18nComponentDefCache(): void {
+  for (const def of componentDefRegistry) {
+    def.tView = null;
+  }
+}
+
+/** @internal */
+export function getI18nComponentDefRegistrySize(): number {
+  return componentDefRegistry.size;
+}
+
+/** @internal */
+export function clearI18nComponentDefRegistry(): void {
+  componentDefRegistry.clear();
+}
+
 export function injectSwitchLocale(): (targetLocale: string) => void {
   assertInInjectionContext(injectSwitchLocale);
   const config = inject(I18N_CONFIG);
@@ -305,12 +321,6 @@ export function injectSwitchLocale(): (targetLocale: string) => void {
   };
 }
 
-/**
- * Replaces or inserts the locale prefix in a URL path.
- *
- * - If the path starts with a known locale, it is swapped.
- * - If no locale prefix exists, the target locale is prepended.
- */
 export function replaceLocaleInPath(
   pathname: string,
   targetLocale: string,

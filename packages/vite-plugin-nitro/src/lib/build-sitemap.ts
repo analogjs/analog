@@ -27,7 +27,7 @@ export async function buildSitemap(
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig) | undefined
   >,
   i18nOptions?: I18nPrerenderOptions,
-) {
+): Promise<void> {
   const routeList: string[] = await optionHasRoutes(routes);
 
   if (routeList.length) {

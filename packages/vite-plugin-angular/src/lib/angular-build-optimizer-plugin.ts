@@ -2,12 +2,7 @@ import type { Plugin, UserConfig } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
 import { isProdMode } from './utils/plugin-config.js';
 
-export function buildOptimizerPlugin({
-  jit,
-}: {
-  supportedBrowsers: string[];
-  jit: boolean;
-}): Plugin {
+export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
   const transformers = new Map<
     string,
     InstanceType<typeof JavaScriptTransformer>
@@ -62,6 +57,17 @@ export function buildOptimizerPlugin({
             }
           : {},
       } as UserConfig;
+    },
+    // The top-level define keys `ngServerMode` off the legacy `build.ssr`
+    // flag. Environment API builds run the server through an environment
+    // with `consumer: 'server'` while `build.ssr` stays unset, so give that
+    // environment its own value; otherwise the guard compiles to `false`
+    // and browser-only hydration features run during SSR.
+    configEnvironment(_name, config) {
+      if (isProd && config.consumer === 'server') {
+        return { define: { ngServerMode: 'true' } };
+      }
+      return undefined;
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
@@ -127,7 +133,10 @@ export function buildOptimizerPlugin({
   };
 }
 
-export function extractInlineSourceMap(code: string, id: string) {
+export function extractInlineSourceMap(
+  code: string,
+  id: string,
+): { code: string; map: string | null } {
   const sourceMapMatch = code.match(
     /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
   );

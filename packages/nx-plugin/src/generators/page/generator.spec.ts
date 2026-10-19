@@ -6,7 +6,7 @@ import {
   readProjectConfiguration,
 } from '@nx/devkit';
 
-import { analogPageGenerator } from './generator';
+import analogPageGenerator from './generator';
 import { AnalogPageGeneratorSchema } from './schema';
 
 describe('analog-page generator', () => {

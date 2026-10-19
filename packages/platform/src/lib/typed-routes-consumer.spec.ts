@@ -9,7 +9,9 @@ import {
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { NgtscProgram, readConfiguration } from '@angular/compiler-cli';
-import angular from '@analogjs/vite-plugin-angular';
+import angular, {
+  angularCompilationPlugin,
+} from '@analogjs/vite-plugin-angular';
 import ts from 'typescript';
 import { resolveConfig } from 'vite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -28,9 +30,17 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     const root = mkdtempSync(join(tmpdir(), 'analog-typed-consumer-'));
     roots.push(root);
     mkdirSync(join(root, 'src/app/pages'), { recursive: true });
+    mkdirSync(join(root, 'node_modules/@analogjs'), { recursive: true });
+    for (const dependency of ['@angular', 'rxjs', 'tslib']) {
+      symlinkSync(
+        resolve(import.meta.dirname, '../../../../node_modules', dependency),
+        join(root, 'node_modules', dependency),
+        'dir',
+      );
+    }
     symlinkSync(
-      resolve(import.meta.dirname, '../../../../node_modules'),
-      join(root, 'node_modules'),
+      resolve(import.meta.dirname, '../../../router'),
+      join(root, 'node_modules/@analogjs/router'),
       'dir',
     );
     writeFileSync(join(root, 'src/main.ts'), "import './consumer';");
@@ -161,7 +171,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     root: string,
     config = 'browser.json',
     outFile?: string,
-    fastCompile = false,
+    compiler: boolean | 'compilation-api' = false,
   ) {
     const plugin = typedRoutes({ workspaceRoot: root, outFile });
     await resolveConfig(
@@ -170,13 +180,15 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
         root,
         plugins: [
           plugin,
-          angular({
-            workspaceRoot: root,
-            tsconfig: () => join(root, config),
-            jit: false,
-            fastCompile,
-            disableTypeChecking: false,
-          }),
+          (compiler === 'compilation-api' ? angularCompilationPlugin : angular)(
+            {
+              workspaceRoot: root,
+              tsconfig: () => join(root, config),
+              jit: false,
+              fastCompile: compiler === true,
+              disableTypeChecking: false,
+            },
+          ),
         ],
       },
       'serve',
@@ -258,7 +270,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     expect(compile(root).messages).toEqual([]);
   });
 
-  it.each([false, true])(
+  it.each([false, true, 'compilation-api'] as const)(
     'reports missing inclusion in the selected tsconfig (fastCompile=%s)',
     async (fastCompile) => {
       const root = fixture();
@@ -313,7 +325,8 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
         resources: () => ({
           feed: resource({ loader: async () => ({ items: ['a', 'b'] }) }),
         }),
-      } satisfies RouteMeta;
+      // Resource type inference also works when the installed Angular predates router resources.
+      } satisfies RouteMeta & { resources: () => unknown };
       export default class Page {}
     `,
     );
@@ -393,7 +406,8 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       const nav: string[] = post().nav;
 
       const userRes = injectResources('/users/[id]');
-      const untypedResources: ActivatedRoute['resources'] = injectResources();
+      const untypedResources: ActivatedRoute extends { resources: infer R }
+        ? R : Record<never, never> = injectResources();
       const feedRes: ResourceRef<{ items: string[] } | undefined> = userRes.feed;
       const feedItems: string[] | undefined = userRes.feed.value()?.items;
 

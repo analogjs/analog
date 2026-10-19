@@ -1,6 +1,6 @@
 {
   "name": "create-analog",
-  "version": "2.9.0",
+  "version": "3.0.0-alpha.99",
   "type": "module",
   "license": "MIT",
   "author": "Brandon Roberts",
@@ -10,10 +10,8 @@
   },
   "files": [
     "index.js",
-    "template-angular-v17",
-    "template-angular-v18",
-    "template-angular-v19",
     "template-angular-v20",
+    "template-angular-v21",
     "template-blog",
     "template-latest",
     "template-minimal",
@@ -21,7 +19,7 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": ">=22.22.3"
+    "node": ">=22.0.0"
   },
   "repository": {
     "type": "git",
@@ -36,9 +34,15 @@
   },
   "homepage": "https://github.com/analogjs/analog/tree/main#readme",
   "dependencies": {
-    "kolorist": "^1.6.0",
-    "minimist": "^1.2.7",
-    "prompts": "^2.4.2"
+    "kolorist": "catalog:",
+    "minimist": "catalog:",
+    "prompts": "catalog:"
+  },
+  "devDependencies": {
+    "@analogjs/platform": "workspace:*",
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@analogjs/vite-plugin-nitro": "workspace:*",
+    "h3": "catalog:nitroV2"
   },
   "publishConfig": {
     "access": "public",

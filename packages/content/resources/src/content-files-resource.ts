@@ -1,14 +1,15 @@
-import { resource } from '@angular/core';
+import { resource, ResourceRef } from '@angular/core';
+import type { ContentFile } from '../../src/lib/content-file';
 import {
-  injectContentListLoader,
-  InjectContentFilesFilterFunction,
   filterByLocale,
   injectContentLocale,
-} from '@analogjs/content';
+} from '../../src/lib/content-locale';
+import type { InjectContentFilesFilterFunction } from '../../src/lib/inject-content-files';
+import { injectContentListLoader } from '../../src/lib/content-list-loader';
 
 export function contentFilesResource<Attributes extends Record<string, any>>(
   filterFn?: InjectContentFilesFilterFunction<Attributes> | undefined,
-) {
+): ResourceRef<ContentFile<Attributes>[] | undefined> {
   const contentListLoader = injectContentListLoader<Attributes>();
   const locale = injectContentLocale();
   const contentList = contentListLoader().then((items) => {

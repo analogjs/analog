@@ -3,6 +3,7 @@
 /dist
 /coverage
 .prettierignore
+.astro
 .docusaurus/
 pnpm-lock.yaml
 /.nx/cache
@@ -11,5 +12,5 @@ pnpm-lock.yaml
 /packages/create-analog/template-*
 .vite-inspect
 .all-contributorsrc
-
+**/routeTree.gen.ts
 .nx/self-healing

@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "update-3-0-0-migrate-setup-vitest": {
+      "version": "3.0.0-alpha.25",
+      "description": "Migrate from @analogjs/vite-plugin-angular/setup-vitest to @analogjs/vitest-angular/setup-zone in Nx workspaces",
+      "implementation": "./update-3-0-0/migrate-setup-vitest"
+    }
+  }
+}

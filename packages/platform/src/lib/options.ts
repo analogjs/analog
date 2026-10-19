@@ -1,16 +1,26 @@
-import type { PluginOptions } from '@analogjs/vite-plugin-angular';
-import type { NitroConfig, PrerenderRoute } from 'nitropack';
+import type { PrerenderRoute } from 'nitro/types';
 import type {
   SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
   PrerenderContentDir,
   PrerenderContentFile,
+  PrerenderSitemapConfig,
   PrerenderRouteConfig,
-} from '@analogjs/vite-plugin-nitro';
+} from './nitro/types.js';
 
-import { ContentPluginOptions } from './content-plugin.js';
+import type { ContentPluginOptions } from './content-plugin.js';
+import type { DebugOption } from './utils/debug.js';
 
-declare module 'nitropack' {
-  interface NitroRouteConfig {
+// Nitro's NitroRouteConfig and NitroRouteRules are aliases of h3's route rule
+// types, so custom rule names are declared on h3 as its docs describe.
+declare module 'h3/rules' {
+  interface RouteRuleConfig {
     ssr?: boolean;
     /**
      * Disable progressive streaming SSR for matching routes (falls back to a
@@ -19,7 +29,7 @@ declare module 'nitropack' {
     streaming?: boolean;
   }
 
-  interface NitroRouteRules {
+  interface RouteRules {
     ssr?: boolean;
     streaming?: boolean;
   }
@@ -84,83 +94,75 @@ export interface I18nOptions {
 
 export interface Options {
   ssr?: boolean;
-  ssrBuildDir?: string;
   /**
    * Prerender the static pages without producing the server output.
    */
   static?: boolean;
   prerender?: PrerenderOptions;
+  /**
+   * Path to the server entry used for SSR.
+   * @default '<root>/src/main.server.ts'
+   */
   entryServer?: string;
   /**
-   * Pass configuration options to the internal `@analogjs/vite-plugin-angular`
-   * plugin. Set to false to disable the internal vite plugin.
+   * Path prefix for API routes.
+   * @default 'api'
    */
-  vite?: PluginOptions | false;
-  nitro?: NitroConfig;
   apiPrefix?: string;
-  jit?: boolean;
+  /**
+   * HTML document rendered around the app, relative to the project root.
+   * @default 'index.html'
+   */
   index?: string;
+  /**
+   * Absolute path to the workspace root, used to resolve workspace-relative
+   * paths such as `additionalPagesDirs`.
+   * @default process.env.NX_WORKSPACE_ROOT ?? process.cwd()
+   */
   workspaceRoot?: string;
   content?: ContentPluginOptions;
   /**
-   * Extension applied for inline styles
+   * Enable debug logging for the `analog:platform:*` and `analog:nitro:*`
+   * scopes.
+   *
+   * - `true` → enables all platform + nitro scopes
+   * - `string[]` → enables listed namespaces
+   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
+   *   to restrict output to a specific Vite command (omit for both)
+   *
+   * Angular scopes (`analog:angular:*`) are owned by
+   * `@analogjs/vite-plugin-angular` — pass `debug` to `angular()` directly
+   * to enable them.
+   *
+   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
+   * (browser), using the `obug` convention.
    */
-  inlineStylesExtension?: string;
-  /**
-   * Enables Angular's HMR during development
-   */
-  liveReload?: boolean;
+  debug?: DebugOption;
 
   /**
-   * Additional page paths to include
+   * Additional page directories to include, as workspace-relative paths
+   * starting with `/` (e.g. `/libs/shared/feature`). Use
+   * `discoverLibraryRoutes()` to collect the directories of workspace
+   * libraries.
    */
   additionalPagesDirs?: string[];
   /**
-   * Additional page paths to include
+   * Additional content directories to include, as workspace-relative paths
+   * starting with `/`.
    */
   additionalContentDirs?: string[];
   /**
-   * Additional API paths to include
+   * Additional API directories to include, as workspace-relative paths
+   * starting with `/`.
    */
   additionalAPIDirs?: string[];
-  /**
-   * Additional files to include in compilation
-   */
-  include?: string[];
-  /**
-   * Toggles internal API middleware.
-   * If disabled, a proxy request is used to route /api
-   * requests to / in the production server build.
-   */
-  useAPIMiddleware?: boolean;
-  /**
-   * Disable type checking diagnostics by the Angular compiler
-   */
-  disableTypeChecking?: boolean;
-  /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
-   */
-  fastCompile?: boolean;
-  /**
-   * Compilation output mode used when `fastCompile` is enabled.
-   * - `'full'` (default): Emit final Ivy definitions for application builds.
-   * - `'partial'`: Emit partial declarations for library publishing.
-   */
-  fastCompileMode?: 'full' | 'partial';
-  /**
-   * File replacements
-   */
-  fileReplacements?: PluginOptions['fileReplacements'];
   /**
    * Configuration for runtime i18n support.
    * When set, enables locale detection on SSR and provides
    * the LOCALE injection token.
    */
   i18n?: I18nOptions;
-  /**
-   * Opt-in experimental features that are not yet stable.
-   */
+  /** Opt-in experimental features. */
   experimental?: {
     /** Opt into generated route types and typed navigation helpers. */
     typedRouting?:
@@ -177,4 +179,16 @@ export interface Options {
   };
 }
 
-export { PrerenderContentDir, PrerenderContentFile };
+export type {
+  PrerenderContentDir,
+  PrerenderContentFile,
+  PrerenderSitemapConfig,
+  SitemapConfig,
+  SitemapEntry,
+  SitemapExcludeRule,
+  SitemapPriority,
+  SitemapRouteDefinition,
+  SitemapRouteInput,
+  SitemapRouteSource,
+  SitemapTransform,
+};

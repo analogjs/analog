@@ -1,1 +1,1 @@
-export { ViteDevServerExecutorOptions } from '@nx/vite/executors';
+export type { ViteDevServerExecutorOptions } from '@nx/vite/executors';

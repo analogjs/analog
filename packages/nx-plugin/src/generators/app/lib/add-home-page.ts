@@ -6,7 +6,7 @@ export function addHomePage(
   tree: Tree,
   options: NormalizedOptions,
   majorAngularVersion: number,
-) {
+): void {
   const templateOptions = {
     ...options,
     template: '',

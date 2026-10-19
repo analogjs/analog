@@ -5,15 +5,17 @@ import {
   Tree,
 } from '@nx/devkit';
 import {
-  addTailwindConfigFile,
-  addTailwindConfigPathToProject,
   addTailwindRequiredPackages,
   detectTailwindInstalledVersion,
   normalizeOptions,
   updateApplicationStyles,
+  writeTailwindPostcssConfig,
 } from './add-tailwind-helpers';
 
-export async function addTailwindConfig(tree: Tree, projectName: string) {
+export async function addTailwindConfig(
+  tree: Tree,
+  projectName: string,
+): Promise<void> {
   await setupTailwindGenerator(tree, {
     project: projectName,
   });
@@ -38,22 +40,18 @@ export async function setupTailwindGenerator(
   const options = normalizeOptions(rawOptions);
   const project = readProjectConfiguration(tree, options.project);
 
-  const tailwindInstalledVersion = detectTailwindInstalledVersion(tree);
+  // TODO: use return value for v5+ branching when needed
+  detectTailwindInstalledVersion(tree);
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   let installTask: GeneratorCallback = () => {};
   if (!options.skipPackageJson) {
-    if (tailwindInstalledVersion === undefined) {
-      installTask = addTailwindRequiredPackages(tree);
-    }
+    installTask = addTailwindRequiredPackages(tree);
   }
-
-  addTailwindConfigFile(tree, options, project);
 
   if (project.projectType === 'application') {
     updateApplicationStyles(tree, options, project);
-  } else if (project.projectType === 'library') {
-    addTailwindConfigPathToProject(tree, options, project);
+    writeTailwindPostcssConfig(tree, project);
   }
 
   if (!options.skipFormat) {

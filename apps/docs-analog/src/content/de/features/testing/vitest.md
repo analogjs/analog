@@ -6,13 +6,13 @@
 
 Vitest kann mit Hilfe eines Schemas/Generators für Angular CLI- oder Nx-Workspaces installiert und eingerichtet werden.
 
-Installiere zunächst das Paket `@analogjs/platform`:
+Installiere zunächst das Paket `@analogjs/vitest-angular`:
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -20,7 +20,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -28,7 +28,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -37,7 +37,7 @@ pnpm install -w @analogjs/platform --save-dev
 Führe anschließend das Schema aus, um die Vite-Konfiguration und die Testkonfigurationsdateien einzurichten und die Testkonfiguration zu aktualisieren.
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 Gehe dann zu [Tests durchführen](#tests-durchführen)

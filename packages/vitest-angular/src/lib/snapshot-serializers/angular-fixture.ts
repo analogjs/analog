@@ -73,7 +73,7 @@ function fixtureVitestSerializer(fixture: any) {
       : fixture.componentRef.componentType
   ) as any;
 
-  let inputsData: string = '';
+  let inputsData = '';
 
   const selector =
     Reflect.getOwnPropertyDescriptor(componentType, '__annotations__')?.value[0]

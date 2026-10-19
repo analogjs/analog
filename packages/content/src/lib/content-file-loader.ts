@@ -7,7 +7,7 @@ type ContentFileLoaderFunction = () => Promise<
   Record<string, () => Promise<string>>
 >;
 
-export const CONTENT_FILE_LOADER =
+export const CONTENT_FILE_LOADER: InjectionToken<ContentFileLoaderFunction> =
   new InjectionToken<ContentFileLoaderFunction>(
     '@analogjs/content/resource File Loader',
   );

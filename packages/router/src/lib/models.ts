@@ -9,7 +9,7 @@ import {
   Route,
 } from '@angular/router';
 
-import { defineRouteMeta } from './define-route';
+import { AnalogJsonLdDocument } from './json-ld';
 import { MetaTag } from './meta-tags';
 
 type OmittedRouteProps =
@@ -35,6 +35,7 @@ export interface DefaultRouteMeta extends Omit<
   resolve?: { [key: string | symbol]: ResolveFn<unknown> };
   title?: string | ResolveFn<string>;
   meta?: MetaTag[] | ResolveFn<MetaTag[]>;
+  jsonLd?: AnalogJsonLdDocument | ResolveFn<AnalogJsonLdDocument | undefined>;
 }
 
 export interface RedirectRouteMeta {
@@ -48,5 +49,5 @@ export type RouteMeta =
 
 export type RouteExport = {
   default: Type<unknown>;
-  routeMeta?: RouteMeta | ReturnType<typeof defineRouteMeta>;
+  routeMeta?: RouteMeta;
 };

@@ -9,7 +9,7 @@ export async function buildSSRApp(
   config: UserConfig,
   options?: Options,
   i18nWorkers = false,
-) {
+): Promise<void> {
   const workspaceRoot = options?.workspaceRoot ?? process.cwd();
   const sourceRoot = options?.sourceRoot ?? 'src';
   const rootDir = relative(workspaceRoot, config.root || '.') || '.';

@@ -65,18 +65,6 @@
       "prefixes": ["packages/storybook-angular/"]
     },
     {
-      "scope": "trpc",
-      "label": "scope:trpc",
-      "kind": "package",
-      "color": "0e8a16",
-      "description": "Changes in @analogjs/trpc",
-      "prefixes": [
-        "packages/trpc/",
-        "apps/trpc-app/",
-        "apps/trpc-app-e2e-playwright/"
-      ]
-    },
-    {
       "scope": "vite-plugin-angular",
       "label": "scope:vite-plugin-angular",
       "kind": "package",

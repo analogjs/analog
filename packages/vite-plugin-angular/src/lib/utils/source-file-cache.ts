@@ -15,9 +15,15 @@ const USING_WINDOWS = platform() === 'win32';
 const WINDOWS_SEP_REGEXP = new RegExp(`\\${path.win32.sep}`, 'g');
 
 export class SourceFileCache extends Map<string, ts.SourceFile> {
-  readonly modifiedFiles = new Set<string>();
-  readonly babelFileCache = new Map<string, Uint8Array>();
-  readonly typeScriptFileCache = new Map<string, string | Uint8Array>();
+  readonly modifiedFiles: Set<string> = new Set<string>();
+  readonly babelFileCache: Map<string, Uint8Array> = new Map<
+    string,
+    Uint8Array
+  >();
+  readonly typeScriptFileCache: Map<string, string | Uint8Array> = new Map<
+    string,
+    string | Uint8Array
+  >();
 
   referencedFiles?: readonly string[];
 

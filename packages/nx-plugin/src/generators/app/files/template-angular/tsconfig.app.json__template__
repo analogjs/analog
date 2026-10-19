@@ -2,9 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "<%= offsetFromRoot %>dist/out-tsc",
-    "types": [],
-    "target": "ES2022",
-    "useDefineForClassFields": false
+    "types": []
   },
   "files": ["src/main.ts", "src/main.server.ts"],
   "include": [

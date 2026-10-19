@@ -2,7 +2,7 @@
 
 An existing Angular Single Page Application can be configured to use Analog using a schematic/generator for Angular CLI or Nx workspaces.
 
-> Analog is compatible with Angular v17 and above.
+> Analog is compatible with Angular v20, v21, and v22.
 
 ## Using a Schematic/Generator
 
@@ -124,7 +124,8 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog({
+    analog(),
+    angular({
       fileReplacements:
         mode === 'production'
           ? [
@@ -201,7 +202,9 @@ export default defineConfig(({ mode }) => ({
 
 ## Enabling HMR
 
-Angular supports HMR/Live reload where in most cases components can be updated without a page reload. To enable it in Analog, use the `liveReload: true` option.
+Angular supports HMR where in most cases components can be updated without a full page reload. In Analog, use `liveReload` to control the Angular live-reload pipeline.
+
+This is separate from Vite's `server.hmr` option, which configures the HMR websocket transport. You can use `server.hmr` together with `liveReload` when you need custom host, port, or path settings.
 
 ```ts
 /// <reference types="vitest" />
@@ -209,7 +212,8 @@ Angular supports HMR/Live reload where in most cases components can be updated w
 export default defineConfig(({ mode }) => ({
   // .. other configuration
   plugins: [
-    analog({
+    analog(),
+    angular({
       liveReload: true,
     }),
   ],

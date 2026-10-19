@@ -16,8 +16,7 @@ import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addHomePage } from './lib/add-home-page';
 import {
   belowMinimumSupportedNxVersion,
-  belowMinimumSupportedOxlintNxVersion,
-  MINIMUM_SUPPORTED_OXLINT_NX_VERSION,
+  MINIMUM_SUPPORTED_NX_VERSION,
 } from './versions/minimum-supported-versions';
 import { addAngularApp } from './lib/add-angular-app';
 import setupAnalogGenerator from '../init/generator';
@@ -72,29 +71,22 @@ function normalizeOptions(
   };
 }
 
-export async function appGenerator(
+async function appGenerator(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
-) {
+): Promise<() => void> {
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
   if (nxVersion && belowMinimumSupportedNxVersion(nxVersion)) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
+      stripIndents`Nx v${MINIMUM_SUPPORTED_NX_VERSION} or newer is required to install Analog`,
     );
   }
 
-  if (options.linter === 'oxlint') {
-    if (!nxVersion) {
-      throw new Error(
-        stripIndents`The oxlint linter is only supported in Nx workspaces`,
-      );
-    }
-    if (belowMinimumSupportedOxlintNxVersion(nxVersion)) {
-      throw new Error(
-        stripIndents`Nx v${MINIMUM_SUPPORTED_OXLINT_NX_VERSION} or newer is required to use the oxlint linter`,
-      );
-    }
+  if (options.linter === 'oxlint' && !nxVersion) {
+    throw new Error(
+      stripIndents`The oxlint linter is only supported in Nx workspaces`,
+    );
   }
 
   const normalizedOptions = normalizeOptions(tree, options);
@@ -127,13 +119,17 @@ export async function appGenerator(
   });
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion!)!);
+  const coercedAngularVersion = coerce(angularVersion ?? '');
+  if (!coercedAngularVersion) {
+    throw new Error('Could not determine installed Angular version.');
+  }
+  const majorAngularVersion = major(coercedAngularVersion);
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
     {
       'front-matter': '^4.0.2',
-      marked: '^15.0.7',
+      marked: '^18.0.0',
       mermaid: '^10.2.4',
       prismjs: '^1.29.0',
     },

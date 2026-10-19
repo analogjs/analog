@@ -4,7 +4,7 @@ Analog also supports `WebSockets` and `Server-Sent Events` through Nitro.
 
 ## Enabling WebSockets
 
-Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) is experimental and it can be enabled in the `analog` plugin:
+Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) is experimental and it can be enabled in the Nitro config passed to the `nitro` plugin:
 
 `vite.config.ts`
 
@@ -12,12 +12,11 @@ Currently, WebSocket support in [Nitro](https://nitro.unjs.io/guide/websocket) i
 export default defineConfig({
   // ...
   plugins: [
-    analog({
-      // ...
-      nitro: {
-        experimental: {
-          websocket: true,
-        },
+    analog(),
+    angular(),
+    nitro({
+      experimental: {
+        websocket: true,
       },
     }),
   ],
@@ -48,7 +47,9 @@ export default defineConfig({
 Similar to [API routes](/docs/features/api/overview), WebSocket Handlers are defined in the `src/server/routes/api` folder.
 
 ```typescript
-// src/server/api/routes/ws/chat.ts
+// src/server/routes/api/ws/chat.ts
+import { defineWebSocketHandler } from 'h3';
+
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });
@@ -79,10 +80,12 @@ WebSocket routes are exposed with the same path as API routes. For example, `src
 
 ## Defining a Server-sent Event Handler
 
-Server-sent event handlers can be created using `createEventStream` function in the event handler.
+Server-sent event handlers can be created using the `createEventStream` function in a handler.
 
 ```typescript
 // src/server/routes/api/sse.ts
+import { createEventStream, defineEventHandler } from 'h3';
+
 export default defineEventHandler(async (event) => {
   const eventStream = createEventStream(event);
 

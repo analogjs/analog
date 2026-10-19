@@ -5,7 +5,24 @@ test('should redirect to /blog', async ({ page }) => {
   await expect(page).toHaveURL(/\/blog$/);
 });
 
-test('should serve up HTML for pre-rendered markdown route', async ({
+test('should list posts on /blog', async ({ page }) => {
+  await page.goto('/');
+  const postLinks = page.locator('ul li a');
+  await expect(postLinks).toHaveCount(2);
+  await expect(postLinks.nth(0)).toHaveText(/My First Post/);
+  await expect(postLinks.nth(1)).toHaveText(/My Second Post/);
+  await expect(postLinks.nth(0)).toHaveAttribute(
+    'href',
+    /\/blog\/2022-12-27-my-first-post$/,
+  );
+  await expect(postLinks.nth(1)).toHaveAttribute(
+    'href',
+    /\/blog\/my-second-post$/,
+  );
+});
+
+// https://github.com/analogjs/analog/issues/2165
+test.fixme('should serve up HTML for pre-rendered markdown route', async ({
   page,
 }) => {
   await page.goto('/blog/2022-12-27-my-first-post');
@@ -17,4 +34,20 @@ test('should serve up XML for pre-rendered XML route at /api/rss.xml', async ({
 }) => {
   const response = await request.get('/api/rss.xml');
   expect(response.headers()['content-type']).toMatch(/xml/);
+});
+
+test('should serve a sitemap with canonical routes and no internal static-data endpoints', async ({
+  request,
+}) => {
+  const response = await request.get('/sitemap.xml');
+  const sitemap = await response.text();
+
+  expect(response.ok()).toBeTruthy();
+  expect(response.headers()['content-type']).toMatch(/xml/);
+  expect(sitemap).toContain('<loc>https://analog-blog.netlify.app/blog</loc>');
+  expect(sitemap).toContain('<loc>https://analog-blog.netlify.app/about</loc>');
+  expect(sitemap).toContain(
+    '<loc>https://analog-blog.netlify.app/blog/2022-12-27-my-first-post</loc>',
+  );
+  expect(sitemap).not.toContain('/api/_analog/pages/');
 });

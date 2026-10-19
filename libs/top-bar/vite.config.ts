@@ -1,13 +1,47 @@
 /// <reference types="vitest" />
 
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { defineConfig } from 'vite';
 import angular from '@analogjs/vite-plugin-angular';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
+  const tsconfig =
+    process.env['ANALOG_BUILD_LIB_TSCONFIG'] ??
+    (command === 'build'
+      ? `${__dirname}/tsconfig.lib.json`
+      : `${__dirname}/tsconfig.spec.json`);
+
   return {
-    root: import.meta.dirname,
-    plugins: [angular()],
+    root: __dirname,
+    cacheDir: '../../node_modules/.vite/libs/top-bar',
+    plugins: [
+      angular({ jit: false, tsconfig }),
+      viteStaticCopy({
+        targets: [{ src: ['*.md', 'package.json'], dest: '.' }],
+      }),
+    ],
+    resolve: {
+      mainFields: ['module'],
+    },
+    build: {
+      target: ['esnext'],
+      sourcemap: true,
+      lib: {
+        entry: 'src/index.ts',
+        fileName: 'fesm2022/top-bar',
+        formats: ['es'],
+      },
+      rollupOptions: {
+        external: [/^@angular\/.*/, 'rxjs', 'rxjs/operators'],
+        output: {
+          preserveModules: false,
+        },
+      },
+      cssCodeSplit: false,
+      cssMinify: true,
+      minify: false,
+    },
     test: {
       reporters: ['default'],
       globals: true,

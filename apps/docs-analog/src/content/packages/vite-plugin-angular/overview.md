@@ -54,6 +54,46 @@ export default defineConfig({
 
 > The `angular` plugin should be listed **first** in the plugins array.
 
+## Plugin Options
+
+All options are optional.
+
+| Option                  | Default                                   | Description                                                                                                                                                                                               |
+| ----------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tsconfig`              | `tsconfig.app.json`                       | Path to the tsconfig used for compilation, or a function returning it. Libraries default to `tsconfig.lib.json` and tests to `tsconfig.spec.json`.                                                        |
+| `workspaceRoot`         | `NX_WORKSPACE_ROOT`, then `process.cwd()` | Absolute path to the workspace root. Set it in monorepos where the app is not the working directory.                                                                                                      |
+| `inlineStylesExtension` | `'css'`                                   | Stylesheet language for inline component `styles`, such as `'scss'`. See [CSS Pre-processors](/docs/packages/vite-plugin-angular/css-preprocessors).                                                      |
+| `jit`                   | `true` in tests, `false` otherwise        | Compile components in JIT mode instead of AOT.                                                                                                                                                            |
+| `include`               | `[]`                                      | Additional globs, relative to the workspace root, to add to compilation, such as components from a library outside the tsconfig `include`.                                                                |
+| `liveReload`            | `true`                                    | Enables Angular component HMR during development. This is separate from Vite's `server.hmr` transport option.                                                                                             |
+| `disableTypeChecking`   | `true`                                    | Skips semantic and template diagnostics during compilation. Set to `false` to report type errors from the Vite build.                                                                                     |
+| `fileReplacements`      | `[]`                                      | Replaces source files at build time, like `fileReplacements` in `angular.json`. Use `{ replace, with }`, or `{ replace, ssr }` for the SSR build. `with` and `ssr` paths resolve against `workspaceRoot`. |
+| `fastCompile`           | `false`                                   | Opts into the [fast compile path](#fast-compile-mode).                                                                                                                                                    |
+| `fastCompileMode`       | `'full'`                                  | Output mode for `fastCompile`: `'full'` for apps, `'partial'` for publishing libraries.                                                                                                                   |
+| `debug`                 | `false`                                   | Enables `analog:angular:*` debug logging.                                                                                                                                                                 |
+
+```ts
+import { defineConfig } from 'vite';
+import angular from '@analogjs/vite-plugin-angular';
+
+export default defineConfig(({ mode }) => ({
+  plugins: [
+    angular({
+      inlineStylesExtension: 'scss',
+      fileReplacements:
+        mode === 'production'
+          ? [
+              {
+                replace: 'src/environments/environment.ts',
+                with: 'src/environments/environment.prod.ts',
+              },
+            ]
+          : [],
+    }),
+  ],
+}));
+```
+
 ## Fast Compile Mode
 
 `fastCompile` opts the plugin into a single-pass compilation path that emits Ivy instructions directly and skips Angular's template type-checking. It's intended for content-focused apps and faster dev iteration where build throughput matters more than inline type-safety feedback.
@@ -132,3 +172,9 @@ Create a `tsconfig.app.json` in the root of the project.
   "include": ["src/**/*.ts"]
 }
 ```
+
+## Tailwind CSS v4
+
+For Angular component styles that use Tailwind utilities like `@apply`, add a `@reference` to your root stylesheet in those component stylesheets and follow the Tailwind guide for Analog:
+
+- https://analogjs.org/docs/integrations/tailwind

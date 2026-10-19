@@ -1,4 +1,4 @@
-import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 
 export type ValidationFieldErrors = Record<string, string[]>;
 

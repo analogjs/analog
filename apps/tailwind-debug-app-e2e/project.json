@@ -1,0 +1,16 @@
+{
+  "name": "tailwind-debug-app-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tailwind-debug-app-e2e/tests",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/tailwind-debug-app-e2e",
+        "command": "playwright test"
+      }
+    }
+  }
+}
