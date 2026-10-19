@@ -1450,6 +1450,36 @@ export class AppComponent {}
     60_000,
   );
 
+  it('keeps AOT output for environments still building after another ends', async () => {
+    const plugin = createAppBuildPlugin({ jit: false });
+    await plugin.config({ root: fixtureDir, build: {} }, { command: 'build' });
+    const config = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
+    plugin.configResolved(config);
+    const ctx = {
+      environment: { config },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    await plugin.buildStart.call(ctx);
+    await plugin.buildStart.call(ctx);
+    await plugin.buildEnd.call(ctx);
+
+    const code = realFs.readFileSync(componentPath, 'utf-8');
+    const result = await plugin.transform.handler.call(
+      ctx,
+      code,
+      componentPath,
+    );
+    expect(result?.code).toContain('ɵcmp');
+
+    await plugin.buildEnd.call(ctx);
+  }, 60_000);
+
   it.each([
     { command: 'build', jit: false },
     { command: 'serve', jit: false },
