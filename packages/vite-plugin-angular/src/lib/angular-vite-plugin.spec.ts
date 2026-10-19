@@ -158,6 +158,72 @@ describe('angularVitePlugin', () => {
       },
     );
   });
+
+  describe('dev SSR ngServerMode define', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    async function configureEnvironment(
+      command: 'serve' | 'build',
+      consumer: 'server' | 'client',
+    ) {
+      const tempRoot = mkdtempSync(join(tmpdir(), 'analog-server-mode-'));
+      const tsconfigPath = join(tempRoot, 'tsconfig.json');
+      writeFileSync(tsconfigPath, '{ "compilerOptions": {} }', 'utf-8');
+
+      try {
+        const plugin = angular({ tsconfig: tsconfigPath }).find(
+          (p) => p.name === '@analogjs/vite-plugin-angular',
+        ) as Plugin;
+        const configHook =
+          typeof plugin.config === 'function'
+            ? plugin.config
+            : (plugin.config as any)?.handler;
+        await configHook?.call(
+          {} as any,
+          { resolve: {} },
+          { command, mode: 'development' },
+        );
+        const configEnvironmentHook = plugin.configEnvironment as (
+          name: string,
+          config: { consumer: string },
+        ) => unknown;
+        return configEnvironmentHook('ssr', { consumer });
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    }
+
+    it('defines ngServerMode for server environments during serve', async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+
+      expect(await configureEnvironment('serve', 'server')).toEqual({
+        define: { ngServerMode: 'true' },
+      });
+    });
+
+    it('leaves client environments untouched during serve', async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+
+      expect(await configureEnvironment('serve', 'client')).toBeUndefined();
+    });
+
+    it('leaves builds to the build optimizer plugin', async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+
+      expect(await configureEnvironment('build', 'server')).toBeUndefined();
+    });
+
+    it('does not define ngServerMode under Vitest', async () => {
+      vi.stubEnv('NODE_ENV', 'test');
+
+      expect(await configureEnvironment('serve', 'server')).toBeUndefined();
+    });
+  });
 });
 
 describe('liveReload option', () => {
