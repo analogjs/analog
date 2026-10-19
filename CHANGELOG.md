@@ -1,3 +1,16 @@
+# [2.9.0](https://github.com/analogjs/analog/compare/v2.8.1...v2.9.0) (2026-10-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit ctorParameters for JIT @Injectable classes ([#2653](https://github.com/analogjs/analog/issues/2653)) ([e09b08a](https://github.com/analogjs/analog/commit/e09b08a3b2a51af02a61facbbbd8955a5ba4dd28)), closes [#2616](https://github.com/analogjs/analog/issues/2616)
+- **vite-plugin-angular:** keep JIT inline style payload in test ids ([#2615](https://github.com/analogjs/analog/issues/2615)) ([95f9531](https://github.com/analogjs/analog/commit/95f953121a550d4cb70037afc52f57db3751b77f))
+- **vite-plugin-angular:** preserve source maps for hoisted statements ([#2654](https://github.com/analogjs/analog/issues/2654)) ([df99d9f](https://github.com/analogjs/analog/commit/df99d9fffc31ed56cce0e9d89a59d0f096bb87bd)), closes [#2517](https://github.com/analogjs/analog/issues/2517)
+- **vite-plugin-angular:** resolve or reject non-literal host bindings in fast compile ([#2652](https://github.com/analogjs/analog/issues/2652)) ([c785872](https://github.com/analogjs/analog/commit/c785872e6aef1b41afca2c54bd866ac2bc06a83b)), closes [#2513](https://github.com/analogjs/analog/issues/2513)
+
+### Features
+
+- **storybook-angular:** forward fastCompile options to the Angular plugin ([#2651](https://github.com/analogjs/analog/issues/2651)) ([caf4b64](https://github.com/analogjs/analog/commit/caf4b64b773c4c7d7a89a2d8430602c243ead4b2)), closes [#2617](https://github.com/analogjs/analog/issues/2617)
+
 # [2.9.0-beta.3](https://github.com/analogjs/analog/compare/v2.9.0-beta.2...v2.9.0-beta.3) (2026-10-18)
 
 ### Bug Fixes
