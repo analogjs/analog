@@ -38,10 +38,9 @@ Work in this order and stop to report if any step fails:
 When you're done, give me:
 - the changes you made, grouped by checklist section
 - the items the guide says need a manual decision that you didn't change:
-  `@analogjs/trpc`, the experimental Analog Compiler options, `FormAction`
-  forms that rely on non-enhanced behavior, `app/routes` folders, references to
-  `injectRouter` that aren't calls, custom base-href deployments, and custom
-  `ContentRenderer` implementations
+  `@analogjs/trpc`, `FormAction` forms that rely on non-enhanced behavior,
+  `app/routes` folders, references to `injectRouter` that aren't calls, custom
+  base-href deployments, and custom `ContentRenderer` implementations
 - any build, test, or lint failures that are still open
 ```
 
@@ -535,11 +534,9 @@ These options had no effect and were removed. Delete them from your config:
 - `analog({ discoverRoutes })`: use [`discoverLibraryRoutes()`](#workspace-library-globs) to include routes from workspace libraries.
 - `angular({ supportedBrowsers })`: no replacement is needed.
 
-### Removed first-party packages and current compiler gaps
+### Removed first-party packages
 
 If your app depends on `@analogjs/trpc`, plan that migration separately. The first-party package is removed in v3, so you need to replace it with standard Analog server and API routes or maintain a custom tRPC integration outside the removed package.
-
-If you enabled the experimental Analog Compiler in v2 with `experimental.useAnalogCompiler`, `analogCompilationMode`, or a direct `@analogjs/angular-compiler` dependency, that path is not available in v3. Remove those options and the dependency, and migrate with the standard `@analogjs/vite-plugin-angular` path. `angularCompilationPlugin()` is a separate experimental opt-in, not a drop-in replacement, and its API and behavior may change in future releases.
 
 ### Template and toolchain baseline shifts
 
@@ -575,6 +572,5 @@ Keep automated migration tooling focused on the breaking changes above:
 - rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
 - remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
-- flag `experimental.useAnalogCompiler`, `analogCompilationMode`, and `@analogjs/angular-compiler` as unavailable in v3
 - typed routing keeps the v3 `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
 - treat `withDebugRoutes` and `liveReload` as opt-in rather than mandatory rewrites
