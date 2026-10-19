@@ -12,9 +12,9 @@ https://analogjs.org/docs/guides/migrating-v2-to-v3.
 
 Work in this order and stop to report if any step fails:
 
-1. Preflight: confirm the workspace is on Angular v20+, Node ^22.18.0 || ^24.3.0,
-   Vitest 4+, and Nx 23.2+ (if Nx is used). If Angular is older than v20, stop and
-   tell me. Analog v3 doesn't support it.
+1. Preflight: confirm the workspace is on Angular v20+ and Node
+   ^22.18.0 || ^24.3.0. If Angular is older than v20, stop and tell me. Analog v3
+   doesn't support it.
 2. Run the official updater first: `ng update @analogjs/platform@latest` or
    `nx migrate @analogjs/platform@latest` (then `nx migrate --run-migrations`).
    Don't hand-edit anything the migrations already handle.
@@ -78,10 +78,8 @@ The `@angular-devkit/build-angular` fallback in `@analogjs/vite-plugin-angular` 
 The peer dependency ranges now match the Angular v20 baseline:
 
 - `@analogjs/vitest-angular` requires Vitest `^4.0.7 || ^5.0.0`
-- `@analogjs/platform` and `@analogjs/content` require Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`), and the application and preset generators reject older Nx versions
+- `@analogjs/platform` and `@analogjs/content` list Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`) as optional peer dependencies. Only the application and preset generators reject older Nx versions
 - `zone.js`, when used, must be `0.15.0` or newer
-
-Upgrade Vitest and Nx before upgrading Analog.
 
 #### Template and toolchain baseline shifts
 
