@@ -168,20 +168,19 @@ Add `@analogjs/vite-plugin-angular` and `@analogjs/vite-plugin-nitro` to the app
 
 These options used to live on `analog()`. Pass them to `angular()` or `nitro()` directly:
 
-| v2 location                                                                                                                                      | v3 location                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`                                                                 |
-| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                                                                                      |
-| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angularCompilationPlugin()`                                                                          |
-| `analog({ experimental: { stylePipeline: { angularPlugins: [...] } } })`                                                                         | a Vite plugin exposing `analog.setup()` (see the [Style Pipeline guide](/docs/guides/style-pipeline)) |
-| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                                                                                        |
-| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array                                                               |
+| v2 location                                                                                                                                      | v3 location                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `analog({ vite: {...} })`                                                                                                                        | spread directly into `angular({...})`   |
+| `analog({ jit })`, `disableTypeChecking`, `liveReload`, `inlineStylesExtension`, `fileReplacements`, `fastCompile`, `fastCompileMode`, `include` | `angular({...})`                        |
+| `analog({ experimental: { useAngularCompilationAPI: true } })`                                                                                   | `angularCompilationPlugin()`            |
+| `analog({ nitro: {...} })`                                                                                                                       | `nitro({...})`                          |
+| `analog({ vite: false })`                                                                                                                        | drop `angular()` from the plugins array |
 
 `analog()` retains `ssr`, `static`, `apiPrefix`, `entryServer`, `index`, `workspaceRoot`, `content`, `prerender`, `i18n`, `additionalPagesDirs`/`additionalContentDirs`/`additionalAPIDirs`, `debug`, and `experimental.typedRouting`.
 
 #### Workspace library globs
 
-The `discoverRoutes` option was removed. If your v2 config used `discoverRoutes: true` to compile workspace library pages, use the `discoverLibraryRoutes()` helper exported from `@analogjs/platform` instead. Call it once and feed the result to `analog()`. The platform registers the library page globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include`:
+The platform registers the `additionalPagesDirs` globs with Angular compilation through `analog.setup()`, so `angular()` needs no matching `include` for workspace library pages. To find those directories automatically, use the `discoverLibraryRoutes()` helper exported from `@analogjs/platform`. Call it once and feed the result to `analog()`:
 
 ```ts
 import analog, { discoverLibraryRoutes } from '@analogjs/platform';
@@ -523,12 +522,9 @@ provideContent(withMarkdownRenderer({ loadMermaid: () => import('mermaid') }));
 
 The `DefineServerRouteContext`, `DefineServerRouteOptions`, `DefineServerRouteResult`, and `ServerRouteHandler` types are now `DefineApiRouteContext`, `DefineApiRouteOptions`, `DefineApiRouteResult`, and `ApiRouteHandler`.
 
-### Removed no-op options
+### Removed no-op option
 
-These options had no effect and were removed. Delete them from your config:
-
-- `analog({ discoverRoutes })`: use [`discoverLibraryRoutes()`](#workspace-library-globs) to include routes from workspace libraries.
-- `angular({ supportedBrowsers })`: no replacement is needed.
+`angular({ supportedBrowsers })` had no effect and was removed. Delete it from your config; no replacement is needed.
 
 ### Removed first-party packages
 
@@ -566,7 +562,7 @@ Keep automated migration tooling focused on the breaking changes above:
 - flag route files under `app/routes` or `src/app/routes`, `routes` imports, `ContentRenderer.getContentHeadings()`, and `MERMAID_IMPORT_TOKEN` for manual migration
 - flag forms using `FormAction` that rely on the v2 non-enhanced behavior; add `[enhanceForm]="false"` to keep it
 - rename `defineServerRoute` to `defineApiRoute` and `ServerRouteHandler` to `ApiRouteHandler` in `@analogjs/router/server/actions` imports
-- remove `analog({ discoverRoutes })` and `angular({ supportedBrowsers })`, which had no effect
+- remove `angular({ supportedBrowsers })`, which had no effect
 - flag `@analogjs/trpc` as a removed package that needs a manual migration plan
 - typed routing keeps the v3 `experimental.typedRouting`, `toRoute`, and `LinkTo` APIs; see the [typed routing guide](/docs/features/routing/typed-routes) for migration from earlier v3 alphas
 - treat `withDebugRoutes` and `liveReload` as opt-in rather than mandatory rewrites
