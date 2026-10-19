@@ -84,10 +84,6 @@ The peer dependency ranges now match the Angular v20 baseline:
 
 Upgrade Vitest and Nx before upgrading Analog.
 
-### Removed Analog SFC support
-
-Analog SFC support was removed and `.agx` files are no longer supported. Replace any remaining SFC usage with standard Angular components, markdown content files, or route/page files that use the current Analog conventions.
-
 ### `analog()`, `angular()`, and `nitro()` are now separate plugins
 
 Analog v3 splits the Vite plugin chain into three explicit calls. `analog()` no longer internally invokes `@analogjs/vite-plugin-angular` or `@analogjs/vite-plugin-nitro` — you call them yourself. Pass each plugin only the options it owns.
