@@ -151,7 +151,7 @@ catalog:
   oxlint-tsgolint: ^0.20.0
   playwright: ^1.58.2
   postcss: ^8.5.8
-  prettier: ^3.8.4
+  prettier: 3.8.4
   prismjs: ^1.30.0
   prompts: ^2.4.2
   radix3: ^1.1.2
