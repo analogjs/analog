@@ -119,7 +119,9 @@ jobs:
       - name: Install with overridden Angular
         # --no-frozen-lockfile because we just modified pnpm-workspace.yaml above.
         # --prefer-offline still hits the cache for everything else.
-        run: pnpm install --no-frozen-lockfile --prefer-offline
+        # --ignore-scripts skips the root `prepare` package build, which
+        # type-checks every package against the overridden Angular version.
+        run: pnpm install --no-frozen-lockfile --prefer-offline --ignore-scripts
 
       - name: Verify installed @angular/compiler version
         run: |
@@ -143,7 +145,9 @@ jobs:
         # constructor regression on 20.3.x) appear in CI logs.
         env:
           DEBUG: 'analog-fast-compile*'
-        run: pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/
+        # Use the package config directly: the root config loads every
+        # project, some of which import built dist output.
+        run: pnpm exec vitest run --config packages/vite-plugin-angular/vite.config.ts packages/vite-plugin-angular/src/lib/compiler/
 
       - name: Open or update regression issue (push to beta only)
         # PRs already surface failures via the check status — auto-opening
@@ -172,7 +176,7 @@ jobs:
           - **Failing workflow run**: $RUN_URL
           - **Matrix slot**: \`@angular/compiler@${MATRIX_VERSION}\`
           - **Workspace pin**: see \`package.json\` for the version that the workspace currently builds against
-          - **Reproduction**: \`pnpm install\` with the \`overrides:\` block of \`pnpm-workspace.yaml\` setting \`@angular/compiler\`, \`@angular/compiler-cli\` and the Angular runtime packages (core, common, platform-browser, platform-browser-dynamic, router) to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run packages/vite-plugin-angular/src/lib/compiler/\`
+          - **Reproduction**: \`pnpm install --ignore-scripts\` with the \`overrides:\` block of \`pnpm-workspace.yaml\` setting \`@angular/compiler\`, \`@angular/compiler-cli\` and the Angular runtime packages (core, common, platform-browser, platform-browser-dynamic, router) to \`${MATRIX_VERSION}\`, then \`DEBUG=analog-fast-compile* pnpm exec vitest run --config packages/vite-plugin-angular/vite.config.ts packages/vite-plugin-angular/src/lib/compiler/\`
 
           ## Which area/package is the issue in?
 
