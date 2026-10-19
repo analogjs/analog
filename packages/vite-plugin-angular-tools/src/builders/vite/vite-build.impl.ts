@@ -4,6 +4,7 @@ import {
   createBuilder,
   targetFromTargetString,
 } from '@angular-devkit/architect';
+import { resolve } from 'node:path';
 import type { InlineConfig } from 'vite';
 import { ViteBuildSchema } from './schema';
 
@@ -48,7 +49,11 @@ async function viteBuilder(
     root: projectConfig.root as string,
     mode,
     build: {
-      outDir: options.outputPath,
+      // outputPath is workspace-relative; Vite resolves a relative outDir
+      // against the project root.
+      outDir: options.outputPath
+        ? resolve(context.workspaceRoot, options.outputPath)
+        : undefined,
       sourcemap: !!buildOptions.sourcemap,
     },
   };
