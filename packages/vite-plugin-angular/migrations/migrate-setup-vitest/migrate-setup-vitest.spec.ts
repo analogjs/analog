@@ -193,6 +193,32 @@ describe('migrate-setup-vitest', () => {
     );
   });
 
+  it.each(['.cjs', '.cts', '.jsx', '.tsx'])(
+    'should process %s files',
+    (extension) => {
+      const filePath = `/src/test-setup${extension}`;
+      tree.create(
+        filePath,
+        `import '@analogjs/vite-plugin-angular/setup-vitest';`,
+      );
+      tree.create(
+        '/package.json',
+        JSON.stringify({
+          devDependencies: {
+            '@analogjs/vite-plugin-angular': '^3.0.0',
+          },
+        }),
+      );
+
+      const rule = migrateSetupVitest();
+      rule(tree, context);
+
+      expect(tree.readContent(filePath)).toBe(
+        `import '@analogjs/vitest-angular/setup-zone';`,
+      );
+    },
+  );
+
   it('should skip unsupported file types', () => {
     const jsonContent = `{ "setup": "@analogjs/vite-plugin-angular/setup-vitest" }`;
     tree.create('/config.json', jsonContent);
