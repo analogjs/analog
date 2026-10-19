@@ -1,8 +1,18 @@
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
-import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks';
+import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks/index.js';
 
 const OLD_IMPORT = '@analogjs/vite-plugin-angular/setup-vitest';
 const NEW_IMPORT = '@analogjs/vitest-angular/setup-zone';
+const SUPPORTED_EXTENSIONS = new Set([
+  '.cjs',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.mts',
+  '.ts',
+  '.tsx',
+]);
 
 function addVitestAngularDependency(
   tree: Tree,
@@ -45,12 +55,8 @@ export default function migrateSetupVitest(): Rule {
     const filesToUpdate: string[] = [];
 
     tree.visit((filePath) => {
-      if (
-        !filePath.endsWith('.ts') &&
-        !filePath.endsWith('.mts') &&
-        !filePath.endsWith('.js') &&
-        !filePath.endsWith('.mjs')
-      ) {
+      const extension = filePath.slice(filePath.lastIndexOf('.'));
+      if (!SUPPORTED_EXTENSIONS.has(extension)) {
         return;
       }
       if (filePath.includes('/node_modules/')) {
