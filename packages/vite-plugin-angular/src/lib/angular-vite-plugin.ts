@@ -1980,12 +1980,6 @@ export function isModuleForChangedResource(
   );
 }
 
-// Production builds get `ngServerMode` from the build optimizer plugin, which
-// only applies to builds. During dev SSR it stays undefined until
-// `platformServer()` sets it at render time, after the app config has already
-// evaluated `provideClientHydration()`. That registers the browser-only event
-// replay listener, which then reads `window` on the server. Vitest is skipped
-// because jsdom component tests run as the browser.
 function devServerModePlugin(): Plugin {
   return {
     name: '@analogjs/vite-plugin-angular-dev-server-mode',
