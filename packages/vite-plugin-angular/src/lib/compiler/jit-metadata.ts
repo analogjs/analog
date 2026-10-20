@@ -154,10 +154,13 @@ export function buildCtorParameters(
  * Returns a JS object literal string or null if no props.
  *
  * Accepts an OXC ClassDeclaration node and the original source string.
+ * `coreNamespace` (e.g. `i0.`) qualifies the decorators synthesized for
+ * signal APIs, whose names the source may not import.
  */
 export function buildPropDecorators(
   classNode: any,
   sourceCode: string,
+  coreNamespace = '',
 ): string | null {
   const props: Record<string, string[]> = {};
   const members: any[] = classNode.body?.body || [];
@@ -253,7 +256,7 @@ export function buildPropDecorators(
         }
         optParts.push(`isSignal: true`, `required: ${required}`);
         props[memberName].push(
-          `{type: Input, args: [{${optParts.join(', ')}}]}`,
+          `{type: ${coreNamespace}Input, args: [{${optParts.join(', ')}}]}`,
         );
       } else if (api === 'model') {
         // Both Input and Output must live on the SAME propDecorators key
@@ -268,10 +271,10 @@ export function buildPropDecorators(
         const alias = extractAlias(optArg);
         const bindingName = alias ?? memberName;
         props[memberName].push(
-          `{type: Input, args: [{isSignal: true, alias: '${escapeStringLiteral(bindingName)}', required: ${required}}]}`,
+          `{type: ${coreNamespace}Input, args: [{isSignal: true, alias: '${escapeStringLiteral(bindingName)}', required: ${required}}]}`,
         );
         props[memberName].push(
-          `{type: Output, args: ['${escapeStringLiteral(bindingName + 'Change')}']}`,
+          `{type: ${coreNamespace}Output, args: ['${escapeStringLiteral(bindingName + 'Change')}']}`,
         );
       } else if (api === 'output' || api === 'outputFromObservable') {
         if (!props[memberName]) props[memberName] = [];
@@ -281,10 +284,10 @@ export function buildPropDecorators(
         const alias = extractAlias(optArg);
         if (alias !== null) {
           props[memberName].push(
-            `{type: Output, args: ['${escapeStringLiteral(alias)}']}`,
+            `{type: ${coreNamespace}Output, args: ['${escapeStringLiteral(alias)}']}`,
           );
         } else {
-          props[memberName].push(`{type: Output}`);
+          props[memberName].push(`{type: ${coreNamespace}Output}`);
         }
       } else if (
         api === 'viewChild' ||
@@ -312,11 +315,11 @@ export function buildPropDecorators(
               ? `{...${sourceCode.slice(args[1].start, args[1].end)}, isSignal: true}`
               : `{isSignal: true}`;
           props[memberName].push(
-            `{type: ${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}, ${opts}]}`,
+            `{type: ${coreNamespace}${queryType}, args: [${sourceCode.slice(args[0].start, args[0].end)}, ${opts}]}`,
           );
         } else {
           props[memberName].push(
-            `{type: ${queryType}, args: [undefined, {isSignal: true}]}`,
+            `{type: ${coreNamespace}${queryType}, args: [undefined, {isSignal: true}]}`,
           );
         }
       }

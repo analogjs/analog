@@ -134,6 +134,30 @@ describe('OXC-based metadata extraction in AOT', () => {
     expect(result).toContain('setClassMetadata');
     expect(result).toContain('app-meta');
   });
+
+  it('emits ctorParameters and propDecorators in setClassMetadata', () => {
+    const result = compile(
+      `
+      import { Component, Input, input } from '@angular/core';
+      import { ClockService } from './clock';
+
+      @Component({ selector: 'app-meta', template: '{{ name() }}' })
+      export class MetaComponent {
+        name = input('world');
+        @Input() legacy = '';
+        constructor(private clock: ClockService) {}
+      }
+    `,
+      'test.ts',
+    );
+    expectCompiles(result);
+    const metadata = result.slice(result.indexOf('ɵsetClassMetadata'));
+    expect(metadata).toContain('() => [{type: ClockService}]');
+    expect(metadata).toContain(
+      'name: [{type: i0.Input, args: [{isSignal: true, required: false}]}]',
+    );
+    expect(metadata).toContain('legacy: [{type: Input}]');
+  });
 });
 
 describe('emitExpr routing for function/method args', () => {
