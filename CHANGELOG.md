@@ -1,3 +1,9 @@
+## [2.9.1](https://github.com/analogjs/analog/compare/v2.9.0...v2.9.1) (2026-10-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** emit ctorParameters and propDecorators in fastCompile class metadata ([#2668](https://github.com/analogjs/analog/issues/2668)) ([33a4275](https://github.com/analogjs/analog/commit/33a4275355b619d60ea51d788337dd0725ca78a6))
+
 # [2.9.0](https://github.com/analogjs/analog/compare/v2.8.1...v2.9.0) (2026-10-19)
 
 ### Bug Fixes
