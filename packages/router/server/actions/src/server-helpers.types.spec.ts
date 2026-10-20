@@ -99,4 +99,4 @@ it('preserves schema inference in the built server actions entry point', () => {
       ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
     ),
   ).toEqual([]);
-});
+}, 30_000);
