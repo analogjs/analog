@@ -55,6 +55,7 @@ import {
   extractConstructorDeps,
 } from './metadata.js';
 import { buildDeferDependencyMap } from './defer.js';
+import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
 import { ANGULAR_MAJOR } from './angular-version.js';
 
@@ -1236,6 +1237,12 @@ export function compile(
     }
 
     // Emit setClassMetadata for runtime decorator reflection (devMode only)
+    const ctorParameters = oxcNode
+      ? buildCtorParameters(oxcNode, sourceCode, typeOnlyImports)
+      : null;
+    const propDecorators = oxcNode
+      ? buildPropDecorators(oxcNode, sourceCode, 'i0.')
+      : null;
     angularDecorators.forEach((dec) => {
       const call = dec.expression as ts.CallExpression;
       const decName = call.expression.getText(origSourceFile);
@@ -1318,8 +1325,12 @@ export function compile(
                 : []),
             ] as unknown as o.LiteralMapPropertyAssignment[]),
           ]),
-          ctorParameters: null,
-          propDecorators: null,
+          ctorParameters: ctorParameters
+            ? new o.WrappedNodeExpr(`() => [${ctorParameters}]`)
+            : null,
+          propDecorators: propDecorators
+            ? new o.WrappedNodeExpr(propDecorators)
+            : null,
         };
         const classMetadataExpr = isPartial
           ? compileDeclareClassMetadata(classMetaInput)
