@@ -515,13 +515,13 @@ catalogs:
       version: 22.2.0
   peerCompat:
     '@nx/angular':
-      specifier: ^23.2.0
+      specifier: ^23.2.0 || ^24.0.0
       version: 23.2.1
     '@nx/devkit':
-      specifier: ^23.2.0
+      specifier: ^23.2.0 || ^24.0.0
       version: 23.2.1
     '@nx/vite':
-      specifier: ^23.2.0
+      specifier: ^23.2.0 || ^24.0.0
       version: 23.2.1
     rxjs:
       specifier: ^6.5.0 || ^7.5.0

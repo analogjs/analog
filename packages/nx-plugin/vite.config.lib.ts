@@ -150,6 +150,7 @@ export default defineConfig({
         'tslib',
         'enquirer',
         'semver',
+        'vite',
       ],
       output: {
         preserveModules: true,

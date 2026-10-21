@@ -13,7 +13,9 @@ export function addAnalogDependencies(
     getAnalogDevDependencies(angularVersion);
   const dependencies = getAnalogDependencies(angularVersion);
 
-  if (!nxVersion) {
+  if (nxVersion) {
+    devDependencies['@nx/vite'] = `^${nxVersion}`;
+  } else {
     delete devDependencies['@nx/vite'];
   }
 
