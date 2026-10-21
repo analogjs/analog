@@ -42,7 +42,7 @@ export function depsPlugin(options?: Options): Plugin[] {
               'rxfire',
               '@ng-web-apis/**',
               '@taiga-ui/**',
-              '@tanstack/angular-query-experimental',
+              /^@tanstack\/angular-/,
             ],
             // The server pre-bundle is resolved separately from the client
             // one, so a secondary entry point left out of it loads its own
@@ -104,10 +104,7 @@ export function depsPlugin(options?: Options): Plugin[] {
           isBuild: command === 'build',
           viteUserConfig: config,
           isSemiFrameworkPkgByJson(pkgJson) {
-            return (
-              !!pkgJson['peerDependencies']?.['@angular/core'] ||
-              !!pkgJson['module']?.includes('fesm')
-            );
+            return pkgJson['module'] && pkgJson['module'].includes('fesm');
           },
         });
         return pkgConfig;
