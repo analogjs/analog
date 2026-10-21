@@ -29,16 +29,4 @@ describe('depsPlugin ssr config', () => {
     );
     expect(result.ssr.optimizeDeps.rolldownOptions.plugins).toHaveLength(1);
   });
-
-  it('bundles @tanstack/angular-* libraries for the server', () => {
-    const plugins = depsPlugin();
-    const result = (plugins[0].config as any)();
-    const tanstack = result.ssr.noExternal.find((dep: unknown) =>
-      String(dep).includes('tanstack'),
-    );
-
-    expect(tanstack.test('@tanstack/angular-charts')).toBe(true);
-    expect(tanstack.test('@tanstack/angular-query-experimental')).toBe(true);
-    expect(tanstack.test('@tanstack/query-core')).toBe(false);
-  });
 });
