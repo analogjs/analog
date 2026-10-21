@@ -1,3 +1,9 @@
+# [3.0.0-beta.7](https://github.com/analogjs/analog/compare/v3.0.0-beta.6...v3.0.0-beta.7) (2026-10-21)
+
+### Bug Fixes
+
+- **platform:** limit SSR Angular package detection to fesm builds ([#2672](https://github.com/analogjs/analog/issues/2672)) ([cf9b555](https://github.com/analogjs/analog/commit/cf9b555aa26f1fea8adb0a630bd36964ca976b79)), closes [#2671](https://github.com/analogjs/analog/issues/2671)
+
 # [3.0.0-beta.6](https://github.com/analogjs/analog/compare/v3.0.0-beta.5...v3.0.0-beta.6) (2026-10-20)
 
 ### Bug Fixes
