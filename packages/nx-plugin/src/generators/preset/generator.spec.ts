@@ -89,4 +89,12 @@ describe('preset generator', () => {
     expect(packageJson['devDependencies']['@vitest/ui']).toBe('^5.0.0');
     expect(tree.read('.gitignore', 'utf-8')).toContain('.vitest/');
   });
+
+  it('should match @nx/vite to the installed Nx major for Nx >= 24.0.0', async () => {
+    const { tree } = await setup({ analogAppName: 'my-app' }, '24.0.0');
+
+    const packageJson = JSON.parse(tree.read('/package.json').toString());
+
+    expect(packageJson['devDependencies']['@nx/vite']).toBe('^24.0.0');
+  });
 });
