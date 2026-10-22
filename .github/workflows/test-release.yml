@@ -37,6 +37,10 @@ jobs:
   create-analog:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .node-version
+          sparse-checkout-cone-mode: false
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -59,6 +63,10 @@ jobs:
   create-analog-windows:
     runs-on: windows-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .node-version
+          sparse-checkout-cone-mode: false
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -77,6 +85,10 @@ jobs:
   create-nx-workspace:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .node-version
+          sparse-checkout-cone-mode: false
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -100,6 +112,10 @@ jobs:
   migrate-angular-app:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .node-version
+          sparse-checkout-cone-mode: false
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
