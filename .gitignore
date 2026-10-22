@@ -92,3 +92,4 @@ gradle.properties
 
 # Vitest output
 .vitest/
+.vitest
