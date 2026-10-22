@@ -2,6 +2,7 @@ export { compile, type CompileResult, type CompileOptions } from './compile.js';
 export { ANGULAR_DECORATORS, ANGULAR_DECORATOR_CALL_RE } from './constants.js';
 export {
   scanFile,
+  declaresNonStandaloneComponent,
   type RegistryEntry,
   type ComponentRegistry,
 } from './registry.js';
@@ -10,6 +11,7 @@ export {
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
+  collectReExports,
   collectAllImports,
 } from './dts-reader.js';
 export { jitTransform, type JitTransformResult } from './jit-transform.js';

@@ -25,7 +25,7 @@ describe('fastCompilePlugin source maps', () => {
     ].join('\n');
 
     const result = await handler.call(
-      { addWatchFile: () => undefined },
+      { addWatchFile: () => undefined, resolve: async () => null },
       code,
       '/src/app/x.component.ts',
     );

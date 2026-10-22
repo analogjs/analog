@@ -333,6 +333,20 @@ export function collectRelativeReExports(
   fileName: string,
   program?: ReturnType<typeof parseSync>['program'],
 ): string[] {
+  return collectReExports(code, fileName, program).filter((specifier) =>
+    specifier.startsWith('.'),
+  );
+}
+
+/**
+ * Parse a source file with OXC and return every specifier it re-exports from
+ * (relative AND bare) via `export * from` or `export { … } from`.
+ */
+export function collectReExports(
+  code: string,
+  fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): string[] {
   if (!program) {
     try {
       program = parseSync(fileName, code).program;
@@ -351,8 +365,7 @@ export function collectRelativeReExports(
     // ExportNamedDeclaration without `source` is `export { x }` (no
     // re-export), which we don't care about here.
     const specifier: string | undefined = stmt.source?.value;
-    if (!specifier || !specifier.startsWith('.')) continue;
-    result.push(specifier);
+    if (specifier) result.push(specifier);
   }
   return result;
 }
