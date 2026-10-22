@@ -123,15 +123,6 @@ export default defineConfig({
           pkgDir,
           'src/builders/vite-dev-server/dev-server.ts',
         ),
-        // Executors
-        'src/executors/vite-dev-server/vite-dev-server.impl': resolve(
-          pkgDir,
-          'src/executors/vite-dev-server/vite-dev-server.impl.ts',
-        ),
-        'src/executors/vite-dev-server/compat': resolve(
-          pkgDir,
-          'src/executors/vite-dev-server/compat.ts',
-        ),
       },
       formats: ['cjs'],
     },

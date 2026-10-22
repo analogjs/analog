@@ -10,12 +10,5 @@
       "schema": "./src/builders/vite/schema.json",
       "description": "Build with Vite."
     }
-  },
-  "executors": {
-    "vite-dev-server": {
-      "implementation": "./src/executors/vite-dev-server/vite-dev-server.impl",
-      "schema": "./src/executors/vite-dev-server/schema.json",
-      "description": "Vite dev server."
-    }
   }
 }
