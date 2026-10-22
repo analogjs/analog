@@ -13,6 +13,7 @@ import {
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
+  collectReExports,
   collectAllImports,
   jitTransform,
   inlineResourceUrls,
@@ -506,36 +507,53 @@ export function fastCompilePlugin(
   ): Promise<Set<string>> {
     let scan = lazyScans.get(file);
     if (!scan) {
-      scan = scanWithGroupImports(file, resolveImport);
+      scan = scanWithReExports(file, resolveImport);
       lazyScans.set(file, scan);
     }
     return scan;
   }
 
   /**
-   * Scan a file and its re-export chain. Tuple barrels and NgModules can list
-   * classes their file imports without re-exporting, so the imports of those
-   * files are scanned one level deep too. Returns every file scanned.
+   * Scan a file and everything it re-exports, resolving specifiers through
+   * Vite so path aliases work. Tuple barrels and NgModules can list classes
+   * their file imports without re-exporting, so their imports are followed
+   * too. Returns every file scanned.
    */
-  async function scanWithGroupImports(
+  async function scanWithReExports(
     file: string,
     resolveImport: ResolveImport,
   ): Promise<Set<string>> {
     const visited = new Set<string>();
-    await scanBarrelExports(file, visited);
-    const groupFiles = new Set(
-      [...registry.values()]
-        .filter((e) => e.kind === 'tuple' || e.kind === 'ngmodule')
-        .map((e) => e.fileName),
-    );
-    for (const scanned of [...visited]) {
-      if (!groupFiles.has(scanned)) continue;
-      const code = await fsPromises.readFile(scanned, 'utf-8');
-      for (const spec of collectAllImports(code, scanned)) {
-        const dep = await resolveImport(spec, scanned);
-        if (dep) await scanBarrelExports(dep, visited);
+    const visit = async (current: string): Promise<void> => {
+      if (visited.has(current)) return;
+      visited.add(current);
+      let code: string;
+      let program: ReturnType<typeof parseSync>['program'];
+      try {
+        code = await fsPromises.readFile(current, 'utf-8');
+        program = parseSync(current, code).program;
+      } catch {
+        return;
       }
-    }
+      const entries = scanFile(code, current, program);
+      for (const entry of entries) {
+        if (!registry.has(entry.className)) {
+          registry.set(entry.className, entry);
+        }
+      }
+      ensureDtsRegistryForSource(code, current, program);
+      const followsImports = entries.some(
+        (e) => e.kind === 'tuple' || e.kind === 'ngmodule',
+      );
+      const specifiers = followsImports
+        ? collectAllImports(code, current, program)
+        : collectReExports(code, current, program);
+      for (const spec of specifiers) {
+        const dep = await resolveImport(spec, current);
+        if (dep) await visit(dep);
+      }
+    };
+    await visit(file);
     return visited;
   }
 
@@ -833,7 +851,8 @@ export function fastCompilePlugin(
 
         // Importers compiled the old selector/inputs/outputs into their
         // templates, so recompile them when this file's metadata changed.
-        lazyScans.delete(fileId);
+        // Cached scans that pulled in this file may now be incomplete.
+        lazyScans.clear();
         const metadataChanged =
           JSON.stringify(oldEntries) !==
           JSON.stringify(registryEntriesOf(fileId));

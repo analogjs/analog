@@ -11,6 +11,7 @@ export {
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
+  collectReExports,
   collectAllImports,
 } from './dts-reader.js';
 export { jitTransform, type JitTransformResult } from './jit-transform.js';
