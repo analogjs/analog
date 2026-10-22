@@ -1,3 +1,10 @@
+## [2.9.2](https://github.com/analogjs/analog/compare/v2.9.1...v2.9.2) (2026-10-22)
+
+### Bug Fixes
+
+- **platform:** support Nx 24 ([#2675](https://github.com/analogjs/analog/issues/2675)) ([3367281](https://github.com/analogjs/analog/commit/3367281c66a14002d407f81d9242c474f754d036)), closes [analogjs/analog#2673](https://github.com/analogjs/analog/issues/2673)
+- **vite-plugin-angular:** resolve builder outputPath from workspace root ([#2676](https://github.com/analogjs/analog/issues/2676)) ([a119285](https://github.com/analogjs/analog/commit/a119285fafb519c1f63564c8708ed1ed85ab1b2a))
+
 ## [2.9.1](https://github.com/analogjs/analog/compare/v2.9.0...v2.9.1) (2026-10-20)
 
 ### Bug Fixes
