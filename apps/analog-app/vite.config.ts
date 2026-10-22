@@ -6,7 +6,6 @@ import nitro from '@analogjs/vite-plugin-nitro';
 import { resolve } from 'node:path';
 import { defineConfig, PluginOption } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
-import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:43000';
@@ -105,7 +104,6 @@ export default defineConfig(async ({ mode, command }) => {
           await import('rollup-plugin-visualizer')
         ).visualizer() as PluginOption),
       },
-      nxReadySignal(),
     ],
     resolve: useBuiltWorkspaceLibs
       ? {

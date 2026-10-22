@@ -14,7 +14,6 @@ import {
   mdxTabsExtension,
   sitemapPlugin,
 } from './vite/index';
-import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../..');
 const CONTENT_DIR = resolve(import.meta.dirname, 'src/content');
@@ -145,7 +144,6 @@ export default defineConfig(({ mode }) => ({
     }),
     brokenLinksPlugin({ distDir: CLIENT_DIST }),
     tailwindcss(),
-    nxReadySignal(),
   ],
   test: {
     reporters: ['default'],

@@ -5,7 +5,6 @@ import angular from '@analogjs/vite-plugin-angular';
 import nitro from '@analogjs/vite-plugin-nitro';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
-import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => {
   return {
@@ -38,7 +37,6 @@ export default defineConfig(() => {
         },
       }),
       viteTsConfigPaths(),
-      nxReadySignal(),
     ],
   };
 });

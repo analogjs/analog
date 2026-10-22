@@ -12,7 +12,6 @@ import { resolve } from 'node:path';
 import { createLogger, defineConfig, type Plugin } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 import { angularTailwind } from './tools/angular-tailwind.plugin';
-import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 // Tailwind `@reference` injection runs through the standalone `analog.setup()`
 // plugin. TDBG_LIVE_RELOAD=false disables HMR-driven style externalization so
@@ -159,7 +158,6 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     hmrWiretapPlugin(),
     resolvedConfigProbe(),
-    nxReadySignal(),
   ],
   test: {
     reporters: ['default'],

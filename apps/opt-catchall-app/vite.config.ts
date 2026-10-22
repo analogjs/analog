@@ -5,7 +5,6 @@ import { angularCompilationPlugin } from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
-import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 export default defineConfig(() => {
   return {
@@ -32,7 +31,6 @@ export default defineConfig(() => {
         liveReload: true,
       }),
       nitro(),
-      nxReadySignal(),
     ],
   };
 });
