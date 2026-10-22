@@ -353,7 +353,7 @@ export function routerPlugin(options?: Options): Plugin[] {
               `
             ANALOG_CONTENT_ROUTE_FILES = {${contentRouteFiles.map((module) => {
               const key = getModuleKey(module);
-              return `"${key}": () => import('${module}?analog-content-file=true').then(m => m.default)`;
+              return `"${key}": () => import('${module}?analog-content-file=true')`;
             })}};
             `,
             );

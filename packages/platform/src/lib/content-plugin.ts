@@ -15,6 +15,22 @@ interface Content {
   attributes: string;
 }
 
+// Serializes parsed frontmatter as a JS expression, keeping YAML timestamps as Dates.
+function toModuleValue(value: unknown): string {
+  if (value instanceof Date) {
+    return `new Date(${JSON.stringify(value.toISOString())})`;
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(toModuleValue).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value)
+      .map(([key, entry]) => `${JSON.stringify(key)}:${toModuleValue(entry)}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'undefined';
+}
+
 export type ContentPluginOptions = {
   highlighter?: 'shiki' | 'prism';
   markedOptions?: WithMarkedOptions;
@@ -346,7 +362,7 @@ export function contentPlugin(
         // fallback to the original implementation.
         const frontmatterFn = fm.default || fm;
         const fileContents = readFileSync(id.split('?')[0], 'utf8');
-        const { body, frontmatter } = frontmatterFn(fileContents);
+        const { body, attributes } = frontmatterFn(fileContents);
 
         // parse markdown and highlight
         const { getMarkedSetup } = await import('./content/marked/index.js');
@@ -358,9 +374,7 @@ export function contentPlugin(
           .getMarkedInstance()
           .parse(body)) as unknown as string;
 
-        return `export default ${JSON.stringify(
-          `---\n${frontmatter}\n---\n\n${mdContent}`,
-        )}`;
+        return `export default ${JSON.stringify(mdContent)};\nexport const metadata = ${toModuleValue(attributes)};`;
       },
     },
     ...contentDiscoveryPlugins,

@@ -274,4 +274,29 @@ describe('content plugin', () => {
       expect(send).not.toHaveBeenCalled();
     });
   });
+
+  it('exports rendered content and build-time frontmatter metadata', async () => {
+    vi.spyOn(fs, 'readFileSync').mockReturnValue(
+      '---\ntitle: My Post\ndate: 2024-01-02\ntags:\n  - angular\n---\n\n# Hello\n' as any,
+    );
+    const contentFilePlugin = contentPlugin({ highlighter: 'prism' }).find(
+      (p) => p.name === 'analogjs-content-file',
+    )!;
+
+    const code = (await (contentFilePlugin.load as any).call(
+      contentFilePlugin,
+      '/src/content/post.md?analog-content-file=true',
+    )) as string;
+
+    expect(code).not.toContain('---');
+    const module = await import(
+      `data:text/javascript,${encodeURIComponent(code)}`
+    );
+    expect(module.default).toContain('<h1');
+    expect(module.metadata).toEqual({
+      title: 'My Post',
+      date: new Date('2024-01-02T00:00:00.000Z'),
+      tags: ['angular'],
+    });
+  });
 });
