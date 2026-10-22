@@ -8,8 +8,9 @@ import analogPageGenerator from './generator';
  * `ng generate @analogjs/platform:page` resolves through the
  * Angular schematics engine.
  */
-export const pageSchematic: ReturnType<typeof convertNxGenerator> =
-  convertNxGenerator(analogPageGenerator) as ReturnType<
-    typeof convertNxGenerator
-  >;
+export function pageSchematic(
+  options: Parameters<typeof analogPageGenerator>[1],
+): ReturnType<ReturnType<typeof convertNxGenerator>> {
+  return convertNxGenerator(analogPageGenerator)(options);
+}
 export default pageSchematic;

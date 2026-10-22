@@ -7,6 +7,9 @@ import generator from './generator';
  * `ng generate @analogjs/platform:application` resolves through the
  * Angular schematics engine (which uses named exports, not default).
  */
-export const applicationSchematic: ReturnType<typeof convertNxGenerator> =
-  convertNxGenerator(generator) as ReturnType<typeof convertNxGenerator>;
+export function applicationSchematic(
+  options: Parameters<typeof generator>[1],
+): ReturnType<ReturnType<typeof convertNxGenerator>> {
+  return convertNxGenerator(generator)(options);
+}
 export default applicationSchematic;

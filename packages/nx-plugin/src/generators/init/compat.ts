@@ -8,8 +8,9 @@ import setupAnalogGenerator from './generator';
  * `ng generate @analogjs/platform:migrate` resolves through the
  * Angular schematics engine.
  */
-export const initSchematic: ReturnType<typeof convertNxGenerator> =
-  convertNxGenerator(setupAnalogGenerator) as ReturnType<
-    typeof convertNxGenerator
-  >;
+export function initSchematic(
+  options: Parameters<typeof setupAnalogGenerator>[1],
+): ReturnType<ReturnType<typeof convertNxGenerator>> {
+  return convertNxGenerator(setupAnalogGenerator)(options);
+}
 export default initSchematic;
