@@ -1,5 +1,6 @@
 import { inject, InjectionToken } from '@angular/core';
 import { Route } from '@angular/router';
+import type { ContentFileLoader } from '@analogjs/content';
 
 import { ANALOG_CONTENT_ROUTE_FILES, createContentRoutes } from '../routes';
 
@@ -10,7 +11,7 @@ export const DEBUG_CONTENT_ROUTES: InjectionToken<(Route & DebugRoute)[]> =
       providedIn: 'root',
       factory() {
         const debugRoutes = createContentRoutes(
-          ANALOG_CONTENT_ROUTE_FILES as Record<string, () => Promise<string>>,
+          ANALOG_CONTENT_ROUTE_FILES as Record<string, ContentFileLoader>,
           true,
         );
 

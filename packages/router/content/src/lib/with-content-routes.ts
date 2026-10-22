@@ -1,4 +1,5 @@
 import { type RouterFeatures } from '@angular/router';
+import type { ContentFileLoader } from '@analogjs/content';
 
 import { ANALOG_CONTENT_ROUTE_FILES } from './routes';
 import { toMarkdownModule } from './markdown-helpers';
@@ -22,7 +23,7 @@ export function withContentRoutes(): RouterFeatures {
             fileLoader: () => Promise<unknown>,
           ) =>
             filename.endsWith('.md')
-              ? toMarkdownModule(fileLoader as () => Promise<string>)
+              ? toMarkdownModule(fileLoader as ContentFileLoader)
               : (fileLoader as () => Promise<RouteExport>),
         } satisfies ExtraRouteFileSource,
       },

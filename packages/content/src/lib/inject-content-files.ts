@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { ContentFile } from './content-file';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
+import type { ContentFileLoader } from './parse-content-file';
 import { CONTENT_LOCALE, filterByLocale } from './content-locale';
 import { RenderTaskService } from './render-task.service';
 
@@ -36,6 +37,6 @@ export type InjectContentFilesFilterFunction<T extends Record<string, any>> = (
   array: ContentFile<T>[],
 ) => boolean;
 
-export function injectContentFilesMap(): Record<string, () => Promise<string>> {
+export function injectContentFilesMap(): Record<string, ContentFileLoader> {
   return inject(CONTENT_FILES_TOKEN);
 }

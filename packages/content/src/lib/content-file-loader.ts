@@ -2,9 +2,10 @@ import { InjectionToken, Provider } from '@angular/core';
 import { inject } from '@angular/core';
 
 import { injectContentFilesMap } from './inject-content-files';
+import type { ContentFileLoader } from './parse-content-file';
 
 type ContentFileLoaderFunction = () => Promise<
-  Record<string, () => Promise<string>>
+  Record<string, ContentFileLoader>
 >;
 
 export const CONTENT_FILE_LOADER: InjectionToken<ContentFileLoaderFunction> =

@@ -2,10 +2,11 @@ import { InjectionToken, Signal, inject, signal } from '@angular/core';
 
 import { getContentFiles } from './get-content-files';
 import { CONTENT_FILES_LIST_TOKEN } from './content-files-list-token';
+import type { ContentFileLoader } from './parse-content-file';
 
 export const CONTENT_FILES_TOKEN: InjectionToken<
-  Record<string, () => Promise<string>>
-> = new InjectionToken<Record<string, () => Promise<string>>>(
+  Record<string, ContentFileLoader>
+> = new InjectionToken<Record<string, ContentFileLoader>>(
   '@analogjs/content Content Files',
   {
     providedIn: 'root',
@@ -44,8 +45,7 @@ export const CONTENT_FILES_TOKEN: InjectionToken<
         lookup[contentFilename] = `${newBase}.${ext}`.replace(/\/{2,}/g, '/');
       });
 
-      const objectUsingSlugAttribute: Record<string, () => Promise<string>> =
-        {};
+      const objectUsingSlugAttribute: Record<string, ContentFileLoader> = {};
       Object.entries(allFiles).forEach((entry) => {
         const filename = entry[0];
         const value = entry[1];
@@ -60,8 +60,7 @@ export const CONTENT_FILES_TOKEN: InjectionToken<
             /^\/(.*?)\/content/,
             '/src/content',
           );
-          objectUsingSlugAttribute[objectFilename] =
-            value as () => Promise<string>;
+          objectUsingSlugAttribute[objectFilename] = value as ContentFileLoader;
         }
       });
 
@@ -71,8 +70,8 @@ export const CONTENT_FILES_TOKEN: InjectionToken<
 );
 
 export const CONTENT_FILES_MAP_TOKEN: InjectionToken<
-  Signal<Record<string, () => Promise<string>>>
-> = new InjectionToken<Signal<Record<string, () => Promise<string>>>>(
+  Signal<Record<string, ContentFileLoader>>
+> = new InjectionToken<Signal<Record<string, ContentFileLoader>>>(
   '@analogjs/content Content Files',
   {
     providedIn: 'root',

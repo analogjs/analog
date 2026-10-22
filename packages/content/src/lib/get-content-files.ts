@@ -1,3 +1,5 @@
+import type { ContentFileLoader } from './parse-content-file';
+
 /**
  * These bindings are rewritten at build time:
  *   - `ANALOG_CONTENT_FILE_LIST` by `@analogjs/platform`'s content plugin,
@@ -31,4 +33,4 @@ export const getContentFilesList = () =>
  * Returns the lazy loaded content files for lookups.
  */
 export const getContentFiles = () =>
-  ANALOG_CONTENT_ROUTE_FILES as Record<string, () => Promise<string>>;
+  ANALOG_CONTENT_ROUTE_FILES as Record<string, ContentFileLoader>;
