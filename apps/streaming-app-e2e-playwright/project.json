@@ -18,10 +18,6 @@
           "E2E_BASE_URL": "http://127.0.0.1:3211"
         }
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
     }
   }
 }

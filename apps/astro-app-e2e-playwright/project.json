@@ -13,10 +13,6 @@
         "command": "start-server-and-test 'nx serve astro-app' http://localhost:43030 'nx run astro-app-e2e-playwright:vitest'"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

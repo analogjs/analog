@@ -67,9 +67,6 @@
         "browserTarget": "analog-app:build"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
     "test": {
       "dependsOn": ["platform:build", "router:build"],
       "outputs": [

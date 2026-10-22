@@ -24,10 +24,6 @@
         "command": "node tools/scripts/publish.mts vite-plugin-nitro {args.ver} {args.tag}"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "test": {
       "options": {
         "passWithNoTests": true,

@@ -9,10 +9,6 @@
   "targets": {
     "tests": {
       "dependsOn": ["vite-plugin-angular:build"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
     }
   }
 }

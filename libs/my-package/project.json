@@ -18,11 +18,11 @@
       "cache": false,
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
         "configFile": "libs/my-package/vite.config.ts",
         "outputPath": "dist/libs/my-package"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -39,9 +39,6 @@
       "options": {
         "cwd": "libs/my-package"
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
     }
   }
 }

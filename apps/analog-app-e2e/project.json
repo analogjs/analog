@@ -5,10 +5,6 @@
   "projectType": "application",
   "tags": [],
   "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "e2e": {
       "executor": "nx:run-commands",
       "dependsOn": ["analog-app:build"],

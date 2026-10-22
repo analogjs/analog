@@ -41,9 +41,6 @@
         }
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
     "serve-nitro": {
       "executor": "nx:run-commands",
       "dependsOn": ["build"],

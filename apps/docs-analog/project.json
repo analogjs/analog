@@ -48,7 +48,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "dependsOn": ["eslint:lint"]
     },
     "test": {
       "outputs": [

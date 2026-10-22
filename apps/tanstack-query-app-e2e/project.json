@@ -6,8 +6,7 @@
   "tags": [],
   "targets": {
     "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "dependsOn": ["eslint:lint"]
     },
     "e2e": {
       "executor": "nx:run-commands",

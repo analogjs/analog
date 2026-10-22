@@ -56,7 +56,7 @@
       }
     },
     "lint": {
-      "executor": "@nx/eslint:lint"
+      "dependsOn": ["eslint:lint"]
     },
     "test": {
       "dependsOn": ["platform:build", "router:build"],

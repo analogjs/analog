@@ -31,10 +31,6 @@
         "command": "node tools/scripts/verify-package-artifacts.mts content"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "test": {
       "dependsOn": ["build"]
     },

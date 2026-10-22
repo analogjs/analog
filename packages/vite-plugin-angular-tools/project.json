@@ -16,10 +16,6 @@
         "command": "vite build -c packages/vite-plugin-angular-tools/vite.config.lib.ts"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

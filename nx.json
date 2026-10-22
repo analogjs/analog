@@ -28,15 +28,6 @@
     "@nx/js:tsc": {
       "cache": false
     },
-    "@nx/eslint:lint": {
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/eslint.config.mjs",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
-      ],
-      "cache": true
-    },
     "@angular-devkit/build-angular:application": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -126,6 +117,35 @@
         "testTargetName": "tests"
       },
       "include": ["libs/card/**/*"]
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      },
+      "include": [
+        "apps/analog-app/**/*",
+        "apps/analog-app-e2e/**/*",
+        "apps/astro-app-e2e-playwright/**/*",
+        "apps/blog-app-e2e/**/*",
+        "apps/docs-analog/**/*",
+        "apps/streaming-app-e2e-playwright/**/*",
+        "apps/tailwind-debug-app/**/*",
+        "apps/tanstack-query-app/**/*",
+        "apps/tanstack-query-app-e2e/**/*",
+        "libs/card/**/*",
+        "libs/my-package/**/*",
+        "libs/top-bar/**/*",
+        "packages/astro-angular/**/*",
+        "packages/content/**/*",
+        "packages/content-plugin/**/*",
+        "packages/nx-plugin/**/*",
+        "packages/platform/**/*",
+        "packages/router/**/*",
+        "packages/vite-plugin-angular-tools/**/*",
+        "packages/vite-plugin-nitro/**/*",
+        "packages/vitest-angular-tools/**/*"
+      ]
     }
   ],
   "analytics": false,

@@ -24,10 +24,6 @@
         "command": "node tools/scripts/publish.mts astro-angular {args.ver} {args.tag}"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "version": {
       "executor": "@jscutlery/semver:version",
       "options": {
