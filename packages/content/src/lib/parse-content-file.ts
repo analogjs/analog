@@ -5,6 +5,8 @@ export type ContentFileModule<
   metadata: Attributes;
 };
 
+export type ContentFileLoader = () => Promise<string | ContentFileModule>;
+
 /**
  * Reads a loaded content file. Build-time content modules carry their
  * frontmatter as `metadata`; raw strings from custom loaders are parsed
@@ -13,10 +15,10 @@ export type ContentFileModule<
 export async function parseContentFile<
   Attributes extends Record<string, any> = Record<string, any>,
 >(
-  file: string | ContentFileModule<Attributes>,
+  file: string | ContentFileModule,
 ): Promise<{ content: string; attributes: Attributes }> {
   if (typeof file !== 'string') {
-    return { content: file.default, attributes: file.metadata };
+    return { content: file.default, attributes: file.metadata as Attributes };
   }
 
   const { parseRawContentFile } = await import('./parse-raw-content-file');

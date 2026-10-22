@@ -15,7 +15,10 @@ import type { ContentFile } from '../../src/lib/content-file';
 import { injectContentLocale } from '../../src/lib/content-locale';
 import { ContentRenderer } from '../../src/lib/content-renderer';
 import { FrontmatterValidationError } from '../../src/lib/frontmatter-validation-error';
-import type { ContentFileModule } from '../../src/lib/parse-content-file';
+import type {
+  ContentFileLoader,
+  ContentFileModule,
+} from '../../src/lib/parse-content-file';
 import { injectContentFileLoader } from '../../src/lib/content-file-loader';
 
 export interface ContentFileResourceResult<
@@ -49,7 +52,7 @@ function getValidationFilename(filename: string): string {
 async function getContentFile<
   Attributes extends Record<string, any> = Record<string, any>,
 >(
-  contentFiles: Record<string, () => Promise<string>>,
+  contentFiles: Record<string, ContentFileLoader>,
   slug: string,
   fallback: string,
   locale?: string | null,
@@ -57,7 +60,7 @@ async function getContentFile<
 ): Promise<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
   // This mirrors normalization used elsewhere in the content pipeline.
-  const normalizedFiles: Record<string, () => Promise<string>> = {};
+  const normalizedFiles: Record<string, ContentFileLoader> = {};
   const stemToKey: Record<string, string> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
