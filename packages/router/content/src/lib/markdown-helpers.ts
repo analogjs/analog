@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import {
-  type ContentFileModule,
+  type ContentFileLoader,
   ContentRenderer,
   MarkdownRouteComponent,
   parseContentFile,
@@ -18,7 +18,7 @@ type ContentRendererLike = {
 const isNgZoneEnabled = typeof Zone !== 'undefined' && !!Zone.root;
 
 export function toMarkdownModule(
-  markdownFileFactory: () => Promise<string | ContentFileModule>,
+  markdownFileFactory: ContentFileLoader,
 ): () => Promise<RouteExport> {
   return async () => {
     const markdownFile = await (isNgZoneEnabled

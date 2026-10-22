@@ -40,6 +40,8 @@ declare module '@analogjs/content' {
     metadata: Record<string, any>;
   };
 
+  export type ContentFileLoader = () => Promise<string | ContentFileModule>;
+
   export function parseContentFile(
     file: string | ContentFileModule,
   ): Promise<{ content: string; attributes: Record<string, any> }>;
