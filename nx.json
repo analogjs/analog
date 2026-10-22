@@ -66,6 +66,9 @@
     "projectSpecificFiles": []
   },
   "defaultBase": "beta",
+  "sync": {
+    "disabledTaskSyncGenerators": ["@nx/js:typescript-sync"]
+  },
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
@@ -146,6 +149,18 @@
         "packages/vite-plugin-nitro/**/*",
         "packages/vitest-angular-tools/**/*"
       ]
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "devTargetName": "dev",
+        "typecheckTargetName": "typecheck",
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "serveStaticTargetName": "serve-static"
+      },
+      "include": ["libs/my-package/**/*", "libs/top-bar/**/*"]
     }
   ],
   "analytics": false,

@@ -26,12 +26,11 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "dependsOn": ["platform:build", "router:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "tanstack-query-app:build",
-        "buildLibsFromSource": true,
         "port": 43020
       },
       "configurations": {

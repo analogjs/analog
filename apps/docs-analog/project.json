@@ -31,7 +31,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "docs-analog:build",

@@ -14,13 +14,12 @@
       }
     },
     "build": {
-      "executor": "@nx/vite:build",
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
-      "outputs": ["{options.outputPath}"],
+      "outputs": ["{projectRoot}/{options.outDir}", "{projectRoot}/dist"],
       "defaultConfiguration": "production",
       "options": {
-        "configFile": "libs/top-bar/vite.config.ts",
-        "outputPath": "dist/libs/top-bar"
+        "config": "./vite.config.ts",
+        "outDir": "../../dist/libs/top-bar"
       },
       "configurations": {
         "development": {

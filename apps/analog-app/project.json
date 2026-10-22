@@ -32,12 +32,11 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "dependsOn": ["platform:build", "router:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "analog-app:build",
-        "buildLibsFromSource": true,
         "port": 43000
       },
       "configurations": {
