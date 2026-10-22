@@ -9,6 +9,7 @@ import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 import {
   compile,
   scanFile,
+  declaresNonStandaloneComponent,
   scanPackageDts,
   collectImportedPackages,
   collectRelativeReExports,
@@ -25,6 +26,7 @@ import {
 
 import {
   TS_EXT_REGEX,
+  EXCLUDED_TS_EXT_REGEX,
   getTsConfigPath,
   createDepOptimizerConfig,
   isProdMode,
@@ -54,6 +56,8 @@ export interface FastCompilePluginOptions {
   fastCompileMode?: 'full' | 'partial';
 }
 
+type ResolveImport = (spec: string, importer: string) => Promise<string | null>;
+
 /**
  * Directory that `compilerOptions.paths` targets resolve against. Mirrors
  * TypeScript: `baseUrl` when set, otherwise the directory of the config
@@ -82,6 +86,14 @@ export function fastCompilePlugin(
   const scannedDtsPackages = new Set<string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
+  let tsConfig: ReturnType<typeof compilerCli.readConfiguration>;
+
+  // Files scanned on demand (mapped to the barrel chain they pulled in), which
+  // modules were compiled against each scanned file, and the one-time
+  // whole-project scan non-standalone components fall back to.
+  const lazyScans = new Map<string, Promise<Set<string>>>();
+  const importersByFile = new Map<string, Set<string>>();
+  let projectScan: Promise<void> | undefined;
 
   /**
    * Scan a file into the registry, then recursively walk its relative
@@ -193,14 +205,20 @@ export function fastCompilePlugin(
   async function initFastCompile() {
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
-    // Scan all source files to build the registry
     registry.clear();
     scannedDtsPackages.clear();
+    lazyScans.clear();
+    importersByFile.clear();
+    projectScan = undefined;
     const resolvedTsConfigPath = resolveTsConfigPath();
     projectRoot = dirname(resolvedTsConfigPath);
-    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
-    useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
+    tsConfig = compilerCli.readConfiguration(resolvedTsConfigPath);
+    useDefineForClassFields = tsConfig.options?.useDefineForClassFields ?? true;
+  }
 
+  /** Scan all source files reachable from the tsconfig into the registry. */
+  async function scanProject() {
+    const config = tsConfig;
     // Collect candidate files: tsconfig rootNames PLUS the entry points
     // named in `compilerOptions.paths`. App tsconfigs typically only
     // include the app's own sources, so workspace library entry barrels
@@ -456,9 +474,79 @@ export function fastCompilePlugin(
     }
   }
 
+  /**
+   * Scan the source files `id` imports into the registry on demand and record
+   * `id` as their importer, so a metadata change in any of them recompiles it.
+   */
+  async function resolveImportedDeclarations(
+    code: string,
+    id: string,
+    program: ReturnType<typeof parseSync>['program'],
+    resolveImport: ResolveImport,
+  ) {
+    await Promise.all(
+      collectAllImports(code, id, program).map(async (spec) => {
+        const file = await resolveImport(spec, id);
+        if (!file) return;
+        for (const scanned of await scanOnDemand(file, resolveImport)) {
+          let importers = importersByFile.get(scanned);
+          if (!importers) {
+            importers = new Set();
+            importersByFile.set(scanned, importers);
+          }
+          importers.add(id);
+        }
+      }),
+    );
+  }
+
+  function scanOnDemand(
+    file: string,
+    resolveImport: ResolveImport,
+  ): Promise<Set<string>> {
+    let scan = lazyScans.get(file);
+    if (!scan) {
+      scan = scanWithGroupImports(file, resolveImport);
+      lazyScans.set(file, scan);
+    }
+    return scan;
+  }
+
+  /**
+   * Scan a file and its re-export chain. Tuple barrels and NgModules can list
+   * classes their file imports without re-exporting, so the imports of those
+   * files are scanned one level deep too. Returns every file scanned.
+   */
+  async function scanWithGroupImports(
+    file: string,
+    resolveImport: ResolveImport,
+  ): Promise<Set<string>> {
+    const visited = new Set<string>();
+    await scanBarrelExports(file, visited);
+    const groupFiles = new Set(
+      [...registry.values()]
+        .filter((e) => e.kind === 'tuple' || e.kind === 'ngmodule')
+        .map((e) => e.fileName),
+    );
+    for (const scanned of [...visited]) {
+      if (!groupFiles.has(scanned)) continue;
+      const code = await fsPromises.readFile(scanned, 'utf-8');
+      for (const spec of collectAllImports(code, scanned)) {
+        const dep = await resolveImport(spec, scanned);
+        if (dep) await scanBarrelExports(dep, visited);
+      }
+    }
+    return visited;
+  }
+
+  function registryEntriesOf(file: string) {
+    return [...registry.values()].filter((e) => e.fileName === file);
+  }
+
   async function handleFastCompileTransform(
     code: string,
     id: string,
+    resolveImport: ResolveImport,
   ): Promise<{ code: string; map: any } | undefined> {
     if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
       // Non-Angular file — strip TS-only syntax ourselves so barrels
@@ -587,6 +675,15 @@ export function fastCompilePlugin(
 
     ensureDtsRegistryForSource(code, id, oxcProgram);
 
+    for (const entry of scanFile(code, id, oxcProgram)) {
+      registry.set(entry.className, entry);
+    }
+    await resolveImportedDeclarations(code, id, oxcProgram, resolveImport);
+    if (declaresNonStandaloneComponent(oxcProgram)) {
+      projectScan ??= scanProject();
+      await projectScan;
+    }
+
     // Merge registries contributed through `analog.setup()` into this
     // compile's lookup view. Out-of-tree compilers register directive
     // metadata for classes fastCompile can't reach through its
@@ -638,9 +735,7 @@ export function fastCompilePlugin(
 
     // Append HMR code in dev mode
     if (watchMode && pluginOptions.liveReload) {
-      const fileDeclarations = [...registry.values()].filter(
-        (e) => e.fileName === id,
-      );
+      const fileDeclarations = registryEntriesOf(id);
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
         outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
@@ -703,21 +798,6 @@ export function fastCompilePlugin(
       transformFilter = integrations.transformFilter;
       componentRegistries = integrations.componentRegistries;
     },
-    configureServer(server) {
-      // Watch for new .ts files and scan them into the registry. Use
-      // the barrel-aware scanner so a newly added re-export entry
-      // (`export * from './x'`) also expands its underlying directive
-      // classes — otherwise the registry stays stale until restart.
-      server.watcher.on('add', async (filePath) => {
-        if (
-          filePath.endsWith('.ts') &&
-          !filePath.endsWith('.spec.ts') &&
-          !filePath.endsWith('.d.ts')
-        ) {
-          await scanBarrelExports(filePath, new Set(), true);
-        }
-      });
-    },
     async buildStart() {
       await initFastCompile();
     },
@@ -740,11 +820,9 @@ export function fastCompilePlugin(
         const [fileId] = ctx.file.split('?');
 
         // Remove old entries from this file
-        const oldEntries = [...registry.entries()]
-          .filter(([_, v]) => v.fileName === fileId)
-          .map(([k]) => k);
-        for (const key of oldEntries) {
-          registry.delete(key);
+        const oldEntries = registryEntriesOf(fileId);
+        for (const entry of oldEntries) {
+          registry.delete(entry.className);
         }
 
         // Rescan the changed file via the barrel-aware scanner so an
@@ -752,6 +830,21 @@ export function fastCompilePlugin(
         // Pass overwrite=true so updated metadata replaces stale
         // entries from the previous scan.
         await scanBarrelExports(fileId, new Set(), true);
+
+        // Importers compiled the old selector/inputs/outputs into their
+        // templates, so recompile them when this file's metadata changed.
+        lazyScans.delete(fileId);
+        const metadataChanged =
+          JSON.stringify(oldEntries) !==
+          JSON.stringify(registryEntriesOf(fileId));
+        if (metadataChanged) {
+          const importerModules = [
+            ...(importersByFile.get(fileId) ?? []),
+          ].flatMap((importer) => [
+            ...(ctx.server.moduleGraph.getModulesByFile(importer) ?? []),
+          ]);
+          return [...ctx.modules, ...importerModules];
+        }
       }
 
       // Let Vite handle the rest — the transform hook will recompile
@@ -824,7 +917,19 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleFastCompileTransform(code, id);
+        return handleFastCompileTransform(code, id, async (spec, importer) => {
+          const resolved = await this.resolve(spec, importer, {
+            skipSelf: true,
+          });
+          if (!resolved || resolved.external) return null;
+          const file = normalizePath(resolved.id.split('?')[0]);
+          // Package declarations come from the lazy `.d.ts` scanner instead.
+          return TS_EXT_REGEX.test(file) &&
+            !EXCLUDED_TS_EXT_REGEX.test(file) &&
+            !file.includes('/node_modules/')
+            ? file
+            : null;
+        });
       },
     },
   };

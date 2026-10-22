@@ -370,3 +370,39 @@ export function scanFile(
 
   return entries;
 }
+
+/**
+ * Whether the file declares a `@Component({ standalone: false })`. Such a
+ * component's template scope comes from the NgModule that declares it, which
+ * can only be found by scanning the whole project.
+ */
+export function declaresNonStandaloneComponent(
+  program: ReturnType<typeof parseSync>['program'],
+): boolean {
+  for (const node of program.body) {
+    const decl =
+      node.type === 'ExportNamedDeclaration' ||
+      node.type === 'ExportDefaultDeclaration'
+        ? (node as any).declaration
+        : node;
+    if (decl?.type !== 'ClassDeclaration') continue;
+    for (const dec of decl.decorators || []) {
+      const expr = dec.expression;
+      if (expr?.type !== 'CallExpression') continue;
+      if (expr.callee?.name !== 'Component') continue;
+      const arg = expr.arguments?.[0];
+      if (arg?.type !== 'ObjectExpression') continue;
+      for (const prop of arg.properties) {
+        if (
+          prop.type === 'Property' &&
+          (prop.key?.name || prop.key?.value) === 'standalone' &&
+          prop.value?.type === 'Literal' &&
+          prop.value.value === false
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
