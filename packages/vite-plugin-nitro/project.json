@@ -27,7 +27,7 @@
     "test": {
       "options": {
         "passWithNoTests": true,
-        "coverage.reportsDirectory": "../../../coverage/packages/vite-plugin-nitro"
+        "coverage.reportsDirectory": "../../coverage/packages/vite-plugin-nitro"
       }
     },
     "typecheck": {
