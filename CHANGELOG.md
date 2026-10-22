@@ -1,3 +1,9 @@
+# [3.0.0-beta.9](https://github.com/analogjs/analog/compare/v3.0.0-beta.8...v3.0.0-beta.9) (2026-10-22)
+
+### Performance Improvements
+
+- **content:** parse frontmatter at build time instead of in the browser ([#2678](https://github.com/analogjs/analog/issues/2678)) ([d44db9d](https://github.com/analogjs/analog/commit/d44db9d6206f7ab9917dd18367d57fe5dcd0cdc4))
+
 # [3.0.0-beta.8](https://github.com/analogjs/analog/compare/v3.0.0-beta.7...v3.0.0-beta.8) (2026-10-22)
 
 ### Bug Fixes
