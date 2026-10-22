@@ -1,4 +1,4 @@
-import { lt } from 'semver';
+import { lt, major } from 'semver';
 import { stripIndents } from '@nx/devkit';
 import {
   V17_X_ANALOG_JS_PLATFORM,
@@ -29,7 +29,6 @@ import {
   V19_X_VITE,
   NX_X_LATEST_VITE,
   NX_X_LATEST_VITEST,
-  NX_X_LATEST_NX,
 } from './ng_19_X/versions';
 
 const devDependencyKeys = [
@@ -107,7 +106,7 @@ const getDevDependencies = (
     '@analogjs/vitest-angular': V19_X_ANALOG_JS_VITEST_ANGULAR,
     '@nx/vite':
       escapedNxVersion && !lt(escapedNxVersion, '23.0.0')
-        ? NX_X_LATEST_NX
+        ? `^${major(escapedNxVersion)}.0.0`
         : V19_X_NX_VITE,
     jsdom: V19_X_JSDOM,
     'vite-tsconfig-paths': V19_X_VITE_TSCONFIG_PATHS,

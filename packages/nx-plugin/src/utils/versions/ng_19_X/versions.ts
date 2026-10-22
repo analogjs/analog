@@ -19,4 +19,3 @@ export const V19_X_VITEST = '^3.0.0';
 export const V19_X_VITE = '^5.0.0';
 export const NX_X_LATEST_VITE = '^7.0.0';
 export const NX_X_LATEST_VITEST = '^5.0.0';
-export const NX_X_LATEST_NX = '^23.0.0';
