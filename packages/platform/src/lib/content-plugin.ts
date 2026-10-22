@@ -91,7 +91,7 @@ export function contentPlugin(
   const discoverContentFilesList = () => {
     contentFilesListCache ??= globSync(
       contentRootDirs.map((dir) => `${dir}/**/*.md`),
-      { dot: true },
+      { dot: true, cwd: workspaceRoot },
     );
 
     return contentFilesListCache;
