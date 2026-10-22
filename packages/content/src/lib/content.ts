@@ -9,7 +9,7 @@ import { ContentFile } from './content-file';
 import { ContentRenderer } from './content-renderer';
 import { CONTENT_LOCALE, withLocaleCandidates } from './content-locale';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
-import { parseRawContentFile } from './parse-raw-content-file';
+import { type ContentFileModule, parseContentFile } from './parse-content-file';
 import { waitFor } from './utils/zone-wait-for';
 import { RenderTaskService } from './render-task.service';
 
@@ -52,43 +52,31 @@ function getContentFile<
   }
 
   const contentTask = renderTaskService.addRenderTask();
-  return new Observable<string | { default: string; metadata: Attributes }>(
-    (observer) => {
-      // `waitFor` is a no-op in non-Zone environments (browser without zone.js),
-      // so this branch works for both SSR and client. Keeping a single path also
-      // avoids Rolldown evaluating `import.meta.env.SSR` at library-build time
-      // and eliminating the task-clearing branch, which caused SSR to hang once
-      // the content map resolved a real lazy import.
-      waitFor(contentFile()).then((content) => {
-        observer.next(content);
-        observer.complete();
+  return new Observable<string | ContentFileModule<Attributes>>((observer) => {
+    // `waitFor` is a no-op in non-Zone environments (browser without zone.js),
+    // so this branch works for both SSR and client. Keeping a single path also
+    // avoids Rolldown evaluating `import.meta.env.SSR` at library-build time
+    // and eliminating the task-clearing branch, which caused SSR to hang once
+    // the content map resolved a real lazy import.
+    waitFor(contentFile()).then((content) => {
+      observer.next(content);
+      observer.complete();
 
-        setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
-      });
-    },
-  ).pipe(
-    switchMap((contentFile) => {
-      if (typeof contentFile === 'string') {
-        const { content, attributes } =
-          parseRawContentFile<Attributes>(contentFile);
-        return from(contentRenderer.render(content)).pipe(
-          map((rendered) => ({
-            filename: resolvedBase,
-            slug,
-            attributes,
-            content,
-            toc: rendered.toc ?? [],
-          })),
-        );
-      }
-      return of({
-        filename: resolvedBase,
-        slug,
-        attributes: contentFile.metadata,
-        content: contentFile.default,
-        toc: [],
-      });
-    }),
+      setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
+    });
+  }).pipe(
+    switchMap((contentFile) => parseContentFile<Attributes>(contentFile)),
+    switchMap(({ content, attributes }) =>
+      from(contentRenderer.render(content)).pipe(
+        map((rendered) => ({
+          filename: resolvedBase,
+          slug,
+          attributes,
+          content,
+          toc: rendered.toc ?? [],
+        })),
+      ),
+    ),
     finalize(() => {
       if (import.meta.env.SSR !== true) {
         renderTaskService.clearRenderTask(contentTask);

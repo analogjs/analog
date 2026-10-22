@@ -17,8 +17,10 @@ export { default as MarkdownComponent } from './lib/markdown.component';
 export {
   parseRawContentFile,
   parseRawContentFileAsync,
-  FrontmatterValidationError,
 } from './lib/parse-raw-content-file';
+export { FrontmatterValidationError } from './lib/frontmatter-validation-error';
+export { parseContentFile } from './lib/parse-content-file';
+export type { ContentFileModule } from './lib/parse-content-file';
 export { injectContentFilesMap } from './lib/inject-content-files';
 export {
   injectContentListLoader,

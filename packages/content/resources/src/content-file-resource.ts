@@ -14,11 +14,8 @@ import { map } from 'rxjs/operators';
 import type { ContentFile } from '../../src/lib/content-file';
 import { injectContentLocale } from '../../src/lib/content-locale';
 import { ContentRenderer } from '../../src/lib/content-renderer';
-import {
-  FrontmatterValidationError,
-  parseRawContentFile,
-  parseRawContentFileAsync,
-} from '../../src/lib/parse-raw-content-file';
+import { FrontmatterValidationError } from '../../src/lib/frontmatter-validation-error';
+import type { ContentFileModule } from '../../src/lib/parse-content-file';
 import { injectContentFileLoader } from '../../src/lib/content-file-loader';
 
 export interface ContentFileResourceResult<
@@ -107,41 +104,41 @@ async function getContentFile<
   const resolvedBase = matchKey!.replace(/\.md$/, '');
   const validationFilename = getValidationFilename(matchKey!);
 
-  return contentFile().then(
-    async (contentFile: string | { default: any; metadata: any }) => {
-      if (typeof contentFile === 'string') {
-        const { content, attributes } = schema
-          ? await parseRawContentFileAsync(
-              contentFile,
-              schema,
-              validationFilename,
-            )
-          : parseRawContentFile<Attributes>(contentFile);
-
-        return {
-          filename: resolvedBase,
-          slug,
-          attributes,
-          content,
-        } as ContentFile<Attributes | Record<string, never>>;
-      }
-
-      const attributes = schema
-        ? await validateAttributes(
+  return contentFile().then(async (contentFile: string | ContentFileModule) => {
+    if (typeof contentFile === 'string') {
+      const { parseRawContentFile, parseRawContentFileAsync } =
+        await import('../../src/lib/parse-raw-content-file');
+      const { content, attributes } = schema
+        ? await parseRawContentFileAsync(
+            contentFile,
             schema,
-            contentFile.metadata,
             validationFilename,
           )
-        : contentFile.metadata;
+        : parseRawContentFile<Attributes>(contentFile);
 
       return {
         filename: resolvedBase,
         slug,
         attributes,
-        content: contentFile.default,
+        content,
       } as ContentFile<Attributes | Record<string, never>>;
-    },
-  );
+    }
+
+    const attributes = schema
+      ? await validateAttributes(
+          schema,
+          contentFile.metadata,
+          validationFilename,
+        )
+      : contentFile.metadata;
+
+    return {
+      filename: resolvedBase,
+      slug,
+      attributes,
+      content: contentFile.default,
+    } as ContentFile<Attributes | Record<string, never>>;
+  });
 }
 
 /**
