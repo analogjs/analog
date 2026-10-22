@@ -1,32 +1,38 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "workspaceLayout": { "libsDir": "packages" },
-  "cli": { "packageManager": "pnpm" },
+  "workspaceLayout": {
+    "libsDir": "packages"
+  },
+  "cli": {
+    "packageManager": "pnpm"
+  },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
     },
-    "test": { "dependsOn": ["^build"], "cache": true },
-    "e2e": { "dependsOn": ["^build"], "cache": true },
-    "serve": { "dependsOn": ["^build"] },
-    "build-package": { "cache": false },
-    "@nx/js:tsc": { "cache": false },
-    "@nx/eslint:lint": {
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/eslint.config.mjs",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
-      ],
+    "test": {
+      "dependsOn": ["^build"],
       "cache": true
+    },
+    "e2e": {
+      "dependsOn": ["^build"],
+      "cache": true
+    },
+    "serve": {
+      "dependsOn": ["^build"]
+    },
+    "build-package": {
+      "cache": false
+    },
+    "@nx/js:tsc": {
+      "cache": false
     },
     "@angular-devkit/build-angular:application": {
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
-    },
-    "@nx/vitest:test": { "cache": true, "inputs": ["default", "^production"] }
+    }
   },
   "generators": {
     "@nx/angular:application": {
@@ -39,7 +45,9 @@
       "linter": "eslint",
       "unitTestRunner": "vitest-analog"
     },
-    "@nx/angular:component": { "style": "css" }
+    "@nx/angular:component": {
+      "style": "css"
+    }
   },
   "defaultProject": "analog-app",
   "namedInputs": {
@@ -58,12 +66,106 @@
     "projectSpecificFiles": []
   },
   "defaultBase": "beta",
+  "sync": {
+    "disabledTaskSyncGenerators": ["@nx/js:typescript-sync"]
+  },
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",
-      "options": { "targetName": "eslint:lint" }
+      "options": {
+        "targetName": "eslint:lint"
+      }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "test"
+      },
+      "include": [
+        "apps/analog-app/**/*",
+        "apps/docs-analog/**/*",
+        "apps/tailwind-debug-app/**/*",
+        "apps/tanstack-query-app/**/*",
+        "libs/top-bar/**/*",
+        "packages/astro-angular/**/*",
+        "packages/content/**/*",
+        "packages/content-plugin/**/*",
+        "packages/create-analog/**/*",
+        "packages/nx-plugin/**/*",
+        "packages/platform/**/*",
+        "packages/router/**/*",
+        "packages/storybook-angular/**/*",
+        "packages/vite-plugin-angular/**/*",
+        "packages/vite-plugin-angular-tools/**/*",
+        "packages/vite-plugin-nitro/**/*",
+        "packages/vitest-angular-tools/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "vitest"
+      },
+      "include": [
+        "apps/astro-app-e2e-playwright/**/*",
+        "apps/streaming-app-e2e-playwright/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "tests"
+      },
+      "include": ["libs/card/**/*"]
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      },
+      "include": [
+        "apps/analog-app/**/*",
+        "apps/analog-app-e2e/**/*",
+        "apps/astro-app-e2e-playwright/**/*",
+        "apps/blog-app-e2e/**/*",
+        "apps/docs-analog/**/*",
+        "apps/streaming-app-e2e-playwright/**/*",
+        "apps/tailwind-debug-app/**/*",
+        "apps/tanstack-query-app/**/*",
+        "apps/tanstack-query-app-e2e/**/*",
+        "libs/card/**/*",
+        "libs/my-package/**/*",
+        "libs/top-bar/**/*",
+        "packages/astro-angular/**/*",
+        "packages/content/**/*",
+        "packages/content-plugin/**/*",
+        "packages/nx-plugin/**/*",
+        "packages/platform/**/*",
+        "packages/router/**/*",
+        "packages/vite-plugin-angular-tools/**/*",
+        "packages/vite-plugin-nitro/**/*",
+        "packages/vitest-angular-tools/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "devTargetName": "dev",
+        "typecheckTargetName": "typecheck",
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "previewTargetName": "preview",
+        "serveStaticTargetName": "serve-static"
+      },
+      "include": ["libs/my-package/**/*", "libs/top-bar/**/*"]
     }
   ],
   "analytics": false,
-  "nxCloudId": "6a440f229f68ea99f27e4235"
+  "nxCloudId": "6a440f229f68ea99f27e4235",
+  "affected": {
+    "legacy": true
+  }
 }

@@ -6,11 +6,9 @@
   "tags": [],
   "implicitDependencies": ["streaming-app"],
   "targets": {
-    "vitest": {
-      "executor": "@nx/vitest:test"
-    },
     "e2e": {
       "executor": "nx:run-commands",
+      "dependsOn": ["streaming-app:build"],
       "options": {
         "cwd": "",
         "command": "start-server-and-test 'node dist/apps/streaming-app/analog/server/index.mjs' http-get://127.0.0.1:3211/api/slow-b 'nx run streaming-app-e2e-playwright:vitest'",
@@ -19,12 +17,7 @@
           "HOST": "127.0.0.1",
           "E2E_BASE_URL": "http://127.0.0.1:3211"
         }
-      },
-      "dependsOn": ["streaming-app:build"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      }
     }
   }
 }

@@ -8,7 +8,7 @@
   "implicitDependencies": ["platform", "router"],
   "targets": {
     "build": {
-      "executor": "@nx/vite:build",
+      "executor": "@analogjs/platform:vite",
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/typed-router-app/.nitro",
@@ -31,7 +31,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "typed-router-app:build",

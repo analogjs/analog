@@ -14,15 +14,14 @@
       }
     },
     "build": {
-      "executor": "@nx/vite:build",
       "cache": false,
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "configFile": "libs/my-package/vite.config.ts",
-        "outputPath": "dist/libs/my-package"
-      },
+      "outputs": ["{projectRoot}/{options.outDir}", "{projectRoot}/dist"],
       "defaultConfiguration": "production",
+      "options": {
+        "config": "./vite.config.ts",
+        "outDir": "../../dist/libs/my-package"
+      },
       "configurations": {
         "development": {
           "mode": "development"
@@ -39,9 +38,6 @@
       "options": {
         "cwd": "libs/my-package"
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
     }
   }
 }

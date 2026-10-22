@@ -14,12 +14,7 @@
         "command": "vite build -c packages/vitest-angular-tools/vite.config.lib.ts"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "test": {
-      "executor": "@nx/vitest:test",
       "dependsOn": ["vitest-angular:build"]
     },
     "typecheck": {

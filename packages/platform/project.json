@@ -28,15 +28,13 @@
         "command": "node tools/scripts/verify-package-artifacts.mts platform"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "test": {
-      "executor": "@nx/vitest:test",
       "dependsOn": [
         "vite-plugin-angular:build",
-        { "target": "build", "projects": ["router"] }
+        {
+          "target": "build",
+          "projects": ["router"]
+        }
       ]
     },
     "version": {

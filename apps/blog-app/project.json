@@ -10,11 +10,11 @@
       "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build", "content:build"],
       "outputs": ["{workspaceRoot}/dist/apps/blog-app/analog"],
+      "defaultConfiguration": "production",
       "options": {
         "configFile": "apps/blog-app/vite.config.ts",
         "outputPath": "dist/apps/blog-app/client"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -26,7 +26,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "continuous": true,
       "dependsOn": ["platform:build", "router:build", "content:build"],
       "defaultConfiguration": "development",
@@ -52,7 +52,11 @@
         "parallel": true,
         "port": 43010,
         "staticFilePath": "dist/apps/blog-app/analog/public"
-      }
+      },
+      "readyWhen": {
+        "signal": true
+      },
+      "dependsOn": ["build"]
     },
     "typecheck": {
       "executor": "nx:run-commands",

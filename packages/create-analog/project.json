@@ -16,9 +16,6 @@
         "parallel": false
       }
     },
-    "test": {
-      "executor": "@nx/vitest:test"
-    },
     "version": {
       "executor": "@jscutlery/semver:version",
       "options": {

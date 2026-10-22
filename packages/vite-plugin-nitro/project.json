@@ -19,21 +19,15 @@
     },
     "publish": {
       "executor": "nx:run-commands",
+      "dependsOn": ["build"],
       "options": {
         "command": "node tools/scripts/publish.mts vite-plugin-nitro {args.ver} {args.tag}"
-      },
-      "dependsOn": ["build"]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      }
     },
     "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": ["{workspaceRoot}/coverage/packages/vite-plugin-nitro"],
       "options": {
         "passWithNoTests": true,
-        "reportsDirectory": "{projectRoot}/../../coverage/packages/vite-plugin-nitro"
+        "coverage.reportsDirectory": "../../coverage/packages/vite-plugin-nitro"
       }
     },
     "typecheck": {

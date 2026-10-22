@@ -16,11 +16,11 @@
         "top-bar:build"
       ],
       "outputs": ["{workspaceRoot}/dist/apps/analog-app/analog"],
+      "defaultConfiguration": "production",
       "options": {
         "configFile": "apps/analog-app/vite.config.ts",
         "outputPath": "dist/apps/analog-app/client"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -32,12 +32,11 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "@analogjs/platform:vite-dev-server",
       "dependsOn": ["platform:build", "router:build"],
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "analog-app:build",
-        "buildLibsFromSource": true,
         "port": 43000
       },
       "configurations": {
@@ -52,14 +51,14 @@
     },
     "serve-nitro": {
       "executor": "nx:run-commands",
+      "dependsOn": ["build"],
       "options": {
         "cwd": "dist/apps/analog-app/analog",
         "command": "node --unhandled-rejections=throw ./server/index.mjs",
         "env": {
           "PORT": "43000"
         }
-      },
-      "dependsOn": ["build"]
+      }
     },
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
@@ -67,13 +66,12 @@
         "browserTarget": "analog-app:build"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
     "test": {
-      "executor": "@nx/vitest:test",
       "dependsOn": ["platform:build", "router:build"],
-      "outputs": ["{projectRoot}/coverage"]
+      "outputs": [
+        "{projectRoot}/coverage",
+        "{workspaceRoot}/coverage/apps/analog-app"
+      ]
     },
     "storybook": {
       "executor": "@analogjs/storybook-angular:start-storybook",

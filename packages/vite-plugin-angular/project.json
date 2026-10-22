@@ -22,9 +22,6 @@
         "command": "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
       }
     },
-    "test": {
-      "executor": "@nx/vitest:test"
-    },
     "version": {
       "executor": "@jscutlery/semver:version",
       "options": {

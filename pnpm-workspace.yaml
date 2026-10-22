@@ -38,17 +38,17 @@ catalog:
   '@astrojs/markdown-component': ^1.0.5
   '@astrojs/react': ^5.0.2
   '@mdx-js/react': 3.1.1
-  '@nx/angular': 23.2.1
-  '@nx/devkit': 23.2.1
-  '@nx/eslint': 23.2.1
-  '@nx/eslint-plugin': 23.2.1
-  '@nx/js': 23.2.1
-  '@nx/playwright': 23.2.1
-  '@nx/plugin': 23.2.1
-  '@nx/storybook': 23.2.1
-  '@nx/vite': 23.2.1
-  '@nx/vitest': 23.2.1
-  '@nx/web': 23.2.1
+  '@nx/angular': 24.0.0
+  '@nx/devkit': 24.0.0
+  '@nx/eslint': 24.0.0
+  '@nx/eslint-plugin': 24.0.0
+  '@nx/js': 24.0.0
+  '@nx/playwright': 24.0.0
+  '@nx/plugin': 24.0.0
+  '@nx/storybook': 24.0.0
+  '@nx/vite': 24.0.0
+  '@nx/vitest': 24.0.0
+  '@nx/web': 24.0.0
   '@oxc-angular/vite': ^0.0.23
   '@oxc-project/runtime': ^0.124.0
   '@playwright/test': 1.60.0
@@ -141,7 +141,7 @@ catalog:
   ng-packagr: 22.2.1
   h3: ^2.0.1-rc.31
   nitro: 3.0.260903-beta
-  nx: 23.2.1
+  nx: 24.0.0
   obug: ^2.1.1
   ofetch: 2.0.0-alpha.3
   oxc-parser: ^0.124.0

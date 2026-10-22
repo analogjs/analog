@@ -14,12 +14,6 @@
         "command": "tsdown -c packages/content-plugin/tsdown.config.ts --config-loader unrun"
       }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@nx/vitest:test"
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
