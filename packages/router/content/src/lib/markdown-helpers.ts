@@ -1,8 +1,9 @@
 import { inject } from '@angular/core';
 import {
+  type ContentFileModule,
   ContentRenderer,
   MarkdownRouteComponent,
-  parseRawContentFile,
+  parseContentFile,
 } from '@analogjs/content';
 
 import type { RouteExport } from '../../../src/lib/models';
@@ -17,14 +18,14 @@ type ContentRendererLike = {
 const isNgZoneEnabled = typeof Zone !== 'undefined' && !!Zone.root;
 
 export function toMarkdownModule(
-  markdownFileFactory: () => Promise<string>,
+  markdownFileFactory: () => Promise<string | ContentFileModule>,
 ): () => Promise<RouteExport> {
   return async () => {
     const markdownFile = await (isNgZoneEnabled
       ? Zone.root.run(markdownFileFactory)
       : markdownFileFactory());
 
-    const { content, attributes } = parseRawContentFile(markdownFile);
+    const { content, attributes } = await parseContentFile(markdownFile);
     const { title, meta, jsonLd } = attributes;
 
     return {

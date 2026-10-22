@@ -35,6 +35,15 @@ declare module '@analogjs/content' {
     filename?: string,
   ): { content: string; attributes: unknown };
 
+  export type ContentFileModule = {
+    default: string;
+    metadata: Record<string, any>;
+  };
+
+  export function parseContentFile(
+    file: string | ContentFileModule,
+  ): Promise<{ content: string; attributes: Record<string, any> }>;
+
   export const MarkdownRouteComponent: import('@angular/core').Type<unknown>;
 
   export abstract class ContentRenderer {
