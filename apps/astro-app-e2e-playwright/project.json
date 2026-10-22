@@ -5,9 +5,6 @@
   "projectType": "application",
   "tags": [],
   "targets": {
-    "vitest": {
-      "executor": "@nx/vitest:test"
-    },
     "e2e": {
       "executor": "nx:run-commands",
       "dependsOn": ["astro-angular:build"],

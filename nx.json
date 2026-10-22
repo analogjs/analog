@@ -41,10 +41,6 @@
       "cache": true,
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"]
-    },
-    "@nx/vitest:test": {
-      "cache": true,
-      "inputs": ["default", "^production"]
     }
   },
   "generators": {
@@ -85,6 +81,51 @@
       "options": {
         "targetName": "eslint:lint"
       }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "test"
+      },
+      "include": [
+        "apps/analog-app/**/*",
+        "apps/docs-analog/**/*",
+        "apps/tailwind-debug-app/**/*",
+        "apps/tanstack-query-app/**/*",
+        "libs/top-bar/**/*",
+        "packages/astro-angular/**/*",
+        "packages/content/**/*",
+        "packages/content-plugin/**/*",
+        "packages/create-analog/**/*",
+        "packages/nx-plugin/**/*",
+        "packages/platform/**/*",
+        "packages/router/**/*",
+        "packages/storybook-angular/**/*",
+        "packages/vite-plugin-angular/**/*",
+        "packages/vite-plugin-angular-tools/**/*",
+        "packages/vite-plugin-nitro/**/*",
+        "packages/vitest-angular-tools/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "vitest"
+      },
+      "include": [
+        "apps/astro-app-e2e-playwright/**/*",
+        "apps/streaming-app-e2e-playwright/**/*"
+      ]
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testMode": "run",
+        "testTargetName": "tests"
+      },
+      "include": ["libs/card/**/*"]
     }
   ],
   "analytics": false,

@@ -17,11 +17,11 @@
       "executor": "@nx/vite:build",
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
         "configFile": "libs/top-bar/vite.config.ts",
         "outputPath": "dist/libs/top-bar"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -31,10 +31,6 @@
           "mode": "production"
         }
       }
-    },
-    "test": {
-      "executor": "@nx/vitest:test",
-      "dependsOn": ["^build"]
     },
     "lint": {
       "executor": "@nx/eslint:lint",

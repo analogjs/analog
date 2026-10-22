@@ -3,9 +3,9 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
   "sourceRoot": "packages/router/src",
-  "implicitDependencies": ["vite-plugin-angular", "content"],
   "prefix": "analogjs",
   "tags": ["type:release"],
+  "implicitDependencies": ["vite-plugin-angular", "content"],
   "targets": {
     "assert-deps": {
       "executor": "nx:run-commands",
@@ -34,7 +34,6 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vitest:test",
       "dependsOn": ["build", "^build"]
     },
     "version": {

@@ -10,11 +10,11 @@
       "executor": "@analogjs/platform:vite",
       "dependsOn": ["platform:build", "router:build"],
       "outputs": ["{workspaceRoot}/dist/apps/tanstack-query-app/analog"],
+      "defaultConfiguration": "production",
       "options": {
         "configFile": "apps/tanstack-query-app/vite.config.ts",
         "outputPath": "dist/apps/tanstack-query-app/client"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -46,22 +46,24 @@
     },
     "serve-nitro": {
       "executor": "nx:run-commands",
+      "dependsOn": ["build"],
       "options": {
         "cwd": "dist/apps/tanstack-query-app/analog",
         "command": "node --unhandled-rejections=throw ./server/index.mjs",
         "env": {
           "PORT": "43020"
         }
-      },
-      "dependsOn": ["build"]
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vitest:test",
       "dependsOn": ["platform:build", "router:build"],
-      "outputs": ["{projectRoot}/coverage"]
+      "outputs": [
+        "{projectRoot}/coverage",
+        "{workspaceRoot}/coverage/apps/tanstack-query-app"
+      ]
     },
     "typecheck": {
       "executor": "nx:run-commands",

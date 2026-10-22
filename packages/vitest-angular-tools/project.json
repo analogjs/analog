@@ -19,7 +19,6 @@
       "outputs": ["{options.outputFile}"]
     },
     "test": {
-      "executor": "@nx/vitest:test",
       "dependsOn": ["vitest-angular:build"]
     },
     "typecheck": {

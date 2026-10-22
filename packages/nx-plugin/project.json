@@ -18,9 +18,6 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"]
     },
-    "test": {
-      "executor": "@nx/vitest:test"
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

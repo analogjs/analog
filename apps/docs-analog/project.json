@@ -15,11 +15,11 @@
         "{workspaceRoot}/dist/apps/docs-analog/ssr",
         "{workspaceRoot}/dist/apps/docs-analog/analog"
       ],
+      "defaultConfiguration": "production",
       "options": {
         "configFile": "apps/docs-analog/vite.config.ts",
         "outputPath": "dist/apps/docs-analog/client"
       },
-      "defaultConfiguration": "production",
       "configurations": {
         "development": {
           "mode": "development"
@@ -51,9 +51,10 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": ["{projectRoot}/coverage"],
-      "dependsOn": ["^build"]
+      "outputs": [
+        "{projectRoot}/coverage",
+        "{workspaceRoot}/coverage/apps/docs-analog"
+      ]
     }
   }
 }

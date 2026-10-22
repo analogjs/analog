@@ -17,9 +17,6 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     },
-    "test": {
-      "executor": "@nx/vitest:test"
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
