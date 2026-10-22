@@ -1,3 +1,9 @@
+# [3.0.0-beta.8](https://github.com/analogjs/analog/compare/v3.0.0-beta.7...v3.0.0-beta.8) (2026-10-22)
+
+### Bug Fixes
+
+- **platform:** support Nx 24 by using Analog builders for platform targets ([#2674](https://github.com/analogjs/analog/issues/2674)) ([47fddbe](https://github.com/analogjs/analog/commit/47fddbe3d268ba30072dd6c9e1834401feb90c6a))
+
 # [3.0.0-beta.7](https://github.com/analogjs/analog/compare/v3.0.0-beta.6...v3.0.0-beta.7) (2026-10-21)
 
 ### Bug Fixes
