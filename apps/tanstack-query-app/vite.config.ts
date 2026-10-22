@@ -6,6 +6,7 @@ import { nitro } from 'nitro/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
+import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -30,6 +31,7 @@ export default defineConfig(({ mode }) => {
       }),
       angular(),
       nitro(),
+      nxReadySignal(),
     ],
     test: {
       reporters: ['default'],

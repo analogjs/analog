@@ -5,6 +5,7 @@ import angular from '@analogjs/vite-plugin-angular';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
+import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 // Only run in Netlify CI
 let base = process.env['URL'] || 'http://localhost:43010';
@@ -105,6 +106,7 @@ export default defineConfig(() => {
           },
         },
       }),
+      nxReadySignal(),
     ],
   };
 });

@@ -2,10 +2,12 @@
 
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { nxReadySignal } from '@nx/vite/plugins/nx-ready-signal.plugin';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
+    plugins: [nxReadySignal()],
     root: fileURLToPath(new URL('./tests', import.meta.url)),
     test: {
       reporters: ['default'],
