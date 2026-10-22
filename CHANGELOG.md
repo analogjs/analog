@@ -1,3 +1,9 @@
+# [3.0.0-beta.10](https://github.com/analogjs/analog/compare/v3.0.0-beta.9...v3.0.0-beta.10) (2026-10-22)
+
+### Features
+
+- **vite-plugin-angular:** resolve fastCompile registry on demand ([#2682](https://github.com/analogjs/analog/issues/2682)) ([f8894b8](https://github.com/analogjs/analog/commit/f8894b854b104f10aad7362404d91f1a57b5d096))
+
 # [3.0.0-beta.9](https://github.com/analogjs/analog/compare/v3.0.0-beta.8...v3.0.0-beta.9) (2026-10-22)
 
 ### Performance Improvements
