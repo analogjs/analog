@@ -68,6 +68,10 @@ exports[`preset generator > should match project.json 1`] = `
     },
     "serve-static": {
       "continuous": true,
+      "readyWhen": {
+        "signal": true
+      },
+      "dependsOn": ["build"],
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "my-app:build",
