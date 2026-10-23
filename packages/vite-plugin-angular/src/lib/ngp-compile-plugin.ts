@@ -1,0 +1,435 @@
+import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import type MagicString from 'magic-string';
+import * as vite from 'vite';
+import {
+  discoverAnalogIntegrations,
+  type TransformFilter,
+} from './analog-plugin-interop.js';
+import type { FastCompilePluginOptions } from './fast-compile-plugin.js';
+import {
+  createDepOptimizerConfig,
+  getTsConfigPath,
+  isProdMode,
+  TS_EXT_REGEX,
+  type TsConfigResolutionContext,
+} from './utils/plugin-config.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
+import { TsgoChecker } from './utils/tsgo-checker.js';
+
+// The unpublished NGP API is loaded at runtime. Model only the surface we use.
+interface NgpDiagnostic {
+  category: number;
+  messageText: string;
+}
+
+interface NgpFile {
+  filePath: string;
+  diagnostics?: NgpDiagnostic[];
+  classes: {
+    component?: {
+      templateUrl?: { resolvedPath: string };
+      styleUrls?: { resolvedPath: string }[];
+      stylesFromUrls?: string[];
+      styles?: string[];
+    };
+  }[];
+}
+
+interface NgpChunk {
+  files: NgpFile[];
+}
+
+interface NgpResult {
+  magicString: MagicString;
+  diagnostics?: NgpDiagnostic[];
+  tcb?: { code: string } | null;
+}
+
+interface NgpAnalyzer {
+  getFileContent(path: string): Promise<string>;
+  updateFileContent(
+    updates: { filePath: string; content: string }[],
+  ): Promise<string[]>;
+  invalidateFiles(
+    updates: { filePath: string; updateType: number }[],
+  ): Promise<string[]>;
+  close(): void;
+}
+
+interface NgpCompiler {
+  analyzeOptimized(): AsyncIterable<NgpChunk>;
+  analyzeOptimizedDelta(): AsyncIterable<NgpChunk>;
+  prepareChunk(chunk: NgpChunk): Promise<unknown>;
+  processFile(
+    path: string,
+    content: string,
+    ...args: [undefined, NgpFile, unknown] | [NgpFile, unknown]
+  ): Promise<NgpResult>;
+}
+
+interface NgpApi {
+  createAnalyzer(
+    tsconfig: string,
+    options: { nativeBinding?: string },
+  ): Promise<NgpAnalyzer>;
+  HybridCompiler: new (
+    analyzer: NgpAnalyzer,
+    options: { optimize: boolean },
+  ) => NgpCompiler;
+}
+
+async function loadNgp(
+  tsconfig: string,
+  workspaceRoot: string,
+): Promise<NgpApi> {
+  let modulePath = process.env['ANALOG_NGP_COMPILER'];
+  if (!modulePath) {
+    const req = createRequire(tsconfig);
+    try {
+      modulePath = req.resolve('@angular/ngp');
+    } catch (cause) {
+      const localPrototype = resolve(
+        workspaceRoot,
+        'node_modules/.cache/analog-ngp/api.mjs',
+      );
+      if (existsSync(localPrototype)) {
+        modulePath = localPrototype;
+      } else {
+        throw new Error(
+          "compilation: 'ngp' requires @angular/ngp. For a local NGP build, set ANALOG_NGP_COMPILER to its API module and ANALOG_NGP_NATIVE_BINDING to its native analyzer.",
+          { cause },
+        );
+      }
+    }
+  }
+  return import(pathToFileURL(resolve(modulePath)).href);
+}
+
+export function ngpCompilePlugin(
+  options: FastCompilePluginOptions,
+): vite.Plugin {
+  if (options.jit || options.fastCompileMode === 'partial') {
+    throw new Error(
+      "compilation: 'ngp' requires jit: false and fastCompileMode: 'full'.",
+    );
+  }
+
+  let configContext: TsConfigResolutionContext;
+  let resolvedConfig: vite.ResolvedConfig;
+  let transformFilter: TransformFilter | undefined;
+  let watchMode = false;
+  let activeBuilds = 0;
+  let analyzer: NgpAnalyzer | undefined;
+  let compiler: NgpCompiler | undefined;
+  let tsgo: TsgoChecker | undefined;
+  let api: NgpApi;
+  const filesByPath = new Map<string, { file: NgpFile; chunk: NgpChunk }>();
+  const chunkContexts = new Map<NgpChunk, Promise<unknown>>();
+  const output = new Map<string, Promise<NgpResult>>();
+  const watchedFiles = new Set<string>();
+  let pending = Promise.resolve();
+  const filter = vite.createFilter(TS_EXT_REGEX, [
+    /node_modules/,
+    /[?&]raw\b/,
+    /type=script/,
+    /@ng\/component/,
+  ]);
+
+  function resolveTsConfigPath() {
+    return getTsConfigPath(
+      configContext.root,
+      options.tsconfigGetter(),
+      configContext.isProd,
+      options.isTest,
+      configContext.isLib,
+      options.workspaceRoot,
+    );
+  }
+
+  async function prepareResources(
+    file: NgpFile,
+    watch: (path: string) => void,
+  ): Promise<NgpFile> {
+    watch(file.filePath);
+    return {
+      ...file,
+      classes: await Promise.all(
+        file.classes.map(async (metadata, classIndex) => {
+          const component = metadata.component;
+          if (!component) return metadata;
+          if (component.templateUrl) watch(component.templateUrl.resolvedPath);
+          for (const style of component.styleUrls ?? [])
+            watch(style.resolvedPath);
+          const preprocess = async (content: string, path: string) => {
+            const result = await vite.preprocessCSS(
+              content,
+              path,
+              resolvedConfig,
+            );
+            result.deps?.forEach(watch);
+            return result.code;
+          };
+          return {
+            ...metadata,
+            component: {
+              ...component,
+              styles:
+                component.styles &&
+                (await Promise.all(
+                  component.styles.map((style, index) =>
+                    preprocess(
+                      style,
+                      `${file.filePath}.inline-${classIndex}-${index}.${options.inlineStylesExtension}`,
+                    ),
+                  ),
+                )),
+              stylesFromUrls:
+                component.stylesFromUrls &&
+                (await Promise.all(
+                  component.stylesFromUrls.map((style, index) =>
+                    preprocess(style, component.styleUrls![index].resolvedPath),
+                  ),
+                )),
+            },
+          };
+        }),
+      ),
+    };
+  }
+
+  async function indexChunks(update?: () => Promise<string[]>) {
+    if (update) {
+      const invalidated = await update();
+      for (const filePath of invalidated) {
+        output.delete(vite.normalizePath(filePath));
+      }
+      chunkContexts.clear();
+    } else {
+      filesByPath.clear();
+      chunkContexts.clear();
+      output.clear();
+      compiler = new api.HybridCompiler(analyzer!, { optimize: true });
+    }
+    const chunks = update
+      ? compiler!.analyzeOptimizedDelta()
+      : compiler!.analyzeOptimized();
+    for await (const chunk of chunks) {
+      for (const file of chunk.files) {
+        const normPath = vite.normalizePath(file.filePath);
+        filesByPath.set(normPath, { file, chunk });
+        output.delete(normPath);
+      }
+    }
+  }
+
+  function enqueueIndex(update: () => Promise<string[]>) {
+    pending = pending.catch(() => {}).then(() => indexChunks(update));
+    return pending;
+  }
+
+  function getChunkContext(chunk: NgpChunk): Promise<unknown> {
+    let context = chunkContexts.get(chunk);
+    if (!context) {
+      context = compiler!.prepareChunk(chunk);
+      chunkContexts.set(chunk, context);
+    }
+    return context;
+  }
+
+  async function checkWithTsgo(
+    filePath: string,
+    sourceCode: string,
+    tcbCode?: string | null,
+  ) {
+    tsgo ??= new TsgoChecker(resolveTsConfigPath());
+    tsgo.queueFile(filePath, sourceCode, tcbCode);
+    if (!watchMode) return;
+    const typeErrors = await tsgo.flushQueue(true);
+    if (typeErrors.length) {
+      throw new Error(typeErrors.join('\n'));
+    }
+  }
+
+  function compileFile(
+    normPath: string,
+    watch: (path: string) => void,
+  ): Promise<NgpResult> | undefined {
+    const entry = filesByPath.get(normPath);
+    if (!entry) return undefined;
+    let task = output.get(normPath);
+    if (!task) {
+      task = (async () => {
+        const activeAnalyzer = analyzer!;
+        const activeCompiler = compiler!;
+        const trackWatch = (path: string) => {
+          watchedFiles.add(path);
+          watch(path);
+        };
+        const [file, context, content] = await Promise.all([
+          prepareResources(entry.file, trackWatch),
+          getChunkContext(entry.chunk),
+          activeAnalyzer.getFileContent(entry.file.filePath),
+        ]);
+        const result =
+          activeCompiler.processFile.length >= 5
+            ? await activeCompiler.processFile(
+                file.filePath,
+                content,
+                undefined,
+                file,
+                context,
+              )
+            : await activeCompiler.processFile(
+                file.filePath,
+                content,
+                file,
+                context,
+              );
+        const errors = [
+          ...(file.diagnostics ?? []),
+          ...(result.diagnostics ?? []),
+        ].filter((diagnostic) => diagnostic.category === 1);
+        if (errors.length) {
+          throw new Error(
+            `${file.filePath}: ${errors.map((error) => error.messageText).join('\n')}`,
+          );
+        }
+        if (options.disableTypeChecking !== true) {
+          await checkWithTsgo(file.filePath, content, result.tcb?.code);
+        }
+        return result;
+      })();
+      output.set(normPath, task);
+    }
+    return task;
+  }
+
+  return {
+    name: '@analogjs/vite-plugin-angular-ngp',
+    enforce: 'pre',
+    api: { getTsConfigPath: resolveTsConfigPath, output, ready: () => pending },
+    config(config, { command }) {
+      watchMode = command === 'serve';
+      configContext = {
+        root: config.root || '.',
+        isProd: isProdMode(config.mode),
+        isLib: !!config.build?.lib,
+      };
+      const depOptimizer = createDepOptimizerConfig({
+        tsconfig: resolveTsConfigPath(),
+        isProd: configContext.isProd,
+        jit: false,
+        watchMode,
+        isTest: options.isTest,
+        isAstroIntegration: options.isAstroIntegration,
+      });
+      return {
+        ...(vite.rolldownVersion ? { oxc: {} as any } : { esbuild: false }),
+        ...depOptimizer,
+      };
+    },
+    async configResolved(config) {
+      resolvedConfig = config;
+      const integrations = await discoverAnalogIntegrations(config);
+      transformFilter = integrations.transformFilter;
+    },
+    configureServer(server) {
+      server.httpServer?.on('close', () => {
+        tsgo?.close();
+        tsgo = undefined;
+        analyzer?.close();
+        analyzer = undefined;
+        compiler = undefined;
+      });
+    },
+    async buildStart() {
+      activeBuilds++;
+      if (!analyzer) {
+        const tsconfig = resolveTsConfigPath();
+        api = await loadNgp(tsconfig, options.workspaceRoot);
+        const localBinding = resolve(
+          options.workspaceRoot,
+          'node_modules/.cache/analog-ngp/analyzer.node',
+        );
+        analyzer = await api.createAnalyzer(tsconfig, {
+          nativeBinding:
+            process.env['ANALOG_NGP_NATIVE_BINDING'] ??
+            (existsSync(localBinding) ? localBinding : undefined),
+        });
+        pending = indexChunks();
+      }
+      await pending;
+      for (const path of watchedFiles) {
+        this.addWatchFile(path);
+      }
+    },
+    async transform(code, id) {
+      if (!filter(id) || transformFilter?.(code, id) === false) return;
+      const filePath = vite.normalizePath(id.split('?')[0]);
+      await pending;
+      let result = await compileFile(filePath, (path) =>
+        this.addWatchFile(path),
+      );
+      if (result && result.magicString.original !== code) {
+        await enqueueIndex(() =>
+          analyzer!.updateFileContent([{ filePath, content: code }]),
+        );
+        result = await compileFile(filePath, (path) => this.addWatchFile(path));
+      } else if (!result && options.disableTypeChecking !== true) {
+        await checkWithTsgo(filePath, code);
+      }
+      const source = result?.magicString.toString() ?? code;
+      const map = result?.magicString.generateMap({
+        source: filePath,
+        includeContent: true,
+        hires: true,
+      });
+      return vite.transformWithOxc
+        ? vite.transformWithOxc(
+            source,
+            filePath,
+            { lang: 'ts', sourcemap: true },
+            map,
+          )
+        : vite.transformWithEsbuild(
+            source,
+            filePath,
+            { loader: 'ts', sourcemap: true },
+            map,
+          );
+    },
+    async handleHotUpdate(ctx) {
+      await enqueueIndex(() =>
+        analyzer!.invalidateFiles([{ filePath: ctx.file, updateType: 2 }]),
+      );
+      ctx.server.moduleGraph.invalidateAll();
+      ctx.server.ws.send({ type: 'full-reload' });
+      return [];
+    },
+    async buildEnd(error) {
+      if (error || watchMode || !tsgo) return;
+      const typeErrors = await tsgo.flushQueue();
+      if (typeErrors.length) {
+        throw new Error(typeErrors.join('\n'));
+      }
+    },
+    async closeBundle() {
+      activeBuilds = Math.max(0, activeBuilds - 1);
+      if (watchMode || activeBuilds > 0) return;
+      await pending.catch(() => {});
+      tsgo?.close();
+      tsgo = undefined;
+      analyzer?.close();
+      analyzer = undefined;
+      compiler = undefined;
+      filesByPath.clear();
+      chunkContexts.clear();
+      output.clear();
+      watchedFiles.clear();
+      releaseCssPreprocessorWorkers();
+    },
+  };
+}

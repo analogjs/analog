@@ -91,6 +91,7 @@ export default defineConfig(async ({ mode, command }) => {
         inlineStylesExtension: 'scss',
         fileReplacements,
         fastCompile: true,
+        compilation: process.env['ANALOG_NGP'] === 'true' ? 'ngp' : undefined,
       }),
       nitro({
         routeRules: {

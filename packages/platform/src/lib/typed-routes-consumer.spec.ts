@@ -171,7 +171,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     root: string,
     config = 'browser.json',
     outFile?: string,
-    compiler: boolean | 'compilation-api' = false,
+    compiler: boolean | 'compilation-api' | 'ngp' = false,
   ) {
     const plugin = typedRoutes({ workspaceRoot: root, outFile });
     await resolveConfig(
@@ -186,6 +186,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
               tsconfig: () => join(root, config),
               jit: false,
               fastCompile: compiler === true,
+              ...(compiler === 'ngp' ? { compilation: 'ngp' } : {}),
               disableTypeChecking: false,
             },
           ),
@@ -270,7 +271,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     expect(compile(root).messages).toEqual([]);
   });
 
-  it.each([false, true, 'compilation-api'] as const)(
+  it.each([false, true, 'compilation-api', 'ngp'] as const)(
     'reports missing inclusion in the selected tsconfig (fastCompile=%s)',
     async (fastCompile) => {
       const root = fixture();

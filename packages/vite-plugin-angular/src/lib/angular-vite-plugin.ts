@@ -57,6 +57,7 @@ import {
 } from './analog-plugin-interop.js';
 
 import { fastCompilePlugin } from './fast-compile-plugin.js';
+import { ngpCompilePlugin } from './ngp-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   encapsulationPlugin,
@@ -196,10 +197,13 @@ export interface PluginOptions {
   fileReplacements?: FileReplacement[];
   /**
    * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform.
+   * and routes compilation through an internal single-pass transform when
+   * `compilation` is not specified.
    * Defaults to `false`.
    */
   fastCompile?: boolean;
+  /** Selects the compilation path, overriding fastCompile. Defaults to 'ngtsc'; 'ngp' is experimental. */
+  compilation?: 'ngtsc' | 'ngp';
   /**
    * Compilation output mode used when `fastCompile` is enabled.
    * - `'full'` (default): Emit final Ivy definitions for application builds.
@@ -264,9 +268,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     jit: options?.jit,
     include: options?.include ?? [],
     liveReload,
-    disableTypeChecking: options?.disableTypeChecking ?? true,
+    disableTypeChecking:
+      options?.disableTypeChecking ?? options?.compilation !== 'ngp',
     fileReplacements: options?.fileReplacements ?? [],
-    fastCompile: options?.fastCompile ?? false,
+    fastCompile:
+      options?.compilation === undefined && (options?.fastCompile ?? false),
+    compilation: options?.compilation ?? 'ngtsc',
     fastCompileMode: options?.fastCompileMode ?? 'full',
     // Set on each compilation from preprocessors registered by Vite plugins
     // through `analog.setup()`.
@@ -1420,18 +1427,22 @@ export function angular(options?: PluginOptions): Plugin[] {
     return JSON.stringify(sourceMap);
   }
 
-  const compilationPlugin = pluginOptions.fastCompile
-    ? fastCompilePlugin({
-        tsconfigGetter: pluginOptions.tsconfigGetter,
-        workspaceRoot: pluginOptions.workspaceRoot,
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-        jit,
-        liveReload: pluginOptions.liveReload,
-        isTest,
-        isAstroIntegration,
-        fastCompileMode: pluginOptions.fastCompileMode,
-      })
-    : angularPlugin();
+  const createFastCompilePlugin =
+    pluginOptions.compilation === 'ngp' ? ngpCompilePlugin : fastCompilePlugin;
+  const compilationPlugin =
+    pluginOptions.compilation === 'ngp' || pluginOptions.fastCompile
+      ? createFastCompilePlugin({
+          tsconfigGetter: pluginOptions.tsconfigGetter,
+          workspaceRoot: pluginOptions.workspaceRoot,
+          inlineStylesExtension: pluginOptions.inlineStylesExtension,
+          jit,
+          liveReload: pluginOptions.liveReload,
+          isTest,
+          isAstroIntegration,
+          fastCompileMode: pluginOptions.fastCompileMode,
+          disableTypeChecking: pluginOptions.disableTypeChecking,
+        })
+      : angularPlugin();
 
   return [
     // Scope the `style` package-export condition to `.css`-extension
@@ -1444,14 +1455,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
     pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
-    // `compilationPlugin` is either `angularPlugin()` or `fastCompilePlugin()`
-    // depending on `pluginOptions.fastCompile`. When fastCompile is off the
-    // array used to also include an unconditional `angularPlugin()` right
-    // before this line — invoking the same plugin twice and double-
-    // registering its hooks. Removed: `compilationPlugin` already covers both
-    // branches.
+    // `compilationPlugin` is `angularPlugin()`, `fastCompilePlugin()`, or
+    // `ngpCompilePlugin()` depending on `compilation` and `fastCompile`.
     compilationPlugin,
     !pluginOptions.fastCompile &&
+      pluginOptions.compilation === 'ngtsc' &&
       pluginOptions.liveReload &&
       liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz

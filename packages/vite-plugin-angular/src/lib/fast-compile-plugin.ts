@@ -55,6 +55,7 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  disableTypeChecking?: boolean;
 }
 
 type ResolveImport = (spec: string, importer: string) => Promise<string | null>;

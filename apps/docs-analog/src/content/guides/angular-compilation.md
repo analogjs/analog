@@ -79,6 +79,32 @@ export default defineConfig({
 
 :::
 
+### Choosing a compilation path
+
+The `compilation` option selects the Angular compiler implementation:
+
+- `'ngtsc'` (default): Angular's standard compiler.
+- `'ngp'`: Angular's experimental hybrid preprocessor, with in-memory TypeScript 7 (`typescript@^7.0.0`) and Angular template type checking enabled by default.
+
+An explicit `compilation` takes precedence over `fastCompile`.
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+});
+```
+
+NGP is loaded only when selected and resolves `@angular/ngp` from your application.
+Until a compatible package is published, a local build is required.
+
+NGP currently supports AOT application compilation, Vite preprocessing for
+component styles, and full-page reloads. Set `inlineStylesExtension` for inline
+SCSS/Sass/Less; external styles use their file extension. JIT and
+`fastCompileMode: 'partial'` are rejected. TypeScript 7 (`typescript@^7.0.0`)
+runs TypeScript and Angular template type checking in memory by default without
+emitting intermediate files; set `disableTypeChecking: true` to skip it.
+
 ### What it supports
 
 | Capability                                   | Fast compile                                                    |
