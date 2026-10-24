@@ -34,4 +34,17 @@ describe('TsgoChecker', () => {
     expect(errors[0]).toContain(`${cartPath} (template)`);
     expect(errors[0]).toContain("'missing'");
   });
+
+  it('checks the in-memory TCB of a document opened after another', async () => {
+    tsgo = new TsgoChecker(tsconfig);
+    const search = inlineTcb(searchPath, 'NewsletterComponent', '');
+    tsgo.queueFile(searchPath, search.source, search.tcb);
+    await tsgo.flushQueue(true);
+
+    const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
+    tsgo.queueFile(cartPath, cart.source, cart.tcb);
+    const errors = await tsgo.flushQueue(true);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("'missing'");
+  });
 });

@@ -319,18 +319,19 @@ export class TsgoChecker {
 
   updateDocument(filePath: string, text: string) {
     const uri = pathToFileURL(resolve(filePath)).href;
-    const version = (this.versions.get(uri) ?? 0) + 1;
-    this.versions.set(uri, version);
-    if (version === 1) {
+    if (!this.versions.has(uri)) {
+      // tsc --lsp can ignore didOpen text once other documents are open
+      this.versions.set(uri, 1);
       this.notify('textDocument/didOpen', {
-        textDocument: { uri, languageId: 'typescript', version, text },
-      });
-    } else {
-      this.notify('textDocument/didChange', {
-        textDocument: { uri, version },
-        contentChanges: [{ text }],
+        textDocument: { uri, languageId: 'typescript', version: 1, text },
       });
     }
+    const version = this.versions.get(uri)! + 1;
+    this.versions.set(uri, version);
+    this.notify('textDocument/didChange', {
+      textDocument: { uri, version },
+      contentChanges: [{ text }],
+    });
   }
 
   async checkFile(
