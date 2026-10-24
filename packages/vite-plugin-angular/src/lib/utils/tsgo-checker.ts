@@ -21,19 +21,6 @@ interface TcbLineRange {
 const IGNORED_TCB_CODES = new Set([6133, 6199, 2695, 7006]);
 const BATCH_SIZE = 32;
 
-function extractTcbSuffix(tcbCode: string): string {
-  const tcbIndex = tcbCode.indexOf('/*tcb');
-  if (tcbIndex === -1) return tcbCode;
-  const header = tcbCode.slice(0, tcbIndex);
-  const imports =
-    header.match(/^import \* as (?:_tcb_)?_?i\d+ from [^\n]+$/gm) ?? [];
-  const prelude =
-    header.match(
-      /^(?:const _ctor\d+|declare function _ctor\d+|var _pipe\d+)[^\n]+$/gm,
-    ) ?? [];
-  return [...imports, ...prelude, tcbCode.slice(tcbIndex)].join('\n');
-}
-
 const TCB_IMPORT_ALIAS = /^(?:_tcb_)?_?i\d+$/;
 const TCB_LOCAL_NAME = /^(?:_tcb|_ctor|_pipe)\d+$/;
 
@@ -56,6 +43,45 @@ function declaredName(stmt: any): string | undefined {
   if (stmt.type === 'FunctionDeclaration' || stmt.type === 'TSDeclareFunction')
     return stmt.id?.name;
   return undefined;
+}
+
+function isTcbImport(stmt: any): boolean {
+  const ns = stmt.type === 'ImportDeclaration' && stmt.specifiers[0];
+  return (
+    ns?.type === 'ImportNamespaceSpecifier' &&
+    TCB_IMPORT_ALIAS.test(ns.local.name)
+  );
+}
+
+interface TcbParts {
+  source: any[];
+  imports: any[];
+  blocks: any[];
+}
+
+// NGP places each block right after its class, so source can follow a block
+function splitTcb(tcbCode: string): TcbParts | null {
+  if (!tcbCode.includes('/*tcb')) return null;
+  const { program, errors } = parseSync('tcb.ts', tcbCode);
+  if (errors.length > 0) return null;
+  const parts: TcbParts = { source: [], imports: [], blocks: [] };
+  for (const stmt of program.body) {
+    if (TCB_LOCAL_NAME.test(declaredName(stmt) ?? '')) {
+      parts.blocks.push(stmt);
+    } else {
+      parts.source.push(stmt);
+      if (isTcbImport(stmt)) parts.imports.push(stmt);
+    }
+  }
+  return parts.blocks.length > 0 ? parts : null;
+}
+
+function extractTcbSuffix(tcbCode: string): string {
+  const parts = splitTcb(tcbCode);
+  if (!parts) return tcbCode;
+  return [...parts.imports, ...parts.blocks]
+    .map((stmt) => tcbCode.slice(stmt.start, stmt.end))
+    .join('\n');
 }
 
 function isBareTypeReference(type: any): boolean {
@@ -99,45 +125,20 @@ function relocateTcb(
   fileIdx: number,
   sharedImports: Map<string, string>,
 ): string | null {
-  const tcbIndex = tcbCode.indexOf('/*tcb');
-  if (tcbIndex === -1) return null;
-  const { program, errors } = parseSync('tcb.ts', tcbCode);
-  if (errors.length > 0) return null;
-  const header: any[] = program.body.filter((stmt) => stmt.end <= tcbIndex);
-  const body: any[] = program.body.filter((stmt) => stmt.start >= tcbIndex);
-
-  // Skip NGP inline TCBs (where sourceCode class declarations are embedded in header)
-  if (
-    !tcbCode.includes('/*tcb*/') &&
-    header.some(
-      (stmt) =>
-        stmt.type === 'ClassDeclaration' ||
-        stmt.declaration?.type === 'ClassDeclaration',
-    )
-  ) {
-    return null;
-  }
+  const parts = splitTcb(tcbCode);
+  if (!parts) return null;
 
   const aliasSpecs = new Map<string, string>();
-  for (const stmt of header) {
-    const ns = stmt.type === 'ImportDeclaration' && stmt.specifiers[0];
-    if (
-      ns?.type === 'ImportNamespaceSpecifier' &&
-      TCB_IMPORT_ALIAS.test(ns.local.name)
-    ) {
-      aliasSpecs.set(ns.local.name, stmt.source.value);
-    }
+  for (const stmt of parts.imports) {
+    aliasSpecs.set(stmt.specifiers[0].local.name, stmt.source.value);
   }
 
-  const prelude = header.filter((stmt) =>
-    TCB_LOCAL_NAME.test(declaredName(stmt) ?? ''),
-  );
-  const exportedClasses = collectExportedClasses(header);
+  const exportedClasses = collectExportedClasses(parts.source);
   const identifiers: any[] = [];
   const thisTypes: Array<{ node: any; exportProp: string }> = [];
   let relocatable = true;
 
-  walk([...prelude, ...body], (node) => {
+  walk(parts.blocks, (node) => {
     if (node.type === 'Identifier') {
       identifiers.push(node);
       return;
@@ -196,10 +197,7 @@ function relocateTcb(
     }
   }
 
-  return [
-    ...prelude.map((stmt) => ms.slice(stmt.start, stmt.end)),
-    ms.slice(tcbIndex, tcbCode.length),
-  ].join('\n');
+  return parts.blocks.map((stmt) => ms.slice(stmt.start, stmt.end)).join('\n');
 }
 
 function resolveTsgoBinary(tsconfig: string): string {
