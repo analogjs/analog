@@ -35,6 +35,24 @@ describe('TsgoChecker', () => {
     expect(errors[0]).toContain("'missing'");
   });
 
+  it('maps template errors to external template files', async () => {
+    tsgo = new TsgoChecker(tsconfig);
+    const templateFile = resolve(pagesDir, 'shipping/shipping.html');
+    const footer = `/*ngp-tcb-template-sources:${JSON.stringify({ tcb1: { templateFile } })}*/`;
+    const search = inlineTcb(searchPath, 'NewsletterComponent', '');
+    const cart = inlineTcb(
+      cartPath,
+      'CartComponent',
+      '(this).missing /*0,5*/;',
+    );
+    tsgo.queueFile(searchPath, search.source, search.tcb);
+    tsgo.queueFile(cartPath, cart.source, `${cart.tcb}${footer}\n`);
+
+    expect(await tsgo.flushQueue()).toEqual([
+      expect.stringContaining(`${templateFile}:1:1 - error TS2339`),
+    ]);
+  });
+
   it('checks the in-memory TCB of a document opened after another', async () => {
     tsgo = new TsgoChecker(tsconfig);
     const search = inlineTcb(searchPath, 'NewsletterComponent', '');

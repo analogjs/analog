@@ -1,6 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { dirname, relative, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import MagicString from 'magic-string';
 import { parseSync } from 'oxc-parser';
@@ -12,17 +13,45 @@ interface LspDiagnostic {
   message: string;
 }
 
+// Same shape as NGP's `TcbTemplateSource`
+export interface TcbTemplateSource {
+  templateFile?: string;
+  templateExpression?: { start: number; end: number };
+}
+
+type TemplateSources = Record<string, TcbTemplateSource>;
+
 interface TcbLineRange {
   startLine: number;
   endLine: number;
   filePath: string;
+  sourceCode: string;
+  templateSources: TemplateSources;
 }
+
+interface FileMeta {
+  filePath: string;
+  sourceLineCount: number;
+  lines?: string[];
+  tcbRanges?: TcbLineRange[];
+}
+
+/** NGP's footer comment mapping TCB ids to the template they were generated from. */
+export const TCB_TEMPLATE_SOURCES_PREFIX = 'ngp-tcb-template-sources:';
 
 const IGNORED_TCB_CODES = new Set([6133, 6199, 2695, 7006]);
 const BATCH_SIZE = 32;
 
 const TCB_IMPORT_ALIAS = /^(?:_tcb_)?_?i\d+$/;
 const TCB_LOCAL_NAME = /^(?:_tcb|_ctor|_pipe)\d+$/;
+const SPAN_COMMENT = /^(\d+),(\d+)$/;
+
+export function readSpanComment(
+  value: string,
+): { start: number; end: number } | null {
+  const match = SPAN_COMMENT.exec(value);
+  return match ? { start: Number(match[1]), end: Number(match[2]) } : null;
+}
 
 function walk(node: any, visit: (node: any) => void): void {
   if (Array.isArray(node)) {
@@ -57,14 +86,28 @@ interface TcbParts {
   source: any[];
   imports: any[];
   blocks: any[];
+  templateSources: TemplateSources;
 }
 
 // NGP places each block right after its class, so source can follow a block
 function splitTcb(tcbCode: string): TcbParts | null {
   if (!tcbCode.includes('/*tcb')) return null;
-  const { program, errors } = parseSync('tcb.ts', tcbCode);
+  const { program, comments, errors } = parseSync('tcb.ts', tcbCode);
   if (errors.length > 0) return null;
-  const parts: TcbParts = { source: [], imports: [], blocks: [] };
+  const parts: TcbParts = {
+    source: [],
+    imports: [],
+    blocks: [],
+    templateSources: {},
+  };
+  const footer = comments.find((c) =>
+    c.value.startsWith(TCB_TEMPLATE_SOURCES_PREFIX),
+  );
+  if (footer) {
+    parts.templateSources = JSON.parse(
+      footer.value.slice(TCB_TEMPLATE_SOURCES_PREFIX.length),
+    );
+  }
   for (const stmt of program.body) {
     if (TCB_LOCAL_NAME.test(declaredName(stmt) ?? '')) {
       parts.blocks.push(stmt);
@@ -76,12 +119,98 @@ function splitTcb(tcbCode: string): TcbParts | null {
   return parts.blocks.length > 0 ? parts : null;
 }
 
-function extractTcbSuffix(tcbCode: string): string {
+function inPlaceDocument(
+  filePath: string,
+  sourceCode: string,
+  tcbCode?: string | null,
+): { text: string; meta: FileMeta } {
+  const lines = sourceCode.split('\n');
+  const sourceLineCount = lines.length;
+  if (!tcbCode)
+    return { text: sourceCode, meta: { filePath, sourceLineCount } };
   const parts = splitTcb(tcbCode);
-  if (!parts) return tcbCode;
-  return [...parts.imports, ...parts.blocks]
-    .map((stmt) => tcbCode.slice(stmt.start, stmt.end))
-    .join('\n');
+  const suffix = parts
+    ? [...parts.imports, ...parts.blocks]
+        .map((stmt) => tcbCode.slice(stmt.start, stmt.end))
+        .join('\n')
+    : tcbCode;
+  lines.push(...suffix.split('\n'));
+  const range: TcbLineRange = {
+    startLine: sourceLineCount,
+    endLine: lines.length,
+    filePath,
+    sourceCode,
+    templateSources: parts?.templateSources ?? {},
+  };
+  return {
+    text: lines.join('\n'),
+    meta: { filePath, sourceLineCount, lines, tcbRanges: [range] },
+  };
+}
+
+function trailingSpan(
+  text: string,
+  pos: number,
+  commentsByStart: Map<number, any>,
+): { start: number; end: number } | null {
+  while (true) {
+    while (pos < text.length && /\s/.test(text[pos])) pos++;
+    const comment = commentsByStart.get(pos);
+    if (!comment) return null;
+    const span = readSpanComment(comment.value);
+    if (span) return span;
+    pos = comment.end;
+  }
+}
+
+function lineAndCharacter(text: string, offset: number) {
+  const before = text.slice(0, offset).split('\n');
+  return {
+    line: before.length,
+    character: before[before.length - 1].length + 1,
+  };
+}
+
+// Mirrors ngtsc: the span comment trailing the innermost node at the diagnostic
+function templateLocation(
+  range: TcbLineRange,
+  lines: string[],
+  position: { line: number; character: number },
+): { file: string; line: number; character: number } | null {
+  const chunk = lines.slice(range.startLine, range.endLine).join('\n');
+  let offset = position.character;
+  for (let i = range.startLine; i < position.line; i++) {
+    offset += lines[i].length + 1;
+  }
+  const { program, comments } = parseSync('tcb.ts', chunk);
+  const commentsByStart = new Map(comments.map((c) => [c.start, c]));
+  const ancestors: any[] = [];
+  walk(program.body, (node) => {
+    if (node.start <= offset && offset < node.end) ancestors.push(node);
+  });
+  const tcbFunction = ancestors.find(
+    (node) =>
+      node.type === 'FunctionDeclaration' && /_tcb\d+$/.test(node.id?.name),
+  );
+  let span: { start: number; end: number } | null = null;
+  for (let i = ancestors.length - 1; i >= 0 && !span; i--) {
+    span = trailingSpan(chunk, ancestors[i].end, commentsByStart);
+  }
+  if (!tcbFunction || !span) return null;
+
+  const id = /(tcb\d+)$/.exec(tcbFunction.id.name)![1];
+  const source = range.templateSources[id];
+  const file = source?.templateFile ?? range.filePath;
+  let content = range.sourceCode;
+  if (source?.templateFile) {
+    try {
+      content = readFileSync(source.templateFile, 'utf-8');
+    } catch {
+      return null;
+    }
+  }
+  const start = source?.templateExpression?.start ?? span.start;
+  return { file, ...lineAndCharacter(content, start) };
 }
 
 function isBareTypeReference(type: any): boolean {
@@ -124,7 +253,7 @@ function relocateTcb(
   hostDir: string,
   fileIdx: number,
   sharedImports: Map<string, string>,
-): string | null {
+): { body: string; templateSources: TemplateSources } | null {
   const parts = splitTcb(tcbCode);
   if (!parts) return null;
 
@@ -197,7 +326,10 @@ function relocateTcb(
     }
   }
 
-  return parts.blocks.map((stmt) => ms.slice(stmt.start, stmt.end)).join('\n');
+  return {
+    body: parts.blocks.map((stmt) => ms.slice(stmt.start, stmt.end)).join('\n'),
+    templateSources: parts.templateSources,
+  };
 }
 
 function resolveTsgoBinary(tsconfig: string): string {
@@ -320,7 +452,7 @@ export class TsgoChecker {
   updateDocument(filePath: string, text: string) {
     const uri = pathToFileURL(resolve(filePath)).href;
     if (!this.versions.has(uri)) {
-      // tsc --lsp can ignore didOpen text once other documents are open
+      // tsgo 7.0.0-dev.20260412 ignores didOpen text once other documents are open
       this.versions.set(uri, 1);
       this.notify('textDocument/didOpen', {
         textDocument: { uri, languageId: 'typescript', version: 1, text },
@@ -353,11 +485,15 @@ export class TsgoChecker {
           !IGNORED_TCB_CODES.has(Number(item.code)) &&
           !lines?.[line]?.includes('/*D:ignore*/')
         ) {
-          const ownerFile =
-            tcbRanges?.find((r) => line >= r.startLine && line < r.endLine)
-              ?.filePath ?? filePath;
+          const range = tcbRanges?.find(
+            (r) => line >= r.startLine && line < r.endLine,
+          );
+          const location =
+            range && lines && templateLocation(range, lines, item.range.start);
           errors.push(
-            `${ownerFile} (template): error TS${item.code}: ${item.message}`,
+            location
+              ? `${location.file}:${location.line}:${location.character} - error TS${item.code}: ${item.message}`
+              : `${range?.filePath ?? filePath} (template): error TS${item.code}: ${item.message}`,
           );
         }
       } else {
@@ -379,35 +515,42 @@ export class TsgoChecker {
     this.queued.clear();
     await this.ready;
 
-    const metas: Array<{
-      filePath: string;
-      sourceLineCount: number;
-      lines?: string[];
-      tcbRanges?: TcbLineRange[];
-    }> = [];
+    const metas: FileMeta[] = [];
     let updatesCount = 0;
+    const update = async (filePath: string, text: string) => {
+      this.updateDocument(filePath, text);
+      updatesCount++;
+      if (updatesCount % BATCH_SIZE === 0) {
+        await new Promise((r) => setTimeout(r, 5));
+      }
+    };
 
     if (!watchMode && entries.length > 1) {
       const [hostFilePath, hostItem] = entries[0];
       const hostDir = dirname(resolve(hostFilePath));
       const hostUri = pathToFileURL(resolve(hostFilePath)).href;
       const sharedImports = new Map<string, string>();
-      const relocatedChunks: Array<{ filePath: string; body: string }> = [];
+      const relocatedChunks: Array<{
+        filePath: string;
+        sourceCode: string;
+        body: string;
+        templateSources: TemplateSources;
+      }> = [];
       let hostRelocated = false;
 
       for (let i = 0; i < entries.length; i++) {
         const [filePath, { sourceCode, tcbCode }] = entries[i];
         const uri = pathToFileURL(resolve(filePath)).href;
         if (tcbCode && !this.versions.has(uri)) {
-          const body = relocateTcb(
+          const relocated = relocateTcb(
             filePath,
             tcbCode,
             hostDir,
             i,
             sharedImports,
           );
-          if (body !== null) {
-            relocatedChunks.push({ filePath, body });
+          if (relocated !== null) {
+            relocatedChunks.push({ filePath, sourceCode, ...relocated });
             if (i === 0) {
               hostRelocated = true;
             } else {
@@ -421,49 +564,37 @@ export class TsgoChecker {
         }
         if (i === 0) continue;
 
-        const sourceLineCount = sourceCode.split('\n').length;
-        const combined = tcbCode
-          ? `${sourceCode}\n${extractTcbSuffix(tcbCode)}`
-          : sourceCode;
-        if (tcbCode || this.versions.has(uri)) {
-          this.updateDocument(filePath, combined);
-          updatesCount++;
-          if (updatesCount % BATCH_SIZE === 0) {
-            await new Promise((r) => setTimeout(r, 5));
-          }
-        }
-        metas.push({
-          filePath,
-          sourceLineCount,
-          lines: tcbCode ? combined.split('\n') : undefined,
-        });
+        const { text, meta } = inPlaceDocument(filePath, sourceCode, tcbCode);
+        if (tcbCode || this.versions.has(uri)) await update(filePath, text);
+        metas.push(meta);
       }
 
-      const hostLines = hostItem.sourceCode.split('\n');
-      const hostSourceLineCount = hostLines.length;
-      const hostTcbRanges: TcbLineRange[] = [];
-
-      if (hostItem.tcbCode && !hostRelocated) {
-        const startLine = hostLines.length;
-        hostLines.push(...extractTcbSuffix(hostItem.tcbCode).split('\n'));
-        hostTcbRanges.push({
-          startLine,
-          endLine: hostLines.length,
-          filePath: hostFilePath,
-        });
-      }
+      const { meta: hostMeta } = inPlaceDocument(
+        hostFilePath,
+        hostItem.sourceCode,
+        hostRelocated ? null : hostItem.tcbCode,
+      );
+      const hostLines = hostMeta.lines ?? hostItem.sourceCode.split('\n');
+      const hostTcbRanges = hostMeta.tcbRanges ?? [];
 
       if (relocatedChunks.length > 0) {
         for (const [spec, alias] of sharedImports) {
           hostLines.push(`import * as ${alias} from '${spec}';`);
         }
-        for (const { filePath, body } of relocatedChunks) {
+        for (const {
+          filePath,
+          sourceCode,
+          body,
+          templateSources,
+        } of relocatedChunks) {
           const startLine = hostLines.length;
           hostLines.push(...body.split('\n'));
           hostTcbRanges.push({
             startLine,
             endLine: hostLines.length,
             filePath,
+            sourceCode,
+            templateSources,
           });
         }
       }
@@ -474,29 +605,18 @@ export class TsgoChecker {
       }
       metas.unshift({
         filePath: hostFilePath,
-        sourceLineCount: hostSourceLineCount,
+        sourceLineCount: hostMeta.sourceLineCount,
         lines: hasHostTcb ? hostLines : undefined,
         tcbRanges: hasHostTcb ? hostTcbRanges : undefined,
       });
     } else {
       for (const [filePath, { sourceCode, tcbCode }] of entries) {
-        const sourceLineCount = sourceCode.split('\n').length;
-        const combined = tcbCode
-          ? `${sourceCode}\n${extractTcbSuffix(tcbCode)}`
-          : sourceCode;
+        const { text, meta } = inPlaceDocument(filePath, sourceCode, tcbCode);
         const uri = pathToFileURL(resolve(filePath)).href;
         if (tcbCode || watchMode || this.versions.has(uri)) {
-          this.updateDocument(filePath, combined);
-          updatesCount++;
-          if (updatesCount % BATCH_SIZE === 0) {
-            await new Promise((r) => setTimeout(r, 5));
-          }
+          await update(filePath, text);
         }
-        metas.push({
-          filePath,
-          sourceLineCount,
-          lines: tcbCode ? combined.split('\n') : undefined,
-        });
+        metas.push(meta);
       }
     }
 
