@@ -1,13 +1,21 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createRequire } from 'node:module';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import MagicString from 'magic-string';
+import { parseSync } from 'oxc-parser';
 
 interface LspDiagnostic {
   range: { start: { line: number; character: number } };
   severity?: number;
   code?: number | string;
   message: string;
+}
+
+interface TcbLineRange {
+  startLine: number;
+  endLine: number;
+  filePath: string;
 }
 
 const IGNORED_TCB_CODES = new Set([6133, 6199, 2695, 7006]);
@@ -17,8 +25,181 @@ function extractTcbSuffix(tcbCode: string): string {
   const tcbIndex = tcbCode.indexOf('/*tcb');
   if (tcbIndex === -1) return tcbCode;
   const header = tcbCode.slice(0, tcbIndex);
-  const imports = header.match(/^import \* as _?i\d+ from [^\n]+$/gm) ?? [];
-  return `${imports.join('\n')}\n${tcbCode.slice(tcbIndex)}`;
+  const imports =
+    header.match(/^import \* as (?:_tcb_)?_?i\d+ from [^\n]+$/gm) ?? [];
+  const prelude =
+    header.match(
+      /^(?:const _ctor\d+|declare function _ctor\d+|var _pipe\d+)[^\n]+$/gm,
+    ) ?? [];
+  return [...imports, ...prelude, tcbCode.slice(tcbIndex)].join('\n');
+}
+
+const TCB_IMPORT_ALIAS = /^(?:_tcb_)?_?i\d+$/;
+const TCB_LOCAL_NAME = /^(?:_tcb|_ctor|_pipe)\d+$/;
+
+function walk(node: any, visit: (node: any) => void): void {
+  if (Array.isArray(node)) {
+    for (const child of node) walk(child, visit);
+    return;
+  }
+  if (!node || typeof node.type !== 'string') return;
+  visit(node);
+  for (const key in node) {
+    const value = node[key];
+    if (value && typeof value === 'object') walk(value, visit);
+  }
+}
+
+function declaredName(stmt: any): string | undefined {
+  if (stmt.type === 'VariableDeclaration')
+    return stmt.declarations[0]?.id?.name;
+  if (stmt.type === 'FunctionDeclaration' || stmt.type === 'TSDeclareFunction')
+    return stmt.id?.name;
+  return undefined;
+}
+
+function isBareTypeReference(type: any): boolean {
+  return (
+    type?.type === 'TSTypeReference' && type.typeName.type === 'Identifier'
+  );
+}
+
+function collectExportedClasses(header: any[]): Map<string, string> {
+  const exported = new Map<string, string>();
+  for (const stmt of header) {
+    const cls = stmt.declaration;
+    if (cls?.type !== 'ClassDeclaration' || !cls.id) continue;
+    if (stmt.type === 'ExportDefaultDeclaration') {
+      exported.set(cls.id.name, 'default');
+    } else if (stmt.type === 'ExportNamedDeclaration') {
+      exported.set(cls.id.name, cls.id.name);
+    }
+  }
+  return exported;
+}
+
+function hostRelativeSpecifier(absPath: string, hostDir: string): string {
+  const spec = relative(hostDir, absPath).replace(/\\/g, '/');
+  return spec.startsWith('.') ? spec : './' + spec;
+}
+
+function sharedAliasFor(spec: string, sharedImports: Map<string, string>) {
+  let alias = sharedImports.get(spec);
+  if (!alias) {
+    alias = `_si${sharedImports.size}`;
+    sharedImports.set(spec, alias);
+  }
+  return alias;
+}
+
+function relocateTcb(
+  filePath: string,
+  tcbCode: string,
+  hostDir: string,
+  fileIdx: number,
+  sharedImports: Map<string, string>,
+): string | null {
+  const tcbIndex = tcbCode.indexOf('/*tcb');
+  if (tcbIndex === -1) return null;
+  const { program, errors } = parseSync('tcb.ts', tcbCode);
+  if (errors.length > 0) return null;
+  const header: any[] = program.body.filter((stmt) => stmt.end <= tcbIndex);
+  const body: any[] = program.body.filter((stmt) => stmt.start >= tcbIndex);
+
+  // Skip NGP inline TCBs (where sourceCode class declarations are embedded in header)
+  if (
+    !tcbCode.includes('/*tcb*/') &&
+    header.some(
+      (stmt) =>
+        stmt.type === 'ClassDeclaration' ||
+        stmt.declaration?.type === 'ClassDeclaration',
+    )
+  ) {
+    return null;
+  }
+
+  const aliasSpecs = new Map<string, string>();
+  for (const stmt of header) {
+    const ns = stmt.type === 'ImportDeclaration' && stmt.specifiers[0];
+    if (
+      ns?.type === 'ImportNamespaceSpecifier' &&
+      TCB_IMPORT_ALIAS.test(ns.local.name)
+    ) {
+      aliasSpecs.set(ns.local.name, stmt.source.value);
+    }
+  }
+
+  const prelude = header.filter((stmt) =>
+    TCB_LOCAL_NAME.test(declaredName(stmt) ?? ''),
+  );
+  const exportedClasses = collectExportedClasses(header);
+  const identifiers: any[] = [];
+  const thisTypes: Array<{ node: any; exportProp: string }> = [];
+  let relocatable = true;
+
+  walk([...prelude, ...body], (node) => {
+    if (node.type === 'Identifier') {
+      identifiers.push(node);
+      return;
+    }
+    // Same-file directives or pipes have no namespace import to relocate
+    if (
+      (node.type === 'VariableDeclarator' &&
+        /^_pipe\d+$/.test(node.id.name) &&
+        isBareTypeReference(node.init?.typeAnnotation)) ||
+      (node.type === 'TSFunctionType' &&
+        node.params[0]?.name === 'init' &&
+        isBareTypeReference(node.returnType?.typeAnnotation))
+    ) {
+      relocatable = false;
+      return;
+    }
+    if (node.type !== 'FunctionDeclaration' || !/^_tcb\d+$/.test(node.id?.name))
+      return;
+    const thisType = node.params[0]?.typeAnnotation?.typeAnnotation;
+    if (node.params[0]?.name !== 'this' || !isBareTypeReference(thisType))
+      return;
+    const exportProp = exportedClasses.get(thisType.typeName.name);
+    if (node.typeParameters || !exportProp) {
+      relocatable = false;
+      return;
+    }
+    thisTypes.push({ node: thisType.typeName, exportProp });
+  });
+  if (!relocatable) return null;
+
+  const fileDir = dirname(resolve(filePath));
+  const aliasMap = new Map<string, string>();
+  for (const [alias, rawSpec] of aliasSpecs) {
+    const spec = rawSpec.startsWith('.')
+      ? hostRelativeSpecifier(resolve(fileDir, rawSpec), hostDir)
+      : rawSpec;
+    aliasMap.set(alias, sharedAliasFor(spec, sharedImports));
+  }
+
+  const ms = new MagicString(tcbCode);
+  for (const node of identifiers) {
+    if (TCB_LOCAL_NAME.test(node.name)) {
+      ms.overwrite(node.start, node.end, `_f${fileIdx}_${node.name}`);
+    } else if (aliasMap.has(node.name)) {
+      ms.overwrite(node.start, node.end, aliasMap.get(node.name)!);
+    }
+  }
+  if (thisTypes.length > 0) {
+    const selfSpec = hostRelativeSpecifier(
+      resolve(filePath).replace(/\.[cm]?tsx?$/, ''),
+      hostDir,
+    );
+    const selfAlias = sharedAliasFor(selfSpec, sharedImports);
+    for (const { node, exportProp } of thisTypes) {
+      ms.overwrite(node.start, node.end, `${selfAlias}.${exportProp}`);
+    }
+  }
+
+  return [
+    ...prelude.map((stmt) => ms.slice(stmt.start, stmt.end)),
+    ms.slice(tcbIndex, tcbCode.length),
+  ].join('\n');
 }
 
 function resolveTsgoBinary(tsconfig: string): string {
@@ -158,6 +339,7 @@ export class TsgoChecker {
     filePath: string,
     sourceLineCount?: number,
     lines?: string[],
+    tcbRanges?: TcbLineRange[],
   ): Promise<string[]> {
     const resolvedPath = resolve(filePath);
     const errors: string[] = [];
@@ -172,8 +354,11 @@ export class TsgoChecker {
           !IGNORED_TCB_CODES.has(Number(item.code)) &&
           !lines?.[line]?.includes('/*D:ignore*/')
         ) {
+          const ownerFile =
+            tcbRanges?.find((r) => line >= r.startLine && line < r.endLine)
+              ?.filePath ?? filePath;
           errors.push(
-            `${filePath} (template): error TS${item.code}: ${item.message}`,
+            `${ownerFile} (template): error TS${item.code}: ${item.message}`,
           );
         }
       } else {
@@ -194,10 +379,108 @@ export class TsgoChecker {
     const entries = Array.from(this.queued.entries());
     this.queued.clear();
     await this.ready;
-    const errors: string[] = [];
-    for (let i = 0; i < entries.length; i += BATCH_SIZE) {
-      const slice = entries.slice(i, i + BATCH_SIZE);
-      const metas = slice.map(([filePath, { sourceCode, tcbCode }]) => {
+
+    const metas: Array<{
+      filePath: string;
+      sourceLineCount: number;
+      lines?: string[];
+      tcbRanges?: TcbLineRange[];
+    }> = [];
+    let updatesCount = 0;
+
+    if (!watchMode && entries.length > 1) {
+      const [hostFilePath, hostItem] = entries[0];
+      const hostDir = dirname(resolve(hostFilePath));
+      const hostUri = pathToFileURL(resolve(hostFilePath)).href;
+      const sharedImports = new Map<string, string>();
+      const relocatedChunks: Array<{ filePath: string; body: string }> = [];
+      let hostRelocated = false;
+
+      for (let i = 0; i < entries.length; i++) {
+        const [filePath, { sourceCode, tcbCode }] = entries[i];
+        const uri = pathToFileURL(resolve(filePath)).href;
+        if (tcbCode && !this.versions.has(uri)) {
+          const body = relocateTcb(
+            filePath,
+            tcbCode,
+            hostDir,
+            i,
+            sharedImports,
+          );
+          if (body !== null) {
+            relocatedChunks.push({ filePath, body });
+            if (i === 0) {
+              hostRelocated = true;
+            } else {
+              metas.push({
+                filePath,
+                sourceLineCount: sourceCode.split('\n').length,
+              });
+            }
+            continue;
+          }
+        }
+        if (i === 0) continue;
+
+        const sourceLineCount = sourceCode.split('\n').length;
+        const combined = tcbCode
+          ? `${sourceCode}\n${extractTcbSuffix(tcbCode)}`
+          : sourceCode;
+        if (tcbCode || this.versions.has(uri)) {
+          this.updateDocument(filePath, combined);
+          updatesCount++;
+          if (updatesCount % BATCH_SIZE === 0) {
+            await new Promise((r) => setTimeout(r, 5));
+          }
+        }
+        metas.push({
+          filePath,
+          sourceLineCount,
+          lines: tcbCode ? combined.split('\n') : undefined,
+        });
+      }
+
+      const hostLines = hostItem.sourceCode.split('\n');
+      const hostSourceLineCount = hostLines.length;
+      const hostTcbRanges: TcbLineRange[] = [];
+
+      if (hostItem.tcbCode && !hostRelocated) {
+        const startLine = hostLines.length;
+        hostLines.push(...extractTcbSuffix(hostItem.tcbCode).split('\n'));
+        hostTcbRanges.push({
+          startLine,
+          endLine: hostLines.length,
+          filePath: hostFilePath,
+        });
+      }
+
+      if (relocatedChunks.length > 0) {
+        for (const [spec, alias] of sharedImports) {
+          hostLines.push(`import * as ${alias} from '${spec}';`);
+        }
+        for (const { filePath, body } of relocatedChunks) {
+          const startLine = hostLines.length;
+          hostLines.push(...body.split('\n'));
+          hostTcbRanges.push({
+            startLine,
+            endLine: hostLines.length,
+            filePath,
+          });
+        }
+      }
+
+      const hasHostTcb = hostTcbRanges.length > 0;
+      if (hasHostTcb || this.versions.has(hostUri)) {
+        this.updateDocument(hostFilePath, hostLines.join('\n'));
+      }
+      metas.unshift({
+        filePath: hostFilePath,
+        sourceLineCount: hostSourceLineCount,
+        lines: hasHostTcb ? hostLines : undefined,
+        tcbRanges: hasHostTcb ? hostTcbRanges : undefined,
+      });
+    } else {
+      for (const [filePath, { sourceCode, tcbCode }] of entries) {
         const sourceLineCount = sourceCode.split('\n').length;
         const combined = tcbCode
           ? `${sourceCode}\n${extractTcbSuffix(tcbCode)}`
@@ -205,16 +488,35 @@ export class TsgoChecker {
         const uri = pathToFileURL(resolve(filePath)).href;
         if (tcbCode || watchMode || this.versions.has(uri)) {
           this.updateDocument(filePath, combined);
+          updatesCount++;
+          if (updatesCount % BATCH_SIZE === 0) {
+            await new Promise((r) => setTimeout(r, 5));
+          }
         }
-        return {
+        metas.push({
           filePath,
           sourceLineCount,
           lines: tcbCode ? combined.split('\n') : undefined,
-        };
-      });
+        });
+      }
+    }
+
+    const errors: string[] = [];
+    const first = metas[0];
+    errors.push(
+      ...(await this.checkFile(
+        first.filePath,
+        first.sourceLineCount,
+        first.lines,
+        first.tcbRanges,
+      )),
+    );
+
+    for (let i = 1; i < metas.length; i += BATCH_SIZE) {
+      const slice = metas.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
-        metas.map(({ filePath, sourceLineCount, lines }) =>
-          this.checkFile(filePath, sourceLineCount, lines),
+        slice.map(({ filePath, sourceLineCount, lines, tcbRanges }) =>
+          this.checkFile(filePath, sourceLineCount, lines, tcbRanges),
         ),
       );
       for (const res of batchResults) {
