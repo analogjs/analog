@@ -1875,6 +1875,48 @@ export class AppComponent {}
     expect(ctx.error).not.toHaveBeenCalled();
   }, 60_000);
 
+  it('reports program diagnostics instead of crashing on shim file references', async () => {
+    // A file outside `rootDir` makes TypeScript explain why it, and the
+    // Angular type-check shim next to it, are in the program. The shim's
+    // inclusion reason indexes the `referencedFiles` Angular added.
+    realFs.mkdirSync(path.join(fixtureDir, 'outside'), { recursive: true });
+    realFs.writeFileSync(
+      path.join(fixtureDir, 'outside/dep.ts'),
+      'export const dep = 1;',
+    );
+    const tsconfig = path.join(fixtureDir, 'tsconfig.json');
+    const config = JSON.parse(realFs.readFileSync(tsconfig, 'utf8'));
+    config.compilerOptions.rootDir = 'src';
+    realFs.writeFileSync(tsconfig, JSON.stringify(config));
+    const code = `
+      import { Component } from '@angular/core';
+      import { dep } from '../outside/dep';
+      @Component({ standalone: true, template: '{{ dep }}' })
+      export class AppComponent { dep = dep; }
+    `;
+    realFs.writeFileSync(componentPath, code);
+    const mainPlugin = createAppBuildPlugin({ disableTypeChecking: false });
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'development' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    await mainPlugin.buildStart.call(ctx);
+    await mainPlugin.transform.handler.call(ctx, code, componentPath);
+
+    expect(ctx.error).toHaveBeenCalledWith(expect.stringContaining('rootDir'));
+    expect(ctx.error).not.toHaveBeenCalledWith(
+      expect.stringContaining('referencedFiles'),
+    );
+  }, 60_000);
+
   it('evicts deleted source files before recompiling a recreated file', async () => {
     const mainPlugin = createAppBuildPlugin();
     const source = (value: string) => `
