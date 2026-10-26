@@ -79,43 +79,6 @@ export default defineConfig({
 
 :::
 
-### Choosing a compilation path
-
-The `compilation` option selects the Angular compiler implementation:
-
-- `'ngtsc'` (default): Angular's standard compiler.
-- `'ngp'`: Angular's experimental hybrid preprocessor, with in-memory TypeScript 7 and Angular template type checking enabled by default.
-
-An explicit `compilation` takes precedence over `fastCompile`.
-
-```ts
-angular({
-  compilation: 'ngp',
-  jit: false,
-});
-```
-
-NGP is loaded only when selected. It resolves `@angular/ngp` from your
-application and otherwise uses an interim NGP build bundled with
-`@analogjs/vite-plugin-angular`, with a WebAssembly analyzer that runs on every
-platform. The bundled build tracks an unreleased Angular revision and is replaced
-by `@angular/ngp` once it is published. The bundled build requires Angular v22.2
-or later.
-
-NGP currently supports AOT application compilation, Vite preprocessing for
-component styles, and full-page reloads. Set `inlineStylesExtension` for inline
-SCSS/Sass/Less; external styles use their file extension. JIT and
-`fastCompileMode: 'partial'` are rejected.
-
-TypeScript and Angular template type checking run in memory by default, without
-emitting intermediate files, and report errors at their template location. They
-require TypeScript 7; while Angular requires TypeScript 6, install the preview
-alongside it, or set `disableTypeChecking: true` to skip type checking:
-
-```shell
-npm install -D @typescript/native-preview
-```
-
 ### What it supports
 
 | Capability                                   | Fast compile                                                    |
@@ -152,9 +115,49 @@ angular({
 
 See [Building an Angular library](/docs/guides/libraries) for the full library workflow.
 
+## NGP compilation (experimental)
+
+The `compilation` option selects the Angular compiler implementation:
+
+- `'ngtsc'` (default): Angular's standard compiler.
+- `'ngp'`: Angular's experimental hybrid preprocessor, with in-memory TypeScript 7 and Angular template type checking enabled by default.
+
+An explicit `compilation` takes precedence over `fastCompile`.
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+});
+```
+
+Vitest defaults to JIT, so set `jit: false` explicitly to use NGP. Without it,
+tests fall back to `'ngtsc'`.
+
+NGP is loaded only when selected. It resolves `@angular/ngp` from your
+application and otherwise uses an interim NGP build bundled with
+`@analogjs/vite-plugin-angular`, with a WebAssembly analyzer that runs on every
+platform. The bundled build tracks an unreleased Angular revision and is replaced
+by `@angular/ngp` once it is published. The bundled build requires Angular v22.2
+or later.
+
+NGP currently supports AOT application compilation, Vite preprocessing for
+component styles, and full-page reloads. Set `inlineStylesExtension` for inline
+SCSS/Sass/Less; external styles use their file extension. An explicit
+`jit: true` and `fastCompileMode: 'partial'` are rejected.
+
+TypeScript and Angular template type checking run in memory by default, without
+emitting intermediate files, and report errors at their template location. They
+require TypeScript 7; while Angular requires TypeScript 6, install the preview
+alongside it, or set `disableTypeChecking: true` to skip type checking:
+
+```shell
+npm install -D @typescript/native-preview
+```
+
 ## Type checking
 
-Fast compile does not type-check your templates or TypeScript, and the default path only does so with `disableTypeChecking: false`. To catch those errors without slowing the build, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:
+Fast compile does not type-check your templates or TypeScript, and the default path only does so with `disableTypeChecking: false`. NGP type-checks by default; see [NGP compilation](#ngp-compilation-experimental). To catch those errors without slowing the build, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:
 
 ```bash
 ngc -p tsconfig.app.json --noEmit
