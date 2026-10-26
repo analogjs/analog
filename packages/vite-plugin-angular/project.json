@@ -22,6 +22,13 @@
         "command": "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
       }
     },
+    "prepare-ngp": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/scripts/prepare-ngp.mjs"
+      }
+    },
     "version": {
       "executor": "@jscutlery/semver:version",
       "options": {

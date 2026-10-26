@@ -1,67 +1,51 @@
-# Local NGP build setup
+# Interim NGP build
 
-Build the experimental Angular hybrid preprocessor used by
-`compilation: 'ngp'` and try it with `analog-app`.
+`@analogjs/vite-plugin-angular` bundles a build of Angular's experimental hybrid
+preprocessor in `packages/vite-plugin-angular/ngp`. `compilation: 'ngp'` uses it
+when the application does not provide `@angular/ngp`. Remove it once a compatible
+`@angular/ngp` is published.
 
-## Prerequisites
+The directory is generated and committed:
 
-Run the commands below from the Analog repository root. Install the workspace
-dependencies with `pnpm i`. The build helper also requires an authenticated GitHub
-CLI (`gh`), `tar`, and the Rust toolchain used by the pinned Angular source:
+- `api.mjs`: the NGP JavaScript API, bundled with the Angular compiler from the same revision.
+- `ng_analyze.cjs`, `ng_analyze_bg.wasm`: the WebAssembly analyzer.
+- `LICENSE`: Angular's license.
+- `build.json`: the Angular revision and wasm-bindgen version.
+
+## Regenerate
+
+Run from the Analog repository root after `pnpm i`. The helper requires an
+authenticated GitHub CLI (`gh`), `tar`, the Rust toolchain used by the pinned
+Angular source with the wasm target, and the wasm-bindgen CLI matching the
+source's `Cargo.lock` (the helper reports a mismatch):
 
 ```sh
 rustup toolchain install 1.95.0
+rustup target add wasm32-unknown-unknown --toolchain 1.95.0
+cargo install wasm-bindgen-cli --version 0.2.121 --locked
+pnpm nx run vite-plugin-angular:prepare-ngp
 ```
 
-## Build the compiler
+To update the revision, change `revision` in `tools/scripts/prepare-ngp.mjs`.
+To reuse an existing checkout of that revision and skip the download, set
+`NGP_SOURCE` to its absolute path:
 
 ```sh
-pnpm nx run analog-app:prepare-ngp
+NGP_SOURCE=/absolute/path/to/angular pnpm nx run vite-plugin-angular:prepare-ngp
 ```
 
-This target runs `tools/scripts/prepare-ngp.mjs`. It downloads Angular revision
-`4e4ad75144e55538cedc65f0ac3ff5b68cb34ce9`, builds the native analyzer, and bundles
-the JavaScript API with the matching Angular compiler source. The application's
-Angular runtime stays unchanged.
+## Overrides
 
-The output is written to `node_modules/.cache/analog-ngp`:
-
-- `api.mjs`: the JavaScript compiler API.
-- `analyzer.node`: the native analyzer for the current platform.
-- `build.json`: the revision and source directory used by the helper.
-
-To reuse an existing checkout of that Angular revision, set `NGP_SOURCE` to its
-absolute path. This skips the source download:
-
-```sh
-NGP_SOURCE=/absolute/path/to/angular pnpm nx run analog-app:prepare-ngp
-```
+- `ANALOG_NGP_COMPILER`: path to another NGP API module.
+- `ANALOG_NGP_NATIVE_BINDING`: path to a native analyzer (`.node`) built from the
+  same revision, used instead of the WebAssembly analyzer.
 
 ## Run analog-app
 
-Enable NGP in the current shell (`node_modules/.cache/analog-ngp` is resolved
-automatically, or override with `ANALOG_NGP_COMPILER` and
-`ANALOG_NGP_NATIVE_BINDING`):
-
-```sh
-export ANALOG_NGP=true
-```
-
-Serve the app:
-
-```sh
-pnpm nx serve analog-app
-```
-
-Or build it for production (runs in-memory TypeScript 7 and Angular template type checking by default):
-
-```sh
-pnpm nx build analog-app --configuration=production
-```
-
 `ANALOG_NGP=true` selects the `ngp` compilation path in the example app's Vite
-configuration. Unset it to return to the default compilation path:
+configuration:
 
 ```sh
-unset ANALOG_NGP ANALOG_NGP_COMPILER ANALOG_NGP_NATIVE_BINDING
+ANALOG_NGP=true pnpm nx serve analog-app
+ANALOG_NGP=true pnpm nx build analog-app --configuration=production
 ```

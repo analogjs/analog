@@ -37,6 +37,7 @@ export default defineConfig({
     copyAssetsPlugin([
       { from: 'README.md', to: 'README.md' },
       { from: 'migrations/migration.json', to: 'migrations/migration.json' },
+      { from: 'ngp', to: 'ngp' },
     ]),
   ],
   build: {

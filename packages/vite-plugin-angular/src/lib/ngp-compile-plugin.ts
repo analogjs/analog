@@ -1,7 +1,6 @@
-import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import type MagicString from 'magic-string';
 import * as vite from 'vite';
 import {
@@ -70,10 +69,16 @@ interface NgpCompiler {
   ): Promise<NgpResult>;
 }
 
+interface NgpAnalyzerOptions {
+  nativeBinding?: string;
+  backend?: 'wasm';
+  wasmBinding?: string;
+}
+
 interface NgpApi {
   createAnalyzer(
     tsconfig: string,
-    options: { nativeBinding?: string },
+    options: NgpAnalyzerOptions,
   ): Promise<NgpAnalyzer>;
   HybridCompiler: new (
     analyzer: NgpAnalyzer,
@@ -81,31 +86,35 @@ interface NgpApi {
   ) => NgpCompiler;
 }
 
+// Interim NGP build bundled with this package until @angular/ngp is published
+const BUNDLED_NGP = new URL('../../ngp/', import.meta.url);
+
 async function loadNgp(
   tsconfig: string,
-  workspaceRoot: string,
-): Promise<NgpApi> {
+): Promise<{ api: NgpApi; analyzerOptions: NgpAnalyzerOptions }> {
+  const nativeBinding = process.env['ANALOG_NGP_NATIVE_BINDING'];
   let modulePath = process.env['ANALOG_NGP_COMPILER'];
   if (!modulePath) {
-    const req = createRequire(tsconfig);
     try {
-      modulePath = req.resolve('@angular/ngp');
-    } catch (cause) {
-      const localPrototype = resolve(
-        workspaceRoot,
-        'node_modules/.cache/analog-ngp/api.mjs',
-      );
-      if (existsSync(localPrototype)) {
-        modulePath = localPrototype;
-      } else {
-        throw new Error(
-          "compilation: 'ngp' requires @angular/ngp. For a local NGP build, set ANALOG_NGP_COMPILER to its API module and ANALOG_NGP_NATIVE_BINDING to its native analyzer.",
-          { cause },
-        );
-      }
+      modulePath = createRequire(tsconfig).resolve('@angular/ngp');
+    } catch {
+      return {
+        api: await import(new URL('api.mjs', BUNDLED_NGP).href),
+        analyzerOptions: nativeBinding
+          ? { nativeBinding }
+          : {
+              backend: 'wasm',
+              wasmBinding: fileURLToPath(
+                new URL('ng_analyze.cjs', BUNDLED_NGP),
+              ),
+            },
+      };
     }
   }
-  return import(pathToFileURL(resolve(modulePath)).href);
+  return {
+    api: await import(pathToFileURL(resolve(modulePath)).href),
+    analyzerOptions: nativeBinding ? { nativeBinding } : {},
+  };
 }
 
 export function ngpCompilePlugin(
@@ -349,16 +358,9 @@ export function ngpCompilePlugin(
       activeBuilds++;
       if (!analyzer) {
         const tsconfig = resolveTsConfigPath();
-        api = await loadNgp(tsconfig, options.workspaceRoot);
-        const localBinding = resolve(
-          options.workspaceRoot,
-          'node_modules/.cache/analog-ngp/analyzer.node',
-        );
-        analyzer = await api.createAnalyzer(tsconfig, {
-          nativeBinding:
-            process.env['ANALOG_NGP_NATIVE_BINDING'] ??
-            (existsSync(localBinding) ? localBinding : undefined),
-        });
+        const ngp = await loadNgp(tsconfig);
+        api = ngp.api;
+        analyzer = await api.createAnalyzer(tsconfig, ngp.analyzerOptions);
         pending = indexChunks();
       }
       await pending;
