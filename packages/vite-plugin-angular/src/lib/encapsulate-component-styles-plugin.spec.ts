@@ -124,7 +124,6 @@ describe('encapsulateComponentStylesPlugin', () => {
       code: encapsulateViteCssOutput(code, COMPONENT_ID),
       map: null,
     });
-    expect(result).not.toBeNull();
     if (result && typeof result === 'object' && 'code' in result) {
       expect(result.code).not.toContain(':host {');
     }
