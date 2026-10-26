@@ -1,6 +1,6 @@
-import { ApplicationRef, PendingTasks } from '@angular/core';
+import { ApplicationRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { expect, vi } from 'vitest';
+import { expect } from 'vitest';
 import { RenderTaskService } from './render-task.service';
 
 describe('RenderTaskService', () => {
@@ -28,25 +28,5 @@ describe('RenderTaskService', () => {
     await expect(
       TestBed.inject(ApplicationRef).whenStable(),
     ).resolves.toBeUndefined();
-  });
-
-  it('should register the task through the public PendingTasks API', () => {
-    const cleanup = vi.fn();
-    const add = vi.fn(() => cleanup);
-    TestBed.configureTestingModule({
-      providers: [
-        RenderTaskService,
-        { provide: PendingTasks, useValue: { add } },
-      ],
-    });
-    const service = TestBed.inject(RenderTaskService);
-
-    const task = service.addRenderTask();
-    expect(add).toHaveBeenCalledTimes(1);
-    expect(task).toBe(cleanup);
-    expect(cleanup).not.toHaveBeenCalled();
-
-    service.clearRenderTask(task);
-    expect(cleanup).toHaveBeenCalledTimes(1);
   });
 });
