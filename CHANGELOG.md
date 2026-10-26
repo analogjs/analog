@@ -1,3 +1,9 @@
+# [3.0.0-beta.14](https://github.com/analogjs/analog/compare/v3.0.0-beta.13...v3.0.0-beta.14) (2026-10-26)
+
+### Features
+
+- **vite-plugin-angular:** add experimental Angular NGP compilation with type checking ([#2695](https://github.com/analogjs/analog/issues/2695)) ([7a93704](https://github.com/analogjs/analog/commit/7a9370410f47659fcb79e862f25eeaf9ffc56888))
+
 # [3.0.0-beta.13](https://github.com/analogjs/analog/compare/v3.0.0-beta.12...v3.0.0-beta.13) (2026-10-26)
 
 ### Features
