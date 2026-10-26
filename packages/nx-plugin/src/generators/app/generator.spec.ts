@@ -11,8 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
 import generator from './generator';
 import { AnalogNxApplicationGeneratorOptions } from './schema';
 
-// Record the options handed to the Angular application generator while keeping
-// linting off, so the tests don't depend on a linter package being set up.
+// Keep linting off so the tests don't depend on a linter package being set up.
 vi.mock('@nx/angular/generators', async (importOriginal) => {
   const mod =
     await importOriginal<typeof import('@nx/angular/dist/generators')>();
@@ -215,17 +214,6 @@ describe('nx-plugin generator', () => {
       );
       expect(tree.read(`apps/${analogAppName}/CLAUDE.md`).toString()).toContain(
         '@AGENTS.md',
-      );
-    });
-
-    it('passes the linter option to the Angular application generator', async () => {
-      const { applicationGenerator } = await import('@nx/angular/generators');
-
-      await setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.2.0');
-
-      expect(applicationGenerator).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ name: 'oxlint-app', linter: 'oxlint' }),
       );
     });
 

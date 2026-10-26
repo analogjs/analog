@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { describe, it, expect, beforeEach } from 'vitest';
 
@@ -18,10 +18,10 @@ class TestAlertComponent {
   selector: 'analog-test-host',
   standalone: true,
   imports: [MdcRendererDirective],
-  template: '<div [mdcAst]="ast"></div>',
+  template: '<div [mdcAst]="ast()"></div>',
 })
 class TestHostComponent {
-  ast: { nodes: unknown[] } | null = null;
+  ast = signal<{ nodes: unknown[] } | null>(null);
 }
 
 async function flushRendering(fixture: ComponentFixture<unknown>) {
@@ -54,9 +54,9 @@ describe('MdcRendererDirective', () => {
   });
 
   it('renders plain HTML elements from AST', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: [['p', {}, 'Hello world']],
-    };
+    });
     await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
@@ -64,9 +64,9 @@ describe('MdcRendererDirective', () => {
   });
 
   it('renders text nodes', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: ['Just text'],
-    };
+    });
     await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
@@ -74,9 +74,9 @@ describe('MdcRendererDirective', () => {
   });
 
   it('renders nested HTML elements', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: [['div', { class: 'wrapper' }, ['strong', {}, 'Bold text']]],
-    };
+    });
     await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
@@ -86,9 +86,9 @@ describe('MdcRendererDirective', () => {
   });
 
   it('renders registered MDC components', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: [['alert', { type: 'warning' }, 'Watch out!']],
-    };
+    });
     await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
@@ -97,9 +97,9 @@ describe('MdcRendererDirective', () => {
   });
 
   it('falls back to HTML element for unregistered components', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: [['custom-unknown', { id: 'test' }, 'Content']],
-    };
+    });
     await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
@@ -109,28 +109,10 @@ describe('MdcRendererDirective', () => {
     expect(custom?.textContent).toBe('Content');
   });
 
-  it('handles null AST', async () => {
-    host.ast = null;
-    await flushRendering(fixture);
-
-    const el = fixture.nativeElement as HTMLElement;
-    const container = el.querySelector('[mdcAst]');
-    expect(container?.innerHTML?.trim() || '').toBe('');
-  });
-
-  it('handles empty nodes array', async () => {
-    host.ast = { nodes: [] };
-    await flushRendering(fixture);
-
-    const el = fixture.nativeElement as HTMLElement;
-    const container = el.querySelector('[mdcAst]');
-    expect(container?.innerHTML?.trim() || '').toBe('');
-  });
-
   it('handles null tag nodes (fragment wrappers)', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: [[null, {}, 'Unwrapped text']],
-    };
+    });
     await flushRendering(fixture);
 
     const el = fixture.nativeElement as HTMLElement;
@@ -138,11 +120,11 @@ describe('MdcRendererDirective', () => {
   });
 
   it('renders HTML attributes on fallback elements', async () => {
-    host.ast = {
+    host.ast.set({
       nodes: [
         ['a', { href: 'https://analogjs.org', target: '_blank' }, 'Analog'],
       ],
-    };
+    });
     await flushRendering(fixture);
 
     const link = (fixture.nativeElement as HTMLElement).querySelector('a');
@@ -151,17 +133,34 @@ describe('MdcRendererDirective', () => {
     expect(link?.textContent).toBe('Analog');
   });
 
-  it('clears host innerHTML on AST change', async () => {
-    host.ast = { nodes: [['p', {}, 'First']] };
+  it('clears previously rendered content when the AST becomes empty', async () => {
+    host.ast.set({ nodes: [['p', {}, 'First']] });
     await flushRendering(fixture);
 
-    // Trigger a change — the synchronous part of the effect clears innerHTML
-    host.ast = { nodes: [] };
-    fixture.detectChanges();
+    const container = (fixture.nativeElement as HTMLElement).querySelector(
+      'div',
+    );
+    expect(container?.innerHTML).toContain('First');
 
-    const el = fixture.nativeElement as HTMLElement;
-    const container = el.querySelector('[mdcAst]');
-    expect(container?.innerHTML?.trim() || '').toBe('');
+    host.ast.set({ nodes: [] });
+    await flushRendering(fixture);
+
+    expect(container?.innerHTML).toBe('');
+  });
+
+  it('clears previously rendered content when the AST becomes null', async () => {
+    host.ast.set({ nodes: [['p', {}, 'First']] });
+    await flushRendering(fixture);
+
+    const container = (fixture.nativeElement as HTMLElement).querySelector(
+      'div',
+    );
+    expect(container?.innerHTML).toContain('First');
+
+    host.ast.set(null);
+    await flushRendering(fixture);
+
+    expect(container?.innerHTML).toBe('');
   });
 
   it('works without MDC_COMPONENTS provider', async () => {
@@ -170,9 +169,9 @@ describe('MdcRendererDirective', () => {
       imports: [TestHostComponent, MdcRendererDirective],
     });
     const f = TestBed.createComponent(TestHostComponent);
-    f.componentInstance.ast = {
+    f.componentInstance.ast.set({
       nodes: [['div', {}, 'No registry']],
-    };
+    });
     await flushRendering(f);
 
     const el = f.nativeElement as HTMLElement;

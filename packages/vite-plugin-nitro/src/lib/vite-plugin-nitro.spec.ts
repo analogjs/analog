@@ -92,7 +92,6 @@ describe('nitro', () => {
 
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
-    expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
   });
 
   describe.skip('when prerendering is configured...', () => {

@@ -1227,44 +1227,6 @@ describe('encapsulation plugin', () => {
   });
 });
 
-// =============================================================================
-// hasComponent detection
-//
-// When angularCompilationPlugin is enabled, the Vite transform hook receives
-// already-compiled code (decorators stripped), so hasComponent is always false.
-// This suite is behavior documentation for both compilation paths rather than
-// a regression harness for `hasComponent`.
-// =============================================================================
-
-describe('hasComponent detection behavior docs', () => {
-  it('documents @Component detection in raw TypeScript source (legacy path)', () => {
-    // Simulates what the legacy (non-API) compilation path sees
-    const rawTs = `
-      import { Component } from '@angular/core';
-      @Component({ selector: 'app-demo', template: '<div>hi</div>' })
-      export class DemoComponent {}
-    `;
-    expect(rawTs.includes('@Component')).toBe(true);
-  });
-
-  it('documents missing @Component detection in compiled output (angularCompilationPlugin path)', () => {
-    // Simulates what the Vite transform hook sees after Angular compilation.
-    // `@Component` becomes `ɵɵdefineComponent()`, so the naive string check
-    // returns false. This is expected documented behavior for that path.
-    const compiledJs = `
-      import * as i0 from "@angular/core";
-      export class DemoComponent {}
-      DemoComponent.ɵcmp = i0.ɵɵdefineComponent({
-        type: DemoComponent,
-        selectors: [["app-demo"]],
-        decls: 1,
-        template: function(rf, ctx) { if (rf & 1) { i0.ɵɵelement(0, "div"); } }
-      });
-    `;
-    expect(compiledJs.includes('@Component')).toBe(false);
-  });
-});
-
 describe('buildStart initial compilation', () => {
   // Rollup runs `buildStart` hooks in parallel, so a plugin registered before
   // this one (e.g. `@module-federation/vite`) can pull modules through
