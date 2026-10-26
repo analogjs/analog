@@ -28,6 +28,7 @@ import { addTailwindConfig } from './lib/add-tailwind-config';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { updateIndex } from './lib/update-index-html';
+import { ANALOG_JS_VITE_PLUGIN_NITRO, H3 } from '../../utils/versions/versions';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions, ReturnType<typeof names> {
@@ -138,11 +139,12 @@ async function appGenerator(
     tree,
     {
       'front-matter': '^4.0.2',
+      h3: H3,
       marked: '^18.0.0',
       mermaid: '^10.2.4',
       prismjs: '^1.29.0',
     },
-    {},
+    { '@analogjs/vite-plugin-nitro': ANALOG_JS_VITE_PLUGIN_NITRO },
   );
 
   updateJson<{

@@ -122,6 +122,11 @@ export default {
             from: "ANALOG_JS_VITEST_ANGULAR = '.*'",
             to: "ANALOG_JS_VITEST_ANGULAR = '^${nextRelease.version}'",
           },
+          {
+            files: ['packages/nx-plugin/src/utils/versions/versions.ts'],
+            from: "ANALOG_JS_VITE_PLUGIN_NITRO = '.*'",
+            to: "ANALOG_JS_VITE_PLUGIN_NITRO = '^${nextRelease.version}'",
+          },
         ],
       },
     ],
