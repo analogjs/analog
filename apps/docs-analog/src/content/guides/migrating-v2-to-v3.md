@@ -78,7 +78,7 @@ The `@angular-devkit/build-angular` fallback in `@analogjs/vite-plugin-angular` 
 The peer dependency ranges now match the Angular v20 baseline:
 
 - `@analogjs/vitest-angular` requires Vitest `^4.0.7 || ^5.0.0`
-- `@analogjs/platform` and `@analogjs/content` list Nx 23.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`) as optional peer dependencies. Only the application and preset generators reject older Nx versions
+- `@analogjs/platform` and `@analogjs/content` list Nx 21.2 or newer (`@nx/angular`, `@nx/devkit`, and `@nx/vite`) as optional peer dependencies, matching the first Nx release that supports Angular v20. Only the application and preset generators reject older Nx versions, and the `oxlint` linter option requires Nx 23.2 or newer
 - `zone.js`, when used, must be `0.15.0` or newer
 
 #### Template and toolchain baseline shifts

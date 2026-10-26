@@ -102,7 +102,17 @@ npx nx g @analogjs/platform:application analog-app --linter=oxlint
 
 ## Updating Nx
 
-Analog requires Nx 23.2 or newer, and supports its inferred targets and migrations. Update the workspace with `nx migrate`, and run the migrations it generates:
+Analog requires Nx 21.2 or newer, and supports its inferred targets and migrations. The minimum Nx version depends on the Angular version in the workspace:
+
+| Angular | Minimum Nx |
+| ------- | ---------- |
+| 20      | 21.2       |
+| 21      | 22.3       |
+| 22      | 23.1       |
+
+The application generator installs the Vite version supported by the workspace's `@nx/vite` version: Vite 6 below Nx 21.5.1, Vite 7 below Nx 22.6.2, and Vite 8 otherwise. On Nx versions below 22.3, `@nx/vite` lists Vitest 3 as its peer dependency, while `@analogjs/vitest-angular` requires Vitest 4 or newer. The `test` target uses the `@analogjs/vitest-angular:test` builder, so this only produces a peer dependency warning.
+
+Update the workspace with `nx migrate`, and run the migrations it generates:
 
 ```shell
 npx nx migrate latest

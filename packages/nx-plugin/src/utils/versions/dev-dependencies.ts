@@ -7,15 +7,15 @@ import {
   JSDOM,
   VITE_TSCONFIG_PATHS,
   VITE,
+  VITE_6,
+  VITE_7,
   VITEST,
-  NX,
 } from './versions';
 
 const devDependencyKeys = [
   '@analogjs/platform',
   '@analogjs/vite-plugin-angular',
   '@analogjs/vitest-angular',
-  '@nx/vite',
   'jsdom',
   'vite-tsconfig-paths',
   'vitest',
@@ -27,6 +27,7 @@ export type AnalogDevDependency = (typeof devDependencyKeys)[number];
 
 export const getAnalogDevDependencies = (
   ngVersion: string,
+  nxVersion?: string,
 ): Record<AnalogDevDependency, string> => {
   const escapedNgVersion = ngVersion.replace(/[~^]/, '');
 
@@ -39,12 +40,22 @@ export const getAnalogDevDependencies = (
     '@analogjs/platform': ANALOG_JS_PLATFORM,
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
     '@analogjs/vitest-angular': ANALOG_JS_VITEST_ANGULAR,
-    '@nx/vite': NX,
     jsdom: JSDOM,
     'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
-    vite: VITE,
+    vite: getViteVersion(nxVersion),
     vitest: VITEST,
     '@vitest/coverage-v8': VITEST,
     '@vitest/ui': VITEST,
   };
+};
+
+// Match the Vite major accepted by the installed @nx/vite peer range.
+const getViteVersion = (nxVersion?: string): string => {
+  if (nxVersion && lt(nxVersion, '21.5.1')) {
+    return VITE_6;
+  }
+  if (nxVersion && lt(nxVersion, '22.6.2')) {
+    return VITE_7;
+  }
+  return VITE;
 };

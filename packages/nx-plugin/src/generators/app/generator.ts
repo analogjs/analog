@@ -16,7 +16,9 @@ import { getInstalledPackageVersion } from '../../utils/version-utils';
 import { addHomePage } from './lib/add-home-page';
 import {
   belowMinimumSupportedNxVersion,
+  belowMinimumSupportedOxlintNxVersion,
   MINIMUM_SUPPORTED_NX_VERSION,
+  MINIMUM_SUPPORTED_OXLINT_NX_VERSION,
 } from './versions/minimum-supported-versions';
 import { addAngularApp } from './lib/add-angular-app';
 import setupAnalogGenerator from '../init/generator';
@@ -26,6 +28,7 @@ import { addTailwindConfig } from './lib/add-tailwind-config';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { updateIndex } from './lib/update-index-html';
+import { ANALOG_JS_VITE_PLUGIN_NITRO, H3 } from '../../utils/versions/versions';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions, ReturnType<typeof names> {
@@ -83,10 +86,17 @@ async function appGenerator(
     );
   }
 
-  if (options.linter === 'oxlint' && !nxVersion) {
-    throw new Error(
-      stripIndents`The oxlint linter is only supported in Nx workspaces`,
-    );
+  if (options.linter === 'oxlint') {
+    if (!nxVersion) {
+      throw new Error(
+        stripIndents`The oxlint linter is only supported in Nx workspaces`,
+      );
+    }
+    if (belowMinimumSupportedOxlintNxVersion(nxVersion)) {
+      throw new Error(
+        stripIndents`Nx v${MINIMUM_SUPPORTED_OXLINT_NX_VERSION} or newer is required to use the oxlint linter`,
+      );
+    }
   }
 
   const normalizedOptions = normalizeOptions(tree, options);
@@ -129,11 +139,12 @@ async function appGenerator(
     tree,
     {
       'front-matter': '^4.0.2',
+      h3: H3,
       marked: '^18.0.0',
       mermaid: '^10.2.4',
       prismjs: '^1.29.0',
     },
-    {},
+    { '@analogjs/vite-plugin-nitro': ANALOG_JS_VITE_PLUGIN_NITRO },
   );
 
   updateJson<{

@@ -6,6 +6,10 @@ import {
   updateJson,
 } from '@nx/devkit';
 import { join } from 'node:path';
+import {
+  belowMinimumSupportedOxlintNxVersion,
+  MINIMUM_SUPPORTED_OXLINT_NX_VERSION,
+} from '../app/versions/minimum-supported-versions';
 import { PresetGeneratorSchema } from './schema';
 
 export default async function (
@@ -15,6 +19,11 @@ export default async function (
   ensurePackage('@nx/angular', NX_VERSION);
   ensurePackage('@nx/vite', NX_VERSION);
   if (options.linter === 'oxlint') {
+    if (belowMinimumSupportedOxlintNxVersion(NX_VERSION)) {
+      throw new Error(
+        `Nx v${MINIMUM_SUPPORTED_OXLINT_NX_VERSION} or newer is required to use the oxlint linter`,
+      );
+    }
     ensurePackage('@nx/oxlint', NX_VERSION);
   } else if (options.linter !== 'none') {
     ensurePackage('@nx/eslint', NX_VERSION);

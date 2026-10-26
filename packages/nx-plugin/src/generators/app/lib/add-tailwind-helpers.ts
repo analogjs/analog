@@ -1,6 +1,5 @@
-import { checkAndCleanWithSemver } from '@nx/devkit/internal';
 import { getTailwindDependencies } from '../versions/tailwind-dependencies';
-import { lt } from 'semver';
+import { coerce, lt } from 'semver';
 import {
   Tree,
   readJson,
@@ -35,7 +34,12 @@ export function detectTailwindInstalledVersion(
     return undefined;
   }
 
-  const version = checkAndCleanWithSemver('tailwindcss', tailwindVersion);
+  const version = coerce(tailwindVersion);
+  if (!version) {
+    throw new Error(
+      `The Tailwind CSS version "${tailwindVersion}" is not a valid version.`,
+    );
+  }
   if (lt(version, '4.0.0')) {
     throw new Error(
       `The Tailwind CSS version "${tailwindVersion}" is not supported. Please upgrade to v4.0.0 or higher.`,
