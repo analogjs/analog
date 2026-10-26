@@ -223,6 +223,7 @@
     "ts-dedent": "catalog:",
     "ts-morph": "catalog:",
     "tsdown": "catalog:",
+    "tsrs": "0.20.0-ts7.1.0-beta",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
     "vite": "catalog:",

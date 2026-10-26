@@ -332,6 +332,21 @@ function relocateTcb(
   };
 }
 
+export type TypeCheckerOption =
+  | 'tsgo'
+  | 'tsrs'
+  | { command: string; args?: string[] };
+
+interface TypeCheckerCommand {
+  command: string;
+  args: string[];
+}
+
+const LSP_ARGS = ['--lsp', '--stdio'];
+
+/** LSP `FileChangeType`: 1 created, 2 changed, 3 deleted. */
+export type FileChangeType = 1 | 2 | 3;
+
 function resolveTsgoBinary(tsconfig: string): string {
   if (process.env['TSNATIVE_BINARY_PATH'])
     return process.env['TSNATIVE_BINARY_PATH'];
@@ -367,7 +382,34 @@ function resolveTsgoBinary(tsconfig: string): string {
   );
 }
 
-export class TsgoChecker {
+// Run tsrs through its launcher, which selects the platform binary.
+function resolveTsrs(tsconfig: string): TypeCheckerCommand {
+  for (const base of [tsconfig, import.meta.url]) {
+    try {
+      const pkg = createRequire(base).resolve('tsrs/package.json');
+      return {
+        command: process.execPath,
+        args: [resolve(dirname(pkg), 'bin', 'tsrs'), ...LSP_ARGS],
+      };
+    } catch {
+      // try next base
+    }
+  }
+  throw new Error("typeChecker: 'tsrs' requires the tsrs package.");
+}
+
+export function resolveTypeChecker(
+  tsconfig: string,
+  option: TypeCheckerOption,
+): TypeCheckerCommand {
+  if (typeof option === 'object') {
+    return { command: option.command, args: option.args ?? LSP_ARGS };
+  }
+  if (option === 'tsrs') return resolveTsrs(tsconfig);
+  return { command: resolveTsgoBinary(tsconfig), args: LSP_ARGS };
+}
+
+export class LspTypeChecker {
   private proc: ChildProcessWithoutNullStreams;
   private seq = 1;
   private pending = new Map<
@@ -383,9 +425,10 @@ export class TsgoChecker {
   private exitError: Error | undefined;
   readonly ready: Promise<void>;
 
-  constructor(tsconfig: string) {
+  constructor(tsconfig: string, option: TypeCheckerOption = 'tsgo') {
     const cwd = dirname(tsconfig);
-    this.proc = spawn(resolveTsgoBinary(tsconfig), ['--lsp', '--stdio'], {
+    const { command, args } = resolveTypeChecker(tsconfig, option);
+    this.proc = spawn(command, args, {
       cwd,
       stdio: ['pipe', 'pipe', 'ignore'],
     });
@@ -398,7 +441,7 @@ export class TsgoChecker {
     this.proc.on('error', fail);
     this.proc.stdin.on('error', fail);
     this.proc.on('exit', (code) =>
-      fail(new Error(`tsgo exited with code ${code}`)),
+      fail(new Error(`type checker exited with code ${code}`)),
     );
     const rootUri = pathToFileURL(cwd).href;
     this.ready = this.request('initialize', {
@@ -511,6 +554,22 @@ export class TsgoChecker {
       }
     }
     return errors;
+  }
+
+  /** Reports a change on disk; an open copy is closed so the checker rereads the file. */
+  notifyFileChanged(filePath: string, type: FileChangeType) {
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const wasOpen = this.versions.delete(uri);
+    this.ready.then(
+      () => {
+        if (wasOpen)
+          this.notify('textDocument/didClose', { textDocument: { uri } });
+        this.notify('workspace/didChangeWatchedFiles', {
+          changes: [{ uri, type }],
+        });
+      },
+      () => {},
+    );
   }
 
   queueFile(filePath: string, sourceCode: string, tcbCode?: string | null) {
