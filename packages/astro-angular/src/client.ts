@@ -7,7 +7,11 @@ import {
 } from '@angular/core';
 import { ApplicationRef, createComponent } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
-import { Observable, Subject, takeUntil } from 'rxjs';
+import {
+  createComponentBindings,
+  registerRootComponent,
+} from './create-component.ts';
+import { ID_PROP_NAME } from './id.ts';
 import { buildProjectableNodes } from './projection.ts';
 
 export default (
@@ -18,14 +22,14 @@ export default (
   },
   props?: Record<string, unknown>,
   slots?: unknown,
-) => void) => {
+) => Promise<ApplicationRef | void> | undefined) => {
   return (
     Component: ComponentType<unknown> & {
       clientProviders?: (Provider | EnvironmentProviders)[];
     },
     props?: Record<string, unknown>,
     slots?: unknown,
-  ): void => {
+  ): Promise<ApplicationRef | void> | undefined => {
     const mirror = reflectComponentType(Component);
 
     if (!mirror) {
@@ -33,64 +37,33 @@ export default (
       return;
     }
 
-    createApplication({
+    if (mirror.outputs.length && props?.[ID_PROP_NAME]) {
+      // `addOutputListener` waits for this attribute to attach its listener.
+      element.setAttribute(ID_PROP_NAME, props[ID_PROP_NAME] as string);
+    }
+
+    return createApplication({
       providers: [
         provideZonelessChangeDetection(),
         ...(Component.clientProviders || []),
       ],
-    }).then((appRef: ApplicationRef) => {
-      const componentRef = createComponent(Component, {
-        environmentInjector: appRef.injector,
-        hostElement: element,
-        projectableNodes: buildProjectableNodes(mirror, slots, document),
+    })
+      .then((appRef: ApplicationRef) => {
+        // Bindings go through `inputBinding`/`outputBinding`, which handle
+        // aliases as well as signal `input()` and `output()`.
+        const componentRef = createComponent(Component, {
+          environmentInjector: appRef.injector,
+          hostElement: element,
+          projectableNodes: buildProjectableNodes(mirror, slots, document),
+          bindings: createComponentBindings(mirror, props, element),
+        });
+
+        registerRootComponent(appRef, componentRef);
+
+        return appRef;
+      })
+      .catch((error) => {
+        console.error('Failed to bootstrap Angular component:', error);
       });
-
-      if (props) {
-        for (const [key, value] of Object.entries(props)) {
-          if (
-            mirror.inputs.some(
-              ({ templateName, propName }) =>
-                templateName === key || propName === key,
-            )
-          ) {
-            componentRef.setInput(key, value);
-          }
-        }
-      }
-
-      if (mirror.outputs.length && props?.['data-analog-id']) {
-        const destroySubject = new Subject<void>();
-        element.setAttribute(
-          'data-analog-id',
-          props['data-analog-id'] as string,
-        );
-
-        mirror.outputs.forEach(({ templateName, propName }) => {
-          const outputName = templateName || propName;
-          const component = componentRef.instance as Record<
-            string,
-            Observable<unknown>
-          >;
-          component[outputName]
-            .pipe(takeUntil(destroySubject))
-            .subscribe((detail) => {
-              const event = new CustomEvent(outputName, {
-                bubbles: true,
-                cancelable: true,
-                composed: true,
-                detail,
-              });
-              element.dispatchEvent(event);
-            });
-        });
-
-        appRef.onDestroy(() => {
-          destroySubject.next();
-          destroySubject.complete();
-        });
-      }
-
-      appRef.attachView(componentRef.hostView);
-    });
   };
 };

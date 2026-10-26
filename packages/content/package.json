@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/content",
-  "version": "3.0.0-beta.10",
+  "version": "3.0.0-beta.11",
   "description": "Content Rendering for Analog",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -91,7 +91,8 @@
   },
   "devDependencies": {
     "@analogjs/vite-plugin-angular": "workspace:*",
-    "@analogjs/vitest-angular": "workspace:*"
+    "@analogjs/vitest-angular": "workspace:*",
+    "@nx/devkit": "catalog:"
   },
   "ng-update": {
     "packageGroup": [
