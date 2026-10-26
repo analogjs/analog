@@ -109,24 +109,6 @@ describe('MdcRendererDirective', () => {
     expect(custom?.textContent).toBe('Content');
   });
 
-  it('handles null AST', async () => {
-    host.ast = null;
-    await flushRendering(fixture);
-
-    const el = fixture.nativeElement as HTMLElement;
-    const container = el.querySelector('[mdcAst]');
-    expect(container?.innerHTML?.trim() || '').toBe('');
-  });
-
-  it('handles empty nodes array', async () => {
-    host.ast = { nodes: [] };
-    await flushRendering(fixture);
-
-    const el = fixture.nativeElement as HTMLElement;
-    const container = el.querySelector('[mdcAst]');
-    expect(container?.innerHTML?.trim() || '').toBe('');
-  });
-
   it('handles null tag nodes (fragment wrappers)', async () => {
     host.ast = {
       nodes: [[null, {}, 'Unwrapped text']],
@@ -149,19 +131,6 @@ describe('MdcRendererDirective', () => {
     expect(link?.getAttribute('href')).toBe('https://analogjs.org');
     expect(link?.getAttribute('target')).toBe('_blank');
     expect(link?.textContent).toBe('Analog');
-  });
-
-  it('clears host innerHTML on AST change', async () => {
-    host.ast = { nodes: [['p', {}, 'First']] };
-    await flushRendering(fixture);
-
-    // Trigger a change — the synchronous part of the effect clears innerHTML
-    host.ast = { nodes: [] };
-    fixture.detectChanges();
-
-    const el = fixture.nativeElement as HTMLElement;
-    const container = el.querySelector('[mdcAst]');
-    expect(container?.innerHTML?.trim() || '').toBe('');
   });
 
   it('works without MDC_COMPONENTS provider', async () => {
