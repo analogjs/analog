@@ -1,3 +1,9 @@
+# [3.0.0-beta.11](https://github.com/analogjs/analog/compare/v3.0.0-beta.10...v3.0.0-beta.11) (2026-10-26)
+
+### Bug Fixes
+
+- **astro-angular:** support signal and aliased outputs in client bootstrap ([#2684](https://github.com/analogjs/analog/issues/2684)) ([18ce97e](https://github.com/analogjs/analog/commit/18ce97e859770e719bbe8dfefa87e97d6f7db3d2)), closes [#2683](https://github.com/analogjs/analog/issues/2683)
+
 # [3.0.0-beta.10](https://github.com/analogjs/analog/compare/v3.0.0-beta.9...v3.0.0-beta.10) (2026-10-22)
 
 ### Features
