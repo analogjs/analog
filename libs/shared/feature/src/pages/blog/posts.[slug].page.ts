@@ -1,7 +1,12 @@
 // Example shared library page mounted at /blog/posts/[slug].
-import { injectContent, MarkdownComponent } from '@analogjs/content';
+import {
+  injectContent,
+  MarkdownComponent,
+  type ContentFile,
+} from '@analogjs/content';
 import { AsyncPipe } from '@angular/common';
 import { Component } from '@angular/core';
+import type { Observable } from 'rxjs';
 
 export interface PostAttributes {
   title: string;
@@ -21,5 +26,7 @@ export interface PostAttributes {
   `,
 })
 export default class BlogPostComponent {
-  readonly post$ = injectContent<PostAttributes>();
+  readonly post$: Observable<
+    ContentFile<PostAttributes | Record<string, never>>
+  > = injectContent<PostAttributes>();
 }
