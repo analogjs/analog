@@ -379,6 +379,7 @@ export class TsgoChecker {
     { sourceCode: string; tcbCode?: string | null }
   >();
   private buffer = Buffer.alloc(0);
+  private exitError: Error | undefined;
   readonly ready: Promise<void>;
 
   constructor(tsconfig: string) {
@@ -388,12 +389,16 @@ export class TsgoChecker {
       stdio: ['pipe', 'pipe', 'ignore'],
     });
     this.proc.stdout.on('data', (chunk: Buffer) => this.onData(chunk));
-    this.proc.on('exit', (code) => {
-      for (const { reject } of this.pending.values()) {
-        reject(new Error(`tsgo exited with code ${code}`));
-      }
+    const fail = (error: Error) => {
+      this.exitError ??= error;
+      for (const { reject } of this.pending.values()) reject(this.exitError);
       this.pending.clear();
-    });
+    };
+    this.proc.on('error', fail);
+    this.proc.stdin.on('error', fail);
+    this.proc.on('exit', (code) =>
+      fail(new Error(`tsgo exited with code ${code}`)),
+    );
     const rootUri = pathToFileURL(cwd).href;
     this.ready = this.request('initialize', {
       processId: process.pid,
@@ -401,6 +406,7 @@ export class TsgoChecker {
       capabilities: { textDocument: { diagnostic: {} } },
       workspaceFolders: [{ uri: rootUri, name: 'root' }],
     }).then(() => this.notify('initialized', {}));
+    this.ready.catch(() => {});
   }
 
   private onData(chunk: Buffer) {
@@ -442,6 +448,7 @@ export class TsgoChecker {
   }
 
   private request(method: string, params: unknown): Promise<any> {
+    if (this.exitError) return Promise.reject(this.exitError);
     const id = this.seq++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });

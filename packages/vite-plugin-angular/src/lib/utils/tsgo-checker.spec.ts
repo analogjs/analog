@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TsgoChecker } from './tsgo-checker.js';
 
 const root = resolve(import.meta.dirname, '../../../../..');
@@ -20,7 +20,10 @@ function inlineTcb(filePath: string, className: string, body: string) {
 
 describe('TsgoChecker', () => {
   let tsgo: TsgoChecker | undefined;
-  afterEach(() => tsgo?.close());
+  afterEach(() => {
+    tsgo?.close();
+    vi.unstubAllEnvs();
+  });
 
   it('relocates inline TCBs without trailing source in build mode', async () => {
     tsgo = new TsgoChecker(tsconfig);
@@ -51,6 +54,15 @@ describe('TsgoChecker', () => {
     expect(await tsgo.flushQueue()).toEqual([
       expect.stringContaining(`${templateFile}:1:1 - error TS2339`),
     ]);
+  });
+
+  it('rejects requests when tsgo cannot start', async () => {
+    vi.stubEnv('TSGO_BINARY_PATH', resolve(root, 'missing-tsgo'));
+    tsgo = new TsgoChecker(tsconfig);
+    tsgo.queueFile(cartPath, readFileSync(cartPath, 'utf-8'));
+    await expect(tsgo.flushQueue()).rejects.toThrow('ENOENT');
+    tsgo.queueFile(searchPath, readFileSync(searchPath, 'utf-8'));
+    await expect(tsgo.flushQueue()).rejects.toThrow('ENOENT');
   });
 
   it('checks the in-memory TCB of a document opened after another', async () => {
