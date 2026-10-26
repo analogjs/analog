@@ -155,6 +155,28 @@ alongside it, or set `disableTypeChecking: true` to skip type checking:
 npm install -D @typescript/native-preview
 ```
 
+### Choosing a type checker
+
+The `typeChecker` option selects the TypeScript 7 language server NGP type-checks with:
+
+- `'tsgo'` (default): `typescript@^7` or `@typescript/native-preview`. Set the
+  `TSNATIVE_BINARY_PATH` environment variable to use a specific binary.
+- `'tsrs'`: [tsrs](https://github.com/oxc-project/tsrs), a Rust port of the
+  TypeScript 7 checker. Install the `tsrs` package.
+- `{ command, args }`: any executable that serves the TypeScript 7 language
+  server over stdio. `args` defaults to `['--lsp', '--stdio']`.
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+  typeChecker: 'tsrs',
+});
+```
+
+Diagnostics follow the TypeScript version the checker implements, so switching
+checkers can surface errors your current version does not report.
+
 ## Type checking
 
 Fast compile does not type-check your templates or TypeScript, and the default path only does so with `disableTypeChecking: false`. NGP type-checks by default; see [NGP compilation](#ngp-compilation-experimental). To catch those errors without slowing the build, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:

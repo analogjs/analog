@@ -189,7 +189,7 @@ export interface PluginOptions {
   /**
    * Skip semantic and Angular template diagnostics during compilation.
    * Defaults to `true`, or `false` with `compilation: 'ngp'`, which requires
-   * `@typescript/native-preview`.
+   * a TypeScript 7 type checker (see `typeChecker`).
    */
   disableTypeChecking?: boolean;
   /**
