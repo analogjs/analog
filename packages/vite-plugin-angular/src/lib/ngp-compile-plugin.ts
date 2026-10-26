@@ -17,7 +17,10 @@ import {
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { angularFullVersion } from './utils/devkit.js';
-import { LspTypeChecker } from './utils/lsp-type-checker.js';
+import {
+  LspTypeChecker,
+  type FileChangeType,
+} from './utils/lsp-type-checker.js';
 
 // The unpublished NGP API is loaded at runtime. Model only the surface we use.
 interface NgpDiagnostic {
@@ -355,6 +358,15 @@ export function ngpCompilePlugin(
       transformFilter = integrations.transformFilter;
     },
     configureServer(server) {
+      const changeTypes: Record<string, FileChangeType> = {
+        add: 1,
+        change: 2,
+        unlink: 3,
+      };
+      server.watcher.on('all', (event, path) => {
+        const type = changeTypes[event];
+        if (type) typeChecker?.notifyFileChanged(path, type);
+      });
       server.httpServer?.on('close', () => {
         typeChecker?.close();
         typeChecker = undefined;

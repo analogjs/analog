@@ -1,4 +1,11 @@
-import { readFileSync, realpathSync } from 'node:fs';
+import {
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -74,6 +81,43 @@ describe.each<TypeCheckerOption>(['tsgo', 'tsrs'])(
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain("'missing'");
     });
+
+    it.each([
+      { depOpen: false, state: 'unopened' },
+      { depOpen: true, state: 'open' },
+    ])(
+      'rechecks after an $state dependency changes on disk',
+      async ({ depOpen }) => {
+        const dir = realpathSync(
+          mkdtempSync(resolve(tmpdir(), 'lsp-checker-')),
+        );
+        try {
+          writeFileSync(
+            resolve(dir, 'tsconfig.json'),
+            JSON.stringify({ compilerOptions: { strict: true, noEmit: true } }),
+          );
+          const dep = resolve(dir, 'dep.ts');
+          const main = resolve(dir, 'main.ts');
+          const mainSource =
+            "import { value } from './dep';\nconst n: number = value;\n";
+          writeFileSync(dep, 'export const value = 1;\n');
+          writeFileSync(main, mainSource);
+          checker = new LspTypeChecker(resolve(dir, 'tsconfig.json'), option);
+          if (depOpen) checker.queueFile(dep, 'export const value = 1;\n');
+          checker.queueFile(main, mainSource);
+          expect(await checker.flushQueue(true)).toEqual([]);
+
+          writeFileSync(dep, "export const value = 'one';\n");
+          checker.notifyFileChanged(dep, 2);
+          checker.queueFile(main, mainSource);
+          expect(await checker.flushQueue(true)).toEqual([
+            expect.stringContaining('TS2322'),
+          ]);
+        } finally {
+          rmSync(dir, { recursive: true, force: true });
+        }
+      },
+    );
   },
 );
 

@@ -344,6 +344,9 @@ interface TypeCheckerCommand {
 
 const LSP_ARGS = ['--lsp', '--stdio'];
 
+/** LSP `FileChangeType`: 1 created, 2 changed, 3 deleted. */
+export type FileChangeType = 1 | 2 | 3;
+
 function resolveTsgoBinary(tsconfig: string): string {
   if (process.env['TSNATIVE_BINARY_PATH'])
     return process.env['TSNATIVE_BINARY_PATH'];
@@ -551,6 +554,22 @@ export class LspTypeChecker {
       }
     }
     return errors;
+  }
+
+  /** Reports a change on disk; an open copy is closed so the checker rereads the file. */
+  notifyFileChanged(filePath: string, type: FileChangeType) {
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const wasOpen = this.versions.delete(uri);
+    this.ready.then(
+      () => {
+        if (wasOpen)
+          this.notify('textDocument/didClose', { textDocument: { uri } });
+        this.notify('workspace/didChangeWatchedFiles', {
+          changes: [{ uri, type }],
+        });
+      },
+      () => {},
+    );
   }
 
   queueFile(filePath: string, sourceCode: string, tcbCode?: string | null) {
