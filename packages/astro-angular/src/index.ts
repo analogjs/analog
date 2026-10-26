@@ -6,7 +6,6 @@ import type {
 } from '@analogjs/vite-plugin-angular';
 import { enableProdMode } from '@angular/core';
 import type { AstroIntegration, AstroRenderer, ViteUserConfig } from 'astro';
-import * as vite from 'vite';
 
 interface AngularOptions {
   vite?: PluginOptions;
@@ -74,11 +73,7 @@ function getViteConfiguration(
   ngHydration: boolean,
   pluginOptions?: AngularOptions,
 ) {
-  const isRolldown = !!vite.rolldownVersion;
   return {
-    [isRolldown ? 'oxc' : 'esbuild']: {
-      ...(isRolldown ? { jsx: { development: true } } : { jsxDev: true }),
-    },
     optimizeDeps: {
       include: [
         '@angular/platform-browser',

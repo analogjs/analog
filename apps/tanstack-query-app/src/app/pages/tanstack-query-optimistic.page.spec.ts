@@ -65,23 +65,6 @@ describe('TanStackQueryOptimisticPageComponent', () => {
     expect(compiled.querySelector('#comments-loading')).toBeTruthy();
   });
 
-  it('should call addComment with the provided text', () => {
-    const fixture = TestBed.createComponent(
-      TanStackQueryOptimisticPageComponent,
-    );
-    fixture.detectChanges();
-
-    const spy = vi.spyOn(
-      fixture.componentInstance.createCommentMutation,
-      'mutate',
-    );
-    fixture.componentInstance.addComment('Great post!');
-    expect(spy).toHaveBeenCalledWith({
-      scope: 'optimistic-test',
-      text: 'Great post!',
-    });
-  });
-
   it('should initialize signal state correctly', () => {
     const fixture = TestBed.createComponent(
       TanStackQueryOptimisticPageComponent,

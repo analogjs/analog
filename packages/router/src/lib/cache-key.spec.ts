@@ -3,14 +3,6 @@ import { HttpParams, HttpRequest } from '@angular/common/http';
 import { makeCacheKey } from './cache-key';
 
 describe('makeCacheKey', () => {
-  it('is deterministic for the same request', () => {
-    const req = new HttpRequest('GET', '/api/todos');
-
-    expect(makeCacheKey(req, '/api/todos')).toEqual(
-      makeCacheKey(req, '/api/todos'),
-    );
-  });
-
   it('produces distinct keys for distinct requests', () => {
     const a = makeCacheKey(new HttpRequest('GET', '/api/a'), '/api/a');
     const b = makeCacheKey(new HttpRequest('GET', '/api/b'), '/api/b');

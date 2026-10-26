@@ -11,19 +11,12 @@ vi.mock('@angular/core', () => ({
   enableProdMode: vi.fn(),
 }));
 
-vi.mock('vite', () => ({
-  rolldownVersion: undefined,
-}));
-
-function registerMocks(rolldownVersion?: string) {
+function registerMocks() {
   vi.doMock('@analogjs/vite-plugin-angular', () => ({
     default: () => ({ name: 'angular-mock' }),
   }));
   vi.doMock('@angular/core', () => ({
     enableProdMode: vi.fn(),
-  }));
-  vi.doMock('vite', () => ({
-    rolldownVersion,
   }));
 }
 
@@ -65,7 +58,7 @@ describe('astro-angular plugin', () => {
   });
 
   describe('vite configuration', () => {
-    it('should use esbuild config key when rolldownVersion is not available', async () => {
+    it('should leave JSX dev mode to Vite', async () => {
       registerMocks();
       const mod = await import('./index');
       const plugin = mod.default();
@@ -81,30 +74,8 @@ describe('astro-angular plugin', () => {
 
       plugin.hooks['astro:config:setup'](mockSetup);
 
-      expect(viteConfig).toHaveProperty('esbuild');
-      expect(viteConfig).not.toHaveProperty('oxc');
-      expect(viteConfig.esbuild.jsxDev).toBe(true);
-    });
-
-    it('should use oxc config key when rolldownVersion is available', async () => {
-      registerMocks('1.0.0');
-      const mod = await import('./index');
-      const plugin = mod.default();
-
-      let viteConfig: any;
-      const mockSetup = {
-        addRenderer: vi.fn(),
-        addMiddleware: vi.fn(),
-        updateConfig: vi.fn(function (config: any) {
-          viteConfig = config.vite;
-        }),
-      };
-
-      plugin.hooks['astro:config:setup'](mockSetup);
-
-      expect(viteConfig).toHaveProperty('oxc');
       expect(viteConfig).not.toHaveProperty('esbuild');
-      expect(viteConfig.oxc.jsx).toEqual({ development: true });
+      expect(viteConfig).not.toHaveProperty('oxc');
     });
   });
 

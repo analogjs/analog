@@ -120,6 +120,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 ## Contribution Patterns & Best Practices
 
 - Always open an issue before a pull request for review by the maintainers. This ensures alignment on implementation of features.
+- Do not open a pull request for an issue created by the maintainer (`brandonroberts`) unless you are explicitly assigned to it.
 - Keep changes minimal and targeted.
 - Backward compatibility is critical for new features, allowing progressive adoption.
 - Keep code concise with emphasis on readability, avoid clever solutions and abstractions.
@@ -133,6 +134,8 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 - Avoid custom code that replicates Angular framework functionality.
 - Don't be overly verbose with comments.
 - Keep tests lightweight and targeted to critical functionality testing.
+- Every test must be able to fail when the code under test is wrong. Do not write tautological tests: asserting literals or test-constructed values against themselves, asserting only what a mock returns, re-implementing production logic in the test, or tests with no reachable assertions.
+- Do not write tests that mock a package only to assert the config or options forwarded to it. Test the behavior those options produce instead.
 - Add concise documentation with descriptive sections to the appropriate guides in the `docs-analog` app.
 - Maintain compatibility with Vite versions 6-8, with progressive fallbacks.
 - Keep filesystem and path handling Windows-compatible. Check absolute paths with `isAbsolute()` rather than `startsWith('/')` (Windows paths look like `C:/...`), normalize separators with Vite's `normalizePath` before comparing or building import IDs, and do not assume `process.cwd()` is the workspace root; pass an explicit `cwd`/root to globs and path resolution.

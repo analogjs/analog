@@ -1,3 +1,10 @@
+# [3.0.0-beta.12](https://github.com/analogjs/analog/compare/v3.0.0-beta.11...v3.0.0-beta.12) (2026-10-26)
+
+### Bug Fixes
+
+- **astro-angular:** stop forcing JSX dev mode in production builds ([#2692](https://github.com/analogjs/analog/issues/2692)) ([0756b38](https://github.com/analogjs/analog/commit/0756b38060b03a008e7d22f59f1d5bf5d4aad61a))
+- **vite-plugin-angular:** build program diagnostics before prepareEmit untags shim references ([#2690](https://github.com/analogjs/analog/issues/2690)) ([29ae58f](https://github.com/analogjs/analog/commit/29ae58fb6d18f7d4d4c261a13a573d594cd96abf))
+
 # [3.0.0-beta.11](https://github.com/analogjs/analog/compare/v3.0.0-beta.10...v3.0.0-beta.11) (2026-10-26)
 
 ### Bug Fixes

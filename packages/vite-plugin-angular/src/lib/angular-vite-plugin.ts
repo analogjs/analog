@@ -1680,6 +1680,16 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     if (angularCompiler!) {
       await angularCompiler.analyzeAsync();
+
+      if (!pluginOptions.disableTypeChecking) {
+        // TypeScript builds the program diagnostics lazily and records why each
+        // file is in the program as an index into `referencedFiles`, which
+        // includes the shim references Angular tags onto every source file.
+        // `prepareEmit()` below removes those tags, so a diagnostic that
+        // explains a file (e.g. TS6059 for a file outside `rootDir`) would
+        // otherwise throw while it is built for the first file's diagnostics.
+        typeScriptProgram.getOptionsDiagnostics();
+      }
     }
 
     const beforeTransformers = jit

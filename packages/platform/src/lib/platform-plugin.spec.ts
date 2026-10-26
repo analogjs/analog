@@ -93,22 +93,16 @@ describe('platformPlugin', () => {
     );
   });
 
-  it('defaults ssr to true and passes that value to the composed plugins', () => {
+  it('wires SSR-only plugins by default', () => {
     platformPlugin();
 
-    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ ssr: true }),
-    );
     expect(ssrBuildPluginSpy).toHaveBeenCalled();
     expect(injectHTMLPluginSpy).toHaveBeenCalled();
   });
 
-  it('passes through ssr false without wiring SSR-only plugins', () => {
+  it('skips SSR-only plugins when ssr is false', () => {
     platformPlugin({ ssr: false });
 
-    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ ssr: false }),
-    );
     expect(ssrBuildPluginSpy).not.toHaveBeenCalled();
     expect(injectHTMLPluginSpy).not.toHaveBeenCalled();
   });
@@ -123,31 +117,6 @@ describe('platformPlugin', () => {
     ).toBe(true);
   });
 
-  it('passes through explicit additional route dirs', () => {
-    platformPlugin({
-      additionalPagesDirs: ['/libs/shared/feature'],
-      additionalContentDirs: ['/libs/shared/feature/src/content'],
-      additionalAPIDirs: ['/libs/shared/feature/src/api'],
-    });
-
-    expect(routerPluginSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        additionalPagesDirs: ['/libs/shared/feature'],
-      }),
-    );
-    expect(analogNitroPluginSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        additionalAPIDirs: ['/libs/shared/feature/src/api'],
-      }),
-    );
-    expect(contentPluginSpy).toHaveBeenCalledWith(
-      undefined,
-      expect.objectContaining({
-        additionalContentDirs: ['/libs/shared/feature/src/content'],
-      }),
-    );
-  });
-
   it.each([undefined, false])(
     'keeps typed routing opt-in (%s)',
     (typedRouting) => {
@@ -159,21 +128,9 @@ describe('platformPlugin', () => {
     },
   );
 
-  it('passes library directories to beta typed routing before other plugins', () => {
+  it('registers typed routing before other plugins', () => {
     const plugins = platformPlugin({
-      workspaceRoot: '/workspace',
-      additionalPagesDirs: ['/libs/shared/feature'],
-      additionalContentDirs: ['/libs/shared/feature/src/content'],
-      experimental: {
-        typedRouting: { outFile: 'src/routes.d.ts', verifyOnBuild: false },
-      },
-    });
-    expect(typedRoutesSpy).toHaveBeenCalledWith({
-      workspaceRoot: '/workspace',
-      additionalPagesDirs: ['/libs/shared/feature'],
-      additionalContentDirs: ['/libs/shared/feature/src/content'],
-      outFile: 'src/routes.d.ts',
-      verifyOnBuild: false,
+      experimental: { typedRouting: { outFile: 'src/routes.d.ts' } },
     });
     expect(plugins[0].name).toBe('analog-typed-routes');
   });
