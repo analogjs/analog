@@ -140,12 +140,8 @@ class WasmAnalyzer {
         }
     }
     /**
-     * Constructs an analyzer.
-     *
-     * `host_fs` is an optional JavaScript filesystem bridge (see `WasmHostFs` in
-     * `src/wasm_host_fs.ts`). This target has no OS beneath it, so without a host the
-     * engine can only see files supplied through `virtualFiles` — which is the
-     * historical behaviour and remains available by omitting the argument.
+     * Constructs an analyzer with an optional JavaScript filesystem bridge (`WasmHostFs`).
+     * Without `host_fs`, only `virtualFiles` are visible.
      * @param {string} options_json
      * @param {any | null} [host_fs]
      */
@@ -171,6 +167,24 @@ class WasmAnalyzer {
             wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
         }
         return v1;
+    }
+    /**
+     * @param {string} containing_file
+     * @param {string} url
+     * @returns {string | undefined}
+     */
+    read_resource(containing_file, url) {
+        const ptr0 = passStringToWasm0(containing_file, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(url, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmanalyzer_read_resource(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+        let v3;
+        if (ret[0] !== 0) {
+            v3 = getStringFromWasm0(ret[0], ret[1]).slice();
+            wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        }
+        return v3;
     }
     /**
      * @param {string} updates_json

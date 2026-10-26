@@ -7,7 +7,7 @@ when the application does not provide `@angular/ngp`. Remove it once a compatibl
 
 The directory is generated and committed:
 
-- `api.mjs`: the NGP JavaScript API, bundled with the Angular compiler from the same revision.
+- `api.mjs`: the NGP JavaScript API, bundled with the Angular compiler and the compiler-cli internals it uses from the same revision.
 - `ng_analyze.cjs`, `ng_analyze_bg.wasm`: the WebAssembly analyzer.
 - `LICENSE`: Angular's license.
 - `build.json`: the Angular revision and wasm-bindgen version.

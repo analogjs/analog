@@ -17,7 +17,7 @@ const { build } = createRequire(require.resolve('vite/package.json'))(
   'esbuild',
 );
 
-const revision = '4e4ad75144e55538cedc65f0ac3ff5b68cb34ce9';
+const revision = '457071571225970890bd5a6baee21373d3960c37';
 const output = resolve('packages/vite-plugin-angular/ngp');
 const source =
   process.env.NGP_SOURCE ?? (await mkdtemp(join(tmpdir(), 'analog-ngp-')));
@@ -92,7 +92,8 @@ await copyFile(
 );
 
 // NGP uses compiler APIs newer than the Angular version installed in Analog.
-// Bundle its matching compiler from the same revision, without changing the app runtime.
+// Bundle its matching compiler and compiler-cli internals from the same revision,
+// without changing the app runtime.
 await build({
   absWorkingDir: source,
   entryPoints: [join(source, 'packages/compiler-cli/preprocessor/api.ts')],
@@ -102,6 +103,10 @@ await build({
   format: 'esm',
   alias: {
     '@angular/compiler': join(source, 'packages/compiler/src/compiler.ts'),
+    '@angular/compiler-cli/private/hybrid_analysis': join(
+      source,
+      'packages/compiler-cli/private/hybrid_analysis.ts',
+    ),
   },
   // magic-string is a dependency of @analogjs/vite-plugin-angular
   external: ['@angular/compiler-cli', 'typescript', 'magic-string'],

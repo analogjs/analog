@@ -13,84 +13,6 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
-// packages/compiler-cli/preprocessor/src/analyzer_napi.ts
-var analyzer_napi_exports = {};
-__export(analyzer_napi_exports, {
-  NapiAnalyzer: () => NapiAnalyzer
-});
-var NapiAnalyzer;
-var init_analyzer_napi = __esm({
-  "packages/compiler-cli/preprocessor/src/analyzer_napi.ts"() {
-    NapiAnalyzer = class {
-      analyzer;
-      constructor(analyzer) {
-        this.analyzer = analyzer;
-      }
-      /**
-       * Creates an analyzer, resolving whichever engine is available.
-       *
-       * Retained for compatibility; prefer `loadAnalyzer` from `./analyzer_loader.js`,
-       * whose options are richer and whose return type reflects that the result may be
-       * wasm-backed rather than N-API-backed.
-       *
-       * The loader is reached through a dynamic `import()` so that merely importing this
-       * module does not pull engine resolution into module evaluation.
-       */
-      static async create(tsconfigPath, options = {}) {
-        const { loadAnalyzer: loadAnalyzer2 } = await Promise.resolve().then(() => (init_analyzer_loader(), analyzer_loader_exports));
-        return loadAnalyzer2(tsconfigPath, options);
-      }
-      async *consumeIterator(iterator) {
-        while (true) {
-          const res = await iterator.next();
-          if (res === null || res === void 0) {
-            break;
-          }
-          yield res;
-        }
-      }
-      analyze() {
-        return this.consumeIterator(this.analyzer.analyze());
-      }
-      analyzeOptimized() {
-        return this.consumeIterator(this.analyzer.analyzeOptimized());
-      }
-      analyzeDelta() {
-        return this.consumeIterator(this.analyzer.analyzeDelta());
-      }
-      analyzeOptimizedDelta() {
-        return this.consumeIterator(this.analyzer.analyzeOptimizedDelta());
-      }
-      async getMetadataForFile(filePath) {
-        return this.analyzer.getMetadataForFile(filePath) ?? null;
-      }
-      async updateFileContent(updates) {
-        return this.analyzer.updateFileContent(updates);
-      }
-      async invalidateFiles(updates) {
-        return this.analyzer.invalidateFiles(updates);
-      }
-      async getTsFileForTemplate(templatePath) {
-        return this.analyzer.getTsFileForTemplate(templatePath);
-      }
-      async getFileContent(filePath) {
-        return this.analyzer.getFileContent(filePath);
-      }
-      getMetadataForFileSync(filePath) {
-        return this.analyzer.getMetadataForFile(filePath) ?? null;
-      }
-      getFileContentSync(filePath) {
-        return this.analyzer.getFileContent(filePath);
-      }
-      getTsFileForTemplateSync(templatePath) {
-        return this.analyzer.getTsFileForTemplate(templatePath);
-      }
-      close() {
-      }
-    };
-  }
-});
-
 // packages/compiler-cli/preprocessor/src/analyzer_wasm.ts
 var analyzer_wasm_exports = {};
 __export(analyzer_wasm_exports, {
@@ -142,9 +64,9 @@ var init_analyzer_wasm = __esm({
                 stream.error = new Error(event.error);
               }
               if (stream.nextResolve) {
-                const resolve4 = stream.nextResolve;
+                const resolve5 = stream.nextResolve;
                 stream.nextResolve = null;
-                resolve4(null);
+                resolve5(null);
               }
             }
           } catch (e) {
@@ -208,8 +130,8 @@ var init_analyzer_wasm = __esm({
             }
             const item = stream.queue.shift();
             if (item === void 0) {
-              await new Promise((resolve4) => {
-                stream.nextResolve = () => resolve4();
+              await new Promise((resolve5) => {
+                stream.nextResolve = () => resolve5();
               });
               continue;
             }
@@ -264,6 +186,17 @@ var init_analyzer_wasm = __esm({
       async getFileContent(filePath) {
         return Promise.resolve(this.getFileContentSync(filePath));
       }
+      async readResource(containingFile, url2) {
+        return Promise.resolve(this.readResourceSync(containingFile, url2));
+      }
+      readResourceSync(containingFile, url2) {
+        const fn2 = this.inner.readResource ?? this.inner.read_resource;
+        if (!fn2) {
+          throw new Error("WasmInner does not support readResource");
+        }
+        const res = fn2.call(this.inner, containingFile, url2);
+        return res ? JSON.parse(res) : null;
+      }
       getMetadataForFileSync(filePath) {
         const fn2 = this.inner.getMetadataForFile ?? this.inner.get_metadata_for_file;
         if (!fn2) {
@@ -286,6 +219,131 @@ var init_analyzer_wasm = __esm({
         }
         const res = fn2.call(this.inner, templatePath);
         return res ? JSON.parse(res) : null;
+      }
+      analyzeSync() {
+        return this.consumeStreamSync(() => this.inner.analyze());
+      }
+      analyzeOptimizedSync() {
+        return this.consumeStreamSync(
+          () => this.startOptional(
+            this.inner.analyze_optimized ?? this.inner.analyzeOptimized,
+            "analyzeOptimized"
+          )
+        );
+      }
+      *consumeStreamSync(start) {
+        const id = start();
+        try {
+          while (true) {
+            const eventStr = this.inner.pump();
+            if (!eventStr) {
+              throw new Error(`WASM analysis stream ${id} stalled before emitting analysisComplete`);
+            }
+            const event = JSON.parse(eventStr);
+            if (event.id !== id) {
+              continue;
+            }
+            if (event.event === "analysisError" && event.error) {
+              throw new Error(event.error);
+            }
+            if (event.event === "analysisComplete") {
+              return;
+            }
+            if (event.event === "analysisResult" && event.data) {
+              yield event.data;
+            }
+          }
+        } finally {
+          this.releaseStream(id);
+        }
+      }
+      close() {
+        try {
+          this.inner.free();
+        } catch {
+        }
+      }
+    };
+  }
+});
+
+// packages/compiler-cli/preprocessor/src/analyzer_napi.ts
+var analyzer_napi_exports = {};
+__export(analyzer_napi_exports, {
+  NapiAnalyzer: () => NapiAnalyzer
+});
+var NapiAnalyzer;
+var init_analyzer_napi = __esm({
+  "packages/compiler-cli/preprocessor/src/analyzer_napi.ts"() {
+    NapiAnalyzer = class {
+      analyzer;
+      constructor(analyzer) {
+        this.analyzer = analyzer;
+      }
+      /**
+       * Creates an analyzer, resolving whichever engine is available.
+       *
+       * Retained for compatibility; prefer `loadAnalyzer` from `./analyzer_loader.js`,
+       * whose options are richer and whose return type reflects that the result may be
+       * wasm-backed rather than N-API-backed.
+       *
+       * The loader is reached through a dynamic `import()` so that merely importing this
+       * module does not pull engine resolution into module evaluation.
+       */
+      static async create(tsconfigPath, options = {}) {
+        const { loadAnalyzer: loadAnalyzer2 } = await Promise.resolve().then(() => (init_analyzer_loader(), analyzer_loader_exports));
+        return loadAnalyzer2(tsconfigPath, options);
+      }
+      async *consumeIterator(iterator) {
+        while (true) {
+          const res = await iterator.next();
+          if (res === null || res === void 0) {
+            break;
+          }
+          yield res;
+        }
+      }
+      analyze() {
+        return this.consumeIterator(this.analyzer.analyze());
+      }
+      analyzeOptimized() {
+        return this.consumeIterator(this.analyzer.analyzeOptimized());
+      }
+      analyzeDelta() {
+        return this.consumeIterator(this.analyzer.analyzeDelta());
+      }
+      analyzeOptimizedDelta() {
+        return this.consumeIterator(this.analyzer.analyzeOptimizedDelta());
+      }
+      async getMetadataForFile(filePath) {
+        return this.analyzer.getMetadataForFile(filePath) ?? null;
+      }
+      async updateFileContent(updates) {
+        return this.analyzer.updateFileContent(updates);
+      }
+      async invalidateFiles(updates) {
+        return this.analyzer.invalidateFiles(updates);
+      }
+      async getTsFileForTemplate(templatePath) {
+        return this.analyzer.getTsFileForTemplate(templatePath);
+      }
+      async getFileContent(filePath) {
+        return this.analyzer.getFileContent(filePath);
+      }
+      async readResource(containingFile, url2) {
+        return this.readResourceSync(containingFile, url2);
+      }
+      readResourceSync(containingFile, url2) {
+        return this.analyzer.readResource(containingFile, url2) ?? null;
+      }
+      getMetadataForFileSync(filePath) {
+        return this.analyzer.getMetadataForFile(filePath) ?? null;
+      }
+      getFileContentSync(filePath) {
+        return this.analyzer.getFileContent(filePath);
+      }
+      getTsFileForTemplateSync(templatePath) {
+        return this.analyzer.getTsFileForTemplate(templatePath);
       }
       close() {
       }
@@ -370,9 +428,13 @@ __export(analyzer_loader_exports, {
   loadAnalyzerWithInfo: () => loadAnalyzerWithInfo
 });
 import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 import * as path5 from "node:path";
 import * as fs6 from "node:fs/promises";
+function engineOptions(tsconfigPath, options) {
+  const { backend, nativeBinding, wasmBinding, hostFs, ngAnalyzeDir, useWasm, ...engine } = options;
+  return { ...engine, tsconfigPath, optimize: options.optimize ?? true };
+}
 function envFlag(name) {
   const value = process.env[name];
   return value !== void 0 && value !== "" && value !== "0" && value.toLowerCase() !== "false";
@@ -388,10 +450,10 @@ function pathExists2(p) {
     () => false
   );
 }
-async function walkUpFor(relative3) {
+async function walkUpFor(relative4) {
   let dir = SELF_DIR;
   for (let i = 0; i < MAX_WALK_UP; i++) {
-    const candidate = path5.join(dir, relative3);
+    const candidate = path5.join(dir, relative4);
     if (await pathExists2(candidate)) {
       return candidate;
     }
@@ -448,13 +510,28 @@ async function wasmCandidates(options) {
       out.push({ backend: "wasm", spec, origin });
     }
   };
-  const [ngAnalyzeWasmDirIndex, inRepoWasm] = await Promise.all([
+  const [ngAnalyzeWasmDirIndex, bundledWasm, bazelBinWasm, inRepoWasm] = await Promise.all([
     options.ngAnalyzeDir ? existingPath(path5.join(options.ngAnalyzeDir, "..", "ng-analyze-wasm", "ng_analyze.js")) : null,
+    existingPath(path5.resolve(SELF_DIR, "../ng-analyze/ng_analyze_wasm/ng_analyze_wasm.js")),
+    !IS_INSTALLED ? walkUpFor(
+      path5.join(
+        "dist",
+        "bin",
+        "packages",
+        "compiler-cli",
+        "preprocessor",
+        "ng-analyze",
+        "ng_analyze_wasm",
+        "ng_analyze_wasm.js"
+      )
+    ) : null,
     !IS_INSTALLED ? walkUpFor(path5.join("ng-analyze-wasm", "ng_analyze.js")) : null
   ]);
   push(options.wasmBinding, "wasmBinding option");
   push(process.env["NG_EXP_COMPILER_WASM_BINDING"], "NG_EXP_COMPILER_WASM_BINDING");
   push(ngAnalyzeWasmDirIndex, "ngAnalyzeDir option");
+  push(bundledWasm, "bundled ng_analyze_wasm");
+  push(bazelBinWasm, "bazel-bin ng_analyze_wasm");
   push("ng-exp-compiler-arch-wasm", "ng-exp-compiler-arch-wasm package");
   push(inRepoWasm, "in-repo ng-analyze-wasm/");
   return out;
@@ -475,16 +552,7 @@ async function constructNative(spec, tsconfigPath, options) {
     );
   }
   const { NapiAnalyzer: NapiAnalyzer2 } = await Promise.resolve().then(() => (init_analyzer_napi(), analyzer_napi_exports));
-  return new NapiAnalyzer2(
-    new Analyzer({
-      tsconfigPath,
-      optimize: options.optimize ?? true,
-      virtualFiles: options.virtualFiles,
-      nodeModulesPathOverride: options.nodeModulesPathOverride,
-      workspaceName: options.workspaceName,
-      rootDirs: options.rootDirs
-    })
-  );
+  return new NapiAnalyzer2(new Analyzer(engineOptions(tsconfigPath, options)));
 }
 async function constructWasm(spec, tsconfigPath, options) {
   const mod = requireFromHere(spec);
@@ -500,17 +568,7 @@ async function constructWasm(spec, tsconfigPath, options) {
     const { createNodeHostFs: createNodeHostFs2 } = await Promise.resolve().then(() => (init_wasm_host_fs(), wasm_host_fs_exports));
     hostFs = createNodeHostFs2();
   }
-  const inner = new Inner(
-    JSON.stringify({
-      virtualFiles: options.virtualFiles,
-      optimize: options.optimize ?? true,
-      tsconfigPath,
-      nodeModulesPathOverride: options.nodeModulesPathOverride,
-      workspaceName: options.workspaceName,
-      rootDirs: options.rootDirs
-    }),
-    hostFs
-  );
+  const inner = new Inner(JSON.stringify(engineOptions(tsconfigPath, options)), hostFs);
   return new WasmAnalyzer2(inner);
 }
 function hostDescription() {
@@ -580,16 +638,12 @@ async function loadAnalyzer(tsconfigPath, options = {}) {
 var SELF_DIR, requireFromHere, IS_INSTALLED, MAX_WALK_UP;
 var init_analyzer_loader = __esm({
   "packages/compiler-cli/preprocessor/src/analyzer_loader.ts"() {
-    SELF_DIR = path5.dirname(fileURLToPath(import.meta.url));
+    SELF_DIR = path5.dirname(fileURLToPath2(import.meta.url));
     requireFromHere = createRequire(import.meta.url);
     IS_INSTALLED = SELF_DIR.split(path5.sep).includes("node_modules");
     MAX_WALK_UP = 8;
   }
 });
-
-// packages/compiler-cli/preprocessor/src/hybrid_compiler.ts
-import * as fs2 from "node:fs/promises";
-import * as path2 from "path";
 
 // packages/compiler/src/directive_matching.ts
 var _SELECTOR_REGEXP = new RegExp(
@@ -1553,46 +1607,46 @@ var NUMBER_TYPE = new BuiltinType(4 /* Number */);
 var STRING_TYPE = new BuiltinType(2 /* String */);
 var FUNCTION_TYPE = new BuiltinType(5 /* Function */);
 var NONE_TYPE = new BuiltinType(7 /* None */);
-var UnaryOperator = /* @__PURE__ */ ((UnaryOperator2) => {
-  UnaryOperator2[UnaryOperator2["Minus"] = 0] = "Minus";
-  UnaryOperator2[UnaryOperator2["Plus"] = 1] = "Plus";
-  UnaryOperator2[UnaryOperator2["Increment"] = 2] = "Increment";
-  UnaryOperator2[UnaryOperator2["Decrement"] = 3] = "Decrement";
-  return UnaryOperator2;
+var UnaryOperator = /* @__PURE__ */ ((UnaryOperator3) => {
+  UnaryOperator3[UnaryOperator3["Minus"] = 0] = "Minus";
+  UnaryOperator3[UnaryOperator3["Plus"] = 1] = "Plus";
+  UnaryOperator3[UnaryOperator3["Increment"] = 2] = "Increment";
+  UnaryOperator3[UnaryOperator3["Decrement"] = 3] = "Decrement";
+  return UnaryOperator3;
 })(UnaryOperator || {});
-var BinaryOperator = /* @__PURE__ */ ((BinaryOperator2) => {
-  BinaryOperator2[BinaryOperator2["Equals"] = 0] = "Equals";
-  BinaryOperator2[BinaryOperator2["NotEquals"] = 1] = "NotEquals";
-  BinaryOperator2[BinaryOperator2["Assign"] = 2] = "Assign";
-  BinaryOperator2[BinaryOperator2["Identical"] = 3] = "Identical";
-  BinaryOperator2[BinaryOperator2["NotIdentical"] = 4] = "NotIdentical";
-  BinaryOperator2[BinaryOperator2["Minus"] = 5] = "Minus";
-  BinaryOperator2[BinaryOperator2["Plus"] = 6] = "Plus";
-  BinaryOperator2[BinaryOperator2["Divide"] = 7] = "Divide";
-  BinaryOperator2[BinaryOperator2["Multiply"] = 8] = "Multiply";
-  BinaryOperator2[BinaryOperator2["Modulo"] = 9] = "Modulo";
-  BinaryOperator2[BinaryOperator2["And"] = 10] = "And";
-  BinaryOperator2[BinaryOperator2["Or"] = 11] = "Or";
-  BinaryOperator2[BinaryOperator2["BitwiseOr"] = 12] = "BitwiseOr";
-  BinaryOperator2[BinaryOperator2["BitwiseAnd"] = 13] = "BitwiseAnd";
-  BinaryOperator2[BinaryOperator2["Lower"] = 14] = "Lower";
-  BinaryOperator2[BinaryOperator2["LowerEquals"] = 15] = "LowerEquals";
-  BinaryOperator2[BinaryOperator2["Bigger"] = 16] = "Bigger";
-  BinaryOperator2[BinaryOperator2["BiggerEquals"] = 17] = "BiggerEquals";
-  BinaryOperator2[BinaryOperator2["NullishCoalesce"] = 18] = "NullishCoalesce";
-  BinaryOperator2[BinaryOperator2["Exponentiation"] = 19] = "Exponentiation";
-  BinaryOperator2[BinaryOperator2["In"] = 20] = "In";
-  BinaryOperator2[BinaryOperator2["InstanceOf"] = 21] = "InstanceOf";
-  BinaryOperator2[BinaryOperator2["AdditionAssignment"] = 22] = "AdditionAssignment";
-  BinaryOperator2[BinaryOperator2["SubtractionAssignment"] = 23] = "SubtractionAssignment";
-  BinaryOperator2[BinaryOperator2["MultiplicationAssignment"] = 24] = "MultiplicationAssignment";
-  BinaryOperator2[BinaryOperator2["DivisionAssignment"] = 25] = "DivisionAssignment";
-  BinaryOperator2[BinaryOperator2["RemainderAssignment"] = 26] = "RemainderAssignment";
-  BinaryOperator2[BinaryOperator2["ExponentiationAssignment"] = 27] = "ExponentiationAssignment";
-  BinaryOperator2[BinaryOperator2["AndAssignment"] = 28] = "AndAssignment";
-  BinaryOperator2[BinaryOperator2["OrAssignment"] = 29] = "OrAssignment";
-  BinaryOperator2[BinaryOperator2["NullishCoalesceAssignment"] = 30] = "NullishCoalesceAssignment";
-  return BinaryOperator2;
+var BinaryOperator = /* @__PURE__ */ ((BinaryOperator3) => {
+  BinaryOperator3[BinaryOperator3["Equals"] = 0] = "Equals";
+  BinaryOperator3[BinaryOperator3["NotEquals"] = 1] = "NotEquals";
+  BinaryOperator3[BinaryOperator3["Assign"] = 2] = "Assign";
+  BinaryOperator3[BinaryOperator3["Identical"] = 3] = "Identical";
+  BinaryOperator3[BinaryOperator3["NotIdentical"] = 4] = "NotIdentical";
+  BinaryOperator3[BinaryOperator3["Minus"] = 5] = "Minus";
+  BinaryOperator3[BinaryOperator3["Plus"] = 6] = "Plus";
+  BinaryOperator3[BinaryOperator3["Divide"] = 7] = "Divide";
+  BinaryOperator3[BinaryOperator3["Multiply"] = 8] = "Multiply";
+  BinaryOperator3[BinaryOperator3["Modulo"] = 9] = "Modulo";
+  BinaryOperator3[BinaryOperator3["And"] = 10] = "And";
+  BinaryOperator3[BinaryOperator3["Or"] = 11] = "Or";
+  BinaryOperator3[BinaryOperator3["BitwiseOr"] = 12] = "BitwiseOr";
+  BinaryOperator3[BinaryOperator3["BitwiseAnd"] = 13] = "BitwiseAnd";
+  BinaryOperator3[BinaryOperator3["Lower"] = 14] = "Lower";
+  BinaryOperator3[BinaryOperator3["LowerEquals"] = 15] = "LowerEquals";
+  BinaryOperator3[BinaryOperator3["Bigger"] = 16] = "Bigger";
+  BinaryOperator3[BinaryOperator3["BiggerEquals"] = 17] = "BiggerEquals";
+  BinaryOperator3[BinaryOperator3["NullishCoalesce"] = 18] = "NullishCoalesce";
+  BinaryOperator3[BinaryOperator3["Exponentiation"] = 19] = "Exponentiation";
+  BinaryOperator3[BinaryOperator3["In"] = 20] = "In";
+  BinaryOperator3[BinaryOperator3["InstanceOf"] = 21] = "InstanceOf";
+  BinaryOperator3[BinaryOperator3["AdditionAssignment"] = 22] = "AdditionAssignment";
+  BinaryOperator3[BinaryOperator3["SubtractionAssignment"] = 23] = "SubtractionAssignment";
+  BinaryOperator3[BinaryOperator3["MultiplicationAssignment"] = 24] = "MultiplicationAssignment";
+  BinaryOperator3[BinaryOperator3["DivisionAssignment"] = 25] = "DivisionAssignment";
+  BinaryOperator3[BinaryOperator3["RemainderAssignment"] = 26] = "RemainderAssignment";
+  BinaryOperator3[BinaryOperator3["ExponentiationAssignment"] = 27] = "ExponentiationAssignment";
+  BinaryOperator3[BinaryOperator3["AndAssignment"] = 28] = "AndAssignment";
+  BinaryOperator3[BinaryOperator3["OrAssignment"] = 29] = "OrAssignment";
+  BinaryOperator3[BinaryOperator3["NullishCoalesceAssignment"] = 30] = "NullishCoalesceAssignment";
+  return BinaryOperator3;
 })(BinaryOperator || {});
 function nullSafeIsEquivalent(base, other) {
   if (base == null || other == null) {
@@ -2124,9 +2178,9 @@ var ConditionalExpr = class _ConditionalExpr extends Expression {
   }
 };
 var DynamicImportExpr = class _DynamicImportExpr extends Expression {
-  constructor(url, sourceSpan, urlComment, leadingComments) {
+  constructor(url2, sourceSpan, urlComment, leadingComments) {
     super(null, sourceSpan, leadingComments);
-    this.url = url;
+    this.url = url2;
     this.urlComment = urlComment;
   }
   isEquivalent(e) {
@@ -2988,9 +3042,7 @@ var ConstantPool = class {
         value = literal2;
         usage = variable(name);
       }
-      this.statements.push(
-        new DeclareVarStmt(name, value, INFERRED_TYPE, 1 /* Final */)
-      );
+      this.statements.push(this.getVariableDeclaration(name, value, null));
       fixup.fixup(usage);
     }
     return fixup;
@@ -3018,7 +3070,7 @@ var ConstantPool = class {
     }
     const name = useUniqueName ? this.uniqueName(prefix) : prefix;
     this.statements.push(
-      fn2 instanceof FunctionExpr ? fn2.toDeclStmt(name, 1 /* Final */) : new DeclareVarStmt(name, fn2, INFERRED_TYPE, 1 /* Final */, fn2.sourceSpan)
+      fn2 instanceof FunctionExpr ? fn2.toDeclStmt(name, 1 /* Final */) : this.getVariableDeclaration(name, fn2, fn2.sourceSpan)
     );
     return variable(name);
   }
@@ -3037,6 +3089,19 @@ var ConstantPool = class {
   }
   freshName() {
     return this.uniqueName(CONSTANT_PREFIX);
+  }
+  getVariableDeclaration(name, value, span) {
+    return new DeclareVarStmt(
+      name,
+      value,
+      INFERRED_TYPE,
+      // Generating top-level constant without type annotations causes
+      // Closure to log warnings so we generate a variable instead.
+      // Note that an alternative is to output an `@type` comment,
+      // but that ends up hitting a different assertion.
+      this.isClosureCompilerEnabled ? 0 /* None */ : 1 /* Final */,
+      span
+    );
   }
 };
 var GenericKeyFn = class _GenericKeyFn {
@@ -4017,16 +4082,29 @@ function stringify(token) {
   const newLineIndex = result.indexOf("\n");
   return newLineIndex >= 0 ? result.slice(0, newLineIndex) : result;
 }
+var Version = class {
+  constructor(full) {
+    this.full = full;
+    const splits = full.split(".");
+    this.major = splits[0];
+    this.minor = splits[1];
+    this.patch = splits.slice(2).join(".");
+  }
+};
 var _global = globalThis;
 var V1_TO_18 = /^([1-9]|1[0-8])\./;
+var V1_TO_21 = /^([1-9]|1[0-9]|2[0-1])\./;
 function getJitStandaloneDefaultForVersion(version) {
-  if (version.startsWith("0.")) {
-    return true;
-  }
   if (V1_TO_18.test(version)) {
     return false;
   }
   return true;
+}
+function getJitChangeDetectionDefaultForVersion(version) {
+  if (V1_TO_21.test(version)) {
+    return 1 /* Eager */;
+  }
+  return 0 /* OnPush */;
 }
 function namespaceCssVariable(varName) {
   if (varName.startsWith("--global--")) {
@@ -4048,9 +4126,9 @@ var SourceMapGenerator = class {
     this.hasMappings = false;
   }
   // The content is `null` when the content is expected to be loaded using the URL
-  addSource(url, content = null) {
-    if (!this.sourcesContent.has(url)) {
-      this.sourcesContent.set(url, content);
+  addSource(url2, content = null) {
+    if (!this.sourcesContent.has(url2)) {
+      this.sourcesContent.set(url2, content);
     }
     return this;
   }
@@ -4094,10 +4172,10 @@ var SourceMapGenerator = class {
     const sourcesIndex = /* @__PURE__ */ new Map();
     const sources = [];
     const sourcesContent = [];
-    Array.from(this.sourcesContent.keys()).forEach((url, i) => {
-      sourcesIndex.set(url, i);
-      sources.push(url);
-      sourcesContent.push(this.sourcesContent.get(url) || null);
+    Array.from(this.sourcesContent.keys()).forEach((url2, i) => {
+      sourcesIndex.set(url2, i);
+      sources.push(url2);
+      sourcesContent.push(this.sourcesContent.get(url2) || null);
     });
     let mappings = "";
     let lastCol0 = 0;
@@ -4173,6 +4251,13 @@ function toBase64Digit(value) {
 // packages/compiler/src/output/abstract_emitter.ts
 var SINGLE_QUOTE_ESCAPE_STRING_RE = /'|\\|\n|\r/g;
 var LEGAL_IDENTIFIER_RE = /^[$A-Z_][0-9A-Z_$]*$/i;
+var NON_ASCII_OR_CONTROL_CHAR_RE = /[\u0000-\u001f\u0080-\uffff]/g;
+var CONTROL_CHAR_ESCAPES = /* @__PURE__ */ new Map([
+  ["	", "\\t"],
+  ["\v", "\\v"],
+  ["\f", "\\f"],
+  ["\b", "\\b"]
+]);
 var INDENT_WITH = "  ";
 var EmittedLine = class {
   constructor(indent) {
@@ -4218,7 +4303,7 @@ var BINARY_OPERATORS = /* @__PURE__ */ new Map([
 var EmitterVisitorContext = class _EmitterVisitorContext {
   constructor(_indent) {
     this._indent = _indent;
-    this._lines = [new EmittedLine(_indent)];
+    this.lines = [new EmittedLine(_indent)];
   }
   static createRoot() {
     return new _EmitterVisitorContext(0);
@@ -4228,7 +4313,7 @@ var EmitterVisitorContext = class _EmitterVisitorContext {
    * https://github.com/microsoft/TypeScript/issues/36216
    */
   get _currentLine() {
-    return this._lines[this._lines.length - 1];
+    return this.lines[this.lines.length - 1];
   }
   println(from, lastPart = "") {
     this.print(from || null, lastPart, true);
@@ -4246,12 +4331,12 @@ var EmitterVisitorContext = class _EmitterVisitorContext {
       this._currentLine.srcSpans.push(from && from.sourceSpan || null);
     }
     if (newLine) {
-      this._lines.push(new EmittedLine(this._indent));
+      this.lines.push(new EmittedLine(this._indent));
     }
   }
   removeEmptyLastLine() {
     if (this.lineIsEmpty()) {
-      this._lines.pop();
+      this.lines.pop();
     }
   }
   incIndent() {
@@ -4314,7 +4399,7 @@ var EmitterVisitorContext = class _EmitterVisitorContext {
     return map;
   }
   spanOf(line, column) {
-    const emittedLine = this._lines[line];
+    const emittedLine = this.lines[line];
     if (emittedLine) {
       let columnsLeft = column - INDENT_WITH.repeat(emittedLine.indent).length;
       for (let partIndex = 0; partIndex < emittedLine.parts.length; partIndex++) {
@@ -4328,26 +4413,26 @@ var EmitterVisitorContext = class _EmitterVisitorContext {
     return null;
   }
   addUniqueSingleLineComment(commentText) {
-    const previousIndex = this._lines.length - 2;
+    const previousIndex = this.lines.length - 2;
     const comment = `//${commentText}`;
-    if (previousIndex >= 0 && this._lines[previousIndex].parts.length === 1 && this._lines[previousIndex].parts[0] === comment) {
+    if (previousIndex >= 0 && this.lines[previousIndex].parts.length === 1 && this.lines[previousIndex].parts[0] === comment) {
       return;
     }
     const line = new EmittedLine(this._currentLine.indent);
     line.parts.push(comment);
     line.partsLength = comment.length;
     line.srcSpans.push(null);
-    this._lines.splice(this._lines.length - 1, 0, line);
+    this.lines.splice(this.lines.length - 1, 0, line);
   }
   /**
    * @internal strip this from published d.ts files due to
    * https://github.com/microsoft/TypeScript/issues/36216
    */
   get sourceLines() {
-    if (this._lines.length && this._lines[this._lines.length - 1].parts.length === 0) {
-      return this._lines.slice(0, -1);
+    if (this.lines.length && this.lines[this.lines.length - 1].parts.length === 0) {
+      return this.lines.slice(0, -1);
     }
-    return this._lines;
+    return this.lines;
   }
 };
 var AbstractEmitterVisitor = class {
@@ -4468,7 +4553,7 @@ var AbstractEmitterVisitor = class {
     this.printLeadingComments(ast, ctx);
     const value = ast.value;
     if (typeof value === "string") {
-      ctx.print(ast, escapeIdentifier(value));
+      ctx.print(ast, this.escapeStringOrIdentifier(value));
     } else {
       ctx.print(ast, `${value}`);
     }
@@ -4502,7 +4587,7 @@ var AbstractEmitterVisitor = class {
     this.printLeadingComments(ast, ctx);
     ctx.print(ast, `import(`);
     if (typeof ast.url === "string") {
-      ctx.print(ast, escapeIdentifier(ast.url, true));
+      ctx.print(ast, this.escapeStringOrIdentifier(ast.url, true));
     } else {
       ast.url.visitExpression(this, ctx);
     }
@@ -4645,7 +4730,7 @@ var AbstractEmitterVisitor = class {
           ctx.println(ast);
         }
         this.printLeadingComments(entry, ctx);
-        ctx.print(ast, `${escapeIdentifier(entry.key, entry.quoted)}: `);
+        ctx.print(ast, `${this.escapeStringOrIdentifier(entry.key, entry.quoted)}: `);
         entry.value.visitExpression(this, ctx);
       }
     }
@@ -4788,12 +4873,15 @@ var AbstractEmitterVisitor = class {
       }
     }
   }
+  escapeStringOrIdentifier(input, alwaysQuote = true, escapeNonAscii = false) {
+    return escapeIdentifier(input, alwaysQuote, escapeNonAscii);
+  }
 };
-function escapeIdentifier(input, alwaysQuote = true) {
+function escapeIdentifier(input, alwaysQuote = true, escapeNonAscii = false) {
   if (input == null) {
     return null;
   }
-  const body = input.replace(SINGLE_QUOTE_ESCAPE_STRING_RE, (...match) => {
+  let body = input.replace(SINGLE_QUOTE_ESCAPE_STRING_RE, (...match) => {
     if (match[0] == "\n") {
       return "\\n";
     } else if (match[0] == "\r") {
@@ -4803,7 +4891,20 @@ function escapeIdentifier(input, alwaysQuote = true) {
     }
   });
   const requiresQuotes = alwaysQuote || !LEGAL_IDENTIFIER_RE.test(body);
-  return requiresQuotes ? `'${body}'` : body;
+  if (!requiresQuotes) {
+    return body;
+  }
+  if (escapeNonAscii) {
+    body = body.replace(NON_ASCII_OR_CONTROL_CHAR_RE, (c, offset, str) => {
+      const code = c.charCodeAt(0);
+      if (code === 0) {
+        const next = str.charCodeAt(offset + 1);
+        return next >= 48 && next <= 57 ? "\\x00" : "\\0";
+      }
+      return CONTROL_CHAR_ESCAPES.get(c) ?? "\\u" + code.toString(16).toUpperCase().padStart(4, "0");
+    });
+  }
+  return `'${body}'`;
 }
 
 // packages/compiler/src/chars.ts
@@ -4971,9 +5072,9 @@ var ParseLocation = class _ParseLocation {
   }
 };
 var ParseSourceFile = class {
-  constructor(content, url) {
+  constructor(content, url2) {
     this.content = content;
-    this.url = url;
+    this.url = url2;
   }
 };
 var ParseSourceSpan = class {
@@ -5047,10 +5148,10 @@ function identifierName(compileIdentifier) {
     return null;
   }
   const ref = compileIdentifier.reference;
-  if (ref["__anonymousType"]) {
+  if (Object.hasOwn(ref, "__anonymousType")) {
     return ref["__anonymousType"];
   }
-  if (ref["__forward_ref__"]) {
+  if (Object.hasOwn(ref, "__forward_ref__")) {
     return "__forward_ref__";
   }
   let identifier = stringify(ref);
@@ -7120,13 +7221,19 @@ function getPolicy() {
 function trustedScriptFromString(script) {
   return getPolicy()?.createScript(script) || script;
 }
+var PARAM_NAME_PATTERN = /^[A-Za-z_$][\w$]*$/;
 function newTrustedFunctionForJIT(...args) {
   if (!_global["trustedTypes"]) {
     return new Function(...args);
   }
-  const fnArgs = args.slice(0, -1).join(",");
   const fnBody = args[args.length - 1];
-  const body = `(function anonymous(${fnArgs}
+  const fnParams = args.slice(0, -1);
+  for (const param of fnParams) {
+    if (!PARAM_NAME_PATTERN.test(param)) {
+      throw new Error(`newTrustedFunctionForJIT: invalid parameter name "${param}"`);
+    }
+  }
+  const body = `(function anonymous(${fnParams.join(",")}
 ) { ${fnBody}
 })`;
   const fn2 = _global["eval"](trustedScriptFromString(body));
@@ -7174,8 +7281,10 @@ var JitEvaluator = class {
     const fnArgNames = [];
     const fnArgValues = [];
     for (const argName in vars) {
-      fnArgValues.push(vars[argName]);
-      fnArgNames.push(argName);
+      if (Object.hasOwn(vars, argName)) {
+        fnArgValues.push(vars[argName]);
+        fnArgNames.push(argName);
+      }
     }
     if (createSourceMap) {
       const emptyFn = newTrustedFunctionForJIT(...fnArgNames.concat("return null;")).toString();
@@ -7974,7 +8083,7 @@ var ShadowCss = class {
     const attrName = `[${scopeSelector}]`;
     const _scopeSelectorPart = (p) => {
       let scopedP = p.trim();
-      if (!scopedP || scopedP === "&") {
+      if (!scopedP || scopedP === "&" || _onlyCommentPlaceholdersRe.test(scopedP)) {
         return p;
       }
       if (p.includes(_polyfillHostNoCombinator)) {
@@ -8141,6 +8250,7 @@ var _commentRe = /\/\*[\s\S]*?\*\//g;
 var _commentWithHashRe = /\/\*\s*#\s*source(Mapping)?URL=/g;
 var COMMENT_PLACEHOLDER = "%COMMENT%";
 var _commentWithHashPlaceHolderRe = new RegExp(COMMENT_PLACEHOLDER, "g");
+var _onlyCommentPlaceholdersRe = new RegExp(`^(?:${COMMENT_PLACEHOLDER})+$`);
 var BLOCK_PLACEHOLDER = "%BLOCK%";
 var _ruleRe = new RegExp(
   `(\\s*(?:${COMMENT_PLACEHOLDER}\\s*)*)([^;\\{\\}]+?)(\\s*)((?:{%BLOCK%}?\\s*;?)|(?:\\s*;)|$)`,
@@ -9627,8 +9737,8 @@ var ReadTemporaryExpr = class _ReadTemporaryExpr extends ExpressionBase {
   }
   visitExpression(visitor, context) {
   }
-  isEquivalent() {
-    return this.xref === this.xref;
+  isEquivalent(e) {
+    return e instanceof _ReadTemporaryExpr && e.xref === this.xref;
   }
   isConstant() {
     return false;
@@ -13228,8 +13338,8 @@ function pureFunction(varOffset, fn2, args) {
 function attachSourceLocation(templatePath, locations) {
   return call(Identifiers.attachSourceLocations, [literal(templatePath), locations], null);
 }
-function arrowFunction(slotOffset, factory, contextRef) {
-  return importExpr(Identifiers.arrowFunction).callFn([literal(slotOffset), factory, contextRef]);
+function arrowFunction(slotOffset, factory13, contextRef) {
+  return importExpr(Identifiers.arrowFunction).callFn([literal(slotOffset), factory13, contextRef]);
 }
 function collateInterpolationArgs(strings, expressions) {
   if (strings.length < 1 || expressions.length !== strings.length - 1) {
@@ -13605,10 +13715,10 @@ function parseHostStyleProperties(job) {
       op.name = "style";
     } else if (op.name.startsWith(CLASS_DOT)) {
       op.bindingKind = 1 /* ClassName */;
-      op.name = parseProperty(op.name.substring(CLASS_DOT.length)).property;
+      op.name = stripImportant(op.name.substring(CLASS_DOT.length));
     } else if (op.name.startsWith(CLASS_BANG)) {
       op.bindingKind = 1 /* ClassName */;
-      op.name = parseProperty(op.name.substring(CLASS_BANG.length)).property;
+      op.name = stripImportant(op.name.substring(CLASS_BANG.length));
     }
   }
 }
@@ -13620,11 +13730,15 @@ function hyphenate(value) {
     return v.charAt(0) + "-" + v.charAt(1);
   }).toLowerCase();
 }
-function parseProperty(name) {
-  const overrideIndex = name.indexOf("!important");
+function stripImportant(name) {
+  const overrideIndex = name.indexOf(BANG_IMPORTANT);
   if (overrideIndex !== -1) {
     name = overrideIndex > 0 ? name.substring(0, overrideIndex) : "";
   }
+  return name;
+}
+function parseProperty(name) {
+  name = stripImportant(name);
   let suffix = null;
   let property2 = name;
   const unitIndex = name.lastIndexOf(".");
@@ -15992,8 +16106,8 @@ var TokenizeResult = class {
     this.nonNormalizedIcuExpressions = nonNormalizedIcuExpressions;
   }
 };
-function tokenize(source, url, getTagDefinition, options = {}) {
-  const tokenizer = new _Tokenizer(new ParseSourceFile(source, url), getTagDefinition, options);
+function tokenize(source, url2, getTagDefinition, options = {}) {
+  const tokenizer = new _Tokenizer(new ParseSourceFile(source, url2), getTagDefinition, options);
   tokenizer.tokenize();
   return new TokenizeResult(
     mergeTextTokens(tokenizer.tokens),
@@ -17335,8 +17449,8 @@ var Parser = class {
   constructor(getTagDefinition) {
     this.getTagDefinition = getTagDefinition;
   }
-  parse(source, url, options) {
-    const tokenizeResult = tokenize(source, url, this.getTagDefinition, options);
+  parse(source, url2, options) {
+    const tokenizeResult = tokenize(source, url2, this.getTagDefinition, options);
     const parser = new _TreeBuilder(tokenizeResult.tokens, this.getTagDefinition);
     parser.build();
     return new ParseTreeResult(parser.rootNodes, [...tokenizeResult.errors, ...parser.errors]);
@@ -19190,6 +19304,10 @@ var Parser2 = class {
     for (let i = 0; i < input.length - 1; i++) {
       const char = input.charCodeAt(i);
       const nextChar = input.charCodeAt(i + 1);
+      if (char === $BACKSLASH) {
+        i++;
+        continue;
+      }
       if (char === $SLASH && nextChar == $SLASH && outerQuote == null) return i;
       if (outerQuote === char) {
         outerQuote = null;
@@ -20201,7 +20319,18 @@ var _ParseAST = class {
           this.error("Template literal interpolation cannot be empty");
         }
         expressions.push(expression);
+        this.expectCharacter($RBRACE);
         this.rbracesExpected--;
+      } else if (token.isError()) {
+        this.errors.push(
+          getParseError(
+            token.toString(),
+            this.input,
+            this.getErrorLocationText(this.index),
+            this.parseSourceSpan
+          )
+        );
+        this.advance();
       } else {
         this.advance();
       }
@@ -20606,7 +20735,7 @@ function normalizeTagName(tagName) {
 }
 var SCHEMA = [
   "[Element]|textContent,%ariaActiveDescendantElement,%ariaAtomic,%ariaAutoComplete,%ariaBusy,%ariaChecked,%ariaColCount,%ariaColIndex,%ariaColIndexText,%ariaColSpan,%ariaControlsElements,%ariaCurrent,%ariaDescribedByElements,%ariaDescription,%ariaDetailsElements,%ariaDisabled,%ariaErrorMessageElements,%ariaExpanded,%ariaFlowToElements,%ariaHasPopup,%ariaHidden,%ariaInvalid,%ariaKeyShortcuts,%ariaLabel,%ariaLabelledByElements,%ariaLevel,%ariaLive,%ariaModal,%ariaMultiLine,%ariaMultiSelectable,%ariaOrientation,%ariaOwnsElements,%ariaPlaceholder,%ariaPosInSet,%ariaPressed,%ariaReadOnly,%ariaRelevant,%ariaRequired,%ariaRoleDescription,%ariaRowCount,%ariaRowIndex,%ariaRowIndexText,%ariaRowSpan,%ariaSelected,%ariaSetSize,%ariaSort,%ariaValueMax,%ariaValueMin,%ariaValueNow,%ariaValueText,%classList,className,elementTiming,id,innerHTML,*beforecopy,*beforecut,*beforepaste,*fullscreenchange,*fullscreenerror,*search,*webkitfullscreenchange,*webkitfullscreenerror,outerHTML,%part,#scrollLeft,#scrollTop,slot,*message,*mozfullscreenchange,*mozfullscreenerror,*mozpointerlockchange,*mozpointerlockerror,*webglcontextcreationerror,*webglcontextlost,*webglcontextrestored",
-  "[HTMLElement]^[Element]|accessKey,autocapitalize,!autofocus,contentEditable,dir,!draggable,enterKeyHint,!hidden,!inert,innerText,inputMode,lang,nonce,*abort,*animationend,*animationiteration,*animationstart,*auxclick,*beforexrselect,*blur,*cancel,*canplay,*canplaythrough,*change,*click,*close,*contextmenu,*copy,*cuechange,*cut,*dblclick,*drag,*dragend,*dragenter,*dragleave,*dragover,*dragstart,*drop,*durationchange,*emptied,*ended,*error,*focus,*formdata,*gotpointercapture,*input,*invalid,*keydown,*keypress,*keyup,*load,*loadeddata,*loadedmetadata,*loadstart,*lostpointercapture,*mousedown,*mouseenter,*mouseleave,*mousemove,*mouseout,*mouseover,*mouseup,*mousewheel,*paste,*pause,*play,*playing,*pointercancel,*pointerdown,*pointerenter,*pointerleave,*pointermove,*pointerout,*pointerover,*pointerrawupdate,*pointerup,*progress,*ratechange,*reset,*resize,*scroll,*securitypolicyviolation,*seeked,*seeking,*select,*selectionchange,*selectstart,*slotchange,*stalled,*submit,*suspend,*timeupdate,*toggle,*transitioncancel,*transitionend,*transitionrun,*transitionstart,*volumechange,*waiting,*webkitanimationend,*webkitanimationiteration,*webkitanimationstart,*webkittransitionend,*wheel,outerText,!spellcheck,%style,#tabIndex,title,!translate,virtualKeyboardPolicy",
+  "[HTMLElement]^[Element]|accessKey,autocapitalize,!autofocus,contentEditable,dir,!draggable,enterKeyHint,!hidden,!inert,innerText,inputMode,lang,nonce,*abort,*animationend,*animationiteration,*animationstart,*auxclick,*beforexrselect,*blur,*cancel,*canplay,*canplaythrough,*change,*click,*close,*contextmenu,*copy,*cuechange,*cut,*dblclick,*drag,*dragend,*dragenter,*dragleave,*dragover,*dragstart,*drop,*durationchange,*emptied,*ended,*error,*focus,*formdata,*gotpointercapture,*input,*invalid,*keydown,*keypress,*keyup,*load,*loadeddata,*loadedmetadata,*loadstart,*lostpointercapture,*mousedown,*mouseenter,*mouseleave,*mousemove,*mouseout,*mouseover,*mouseup,*mousewheel,*paste,*pause,*play,*playing,*pointercancel,*pointerdown,*pointerenter,*pointerleave,*pointermove,*pointerout,*pointerover,*pointerrawupdate,*pointerup,*progress,*ratechange,*reset,*resize,*scroll,*securitypolicyviolation,*seeked,*seeking,*select,*selectionchange,*selectstart,*slotchange,*stalled,*submit,*suspend,*timeupdate,*toggle,*transitioncancel,*transitionend,*transitionrun,*transitionstart,*volumechange,*waiting,*webkitanimationend,*webkitanimationiteration,*webkitanimationstart,*webkittransitionend,*wheel,outerText,popover,!spellcheck,%style,#tabIndex,title,!translate,virtualKeyboardPolicy",
   "abbr,address,article,aside,b,bdi,bdo,cite,content,code,dd,dfn,dt,em,figcaption,figure,footer,header,hgroup,i,kbd,main,mark,nav,noscript,rb,rp,rt,rtc,ruby,s,samp,search,section,small,strong,sub,sup,u,var,wbr^[HTMLElement]|accessKey,autocapitalize,!autofocus,contentEditable,dir,!draggable,enterKeyHint,!hidden,innerText,inputMode,lang,nonce,*abort,*animationend,*animationiteration,*animationstart,*auxclick,*beforexrselect,*blur,*cancel,*canplay,*canplaythrough,*change,*click,*close,*contextmenu,*copy,*cuechange,*cut,*dblclick,*drag,*dragend,*dragenter,*dragleave,*dragover,*dragstart,*drop,*durationchange,*emptied,*ended,*error,*focus,*formdata,*gotpointercapture,*input,*invalid,*keydown,*keypress,*keyup,*load,*loadeddata,*loadedmetadata,*loadstart,*lostpointercapture,*mousedown,*mouseenter,*mouseleave,*mousemove,*mouseout,*mouseover,*mouseup,*mousewheel,*paste,*pause,*play,*playing,*pointercancel,*pointerdown,*pointerenter,*pointerleave,*pointermove,*pointerout,*pointerover,*pointerrawupdate,*pointerup,*progress,*ratechange,*reset,*resize,*scroll,*securitypolicyviolation,*seeked,*seeking,*select,*selectionchange,*selectstart,*slotchange,*stalled,*submit,*suspend,*timeupdate,*toggle,*transitioncancel,*transitionend,*transitionrun,*transitionstart,*volumechange,*waiting,*webkitanimationend,*webkitanimationiteration,*webkitanimationstart,*webkittransitionend,*wheel,outerText,!spellcheck,%style,#tabIndex,title,!translate,virtualKeyboardPolicy",
   "media^[HTMLElement]|!autoplay,!controls,%controlsList,%crossOrigin,#currentTime,!defaultMuted,#defaultPlaybackRate,!disableRemotePlayback,!loop,!muted,*encrypted,*waitingforkey,#playbackRate,preload,!preservesPitch,src,%srcObject,#volume",
   ":svg:^[HTMLElement]|!autofocus,nonce,*abort,*animationend,*animationiteration,*animationstart,*auxclick,*beforexrselect,*blur,*cancel,*canplay,*canplaythrough,*change,*click,*close,*contextmenu,*copy,*cuechange,*cut,*dblclick,*drag,*dragend,*dragenter,*dragleave,*dragover,*dragstart,*drop,*durationchange,*emptied,*ended,*error,*focus,*formdata,*gotpointercapture,*input,*invalid,*keydown,*keypress,*keyup,*load,*loadeddata,*loadedmetadata,*loadstart,*lostpointercapture,*mousedown,*mouseenter,*mouseleave,*mousemove,*mouseout,*mouseover,*mouseup,*mousewheel,*paste,*pause,*play,*playing,*pointercancel,*pointerdown,*pointerenter,*pointerleave,*pointermove,*pointerout,*pointerover,*pointerrawupdate,*pointerup,*progress,*ratechange,*reset,*resize,*scroll,*securitypolicyviolation,*seeked,*seeking,*select,*selectionchange,*selectstart,*slotchange,*stalled,*submit,*suspend,*timeupdate,*toggle,*transitioncancel,*transitionend,*transitionrun,*transitionstart,*volumechange,*waiting,*webkitanimationend,*webkitanimationiteration,*webkitanimationstart,*webkittransitionend,*wheel,%style,#tabIndex",
@@ -20623,7 +20752,7 @@ var SCHEMA = [
   "br^[HTMLElement]|clear",
   "base^[HTMLElement]|href,target",
   "body^[HTMLElement]|aLink,background,bgColor,link,*afterprint,*beforeprint,*beforeunload,*blur,*error,*focus,*hashchange,*languagechange,*load,*message,*messageerror,*offline,*online,*pagehide,*pageshow,*popstate,*rejectionhandled,*resize,*scroll,*storage,*unhandledrejection,*unload,text,vLink",
-  "button^[HTMLElement]|!disabled,formAction,formEnctype,formMethod,!formNoValidate,formTarget,name,type,value",
+  "button^[HTMLElement]|!disabled,formAction,formEnctype,formMethod,!formNoValidate,formTarget,name,popoverTargetAction,%popoverTargetElement,type,value",
   "canvas^[HTMLElement]|#height,#width",
   "content^[HTMLElement]|select",
   "dl^[HTMLElement]|!compact",
@@ -20646,7 +20775,7 @@ var SCHEMA = [
   "html^[HTMLElement]|version",
   "iframe^[HTMLElement]|align,allow,!allowFullscreen,!allowPaymentRequest,csp,!credentialless,frameBorder,height,loading,longDesc,marginHeight,marginWidth,name,referrerPolicy,%sandbox,scrolling,src,srcdoc,width",
   "img^[HTMLElement]|align,alt,border,%crossOrigin,decoding,#height,#hspace,!isMap,loading,longDesc,lowsrc,name,referrerPolicy,sizes,src,srcset,useMap,#vspace,#width",
-  "input^[HTMLElement]|accept,align,alt,autocomplete,!checked,!defaultChecked,defaultValue,dirName,!disabled,%files,formAction,formEnctype,formMethod,!formNoValidate,formTarget,#height,!incremental,!indeterminate,max,#maxLength,min,#minLength,!multiple,name,pattern,placeholder,!readOnly,!required,selectionDirection,#selectionEnd,#selectionStart,#size,src,step,type,useMap,value,%valueAsDate,#valueAsNumber,#width",
+  "input^[HTMLElement]|accept,align,alt,autocomplete,!checked,!defaultChecked,defaultValue,dirName,!disabled,%files,formAction,formEnctype,formMethod,!formNoValidate,formTarget,#height,!incremental,!indeterminate,max,#maxLength,min,#minLength,!multiple,name,pattern,placeholder,popoverTargetAction,%popoverTargetElement,!readOnly,!required,selectionDirection,#selectionEnd,#selectionStart,#size,src,step,type,useMap,value,%valueAsDate,#valueAsNumber,#width",
   "li^[HTMLElement]|type,#value",
   "label^[HTMLElement]|htmlFor",
   "legend^[HTMLElement]|align",
@@ -22691,10 +22820,10 @@ function addNamesToView(unit, baseName, state) {
         addNamesToView(childView, `${baseName}${suffix}_${op.handle.slot}`, state);
         break;
       case 24 /* StyleProp */:
-        op.name = stripImportant(normalizeStylePropName(op.name));
+        op.name = stripImportant2(normalizeStylePropName(op.name));
         break;
       case 25 /* ClassProp */:
-        op.name = stripImportant(op.name);
+        op.name = stripImportant2(op.name);
         break;
     }
   }
@@ -22733,7 +22862,7 @@ function getVariableName(variable2, state) {
 function normalizeStylePropName(name) {
   return name.startsWith("--") ? name : hyphenate2(name);
 }
-function stripImportant(name) {
+function stripImportant2(name) {
   const importantIndex = name.indexOf("!important");
   if (importantIndex > -1) {
     return name.substring(0, importantIndex);
@@ -26486,7 +26615,7 @@ var BindingParser = class {
         }
         bindingType = 1 /* Attribute */;
       } else if (parts[0] == CLASS_PREFIX) {
-        boundPropertyName = parts[1];
+        boundPropertyName = parts.slice(1).join(PROPERTY_PARTS_SEPARATOR);
         bindingType = 2 /* Class */;
         securityContexts = [0 /* NONE */];
       } else if (parts[0] == STYLE_PREFIX) {
@@ -28480,15 +28609,15 @@ var HtmlParser = class extends Parser {
   constructor() {
     super(getHtmlTagDefinition);
   }
-  parse(source, url, options) {
-    return super.parse(source, url, options);
+  parse(source, url2, options) {
+    return super.parse(source, url2, options);
   }
 };
 
 // packages/compiler/src/style_url_resolver.ts
-function isStyleUrlResolvable(url) {
-  if (url == null || url.length === 0 || url[0] == "/") return false;
-  const schemeMatch = url.match(URL_WITH_SCHEMA_REGEXP);
+function isStyleUrlResolvable(url2) {
+  if (url2 == null || url2.length === 0 || url2[0] == "/") return false;
+  const schemeMatch = url2.match(URL_WITH_SCHEMA_REGEXP);
   return schemeMatch === null || schemeMatch[1] == "package" || schemeMatch[1] == "asset";
 }
 var URL_WITH_SCHEMA_REGEXP = /^([^:/?#]+):/;
@@ -30542,7 +30671,7 @@ var HtmlAstToIvyAst = class {
     const bound = [];
     const literal2 = [];
     properties.forEach((prop) => {
-      const i18n2 = i18nPropsMeta[prop.name];
+      const i18n2 = i18nPropsMeta?.get(prop.name);
       if (prop.isLiteral) {
         literal2.push(
           new TextAttribute(
@@ -30575,15 +30704,16 @@ var HtmlAstToIvyAst = class {
     const variables = [];
     const references = [];
     const attributes = [];
-    const i18nAttrsMeta = {};
     const templateParsedProperties = [];
     const templateVariables = [];
+    let i18nAttrsMeta = null;
     let elementHasInlineTemplate = false;
     for (const attribute2 of attrs) {
       let hasBinding = false;
       let isTemplateBinding = false;
       if (attribute2.i18n) {
-        i18nAttrsMeta[attribute2.name] = attribute2.i18n;
+        i18nAttrsMeta ??= /* @__PURE__ */ new Map();
+        i18nAttrsMeta.set(attribute2.name, attribute2.i18n);
       }
       if (attribute2.name.startsWith(TEMPLATE_ATTR_PREFIX2)) {
         if (elementHasInlineTemplate) {
@@ -33429,6 +33559,7 @@ function convertDeclareComponentFacadeToMetadata(decl, typeSourceSpan, sourceMap
   const hasDirectiveDependencies = declarations.some(
     ({ kind }) => kind === 0 /* Directive */ || kind === 2 /* NgModule */
   );
+  const defaultCdStrategy = getJitChangeDetectionDefaultForVersion(decl.version);
   return {
     ...convertDeclareDirectiveFacadeToMetadata(decl, typeSourceSpan),
     template: template2,
@@ -33437,7 +33568,7 @@ function convertDeclareComponentFacadeToMetadata(decl, typeSourceSpan, sourceMap
     viewProviders: decl.viewProviders !== void 0 ? new WrappedNodeExpr(decl.viewProviders) : null,
     animations: decl.animations !== void 0 ? new WrappedNodeExpr(decl.animations) : null,
     defer: defer2,
-    changeDetection: decl.changeDetection ?? 0 /* OnPush */,
+    changeDetection: decl.changeDetection ?? defaultCdStrategy,
     encapsulation: decl.encapsulation ?? 0 /* Emulated */,
     declarationListEmitMode: 2 /* ClosureResolved */,
     relativeContextFilePath: "",
@@ -33530,8 +33661,8 @@ function convertR3DependencyMetadataArray(facades) {
 }
 function convertR3DependencyMetadata(facade) {
   const isAttributeDep = facade.attribute != null;
-  const rawToken = facade.token === null ? null : new WrappedNodeExpr(facade.token);
-  const token = isAttributeDep ? new WrappedNodeExpr(facade.attribute) : rawToken;
+  const rawToken2 = facade.token === null ? null : new WrappedNodeExpr(facade.token);
+  const token = isAttributeDep ? new WrappedNodeExpr(facade.attribute) : rawToken2;
   return createR3DependencyMetadata(
     token,
     isAttributeDep,
@@ -33802,6 +33933,113 @@ function compileClassDebugInfo(debugInfo) {
   const iife = arrowFn([], [devOnlyGuardedExpression(fnCall).toStmt()], DYNAMIC_TYPE);
   return iife.callFn([]);
 }
+
+// packages/compiler/src/render3/r3_hmr_compiler.ts
+function compileHmrInitializer(meta) {
+  const moduleName = "m";
+  const dataName = "d";
+  const timestampName = "t";
+  const idName = "id";
+  const importCallbackName = `${meta.className}_HmrLoad`;
+  const namespaces = meta.namespaceDependencies.map((dep) => {
+    return new ExternalExpr({ moduleName: dep.moduleName, name: null });
+  });
+  const defaultRead = variable(moduleName).prop("default");
+  const replaceCall = importExpr(Identifiers.replaceMetadata).callFn([
+    meta.type,
+    defaultRead,
+    literalArr(namespaces),
+    literalArr(meta.localDependencies.map((l) => l.runtimeRepresentation)),
+    variable("import").prop("meta"),
+    variable(idName)
+  ]);
+  const replaceCallback = arrowFn(
+    [new FnParam(moduleName, DYNAMIC_TYPE)],
+    defaultRead.and(replaceCall),
+    DYNAMIC_TYPE
+  );
+  const url2 = importExpr(Identifiers.getReplaceMetadataURL).callFn([
+    variable(idName),
+    variable(timestampName),
+    variable("import").prop("meta").prop("url")
+  ]);
+  const importCallback = new DeclareFunctionStmt(
+    importCallbackName,
+    [new FnParam(timestampName, DYNAMIC_TYPE)],
+    [
+      // The vite-ignore special comment is required to prevent Vite from generating a superfluous
+      // warning for each usage within the development code. If Vite provides a method to
+      // programmatically avoid this warning in the future, this added comment can be removed here.
+      new DynamicImportExpr(url2, null, "@vite-ignore").prop("then").callFn([replaceCallback]).toStmt()
+    ],
+    DYNAMIC_TYPE,
+    1 /* Final */
+  );
+  const updateCallback = arrowFn(
+    [new FnParam(dataName, DYNAMIC_TYPE)],
+    variable(dataName).prop("id").identical(variable(idName)).and(variable(importCallbackName).callFn([variable(dataName).prop("timestamp")])),
+    DYNAMIC_TYPE
+  );
+  const initialCall = variable(importCallbackName).callFn([variable("Date").prop("now").callFn([])]);
+  const hotRead = variable("import").prop("meta").prop("hot");
+  const hotListener = hotRead.clone().prop("on").callFn([literal("angular:component-update"), updateCallback]);
+  return arrowFn(
+    [],
+    [
+      // const id = <id>;
+      new DeclareVarStmt(
+        idName,
+        literal(encodeURIComponent(`${meta.filePath}@${meta.className}`)),
+        null,
+        1 /* Final */
+      ),
+      // function Cmp_HmrLoad() {...}.
+      importCallback,
+      // ngDevMode && Cmp_HmrLoad(Date.now());
+      devOnlyGuardedExpression(initialCall).toStmt(),
+      // ngDevMode && import.meta.hot && import.meta.hot.on(...)
+      devOnlyGuardedExpression(hotRead.and(hotListener)).toStmt()
+    ],
+    DYNAMIC_TYPE
+  ).callFn([]);
+}
+function compileHmrUpdateCallback(definitions, constantStatements, meta) {
+  const namespaces = "\u0275\u0275namespaces";
+  const params = [meta.className, namespaces].map((name) => new FnParam(name, DYNAMIC_TYPE));
+  const body = [];
+  for (const local of meta.localDependencies) {
+    params.push(new FnParam(local.name, DYNAMIC_TYPE));
+  }
+  for (let i = 0; i < meta.namespaceDependencies.length; i++) {
+    body.push(
+      new DeclareVarStmt(
+        meta.namespaceDependencies[i].assignedName,
+        variable(namespaces).key(literal(i)),
+        DYNAMIC_TYPE,
+        1 /* Final */
+      )
+    );
+  }
+  body.push(...constantStatements);
+  for (const field of definitions) {
+    if (field.initializer !== null) {
+      body.push(variable(meta.className).prop(field.name).set(field.initializer).toStmt());
+      for (const stmt of field.statements) {
+        body.push(stmt);
+      }
+    }
+  }
+  return new DeclareFunctionStmt(
+    `${meta.className}_UpdateMetadata`,
+    params,
+    body,
+    DYNAMIC_TYPE,
+    1 /* Final */
+  );
+}
+
+// packages/compiler/src/version.ts
+var VERSION2 = new Version("0.0.0-PLACEHOLDER");
 
 // packages/compiler/src/typecheck/host_bindings.ts
 var HOST_BINDING_GUARD_COMMENT_TEXT = "hostBindingsBlockGuard";
@@ -34959,6 +35197,10 @@ var TcbControlFlowContentProjectionOp = class extends TcbOp {
             result.push(current);
           }
         }
+      } else if (child instanceof BoundaryBlock) {
+        if (this.shouldCheck(child)) {
+          result.push(child);
+        }
       }
     }
     return result;
@@ -35428,6 +35670,11 @@ var TcbDirectiveInputsOp = class extends TcbOp {
           const temp = declareVariable(id, type);
           this.scope.addStatement(temp);
           target = id;
+          if (!this.dir.stringLiteralInputFields.has(fieldName) && attr.keySpan !== null) {
+            this.scope.addStatement(
+              new TcbExpr(`null! as typeof ${dirId.print()}.${fieldName}`).markIgnoreDiagnostics().addParseSpanInfo(attr.keySpan)
+            );
+          }
         } else {
           if (dirId === null) {
             dirId = this.scope.resolve(this.node, this.dir);
@@ -36252,11 +36499,11 @@ var TcbSwitchOp = class extends TcbOp {
       });
     });
     if (this.block.exhaustiveCheck) {
-      let translateExpression = this.block.expression;
+      let translateExpression2 = this.block.expression;
       if (this.block.exhaustiveCheck.expression) {
-        translateExpression = this.block.exhaustiveCheck.expression;
+        translateExpression2 = this.block.exhaustiveCheck.expression;
       }
-      const switchValue = tcbExpression(translateExpression, this.tcb, this.scope);
+      const switchValue = tcbExpression(translateExpression2, this.tcb, this.scope);
       const exhaustiveId = this.tcb.allocateId();
       clauses.push(
         new TcbExpr(`default: const tcbExhaustive${exhaustiveId}: never = ${switchValue.print()};`)
@@ -37689,111 +37936,371 @@ var IndexerVisitor = class extends CombinedRecursiveAstVisitor {
 // packages/compiler/src/compiler.ts
 publishFacade(_global);
 
-// packages/compiler-cli/preprocessor/src/dom_schema_checker.ts
+// packages/compiler-cli/preprocessor/src/hybrid_compiler.ts
+import * as fsSync2 from "node:fs";
+import * as fs2 from "node:fs/promises";
+import * as path2 from "path";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/dom.ts
+import ts3 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/diagnostics/src/error.ts
+import ts from "typescript";
+
+// packages/compiler-cli/src/ngtsc/diagnostics/src/error_details_base_url.ts
+var DOC_PAGE_BASE_URL = (() => {
+  const full = VERSION2.full;
+  const isPreRelease = full.includes("-next") || full.includes("-rc") || full === "0.0.0-PLACEHOLDER";
+  const prefix = isPreRelease ? "next" : `v${VERSION2.major}`;
+  return `https://${prefix}.angular.dev`;
+})();
+var ERROR_DETAILS_PAGE_BASE_URL = (() => {
+  return `${DOC_PAGE_BASE_URL}/errors`;
+})();
+
+// packages/compiler-cli/src/ngtsc/diagnostics/src/util.ts
+var ERROR_CODE_MARKER = 99;
+var ERROR_CODE_MARKER_DIGITS = String(ERROR_CODE_MARKER).length;
+
+// packages/compiler-cli/src/ngtsc/typecheck/diagnostics/src/diagnostic.ts
+import ts2 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/dom.ts
 var REGISTRY3 = new DomElementSchemaRegistry();
-var REMOVE_XHTML_REGEX = /^:xhtml:/;
-var UNCLAIMED_EVENT_CANDIDATE_REGEX = /^[a-zA-Z][a-zA-Z0-9$_]*$/;
-var RegistryDomSchemaChecker = class {
-  _diagnostics = [];
-  get diagnostics() {
-    return this._diagnostics;
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/reference_emit_environment.ts
+import ts16 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/imports/src/emitter.ts
+import ts7 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/file_system/src/compiler_host.ts
+import ts4 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/file_system/src/invalid_file_system.ts
+var InvalidFileSystem = class {
+  exists(path6) {
+    throw makeError();
   }
-  checkElement(id, tagName, sourceSpanForDiagnostics, schemas, hostIsStandalone) {
-    const name = tagName.replace(REMOVE_XHTML_REGEX, "");
-    if (!REGISTRY3.hasElement(name, schemas)) {
-      const schemasStr = `'${hostIsStandalone ? "@Component" : "@NgModule"}.schemas'`;
-      let errorMsg = `'${name}' is not a known element:
-`;
-      errorMsg += `1. If '${name}' is an Angular component, then verify that it is ${hostIsStandalone ? "included in the '@Component.imports' of this component" : "part of this module"}.
-`;
-      if (name.indexOf("-") > -1) {
-        errorMsg += `2. If '${name}' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the ${schemasStr} of this component to suppress this message.`;
-      } else {
-        errorMsg += `2. To allow any element add 'NO_ERRORS_SCHEMA' to the ${schemasStr} of this component.`;
+  readFile(path6) {
+    throw makeError();
+  }
+  readFileBuffer(path6) {
+    throw makeError();
+  }
+  writeFile(path6, data, exclusive) {
+    throw makeError();
+  }
+  removeFile(path6) {
+    throw makeError();
+  }
+  symlink(target, path6) {
+    throw makeError();
+  }
+  readdir(path6) {
+    throw makeError();
+  }
+  lstat(path6) {
+    throw makeError();
+  }
+  stat(path6) {
+    throw makeError();
+  }
+  pwd() {
+    throw makeError();
+  }
+  chdir(path6) {
+    throw makeError();
+  }
+  extname(path6) {
+    throw makeError();
+  }
+  copyFile(from, to) {
+    throw makeError();
+  }
+  moveFile(from, to) {
+    throw makeError();
+  }
+  ensureDir(path6) {
+    throw makeError();
+  }
+  removeDeep(path6) {
+    throw makeError();
+  }
+  isCaseSensitive() {
+    throw makeError();
+  }
+  resolve(...paths) {
+    throw makeError();
+  }
+  dirname(file) {
+    throw makeError();
+  }
+  join(basePath, ...paths) {
+    throw makeError();
+  }
+  isRoot(path6) {
+    throw makeError();
+  }
+  isRooted(path6) {
+    throw makeError();
+  }
+  relative(from, to) {
+    throw makeError();
+  }
+  basename(filePath, extension) {
+    throw makeError();
+  }
+  realpath(filePath) {
+    throw makeError();
+  }
+  getDefaultLibLocation() {
+    throw makeError();
+  }
+  normalize(path6) {
+    throw makeError();
+  }
+};
+function makeError() {
+  return new Error(
+    "FileSystem has not been configured. Please call `setFileSystem()` before calling this method."
+  );
+}
+
+// packages/compiler-cli/src/ngtsc/file_system/src/helpers.ts
+var fs = new InvalidFileSystem();
+
+// packages/compiler-cli/src/ngtsc/file_system/src/node_js_file_system.ts
+import * as url from "url";
+var isCommonJS = typeof __filename !== "undefined";
+var currentFileUrl = isCommonJS ? null : import.meta.url;
+var currentFileName = isCommonJS ? __filename : url.fileURLToPath?.(currentFileUrl) ?? null;
+
+// packages/compiler-cli/src/ngtsc/file_system/src/ts_read_directory.ts
+import ts5 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/util/src/typescript.ts
+import ts6 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/imports/src/core.ts
+var CORE_SUPPORTED_SYMBOLS = /* @__PURE__ */ new Map([
+  ["\u0275\u0275defineInjectable", "\u0275\u0275defineInjectable"],
+  ["\u0275\u0275defineService", "\u0275\u0275defineService"],
+  ["\u0275\u0275defineInjector", "\u0275\u0275defineInjector"],
+  ["\u0275\u0275defineNgModule", "\u0275\u0275defineNgModule"],
+  ["\u0275\u0275setNgModuleScope", "\u0275\u0275setNgModuleScope"],
+  ["\u0275\u0275inject", "\u0275\u0275inject"],
+  ["\u0275\u0275FactoryDeclaration", "\u0275\u0275FactoryDeclaration"],
+  ["\u0275setClassMetadata", "setClassMetadata"],
+  ["\u0275setClassMetadataAsync", "setClassMetadataAsync"],
+  ["\u0275\u0275InjectableDeclaration", "\u0275\u0275InjectableDeclaration"],
+  ["\u0275\u0275InjectorDeclaration", "\u0275\u0275InjectorDeclaration"],
+  ["\u0275\u0275NgModuleDeclaration", "\u0275\u0275NgModuleDeclaration"],
+  ["\u0275NgModuleFactory", "NgModuleFactory"],
+  ["\u0275noSideEffects", "\u0275noSideEffects"]
+]);
+var CORE_MODULE = "@angular/core";
+function validateAndRewriteCoreSymbol(name) {
+  if (!CORE_SUPPORTED_SYMBOLS.has(name)) {
+    throw new Error(`Importing unexpected symbol ${name} while compiling ${CORE_MODULE}`);
+  }
+  return CORE_SUPPORTED_SYMBOLS.get(name);
+}
+
+// packages/compiler-cli/src/ngtsc/imports/src/patch_alias_reference_resolution.ts
+import ts8 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/imports/src/deferred_symbol_tracker.ts
+import ts13 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/reflection/src/typescript.ts
+import ts12 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/reflection/src/host.ts
+import ts9 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/reflection/src/type_to_value.ts
+import ts10 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/reflection/src/util.ts
+import ts11 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/imports/src/imported_symbols_tracker.ts
+import ts14 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/imports/src/local_compilation_extra_imports_tracker.ts
+import ts15 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/tcb_util.ts
+import ts29 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/comments.ts
+import ts17 from "typescript";
+var IGNORE_FOR_DIAGNOSTICS_MARKER = `${"D" /* DIAGNOSTIC */}:ignore`;
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/type_parameter_emitter.ts
+import ts27 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/import_manager/import_manager.ts
+import ts22 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/import_manager/check_unique_identifier_name.ts
+import ts18 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/import_manager/import_typescript_transform.ts
+import ts19 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/import_manager/reuse_generated_imports.ts
+import ts20 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/import_manager/reuse_source_file_imports.ts
+import ts21 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/translator.ts
+var UNARY_OPERATORS2 = /* @__PURE__ */ new Map([
+  [0 /* Minus */, "-"],
+  [1 /* Plus */, "+"],
+  [2 /* Increment */, "++"],
+  [3 /* Decrement */, "--"]
+]);
+var BINARY_OPERATORS3 = /* @__PURE__ */ new Map([
+  [10 /* And */, "&&"],
+  [16 /* Bigger */, ">"],
+  [17 /* BiggerEquals */, ">="],
+  [13 /* BitwiseAnd */, "&"],
+  [12 /* BitwiseOr */, "|"],
+  [7 /* Divide */, "/"],
+  [0 /* Equals */, "=="],
+  [3 /* Identical */, "==="],
+  [14 /* Lower */, "<"],
+  [15 /* LowerEquals */, "<="],
+  [5 /* Minus */, "-"],
+  [9 /* Modulo */, "%"],
+  [8 /* Multiply */, "*"],
+  [1 /* NotEquals */, "!="],
+  [4 /* NotIdentical */, "!=="],
+  [11 /* Or */, "||"],
+  [6 /* Plus */, "+"],
+  [18 /* NullishCoalesce */, "??"],
+  [19 /* Exponentiation */, "**"],
+  [20 /* In */, "in"],
+  [21 /* InstanceOf */, "instanceof"],
+  [2 /* Assign */, "="],
+  [22 /* AdditionAssignment */, "+="],
+  [23 /* SubtractionAssignment */, "-="],
+  [24 /* MultiplicationAssignment */, "*="],
+  [25 /* DivisionAssignment */, "/="],
+  [26 /* RemainderAssignment */, "%="],
+  [27 /* ExponentiationAssignment */, "**="],
+  [28 /* AndAssignment */, "&&="],
+  [29 /* OrAssignment */, "||="],
+  [30 /* NullishCoalesceAssignment */, "??="]
+]);
+
+// packages/compiler-cli/src/ngtsc/translator/src/type_emitter.ts
+import ts23 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/type_translator.ts
+import ts25 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/ts_util.ts
+import ts24 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/translator/src/typescript_ast_factory.ts
+import ts26 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/tcb_print.ts
+import ts28 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/tcb_util.ts
+var TCB_FILE_IMPORT_GRAPH_PREPARE_IDENTIFIERS = [
+  // Imports may be added for signal input checking. We wouldn't want to change the
+  // import graph for incremental compilations when suddenly a signal input is used,
+  // or removed.
+  Identifiers.InputSignalBrandWriteType
+];
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/template_symbol_builder.ts
+import ts35 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/metadata/src/dts.ts
+import ts33 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/partial_evaluator/src/diagnostics.ts
+import ts30 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/partial_evaluator/src/interpreter.ts
+import ts31 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/metadata/src/util.ts
+import ts32 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/typecheck/src/ts_util.ts
+import ts34 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/hmr/src/extract_dependencies.ts
+import ts36 from "typescript";
+function extractHmrDependenciesFromOutput(className, output, visitor, availableTopLevel, resolver) {
+  const { definition, factory: factory13, deferBlockMetadata, classMetadata, debugInfo } = output;
+  definition.expression.visitExpression(visitor, null);
+  definition.statements.forEach((statement) => statement.visitStatement(visitor, null));
+  factory13.initializer?.visitExpression(visitor, null);
+  factory13.statements.forEach((statement) => statement.visitStatement(visitor, null));
+  classMetadata?.visitStatement(visitor, null);
+  debugInfo?.visitStatement(visitor, null);
+  if (deferBlockMetadata.mode === 0 /* PerBlock */) {
+    deferBlockMetadata.blocks.forEach((loader) => loader?.visitExpression(visitor, null));
+  } else {
+    deferBlockMetadata.dependenciesFn?.visitExpression(visitor, null);
+  }
+  const local = [];
+  const seenLocals = /* @__PURE__ */ new Set();
+  for (const readNode of visitor.allReads) {
+    const readName2 = resolver.getName(readNode);
+    if (readName2 !== className && !seenLocals.has(readName2) && availableTopLevel.has(readName2)) {
+      const runtimeRepresentation = resolver.getRuntimeRepresentation(readNode);
+      if (runtimeRepresentation === null) {
+        return null;
       }
-      this._diagnostics.push({
-        typeCheckId: id,
-        category: 0 /* Error */,
-        code: 8001,
-        message: errorMsg,
-        start: sourceSpanForDiagnostics.start.offset,
-        end: sourceSpanForDiagnostics.end.offset
-      });
+      local.push({ name: readName2, runtimeRepresentation });
+      seenLocals.add(readName2);
     }
   }
-  checkTemplateElementProperty(id, tagName, name, span, schemas, hostIsStandalone) {
-    if (!REGISTRY3.hasProperty(tagName, name, schemas)) {
-      const decorator = hostIsStandalone ? "@Component" : "@NgModule";
-      const schemasStr = `'${decorator}.schemas'`;
-      let errorMsg = `Can't bind to '${name}' since it isn't a known property of '${tagName}'.`;
-      if (tagName.startsWith("ng-")) {
-        errorMsg += `
-1. If '${name}' is an Angular directive, then add 'CommonModule' to the '${decorator}.imports' of this component.
-2. To allow any property add 'NO_ERRORS_SCHEMA' to the ${schemasStr} of this component.`;
-      } else if (tagName.indexOf("-") > -1) {
-        errorMsg += `
-1. If '${tagName}' is an Angular component and it has '${name}' input, then verify that it is ${hostIsStandalone ? "included in the '@Component.imports' of this component" : "part of this module"}.
-2. If '${tagName}' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the ${schemasStr} of this component to suppress this message.
-3. To allow any property add 'NO_ERRORS_SCHEMA' to the ${schemasStr} of this component.`;
-      }
-      this._diagnostics.push({
-        typeCheckId: id,
-        category: 0 /* Error */,
-        code: 8002,
-        message: errorMsg,
-        start: span.start.offset,
-        end: span.end.offset
-      });
+  return {
+    local,
+    external: Array.from(visitor.namespaceReads, (name, index) => ({
+      moduleName: name,
+      assignedName: `\u0275hmr${index}`
+    }))
+  };
+}
+var PotentialTopLevelReadsVisitor = class extends output_ast_exports.RecursiveAstVisitor {
+  allReads = /* @__PURE__ */ new Set();
+  namespaceReads = /* @__PURE__ */ new Set();
+  visitExternalExpr(ast, context) {
+    if (ast.value.moduleName !== null) {
+      this.namespaceReads.add(ast.value.moduleName);
     }
+    super.visitExternalExpr(ast, context);
   }
-  checkHostElementProperty(id, element2, name, span, schemas) {
-    for (const tagName of element2.tagNames) {
-      if (REGISTRY3.hasProperty(tagName, name, schemas)) {
-        continue;
-      }
-      const errorMessage = `Can't bind to '${name}' since it isn't a known property of '${tagName}'.`;
-      this._diagnostics.push({
-        typeCheckId: id,
-        category: 0 /* Error */,
-        code: 8002,
-        message: errorMessage,
-        start: span.start.offset,
-        end: span.end.offset
-      });
-      break;
-    }
+  visitReadVarExpr(ast, context) {
+    this.allReads.add(ast);
+    super.visitReadVarExpr(ast, context);
   }
-  checkTemplateElementEvent(id, tagName, eventName, span, schemas, hasComponent) {
-    if (!UNCLAIMED_EVENT_CANDIDATE_REGEX.test(eventName) || !/[A-Z]/.test(eventName)) {
-      return;
-    }
-    if (REGISTRY3.isKnownEventOfAnyElement(eventName)) {
-      return;
-    }
-    if (schemas.some(
-      (schema) => schema.name === NO_ERRORS_SCHEMA.name || schema.name === CUSTOM_ELEMENTS_SCHEMA.name && !hasComponent
-    )) {
-      return;
-    }
-    const errorMsg = `Event '${eventName}' is not emitted by any directive applied to '${tagName}' and it isn't a known native DOM event.
-1. If '${eventName}' is an output of a directive, make sure the directive is applied to the element and check the output's name for typos.
-2. If you're listening to a custom event dispatched by a descendant element, dash-separated event names (e.g. 'my-event') are exempt from this check.
-3. To disable this check entirely, set 'strictUnclaimedEventNames' to false or remove it from the compiler options.`;
-    this._diagnostics.push({
-      typeCheckId: id,
-      category: 0 /* Error */,
-      code: 8030,
-      message: errorMsg,
-      start: span.start.offset,
-      end: span.end.offset
-    });
+  visitWrappedNodeExpr(ast, context) {
+    this.addWrappedNodeReads(ast.node);
+    super.visitWrappedNodeExpr(ast, context);
   }
 };
 
-// packages/compiler-cli/preprocessor/src/tcb.ts
-import MagicString from "magic-string";
+// packages/compiler-cli/src/ngtsc/hmr/src/metadata.ts
+import ts37 from "typescript";
+
+// packages/compiler-cli/src/ngtsc/hmr/src/update_declaration.ts
+import ts38 from "typescript";
 
 // packages/compiler-cli/preprocessor/src/output_ast_printer.ts
+var CORE_MODULE2 = "@angular/core";
 var NUMERIC_OPERATORS = /* @__PURE__ */ new Set([
   output_ast_exports.BinaryOperator.Bigger,
   output_ast_exports.BinaryOperator.BiggerEquals,
@@ -37836,12 +38343,23 @@ function binaryNeedsTsIgnore(expression) {
   return false;
 }
 var RawSource = class {
-  constructor(source) {
+  constructor(source, spans = []) {
     this.source = source;
+    this.spans = spans;
   }
   source;
+  spans;
 };
 var ExpressionPrinter = class {
+  constructor(filePath, r3SymbolsSpecifier = null) {
+    this.r3SymbolsSpecifier = r3SymbolsSpecifier;
+    this.emitTypes = filePath.endsWith(".ts") || filePath.endsWith(".mts");
+    this.moduleToNamespace.set(CORE_MODULE2, "i0");
+    this.generatedNamespaceCount = 1;
+    this.exprVisitor = new EmitterVisitor(this);
+    this.typeVisitor = new EmitterVisitor(this, true);
+  }
+  r3SymbolsSpecifier;
   moduleToNamespace = /* @__PURE__ */ new Map();
   existingNamespaces = /* @__PURE__ */ new Set();
   /**
@@ -37855,22 +38373,17 @@ var ExpressionPrinter = class {
   emitTypes;
   exprVisitor;
   typeVisitor;
-  constructor(filePath) {
-    this.emitTypes = filePath.endsWith(".ts") || filePath.endsWith(".mts");
-    this.moduleToNamespace.set("@angular/core", "i0");
-    this.generatedNamespaceCount = 1;
-    this.exprVisitor = new EmitterVisitor(this);
-    this.typeVisitor = new EmitterVisitor(this, true);
-  }
+  /** Printed snippets that carry source mappings and haven't been claimed by an insertion yet. */
+  pendingSnippets = [];
   print(expr) {
-    const context = EmitterVisitorContext.createRoot();
+    const context = new MappingContext();
     expr.visitExpression(this.exprVisitor, context);
-    return context.toSource();
+    return this.finishPrint(context);
   }
   printStatement(stmt) {
-    const context = EmitterVisitorContext.createRoot();
+    const context = new MappingContext();
     stmt.visitStatement(this.exprVisitor, context);
-    return context.toSource();
+    return this.finishPrint(context);
   }
   printType(type) {
     const context = EmitterVisitorContext.createRoot();
@@ -37878,6 +38391,23 @@ var ExpressionPrinter = class {
       type.visitType(this.typeVisitor, context);
     });
     return context.toSource();
+  }
+  /**
+   * Returns the snippets printed since the last call that carry source mappings. Callers that
+   * splice printed text into the output use this to attach the mappings to the output's map.
+   */
+  takePendingSnippets() {
+    const snippets = this.pendingSnippets;
+    this.pendingSnippets = [];
+    return snippets;
+  }
+  finishPrint(context) {
+    const text2 = context.toSource();
+    const mappings = context.finish(text2);
+    if (mappings.length > 0) {
+      this.pendingSnippets.push({ text: text2, mappings });
+    }
+    return text2;
   }
   getOrCreateNamespace(moduleName) {
     this.usedNamespaces.add(moduleName);
@@ -37888,9 +38418,22 @@ var ExpressionPrinter = class {
     this.moduleToNamespace.set(moduleName, namespace);
     return namespace;
   }
+  rewriteSymbol(symbolName, moduleName) {
+    if (this.r3SymbolsSpecifier === null || moduleName !== CORE_MODULE2) {
+      return symbolName;
+    }
+    return validateAndRewriteCoreSymbol(symbolName);
+  }
+  rewriteSpecifier(moduleName) {
+    if (this.r3SymbolsSpecifier === null || moduleName !== CORE_MODULE2) {
+      return moduleName;
+    }
+    return this.r3SymbolsSpecifier;
+  }
   addNamespaceImport(moduleSpecifier, namespaceAlias) {
-    this.moduleToNamespace.set(moduleSpecifier, namespaceAlias);
-    this.existingNamespaces.add(moduleSpecifier);
+    const moduleName = this.r3SymbolsSpecifier !== null && moduleSpecifier === this.r3SymbolsSpecifier ? CORE_MODULE2 : moduleSpecifier;
+    this.moduleToNamespace.set(moduleName, namespaceAlias);
+    this.existingNamespaces.add(moduleName);
   }
   addSideEffectImport(moduleSpecifier) {
     this.sideEffectImports.add(moduleSpecifier);
@@ -37902,8 +38445,9 @@ var ExpressionPrinter = class {
         continue;
       }
       if (!this.existingNamespaces.has(moduleName)) {
+        const specifier = this.rewriteSpecifier(moduleName);
         statements.push(`// @ts-ignore
-import * as ${namespace} from '${moduleName}';`);
+import * as ${namespace} from '${specifier}';`);
       }
     }
     for (const moduleName of this.sideEffectImports) {
@@ -37911,7 +38455,7 @@ import * as ${namespace} from '${moduleName}';`);
         continue;
       }
       statements.push(`// @ts-ignore
-import '${moduleName}';`);
+import '${this.rewriteSpecifier(moduleName)}';`);
     }
     return statements.length > 0 ? statements.join("\n") : null;
   }
@@ -37921,9 +38465,151 @@ import '${moduleName}';`);
     this.sideEffectImports.clear();
     this.usedNamespaces.clear();
     this.generatedNamespaceCount = 1;
-    this.moduleToNamespace.set("@angular/core", "i0");
+    this.moduleToNamespace.set(CORE_MODULE2, "i0");
   }
 };
+var MappingContext = class extends EmitterVisitorContext {
+  /** Index of the line the next part is printed on. */
+  line = 0;
+  /** Column the next part is printed at, once the current line has a part. */
+  column = 0;
+  /** The span text is currently attributed to, or `null` before the first ranged node. */
+  current = null;
+  /** Whether a ranged node just started or ended, so the next part printed records a point. */
+  needsPoint = false;
+  /**
+   * Set by a ranged node whose immediate child must not record its own range, matching the
+   * translator overriding the child's range (literal array entries, `$localize` placeholders).
+   */
+  suppressNextSpan = false;
+  /** Leading comments are emitted before a node's start mapping, so they don't record points. */
+  inComment = false;
+  points = [];
+  constructor() {
+    super(0);
+  }
+  print(from, part, newLine = false) {
+    const column = this.lineIsEmpty() ? this.lineLength() : this.column;
+    if (part.length > 0 && !this.inComment) {
+      this.suppressNextSpan = false;
+      if (this.current !== null && this.needsPoint) {
+        this.record(this.current, this.line, column);
+      }
+    }
+    super.print(from, part, newLine);
+    const lastNewline = part.lastIndexOf("\n");
+    if (lastNewline === -1) {
+      this.column = column + part.length;
+    } else {
+      for (let i = part.indexOf("\n"); i !== -1; i = part.indexOf("\n", i + 1)) {
+        this.line++;
+      }
+      this.column = part.length - lastNewline - 1;
+    }
+    if (newLine) {
+      this.line++;
+    }
+  }
+  removeEmptyLastLine() {
+    if (this.lineIsEmpty()) {
+      this.line--;
+    }
+    super.removeEmptyLastLine();
+  }
+  addUniqueSingleLineComment(commentText) {
+    const linesBefore = this.lineCount();
+    super.addUniqueSingleLineComment(commentText);
+    if (this.lineCount() !== linesBefore) {
+      for (const point of this.points) {
+        if (point.line >= this.line) {
+          point.line++;
+        }
+      }
+      this.line++;
+    }
+  }
+  /** Runs `fn` while printing a node that gets a source-map range of `span`. */
+  withSpan(span, fn2, suppressChildSpan = false) {
+    if (this.suppressNextSpan) {
+      this.suppressNextSpan = false;
+      span = null;
+    }
+    if (span === null || !span.start.file.url) {
+      fn2();
+      return;
+    }
+    this.current = span;
+    this.needsPoint = true;
+    this.suppressNextSpan = suppressChildSpan;
+    try {
+      fn2();
+    } finally {
+      this.suppressNextSpan = false;
+      this.current = new ParseSourceSpan(span.end, span.end);
+      this.needsPoint = true;
+    }
+  }
+  /** Runs `fn` while printing leading comments, which precede a node's start mapping. */
+  withComments(fn2) {
+    const previous = this.inComment;
+    this.inComment = true;
+    try {
+      fn2();
+    } finally {
+      this.inComment = previous;
+    }
+  }
+  /** Resolves the recorded points into offsets within the final printed `text`. */
+  finish(text2) {
+    const lineStarts = [0];
+    for (let i = 0; i < text2.length; i++) {
+      if (text2.charCodeAt(i) === 10) {
+        lineStarts.push(i + 1);
+      }
+    }
+    const mappings = [];
+    for (const { line, column, span } of this.points) {
+      if (line >= lineStarts.length) {
+        continue;
+      }
+      mappings.push(toPrintedMapping(lineStarts[line] + column, span));
+    }
+    if (this.current !== null && this.needsPoint) {
+      mappings.push(toPrintedMapping(text2.length, this.current));
+    }
+    return mappings;
+  }
+  record(span, line, column) {
+    const last = this.points[this.points.length - 1];
+    if (last !== void 0 && last.line === line && last.column === column) {
+      last.span = span;
+    } else {
+      this.points.push({ line, column, span });
+    }
+    this.needsPoint = false;
+  }
+  lineCount() {
+    return this.lines.length;
+  }
+};
+function toPrintedMapping(offset, span) {
+  const { file, offset: sourceOffset, line, col } = span.start;
+  return {
+    offset,
+    source: file.url,
+    sourceContent: file.content || null,
+    sourceOffset,
+    line,
+    column: col
+  };
+}
+function withSpan(ctx, span, fn2, suppressChildSpan = false) {
+  if (ctx instanceof MappingContext) {
+    ctx.withSpan(span, fn2, suppressChildSpan);
+  } else {
+    fn2();
+  }
+}
 var EmitterVisitor = class extends AbstractEmitterVisitor {
   constructor(printer, forcePrintTypes = false) {
     super(true, printer.emitTypes || forcePrintTypes);
@@ -37931,6 +38617,7 @@ var EmitterVisitor = class extends AbstractEmitterVisitor {
   }
   printer;
   suppressLeadingColon = false;
+  constVariableNames = /* @__PURE__ */ new Set();
   withSuppressedColon(fn2) {
     const previous = this.suppressLeadingColon;
     this.suppressLeadingColon = true;
@@ -37940,10 +38627,77 @@ var EmitterVisitor = class extends AbstractEmitterVisitor {
       this.suppressLeadingColon = previous;
     }
   }
+  visitDeclareVarStmt(stmt, ctx) {
+    super.visitDeclareVarStmt(stmt, ctx);
+    if (stmt.hasModifier(output_ast_exports.StmtModifier.Final)) {
+      this.constVariableNames.add(stmt.name);
+    }
+  }
   visitBinaryOperatorExpr(ast, ctx) {
     super.visitBinaryOperatorExpr(ast, ctx);
-    if (this.printTypes && binaryNeedsTsIgnore(ast)) {
+    if (!this.printTypes) {
+      return;
+    }
+    if (binaryNeedsTsIgnore(ast) || ast.isAssignment() && this.referencesConstVariable(ast.lhs)) {
       ctx.addUniqueSingleLineComment(" @ts-ignore");
+    }
+  }
+  visitUnaryOperatorExpr(ast, ctx) {
+    super.visitUnaryOperatorExpr(ast, ctx);
+    const isUpdate = ast.operator === output_ast_exports.UnaryOperator.Increment || ast.operator === output_ast_exports.UnaryOperator.Decrement;
+    if (this.printTypes && isUpdate && this.referencesConstVariable(ast.expr)) {
+      ctx.addUniqueSingleLineComment(" @ts-ignore");
+    }
+  }
+  /** Whether `initialTarget` is a write to a `const` variable. */
+  referencesConstVariable(initialTarget) {
+    let target = initialTarget;
+    while (target instanceof output_ast_exports.ParenthesizedExpr) {
+      target = target.expr;
+    }
+    return target instanceof output_ast_exports.ReadVarExpr && this.constVariableNames.has(target.name);
+  }
+  // The nodes below are the ones ngtsc's translator attaches a source-map range to. Keep this
+  // list in sync with `ExpressionTranslatorVisitor`.
+  visitReadVarExpr(ast, ctx) {
+    withSpan(ctx, ast.sourceSpan, () => super.visitReadVarExpr(ast, ctx));
+  }
+  visitInvokeFunctionExpr(expr, ctx) {
+    withSpan(ctx, expr.sourceSpan, () => super.visitInvokeFunctionExpr(expr, ctx));
+  }
+  visitTaggedTemplateLiteralExpr(expr, ctx) {
+    withSpan(ctx, expr.sourceSpan, () => super.visitTaggedTemplateLiteralExpr(expr, ctx));
+  }
+  visitTemplateLiteralExpr(expr, ctx) {
+    withSpan(
+      ctx,
+      expr.sourceSpan ?? expr.elements[0]?.sourceSpan ?? null,
+      () => super.visitTemplateLiteralExpr(expr, ctx)
+    );
+  }
+  visitTemplateLiteralElementExpr(expr, ctx) {
+    withSpan(ctx, expr.sourceSpan, () => super.visitTemplateLiteralElementExpr(expr, ctx));
+  }
+  visitLiteralExpr(ast, ctx) {
+    withSpan(ctx, ast.sourceSpan, () => super.visitLiteralExpr(ast, ctx));
+  }
+  visitRegularExpressionLiteral(ast, ctx) {
+    withSpan(ctx, ast.sourceSpan, () => super.visitRegularExpressionLiteral(ast, ctx));
+  }
+  visitLiteralMapExpr(ast, ctx) {
+    withSpan(ctx, ast.sourceSpan, () => super.visitLiteralMapExpr(ast, ctx));
+  }
+  escapeStringOrIdentifier(input, alwaysQuote = true) {
+    return super.escapeStringOrIdentifier(input, alwaysQuote, true);
+  }
+  visitSpreadElementExpr(ast, ctx) {
+    withSpan(ctx, ast.sourceSpan, () => super.visitSpreadElementExpr(ast, ctx));
+  }
+  printLeadingComments(node, ctx) {
+    if (ctx instanceof MappingContext) {
+      ctx.withComments(() => super.printLeadingComments(node, ctx));
+    } else {
+      super.printLeadingComments(node, ctx);
     }
   }
   visitExternalExpr(ast, ctx) {
@@ -37951,7 +38705,10 @@ var EmitterVisitor = class extends AbstractEmitterVisitor {
     const symbolName = ast.value.name;
     if (moduleName) {
       const namespace = this.printer.getOrCreateNamespace(moduleName);
-      ctx.print(ast, `${namespace}.${symbolName}`);
+      ctx.print(
+        ast,
+        symbolName == null ? namespace : `${namespace}.${this.printer.rewriteSymbol(symbolName, moduleName)}`
+      );
     } else {
       ctx.print(ast, symbolName || "");
     }
@@ -37964,17 +38721,47 @@ var EmitterVisitor = class extends AbstractEmitterVisitor {
       ctx.print(ast, ">");
     }
   }
-  visitLocalizedString(ast, ctx) {
-    this.printLeadingComments(ast, ctx);
-    const head = ast.serializeI18nHead();
-    ctx.print(ast, "$localize `" + head.raw);
-    for (let i = 0; i < ast.expressions.length; i++) {
-      ctx.print(ast, "${");
-      const expr = ast.expressions[i] || output_ast_exports.literal("");
-      expr.visitExpression(this, ctx);
-      ctx.print(ast, `}${ast.serializeI18nTemplatePart(i + 1).raw}`);
+  visitReadPropExpr(ast, ctx) {
+    if (this.printTypes && ast.name === "meta" && ast.receiver instanceof output_ast_exports.ReadVarExpr && ast.receiver.name === "import") {
+      ctx.addUniqueSingleLineComment(" @ts-ignore");
     }
-    ctx.print(ast, "`");
+    super.visitReadPropExpr(ast, ctx);
+  }
+  visitDynamicImportExpr(ast, ctx) {
+    if (ast.urlComment == null) {
+      super.visitDynamicImportExpr(ast, ctx);
+      return;
+    }
+    this.printLeadingComments(ast, ctx);
+    ctx.print(ast, `import(/* ${ast.urlComment} */ `);
+    const url2 = typeof ast.url === "string" ? output_ast_exports.literal(ast.url) : ast.url;
+    url2.visitExpression(this, ctx);
+    ctx.print(ast, `)`);
+  }
+  visitLocalizedString(ast, ctx) {
+    withSpan(ctx, ast.sourceSpan, () => {
+      this.printLeadingComments(ast, ctx);
+      ctx.print(ast, "$localize ");
+      const head = ast.serializeI18nHead();
+      const count = ast.expressions.length;
+      withSpan(ctx, head.range, () => {
+        ctx.print(ast, "`" + head.raw + (count > 0 ? "${" : "`"));
+        for (let i = 0; i < count; i++) {
+          const expr = ast.expressions[i] || output_ast_exports.literal("");
+          withSpan(
+            ctx,
+            ast.getPlaceholderSourceSpan(i),
+            () => expr.visitExpression(this, ctx),
+            /* suppressChildSpan */
+            true
+          );
+          const part = ast.serializeI18nTemplatePart(i + 1);
+          withSpan(ctx, part.range, () => {
+            ctx.print(ast, "}" + part.raw + (i < count - 1 ? "${" : "`"));
+          });
+        }
+      });
+    });
   }
   visitLiteralArrayExpr(ast, ctx) {
     this.printLeadingComments(ast, ctx);
@@ -37990,7 +38777,13 @@ var EmitterVisitor = class extends AbstractEmitterVisitor {
       } else if (hasLeadingComments) {
         ctx.println(ast);
       }
-      entry.visitExpression(this, ctx);
+      withSpan(
+        ctx,
+        ast.sourceSpan,
+        () => entry.visitExpression(this, ctx),
+        /* suppressChildSpan */
+        true
+      );
     }
     ctx.print(ast, "]");
   }
@@ -38168,13 +38961,13 @@ function requiresInlineTypeCheckBlock(target, boundTarget, localClasses) {
 }
 
 // packages/compiler-cli/preprocessor/src/compiler-utils.ts
-function buildInputsMap(inputs, content) {
+function buildInputsMap(inputs, content, sliceSpan) {
   const result = {};
   for (const input of inputs) {
     let transformFunction = null;
     if (input.transform && !input.isSignal) {
-      const fnStr = content.substring(input.transform.span.start, input.transform.span.end);
-      transformFunction = new WrappedNodeExpr(new RawSource(fnStr));
+      const fnStr = sliceSpan ? sliceSpan(input.transform.span) : content.substring(input.transform.span.start, input.transform.span.end);
+      transformFunction = new WrappedNodeExpr(new RawSource(fnStr, [input.transform.span]));
     }
     result[input.name] = {
       classPropertyName: input.name,
@@ -38197,14 +38990,16 @@ function buildQueriesMap(queries, sourceText) {
   return queries.map((q) => {
     const predicate = q.predicateSelectors ?? {
       expression: new output_ast_exports.WrappedNodeExpr(
-        new RawSource(sourceText.substring(q.predicateSpan.start, q.predicateSpan.end))
+        new RawSource(sourceText.substring(q.predicateSpan.start, q.predicateSpan.end), [
+          q.predicateSpan
+        ])
       ),
       forwardRef: q.isForwardRef ? 2 : 0
     };
     let read = null;
     if (q.readSpan) {
       const readText = sourceText.substring(q.readSpan.start, q.readSpan.end);
-      read = new output_ast_exports.WrappedNodeExpr(new RawSource(readText));
+      read = new output_ast_exports.WrappedNodeExpr(new RawSource(readText, [q.readSpan]));
     }
     return {
       propertyName: q.propertyName,
@@ -38230,10 +39025,28 @@ function createDummySourceSpan(filePath) {
   const startLocation = new ParseLocation(sourceFile, 0, 0, 0);
   return new ParseSourceSpan(startLocation, startLocation);
 }
+function createHostSourceSpan(ctx) {
+  if (ctx.sourceText != null && ctx.hostSpan != null) {
+    const { line: startLine, character: startCol } = offsetToPosition(
+      ctx.sourceText,
+      ctx.hostSpan.start
+    );
+    const { line: endLine, character: endCol } = offsetToPosition(ctx.sourceText, ctx.hostSpan.end);
+    const parseSf = new ParseSourceFile(ctx.sourceText, ctx.filePath);
+    return new ParseSourceSpan(
+      new ParseLocation(parseSf, ctx.hostSpan.start, startLine + 1, startCol + 1),
+      new ParseLocation(parseSf, ctx.hostSpan.end, endLine + 1, endCol + 1)
+    );
+  }
+  return createDummySourceSpan(ctx.filePath);
+}
 function getHostBindingErrorSpan(error, ctx) {
   for (const prop of ctx.hostProperties ?? []) {
     if (prop.value.kind === "string" /* String */ && prop.value.text != null && error.msg.includes(`[${prop.value.text}]`)) {
-      return prop.value.sourceSpan;
+      return {
+        start: prop.value.sourceSpan.start - 1,
+        end: prop.value.sourceSpan.end + 1
+      };
     }
   }
   return ctx.hostSpan;
@@ -38244,14 +39057,16 @@ function buildHostMetadata(hostMetadata, hostBindings, hostListeners, className,
     if (entry.value != null) {
       hostObj[entry.key] = entry.value;
     } else if (entry.expression != null) {
-      hostObj[entry.key] = new output_ast_exports.WrappedNodeExpr(new RawSource(entry.expression));
+      hostObj[entry.key] = new output_ast_exports.WrappedNodeExpr(
+        new RawSource(entry.expression, entry.expressionSpan ? [entry.expressionSpan] : [])
+      );
     }
   }
   if (diagCtx) {
     let failed = false;
     try {
       const objBindings = parseHostBindings(hostObj);
-      const errors = verifyHostBindings(objBindings, createDummySourceSpan(diagCtx.filePath));
+      const errors = verifyHostBindings(objBindings, createHostSourceSpan(diagCtx));
       if (errors.length > 0) {
         failed = true;
         diagCtx.diagnostics.push({
@@ -38331,6 +39146,11 @@ function createDirectiveMeta(decl, inputNames, outputNames, filePath) {
     matchSource: 0 /* Selector */
   };
 }
+function rawToken(arg, decorator) {
+  return new output_ast_exports.WrappedNodeExpr(
+    new RawSource(arg.value, decorator.argsSpan ? [decorator.argsSpan] : [])
+  );
+}
 function buildDeps(constructorParams, usesInheritance, o, s) {
   if (constructorParams === void 0) {
     return usesInheritance ? null : [];
@@ -38340,12 +39160,11 @@ function buildDeps(constructorParams, usesInheritance, o, s) {
   }
   let hasInvalidDep = false;
   const deps = constructorParams.map((param) => {
-    const isTypeOnly = param.isTypeOnly;
-    const effectiveTypeName = param.typeName ?? "Object";
-    let tokenResolved = !isTypeOnly;
+    const typeName = param.isTypeOnly ? null : param.typeName ?? null;
+    let tokenResolved = typeName !== null;
     let token;
-    if (tokenResolved) {
-      token = param.typeModule === "@angular/core" && param.typeName != null ? o.importExpr(new o.ExternalReference(param.typeModule, param.typeName)) : o.variable(effectiveTypeName);
+    if (typeName !== null) {
+      token = param.typeModule === "@angular/core" ? o.importExpr(new o.ExternalReference(param.typeModule, typeName)) : o.variable(typeName);
     } else {
       token = o.literal(null);
     }
@@ -38377,14 +39196,14 @@ function buildDeps(constructorParams, usesInheritance, o, s) {
           break;
         case "Inject":
           if (arg) {
-            token = arg.isLiteral ? o.literal(arg.value) : o.variable(arg.value);
+            token = arg.isLiteral ? o.literal(arg.value) : rawToken(arg, decorator);
             tokenResolved = true;
           }
           isInjectDecorator = true;
           break;
         case "Attribute":
           if (arg) {
-            token = arg.isLiteral ? o.literal(arg.value) : o.variable(arg.value);
+            token = arg.isLiteral ? o.literal(arg.value) : rawToken(arg, decorator);
             attributeNameType = arg.isLiteral ? o.literal(arg.value) : new o.WrappedNodeExpr(new RawSource("unknown"));
             tokenResolved = true;
           }
@@ -38434,6 +39253,15 @@ function refToExpression(ref) {
   }
   return output_ast_exports.variable(refName(ref));
 }
+function refToTypeExpression(ref) {
+  if (ref.typecheckImport && ref.localAlias && ref.localAlias !== ref.typecheckImport.symbol) {
+    return output_ast_exports.importExpr({
+      moduleName: ref.typecheckImport.specifier,
+      name: ref.typecheckImport.symbol
+    });
+  }
+  return refToExpression(ref);
+}
 function buildHostDirectives(parsedHostDirectives) {
   if (!parsedHostDirectives || parsedHostDirectives.length === 0) return null;
   return parsedHostDirectives.map((hd) => ({
@@ -38463,6 +39291,47 @@ function parseDirectInlineTemplate(sourceText, filePath, contentSpan, options = 
     }
   });
 }
+function parseComponentTemplate(component, filePath, content, options = {}) {
+  const parseOptions = {
+    ...options,
+    preserveWhitespaces: component.preserveWhitespaces ?? options.preserveWhitespaces ?? false
+  };
+  const diagParseOptions = {
+    ...options,
+    preserveWhitespaces: true,
+    preserveLineEndings: true,
+    preserveSignificantWhitespace: true,
+    leadingTriviaChars: []
+  };
+  const contentSpan = component.templateContentSpan;
+  if (component.templateUrl == null && contentSpan != null) {
+    const parsed2 = parseDirectInlineTemplate(content, filePath, contentSpan, parseOptions);
+    const diagNodes2 = parseDirectInlineTemplate(
+      content,
+      filePath,
+      contentSpan,
+      diagParseOptions
+    ).nodes;
+    return { ...parsed2, diagNodes: diagNodes2 };
+  }
+  const templateStr = component.template || "";
+  const templateUrl = component.templateUrl?.resolvedPath ?? filePath;
+  const parsed = parseTemplate(templateStr, templateUrl, parseOptions);
+  const diagNodes = parseTemplate(templateStr, templateUrl, diagParseOptions).nodes;
+  return { ...parsed, diagNodes };
+}
+function getOrParseComponentTemplate(templatesByClass, classMeta, component, filePath, content, options) {
+  const classKey = makeClassKey(classMeta.className, classMeta.span.start);
+  let parsed = templatesByClass.get(classKey);
+  if (parsed === void 0) {
+    parsed = {
+      ...parseComponentTemplate(component, filePath, content, options),
+      classNameStart: classMeta.nameSpan?.start
+    };
+    templatesByClass.set(classKey, parsed);
+  }
+  return parsed;
+}
 function metadataToDeclaration(meta, classMeta, declarationType, ngContentSelectors, fileId = 0) {
   const decl = {
     name: classMeta.className,
@@ -38487,6 +39356,7 @@ function metadataToDeclaration(meta, classMeta, declarationType, ngContentSelect
     hasNgTemplateContextGuard: classMeta.hasNgTemplateContextGuard || false,
     ngTemplateGuards: classMeta.ngTemplateGuards || [],
     hasNgFieldDirective: classMeta.hasNgFieldDirective || false,
+    publicMethods: classMeta.publicMethods ?? [],
     isForwardRef: "isForwardRef" in meta ? meta.isForwardRef ?? false : false,
     isStructural: "isStructural" in meta ? meta.isStructural ?? false : false,
     isExported: classMeta.isExported ?? true,
@@ -38516,6 +39386,16 @@ function buildPipeRegistry(declarations) {
 function makeClassKey(className, spanStart) {
   return `${className ?? ""}@${spanStart}`;
 }
+function createForeignComponentMatcher2(foreignImports) {
+  if (!foreignImports || foreignImports.length === 0) {
+    return null;
+  }
+  const registry = /* @__PURE__ */ new Map();
+  for (const { name } of foreignImports) {
+    registry.set(name, [{ name }]);
+  }
+  return new SelectorlessMatcher(registry);
+}
 function stripIife(expr) {
   if (!(expr instanceof output_ast_exports.InvokeFunctionExpr)) {
     return [expr.toStmt()];
@@ -38535,300 +39415,317 @@ function stripIife(expr) {
   return [expr.toStmt()];
 }
 
-// packages/compiler-cli/preprocessor/src/oob.ts
-var OutOfBandDiagnosticRecorderImpl = class {
-  _diagnostics = [];
-  get diagnostics() {
-    return this._diagnostics;
+// packages/compiler-cli/preprocessor/src/compiler_options.ts
+var DIAGNOSTIC_CATEGORY_LABELS = ["warning", "error", "suppress"];
+var SUPPORTED_DIAGNOSTIC_NAMES = /* @__PURE__ */ new Set([
+  "controlFlowPreventingContentProjection",
+  "unusedStandaloneImports",
+  "invalidBananaInBox",
+  "nullishCoalescingNotNullable",
+  "numericCssPropertyRequiresUnit",
+  "optionalChainNotNullable",
+  "missingControlFlowDirective",
+  "textAttributeNotBinding",
+  "missingNgForOfLet",
+  "missingStructuralDirective",
+  "suffixNotSupported",
+  "interpolatedSignalNotInvoked",
+  "uninvokedFunctionInEventBinding",
+  "unusedLetDeclaration",
+  "skipHydrationNotStatic",
+  "unparenthesizedNullishCoalescing",
+  "uninvokedTrackFunction",
+  "uninvokedFunctionInTextInterpolation",
+  "deferTriggerMisconfiguration"
+]);
+var CONFIG_EXTENDED_DIAGNOSTICS_IMPLIES_STRICT_TEMPLATES = 4003;
+var CONFIG_EXTENDED_DIAGNOSTICS_UNKNOWN_CATEGORY_LABEL = 4004;
+var CONFIG_EXTENDED_DIAGNOSTICS_UNKNOWN_CHECK = 4005;
+var CONFIG_EMIT_DECLARATION_ONLY_UNSUPPORTED = 4006;
+function verifyExtendedDiagnosticsOptions(options) {
+  if (!options.extendedDiagnostics) {
+    return [];
   }
-  pushDiagnostic(typeCheckId, message, span, category = 0 /* Error */, code) {
-    let start;
-    let end;
-    if (span instanceof ParseSourceSpan) {
-      start = span.start.offset;
-      end = span.end.offset;
-    } else {
-      start = span.start;
-      end = span.end;
+  const diagnostics = [];
+  const configError = (code, messageText) => diagnostics.push({ category: 1, code, messageText });
+  if (options.strictTemplates === false) {
+    configError(
+      CONFIG_EXTENDED_DIAGNOSTICS_IMPLIES_STRICT_TEMPLATES,
+      `
+Angular compiler option "extendedDiagnostics" is configured, however "strictTemplates" is disabled.
+
+Using "extendedDiagnostics" requires that "strictTemplates" is also enabled.
+
+One of the following actions is required:
+1. Remove "strictTemplates: false" to enable it.
+2. Remove "extendedDiagnostics" configuration to disable them.
+      `.trim()
+    );
+  }
+  const defaultCategory = options.extendedDiagnostics.defaultCategory;
+  if (defaultCategory !== void 0 && !DIAGNOSTIC_CATEGORY_LABELS.includes(defaultCategory)) {
+    configError(
+      CONFIG_EXTENDED_DIAGNOSTICS_UNKNOWN_CATEGORY_LABEL,
+      `
+Angular compiler option "extendedDiagnostics.defaultCategory" has an unknown diagnostic category: "${defaultCategory}".
+
+Allowed diagnostic categories are:
+${DIAGNOSTIC_CATEGORY_LABELS.join("\n")}
+      `.trim()
+    );
+  }
+  for (const [checkName, category] of Object.entries(options.extendedDiagnostics.checks ?? {})) {
+    if (!SUPPORTED_DIAGNOSTIC_NAMES.has(checkName)) {
+      configError(
+        CONFIG_EXTENDED_DIAGNOSTICS_UNKNOWN_CHECK,
+        `
+Angular compiler option "extendedDiagnostics.checks" has an unknown check: "${checkName}".
+
+Allowed check names are:
+${Array.from(SUPPORTED_DIAGNOSTIC_NAMES).join("\n")}
+        `.trim()
+      );
     }
-    this._diagnostics.push({
-      typeCheckId,
-      message,
-      start,
-      end,
-      category,
-      code
+    if (!DIAGNOSTIC_CATEGORY_LABELS.includes(category)) {
+      configError(
+        CONFIG_EXTENDED_DIAGNOSTICS_UNKNOWN_CATEGORY_LABEL,
+        `
+Angular compiler option "extendedDiagnostics.checks['${checkName}']" has an unknown diagnostic category: "${category}".
+
+Allowed diagnostic categories are:
+${DIAGNOSTIC_CATEGORY_LABELS.join("\n")}
+        `.trim()
+      );
+    }
+  }
+  return diagnostics;
+}
+function verifyCompilerOptions(options) {
+  const diagnostics = verifyExtendedDiagnosticsOptions(options);
+  if (options.emitDeclarationOnly && !options._experimentalAllowEmitDeclarationOnly) {
+    diagnostics.push({
+      category: 1,
+      code: CONFIG_EMIT_DECLARATION_ONLY_UNSUPPORTED,
+      messageText: 'TS compiler option "emitDeclarationOnly" is not supported.'
     });
   }
-  error(id, message, span) {
-    this.pushDiagnostic(id, message, span, 0 /* Error */, 8e3);
+  return diagnostics;
+}
+
+// packages/compiler-cli/preprocessor/src/file_analysis.ts
+function getOrCreateFileAnalysis(cache, filePath) {
+  let analysis = cache.get(filePath);
+  if (!analysis) {
+    analysis = { filePath, parsedTemplates: /* @__PURE__ */ new Map() };
+    cache.set(filePath, analysis);
   }
-  missingReferenceTarget(id, ref) {
-    this.pushDiagnostic(
-      id,
-      `No directive found with exportAs '${ref.value.trim()}'.`,
-      ref.valueSpan || ref.sourceSpan,
-      0 /* Error */,
-      8003
-    );
+  return analysis;
+}
+
+// packages/compiler-cli/preprocessor/src/dependency_templates.ts
+var DependencyTemplates = class {
+  /**
+   * @param knownMetadata Metadata already at hand (e.g. the files of the chunk being
+   *     processed), preferred to a round trip to the analyzer.
+   */
+  constructor(analyzer, fileCache, templateParseOptions, knownMetadata) {
+    this.analyzer = analyzer;
+    this.fileCache = fileCache;
+    this.templateParseOptions = templateParseOptions;
+    this.knownMetadata = knownMetadata;
   }
-  missingPipe(id, ast) {
-    this.pushDiagnostic(
-      id,
-      `No pipe found with name '${ast.name}'.`,
-      ast.nameSpan,
-      0 /* Error */,
-      8004
-    );
-  }
-  deferredPipeUsedEagerly(id, ast, currentBlockName = null, declaredBlocks = null) {
-    let errorMsg;
-    if (currentBlockName !== null && declaredBlocks !== null && declaredBlocks.length > 0) {
-      errorMsg = `Pipe '${ast.name}' was imported via \`@Component.deferredImports\` under block '${declaredBlocks.join(", ")}', but is used in a \`@defer\` block configured for '${currentBlockName}'. To fix this, add '${ast.name}' to 'deferredImports.${currentBlockName}'.`;
-    } else {
-      errorMsg = `Pipe '${ast.name}' was imported via \`@Component.deferredImports\`, but was used outside of a \`@defer\` block in a template. To fix this, either use the '${ast.name}' pipe inside of a \`@defer\` block or import this dependency using the \`@Component.imports\` field.`;
-    }
-    this.pushDiagnostic(id, errorMsg, ast.nameSpan, 0 /* Error */, 8012);
-  }
-  deferredComponentUsedEagerly(id, element2, dirMeta, currentBlockName = null, declaredBlocks = null) {
-    const elementName = element2 instanceof Element ? element2.name : element2.tagName ?? "ng-template";
-    const kind = dirMeta?.isComponent ? "Component" : "Directive";
-    const name = dirMeta?.name ?? elementName;
-    const usage = dirMeta?.isComponent ? `used as element '${elementName}'` : `used on element '${elementName}'`;
-    let errorMsg;
-    if (currentBlockName !== null && declaredBlocks !== null && declaredBlocks.length > 0) {
-      errorMsg = `${kind} '${name}' (${usage}) was imported via \`@Component.deferredImports\` under block '${declaredBlocks.join(", ")}', but is used in a \`@defer\` block configured for '${currentBlockName}'. To fix this, add '${name}' to 'deferredImports.${currentBlockName}'.`;
-    } else {
-      errorMsg = `${kind} '${name}' (${usage}) was imported via \`@Component.deferredImports\`, but was used outside of a \`@defer\` block in a template. To fix this, either use the '${elementName}' element inside of a \`@defer\` block or import '${name}' using the \`@Component.imports\` field.`;
-    }
-    const startSourceSpan = element2.startSourceSpan ?? element2.sourceSpan;
-    this.pushDiagnostic(id, errorMsg, startSourceSpan, 0 /* Error */, 8013);
-  }
-  duplicateTemplateVar(id, variable2) {
-    this.pushDiagnostic(
-      id,
-      `Cannot redeclare variable '${variable2.name}' as it was previously declared elsewhere for the same template.`,
-      variable2.keySpan,
-      0 /* Error */,
-      8006
-    );
-  }
-  suboptimalTypeInference(id, variables) {
-    let diagnosticVar = null;
-    for (const variable2 of variables) {
-      if (diagnosticVar === null || variable2.value === "" || variable2.value === "$implicit") {
-        diagnosticVar = variable2;
+  analyzer;
+  fileCache;
+  templateParseOptions;
+  knownMetadata;
+  /**
+   * Returns `declarations` with `ngContentSelectors` filled in for every source-file component
+   * that lacks them. The input array and its entries are not mutated; it is returned as is when
+   * nothing had to change.
+   */
+  withNgContentSelectors(declarations, consumer) {
+    const missing = /* @__PURE__ */ new Map();
+    this.collectMissing(declarations, consumer.filePath, missing);
+    for (const [filePath, classIds] of missing) {
+      const metadata = this.knownMetadata?.get(filePath) ?? safeLookup(() => this.analyzer.getMetadataForFileSync(filePath));
+      const content = metadata && safeLookup(() => this.analyzer.getFileContentSync(filePath));
+      if (metadata && content !== null) {
+        this.parseTemplates(filePath, metadata.classes, content, classIds.values());
       }
     }
-    if (diagnosticVar === null) return;
-    let varIdentification = `'${diagnosticVar.name}'`;
-    if (variables.length === 2) {
-      varIdentification += ` (and 1 other)`;
-    } else if (variables.length > 2) {
-      varIdentification += ` (and ${variables.length - 1} others)`;
-    }
-    this.pushDiagnostic(
-      id,
-      `This structural directive supports advanced type inference, but the current compiler configuration prevents its usage. The variable ${varIdentification} will have type 'any' as a result.
-
-Consider enabling the 'strictTemplates' option in your tsconfig.json for better type inference within this template.`,
-      diagnosticVar.keySpan,
-      1 /* Warning */,
-      8104
-    );
-  }
-  splitTwoWayBinding(id, input) {
-    this.pushDiagnostic(
-      id,
-      `The property and event halves of the two-way binding '${input.name}' are not bound to the same target.
-            Find more at https://angular.dev/guide/templates/two-way-binding`,
-      input.keySpan,
-      0 /* Error */,
-      8007
-    );
-  }
-  missingRequiredInputs(id, element2, directiveName, isComponent, inputAliases) {
-    const aliasString = inputAliases.map((n) => `'${n}'`).join(", ");
-    const type = isComponent ? "component" : "directive";
-    let name;
-    let span;
-    if (element2 instanceof Element || element2 instanceof Directive) {
-      name = element2.name;
-    } else if (element2 instanceof Component) {
-      name = element2.componentName;
-    } else {
-      name = null;
-    }
-    if (name === null) {
-      span = element2.startSourceSpan;
-    } else {
-      const start = element2.startSourceSpan.start.moveBy(1);
-      const end = element2.startSourceSpan.end.moveBy(
-        start.offset + name.length - element2.startSourceSpan.end.offset
-      );
-      span = new ParseSourceSpan(start, end);
-    }
-    this.pushDiagnostic(
-      id,
-      `Required input${inputAliases.length === 1 ? "" : "s"} ${aliasString} from ${type} ${directiveName} must be specified.`,
-      span,
-      0 /* Error */,
-      8008
-    );
-  }
-  illegalForLoopTrackAccess(id, block, access3) {
-    const messageVars = [
-      block.item,
-      ...(block.contextVariables || []).filter((v) => v.value === "$index")
-    ].map((v) => `'${v.name}'`).join(", ");
-    this.pushDiagnostic(
-      id,
-      `Cannot access '${access3.name}' inside of a track expression. Only ${messageVars} and properties on the containing component are available to this expression.`,
-      access3.sourceSpan,
-      0 /* Error */,
-      8009
-    );
-  }
-  inaccessibleDeferredTriggerElement(id, trigger) {
-    if (trigger.reference === null) {
-      this.pushDiagnostic(
-        id,
-        `Trigger cannot find reference. Make sure that the @defer block has a @placeholder with at least one root element node.`,
-        trigger.sourceSpan,
-        0 /* Error */,
-        8010
-      );
-    } else {
-      this.pushDiagnostic(
-        id,
-        `Trigger cannot find reference "${trigger.reference}".
-Check that an element with #${trigger.reference} exists in the same template and it's accessible from the @defer block.
-Deferred blocks can only access triggers in same view, a parent embedded view or the root view of the @placeholder block.`,
-        trigger.sourceSpan,
-        0 /* Error */,
-        8010
-      );
-    }
-  }
-  controlFlowPreventingContentProjection(id, category, node, componentName, selector, controlFlowNode, preservesWhitespaces) {
-    const blockName = controlFlowNode?.nameSpan?.toString().trim() || "block";
-    let msg = `Node matches the "${selector}" slot of the "${componentName}" component, but will not be projected into the specific slot because the surrounding ${blockName} has more than one node at its root. To project the node in the right slot, you can:
-
-1. Wrap the content of the ${blockName} block in an <ng-container/> that matches the "${selector}" selector.
-2. Split the content of the ${blockName} block across multiple ${blockName} blocks such that each one only has a single projectable node at its root.
-3. Remove all content from the ${blockName} block, except for the node being projected.
-`;
-    if (preservesWhitespaces) {
-      msg += "\nNote: the host component has `preserveWhitespaces: true` which may cause whitespace to affect content projection.\n";
-    }
-    msg += '\nThis check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress"` compiler option.';
-    this.pushDiagnostic(id, msg, node.startSourceSpan, category, 8011);
-  }
-  illegalWriteToLetDeclaration(id, node, target) {
-    this.pushDiagnostic(
-      id,
-      `Cannot assign to @let declaration '${target.name}'.`,
-      node.sourceSpan,
-      0 /* Error */,
-      8015
-    );
-  }
-  letUsedBeforeDefinition(id, node, target) {
-    this.pushDiagnostic(
-      id,
-      `Cannot read @let declaration '${target.name}' before it has been defined.`,
-      node.sourceSpan,
-      0 /* Error */,
-      8016
-    );
-  }
-  conflictingDeclaration(id, decl) {
-    this.pushDiagnostic(
-      id,
-      `Cannot declare @let called '${decl.name}' as there is another symbol in the template with the same name.`,
-      decl.sourceSpan,
-      0 /* Error */,
-      8017
-    );
-  }
-  missingNamedTemplateDependency(id, node) {
-    this.pushDiagnostic(
-      id,
-      `Cannot find name "${node instanceof Directive ? node.name : node.componentName}". Selectorless references are only supported to classes or non-type import statements.`,
-      node.startSourceSpan,
-      0 /* Error */,
-      8001
-    );
-  }
-  incorrectTemplateDependencyType(id, node) {
-    this.pushDiagnostic(
-      id,
-      `Incorrect reference type. Type must be a standalone @Component or @Directive.`,
-      node.startSourceSpan,
-      0 /* Error */,
-      8001
-    );
-  }
-  unclaimedDirectiveBinding(id, directive, node) {
-    this.pushDiagnostic(
-      id,
-      `Directive ${directive.name} does not have an input or output named "${node.name}". Bindings to directives must target existing inputs or outputs.`,
-      node.keySpan || node.sourceSpan,
-      0 /* Error */,
-      8018
-    );
-  }
-  deferImplicitTriggerMissingPlaceholder(id, trigger) {
-    this.pushDiagnostic(
-      id,
-      "Trigger with no target can only be placed on an @defer that has a @placeholder block",
-      trigger.sourceSpan,
-      0 /* Error */,
-      8019
-    );
-  }
-  deferImplicitTriggerInvalidPlaceholder(id, trigger) {
-    this.pushDiagnostic(
-      id,
-      "Trigger with no target can only be placed on an @defer that has a @placeholder block with exactly one root element node",
-      trigger.sourceSpan,
-      0 /* Error */,
-      8019
-    );
-  }
-  formFieldUnsupportedBinding(id, node) {
-    let message;
-    if (node instanceof BoundAttribute) {
-      let name;
-      if (node.type === 0 /* Property */) {
-        name = `[${node.name}]`;
-      } else if (node.type === 1 /* Attribute */) {
-        name = `[attr.${node.name}]`;
-      } else {
-        name = node.name;
+    let result = null;
+    for (let i = 0; i < declarations.length; i++) {
+      const decl = declarations[i];
+      if (!needsNgContentSelectors(decl)) {
+        continue;
       }
-      message = `Binding to '${name}' is not allowed on nodes using the '[formField]' directive`;
-    } else {
-      message = `Setting the '${node.name}' attribute is not allowed on nodes using the '[formField]' directive`;
+      const parsed = this.getTemplate(decl, consumer);
+      if (parsed === null) {
+        continue;
+      }
+      result ??= [...declarations];
+      result[i] = { ...decl, ngContentSelectors: parsed.ngContentSelectors };
     }
-    this.pushDiagnostic(id, message, node.sourceSpan, 0 /* Error */, 8020);
+    return result ?? declarations;
   }
-  multipleMatchingComponents(id, element2, componentNames) {
-    const names = componentNames.map((n) => `'${n}'`).join(", ");
-    this.pushDiagnostic(
-      id,
-      `Multiple components match node with tagname ${element2.name}: ${names}.`,
-      element2.startSourceSpan,
-      0 /* Error */,
-      8001
+  /**
+   * Parses and caches the templates of the cross-file component dependencies of every component
+   * in `consumer` that `withNgContentSelectors` would otherwise have to read synchronously. For
+   * analyzers without synchronous lookups (the sidecar), this has to run before the consumer is
+   * bound. The dependency files are read concurrently.
+   */
+  async prefetch(consumer) {
+    const missing = /* @__PURE__ */ new Map();
+    for (const cls of consumer.classes) {
+      this.collectMissing(cls.component?.resolvedDeclarations ?? [], consumer.filePath, missing);
+    }
+    await Promise.all(
+      Array.from(missing, async ([filePath, classIds]) => {
+        const metadata = this.knownMetadata?.get(filePath) ?? await this.analyzer.getMetadataForFile(filePath);
+        if (metadata == null) {
+          return;
+        }
+        const content = await this.analyzer.getFileContent(filePath);
+        this.parseTemplates(filePath, metadata.classes, content, classIds.values());
+      })
     );
   }
-  conflictingHostDirectiveBinding(id, node, directiveName, kind, classPropertyName, aliases) {
+  /**
+   * Adds to `missing` the components among `declarations` that are declared in a file other than
+   * `consumerPath` and whose template is not cached yet. Same-file dependencies are parsed from
+   * the consumer's own content, which the caller already has.
+   */
+  collectMissing(declarations, consumerPath, missing) {
+    for (const decl of declarations) {
+      const filePath = decl.filePath ?? consumerPath;
+      if (!needsNgContentSelectors(decl) || filePath === consumerPath) {
+        continue;
+      }
+      const id = classIdOf(decl);
+      if (findParsedTemplate(this.getParsedTemplates(filePath), id) !== null) {
+        continue;
+      }
+      let classIds = missing.get(filePath);
+      if (classIds === void 0) {
+        classIds = /* @__PURE__ */ new Map();
+        missing.set(filePath, classIds);
+      }
+      classIds.set(id.nameStart, id);
+    }
+  }
+  /** Parses the templates of `classIds` into `filePath`'s cache, if not there already. */
+  parseTemplates(filePath, classes, content, classIds) {
+    const templatesByClass = this.getParsedTemplates(filePath);
+    for (const id of classIds) {
+      this.getOrParseTemplate(id, classes, filePath, content, templatesByClass);
+    }
+  }
+  getTemplate(decl, consumer) {
+    const filePath = decl.filePath ?? consumer.filePath;
+    const id = classIdOf(decl);
+    if (filePath === consumer.filePath) {
+      return this.getOrParseTemplate(
+        id,
+        consumer.classes,
+        consumer.filePath,
+        consumer.content,
+        consumer.templatesByClass
+      );
+    }
+    return findParsedTemplate(this.getParsedTemplates(filePath), id);
+  }
+  getParsedTemplates(filePath) {
+    return getOrCreateFileAnalysis(this.fileCache, filePath).parsedTemplates;
+  }
+  getOrParseTemplate(id, classes, filePath, content, templatesByClass) {
+    const classMeta = classes.find(
+      (c) => c.nameSpan?.start === id.nameStart && c.className === id.name && c.component != null
+    );
+    if (classMeta?.component == null) {
+      return null;
+    }
+    return getOrParseComponentTemplate(
+      templatesByClass,
+      classMeta,
+      classMeta.component,
+      filePath,
+      content,
+      this.templateParseOptions
+    );
   }
 };
+function needsNgContentSelectors(decl) {
+  return decl.declarationType === "component" && decl.ngContentSelectors == null;
+}
+function classIdOf(decl) {
+  return { name: decl.name, nameStart: decl.nameSpan.start };
+}
+function findParsedTemplate(templatesByClass, id) {
+  const prefix = `${id.name}@`;
+  for (const [key, parsed] of templatesByClass) {
+    if (key.startsWith(prefix) && parsed.classNameStart === id.nameStart) {
+      return parsed;
+    }
+  }
+  return null;
+}
+function safeLookup(lookup) {
+  try {
+    return lookup();
+  } catch {
+    return null;
+  }
+}
+
+// packages/compiler-cli/preprocessor/src/diagnostic.ts
+var ERROR_CODES_WITH_GUIDES = /* @__PURE__ */ new Set([
+  1001,
+  // DECORATOR_ARG_NOT_LITERAL
+  2003,
+  // PARAM_MISSING_TOKEN
+  2009,
+  // COMPONENT_INVALID_SHADOW_DOM_SELECTOR
+  3003,
+  // IMPORT_CYCLE_DETECTED
+  6100,
+  // WARN_NGMODULE_ID_UNNECESSARY
+  8001,
+  // SCHEMA_INVALID_ELEMENT
+  8002,
+  // SCHEMA_INVALID_ATTRIBUTE
+  8003,
+  // MISSING_REFERENCE_TARGET
+  8011,
+  // CONTROL_FLOW_PREVENTING_CONTENT_PROJECTION
+  8023,
+  // MULTIPLE_MATCHING_COMPONENTS
+  8024
+  // CONFLICTING_HOST_DIRECTIVE_BINDING
+]);
+var ERROR_DETAILS_PAGE_BASE_URL2 = (() => {
+  const full = VERSION2.full;
+  const isPreRelease = full.includes("-next") || full.includes("-rc") || full === "0.0.0-PLACEHOLDER";
+  const prefix = isPreRelease ? "next" : `v${VERSION2.major}`;
+  return `https://${prefix}.angular.dev/errors`;
+})();
+function withErrorGuide(diag) {
+  if (!ERROR_CODES_WITH_GUIDES.has(diag.code)) {
+    return diag;
+  }
+  const details = `Find more at ${ERROR_DETAILS_PAGE_BASE_URL2}/NG${diag.code}`;
+  const message = diag.messageText;
+  if (message === "") {
+    return { ...diag, messageText: details };
+  }
+  const separator = /[.,;!?\n]$/.test(message) ? " " : ". ";
+  return { ...diag, messageText: `${message}${separator}${details}` };
+}
+function flattenNgDiagnosticMessage(diag) {
+  return [diag.messageText, ...diag.next ?? []].join("\n  ");
+}
 
 // packages/compiler-cli/preprocessor/src/tcb_adapter.ts
-function createInputPropertyMapping(metadata, content) {
+function createInputPropertyMapping(metadata, inlineContent) {
   const obj = {};
   if (metadata) {
     for (const item of metadata) {
@@ -38840,8 +39737,8 @@ function createInputPropertyMapping(metadata, content) {
         isSignal: item.isSignal,
         required: item.required
       };
-      if (item.transform !== void 0 && item.transform.kind === "type" && item.transform.typeSpan && content) {
-        mapping.transformType = content.substring(
+      if (item.transform !== void 0 && item.transform.kind === "type" && item.transform.typeSpan && inlineContent) {
+        mapping.transformType = inlineContent.substring(
           item.transform.typeSpan.start,
           item.transform.typeSpan.end
         );
@@ -38904,27 +39801,28 @@ function filterOutputMappings(source, allowed) {
   }
   return ClassPropertyMapping.fromMappedObject(result);
 }
-function resolveHostDirectives(resolvedHostDirectives, filePath, requiresInline = false, content, consumerPath, visited = /* @__PURE__ */ new Set()) {
+function resolveHostDirectives(resolvedHostDirectives, filePath, requiresInline = false, content, consumerPath, ancestors = /* @__PURE__ */ new Set()) {
   if (!resolvedHostDirectives || resolvedHostDirectives.length === 0) {
     return [];
   }
   const results = [];
   for (const hd of resolvedHostDirectives) {
     const hostDecl = hd.directive;
-    const hostKey = `${hostDecl.filePath || filePath}#${hostDecl.name}`;
-    if (visited.has(hostKey)) {
+    const hostDeclPath = hostDecl.filePath || filePath;
+    const hostKey = `${hostDeclPath}#${hostDecl.name}`;
+    if (ancestors.has(hostKey)) {
       continue;
     }
-    visited.add(hostKey);
-    const hostDeclPath = hostDecl.filePath || filePath;
+    ancestors.add(hostKey);
     const chained = resolveHostDirectives(
       hostDecl.resolvedHostDirectives,
       hostDeclPath,
       requiresInline,
       content,
       consumerPath,
-      visited
+      ancestors
     );
+    ancestors.delete(hostKey);
     results.push(...chained);
     const hostMeta = declarationToMetadata(
       hostDecl,
@@ -38948,7 +39846,12 @@ function adaptTcbInput(target, typeCheckId, filePath, config, requiresInline = f
   const isStandalone = target.isStandalone ?? target.ownDeclaration.isStandalone ?? false;
   const isSelectorless = target.ownDeclaration.declarationType === "component" && isStandalone && (target.selectorlessEnabled ?? false);
   let matcher;
-  const declarations = isStandalone && target.ownDeclaration && !target.declarations.some((d) => d.name === target.ownDeclaration.name) ? [...target.declarations, target.ownDeclaration] : target.declarations;
+  const declarations = isStandalone && target.ownDeclaration ? [
+    target.ownDeclaration,
+    ...target.declarations.filter(
+      (d) => !(d.name === target.ownDeclaration.name && d.ref.localAlias === target.ownDeclaration.name && d.ref.consumerImport == null)
+    )
+  ] : target.declarations;
   if (isSelectorless) {
     const registry = /* @__PURE__ */ new Map();
     for (const decl of declarations) {
@@ -38998,7 +39901,10 @@ function adaptTcbInput(target, typeCheckId, filePath, config, requiresInline = f
     content,
     filePath
   ) : [];
-  const binder = new R3TargetBinder(matcher);
+  const binder = new R3TargetBinder(
+    matcher,
+    createForeignComponentMatcher2(target.foreignImports)
+  );
   const host = config.typeCheckHostBindings === false ? null : adaptHostElement(target, content);
   const boundTarget = binder.bind({
     template: target.templateNodes,
@@ -39079,7 +39985,7 @@ function adaptHostElement(target, content) {
     });
   }
   for (const decorator of target.hostBindings) {
-    if (!isStaticSourceNode(decorator.memberName)) {
+    if (decorator.isAccessor || !isStaticSourceNode(decorator.memberName)) {
       continue;
     }
     hostBindingDecorators.push({
@@ -39175,7 +40081,10 @@ function declarationToMetadata(decl, filePath, requiresInline = false, content, 
           i.isCoerced = true;
         }
       }
-      return createInputPropertyMapping(inputsList, content);
+      return createInputPropertyMapping(
+        inputsList,
+        requiresInline && isSameFile ? content : void 0
+      );
     })(),
     outputs: (() => {
       const outputsList = [];
@@ -39220,7 +40129,7 @@ function declarationToMetadata(decl, filePath, requiresInline = false, content, 
     undeclaredInputFields: new Set(
       fields.filter((f) => f.kind === "input" && f.input && !f.input.propertySpan).map((f) => f.input.name)
     ),
-    publicMethods: /* @__PURE__ */ new Set(),
+    publicMethods: new Set(decl.publicMethods ?? []),
     ngContentSelectors: decl.ngContentSelectors || null,
     animationTriggerNames: decl.animationTriggerNames || null
   };
@@ -39236,524 +40145,206 @@ function mapTypeParameters(params) {
   }));
 }
 
-// packages/compiler-cli/preprocessor/src/tcb.ts
-var TCB_TEMPLATE_SOURCES_COMMENT_PREFIX = "ngp-tcb-template-sources:";
-function getTcbTemplateSource(component) {
-  if (component?.templateUrl != null) {
-    return { templateFile: component.templateUrl.resolvedPath };
+// packages/compiler-cli/preprocessor/src/indexing/indexer.ts
+var IndexerBoundTemplate = class {
+  constructor(boundTarget, pipes) {
+    this.boundTarget = boundTarget;
+    this.pipes = pipes;
   }
-  const expressionSpan = component?.templateSpan;
-  if (component?.templateContentSpan != null || expressionSpan == null) {
-    return null;
+  boundTarget;
+  pipes;
+  classEntityCache = /* @__PURE__ */ new Map();
+  getDirectivesOfNode(node) {
+    return this.boundTarget?.getDirectivesOfNode(node)?.map((dir) => this.toDirectiveRef(dir)) || null;
   }
-  return { templateExpression: { start: expressionSpan.start, end: expressionSpan.end } };
-}
-function serializeTcbTemplateSources(templateSources) {
-  if (Object.keys(templateSources).length === 0) {
-    return "";
-  }
-  const json = JSON.stringify(templateSources).split("*/").join("*\\/");
-  return `
-/*${TCB_TEMPLATE_SOURCES_COMMENT_PREFIX}${json}*/
-`;
-}
-function buildTypeCheckingConfig(options = {}, enableTemplateTypeChecker = false) {
-  const strictTemplates = options.strictTemplates !== false;
-  let typeCheckingConfig;
-  if (strictTemplates) {
-    typeCheckingConfig = {
-      applyTemplateContextGuards: true,
-      checkTemplateBodies: true,
-      alwaysCheckSchemaInTemplateBodies: true,
-      checkTypeOfInputBindings: true,
-      honorAccessModifiersForInputBindings: false,
-      checkControlFlowBodies: true,
-      strictNullInputBindings: true,
-      checkTypeOfAttributes: true,
-      checkTypeOfDomBindings: false,
-      checkTypeOfOutputEvents: true,
-      checkTypeOfAnimationEvents: true,
-      checkTypeOfDomEvents: true,
-      checkTypeOfDomReferences: true,
-      checkTypeOfNonDomReferences: true,
-      checkTypeOfPipes: true,
-      strictSafeNavigationTypes: true,
-      useContextGenericType: true,
-      strictLiteralTypes: true,
-      enableTemplateTypeChecker,
-      useInlineTypeConstructors: false,
-      controlFlowPreventingContentProjection: options.extendedDiagnostics?.checks?.controlFlowPreventingContentProjection ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
-      unusedStandaloneImports: options.extendedDiagnostics?.checks?.unusedStandaloneImports ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
-      // These are actually set via version check in ngtsc (ngtsc/core/src/compiler.ts).
-      // Since we don't have any of that here we just default to true.
-      allowSignalsInTwoWayBindings: true,
-      allowDomEventAssertion: true,
-      checkUnclaimedEventNames: false,
-      checkUnknownElements: false
-    };
-  } else {
-    typeCheckingConfig = {
-      applyTemplateContextGuards: false,
-      checkTemplateBodies: false,
-      checkControlFlowBodies: false,
-      alwaysCheckSchemaInTemplateBodies: !!options.annotateForClosureCompiler,
-      checkTypeOfInputBindings: false,
-      strictNullInputBindings: false,
-      honorAccessModifiersForInputBindings: false,
-      checkTypeOfAttributes: false,
-      checkTypeOfDomBindings: false,
-      checkTypeOfOutputEvents: false,
-      checkTypeOfAnimationEvents: false,
-      checkTypeOfDomEvents: false,
-      checkTypeOfDomReferences: false,
-      checkTypeOfNonDomReferences: false,
-      checkTypeOfPipes: false,
-      strictSafeNavigationTypes: false,
-      useContextGenericType: false,
-      strictLiteralTypes: false,
-      enableTemplateTypeChecker,
-      useInlineTypeConstructors: false,
-      controlFlowPreventingContentProjection: options.extendedDiagnostics?.checks?.controlFlowPreventingContentProjection ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
-      unusedStandaloneImports: options.extendedDiagnostics?.checks?.unusedStandaloneImports ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
-      // These are actually set via version check in ngtsc (ngtsc/core/src/compiler.ts).
-      // Since we don't have any of that here we just default to true.
-      allowSignalsInTwoWayBindings: true,
-      allowDomEventAssertion: true,
-      checkUnclaimedEventNames: false,
-      checkUnknownElements: false
-    };
-  }
-  if (options.strictInputTypes !== void 0) {
-    typeCheckingConfig.checkTypeOfInputBindings = options.strictInputTypes;
-    typeCheckingConfig.applyTemplateContextGuards = options.strictInputTypes;
-  }
-  if (options.strictInputAccessModifiers !== void 0) {
-    typeCheckingConfig.honorAccessModifiersForInputBindings = options.strictInputAccessModifiers;
-  }
-  if (options.strictNullInputTypes !== void 0) {
-    typeCheckingConfig.strictNullInputBindings = options.strictNullInputTypes;
-  }
-  if (options.strictOutputEventTypes !== void 0) {
-    typeCheckingConfig.checkTypeOfOutputEvents = options.strictOutputEventTypes;
-    typeCheckingConfig.checkTypeOfAnimationEvents = options.strictOutputEventTypes;
-  }
-  if (options.strictDomEventTypes !== void 0) {
-    typeCheckingConfig.checkTypeOfDomEvents = options.strictDomEventTypes;
-  }
-  if (options.strictSafeNavigationTypes !== void 0) {
-    typeCheckingConfig.strictSafeNavigationTypes = options.strictSafeNavigationTypes;
-  }
-  if (options.strictDomLocalRefTypes !== void 0) {
-    typeCheckingConfig.checkTypeOfDomReferences = options.strictDomLocalRefTypes;
-  }
-  if (options.strictAttributeTypes !== void 0) {
-    typeCheckingConfig.checkTypeOfAttributes = options.strictAttributeTypes;
-  }
-  if (options.strictContextGenerics !== void 0) {
-    typeCheckingConfig.useContextGenericType = options.strictContextGenerics;
-  }
-  if (options.strictLiteralTypes !== void 0) {
-    typeCheckingConfig.strictLiteralTypes = options.strictLiteralTypes;
-  }
-  typeCheckingConfig.typeCheckHostBindings = options.typeCheckHostBindings ?? true;
-  return typeCheckingConfig;
-}
-function printStatements(expressions) {
-  let result = "";
-  for (const expr of expressions) {
-    result += `${expr.print()};
-`;
-  }
-  return result;
-}
-var TcbImportManager = class {
-  imports = /* @__PURE__ */ new Map();
-  nextIndex = 0;
-  addImport(moduleSpecifier) {
-    let alias = this.imports.get(moduleSpecifier);
-    if (alias === void 0) {
-      alias = `i${this.nextIndex++}`;
-      this.imports.set(moduleSpecifier, alias);
+  getReferenceTarget(node) {
+    const target = this.boundTarget?.getReferenceTarget(node);
+    if (!target) {
+      return null;
     }
-    return alias;
-  }
-  generateImportStatements() {
-    let result = "";
-    for (const [moduleSpecifier, alias] of this.imports) {
-      result += `import * as ${alias} from '${moduleSpecifier}';
-`;
+    if (target instanceof Element || target instanceof Template) {
+      return target;
     }
-    return result;
+    return { node: target.node, directive: this.toDirectiveRef(target.directive) };
+  }
+  getConsumerOfBinding(binding) {
+    const consumer = this.boundTarget?.getConsumerOfBinding(binding);
+    if (!consumer) {
+      return null;
+    }
+    if (consumer instanceof Element || consumer instanceof Template) {
+      return consumer;
+    }
+    return this.toDirectiveRef(consumer);
+  }
+  getExpressionTarget(ast) {
+    return this.boundTarget?.getExpressionTarget(ast) ?? null;
+  }
+  getUsedDirectives() {
+    const directives = this.boundTarget?.getUsedDirectives() ?? [];
+    return directives.map((dir) => ({ ...this.toDirectiveRef(dir), isComponent: dir.isComponent }));
+  }
+  getTemplateAst() {
+    return this.boundTarget?.target.template;
+  }
+  getPipe(name) {
+    const pipe2 = this.pipes?.get(name);
+    return pipe2 ? { ref: { node: pipe2 } } : null;
+  }
+  getClassEntity(dir) {
+    const cacheKey = dir.ref || dir;
+    if (this.classEntityCache.has(cacheKey)) {
+      return this.classEntityCache.get(cacheKey);
+    }
+    let name = dir.name ?? "";
+    let filePath = "";
+    if (dir.ref) {
+      name = dir.ref.name || name;
+      filePath = dir.ref.nodeFilePath || "";
+      if (!filePath && typeof dir.ref.key === "string") {
+        const parts = dir.ref.key.split("#");
+        if (parts.length > 1) {
+          filePath = parts[0];
+        }
+      }
+    }
+    const entity = { name, filePath };
+    this.classEntityCache.set(cacheKey, entity);
+    return entity;
+  }
+  toDirectiveRef(dir) {
+    return { ref: { node: this.getClassEntity(dir) }, selector: dir.selector };
   }
 };
-function qualifyTypeParameters(params, env, defaultModuleSpecifier) {
-  if (!params || params.length === 0) {
-    return params ? [] : void 0;
+async function getIndexedComponents(compiler) {
+  const indexedComponents = /* @__PURE__ */ new Map();
+  for (const [filePath, fileAnalysis] of compiler.fileCache.entries()) {
+    const result = await compiler.analyzer.getMetadataForFile(filePath);
+    if (!result) continue;
+    indexFileComponents(filePath, fileAnalysis, result, indexedComponents);
   }
-  return params.map((param) => {
-    const typeRefs = param.typeRefs;
-    if (!typeRefs || typeRefs.length === 0) {
-      return param;
-    }
-    const sortedRefs = [...typeRefs].sort((a, b) => (b.span?.start ?? 0) - (a.span?.start ?? 0));
-    let representation = param.representation;
-    let representationWithDefault = param.representationWithDefault;
-    for (const ref of sortedRefs) {
-      const mod = ref.moduleSpecifier || defaultModuleSpecifier;
-      if (!mod || !ref.span) continue;
-      const qualified = env.referenceExternalSymbol(mod, ref.symbol).print();
-      const { start, end } = ref.span;
-      if (start <= representation.length && end <= representation.length) {
-        representation = representation.slice(0, start) + qualified + representation.slice(end);
-      }
-      if (start <= representationWithDefault.length && end <= representationWithDefault.length) {
-        representationWithDefault = representationWithDefault.slice(0, start) + qualified + representationWithDefault.slice(end);
-      }
-    }
-    return {
-      ...param,
-      representation,
-      representationWithDefault
-    };
-  });
+  return indexedComponents;
 }
-function generateGenericArgs(typeParameters) {
-  if (typeParameters === void 0 || typeParameters.length === 0) {
-    return "";
+function getIndexedComponentsSync(compiler) {
+  const indexedComponents = /* @__PURE__ */ new Map();
+  for (const [filePath, fileAnalysis] of compiler.fileCache.entries()) {
+    const result = compiler.analyzer.getMetadataForFileSync(filePath);
+    if (!result) continue;
+    indexFileComponents(filePath, fileAnalysis, result, indexedComponents);
   }
-  return `<${typeParameters.map((param) => param.name).join(", ")}>`;
+  return indexedComponents;
 }
-function typeParametersWithDefaultTypes(params) {
-  if (params === void 0 || params.length === 0) {
-    return "";
-  }
-  return `<${params.map((param) => param.representationWithDefault).join(", ")}>`;
-}
-function constructTypeCtorParameter(env, meta, typeRef, typeRefWithGenerics) {
-  let initType = null;
-  const plainKeys = [];
-  const coercedKeys = [];
-  const signalInputKeys = [];
-  for (const { classPropertyName, transformType, isSignal } of meta.fields.inputs) {
-    if (isSignal) {
-      signalInputKeys.push(TcbExpr.quoteAndEscape(classPropertyName));
-    } else if (!meta.coercedInputFields.has(classPropertyName)) {
-      plainKeys.push(TcbExpr.quoteAndEscape(classPropertyName));
-    } else {
-      const propName = `ngAcceptInputType_${classPropertyName}`;
-      const isUnsafe = isUnsafeObjectKey(classPropertyName);
-      const access3 = isUnsafe ? `[${TcbExpr.quoteAndEscape(propName)}]` : `.${propName}`;
-      const coercionType = transformType !== void 0 ? transformType : `typeof ${typeRef}${access3}`;
-      coercedKeys.push(
-        `${isUnsafe ? TcbExpr.quoteAndEscape(classPropertyName) : classPropertyName}: ${coercionType}`
-      );
-    }
-  }
-  if (plainKeys.length > 0) {
-    initType = `Pick<${typeRefWithGenerics}, ${plainKeys.join(" | ")}>`;
-  }
-  if (coercedKeys.length > 0) {
-    let coercedLiteral = "{\n";
-    for (const key of coercedKeys) {
-      coercedLiteral += `${key};
-`;
-    }
-    coercedLiteral += "}";
-    initType = initType !== null ? `${initType} & ${coercedLiteral}` : coercedLiteral;
-  }
-  if (signalInputKeys.length > 0) {
-    const keyTypeUnion = signalInputKeys.join(" | ");
-    const unwrapRef = env.referenceExternalSymbol(
-      Identifiers.UnwrapDirectiveSignalInputs.moduleName,
-      Identifiers.UnwrapDirectiveSignalInputs.name
+function indexFileComponents(filePath, fileAnalysis, result, indexedComponents) {
+  const templatesByClass = fileAnalysis.parsedTemplates;
+  const boundTargetsByClass = fileAnalysis.preparedTcbData?.boundTargetMap;
+  for (const cls of result.classes) {
+    if (!cls.className || !cls.component) continue;
+    const classKey = makeClassKey(cls.className, cls.span.start);
+    const parsedTemplate = templatesByClass.get(classKey);
+    if (!parsedTemplate) continue;
+    const boundTarget = boundTargetsByClass?.get(classKey);
+    const target = fileAnalysis.preparedTcbData?.targets.find(
+      (t) => t.comp.className === cls.className && (!t.comp.classMeta || t.comp.classMeta.span.start === cls.span.start)
     );
-    const unwrapExpr = `${unwrapRef.print()}<${typeRefWithGenerics}, ${keyTypeUnion}>`;
-    initType = initType !== null ? `${initType} & ${unwrapExpr}` : unwrapExpr;
-  }
-  if (initType === null) {
-    initType = "{}";
-  }
-  return `init: ${initType}`;
-}
-function generateTypeCtorDeclarationFn(env, meta, nodeTypeRef, typeParams) {
-  const typeArgs = generateGenericArgs(typeParams);
-  const typeRefWithGenerics = `${nodeTypeRef.print()}${typeArgs}`;
-  const initParam = constructTypeCtorParameter(env, meta, nodeTypeRef.print(), typeRefWithGenerics);
-  const typeParameters = typeParametersWithDefaultTypes(typeParams);
-  let source;
-  if (meta.body) {
-    const fnType = `${typeParameters}(${initParam}) => ${typeRefWithGenerics}`;
-    source = `const ${meta.fnName}: ${fnType} = null!`;
-  } else {
-    source = `declare function ${meta.fnName}${typeParameters}(${initParam}): ${typeRefWithGenerics}`;
-  }
-  return new TcbExpr(source);
-}
-var TcbEnvironmentImpl = class {
-  constructor(config, importManager, isInline = false) {
-    this.config = config;
-    this.importManager = importManager;
-    this.isInline = isInline;
-  }
-  config;
-  importManager;
-  isInline;
-  nextIds = {
-    pipeInst: 1,
-    typeCtor: 1
-  };
-  typeCtors = /* @__PURE__ */ new Map();
-  typeCtorStatements = [];
-  pipeInsts = /* @__PURE__ */ new Map();
-  pipeInstStatements = [];
-  referenceTcbValue(ref) {
-    if (ref.unexportedDiagnostic !== null || ref.isLocal || ref.moduleName === null) {
-      if (ref.unexportedDiagnostic !== null) {
-        throw new Error(`Unable to import symbol ${ref.name}: ${ref.unexportedDiagnostic}`);
+    const pipeMap = /* @__PURE__ */ new Map();
+    if (target?.comp.pipeRegistry) {
+      for (const [name, pipeMeta] of target.comp.pipeRegistry.entries()) {
+        pipeMap.set(name, {
+          name: pipeMeta.className,
+          filePath: pipeMeta.filePath || ""
+        });
       }
-      return new TcbExpr(ref.name);
     }
-    return this.referenceExternalSymbol(ref.moduleName, ref.name);
-  }
-  referenceExternalSymbol(moduleName, name) {
-    const alias = this.importManager.addImport(moduleName);
-    return new TcbExpr(`${alias}.${name}`);
-  }
-  typeCtorFor(dir) {
-    if (this.typeCtors.has(dir.ref.key)) {
-      return new TcbExpr(this.typeCtors.get(dir.ref.key));
+    const visitor = new IndexerVisitor(new IndexerBoundTemplate(boundTarget, pipeMap));
+    parsedTemplate.diagNodes.forEach((node) => node.visit(visitor));
+    const identifiers = /* @__PURE__ */ new Set();
+    for (const id of visitor.identifiers) {
+      identifiers.add(id);
     }
-    if (dir.requiresInlineTypeCtor) {
-      const typeCtorExpr = `${this.referenceTcbValue(dir.ref).print()}.ngTypeCtor`;
-      this.typeCtors.set(dir.ref.key, typeCtorExpr);
-      return new TcbExpr(typeCtorExpr);
-    } else {
-      const fnName = `_ctor${this.nextIds.typeCtor++}`;
-      const nodeTypeRef = this.referenceTcbValue(dir.ref);
-      const meta = {
-        fnName,
-        body: true,
-        fields: {
-          inputs: dir.inputs
+    let templateUrl = void 0;
+    if (cls.component.templateUrl && cls.component.templateUrl.stringLiteralSpan) {
+      const span = cls.component.templateUrl.stringLiteralSpan;
+      templateUrl = {
+        url: cls.component.templateUrl.url,
+        span: {
+          start: span.start + 1,
+          end: span.end - 1
         },
-        coercedInputFields: dir.coercedInputFields
+        resolvedPath: cls.component.templateUrl.resolvedPath
       };
-      const typeParams = dir.typeParameters ? qualifyTypeParameters(dir.typeParameters, this, dir.ref.moduleName) : void 0;
-      const typeCtor = generateTypeCtorDeclarationFn(this, meta, nodeTypeRef, typeParams);
-      this.typeCtorStatements.push(typeCtor);
-      this.typeCtors.set(dir.ref.key, fnName);
-      return new TcbExpr(fnName);
     }
-  }
-  pipeInst(pipe2) {
-    if (this.pipeInsts.has(pipe2.ref.key)) {
-      return new TcbExpr(this.pipeInsts.get(pipe2.ref.key));
-    }
-    const pipeType = this.referenceTcbValue(pipe2.ref);
-    const pipeInstId = `_pipe${this.nextIds.pipeInst++}`;
-    this.pipeInsts.set(pipe2.ref.key, pipeInstId);
-    this.pipeInstStatements.push(new TcbExpr(`var ${pipeInstId} = null! as ${pipeType.print()}`));
-    return new TcbExpr(pipeInstId);
-  }
-  getPreludeStatements() {
-    if (this.isInline) {
-      return [...this.pipeInstStatements, ...this.typeCtorStatements];
-    }
-    return [];
-  }
-  getFileLevelStatements() {
-    return [...this.pipeInstStatements, ...this.typeCtorStatements];
-  }
-};
-function prepareTcbTargets(filePath, tcbTargets, content, config, classes, _workspaceName, _rootDirs) {
-  if (tcbTargets.length === 0) return null;
-  const localClasses = /* @__PURE__ */ new Map();
-  if (classes) {
-    for (const cls of classes) {
-      if (cls.className) localClasses.set(cls.className, cls);
-    }
-  } else {
-    for (const target of tcbTargets) {
-      if (target.className) localClasses.set(target.className, target.classMeta);
-    }
-  }
-  let requiresInline = tcbTargets.some((target) => requiresInlineDeclaration(target.classMeta));
-  const intermediateTargets = [];
-  for (let i = 0; i < tcbTargets.length; i++) {
-    const comp = tcbTargets[i];
-    const typeCheckId = `tcb${i + 1}`;
-    const adapted = adaptTcbInput(comp, typeCheckId, filePath, config, requiresInline, content);
-    intermediateTargets.push({ comp, typeCheckId, ...adapted });
-    if (!requiresInline && requiresInlineTypeCheckBlock(comp, adapted.tcbMeta.boundTarget, localClasses)) {
-      requiresInline = true;
-    }
-  }
-  const boundTargetMap = /* @__PURE__ */ new Map();
-  const hostElementsMap = /* @__PURE__ */ new Map();
-  const typeCheckIdMap = /* @__PURE__ */ new Map();
-  const targets = [];
-  for (let i = 0; i < tcbTargets.length; i++) {
-    const { comp, typeCheckId } = intermediateTargets[i];
-    const { tcbMeta, targetMeta, hostElement } = requiresInline ? adaptTcbInput(comp, typeCheckId, filePath, config, true, content) : intermediateTargets[i];
-    const classKey = makeClassKey(comp.className, comp.classMeta.span.start);
-    boundTargetMap.set(classKey, tcbMeta.boundTarget);
-    hostElementsMap.set(classKey, hostElement);
-    typeCheckIdMap.set(classKey, typeCheckId);
-    targets.push({ comp, typeCheckId, tcbMeta, targetMeta });
-  }
-  return { targets, boundTargetMap, hostElementsMap, typeCheckIdMap, requiresInline };
-}
-function generateTcbCode(filePath, preparedData, config) {
-  const { targets, requiresInline } = preparedData;
-  if (targets.length === 0) return null;
-  const importManager = new TcbImportManager();
-  const oobRecorder = new OutOfBandDiagnosticRecorderImpl();
-  const domSchemaChecker = new RegistryDomSchemaChecker();
-  let code = "";
-  let functionStrings = "";
-  const tcbMap = /* @__PURE__ */ new Map();
-  const templateSources = {};
-  const sharedEnv = !requiresInline ? new TcbEnvironmentImpl(config, importManager, false) : null;
-  for (const target of targets) {
-    const { comp, typeCheckId, tcbMeta, targetMeta } = target;
-    const env = sharedEnv || new TcbEnvironmentImpl(config, importManager, true);
-    const targetTypeParams = targetMeta.typeParameters ? qualifyTypeParameters(targetMeta.typeParameters, env, targetMeta.ref.moduleName) ?? null : null;
-    const qualifiedTargetMeta = targetTypeParams ? { ...targetMeta, typeParameters: targetTypeParams } : targetMeta;
-    let tcbString = "";
-    try {
-      tcbString = generateTypeCheckBlock(
-        env,
-        qualifiedTargetMeta,
-        `_${typeCheckId}`,
-        tcbMeta,
-        domSchemaChecker,
-        oobRecorder
-      );
-    } catch (e) {
-      oobRecorder.error(
-        typeCheckId,
-        `Error generating TCB for ${comp.className}: ${e?.message || e}`,
-        { start: comp.classMeta.span.start, end: comp.classMeta.span.end }
-      );
-      continue;
-    }
-    functionStrings += tcbString + "\n\n";
-    const classKey = makeClassKey(comp.className, comp.classMeta.span.start);
-    tcbMap.set(classKey, tcbString);
-    const templateSource = getTcbTemplateSource(comp.classMeta.component);
-    if (templateSource !== null) {
-      templateSources[typeCheckId] = templateSource;
-    }
-  }
-  if (!requiresInline) {
-    const preludeStatements = sharedEnv.getFileLevelStatements();
-    const preludeStr = printStatements(preludeStatements);
-    code += preludeStr + "\n" + functionStrings;
-  } else {
-    code += functionStrings;
-  }
-  const importsStr = importManager.generateImportStatements();
-  return {
-    code,
-    imports: importsStr,
-    tcbMap,
-    templateSources,
-    diagnostics: [...domSchemaChecker.diagnostics, ...oobRecorder.diagnostics],
-    isInline: requiresInline
-  };
-}
-function combineTcbContent(tcbResult, filePath, inlineInfo) {
-  const generatedComment = `/**
- * TCB for ${filePath}
- * @generated
- */
-
-`;
-  const importsStr = tcbResult.imports || "";
-  const separator = importsStr ? "\n" : "";
-  const tcbHeader = generatedComment + importsStr + separator;
-  const tcbFooter = serializeTcbTemplateSources(tcbResult.templateSources);
-  if (tcbResult.isInline) {
-    const { sourceContent, classes } = inlineInfo;
-    const s = new MagicString(sourceContent);
-    for (const classMeta of classes) {
-      const classKey = makeClassKey(classMeta.className || "", classMeta.span.start);
-      const tcbCode = tcbResult.tcbMap.get(classKey);
-      if (tcbCode) {
-        s.appendLeft(classMeta.span.end, "\n\n" + tcbCode);
+    const styleUrls = [];
+    if (cls.component.styleUrls) {
+      for (const s of cls.component.styleUrls) {
+        if (s.stringLiteralSpan) {
+          styleUrls.push({
+            url: s.url,
+            span: {
+              start: s.stringLiteralSpan.start + 1,
+              end: s.stringLiteralSpan.end - 1
+            },
+            resolvedPath: s.resolvedPath
+          });
+        }
       }
     }
-    return tcbHeader + s.toString() + tcbFooter;
-  } else {
-    return tcbHeader + tcbResult.code + tcbFooter;
+    const inputMapping = createInputPropertyMapping(cls.inputs);
+    const outputMapping = createOutputPropertyMapping(cls.outputs);
+    const inputs = Array.from(inputMapping).map((m) => ({
+      directiveProperty: m.classPropertyName,
+      bindingName: m.bindingPropertyName
+    }));
+    const outputs = Array.from(outputMapping).map((m) => ({
+      directiveProperty: m.classPropertyName,
+      bindingName: m.bindingPropertyName
+    }));
+    const templatePath = templateUrl?.resolvedPath || filePath;
+    indexedComponents.set(cls.className, {
+      name: cls.className,
+      selector: cls.component.selector || null,
+      fileUrl: filePath,
+      template: {
+        identifiers,
+        fileUrl: templatePath
+      },
+      errors: visitor.errors,
+      templateUrl,
+      styleUrls,
+      inputs,
+      outputs
+    });
   }
 }
 
 // packages/compiler-cli/preprocessor/src/processor.ts
+import MagicString3 from "magic-string";
+import * as fsSync from "node:fs";
 import * as path from "path";
-import * as fs from "node:fs/promises";
-import MagicString2 from "magic-string";
 
-// packages/compiler-cli/preprocessor/src/selectorless.ts
-var SelectorlessPipeAnalyzer = class extends RecursiveAstVisitor2 {
-  constructor(tracker) {
-    super();
-    this.tracker = tracker;
-  }
-  tracker;
-  visitPipe(ast, context) {
-    if (ast.type === 1) {
-      this.tracker(ast.name);
-    }
-    super.visitPipe(ast, context);
-  }
-};
-var SelectorlessDirectivesAnalyzer = class extends RecursiveVisitor {
-  symbols = null;
-  pipeAnalyzer = new SelectorlessPipeAnalyzer((name) => this.trackSymbol(name));
+// packages/compiler-cli/preprocessor/src/animations.ts
+var ANIMATE_ENTER = "animate.enter";
+var ANIMATE_LEAVE = "animate.leave";
+function hasAnimations(template2) {
+  const analyzer = new AnimationsAnalyzer();
+  visitAll(analyzer, template2);
+  return analyzer.hasAnimations;
+}
+var AnimationsAnalyzer = class extends CombinedRecursiveAstVisitor {
+  hasAnimations = false;
   visitElement(element2) {
-    for (const input of element2.inputs) {
-      input.value.visit(this.pipeAnalyzer);
+    for (const attr of element2.attributes) {
+      if (attr.name === ANIMATE_LEAVE || attr.name === ANIMATE_ENTER) {
+        this.hasAnimations = true;
+      }
     }
-    for (const output of element2.outputs) {
-      output.handler.visit(this.pipeAnalyzer);
+    for (const input of element2.inputs) {
+      if (input.name === ANIMATE_LEAVE || input.name === ANIMATE_ENTER) {
+        this.hasAnimations = true;
+      }
     }
     super.visitElement(element2);
   }
-  visitBoundText(text2) {
-    text2.value.visit(this.pipeAnalyzer);
-    super.visitBoundText(text2);
-  }
-  visitBoundAttribute(attribute2) {
-    attribute2.value.visit(this.pipeAnalyzer);
-    super.visitBoundAttribute(attribute2);
-  }
-  visitBoundEvent(event) {
-    event.handler.visit(this.pipeAnalyzer);
-    super.visitBoundEvent(event);
-  }
-  visitComponent(component) {
-    this.trackSymbol(component.componentName);
-    super.visitComponent(component);
-  }
-  visitDirective(directive) {
-    this.trackSymbol(directive.name);
-    super.visitDirective(directive);
-  }
-  trackSymbol(name) {
-    this.symbols ??= /* @__PURE__ */ new Set();
-    this.symbols.add(name);
-  }
 };
-function analyzeTemplateForSelectorless(template2) {
-  const analyzer = new SelectorlessDirectivesAnalyzer();
-  for (const node of template2) {
-    node.visit(analyzer);
-  }
-  const isSelectorless = analyzer.symbols !== null && analyzer.symbols.size > 0;
-  const localReferencedSymbols = analyzer.symbols;
-  return { isSelectorless, localReferencedSymbols };
-}
 
 // packages/compiler-cli/preprocessor/src/foreign_component.ts
 var FOREIGN_COMPONENT_UNSUPPORTED_BINDING = 8025;
@@ -39970,14 +40561,2189 @@ var ForeignComponentFeatureAnalyzer = class extends RecursiveVisitor {
   }
 };
 
-// packages/compiler-cli/preprocessor/src/file_analysis.ts
-function getOrCreateFileAnalysis(cache, filePath) {
-  let analysis = cache.get(filePath);
-  if (!analysis) {
-    analysis = { filePath, parsedTemplates: /* @__PURE__ */ new Map() };
-    cache.set(filePath, analysis);
+// packages/compiler-cli/preprocessor/src/hmr.ts
+function extractHmrMetadata(options) {
+  const { className, filePath, classMeta, topLevelValueBindings, compiled } = options;
+  const dependencies = extractHmrDependenciesFromOutput(
+    className,
+    compiled,
+    new RawSourceTopLevelReadsVisitor(classMeta.topLevelReferences ?? []),
+    new Set(topLevelValueBindings),
+    READ_RESOLVER
+  );
+  if (dependencies === null) {
+    return null;
   }
-  return analysis;
+  return {
+    type: output_ast_exports.variable(className),
+    className,
+    filePath,
+    localDependencies: dependencies.local,
+    namespaceDependencies: dependencies.external
+  };
+}
+var READ_RESOLVER = {
+  getName: readName,
+  // https://github.com/angular/angular/blob/e3ac727/packages/compiler-cli/src/ngtsc/hmr/src/extract_dependencies.ts#L96-L139
+  getRuntimeRepresentation(read) {
+    if (read instanceof output_ast_exports.ReadVarExpr || !read.isConstEnum) {
+      return output_ast_exports.variable(readName(read));
+    }
+    if (read.constEnumMembers === void 0) {
+      return null;
+    }
+    return output_ast_exports.literalMap(
+      read.constEnumMembers.map((member) => ({
+        key: member.key,
+        quoted: false,
+        value: output_ast_exports.literal(constEnumMemberValue(member))
+      }))
+    );
+  }
+};
+function readName(read) {
+  if (!(read instanceof output_ast_exports.ReadVarExpr)) {
+    return read.name;
+  }
+  const dot = read.name.indexOf(".");
+  return dot === -1 ? read.name : read.name.slice(0, dot);
+}
+function constEnumMemberValue(member) {
+  switch (member.kind) {
+    case "string" /* String */:
+      return member.value;
+    case "number" /* Number */:
+      return Number(member.value);
+    case "boolean" /* Boolean */:
+      return member.value === "true";
+    case "null" /* Null */:
+      return null;
+    case "undefined" /* Undefined */:
+      return void 0;
+  }
+}
+var RawSourceTopLevelReadsVisitor = class extends PotentialTopLevelReadsVisitor {
+  topLevelReferences;
+  constructor(topLevelReferences) {
+    super();
+    this.topLevelReferences = [...topLevelReferences].sort((a, b) => a.span.start - b.span.start);
+  }
+  addWrappedNodeReads(node) {
+    if (!(node instanceof RawSource)) {
+      return;
+    }
+    for (const span of node.spans) {
+      for (const reference2 of this.topLevelReferences) {
+        if (reference2.span.start >= span.start && reference2.span.end <= span.end) {
+          this.allReads.add(reference2);
+        }
+      }
+    }
+  }
+};
+function getHmrUpdateDeclaration(compilationResults, constantStatements, meta, filePath) {
+  const printer = new ExpressionPrinter(filePath);
+  for (const dependency of meta.namespaceDependencies) {
+    printer.addNamespaceImport(dependency.moduleName, dependency.assignedName);
+  }
+  const callback = compileHmrUpdateCallback(compilationResults, constantStatements, meta);
+  return `export default ${printer.printStatement(callback)}`;
+}
+
+// packages/compiler-cli/preprocessor/src/output_source_map.ts
+import { SourceMap } from "magic-string";
+var OutputSourceMapBuilder = class {
+  constructor(s, printer, filePath, content) {
+    this.s = s;
+    this.printer = printer;
+    this.filePath = filePath;
+    this.content = content;
+  }
+  s;
+  printer;
+  filePath;
+  content;
+  insertions = [];
+  appendLeft(position, text2) {
+    this.s.appendLeft(position, text2);
+    this.record(position, "left", text2);
+  }
+  appendRight(position, text2) {
+    this.s.appendRight(position, text2);
+    this.record(position, "right", text2);
+  }
+  /** Generates the source map of `s.toString()`. */
+  generateMap(options = {}) {
+    const output = this.s.toString();
+    const sourceName = options.source ?? this.filePath;
+    const decoded = this.s.generateDecodedMap({
+      ...options,
+      // Disable high resolution source maps, because they use a lot of memory.
+      hires: "boundary"
+    });
+    const sources = [...decoded.sources];
+    const sourcesContent = decoded.sourcesContent === void 0 ? void 0 : [...decoded.sourcesContent];
+    const mappings = decoded.mappings;
+    const sourceIndex = (url2, content) => {
+      const name = url2 === this.filePath ? sourceName : url2;
+      let index = sources.indexOf(name);
+      if (index === -1) {
+        index = sources.push(name) - 1;
+        sourcesContent?.push(content);
+      }
+      return index;
+    };
+    const outputLineStarts = computeLineStarts(output);
+    const touchedLines = /* @__PURE__ */ new Set();
+    for (const insertion of this.insertions) {
+      const start = this.locate(output, insertion);
+      if (start === -1) {
+        continue;
+      }
+      for (const { offset, snippet } of insertion.snippets) {
+        for (const mapping of snippet.mappings) {
+          const generatedOffset = start + offset + mapping.offset;
+          const line = lineOf(outputLineStarts, generatedOffset);
+          const column = generatedOffset - outputLineStarts[line];
+          const { line: sourceLine, column: sourceColumn } = this.sourcePosition(mapping);
+          while (mappings.length <= line) {
+            mappings.push([]);
+          }
+          mappings[line].push([
+            column,
+            sourceIndex(mapping.source, mapping.sourceContent),
+            sourceLine,
+            sourceColumn
+          ]);
+          touchedLines.add(line);
+        }
+      }
+    }
+    for (const line of touchedLines) {
+      const segments = mappings[line].sort((a, b) => a[0] - b[0]);
+      const deduped = [];
+      for (const segment of segments) {
+        const last = deduped[deduped.length - 1];
+        if (last !== void 0 && last[0] === segment[0]) {
+          deduped[deduped.length - 1] = segment;
+        } else {
+          deduped.push(segment);
+        }
+      }
+      mappings[line] = deduped;
+    }
+    return new SourceMap({
+      file: decoded.file,
+      sources,
+      sourcesContent,
+      names: decoded.names,
+      mappings
+    });
+  }
+  record(position, side, text2) {
+    const snippets = [];
+    let cursor = 0;
+    for (const snippet of this.printer.takePendingSnippets()) {
+      let offset = text2.indexOf(snippet.text, cursor);
+      if (offset === -1) {
+        offset = text2.indexOf(snippet.text);
+      }
+      if (offset === -1) {
+        continue;
+      }
+      snippets.push({ offset, snippet });
+      cursor = offset + snippet.text.length;
+    }
+    if (snippets.length > 0) {
+      this.insertions.push({ position, side, text: text2, snippets });
+    }
+  }
+  /** Finds where an insertion's text starts in the output, or -1 if it was edited away. */
+  locate(output, { position, side, text: text2 }) {
+    let anchor = null;
+    if (position === 0) {
+      anchor = 0;
+    } else {
+      try {
+        anchor = this.s.slice(0, position).length;
+      } catch {
+      }
+    }
+    if (anchor !== null) {
+      if (side === "left") {
+        const start = output.lastIndexOf(text2, anchor - text2.length);
+        if (start !== -1 && start + text2.length <= anchor) {
+          return start;
+        }
+      } else {
+        const start = output.indexOf(text2, anchor);
+        if (start !== -1) {
+          return start;
+        }
+      }
+    }
+    return output.indexOf(text2);
+  }
+  /**
+   * The line and column of a mapping in its source. Spans the compiler builds from a bare
+   * offset (e.g. host bindings) carry no usable line/column, so recompute them from the file
+   * content when it is available.
+   */
+  sourcePosition(mapping) {
+    const content = mapping.source === this.filePath ? this.content : mapping.sourceContent ?? null;
+    if (content === null || mapping.sourceOffset > content.length) {
+      return { line: mapping.line, column: mapping.column };
+    }
+    const lineStarts = this.lineStartsOf(content);
+    const line = lineOf(lineStarts, mapping.sourceOffset);
+    return { line, column: mapping.sourceOffset - lineStarts[line] };
+  }
+  lineStartsCache = /* @__PURE__ */ new Map();
+  lineStartsOf(content) {
+    let lineStarts = this.lineStartsCache.get(content);
+    if (lineStarts === void 0) {
+      lineStarts = computeLineStarts(content);
+      this.lineStartsCache.set(content, lineStarts);
+    }
+    return lineStarts;
+  }
+};
+function computeLineStarts(text2) {
+  const lineStarts = [0];
+  for (let i = 0; i < text2.length; i++) {
+    if (text2.charCodeAt(i) === 10) {
+      lineStarts.push(i + 1);
+    }
+  }
+  return lineStarts;
+}
+function lineOf(lineStarts, offset) {
+  let low = 0;
+  let high = lineStarts.length - 1;
+  while (low < high) {
+    const mid = low + high + 1 >> 1;
+    if (lineStarts[mid] <= offset) {
+      low = mid;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return low;
+}
+
+// packages/compiler-cli/preprocessor/src/selectorless.ts
+var SelectorlessPipeAnalyzer = class extends RecursiveAstVisitor2 {
+  constructor(tracker) {
+    super();
+    this.tracker = tracker;
+  }
+  tracker;
+  visitPipe(ast, context) {
+    if (ast.type === 1) {
+      this.tracker(ast.name);
+    }
+    super.visitPipe(ast, context);
+  }
+};
+var SelectorlessDirectivesAnalyzer = class extends RecursiveVisitor {
+  symbols = null;
+  pipeAnalyzer = new SelectorlessPipeAnalyzer((name) => this.trackSymbol(name));
+  visitElement(element2) {
+    for (const input of element2.inputs) {
+      input.value.visit(this.pipeAnalyzer);
+    }
+    for (const output of element2.outputs) {
+      output.handler.visit(this.pipeAnalyzer);
+    }
+    super.visitElement(element2);
+  }
+  visitBoundText(text2) {
+    text2.value.visit(this.pipeAnalyzer);
+    super.visitBoundText(text2);
+  }
+  visitBoundAttribute(attribute2) {
+    attribute2.value.visit(this.pipeAnalyzer);
+    super.visitBoundAttribute(attribute2);
+  }
+  visitBoundEvent(event) {
+    event.handler.visit(this.pipeAnalyzer);
+    super.visitBoundEvent(event);
+  }
+  visitComponent(component) {
+    this.trackSymbol(component.componentName);
+    super.visitComponent(component);
+  }
+  visitDirective(directive) {
+    this.trackSymbol(directive.name);
+    super.visitDirective(directive);
+  }
+  trackSymbol(name) {
+    this.symbols ??= /* @__PURE__ */ new Set();
+    this.symbols.add(name);
+  }
+};
+function analyzeTemplateForSelectorless(template2) {
+  const analyzer = new SelectorlessDirectivesAnalyzer();
+  for (const node of template2) {
+    node.visit(analyzer);
+  }
+  const isSelectorless = analyzer.symbols !== null && analyzer.symbols.size > 0;
+  const localReferencedSymbols = analyzer.symbols;
+  return { isSelectorless, localReferencedSymbols };
+}
+
+// packages/compiler-cli/preprocessor/src/dom_schema_checker.ts
+var REGISTRY4 = new DomElementSchemaRegistry();
+var REMOVE_XHTML_REGEX = /^:xhtml:/;
+var UNCLAIMED_EVENT_CANDIDATE_REGEX = /^[a-zA-Z][a-zA-Z0-9$_]*$/;
+var RegistryDomSchemaChecker2 = class {
+  _diagnostics = [];
+  get diagnostics() {
+    return this._diagnostics;
+  }
+  checkElement(id, tagName, sourceSpanForDiagnostics, schemas, hostIsStandalone) {
+    const name = tagName.replace(REMOVE_XHTML_REGEX, "");
+    if (!REGISTRY4.hasElement(name, schemas)) {
+      const schemasStr = `'${hostIsStandalone ? "@Component" : "@NgModule"}.schemas'`;
+      let errorMsg = `'${name}' is not a known element:
+`;
+      errorMsg += `1. If '${name}' is an Angular component, then verify that it is ${hostIsStandalone ? "included in the '@Component.imports' of this component" : "part of this module"}.
+`;
+      if (name.indexOf("-") > -1) {
+        errorMsg += `2. If '${name}' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the ${schemasStr} of this component to suppress this message.`;
+      } else {
+        errorMsg += `2. To allow any element add 'NO_ERRORS_SCHEMA' to the ${schemasStr} of this component.`;
+      }
+      this._diagnostics.push({
+        typeCheckId: id,
+        category: 0 /* Error */,
+        code: 8001,
+        message: errorMsg,
+        start: sourceSpanForDiagnostics.start.offset,
+        end: sourceSpanForDiagnostics.end.offset
+      });
+    }
+  }
+  checkTemplateElementProperty(id, tagName, name, span, schemas, hostIsStandalone) {
+    if (!REGISTRY4.hasProperty(tagName, name, schemas)) {
+      const decorator = hostIsStandalone ? "@Component" : "@NgModule";
+      const schemasStr = `'${decorator}.schemas'`;
+      let errorMsg = `Can't bind to '${name}' since it isn't a known property of '${tagName}'.`;
+      if (tagName.startsWith("ng-")) {
+        errorMsg += `
+1. If '${name}' is an Angular directive, then add 'CommonModule' to the '${decorator}.imports' of this component.
+2. To allow any property add 'NO_ERRORS_SCHEMA' to the ${schemasStr} of this component.`;
+      } else if (tagName.indexOf("-") > -1) {
+        errorMsg += `
+1. If '${tagName}' is an Angular component and it has '${name}' input, then verify that it is ${hostIsStandalone ? "included in the '@Component.imports' of this component" : "part of this module"}.
+2. If '${tagName}' is a Web Component then add 'CUSTOM_ELEMENTS_SCHEMA' to the ${schemasStr} of this component to suppress this message.
+3. To allow any property add 'NO_ERRORS_SCHEMA' to the ${schemasStr} of this component.`;
+      }
+      this._diagnostics.push({
+        typeCheckId: id,
+        category: 0 /* Error */,
+        code: 8002,
+        message: errorMsg,
+        start: span.start.offset,
+        end: span.end.offset
+      });
+    }
+  }
+  checkHostElementProperty(id, element2, name, span, schemas) {
+    for (const tagName of element2.tagNames) {
+      if (REGISTRY4.hasProperty(tagName, name, schemas)) {
+        continue;
+      }
+      const errorMessage = `Can't bind to '${name}' since it isn't a known property of '${tagName}'.`;
+      this._diagnostics.push({
+        typeCheckId: id,
+        category: 0 /* Error */,
+        code: 8002,
+        message: errorMessage,
+        start: span.start.offset,
+        end: span.end.offset
+      });
+      break;
+    }
+  }
+  checkTemplateElementEvent(id, tagName, eventName, span, schemas, hasComponent) {
+    if (!UNCLAIMED_EVENT_CANDIDATE_REGEX.test(eventName) || !/[A-Z]/.test(eventName)) {
+      return;
+    }
+    if (REGISTRY4.isKnownEventOfAnyElement(eventName)) {
+      return;
+    }
+    if (schemas.some(
+      (schema) => schema.name === NO_ERRORS_SCHEMA.name || schema.name === CUSTOM_ELEMENTS_SCHEMA.name && !hasComponent
+    )) {
+      return;
+    }
+    const errorMsg = `Event '${eventName}' is not emitted by any directive applied to '${tagName}' and it isn't a known native DOM event.
+1. If '${eventName}' is an output of a directive, make sure the directive is applied to the element and check the output's name for typos.
+2. If you're listening to a custom event dispatched by a descendant element, dash-separated event names (e.g. 'my-event') are exempt from this check.
+3. To disable this check entirely, set 'strictUnclaimedEventNames' to false or remove it from the compiler options.`;
+    this._diagnostics.push({
+      typeCheckId: id,
+      category: 0 /* Error */,
+      code: 8030,
+      message: errorMsg,
+      start: span.start.offset,
+      end: span.end.offset
+    });
+  }
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/api.ts
+var versionSubDomain = VERSION2.major !== "0" ? `v${VERSION2.major}.` : "";
+var EXTENDED_ERROR_DETAILS_PAGE_BASE_URL = `https://${versionSubDomain}angular.dev/extended-diagnostics`;
+function formatExtendedError(code, message) {
+  const fullCode = `NG${Math.abs(code)}`;
+  const errorMessage = `${fullCode}${message ? ": " + message : ""}`;
+  const addPeriodSeparator = !/[.,;!?\n]$/.test(errorMessage);
+  const separator = addPeriodSeparator ? "." : "";
+  return `${errorMessage}${separator} Find more at ${EXTENDED_ERROR_DETAILS_PAGE_BASE_URL}/${fullCode}`;
+}
+var TemplateCheckWithVisitor = class {
+  /**
+   * Base implementation for run function, visits all nodes in template and calls
+   * `visitNode()` for each one.
+   */
+  run(ctx, component, template2) {
+    const visitor = new TemplateVisitor(ctx, component, this);
+    return visitor.getDiagnostics(template2);
+  }
+};
+var TemplateVisitor = class extends CombinedRecursiveAstVisitor {
+  constructor(ctx, component, check) {
+    super();
+    this.ctx = ctx;
+    this.component = component;
+    this.check = check;
+  }
+  ctx;
+  component;
+  check;
+  diagnostics = [];
+  visit(node) {
+    this.diagnostics.push(...this.check.visitNode(this.ctx, this.component, node));
+    super.visit(node);
+  }
+  visitTemplate(template2) {
+    const isInlineTemplate = template2.tagName && isNgTemplate(template2.tagName);
+    this.visitAllTemplateNodes(template2.attributes);
+    if (isInlineTemplate) {
+      this.visitAllTemplateNodes(template2.inputs);
+      this.visitAllTemplateNodes(template2.outputs);
+    }
+    this.visitAllTemplateNodes(template2.directives);
+    this.visitAllTemplateNodes(template2.templateAttrs);
+    this.visitAllTemplateNodes(template2.variables);
+    this.visitAllTemplateNodes(template2.references);
+    this.visitAllTemplateNodes(template2.children);
+  }
+  getDiagnostics(template2) {
+    this.diagnostics = [];
+    this.visitAllTemplateNodes(template2);
+    return this.diagnostics;
+  }
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/defer_trigger_misconfiguration.ts
+function areLiteralMapsEqual(a, b) {
+  const aIsEmpty = a === null || a.keys.length === 0;
+  const bIsEmpty = b === null || b.keys.length === 0;
+  if (aIsEmpty && bIsEmpty) return true;
+  if (aIsEmpty || bIsEmpty) return false;
+  if (a.keys.length !== b.keys.length) return false;
+  const bMap = /* @__PURE__ */ new Map();
+  for (let i = 0; i < b.keys.length; i++) {
+    const bKey = b.keys[i];
+    if (bKey.kind !== "property") continue;
+    const bVal = b.values[i];
+    bMap.set(bKey.key, bVal instanceof LiteralPrimitive ? bVal.value : null);
+  }
+  for (let i = 0; i < a.keys.length; i++) {
+    const aKey = a.keys[i];
+    if (aKey.kind !== "property") continue;
+    const aVal = a.values[i];
+    const aValue = aVal instanceof LiteralPrimitive ? aVal.value : null;
+    if (!bMap.has(aKey.key)) return false;
+    if (bMap.get(aKey.key) !== aValue) return false;
+  }
+  return true;
+}
+function getTimedTriggerValue(trigger) {
+  if (trigger instanceof TimerDeferredTrigger) {
+    return trigger.delay;
+  }
+  return trigger.timeout;
+}
+function formatTimedTrigger(trigger) {
+  if (trigger instanceof TimerDeferredTrigger) {
+    return `timer(${trigger.delay}ms)`;
+  }
+  return trigger.timeout === null ? "idle" : `idle(${trigger.timeout}ms)`;
+}
+var DeferTriggerMisconfiguration = class extends TemplateCheckWithVisitor {
+  code = 8021;
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof DeferredBlock)) return [];
+    const mainKeys = Object.keys(node.triggers);
+    const prefetchKeys = Object.keys(node.prefetchTriggers);
+    const mains = mainKeys.map((k) => node.triggers[k]).filter((t) => t !== void 0 && t !== null);
+    const prefetches = prefetchKeys.map((k) => node.prefetchTriggers[k]).filter((t) => t !== void 0 && t !== null);
+    const diags = [];
+    const hasImmediateMain = mains.some((t) => t instanceof ImmediateDeferredTrigger);
+    if (hasImmediateMain) {
+      if (mains.length > 1) {
+        const msg = `The 'immediate' trigger makes additional triggers redundant.`;
+        diags.push(ctx.makeTemplateDiagnostic(node.sourceSpan, formatExtendedError(8021, msg)));
+      }
+      if (prefetches.length > 0) {
+        const msg = `Prefetch triggers have no effect because 'immediate' executes earlier.`;
+        diags.push(ctx.makeTemplateDiagnostic(node.sourceSpan, formatExtendedError(8021, msg)));
+      }
+    }
+    if (mains.length === 0 && prefetches.length > 0) {
+      const msg = `Define a main trigger when using 'prefetch' triggers. Without an explicit main trigger, @defer defaults to 'idle' and prefetch may have no effect.`;
+      diags.push(ctx.makeTemplateDiagnostic(node.sourceSpan, formatExtendedError(8021, msg)));
+    }
+    if (mains.length === 1 && prefetches.length > 0) {
+      const main = mains[0];
+      for (const pre of prefetches) {
+        const isTimerPair = main instanceof TimerDeferredTrigger && pre instanceof TimerDeferredTrigger;
+        const isIdlePair = main instanceof IdleDeferredTrigger && pre instanceof IdleDeferredTrigger;
+        if (isTimerPair || isIdlePair) {
+          const mainVal = getTimedTriggerValue(main);
+          const preVal = getTimedTriggerValue(pre);
+          const sameUntimedIdle = mainVal == null && preVal == null;
+          const comparableTimedPair = mainVal != null && preVal != null && preVal >= mainVal;
+          if (!sameUntimedIdle && !comparableTimedPair) {
+            continue;
+          }
+          const msg = `The Prefetch '${formatTimedTrigger(pre)}' is not scheduled before the main '${formatTimedTrigger(main)}', so it won't run prior to rendering. Lower the prefetch timing or remove it.`;
+          diags.push(
+            ctx.makeTemplateDiagnostic(
+              pre.sourceSpan ?? node.sourceSpan,
+              formatExtendedError(8021, msg)
+            )
+          );
+          continue;
+        }
+        const isHoverTrigger = main instanceof HoverDeferredTrigger && pre instanceof HoverDeferredTrigger;
+        const isInteractionTrigger = main instanceof InteractionDeferredTrigger && pre instanceof InteractionDeferredTrigger;
+        const isViewportTrigger = main instanceof ViewportDeferredTrigger && pre instanceof ViewportDeferredTrigger;
+        if (isHoverTrigger || isInteractionTrigger || isViewportTrigger) {
+          const referencesMatch = main.reference === pre.reference;
+          const optionsMatch = isViewportTrigger ? areLiteralMapsEqual(main.options, pre.options) : true;
+          if (referencesMatch && optionsMatch) {
+            const kindName = isHoverTrigger ? "hover" : isInteractionTrigger ? "interaction" : "viewport";
+            const msg = `Prefetch '${kindName}' matches the main trigger and provides no benefit. Remove the prefetch modifier.`;
+            diags.push(
+              ctx.makeTemplateDiagnostic(
+                pre.sourceSpan ?? node.sourceSpan,
+                formatExtendedError(8021, msg)
+              )
+            );
+          }
+          continue;
+        }
+        if (main.constructor === pre.constructor && !(main instanceof TimerDeferredTrigger)) {
+          const kind = main instanceof ImmediateDeferredTrigger ? "immediate" : main instanceof IdleDeferredTrigger ? "idle" : main instanceof NeverDeferredTrigger ? "never" : "trigger";
+          const msg = `Prefetch '${kind}' matches the main trigger and provides no benefit. Remove the prefetch modifier.`;
+          diags.push(
+            ctx.makeTemplateDiagnostic(
+              pre.sourceSpan ?? node.sourceSpan,
+              formatExtendedError(8021, msg)
+            )
+          );
+        }
+      }
+    }
+    return diags;
+  }
+};
+var factory = {
+  code: 8021,
+  name: "deferTriggerMisconfiguration",
+  create: () => new DeferTriggerMisconfiguration()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/invalid_banana_in_box.ts
+var InvalidBananaInBoxCheck = class extends TemplateCheckWithVisitor {
+  code = 8101;
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof BoundEvent)) return [];
+    const name = node.name;
+    if (!name.startsWith("[") || !name.endsWith("]")) return [];
+    const boundSyntax = node.sourceSpan.toString();
+    const expectedBoundSyntax = boundSyntax.replace(`(${name})`, `[(${name.slice(1, -1)})]`);
+    const diagnostic = ctx.makeTemplateDiagnostic(
+      node.sourceSpan,
+      formatExtendedError(
+        8101,
+        `In the two-way binding syntax the parentheses should be inside the brackets, ex. '${expectedBoundSyntax}'`
+      )
+    );
+    return [diagnostic];
+  }
+};
+var factory2 = {
+  code: 8101,
+  name: "invalidBananaInBox",
+  create: () => new InvalidBananaInBoxCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/missing_control_flow_directive.ts
+var KNOWN_CONTROL_FLOW_DIRECTIVES = /* @__PURE__ */ new Map([
+  ["ngIf", { directive: "NgIf", builtIn: "@if" }],
+  ["ngFor", { directive: "NgFor", builtIn: "@for" }],
+  ["ngSwitchCase", { directive: "NgSwitchCase", builtIn: "@switch with @case" }],
+  ["ngSwitchDefault", { directive: "NgSwitchDefault", builtIn: "@switch with @default" }]
+]);
+var MissingControlFlowDirectiveCheck = class extends TemplateCheckWithVisitor {
+  code = 8103;
+  run(ctx, component, template2) {
+    if (!component.isStandalone) {
+      return [];
+    }
+    return super.run(ctx, component, template2);
+  }
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof Template)) return [];
+    const controlFlowAttr = node.templateAttrs.find(
+      (attr) => KNOWN_CONTROL_FLOW_DIRECTIVES.has(attr.name)
+    );
+    if (!controlFlowAttr) return [];
+    const matchingDirs = ctx.boundTarget.getDirectivesOfNode(node);
+    if (matchingDirs && matchingDirs.length > 0) {
+      return [];
+    }
+    const sourceSpan = controlFlowAttr.keySpan || controlFlowAttr.sourceSpan;
+    const directiveAndBuiltIn = KNOWN_CONTROL_FLOW_DIRECTIVES.get(controlFlowAttr.name);
+    const errorMessage = formatExtendedError(
+      8103,
+      `The \`*${controlFlowAttr.name}\` directive was used in the template, but neither the \`${directiveAndBuiltIn?.directive}\` directive nor the \`CommonModule\` was imported. Use Angular's built-in control flow ${directiveAndBuiltIn?.builtIn} or make sure that either the \`${directiveAndBuiltIn?.directive}\` directive or the \`CommonModule\` is included in the \`@Component.imports\` array of this component.`
+    );
+    return [ctx.makeTemplateDiagnostic(sourceSpan, errorMessage)];
+  }
+};
+var factory3 = {
+  code: 8103,
+  name: "missingControlFlowDirective",
+  create: () => new MissingControlFlowDirectiveCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/missing_ngforof_let.ts
+var MissingNgForOfLetCheck = class extends TemplateCheckWithVisitor {
+  code = 8105;
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof Template)) {
+      return [];
+    }
+    if (node.templateAttrs.length === 0) {
+      return [];
+    }
+    const attr = node.templateAttrs.find((x) => x.name === "ngFor");
+    if (attr === void 0) {
+      return [];
+    }
+    if (node.variables.length > 0) {
+      return [];
+    }
+    const errorString = formatExtendedError(
+      8105,
+      `Your ngFor is missing a value. Did you forget to add the \`let\` keyword?`
+    );
+    return [ctx.makeTemplateDiagnostic(attr.sourceSpan, errorString)];
+  }
+};
+var factory4 = {
+  code: 8105,
+  name: "missingNgForOfLet",
+  create: () => new MissingNgForOfLetCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/missing_structural_directive.ts
+var KNOWN_CONTROL_FLOW_DIRECTIVES2 = /* @__PURE__ */ new Set([
+  "ngIf",
+  "ngFor",
+  "ngForOf",
+  "ngForTrackBy",
+  "ngSwitchCase",
+  "ngSwitchDefault",
+  "ngIfThen",
+  "ngIfElse"
+]);
+var MissingStructuralDirectiveCheck = class extends TemplateCheckWithVisitor {
+  code = 8116;
+  run(ctx, component, template2) {
+    if (!component.isStandalone) {
+      return [];
+    }
+    return super.run(ctx, component, template2);
+  }
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof Template)) return [];
+    const customStructuralDirective = node.templateAttrs.find(
+      (attr) => !KNOWN_CONTROL_FLOW_DIRECTIVES2.has(attr.name)
+    );
+    if (!customStructuralDirective) return [];
+    const matchingDirs = ctx.boundTarget.getDirectivesOfNode(node);
+    const hasStructuralDirective = matchingDirs?.some(
+      (dir) => dir.selector?.includes(`[${customStructuralDirective.name}]`)
+    );
+    if (hasStructuralDirective) return [];
+    const sourceSpan = customStructuralDirective.keySpan || customStructuralDirective.sourceSpan;
+    const errorMessage = formatExtendedError(
+      8116,
+      `A structural directive \`${customStructuralDirective.name}\` was used in the template without a corresponding import in the component. Make sure that the directive is included in the \`@Component.imports\` array of this component.`
+    );
+    return [ctx.makeTemplateDiagnostic(sourceSpan, errorMessage)];
+  }
+};
+var factory5 = {
+  code: 8116,
+  name: "missingStructuralDirective",
+  create: () => new MissingStructuralDirectiveCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/numeric_css_property_requires_unit.ts
+var CSS_LENGTH_PROPERTIES = /* @__PURE__ */ new Set([
+  // Box model & spacing
+  "width",
+  "height",
+  "min-width",
+  "min-height",
+  "max-width",
+  "max-height",
+  "margin",
+  "margin-top",
+  "margin-right",
+  "margin-bottom",
+  "margin-left",
+  "padding",
+  "padding-top",
+  "padding-right",
+  "padding-bottom",
+  "padding-left",
+  // dimensions
+  "block-size",
+  "inline-size",
+  "min-block-size",
+  "min-inline-size",
+  "max-block-size",
+  "max-inline-size",
+  // margin & padding
+  "margin-block",
+  "margin-block-start",
+  "margin-block-end",
+  "margin-inline",
+  "margin-inline-start",
+  "margin-inline-end",
+  "padding-block",
+  "padding-block-start",
+  "padding-block-end",
+  "padding-inline",
+  "padding-inline-start",
+  "padding-inline-end",
+  // Borders
+  "border-width",
+  "border-top-width",
+  "border-right-width",
+  "border-bottom-width",
+  "border-left-width",
+  "border-radius",
+  "border-top-left-radius",
+  "border-top-right-radius",
+  "border-bottom-right-radius",
+  "border-bottom-left-radius",
+  "border-start-start-radius",
+  "border-start-end-radius",
+  "border-end-start-radius",
+  "border-end-end-radius",
+  "border-block-start-width",
+  "border-block-end-width",
+  "border-block-width",
+  "border-inline-start-width",
+  "border-inline-end-width",
+  "border-inline-width",
+  "border-spacing",
+  "outline-width",
+  "outline-offset",
+  // Positioning
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "inset",
+  "inset-block-start",
+  "inset-block-end",
+  "inset-inline-start",
+  "inset-inline-end",
+  // Typography & text spacing
+  "font-size",
+  "letter-spacing",
+  "word-spacing",
+  "text-indent",
+  "text-decoration-thickness",
+  "text-underline-offset",
+  "vertical-align",
+  // Gaps & columns
+  "gap",
+  "row-gap",
+  "column-gap",
+  "column-width",
+  "column-rule-width",
+  // Flex layout
+  "flex-basis",
+  // Grid layout
+  "grid-template-columns",
+  "grid-template-rows",
+  "grid-auto-columns",
+  "grid-auto-rows",
+  "grid-gap",
+  // Background & positioning
+  "background-size",
+  "background-position",
+  "background-position-x",
+  "background-position-y",
+  "object-position",
+  // Transform & visual
+  "transform-origin",
+  "perspective",
+  "perspective-origin",
+  "translate",
+  // Scroll margin & padding (all variants)
+  "scroll-margin",
+  "scroll-margin-top",
+  "scroll-margin-right",
+  "scroll-margin-bottom",
+  "scroll-margin-left",
+  "scroll-margin-block",
+  "scroll-margin-block-start",
+  "scroll-margin-block-end",
+  "scroll-margin-inline",
+  "scroll-margin-inline-start",
+  "scroll-margin-inline-end",
+  "scroll-padding",
+  "scroll-padding-top",
+  "scroll-padding-right",
+  "scroll-padding-bottom",
+  "scroll-padding-left",
+  "scroll-padding-block",
+  "scroll-padding-block-start",
+  "scroll-padding-block-end",
+  "scroll-padding-inline",
+  "scroll-padding-inline-start",
+  "scroll-padding-inline-end",
+  // Motion path & scroll animations
+  "offset-anchor",
+  "offset-distance",
+  "offset-position",
+  "view-timeline-inset",
+  // Other layout helpers
+  "shape-margin"
+]);
+var NumericCssPropertyRequiresUnitCheck = class extends TemplateCheckWithVisitor {
+  code = 8119;
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof BoundAttribute)) return [];
+    if (node.type !== 3 /* Style */) return [];
+    if (node.unit) return [];
+    if (!CSS_LENGTH_PROPERTIES.has(hyphenate3(node.name))) return [];
+    const ast = node.value instanceof ASTWithSource ? node.value.ast : node.value;
+    const value = getNumericValue(ast);
+    if (value === null || value === 0) return [];
+    const diagnostic = ctx.makeTemplateDiagnostic(
+      node.keySpan,
+      formatExtendedError(
+        8119,
+        `Binding a number to the CSS property '${node.name}' will have no effect. CSS requires units for length values. For example, use [style.${node.name}.px]="${value}" or [style.${node.name}]="'${value}px'" instead.`
+      )
+    );
+    return [diagnostic];
+  }
+};
+function hyphenate3(name) {
+  return name.replace(/[a-z][A-Z]/g, (v) => v.charAt(0) + "-" + v.charAt(1)).toLowerCase();
+}
+function getNumericValue(ast) {
+  if (ast instanceof Unary && (ast.operator === "-" || ast.operator === "+")) {
+    const value = getNumericValue(ast.expr);
+    return value !== null && ast.operator === "-" ? -value : value;
+  }
+  if (!(ast instanceof LiteralPrimitive)) return null;
+  if (typeof ast.value === "number") return ast.value;
+  if (typeof ast.value === "string" && ast.value.trim() !== "") {
+    const value = Number(ast.value);
+    return isNaN(value) ? null : value;
+  }
+  return null;
+}
+var factory6 = {
+  code: 8119,
+  name: "numericCssPropertyRequiresUnit",
+  create: () => new NumericCssPropertyRequiresUnitCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/skip_hydration_not_static.ts
+var NG_SKIP_HYDRATION_ATTR_NAME = "ngSkipHydration";
+var NgSkipHydrationSpec = class extends TemplateCheckWithVisitor {
+  code = 8108;
+  visitNode(ctx, _component, node) {
+    if (node instanceof BoundAttribute && node.name === NG_SKIP_HYDRATION_ATTR_NAME) {
+      const errorString = formatExtendedError(
+        8108,
+        `ngSkipHydration should not be used as a binding`
+      );
+      return [ctx.makeTemplateDiagnostic(node.sourceSpan, errorString)];
+    }
+    const acceptedValues = ["true", ""];
+    if (node instanceof TextAttribute && node.name === NG_SKIP_HYDRATION_ATTR_NAME && !acceptedValues.includes(node.value) && node.value !== void 0) {
+      const errorString = formatExtendedError(
+        8108,
+        `ngSkipHydration only accepts "true" or "" as value or no value at all. For example 'ngSkipHydration="true"' or 'ngSkipHydration'`
+      );
+      return [ctx.makeTemplateDiagnostic(node.sourceSpan, errorString)];
+    }
+    return [];
+  }
+};
+var factory7 = {
+  code: 8108,
+  name: "skipHydrationNotStatic",
+  create: () => new NgSkipHydrationSpec()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/suffix_not_supported.ts
+var STYLE_SUFFIXES = ["px", "%", "em"];
+var SUFFIX_ERROR_MSG = formatExtendedError(
+  8106,
+  `The ${STYLE_SUFFIXES.map((suffix) => `'.${suffix}'`).join(", ")} suffixes are only supported on style bindings`
+);
+var SuffixNotSupportedCheck = class extends TemplateCheckWithVisitor {
+  code = 8106;
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof BoundAttribute)) return [];
+    if (node.type !== 1 /* Attribute */ || !STYLE_SUFFIXES.some((suffix) => node.name.endsWith(`.${suffix}`))) {
+      return [];
+    }
+    return [ctx.makeTemplateDiagnostic(node.keySpan, SUFFIX_ERROR_MSG)];
+  }
+};
+var factory8 = {
+  code: 8106,
+  name: "suffixNotSupported",
+  create: () => new SuffixNotSupportedCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/text_attribute_not_binding.ts
+var TextAttributeNotBindingSpec = class extends TemplateCheckWithVisitor {
+  code = 8104;
+  visitNode(ctx, _component, node) {
+    if (!(node instanceof TextAttribute)) return [];
+    const name = node.name;
+    if (!name.startsWith("attr.") && !name.startsWith("style.") && !name.startsWith("class.")) {
+      return [];
+    }
+    let errorString;
+    if (name.startsWith("attr.")) {
+      const staticAttr = name.replace("attr.", "");
+      errorString = `Static attributes should be written without the 'attr.' prefix.`;
+      if (node.value) {
+        errorString += ` For example, ${staticAttr}="${node.value}".`;
+      }
+    } else {
+      const expectedKey = `[${name}]`;
+      const expectedValue = node.value === "true" || node.value === "false" ? node.value : `'${node.value}'`;
+      errorString = "Attribute, style, and class bindings should be enclosed with square braces.";
+      if (node.value) {
+        errorString += ` For example, '${expectedKey}="${expectedValue}"'.`;
+      }
+      errorString = formatExtendedError(8104, errorString);
+    }
+    return [ctx.makeTemplateDiagnostic(node.sourceSpan, errorString)];
+  }
+};
+var factory9 = {
+  code: 8104,
+  name: "textAttributeNotBinding",
+  create: () => new TextAttributeNotBindingSpec()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/uninvoked_function_in_event_binding.ts
+var UninvokedFunctionInEventBindingSpec = class extends TemplateCheckWithVisitor {
+  code = 8111;
+  visitNode(ctx, component, node) {
+    if (!(node instanceof BoundEvent)) return [];
+    if (node.type !== 0 /* Regular */ && node.type !== 1 /* LegacyAnimation */) {
+      return [];
+    }
+    if (!(node.handler instanceof ASTWithSource)) return [];
+    if (node.handler.ast instanceof Chain) {
+      return node.handler.ast.expressions.flatMap(
+        (expression) => assertExpressionInvoked(expression, component, node, ctx)
+      );
+    }
+    if (node.handler.ast instanceof Conditional) {
+      const { trueExp, falseExp } = node.handler.ast;
+      return [trueExp, falseExp].flatMap(
+        (expression) => assertExpressionInvoked(expression, component, node, ctx)
+      );
+    }
+    return assertExpressionInvoked(node.handler.ast, component, node, ctx);
+  }
+};
+function assertExpressionInvoked(expression, _component, node, ctx) {
+  if (expression instanceof Call || expression instanceof SafeCall) {
+    return [];
+  }
+  if (expression instanceof ArrowFunction) {
+    const errorString = "Arrow function will not be invoked in this event listener. Did you intend to call a method?";
+    return [ctx.makeTemplateDiagnostic(node.sourceSpan, errorString)];
+  }
+  return [];
+}
+var factory10 = {
+  code: 8111,
+  name: "uninvokedFunctionInEventBinding",
+  create: () => new UninvokedFunctionInEventBindingSpec()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/unparenthesized_nullish_coalescing.ts
+var UnparenthesizedNullishCoalescing = class extends TemplateCheckWithVisitor {
+  code = 8114;
+  visitNode(ctx, _component, node) {
+    if (node instanceof Binary) {
+      if (node.operation === "&&" || node.operation === "||") {
+        if (node.left instanceof Binary && node.left.operation === "??" || node.right instanceof Binary && node.right.operation === "??") {
+          const diagnostic = ctx.makeTemplateDiagnostic(
+            node.sourceSpan,
+            formatExtendedError(
+              8114,
+              `Parentheses are required to disambiguate precedence when mixing '??' with '&&' and '||'`
+            )
+          );
+          return [diagnostic];
+        }
+      }
+    }
+    return [];
+  }
+};
+var factory11 = {
+  code: 8114,
+  name: "unparenthesizedNullishCoalescing",
+  create: () => new UnparenthesizedNullishCoalescing()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/checks/unused_let_declaration.ts
+var UnusedLetDeclarationCheck = class extends TemplateCheckWithVisitor {
+  code = 8112;
+  analysis = /* @__PURE__ */ new Map();
+  run(ctx, component, template2) {
+    super.run(ctx, component, template2);
+    const diagnostics = [];
+    const { allLetDeclarations, usedLetDeclarations } = this.getAnalysis(component);
+    for (const decl of allLetDeclarations) {
+      if (!usedLetDeclarations.has(decl)) {
+        diagnostics.push(
+          ctx.makeTemplateDiagnostic(
+            decl.sourceSpan,
+            formatExtendedError(8112, `@let ${decl.name} is declared but its value is never read.`)
+          )
+        );
+      }
+    }
+    this.analysis.clear();
+    return diagnostics;
+  }
+  visitNode(ctx, component, node) {
+    if (node instanceof LetDeclaration) {
+      this.getAnalysis(component).allLetDeclarations.add(node);
+    } else if (node instanceof AST) {
+      const unwrappedNode = node instanceof ASTWithSource ? node.ast : node;
+      const target = ctx.boundTarget.getExpressionTarget(unwrappedNode);
+      if (target !== null && target instanceof LetDeclaration) {
+        this.getAnalysis(component).usedLetDeclarations.add(target);
+      }
+    }
+    return [];
+  }
+  getAnalysis(component) {
+    if (!this.analysis.has(component)) {
+      this.analysis.set(component, {
+        allLetDeclarations: /* @__PURE__ */ new Set(),
+        usedLetDeclarations: /* @__PURE__ */ new Set()
+      });
+    }
+    return this.analysis.get(component);
+  }
+};
+var factory12 = {
+  code: 8112,
+  name: "unusedLetDeclaration",
+  create: () => new UnusedLetDeclarationCheck()
+};
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/extended_template_checker.ts
+var ExtendedTemplateCheckerImpl = class {
+  templateChecks;
+  constructor(templateCheckFactories, options) {
+    this.templateChecks = /* @__PURE__ */ new Map();
+    for (const factory13 of templateCheckFactories) {
+      const category = diagnosticLabelToCategory(
+        options?.extendedDiagnostics?.checks?.[factory13.name] ?? options?.extendedDiagnostics?.defaultCategory ?? "warning"
+      );
+      if (category === null) {
+        continue;
+      }
+      const check = factory13.create(options);
+      if (check === null) {
+        continue;
+      }
+      this.templateChecks.set(check, category);
+    }
+  }
+  getDiagnosticsForComponent(typeCheckId, component, boundTarget) {
+    const template2 = component.templateNodes;
+    const diagnostics = [];
+    for (const [check, category] of this.templateChecks.entries()) {
+      const ctx = {
+        boundTarget,
+        makeTemplateDiagnostic: (span, message, relatedInformation) => {
+          const start = span instanceof ParseSourceSpan ? span.start.offset : span.start;
+          const end = span instanceof ParseSourceSpan ? span.end.offset : span.end;
+          return {
+            typeCheckId,
+            category,
+            code: check.code,
+            message,
+            start,
+            end,
+            ...relatedInformation ? { relatedInformation } : {}
+          };
+        }
+      };
+      diagnostics.push(...deduplicateDiagnostics(check.run(ctx, component, template2)));
+    }
+    return diagnostics;
+  }
+};
+function deduplicateDiagnostics(diagnostics) {
+  const seen = /* @__PURE__ */ new Set();
+  return diagnostics.filter((diag) => {
+    const key = JSON.stringify([
+      diag.typeCheckId,
+      diag.sourceFilePath,
+      diag.start,
+      diag.end,
+      diag.code,
+      diag.category,
+      diag.message
+    ]);
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+function diagnosticLabelToCategory(label) {
+  switch (label) {
+    case "warning":
+      return 1 /* Warning */;
+    case "error":
+      return 0 /* Error */;
+    case "suppress":
+      return null;
+    default:
+      return assertNever(label);
+  }
+}
+function assertNever(value) {
+  throw new Error(`Unexpected call to 'assertNever()' with value:
+${value}`);
+}
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/unused_standalone_imports.ts
+function checkUnusedStandaloneImports(typeCheckId, category, comp, boundTarget, filePath) {
+  const component = comp.classMeta.component;
+  if (!comp.isStandalone || !component?.resolvedImportEntries?.length) {
+    return [];
+  }
+  const importEntries = component.resolvedImportEntries;
+  const usedDirectives = boundTarget.getUsedDirectives();
+  const usedPipes = new Set(boundTarget.getUsedPipes());
+  const isUsedDirective = (entry) => {
+    return usedDirectives.some((dir) => {
+      const ref = dir.ref;
+      if (entry.filePath != null && ref.nodeFilePath != null) {
+        return ref.nodeFilePath === entry.filePath && dir.name === entry.name;
+      }
+      return dir.name === entry.name;
+    });
+  };
+  const unused = [];
+  for (const entry of importEntries) {
+    if ((entry.declarationType === "component" || entry.declarationType === "directive") && entry.isStandalone !== false && !isUsedDirective(entry) && !entry.isPotentialShared) {
+      unused.push(entry);
+    } else if (entry.declarationType === "pipe" && entry.isStandalone !== false && entry.pipeName != null && !usedPipes.has(entry.pipeName) && !entry.isPotentialShared) {
+      unused.push(entry);
+    }
+  }
+  if (unused.length === 0) {
+    return [];
+  }
+  if (unused.length === importEntries.length && component.importsKeySpan != null) {
+    return [
+      {
+        typeCheckId,
+        category,
+        code: 8113,
+        message: "All imports are unused",
+        start: component.importsKeySpan.start,
+        end: component.importsKeySpan.end,
+        sourceFilePath: filePath
+      }
+    ];
+  }
+  const fallbackSpan = component.importsFactorySpan ?? component.rawImportsSpan ?? comp.classMeta.span;
+  return unused.map((entry) => {
+    const span = entry.usageSpan ?? fallbackSpan;
+    return {
+      typeCheckId,
+      category,
+      code: 8113,
+      message: `${entry.name} is not used within the template of ${comp.className}`,
+      start: span.start,
+      end: span.end,
+      sourceFilePath: filePath
+    };
+  });
+}
+
+// packages/compiler-cli/preprocessor/src/extended_diagnostics/index.ts
+var ALL_DIAGNOSTIC_FACTORIES = [
+  factory2,
+  factory3,
+  factory9,
+  factory4,
+  factory5,
+  factory8,
+  factory10,
+  factory12,
+  factory7,
+  factory11,
+  factory,
+  factory6
+];
+function runExtendedDiagnostics(typeCheckId, comp, boundTarget, filePath, options, templateCheckFactories = ALL_DIAGNOSTIC_FACTORIES, strictTemplates = true, unusedStandaloneImports = options?.checks?.unusedStandaloneImports ?? options?.defaultCategory ?? "warning") {
+  const diagnostics = [];
+  const unusedStandaloneImportsCat = diagnosticLabelToCategory(unusedStandaloneImports);
+  if (unusedStandaloneImportsCat !== null) {
+    diagnostics.push(
+      ...checkUnusedStandaloneImports(
+        typeCheckId,
+        unusedStandaloneImportsCat,
+        comp,
+        boundTarget,
+        filePath
+      )
+    );
+  }
+  if (strictTemplates) {
+    const extendedTemplateChecker = new ExtendedTemplateCheckerImpl(templateCheckFactories, {
+      extendedDiagnostics: options
+    });
+    diagnostics.push(
+      ...extendedTemplateChecker.getDiagnosticsForComponent(typeCheckId, comp, boundTarget)
+    );
+  }
+  return diagnostics;
+}
+
+// packages/compiler-cli/preprocessor/src/tcb.ts
+import MagicString2 from "magic-string";
+
+// packages/compiler-cli/preprocessor/src/oob.ts
+var OutOfBandDiagnosticRecorderImpl = class {
+  _diagnostics = [];
+  get diagnostics() {
+    return this._diagnostics;
+  }
+  pushDiagnostic(typeCheckId, message, span, category = 0 /* Error */, code) {
+    let start;
+    let end;
+    if (span instanceof ParseSourceSpan) {
+      start = span.start.offset;
+      end = span.end.offset;
+    } else {
+      start = span.start;
+      end = span.end;
+    }
+    this._diagnostics.push({
+      typeCheckId,
+      message,
+      start,
+      end,
+      category,
+      code
+    });
+  }
+  error(id, message, span) {
+    this.pushDiagnostic(id, message, span, 0 /* Error */, 8e3);
+  }
+  missingReferenceTarget(id, ref) {
+    this.pushDiagnostic(
+      id,
+      `No directive found with exportAs '${ref.value.trim()}'.`,
+      ref.valueSpan || ref.sourceSpan,
+      0 /* Error */,
+      8003
+    );
+  }
+  missingPipe(id, ast) {
+    this.pushDiagnostic(
+      id,
+      `No pipe found with name '${ast.name}'.`,
+      ast.nameSpan,
+      0 /* Error */,
+      8004
+    );
+  }
+  deferredPipeUsedEagerly(id, ast, currentBlockName = null, declaredBlocks = null) {
+    let errorMsg;
+    if (currentBlockName !== null && declaredBlocks !== null && declaredBlocks.length > 0) {
+      errorMsg = `Pipe '${ast.name}' was imported via \`@Component.deferredImports\` under block '${declaredBlocks.join(", ")}', but is used in a \`@defer\` block configured for '${currentBlockName}'. To fix this, add '${ast.name}' to 'deferredImports.${currentBlockName}'.`;
+    } else {
+      errorMsg = `Pipe '${ast.name}' was imported via \`@Component.deferredImports\`, but was used outside of a \`@defer\` block in a template. To fix this, either use the '${ast.name}' pipe inside of a \`@defer\` block or import this dependency using the \`@Component.imports\` field.`;
+    }
+    this.pushDiagnostic(id, errorMsg, ast.nameSpan, 0 /* Error */, 8012);
+  }
+  deferredComponentUsedEagerly(id, element2, dirMeta, currentBlockName = null, declaredBlocks = null) {
+    const elementName = element2 instanceof Element ? element2.name : element2.tagName ?? "ng-template";
+    const kind = dirMeta?.isComponent ? "Component" : "Directive";
+    const name = dirMeta?.name ?? elementName;
+    const usage = dirMeta?.isComponent ? `used as element '${elementName}'` : `used on element '${elementName}'`;
+    let errorMsg;
+    if (currentBlockName !== null && declaredBlocks !== null && declaredBlocks.length > 0) {
+      errorMsg = `${kind} '${name}' (${usage}) was imported via \`@Component.deferredImports\` under block '${declaredBlocks.join(", ")}', but is used in a \`@defer\` block configured for '${currentBlockName}'. To fix this, add '${name}' to 'deferredImports.${currentBlockName}'.`;
+    } else {
+      errorMsg = `${kind} '${name}' (${usage}) was imported via \`@Component.deferredImports\`, but was used outside of a \`@defer\` block in a template. To fix this, either use the '${elementName}' element inside of a \`@defer\` block or import '${name}' using the \`@Component.imports\` field.`;
+    }
+    const startSourceSpan = element2.startSourceSpan ?? element2.sourceSpan;
+    this.pushDiagnostic(id, errorMsg, startSourceSpan, 0 /* Error */, 8013);
+  }
+  duplicateTemplateVar(id, variable2) {
+    this.pushDiagnostic(
+      id,
+      `Cannot redeclare variable '${variable2.name}' as it was previously declared elsewhere for the same template.`,
+      variable2.keySpan,
+      0 /* Error */,
+      8006
+    );
+  }
+  suboptimalTypeInference(id, variables) {
+    let diagnosticVar = null;
+    for (const variable2 of variables) {
+      if (diagnosticVar === null || variable2.value === "" || variable2.value === "$implicit") {
+        diagnosticVar = variable2;
+      }
+    }
+    if (diagnosticVar === null) return;
+    let varIdentification = `'${diagnosticVar.name}'`;
+    if (variables.length === 2) {
+      varIdentification += ` (and 1 other)`;
+    } else if (variables.length > 2) {
+      varIdentification += ` (and ${variables.length - 1} others)`;
+    }
+    this.pushDiagnostic(
+      id,
+      `This structural directive supports advanced type inference, but the current compiler configuration prevents its usage. The variable ${varIdentification} will have type 'any' as a result.
+
+Consider enabling the 'strictTemplates' option in your tsconfig.json for better type inference within this template.`,
+      diagnosticVar.keySpan,
+      1 /* Warning */,
+      10002
+      // SUGGEST_SUBOPTIMAL_TYPE_INFERENCE
+    );
+  }
+  splitTwoWayBinding(id, input) {
+    this.pushDiagnostic(
+      id,
+      `The property and event halves of the two-way binding '${input.name}' are not bound to the same target.
+            Find more at https://angular.dev/guide/templates/two-way-binding`,
+      input.keySpan,
+      0 /* Error */,
+      8007
+    );
+  }
+  missingRequiredInputs(id, element2, directiveName, isComponent, inputAliases) {
+    const aliasString = inputAliases.map((n) => `'${n}'`).join(", ");
+    const type = isComponent ? "component" : "directive";
+    this.pushDiagnostic(
+      id,
+      `Required input${inputAliases.length === 1 ? "" : "s"} ${aliasString} from ${type} ${directiveName} must be specified.`,
+      this.getTagNameSpan(element2),
+      0 /* Error */,
+      8008
+    );
+  }
+  illegalForLoopTrackAccess(id, block, access3) {
+    const messageVars = [
+      block.item,
+      ...(block.contextVariables || []).filter((v) => v.value === "$index")
+    ].map((v) => `'${v.name}'`).join(", ");
+    this.pushDiagnostic(
+      id,
+      `Cannot access '${access3.name}' inside of a track expression. Only ${messageVars} and properties on the containing component are available to this expression.`,
+      access3.sourceSpan,
+      0 /* Error */,
+      8009
+    );
+  }
+  inaccessibleDeferredTriggerElement(id, trigger) {
+    if (trigger.reference === null) {
+      this.pushDiagnostic(
+        id,
+        `Trigger cannot find reference. Make sure that the @defer block has a @placeholder with at least one root element node.`,
+        trigger.sourceSpan,
+        0 /* Error */,
+        8010
+      );
+    } else {
+      this.pushDiagnostic(
+        id,
+        `Trigger cannot find reference "${trigger.reference}".
+Check that an element with #${trigger.reference} exists in the same template and it's accessible from the @defer block.
+Deferred blocks can only access triggers in same view, a parent embedded view or the root view of the @placeholder block.`,
+        trigger.sourceSpan,
+        0 /* Error */,
+        8010
+      );
+    }
+  }
+  controlFlowPreventingContentProjection(id, category, node, componentName, selector, controlFlowNode, preservesWhitespaces) {
+    const blockName = controlFlowNode?.nameSpan?.toString().trim() || "block";
+    let msg = `Node matches the "${selector}" slot of the "${componentName}" component, but will not be projected into the specific slot because the surrounding ${blockName} has more than one node at its root. To project the node in the right slot, you can:
+
+1. Wrap the content of the ${blockName} block in an <ng-container/> that matches the "${selector}" selector.
+2. Split the content of the ${blockName} block across multiple ${blockName} blocks such that each one only has a single projectable node at its root.
+3. Remove all content from the ${blockName} block, except for the node being projected.
+`;
+    if (preservesWhitespaces) {
+      msg += "\nNote: the host component has `preserveWhitespaces: true` which may cause whitespace to affect content projection.\n";
+    }
+    msg += '\nThis check can be disabled using the `extendedDiagnostics.checks.controlFlowPreventingContentProjection = "suppress"` compiler option.';
+    this.pushDiagnostic(id, msg, node.startSourceSpan, category, 8011);
+  }
+  illegalWriteToLetDeclaration(id, node, target) {
+    this.pushDiagnostic(
+      id,
+      `Cannot assign to @let declaration '${target.name}'.`,
+      node.sourceSpan,
+      0 /* Error */,
+      8015
+    );
+  }
+  letUsedBeforeDefinition(id, node, target) {
+    this.pushDiagnostic(
+      id,
+      `Cannot read @let declaration '${target.name}' before it has been defined.`,
+      node.sourceSpan,
+      0 /* Error */,
+      8016
+    );
+  }
+  conflictingDeclaration(id, decl) {
+    this.pushDiagnostic(
+      id,
+      `Cannot declare @let called '${decl.name}' as there is another symbol in the template with the same name.`,
+      decl.sourceSpan,
+      0 /* Error */,
+      8017
+    );
+  }
+  missingNamedTemplateDependency(id, node) {
+    this.pushDiagnostic(
+      id,
+      `Cannot find name "${node instanceof Directive ? node.name : node.componentName}". Selectorless references are only supported to classes or non-type import statements.`,
+      node.startSourceSpan,
+      0 /* Error */,
+      2024
+      // MISSING_NAMED_TEMPLATE_DEPENDENCY
+    );
+  }
+  incorrectTemplateDependencyType(id, node) {
+    this.pushDiagnostic(
+      id,
+      `Incorrect reference type. Type must be a standalone @Component or @Directive.`,
+      node.startSourceSpan,
+      0 /* Error */,
+      2025
+      // INCORRECT_NAMED_TEMPLATE_DEPENDENCY_TYPE
+    );
+  }
+  unclaimedDirectiveBinding(id, directive, node) {
+    this.pushDiagnostic(
+      id,
+      `Directive ${directive.name} does not have an input or output named "${node.name}". Bindings to directives must target existing inputs or outputs.`,
+      node.keySpan || node.sourceSpan,
+      0 /* Error */,
+      8018
+    );
+  }
+  deferImplicitTriggerMissingPlaceholder(id, trigger) {
+    this.pushDiagnostic(
+      id,
+      "Trigger with no target can only be placed on an @defer that has a @placeholder block",
+      trigger.sourceSpan,
+      0 /* Error */,
+      8019
+    );
+  }
+  deferImplicitTriggerInvalidPlaceholder(id, trigger) {
+    this.pushDiagnostic(
+      id,
+      "Trigger with no target can only be placed on an @defer that has a @placeholder block with exactly one root element node",
+      trigger.sourceSpan,
+      0 /* Error */,
+      8020
+      // DEFER_IMPLICIT_TRIGGER_INVALID_PLACEHOLDER
+    );
+  }
+  formFieldUnsupportedBinding(id, node) {
+    let message;
+    if (node instanceof BoundAttribute) {
+      let name;
+      if (node.type === 0 /* Property */) {
+        name = `[${node.name}]`;
+      } else if (node.type === 1 /* Attribute */) {
+        name = `[attr.${node.name}]`;
+      } else {
+        name = node.name;
+      }
+      message = `Binding to '${name}' is not allowed on nodes using the '[formField]' directive`;
+    } else {
+      message = `Setting the '${node.name}' attribute is not allowed on nodes using the '[formField]' directive`;
+    }
+    this.pushDiagnostic(id, message, node.sourceSpan, 0 /* Error */, 8022);
+  }
+  multipleMatchingComponents(id, element2, componentNames) {
+    const names = componentNames.map((n) => `'${n}'`).join(", ");
+    this.pushDiagnostic(
+      id,
+      `Multiple components match node with tagname ${element2.name}: ${names}.`,
+      element2.startSourceSpan,
+      0 /* Error */,
+      8023
+      // MULTIPLE_MATCHING_COMPONENTS
+    );
+  }
+  conflictingHostDirectiveBinding(id, node, directiveName, kind, classPropertyName, aliases) {
+    const message = `${kind === "input" ? "Input" : "Output"} declared in ${directiveName}.${classPropertyName} is exposed under the following conflicting names: ${aliases.map((a) => `"${a}"`).join(", ")}. An ${kind} can only be exposed under a single name.`;
+    this.pushDiagnostic(
+      id,
+      message,
+      this.getTagNameSpan(node),
+      0 /* Error */,
+      8024
+      // CONFLICTING_HOST_DIRECTIVE_BINDING
+    );
+  }
+  /**
+   * Span covering only the tag name of a node, since highlighting the entire start tag can be
+   * noisy. Falls back to the whole start tag for nodes without a name (e.g. `<ng-template>`).
+   */
+  getTagNameSpan(node) {
+    let name;
+    if (node instanceof Element || node instanceof Directive) {
+      name = node.name;
+    } else if (node instanceof Component) {
+      name = node.componentName;
+    } else {
+      name = null;
+    }
+    if (name === null) {
+      return node.startSourceSpan;
+    }
+    const start = node.startSourceSpan.start.moveBy(1);
+    const end = node.startSourceSpan.end.moveBy(
+      start.offset + name.length - node.startSourceSpan.end.offset
+    );
+    return new ParseSourceSpan(start, end);
+  }
+};
+
+// packages/compiler-cli/preprocessor/src/template_semantics.ts
+var WRITE_TO_READ_ONLY_VARIABLE = 8005;
+function getTemplateSemanticsDiagnostics(typeCheckId, nodes, boundTarget) {
+  const diagnostics = [];
+  const expressionVisitor = new ExpressionsSemanticsVisitor(typeCheckId, boundTarget, diagnostics);
+  const templateVisitor = new TemplateSemanticsVisitor(expressionVisitor);
+  for (const node of nodes) {
+    node.visit(templateVisitor);
+  }
+  return diagnostics;
+}
+var TemplateSemanticsVisitor = class extends RecursiveVisitor {
+  constructor(expressionVisitor) {
+    super();
+    this.expressionVisitor = expressionVisitor;
+  }
+  expressionVisitor;
+  visitBoundEvent(event) {
+    super.visitBoundEvent(event);
+    event.handler.visit(this.expressionVisitor, event);
+  }
+};
+var ExpressionsSemanticsVisitor = class extends RecursiveAstVisitor2 {
+  constructor(typeCheckId, boundTarget, diagnostics) {
+    super();
+    this.typeCheckId = typeCheckId;
+    this.boundTarget = boundTarget;
+    this.diagnostics = diagnostics;
+  }
+  typeCheckId;
+  boundTarget;
+  diagnostics;
+  visitBinary(ast, context) {
+    if (Binary.isAssignmentOperation(ast.operation) && ast.left instanceof PropertyRead) {
+      this.checkForIllegalWriteInEventBinding(ast.left, context);
+    }
+    super.visitBinary(ast, context);
+  }
+  visitUnary(ast, context) {
+    if (Unary.isUpdateOperation(ast.operator)) {
+      const target = unwrapWriteTarget(ast.expr);
+      if (target instanceof PropertyRead) {
+        this.checkForIllegalWriteInEventBinding(target, context);
+      }
+    }
+    super.visitUnary(ast, context);
+  }
+  // TODO(parity): ngtsc also visits property reads (`visitPropertyRead`) to report two-way
+  // bindings to template variables and `@let` declarations that don't hold signals ("Cannot use a
+  // non-signal variable '…' in a two-way binding expression. Template variables are read-only."
+  // and "Cannot use non-signal @let declaration '…' in a two-way binding expression. @let
+  // declarations are read-only."). It tells signals apart with the type checker
+  // (`isSignalReference(templateTypeChecker.getSymbolOfNode(target, component))`), which the
+  // preprocessor doesn't have, so that check isn't ported rather than flag valid signal writes.
+  checkForIllegalWriteInEventBinding(ast, context) {
+    if (!this.shouldCheckForIllegalWrites(ast, context)) {
+      return;
+    }
+    const target = this.boundTarget.getExpressionTarget(ast);
+    if (target instanceof Variable) {
+      this.reportIllegalWrite(
+        context,
+        target,
+        `Cannot use variable '${target.name}' as the left-hand side of an assignment expression. Template variables are read-only.`
+      );
+    }
+  }
+  reportIllegalWrite(event, target, message) {
+    const span = target.valueSpan || target.sourceSpan;
+    this.diagnostics.push({
+      typeCheckId: this.typeCheckId,
+      category: 0 /* Error */,
+      code: WRITE_TO_READ_ONLY_VARIABLE,
+      message,
+      start: event.handlerSpan.start.offset,
+      end: event.handlerSpan.end.offset,
+      relatedInformation: [
+        {
+          message: `'${target.name}' is declared here.`,
+          start: span.start.offset,
+          end: span.end.offset
+        }
+      ]
+    });
+  }
+  shouldCheckForIllegalWrites(ast, context) {
+    return context instanceof BoundEvent && (ast.receiver instanceof ImplicitReceiver || ast.receiver instanceof ThisReceiver);
+  }
+};
+
+// packages/compiler-cli/preprocessor/src/tcb.ts
+var TCB_TEMPLATE_SOURCES_COMMENT_PREFIX = "ngp-tcb-template-sources:";
+function getTcbTemplateSource(component) {
+  if (component?.templateUrl != null) {
+    return { templateFile: component.templateUrl.resolvedPath };
+  }
+  const expressionSpan = component?.templateSpan;
+  if (component?.templateContentSpan != null || expressionSpan == null) {
+    return null;
+  }
+  return { templateExpression: { start: expressionSpan.start, end: expressionSpan.end } };
+}
+function serializeTcbTemplateSources(templateSources) {
+  if (Object.keys(templateSources).length === 0) {
+    return "";
+  }
+  const json = JSON.stringify(templateSources).split("*/").join("*\\/");
+  return `
+/*${TCB_TEMPLATE_SOURCES_COMMENT_PREFIX}${json}*/
+`;
+}
+function buildTypeCheckingConfig(options = {}, enableTemplateTypeChecker = false, usePoisonedData = false) {
+  const strictTemplates = options.strictTemplates !== false;
+  let typeCheckingConfig;
+  if (strictTemplates) {
+    typeCheckingConfig = {
+      applyTemplateContextGuards: true,
+      checkTemplateBodies: true,
+      alwaysCheckSchemaInTemplateBodies: true,
+      checkTypeOfInputBindings: true,
+      honorAccessModifiersForInputBindings: false,
+      checkControlFlowBodies: true,
+      strictNullInputBindings: true,
+      checkTypeOfAttributes: true,
+      checkTypeOfDomBindings: false,
+      checkTypeOfOutputEvents: true,
+      checkTypeOfAnimationEvents: true,
+      checkTypeOfDomEvents: true,
+      checkTypeOfDomReferences: true,
+      checkTypeOfNonDomReferences: true,
+      checkTypeOfPipes: true,
+      strictSafeNavigationTypes: true,
+      useContextGenericType: true,
+      strictLiteralTypes: true,
+      enableTemplateTypeChecker,
+      useInlineTypeConstructors: false,
+      controlFlowPreventingContentProjection: options.extendedDiagnostics?.checks?.controlFlowPreventingContentProjection ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
+      unusedStandaloneImports: options.unusedStandaloneImports ?? options.extendedDiagnostics?.checks?.unusedStandaloneImports ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
+      // These are actually set via version check in ngtsc (ngtsc/core/src/compiler.ts).
+      // Since we don't have any of that here we just default to true.
+      allowSignalsInTwoWayBindings: true,
+      allowDomEventAssertion: true,
+      checkUnclaimedEventNames: false,
+      checkUnknownElements: false
+    };
+  } else {
+    typeCheckingConfig = {
+      applyTemplateContextGuards: false,
+      checkTemplateBodies: false,
+      checkControlFlowBodies: false,
+      alwaysCheckSchemaInTemplateBodies: !!options.annotateForClosureCompiler,
+      checkTypeOfInputBindings: false,
+      strictNullInputBindings: false,
+      honorAccessModifiersForInputBindings: false,
+      checkTypeOfAttributes: false,
+      checkTypeOfDomBindings: false,
+      checkTypeOfOutputEvents: false,
+      checkTypeOfAnimationEvents: false,
+      checkTypeOfDomEvents: false,
+      checkTypeOfDomReferences: false,
+      checkTypeOfNonDomReferences: false,
+      checkTypeOfPipes: false,
+      strictSafeNavigationTypes: false,
+      useContextGenericType: false,
+      strictLiteralTypes: false,
+      enableTemplateTypeChecker,
+      useInlineTypeConstructors: false,
+      controlFlowPreventingContentProjection: options.extendedDiagnostics?.checks?.controlFlowPreventingContentProjection ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
+      unusedStandaloneImports: options.unusedStandaloneImports ?? options.extendedDiagnostics?.checks?.unusedStandaloneImports ?? options.extendedDiagnostics?.defaultCategory ?? "warning",
+      // These are actually set via version check in ngtsc (ngtsc/core/src/compiler.ts).
+      // Since we don't have any of that here we just default to true.
+      allowSignalsInTwoWayBindings: true,
+      allowDomEventAssertion: true,
+      checkUnclaimedEventNames: false,
+      checkUnknownElements: false
+    };
+  }
+  if (options.strictInputTypes !== void 0) {
+    typeCheckingConfig.checkTypeOfInputBindings = options.strictInputTypes;
+    typeCheckingConfig.applyTemplateContextGuards = options.strictInputTypes;
+  }
+  if (options.strictInputAccessModifiers !== void 0) {
+    typeCheckingConfig.honorAccessModifiersForInputBindings = options.strictInputAccessModifiers;
+  }
+  if (options.strictNullInputTypes !== void 0) {
+    typeCheckingConfig.strictNullInputBindings = options.strictNullInputTypes;
+  }
+  if (options.strictOutputEventTypes !== void 0) {
+    typeCheckingConfig.checkTypeOfOutputEvents = options.strictOutputEventTypes;
+    typeCheckingConfig.checkTypeOfAnimationEvents = options.strictOutputEventTypes;
+  }
+  if (options.strictDomEventTypes !== void 0) {
+    typeCheckingConfig.checkTypeOfDomEvents = options.strictDomEventTypes;
+  }
+  if (options.strictSafeNavigationTypes !== void 0) {
+    typeCheckingConfig.strictSafeNavigationTypes = options.strictSafeNavigationTypes;
+  }
+  if (options.strictDomLocalRefTypes !== void 0) {
+    typeCheckingConfig.checkTypeOfDomReferences = options.strictDomLocalRefTypes;
+  }
+  if (options.strictAttributeTypes !== void 0) {
+    typeCheckingConfig.checkTypeOfAttributes = options.strictAttributeTypes;
+  }
+  if (options.strictContextGenerics !== void 0) {
+    typeCheckingConfig.useContextGenericType = options.strictContextGenerics;
+  }
+  if (options.strictLiteralTypes !== void 0) {
+    typeCheckingConfig.strictLiteralTypes = options.strictLiteralTypes;
+  }
+  typeCheckingConfig.typeCheckHostBindings = options.typeCheckHostBindings ?? true;
+  typeCheckingConfig.usePoisonedData = usePoisonedData || Boolean(options._compilePoisonedComponents);
+  typeCheckingConfig.extendedDiagnostics = options.extendedDiagnostics;
+  return typeCheckingConfig;
+}
+function printStatements(expressions) {
+  let result = "";
+  for (const expr of expressions) {
+    result += `${expr.print()};
+`;
+  }
+  return result;
+}
+var TcbImportManager = class {
+  imports = /* @__PURE__ */ new Map();
+  nextIndex = 0;
+  addImport(moduleSpecifier) {
+    let alias = this.imports.get(moduleSpecifier);
+    if (alias === void 0) {
+      alias = `i${this.nextIndex++}`;
+      this.imports.set(moduleSpecifier, alias);
+    }
+    return alias;
+  }
+  generateImportStatements() {
+    let result = "";
+    for (const [moduleSpecifier, alias] of this.imports) {
+      result += `import * as ${alias} from '${moduleSpecifier}';
+`;
+    }
+    return result;
+  }
+};
+function qualifyTypeParameters(params, env, defaultModuleSpecifier) {
+  if (!params || params.length === 0) {
+    return params ? [] : void 0;
+  }
+  return params.map((param) => {
+    const typeRefs = param.typeRefs;
+    if (!typeRefs || typeRefs.length === 0) {
+      return param;
+    }
+    const sortedRefs = [...typeRefs].sort((a, b) => (b.span?.start ?? 0) - (a.span?.start ?? 0));
+    let representation = param.representation;
+    let representationWithDefault = param.representationWithDefault;
+    for (const ref of sortedRefs) {
+      const mod = ref.moduleSpecifier || defaultModuleSpecifier;
+      if (!mod || !ref.span) continue;
+      const qualified = env.referenceExternalSymbol(mod, ref.symbol).print();
+      const { start, end } = ref.span;
+      if (start <= representation.length && end <= representation.length) {
+        representation = representation.slice(0, start) + qualified + representation.slice(end);
+      }
+      if (start <= representationWithDefault.length && end <= representationWithDefault.length) {
+        representationWithDefault = representationWithDefault.slice(0, start) + qualified + representationWithDefault.slice(end);
+      }
+    }
+    return {
+      ...param,
+      representation,
+      representationWithDefault
+    };
+  });
+}
+function generateGenericArgs(typeParameters) {
+  if (typeParameters === void 0 || typeParameters.length === 0) {
+    return "";
+  }
+  return `<${typeParameters.map((param) => param.name).join(", ")}>`;
+}
+function typeParametersWithDefaultTypes(params) {
+  if (params === void 0 || params.length === 0) {
+    return "";
+  }
+  return `<${params.map((param) => param.representationWithDefault).join(", ")}>`;
+}
+function constructTypeCtorParameter(env, meta, typeRef, typeRefWithGenerics) {
+  let initType = null;
+  const plainKeys = [];
+  const coercedKeys = [];
+  const signalInputKeys = [];
+  for (const { classPropertyName, transformType, isSignal } of meta.fields.inputs) {
+    if (isSignal) {
+      signalInputKeys.push(TcbExpr.quoteAndEscape(classPropertyName));
+    } else if (!meta.coercedInputFields.has(classPropertyName)) {
+      plainKeys.push(TcbExpr.quoteAndEscape(classPropertyName));
+    } else {
+      const propName = `ngAcceptInputType_${classPropertyName}`;
+      const isUnsafe = isUnsafeObjectKey(classPropertyName);
+      const access3 = isUnsafe ? `[${TcbExpr.quoteAndEscape(propName)}]` : `.${propName}`;
+      const coercionType = transformType !== void 0 ? transformType : `typeof ${typeRef}${access3}`;
+      coercedKeys.push(
+        `${isUnsafe ? TcbExpr.quoteAndEscape(classPropertyName) : classPropertyName}: ${coercionType}`
+      );
+    }
+  }
+  if (plainKeys.length > 0) {
+    initType = `Pick<${typeRefWithGenerics}, ${plainKeys.join(" | ")}>`;
+  }
+  if (coercedKeys.length > 0) {
+    let coercedLiteral = "{\n";
+    for (const key of coercedKeys) {
+      coercedLiteral += `${key};
+`;
+    }
+    coercedLiteral += "}";
+    initType = initType !== null ? `${initType} & ${coercedLiteral}` : coercedLiteral;
+  }
+  if (signalInputKeys.length > 0) {
+    const keyTypeUnion = signalInputKeys.join(" | ");
+    const unwrapRef = env.referenceExternalSymbol(
+      Identifiers.UnwrapDirectiveSignalInputs.moduleName,
+      Identifiers.UnwrapDirectiveSignalInputs.name
+    );
+    const unwrapExpr = `${unwrapRef.print()}<${typeRefWithGenerics}, ${keyTypeUnion}>`;
+    initType = initType !== null ? `${initType} & ${unwrapExpr}` : unwrapExpr;
+  }
+  if (initType === null) {
+    initType = "{}";
+  }
+  return `init: ${initType}`;
+}
+function generateTypeCtorDeclarationFn2(env, meta, nodeTypeRef, typeParams) {
+  const typeArgs = generateGenericArgs(typeParams);
+  const typeRefWithGenerics = `${nodeTypeRef.print()}${typeArgs}`;
+  const initParam = constructTypeCtorParameter(env, meta, nodeTypeRef.print(), typeRefWithGenerics);
+  const typeParameters = typeParametersWithDefaultTypes(typeParams);
+  let source;
+  if (meta.body) {
+    const fnType = `${typeParameters}(${initParam}) => ${typeRefWithGenerics}`;
+    source = `const ${meta.fnName}: ${fnType} = null!`;
+  } else {
+    source = `declare function ${meta.fnName}${typeParameters}(${initParam}): ${typeRefWithGenerics}`;
+  }
+  return new TcbExpr(source);
+}
+var TcbEnvironmentImpl = class {
+  constructor(config, importManager, isInline = false) {
+    this.config = config;
+    this.importManager = importManager;
+    this.isInline = isInline;
+  }
+  config;
+  importManager;
+  isInline;
+  nextIds = {
+    pipeInst: 1,
+    typeCtor: 1
+  };
+  typeCtors = /* @__PURE__ */ new Map();
+  typeCtorStatements = [];
+  pipeInsts = /* @__PURE__ */ new Map();
+  pipeInstStatements = [];
+  referenceTcbValue(ref) {
+    if (ref.unexportedDiagnostic !== null || ref.isLocal || ref.moduleName === null) {
+      if (ref.unexportedDiagnostic !== null) {
+        throw new Error(`Unable to import symbol ${ref.name}: ${ref.unexportedDiagnostic}`);
+      }
+      return new TcbExpr(ref.name);
+    }
+    return this.referenceExternalSymbol(ref.moduleName, ref.name);
+  }
+  referenceExternalSymbol(moduleName, name) {
+    const alias = this.importManager.addImport(moduleName);
+    return new TcbExpr(`${alias}.${name}`);
+  }
+  typeCtorFor(dir) {
+    if (this.typeCtors.has(dir.ref.key)) {
+      return new TcbExpr(this.typeCtors.get(dir.ref.key));
+    }
+    if (dir.requiresInlineTypeCtor) {
+      const typeCtorExpr = `${this.referenceTcbValue(dir.ref).print()}.ngTypeCtor`;
+      this.typeCtors.set(dir.ref.key, typeCtorExpr);
+      return new TcbExpr(typeCtorExpr);
+    } else {
+      const fnName = `_ctor${this.nextIds.typeCtor++}`;
+      const nodeTypeRef = this.referenceTcbValue(dir.ref);
+      const meta = {
+        fnName,
+        body: true,
+        fields: {
+          inputs: dir.inputs
+        },
+        coercedInputFields: dir.coercedInputFields
+      };
+      const typeParams = dir.typeParameters ? qualifyTypeParameters(dir.typeParameters, this, dir.ref.moduleName) : void 0;
+      const typeCtor = generateTypeCtorDeclarationFn2(this, meta, nodeTypeRef, typeParams);
+      this.typeCtorStatements.push(typeCtor);
+      this.typeCtors.set(dir.ref.key, fnName);
+      return new TcbExpr(fnName);
+    }
+  }
+  pipeInst(pipe2) {
+    if (this.pipeInsts.has(pipe2.ref.key)) {
+      return new TcbExpr(this.pipeInsts.get(pipe2.ref.key));
+    }
+    const pipeType = this.referenceTcbValue(pipe2.ref);
+    const pipeInstId = `_pipe${this.nextIds.pipeInst++}`;
+    this.pipeInsts.set(pipe2.ref.key, pipeInstId);
+    this.pipeInstStatements.push(new TcbExpr(`var ${pipeInstId} = null! as ${pipeType.print()}`));
+    return new TcbExpr(pipeInstId);
+  }
+  getPreludeStatements() {
+    if (this.isInline) {
+      return [...this.pipeInstStatements, ...this.typeCtorStatements];
+    }
+    return [];
+  }
+  getFileLevelStatements() {
+    return [...this.pipeInstStatements, ...this.typeCtorStatements];
+  }
+};
+function prepareTcbTargets(filePath, tcbTargets, content, config, classes) {
+  if (tcbTargets.length === 0) return null;
+  const localClasses = /* @__PURE__ */ new Map();
+  if (classes) {
+    for (const cls of classes) {
+      if (cls.className) localClasses.set(cls.className, cls);
+    }
+  } else {
+    for (const target of tcbTargets) {
+      if (target.className) localClasses.set(target.className, target.classMeta);
+    }
+  }
+  let requiresInline = tcbTargets.some((target) => requiresInlineDeclaration(target.classMeta));
+  const intermediateTargets = [];
+  for (let i = 0; i < tcbTargets.length; i++) {
+    const comp = tcbTargets[i];
+    const typeCheckId = `tcb${i + 1}`;
+    const adapted = adaptTcbInput(comp, typeCheckId, filePath, config, requiresInline, content);
+    intermediateTargets.push({ comp, typeCheckId, ...adapted });
+    if (!requiresInline && requiresInlineTypeCheckBlock(comp, adapted.tcbMeta.boundTarget, localClasses)) {
+      requiresInline = true;
+    }
+  }
+  const boundTargetMap = /* @__PURE__ */ new Map();
+  const hostElementsMap = /* @__PURE__ */ new Map();
+  const typeCheckIdMap = /* @__PURE__ */ new Map();
+  const targets = [];
+  for (let i = 0; i < tcbTargets.length; i++) {
+    const { comp, typeCheckId } = intermediateTargets[i];
+    const { tcbMeta, targetMeta, hostElement } = requiresInline ? adaptTcbInput(comp, typeCheckId, filePath, config, true, content) : intermediateTargets[i];
+    const classKey = makeClassKey(comp.className, comp.classMeta.span.start);
+    boundTargetMap.set(classKey, tcbMeta.boundTarget);
+    hostElementsMap.set(classKey, hostElement);
+    typeCheckIdMap.set(classKey, typeCheckId);
+    targets.push({ comp, typeCheckId, tcbMeta, targetMeta });
+  }
+  return { targets, boundTargetMap, hostElementsMap, typeCheckIdMap, requiresInline };
+}
+function generateTcbCode(filePath, preparedData, config) {
+  const { targets, requiresInline } = preparedData;
+  if (targets.length === 0) return null;
+  const importManager = new TcbImportManager();
+  const oobRecorder = new OutOfBandDiagnosticRecorderImpl();
+  const domSchemaChecker = new RegistryDomSchemaChecker2();
+  const semanticsDiagnostics = [];
+  const extendedDiagnostics = [];
+  let code = "";
+  let functionStrings = "";
+  const tcbMap = /* @__PURE__ */ new Map();
+  const templateSources = {};
+  const sharedEnv = !requiresInline ? new TcbEnvironmentImpl(config, importManager, false) : null;
+  for (const target of targets) {
+    const { comp, typeCheckId, tcbMeta, targetMeta } = target;
+    const env = sharedEnv || new TcbEnvironmentImpl(config, importManager, true);
+    const targetTypeParams = targetMeta.typeParameters ? qualifyTypeParameters(targetMeta.typeParameters, env, targetMeta.ref.moduleName) ?? null : null;
+    const qualifiedTargetMeta = targetTypeParams ? { ...targetMeta, typeParameters: targetTypeParams } : targetMeta;
+    let tcbString = "";
+    try {
+      tcbString = generateTypeCheckBlock(
+        env,
+        qualifiedTargetMeta,
+        `_${typeCheckId}`,
+        tcbMeta,
+        domSchemaChecker,
+        oobRecorder
+      );
+    } catch (e) {
+      oobRecorder.error(
+        typeCheckId,
+        `Error generating TCB for ${comp.className}: ${e?.message || e}`,
+        { start: comp.classMeta.span.start, end: comp.classMeta.span.end }
+      );
+      continue;
+    }
+    if (!config.disabledExtendedDiagnostics) {
+      semanticsDiagnostics.push(
+        ...getTemplateSemanticsDiagnostics(typeCheckId, comp.templateNodes, tcbMeta.boundTarget)
+      );
+      extendedDiagnostics.push(
+        ...runExtendedDiagnostics(
+          typeCheckId,
+          comp,
+          tcbMeta.boundTarget,
+          filePath,
+          config.extendedDiagnostics,
+          void 0,
+          config.checkTemplateBodies,
+          config.unusedStandaloneImports
+        )
+      );
+    }
+    functionStrings += tcbString + "\n\n";
+    const classKey = makeClassKey(comp.className, comp.classMeta.span.start);
+    tcbMap.set(classKey, tcbString);
+    const templateSource = getTcbTemplateSource(comp.classMeta.component);
+    if (templateSource !== null) {
+      templateSources[typeCheckId] = templateSource;
+    }
+  }
+  if (!requiresInline) {
+    const preludeStatements = sharedEnv.getFileLevelStatements();
+    const preludeStr = printStatements(preludeStatements);
+    code += preludeStr + "\n" + functionStrings;
+  } else {
+    code += functionStrings;
+  }
+  const importsStr = importManager.generateImportStatements();
+  return {
+    code,
+    imports: importsStr,
+    tcbMap,
+    templateSources,
+    diagnostics: [
+      ...domSchemaChecker.diagnostics,
+      ...oobRecorder.diagnostics,
+      ...semanticsDiagnostics,
+      ...extendedDiagnostics
+    ],
+    isInline: requiresInline
+  };
+}
+function combineTcbContent(tcbResult, filePath, inlineInfo) {
+  const generatedComment = `/**
+ * TCB for ${filePath}
+ * @generated
+ */
+
+`;
+  const importsStr = tcbResult.imports || "";
+  const separator = importsStr ? "\n" : "";
+  const tcbHeader = generatedComment + importsStr + separator;
+  const tcbFooter = serializeTcbTemplateSources(tcbResult.templateSources);
+  if (tcbResult.isInline) {
+    const { sourceContent, classes } = inlineInfo;
+    const s = new MagicString2(sourceContent);
+    for (const classMeta of classes) {
+      const classKey = makeClassKey(classMeta.className || "", classMeta.span.start);
+      const tcbCode = tcbResult.tcbMap.get(classKey);
+      if (tcbCode) {
+        s.appendLeft(classMeta.span.end, "\n\n" + tcbCode);
+      }
+    }
+    return tcbHeader + s.toString() + tcbFooter;
+  } else {
+    return tcbHeader + tcbResult.code + tcbFooter;
+  }
 }
 
 // packages/compiler-cli/preprocessor/src/processor.ts
@@ -39988,23 +42754,40 @@ var DeclarationListEmitMode = {
   ClosureResolved: 2,
   RuntimeResolved: 3
 };
-var DeferBlockDepsEmitMode = { PerBlock: 0, PerComponent: 1 };
+var DeferBlockDepsEmitMode2 = { PerBlock: 0, PerComponent: 1 };
 var R3NgModuleMetadataKind2 = { Global: 0, Local: 1, Isolated: 2 };
 var R3SelectorScopeMode2 = { Inline: 0, SideEffect: 1, Omit: 2 };
 var GENERATED_NAMESPACE_ALIAS = /^(ɵ?i\d+|ɵng)$/;
-function buildTcbTargets(filePath, content, classes, templatesByClass, options = {}, tcbConfig) {
+function unprocessedFile(s) {
+  return {
+    magicString: s,
+    generateSourceMap: (options = {}) => s.generateMap({
+      ...options,
+      // Disable high resolution source maps, because they use a lot of memory.
+      hires: "boundary"
+    })
+  };
+}
+function buildTcbTargets(filePath, content, classes, templatesByClass, options = {}, tcbConfig, dependencyTemplates) {
   const tcbTargets = [];
+  const consumer = { filePath, content, classes, templatesByClass };
   for (const cls of classes) {
     const { className, component, directive, hostBindings, hostListeners } = cls;
-    if (!className) continue;
+    if (!className) {
+      continue;
+    }
     if (component) {
-      if (component.isJit) continue;
-      const classKey = makeClassKey(cls.className, cls.span.start);
-      let parsed = templatesByClass.get(classKey);
-      if (!parsed) {
-        parsed = parseComponentTemplate(component, filePath, content, options);
-        templatesByClass.set(classKey, parsed);
+      if (component.isJit || component.isPoisoned && !tcbConfig.usePoisonedData) {
+        continue;
       }
+      const parsed = getOrParseComponentTemplate(
+        templatesByClass,
+        cls,
+        component,
+        filePath,
+        content,
+        options
+      );
       const parsedSchemas = [];
       if (component.schemas) {
         for (const schema of component.schemas) {
@@ -40021,12 +42804,15 @@ function buildTcbTargets(filePath, content, classes, templatesByClass, options =
         selectorlessEnabled = analysis.isSelectorless;
       }
       tcbTargets.push({
-        // TODO: maybe remove duplicated info from tcbTargets and have downstream access through classMeta
+        // TODO(cleanup): access fields mirrored from `classMeta` directly instead of duplicating them on `TcbTargetInput`.
         classMeta: cls,
         className,
         template: component.template || "",
-        templateNodes: parsed.nodes,
-        declarations: component.resolvedDeclarations ?? [],
+        templateNodes: parsed.diagNodes,
+        declarations: dependencyTemplates.withNgContentSelectors(
+          component.resolvedDeclarations ?? [],
+          consumer
+        ),
         enableSelectorless: options.enableSelectorless ?? false,
         selectorlessEnabled,
         ownDeclaration: metadataToDeclaration(
@@ -40042,7 +42828,8 @@ function buildTcbTargets(filePath, content, classes, templatesByClass, options =
         preserveWhitespaces: parsed.preserveWhitespaces,
         schemas: parsedSchemas,
         typeParameters: cls.typeParameters ?? null,
-        pipeRegistry: buildPipeRegistry(component.resolvedDeclarations ?? [])
+        pipeRegistry: buildPipeRegistry(component.resolvedDeclarations ?? []),
+        foreignImports: component.foreignImports ?? null
       });
     } else if (directive) {
       if (directive.isJit) continue;
@@ -40074,7 +42861,7 @@ function mapDeps(deps, content, guards = []) {
   return deps.map((dep) => {
     let token = null;
     if (dep.tokenSpan) {
-      token = new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(content, dep.tokenSpan, guards)));
+      token = rawSlice(content, dep.tokenSpan, guards);
     }
     return {
       token,
@@ -40086,21 +42873,58 @@ function mapDeps(deps, content, guards = []) {
     };
   });
 }
-async function processFile(rawCtx, filePath, content, readResource, metadata, chunkContext) {
+async function processFile(rawCtx, filePath, content, metadata, chunkContext) {
+  const result = metadata || await rawCtx.analyzer.getMetadataForFile(filePath);
+  if (!result) {
+    return unprocessedFile(new MagicString3(content));
+  }
+  const { parsedTemplates: templatesByClass } = getOrCreateFileAnalysis(rawCtx.fileCache, filePath);
+  const resourceMap = /* @__PURE__ */ new Map();
+  for (const classMeta of result.classes) {
+    if (!classMeta.component || !classMeta.className) continue;
+    const parsed = getOrParseComponentTemplate(
+      templatesByClass,
+      classMeta,
+      classMeta.component,
+      filePath,
+      content,
+      rawCtx.templateParseOptions
+    );
+    for (const styleUrl of parsed.styleUrls) {
+      if (!resourceMap.has(styleUrl)) {
+        const resource = await rawCtx.analyzer.readResource(filePath, styleUrl);
+        resourceMap.set(styleUrl, resource);
+      }
+    }
+  }
+  if (rawCtx.optimize && !rawCtx.emitDeclarationOnly) {
+    await new DependencyTemplates(
+      rawCtx.analyzer,
+      rawCtx.fileCache,
+      rawCtx.templateParseOptions,
+      chunkContext?.metadataMap || rawCtx.metadataMap
+    ).prefetch(result);
+  }
+  return processFileSync(rawCtx, filePath, content, resourceMap, result, chunkContext);
+}
+function processFileSync(rawCtx, filePath, content, readResource, metadata, chunkContext) {
   const ctx = {
     ...rawCtx,
     remoteScopedClasses: chunkContext?.remoteScopedClasses || rawCtx.remoteScopedClasses || /* @__PURE__ */ new Set(),
     metadataMap: chunkContext?.metadataMap || rawCtx.metadataMap || /* @__PURE__ */ new Map(),
     eagerlyUsedDeclarations: chunkContext?.eagerlyUsedDeclarations || /* @__PURE__ */ new Map()
   };
-  const s = new MagicString2(content);
-  const printer = new ExpressionPrinter(filePath);
+  const s = new MagicString3(content);
   const fileDiagnostics = [];
-  const result = metadata || await ctx.analyzer.getMetadataForFile(filePath);
+  let hmrUpdateModule;
+  const result = metadata || ctx.analyzer.getMetadataForFileSync(filePath);
   if (!result) {
-    return { magicString: s };
+    return unprocessedFile(s);
   }
   const { classes, importsEnd, imports: importDeclarations } = result;
+  const printer = new ExpressionPrinter(filePath, result.r3SymbolsSpecifier ?? null);
+  const out = new OutputSourceMapBuilder(s, printer, filePath, content);
+  const generateSourceMap = (options) => out.generateMap(options);
   if (!ctx.emitDeclarationOnly) {
     insertSignalDebugNames(s, result.signalDebugNames, printer.emitTypes);
   }
@@ -40111,15 +42935,11 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       }
     }
   }
-  let fileAnalysis = getOrCreateFileAnalysis(ctx.fileCache, filePath);
-  let templatesByClass = fileAnalysis.parsedTemplates;
-  if (!templatesByClass) {
-    templatesByClass = /* @__PURE__ */ new Map();
-    fileAnalysis.parsedTemplates = templatesByClass;
-  }
+  const { parsedTemplates: templatesByClass } = getOrCreateFileAnalysis(ctx.fileCache, filePath);
   const sharedPool = new ConstantPool(ctx.isClosureCompilerEnabled);
   const deferredOnlyNames = /* @__PURE__ */ new Set();
   const eagerlyBoundNames = /* @__PURE__ */ new Set();
+  const eagerlyReferencedNames = /* @__PURE__ */ new Set();
   const eagerDependencyNames = /* @__PURE__ */ new Set();
   const importsByBinding = /* @__PURE__ */ new Map();
   for (const decl of importDeclarations) {
@@ -40127,7 +42947,12 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       importsByBinding.set(binding.local, decl);
     }
   }
+  const compiledClasses = [];
+  let pipelineError = void 0;
   for (const classMeta of classes) {
+    if (ctx.hmrUpdateTarget !== void 0 && classMeta.className !== ctx.hmrUpdateTarget) {
+      continue;
+    }
     const {
       span,
       className,
@@ -40151,7 +42976,7 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       }
     }
     if (!className) continue;
-    if (component?.isJit || directive?.isJit) {
+    if (component?.isJit || directive?.isJit || ngModule?.isJit) {
       const coreNamespace = printer.getOrCreateNamespace("@angular/core");
       for (const input of inputs) {
         if (input.isSignal && input.propertySpan) {
@@ -40177,25 +43002,54 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         const decoratorName = query.isView ? query.first ? "ViewChild" : "ViewChildren" : query.first ? "ContentChild" : "ContentChildren";
         const rawPred = s.original.slice(query.predicateSpan.start, query.predicateSpan.end);
         const predicateStr = query.predicateSelectors ? rawPred : `${coreNamespace}.forwardRef(() => ${rawPred})`;
-        const optionsObj = ["isSignal: true"];
-        if (query.readSpan) {
-          const readStr = s.original.slice(query.readSpan.start, query.readSpan.end);
-          optionsObj.push(`read: ${readStr}`);
+        const optionsObj = [];
+        if (query.optionsSpan) {
+          optionsObj.push(`...${s.original.slice(query.optionsSpan.start, query.optionsSpan.end)}`);
         }
-        if (!query.isView && query.descendants) {
-          optionsObj.push("descendants: true");
-        }
+        optionsObj.push("isSignal: true");
         const optionsStr = `({${optionsObj.join(", ")}} as any)`;
         s.appendLeft(
           query.propertySpan.start,
           `@${coreNamespace}.${decoratorName}(${predicateStr}, ${optionsStr}) `
         );
       }
+      if (!ctx.emitDeclarationOnly && constructorParams && constructorParams.length > 0) {
+        const ctorParams = buildCtorParametersExpr(
+          constructorParams,
+          s,
+          /* omitEmptyDecorators */
+          true
+        );
+        if (ctorParams) {
+          const ctorExpr = compileCtorParameters(
+            ctorParams,
+            /* allowSuppressions */
+            true
+          );
+          const jsdoc = ctx.isClosureCompilerEnabled ? "/** @internal @nocollapse */" : "/** @internal */";
+          s.appendLeft(
+            span.end - 1,
+            `
+  ${jsdoc}
+  static ctorParameters = ${printer.print(ctorExpr)};
+`
+          );
+        }
+      }
       continue;
     }
     const deps = buildDeps(constructorParams, classMeta.usesInheritance, output_ast_exports, s);
     let factoryGenerated = false;
-    let ngModuleStatements = "";
+    let hmrComponent = null;
+    const compiledClass = {
+      classMeta,
+      fields: [],
+      ngModule: null,
+      classMetadataStmt: null,
+      debugInfoStmt: null,
+      hmrInitializerStmt: null
+    };
+    compiledClasses.push(compiledClass);
     const decoratorsToEmit = [];
     const guards = ctx.complianceMode ? [] : classMeta.laterDeclarationReferences;
     const perComponentDeferredDeps = [];
@@ -40216,7 +43070,6 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         deps,
         target: 3 /* Pipe */
       });
-      const compiledFactory = compileFactoryField(factoryRes, printer, ctx);
       const def = compilePipeFromMetadata({
         name: className,
         type: {
@@ -40229,14 +43082,10 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
         deps: null
       });
-      const compiledPipe = createStaticField(
-        "\u0275pipe",
-        printer.print(def.expression),
-        printer.emitTypes ? printer.printType(def.type) : null,
-        true,
-        ctx.isClosureCompilerEnabled
-      );
-      s.appendLeft(span.end - 1, compiledFactory + compiledPipe);
+      compiledClass.fields.push({
+        factory: factoryRes,
+        def: { name: "\u0275pipe", def }
+      });
     }
     if (component) {
       factoryGenerated = true;
@@ -40251,13 +43100,15 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         preserveWhitespaces
       } = component;
       const hostMetadata = component.hostMetadata ?? [];
-      const rawImports = component.rawImportsSpan ? sliceGuarded(s, component.rawImportsSpan, guards) : void 0;
-      const importsFactory = component.importsFactorySpan ? sliceGuarded(s, component.importsFactorySpan, guards) : void 0;
-      const providers = component.providersSpan ? sliceGuarded(s, component.providersSpan, guards) : void 0;
-      const viewProviders = component.viewProvidersSpan ? sliceGuarded(s, component.viewProvidersSpan, guards) : void 0;
-      const animations = component.animationsSpan ? sliceGuarded(s, component.animationsSpan, guards) : void 0;
+      const rawImports = component.rawImportsSpan ? rawSlice(s, component.rawImportsSpan, guards) : void 0;
+      const importsFactory = component.importsFactorySpan ? rawSlice(s, component.importsFactorySpan, guards) : void 0;
       const encapsulationValue = component.encapsulation ?? 0 /* Emulated */;
-      const changeDetectionValue = component.changeDetection ? new output_ast_exports.WrappedNodeExpr(new RawSource(component.changeDetection)) : null;
+      const changeDetectionValue = component.changeDetection ? new output_ast_exports.WrappedNodeExpr(
+        new RawSource(
+          component.changeDetection,
+          component.changeDetectionSpan ? [component.changeDetectionSpan] : []
+        )
+      ) : null;
       const externalRuntimeStyles = !!ctx.externalRuntimeStyles;
       const allStyles = [];
       const externalStyles = [];
@@ -40268,12 +43119,14 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       } else if (component.stylesFromUrls) {
         allStyles.push(...component.stylesFromUrls);
       }
-      const classKey = makeClassKey(classMeta.className, classMeta.span.start);
-      let parsed = templatesByClass.get(classKey);
-      if (!parsed) {
-        parsed = parseComponentTemplate(component, filePath, content, ctx.templateParseOptions);
-        templatesByClass.set(classKey, parsed);
-      }
+      const parsed = getOrParseComponentTemplate(
+        templatesByClass,
+        classMeta,
+        component,
+        filePath,
+        content,
+        ctx.templateParseOptions
+      );
       if (parsed.errors && parsed.errors.length > 0) {
         for (const error of parsed.errors) {
           const span2 = error.span;
@@ -40307,17 +43160,50 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         }
         continue;
       }
+      if (component.animationsSpan && hasAnimations(parsed.nodes)) {
+        fileDiagnostics.push({
+          category: 1,
+          code: 2027,
+          messageText: `A component cannot have both the '@Component.animations' property (legacy animations) and use 'animate.enter' or 'animate.leave' in the template.`,
+          filePath,
+          span: { start: component.animationsSpan.start, end: component.animationsSpan.end }
+        });
+        continue;
+      }
       for (const styleUrl of parsed.styleUrls) {
-        const resolvedPath = path.resolve(path.dirname(filePath), styleUrl);
-        if (externalRuntimeStyles) {
-          externalStyles.push(resolvedPath);
+        let resource = null;
+        if (readResource instanceof Map) {
+          resource = readResource.get(styleUrl) ?? null;
+        } else if (ctx.analyzer.readResourceSync) {
+          resource = ctx.analyzer.readResourceSync(filePath, styleUrl);
+          if (resource === null && typeof readResource === "function") {
+            const resolvedPath = path.resolve(path.dirname(filePath), styleUrl);
+            const content2 = readResource(resolvedPath);
+            if (content2 !== void 0) {
+              resource = { resolvedPath, content: content2 };
+            }
+          }
+        } else if (typeof readResource === "function") {
+          const resolvedPath = path.resolve(path.dirname(filePath), styleUrl);
+          const content2 = readResource(resolvedPath);
+          resource = content2 !== void 0 ? { resolvedPath, content: content2 } : null;
+        } else {
+          const resolvedPath = path.resolve(path.dirname(filePath), styleUrl);
+          try {
+            const content2 = fsSync.readFileSync(resolvedPath, "utf8");
+            resource = { resolvedPath, content: content2 };
+          } catch {
+            resource = null;
+          }
+        }
+        if (externalRuntimeStyles && resource !== null) {
+          externalStyles.push(resource.resolvedPath);
           continue;
         }
-        const resolvedContent = readResource ? readResource(resolvedPath) : await fs.readFile(resolvedPath, "utf8").catch(() => void 0);
-        if (resolvedContent !== void 0) {
-          allStyles.push(resolvedContent);
+        if (resource?.content != null) {
+          allStyles.push(resource.content);
         } else {
-          const span2 = component.templateUrl?.stringLiteralSpan ?? component.templateSpan;
+          const span2 = component.templateUrlSpan ?? component.templateSpan;
           fileDiagnostics.push({
             category: 1,
             code: 2008,
@@ -40343,16 +43229,18 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           stripStyleFields: hasStyleField
         } : void 0
       });
-      let filteredDeclarations = [...resolvedDeclarations || []];
-      const hasUnresolvedImports = rawImports !== void 0;
+      const skipPoisonedScope = Boolean(component.isPoisoned && !ctx.tcbConfig?.usePoisonedData);
+      let filteredDeclarations = skipPoisonedScope ? [] : [...resolvedDeclarations || []];
+      const hasUnresolvedImports = !skipPoisonedScope && rawImports !== void 0;
       const isLocalCompilation = !ctx.optimize || !!ctx.emitDeclarationOnly;
-      if (standalone) {
-        const isAlreadyImported = filteredDeclarations.some((d) => d.name === className);
-        if (!isAlreadyImported) {
-          filteredDeclarations.push(
-            metadataToDeclaration(component, classMeta, "component", parsed.ngContentSelectors)
-          );
-        }
+      const standaloneImportMayBeForwardDeclared = standalone && !skipPoisonedScope && (resolvedDeclarations ?? []).some((d) => !!d.isForwardRef);
+      if (standalone && !skipPoisonedScope) {
+        filteredDeclarations = filteredDeclarations.filter(
+          (d) => !(d.name === className && d.ref.localAlias === className && d.ref.consumerImport == null)
+        );
+        filteredDeclarations.unshift(
+          metadataToDeclaration(component, classMeta, "component", parsed.ngContentSelectors)
+        );
       }
       const matcher = new SelectorMatcher();
       const metaToDecl = /* @__PURE__ */ new Map();
@@ -40366,7 +43254,10 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           registerSelectable(decl, decl.selector);
         }
       }
-      const binder = new R3TargetBinder(matcher);
+      const binder = new R3TargetBinder(
+        matcher,
+        createForeignComponentMatcher2(component.foreignImports)
+      );
       const bound = binder.bind({ template: parsed.nodes });
       const toDecls = (metas) => metas.map((meta) => metaToDecl.get(meta)).filter((decl) => decl !== void 0);
       const pipeNameToDecl = /* @__PURE__ */ new Map();
@@ -40380,15 +43271,32 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       const usedPipes = new Set(bound.getUsedPipes());
       const eagerlyUsedDirectiveDecls = new Set(toDecls(bound.getEagerlyUsedDirectives()));
       const eagerlyUsedPipes = new Set(bound.getEagerlyUsedPipes());
-      const usedDeclarations = filteredDeclarations.filter((d) => {
-        if (d.declarationType === "ngmodule") {
-          return true;
+      if (ctx.enableHmr) {
+        for (const decl of filteredDeclarations) {
+          if (decl.name === className && decl.ref.localAlias === className && decl.ref.consumerImport == null && decl.declarationType === "component") {
+            continue;
+          }
+          if (decl.isExplicitlyDeferred) {
+            continue;
+          }
+          if (decl.declarationType === "pipe") {
+            if (decl.pipeName) {
+              usedPipes.add(decl.pipeName);
+              eagerlyUsedPipes.add(decl.pipeName);
+            }
+          } else {
+            usedDirectiveDecls.add(decl);
+            eagerlyUsedDirectiveDecls.add(decl);
+          }
         }
-        if (d.declarationType === "pipe") {
-          return d.pipeName && usedPipes.has(d.pipeName) && pipeNameToDecl.get(d.pipeName) === d;
-        }
-        return usedDirectiveDecls.has(d);
-      });
+      }
+      const usedDirectivesAndModules = filteredDeclarations.filter(
+        (d) => d.declarationType === "ngmodule" || d.declarationType !== "pipe" && usedDirectiveDecls.has(d)
+      );
+      const usedPipeDecls = Array.from(pipeNameToDecl.values()).filter(
+        (d) => d.pipeName != null && usedPipes.has(d.pipeName)
+      );
+      const usedDeclarations = [...usedDirectivesAndModules, ...usedPipeDecls];
       const hasBlockSpecificImports = component?.deferredImportsByBlock != null;
       const hasDeferredImportsField = hasBlockSpecificImports || component?.deferredImports != null;
       const deferBlocks = bound.getDeferBlocks();
@@ -40491,16 +43399,18 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         }
       }
       if (isLocalCompilation && component.localCompilationExtraImports) {
-        for (const spec of component.localCompilationExtraImports) {
-          printer.addSideEffectImport(spec);
-        }
-        const isRemotelyScoped = ctx.remoteScopedClasses?.has(`${filePath}#${className}`) ?? false;
-        const hasCycle = isRemotelyScoped || filteredDeclarations.some((d) => d.cycleProne);
-        if (!hasCycle) {
-          for (const decl of filteredDeclarations) {
-            const spec = decl.ref.consumerImport?.specifier;
-            if (spec) {
-              printer.addSideEffectImport(spec);
+        if (!ctx.emitDeclarationOnly) {
+          for (const spec of component.localCompilationExtraImports) {
+            printer.addSideEffectImport(spec);
+          }
+          const isRemotelyScoped = ctx.remoteScopedClasses?.has(`${filePath}#${className}`) ?? false;
+          const hasCycle = isRemotelyScoped || filteredDeclarations.some((d) => d.cycleProne);
+          if (!hasCycle) {
+            for (const decl of filteredDeclarations) {
+              const spec = decl.ref.consumerImport?.specifier;
+              if (spec) {
+                printer.addSideEffectImport(spec);
+              }
             }
           }
         }
@@ -40533,6 +43443,9 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           if (local === void 0) continue;
           if (filteredDeclarations.includes(decl)) {
             eagerlyBoundNames.add(local);
+            if (!decl.isExplicitlyDeferred) {
+              eagerlyReferencedNames.add(local);
+            }
             continue;
           }
           if (ctx.onlyExplicitDeferDependencyImports && !decl.isExplicitlyDeferred) {
@@ -40558,15 +43471,18 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           (b) => b.isType || deferredHere.has(b.local) && !b.valueReferenced
         );
       };
-      const isDeferrable = (decl) => isRefDeferrable(decl.ref);
+      const canDeferDeps = !ctx.enableHmr;
+      const deferredImportIfDeferrable = (ref) => canDeferDeps && isRefDeferrable(ref) ? deferredImportOf(ref, importsByBinding) : null;
+      const markNotDeferrable = (local) => {
+        if (!canDeferDeps || local === void 0) return;
+        eagerlyBoundNames.add(local);
+        deferredOnlyNames.delete(local);
+      };
       if (isLocalCompilation && standalone && hasDeferredImportsField) {
         for (const ref of component.deferredImports ?? []) {
-          const imported = isRefDeferrable(ref) ? deferredImportOf(ref, importsByBinding) : null;
+          const imported = deferredImportIfDeferrable(ref);
           if (imported === null) {
-            if (ref.localAlias) {
-              eagerlyBoundNames.add(ref.localAlias);
-              deferredOnlyNames.delete(ref.localAlias);
-            }
+            markNotDeferrable(ref.localAlias);
             continue;
           }
           const key = deferredDepKey(imported.importPath, imported.symbolName);
@@ -40582,9 +43498,9 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           const blockRefs = blockName !== null ? component.deferredImportsByBlock?.[blockName] ?? [] : [];
           const dependencies2 = [];
           for (const ref of blockRefs) {
-            const imported = isRefDeferrable(ref) ? deferredImportOf(ref, importsByBinding) : null;
+            const imported = deferredImportIfDeferrable(ref);
             dependencies2.push({
-              typeReference: refToExpression2(ref),
+              typeReference: refToExpression(ref),
               // Read only when `isDeferrable`: `compileDeferResolverFunction` emits the
               // `typeReference` for the rest and never looks at their name. ngtsc names those
               // after the resolved declaration, which local compilation cannot see.
@@ -40597,7 +43513,7 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           deferBlocksMap.set(
             block,
             dependencies2.length === 0 ? null : compileDeferResolverFunction({
-              mode: DeferBlockDepsEmitMode.PerBlock,
+              mode: DeferBlockDepsEmitMode2.PerBlock,
               dependencies: dependencies2
             })
           );
@@ -40624,35 +43540,20 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           }
         }
         const blockBound = binder.bind({ template: block.children });
+        const blockUsedDirectiveDecls = new Set(toDecls(blockBound.getEagerlyUsedDirectives()));
+        const blockUsedPipes = new Set(blockBound.getEagerlyUsedPipes());
         const dependencies = [];
-        for (const decl of toDecls(blockBound.getEagerlyUsedDirectives())) {
-          if (eagerDirectiveDecls.has(decl)) continue;
+        for (const decl of usedDeclarations) {
+          if (decl.declarationType === "ngmodule") continue;
+          const isUsedInBlock = decl.declarationType === "pipe" ? decl.pipeName != null && blockUsedPipes.has(decl.pipeName) : blockUsedDirectiveDecls.has(decl);
+          if (!isUsedInBlock) continue;
           if (allowedNames !== null && !allowedNames.has(decl.name)) continue;
-          const imported = isDeferrable(decl) ? deferredImportOf(decl.ref, importsByBinding) : null;
-          if (imported === null && decl.ref.localAlias) {
-            eagerlyBoundNames.add(decl.ref.localAlias);
-            deferredOnlyNames.delete(decl.ref.localAlias);
+          const imported = deferredImportIfDeferrable(decl.ref);
+          if (imported === null) {
+            markNotDeferrable(decl.ref.localAlias);
           }
           dependencies.push({
-            typeReference: refToExpression2(decl.ref),
-            symbolName: imported?.symbolName ?? decl.name,
-            isDeferrable: imported !== null,
-            importPath: imported?.importPath ?? null,
-            isDefaultImport: imported?.isDefaultImport ?? false
-          });
-        }
-        for (const pipeName of blockBound.getEagerlyUsedPipes()) {
-          if (eagerPipes.has(pipeName)) continue;
-          const decl = pipeNameToDecl.get(pipeName);
-          if (!decl) continue;
-          if (allowedNames !== null && !allowedNames.has(decl.name)) continue;
-          const imported = isDeferrable(decl) ? deferredImportOf(decl.ref, importsByBinding) : null;
-          if (imported === null && decl.ref.localAlias) {
-            eagerlyBoundNames.add(decl.ref.localAlias);
-            deferredOnlyNames.delete(decl.ref.localAlias);
-          }
-          dependencies.push({
-            typeReference: refToExpression2(decl.ref),
+            typeReference: refToExpression(decl.ref),
             symbolName: imported?.symbolName ?? decl.name,
             isDeferrable: imported !== null,
             importPath: imported?.importPath ?? null,
@@ -40674,7 +43575,7 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
           deferBlocksMap.set(
             block,
             compileDeferResolverFunction({
-              mode: DeferBlockDepsEmitMode.PerBlock,
+              mode: DeferBlockDepsEmitMode2.PerBlock,
               dependencies
             })
           );
@@ -40692,11 +43593,11 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         (decl) => decl.declarationType === "ngmodule" ? {
           kind: 2,
           // R3TemplateDependencyKind.NgModule
-          type: refToExpression2(decl.ref)
+          type: refToExpression(decl.ref)
         } : {
           kind: decl.declarationType === "pipe" ? 1 : 0,
           // 1: Pipe, 0: Directive
-          type: refToExpression2(decl.ref),
+          type: refToExpression(decl.ref),
           selector: decl.selector || "",
           inputs: [],
           outputs: [],
@@ -40705,10 +43606,12 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         }
       ) : [];
       const isExpressionForwardReference = (d) => {
-        if (className && d.name === className) return false;
+        if (className && d.name === className && d.ref.localAlias === className && d.ref.consumerImport == null) {
+          return false;
+        }
         return !!d.isForwardRef;
       };
-      const hasForwardRef = filteredDeclarations.some((d) => isExpressionForwardReference(d));
+      const hasForwardRef = standaloneImportMayBeForwardDeclared || filteredDeclarations.some((d) => isExpressionForwardReference(d));
       const templateUsesDirectives = hasUnresolvedImports ? true : usedDirectiveDecls.size > 0;
       const typeSourceSpan = createDummySourceSpan(filePath);
       const localRuntimeResolved = isLocalCompilation && (!standalone || importsFactory !== void 0);
@@ -40724,12 +43627,12 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         importsFactory
       );
       const deferMeta = isLocalCompilation && standalone && !hasBlockSpecificImports ? {
-        mode: DeferBlockDepsEmitMode.PerComponent,
+        mode: DeferBlockDepsEmitMode2.PerComponent,
         dependenciesFn: perComponentDeferredDeps.length === 0 ? null : compileDeferResolverFunction({
-          mode: DeferBlockDepsEmitMode.PerComponent,
+          mode: DeferBlockDepsEmitMode2.PerComponent,
           dependencies: perComponentDeferredDeps
         })
-      } : { mode: DeferBlockDepsEmitMode.PerBlock, blocks: deferBlocksMap };
+      } : { mode: DeferBlockDepsEmitMode2.PerBlock, blocks: deferBlocksMap };
       const componentMeta = {
         name: className,
         type: {
@@ -40747,18 +43650,29 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         viewQueries: buildQueriesMap(viewQueries, content),
         host: buildHostMetadata(hostMetadata, hostBindings, hostListeners, className, {
           filePath,
+          sourceText: content,
           hostSpan: component.hostSpan,
           hostProperties: component.hostProperties,
           diagnostics: fileDiagnostics
         }),
         lifecycle: { usesOnChanges: classMeta.usesOnChanges },
-        inputs: buildInputsMap(inputs, content),
+        inputs: buildInputsMap(inputs, content, (span2) => sliceGuarded(s, span2, guards)),
         outputs: buildOutputsMap(outputs),
         usesInheritance: classMeta.usesInheritance,
         controlCreate: null,
         exportAs: component.exportAs || null,
-        providers: providers ? new output_ast_exports.WrappedNodeExpr(new RawSource(providers)) : null,
-        viewProviders: viewProviders ? new output_ast_exports.WrappedNodeExpr(new RawSource(viewProviders)) : null,
+        providers: component.providersSpan ? rawSlice(
+          s,
+          component.providersSpan,
+          guards,
+          ctx.isClosureCompilerEnabled ? classMeta.decoratorFunctionSpans : void 0
+        ) : null,
+        viewProviders: component.viewProvidersSpan ? rawSlice(
+          s,
+          component.viewProvidersSpan,
+          guards,
+          ctx.isClosureCompilerEnabled ? classMeta.decoratorFunctionSpans : void 0
+        ) : null,
         isStandalone: standalone,
         isSignal: component.signals,
         hostDirectives: buildHostDirectives(hostDirectives),
@@ -40770,7 +43684,7 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         // Local compilation cannot inspect dependencies, so it always assumes directive
         // dependencies exist (avoiding the DOM-only fast path). In global compilation, a
         // standalone component only has dependencies when its template uses a directive:
-        // https://github.com/angular/angular/blob/e3ac727dfc/packages/compiler-cli/src/ngtsc/annotations/component/src/handler.ts#L1380-L1393
+        // https://github.com/angular/angular/blob/e3ac727/packages/compiler-cli/src/ngtsc/annotations/component/src/handler.ts#L1385-L1400
         hasDirectiveDependencies: isLocalCompilation ? true : !standalone || templateUsesDirectives,
         declarations: depMeta.declarations,
         defer: deferMeta,
@@ -40779,29 +43693,35 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         styles: allStyles,
         externalStyles: externalStyles.length > 0 ? externalStyles : void 0,
         encapsulation: encapsulationValue,
-        animations: animations ? new output_ast_exports.WrappedNodeExpr(new RawSource(animations)) : null,
+        animations: component.animationsSpan ? rawSlice(s, component.animationsSpan, guards) : null,
         changeDetection: changeDetectionValue,
-        relativeContextFilePath: filePath,
+        relativeContextFilePath: getRelativeContextFilePath(filePath, ctx),
         i18nUseExternalIds: ctx.i18nUseExternalIds ?? true,
         // Project-relative path of the file the template's text lives in: the `templateUrl`
         // resource, or this file for an inline template. Only `ɵɵattachSourceLocations` reads it,
         // and only under `enableTemplateSourceLocations`.
-        // https://github.com/angular/angular/blob/b3b9f39/packages/compiler-cli/src/ngtsc/annotations/component/src/handler.ts#L815-L825
-        relativeTemplatePath: getProjectRelativePath(
-          component.templateUrl?.resolvedPath ?? filePath,
-          ctx.rootDir
+        // https://github.com/angular/angular/blob/e3ac727/packages/compiler-cli/src/ngtsc/annotations/component/src/handler.ts#L812-L822
+        relativeTemplatePath: getProjectRelativePath2(
+          component.templateUrl?.resolvedPath || filePath,
+          ctx
         ),
         enableTemplateSourceLocations: ctx.enableTemplateSourceLocations ?? false,
         foreignImports: component.foreignImports?.map((fi) => ({
           name: fi.name,
-          component: new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(s, fi.span, guards)))
+          component: rawSlice(s, fi.span, guards)
         })) ?? [],
         legacyOptionalChaining: ctx.legacyOptionalChaining
       };
       const bindingParser = makeBindingParser(
         ctx.templateParseOptions?.enableSelectorless ?? false
       );
-      const compileResult = compileComponentFromMetadata(componentMeta, sharedPool, bindingParser);
+      let compileResult;
+      try {
+        compileResult = compileComponentFromMetadata(componentMeta, sharedPool, bindingParser);
+      } catch (e) {
+        pipelineError ??= e;
+        continue;
+      }
       const factoryRes = compileFactoryFunction({
         name: className,
         type: { value: output_ast_exports.variable(className), type: output_ast_exports.variable(className) },
@@ -40809,15 +43729,20 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         deps,
         target: 1 /* Component */
       });
-      const compiledFac = compileFactoryField(factoryRes, printer, ctx);
-      const compiledCmp = createStaticField(
-        "\u0275cmp",
-        printer.print(compileResult.expression),
-        printer.emitTypes ? printer.printType(compileResult.type) : null,
-        true,
-        ctx.isClosureCompilerEnabled
-      );
-      s.appendLeft(span.end - 1, compiledFac + compiledCmp + classMeta.coercionMembers);
+      compiledClass.fields.push({
+        factory: factoryRes,
+        def: { name: "\u0275cmp", def: compileResult },
+        coercionMembers: classMeta.coercionMembers
+      });
+      if (ctx.enableHmr) {
+        hmrComponent = {
+          meta: componentMeta,
+          bindingParser,
+          definition: compileResult,
+          factory: factoryRes,
+          defer: deferMeta
+        };
+      }
     }
     if (directive) {
       decoratorsToEmit.push({
@@ -40827,7 +43752,6 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       factoryGenerated = true;
       const { selector, standalone, hostDirectives } = directive;
       const hostMetadata = directive.hostMetadata ?? [];
-      const providers = directive.providersSpan ? sliceGuarded(s, directive.providersSpan, guards) : void 0;
       const hasHostBindings = hostMetadata.length > 0 || hostBindings.length > 0 || hostListeners.length > 0;
       const typeSourceSpan = hasHostBindings ? createDummySourceSpan(filePath) : createEmptySourceSpan();
       const directiveMeta = {
@@ -40844,17 +43768,23 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         viewQueries: buildQueriesMap(viewQueries, content),
         host: buildHostMetadata(hostMetadata, hostBindings, hostListeners, className, {
           filePath,
+          sourceText: content,
           hostSpan: directive.hostSpan,
           hostProperties: directive.hostProperties,
           diagnostics: fileDiagnostics
         }),
         lifecycle: { usesOnChanges: classMeta.usesOnChanges },
-        inputs: buildInputsMap(inputs, content),
+        inputs: buildInputsMap(inputs, content, (span2) => sliceGuarded(s, span2, guards)),
         outputs: buildOutputsMap(outputs),
         usesInheritance: classMeta.usesInheritance,
         controlCreate: null,
         exportAs: directive.exportAs || null,
-        providers: providers ? new output_ast_exports.WrappedNodeExpr(new RawSource(providers)) : null,
+        providers: directive.providersSpan ? rawSlice(
+          s,
+          directive.providersSpan,
+          guards,
+          ctx.isClosureCompilerEnabled ? classMeta.decoratorFunctionSpans : void 0
+        ) : null,
         isStandalone: standalone,
         isSignal: directive.signals,
         hostDirectives: buildHostDirectives(hostDirectives),
@@ -40863,7 +43793,13 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       const bindingParser = makeBindingParser(
         ctx.templateParseOptions?.enableSelectorless ?? false
       );
-      const compileResult = compileDirectiveFromMetadata(directiveMeta, sharedPool, bindingParser);
+      let compileResult;
+      try {
+        compileResult = compileDirectiveFromMetadata(directiveMeta, sharedPool, bindingParser);
+      } catch (e) {
+        pipelineError ??= e;
+        continue;
+      }
       const factoryRes = compileFactoryFunction({
         name: className,
         type: { value: output_ast_exports.variable(className), type: output_ast_exports.variable(className) },
@@ -40871,63 +43807,65 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         deps,
         target: 0 /* Directive */
       });
-      const compiledFac = compileFactoryField(factoryRes, printer, ctx);
-      const compiledDir = createStaticField(
-        "\u0275dir",
-        printer.print(compileResult.expression),
-        printer.emitTypes ? printer.printType(compileResult.type) : null,
-        true,
-        ctx.isClosureCompilerEnabled
-      );
-      s.appendLeft(span.end - 1, compiledFac + compiledDir + classMeta.coercionMembers);
+      compiledClass.fields.push({
+        factory: factoryRes,
+        def: { name: "\u0275dir", def: compileResult },
+        coercionMembers: classMeta.coercionMembers
+      });
     }
-    if (ngModule) {
-      if (!ctx.emitDeclarationOnly) {
-        decoratorsToEmit.push({
-          decoratorName: ngModule.decoratorName ?? "NgModule",
-          argsSpan: ngModule.argsSpan ?? void 0
-        });
-      }
-      factoryGenerated = true;
-      const { compiledFac, compiledMod, compiledInj, statements } = compileNgModuleDef(
-        className,
-        ngModule,
-        deps,
-        printer,
-        ctx,
-        classes,
-        classMeta,
-        content,
-        filePath,
-        fileDiagnostics
-      );
-      s.appendLeft(span.end - 1, compiledFac + compiledMod + compiledInj);
-      ngModuleStatements = statements;
+    if (service) {
+      decoratorsToEmit.push({
+        decoratorName: service.decoratorName ?? "Service",
+        argsSpan: service.argsSpan ?? void 0
+      });
+      const factoryRes = compileFactoryFunction({
+        name: className,
+        type: {
+          value: output_ast_exports.variable(className),
+          type: output_ast_exports.variable(className)
+        },
+        typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
+        deps: [],
+        // Intentional since services don't allow constructor DI.
+        target: 5 /* Service */
+      });
+      const serviceMeta = {
+        name: className,
+        type: {
+          value: output_ast_exports.variable(className),
+          type: output_ast_exports.variable(className)
+        },
+        typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
+        autoProvided: service.autoProvided,
+        factory: service.factory ? rawSlice(s, service.factory.span, guards) : void 0
+      };
+      const def = compileService(serviceMeta, false);
+      compiledClass.fields.push({
+        factory: factoryRes,
+        def: { name: "\u0275prov", def }
+      });
     }
     if (injectable) {
       decoratorsToEmit.push({
         decoratorName: injectable.decoratorName ?? "Injectable",
         argsSpan: injectable.argsSpan ?? void 0
       });
-      let compiledFactory = "";
-      if (!factoryGenerated) {
-        const factoryRes = compileFactoryFunction({
-          name: className,
-          type: {
-            value: output_ast_exports.variable(className),
-            type: output_ast_exports.variable(className)
-          },
-          typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
-          deps,
-          target: 2 /* Injectable */
-        });
-        compiledFactory = compileFactoryField(factoryRes, printer, ctx);
-      }
+      const hasOtherAngularDecorator = !!(pipe2 || component || directive || ngModule || service);
+      const factoryRes = !factoryGenerated && !hasOtherAngularDecorator ? compileFactoryFunction({
+        name: className,
+        type: {
+          value: output_ast_exports.variable(className),
+          type: output_ast_exports.variable(className)
+        },
+        typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
+        deps,
+        target: 2 /* Injectable */
+      }) : null;
       const wrapProviderField = (field) => ({
-        expression: new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(s, field.span, guards))),
+        expression: rawSlice(s, field.span, guards),
         forwardRef: field.isForwardRef ? ForwardRefHandling2.Unwrapped : ForwardRefHandling2.None
       });
-      const parsedDeps = injectable.deps && (injectable.useClass || injectable.useFactory) ? mapDeps(injectable.deps, content, guards) : void 0;
+      const parsedDeps = injectable.deps && (injectable.useClass || injectable.useFactory) ? mapDeps(injectable.deps, s, guards) : void 0;
       const injectableMeta = {
         name: className,
         type: {
@@ -40948,91 +43886,106 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
       } else if (injectable.useClass) {
         injectableMeta.useClass = wrapProviderField(injectable.useClass);
       } else if (injectable.useFactory) {
-        injectableMeta.useFactory = new output_ast_exports.WrappedNodeExpr(
-          new RawSource(sliceGuarded(s, injectable.useFactory.span, guards))
-        );
+        injectableMeta.useFactory = rawSlice(s, injectable.useFactory.span, guards);
       }
       const def = compileInjectable(injectableMeta, false);
-      const compiledProv = createStaticField(
-        "\u0275prov",
-        printer.print(def.expression),
-        printer.emitTypes ? printer.printType(def.type) : null,
-        true,
-        ctx.isClosureCompilerEnabled
-      );
-      s.appendLeft(span.end - 1, compiledFactory + compiledProv);
-    }
-    if (service) {
-      decoratorsToEmit.push({
-        decoratorName: service.decoratorName ?? "Service",
-        argsSpan: service.argsSpan ?? void 0
+      compiledClass.fields.push({
+        factory: factoryRes,
+        def: { name: "\u0275prov", def }
       });
-      let compiledFactory = "";
-      const factoryRes = compileFactoryFunction({
-        name: className,
-        type: {
-          value: output_ast_exports.variable(className),
-          type: output_ast_exports.variable(className)
-        },
-        typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
-        deps: [],
-        // Intentional since services don't allow constructor DI.
-        target: 5 /* Service */
-      });
-      compiledFactory = compileFactoryField(factoryRes, printer, ctx);
-      const serviceMeta = {
-        name: className,
-        type: {
-          value: output_ast_exports.variable(className),
-          type: output_ast_exports.variable(className)
-        },
-        typeArgumentCount: classMeta?.typeParameters?.length ?? 0,
-        autoProvided: service.autoProvided,
-        factory: service.factory ? new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(s, service.factory.span, guards))) : void 0
-      };
-      const def = compileService(serviceMeta, false);
-      const compiledProv = createStaticField(
-        "\u0275prov",
-        printer.print(def.expression),
-        printer.emitTypes ? printer.printType(def.type) : null,
-        true,
-        ctx.isClosureCompilerEnabled
-      );
-      s.appendLeft(span.end - 1, compiledFactory + compiledProv);
     }
+    if (ngModule) {
+      if (!ctx.emitDeclarationOnly) {
+        decoratorsToEmit.push({
+          decoratorName: ngModule.decoratorName ?? "NgModule",
+          argsSpan: ngModule.argsSpan ?? void 0
+        });
+      }
+      factoryGenerated = true;
+      compiledClass.ngModule = compileNgModuleDef(
+        className,
+        ngModule,
+        deps,
+        ctx,
+        classes,
+        classMeta,
+        s,
+        filePath,
+        fileDiagnostics
+      );
+    }
+    let classMetadataStmt = null;
     if (decoratorsToEmit.length > 0 && ctx.supportTestBed !== false) {
-      const metadata2 = generateSetClassMetadata(
+      classMetadataStmt = buildSetClassMetadata(
         className,
         decoratorsToEmit,
         classMeta,
-        printer,
         s,
         perComponentDeferredDeps,
-        ctx.complianceMode ?? false
+        ctx.complianceMode ?? false,
+        ctx.isClosureCompilerEnabled ?? false
       );
-      if (ctx.complianceMode) {
-        s.appendRight(span.end, "\n" + metadata2);
-      } else {
-        s.appendLeft(span.end - 1, metadata2);
-      }
+      compiledClass.classMetadataStmt = classMetadataStmt;
     }
+    let debugInfoStmt = null;
     if (component) {
-      const debugInfoCall = generateSetClassDebugInfo(
+      debugInfoStmt = buildSetClassDebugInfo(
         className,
-        getProjectRelativePath(filePath, ctx.rootDir),
+        getProjectRelativePath2(filePath, ctx),
         content,
         classMeta.nameSpan?.start ?? span.start,
-        ctx.forbidOrphanComponents ?? false,
-        printer
+        ctx.forbidOrphanComponents ?? false
       );
-      s.appendRight(span.end, "\n" + debugInfoCall);
+      compiledClass.debugInfoStmt = debugInfoStmt;
     }
-    if (ngModuleStatements) {
-      s.appendRight(span.end, "\n" + ngModuleStatements + "\n");
+    if (hmrComponent !== null) {
+      const hmrFilePath = getHmrFilePath(filePath, ctx);
+      const hmrMeta = extractHmrMetadata({
+        className,
+        filePath: hmrFilePath,
+        classMeta,
+        topLevelValueBindings: result.topLevelValueBindings ?? [],
+        compiled: {
+          definition: hmrComponent.definition,
+          factory: {
+            initializer: hmrComponent.factory.expression,
+            statements: hmrComponent.factory.statements
+          },
+          deferBlockMetadata: hmrComponent.defer,
+          classMetadata: classMetadataStmt,
+          debugInfo: debugInfoStmt
+        }
+      });
+      if (hmrMeta !== null) {
+        compiledClass.hmrInitializerStmt = compileHmrInitializer(hmrMeta).toStmt();
+      }
+      if (ctx.hmrUpdateTarget === className) {
+        hmrUpdateModule = hmrMeta === null ? null : compileHmrUpdateModule({
+          compiled: hmrComponent,
+          className,
+          hmrFilePath,
+          filePath,
+          classMeta,
+          topLevelValueBindings: result.topLevelValueBindings ?? [],
+          decorators: decoratorsToEmit,
+          s,
+          content,
+          nameOffset: classMeta.nameSpan?.start ?? span.start,
+          ctx
+        });
+        return { magicString: s, generateSourceMap, hmrUpdateModule };
+      }
     }
+  }
+  if (ctx.hmrUpdateTarget !== void 0) {
+    return { magicString: s, generateSourceMap, hmrUpdateModule: null };
+  }
+  for (const compiledClass of compiledClasses) {
+    appendCompiledClass(compiledClass, out, printer, ctx);
   }
   for (const local of eagerDependencyNames) {
     eagerlyBoundNames.add(local);
+    eagerlyReferencedNames.add(local);
     deferredOnlyNames.delete(local);
   }
   reportEagerlyImportedDeferredDependencies(
@@ -41041,17 +43994,11 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
     importDeclarations,
     classes,
     deferredOnlyNames,
-    eagerlyBoundNames
+    eagerlyReferencedNames
   );
-  const removedDecls = removeDeferredImports(
-    s,
-    content,
-    importDeclarations,
-    deferredOnlyNames,
-    eagerlyBoundNames
-  );
+  const removedDecls = ctx.enableHmr ? /* @__PURE__ */ new Set() : removeDeferredImports(s, content, importDeclarations, deferredOnlyNames, eagerlyBoundNames);
   const hoistedImports = [];
-  if (!filePath.endsWith(".d.ts")) {
+  if (!filePath.endsWith(".d.ts") && classes.length > 0) {
     for (const decl of importDeclarations) {
       if (decl.span.start > importsEnd && !removedDecls.has(decl)) {
         hoistedImports.push(s.slice(decl.span.start, decl.span.end));
@@ -41063,7 +44010,7 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
   const topOfFileStatements = [...hoistedImports, printer.getImportStatements(), poolStatements].filter(Boolean).join("\n");
   if (topOfFileStatements) {
     const prefix = importsEnd === 0 || content[importsEnd - 1] === "\n" ? "" : "\n";
-    s.appendRight(importsEnd, prefix + topOfFileStatements + "\n");
+    out.appendRight(importsEnd, prefix + topOfFileStatements + "\n");
   }
   const tcbTargets = ctx.optimize && !ctx.emitDeclarationOnly ? buildTcbTargets(
     filePath,
@@ -41071,17 +44018,15 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
     classes,
     templatesByClass,
     ctx.templateParseOptions,
-    ctx.tcbConfig
-  ) : [];
-  const prepared = ctx.optimize && tcbTargets.length > 0 ? prepareTcbTargets(
-    filePath,
-    tcbTargets,
-    content,
     ctx.tcbConfig,
-    classes,
-    ctx.workspaceName,
-    ctx.rootDirs
-  ) : null;
+    new DependencyTemplates(
+      ctx.analyzer,
+      ctx.fileCache,
+      ctx.templateParseOptions,
+      ctx.metadataMap
+    )
+  ) : [];
+  const prepared = ctx.optimize && tcbTargets.length > 0 ? prepareTcbTargets(filePath, tcbTargets, content, ctx.tcbConfig, classes) : null;
   const tcb = prepared ? generateTcbCode(filePath, prepared, ctx.tcbConfig) ?? void 0 : void 0;
   const returnTcb = tcb ? { ...tcb, code: combineTcbContent(tcb, filePath, { sourceContent: content, classes }) } : void 0;
   if (returnTcb) {
@@ -41104,22 +44049,99 @@ async function processFile(rawCtx, filePath, content, readResource, metadata, ch
         }
       }
       const span = { start: diag.start, end: diag.end };
+      const loc = diag.sourceFilePath ? { filePath: diag.sourceFilePath, span } : component ? templateDiagnosticLocation(component, filePath, span) : { filePath, span };
+      const relatedInformation = diag.relatedInformation?.map((rel) => {
+        const relSpan = { start: rel.start, end: rel.end };
+        const relLoc = rel.sourceFilePath ? { filePath: rel.sourceFilePath, span: relSpan } : component ? templateDiagnosticLocation(component, filePath, relSpan) : { filePath, span: relSpan };
+        return {
+          messageText: rel.message,
+          filePath: relLoc.filePath,
+          span: relLoc.span
+        };
+      });
       fileDiagnostics.push({
         category: diag.category === 1 /* Warning */ ? 0 : 1,
         code: diag.code ?? 8e3,
         messageText: diag.message,
-        ...component ? templateDiagnosticLocation(component, filePath, span) : { filePath, span }
+        filePath: loc.filePath,
+        span: loc.span,
+        ...relatedInformation && relatedInformation.length > 0 ? { relatedInformation } : {}
       });
     }
   }
+  if (pipelineError !== void 0 && !fileDiagnostics.some((d) => d.category === 1)) {
+    throw pipelineError;
+  }
   return {
     magicString: s,
+    generateSourceMap,
     tcb: returnTcb,
-    diagnostics: fileDiagnostics
+    diagnostics: fileDiagnostics,
+    hmrUpdateModule
   };
 }
-function inlineDecoratorResources(preservedProperties, override, s, guards) {
-  const props = preservedProperties.map((span) => sliceGuarded(s, span, guards));
+function appendCompiledClass(compiled, out, printer, ctx) {
+  const {
+    classMeta: { span },
+    fields,
+    ngModule,
+    classMetadataStmt,
+    debugInfoStmt,
+    hmrInitializerStmt
+  } = compiled;
+  for (const field of fields) {
+    const compiledFactory = field.factory ? compileFactoryField(field.factory, printer, ctx) : "";
+    const compiledDef = createStaticField(
+      field.def.name,
+      printer.print(field.def.def.expression),
+      printer.emitTypes ? printer.printType(field.def.def.type) : null,
+      true,
+      ctx.isClosureCompilerEnabled
+    );
+    out.appendLeft(span.end - 1, compiledFactory + compiledDef + (field.coercionMembers ?? ""));
+  }
+  let ngModuleStatements = "";
+  if (ngModule !== null) {
+    const compiledFac = compileFactoryField(ngModule.factory, printer, ctx);
+    const compiledMod = createStaticField(
+      "\u0275mod",
+      printer.print(ngModule.mod.expression),
+      printer.emitTypes ? printer.printType(ngModule.mod.type) : null,
+      true,
+      ctx.isClosureCompilerEnabled
+    );
+    if (ngModule.statements.length > 0) {
+      ngModuleStatements = ngModule.statements.map((stmt) => printer.printStatement(stmt)).join("\n");
+    }
+    const compiledInj = createStaticField(
+      "\u0275inj",
+      printer.print(ngModule.inj.expression),
+      printer.emitTypes ? printer.printType(ngModule.inj.type) : null,
+      true,
+      ctx.isClosureCompilerEnabled
+    );
+    out.appendLeft(span.end - 1, compiledFac + compiledMod + compiledInj);
+  }
+  if (classMetadataStmt !== null) {
+    const metadata = printSetClassMetadata(classMetadataStmt, printer, ctx.complianceMode);
+    if (ctx.complianceMode) {
+      out.appendRight(span.end, "\n" + metadata);
+    } else {
+      out.appendLeft(span.end - 1, metadata);
+    }
+  }
+  if (debugInfoStmt !== null) {
+    out.appendRight(span.end, "\n" + printer.printStatement(debugInfoStmt));
+  }
+  if (hmrInitializerStmt !== null) {
+    out.appendRight(span.end, "\n" + printer.printStatement(hmrInitializerStmt));
+  }
+  if (ngModuleStatements) {
+    out.appendRight(span.end, "\n" + ngModuleStatements + "\n");
+  }
+}
+function inlineDecoratorResources(preservedProperties, override, s, guards, functionSpans) {
+  const props = preservedProperties.map((span) => sliceGuarded(s, span, guards, functionSpans));
   if (override.inlineTemplate !== null) {
     props.push(`template: ${JSON.stringify(override.inlineTemplate)}`);
   }
@@ -41134,39 +44156,70 @@ function inlineDecoratorResources(preservedProperties, override, s, guards) {
 }`;
 }
 var FORWARD_REFERENCE_GUARD = "// @ts-ignore\n";
+var signalDebugNameInsertionsBySource = /* @__PURE__ */ new WeakMap();
 function insertSignalDebugNames(s, insertions, emitTypes) {
+  if (!insertions || insertions.length === 0) return;
+  const recorded = [];
   for (const insertion of insertions) {
     const debugName = `{ debugName: ${JSON.stringify(insertion.debugName)} }`;
     const separator = insertion.needsSeparator ? ", " : "";
+    let text2;
     if (insertion.intoOptions) {
-      s.appendLeft(
-        insertion.position,
-        `...(ngDevMode ? ${debugName} : /* istanbul ignore next */ {})${separator}`
-      );
-      continue;
+      text2 = `...(ngDevMode ? ${debugName} : /* istanbul ignore next */ {})${separator}`;
+    } else {
+      const devArgs = insertion.prependUndefined ? `undefined, ${debugName}` : debugName;
+      const spread = `...(ngDevMode ? [${devArgs}] : /* istanbul ignore next */ [])`;
+      text2 = emitTypes ? `${separator}${spread} as []` : `${separator}/* @ts-ignore */ ${spread}`;
     }
-    const devArgs = insertion.prependUndefined ? `undefined, ${debugName}` : debugName;
-    const spread = `...(ngDevMode ? [${devArgs}] : /* istanbul ignore next */ [])`;
-    s.appendLeft(
-      insertion.position,
-      emitTypes ? `${separator}${spread} as []` : `${separator}/* @ts-ignore */ ${spread}`
-    );
+    s.appendLeft(insertion.position, text2);
+    recorded.push({ position: insertion.position, text: text2 });
+  }
+  if (recorded.length > 0) {
+    signalDebugNameInsertionsBySource.set(s, recorded);
   }
 }
-function sliceGuarded(s, span, guards) {
+function sliceGuarded(s, span, guards, functionSpans) {
   const source = typeof s === "string" ? s : s.original;
-  const inside = [
-    ...new Set(
-      guards.map((guard) => guard.start).filter((start) => start >= span.start && start < span.end)
-    )
-  ].sort((a, b) => a - b);
+  const insertions = [];
+  if (functionSpans) {
+    for (const fnSpan of functionSpans) {
+      if (fnSpan.start >= span.start && fnSpan.end <= span.end && !(fnSpan.start === span.start && fnSpan.end === span.end)) {
+        insertions.push({ position: fnSpan.start, text: "(" });
+        insertions.push({ position: fnSpan.end, text: ")" });
+      }
+    }
+  }
+  if (typeof s !== "string") {
+    const debugInsertions = signalDebugNameInsertionsBySource.get(s);
+    if (debugInsertions !== void 0) {
+      for (const ins of debugInsertions) {
+        if (ins.position >= span.start && ins.position < span.end) {
+          insertions.push(ins);
+        }
+      }
+    }
+  }
+  const seenGuards = /* @__PURE__ */ new Set();
+  for (const guard of guards) {
+    if (guard.start >= span.start && guard.start < span.end && !seenGuards.has(guard.start)) {
+      seenGuards.add(guard.start);
+      insertions.push({ position: guard.start, text: FORWARD_REFERENCE_GUARD });
+    }
+  }
+  if (insertions.length === 0) {
+    return source.slice(span.start, span.end);
+  }
+  insertions.sort((a, b) => a.position - b.position);
   let result = "";
   let cursor = span.start;
-  for (const start of inside) {
-    result += source.slice(cursor, start) + FORWARD_REFERENCE_GUARD;
-    cursor = start;
+  for (const ins of insertions) {
+    result += source.slice(cursor, ins.position) + ins.text;
+    cursor = ins.position;
   }
   return result + source.slice(cursor, span.end);
+}
+function rawSlice(s, span, guards, functionSpans) {
+  return new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(s, span, guards, functionSpans), [span]));
 }
 function buildDecoratorMetadataExpr(name, argsSpan, argsString, s, guards) {
   const props = [
@@ -41176,13 +44229,15 @@ function buildDecoratorMetadataExpr(name, argsSpan, argsString, s, guards) {
   if (argsStr != null) {
     props.push({
       key: "args",
-      value: output_ast_exports.literalArr([new output_ast_exports.WrappedNodeExpr(new RawSource(argsStr))]),
+      value: output_ast_exports.literalArr([
+        new output_ast_exports.WrappedNodeExpr(new RawSource(argsStr, argsSpan != null ? [argsSpan] : []))
+      ]),
       quoted: false
     });
   }
   return output_ast_exports.literalMap(props);
 }
-function buildCtorParametersExpr(constructorParams, s) {
+function buildCtorParametersExpr(constructorParams, s, omitEmptyDecorators = false) {
   if (constructorParams == null) {
     return null;
   }
@@ -41191,7 +44246,9 @@ function buildCtorParametersExpr(constructorParams, s) {
     let decorators = null;
     if (param.decorators.length > 0) {
       const ngDecorators = param.decorators.filter((d) => d.isAngular).map((d) => buildDecoratorMetadataExpr(d.name, d.argsSpan, d.argsString, s, []));
-      decorators = output_ast_exports.literalArr(ngDecorators);
+      if (!omitEmptyDecorators || ngDecorators.length > 0) {
+        decorators = output_ast_exports.literalArr(ngDecorators);
+      }
     }
     return {
       type: typeName == null ? null : output_ast_exports.variable(typeName),
@@ -41265,36 +44322,32 @@ function buildPropDecoratorsExpr(classMeta, s, className, guards) {
     const entry = getOrCreateEntry(query.propertyName, false);
     const queryIdentifier = query.isView ? query.first ? Identifiers.viewChildDecorator : Identifiers.viewChildrenDecorator : query.first ? Identifiers.contentChildDecorator : Identifiers.contentChildrenDecorator;
     const predicateStr = s.original.slice(query.predicateSpan.start, query.predicateSpan.end);
-    let predicateExpr = new output_ast_exports.WrappedNodeExpr(new RawSource(predicateStr));
+    let predicateExpr = new output_ast_exports.WrappedNodeExpr(
+      new RawSource(predicateStr, [query.predicateSpan])
+    );
     if (!query.predicateSelectors) {
       predicateExpr = new output_ast_exports.ExternalExpr(Identifiers.forwardRef).callFn([
         new output_ast_exports.ArrowFunctionExpr([], predicateExpr)
       ]);
     }
-    const queryOptionsProps = [
-      { key: "isSignal", value: output_ast_exports.literal(true), quoted: false }
-    ];
-    if (query.readSpan) {
-      const readStr = s.original.slice(query.readSpan.start, query.readSpan.end);
-      queryOptionsProps.push({
-        key: "read",
-        value: new output_ast_exports.WrappedNodeExpr(new RawSource(readStr)),
-        quoted: false
-      });
+    const queryOptionsEntries = [];
+    if (query.optionsSpan) {
+      const optionsStr = s.original.slice(query.optionsSpan.start, query.optionsSpan.end);
+      queryOptionsEntries.push(
+        new output_ast_exports.LiteralMapSpreadAssignment(
+          new output_ast_exports.WrappedNodeExpr(new RawSource(optionsStr, [query.optionsSpan]))
+        )
+      );
     }
-    if (!query.isView && query.descendants) {
-      queryOptionsProps.push({
-        key: "descendants",
-        value: output_ast_exports.literal(true),
-        quoted: false
-      });
-    }
+    queryOptionsEntries.push(
+      new output_ast_exports.LiteralMapPropertyAssignment("isSignal", output_ast_exports.literal(true), false)
+    );
     entry.decorators.push(
       output_ast_exports.literalMap([
         { key: "type", value: new output_ast_exports.ExternalExpr(queryIdentifier), quoted: false },
         {
           key: "args",
-          value: output_ast_exports.literalArr([predicateExpr, output_ast_exports.literalMap(queryOptionsProps)]),
+          value: output_ast_exports.literalArr([predicateExpr, new output_ast_exports.LiteralMapExpr(queryOptionsEntries)]),
           quoted: false
         }
       ])
@@ -41313,21 +44366,57 @@ function buildPropDecoratorsExpr(classMeta, s, className, guards) {
   }
   return output_ast_exports.literalMap(entries);
 }
-function generateSetClassMetadata(className, decorators, classMeta, printer, s, deferredDeps = [], complianceMode = false) {
+function getDecoratorSourceOffset(dec, classMeta, source) {
+  if (dec.argsSpan != null) {
+    return dec.argsSpan.start;
+  }
+  const classHeaderEnd = classMeta.nameSpan?.start ?? classMeta.span.end;
+  const prefix = `@${dec.decoratorName}`;
+  for (const r of classMeta.removalSpans) {
+    if (r.start >= classHeaderEnd) {
+      continue;
+    }
+    const trimmed = source.slice(r.start, r.end).trimStart();
+    if (!trimmed.startsWith(prefix)) {
+      continue;
+    }
+    const after = trimmed.slice(prefix.length);
+    if (after.length === 0 || /^[\s(<]/.test(after)) {
+      return r.start;
+    }
+  }
+  return 0;
+}
+function buildSetClassMetadata(className, decorators, classMeta, s, deferredDeps = [], complianceMode = false, isClosureCompilerEnabled = false) {
   const guards = complianceMode ? [] : classMeta.laterDeclarationReferences;
-  const decoratorObjs = decorators.map(
+  const functionSpans = isClosureCompilerEnabled ? classMeta.decoratorFunctionSpans : void 0;
+  const sortedDecorators = decorators.length > 1 ? [...decorators].sort(
+    (a, b) => getDecoratorSourceOffset(a, classMeta, s.original) - getDecoratorSourceOffset(b, classMeta, s.original)
+  ) : decorators;
+  const decoratorObjs = sortedDecorators.map(
     ({ decoratorName, argsSpan, preservedDecoratorProperties, resourceOverride }) => {
       const props = [
         { key: "type", value: output_ast_exports.variable(decoratorName), quoted: false }
       ];
       if (argsSpan != null) {
-        let argsStr = resourceOverride && preservedDecoratorProperties ? inlineDecoratorResources(preservedDecoratorProperties, resourceOverride, s, guards) : sliceGuarded(s, argsSpan, guards);
+        const inlineResources = resourceOverride && preservedDecoratorProperties;
+        let argsStr = inlineResources ? inlineDecoratorResources(
+          preservedDecoratorProperties,
+          resourceOverride,
+          s,
+          guards,
+          functionSpans
+        ) : sliceGuarded(s, argsSpan, guards, functionSpans);
         if (complianceMode) {
           argsStr = argsStr.replace(/^(\s*)\{([^\s])/, "$1{ $2").replace(/([^\s])\}(\s*)$/, "$1 }$2");
         }
         props.push({
           key: "args",
-          value: output_ast_exports.literalArr([new output_ast_exports.WrappedNodeExpr(new RawSource(argsStr))]),
+          value: output_ast_exports.literalArr([
+            new output_ast_exports.WrappedNodeExpr(
+              new RawSource(argsStr, inlineResources ? preservedDecoratorProperties : [argsSpan])
+            )
+          ]),
           quoted: false
         });
       }
@@ -41340,11 +44429,13 @@ function generateSetClassMetadata(className, decorators, classMeta, printer, s, 
     ctorParameters: buildCtorParametersExpr(classMeta.constructorParams, s),
     propDecorators: buildPropDecoratorsExpr(classMeta, s, className, guards)
   };
-  const metadataExpr = compileComponentClassMetadata(classMetadata, deferredDeps);
-  if (complianceMode) {
-    return printer.printStatement(metadataExpr.toStmt());
+  return compileComponentClassMetadata(classMetadata, deferredDeps).toStmt();
+}
+function printSetClassMetadata(statement, printer, complianceMode = false) {
+  if (complianceMode || !(statement instanceof output_ast_exports.ExpressionStatement)) {
+    return printer.printStatement(statement);
   }
-  const stmts = stripIife(metadataExpr);
+  const stmts = stripIife(statement.expr);
   const printedStmt = stmts.map((stmt) => printer.printStatement(stmt)).join("\n");
   return createStaticBlock(printedStmt);
 }
@@ -41355,14 +44446,27 @@ ${indented}
   }
 `;
 }
-function getProjectRelativePath(filePath, rootDir) {
-  if (!rootDir) {
-    return null;
+function getProjectRelativePath2(filePath, ctx) {
+  const rootDirs = ctx.rootDirs && ctx.rootDirs.length > 0 ? ctx.rootDirs : ctx.rootDir ? [ctx.rootDir] : [];
+  let shortest = null;
+  for (const rootDir of rootDirs) {
+    if (!rootDir) continue;
+    const rel = path.posix.relative(rootDir, filePath);
+    if (!rel.startsWith("..") && !path.posix.isAbsolute(rel)) {
+      if (shortest === null || rel.length < shortest.length) {
+        shortest = rel;
+      }
+    }
   }
-  const rel = path.posix.relative(rootDir, filePath);
-  return rel.startsWith("..") ? null : rel;
+  return shortest;
 }
-function generateSetClassDebugInfo(className, relativeFilePath, content, nameOffset, forbidOrphanRendering, printer) {
+function getHmrFilePath(filePath, ctx) {
+  return getProjectRelativePath2(filePath, ctx) ?? filePath;
+}
+function getRelativeContextFilePath(filePath, ctx) {
+  return (getProjectRelativePath2(filePath, ctx) ?? filePath).replace(/^\/+/, "");
+}
+function buildSetClassDebugInfo(className, relativeFilePath, content, nameOffset, forbidOrphanRendering) {
   const debugInfo = {
     type: output_ast_exports.variable(className),
     className: output_ast_exports.literal(className),
@@ -41372,15 +44476,62 @@ function generateSetClassDebugInfo(className, relativeFilePath, content, nameOff
     lineNumber: output_ast_exports.literal(relativeFilePath !== null ? lineNumberAtOffset(content, nameOffset) : 0),
     forbidOrphanRendering
   };
-  const debugInfoExpr = compileClassDebugInfo(debugInfo);
-  return printer.printStatement(debugInfoExpr.toStmt());
+  return compileClassDebugInfo(debugInfo).toStmt();
 }
-function refName2(ref) {
-  const name = ref.localAlias ?? ref.consumerImport?.symbol ?? ref.typecheckImport?.symbol;
-  if (name === void 0) {
-    throw new Error("ReferenceMetadata has neither a local binding nor an import path");
+function compileHmrUpdateModule(options) {
+  const { compiled, className, hmrFilePath, filePath, classMeta, decorators, s, content, ctx } = options;
+  const pool = new ConstantPool(ctx.isClosureCompilerEnabled);
+  const definition = compileComponentFromMetadata(compiled.meta, pool, compiled.bindingParser);
+  const classMetadata = decorators.length > 0 && ctx.supportTestBed !== false ? buildSetClassMetadata(
+    className,
+    decorators,
+    classMeta,
+    s,
+    [],
+    ctx.complianceMode,
+    ctx.isClosureCompilerEnabled
+  ) : null;
+  const debugInfo = buildSetClassDebugInfo(
+    className,
+    getProjectRelativePath2(filePath, ctx),
+    content,
+    options.nameOffset,
+    ctx.forbidOrphanComponents ?? false
+  );
+  const hmrMeta = extractHmrMetadata({
+    className,
+    filePath: hmrFilePath,
+    classMeta,
+    topLevelValueBindings: options.topLevelValueBindings,
+    compiled: {
+      definition,
+      factory: { initializer: compiled.factory.expression, statements: compiled.factory.statements },
+      deferBlockMetadata: compiled.defer,
+      classMetadata,
+      debugInfo
+    }
+  });
+  if (hmrMeta === null) {
+    return null;
   }
-  return name;
+  const statements = [...definition.statements];
+  if (classMetadata !== null) {
+    statements.push(classMetadata);
+  }
+  statements.push(debugInfo);
+  return getHmrUpdateDeclaration(
+    [
+      {
+        name: "\u0275fac",
+        initializer: compiled.factory.expression,
+        statements: compiled.factory.statements
+      },
+      { name: "\u0275cmp", initializer: definition.expression, statements }
+    ],
+    pool.statements,
+    hmrMeta,
+    filePath
+  );
 }
 function deferredImportOf(ref, importsByBinding) {
   const local = ref.localAlias;
@@ -41402,28 +44553,17 @@ function deferredImportOf(ref, importsByBinding) {
 function deferredDepKey(importPath, symbolName) {
   return JSON.stringify([importPath, symbolName]);
 }
-function refToExpression2(ref) {
-  if (ref.localAlias) {
-    return output_ast_exports.variable(ref.localAlias);
-  }
-  if (ref.consumerImport) {
-    return new output_ast_exports.ExternalExpr({
-      moduleName: ref.consumerImport.specifier,
-      name: ref.consumerImport.symbol
-    });
-  }
-  return output_ast_exports.variable(refName2(ref));
-}
-function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [], classMeta, content, filePath, diagnostics) {
-  const { optimize, isClosureCompilerEnabled, emitDeclarationOnly } = ctx;
+function compileNgModuleDef(className, ngModule, deps, ctx, classes = [], classMeta, content, filePath, diagnostics) {
+  const { optimize, emitDeclarationOnly } = ctx;
   const { declarations, imports, injectorImports, exports, bootstrap } = ngModule;
-  const mapToVarArr = (names) => names ? output_ast_exports.literalArr(names.map((d) => refToExpression2(d))) : null;
+  const sourceText = typeof content === "string" ? content : content?.original;
+  const mapToVarArr = (names) => names ? output_ast_exports.literalArr(names.map((d) => refToExpression(d))) : null;
   const mapToRefs = (names) => names ? names.map((ref) => ({
-    value: refToExpression2(ref),
-    type: refToExpression2(ref)
+    value: refToExpression(ref),
+    type: refToTypeExpression(ref)
   })) : [];
   const guards = ctx.complianceMode ? [] : classMeta?.laterDeclarationReferences ?? [];
-  const rawExprFromSpan = (span) => span && content !== void 0 ? new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(content, span, guards))) : null;
+  const rawExprFromSpan = (span, functionSpans) => span && content !== void 0 ? new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(content, span, guards, functionSpans))) : null;
   const rawExprsFromSpans = (spans) => spans && content !== void 0 ? spans.map(
     (span) => new output_ast_exports.WrappedNodeExpr(new RawSource(sliceGuarded(content, span, guards)))
   ) : null;
@@ -41435,22 +44575,24 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
       switch (el.kind) {
         case "typeof": {
           if (el.references && el.references.length > 0) {
-            return new output_ast_exports.TypeofExpr(refToExpression2(el.references[0]));
+            return new output_ast_exports.TypeofExpr(refToExpression(el.references[0]));
           }
-          if (el.span && content !== void 0) {
+          if (el.span && sourceText !== void 0) {
             return new output_ast_exports.TypeofExpr(
-              new output_ast_exports.WrappedNodeExpr(new RawSource(content.substring(el.span.start, el.span.end)))
+              new output_ast_exports.WrappedNodeExpr(
+                new RawSource(sourceText.substring(el.span.start, el.span.end))
+              )
             );
           }
           return new output_ast_exports.WrappedNodeExpr(new RawSource("never"));
         }
         case "callReturnType": {
-          const calleeText = el.span && content !== void 0 ? content.substring(el.span.start, el.span.end) : "never";
+          const calleeText = el.span && sourceText !== void 0 ? sourceText.substring(el.span.start, el.span.end) : "never";
           return new output_ast_exports.WrappedNodeExpr(new RawSource(`ReturnType<typeof ${calleeText}>`));
         }
         case "referenceTuple": {
           return output_ast_exports.literalArr(
-            (el.references ?? []).map((ref) => new output_ast_exports.TypeofExpr(refToExpression2(ref)))
+            (el.references ?? []).map((ref) => new output_ast_exports.TypeofExpr(refToExpression(ref)))
           );
         }
         case "never":
@@ -41470,7 +44612,7 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
     });
     return tuple.isArrayLiteral ? output_ast_exports.literalArr(elementExprs) : elementExprs[0] ?? null;
   };
-  const factoryRes = compileFactoryFunction({
+  const factory13 = compileFactoryFunction({
     name: className,
     type: {
       value: output_ast_exports.variable(className),
@@ -41480,7 +44622,6 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
     deps,
     target: 4 /* NgModule */
   });
-  const compiledFac = compileFactoryField(factoryRes, printer, ctx);
   const sharedMeta = {
     type: {
       value: output_ast_exports.variable(className),
@@ -41498,7 +44639,7 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
       ...bootstrap || []
     ];
     for (const ref of allRefs) {
-      const localClass = classes.find((c) => c.className === refName2(ref));
+      const localClass = classes.find((c) => c.className === refName(ref));
       if (localClass && localClass.span.start > classMeta.span.start) {
         containsForwardDecls = true;
         break;
@@ -41519,7 +44660,7 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
     ...sharedMeta,
     kind: R3NgModuleMetadataKind2.Global,
     // In JIT/linker mode scope information is emitted inline into `ɵɵdefineNgModule()`.
-    selectorScopeMode: ctx.templateParseOptions?.linkerJitMode ? R3SelectorScopeMode2.Inline : R3SelectorScopeMode2.SideEffect,
+    selectorScopeMode: ctx.templateParseOptions?.linkerJitMode ? R3SelectorScopeMode2.Inline : ctx.supportJitMode === false ? R3SelectorScopeMode2.Omit : R3SelectorScopeMode2.SideEffect,
     bootstrap: mapToRefs(bootstrap),
     declarations: mapToRefs(declarations),
     imports: mapToRefs(imports),
@@ -41528,9 +44669,9 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
     // `onlyPublishPublicTypingsForNgModules` narrows the `ɵmod` type — which becomes the
     // `.d.ts` type once `tsc` compiles this output — to the declarations the module exports,
     // and drops its imports, which are generally private.
-    // https://github.com/angular/angular/blob/b3b9f39/packages/compiler-cli/src/ngtsc/annotations/ng_module/src/handler.ts#L583-L592
+    // https://github.com/angular/angular/blob/e3ac727/packages/compiler-cli/src/ngtsc/annotations/ng_module/src/handler.ts#L583-L592
     includeImportTypes: !ctx.onlyPublishPublicTypingsForNgModules,
-    publicDeclarationTypes: ctx.onlyPublishPublicTypingsForNgModules ? (ngModule.publicDeclarations ?? []).map((ref) => refToExpression2(ref)) : null
+    publicDeclarationTypes: ctx.onlyPublishPublicTypingsForNgModules ? (ngModule.publicDeclarations ?? []).map((ref) => refToTypeExpression(ref)) : null
   } : {
     ...sharedMeta,
     kind: R3NgModuleMetadataKind2.Local,
@@ -41542,16 +44683,8 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
     importsExpression: rawExprFromSpan(ngModule.importsSpan) ?? mapToVarArr(imports),
     exportsExpression: rawExprFromSpan(ngModule.exportsSpan) ?? mapToVarArr(exports)
   };
-  const compileResult = compileNgModule(ngModuleMeta);
-  const compiledMod = createStaticField(
-    "\u0275mod",
-    printer.print(compileResult.expression),
-    printer.emitTypes ? printer.printType(compileResult.type) : null,
-    true,
-    isClosureCompilerEnabled
-  );
-  let statements = "";
-  const allStatements = [...compileResult.statements || []];
+  const mod = compileNgModule(ngModuleMeta);
+  const statements = [...mod.statements || []];
   if (optimize && !emitDeclarationOnly && classMeta) {
     const scopeTargets = [];
     const metadataMap = ctx.metadataMap || /* @__PURE__ */ new Map();
@@ -41561,8 +44694,8 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
         const comp = otherClass.component;
         if (comp && ctx.remoteScopedClasses?.has(`${cachedPath}#${otherClass.className}`) && comp.declaringNgModule && comp.declaringNgModule.symbolId === classMeta.symbolId && comp.declaringNgModule.filePath === filePath) {
           const compClassName = otherClass.className;
-          const ngModuleDecls = ngModule.declarations || [];
-          const compDecl = ngModuleDecls.find((d) => refName2(d) === compClassName);
+          const ngModuleDecls2 = ngModule.declarations || [];
+          const compDecl = ngModuleDecls2.find((d) => refName(d) === compClassName);
           if (!compDecl) continue;
           const eager = ctx.eagerlyUsedDeclarations?.get(`${cachedPath}#${compClassName}`) ?? [];
           const refs = eager.map((d) => ({
@@ -41579,28 +44712,28 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
         }
       }
     }
-    scopeTargets.sort((a, b) => refName2(a.component).localeCompare(refName2(b.component)));
+    const ngModuleDecls = ngModule.declarations || [];
+    scopeTargets.sort(
+      (a, b) => ngModuleDecls.indexOf(a.component) - ngModuleDecls.indexOf(b.component)
+    );
     const coreSetScope = output_ast_exports.importExpr({
       moduleName: "@angular/core",
       name: "\u0275\u0275setComponentScope"
     });
     const mayRequireCycleProtection = ngModule.remoteScopesMayRequireCycleProtection ?? false;
     const scopeArray = (refs) => {
-      const array = output_ast_exports.literalArr(refs.map((ref) => refToExpression2(ref)));
+      const array = output_ast_exports.literalArr(refs.map((ref) => refToExpression(ref)));
       return mayRequireCycleProtection && refs.length > 0 ? output_ast_exports.fn([], [new output_ast_exports.ReturnStatement(array)]) : array;
     };
     for (const target of scopeTargets) {
-      allStatements.push(
+      statements.push(
         coreSetScope.callFn([
-          refToExpression2(target.component),
+          refToExpression(target.component),
           scopeArray(target.directiveRefs),
           scopeArray(target.pipeRefs)
         ]).toStmt()
       );
     }
-  }
-  if (allStatements.length > 0) {
-    statements = allStatements.map((stmt) => printer.printStatement(stmt)).join("\n");
   }
   const injectorImportsExprs = () => {
     if (emitDeclarationOnly) {
@@ -41623,22 +44756,18 @@ function compileNgModuleDef(className, ngModule, deps, printer, ctx, classes = [
       value: output_ast_exports.variable(className),
       type: output_ast_exports.variable(className)
     },
-    providers: rawExprFromSpan(ngModule.providersSpan),
+    providers: rawExprFromSpan(
+      ngModule.providersSpan,
+      ctx.isClosureCompilerEnabled ? classMeta?.decoratorFunctionSpans : void 0
+    ),
     imports: injectorImportsExprs()
   };
-  const injectorResult = compileInjector(injectorMeta);
-  const compiledInj = createStaticField(
-    "\u0275inj",
-    printer.print(injectorResult.expression),
-    printer.emitTypes ? printer.printType(injectorResult.type) : null,
-    true,
-    isClosureCompilerEnabled
-  );
-  return { compiledFac, compiledMod, compiledInj, statements };
+  const inj = compileInjector(injectorMeta);
+  return { factory: factory13, mod, inj, statements };
 }
 function buildInjectorImports(ngModule, content, guards = []) {
   const { imports, injectorImports, exports } = ngModule;
-  const importExprs = (injectorImports || (imports || []).concat(exports || [])).map((d) => refToExpression2(d));
+  const importExprs = (injectorImports || (imports || []).concat(exports || [])).map((d) => refToExpression(d));
   if (ngModule.injectorImportRawSpans && injectorImports && content) {
     const raws = [...ngModule.injectorImportRawSpans].sort((a, b) => a.index - b.index);
     for (const raw of raws) {
@@ -41656,7 +44785,7 @@ function buildInjectorImports(ngModule, content, guards = []) {
   }
   return importExprs;
 }
-function reportEagerlyImportedDeferredDependencies(diagnostics, filePath, importDeclarations, classes, deferredOnlyNames, eagerlyBoundNames) {
+function reportEagerlyImportedDeferredDependencies(diagnostics, filePath, importDeclarations, classes, deferredOnlyNames, eagerlyReferencedNames) {
   const explicitlyDeferredNames = /* @__PURE__ */ new Set();
   for (const classMeta of classes) {
     const component = classMeta.component;
@@ -41675,7 +44804,7 @@ function reportEagerlyImportedDeferredDependencies(diagnostics, filePath, import
       continue;
     }
     const canDefer = decl.bindings.every(
-      (binding) => binding.isType || deferredOnlyNames.has(binding.local) && !eagerlyBoundNames.has(binding.local) && !binding.valueReferenced
+      (binding) => binding.isType || (deferredOnlyNames.has(binding.local) || explicitlyDeferredNames.has(binding.local)) && !eagerlyReferencedNames.has(binding.local) && !binding.valueReferenced
     );
     if (canDefer) {
       continue;
@@ -41735,11 +44864,19 @@ function convertImportToTypeOnly(s, content, decl) {
   }
 }
 function createStaticField(name, value, type, pure, isClosureCompilerEnabled) {
-  const pureComment = pure ? "/*@__PURE__*/ " : "";
   const typeSuffix = type ? `: ${type}` : "";
   const nocollapse = isClosureCompilerEnabled ? "/** @nocollapse */\n  " : "";
-  return `  ${nocollapse}// @ts-ignore
-  static ${name}${typeSuffix} = ${pureComment}${value};
+  const tsignore = "// @ts-ignore";
+  if (!pure) {
+    return `  ${nocollapse}${tsignore}
+  static ${name}${typeSuffix} = ${value};
+`;
+  }
+  const pureComment = isClosureCompilerEnabled ? "/** @pureOrBreakMyCode */" : "/*@__PURE__*/";
+  return `  ${nocollapse}${tsignore}
+  static ${name}${typeSuffix} =
+    ${tsignore}
+    ${pureComment} ${value};
 `;
 }
 function compileFactoryField(factoryRes, printer, ctx) {
@@ -41752,15 +44889,17 @@ function compileFactoryField(factoryRes, printer, ctx) {
     ctx.isClosureCompilerEnabled
   );
 }
-function computeComponentDependencyMetadata(isLocalCompilation, localRuntimeResolved, isRemoteScoped, hasUnresolvedImports, hasForwardRef, standalone, declarations, rawImportsString, importsFactoryString) {
+function computeComponentDependencyMetadata(isLocalCompilation, localRuntimeResolved, isRemoteScoped, hasUnresolvedImports, hasForwardRef, standalone, declarations, rawImports, importsFactory) {
   if (isLocalCompilation) {
     return {
       declarations: [],
       declarationListEmitMode: localRuntimeResolved ? DeclarationListEmitMode.RuntimeResolved : DeclarationListEmitMode.Direct,
-      rawImports: localRuntimeResolved && importsFactoryString ? new output_ast_exports.WrappedNodeExpr(new RawSource(importsFactoryString)) : void 0
+      rawImports: localRuntimeResolved ? importsFactory : void 0
     };
   }
-  const rawImports = hasUnresolvedImports && rawImportsString ? new output_ast_exports.WrappedNodeExpr(new RawSource(rawImportsString)) : void 0;
+  if (!hasUnresolvedImports) {
+    rawImports = void 0;
+  }
   if (isRemoteScoped) {
     return {
       declarations: [],
@@ -41777,7 +44916,7 @@ function computeComponentDependencyMetadata(isLocalCompilation, localRuntimeReso
   }
   return {
     declarations,
-    declarationListEmitMode: rawImportsString !== void 0 || !standalone ? DeclarationListEmitMode.RuntimeResolved : DeclarationListEmitMode.Direct,
+    declarationListEmitMode: rawImports !== void 0 || !standalone ? DeclarationListEmitMode.RuntimeResolved : DeclarationListEmitMode.Direct,
     rawImports
   };
 }
@@ -41791,179 +44930,6 @@ function templateDiagnosticLocation(component, filePath, span) {
   }
   return { filePath, span: { start: expressionSpan.start, end: expressionSpan.end } };
 }
-function parseComponentTemplate(component, filePath, content, options = {}) {
-  const parseOptions = {
-    ...options,
-    preserveWhitespaces: component.preserveWhitespaces ?? options.preserveWhitespaces ?? false
-  };
-  const contentSpan = component.templateContentSpan;
-  if (component.templateUrl == null && contentSpan != null) {
-    return parseDirectInlineTemplate(content, filePath, contentSpan, parseOptions);
-  }
-  return parseTemplate(component.template || "", filePath, parseOptions);
-}
-
-// packages/compiler-cli/preprocessor/src/indexing/indexer.ts
-var IndexerBoundTemplate = class {
-  constructor(boundTarget, pipes) {
-    this.boundTarget = boundTarget;
-    this.pipes = pipes;
-  }
-  boundTarget;
-  pipes;
-  classEntityCache = /* @__PURE__ */ new Map();
-  getDirectivesOfNode(node) {
-    return this.boundTarget?.getDirectivesOfNode(node)?.map((dir) => this.toDirectiveRef(dir)) || null;
-  }
-  getReferenceTarget(node) {
-    const target = this.boundTarget?.getReferenceTarget(node);
-    if (!target) {
-      return null;
-    }
-    if (target instanceof Element || target instanceof Template) {
-      return target;
-    }
-    return { node: target.node, directive: this.toDirectiveRef(target.directive) };
-  }
-  getConsumerOfBinding(binding) {
-    const consumer = this.boundTarget?.getConsumerOfBinding(binding);
-    if (!consumer) {
-      return null;
-    }
-    if (consumer instanceof Element || consumer instanceof Template) {
-      return consumer;
-    }
-    return this.toDirectiveRef(consumer);
-  }
-  getExpressionTarget(ast) {
-    return this.boundTarget?.getExpressionTarget(ast) ?? null;
-  }
-  getUsedDirectives() {
-    const directives = this.boundTarget?.getUsedDirectives() ?? [];
-    return directives.map((dir) => ({ ...this.toDirectiveRef(dir), isComponent: dir.isComponent }));
-  }
-  getTemplateAst() {
-    return this.boundTarget?.target.template;
-  }
-  getPipe(name) {
-    const pipe2 = this.pipes?.get(name);
-    return pipe2 ? { ref: { node: pipe2 } } : null;
-  }
-  getClassEntity(dir) {
-    const cacheKey = dir.ref || dir;
-    if (this.classEntityCache.has(cacheKey)) {
-      return this.classEntityCache.get(cacheKey);
-    }
-    let name = dir.name ?? "";
-    let filePath = "";
-    if (dir.ref) {
-      name = dir.ref.name || name;
-      filePath = dir.ref.nodeFilePath || "";
-      if (!filePath && typeof dir.ref.key === "string") {
-        const parts = dir.ref.key.split("#");
-        if (parts.length > 1) {
-          filePath = parts[0];
-        }
-      }
-    }
-    const entity = { name, filePath };
-    this.classEntityCache.set(cacheKey, entity);
-    return entity;
-  }
-  toDirectiveRef(dir) {
-    return { ref: { node: this.getClassEntity(dir) }, selector: dir.selector };
-  }
-};
-async function getIndexedComponents(compiler) {
-  const indexedComponents = /* @__PURE__ */ new Map();
-  for (const [filePath, fileAnalysis] of compiler.fileCache.entries()) {
-    const templatesByClass = fileAnalysis?.parsedTemplates;
-    if (!templatesByClass) continue;
-    const boundTargetsByClass = fileAnalysis?.preparedTcbData?.boundTargetMap;
-    const result = await compiler.analyzer.getMetadataForFile(filePath);
-    if (!result) continue;
-    for (const cls of result.classes) {
-      if (!cls.className || !cls.component) continue;
-      const classKey = makeClassKey(cls.className, cls.span.start);
-      const parsedTemplate = templatesByClass.get(classKey);
-      if (!parsedTemplate) continue;
-      const boundTarget = boundTargetsByClass?.get(classKey);
-      const target = fileAnalysis?.preparedTcbData?.targets.find(
-        (t) => t.comp.className === cls.className && (!t.comp.classMeta || t.comp.classMeta.span.start === cls.span.start)
-      );
-      const pipeMap = /* @__PURE__ */ new Map();
-      if (target?.comp.pipeRegistry) {
-        for (const [name, pipeMeta] of target.comp.pipeRegistry.entries()) {
-          pipeMap.set(name, {
-            name: pipeMeta.className,
-            filePath: pipeMeta.filePath || ""
-          });
-        }
-      }
-      const visitor = new IndexerVisitor(
-        new IndexerBoundTemplate(boundTarget, pipeMap)
-      );
-      parsedTemplate.nodes.forEach((node) => node.visit(visitor));
-      const identifiers = /* @__PURE__ */ new Set();
-      for (const id of visitor.identifiers) {
-        identifiers.add(id);
-      }
-      let templateUrl = void 0;
-      if (cls.component.templateUrl && cls.component.templateUrl.stringLiteralSpan) {
-        const span = cls.component.templateUrl.stringLiteralSpan;
-        templateUrl = {
-          url: cls.component.templateUrl.url,
-          span: {
-            start: span.start + 1,
-            end: span.end - 1
-          },
-          resolvedPath: cls.component.templateUrl.resolvedPath
-        };
-      }
-      const styleUrls = [];
-      if (cls.component.styleUrls) {
-        for (const s of cls.component.styleUrls) {
-          if (s.stringLiteralSpan) {
-            styleUrls.push({
-              url: s.url,
-              span: {
-                start: s.stringLiteralSpan.start + 1,
-                end: s.stringLiteralSpan.end - 1
-              },
-              resolvedPath: s.resolvedPath
-            });
-          }
-        }
-      }
-      const inputMapping = createInputPropertyMapping(cls.inputs);
-      const outputMapping = createOutputPropertyMapping(cls.outputs);
-      const inputs = Array.from(inputMapping).map((m) => ({
-        directiveProperty: m.classPropertyName,
-        bindingName: m.bindingPropertyName
-      }));
-      const outputs = Array.from(outputMapping).map((m) => ({
-        directiveProperty: m.classPropertyName,
-        bindingName: m.bindingPropertyName
-      }));
-      const templatePath = templateUrl?.resolvedPath || filePath;
-      indexedComponents.set(cls.className, {
-        name: cls.className,
-        selector: cls.component.selector || null,
-        fileUrl: filePath,
-        template: {
-          identifiers,
-          fileUrl: templatePath
-        },
-        errors: visitor.errors,
-        templateUrl,
-        styleUrls,
-        inputs,
-        outputs
-      });
-    }
-  }
-  return indexedComponents;
-}
 
 // packages/compiler-cli/preprocessor/src/hybrid_compiler.ts
 function getDiagnosticPath(tsconfigPath) {
@@ -41972,7 +44938,7 @@ function getDiagnosticPath(tsconfigPath) {
   }
   return tsconfigPath + ".ngdiag.json";
 }
-function serializeDiagnostics(tsconfigPath, diagnosticsMap) {
+function serializeDiagnostics(tsconfigPath, diagnosticsMap, optionDiagnostics = []) {
   const allDiagnostics = [];
   for (const diags of diagnosticsMap.values()) {
     allDiagnostics.push(...diags);
@@ -41983,13 +44949,8 @@ function serializeDiagnostics(tsconfigPath, diagnosticsMap) {
   return JSON.stringify(
     {
       tsconfigPath,
-      diagnostics: allDiagnostics.map((d) => ({
-        filePath: d.filePath,
-        category: d.category === 1 ? "error" : "warning",
-        code: d.code,
-        messageText: d.messageText,
-        span: d.span
-      }))
+      ...optionDiagnostics.length > 0 ? { optionDiagnostics: optionDiagnostics.map(formatSerializedDiagnostic) } : {},
+      diagnostics: allDiagnostics.map(formatSerializedDiagnostic)
     },
     null,
     2
@@ -41997,10 +44958,12 @@ function serializeDiagnostics(tsconfigPath, diagnosticsMap) {
 }
 var HybridCompiler = class {
   analyzer;
+  /** Bound targets and TCBs per file, keyed by `AnalysisResult.filePath`. */
   fileCache = /* @__PURE__ */ new Map();
   optimize;
   tsconfigPath;
   diagnosticsMap = /* @__PURE__ */ new Map();
+  optionDiagnostics = [];
   virtualFiles;
   tcbConfig;
   templateParseOptions;
@@ -42012,6 +44975,7 @@ var HybridCompiler = class {
   enableTemplateSourceLocations;
   onlyPublishPublicTypingsForNgModules;
   forbidOrphanComponents;
+  supportJitMode;
   supportTestBed;
   i18nUseExternalIds;
   enableHmr;
@@ -42026,10 +44990,12 @@ var HybridCompiler = class {
     this.virtualFiles = options.virtualFiles;
     this.templateParseOptions = {
       preserveWhitespaces: options.preserveWhitespaces ?? false,
+      preserveSignificantWhitespace: options.i18nPreserveWhitespaceForLegacyExtraction ?? true,
       enableI18nLegacyMessageIdFormat: options.enableI18nLegacyMessageIdFormat !== false,
       i18nNormalizeLineEndingsInICUs: options.i18nNormalizeLineEndingsInICUs === true,
       ...options.templateParseOptions
     };
+    this.supportJitMode = options.supportJitMode !== false;
     this.supportTestBed = options.supportTestBed !== false;
     this.i18nUseExternalIds = options.i18nUseExternalIds !== false;
     this.enableHmr = options.enableHmr === true;
@@ -42048,11 +45014,19 @@ var HybridCompiler = class {
         'JIT mode support ("supportJitMode" option) cannot be disabled when forbidOrphanComponents is set to true'
       );
     }
+    const configErrors = options.optionDiagnostics ?? (this.tcbConfig.extendedDiagnostics ? verifyExtendedDiagnosticsOptions({
+      strictTemplates: this.tcbConfig.checkTemplateBodies,
+      extendedDiagnostics: this.tcbConfig.extendedDiagnostics
+    }) : []);
+    this.optionDiagnostics = [...configErrors];
+    if (this.optionDiagnostics.length > 0) {
+      this.tcbConfig = { ...this.tcbConfig, disabledExtendedDiagnostics: true };
+    }
     this.rootDir = options.rootDir;
     this.complianceMode = options.complianceMode ?? false;
     this.workspaceName = options.workspaceName;
     if (options.rootDirs) {
-      const baseDir = options.rootDir ? options.rootDir.replace(/\\/g, "/") : "/";
+      const baseDir = options.rootDir ? options.rootDir.replace(/\\/g, "/") : options.tsconfigPath ? path2.posix.dirname(options.tsconfigPath.replace(/\\/g, "/")) : "/";
       this.rootDirs = options.rootDirs.map((d) => {
         const norm = d.replace(/\\/g, "/");
         if (norm.startsWith("/") || /^[a-zA-Z]:/.test(norm)) {
@@ -42069,28 +45043,73 @@ var HybridCompiler = class {
       return;
     }
     const diagPath = getDiagnosticPath(this.tsconfigPath);
-    const content = serializeDiagnostics(this.tsconfigPath, this.diagnosticsMap);
+    const content = serializeDiagnostics(
+      this.tsconfigPath,
+      this.diagnosticsMap,
+      this.optionDiagnostics
+    );
     if (this.virtualFiles) {
       this.virtualFiles[diagPath] = content;
     } else {
       await fs2.writeFile(diagPath, content, "utf-8");
     }
   }
-  async prepareChunk(chunk) {
-    for (const file of chunk.files) {
-      if (file.diagnostics) {
-        this.diagnosticsMap.set(file.filePath, file.diagnostics);
-      }
+  writeDiagnosticsFileSync() {
+    if (!this.tsconfigPath) {
+      return;
     }
+    const diagPath = getDiagnosticPath(this.tsconfigPath);
+    const content = serializeDiagnostics(
+      this.tsconfigPath,
+      this.diagnosticsMap,
+      this.optionDiagnostics
+    );
+    if (this.virtualFiles) {
+      this.virtualFiles[diagPath] = content;
+    } else {
+      fsSync2.writeFileSync(diagPath, content, "utf-8");
+    }
+  }
+  async prepareChunk(chunk) {
+    this.recordChunkDiagnostics(chunk);
     await this.writeDiagnosticsFile();
-    const remoteScopedClasses = /* @__PURE__ */ new Set();
-    const eagerlyUsedDeclarations = /* @__PURE__ */ new Map();
+    const metadataMap = chunkMetadataMap(chunk);
     const boundFiles = await Promise.all(
       chunk.files.map(async (file) => ({
         file,
-        analysis: await this.ensureBoundWithMetadata(file)
+        analysis: await this.ensureBoundWithMetadata(file, void 0, metadataMap)
       }))
     );
+    return this.finalizePreparedChunk(chunk, boundFiles, metadataMap);
+  }
+  prepareChunkSync(chunk) {
+    this.recordChunkDiagnostics(chunk);
+    this.writeDiagnosticsFileSync();
+    const metadataMap = chunkMetadataMap(chunk);
+    const boundFiles = chunk.files.map((file) => ({
+      file,
+      analysis: this.ensureBoundWithMetadataSync(file, void 0, metadataMap)
+    }));
+    return this.finalizePreparedChunk(chunk, boundFiles, metadataMap);
+  }
+  recordChunkDiagnostics(chunk) {
+    const skipSourceFileValidator = this.optionDiagnostics.length > 0;
+    for (const file of chunk.files) {
+      const diagnostics = [];
+      if (file.diagnostics) {
+        diagnostics.push(...file.diagnostics.map(withErrorGuide));
+      }
+      if (!skipSourceFileValidator && file.sourceFileValidatorDiagnostics) {
+        diagnostics.push(...file.sourceFileValidatorDiagnostics.map(withErrorGuide));
+      }
+      if (file.diagnostics || file.sourceFileValidatorDiagnostics) {
+        this.diagnosticsMap.set(file.filePath, diagnostics);
+      }
+    }
+  }
+  finalizePreparedChunk(chunk, boundFiles, metadataMap) {
+    const remoteScopedClasses = /* @__PURE__ */ new Set();
+    const eagerlyUsedDeclarations = /* @__PURE__ */ new Map();
     const chunkFileIds = new Set(chunk.files.map((f) => f.fileId));
     const dynamicGraph = /* @__PURE__ */ new Map();
     if (chunk.staticEdges) {
@@ -42135,6 +45154,9 @@ var HybridCompiler = class {
         );
         const eagerDecls = [...eagerDirDecls, ...eagerPipeDecls];
         eagerlyUsedDeclarations.set(`${file.filePath}#${className}`, eagerDecls);
+        if (classMeta.component.standalone) {
+          continue;
+        }
         let hasStaticCycle = false;
         for (const decl of eagerDecls) {
           if (decl.cycleProne) {
@@ -42143,6 +45165,17 @@ var HybridCompiler = class {
           }
         }
         if (hasStaticCycle) {
+          remoteScopedClasses.add(`${file.filePath}#${className}`);
+          continue;
+        }
+        let createsCycle = false;
+        for (const decl of eagerDecls) {
+          if (chunkFileIds.has(decl.fileId) && decl.fileId !== file.fileId && hasGraphPath(dynamicGraph, decl.fileId, file.fileId)) {
+            createsCycle = true;
+            break;
+          }
+        }
+        if (createsCycle) {
           remoteScopedClasses.add(`${file.filePath}#${className}`);
           continue;
         }
@@ -42157,20 +45190,6 @@ var HybridCompiler = class {
           }
         }
       }
-    }
-    const cyclicFiles = findCyclicNodes(dynamicGraph);
-    for (const file of chunk.files) {
-      if (cyclicFiles.has(file.fileId)) {
-        for (const classMeta of file.classes) {
-          if (classMeta.component && classMeta.className) {
-            remoteScopedClasses.add(`${file.filePath}#${classMeta.className}`);
-          }
-        }
-      }
-    }
-    const metadataMap = /* @__PURE__ */ new Map();
-    for (const file of chunk.files) {
-      metadataMap.set(file.filePath, file);
     }
     return { remoteScopedClasses, metadataMap, eagerlyUsedDeclarations };
   }
@@ -42238,6 +45257,18 @@ var HybridCompiler = class {
   analyzeOptimized() {
     return this.analyzer.analyzeOptimized();
   }
+  analyzeSync() {
+    if (!this.analyzer.analyzeSync) {
+      throw new Error("Analyzer does not support analyzeSync");
+    }
+    return this.analyzer.analyzeSync();
+  }
+  analyzeOptimizedSync() {
+    if (!this.analyzer.analyzeOptimizedSync) {
+      throw new Error("Analyzer does not support analyzeOptimizedSync");
+    }
+    return this.analyzer.analyzeOptimizedSync();
+  }
   analyzeDelta() {
     return this.analyzer.analyzeDelta();
   }
@@ -42253,25 +45284,55 @@ var HybridCompiler = class {
     );
   }
   /**
-   * Ensures that the targets for the given file are bound, resolving all selectors,
-   * bindings, and template AST relationships. This phase does NOT perform TCB code
-   * generation or printing, which is useful when indexing templates because the indexer
-   * only requires a `BoundTarget` (to map identifiers, variables, references, inputs, and outputs)
-   * rather than generating/compiling a full TCB representation.
+   * Binds template targets for `filePath` without generating or printing TCB code (sufficient for
+   * template indexing, which only needs `BoundTarget`).
    */
   ensureBoundSync(filePath) {
     const result = this.analyzer.getMetadataForFileSync(filePath);
-    const normalized = result ? result.filePath : filePath;
+    if (!result) {
+      return unanalyzedFile(filePath);
+    }
+    const normalized = result.filePath;
     const fileAnalysis = getOrCreateFileAnalysis(this.fileCache, normalized);
     if (fileAnalysis.preparedTcbData !== void 0) {
       return fileAnalysis;
     }
-    if (!result || !this.hasTcbCandidates(result.classes)) {
+    if (!this.hasTcbCandidates(result.classes)) {
       fileAnalysis.preparedTcbData = null;
       return fileAnalysis;
     }
     const content = this.analyzer.getFileContentSync(filePath);
-    return this.populateBoundData(normalized, fileAnalysis, result, content);
+    return this.populateBoundData(
+      normalized,
+      fileAnalysis,
+      result,
+      content,
+      this.dependencyTemplates()
+    );
+  }
+  /**
+   * Synchronously binds template targets using a pre-fetched `AnalysisResult`. `knownMetadata`
+   * (e.g. the other files of the chunk) spares a round trip to the analyzer for the templates of
+   * dependencies declared in those files.
+   */
+  ensureBoundWithMetadataSync(result, content, knownMetadata) {
+    const normalized = result.filePath;
+    const fileAnalysis = getOrCreateFileAnalysis(this.fileCache, normalized);
+    if (fileAnalysis.preparedTcbData !== void 0) {
+      return fileAnalysis;
+    }
+    if (!this.hasTcbCandidates(result.classes)) {
+      fileAnalysis.preparedTcbData = null;
+      return fileAnalysis;
+    }
+    const fileContent = content !== void 0 ? content : this.analyzer.getFileContentSync(result.filePath);
+    return this.populateBoundData(
+      normalized,
+      fileAnalysis,
+      result,
+      fileContent,
+      this.dependencyTemplates(knownMetadata)
+    );
   }
   /**
    * Asynchronously ensures that the targets for the given file are bound.
@@ -42280,18 +45341,12 @@ var HybridCompiler = class {
   async ensureBound(filePath) {
     const result = await this.analyzer.getMetadataForFile(filePath);
     if (!result) {
-      const fileAnalysis = getOrCreateFileAnalysis(this.fileCache, filePath);
-      fileAnalysis.preparedTcbData = null;
-      return fileAnalysis;
+      return unanalyzedFile(filePath);
     }
     return this.ensureBoundWithMetadata(result);
   }
-  /**
-   * Asynchronously ensures that the targets for the given file analysis result are bound.
-   * This avoids re-querying metadata for files whose AnalysisResult is already available
-   * from the chunk stream.
-   */
-  async ensureBoundWithMetadata(result, content) {
+  /** Asynchronously binds template targets using a pre-fetched `AnalysisResult`. */
+  async ensureBoundWithMetadata(result, content, knownMetadata) {
     const normalized = result.filePath;
     const fileAnalysis = getOrCreateFileAnalysis(this.fileCache, normalized);
     if (fileAnalysis.preparedTcbData !== void 0) {
@@ -42302,33 +45357,44 @@ var HybridCompiler = class {
       return fileAnalysis;
     }
     const fileContent = content !== void 0 ? content : await this.analyzer.getFileContent(result.filePath);
-    return this.populateBoundData(normalized, fileAnalysis, result, fileContent);
+    const dependencyTemplates = this.dependencyTemplates(knownMetadata);
+    await dependencyTemplates.prefetch(result);
+    return this.populateBoundData(
+      normalized,
+      fileAnalysis,
+      result,
+      fileContent,
+      dependencyTemplates
+    );
+  }
+  dependencyTemplates(knownMetadata) {
+    return new DependencyTemplates(
+      this.analyzer,
+      this.fileCache,
+      this.templateParseOptions,
+      knownMetadata
+    );
   }
   /**
    * Helper that populates template parsing options and runs template target binding.
    */
-  populateBoundData(filePath, fileAnalysis, result, content) {
-    let templatesByClass = fileAnalysis.parsedTemplates;
-    if (!templatesByClass) {
-      templatesByClass = /* @__PURE__ */ new Map();
-      fileAnalysis.parsedTemplates = templatesByClass;
-    }
+  populateBoundData(filePath, fileAnalysis, result, content, dependencyTemplates) {
+    const templatesByClass = fileAnalysis.parsedTemplates;
     const tcbTargets = buildTcbTargets(
       filePath,
       content,
       result.classes,
       templatesByClass,
       this.templateParseOptions,
-      this.tcbConfig
+      this.tcbConfig,
+      dependencyTemplates
     );
     const prepared = prepareTcbTargets(
       filePath,
       tcbTargets,
       content,
       this.tcbConfig,
-      result.classes,
-      this.workspaceName,
-      this.rootDirs
+      result.classes
     );
     if (prepared) {
       fileAnalysis.preparedTcbData = prepared;
@@ -42337,11 +45403,7 @@ var HybridCompiler = class {
     }
     return fileAnalysis;
   }
-  /**
-   * Ensures that the Type Check Block (TCB) code has been generated and cached for the file.
-   * This builds upon the bound targets and performs string generation and import management
-   * only when requested (lazy-loaded), ensuring optimal performance for non-diagnostics/compilation tasks.
-   */
+  /** Generates and caches the Type Check Block (TCB) for `filePath` on demand. */
   ensureTcb(filePath) {
     const fileAnalysis = this.ensureBoundSync(filePath);
     if (fileAnalysis.tcb !== void 0) {
@@ -42375,7 +45437,8 @@ var HybridCompiler = class {
     return fileAnalysis;
   }
   getParsedTemplate(filePath, classKey) {
-    return this.ensureBoundSync(filePath).parsedTemplates?.get(classKey) ?? null;
+    const parsed = this.ensureBoundSync(filePath).parsedTemplates.get(classKey);
+    return parsed ? { ...parsed, nodes: parsed.diagNodes } : null;
   }
   getHostElement(filePath, classKey) {
     return this.ensureBoundSync(filePath).preparedTcbData?.hostElementsMap.get(classKey) ?? null;
@@ -42386,10 +45449,17 @@ var HybridCompiler = class {
   getClassMetadata(filePath) {
     return this.analyzer.getMetadataForFileSync(filePath);
   }
-  async processFile(filePath, content, readResource, metadata, chunkContext) {
+  async processFile(filePath, content, metadata, chunkContext) {
     const result = metadata || await this.analyzer.getMetadataForFile(filePath);
     const normPath = result ? result.filePath : filePath;
-    const processed = await processFile(
+    const processed = await processFile(this, normPath, content, result || void 0, chunkContext);
+    this.recordProcessedDiagnostics(normPath, processed);
+    return processed;
+  }
+  processFileSync(filePath, content, readResource, metadata, chunkContext) {
+    const result = metadata || this.analyzer.getMetadataForFileSync(filePath);
+    const normPath = result ? result.filePath : filePath;
+    const processed = processFileSync(
       this,
       normPath,
       content,
@@ -42397,15 +45467,53 @@ var HybridCompiler = class {
       result || void 0,
       chunkContext
     );
+    this.recordProcessedDiagnostics(normPath, processed);
+    return processed;
+  }
+  recordProcessedDiagnostics(normPath, processed) {
     if (processed.diagnostics && processed.diagnostics.length > 0) {
       for (const diag of processed.diagnostics) {
         const targetPath = diag.filePath || normPath;
         const existing = this.diagnosticsMap.get(targetPath) || [];
-        existing.push(diag);
+        existing.push(withErrorGuide(diag));
         this.diagnosticsMap.set(targetPath, existing);
       }
     }
-    return processed;
+  }
+  async emitHmrUpdateModule(filePath, className) {
+    if (!this.enableHmr) {
+      return null;
+    }
+    const result = await this.analyzer.getMetadataForFile(filePath);
+    if (!result) {
+      return null;
+    }
+    const content = await this.analyzer.getFileContent(result.filePath);
+    const processed = await processFile(
+      { ...this, hmrUpdateTarget: className },
+      result.filePath,
+      content,
+      result
+    );
+    return processed.hmrUpdateModule ?? null;
+  }
+  emitHmrUpdateModuleSync(filePath, className) {
+    if (!this.enableHmr) {
+      return null;
+    }
+    const result = this.analyzer.getMetadataForFileSync(filePath);
+    if (!result) {
+      return null;
+    }
+    const content = this.analyzer.getFileContentSync(result.filePath);
+    const processed = processFileSync(
+      { ...this, hmrUpdateTarget: className },
+      result.filePath,
+      content,
+      void 0,
+      result
+    );
+    return processed.hmrUpdateModule ?? null;
   }
   getBoundTarget(filePath, classKey) {
     return this.ensureBoundSync(filePath).preparedTcbData?.boundTargetMap.get(classKey) || null;
@@ -42414,10 +45522,19 @@ var HybridCompiler = class {
     const iterator = this.optimize ? this.analyzer.analyzeOptimized() : this.analyzer.analyze();
     for await (const chunk of iterator) {
       for (const result of chunk.files) {
-        await this.ensureBound(result.filePath);
+        await this.ensureBoundWithMetadata(result);
       }
     }
     return getIndexedComponents(this);
+  }
+  getIndexedComponentsSync() {
+    const chunks = this.optimize ? this.analyzeOptimizedSync() : this.analyzeSync();
+    for (const chunk of chunks) {
+      for (const result of chunk.files) {
+        this.ensureBoundWithMetadataSync(result);
+      }
+    }
+    return getIndexedComponentsSync(this);
   }
   getTsFileForTemplate(templatePath) {
     const res = this.analyzer.getTsFileForTemplateSync(templatePath);
@@ -42427,66 +45544,43 @@ var HybridCompiler = class {
     return this.analyzer.getFileContentSync(filePath);
   }
 };
-function findCyclicNodes(graph) {
-  const cyclic = /* @__PURE__ */ new Set();
-  const index = /* @__PURE__ */ new Map();
-  const lowLink = /* @__PURE__ */ new Map();
-  const onStack = /* @__PURE__ */ new Set();
-  const stack = [];
-  let nextIndex = 0;
-  for (const root of graph.keys()) {
-    if (index.has(root)) {
-      continue;
-    }
-    const frames = [];
-    const enter = (node) => {
-      index.set(node, nextIndex);
-      lowLink.set(node, nextIndex);
-      nextIndex++;
-      stack.push(node);
-      onStack.add(node);
-      frames.push({ node, edges: (graph.get(node) ?? /* @__PURE__ */ new Set())[Symbol.iterator]() });
-    };
-    enter(root);
-    while (frames.length > 0) {
-      const frame = frames[frames.length - 1];
-      const step = frame.edges.next();
-      if (!step.done) {
-        const neighbor = step.value;
-        if (neighbor === frame.node) {
-          cyclic.add(neighbor);
-        } else if (!index.has(neighbor)) {
-          enter(neighbor);
-        } else if (onStack.has(neighbor)) {
-          lowLink.set(frame.node, Math.min(lowLink.get(frame.node), index.get(neighbor)));
-        }
-        continue;
-      }
-      frames.pop();
-      const caller = frames[frames.length - 1];
-      if (caller !== void 0) {
-        lowLink.set(caller.node, Math.min(lowLink.get(caller.node), lowLink.get(frame.node)));
-      }
-      if (lowLink.get(frame.node) !== index.get(frame.node)) {
-        continue;
-      }
-      const component = [];
-      for (; ; ) {
-        const member = stack.pop();
-        onStack.delete(member);
-        component.push(member);
-        if (member === frame.node) {
-          break;
-        }
-      }
-      if (component.length > 1) {
-        for (const member of component) {
-          cyclic.add(member);
-        }
+function chunkMetadataMap(chunk) {
+  const metadataMap = /* @__PURE__ */ new Map();
+  for (const file of chunk.files) {
+    metadataMap.set(file.filePath, file);
+  }
+  return metadataMap;
+}
+function unanalyzedFile(filePath) {
+  return { filePath, parsedTemplates: /* @__PURE__ */ new Map(), preparedTcbData: null };
+}
+function hasGraphPath(graph, start, target) {
+  if (start === target) return true;
+  const visited = /* @__PURE__ */ new Set([start]);
+  const stack = [start];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const neighbors = graph.get(current);
+    if (!neighbors) continue;
+    for (const neighbor of neighbors) {
+      if (neighbor === target) return true;
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        stack.push(neighbor);
       }
     }
   }
-  return cyclic;
+  return false;
+}
+function formatSerializedDiagnostic(d) {
+  return {
+    filePath: d.filePath,
+    category: d.category === 1 ? "error" : "warning",
+    code: d.code,
+    messageText: flattenNgDiagnosticMessage(d),
+    span: d.span,
+    ...d.relatedInformation && d.relatedInformation.length > 0 ? { relatedInformation: d.relatedInformation } : {}
+  };
 }
 
 // packages/compiler-cli/preprocessor/src/analyzer_sidecar.ts
@@ -42587,8 +45681,8 @@ var SidecarAnalyzer = class {
     if (this.sidecarProcess.exitCode !== null) {
       return Promise.resolve();
     }
-    return new Promise((resolve4) => {
-      this.onExit = resolve4;
+    return new Promise((resolve5) => {
+      this.onExit = resolve5;
     });
   }
   close() {
@@ -42605,20 +45699,18 @@ var SidecarAnalyzer = class {
     }
     const id = ++this.requestId;
     const request = { id, method, params };
-    return new Promise((resolve4, reject) => {
-      this.pendingRequests.set(id, { method, resolve: resolve4, reject });
+    return new Promise((resolve5, reject) => {
+      this.pendingRequests.set(id, { method, resolve: resolve5, reject });
       this.sidecarProcess.stdin.write(JSON.stringify(request) + "\n");
     });
   }
   async initialize(tsconfigPath, optimize, virtualFiles, nodeModulesPathOverride, options) {
     await this.callRpc("initialize", {
+      ...options,
       tsconfigPath,
       optimize,
       virtualFiles,
-      nodeModulesPathOverride,
-      allowedSources: options?.allowedSources,
-      workspaceName: options?.workspaceName,
-      rootDirs: options?.rootDirs
+      nodeModulesPathOverride
     });
   }
   async *runAnalysisStream(method) {
@@ -42658,23 +45750,23 @@ var SidecarAnalyzer = class {
     if (!this.isAnalyzing) {
       return null;
     }
-    return new Promise((resolve4, reject) => {
+    return new Promise((resolve5, reject) => {
       this.nextResolve = (chunk) => {
         if (this.activeError) {
           const err = this.activeError;
           this.activeError = null;
           reject(err);
         } else {
-          resolve4(chunk);
+          resolve5(chunk);
         }
       };
     });
   }
   handleAnalysisResult(result) {
     if (this.nextResolve) {
-      const resolve4 = this.nextResolve;
+      const resolve5 = this.nextResolve;
       this.nextResolve = null;
-      resolve4(result);
+      resolve5(result);
     } else {
       this.resultQueue.push(result);
     }
@@ -42682,18 +45774,18 @@ var SidecarAnalyzer = class {
   handleAnalysisComplete() {
     this.isAnalyzing = false;
     if (this.nextResolve) {
-      const resolve4 = this.nextResolve;
+      const resolve5 = this.nextResolve;
       this.nextResolve = null;
-      resolve4(null);
+      resolve5(null);
     }
   }
   handleAnalysisError(errorStr) {
     this.isAnalyzing = false;
     this.activeError = new Error(errorStr);
     if (this.nextResolve) {
-      const resolve4 = this.nextResolve;
+      const resolve5 = this.nextResolve;
       this.nextResolve = null;
-      resolve4(null);
+      resolve5(null);
     }
   }
   async getMetadataForFile(filePath) {
@@ -42710,6 +45802,9 @@ var SidecarAnalyzer = class {
   }
   async getFileContent(filePath) {
     return this.callRpc("getFileContent", { filePath });
+  }
+  async readResource(containingFile, url2) {
+    return this.callRpc("readResource", { containingFile, url: url2 });
   }
   getMetadataForFileSync(filePath) {
     throw new Error("Synchronous AST lookups are not supported in Sidecar mode");
@@ -42738,14 +45833,18 @@ async function run(compiler, options) {
       );
       await compiler.writeDiagnosticsFile();
     }
+    await compiler.writeDiagnosticsFile();
   } finally {
     compiler.analyzer.close();
   }
 }
 async function processFile2(file, outDir, compiler, options, chunkContext, rootDir) {
   const { filePath } = file;
+  if (filePath.endsWith(".d.ts")) {
+    return;
+  }
   const content = await fs3.readFile(filePath, "utf-8");
-  const processed = await compiler.processFile(filePath, content, void 0, file, chunkContext);
+  const processed = await compiler.processFile(filePath, content, file, chunkContext);
   const s = processed.magicString;
   const writeOutput = outDir || options.inPlace;
   if (writeOutput) {
@@ -42764,7 +45863,7 @@ async function processFile2(file, outDir, compiler, options, chunkContext, rootD
     const outputDir = path3.dirname(outputPath);
     const mapPath = outputPath + ".map";
     await fs3.mkdir(outputDir, { recursive: true });
-    const map = s.generateMap({
+    const map = processed.generateSourceMap({
       source: relativeSourcePath,
       file: path3.basename(outputPath),
       includeContent: true
@@ -42793,6 +45892,9 @@ async function processFile2(file, outDir, compiler, options, chunkContext, rootD
     console.log("-------------------");
   }
 }
+
+// packages/compiler-cli/preprocessor/api.ts
+init_analyzer_wasm();
 
 // packages/compiler-cli/preprocessor/src/workspace.ts
 import * as fs4 from "node:fs/promises";
@@ -42912,12 +46014,15 @@ async function createAnalyzerWithInfo(tsconfigPath, options = {}) {
 }
 export {
   HybridCompiler,
+  IndexerBoundTemplate,
   SidecarAnalyzer,
+  WasmAnalyzer,
   buildTypeCheckingConfig,
   createAnalyzer,
   createAnalyzerWithInfo,
   resolveWorkspaceConfig,
-  run
+  run,
+  verifyCompilerOptions
 };
 /**
  * @license
