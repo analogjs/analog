@@ -5,7 +5,9 @@
     "types": [],
     "target": "ES2022",
     "useDefineForClassFields": false,
-    "composite": false
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
   },
   "files": [
     "src/main.ts",
