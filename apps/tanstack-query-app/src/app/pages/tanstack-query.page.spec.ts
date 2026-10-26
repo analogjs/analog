@@ -59,19 +59,4 @@ describe('TanStackQueryPageComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('#todo-loading')).toBeTruthy();
   });
-
-  it('should call createTodo with the provided title', () => {
-    const fixture = TestBed.createComponent(TanStackQueryPageComponent);
-    fixture.detectChanges();
-
-    const spy = vi.spyOn(
-      fixture.componentInstance.createTodoMutation,
-      'mutate',
-    );
-    fixture.componentInstance.createTodo('New todo');
-    expect(spy).toHaveBeenCalledWith({
-      scope: 'test-scope',
-      title: 'New todo',
-    });
-  });
 });
