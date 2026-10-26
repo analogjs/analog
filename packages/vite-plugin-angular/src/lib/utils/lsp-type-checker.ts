@@ -332,6 +332,18 @@ function relocateTcb(
   };
 }
 
+export type TypeCheckerOption =
+  | 'tsgo'
+  | 'tsrs'
+  | { command: string; args?: string[] };
+
+interface TypeCheckerCommand {
+  command: string;
+  args: string[];
+}
+
+const LSP_ARGS = ['--lsp', '--stdio'];
+
 function resolveTsgoBinary(tsconfig: string): string {
   if (process.env['TSNATIVE_BINARY_PATH'])
     return process.env['TSNATIVE_BINARY_PATH'];
@@ -367,6 +379,33 @@ function resolveTsgoBinary(tsconfig: string): string {
   );
 }
 
+// Run tsrs through its launcher, which selects the platform binary.
+function resolveTsrs(tsconfig: string): TypeCheckerCommand {
+  for (const base of [tsconfig, import.meta.url]) {
+    try {
+      const pkg = createRequire(base).resolve('tsrs/package.json');
+      return {
+        command: process.execPath,
+        args: [resolve(dirname(pkg), 'bin', 'tsrs'), ...LSP_ARGS],
+      };
+    } catch {
+      // try next base
+    }
+  }
+  throw new Error("typeChecker: 'tsrs' requires the tsrs package.");
+}
+
+export function resolveTypeChecker(
+  tsconfig: string,
+  option: TypeCheckerOption,
+): TypeCheckerCommand {
+  if (typeof option === 'object') {
+    return { command: option.command, args: option.args ?? LSP_ARGS };
+  }
+  if (option === 'tsrs') return resolveTsrs(tsconfig);
+  return { command: resolveTsgoBinary(tsconfig), args: LSP_ARGS };
+}
+
 export class LspTypeChecker {
   private proc: ChildProcessWithoutNullStreams;
   private seq = 1;
@@ -383,9 +422,10 @@ export class LspTypeChecker {
   private exitError: Error | undefined;
   readonly ready: Promise<void>;
 
-  constructor(tsconfig: string) {
+  constructor(tsconfig: string, option: TypeCheckerOption = 'tsgo') {
     const cwd = dirname(tsconfig);
-    this.proc = spawn(resolveTsgoBinary(tsconfig), ['--lsp', '--stdio'], {
+    const { command, args } = resolveTypeChecker(tsconfig, option);
+    this.proc = spawn(command, args, {
       cwd,
       stdio: ['pipe', 'pipe', 'ignore'],
     });

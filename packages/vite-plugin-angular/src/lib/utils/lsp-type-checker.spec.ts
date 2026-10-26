@@ -1,7 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LspTypeChecker } from './lsp-type-checker.js';
+import {
+  LspTypeChecker,
+  resolveTypeChecker,
+  type TypeCheckerOption,
+} from './lsp-type-checker.js';
 
 const root = resolve(import.meta.dirname, '../../../../..');
 const tsconfig = resolve(root, 'apps/analog-app/tsconfig.app.json');
@@ -18,42 +22,71 @@ function inlineTcb(filePath: string, className: string, body: string) {
   };
 }
 
-describe('LspTypeChecker', () => {
-  let checker: LspTypeChecker | undefined;
-  afterEach(() => {
-    checker?.close();
-    vi.unstubAllEnvs();
-  });
+let checker: LspTypeChecker | undefined;
+afterEach(() => {
+  checker?.close();
+  vi.unstubAllEnvs();
+});
 
-  it('relocates inline TCBs without trailing source in build mode', async () => {
-    checker = new LspTypeChecker(tsconfig);
-    const search = inlineTcb(searchPath, 'NewsletterComponent', '');
-    const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
-    checker.queueFile(searchPath, search.source, search.tcb);
-    checker.queueFile(cartPath, cart.source, cart.tcb);
+describe.each<TypeCheckerOption>(['tsgo', 'tsrs'])(
+  'LspTypeChecker (%s)',
+  (option) => {
+    it('relocates inline TCBs without trailing source in build mode', async () => {
+      checker = new LspTypeChecker(tsconfig, option);
+      const search = inlineTcb(searchPath, 'NewsletterComponent', '');
+      const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
+      checker.queueFile(searchPath, search.source, search.tcb);
+      checker.queueFile(cartPath, cart.source, cart.tcb);
 
-    const errors = await checker.flushQueue();
-    expect(errors).toHaveLength(1);
-    expect(errors[0]).toContain(`${cartPath} (template)`);
-    expect(errors[0]).toContain("'missing'");
-  });
+      const errors = await checker.flushQueue();
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain(`${cartPath} (template)`);
+      expect(errors[0]).toContain("'missing'");
+    });
 
-  it('maps template errors to external template files', async () => {
-    checker = new LspTypeChecker(tsconfig);
-    const templateFile = resolve(pagesDir, 'shipping/shipping.html');
-    const footer = `/*ngp-tcb-template-sources:${JSON.stringify({ tcb1: { templateFile } })}*/`;
-    const search = inlineTcb(searchPath, 'NewsletterComponent', '');
-    const cart = inlineTcb(
-      cartPath,
-      'CartComponent',
-      '(this).missing /*0,5*/;',
-    );
-    checker.queueFile(searchPath, search.source, search.tcb);
-    checker.queueFile(cartPath, cart.source, `${cart.tcb}${footer}\n`);
+    it('maps template errors to external template files', async () => {
+      checker = new LspTypeChecker(tsconfig, option);
+      const templateFile = resolve(pagesDir, 'shipping/shipping.html');
+      const footer = `/*ngp-tcb-template-sources:${JSON.stringify({ tcb1: { templateFile } })}*/`;
+      const search = inlineTcb(searchPath, 'NewsletterComponent', '');
+      const cart = inlineTcb(
+        cartPath,
+        'CartComponent',
+        '(this).missing /*0,5*/;',
+      );
+      checker.queueFile(searchPath, search.source, search.tcb);
+      checker.queueFile(cartPath, cart.source, `${cart.tcb}${footer}\n`);
 
-    expect(await checker.flushQueue()).toEqual([
-      expect.stringContaining(`${templateFile}:1:1 - error TS2339`),
-    ]);
+      expect(await checker.flushQueue()).toEqual([
+        expect.stringContaining(`${templateFile}:1:1 - error TS2339`),
+      ]);
+    });
+
+    it('checks the in-memory TCB of a document opened after another', async () => {
+      checker = new LspTypeChecker(tsconfig, option);
+      const search = inlineTcb(searchPath, 'NewsletterComponent', '');
+      checker.queueFile(searchPath, search.source, search.tcb);
+      await checker.flushQueue(true);
+
+      const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
+      checker.queueFile(cartPath, cart.source, cart.tcb);
+      const errors = await checker.flushQueue(true);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain("'missing'");
+    });
+  },
+);
+
+describe('LspTypeChecker startup', () => {
+  it('runs tsrs through its launcher', () => {
+    expect(resolveTypeChecker(tsconfig, 'tsrs')).toEqual({
+      command: process.execPath,
+      args: [
+        realpathSync(resolve(root, 'node_modules/tsrs/bin/tsrs')),
+        '--lsp',
+        '--stdio',
+      ],
+    });
   });
 
   it('rejects requests when the type checker cannot start', async () => {
@@ -65,15 +98,14 @@ describe('LspTypeChecker', () => {
     await expect(checker.flushQueue()).rejects.toThrow('ENOENT');
   });
 
-  it('checks the in-memory TCB of a document opened after another', async () => {
-    checker = new LspTypeChecker(tsconfig);
-    const search = inlineTcb(searchPath, 'NewsletterComponent', '');
-    checker.queueFile(searchPath, search.source, search.tcb);
-    await checker.flushQueue(true);
-
+  it('spawns a custom type checker command', async () => {
+    checker = new LspTypeChecker(tsconfig, {
+      command: process.execPath,
+      args: [resolve(root, 'node_modules/tsrs/bin/tsrs'), '--lsp', '--stdio'],
+    });
     const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
     checker.queueFile(cartPath, cart.source, cart.tcb);
-    const errors = await checker.flushQueue(true);
+    const errors = await checker.flushQueue();
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain("'missing'");
   });

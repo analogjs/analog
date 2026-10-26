@@ -259,7 +259,10 @@ export function ngpCompilePlugin(
     sourceCode: string,
     tcbCode?: string | null,
   ) {
-    typeChecker ??= new LspTypeChecker(resolveTsConfigPath());
+    typeChecker ??= new LspTypeChecker(
+      resolveTsConfigPath(),
+      options.typeChecker,
+    );
     typeChecker.queueFile(filePath, sourceCode, tcbCode);
     if (!watchMode) return;
     const typeErrors = await typeChecker.flushQueue(true);

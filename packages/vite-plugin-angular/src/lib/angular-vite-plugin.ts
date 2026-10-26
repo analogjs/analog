@@ -147,6 +147,7 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { createHotUpdateBatcher } from './hot-update-batch.js';
+import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
 
 export interface PluginOptions {
   /**
@@ -191,6 +192,12 @@ export interface PluginOptions {
    * `@typescript/native-preview`.
    */
   disableTypeChecking?: boolean;
+  /**
+   * TypeScript 7 type checker used with `compilation: 'ngp'`: `'tsgo'`
+   * (default), `'tsrs'`, or a command serving the TypeScript 7 language
+   * server over stdio (`args` defaults to `['--lsp', '--stdio']`).
+   */
+  typeChecker?: TypeCheckerOption;
   /**
    * Replace source files at build time, like `fileReplacements` in
    * `angular.json`.
@@ -1448,6 +1455,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           isAstroIntegration,
           fastCompileMode: pluginOptions.fastCompileMode,
           disableTypeChecking: pluginOptions.disableTypeChecking,
+          typeChecker: options?.typeChecker,
         })
       : angularPlugin();
 

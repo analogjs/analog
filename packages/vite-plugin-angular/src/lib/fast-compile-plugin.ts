@@ -40,6 +40,7 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
+import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
 import {
   discoverAnalogIntegrations,
   type ComponentRegistryEntries,
@@ -56,6 +57,7 @@ export interface FastCompilePluginOptions {
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
   disableTypeChecking?: boolean;
+  typeChecker?: TypeCheckerOption;
 }
 
 type ResolveImport = (spec: string, importer: string) => Promise<string | null>;
