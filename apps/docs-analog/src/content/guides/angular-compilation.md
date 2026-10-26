@@ -99,7 +99,8 @@ NGP is loaded only when selected. It resolves `@angular/ngp` from your
 application and otherwise uses an interim NGP build bundled with
 `@analogjs/vite-plugin-angular`, with a WebAssembly analyzer that runs on every
 platform. The bundled build tracks an unreleased Angular revision and is replaced
-by `@angular/ngp` once it is published.
+by `@angular/ngp` once it is published. The bundled build requires Angular v22.2
+or later.
 
 NGP currently supports AOT application compilation, Vite preprocessing for
 component styles, and full-page reloads. Set `inlineStylesExtension` for inline

@@ -16,6 +16,7 @@ import {
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
+import { angularFullVersion } from './utils/devkit.js';
 import { TsgoChecker } from './utils/tsgo-checker.js';
 
 // The unpublished NGP API is loaded at runtime. Model only the surface we use.
@@ -98,6 +99,11 @@ async function loadNgp(
     try {
       modulePath = createRequire(tsconfig).resolve('@angular/ngp');
     } catch {
+      if (angularFullVersion < 220200) {
+        throw new Error(
+          "[@analogjs/vite-plugin-angular]: compilation: 'ngp' requires Angular v22.2 or later.",
+        );
+      }
       return {
         api: await import(new URL('api.mjs', BUNDLED_NGP).href),
         analyzerOptions: nativeBinding
