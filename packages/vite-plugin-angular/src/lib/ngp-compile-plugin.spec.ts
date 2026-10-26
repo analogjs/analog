@@ -36,6 +36,14 @@ describe('compilation selection', () => {
     ).toEqual([name]);
   });
 
+  it('uses ngtsc under Vitest when jit is not set', () => {
+    const names = angular({ compilation: 'ngp', liveReload: true }).map(
+      (plugin) => plugin.name,
+    );
+    expect(names).toContain('@analogjs/vite-plugin-angular');
+    expect(names).not.toContain('@analogjs/vite-plugin-angular-ngp');
+  });
+
   it('preserves companion plugins without loading NGP', () => {
     const options = { jit: false, liveReload: true };
     const fastCompile = angular({ ...options, fastCompile: true }).map(

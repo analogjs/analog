@@ -187,7 +187,8 @@ export interface PluginOptions {
   liveReload?: boolean;
   /**
    * Skip semantic and Angular template diagnostics during compilation.
-   * Defaults to `true`.
+   * Defaults to `true`, or `false` with `compilation: 'ngp'`, which requires
+   * `@typescript/native-preview`.
    */
   disableTypeChecking?: boolean;
   /**
@@ -202,7 +203,10 @@ export interface PluginOptions {
    * Defaults to `false`.
    */
   fastCompile?: boolean;
-  /** Selects the compilation path, overriding fastCompile. Defaults to 'ngtsc'; 'ngp' is experimental. */
+  /**
+   * Selects the compilation path, overriding fastCompile. Defaults to 'ngtsc';
+   * 'ngp' is experimental and falls back to 'ngtsc' under Vitest's JIT default.
+   */
   compilation?: 'ngtsc' | 'ngp';
   /**
    * Compilation output mode used when `fastCompile` is enabled.
@@ -253,6 +257,11 @@ export function angular(options?: PluginOptions): Plugin[] {
   let externalizeStylesRequested = false;
   let configureStylesheetRegistry: StylesheetRegistryConfigurator | undefined;
   let transformFilter: TransformFilter | undefined;
+  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
+  const compilation =
+    options?.compilation === 'ngp' && !(isTest && options.jit === undefined)
+      ? 'ngp'
+      : 'ngtsc';
 
   /**
    * Normalize plugin options so defaults
@@ -268,12 +277,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     jit: options?.jit,
     include: options?.include ?? [],
     liveReload,
-    disableTypeChecking:
-      options?.disableTypeChecking ?? options?.compilation !== 'ngp',
+    disableTypeChecking: options?.disableTypeChecking ?? compilation !== 'ngp',
     fileReplacements: options?.fileReplacements ?? [],
     fastCompile:
       options?.compilation === undefined && (options?.fastCompile ?? false),
-    compilation: options?.compilation ?? 'ngtsc',
+    compilation,
     fastCompileMode: options?.fastCompileMode ?? 'full',
     // Set on each compilation from preprocessors registered by Vite plugins
     // through `analog.setup()`.
@@ -288,7 +296,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   let nextProgram: NgtscProgram | undefined;
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
-  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
   const tsconfigResolver = new TsconfigResolver({
     workspaceRoot: pluginOptions.workspaceRoot,
     include: pluginOptions.include,
