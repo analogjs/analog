@@ -128,7 +128,8 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         (plugin) =>
           plugin.name === '@analogjs/vite-plugin-angular' ||
           plugin.name === '@analogjs/vite-plugin-angular-fast-compile' ||
-          plugin.name === '@analogjs/vite-plugin-angular-compilation-api',
+          plugin.name === '@analogjs/vite-plugin-angular-compilation-api' ||
+          plugin.name === '@analogjs/vite-plugin-angular-ngp',
       );
       getTsConfigPath = compiler?.api?.getTsConfigPath;
       if (compiler && !getTsConfigPath) {
