@@ -57,7 +57,7 @@ describe('TsgoChecker', () => {
   });
 
   it('rejects requests when tsgo cannot start', async () => {
-    vi.stubEnv('TSGO_BINARY_PATH', resolve(root, 'missing-tsgo'));
+    vi.stubEnv('TSNATIVE_BINARY_PATH', resolve(root, 'missing-tsgo'));
     tsgo = new TsgoChecker(tsconfig);
     tsgo.queueFile(cartPath, readFileSync(cartPath, 'utf-8'));
     await expect(tsgo.flushQueue()).rejects.toThrow('ENOENT');

@@ -333,7 +333,8 @@ function relocateTcb(
 }
 
 function resolveTsgoBinary(tsconfig: string): string {
-  if (process.env['TSGO_BINARY_PATH']) return process.env['TSGO_BINARY_PATH'];
+  if (process.env['TSNATIVE_BINARY_PATH'])
+    return process.env['TSNATIVE_BINARY_PATH'];
   const ext = process.platform === 'win32' ? '.exe' : '';
   const candidates = [
     {
@@ -362,7 +363,7 @@ function resolveTsgoBinary(tsconfig: string): string {
     }
   }
   throw new Error(
-    'disableTypeChecking: false requires TypeScript 7 (typescript@^7.0.0), @typescript/native-preview, or TSGO_BINARY_PATH.',
+    'disableTypeChecking: false requires TypeScript 7 (typescript@^7.0.0), @typescript/native-preview, or TSNATIVE_BINARY_PATH.',
   );
 }
 
