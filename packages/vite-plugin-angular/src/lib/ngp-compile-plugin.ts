@@ -17,7 +17,7 @@ import {
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { angularFullVersion } from './utils/devkit.js';
-import { TsgoChecker } from './utils/tsgo-checker.js';
+import { LspTypeChecker } from './utils/lsp-type-checker.js';
 
 // The unpublished NGP API is loaded at runtime. Model only the surface we use.
 interface NgpDiagnostic {
@@ -139,7 +139,7 @@ export function ngpCompilePlugin(
   let activeBuilds = 0;
   let analyzer: NgpAnalyzer | undefined;
   let compiler: NgpCompiler | undefined;
-  let tsgo: TsgoChecker | undefined;
+  let typeChecker: LspTypeChecker | undefined;
   let api: NgpApi;
   const filesByPath = new Map<string, { file: NgpFile; chunk: NgpChunk }>();
   const chunkContexts = new Map<NgpChunk, Promise<unknown>>();
@@ -254,15 +254,15 @@ export function ngpCompilePlugin(
     return context;
   }
 
-  async function checkWithTsgo(
+  async function checkTypes(
     filePath: string,
     sourceCode: string,
     tcbCode?: string | null,
   ) {
-    tsgo ??= new TsgoChecker(resolveTsConfigPath());
-    tsgo.queueFile(filePath, sourceCode, tcbCode);
+    typeChecker ??= new LspTypeChecker(resolveTsConfigPath());
+    typeChecker.queueFile(filePath, sourceCode, tcbCode);
     if (!watchMode) return;
-    const typeErrors = await tsgo.flushQueue(true);
+    const typeErrors = await typeChecker.flushQueue(true);
     if (typeErrors.length) {
       throw new Error(typeErrors.join('\n'));
     }
@@ -313,7 +313,7 @@ export function ngpCompilePlugin(
           );
         }
         if (options.disableTypeChecking !== true) {
-          await checkWithTsgo(file.filePath, content, result.tcb?.code);
+          await checkTypes(file.filePath, content, result.tcb?.code);
         }
         return result;
       })();
@@ -353,8 +353,8 @@ export function ngpCompilePlugin(
     },
     configureServer(server) {
       server.httpServer?.on('close', () => {
-        tsgo?.close();
-        tsgo = undefined;
+        typeChecker?.close();
+        typeChecker = undefined;
         analyzer?.close();
         analyzer = undefined;
         compiler = undefined;
@@ -387,7 +387,7 @@ export function ngpCompilePlugin(
         );
         result = await compileFile(filePath, (path) => this.addWatchFile(path));
       } else if (!result && options.disableTypeChecking !== true) {
-        await checkWithTsgo(filePath, code);
+        await checkTypes(filePath, code);
       }
       const source = result?.magicString.toString() ?? code;
       const map = result?.magicString.generateMap({
@@ -418,8 +418,8 @@ export function ngpCompilePlugin(
       return [];
     },
     async buildEnd(error) {
-      if (error || watchMode || !tsgo) return;
-      const typeErrors = await tsgo.flushQueue();
+      if (error || watchMode || !typeChecker) return;
+      const typeErrors = await typeChecker.flushQueue();
       if (typeErrors.length) {
         throw new Error(typeErrors.join('\n'));
       }
@@ -428,8 +428,8 @@ export function ngpCompilePlugin(
       activeBuilds = Math.max(0, activeBuilds - 1);
       if (watchMode || activeBuilds > 0) return;
       await pending.catch(() => {});
-      tsgo?.close();
-      tsgo = undefined;
+      typeChecker?.close();
+      typeChecker = undefined;
       analyzer?.close();
       analyzer = undefined;
       compiler = undefined;

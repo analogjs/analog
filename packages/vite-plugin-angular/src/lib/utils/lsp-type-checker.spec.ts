@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TsgoChecker } from './tsgo-checker.js';
+import { LspTypeChecker } from './lsp-type-checker.js';
 
 const root = resolve(import.meta.dirname, '../../../../..');
 const tsconfig = resolve(root, 'apps/analog-app/tsconfig.app.json');
@@ -18,28 +18,28 @@ function inlineTcb(filePath: string, className: string, body: string) {
   };
 }
 
-describe('TsgoChecker', () => {
-  let tsgo: TsgoChecker | undefined;
+describe('LspTypeChecker', () => {
+  let checker: LspTypeChecker | undefined;
   afterEach(() => {
-    tsgo?.close();
+    checker?.close();
     vi.unstubAllEnvs();
   });
 
   it('relocates inline TCBs without trailing source in build mode', async () => {
-    tsgo = new TsgoChecker(tsconfig);
+    checker = new LspTypeChecker(tsconfig);
     const search = inlineTcb(searchPath, 'NewsletterComponent', '');
     const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
-    tsgo.queueFile(searchPath, search.source, search.tcb);
-    tsgo.queueFile(cartPath, cart.source, cart.tcb);
+    checker.queueFile(searchPath, search.source, search.tcb);
+    checker.queueFile(cartPath, cart.source, cart.tcb);
 
-    const errors = await tsgo.flushQueue();
+    const errors = await checker.flushQueue();
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain(`${cartPath} (template)`);
     expect(errors[0]).toContain("'missing'");
   });
 
   it('maps template errors to external template files', async () => {
-    tsgo = new TsgoChecker(tsconfig);
+    checker = new LspTypeChecker(tsconfig);
     const templateFile = resolve(pagesDir, 'shipping/shipping.html');
     const footer = `/*ngp-tcb-template-sources:${JSON.stringify({ tcb1: { templateFile } })}*/`;
     const search = inlineTcb(searchPath, 'NewsletterComponent', '');
@@ -48,32 +48,32 @@ describe('TsgoChecker', () => {
       'CartComponent',
       '(this).missing /*0,5*/;',
     );
-    tsgo.queueFile(searchPath, search.source, search.tcb);
-    tsgo.queueFile(cartPath, cart.source, `${cart.tcb}${footer}\n`);
+    checker.queueFile(searchPath, search.source, search.tcb);
+    checker.queueFile(cartPath, cart.source, `${cart.tcb}${footer}\n`);
 
-    expect(await tsgo.flushQueue()).toEqual([
+    expect(await checker.flushQueue()).toEqual([
       expect.stringContaining(`${templateFile}:1:1 - error TS2339`),
     ]);
   });
 
-  it('rejects requests when tsgo cannot start', async () => {
-    vi.stubEnv('TSNATIVE_BINARY_PATH', resolve(root, 'missing-tsgo'));
-    tsgo = new TsgoChecker(tsconfig);
-    tsgo.queueFile(cartPath, readFileSync(cartPath, 'utf-8'));
-    await expect(tsgo.flushQueue()).rejects.toThrow('ENOENT');
-    tsgo.queueFile(searchPath, readFileSync(searchPath, 'utf-8'));
-    await expect(tsgo.flushQueue()).rejects.toThrow('ENOENT');
+  it('rejects requests when the type checker cannot start', async () => {
+    vi.stubEnv('TSNATIVE_BINARY_PATH', resolve(root, 'missing-checker'));
+    checker = new LspTypeChecker(tsconfig);
+    checker.queueFile(cartPath, readFileSync(cartPath, 'utf-8'));
+    await expect(checker.flushQueue()).rejects.toThrow('ENOENT');
+    checker.queueFile(searchPath, readFileSync(searchPath, 'utf-8'));
+    await expect(checker.flushQueue()).rejects.toThrow('ENOENT');
   });
 
   it('checks the in-memory TCB of a document opened after another', async () => {
-    tsgo = new TsgoChecker(tsconfig);
+    checker = new LspTypeChecker(tsconfig);
     const search = inlineTcb(searchPath, 'NewsletterComponent', '');
-    tsgo.queueFile(searchPath, search.source, search.tcb);
-    await tsgo.flushQueue(true);
+    checker.queueFile(searchPath, search.source, search.tcb);
+    await checker.flushQueue(true);
 
     const cart = inlineTcb(cartPath, 'CartComponent', '(this).missing;');
-    tsgo.queueFile(cartPath, cart.source, cart.tcb);
-    const errors = await tsgo.flushQueue(true);
+    checker.queueFile(cartPath, cart.source, cart.tcb);
+    const errors = await checker.flushQueue(true);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain("'missing'");
   });

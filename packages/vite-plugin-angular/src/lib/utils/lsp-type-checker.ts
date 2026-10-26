@@ -367,7 +367,7 @@ function resolveTsgoBinary(tsconfig: string): string {
   );
 }
 
-export class TsgoChecker {
+export class LspTypeChecker {
   private proc: ChildProcessWithoutNullStreams;
   private seq = 1;
   private pending = new Map<
@@ -398,7 +398,7 @@ export class TsgoChecker {
     this.proc.on('error', fail);
     this.proc.stdin.on('error', fail);
     this.proc.on('exit', (code) =>
-      fail(new Error(`tsgo exited with code ${code}`)),
+      fail(new Error(`type checker exited with code ${code}`)),
     );
     const rootUri = pathToFileURL(cwd).href;
     this.ready = this.request('initialize', {
