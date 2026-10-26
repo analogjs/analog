@@ -47,8 +47,4 @@ describe('CardComponent', () => {
   it('should match snapshot', () => {
     expect(fixture).toMatchSnapshot();
   });
-
-  it.skip('should skip this test', () => {
-    expect(false).toBeTruthy();
-  });
 });
