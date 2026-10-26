@@ -148,6 +148,21 @@ describe('MdcRendererDirective', () => {
     expect(container?.innerHTML).toBe('');
   });
 
+  it('clears previously rendered content when the AST becomes null', async () => {
+    host.ast.set({ nodes: [['p', {}, 'First']] });
+    await flushRendering(fixture);
+
+    const container = (fixture.nativeElement as HTMLElement).querySelector(
+      'div',
+    );
+    expect(container?.innerHTML).toContain('First');
+
+    host.ast.set(null);
+    await flushRendering(fixture);
+
+    expect(container?.innerHTML).toBe('');
+  });
+
   it('works without MDC_COMPONENTS provider', async () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
