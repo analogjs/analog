@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { rmSync } from 'node:fs';
 import {
   copyFile,
   mkdir,
@@ -23,6 +24,7 @@ const source =
   process.env.NGP_SOURCE ?? (await mkdtemp(join(tmpdir(), 'analog-ngp-')));
 
 if (!process.env.NGP_SOURCE) {
+  process.on('exit', () => rmSync(source, { recursive: true, force: true }));
   const archive = await open(join(source, 'angular.tar.gz'), 'w');
   try {
     execFileSync('gh', ['api', `repos/angular/angular/tarball/${revision}`], {
