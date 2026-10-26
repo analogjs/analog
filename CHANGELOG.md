@@ -1,3 +1,9 @@
+# [3.0.0-beta.13](https://github.com/analogjs/analog/compare/v3.0.0-beta.12...v3.0.0-beta.13) (2026-10-26)
+
+### Features
+
+- **nx-plugin:** lower the minimum supported Nx version to 21.2 ([#2694](https://github.com/analogjs/analog/issues/2694)) ([c0fbfab](https://github.com/analogjs/analog/commit/c0fbfab1bc492ea56ee0ec9facd2a4f42de11be3))
+
 # [3.0.0-beta.12](https://github.com/analogjs/analog/compare/v3.0.0-beta.11...v3.0.0-beta.12) (2026-10-26)
 
 ### Bug Fixes
