@@ -1,3 +1,9 @@
+# [3.0.0-beta.15](https://github.com/analogjs/analog/compare/v3.0.0-beta.14...v3.0.0-beta.15) (2026-10-26)
+
+### Features
+
+- **vite-plugin-angular:** add typeChecker option for NGP type checking ([#2697](https://github.com/analogjs/analog/issues/2697)) ([0a8c571](https://github.com/analogjs/analog/commit/0a8c5716c2ebf004f05387a62f6444d1201b07ac))
+
 # [3.0.0-beta.14](https://github.com/analogjs/analog/compare/v3.0.0-beta.13...v3.0.0-beta.14) (2026-10-26)
 
 ### Features
