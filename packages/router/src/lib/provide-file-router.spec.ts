@@ -8,7 +8,7 @@ import {
 } from '@angular/common/http/testing';
 import { provideLocationMocks } from '@angular/common/testing';
 import { ROUTES, Router } from '@angular/router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { RouteExport } from './models';
 import { ROUTE_JSON_LD_KEY } from './json-ld';
@@ -187,6 +187,21 @@ describe('provideFileRouter integration', () => {
     // route is automatically registered without needing withDebugRoutes().
     expect(debugRoute).toBeDefined();
     expect(debugRoute!.loadComponent).toBeTypeOf('function');
+  });
+
+  it('does not warn about withContentRoutes() when no content files exist', () => {
+    // ANALOG_CONTENT_FILE_COUNT is 0 in tests (not replaced by Vite).
+    const spy = vi.spyOn(console, 'warn');
+    TestBed.configureTestingModule({
+      providers: [provideFileRouter(), provideLocationMocks()],
+    });
+
+    TestBed.inject(ROUTES);
+
+    expect(spy).not.toHaveBeenCalledWith(
+      expect.stringContaining('withContentRoutes() is not configured'),
+    );
+    spy.mockRestore();
   });
 
   it('should register meta tag and JSON-LD listeners before first navigation', async () => {
