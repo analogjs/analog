@@ -92,6 +92,7 @@ export default defineConfig(async ({ mode, command }) => {
         fileReplacements,
         fastCompile: true,
         compilation: process.env['ANALOG_NGP'] === 'true' ? 'ngp' : undefined,
+        typeChecker: process.env['ANALOG_TYPE_CHECKER'] as 'tsgo' | 'tsrs',
       }),
       nitro({
         routeRules: {
