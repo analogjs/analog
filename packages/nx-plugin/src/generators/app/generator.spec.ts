@@ -217,10 +217,33 @@ describe('nx-plugin generator', () => {
       );
     });
 
-    it('rejects Nx versions below 23.2', async () => {
+    it('rejects Nx versions below 21.2', async () => {
       await expect(
-        setup({ analogAppName: 'my-app' }, '23.1.0'),
-      ).rejects.toThrow('Nx v23.2.0 or newer is required to install Analog');
+        setup({ analogAppName: 'my-app' }, '21.1.3'),
+      ).rejects.toThrow('Nx v21.2.0 or newer is required to install Analog');
+    });
+
+    it.each([
+      ['21.2.0', '^6.4.0'],
+      ['22.6.1', '^7.0.0'],
+      ['22.6.2', '^8.0.0'],
+    ])(
+      'installs @nx/vite and a matching Vite version on Nx %s',
+      async (nxVersion, viteVersion) => {
+        const { tree } = await setup({ analogAppName: 'my-app' }, nxVersion);
+        const { devDependencies } = readJson(tree, 'package.json');
+
+        expect(devDependencies['@nx/vite']).toBe(`^${nxVersion}`);
+        expect(devDependencies['vite']).toBe(viteVersion);
+      },
+    );
+
+    it('rejects the oxlint linter on Nx versions below 23.2', async () => {
+      await expect(
+        setup({ analogAppName: 'oxlint-app', linter: 'oxlint' }, '23.1.0'),
+      ).rejects.toThrow(
+        'Nx v23.2.0 or newer is required to use the oxlint linter',
+      );
     });
 
     it('rejects the oxlint linter outside an Nx workspace', async () => {

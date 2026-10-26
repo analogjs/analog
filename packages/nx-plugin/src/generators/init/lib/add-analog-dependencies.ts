@@ -9,14 +9,14 @@ export function addAnalogDependencies(
   vitest: boolean,
   nxVersion?: string,
 ): void {
-  const devDependencies: Record<string, string> =
-    getAnalogDevDependencies(angularVersion);
+  const devDependencies: Record<string, string> = getAnalogDevDependencies(
+    angularVersion,
+    nxVersion,
+  );
   const dependencies = getAnalogDependencies(angularVersion);
 
   if (nxVersion) {
     devDependencies['@nx/vite'] = `^${nxVersion}`;
-  } else {
-    delete devDependencies['@nx/vite'];
   }
 
   if (!vitest) {

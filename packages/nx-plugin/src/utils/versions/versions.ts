@@ -14,5 +14,6 @@ export const ANALOG_JS_VITEST_ANGULAR = '^3.0.0-beta.12';
 export const JSDOM = '^22.0.0';
 export const VITE_TSCONFIG_PATHS = '^4.2.0';
 export const VITE = '^8.0.0';
+export const VITE_7 = '^7.0.0';
+export const VITE_6 = '^6.4.0';
 export const VITEST = '^5.0.0';
-export const NX = '^23.2.0';

@@ -1,10 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { MINIMUM_SUPPORTED_ANGULAR_VERSION } from './versions';
-import {
-  MINIMUM_SUPPORTED_ANGULAR_VERSION as MIN_ANGULAR_GUARD,
-  MINIMUM_SUPPORTED_NX_VERSION,
-} from './versions/minimum-supported-versions';
+import { MINIMUM_SUPPORTED_ANGULAR_VERSION as MIN_ANGULAR_GUARD } from './versions/minimum-supported-versions';
 
 const templatesDir = join(__dirname, 'files');
 
@@ -101,12 +98,6 @@ describe('generator templates', () => {
   describe('version constants', () => {
     it('minimum Angular version is consistent', () => {
       expect(MINIMUM_SUPPORTED_ANGULAR_VERSION).toBe(MIN_ANGULAR_GUARD);
-    });
-
-    it('minimum Nx version is at least 23', () => {
-      expect(
-        Number(MINIMUM_SUPPORTED_NX_VERSION.split('.')[0]),
-      ).toBeGreaterThanOrEqual(23);
     });
 
     it('minimum Angular version is at least 20', () => {
