@@ -29,6 +29,7 @@ export default defineConfig(async ({ mode }) => {
       reporters: ['default'],
       globals: true,
       environment: 'jsdom',
+      pool: 'forks',
       setupFiles: ['src/test-setup.ts'],
       include: ['**/*.spec.ts'],
     },

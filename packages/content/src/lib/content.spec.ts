@@ -279,6 +279,7 @@ Body content`),
         expect(await content).toEqual(
           expect.objectContaining({ content: '# Test content' }),
         );
+        await TestBed.inject(ApplicationRef).whenStable();
         expect(stable).toBe(true);
         stability.unsubscribe();
       },
@@ -304,6 +305,7 @@ Body content`),
       const content = injectContent().subscribe(onContent);
       await new Promise((resolve) => setTimeout(resolve, 0));
 
+      await TestBed.inject(ApplicationRef).whenStable();
       expect(stable).toBe(true);
       params.next(convertToParamMap({ slug: 'second' }));
       expect(stable).toBe(false);
@@ -312,6 +314,7 @@ Body content`),
       expect(onContent).toHaveBeenLastCalledWith(
         expect.objectContaining({ content: 'Second page' }),
       );
+      await TestBed.inject(ApplicationRef).whenStable();
       expect(stable).toBe(true);
       content.unsubscribe();
       stability.unsubscribe();
