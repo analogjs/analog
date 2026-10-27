@@ -141,8 +141,8 @@ platform. The bundled build tracks an unreleased Angular revision and is replace
 by `@angular/ngp` once it is published. The bundled build requires Angular v22.2
 or later.
 
-NGP currently supports AOT application compilation, Vite preprocessing for
-component styles, and full-page reloads. Set `inlineStylesExtension` for inline
+NGP currently supports AOT application compilation and Vite preprocessing for
+component styles. Set `inlineStylesExtension` for inline
 SCSS/Sass/Less; external styles use their file extension. An explicit
 `jit: true` and `fastCompileMode: 'partial'` are rejected.
 
@@ -176,6 +176,25 @@ angular({
 
 Diagnostics follow the TypeScript version the checker implements, so switching
 checkers can surface errors your current version does not report.
+
+### Component HMR
+
+NGP reloads the page on every change by default. Set `liveReload: true` to
+update components in place instead:
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+  liveReload: true,
+});
+```
+
+Components update in place after changes to their template and style files,
+including files those styles import, and after edits to a component file that
+only change its `template`, `templateUrl`, `styles`, `styleUrl`, or `stylesUrl`.
+Any other change, or a change that fails to compile, reloads the page. With
+HMR enabled, `@defer` dependencies load eagerly during development.
 
 ## Type checking
 
