@@ -63,6 +63,8 @@ interface NgpAnalyzer {
 }
 
 interface NgpCompiler {
+  // Parsed templates by file, cleared by NGP's own update methods
+  fileCache: Map<string, unknown>;
   analyzeOptimized(): AsyncIterable<NgpChunk>;
   analyzeOptimizedDelta(): AsyncIterable<NgpChunk>;
   prepareChunk(chunk: NgpChunk): Promise<unknown>;
@@ -223,6 +225,7 @@ export function ngpCompilePlugin(
       const invalidated = await update();
       for (const filePath of invalidated) {
         output.delete(vite.normalizePath(filePath));
+        compiler!.fileCache.delete(filePath);
       }
       chunkContexts.clear();
     } else {
@@ -239,6 +242,7 @@ export function ngpCompilePlugin(
         const normPath = vite.normalizePath(file.filePath);
         filesByPath.set(normPath, { file, chunk });
         output.delete(normPath);
+        compiler!.fileCache.delete(file.filePath);
       }
     }
   }
