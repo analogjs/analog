@@ -181,9 +181,10 @@ export interface PluginOptions {
    * This is separate from Vite's `server.hmr` option, which configures the
    * HMR client transport.
    *
-   * Defaults to `true` for watch mode. Set to `false` to disable Angular
-   * reload updates while keeping other stylesheet externalization behavior
-   * available when needed.
+   * Defaults to `true` for watch mode, or `false` with `compilation: 'ngp'`,
+   * which reloads the page on every change unless this is `true`. Set to
+   * `false` to disable Angular reload updates while keeping other stylesheet
+   * externalization behavior available when needed.
    */
   liveReload?: boolean;
   /**
@@ -259,7 +260,6 @@ interface DeclarationFile {
 
 export function angular(options?: PluginOptions): Plugin[] {
   applyDebugOption(options?.debug, options?.workspaceRoot);
-  const liveReload = options?.liveReload ?? true;
   // Set on each compilation from the Vite plugins' `analog.setup()` hooks.
   let externalizeStylesRequested = false;
   let configureStylesheetRegistry: StylesheetRegistryConfigurator | undefined;
@@ -269,6 +269,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     options?.compilation === 'ngp' && !(isTest && options.jit === undefined)
       ? 'ngp'
       : 'ngtsc';
+  const liveReload = options?.liveReload ?? compilation !== 'ngp';
 
   /**
    * Normalize plugin options so defaults
@@ -1469,7 +1470,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     cssExtensionStyleResolverPlugin(),
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    pluginOptions.liveReload &&
+      liveReloadPlugin(
+        pluginOptions.compilation === 'ngp'
+          ? compilationPlugin.api.componentUpdates
+          : { classNames, fileEmitter },
+      ),
     // `compilationPlugin` is `angularPlugin()`, `fastCompilePlugin()`, or
     // `ngpCompilePlugin()` depending on `compilation` and `fastCompile`.
     compilationPlugin,
