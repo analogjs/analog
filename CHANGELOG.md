@@ -1,3 +1,9 @@
+# [3.0.0-beta.17](https://github.com/analogjs/analog/compare/v3.0.0-beta.16...v3.0.0-beta.17) (2026-10-27)
+
+### Bug Fixes
+
+- **router:** exclude Response from the serverFn result type ([#2703](https://github.com/analogjs/analog/issues/2703)) ([f1541d4](https://github.com/analogjs/analog/commit/f1541d40f93034401d77f387377c6baef2a5f997))
+
 # [3.0.0-beta.16](https://github.com/analogjs/analog/compare/v3.0.0-beta.15...v3.0.0-beta.16) (2026-10-27)
 
 ### Features
