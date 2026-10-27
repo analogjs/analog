@@ -1,3 +1,9 @@
+# [3.0.0-beta.18](https://github.com/analogjs/analog/compare/v3.0.0-beta.17...v3.0.0-beta.18) (2026-10-27)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** remove client index.html shell whenever SSR is enabled ([#2702](https://github.com/analogjs/analog/issues/2702)) ([2a3fc0c](https://github.com/analogjs/analog/commit/2a3fc0cb25482c4227e3a658995d2d67c8a44129))
+
 # [3.0.0-beta.17](https://github.com/analogjs/analog/compare/v3.0.0-beta.16...v3.0.0-beta.17) (2026-10-27)
 
 ### Bug Fixes
