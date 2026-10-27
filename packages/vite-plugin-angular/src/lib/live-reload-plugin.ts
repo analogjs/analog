@@ -8,13 +8,18 @@ import { debugHmr } from './utils/debug.js';
 const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
 const FILE_PREFIX = 'file:';
 
+export interface ComponentUpdates {
+  classNames: Map<string, string>;
+  fileEmitter: (
+    file: string,
+    className: string,
+  ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined;
+}
+
 export function liveReloadPlugin({
   classNames,
   fileEmitter,
-}: {
-  classNames: Map<string, string>;
-  fileEmitter: (file: string) => EmitFileResult | undefined;
-}): Plugin {
+}: ComponentUpdates): Plugin {
   return {
     name: 'analogjs-live-reload-plugin',
     apply: 'serve',
@@ -49,7 +54,7 @@ export function liveReloadPlugin({
           return;
         }
 
-        const [fileId] = decodeURIComponent(componentId).split('@');
+        const [fileId, className] = decodeURIComponent(componentId).split('@');
         const resolvedId = normalizePath(resolve(process.cwd(), fileId));
         const invalidated =
           !!server.moduleGraph.getModuleById(resolvedId)
@@ -64,7 +69,7 @@ export function liveReloadPlugin({
           return;
         }
 
-        const result = fileEmitter(resolvedId);
+        const result = fileEmitter(resolvedId, className);
         debugHmr('middleware: served component update', {
           resolvedId,
           hasCode: !!result?.hmrUpdateCode,
@@ -96,13 +101,10 @@ export function liveReloadPlugin({
           return;
         }
 
+        const [fileId, className] = decodeURIComponent(componentId).split('@');
         const result = fileEmitter(
-          normalizePath(
-            resolve(
-              process.cwd(),
-              decodeURIComponent(componentId).split('@')[0],
-            ),
-          ),
+          normalizePath(resolve(process.cwd(), fileId)),
+          className,
         );
 
         return result?.hmrUpdateCode || '';

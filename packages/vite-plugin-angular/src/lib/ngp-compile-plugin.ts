@@ -17,10 +17,12 @@ import {
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { angularFullVersion } from './utils/devkit.js';
+import { findHmrComponentUpdates } from './utils/hmr-component-updates.js';
 import {
   LspTypeChecker,
   type FileChangeType,
 } from './utils/lsp-type-checker.js';
+import type { ComponentUpdates } from './live-reload-plugin.js';
 
 // The unpublished NGP API is loaded at runtime. Model only the surface we use.
 interface NgpDiagnostic {
@@ -32,6 +34,7 @@ interface NgpFile {
   filePath: string;
   diagnostics?: NgpDiagnostic[];
   classes: {
+    className?: string;
     component?: {
       templateUrl?: { resolvedPath: string };
       styleUrls?: { resolvedPath: string }[];
@@ -49,6 +52,7 @@ interface NgpResult {
   magicString: MagicString;
   diagnostics?: NgpDiagnostic[];
   tcb?: { code: string } | null;
+  hmrUpdateModule?: string | null;
 }
 
 interface NgpAnalyzer {
@@ -75,10 +79,16 @@ interface NgpCompiler {
   ): Promise<NgpResult>;
 }
 
+interface ComponentUpdate {
+  file: string;
+  className: string;
+}
+
 interface NgpAnalyzerOptions {
   nativeBinding?: string;
   backend?: 'wasm';
   wasmBinding?: string;
+  enableHmr?: boolean;
 }
 
 interface NgpApi {
@@ -88,7 +98,7 @@ interface NgpApi {
   ): Promise<NgpAnalyzer>;
   HybridCompiler: new (
     analyzer: NgpAnalyzer,
-    options: { optimize: boolean },
+    options: { optimize: boolean; enableHmr: boolean },
   ) => NgpCompiler;
 }
 
@@ -128,6 +138,26 @@ async function loadNgp(
   };
 }
 
+function transpile(
+  source: string,
+  filePath: string,
+  map?: Parameters<typeof vite.transformWithEsbuild>[3],
+) {
+  return vite.transformWithOxc
+    ? vite.transformWithOxc(
+        source,
+        filePath,
+        { lang: 'ts', sourcemap: true },
+        map,
+      )
+    : vite.transformWithEsbuild(
+        source,
+        filePath,
+        { loader: 'ts', sourcemap: true },
+        map,
+      );
+}
+
 export function ngpCompilePlugin(
   options: FastCompilePluginOptions,
 ): vite.Plugin {
@@ -141,6 +171,7 @@ export function ngpCompilePlugin(
   let resolvedConfig: vite.ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let watchMode = false;
+  let hmr = false;
   let activeBuilds = 0;
   let analyzer: NgpAnalyzer | undefined;
   let compiler: NgpCompiler | undefined;
@@ -149,7 +180,17 @@ export function ngpCompilePlugin(
   const filesByPath = new Map<string, { file: NgpFile; chunk: NgpChunk }>();
   const chunkContexts = new Map<NgpChunk, Promise<unknown>>();
   const output = new Map<string, Promise<NgpResult>>();
-  const watchedFiles = new Set<string>();
+  // Last compiled source of each file, compared on edits for HMR
+  const sources = new Map<string, string>();
+  // Watched files mapped to the source files that depend on them
+  const dependents = new Map<string, Set<string>>();
+  const hmrUpdateCode = new Map<string, string>();
+  const componentUpdates: ComponentUpdates = {
+    classNames: new Map(),
+    fileEmitter: (file, className) => ({
+      hmrUpdateCode: hmrUpdateCode.get(`${file}@${className}`),
+    }),
+  };
   let pending = Promise.resolve();
   const filter = vite.createFilter(TS_EXT_REGEX, [
     /node_modules/,
@@ -232,7 +273,10 @@ export function ngpCompilePlugin(
       filesByPath.clear();
       chunkContexts.clear();
       output.clear();
-      compiler = new api.HybridCompiler(analyzer!, { optimize: true });
+      compiler = new api.HybridCompiler(analyzer!, {
+        optimize: true,
+        enableHmr: hmr,
+      });
     }
     const chunks = update
       ? compiler!.analyzeOptimizedDelta()
@@ -278,41 +322,53 @@ export function ngpCompilePlugin(
     }
   }
 
+  async function processFile(
+    normPath: string,
+    activeCompiler: NgpCompiler,
+    watch: (path: string) => void,
+  ) {
+    const { file: analyzed, chunk } = filesByPath.get(normPath)!;
+    const [file, context, content] = await Promise.all([
+      prepareResources(analyzed, (path) => {
+        const key = vite.normalizePath(path);
+        dependents.set(key, (dependents.get(key) ?? new Set()).add(normPath));
+        watch(path);
+      }),
+      getChunkContext(chunk),
+      analyzer!.getFileContent(analyzed.filePath),
+    ]);
+    sources.set(normPath, content);
+    const result =
+      activeCompiler.processFile.length >= 5
+        ? await activeCompiler.processFile(
+            file.filePath,
+            content,
+            undefined,
+            file,
+            context,
+          )
+        : await activeCompiler.processFile(
+            file.filePath,
+            content,
+            file,
+            context,
+          );
+    return { file, content, result };
+  }
+
   function compileFile(
     normPath: string,
     watch: (path: string) => void,
   ): Promise<NgpResult> | undefined {
-    const entry = filesByPath.get(normPath);
-    if (!entry) return undefined;
+    if (!filesByPath.has(normPath)) return undefined;
     let task = output.get(normPath);
     if (!task) {
       task = (async () => {
-        const activeAnalyzer = analyzer!;
-        const activeCompiler = compiler!;
-        const trackWatch = (path: string) => {
-          watchedFiles.add(path);
-          watch(path);
-        };
-        const [file, context, content] = await Promise.all([
-          prepareResources(entry.file, trackWatch),
-          getChunkContext(entry.chunk),
-          activeAnalyzer.getFileContent(entry.file.filePath),
-        ]);
-        const result =
-          activeCompiler.processFile.length >= 5
-            ? await activeCompiler.processFile(
-                file.filePath,
-                content,
-                undefined,
-                file,
-                context,
-              )
-            : await activeCompiler.processFile(
-                file.filePath,
-                content,
-                file,
-                context,
-              );
+        const { file, content, result } = await processFile(
+          normPath,
+          compiler!,
+          watch,
+        );
         const errors = [
           ...(file.diagnostics ?? []),
           ...(result.diagnostics ?? []),
@@ -332,10 +388,91 @@ export function ngpCompilePlugin(
     return task;
   }
 
+  function componentNames(normPath: string) {
+    return (filesByPath.get(normPath)?.file.classes ?? []).flatMap(
+      ({ className, component }) => (component && className ? [className] : []),
+    );
+  }
+
+  // Components to update in place, following the Angular CLI's rule
+  async function findComponentUpdates(
+    normPath: string,
+    read: () => string | Promise<string>,
+  ): Promise<ComponentUpdate[]> {
+    if (!TS_EXT_REGEX.test(normPath)) {
+      return [...(dependents.get(normPath) ?? [])].flatMap((file) =>
+        componentNames(file).map((className) => ({ file, className })),
+      );
+    }
+    const stale = sources.get(normPath);
+    if (stale === undefined) return [];
+    const classNames = findHmrComponentUpdates(
+      normPath,
+      stale,
+      await read(),
+      new Set(componentNames(normPath)),
+    );
+    return (classNames ?? []).map((className) => ({
+      file: normPath,
+      className,
+    }));
+  }
+
+  async function emitHmrUpdate(file: string, className: string) {
+    // NGP emits only the update module of the class named by `hmrUpdateTarget`
+    const target = Object.assign(
+      Object.create(Object.getPrototypeOf(compiler)),
+      compiler,
+      { hmrUpdateTarget: className },
+    );
+    const { result } = await processFile(file, target, () => {});
+    return (
+      result.hmrUpdateModule &&
+      (await transpile(result.hmrUpdateModule, file)).code
+    );
+  }
+
+  async function sendComponentUpdates(
+    updates: ComponentUpdate[],
+    server: vite.ViteDevServer,
+  ) {
+    try {
+      for (const file of new Set(updates.map((update) => update.file))) {
+        await compileFile(file, () => {});
+      }
+      const codes = await Promise.all(
+        updates.map(({ file, className }) => emitHmrUpdate(file, className)),
+      );
+      if (codes.some((code) => !code)) return false;
+      updates.forEach(({ file, className }, index) => {
+        hmrUpdateCode.set(`${file}@${className}`, codes[index]!);
+        componentUpdates.classNames.set(file, className);
+        server.moduleGraph
+          .getModulesByFile(file)
+          ?.forEach((mod) => server.moduleGraph.invalidateModule(mod));
+        server.ws.send('angular:component-update', {
+          id: encodeURIComponent(
+            `${filesByPath.get(file)!.file.filePath}@${className}`,
+          ),
+          timestamp: Date.now(),
+        });
+      });
+      return true;
+    } catch {
+      // A full reload reports the compilation error
+      return false;
+    }
+  }
+
   return {
     name: '@analogjs/vite-plugin-angular-ngp',
     enforce: 'pre',
-    api: { getTsConfigPath: resolveTsConfigPath, output, ready: () => pending },
+    api: {
+      getTsConfigPath: resolveTsConfigPath,
+      output,
+      ready: () => pending,
+      componentUpdates,
+    },
     config(config, { command }) {
       watchMode = command === 'serve';
       configContext = {
@@ -358,6 +495,11 @@ export function ngpCompilePlugin(
     },
     async configResolved(config) {
       resolvedConfig = config;
+      hmr =
+        watchMode &&
+        options.liveReload &&
+        !options.isTest &&
+        config.server.hmr !== false;
       const integrations = await discoverAnalogIntegrations(config);
       transformFilter = integrations.transformFilter;
     },
@@ -385,11 +527,14 @@ export function ngpCompilePlugin(
         const tsconfig = resolveTsConfigPath();
         const ngp = await loadNgp(tsconfig);
         api = ngp.api;
-        analyzer = await api.createAnalyzer(tsconfig, ngp.analyzerOptions);
+        analyzer = await api.createAnalyzer(tsconfig, {
+          ...ngp.analyzerOptions,
+          enableHmr: hmr,
+        });
         pending = indexChunks();
       }
       await pending;
-      for (const path of watchedFiles) {
+      for (const path of dependents.keys()) {
         this.addWatchFile(path);
       }
     },
@@ -414,24 +559,19 @@ export function ngpCompilePlugin(
         includeContent: true,
         hires: true,
       });
-      return vite.transformWithOxc
-        ? vite.transformWithOxc(
-            source,
-            filePath,
-            { lang: 'ts', sourcemap: true },
-            map,
-          )
-        : vite.transformWithEsbuild(
-            source,
-            filePath,
-            { loader: 'ts', sourcemap: true },
-            map,
-          );
+      return transpile(source, filePath, map);
     },
     async handleHotUpdate(ctx) {
+      const normPath = vite.normalizePath(ctx.file);
+      const updates = hmr ? await findComponentUpdates(normPath, ctx.read) : [];
       await enqueueIndex(() =>
         analyzer!.invalidateFiles([{ filePath: ctx.file, updateType: 2 }]),
       );
+      if (updates.length && (await sendComponentUpdates(updates, ctx.server))) {
+        return [];
+      }
+      hmrUpdateCode.clear();
+      componentUpdates.classNames.clear();
       ctx.server.moduleGraph.invalidateAll();
       ctx.server.ws.send({ type: 'full-reload' });
       return [];
@@ -455,7 +595,8 @@ export function ngpCompilePlugin(
       filesByPath.clear();
       chunkContexts.clear();
       output.clear();
-      watchedFiles.clear();
+      sources.clear();
+      dependents.clear();
       releaseCssPreprocessorWorkers();
     },
   };
