@@ -67,9 +67,8 @@ export async function buildServer(
 
     if (
       options?.ssr &&
-      nitroConfig?.prerender?.routes &&
-      (nitroConfig?.prerender?.routes.find((route) => route === '/') ||
-        nitroConfig?.prerender?.routes?.length === 0)
+      (!(options.static || nitro.options.static) ||
+        nitroConfig.prerender?.routes?.includes('/'))
     ) {
       const indexFileExts = ['', '.br', '.gz'];
 
