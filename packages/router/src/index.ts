@@ -46,6 +46,7 @@ export type {
   ServerFnDef,
   ServerFnHandler,
   ServerFnMethod,
+  ServerFnResult,
   StandardSchemaV1,
 } from './lib/server-fn/types';
 
