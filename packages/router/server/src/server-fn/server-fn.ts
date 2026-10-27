@@ -3,6 +3,7 @@ import type {
   ServerFn,
   ServerFnConfig,
   ServerFnHandler,
+  ServerFnResult,
   StandardSchemaV1,
 } from '@analogjs/router';
 
@@ -27,15 +28,15 @@ import { serverFnRegistry } from './registry';
  */
 export function serverFn<Out>(
   handler: ServerFnHandler<void, Out>,
-): ServerFn<void, Out>;
+): ServerFn<void, ServerFnResult<Out>>;
 export function serverFn<In, Out>(
   input: StandardSchemaV1<In>,
   handler: ServerFnHandler<In, Out>,
-): ServerFn<In, Out>;
+): ServerFn<In, ServerFnResult<Out>>;
 export function serverFn<In, Out>(
   config: ServerFnConfig<In>,
   handler: ServerFnHandler<In, Out>,
-): ServerFn<In, Out>;
+): ServerFn<In, ServerFnResult<Out>>;
 export function serverFn(
   arg1: unknown,
   arg2?: ServerFnHandler<unknown, unknown>,

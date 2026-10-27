@@ -50,6 +50,8 @@ export type ServerFn<In, Out> = ((input: In) => Promise<Out>) & {
   readonly method: ServerFnMethod;
 };
 
+export type ServerFnResult<Out> = Exclude<Out, Response>;
+
 export type ServerFnHandler<In, Out> = (
   input: In,
   context: ServerFnContext,
