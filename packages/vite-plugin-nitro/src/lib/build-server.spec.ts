@@ -39,16 +39,25 @@ describe('buildServer', () => {
 
   it('removes the client index.html shell for SSR when / is not prerendered', async () => {
     await buildServer(
-      { ssr: true, static: true },
+      { ssr: true },
       { output: { publicDir }, prerender: { routes: ['/about'] } },
     );
 
     expect(indexFiles()).toEqual([false, false, false]);
   });
 
+  it('keeps the client index.html shell for static builds when / is not prerendered', async () => {
+    await buildServer(
+      { ssr: true, static: true },
+      { output: { publicDir }, prerender: { routes: ['/about'] } },
+    );
+
+    expect(indexFiles()).toEqual([true, true, true]);
+  });
+
   it('keeps the client index.html shell when SSR is disabled', async () => {
     await buildServer(
-      { ssr: false, static: true },
+      { ssr: false },
       { output: { publicDir }, prerender: { routes: ['/about'] } },
     );
 

@@ -65,7 +65,10 @@ export async function buildServer(
     await prepare(nitro);
     await copyPublicAssets(nitro);
 
-    if (options?.ssr) {
+    if (
+      options?.ssr &&
+      (!options.static || nitroConfig.prerender?.routes?.includes('/'))
+    ) {
       const indexFileExts = ['', '.br', '.gz'];
 
       indexFileExts.forEach((fileExt) => {
