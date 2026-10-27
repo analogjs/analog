@@ -13,7 +13,8 @@ import { prerender } from 'nitropack';
 import { buildServer } from './build-server.js';
 
 vi.mock('nitropack', () => ({
-  createNitro: vi.fn(async () => ({
+  createNitro: vi.fn(async (config: { static?: boolean }) => ({
+    options: { static: config.static ?? false },
     hooks: { hook: vi.fn() },
     close: vi.fn(),
   })),
@@ -76,6 +77,19 @@ describe('buildServer', () => {
     await buildServer(
       { ssr: true, static: true },
       { output: { publicDir }, prerender: { routes: ['/about'] } },
+    );
+
+    expect(indexFiles()).toEqual([true, true, true]);
+  });
+
+  it('keeps the client index.html shell for static Nitro presets when / is not prerendered', async () => {
+    await buildServer(
+      { ssr: true },
+      {
+        static: true,
+        output: { publicDir },
+        prerender: { routes: ['/about'] },
+      },
     );
 
     expect(indexFiles()).toEqual([true, true, true]);

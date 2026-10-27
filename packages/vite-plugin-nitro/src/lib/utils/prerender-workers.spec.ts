@@ -14,6 +14,7 @@ const lifecycle = vi.hoisted(() => ({
 }));
 vi.mock('nitropack', () => ({
   createNitro: async () => ({
+    options: { static: false },
     hooks: {
       hook: (name: string, callback: typeof lifecycle.init) => {
         expect(name).toBe('prerender:init');
