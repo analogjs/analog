@@ -137,17 +137,63 @@ export function extractInlineSourceMap(
   code: string,
   id: string,
 ): { code: string; map: string | null } {
-  const sourceMapMatch = code.match(
-    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
-  );
-  if (!sourceMapMatch || sourceMapMatch.index === undefined) {
+  const marker = '//# sourceMappingURL=data:application/json';
+  const markerIndex = code.lastIndexOf(marker);
+
+  const markerStartsLine =
+    markerIndex === 0 || code[markerIndex - 1] === '\n';
+
+  if (markerIndex === -1 || !markerStartsLine) {
     return {
       code,
       map: null,
     };
   }
+
+  const lineEndIndex = code.indexOf('\n', markerIndex);
+
+  // Only treat it as a sourcemap comment if it is the final content
+  // in the file, matching the previous regex behaviour.
+  if (
+    lineEndIndex !== -1 &&
+    code.slice(lineEndIndex).trim().length !== 0
+  ) {
+    return {
+      code,
+      map: null,
+    };
+  }
+
+  const sourceMapComment = code.slice(
+    markerIndex,
+    lineEndIndex === -1 ? code.length : lineEndIndex,
+  );
+
+  const base64Marker = ';base64,';
+  const base64Index = sourceMapComment.indexOf(base64Marker);
+
+  if (base64Index === -1) {
+    return {
+      code,
+      map: null,
+    };
+  }
+
+  const encodedSourceMap = sourceMapComment
+    .slice(base64Index + base64Marker.length)
+    .trim();
+
+  let extractedCode = code.slice(0, markerIndex);
+
+  // Preserve previous regex behaviour
+  if (extractedCode.endsWith('\r\n')) {
+    extractedCode = extractedCode.slice(0, -2);
+  } else if (extractedCode.endsWith('\n')) {
+    extractedCode = extractedCode.slice(0, -1);
+  }
+
   return {
-    code: code.slice(0, sourceMapMatch.index),
-    map: Buffer.from(sourceMapMatch[1]!, 'base64').toString(),
+    code: extractedCode,
+    map: Buffer.from(encodedSourceMap, 'base64').toString(),
   };
 }
