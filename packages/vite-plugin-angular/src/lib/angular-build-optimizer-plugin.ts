@@ -133,21 +133,39 @@ export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
   };
 }
 
-export function extractInlineSourceMap(
-  code: string,
-  id: string,
-): { code: string; map: string | null } {
-  const sourceMapMatch = code.match(
-    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
-  );
-  if (!sourceMapMatch || sourceMapMatch.index === undefined) {
+export function extractInlineSourceMap(code, id) {
+  const marker = '//# sourceMappingURL=data:application/json';
+  const markerIndex = code.lastIndexOf(marker);
+
+  if (markerIndex === -1) {
     return {
       code,
       map: null,
     };
   }
+
+  const lineEndIndex = code.indexOf('\n', markerIndex);
+  const sourceMapComment = code.slice(
+    markerIndex,
+    lineEndIndex === -1 ? code.length : lineEndIndex,
+  );
+
+  const base64Marker = ';base64,';
+  const base64Index = sourceMapComment.indexOf(base64Marker);
+
+  if (base64Index === -1) {
+    return {
+      code,
+      map: null,
+    };
+  }
+
+  const encodedSourceMap = sourceMapComment
+    .slice(base64Index + base64Marker.length)
+    .trim();
+
   return {
-    code: code.slice(0, sourceMapMatch.index),
-    map: Buffer.from(sourceMapMatch[1]!, 'base64').toString(),
+    code: code.slice(0, markerIndex),
+    map: Buffer.from(encodedSourceMap, 'base64').toString(),
   };
 }
