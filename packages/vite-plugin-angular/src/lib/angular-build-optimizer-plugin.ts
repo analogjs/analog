@@ -140,7 +140,10 @@ export function extractInlineSourceMap(
   const marker = '//# sourceMappingURL=data:application/json';
   const markerIndex = code.lastIndexOf(marker);
 
-  if (markerIndex === -1) {
+  const markerStartsLine =
+    markerIndex === 0 || code[markerIndex - 1] === '\n';
+
+  if (markerIndex === -1 || !markerStartsLine) {
     return {
       code,
       map: null,
@@ -148,6 +151,19 @@ export function extractInlineSourceMap(
   }
 
   const lineEndIndex = code.indexOf('\n', markerIndex);
+
+  // Only treat it as a sourcemap comment if it is the final content
+  // in the file, matching the previous regex behaviour.
+  if (
+    lineEndIndex !== -1 &&
+    code.slice(lineEndIndex).trim().length !== 0
+  ) {
+    return {
+      code,
+      map: null,
+    };
+  }
+
   const sourceMapComment = code.slice(
     markerIndex,
     lineEndIndex === -1 ? code.length : lineEndIndex,
@@ -167,8 +183,17 @@ export function extractInlineSourceMap(
     .slice(base64Index + base64Marker.length)
     .trim();
 
+  let extractedCode = code.slice(0, markerIndex);
+
+  // Preserve previous regex behaviour
+  if (extractedCode.endsWith('\r\n')) {
+    extractedCode = extractedCode.slice(0, -2);
+  } else if (extractedCode.endsWith('\n')) {
+    extractedCode = extractedCode.slice(0, -1);
+  }
+
   return {
-    code: code.slice(0, markerIndex),
+    code: extractedCode,
     map: Buffer.from(encodedSourceMap, 'base64').toString(),
   };
 }
