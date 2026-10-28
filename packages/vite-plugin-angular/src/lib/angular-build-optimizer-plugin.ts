@@ -133,7 +133,10 @@ export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
   };
 }
 
-export function extractInlineSourceMap(code, id) {
+export function extractInlineSourceMap(
+  code: string,
+  id: string,
+): { code: string; map: string | null } {
   const marker = '//# sourceMappingURL=data:application/json';
   const markerIndex = code.lastIndexOf(marker);
 
