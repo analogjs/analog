@@ -22,6 +22,9 @@
         "command": "node tools/scripts/verify-package-artifacts.mts vite-plugin-angular"
       }
     },
+    "test": {
+      "dependsOn": ["^build", "router:build"]
+    },
     "prepare-ngp": {
       "executor": "nx:run-commands",
       "cache": false,
