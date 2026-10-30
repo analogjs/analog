@@ -220,20 +220,8 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
       };
 
       if (ssr) {
-        // Two-pronged registration: `experimental.vite.services.ssr.entry`
-        // is the documented hook, but nitro/vite's setupNitroContext also
-        // accepts an `environments.ssr.build.rollupOptions.input` entry
-        // (see node_modules/nitro/dist/vite.mjs:710-734). When `analog()`
-        // and `nitro()` are invoked separately, the `services` slot on
-        // `nitro()`'s pluginConfig is empty, so the rollupOptions.input
-        // path is how we get our wrapper entry recognized.
-        overrides.experimental = {
-          vite: {
-            services: {
-              ssr: { entry: ssrEntryMarkerPath },
-            },
-          },
-        };
+        // nitro/vite registers the SSR service from
+        // `environments.ssr.build.rollupOptions.input`.
         (overrides.environments as Record<string, unknown>)['ssr'] = {
           build: {
             outDir: resolve(
@@ -549,7 +537,8 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
           }
         }
 
-        nitro.hooks.hook('rollup:before', (_n, rollupConfig: any) => {
+        nitro.hooks.hook('build:config', (_n, buildConfig) => {
+          const rollupConfig: any = buildConfig.rollup ?? buildConfig.rolldown;
           if (Array.isArray(rollupConfig.plugins)) {
             rollupConfig.plugins.push(
               nitroH3Resolver,
