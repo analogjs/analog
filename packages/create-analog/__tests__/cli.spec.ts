@@ -230,6 +230,19 @@ test('scaffolds a versioned Angular template', () => {
   );
 });
 
+test('scaffolds the Angular v20 template with separate plugins', () => {
+  run([projectName, '--template', 'angular-v20', '--skipTailwind', 'false'], {
+    cwd: tmpDir,
+  });
+
+  expect(readGeneratedViteConfig()).toMatch(
+    /plugins:\s*\[\s*analog\(\),\s*angular\(\),\s*nitro\(\),\s*tailwindcss\(\),\s*\]/,
+  );
+  expect(
+    readGeneratedPackageJson().devDependencies['@analogjs/vite-plugin-nitro'],
+  ).toBeDefined();
+});
+
 test('configures the blog highlighter at build time only', () => {
   run([projectName, '--template', 'blog', '--skipTailwind', 'true'], {
     cwd: tmpDir,

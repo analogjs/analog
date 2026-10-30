@@ -89,7 +89,7 @@ describe('analogNitroPlugin', () => {
     const plugin = analogNitroPlugin({ workspaceRoot, ssr: true });
     const overrides: any = callConfig(plugin, projectRoot);
 
-    expect(overrides.experimental.vite.services.ssr.entry).toMatch(
+    expect(overrides.environments.ssr.build.rollupOptions.input.index).toMatch(
       /\.analog\/__ssr-entry\.mjs$/,
     );
   });
@@ -293,7 +293,7 @@ describe('analogNitroPlugin', () => {
 
     expect(nitroMock.options.handlers).toHaveLength(1);
     expect(nitroMock.options.handlers[0].route).toContain('/_analog/pages');
-    expect(hookFn).toHaveBeenCalledWith('rollup:before', expect.any(Function));
+    expect(hookFn).toHaveBeenCalledWith('build:config', expect.any(Function));
   });
 
   it('resolves a built SSR entry emitted with a .js extension', async () => {
