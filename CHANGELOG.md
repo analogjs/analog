@@ -1,3 +1,9 @@
+## [2.9.3](https://github.com/analogjs/analog/compare/v2.9.2...v2.9.3) (2026-10-30)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** keep compilation state until all parallel environment builds end ([#2706](https://github.com/analogjs/analog/issues/2706)) ([c635be3](https://github.com/analogjs/analog/commit/c635be392a6466dbd67b9f21554832c9a610bd80))
+
 ## [2.9.2](https://github.com/analogjs/analog/compare/v2.9.1...v2.9.2) (2026-10-22)
 
 ### Bug Fixes
