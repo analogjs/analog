@@ -1,3 +1,9 @@
+## [2.9.4](https://github.com/analogjs/analog/compare/v2.9.3...v2.9.4) (2026-10-31)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** republish vite-plugin-angular and vite-plugin-nitro ([93a3278](https://github.com/analogjs/analog/commit/93a3278095667effd445759da6b24455651a9a63))
+
 ## [2.9.3](https://github.com/analogjs/analog/compare/v2.9.2...v2.9.3) (2026-10-30)
 
 ### Bug Fixes
