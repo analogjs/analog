@@ -127,6 +127,30 @@ describe('createAnalogRequestHandler', () => {
     expect(network).not.toHaveBeenCalled();
   });
 
+  it('keeps absolute URLs from BASE_URL in-process behind a proxy', async () => {
+    const network = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network'));
+    ANALOG_SERVER_MANIFEST.render =
+      async () =>
+      async (_url, _document, { fetch }) =>
+        JSON.stringify(
+          await fetch!('https://app.example/api/_analog/pages/users/2'),
+        );
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/`, {
+        headers: {
+          'x-forwarded-proto': 'https',
+          'x-forwarded-host': 'app.example',
+        },
+      }),
+    );
+
+    expect(await response?.json()).toEqual({ id: '2' });
+    expect(network).not.toHaveBeenCalled();
+  });
+
   it('dispatches server functions with a JSON body', async () => {
     const handle = createAnalogRequestHandler();
     const call = (body: string) =>

@@ -6,6 +6,7 @@ import { Socket } from 'node:net';
 import { $fetch } from 'ofetch';
 import { createRouter } from 'radix3';
 
+import { getBaseUrl } from './provide-server-context';
 import { createServerFnAppInjector } from './server-fn/app-injector';
 import { dispatchServerFn } from './server-fn/dispatch';
 import {
@@ -92,12 +93,12 @@ export function createAnalogRequestHandler(
             request,
             url,
             context,
-            serverFetch(url.origin),
+            serverFetch(baseUrl(context)),
           )
         : null;
     }
     if (request.method === 'GET' && !url.pathname.startsWith(apiPrefix)) {
-      return renderPage(manifest, url, context, serverFetch(url.origin));
+      return renderPage(manifest, url, context, serverFetch(baseUrl(context)));
     }
     return null;
   }
@@ -138,6 +139,11 @@ export function createAnalogRequestHandler(
   }
 
   return handle;
+}
+
+/** The origin `BASE_URL` holds, so absolute URLs built from it stay in-process. */
+function baseUrl(context: AnalogRequestContext): string {
+  return getBaseUrl(context.req as ServerContext['req']);
 }
 
 function serverManifest(): AnalogServerManifest {
