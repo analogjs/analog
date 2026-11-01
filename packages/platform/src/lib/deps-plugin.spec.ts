@@ -1,3 +1,4 @@
+import { resolveConfig } from 'vite';
 import { describe, it, expect } from 'vitest';
 
 import { depsPlugin } from './deps-plugin.js';
@@ -16,6 +17,18 @@ describe('depsPlugin oxc config', () => {
     const result = (plugins[0].config as any)();
 
     expect(result.oxc).toEqual({ exclude: ['**/*.ts', '**/*.js'] });
+  });
+
+  it("keeps the user's own transform config", async () => {
+    const userConfig = {
+      configFile: false as const,
+      plugins: depsPlugin(),
+      oxc: { include: ['src/server/**/*.ts'] },
+    };
+    const { oxc } = await resolveConfig(userConfig, 'serve');
+
+    expect(oxc).toMatchObject({ include: ['src/server/**/*.ts'] });
+    expect((oxc as { exclude?: unknown }).exclude).toBeUndefined();
   });
 });
 
