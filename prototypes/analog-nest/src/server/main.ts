@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { fileURLToPath } from 'node:url';
 
 import type { AnalogNodeApp } from '../router-server/analog-handler';
 import { AppModule } from './app.module';
@@ -11,6 +12,13 @@ async function createNestApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     rawBody: true,
   });
+  // Vite serves client files in dev. In production they must be registered
+  // before init(), so they come ahead of the Analog handler mounted then.
+  if (!import.meta.env.DEV) {
+    app.useStaticAssets(fileURLToPath(new URL('../client', import.meta.url)), {
+      index: false,
+    });
+  }
   return app.init();
 }
 

@@ -28,14 +28,15 @@ npm run verify -- http://localhost:3000 --analog-only   # any host
 
 | Host        | dev                 | production          |
 | ----------- | ------------------- | ------------------- |
-| NestJS      | 16 / 16             | 16 / 16             |
-| `node:http` | 7 / 7 (Analog-only) | 7 / 7 (Analog-only) |
+| NestJS      | 17 / 17             | 17 / 17             |
+| `node:http` | 8 / 8 (Analog-only) | 8 / 8 (Analog-only) |
 
 The checks cover:
 
 - SSR, page endpoint `load`s (one of them calls a Nest controller through `fetch`) and `defineAction` (200 and 422)
 - Server functions: success, 400 on invalid input, 403 cross-origin, 404 for an unknown ID
 - Nest controllers (GET, POST, 404); an unclaimed `/api` route goes to the host, not SSR
+- The page's client script is served by the host (production) or Vite (dev)
 - One Nest DI instance shared by SSR, server functions and controllers
 - Hydration, a client-side server function call and a form submit in a real browser, with no console errors
 
@@ -66,14 +67,20 @@ src/
 import { createAnalogHandler } from '@analogjs/router/server';
 ```
 
-Returns a `(req, res, next)` handler that serves the whole Analog app on any Node server:
+Returns a `(req, res, next)` handler for Analog's own requests on any Node server:
 
-1. Static client files (production only, via `serve-static`, with `index: false` so `/` is rendered).
-2. `/_analog/fn/:id` and `/<apiPrefix>/_analog/pages/**`, through an h3 v1 sub-app built from Analog's own handlers:
+1. `/_analog/fn/:id` and `/<apiPrefix>/_analog/pages/**`, through an h3 v1 sub-app built from Analog's own handlers:
    - Server functions use `createServerFnEventHandler(createServerFnAppInjector(config))`, exactly what Nitro registers.
    - Page endpoints call each `load` or `action` with an ofetch `fetch`, matching what Nitro provides.
-3. SSR for any GET outside `/<apiPrefix>/`, using the app's `main.server.ts` renderer. It receives an ofetch instance as `ServerContext.fetch`, which the router uses for TransferState.
-4. Everything else goes to `next()`, so the host's own routes and 404 handling apply.
+2. SSR for any GET outside `/<apiPrefix>/`, using the app's `main.server.ts` renderer. It receives an ofetch instance as `ServerContext.fetch`, which the router uses for TransferState.
+3. Everything else goes to `next()`, so the host's own routes and 404 handling apply.
+
+**Static client files are the host's job**, with the host's own tools: `express.static`, Nest's `useStaticAssets()` or `ServeStaticModule`, `serve-static` on `node:http`, a CDN. In production, files are in `dist/client`, which is `../client` from the server entry. Two rules:
+
+- Register static files **before** the Analog handler. Otherwise the SSR catch-all answers asset URLs with rendered HTML.
+- Use `index: false` (or equivalent), so `/` is server-rendered instead of returning the client's `index.html`.
+
+In dev, Vite serves client files, so hosts only register static files in production.
 
 The handler gets the app's files from `ANALOG_SERVER_MANIFEST`, which the router ships as an empty placeholder (`{}`). This follows the existing `ANALOG_ROUTE_FILES` pattern, which `@analogjs/router` ships as `{}` and the platform's router plugin fills in. So the router never imports a module that only the platform provides; without the platform's build, `createAnalogHandler()` throws a clear error. The manifest holds only lazy imports:
 
@@ -119,9 +126,9 @@ export class AppModule implements OnModuleInit {
 }
 ```
 
-The entry creates the app with `NestFactory.create(AppModule, { rawBody: true })`. For dev, `createApp()` returns `{ handle: app.getHttpAdapter().getInstance(), close: () => app.close() }`. `injectNest(GreetingService)` (`inject-nest.ts`, about 25 lines) resolves Nest providers from server functions, page loads and SSR.
+The entry creates the app with `NestFactory.create(AppModule, { rawBody: true })` and, in production, calls `app.useStaticAssets(clientDir, { index: false })` before `app.init()`. Anything Nest registers after `init()` sits behind its 404 handler, and `init()` is where the Analog handler gets mounted. For dev, `createApp()` returns `{ handle: app.getHttpAdapter().getInstance(), close: () => app.close() }`. `injectNest(GreetingService)` (`inject-nest.ts`, about 25 lines) resolves Nest providers from server functions, page loads and SSR.
 
-Nest-specific code in total: the `onModuleInit` mount, `rawBody: true`, `createApp()`, and `inject-nest.ts`.
+Nest-specific code in total: the `onModuleInit` mount, `rawBody: true`, `useStaticAssets()`, `createApp()`, and `inject-nest.ts`.
 
 ## Findings
 
@@ -143,6 +150,8 @@ Nest-specific code in total: the `onModuleInit` mount, `rawBody: true`, `createA
 Fastify (needs `@fastify/middie` for `use()`), Vite 6/7, streaming SSR, i18n, prerendering, per-route `ssr: false`, `src/server/routes` (the host's own routes replace file-based API routes), WebSockets, Windows paths, Nx layouts where the workspace root differs from the app root.
 
 ## Proposal
+
+Filed as analogjs/analog#2710 (fixes), analogjs/analog#2711 (handler and server build) and analogjs/analog#2712 (NestJS docs).
 
 - **Fix in Analog regardless:** findings 3, 4 and 6, plus checking finding 7 on Nitro.
 - **Add to Analog:** `createAnalogHandler()` in `@analogjs/router/server` (shaped like `src/router-server/`), and a server build in `@analogjs/platform`, as `analogNodeServer()` or an `analog()` option (shaped like `src/platform/`). Any Node host can use them: Nest, Express, Fastify, or a custom `server.mjs`.

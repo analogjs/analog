@@ -37,13 +37,20 @@ const form = (body) => ({
 const page = '/api/_analog/pages/index';
 
 // Analog only: these hold on any host.
-await check(
+const aboutHtml = await check(
   'SSR renders an Analog-only page',
   { path: '/about' },
   {
     status: 200,
     body: /<p id="about">About, from a page endpoint/,
   },
+);
+// Served by the host (production) or Vite (dev), not by the Analog handler.
+const script = aboutHtml.match(/<script type="module"[^>]*src="([^"]+)"/)?.[1];
+await check(
+  `client script ${script} is served as JavaScript`,
+  { path: script ?? '/missing.js' },
+  { status: 200, body: /\b(import|export)\b/ },
 );
 await check(
   'page endpoint load (Analog-only page)',

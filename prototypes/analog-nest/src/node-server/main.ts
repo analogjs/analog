@@ -1,4 +1,6 @@
 import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+import serveStatic from 'serve-static';
 
 import {
   createAnalogHandler,
@@ -11,11 +13,18 @@ export async function createApp(): Promise<AnalogNodeApp> {
 }
 
 if (!import.meta.env.DEV) {
+  const staticFiles = serveStatic(
+    fileURLToPath(new URL('../client', import.meta.url)),
+    { index: false },
+  );
   const handle = createAnalogHandler();
-  createServer((req, res) =>
-    handle(req, res, (error) => {
+  createServer((req, res) => {
+    const notFound = (error?: unknown) => {
       res.statusCode = error ? 500 : 404;
       res.end(error ? 'Internal Server Error' : 'Not Found');
-    }),
-  ).listen(process.env['PORT'] ?? 3000);
+    };
+    staticFiles(req, res, (error) =>
+      error ? notFound(error) : handle(req, res, notFound),
+    );
+  }).listen(process.env['PORT'] ?? 3000);
 }

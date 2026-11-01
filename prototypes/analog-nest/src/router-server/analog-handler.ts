@@ -17,7 +17,6 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { TLSSocket } from 'node:tls';
 import { fileURLToPath } from 'node:url';
 import { $fetch } from 'ofetch';
-import serveStatic from 'serve-static';
 import type { ViteDevServer } from 'vite';
 
 import {
@@ -42,19 +41,17 @@ const SERVER_FN_PREFIX = '/_analog/fn/';
 const VITE_SERVER = Symbol.for('analog.node.vite');
 
 /**
- * Serves an Analog app from any Node server: static client files
- * (production), server functions and page endpoints, then SSR for GET
- * requests outside the API prefix. Anything else goes to `next`.
+ * Handles Analog's requests on any Node server: server functions and page
+ * endpoints, then SSR for GET requests outside the API prefix. Anything else
+ * goes to `next`. Static client files are the host's job; register them
+ * first (with `index: false`), or SSR answers asset URLs.
  */
 export function createAnalogHandler(): NodeHandler {
   const manifest = serverManifest();
   const pageEndpointPrefix = `/${manifest.apiPrefix}/_analog/pages/`;
-  const staticFiles = import.meta.env.DEV
-    ? undefined
-    : serveStatic(clientDir(), { index: false });
   const endpoints = toNodeListener(createEndpointsApp(manifest));
 
-  const handleAnalog: NodeHandler = (req, res, next) => {
+  return (req, res, next) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
     if (
       path.startsWith(SERVER_FN_PREFIX) ||
@@ -70,13 +67,6 @@ export function createAnalogHandler(): NodeHandler {
       next();
     }
   };
-
-  return staticFiles
-    ? (req, res, next) =>
-        staticFiles(req, res, (error) =>
-          error ? next(error) : handleAnalog(req, res, next),
-        )
-    : handleAnalog;
 }
 
 function serverManifest(): AnalogServerManifest {
