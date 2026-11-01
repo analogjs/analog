@@ -32,6 +32,17 @@ describe('depsPlugin oxc config', () => {
   });
 });
 
+describe('depsPlugin with an esbuild config on Vite 8', () => {
+  it('leaves the transform to Vite', () => {
+    const plugins = depsPlugin();
+    const result = (plugins[0].config as any)({
+      esbuild: { include: ['src/server/**/*.ts'] },
+    });
+
+    expect(result).not.toHaveProperty('oxc');
+  });
+});
+
 describe('depsPlugin ssr config', () => {
   it('pre-bundles and links Angular for the server', () => {
     const plugins = depsPlugin();

@@ -49,6 +49,10 @@ Analog leaves `.ts` and `.js` files to the Angular compiler and turns Vite's own
 
 ```ts
 // vite.config.ts
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { defineConfig } from 'vite';
+
 export default defineConfig({
   oxc: { include: [/\/src\/server\/.*\.ts$/] }, // `esbuild` on Vite 6 and 7
   plugins: [analog(), angular()],
