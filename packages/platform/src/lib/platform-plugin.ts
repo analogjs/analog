@@ -26,6 +26,7 @@ import {
 import { serverModePlugin } from '../server-mode-plugin.js';
 import { typedRoutes } from './typed-routes-plugin.js';
 import { analogNitroPlugin } from './nitro/analog-nitro-plugin.js';
+import { serverPlugin } from './server-plugin.js';
 
 /**
  * The installed `@angular/core` major version, resolved from the workspace root
@@ -103,6 +104,9 @@ export function platformPlugin(opts: Options = {}): Plugin[] {
       api: { analogOptions: platformOptions },
     },
     ...(!isTest ? [analogNitroPlugin(platformOptions)] : []),
+    ...(platformOptions.server && !isTest
+      ? [serverPlugin(platformOptions.server, platformOptions)]
+      : []),
     ...(platformOptions.ssr
       ? [...ssrBuildPlugin(), ...injectHTMLPlugin()]
       : []),

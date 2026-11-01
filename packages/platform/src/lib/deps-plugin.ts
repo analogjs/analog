@@ -1,4 +1,5 @@
-import type { Plugin } from 'vite';
+import { dirname, resolve } from 'node:path';
+import { normalizePath, type Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { angularLinkerPlugin } from './nitro/angular-linker-plugin.js';
@@ -33,15 +34,27 @@ export function depsPlugin(options?: Options): Plugin[] {
         const userTransform =
           userConfig?.[jsTransformKey] !== undefined ||
           (jsTransformKey === 'oxc' && !!userConfig?.esbuild);
+        // With `server`, Vite compiles the server entry's directory instead,
+        // which the Angular compiler leaves alone.
+        const transform = options?.server
+          ? {
+              include: [
+                `${normalizePath(
+                  resolve(
+                    userConfig?.root ?? process.cwd(),
+                    dirname(options.server.entry),
+                  ),
+                )}/**/*.ts`,
+              ],
+            }
+          : { exclude: ['**/*.ts', '**/*.js'] };
         debugPlatform('deps transform config', {
           jsTransformKey,
-          transformExcluded: !userTransform,
+          transform: userTransform ? 'user' : transform,
         });
 
         return {
-          ...(userTransform
-            ? {}
-            : { [jsTransformKey]: { exclude: ['**/*.ts', '**/*.js'] } }),
+          ...(userTransform ? {} : { [jsTransformKey]: transform }),
           ssr: {
             noExternal: [
               '@analogjs/**',
