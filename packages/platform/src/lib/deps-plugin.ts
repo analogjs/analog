@@ -20,19 +20,24 @@ export function depsPlugin(options?: Options): Plugin[] {
   return [
     {
       name: 'analogjs-deps-plugin',
-      config() {
+      config(userConfig) {
         // Skip Vite's built-in ts/js transform so `@analogjs/vite-plugin-angular`
         // (when the user includes it) owns Angular file compilation. Users who
-        // run an alternative compiler or compile through Angular's own
-        // compilation API can override this in their own Vite config.
-        const transformConfig = { exclude: ['**/*.ts', '**/*.js'] };
+        // run an alternative compiler, or compile non-Angular server code with
+        // Vite, set the transform in their own Vite config. Theirs is kept
+        // as-is: merging would concatenate these excludes into it, and an
+        // exclude wins over any include they set.
+        const jsTransformKey = getJsTransformConfigKey();
+        const userTransform = userConfig?.[jsTransformKey] !== undefined;
         debugPlatform('deps transform config', {
-          jsTransformKey: getJsTransformConfigKey(),
-          transformExcluded: true,
+          jsTransformKey,
+          transformExcluded: !userTransform,
         });
 
         return {
-          [getJsTransformConfigKey()]: transformConfig,
+          ...(userTransform
+            ? {}
+            : { [jsTransformKey]: { exclude: ['**/*.ts', '**/*.js'] } }),
           ssr: {
             noExternal: [
               '@analogjs/**',
