@@ -1,3 +1,14 @@
+# [3.0.0-beta.19](https://github.com/analogjs/analog/compare/v3.0.0-beta.18...v3.0.0-beta.19) (2026-11-01)
+
+### Bug Fixes
+
+- **platform:** keep a user's esbuild config on Vite 8 ([096cdf8](https://github.com/analogjs/analog/commit/096cdf892ab5e56a7e75871a1b9d820213e0dc63)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **platform:** keep the transform exclusions for esbuild: false on Vite 8 ([9ae3c59](https://github.com/analogjs/analog/commit/9ae3c59508564928e5c98877bffe0c4d3c18b9b7)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **platform:** keep the user's ts/js transform config ([e749335](https://github.com/analogjs/analog/commit/e7493357dadfd22231bd229d4266627a75565e22)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **router:** transfer page load data when an internal fetch is provided ([7b81f29](https://github.com/analogjs/analog/commit/7b81f29f70eebb31b208cd26d3355b4015ff6d0b)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **vite-plugin-angular:** decide ngServerMode after other plugins set the consumer ([bfc7ab8](https://github.com/analogjs/analog/commit/bfc7ab89c1b5ef76a7b43ab94925419ed4453645)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **vite-plugin-angular:** define ngServerMode for server environments without an explicit consumer ([74e316f](https://github.com/analogjs/analog/commit/74e316f08e8de974a974cd3a5ec1fdd13442ec90)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+
 # [3.0.0-beta.18](https://github.com/analogjs/analog/compare/v3.0.0-beta.17...v3.0.0-beta.18) (2026-10-27)
 
 ### Bug Fixes
