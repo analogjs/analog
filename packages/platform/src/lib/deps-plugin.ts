@@ -28,10 +28,11 @@ export function depsPlugin(options?: Options): Plugin[] {
         // as-is: merging would concatenate these excludes into it, and an
         // exclude wins over any include they set.
         const jsTransformKey = getJsTransformConfigKey();
-        // Vite 8 still converts a user's `esbuild` config to `oxc`, unless
-        // `oxc` is set.
+        // Vite 8 still converts a user's `esbuild` object to `oxc` (unless
+        // `oxc` is set), but `esbuild: false` no longer has any effect there.
         const userTransform =
-          userConfig?.oxc !== undefined || userConfig?.esbuild !== undefined;
+          userConfig?.[jsTransformKey] !== undefined ||
+          (jsTransformKey === 'oxc' && !!userConfig?.esbuild);
         debugPlatform('deps transform config', {
           jsTransformKey,
           transformExcluded: !userTransform,

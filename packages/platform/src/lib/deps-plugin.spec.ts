@@ -41,6 +41,13 @@ describe('depsPlugin with an esbuild config on Vite 8', () => {
 
     expect(result).not.toHaveProperty('oxc');
   });
+
+  it('keeps the exclusions for esbuild: false, which Vite 8 ignores', () => {
+    const plugins = depsPlugin();
+    const result = (plugins[0].config as any)({ esbuild: false });
+
+    expect(result.oxc).toEqual({ exclude: ['**/*.ts', '**/*.js'] });
+  });
 });
 
 describe('depsPlugin ssr config', () => {
