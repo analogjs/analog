@@ -24,7 +24,8 @@ export function createAnalogHandler(
 ): AnalogNodeHandler {
   const handleAnalogRequest = createAnalogRequestHandler(options);
   return (req, res, next) => {
-    handleAnalogRequest(toRequest(req), { req, res })
+    Promise.resolve(req)
+      .then((req) => handleAnalogRequest(toRequest(req), { req, res }))
       .then((response) => (response ? writeResponse(response, res) : next()))
       .catch(next);
   };

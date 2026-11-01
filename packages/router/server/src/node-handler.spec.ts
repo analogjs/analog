@@ -1,4 +1,9 @@
-import { createServer, type IncomingMessage, type Server } from 'node:http';
+import {
+  createServer,
+  request,
+  type IncomingMessage,
+  type Server,
+} from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -58,7 +63,7 @@ describe('createAnalogHandler', () => {
         );
       }
       // A body parser that ran first and didn't.
-      if (req.url?.endsWith('?consumed')) {
+      if (req.url?.endsWith('?consumed') || req.url === '/bad-host') {
         await readBody(req);
         handle(req, res, (error) =>
           res.end(error ? `error:${(error as Error).message}` : 'next'),
@@ -104,6 +109,18 @@ describe('createAnalogHandler', () => {
     });
 
     expect(await response.json()).toEqual({ email: 'raw@b.dev' });
+  });
+
+  it('passes a request it cannot convert to next() as an error', async () => {
+    const body = await new Promise<string>((resolve, reject) => {
+      request(`${base}/bad-host`, { headers: { host: 'bad host' } }, (res) =>
+        readBody(res).then(resolve),
+      )
+        .on('error', reject)
+        .end();
+    });
+
+    expect(body).toMatch(/^error:.*URL/);
   });
 
   it('passes requests on after a parser read the body without keeping it', async () => {
