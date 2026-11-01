@@ -2,7 +2,6 @@ import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { Route } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { injectInternalServerFetch } from '../../tokens/src/index.js';
 
 import {
   DefaultRouteMeta,
@@ -57,12 +56,10 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
       if (ANALOG_PAGE_ENDPOINTS[routeConfig[ANALOG_META_KEY]?.endpointKey]) {
         const http = inject(HttpClient);
         const url = injectRouteEndpointURL(route);
-        const internalFetch = injectInternalServerFetch();
 
-        if (internalFetch) {
-          return internalFetch(`${url.pathname}${url.search}`);
-        }
-
+        // On the server, requestContextInterceptor sends this through the
+        // internal fetch when one is provided and records the response in
+        // TransferState, so the client reuses it after hydration.
         return firstValueFrom(http.get(`${url.href}`));
       }
 
