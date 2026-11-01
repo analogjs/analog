@@ -50,6 +50,15 @@ describe('depsPlugin with an esbuild config on Vite 8', () => {
   });
 });
 
+describe('depsPlugin with a server entry', () => {
+  it("compiles the server entry's directory with Vite", () => {
+    const plugins = depsPlugin({ server: { entry: 'src/server/main.ts' } });
+    const result = (plugins[0].config as any)({ root: '/app' });
+
+    expect(result.oxc).toEqual({ include: ['/app/src/server/**/*.ts'] });
+  });
+});
+
 describe('depsPlugin ssr config', () => {
   it('pre-bundles and links Angular for the server', () => {
     const plugins = depsPlugin();
