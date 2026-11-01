@@ -170,13 +170,17 @@ describe('angularVitePlugin', () => {
       );
     }
 
-    function configureEnvironment(plugin: Plugin, consumer: string) {
+    function configureEnvironment(
+      plugin: Plugin,
+      consumer: string | undefined,
+      name = 'ssr',
+    ) {
       return (
         plugin.configEnvironment as (
           name: string,
-          config: { consumer: string },
+          config: { consumer?: string },
         ) => unknown
-      )('ssr', { consumer });
+      )(name, { consumer });
     }
 
     it.each([false, true])(
@@ -193,6 +197,17 @@ describe('angularVitePlugin', () => {
         expect(configureEnvironment(plugin, 'client')).toBeUndefined();
       },
     );
+
+    it('treats an environment without a consumer as Vite does', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+      const plugin = findServerModePlugin() as Plugin;
+
+      expect(configureEnvironment(plugin, undefined)).toEqual({
+        define: { ngServerMode: 'true' },
+      });
+      expect(configureEnvironment(plugin, undefined, 'client')).toBeUndefined();
+    });
 
     it('is not registered under Vitest', () => {
       vi.stubEnv('NODE_ENV', 'test');

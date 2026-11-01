@@ -89,6 +89,7 @@ import {
   EXCLUDED_TS_EXT_REGEX,
   getTsConfigPath,
   isProdMode,
+  isServerEnvironment,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
@@ -2028,8 +2029,8 @@ function devServerModePlugin(): Plugin {
   return {
     name: '@analogjs/vite-plugin-angular-dev-server-mode',
     apply: 'serve',
-    configEnvironment(_name, config) {
-      if (config.consumer === 'server') {
+    configEnvironment(name, config) {
+      if (isServerEnvironment(name, config)) {
         return { define: { ngServerMode: 'true' } };
       }
       return undefined;

@@ -1,6 +1,6 @@
 import type { Plugin, UserConfig } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
-import { isProdMode } from './utils/plugin-config.js';
+import { isProdMode, isServerEnvironment } from './utils/plugin-config.js';
 
 export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
   const transformers = new Map<
@@ -59,12 +59,12 @@ export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
       } as UserConfig;
     },
     // The top-level define keys `ngServerMode` off the legacy `build.ssr`
-    // flag. Environment API builds run the server through an environment
-    // with `consumer: 'server'` while `build.ssr` stays unset, so give that
-    // environment its own value; otherwise the guard compiles to `false`
-    // and browser-only hydration features run during SSR.
-    configEnvironment(_name, config) {
-      if (isProd && config.consumer === 'server') {
+    // flag. Environment API builds run the server through a server
+    // environment while `build.ssr` stays unset, so give that environment its
+    // own value; otherwise the guard compiles to `false` and browser-only
+    // hydration features run during SSR.
+    configEnvironment(name, config) {
+      if (isProd && isServerEnvironment(name, config)) {
         return { define: { ngServerMode: 'true' } };
       }
       return undefined;
