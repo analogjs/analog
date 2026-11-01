@@ -122,6 +122,19 @@ describe('buildOptimizerPlugin config()', () => {
     ).toBeUndefined();
   });
 
+  it('should treat an environment without a consumer as Vite does', () => {
+    const plugin = createPlugin() as Plugin & {
+      config: (c: UserConfig) => UserConfig;
+      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+    };
+    plugin.config({ mode: 'production' });
+
+    expect(plugin.configEnvironment('ssr', {})).toEqual({
+      define: { ngServerMode: 'true' },
+    });
+    expect(plugin.configEnvironment('client', {})).toBeUndefined();
+  });
+
   it('should leave environment defines alone outside production', () => {
     const plugin = createPlugin() as Plugin & {
       config: (c: UserConfig) => UserConfig;
