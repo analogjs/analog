@@ -85,6 +85,12 @@ describe('serverPlugin', () => {
     );
   });
 
+  it('fails a build when the client build emitted no document', () => {
+    const { plugin } = setup('build');
+
+    expect(() => evaluateManifest(plugin)).toThrow(/didn't emit index.html/);
+  });
+
   it('builds the client, then the server entry', () => {
     const { config } = setup('build') as {
       config: {
