@@ -74,6 +74,7 @@
   "sidebar.nitro": "Nitro",
   "sidebar.angular-material": "Angular Material",
   "sidebar.ionic": "Ionic Framework",
+  "sidebar.nestjs": "NestJS",
   "sidebar.storybook": "Storybook",
   "sidebar.tailwind": "Tailwind CSS",
   "sidebar.tanstack-query": "TanStack Query",
