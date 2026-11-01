@@ -54,15 +54,16 @@ function requestBody(req: IncomingMessage): BodyInit {
   if (rawBody) {
     return new Uint8Array(rawBody);
   }
-  if (req.readableEnded) {
-    throw new Error(
-      '[@analogjs/router] The request body was already read by another parser. Keep the raw body (NestJS: `rawBody: true`) or mount Analog before body parsers.',
-    );
-  }
   let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
   return new ReadableStream<Uint8Array>(
     {
       async pull(controller) {
+        // Checked on read, so requests Analog passes on still reach `next()`.
+        if (!reader && req.readableEnded) {
+          throw new Error(
+            '[@analogjs/router] The request body was already read by another parser. Keep the raw body (NestJS: `rawBody: true`) or mount Analog before body parsers.',
+          );
+        }
         reader ??= (
           Readable.toWeb(req) as ReadableStream<Uint8Array>
         ).getReader();

@@ -52,10 +52,18 @@ describe('createAnalogHandler', () => {
     const handle = createAnalogHandler();
     server = createServer(async (req, res) => {
       // A body parser that ran first and kept the original bytes.
-      if (req.url === '/api/_analog/pages/form?parsed') {
+      if (req.url?.endsWith('?parsed')) {
         (req as { rawBody?: Buffer }).rawBody = Buffer.from(
           await readBody(req),
         );
+      }
+      // A body parser that ran first and didn't.
+      if (req.url?.endsWith('?consumed')) {
+        await readBody(req);
+        handle(req, res, (error) =>
+          res.end(error ? `error:${(error as Error).message}` : 'next'),
+        );
+        return;
       }
       handle(req, res, async () => res.end(`next:${await readBody(req)}`));
     });
@@ -96,5 +104,14 @@ describe('createAnalogHandler', () => {
     });
 
     expect(await response.json()).toEqual({ email: 'raw@b.dev' });
+  });
+
+  it('passes requests on after a parser read the body without keeping it', async () => {
+    const init = { method: 'POST', body: 'email=a%40b.dev' };
+    const passed = await fetch(`${base}/api/echo?consumed`, init);
+    const owned = await fetch(`${base}/api/_analog/pages/form?consumed`, init);
+
+    expect(await passed.text()).toBe('next');
+    expect(await owned.text()).toMatch(/^error:.*already read/);
   });
 });
