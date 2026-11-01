@@ -367,6 +367,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/features/server/custom-server': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/features/server/server-side-rendering': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;

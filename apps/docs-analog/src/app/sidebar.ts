@@ -120,6 +120,11 @@ export function getSidebar(): SidebarNode[] {
               id: 'features/server/streaming-ssr',
               label: $localize`:@@sidebar.streaming-ssr:Streaming SSR`,
             },
+            {
+              kind: 'doc',
+              id: 'features/server/custom-server',
+              label: $localize`:@@sidebar.custom-server:Custom Server`,
+            },
           ],
         },
         {
