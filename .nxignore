@@ -2,3 +2,6 @@
 # cause @nx/vite's inference plugin to register them as real projects.
 packages/create-analog/template-*
 packages/create-analog/__tests__/test-app
+
+# Standalone prototypes with their own package.json, built outside the workspace.
+prototypes/*
