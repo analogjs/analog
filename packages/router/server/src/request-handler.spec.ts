@@ -106,6 +106,27 @@ describe('createAnalogRequestHandler', () => {
     expect(response?.headers.get('x-load')).toBeNull();
   });
 
+  it('serves same-origin server fetches in-process, whatever the Host', async () => {
+    const network = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new Error('network'));
+    ANALOG_SERVER_MANIFEST.render =
+      async () =>
+      async (_url, _document, { fetch }) => {
+        const page = await fetch!('/api/_analog/pages/users/1');
+        const health = await fetch!('/api/health');
+        return JSON.stringify([page, health]);
+      };
+    const handle = createAnalogRequestHandler({
+      fetch: async (request) => Response.json(new URL(request.url).pathname),
+    });
+
+    const response = await handle(new Request('http://internal.invalid/'));
+
+    expect(await response?.json()).toEqual([{ id: '1' }, '/api/health']);
+    expect(network).not.toHaveBeenCalled();
+  });
+
   it('dispatches server functions with a JSON body', async () => {
     const handle = createAnalogRequestHandler();
     const call = (body: string) =>

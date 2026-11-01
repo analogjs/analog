@@ -34,6 +34,14 @@ export type AnalogRequestHandler = (
   context?: AnalogRequestContext,
 ) => Promise<Response | null>;
 
+export type AnalogRequestOptions = {
+  /**
+   * Serves server-side fetches that Analog doesn't handle, such as the host's
+   * own routes. Fetch-native hosts can pass their app's `fetch`.
+   */
+  fetch?: (request: Request) => Promise<Response>;
+};
+
 type PageRoute = { importEndpoint: () => Promise<PageEndpointModule> };
 
 const SERVER_FN_PREFIX = '/_analog/fn/';
@@ -44,7 +52,9 @@ const SERVER_FN_PREFIX = '/_analog/fn/';
  * host's job; serve them first, without an index fallback, or SSR answers
  * asset URLs.
  */
-export function createAnalogRequestHandler(): AnalogRequestHandler {
+export function createAnalogRequestHandler(
+  options: AnalogRequestOptions = {},
+): AnalogRequestHandler {
   const manifest = serverManifest();
   const apiPrefix = `/${manifest.apiPrefix}/`;
   const pageEndpointPrefix = `${apiPrefix}_analog/pages/`;
@@ -76,15 +86,23 @@ export function createAnalogRequestHandler(): AnalogRequestHandler {
     }
     if (url.pathname.startsWith(pageEndpointPrefix)) {
       const match = pageRoutes.lookup(url.pathname);
-      return match ? callPageEndpoint(match, request, url, context) : null;
+      return match
+        ? callPageEndpoint(
+            match,
+            request,
+            url,
+            context,
+            serverFetch(url.origin),
+          )
+        : null;
     }
     if (request.method === 'GET' && !url.pathname.startsWith(apiPrefix)) {
-      return renderPage(manifest, url, context);
+      return renderPage(manifest, url, context, serverFetch(url.origin));
     }
     return null;
   }
 
-  return async (request, context) => {
+  const handle: AnalogRequestHandler = async (request, context) => {
     const url = new URL(request.url);
     if (context) {
       return route(request, url, context);
@@ -93,6 +111,33 @@ export function createAnalogRequestHandler(): AnalogRequestHandler {
     const response = await route(request, url, created);
     return response && withResponseHeaders(response, created.res);
   };
+
+  /**
+   * An ofetch instance for page endpoints' `fetch` and the router's SSR
+   * interceptor, which records responses in TransferState. Same-origin
+   * requests run in-process, as on Nitro, so they never go to the host named
+   * by the client's `Host` header.
+   */
+  function serverFetch(origin: string): typeof $fetch {
+    return $fetch.create(
+      { baseURL: origin },
+      {
+        fetch: async (input, init) => {
+          const request = new Request(input, init);
+          if (new URL(request.url).origin !== origin) {
+            return fetch(request);
+          }
+          return (
+            (await handle(request)) ??
+            (await options.fetch?.(request)) ??
+            new Response(null, { status: 404 })
+          );
+        },
+      },
+    );
+  }
+
+  return handle;
 }
 
 function serverManifest(): AnalogServerManifest {
@@ -142,6 +187,7 @@ async function callPageEndpoint(
   request: Request,
   url: URL,
   context: AnalogRequestContext,
+  fetch: typeof $fetch,
 ): Promise<Response> {
   const event = pageEndpointEvent(request, url, context);
   event.context.params = match.params ?? {};
@@ -152,7 +198,7 @@ async function callPageEndpoint(
     params: event.context.params,
     req: context.req,
     res: context.res,
-    fetch: serverFetch(url.origin),
+    fetch,
     event,
   });
   return result instanceof Response
@@ -184,6 +230,7 @@ async function renderPage(
   manifest: AnalogServerManifest,
   url: URL,
   context: AnalogRequestContext,
+  fetch: typeof $fetch,
 ): Promise<Response> {
   const path = `${url.pathname}${url.search}`;
   const req = context.req as ServerContext['req'];
@@ -192,22 +239,13 @@ async function renderPage(
   const html = await render(path, await manifest.template(path), {
     req,
     res: context.res,
-    fetch: serverFetch(url.origin),
+    fetch,
   });
   // The status carries anything the app set through RESPONSE while rendering.
   return new Response(html, {
     status: context.res.statusCode,
     headers: { 'content-type': 'text/html; charset=utf-8' },
   });
-}
-
-/**
- * An ofetch instance for same-origin calls, as Nitro provides: page endpoints
- * get it as `fetch`, and the router's SSR interceptor uses its `.raw()` and
- * records the responses in TransferState.
- */
-function serverFetch(origin: string): typeof $fetch {
-  return $fetch.create({ baseURL: origin });
 }
 
 /**
