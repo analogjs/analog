@@ -1,8 +1,7 @@
 import { serverFn } from '@analogjs/router/server';
-import { inject } from '@angular/core';
 import * as v from 'valibot';
 
-import { injectNest } from '../../analog-nest/nest-app';
+import { injectNest } from '../../server/inject-nest';
 import { GreetingService } from '../../server/greeting.service';
 
 export const greet = serverFn(

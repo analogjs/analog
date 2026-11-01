@@ -13,7 +13,7 @@ export const NEST_APP = new InjectionToken<ModuleRef>('NEST_APP', {
   providedIn: 'root',
   factory: () => {
     if (!nestModuleRef) {
-      throw new Error('[analog-nest] The Nest application is not initialized.');
+      throw new Error('The Nest application is not initialized.');
     }
     return nestModuleRef;
   },
