@@ -98,6 +98,28 @@ if (!import.meta.env.DEV) {
 
 Register your own routes before it. Routes under `/api/` that nothing handles reach your server's 404 handling instead of server-side rendering.
 
+## Server-side fetches
+
+Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`:
+
+```ts
+// Your server's own address, never one taken from the request.
+const origin = process.env['SERVER_ORIGIN'] ?? 'http://localhost:3000';
+
+app.use(
+  createAnalogHandler({
+    fetch: (request) => {
+      const { pathname, search } = new URL(request.url);
+      return fetch(
+        new Request(new URL(`${pathname}${search}`, origin), request),
+      );
+    },
+  }),
+);
+```
+
+In development, the origin is Vite's dev server. Without a `fetch`, these requests get a `404`. Prefer calling your services directly from page endpoints and server functions where you can.
+
 ## Static files
 
 Serving client files is the server's job, with its own tools (`express.static`, `serve-static`, NestJS's `useStaticAssets()`, a CDN). In production they're in `dist/client`, next to the `dist/server` directory that holds the server entry:
@@ -121,6 +143,8 @@ app.all(
   async (c) => (await handleAnalogRequest(c.req.raw)) ?? c.notFound(),
 );
 ```
+
+Pass your app's `fetch`, `createAnalogRequestHandler({ fetch: (request) => app.fetch(request) })`, so [server-side fetches](#server-side-fetches) reach your Hono routes in-process.
 
 Node servers that have the Node request and response can pass them as a second argument, `handleAnalogRequest(request, { req, res })`, so they become Analog's `REQUEST` and `RESPONSE` tokens. `createAnalogHandler()` does this for you.
 
