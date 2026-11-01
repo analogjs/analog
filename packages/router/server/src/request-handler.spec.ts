@@ -1,6 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { Socket } from 'node:net';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAnalogRequestHandler } from './request-handler';
 import { serverFnRegistry } from './server-fn/registry';
@@ -58,6 +58,7 @@ describe('createAnalogRequestHandler', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     for (const key of Object.keys(ANALOG_SERVER_MANIFEST)) {
       delete ANALOG_SERVER_MANIFEST[key as keyof AnalogServerManifest];
     }
@@ -125,6 +126,21 @@ describe('createAnalogRequestHandler', () => {
     expect(await malformed?.json()).toEqual({
       message: 'Malformed request body',
     });
+  });
+
+  it('reports a failing server config only on server function requests', async () => {
+    ANALOG_SERVER_MANIFEST.config = async () => {
+      throw new Error('bad config');
+    };
+    const unhandled = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const handle = createAnalogRequestHandler();
+
+    expect(await handle(new Request(`${origin}/api/health`))).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(unhandled).not.toHaveBeenCalled();
+    await expect(
+      handle(new Request(`${origin}/_analog/fn/shout`, { method: 'POST' })),
+    ).rejects.toThrow('bad config');
   });
 
   it('needs the server build to fill in the manifest', () => {
