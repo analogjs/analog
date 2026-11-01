@@ -101,7 +101,7 @@ export function serverPlugin(
     // the client build's own output.
     writeBundle(_options, bundle) {
       if (this.environment.name === 'client') {
-        const document = bundle[relative(root, indexHtml())];
+        const document = bundle[normalizePath(relative(root, indexHtml()))];
         if (document?.type === 'asset') {
           builtTemplate = String(document.source);
         }
@@ -144,6 +144,15 @@ export function serverPlugin(
     },
   };
 
+  function requireBuiltTemplate(): string {
+    if (builtTemplate === undefined) {
+      throw new Error(
+        `[@analogjs/platform] The client build didn't emit ${relative(root, indexHtml())}, which the server renders around.`,
+      );
+    }
+    return builtTemplate;
+  }
+
   /**
    * The manifest object literal: the template, and lazy imports of the SSR
    * renderer, the server config, every server function module, and page
@@ -172,7 +181,7 @@ export function serverPlugin(
       lazy(file),
     );
     const template = isBuild
-      ? `async () => ${JSON.stringify(builtTemplate ?? '')}`
+      ? `async () => ${JSON.stringify(requireBuiltTemplate())}`
       : `(url) => globalThis[Symbol.for('@analogjs/platform/dev-template')](url)`;
 
     return `{
