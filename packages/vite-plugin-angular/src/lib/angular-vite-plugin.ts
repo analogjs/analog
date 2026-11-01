@@ -1811,7 +1811,9 @@ export function toAngularCompilationFileReplacements(
  * Group `@angular/build` `diagnoseFiles()` diagnostics by the source file they
  * point at, folding the esbuild-style `location` into each message as
  * `file:line:column`. Diagnostics without a file location are collected into
- * the `globalErrors` / `globalWarnings` buckets.
+ * the `globalErrors` / `globalWarnings` buckets, as are diagnostics for
+ * non-TypeScript files such as external `templateUrl` templates: those files
+ * are never emitted, so a per-file bucket for them would never be reported.
  *
  * Grouping lets the caller attach each diagnostic to its own emitted file so it
  * is reported exactly once, rather than duplicating the whole global list
@@ -1844,7 +1846,7 @@ export function groupDiagnosticsByFile(diagnostics: {
           }`
         : (diagnostic.text ?? '');
 
-      if (location?.file) {
+      if (location?.file && TS_EXT_REGEX.test(location.file)) {
         const key = normalizePath(location.file);
         const bucket = byFile.get(key);
         if (bucket) {

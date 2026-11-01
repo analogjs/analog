@@ -868,6 +868,33 @@ describe('groupDiagnosticsByFile', () => {
     expect(globalWarnings).toEqual(['NG: program-wide warning']);
   });
 
+  it('routes external template diagnostics to the global buckets', () => {
+    const { errorsByFile, warningsByFile, globalErrors, globalWarnings } =
+      groupDiagnosticsByFile({
+        errors: [
+          {
+            text: 'TS2339: Property does not exist',
+            location: { file: '/src/app.component.html', line: 1, column: 6 },
+          },
+        ],
+        warnings: [
+          {
+            text: 'NG8107: unnecessary optional chain',
+            location: { file: '/src/app.component.html', line: 2, column: 3 },
+          },
+        ],
+      });
+
+    expect(errorsByFile.size).toBe(0);
+    expect(warningsByFile.size).toBe(0);
+    expect(globalErrors).toEqual([
+      '/src/app.component.html:1:6: TS2339: Property does not exist',
+    ]);
+    expect(globalWarnings).toEqual([
+      '/src/app.component.html:2:3: NG8107: unnecessary optional chain',
+    ]);
+  });
+
   it('defaults missing line/column to 0', () => {
     const { errorsByFile } = groupDiagnosticsByFile({
       errors: [{ text: 'TS1: msg', location: { file: '/src/a.ts' } }],
