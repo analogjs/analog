@@ -62,12 +62,16 @@ export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
     // flag. Environment API builds run the server through a server
     // environment while `build.ssr` stays unset, so give that environment its
     // own value; otherwise the guard compiles to `false` and browser-only
-    // hydration features run during SSR.
-    configEnvironment(name, config) {
-      if (isProd && isServerEnvironment(name, config)) {
-        return { define: { ngServerMode: 'true' } };
-      }
-      return undefined;
+    // hydration features run during SSR. Runs after other plugins' hooks, so
+    // a consumer they set is taken into account.
+    configEnvironment: {
+      order: 'post',
+      handler(name, config) {
+        if (isProd && isServerEnvironment(name, config)) {
+          return { define: { ngServerMode: 'true' } };
+        }
+        return undefined;
+      },
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
