@@ -1,3 +1,9 @@
+## [2.9.5](https://github.com/analogjs/analog/compare/v2.9.4...v2.9.5) (2026-11-01)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** report diagnostics from external templates ([#2714](https://github.com/analogjs/analog/issues/2714)) ([b50d3cd](https://github.com/analogjs/analog/commit/b50d3cd3434729d81eb7778e4c1e2a96c0b691a2))
+
 ## [2.9.4](https://github.com/analogjs/analog/compare/v2.9.3...v2.9.4) (2026-10-31)
 
 ### Bug Fixes
