@@ -81,6 +81,17 @@ await check(
     body: /Unknown server function/,
   },
 );
+// Nest's JSON parser rejects it first with its own body; elsewhere Analog does.
+await check(
+  'malformed JSON to a server function',
+  {
+    path: '/_analog/fn/0000000000000000',
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{bad',
+  },
+  { status: 400, body: withNest ? undefined : /Malformed request body/ },
+);
 
 if (withNest) {
   const html = await check(

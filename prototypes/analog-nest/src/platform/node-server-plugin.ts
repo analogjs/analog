@@ -8,7 +8,7 @@ import {
   type ViteDevServer,
 } from 'vite';
 
-import type { AnalogNodeApp } from '../router-server/analog-handler';
+import type { AnalogNodeApp } from '../router-server/node-handler';
 
 // The router's placeholder, as emitted after its type assertion is stripped.
 const MANIFEST_PLACEHOLDER = /ANALOG_SERVER_MANIFEST = \{\}/;

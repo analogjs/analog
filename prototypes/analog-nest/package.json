@@ -26,6 +26,7 @@
     "h3": "1.15.11",
     "marked": "18.1.2",
     "ofetch": "2.0.0-alpha.3",
+    "radix3": "1.1.2",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "serve-static": "2.2.1",

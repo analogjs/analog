@@ -5,7 +5,7 @@ import serveStatic from 'serve-static';
 import {
   createAnalogHandler,
   type AnalogNodeApp,
-} from '../router-server/analog-handler';
+} from '../router-server/node-handler';
 
 /** The same Analog handler on a plain Node server, with no Nest involved. */
 export async function createApp(): Promise<AnalogNodeApp> {

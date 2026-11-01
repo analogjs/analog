@@ -4,7 +4,7 @@ A standalone Analog app (published `@analogjs/*@3.0.0-beta.18`, Angular 22, Vite
 
 It has three parts:
 
-- `src/router-server/` is what **`@analogjs/router/server`** would export: `createAnalogHandler()`, a Node request handler for any server.
+- `src/router-server/` is what **`@analogjs/router/server`** would export: a fetch-style core, `createAnalogRequestHandler().handle(request, context)` → `Response | null`, and `createAnalogHandler()`, its Node adapter.
 - `src/platform/` is what **`@analogjs/platform`** would add: a Vite plugin that builds the server and fills in the handler's manifest.
 - **NestJS is one host for them.** The Nest-specific code is a short recipe. The same app also runs on plain `node:http` (`src/node-server/main.ts`).
 
@@ -28,13 +28,13 @@ npm run verify -- http://localhost:3000 --analog-only   # any host
 
 | Host        | dev                 | production          |
 | ----------- | ------------------- | ------------------- |
-| NestJS      | 17 / 17             | 17 / 17             |
-| `node:http` | 8 / 8 (Analog-only) | 8 / 8 (Analog-only) |
+| NestJS      | 18 / 18             | 18 / 18             |
+| `node:http` | 9 / 9 (Analog-only) | 9 / 9 (Analog-only) |
 
 The checks cover:
 
 - SSR, page endpoint `load`s (one of them calls a Nest controller through `fetch`) and `defineAction` (200 and 422)
-- Server functions: success, 400 on invalid input, 403 cross-origin, 404 for an unknown ID
+- Server functions: success, 400 on invalid input, 400 on malformed JSON, 403 cross-origin, 404 for an unknown ID
 - Nest controllers (GET, POST, 404); an unclaimed `/api` route goes to the host, not SSR
 - The page's client script is served by the host (production) or Vite (dev)
 - One Nest DI instance shared by SSR, server functions and controllers
@@ -45,7 +45,8 @@ The checks cover:
 ```
 src/
   router-server/        would be @analogjs/router/server (no Nest imports)
-    analog-handler.ts   createAnalogHandler(): (req, res, next) Node handler
+    request-handler.ts  createAnalogRequestHandler(): fetch-style core
+    node-handler.ts     createAnalogHandler(): Node adapter, (req, res, next)
     server-manifest.ts  ANALOG_SERVER_MANIFEST placeholder and its type
   platform/             would be @analogjs/platform
     node-server-plugin.ts  analogNodeServer(): build, manifest, dev server
@@ -61,19 +62,33 @@ src/
 
 ## The server-agnostic layer
 
-### `createAnalogHandler()`, in `@analogjs/router/server`
+### The fetch-style core and the Node adapter, in `@analogjs/router/server`
 
 ```ts
-import { createAnalogHandler } from '@analogjs/router/server';
+import {
+  createAnalogHandler, // Node: (req, res, next)
+  createAnalogRequestHandler, // fetch-style core
+} from '@analogjs/router/server';
+
+const analog = createAnalogRequestHandler();
+const response = await analog.handle(request, { req, res }); // Response | null
 ```
 
-Returns a `(req, res, next)` handler for Analog's own requests on any Node server:
+`handle()` takes a web `Request` and returns a `Response` for Analog's own requests, or `null` for anything else:
 
-1. `/_analog/fn/:id` and `/<apiPrefix>/_analog/pages/**`, through an h3 v1 sub-app built from Analog's own handlers:
-   - Server functions use `createServerFnEventHandler(createServerFnAppInjector(config))`, exactly what Nitro registers.
-   - Page endpoints call each `load` or `action` with an ofetch `fetch`, matching what Nitro provides.
-2. SSR for any GET outside `/<apiPrefix>/`, using the app's `main.server.ts` renderer. It receives an ofetch instance as `ServerContext.fetch`, which the router uses for TransferState.
-3. Everything else goes to `next()`, so the host's own routes and 404 handling apply.
+1. `/_analog/fn/:id`: parses the JSON body (400 `Malformed request body` if it doesn't parse) and calls Analog's exported `dispatchServerFn()` with the app injector built from `createServerFnAppInjector(config)`.
+2. `/<apiPrefix>/_analog/pages/**`: matches the route (radix3, the same patterns Nitro uses), then calls the page's `load` or `action` with an ofetch `fetch`, as Nitro does. Their h3 event points at the `Request`, so the `Request` is the one body source for `readBody`/`readFormData`.
+3. SSR for any GET outside `/<apiPrefix>/`, using the app's `main.server.ts` renderer, with an ofetch instance as `ServerContext.fetch` for TransferState.
+4. `null` for everything else, so the host's own routes and 404 handling apply.
+
+**Context.** The second argument carries the Node `req`/`res` behind the `Request`. Analog's `REQUEST`/`RESPONSE` tokens, the page endpoint arguments (`req`, `res`, `event`) and server function dispatch are Node-typed today, so the context keeps all of them working unchanged; that's why the first version requires it and is Node-only. Status codes the app sets on `RESPONSE` while rendering, or on `res` in a `load`, carry over into the returned `Response`.
+
+**`createAnalogHandler()`** wraps the core for any Node server:
+
+- builds the `Request` from `req` (protocol, host, `originalUrl`, headers);
+- reads the body from `req.rawBody` when a body parser ran first (Nest with `rawBody: true`), and otherwise streams it **lazily**, so a request passed on with `next()` keeps its body for the host's own routes. If a parser already consumed the body without keeping it, the adapter throws a clear error rather than sending an empty body;
+- writes the `Response` back to `res`, keeping headers the app already set and appending `Set-Cookie`;
+- calls `next()` when the core returns `null`.
 
 **Static client files are the host's job**, with the host's own tools: `express.static`, Nest's `useStaticAssets()` or `ServeStaticModule`, `serve-static` on `node:http`, a CDN. In production, files are in `dist/client`, which is `../client` from the server entry. Two rules:
 
@@ -82,7 +97,7 @@ Returns a `(req, res, next)` handler for Analog's own requests on any Node serve
 
 In dev, Vite serves client files, so hosts only register static files in production.
 
-The handler gets the app's files from `ANALOG_SERVER_MANIFEST`, which the router ships as an empty placeholder (`{}`). This follows the existing `ANALOG_ROUTE_FILES` pattern, which `@analogjs/router` ships as `{}` and the platform's router plugin fills in. So the router never imports a module that only the platform provides; without the platform's build, `createAnalogHandler()` throws a clear error. The manifest holds only lazy imports:
+The handler gets the app's files from `ANALOG_SERVER_MANIFEST`, which the router ships as an empty placeholder (`{}`). This follows the existing `ANALOG_ROUTE_FILES` pattern, which `@analogjs/router` ships as `{}` and the platform's router plugin fills in. So the router never imports a module that only the platform provides; without the platform's build, `createAnalogRequestHandler()` throws a clear error. The manifest holds only lazy imports:
 
 ```ts
 {
@@ -139,7 +154,7 @@ Nest-specific code in total: the `onModuleInit` mount, `rawBody: true`, `useStat
    - Nitro bundles `src/server` itself, so it never notices. A Vite-hosted server does: its files reach Vite's SSR transform as raw TypeScript.
    - The plugin has to _assign_ `config.oxc`, because `mergeConfig` concatenates arrays and the excludes would survive a returned config.
 4. **`consumer: 'server'` must be explicit.** The Angular build optimizer defines `ngServerMode: true` only when `config.consumer === 'server'` in `configEnvironment`, and Vite hasn't applied the default yet at that point. Without it, the production SSR bundle constant-folds the browser branch and crashes on `window` (event replay). Nitro sets it explicitly, so this is a latent bug that any custom server environment hits.
-5. **Body parsing (Nest).** Nest's parsers run before Analog's handlers. `rawBody: true` keeps the original bytes, and h3 reads `req.rawBody` first, so urlencoded and multipart actions work. The one difference from Nitro: malformed JSON sent to a server function gets Nest's 400 body instead of Analog's `Malformed request body` contract.
+5. **Body parsing (Nest).** Nest's parsers run before Analog's handlers. `rawBody: true` keeps the original bytes, which the Node adapter uses as the `Request` body, so urlencoded and multipart actions work. The one difference from Nitro: malformed JSON sent to a server function gets Nest's 400 body instead of Analog's `Malformed request body` contract. On hosts without an earlier parser (`node:http`), Analog's contract applies.
 6. **Page endpoints needed a small re-implementation.** Nitro's h3 wrapper (`pageEndpointsPlugin`) lives in `@analogjs/vite-plugin-nitro`, and the route mapping duplicates `getPageHandlers`, which returns Nitro types.
 7. **`load` data is fetched again after hydration.** Server function results reach the client through TransferState, but the page `load` doesn't. `route-config.ts` calls `INTERNAL_FETCH` directly and skips TransferState, so this looks like existing Analog behaviour; it was found by reading the code, not reproduced on Nitro.
 8. **One module instance.** Dev uses one Vite module graph and production builds one server bundle, so a module-level `ModuleRef` is shared by the host, SSR and server functions.
@@ -147,12 +162,12 @@ Nest-specific code in total: the `onModuleInit` mount, `rawBody: true`, `useStat
 
 ## Not covered
 
-Fastify (needs `@fastify/middie` for `use()`), Vite 6/7, streaming SSR, i18n, prerendering, per-route `ssr: false`, `src/server/routes` (the host's own routes replace file-based API routes), WebSockets, Windows paths, Nx layouts where the workspace root differs from the app root.
+Calling the core without a Node context (Bun, Deno, edge runtimes): that needs web-standard request/response tokens and server function dispatch decoupled from Node first. Also Fastify (needs `@fastify/middie` for `use()`), Vite 6/7, streaming SSR, i18n, prerendering, per-route `ssr: false`, `src/server/routes` (the host's own routes replace file-based API routes), WebSockets, Windows paths, Nx layouts where the workspace root differs from the app root.
 
 ## Proposal
 
 Filed as analogjs/analog#2710 (fixes), analogjs/analog#2711 (handler and server build) and analogjs/analog#2712 (NestJS docs).
 
 - **Fix in Analog regardless:** findings 3, 4 and 6, plus checking finding 7 on Nitro.
-- **Add to Analog:** `createAnalogHandler()` in `@analogjs/router/server` (shaped like `src/router-server/`), and a server build in `@analogjs/platform`, as `analogNodeServer()` or an `analog()` option (shaped like `src/platform/`). Any Node host can use them: Nest, Express, Fastify, or a custom `server.mjs`.
+- **Add to Analog:** `createAnalogRequestHandler()` (fetch-style) and its Node adapter `createAnalogHandler()` in `@analogjs/router/server` (shaped like `src/router-server/`), and a server build in `@analogjs/platform`, as `analogNodeServer()` or an `analog()` option (shaped like `src/platform/`). Any Node host can use them: Nest, Express, Fastify, or a custom `server.mjs`.
 - **NestJS:** a docs recipe (the module above plus `injectNest()`), not a dedicated package.

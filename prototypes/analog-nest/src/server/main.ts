@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { fileURLToPath } from 'node:url';
 
-import type { AnalogNodeApp } from '../router-server/analog-handler';
+import type { AnalogNodeApp } from '../router-server/node-handler';
 import { AppModule } from './app.module';
 
 async function createNestApp(): Promise<NestExpressApplication> {
