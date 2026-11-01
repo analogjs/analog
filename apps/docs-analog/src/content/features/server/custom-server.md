@@ -10,6 +10,34 @@ A custom server runs on Node.js (or a runtime with `node:http`, such as Bun or D
 
 ## Setup
 
+Install `h3`, which Analog's request handling uses (Nitro apps get it from Nitro):
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install h3
+```
+
+  </TabItem>
+
+  <TabItem label="yarn" value="yarn">
+
+```shell
+yarn add h3
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm add h3
+```
+
+  </TabItem>
+</Tabs>
+
 Point the `server` option at your server entry, and leave `nitro()` out of the Vite plugins:
 
 ```ts
@@ -26,7 +54,7 @@ export default defineConfig({
 });
 ```
 
-Vite compiles the TypeScript in the entry's directory. Frameworks that use decorators with dependency injection, like NestJS, also need `experimentalDecorators` and `emitDecoratorMetadata` in `tsconfig.json`.
+Vite compiles the TypeScript in the entry's directory. Frameworks that use decorators with dependency injection, like NestJS, also need `experimentalDecorators` and `emitDecoratorMetadata` in `tsconfig.json`. Vite 8 emits the decorator metadata; on Vite 6 and 7, esbuild can't, so compile the server directory with SWC (for example with `unplugin-swc`).
 
 ## The server entry
 
@@ -103,6 +131,8 @@ Node servers that have the Node request and response can pass them as a second a
 ```shell
 node dist/server/main.js
 ```
+
+The server bundle is an ES module, named `main.mjs` instead when your `package.json` doesn't set `"type": "module"`. In an Nx workspace, the output is under the project's directory, such as `dist/apps/my-app/client` and `dist/apps/my-app/server`.
 
 ## Limitations
 
