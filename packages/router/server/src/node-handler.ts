@@ -4,7 +4,10 @@ import { pipeline } from 'node:stream/promises';
 import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import type { TLSSocket } from 'node:tls';
 
-import { createAnalogRequestHandler } from './request-handler';
+import {
+  createAnalogRequestHandler,
+  type AnalogRequestOptions,
+} from './request-handler';
 
 export type AnalogNodeHandler = (
   req: IncomingMessage,
@@ -16,8 +19,10 @@ export type AnalogNodeHandler = (
  * The Node adapter for `createAnalogRequestHandler()`: converts the request,
  * writes Analog's `Response`, and calls `next` when Analog returns `null`.
  */
-export function createAnalogHandler(): AnalogNodeHandler {
-  const handleAnalogRequest = createAnalogRequestHandler();
+export function createAnalogHandler(
+  options: AnalogRequestOptions = {},
+): AnalogNodeHandler {
+  const handleAnalogRequest = createAnalogRequestHandler(options);
   return (req, res, next) => {
     handleAnalogRequest(toRequest(req), { req, res })
       .then((response) => (response ? writeResponse(response, res) : next()))

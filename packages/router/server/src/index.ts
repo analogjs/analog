@@ -7,6 +7,7 @@ export {
   createAnalogRequestHandler,
   type AnalogRequestContext,
   type AnalogRequestHandler,
+  type AnalogRequestOptions,
 } from './request-handler';
 export { createAnalogHandler, type AnalogNodeHandler } from './node-handler';
 
