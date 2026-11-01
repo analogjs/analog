@@ -62,6 +62,8 @@ export function createAnalogRequestHandler(): AnalogRequestHandler {
     manifest.config(),
     ...manifest.serverFnModules.map((load) => load()),
   ]).then(([config]) => createServerFnAppInjector(config));
+  // Failures surface on server function requests, not as unhandled rejections.
+  appInjector.catch(() => undefined);
 
   async function route(
     request: Request,
