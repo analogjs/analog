@@ -451,6 +451,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/integrations/nestjs': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/integrations/nx': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;

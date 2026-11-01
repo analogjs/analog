@@ -271,6 +271,11 @@ export function getSidebar(): SidebarNode[] {
         },
         {
           kind: 'doc',
+          id: 'integrations/nestjs/index',
+          label: $localize`:@@sidebar.nestjs:NestJS`,
+        },
+        {
+          kind: 'doc',
           id: 'integrations/storybook/index',
           label: $localize`:@@sidebar.storybook:Storybook`,
         },
