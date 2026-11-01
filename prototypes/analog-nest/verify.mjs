@@ -1,6 +1,6 @@
 // Checks a running prototype server (dev or production) end to end.
 // Usage: node verify.mjs http://localhost:3000 [--analog-only]
-// --analog-only skips the checks that need Nest (for the node:http host).
+// --analog-only skips the checks that need Nest (node:http and Hono hosts).
 import { createRequire } from 'node:module';
 
 const base = process.argv[2] ?? 'http://localhost:3000';
@@ -21,7 +21,11 @@ async function check(name, request, expect) {
   });
   const text = await res.text();
   const ok =
-    res.status === expect.status && (!expect.body || expect.body.test(text));
+    res.status === expect.status &&
+    (!expect.body || expect.body.test(text)) &&
+    Object.entries(expect.headers ?? {}).every(([key, value]) =>
+      value.test(res.headers.get(key) ?? ''),
+    );
   report(ok, name, ` [${res.status}]${ok ? '' : ` ${text.slice(0, 200)}`}`);
   return text;
 }
@@ -42,8 +46,14 @@ const aboutHtml = await check(
   { path: '/about' },
   {
     status: 200,
-    body: /<p id="about">About, from a page endpoint/,
+    body: /<p id="about">About, from a page endpoint[\s\S]*<p id="shout">ANALOG/,
   },
+);
+const shoutFn = `/_analog/fn/${aboutHtml.match(/__analog_fn_([a-f0-9]{16})_/)?.[1]}`;
+await check(
+  'Analog-only server fn reads its JSON body',
+  { path: shoutFn, method: 'POST', ...json({ text: 'fetch' }) },
+  { status: 200, body: /"text":"FETCH"/ },
 );
 // Served by the host (production) or Vite (dev), not by the Analog handler.
 const script = aboutHtml.match(/<script type="module"[^>]*src="([^"]+)"/)?.[1];
@@ -53,11 +63,12 @@ await check(
   { status: 200, body: /\b(import|export)\b/ },
 );
 await check(
-  'page endpoint load (Analog-only page)',
+  'page endpoint load, with a header set on res (Analog-only page)',
   { path: '/api/_analog/pages/about' },
   {
     status: 200,
     body: /About, from a page endpoint/,
+    headers: { 'x-analog-load': /^about$/ },
   },
 );
 await check(

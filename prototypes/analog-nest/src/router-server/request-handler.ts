@@ -7,7 +7,8 @@ import type { ServerContext } from '@analogjs/router/tokens';
 import type { Injector } from '@angular/core';
 import { createEvent } from 'h3';
 import { readFileSync } from 'node:fs';
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import { $fetch } from 'ofetch';
 import { createRouter } from 'radix3';
@@ -20,22 +21,24 @@ import {
 } from './server-manifest';
 
 /**
- * The Node request and response behind a `Request`. Analog's `REQUEST` and
- * `RESPONSE` tokens, page endpoint arguments and server function dispatch are
- * Node-typed, so the first version requires them.
+ * The Node request and response behind a `Request`, when the host has them.
+ * They become Analog's `REQUEST`/`RESPONSE` and the page endpoint `req`/`res`.
  */
 export type AnalogRequestContext = {
   req: IncomingMessage;
   res: ServerResponse;
 };
 
-export type AnalogRequestHandler = {
-  /** A `Response` for Analog's requests, or `null` for anything else. */
-  handle(
-    request: Request,
-    context: AnalogRequestContext,
-  ): Promise<Response | null>;
-};
+/**
+ * A `Response` for Analog's requests, or `null` for anything else. Without a
+ * context (fetch-native hosts), a Node request/response pair is created from
+ * the `Request`, and whatever the app sets on the response is folded into the
+ * returned `Response`.
+ */
+export type AnalogRequestHandler = (
+  request: Request,
+  context?: AnalogRequestContext,
+) => Promise<Response | null>;
 
 type PageRoute = { importEndpoint: () => Promise<PageEndpointModule> };
 
@@ -45,8 +48,8 @@ const VITE_SERVER = Symbol.for('analog.node.vite');
 /**
  * Handles Analog's requests: server functions and page endpoints, then SSR for
  * GET requests outside the API prefix. Static client files are the host's job;
- * serve them before calling `handle` (without index fallback), or SSR answers
- * asset URLs.
+ * serve them before calling the handler (without index fallback), or SSR
+ * answers asset URLs.
  */
 export function createAnalogRequestHandler(): AnalogRequestHandler {
   const manifest = serverManifest();
@@ -67,23 +70,79 @@ export function createAnalogRequestHandler(): AnalogRequestHandler {
     ...manifest.serverFnModules.map((load) => load()),
   ]).then(([config]) => createServerFnAppInjector(config));
 
-  return {
-    async handle(request, context) {
-      const url = new URL(request.url);
-      if (url.pathname.startsWith(SERVER_FN_PREFIX)) {
-        const id = url.pathname.slice(SERVER_FN_PREFIX.length);
-        return callServerFn(id, request, context, await appInjector);
-      }
-      if (url.pathname.startsWith(pageEndpointPrefix)) {
-        const route = pageRoutes.lookup(url.pathname);
-        return route ? callPageEndpoint(route, request, url, context) : null;
-      }
-      if (request.method === 'GET' && !url.pathname.startsWith(apiPrefix)) {
-        return renderPage(manifest, url, context);
-      }
-      return null;
-    },
+  async function route(
+    request: Request,
+    url: URL,
+    context: AnalogRequestContext,
+  ): Promise<Response | null> {
+    if (url.pathname.startsWith(SERVER_FN_PREFIX)) {
+      const id = url.pathname.slice(SERVER_FN_PREFIX.length);
+      return callServerFn(id, request, context, await appInjector);
+    }
+    if (url.pathname.startsWith(pageEndpointPrefix)) {
+      const route = pageRoutes.lookup(url.pathname);
+      return route ? callPageEndpoint(route, request, url, context) : null;
+    }
+    if (request.method === 'GET' && !url.pathname.startsWith(apiPrefix)) {
+      return renderPage(manifest, url, context);
+    }
+    return null;
+  }
+
+  return async (request, context) => {
+    const url = new URL(request.url);
+    if (context) {
+      return route(request, url, context);
+    }
+    const created = nodeContext(request, url);
+    const response = await route(request, url, created);
+    return response && withResponseHeaders(response, created.res);
   };
+}
+
+/**
+ * A Node request/response pair for a bare `Request`, carrying what Analog
+ * reads: method, URL, headers and protocol. The same approach as h3's web
+ * adapter; it needs `node:http` (Node, Bun, Deno).
+ */
+function nodeContext(request: Request, url: URL): AnalogRequestContext {
+  const socket = new Socket();
+  Object.defineProperty(socket, 'encrypted', {
+    value: url.protocol === 'https:',
+  });
+  const req = new IncomingMessage(socket);
+  const path = `${url.pathname}${url.search}`;
+  req.method = request.method;
+  req.url = path;
+  Object.assign(req, { originalUrl: path });
+  req.headers = { host: url.host, ...Object.fromEntries(request.headers) };
+  return { req, res: new ServerResponse(req) };
+}
+
+/** Headers the app set on the created response, under Analog's own. */
+function withResponseHeaders(
+  response: Response,
+  res: ServerResponse,
+): Response {
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(res.getHeaders())) {
+    for (const item of [value ?? []].flat()) {
+      headers.append(key, String(item));
+    }
+  }
+  response.headers.forEach((value, key) => {
+    if (key !== 'set-cookie') {
+      headers.set(key, value);
+    }
+  });
+  for (const cookie of response.headers.getSetCookie()) {
+    headers.append('set-cookie', cookie);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 function serverManifest(): AnalogServerManifest {

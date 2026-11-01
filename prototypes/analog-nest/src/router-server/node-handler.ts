@@ -24,10 +24,9 @@ export type AnalogNodeApp = {
  * writes Analog's `Response`, and calls `next` when Analog returns `null`.
  */
 export function createAnalogHandler(): NodeHandler {
-  const analog = createAnalogRequestHandler();
+  const handleAnalogRequest = createAnalogRequestHandler();
   return (req, res, next) => {
-    analog
-      .handle(toRequest(req), { req, res })
+    handleAnalogRequest(toRequest(req), { req, res })
       .then((response) => (response ? writeResponse(response, res) : next()))
       .catch(next);
   };

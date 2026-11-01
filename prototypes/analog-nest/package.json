@@ -7,7 +7,8 @@
     "build": "vite build",
     "start": "node dist/server/main.js",
     "verify": "node verify.mjs",
-    "dev:node": "vite --config vite.node.config.ts"
+    "dev:node": "vite --config vite.node.config.ts",
+    "dev:fetch": "vite --config vite.fetch.config.ts"
   },
   "dependencies": {
     "@analogjs/content": "3.0.0-beta.18",
@@ -18,12 +19,14 @@
     "@angular/platform-browser": "22.2.4",
     "@angular/platform-server": "22.2.4",
     "@angular/router": "22.2.4",
+    "@hono/node-server": "2.1.5",
     "@nestjs/common": "12.3.2",
     "@nestjs/core": "12.3.2",
     "@nestjs/platform-express": "12.3.2",
     "express": "5.3.0",
     "front-matter": "4.0.2",
     "h3": "1.15.11",
+    "hono": "4.13.16",
     "marked": "18.1.2",
     "ofetch": "2.0.0-alpha.3",
     "radix3": "1.1.2",
