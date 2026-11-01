@@ -2029,11 +2029,15 @@ function devServerModePlugin(): Plugin {
   return {
     name: '@analogjs/vite-plugin-angular-dev-server-mode',
     apply: 'serve',
-    configEnvironment(name, config) {
-      if (isServerEnvironment(name, config)) {
-        return { define: { ngServerMode: 'true' } };
-      }
-      return undefined;
+    // After other plugins' hooks, so a consumer they set is taken into account.
+    configEnvironment: {
+      order: 'post',
+      handler(name, config) {
+        if (isServerEnvironment(name, config)) {
+          return { define: { ngServerMode: 'true' } };
+        }
+        return undefined;
+      },
     },
   };
 }
