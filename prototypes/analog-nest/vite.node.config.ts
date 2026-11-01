@@ -2,7 +2,7 @@ import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 import { defineConfig } from 'vite';
 
-import { analogNodeServer } from './src/analog-node/vite-plugin';
+import { analogNodeServer } from './src/platform/node-server-plugin';
 
 // The same app served by src/node-server/main.ts instead of Nest.
 export default defineConfig({
@@ -13,7 +13,7 @@ export default defineConfig({
     angular(),
     analogNodeServer({
       entry: 'src/node-server/main.ts',
-      serverDirs: ['src/node-server', 'src/analog-node'],
+      serverDirs: ['src/node-server', 'src/router-server'],
     }),
   ],
 });

@@ -1,7 +1,7 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { HttpAdapterHost, ModuleRef } from '@nestjs/core';
 
-import { createAnalogHandler } from '../analog-node/handler';
+import { createAnalogHandler } from '../router-server/analog-handler';
 import { ClockService } from './clock.service';
 import { GreetingService } from './greeting.service';
 import { HelloController } from './hello.controller';

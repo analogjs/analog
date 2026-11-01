@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
-import type { AnalogNodeApp } from '../analog-node/handler';
+import type { AnalogNodeApp } from '../router-server/analog-handler';
 import { AppModule } from './app.module';
 
 async function createNestApp(): Promise<NestExpressApplication> {

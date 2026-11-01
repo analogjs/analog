@@ -8,10 +8,10 @@ import {
   type ViteDevServer,
 } from 'vite';
 
-import type { AnalogNodeApp } from './handler';
+import type { AnalogNodeApp } from '../router-server/analog-handler';
 
-const VIRTUAL_ID = 'virtual:analog-node/server';
-const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
+// The router's placeholder, as emitted after its type assertion is stripped.
+const MANIFEST_PLACEHOLDER = /ANALOG_SERVER_MANIFEST = \{\}/;
 const VITE_SERVER = Symbol.for('analog.node.vite');
 const HTML_MIDDLEWARES = [
   'viteIndexHtmlMiddleware',
@@ -31,6 +31,8 @@ export type AnalogNodeServerOptions = {
 };
 
 /**
+ * Would be part of @analogjs/platform (an `analog()` option or its own export).
+ *
  * Builds and serves an Analog app from a Node server entry instead of Nitro:
  * the client and a single server bundle in `vite build`, and the entry's app
  * mounted as middleware in `vite dev`.
@@ -41,6 +43,7 @@ export function analogNodeServer({
 }: AnalogNodeServerOptions = {}): Plugin {
   let root = process.cwd();
   let analogOptions: AnalogOptions = {};
+  let manifestId: string | undefined;
 
   return {
     name: 'analog-node-server',
@@ -93,20 +96,24 @@ export function analogNodeServer({
             ?.api as { analogOptions?: AnalogOptions } | undefined
         )?.analogOptions ?? {};
     },
-    resolveId(id) {
-      return id === VIRTUAL_ID ? RESOLVED_VIRTUAL_ID : undefined;
-    },
-    load(id) {
-      return id === RESOLVED_VIRTUAL_ID
-        ? serverModule(root, analogOptions)
-        : undefined;
+    // Fills in the router's ANALOG_SERVER_MANIFEST placeholder, as the
+    // router plugin does for ANALOG_ROUTE_FILES.
+    transform(code, id) {
+      if (!MANIFEST_PLACEHOLDER.test(code)) {
+        return undefined;
+      }
+      manifestId = id;
+      return code.replace(
+        MANIFEST_PLACEHOLDER,
+        `ANALOG_SERVER_MANIFEST = ${serverManifest(root, analogOptions)}`,
+      );
     },
     configureServer(server) {
       (globalThis as Record<symbol, ViteDevServer>)[VITE_SERVER] = server;
       const invalidateServerModule = (file: string) => {
         if (file.endsWith('.server.ts')) {
           const graph = server.environments['ssr'].moduleGraph;
-          const mod = graph.getModuleById(RESOLVED_VIRTUAL_ID);
+          const mod = manifestId && graph.getModuleById(manifestId);
           if (mod) graph.invalidateModule(mod);
         }
       };
@@ -122,11 +129,11 @@ export function analogNodeServer({
 }
 
 /**
- * The generated `virtual:analog-node/server` module: the SSR renderer, the
- * app's server config, every `*.server.ts` (imported so server functions
- * register), and lazy page endpoints keyed by route.
+ * The manifest object literal: lazy imports of the SSR renderer, the app's
+ * server config, every `*.server.ts` (so server functions register), and page
+ * endpoints keyed by route.
  */
-function serverModule(root: string, options: AnalogOptions): string {
+function serverManifest(root: string, options: AnalogOptions): string {
   const apiPrefix = options.apiPrefix ?? 'api';
   const src = `${root}/${options.sourceRoot ?? 'src'}`;
   const glob = (pattern: string) =>
@@ -139,22 +146,24 @@ function serverModule(root: string, options: AnalogOptions): string {
     `${src}/app.config.server.ts`,
   ].find((file) => existsSync(file));
 
-  return [
-    `export { default as render } from ${JSON.stringify(`${src}/main.server.ts`)};`,
+  const lazy = (file: string) => `() => import(${JSON.stringify(file)})`;
+
+  return `{
+  apiPrefix: ${JSON.stringify(apiPrefix)},
+  render: () => import(${JSON.stringify(`${src}/main.server.ts`)}).then((m) => m.default),
+  config: ${
     appConfig
-      ? `export { config } from ${JSON.stringify(appConfig)};`
-      : `export const config = { providers: [] };`,
-    ...glob(`${src}/app/**/*.server.ts`).map(
-      (file) => `import ${JSON.stringify(file)};`,
-    ),
-    `export const apiPrefix = ${JSON.stringify(apiPrefix)};`,
-    `export const pageEndpoints = {`,
-    ...glob(`${src}/app/pages/**/*.server.ts`).map(
+      ? `() => import(${JSON.stringify(appConfig)}).then((m) => m.config)`
+      : `async () => ({ providers: [] })`
+  },
+  serverFnModules: [${glob(`${src}/app/**/*.server.ts`).map(lazy).join(', ')}],
+  pageEndpoints: {${glob(`${src}/app/pages/**/*.server.ts`)
+    .map(
       (file) =>
-        `  ${JSON.stringify(pageEndpointRoute(file, apiPrefix))}: () => import(${JSON.stringify(file)}),`,
-    ),
-    `};`,
-  ].join('\n');
+        `${JSON.stringify(pageEndpointRoute(file, apiPrefix))}: ${lazy(file)}`,
+    )
+    .join(', ')}},
+}`;
 }
 
 /** Same mapping as getPageHandlers in @analogjs/platform. */

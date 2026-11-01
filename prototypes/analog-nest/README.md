@@ -2,10 +2,13 @@
 
 A standalone Analog app (published `@analogjs/*@3.0.0-beta.18`, Angular 22, Vite 8) served by **its own Node server instead of Nitro**: Node only, no SSG.
 
-It has two parts:
+It has three parts:
 
-- `src/analog-node/` is a **server-agnostic layer** that could move into Analog. It contains a Node request handler and a Vite plugin, and doesn't reference Nest.
-- **NestJS is one host for that layer.** The Nest-specific code is a short recipe. The same app also runs on plain `node:http` (`src/node-server/main.ts`).
+- `src/router-server/` is what **`@analogjs/router/server`** would export: `createAnalogHandler()`, a Node request handler for any server.
+- `src/platform/` is what **`@analogjs/platform`** would add: a Vite plugin that builds the server and fills in the handler's manifest.
+- **NestJS is one host for them.** The Nest-specific code is a short recipe. The same app also runs on plain `node:http` (`src/node-server/main.ts`).
+
+Neither `src/router-server/` nor `src/platform/` references Nest.
 
 Analog itself is unchanged: every Analog runtime API used here is published as-is.
 
@@ -40,10 +43,11 @@ The checks cover:
 
 ```
 src/
-  analog-node/        server-agnostic layer (no Nest imports)
-    handler.ts        createAnalogHandler(): (req, res, next) Node handler
-    vite-plugin.ts    analogNodeServer(): build environments, generated module, dev server
-    server.d.ts       types for virtual:analog-node/server
+  router-server/        would be @analogjs/router/server (no Nest imports)
+    analog-handler.ts   createAnalogHandler(): (req, res, next) Node handler
+    server-manifest.ts  ANALOG_SERVER_MANIFEST placeholder and its type
+  platform/             would be @analogjs/platform
+    node-server-plugin.ts  analogNodeServer(): build, manifest, dev server
   server/             NestJS host (app code)
     main.ts           createApp() for dev; listens in production
     app.module.ts     the recipe: mount the handler in onModuleInit
@@ -54,9 +58,13 @@ src/
   app/                Angular app (pages, server functions)
 ```
 
-## The generic layer
+## The server-agnostic layer
 
-### `createAnalogHandler()`
+### `createAnalogHandler()`, in `@analogjs/router/server`
+
+```ts
+import { createAnalogHandler } from '@analogjs/router/server';
+```
 
 Returns a `(req, res, next)` handler that serves the whole Analog app on any Node server:
 
@@ -67,12 +75,26 @@ Returns a `(req, res, next)` handler that serves the whole Analog app on any Nod
 3. SSR for any GET outside `/<apiPrefix>/`, using the app's `main.server.ts` renderer. It receives an ofetch instance as `ServerContext.fetch`, which the router uses for TransferState.
 4. Everything else goes to `next()`, so the host's own routes and 404 handling apply.
 
-### `analogNodeServer({ entry, serverDirs })`
+The handler gets the app's files from `ANALOG_SERVER_MANIFEST`, which the router ships as an empty placeholder (`{}`). This follows the existing `ANALOG_ROUTE_FILES` pattern, which `@analogjs/router` ships as `{}` and the platform's router plugin fills in. So the router never imports a module that only the platform provides; without the platform's build, `createAnalogHandler()` throws a clear error. The manifest holds only lazy imports:
 
-A Vite plugin used in place of `nitro()`:
+```ts
+{
+  apiPrefix: 'api',
+  render: () => import('/src/main.server.ts').then((m) => m.default),
+  config: () => import('/src/app/app.config.server.ts').then((m) => m.config),
+  serverFnModules: [() => import('/src/app/server-fns/greeting.server.ts'), …],
+  pageEndpoints: { '/api/_analog/pages/index': () => import('/src/app/pages/index.server.ts'), … },
+}
+```
+
+Server-function dispatch waits for every `serverFnModules` import, so all functions are registered before the first call.
+
+### `analogNodeServer({ entry, serverDirs })`, in `@analogjs/platform`
+
+A Vite plugin used in place of `nitro()`, either as its own export or as an `analog()` option:
 
 - **Build:** a `client` environment (`index.html` → `dist/client`) and a server environment (`entry` → `dist/server`, with chunks flat so every chunk finds `../client`), built in that order.
-- **Generated module:** `virtual:analog-node/server` exports the SSR renderer, the app's server config, imports of every `*.server.ts` (so server functions register), and lazy page endpoints keyed by route. It uses `apiPrefix` and `sourceRoot` from `analog()`'s options. In dev it is invalidated when a `*.server.ts` file is added or removed, so new page endpoints work without a restart.
+- **Manifest:** replaces the `ANALOG_SERVER_MANIFEST = {}` placeholder with the object above, built from `*.server.ts` discovery and `analog()`'s `apiPrefix` and `sourceRoot`. In dev it invalidates that module when a `*.server.ts` file is added or removed, so new page endpoints work without a restart.
 - **Dev:** removes Vite's HTML fallbacks, loads `entry` with `ssrLoadModule`, calls its `createApp()` and hands every request Vite doesn't serve to `app.handle`. When the server module graph changes, it starts a new app and closes the old one (`app.close`), which took 7–10 ms in testing.
 - **Compiling server code:** turns Vite's Oxc transform back on for `serverDirs` (finding 3 below).
 
@@ -123,5 +145,5 @@ Fastify (needs `@fastify/middie` for `use()`), Vite 6/7, streaming SSR, i18n, pr
 ## Proposal
 
 - **Fix in Analog regardless:** findings 3, 4 and 6, plus checking finding 7 on Nitro.
-- **Add to Analog:** `createAnalogHandler()` and a Vite plugin such as `analogNodeServer()` (or an `analog()` option), shaped like `src/analog-node/`. Any Node host can use them: Nest, Express, Fastify, or a custom `server.mjs`.
+- **Add to Analog:** `createAnalogHandler()` in `@analogjs/router/server` (shaped like `src/router-server/`), and a server build in `@analogjs/platform`, as `analogNodeServer()` or an `analog()` option (shaped like `src/platform/`). Any Node host can use them: Nest, Express, Fastify, or a custom `server.mjs`.
 - **NestJS:** a docs recipe (the module above plus `injectNest()`), not a dedicated package.

@@ -1,3 +1,4 @@
+// Would be exported from @analogjs/router/server.
 import {
   createServerFnAppInjector,
   createServerFnEventHandler,
@@ -18,12 +19,12 @@ import { fileURLToPath } from 'node:url';
 import { $fetch } from 'ofetch';
 import serveStatic from 'serve-static';
 import type { ViteDevServer } from 'vite';
+
 import {
-  apiPrefix,
-  config,
-  pageEndpoints,
-  render,
-} from 'virtual:analog-node/server';
+  ANALOG_SERVER_MANIFEST,
+  type AnalogServerManifest,
+  type PageEndpointModule,
+} from './server-manifest';
 
 export type NodeHandler = (
   req: IncomingMessage,
@@ -38,7 +39,6 @@ export type AnalogNodeApp = {
 };
 
 const SERVER_FN_PREFIX = '/_analog/fn/';
-const PAGE_ENDPOINT_PREFIX = `/${apiPrefix}/_analog/pages/`;
 const VITE_SERVER = Symbol.for('analog.node.vite');
 
 /**
@@ -47,20 +47,25 @@ const VITE_SERVER = Symbol.for('analog.node.vite');
  * requests outside the API prefix. Anything else goes to `next`.
  */
 export function createAnalogHandler(): NodeHandler {
+  const manifest = serverManifest();
+  const pageEndpointPrefix = `/${manifest.apiPrefix}/_analog/pages/`;
   const staticFiles = import.meta.env.DEV
     ? undefined
     : serveStatic(clientDir(), { index: false });
-  const endpoints = toNodeListener(createEndpointsApp());
+  const endpoints = toNodeListener(createEndpointsApp(manifest));
 
   const handleAnalog: NodeHandler = (req, res, next) => {
     const path = new URL(req.url ?? '/', 'http://localhost').pathname;
     if (
       path.startsWith(SERVER_FN_PREFIX) ||
-      path.startsWith(PAGE_ENDPOINT_PREFIX)
+      path.startsWith(pageEndpointPrefix)
     ) {
       void endpoints(req, res);
-    } else if (req.method === 'GET' && !path.startsWith(`/${apiPrefix}/`)) {
-      renderPage(req, res).catch(next);
+    } else if (
+      req.method === 'GET' &&
+      !path.startsWith(`/${manifest.apiPrefix}/`)
+    ) {
+      renderPage(manifest, req, res).catch(next);
     } else {
       next();
     }
@@ -74,13 +79,24 @@ export function createAnalogHandler(): NodeHandler {
     : handleAnalog;
 }
 
+function serverManifest(): AnalogServerManifest {
+  if (!ANALOG_SERVER_MANIFEST.render) {
+    throw new Error(
+      'createAnalogHandler() needs the platform server build, which fills in the server manifest.',
+    );
+  }
+  return ANALOG_SERVER_MANIFEST as AnalogServerManifest;
+}
+
 async function renderPage(
+  manifest: AnalogServerManifest,
   req: IncomingMessage,
   res: ServerResponse,
 ): Promise<void> {
   const serverReq = req as ServerContext['req'];
   serverReq.originalUrl ??= req.url ?? '/';
   const url = serverReq.originalUrl;
+  const render = await manifest.render();
   const html = await render(url, await indexHtml(url), {
     req: serverReq,
     res,
@@ -90,20 +106,26 @@ async function renderPage(
   res.end(html);
 }
 
-function createEndpointsApp() {
+function createEndpointsApp(manifest: AnalogServerManifest) {
+  // Server functions register when their module is imported, so dispatch
+  // waits for every module along with the app injector.
+  const appInjector = Promise.all([
+    manifest.config(),
+    ...manifest.serverFnModules.map((load) => load()),
+  ]).then(([config]) => createServerFnAppInjector(config));
+
   const router = createRouter();
-  router.use(
-    `${SERVER_FN_PREFIX}:id`,
-    createServerFnEventHandler(createServerFnAppInjector(config)),
-  );
-  for (const [route, importEndpoint] of Object.entries(pageEndpoints)) {
+  router.use(`${SERVER_FN_PREFIX}:id`, createServerFnEventHandler(appInjector));
+  for (const [route, importEndpoint] of Object.entries(
+    manifest.pageEndpoints,
+  )) {
     router.use(route, pageEndpointHandler(importEndpoint));
   }
   return createApp().use(router);
 }
 
 function pageEndpointHandler(
-  importEndpoint: (typeof pageEndpoints)[string],
+  importEndpoint: () => Promise<PageEndpointModule>,
 ): EventHandler {
   return defineEventHandler(async (event) => {
     const endpoint = await importEndpoint();
