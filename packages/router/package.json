@@ -102,6 +102,7 @@
     "@standard-schema/spec": "catalog:",
     "es-toolkit": "catalog:",
     "ofetch": "catalog:",
+    "radix3": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {

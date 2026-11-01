@@ -2,6 +2,14 @@ export { provideServerContext } from './provide-server-context';
 export { render } from './render';
 export { renderStream } from './render-stream';
 
+// Serve Analog from any server (issue #2711).
+export {
+  createAnalogRequestHandler,
+  type AnalogRequestContext,
+  type AnalogRequestHandler,
+} from './request-handler';
+export { createAnalogHandler, type AnalogNodeHandler } from './node-handler';
+
 // Server Functions (issue #2422) — server authoring + dispatch runtime.
 export { serverFn } from './server-fn/server-fn';
 export { createServerFnAppInjector } from './server-fn/app-injector';
