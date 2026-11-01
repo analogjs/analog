@@ -100,7 +100,7 @@ Register your own routes before it. Routes under `/api/` that nothing handles re
 
 ## Server-side fetches
 
-Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`:
+Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`. It gets the requests Analog doesn't handle: routes under `/api/`, and non-`GET` requests elsewhere; other `GET` requests are server-rendered.
 
 ```ts
 // Your server's own address, never one taken from the request.
@@ -118,7 +118,7 @@ app.use(
 );
 ```
 
-In development, the origin is Vite's dev server. Without a `fetch`, these requests get a `404`. Prefer calling your services directly from page endpoints and server functions where you can.
+In development, set `SERVER_ORIGIN` to Vite's dev server origin, such as `http://localhost:5173`. Without a `fetch`, these requests get a `404`. Prefer calling your services directly from page endpoints and server functions where you can.
 
 ## Static files
 
