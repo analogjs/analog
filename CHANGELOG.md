@@ -1,3 +1,16 @@
+# [3.0.0-beta.22](https://github.com/analogjs/analog/compare/v3.0.0-beta.21...v3.0.0-beta.22) (2026-11-02)
+
+### Bug Fixes
+
+- **platform:** resolve a relative entryServer for custom servers ([f2f6354](https://github.com/analogjs/analog/commit/f2f63549316dfc52a794bde9371a4dae9aba9d24))
+- **router:** abort a render whose client left before the handler ran ([a90453b](https://github.com/analogjs/analog/commit/a90453bc53fb9b480332dcc0b1e47e51eec15de3))
+- **router:** abort renders the client left during setup, report stream errors ([9d8d5af](https://github.com/analogjs/analog/commit/9d8d5af2bf102bf3589a0d7be04441a76a6c0920))
+- **router:** don't report a render the client walked away from ([25fe247](https://github.com/analogjs/analog/commit/25fe24737a8ef67c0c923a93256fdff900b84529))
+
+### Features
+
+- **router:** stream SSR with a custom server ([d1c195d](https://github.com/analogjs/analog/commit/d1c195d310e540b81a61a1b5c0742aae934f1e1f)), closes [analogjs/analog#2719](https://github.com/analogjs/analog/issues/2719)
+
 # [3.0.0-beta.21](https://github.com/analogjs/analog/compare/v3.0.0-beta.20...v3.0.0-beta.21) (2026-11-02)
 
 ### Features
