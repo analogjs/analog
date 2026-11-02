@@ -152,7 +152,7 @@ describe('serverPlugin', () => {
     }
   });
 
-  it('serves requests from a Fetchable entry in dev', async () => {
+  it('serves a Fetchable entry in dev and closes it on reload', async () => {
     writeFileSync(
       join(root, 'src/main.ts'),
       [
@@ -161,6 +161,9 @@ describe('serverPlugin', () => {
         '    const { pathname } = new URL(request.url);',
         '    const body = `${request.method} ${pathname} ${await request.text()}`;',
         "    return new Response(body, { status: 201, headers: { 'x-entry': 'fetchable' } });",
+        '  },',
+        '  close() {',
+        '    globalThis.analogClosed = (globalThis.analogClosed ?? 0) + 1;',
         '  },',
         '};',
       ].join('\n'),
@@ -184,7 +187,13 @@ describe('serverPlugin', () => {
       expect(response.status).toBe(201);
       expect(response.headers.get('x-entry')).toBe('fetchable');
       expect(await response.text()).toBe('POST /services/echo hello');
+
+      vite.environments['ssr'].moduleGraph.invalidateAll();
+      await fetch(`http://localhost:${port}/services/echo`);
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(globalThis).toHaveProperty('analogClosed', 1);
     } finally {
+      delete (globalThis as { analogClosed?: number }).analogClosed;
       http.close();
       await vite.close();
     }

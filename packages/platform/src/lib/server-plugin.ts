@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from 'node:fs';
-import type { IncomingMessage, ServerResponse } from 'node:http';
 import { relative, resolve } from 'node:path';
 import type { NodeHttp1Handler } from 'srvx';
 import { toNodeHandler } from 'srvx/node';
@@ -24,18 +23,11 @@ const HTML_MIDDLEWARES = [
 ];
 const NITRO_PLUGINS = ['nitro:main', '@analogjs/vite-plugin-nitro'];
 
-type ServerApp = {
-  handle: (
-    req: IncomingMessage,
-    res: ServerResponse,
-    next: (error?: unknown) => void,
-  ) => void;
-  close?: () => Promise<void>;
-};
-type FetchHandler = (request: Request) => Response | Promise<Response>;
 type ServerEntry = {
-  createApp?: () => Promise<ServerApp>;
-  default?: { fetch?: FetchHandler };
+  default?: {
+    fetch?: (request: Request) => Response | Promise<Response>;
+    close?: () => unknown;
+  };
 };
 
 /**
@@ -221,32 +213,31 @@ export function serverPlugin(
 }
 
 /**
- * Hands every request Vite doesn't serve to the entry's app. The app is
+ * Hands every request Vite doesn't serve to the entry's `fetch`. The handler is
  * recreated when the server module graph changes (ssrLoadModule returns a new
- * module) and the previous one is closed.
+ * module), and the previous entry's `close()` is called.
  */
 function devMiddleware(
   viteServer: ViteDevServer,
   entry: string,
 ): Connect.NextHandleFunction {
-  let current: { entry: ServerEntry; app: Promise<ServerApp> } | undefined;
+  let current: { entry: ServerEntry; handle: NodeHttp1Handler } | undefined;
 
-  async function getApp(): Promise<ServerApp> {
+  async function getHandler(): Promise<NodeHttp1Handler> {
     const loaded = (await viteServer.ssrLoadModule(entry)) as ServerEntry;
     if (current?.entry !== loaded) {
-      const previous = current;
-      current = { entry: loaded, app: createApp(loaded) };
-      void previous?.app.then(
-        (app) => app.close?.(),
-        () => undefined,
-      );
+      const previous = current?.entry.default;
+      current = { entry: loaded, handle: toHandler(loaded) };
+      void Promise.resolve()
+        .then(() => previous?.close?.())
+        .catch(() => undefined);
     }
-    return current.app;
+    return current.handle;
   }
 
   return (req, res, next) => {
-    getApp()
-      .then((app) => app.handle(req, res, next))
+    getHandler()
+      .then((handle) => handle(req, res))
       .catch((error: Error) => {
         viteServer.ssrFixStacktrace(error);
         next(error);
@@ -254,32 +245,19 @@ function devMiddleware(
   };
 }
 
-/**
- * The entry's `createApp()`, or a Node app around the `fetch` of a Fetchable
- * entry (https://fetchable.org).
- */
-async function createApp(entry: ServerEntry): Promise<ServerApp> {
-  if (entry.createApp) {
-    return entry.createApp();
-  }
+/** A Node handler around the `fetch` of a Fetchable entry (https://fetchable.org). */
+function toHandler(entry: ServerEntry): NodeHttp1Handler {
   const fetchable = entry.default;
   const handleRequest = fetchable?.fetch;
   if (typeof handleRequest !== 'function') {
     throw new Error(
-      '[@analogjs/platform] The server entry must export `createApp()` or a default export with `fetch(request)`.',
+      '[@analogjs/platform] The server entry must be a Fetchable module: a default export with `fetch(request)`. `createApp()` entries are no longer supported; see https://analogjs.org/docs/features/server/custom-server.',
     );
   }
   // Connect middleware is typed with the HTTP/1 request and response.
-  const handle = toNodeHandler((request) =>
+  return toNodeHandler((request) =>
     handleRequest.call(fetchable, request),
   ) as NodeHttp1Handler;
-  return {
-    handle: (req, res, next) => {
-      Promise.resolve()
-        .then(() => handle(req, res))
-        .catch(next);
-    },
-  };
 }
 
 function removeHtmlMiddlewares(middlewares: Connect.Server): void {
