@@ -72,6 +72,18 @@ describe('serverPlugin', () => {
     );
   });
 
+  it('resolves a relative entryServer against the root', () => {
+    const plugin = serverPlugin(
+      { entry: 'src/server/main.ts' },
+      { workspaceRoot: root, entryServer: 'src/main.server.stream.ts' },
+    ) as Plugin & Hooks;
+    plugin.config({ root }, { command: 'serve' });
+
+    expect(evaluateManifest(plugin).render.toString()).toContain(
+      `"${root}/src/main.server.stream.ts"`,
+    );
+  });
+
   it('renders around the built document in a build', async () => {
     const { plugin } = setup('build');
     plugin.writeBundle.call(
