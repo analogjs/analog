@@ -144,6 +144,100 @@ A few details matter here:
 - `index: false` keeps `/` server-rendered instead of returning the client's `index.html`.
 - In development, Analog creates a new NestJS app when server code changes, and calls `close()` on the previous one.
 
+## Using the Fastify adapter
+
+With `@nestjs/platform-fastify`, NestJS runs Analog's handler through `@fastify/middie`, which the adapter registers itself. Install the adapter and `serve-static`:
+
+<Tabs groupId="package-manager">
+  <TabItem value="npm">
+
+```shell
+npm install @nestjs/platform-fastify serve-static
+```
+
+  </TabItem>
+
+  <TabItem label="yarn" value="yarn">
+
+```shell
+yarn add @nestjs/platform-fastify serve-static
+```
+
+  </TabItem>
+
+  <TabItem value="pnpm">
+
+```shell
+pnpm add @nestjs/platform-fastify serve-static
+```
+
+  </TabItem>
+</Tabs>
+
+The module from [Step 3](#step-3-mount-analog-in-your-module) stays the same. The entry creates a Fastify app and hands Vite Fastify's request handler:
+
+```ts
+// src/server/main.ts
+import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
+import {
+  FastifyAdapter,
+  type NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import { fileURLToPath } from 'node:url';
+import serveStatic from 'serve-static';
+
+import { AppModule } from './app.module';
+
+async function createNestApp() {
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+  );
+
+  // Vite serves client files in development.
+  if (!import.meta.env.DEV) {
+    const clientDir = fileURLToPath(new URL('../client', import.meta.url));
+    app.use(serveStatic(clientDir, { index: false }));
+  }
+
+  await app.init();
+  await app.getHttpAdapter().getInstance().ready();
+  return app;
+}
+
+export async function createApp() {
+  const app = await createNestApp();
+  const fastify = app.getHttpAdapter().getInstance();
+  return {
+    handle: (req, res) => fastify.routing(req, res),
+    close: () => app.close(),
+  };
+}
+
+if (!import.meta.env.DEV) {
+  const app = await createNestApp();
+  await app.listen(process.env['PORT'] ?? 3000, '0.0.0.0');
+}
+```
+
+How it differs from Express:
+
+- Middleware runs before Fastify's routes, so Analog sees requests before your controllers. Your controllers still answer their routes under `/api/` and their non-`GET` routes, because Analog passes those on, but a `GET` controller route outside `/api/` would be server-rendered. Keep controllers under `/api/`, for example with `app.setGlobalPrefix('api')`.
+- Analog reads request bodies before Fastify parses them, so `rawBody` isn't needed, and malformed JSON sent to a server function gets Analog's `400`.
+- Static files go through `serve-static` as middleware, registered before `init()`. `useStaticAssets()` registers a Fastify route, which Analog's handler would run ahead of.
+- `listen()` binds to `localhost` unless given a host; `'0.0.0.0'` accepts outside connections, for example in a container.
+
+## Development
+
+Under `vite`, NestJS runs inside the dev server rather than listening on its own port:
+
+- The first request Vite doesn't serve itself calls `createApp()`, which runs `NestFactory.create()` and `init()`.
+- Vite serves client files and HMR, and passes every other request to NestJS, which routes it as in production.
+- Vite compiles the NestJS code, so there's no `nest start --watch` or `tsc` step.
+- When server code changes, the next request creates a new NestJS app and calls `close()` on the previous one, so shutdown hooks run.
+- To reach controllers from [server-side fetches](/docs/features/server/custom-server#server-side-fetches), point the origin at Vite's dev server, such as `http://localhost:5173`.
+
 ## Using NestJS services from Angular code
 
 Server functions, page `load`s and server-side rendering run inside the NestJS process, so they can use the same service instances as your controllers. Expose NestJS's `ModuleRef` through an Angular injection token:
@@ -220,6 +314,5 @@ node dist/server/main.js
 
 ## Limitations
 
-- Malformed JSON sent to a server function gets NestJS's `400` response rather than Analog's, because NestJS's JSON parser runs first.
-- The Express adapter is supported. The Fastify adapter needs `@fastify/middie` for `use()` and hasn't been tested.
+- With the Express adapter, malformed JSON sent to a server function gets NestJS's `400` response rather than Analog's, because NestJS's JSON parser runs first.
 - WebSockets go through NestJS gateways.
