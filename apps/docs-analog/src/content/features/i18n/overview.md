@@ -228,7 +228,7 @@ The shared loader in [Setup](#setup) automatically enables workers when:
 - `i18n.loader` is configured with at least two locales.
 - Progressive Angular streaming, WebSockets, and scheduled tasks are disabled.
 
-Selection follows the deployment preset. To target a standalone Node server explicitly, set `nitro: { preset: 'node-server' }` in `analog()`.
+Selection follows the deployment preset. To target a standalone Node server explicitly, set `nitro: { preset: 'node-server' }` in `analog()`. A [custom server](/docs/features/server/custom-server#internationalization) renders without workers.
 
 | `i18n.workers` | Behavior                                                             |
 | -------------- | -------------------------------------------------------------------- |
