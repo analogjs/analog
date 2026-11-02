@@ -163,6 +163,8 @@ describe('createAnalogHandler', () => {
       await loaded;
       return async (_url, _document, context) => {
         signal = context.signal;
+        // As renderStream() does.
+        signal?.throwIfAborted();
         return '<html></html>';
       };
     };
@@ -176,6 +178,8 @@ describe('createAnalogHandler', () => {
     release();
 
     await vi.waitFor(() => expect(signal?.aborted).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(errors).toEqual([]);
   });
 
   it('aborts a render whose client left before Analog ran', async () => {
