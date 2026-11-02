@@ -1,6 +1,6 @@
 # Custom Server
 
-Serve an Analog app from your own server, such as NestJS, Express, Fastify or Hono, instead of Nitro. Your server owns the process and its routes, and Analog handles server-side rendering, page endpoints and server functions inside it.
+Serve an Analog app from your own server entry instead of Nitro: a [Fetchable](https://fetchable.org) module that platforms and runtimes invoke directly, or a server built with a framework such as Hono, Express, NestJS or Fastify. Your server owns the process and its routes, and Analog handles server-side rendering, page endpoints and server functions inside it.
 
 :::info
 
@@ -55,7 +55,59 @@ Vite compiles the TypeScript in the entry's directory. Frameworks that use decor
 
 ## The server entry
 
-The entry exports `createApp()`, which the dev server mounts behind Vite, and starts its own server in production. With Express:
+The entry is a [Fetchable](https://fetchable.org) module: its default export has a `fetch(request)` method that returns a `Response`. `createAnalogRequestHandler()` handles Analog's requests and returns `null` for anything else:
+
+```ts
+// src/server/main.ts
+import { createAnalogRequestHandler } from '@analogjs/router/server';
+
+const handleAnalogRequest = createAnalogRequestHandler();
+
+export default {
+  async fetch(request: Request) {
+    return (
+      (await handleAnalogRequest(request)) ??
+      new Response('Not Found', { status: 404 })
+    );
+  },
+};
+```
+
+Analog handles:
+
+- server functions (`/_analog/fn/:id`) and page endpoints (`/api/_analog/pages/**`);
+- server-side rendering for `GET` requests outside `/api/`.
+
+In development, Analog serves the entry's `fetch` behind Vite. In production, platforms and runtimes that invoke Fetchable modules, such as Netlify Functions, Deno and Bun, run the built entry without a server of your own.
+
+### Fetch-native frameworks
+
+Frameworks built on web `Request`/`Response`, such as Hono, are already Fetchable. Hand Analog the requests your routes don't handle, and export the app:
+
+```ts
+// src/server/main.ts
+import { createAnalogRequestHandler } from '@analogjs/router/server';
+import { Hono } from 'hono';
+
+const app = new Hono();
+const handleAnalogRequest = createAnalogRequestHandler({
+  fetch: (request) => app.fetch(request),
+});
+
+app.get('/api/health', (c) => c.json({ ok: true }));
+app.all(
+  '*',
+  async (c) => (await handleAnalogRequest(c.req.raw)) ?? c.notFound(),
+);
+
+export default app;
+```
+
+Passing the app's `fetch` lets [server-side fetches](#server-side-fetches) reach your Hono routes in-process.
+
+### Node frameworks
+
+Frameworks built on Node's request and response, such as Express, NestJS and Fastify, export `createApp()` instead. The dev server mounts it behind Vite, and the entry starts its own server in production. With Express:
 
 ```ts
 // src/server/main.ts
@@ -86,18 +138,15 @@ if (!import.meta.env.DEV) {
 }
 ```
 
-`createApp()` returns `{ handle, close? }`, where `handle` is a Node `(req, res, next)` handler. When server code changes in development, Analog creates a new app and calls `close()` on the previous one.
+`createApp()` returns `{ handle, close? }`, where `handle` is a Node `(req, res, next)` handler. When server code changes in development, Analog creates a new app and calls `close()` on the previous one. When an entry exports both `createApp()` and a Fetchable default, `createApp()` is used.
 
-`createAnalogHandler()` handles Analog's own requests and passes everything else to `next()`:
-
-- server functions (`/_analog/fn/:id`) and page endpoints (`/api/_analog/pages/**`);
-- server-side rendering for `GET` requests outside `/api/`.
-
-Register your own routes before it. Routes under `/api/` that nothing handles reach your server's 404 handling instead of server-side rendering.
+`createAnalogHandler()` is the Node adapter for `createAnalogRequestHandler()`: it handles Analog's requests and passes everything else to `next()`. Register your own routes before it. Routes under `/api/` that nothing handles reach your server's 404 handling instead of server-side rendering. It also passes the Node request and response to Analog as the `REQUEST` and `RESPONSE` tokens; with `createAnalogRequestHandler()`, pass them yourself as `handleAnalogRequest(request, { req, res })`.
 
 ## Server-side fetches
 
-Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`. It gets the requests Analog doesn't handle: routes under `/api/`, and non-`GET` requests elsewhere; other `GET` requests are server-rendered.
+Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`, as the Hono example does. It gets the requests Analog doesn't handle: routes under `/api/`, and non-`GET` requests elsewhere; other `GET` requests are server-rendered.
+
+Node frameworks don't have a `fetch` of their own, so forward these requests to the server's address:
 
 ```ts
 // Your server's own address, never one taken from the request.
@@ -119,55 +168,10 @@ In development, set `SERVER_ORIGIN` to Vite's dev server origin, such as `http:/
 
 ## Static files
 
-Serving client files is the server's job, with its own tools (`express.static`, `serve-static`, NestJS's `useStaticAssets()`, a CDN). In production they're in `dist/client`, next to the `dist/server` directory that holds the server entry:
+Vite serves client files in development. In production they're in `dist/client`, next to the `dist/server` directory that holds the server entry. A Fetchable entry leaves them to the platform, usually its CDN. A Node server serves them with its own tools (`express.static`, `serve-static`, NestJS's `useStaticAssets()`). Either way:
 
-- Register them **before** the Analog handler. Otherwise server-side rendering answers asset URLs.
+- Serve them **before** the Analog handler. Otherwise server-side rendering answers asset URLs.
 - Disable the index fallback (`index: false`), so `/` is server-rendered instead of returning the client's `index.html`.
-
-## Fetch-native servers
-
-Servers built on web `Request`/`Response`, such as Hono, use `createAnalogRequestHandler()`. It returns a function that takes a `Request` and returns a `Response`, or `null` for requests Analog doesn't handle:
-
-```ts
-import { createAnalogRequestHandler } from '@analogjs/router/server';
-import { Hono } from 'hono';
-
-const handleAnalogRequest = createAnalogRequestHandler();
-const app = new Hono();
-
-app.all(
-  '*',
-  async (c) => (await handleAnalogRequest(c.req.raw)) ?? c.notFound(),
-);
-```
-
-Pass your app's `fetch`, `createAnalogRequestHandler({ fetch: (request) => app.fetch(request) })`, so [server-side fetches](#server-side-fetches) reach your Hono routes in-process.
-
-Node servers that have the Node request and response can pass them as a second argument, `handleAnalogRequest(request, { req, res })`, so they become Analog's `REQUEST` and `RESPONSE` tokens. `createAnalogHandler()` does this for you.
-
-## Fetchable entry
-
-Instead of `createApp()`, the server entry can be a [Fetchable](https://fetchable.org) module: its default export has a `fetch(request)` method that returns a `Response`. Platforms and runtimes that invoke Fetchable modules, such as Netlify Functions, Deno and Bun, run the built entry without a server of your own.
-
-```ts
-// src/server/main.ts
-import { createAnalogRequestHandler } from '@analogjs/router/server';
-
-const handleAnalogRequest = createAnalogRequestHandler();
-
-export default {
-  async fetch(request: Request) {
-    return (
-      (await handleAnalogRequest(request)) ??
-      new Response('Not Found', { status: 404 })
-    );
-  },
-};
-```
-
-A Hono app is already Fetchable, so the entry can `export default app`.
-
-In development, Analog serves the entry's `fetch` behind Vite. When the entry exports both, `createApp()` is used. The built `dist/server/main.js` keeps the default export and doesn't listen on a port, so the platform serves `dist/client`. Serve it without an index fallback so `/` is server-rendered.
 
 ## Streaming
 
@@ -197,7 +201,7 @@ Two details of locale detection apply here as on Nitro:
 
 ## Building and running
 
-`vite build` builds the client into `dist/client` and the server entry into `dist/server/main.js`. Run an entry that starts its own server with Node:
+`vite build` builds the client into `dist/client` and the server entry into `dist/server/main.js`. A Fetchable entry keeps its default export and doesn't listen on a port; deploy it to a platform or runtime that invokes Fetchable modules. Run a Node entry that starts its own server with Node:
 
 ```shell
 node dist/server/main.js
