@@ -5,7 +5,7 @@ import {
   type Server,
 } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAnalogHandler } from './node-handler';
 import {
@@ -51,9 +51,11 @@ function readBody(req: IncomingMessage): Promise<string> {
 describe('createAnalogHandler', () => {
   let server: Server;
   let base: string;
+  let errors: unknown[];
 
   beforeEach(async () => {
     Object.assign(ANALOG_SERVER_MANIFEST, manifest);
+    errors = [];
     const handle = createAnalogHandler();
     server = createServer(async (req, res) => {
       // A body parser that ran first and kept the original bytes.
@@ -70,7 +72,14 @@ describe('createAnalogHandler', () => {
         );
         return;
       }
-      handle(req, res, async () => res.end(`next:${await readBody(req)}`));
+      handle(req, res, async (error) => {
+        if (error) {
+          errors.push(error);
+          res.destroy();
+          return;
+        }
+        res.end(`next:${await readBody(req)}`);
+      });
     });
     await new Promise<void>((resolve) => server.listen(0, resolve));
     base = `http://localhost:${(server.address() as AddressInfo).port}`;
@@ -109,6 +118,29 @@ describe('createAnalogHandler', () => {
     });
 
     expect(await response.json()).toEqual({ email: 'raw@b.dev' });
+  });
+
+  it('streams pages and stops rendering when the client disconnects', async () => {
+    let signal: AbortSignal | undefined;
+    ANALOG_SERVER_MANIFEST.render =
+      async () => async (_url, _document, context) => {
+        signal = context.signal;
+        // A render that never finishes on its own.
+        return new ReadableStream({
+          start: (controller) =>
+            controller.enqueue(new TextEncoder().encode('<html>shell')),
+        });
+      };
+    const client = new AbortController();
+
+    const response = await fetch(`${base}/streamed`, { signal: client.signal });
+    const { value } = await response.body!.getReader().read();
+    expect(new TextDecoder().decode(value)).toBe('<html>shell');
+    expect(signal?.aborted).toBe(false);
+
+    client.abort();
+    await vi.waitFor(() => expect(signal?.aborted).toBe(true));
+    expect(errors).toEqual([]);
   });
 
   it('passes a request it cannot convert to next() as an error', async () => {
