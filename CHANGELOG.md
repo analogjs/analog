@@ -1,3 +1,9 @@
+# [3.0.0-beta.21](https://github.com/analogjs/analog/compare/v3.0.0-beta.20...v3.0.0-beta.21) (2026-11-02)
+
+### Features
+
+- **platform:** support Nitro v3 RC ([#2707](https://github.com/analogjs/analog/issues/2707)) ([44eaec3](https://github.com/analogjs/analog/commit/44eaec324b2bd937874df6da5d9974e531e23ecc))
+
 # [3.0.0-beta.20](https://github.com/analogjs/analog/compare/v3.0.0-beta.19...v3.0.0-beta.20) (2026-11-01)
 
 ### Bug Fixes
