@@ -148,6 +148,19 @@ Pass your app's `fetch`, `createAnalogRequestHandler({ fetch: (request) => app.f
 
 Node servers that have the Node request and response can pass them as a second argument, `handleAnalogRequest(request, { req, res })`, so they become Analog's `REQUEST` and `RESPONSE` tokens. `createAnalogHandler()` does this for you.
 
+## Streaming
+
+[Streaming SSR](/docs/features/server/streaming-ssr) works with a custom server: enable `experimental.streaming` and export `renderStream` from `main.server.ts`. Analog returns the document as a stream with `Cache-Control: no-store, no-transform`, and stops rendering when the client disconnects.
+
+Route rules come from Nitro, so opt a route out of streaming with an `x-analog-no-streaming: true` header set before the Analog handler runs: on the response for Node servers, or on the request for fetch-native servers.
+
+```ts
+app.get('/report', (req, res, next) => {
+  res.setHeader('x-analog-no-streaming', 'true');
+  next();
+});
+```
+
 ## Building and running
 
 `vite build` builds the client into `dist/client` and the server entry into `dist/server/main.js`. Run it with Node:
@@ -162,4 +175,4 @@ The server bundle is an ES module, named `main.mjs` instead when your `package.j
 
 - Prerendering, static site generation and deployment presets need Nitro.
 - File-based API routes in `src/server/routes` aren't served; use your server's own routes.
-- Streaming server-side rendering and runtime i18n aren't supported yet.
+- Runtime i18n isn't supported yet.

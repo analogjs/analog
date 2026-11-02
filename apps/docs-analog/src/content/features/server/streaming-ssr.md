@@ -135,3 +135,5 @@ export default defineConfig({
   ],
 });
 ```
+
+With a [custom server](/docs/features/server/custom-server#streaming), set an `x-analog-no-streaming: true` header instead.
