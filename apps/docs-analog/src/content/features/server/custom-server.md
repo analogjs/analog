@@ -107,38 +107,38 @@ Passing the app's `fetch` lets [server-side fetches](#server-side-fetches) reach
 
 ### Node frameworks
 
-Frameworks built on Node's request and response, such as Express, NestJS and Fastify, export `createApp()` instead. The dev server mounts it behind Vite, and the entry starts its own server in production. With Express:
+Frameworks built on Node's request and response, such as Express, NestJS and Fastify, wrap their app with `toFetchHandler()` from [srvx](https://srvx.h3.dev). In development, the app gets the dev server's Node request and response directly. In production, the entry can start its own server. Install `srvx`, then with Express:
 
 ```ts
 // src/server/main.ts
 import { createAnalogHandler } from '@analogjs/router/server';
 import express from 'express';
 import { fileURLToPath } from 'node:url';
+import { toFetchHandler } from 'srvx/node';
 
-function createServer() {
-  const app = express();
-  app.get('/api/health', (req, res) => res.json({ ok: true }));
+const app = express();
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
-  // Vite serves client files in development.
-  if (!import.meta.env.DEV) {
-    const clientDir = fileURLToPath(new URL('../client', import.meta.url));
-    app.use(express.static(clientDir, { index: false }));
-  }
-
-  app.use(createAnalogHandler());
-  return app;
+// Vite serves client files in development.
+if (!import.meta.env.DEV) {
+  const clientDir = fileURLToPath(new URL('../client', import.meta.url));
+  app.use(express.static(clientDir, { index: false }));
 }
 
-export async function createApp() {
-  return { handle: createServer() };
-}
+app.use(createAnalogHandler());
 
 if (!import.meta.env.DEV) {
-  createServer().listen(process.env['PORT'] ?? 3000);
+  app.listen(process.env['PORT'] ?? 3000);
 }
+
+export default {
+  fetch: toFetchHandler((req, res) => app(req, res)),
+};
 ```
 
-`createApp()` returns `{ handle, close? }`, where `handle` is a Node `(req, res, next)` handler. When server code changes in development, Analog creates a new app and calls `close()` on the previous one. When an entry exports both `createApp()` and a Fetchable default, `createApp()` is used.
+`(req, res) => app(req, res)` calls Express without a `next` callback, so a request nothing handles gets Express's `404` instead of an empty response.
+
+When server code changes in development, Analog reloads the entry. Add a `close()` next to `fetch` to release what the previous entry holds, such as database connections; Analog calls it before using the new entry. See [NestJS](/docs/integrations/nestjs) for an entry that closes its app.
 
 `createAnalogHandler()` is the Node adapter for `createAnalogRequestHandler()`: it handles Analog's requests and passes everything else to `next()`. Register your own routes before it. Routes under `/api/` that nothing handles reach your server's 404 handling instead of server-side rendering. It also passes the Node request and response to Analog as the `REQUEST` and `RESPONSE` tokens; with `createAnalogRequestHandler()`, pass them yourself as `handleAnalogRequest(request, { req, res })`.
 
@@ -146,7 +146,7 @@ if (!import.meta.env.DEV) {
 
 Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`, as the Hono example does. It gets the requests Analog doesn't handle, such as your own routes under `/api/` and non-`GET` requests outside `/api/`; other `GET` requests are server-rendered.
 
-Node frameworks don't have a `fetch` of their own, so forward these requests to the server's address:
+With a Node framework, forward these requests to the server's address:
 
 ```ts
 // Your server's own address, never one taken from the request.
