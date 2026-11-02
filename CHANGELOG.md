@@ -1,3 +1,9 @@
+# [3.0.0-beta.26](https://github.com/analogjs/analog/compare/v3.0.0-beta.25...v3.0.0-beta.26) (2026-11-02)
+
+### Features
+
+- **platform:** use Fetchable server entries for analog({ server }) ([#2729](https://github.com/analogjs/analog/issues/2729)) ([2e8d867](https://github.com/analogjs/analog/commit/2e8d8675db5d1cb84a07e7a56bf3eea18f37cfd2))
+
 # [3.0.0-beta.25](https://github.com/analogjs/analog/compare/v3.0.0-beta.24...v3.0.0-beta.25) (2026-11-02)
 
 ### Bug Fixes
