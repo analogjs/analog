@@ -152,6 +152,8 @@ Node servers that have the Node request and response can pass them as a second a
 
 [Streaming SSR](/docs/features/server/streaming-ssr) works with a custom server: enable `experimental.streaming` and export `renderStream` from `main.server.ts`. Analog returns the document as a stream with `Cache-Control: no-store, no-transform`, and stops rendering when the client disconnects.
 
+The status and headers go out with the first chunk, so anything the app sets through `RESPONSE` after rendering starts doesn't take effect. Use a buffered route when the status is decided during the render.
+
 Route rules come from Nitro, so opt a route out of streaming with an `x-analog-no-streaming: true` header set before the Analog handler runs: on the response for Node servers, or on the request for fetch-native servers.
 
 ```ts
