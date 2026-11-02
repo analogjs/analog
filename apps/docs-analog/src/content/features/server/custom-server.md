@@ -147,7 +147,7 @@ Node servers that have the Node request and response can pass them as a second a
 
 ## Fetchable entry
 
-Instead of `createApp()`, the server entry can be a [Fetchable](https://fetchable.org) module: its default export has a `fetch(request)` method that returns a `Response`. Platforms and runtimes that invoke Fetchable modules, such as Netlify Functions, Cloudflare Workers, Deno and Bun, run the built entry without a server of your own.
+Instead of `createApp()`, the server entry can be a [Fetchable](https://fetchable.org) module: its default export has a `fetch(request)` method that returns a `Response`. Platforms and runtimes that invoke Fetchable modules, such as Netlify Functions, Deno and Bun, run the built entry without a server of your own.
 
 ```ts
 // src/server/main.ts
