@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/router",
-  "version": "3.0.0-beta.18",
+  "version": "3.0.0-beta.20",
   "description": "Filesystem-based routing for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -102,6 +102,7 @@
     "@standard-schema/spec": "catalog:",
     "es-toolkit": "catalog:",
     "ofetch": "catalog:",
+    "radix3": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {

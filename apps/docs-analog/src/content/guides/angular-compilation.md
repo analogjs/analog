@@ -43,6 +43,22 @@ HMR notifications are coalesced after compilation, so saving several files at
 once avoids compiling separately for every file. Changes received during a
 compilation are queued for the next batch. This behavior requires no configuration.
 
+### Non-Angular TypeScript
+
+Analog leaves `.ts` and `.js` files to the Angular compiler and turns Vite's own TypeScript transform off for them. Files outside the Angular program, such as a custom Node server loaded through Vite, are then not compiled. To have Vite compile them, set the transform in your own config. Analog keeps your setting instead of adding its exclusions, and files it doesn't include stay with the Angular compiler:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  oxc: { include: [/\/src\/server\/.*\.ts$/] }, // `esbuild` on Vite 6 and 7
+  plugins: [analog(), angular()],
+});
+```
+
 ## Fast compile
 
 Fast compile swaps Angular's compiler for an in-tree, single-pass transform. Instead of constructing a full `ts.Program`, it extracts each file's decorator metadata and generates Ivy definitions directly through `@angular/compiler`'s lowering APIs. It produces equivalent Ivy output and reduces cold-build and hot-rebuild times.

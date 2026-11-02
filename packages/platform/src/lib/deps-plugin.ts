@@ -1,4 +1,5 @@
-import type { Plugin } from 'vite';
+import { dirname, resolve } from 'node:path';
+import { normalizePath, type Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
 import { angularLinkerPlugin } from './nitro/angular-linker-plugin.js';
@@ -20,19 +21,40 @@ export function depsPlugin(options?: Options): Plugin[] {
   return [
     {
       name: 'analogjs-deps-plugin',
-      config() {
+      config(userConfig) {
         // Skip Vite's built-in ts/js transform so `@analogjs/vite-plugin-angular`
         // (when the user includes it) owns Angular file compilation. Users who
-        // run an alternative compiler or compile through Angular's own
-        // compilation API can override this in their own Vite config.
-        const transformConfig = { exclude: ['**/*.ts', '**/*.js'] };
+        // run an alternative compiler, or compile non-Angular server code with
+        // Vite, set the transform in their own Vite config. Theirs is kept
+        // as-is: merging would concatenate these excludes into it, and an
+        // exclude wins over any include they set.
+        const jsTransformKey = getJsTransformConfigKey();
+        // Vite 8 still converts a user's `esbuild` object to `oxc` (unless
+        // `oxc` is set), but `esbuild: false` no longer has any effect there.
+        const userTransform =
+          userConfig?.[jsTransformKey] !== undefined ||
+          (jsTransformKey === 'oxc' && !!userConfig?.esbuild);
+        // With `server`, Vite compiles the server entry's directory instead,
+        // which the Angular compiler leaves alone.
+        const transform = options?.server
+          ? {
+              include: [
+                `${normalizePath(
+                  resolve(
+                    userConfig?.root ?? process.cwd(),
+                    dirname(options.server.entry),
+                  ),
+                )}/**/*.ts`,
+              ],
+            }
+          : { exclude: ['**/*.ts', '**/*.js'] };
         debugPlatform('deps transform config', {
-          jsTransformKey: getJsTransformConfigKey(),
-          transformExcluded: true,
+          jsTransformKey,
+          transform: userTransform ? 'user' : transform,
         });
 
         return {
-          [getJsTransformConfigKey()]: transformConfig,
+          ...(userTransform ? {} : { [jsTransformKey]: transform }),
           ssr: {
             noExternal: [
               '@analogjs/**',

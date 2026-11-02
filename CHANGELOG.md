@@ -1,3 +1,30 @@
+# [3.0.0-beta.20](https://github.com/analogjs/analog/compare/v3.0.0-beta.19...v3.0.0-beta.20) (2026-11-01)
+
+### Bug Fixes
+
+- **platform:** fail the server build without the built document ([7063ba6](https://github.com/analogjs/analog/commit/7063ba645d93edf82193916f82896d632cc9493e))
+- **router:** pass request conversion errors to next() ([17a2bb0](https://github.com/analogjs/analog/commit/17a2bb02fbaa2dc217383814d06129270d8a1dba))
+- **router:** pass requests on after a body parser read the body ([6a2a617](https://github.com/analogjs/analog/commit/6a2a61749c39a45f18609b8d1d4f5c8f2e71428b))
+- **router:** report a failing server config on server function requests ([f58f04a](https://github.com/analogjs/analog/commit/f58f04aeba374bc0ff62a05ce2d8a56542491c6e))
+- **router:** run same-origin server fetches in-process ([32fa048](https://github.com/analogjs/analog/commit/32fa0487011c813a1360d97552efbc426915dbbd))
+- **router:** use the BASE_URL origin for server fetches ([daa4920](https://github.com/analogjs/analog/commit/daa49206da5b8eb3f022fea60b24d6883b147cef))
+
+### Features
+
+- **platform:** add the server option for custom servers ([e416d6e](https://github.com/analogjs/analog/commit/e416d6e4409ae8c6be01c9688c6fbedc4ad1605a)), closes [analogjs/analog#2711](https://github.com/analogjs/analog/issues/2711)
+- **router:** serve Analog from any server with createAnalogRequestHandler ([8b7dfb4](https://github.com/analogjs/analog/commit/8b7dfb4230c16edd252979bc74aa1494a0f61914)), closes [analogjs/analog#2711](https://github.com/analogjs/analog/issues/2711)
+
+# [3.0.0-beta.19](https://github.com/analogjs/analog/compare/v3.0.0-beta.18...v3.0.0-beta.19) (2026-11-01)
+
+### Bug Fixes
+
+- **platform:** keep a user's esbuild config on Vite 8 ([096cdf8](https://github.com/analogjs/analog/commit/096cdf892ab5e56a7e75871a1b9d820213e0dc63)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **platform:** keep the transform exclusions for esbuild: false on Vite 8 ([9ae3c59](https://github.com/analogjs/analog/commit/9ae3c59508564928e5c98877bffe0c4d3c18b9b7)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **platform:** keep the user's ts/js transform config ([e749335](https://github.com/analogjs/analog/commit/e7493357dadfd22231bd229d4266627a75565e22)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **router:** transfer page load data when an internal fetch is provided ([7b81f29](https://github.com/analogjs/analog/commit/7b81f29f70eebb31b208cd26d3355b4015ff6d0b)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **vite-plugin-angular:** decide ngServerMode after other plugins set the consumer ([bfc7ab8](https://github.com/analogjs/analog/commit/bfc7ab89c1b5ef76a7b43ab94925419ed4453645)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+- **vite-plugin-angular:** define ngServerMode for server environments without an explicit consumer ([74e316f](https://github.com/analogjs/analog/commit/74e316f08e8de974a974cd3a5ec1fdd13442ec90)), closes [analogjs/analog#2710](https://github.com/analogjs/analog/issues/2710)
+
 # [3.0.0-beta.18](https://github.com/analogjs/analog/compare/v3.0.0-beta.17...v3.0.0-beta.18) (2026-10-27)
 
 ### Bug Fixes

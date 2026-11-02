@@ -1,3 +1,4 @@
+import { resolveConfig } from 'vite';
 import { describe, it, expect } from 'vitest';
 
 import { depsPlugin } from './deps-plugin.js';
@@ -16,6 +17,45 @@ describe('depsPlugin oxc config', () => {
     const result = (plugins[0].config as any)();
 
     expect(result.oxc).toEqual({ exclude: ['**/*.ts', '**/*.js'] });
+  });
+
+  it("keeps the user's own transform config", async () => {
+    const userConfig = {
+      configFile: false as const,
+      plugins: depsPlugin(),
+      oxc: { include: ['src/server/**/*.ts'] },
+    };
+    const { oxc } = await resolveConfig(userConfig, 'serve');
+
+    expect(oxc).toMatchObject({ include: ['src/server/**/*.ts'] });
+    expect((oxc as { exclude?: unknown }).exclude).toBeUndefined();
+  });
+});
+
+describe('depsPlugin with an esbuild config on Vite 8', () => {
+  it('leaves the transform to Vite', () => {
+    const plugins = depsPlugin();
+    const result = (plugins[0].config as any)({
+      esbuild: { include: ['src/server/**/*.ts'] },
+    });
+
+    expect(result).not.toHaveProperty('oxc');
+  });
+
+  it('keeps the exclusions for esbuild: false, which Vite 8 ignores', () => {
+    const plugins = depsPlugin();
+    const result = (plugins[0].config as any)({ esbuild: false });
+
+    expect(result.oxc).toEqual({ exclude: ['**/*.ts', '**/*.js'] });
+  });
+});
+
+describe('depsPlugin with a server entry', () => {
+  it("compiles the server entry's directory with Vite", () => {
+    const plugins = depsPlugin({ server: { entry: 'src/server/main.ts' } });
+    const result = (plugins[0].config as any)({ root: '/app' });
+
+    expect(result.oxc).toEqual({ include: ['/app/src/server/**/*.ts'] });
   });
 });
 

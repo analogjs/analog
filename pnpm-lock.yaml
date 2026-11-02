@@ -1601,6 +1601,9 @@ importers:
       ofetch:
         specifier: 'catalog:'
         version: 2.0.0-alpha.3
+      radix3:
+        specifier: 'catalog:'
+        version: 1.1.2
       schema-dts:
         specifier: 'catalog:'
         version: 2.0.0(typescript@6.0.3)

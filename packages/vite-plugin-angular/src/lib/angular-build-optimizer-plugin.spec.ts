@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect } from 'vitest';
-import type { Plugin, UserConfig } from 'vite';
+import { resolveConfig, type Plugin, type UserConfig } from 'vite';
 import {
   buildOptimizerPlugin,
   extractInlineSourceMap,
@@ -110,27 +110,70 @@ describe('buildOptimizerPlugin config()', () => {
   it('should set ngServerMode to true for a production server environment', () => {
     const plugin = createPlugin() as Plugin & {
       config: (c: UserConfig) => UserConfig;
-      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+      configEnvironment: {
+        handler: (name: string, c: unknown) => UserConfig | undefined;
+      };
     };
     plugin.config({ mode: 'production' });
 
-    expect(plugin.configEnvironment('ssr', { consumer: 'server' })).toEqual({
+    expect(
+      plugin.configEnvironment.handler('ssr', { consumer: 'server' }),
+    ).toEqual({
       define: { ngServerMode: 'true' },
     });
     expect(
-      plugin.configEnvironment('client', { consumer: 'client' }),
+      plugin.configEnvironment.handler('client', { consumer: 'client' }),
     ).toBeUndefined();
+  });
+
+  it('should treat an environment without a consumer as Vite does', () => {
+    const plugin = createPlugin() as Plugin & {
+      config: (c: UserConfig) => UserConfig;
+      configEnvironment: {
+        handler: (name: string, c: unknown) => UserConfig | undefined;
+      };
+    };
+    plugin.config({ mode: 'production' });
+
+    expect(plugin.configEnvironment.handler('ssr', {})).toEqual({
+      define: { ngServerMode: 'true' },
+    });
+    expect(plugin.configEnvironment.handler('client', {})).toBeUndefined();
+  });
+
+  it("should respect a consumer set by a later plugin's configEnvironment", async () => {
+    const config = await resolveConfig(
+      {
+        configFile: false,
+        mode: 'production',
+        environments: { edge: {}, worker: {} },
+        plugins: [
+          createPlugin(),
+          {
+            name: 'later',
+            configEnvironment: (name) =>
+              name === 'edge' ? { consumer: 'client' } : undefined,
+          },
+        ],
+      },
+      'build',
+    );
+
+    expect(config.environments['edge'].define?.['ngServerMode']).toBe('false');
+    expect(config.environments['worker'].define?.['ngServerMode']).toBe('true');
   });
 
   it('should leave environment defines alone outside production', () => {
     const plugin = createPlugin() as Plugin & {
       config: (c: UserConfig) => UserConfig;
-      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+      configEnvironment: {
+        handler: (name: string, c: unknown) => UserConfig | undefined;
+      };
     };
     plugin.config({ mode: 'development' });
 
     expect(
-      plugin.configEnvironment('ssr', { consumer: 'server' }),
+      plugin.configEnvironment.handler('ssr', { consumer: 'server' }),
     ).toBeUndefined();
   });
 

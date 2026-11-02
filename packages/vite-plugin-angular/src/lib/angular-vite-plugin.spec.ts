@@ -170,13 +170,16 @@ describe('angularVitePlugin', () => {
       );
     }
 
-    function configureEnvironment(plugin: Plugin, consumer: string) {
+    function configureEnvironment(
+      plugin: Plugin,
+      consumer: string | undefined,
+      name = 'ssr',
+    ) {
       return (
-        plugin.configEnvironment as (
-          name: string,
-          config: { consumer: string },
-        ) => unknown
-      )('ssr', { consumer });
+        plugin.configEnvironment as {
+          handler: (name: string, config: { consumer?: string }) => unknown;
+        }
+      ).handler(name, { consumer });
     }
 
     it.each([false, true])(
@@ -193,6 +196,44 @@ describe('angularVitePlugin', () => {
         expect(configureEnvironment(plugin, 'client')).toBeUndefined();
       },
     );
+
+    it('treats an environment without a consumer as Vite does', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+      const plugin = findServerModePlugin() as Plugin;
+
+      expect(configureEnvironment(plugin, undefined)).toEqual({
+        define: { ngServerMode: 'true' },
+      });
+      expect(configureEnvironment(plugin, undefined, 'client')).toBeUndefined();
+    });
+
+    it("respects a consumer set by a later plugin's configEnvironment", async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+      const config = await resolveConfig(
+        {
+          configFile: false,
+          environments: { edge: {}, worker: {} },
+          plugins: [
+            findServerModePlugin() as Plugin,
+            {
+              name: 'later',
+              configEnvironment: (name) =>
+                name === 'edge' ? { consumer: 'client' } : undefined,
+            },
+          ],
+        },
+        'serve',
+      );
+
+      expect(
+        config.environments['edge'].define?.['ngServerMode'],
+      ).toBeUndefined();
+      expect(config.environments['worker'].define?.['ngServerMode']).toBe(
+        'true',
+      );
+    });
 
     it('is not registered under Vitest', () => {
       vi.stubEnv('NODE_ENV', 'test');

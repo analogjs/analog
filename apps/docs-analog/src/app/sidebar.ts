@@ -120,6 +120,11 @@ export function getSidebar(): SidebarNode[] {
               id: 'features/server/streaming-ssr',
               label: $localize`:@@sidebar.streaming-ssr:Streaming SSR`,
             },
+            {
+              kind: 'doc',
+              id: 'features/server/custom-server',
+              label: $localize`:@@sidebar.custom-server:Custom Server`,
+            },
           ],
         },
         {
@@ -263,6 +268,11 @@ export function getSidebar(): SidebarNode[] {
           kind: 'doc',
           id: 'integrations/ionic/index',
           label: $localize`:@@sidebar.ionic:Ionic Framework`,
+        },
+        {
+          kind: 'doc',
+          id: 'integrations/nestjs/index',
+          label: $localize`:@@sidebar.nestjs:NestJS`,
         },
         {
           kind: 'doc',
