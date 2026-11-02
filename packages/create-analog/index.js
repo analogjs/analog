@@ -13,6 +13,7 @@ import prompts from 'prompts';
  * @typedef {'latest' | 'blog' | 'minimal'} StarterTemplate
  * @typedef {StarterTemplate | `angular-v${number}`} Template
  * @typedef {'prismjs' | 'shiki'} HighlighterId
+ * @typedef {'nitro' | 'nestjs'} ServerId
  * @typedef {(value: string) => string} Colorizer
  *
  * @typedef {object} Variant
@@ -42,6 +43,7 @@ import prompts from 'prompts';
  * @property {Template} [variant]
  * @property {boolean} [tailwind]
  * @property {HighlighterId} [syntaxHighlighter]
+ * @property {ServerId} [server]
  *
  * @typedef {object} UserAgentPackage
  * @property {string} name
@@ -51,6 +53,7 @@ import prompts from 'prompts';
  *   _: string[];
  *   template?: string;
  *   t?: string;
+ *   server?: string;
  *   skipTailwind?: boolean | string;
  *   skipGit?: boolean | string;
  * } & Record<string, unknown>} CliArgv
@@ -59,6 +62,10 @@ import prompts from 'prompts';
 const CLI_DIR = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_TARGET_DIR = 'analog-project';
 const DEFAULT_BLOG_HIGHLIGHTER = 'prismjs';
+
+// Skips the server prompt while set. Remove it to let users choose.
+/** @type {ServerId | undefined} */
+const DEFAULT_SERVER = 'nitro';
 
 /** @type {readonly Template[]} */
 const H3_TEMPLATES = ['latest', 'blog', 'minimal', 'angular-v20'];
@@ -114,6 +121,20 @@ const HIGHLIGHTERS = {
   },
 };
 
+/** @type {Readonly<Record<ServerId, string>>} */
+const SERVERS = {
+  nitro: 'Nitro (prerendering, static sites, deployment presets)',
+  nestjs: 'NestJS',
+};
+
+const NESTJS_DEPENDENCIES = {
+  '@nestjs/common': '^12.3.2',
+  '@nestjs/core': '^12.3.2',
+  '@nestjs/platform-express': '^12.3.2',
+  h3: '^1.13.0',
+  'reflect-metadata': '^0.2.2',
+};
+
 /** @type {Readonly<Record<string, string>>} */
 const renameFiles = {
   _gitignore: '.gitignore',
@@ -130,6 +151,7 @@ async function init() {
   let targetDir = formatTargetDir(argv._[0]);
   let template = resolveTemplate(argv.template ?? argv.t);
   let skipTailwind = fromBoolArg(argv.skipTailwind);
+  let server = resolveServer(argv.server) ?? DEFAULT_SERVER;
   const skipGit = fromBoolArg(argv.skipGit ?? argv['skip-git']) ?? false;
 
   // Internal flag (no prompt): when set, strip the `overrides` block that
@@ -210,6 +232,18 @@ async function init() {
             initial: 1,
           },
           {
+            type: (_, values) =>
+              server || (values.variant ?? template) !== 'latest'
+                ? null
+                : 'select',
+            name: 'server',
+            message: reset('Which server would you like to use?'),
+            choices: Object.entries(SERVERS).map(([value, title]) => ({
+              title,
+              value,
+            })),
+          },
+          {
             type: skipTailwind === undefined ? 'confirm' : null,
             name: 'tailwind',
             message: 'Would you like to add Tailwind to your project?',
@@ -233,6 +267,13 @@ async function init() {
   template = variant ?? template;
   if (!template) {
     throw new Error('A project template must be selected.');
+  }
+
+  server = result.server ?? server ?? 'nitro';
+  if (server === 'nestjs' && template !== 'latest') {
+    throw new Error(
+      'The NestJS server is only available for the Full-stack Application (latest) template.',
+    );
   }
 
   const highlighter =
@@ -281,7 +322,12 @@ async function init() {
     write('postcss.config.mjs', TAILWIND_POSTCSS_CONFIG);
   }
 
+  if (server === 'nestjs') {
+    addNestServer(root, filesDir);
+  }
+
   replacePlaceholders(root, 'vite.config.ts', {
+    ...getServerPlaceholders(template, server),
     __TAILWIND_IMPORT__: !skipTailwind
       ? "import tailwindcss from '@tailwindcss/vite';\n"
       : '',
@@ -303,6 +349,10 @@ async function init() {
 
   if (template === 'blog' && highlighter) {
     ensureSyntaxHighlighter(root, pkg, highlighter);
+  }
+
+  if (server === 'nestjs') {
+    addNestDependencies(pkg);
   }
 
   if (!skipTailwind) {
@@ -498,12 +548,64 @@ function addTailwindDependencies(pkg) {
 }
 
 /**
+ * @param {string} root
+ * @param {string} filesDir
+ * @returns {void}
+ */
+function addNestServer(root, filesDir) {
+  fs.rmSync(path.join(root, 'src/server/routes'), {
+    recursive: true,
+    force: true,
+  });
+  copyDir(path.join(filesDir, 'nestjs'), root);
+
+  const tsconfigPath = path.join(root, 'tsconfig.json');
+  const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
+  tsconfig.compilerOptions.experimentalDecorators = true;
+  tsconfig.compilerOptions.emitDecoratorMetadata = true;
+  fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\n');
+}
+
+/**
+ * @param {Template} template
+ * @param {ServerId} server
+ * @returns {Record<string, string>}
+ */
+function getServerPlaceholders(template, server) {
+  if (template !== 'latest') {
+    return {};
+  }
+
+  return server === 'nestjs'
+    ? {
+        __NITRO_IMPORT__: '',
+        __ANALOG_OPTIONS__: "{ server: { entry: 'src/server/main.ts' } }",
+        __NITRO_PLUGIN__: '',
+      }
+    : {
+        __NITRO_IMPORT__: "import nitro from '@analogjs/vite-plugin-nitro';\n",
+        __ANALOG_OPTIONS__: '',
+        __NITRO_PLUGIN__: '    nitro(),\n',
+      };
+}
+
+/**
+ * @param {PackageJson} pkg
+ * @returns {void}
+ */
+function addNestDependencies(pkg) {
+  Object.assign(pkg.dependencies, NESTJS_DEPENDENCIES);
+  delete pkg.devDependencies['@analogjs/vite-plugin-nitro'];
+  pkg.scripts.preview = 'node dist/server/main.js';
+}
+
+/**
  * @param {PackageJson} pkg
  * @param {Template} template
  * @returns {void}
  */
 function addYarnDevDependencies(pkg, template) {
-  if (H3_TEMPLATES.includes(template)) {
+  if (H3_TEMPLATES.includes(template) && !pkg.dependencies?.h3) {
     pkg.devDependencies ??= {};
     pkg.devDependencies.h3 = '^1.13.0';
   }
@@ -610,6 +712,20 @@ function fromBoolArg(arg) {
   }
 
   return arg === '' || arg === 'true';
+}
+
+/**
+ * @param {string | undefined} value
+ * @returns {ServerId | undefined}
+ */
+function resolveServer(value) {
+  if (value === undefined || Object.hasOwn(SERVERS, value)) {
+    return /** @type {ServerId | undefined} */ (value);
+  }
+
+  throw new Error(
+    `Unknown server "${value}". Use one of: ${Object.keys(SERVERS).join(', ')}.`,
+  );
 }
 
 /**
