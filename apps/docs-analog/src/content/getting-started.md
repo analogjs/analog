@@ -46,6 +46,8 @@ bun create analog
   </TabItem>
 </Tabs>
 
+To serve the app from NestJS instead of Nitro, pass `--server nestjs`, as described in the [`create-analog` guide](/docs/packages/create-analog/overview#nestjs-server).
+
 You can also [scaffold a new project with Nx](/docs/integrations/nx).
 
 ### Serving the application
