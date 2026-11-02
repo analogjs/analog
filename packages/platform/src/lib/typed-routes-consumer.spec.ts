@@ -254,7 +254,15 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     writeFileSync(
       join(root, 'src/consumer.ts'),
       `
-      import { toRoute, injectNavigate, injectParams, injectQuery, injectRouteData } from '@analogjs/router';
+      import {
+        toRoute,
+        injectNavigate,
+        injectParams,
+        injectQuery,
+        injectResources,
+        injectRouteData,
+        type RouteMeta,
+      } from '@analogjs/router';
       // @ts-expect-error route declarations are missing
       toRoute('/about');
       // @ts-expect-error route declarations are missing
@@ -263,9 +271,23 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       injectParams('/about');
       // @ts-expect-error route declarations are missing
       injectQuery('/about');
+      // @ts-expect-error route declarations are missing
+      injectRouteData('/about');
+      // @ts-expect-error route declarations are missing
+      injectResources('/about');
+      // @ts-expect-error route declarations are missing
+      type MissingTableMeta = RouteMeta<'/about'>;
+      const untypedMeta = {
+        resources: (ctx) => {
+          const inherited = ctx.resources();
+          void inherited['anyKey']?.value();
+          return inherited;
+        },
+      } satisfies RouteMeta;
       injectParams();
       injectQuery();
       injectRouteData();
+      injectResources();
     `,
     );
     expect(compile(root).messages).toEqual([]);
@@ -309,10 +331,16 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     writeFileSync(
       join(pages, 'users.[id].page.ts'),
       `
-      import type { ResolveFn } from '@angular/router';
+      import {
+        RedirectCommand,
+        type ResolveFn,
+        UrlTree,
+      } from '@angular/router';
       import type { RouteMeta } from '@analogjs/router';
       import { resource } from '@angular/core';
       import { of } from 'rxjs';
+      declare const shouldRedirect: boolean;
+      declare const loginTree: UrlTree;
       const profile: ResolveFn<{ bio: string }> = () => ({ bio: 'hi' });
       export const routeMeta = {
         data: { section: 'users' as const, count: 1, total: 'static' },
@@ -320,14 +348,19 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
           greeting: () => Promise.resolve('hello'),
           tags: () => of(['a', 'b']),
           total: () => 42,
+          guarded: () =>
+            shouldRedirect ? new RedirectCommand(loginTree) : { allowed: true },
           profile,
           load: () => 'shadowed',
         },
-        resources: () => ({
-          feed: resource({ loader: async () => ({ items: ['a', 'b'] }) }),
-        }),
-      // Resource type inference also works when the installed Angular predates router resources.
-      } satisfies RouteMeta & { resources: () => unknown };
+        resources: (ctx) => {
+          const inherited = ctx.resources();
+          void inherited['anyKey']?.value();
+          return {
+            feed: resource({ loader: async () => ({ items: ['a', 'b'] }) }),
+          };
+        },
+      } satisfies RouteMeta;
       export default class Page {}
     `,
     );
@@ -348,13 +381,15 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       join(pages, 'blog.page.ts'),
       `
       import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
       export const routeMeta = {
         data: { title: 'Blog', section: 'blog' as const },
         resolve: { nav: () => ['home'] },
         resources: () => ({
-          theme: resource({ loader: async () => 'dark' }),
+          theme: resource({ loader: async () => 'dark' as const }),
+          accent: resource({ loader: async () => 1 }),
         }),
-      };
+      } satisfies RouteMeta;
       export default class Layout {}
     `,
     );
@@ -370,21 +405,51 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       join(pages, 'blog/[slug].page.ts'),
       `
       import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
       export const routeMeta = {
         data: { section: 'post' as const },
-        resources: () => ({
-          likes: resource({ loader: async () => 10 }),
-        }),
-      };
+        resolve: {
+          summary: (route) => ({
+            slug: route.params.slug,
+            blogTitle: route.data.title,
+            navCount: route.data.nav.length,
+          }),
+        },
+        resources: (ctx) => {
+          const slug: string = ctx.params().slug;
+          const preview: string | string[] | undefined = ctx.queryParams()['preview'];
+          const hash: string | null = ctx.fragment();
+          const blogTitle: string = ctx.data().title;
+          const nav: string[] = ctx.data().nav;
+          const theme: 'dark' | undefined = ctx.resources().theme.value();
+          const parentAccent: number | undefined = ctx.resources().accent.value();
+          // @ts-expect-error a route's own resources are not on its setup context
+          ctx.resources().likes;
+          // @ts-expect-error unknown ancestor resources are rejected
+          ctx.resources().missing;
+          // @ts-expect-error layout server load is not inherited into child context data
+          ctx.data().load;
+          void [slug, preview, hash, blogTitle, nav, theme, parentAccent];
+          return {
+            likes: resource({ loader: async () => 10 }),
+            accent: resource({ loader: async () => 'amber' }),
+          };
+        },
+      } satisfies RouteMeta<'/blog/[slug]'>;
       export default class Page {}
     `,
     );
     writeFileSync(
       join(root, 'src/consumer.ts'),
       `
-      import { injectLoad, injectResources, injectRouteData } from '@analogjs/router';
+      import {
+        injectLoad,
+        injectResources,
+        injectRouteData,
+        injectRouteResources,
+        type RouteMeta,
+      } from '@analogjs/router';
       import type { ResourceRef } from '@angular/core';
-      import type { ActivatedRoute } from '@angular/router';
       import type { load } from './app/pages/users.[id].server';
       const data = injectRouteData('/users/[id]');
       const section: 'users' = data().section;
@@ -392,6 +457,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       const greeting: string = data().greeting;
       const tags: string[] = data().tags;
       const total: number = data().total;
+      const allowed: boolean = data().guarded.allowed;
       const bio: string = data().profile.bio;
       const name: string = data().load.user.name;
       injectLoad('/users/[id]').subscribe((result) => {
@@ -405,22 +471,42 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       const postTitle: string = post().title;
       const postSection: 'post' = post().section;
       const nav: string[] = post().nav;
+      const summarySlug: string = post().summary.slug;
+      const summaryBlogTitle: string = post().summary.blogTitle;
+      const summaryNavCount: number = post().summary.navCount;
 
       const userRes = injectResources('/users/[id]');
-      const untypedResources: ActivatedRoute extends { resources: infer R }
-        ? R : Record<never, never> = injectResources();
+      const untypedResources = injectResources();
+      const untypedValue: unknown = untypedResources['anyKey']?.value();
+      const untypedReload: (() => boolean) | undefined =
+        untypedResources['anyKey']?.reload;
+      void [untypedValue, untypedReload];
+      // @ts-expect-error untyped resources entries are Resource instances, not strings
+      const invalidUntyped: string = untypedResources['anyKey'];
       const feedRes: ResourceRef<{ items: string[] } | undefined> = userRes.feed;
       const feedItems: string[] | undefined = userRes.feed.value()?.items;
 
       const blogRes = injectResources('/blog/[slug]');
+      const blogResAlias = injectRouteResources('/blog/[slug]');
       const likesRes: ResourceRef<number | undefined> = blogRes.likes;
-      // @ts-expect-error layout resources are not inherited by child routes
-      blogRes.theme;
+      const themeRes: ResourceRef<'dark' | undefined> = blogRes.theme;
+      const aliasThemeRes: ResourceRef<'dark' | undefined> = blogResAlias.theme;
+      const accentRes: ResourceRef<string | undefined> = blogRes.accent;
+      // @ts-expect-error child resource overrides ancestor layout resource of the same key
+      const oldAccent: ResourceRef<number | undefined> = blogRes.accent;
 
       // @ts-expect-error unknown resource key is rejected
       userRes.missing;
       // @ts-expect-error wrong resource value type is rejected
       const invalidFeed: number = userRes.feed.value();
+      // @ts-expect-error wrong inherited resource value type is rejected
+      const invalidTheme: number | undefined = blogRes.theme.value();
+      // @ts-expect-error shared URLs have no typed resource keys
+      injectResources('/blog').theme;
+      // @ts-expect-error resource helpers require a known route
+      injectResources('/missing');
+      // @ts-expect-error RouteMeta rejects unknown route paths
+      type UnknownRouteMeta = RouteMeta<'/missing'>;
 
       // @ts-expect-error unknown data keys are rejected
       data().missing;
@@ -456,6 +542,193 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     expect(declaration).toContain(
       `layoutRouteMeta: [typeof import("./app/pages/blog.page").routeMeta];`,
     );
+    expect(compile(root).messages).toEqual([]);
+  });
+
+  it('inherits resources, resource context, and resolved data across multi-level layouts', async () => {
+    const root = fixture();
+    const pages = join(root, 'src/app/pages');
+    mkdirSync(join(pages, 'orgs/[orgId]/teams/[teamId]/members'), {
+      recursive: true,
+    });
+    writeFileSync(
+      join(pages, 'orgs/[orgId].page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        data: { scope: 'org' as const, tier: 'pro' as const },
+        resolve: {
+          org: (route) => ({ id: route.params.orgId, name: 'Acme' }),
+          sharedResolved: () => 100,
+        },
+        resources: (ctx) => ({
+          orgInfo: resource({
+            params: ctx.params,
+            loader: async ({ params }) => ({ orgId: params.orgId }),
+          }),
+          badge: resource({ loader: async () => 1 }),
+        }),
+      } satisfies RouteMeta<'/orgs/[orgId]'>;
+      export default class OrgLayout {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'orgs/[orgId]/teams/[teamId].page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import { of } from 'rxjs';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        data: { scope: 'team' as const },
+        resolve: {
+          team: (route) =>
+            of({
+              teamId: route.params.teamId,
+              orgName: route.data.org.name,
+              tier: route.data.tier,
+            }),
+          sharedResolved: () => 'team-level',
+        },
+        resources: (ctx) => {
+          const parentOrgId: string | undefined = ctx.resources().orgInfo.value()?.orgId;
+          const parentBadge: number | undefined = ctx.resources().badge.value();
+          // @ts-expect-error own teamInfo resource is not in ctx.resources()
+          ctx.resources().teamInfo;
+          void [parentOrgId, parentBadge];
+          return {
+            teamInfo: resource({
+              params: () => ({
+                teamId: ctx.params().teamId,
+                orgId: ctx.resources().orgInfo.value()?.orgId,
+              }),
+              loader: async ({ params }) => params,
+            }),
+            badge: resource({ loader: async () => 'team-badge' }),
+          };
+        },
+      } satisfies RouteMeta<'/orgs/[orgId]/teams/[teamId]'>;
+      export default class TeamLayout {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'orgs/[orgId]/teams/[teamId]/members/index.page.ts'),
+      'export default class MembersListPage {}',
+    );
+    writeFileSync(
+      join(pages, 'orgs/[orgId]/teams/[teamId]/members/[memberId].server.ts'),
+      "export const load = async () => ({ projects: ['router', 'vite'] });",
+    );
+    writeFileSync(
+      join(pages, 'orgs/[orgId]/teams/[teamId]/members/[memberId].page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        resolve: {
+          member: (route) => {
+            // @ts-expect-error unknown route param is rejected in typed resolver
+            route.params.unknownParam;
+            // @ts-expect-error unknown ancestor data key is rejected in typed resolver
+            route.data.unknownKey;
+            return {
+              memberId: route.params.memberId,
+              teamOrgName: route.data.team.orgName,
+              resolvedFromTeam: route.data.sharedResolved,
+            };
+          },
+        },
+        resources: (ctx) => {
+          const badge: string | undefined = ctx.resources().badge.value();
+          // @ts-expect-error middle layout badge overrides outer layout number badge
+          const numericBadge: number | undefined = ctx.resources().badge.value();
+          // @ts-expect-error own activity resource is not on ctx.resources()
+          ctx.resources().activity;
+          const scope: 'team' = ctx.data().scope;
+          const projects: string[] = ctx.data().load.projects;
+          void [badge, scope, projects];
+          return {
+            activity: resource({
+              params: () => ({
+                memberId: ctx.params().memberId,
+                teamId: ctx.resources().teamInfo.value()?.teamId,
+                orgId: ctx.resources().orgInfo.value()?.orgId,
+                projects: ctx.data().load.projects,
+              }),
+              loader: async ({ params }) => params,
+            }),
+          };
+        },
+      } satisfies RouteMeta<'/orgs/[orgId]/teams/[teamId]/members/[memberId]'>;
+      export default class MemberDetailPage {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'orgs.[orgId].audit.page.ts'),
+      'export default class OrgAuditDotPage {}',
+    );
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { injectResources, injectRouteData } from '@analogjs/router';
+      import type { ResourceRef } from '@angular/core';
+
+      // Leaf page with no routeMeta still inherits multi-level layout resources & data
+      const listRes = injectResources('/orgs/[orgId]/teams/[teamId]/members');
+      const listOrgRes: ResourceRef<{ orgId: string } | undefined> = listRes.orgInfo;
+      const listTeamRes: ResourceRef<{ teamId: string; orgId: string | undefined } | undefined> =
+        listRes.teamInfo;
+      const listBadge: ResourceRef<string | undefined> = listRes.badge;
+      // @ts-expect-error unknown resource on child without routeMeta is rejected
+      listRes.missing;
+
+      const listData = injectRouteData('/orgs/[orgId]/teams/[teamId]/members')();
+      const listScope: 'team' = listData.scope;
+      const listTier: 'pro' = listData.tier;
+      const listOrgName: string = listData.team.orgName;
+      const listSharedResolved: string = listData.sharedResolved;
+
+      // Leaf page with own resources & resolvers merges all 3 levels
+      const memberRes = injectResources('/orgs/[orgId]/teams/[teamId]/members/[memberId]');
+      const memberOrg: string | undefined = memberRes.orgInfo.value()?.orgId;
+      const memberTeam: string | undefined = memberRes.teamInfo.value()?.teamId;
+      const memberBadge: string | undefined = memberRes.badge.value();
+      const memberProjects: string[] | undefined = memberRes.activity.value()?.projects;
+      // @ts-expect-error outer number badge was overridden by team layout string badge
+      const wrongBadge: number | undefined = memberRes.badge.value();
+
+      const memberData = injectRouteData('/orgs/[orgId]/teams/[teamId]/members/[memberId]')();
+      const memberId: string = memberData.member.memberId;
+      const resolvedFromTeam: string = memberData.member.resolvedFromTeam;
+      const loadedProjects: string[] = memberData.load.projects;
+
+      // Dot-notation sibling is NOT wrapped by orgs/[orgId].page.ts
+      const auditRes = injectResources('/orgs/[orgId]/audit');
+      const auditData = injectRouteData('/orgs/[orgId]/audit')();
+      // @ts-expect-error dot-notation route does not inherit folder layout resources
+      auditRes.orgInfo;
+      // @ts-expect-error dot-notation route does not inherit folder layout data
+      auditData.tier;
+
+      void [
+        listOrgRes,
+        listTeamRes,
+        listBadge,
+        listScope,
+        listTier,
+        listOrgName,
+        listSharedResolved,
+        memberOrg,
+        memberTeam,
+        memberBadge,
+        memberProjects,
+        memberId,
+        resolvedFromTeam,
+        loadedProjects,
+      ];
+    `,
+    );
+    await configure(root);
     expect(compile(root).messages).toEqual([]);
   });
 
@@ -777,4 +1050,108 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     listeners.get('unlink')!(renamed);
     expect(diagnostics().join('\n')).toContain('"/renamed"');
   }, 20_000);
+
+  it('compiles cleanly against Angular versions prior to router resources', async () => {
+    const root = fixture();
+    mkdirSync(join(root, 'legacy-router/types'), { recursive: true });
+    const routerTypesDir = resolve(
+      import.meta.dirname,
+      '../../../../node_modules/@angular/router/types',
+    );
+    const chunkDts = readFileSync(
+      join(routerTypesDir, '_router_module-chunk.d.ts'),
+      'utf8',
+    )
+      .replace(/type ResourceResult\s*=[\s\S]*?;\n/, '')
+      .replace(/interface ResourceContext\s*\{[\s\S]*?\n\}\n/, '')
+      .replace(/\s*resources\?:\s*\(ctx:\s*ResourceContext\)[^;]*;/g, '')
+      .replace(/\s*resources\?:\s*ResourceResult;/g, '')
+      .replace(/\bResourceContext,\s*/g, '')
+      .replace(/\bResourceResult,\s*/g, '')
+      .replace(/declare function withRouterResources[\s\S]*?;\n/, '')
+      .replace(/,?\s*\bwithRouterResources\b|\bwithRouterResources,\s*/g, '');
+    const routerDts = readFileSync(join(routerTypesDir, 'router.d.ts'), 'utf8')
+      .replace(/\bResourceContext,\s*/g, '')
+      .replace(/\bResourceResult,\s*/g, '')
+      .replace(/declare function withRouterResources[\s\S]*?;\n/, '')
+      .replace(/,?\s*\bwithRouterResources\b|\bwithRouterResources,\s*/g, '');
+    writeFileSync(
+      join(root, 'legacy-router/types/_router_module-chunk.d.ts'),
+      chunkDts,
+    );
+    writeFileSync(join(root, 'legacy-router/types/router.d.ts'), routerDts);
+    expect(chunkDts).not.toMatch(/\bResourceContext\b|\bResourceResult\b/);
+    expect(chunkDts).not.toMatch(/\bresources\?:/);
+    expect(routerDts).not.toMatch(/\bwithRouterResources\b/);
+
+    const tsconfig = JSON.parse(
+      readFileSync(join(root, 'tsconfig.json'), 'utf8'),
+    );
+    tsconfig.compilerOptions.skipLibCheck = false;
+    tsconfig.compilerOptions.paths = {
+      '@angular/router': ['./legacy-router/types/router.d.ts'],
+    };
+    writeFileSync(join(root, 'tsconfig.json'), JSON.stringify(tsconfig));
+    writeFileSync(
+      join(root, 'src/env.d.ts'),
+      'interface FetchEvent extends Event { readonly request: Request; respondWith(r: Response | PromiseLike<Response>): void; waitUntil(f: Promise<unknown>): void; }\n',
+    );
+
+    const pages = join(root, 'src/app/pages');
+    mkdirSync(join(pages, 'blog'));
+    writeFileSync(
+      join(pages, 'blog.page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        data: { section: 'blog' as const },
+        resources: () => ({
+          theme: resource({ loader: async () => 'dark' as const }),
+        }),
+      } satisfies RouteMeta;
+      export default class BlogLayout {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'blog/[slug].page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        resources: (ctx) => ({
+          post: resource({
+            params: () => ({
+              slug: ctx.params().slug,
+              section: ctx.data().section,
+              theme: ctx.resources().theme.value(),
+            }),
+            loader: async ({ params }) => params,
+          }),
+        }),
+      } satisfies RouteMeta<'/blog/[slug]'>;
+      export default class BlogPostPage {}
+    `,
+    );
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { injectResources, injectRouteData } from '@analogjs/router';
+      import type { ResourceRef } from '@angular/core';
+      // @ts-expect-error legacy @angular/router has no ResourceContext export
+      import type { ResourceContext } from '@angular/router';
+
+      const res = injectResources('/blog/[slug]');
+      const themeRef: ResourceRef<'dark' | undefined> = res.theme;
+      const postSlug: string | undefined = res.post.value()?.slug;
+      const untyped = injectResources();
+      const untypedVal: unknown = untyped['anyKey']?.value();
+      const section: 'blog' = injectRouteData('/blog/[slug]')().section;
+      void [themeRef, postSlug, untypedVal, section];
+    `,
+    );
+
+    await configure(root);
+    expect(compile(root).messages).toEqual([]);
+  });
 });

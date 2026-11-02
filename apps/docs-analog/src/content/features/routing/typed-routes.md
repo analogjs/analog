@@ -118,9 +118,15 @@ Type checking comes from the generated table. The `experimental.typedRouting` op
 
 ```ts
 // src/app/pages/products.page.ts (layout)
+import { resource } from '@angular/core';
 import type { RouteMeta } from '@analogjs/router';
 
-export const routeMeta = { data: { section: 'catalog' } } satisfies RouteMeta;
+export const routeMeta = {
+  data: { section: 'catalog' },
+  resources: () => ({
+    catalog: resource({ loader: async () => fetchCatalog() }),
+  }),
+} satisfies RouteMeta;
 ```
 
 ```ts
@@ -129,8 +135,10 @@ import { Component, inject } from '@angular/core';
 import { injectRouteData, type RouteMeta } from '@analogjs/router';
 
 export const routeMeta = {
-  resolve: { related: () => inject(ProductsService).related() },
-} satisfies RouteMeta;
+  resolve: {
+    related: (route) => inject(ProductsService).related(route.params.id),
+  },
+} satisfies RouteMeta<'/products/[id]'>;
 
 @Component({ template: `{{ data().section }}` })
 export default class ProductPage {
@@ -139,7 +147,7 @@ export default class ProductPage {
 }
 ```
 
-Use `satisfies RouteMeta` instead of a `RouteMeta` annotation. An annotation widens the object, so data values are typed as `unknown`.
+Use `satisfies RouteMeta` (or `satisfies RouteMeta<'/products/[id]'>` to also type `route.params`, `route.queryParams`, and inherited layout `route.data` inside resolvers) instead of a `RouteMeta` annotation. An annotation widens the object, so data values are typed as `unknown`.
 
 `injectLoad` also accepts a route path. The result is typed from the page's `.server.ts` `load` function, so the page does not need to import it:
 
@@ -153,17 +161,33 @@ As with Angular's route data inheritance, a page's keys override the same keys f
 
 ## Access route resources
 
-On Angular 22.2+, when using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources`:
+On Angular 22.2+, when using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources` (and on Angular 22.3+, resources inherited from ancestor [layout routes](/docs/features/routing/overview#layout-routes) as well). As with route data, a child route's resource keys override matching keys from its layouts.
+
+Pass the route path to `RouteMeta` to type `ctx.params`, `ctx.queryParams`, `ctx.data`, and inherited ancestor `ctx.resources` inside `routeMeta.resources`:
 
 ```ts
-import { injectResources } from '@analogjs/router';
+// src/app/pages/products/[id].page.ts
+import { resource } from '@angular/core';
+import { injectResources, type RouteMeta } from '@analogjs/router';
+
+export const routeMeta = {
+  resources: (ctx) => ({
+    product: resource({
+      params: () => ({
+        id: ctx.params().id,
+        catalog: ctx.resources().catalog.value(),
+      }),
+      loader: async ({ params }) => fetchProduct(params.id, params.catalog),
+    }),
+  }),
+} satisfies RouteMeta<'/products/[id]'>;
 
 const resources = injectResources('/products/[id]');
-// resources.user is a typed Resource instance
-const user = resources.user.value();
+// resources.product and inherited resources.catalog are typed Resource instances
+const product = resources.product.value();
 ```
 
-Calling `injectResources()` without a route path returns untyped route resources. On older Angular versions without router resources, it returns an empty object. The other typed-routing helpers do not require router resources.
+Calling `injectResources()` without a route path returns untyped route resources. On older Angular versions without router resources, it returns an empty object. Shared URLs have no typed resource keys, matching `injectRouteData`. The other typed-routing helpers do not require router resources.
 
 ## Navigate relative to the current route
 
