@@ -1,6 +1,6 @@
 # Custom Server
 
-Serve an Analog app from your own server entry instead of Nitro: a [Fetchable](https://fetchable.org) module that platforms and runtimes invoke directly, or a server built with a framework such as Hono, Express, NestJS or Fastify. Your server owns the process and its routes, and Analog handles server-side rendering, page endpoints and server functions inside it.
+Serve an Analog app from your own server entry instead of Nitro: a [Fetchable](https://fetchable.org) module that platforms and runtimes invoke directly, or a server built with a framework such as Hono, Express, NestJS or Fastify. Your entry owns its routes, and Analog handles server-side rendering, page endpoints and server functions inside it. A platform or runtime runs a Fetchable entry, while a Node server entry starts its own process.
 
 :::info
 
@@ -144,7 +144,7 @@ if (!import.meta.env.DEV) {
 
 ## Server-side fetches
 
-Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`, as the Hono example does. It gets the requests Analog doesn't handle: routes under `/api/`, and non-`GET` requests elsewhere; other `GET` requests are server-rendered.
+Requests that server-side rendering and page endpoints make to the app's own origin, such as `HttpClient` calls to `/api/...` and the `fetch` passed to page endpoints, run in-process instead of over the network, as with Nitro. Analog serves its own routes. To serve your server's routes too, pass a `fetch` that handles a `Request`, as the Hono example does. It gets the requests Analog doesn't handle, such as your own routes under `/api/` and non-`GET` requests outside `/api/`; other `GET` requests are server-rendered.
 
 Node frameworks don't have a `fetch` of their own, so forward these requests to the server's address:
 
