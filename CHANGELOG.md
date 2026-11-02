@@ -1,3 +1,10 @@
+# [3.0.0-beta.23](https://github.com/analogjs/analog/compare/v3.0.0-beta.22...v3.0.0-beta.23) (2026-11-02)
+
+### Bug Fixes
+
+- **platform:** define the API prefix and i18n locales for custom servers ([3f8a72a](https://github.com/analogjs/analog/commit/3f8a72a06ae1324009caaebfeb40d85639a40eb5)), closes [analogjs/analog#2720](https://github.com/analogjs/analog/issues/2720)
+- **platform:** reject i18n.workers: true with a custom server ([3de828a](https://github.com/analogjs/analog/commit/3de828aaeb99c84b0f8bdc332df0114ced19ae0d))
+
 # [3.0.0-beta.22](https://github.com/analogjs/analog/compare/v3.0.0-beta.21...v3.0.0-beta.22) (2026-11-02)
 
 ### Bug Fixes
