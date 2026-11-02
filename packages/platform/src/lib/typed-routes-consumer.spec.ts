@@ -1069,17 +1069,20 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       .replace(/\bResourceContext,\s*/g, '')
       .replace(/\bResourceResult,\s*/g, '')
       .replace(/declare function withRouterResources[\s\S]*?;\n/, '')
-      .replace(/\bwithRouterResources,\s*/g, '');
+      .replace(/,?\s*\bwithRouterResources\b|\bwithRouterResources,\s*/g, '');
     const routerDts = readFileSync(join(routerTypesDir, 'router.d.ts'), 'utf8')
       .replace(/\bResourceContext,\s*/g, '')
       .replace(/\bResourceResult,\s*/g, '')
       .replace(/declare function withRouterResources[\s\S]*?;\n/, '')
-      .replace(/\bwithRouterResources,\s*/g, '');
+      .replace(/,?\s*\bwithRouterResources\b|\bwithRouterResources,\s*/g, '');
     writeFileSync(
       join(root, 'legacy-router/types/_router_module-chunk.d.ts'),
       chunkDts,
     );
     writeFileSync(join(root, 'legacy-router/types/router.d.ts'), routerDts);
+    expect(chunkDts).not.toMatch(/\bResourceContext\b|\bResourceResult\b/);
+    expect(chunkDts).not.toMatch(/\bresources\?:/);
+    expect(routerDts).not.toMatch(/\bwithRouterResources\b/);
 
     const tsconfig = JSON.parse(
       readFileSync(join(root, 'tsconfig.json'), 'utf8'),

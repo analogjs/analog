@@ -118,9 +118,15 @@ Type checking comes from the generated table. The `experimental.typedRouting` op
 
 ```ts
 // src/app/pages/products.page.ts (layout)
+import { resource } from '@angular/core';
 import type { RouteMeta } from '@analogjs/router';
 
-export const routeMeta = { data: { section: 'catalog' } } satisfies RouteMeta;
+export const routeMeta = {
+  data: { section: 'catalog' },
+  resources: () => ({
+    catalog: resource({ loader: async () => fetchCatalog() }),
+  }),
+} satisfies RouteMeta;
 ```
 
 ```ts
