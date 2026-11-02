@@ -1,8 +1,14 @@
+import type { Signal } from '@angular/core';
 import {
-  type ActivatedRoute,
+  type ActivatedRouteSnapshot,
+  type Data as RouterData,
   DefaultUrlSerializer,
+  type MaybeAsync,
+  type Params,
   PRIMARY_OUTLET,
-  type ResolveFn,
+  type RedirectCommand,
+  type ResourceContext,
+  type ResourceResult,
   UrlSegment,
   UrlSegmentGroup,
   UrlTree,
@@ -159,10 +165,10 @@ type RouteResolvers<Meta> = Meta extends { resolve?: infer Resolvers }
   : EmptyObject;
 
 type ResolvedRouteData<Meta> = {
-  [K in keyof RouteResolvers<Meta>]: RouteResolvers<Meta>[K] extends ResolveFn<
-    infer T
-  >
-    ? T
+  [K in keyof RouteResolvers<Meta>]: RouteResolvers<Meta>[K] extends (
+    ...args: never[]
+  ) => MaybeAsync<infer T>
+    ? Exclude<T, RedirectCommand>
     : unknown;
 };
 
@@ -190,12 +196,15 @@ type RouteResourceMap<Meta> = Meta extends {
     : EmptyObject
   : EmptyObject;
 
-type PageRouteMetas<P extends keyof AnalogRouteTable> = [
-  ...(AnalogRouteTable[P] extends {
+type LayoutRouteMetas<P extends keyof AnalogRouteTable> =
+  AnalogRouteTable[P] extends {
     layoutRouteMeta: infer Metas extends unknown[];
   }
     ? Metas
-    : []),
+    : [];
+
+type PageRouteMetas<P extends keyof AnalogRouteTable> = [
+  ...LayoutRouteMetas<P>,
   ...(AnalogRouteTable[P] extends { routeMeta: infer Meta } ? [Meta] : []),
 ];
 
@@ -236,9 +245,47 @@ export type RouteResourcesOutput<P extends string> =
     ? AnalogRouteTable[P] extends { routeMeta: infer Meta }
       ? Simplify<RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
       : EmptyObject
-    : ActivatedRoute extends { resources: infer Resources }
-      ? Resources
-      : EmptyObject;
+    : ResourceResult;
+
+/**
+ * `ResourceContext` narrowed with typed `params`, `queryParams`, and `data`
+ * (ancestor layout data/resolvers plus the page's server `load`) from the
+ * route table.
+ */
+export type RouteResourceContext<P extends string = string> = Omit<
+  ResourceContext,
+  'params' | 'queryParams' | 'data'
+> & {
+  params: Signal<
+    P extends keyof AnalogRouteTable ? RouteParamsOutput<P> : Params
+  >;
+  queryParams: Signal<
+    P extends keyof AnalogRouteTable ? RouteQueryOutput<P> : Params
+  >;
+  data: Signal<
+    P extends keyof AnalogRouteTable
+      ? Simplify<
+          Omit<InheritedRouteData<LayoutRouteMetas<P>>, 'load'> &
+            PageLoadData<P>
+        >
+      : RouterData
+  >;
+};
+
+/**
+ * `ActivatedRouteSnapshot` narrowed with typed `params`, `queryParams`, and
+ * inherited ancestor layout `data` for resolvers on `RouteMeta<P>`.
+ */
+export type RouteActivatedRouteSnapshot<P extends string = string> = Omit<
+  ActivatedRouteSnapshot,
+  'params' | 'queryParams' | 'data'
+> & {
+  params: P extends keyof AnalogRouteTable ? RouteParamsOutput<P> : Params;
+  queryParams: P extends keyof AnalogRouteTable ? RouteQueryOutput<P> : Params;
+  data: P extends keyof AnalogRouteTable
+    ? Simplify<Omit<InheritedRouteData<LayoutRouteMetas<P>>, 'load'>>
+    : RouterData;
+};
 
 type SplitPath<S extends string> = S extends ''
   ? []

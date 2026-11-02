@@ -9,9 +9,10 @@ import {
   toRoute,
   type LinkToInput,
   type RouteDataOutput,
+  type RouteMeta,
   type RouteResourcesOutput,
 } from '@analogjs/router';
-import type { ResourceRef } from '@angular/core';
+import { resource, type ResourceRef } from '@angular/core';
 
 import type { Org, Team, User } from './data';
 
@@ -128,6 +129,12 @@ export function routeTypeAssertions() {
   const anyData: Record<string, unknown> = injectRouteData()();
   const anyResources = injectResources();
   const anyRouteResources = injectRouteResources();
+  const anyResourceValue: unknown = anyResources['user']?.value();
+  const anyResourceReload: (() => boolean) | undefined =
+    anyRouteResources['user']?.reload;
+  void [anyResourceValue, anyResourceReload];
+  // @ts-expect-error untyped resources entries are Resource instances, not strings
+  const invalidAnyResource: string = anyResources['user'];
   // @ts-expect-error untyped values may be missing
   const anyUserId: string = injectParams()()['userId'];
 
@@ -142,6 +149,26 @@ export function routeTypeAssertions() {
   const aliasedResources = injectRouteResources('/users/[userId]');
   const aliasedRef: ResourceRef<User | undefined> =
     aliasedResources.userResource;
+
+  const memberMetaCheck = {
+    resolve: {
+      check: (route) => ({
+        memberId: route.params.memberId,
+        orgName: route.data.org?.name,
+        teamName: route.data.team?.name,
+      }),
+    },
+    resources: (ctx) => ({
+      memberSummary: resource({
+        params: () => ({
+          memberId: ctx.params().memberId,
+          projects: ctx.data().load.projects,
+        }),
+        loader: async ({ params }) => params,
+      }),
+    }),
+  } satisfies RouteMeta<typeof MEMBER>;
+  void memberMetaCheck;
 
   // LinkTo inputs
   const links: LinkToInput<'/users/[userId]'>[] = [

@@ -8,10 +8,9 @@ import { findTeam } from '../../../../data';
 export const routeMeta = {
   data: { area: 'team' },
   resolve: {
-    team: (route) =>
-      of(findTeam(route.paramMap.get('orgId'), route.paramMap.get('teamId'))),
+    team: (route) => of(findTeam(route.params.orgId, route.params.teamId)),
   },
-} satisfies RouteMeta;
+} satisfies RouteMeta<'/orgs/[orgId]/teams/[teamId]'>;
 
 @Component({
   imports: [LinkTo, RouterOutlet],

@@ -5,8 +5,8 @@ import { RouterLinkActive, RouterOutlet } from '@angular/router';
 import { findOrg } from '../../data';
 
 export const routeMeta = {
-  resolve: { org: (route) => findOrg(route.paramMap.get('orgId')) },
-} satisfies RouteMeta;
+  resolve: { org: (route) => findOrg(route.params.orgId) },
+} satisfies RouteMeta<'/orgs/[orgId]'>;
 
 @Component({
   imports: [LinkTo, RouterLinkActive, RouterOutlet],

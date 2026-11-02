@@ -15,7 +15,9 @@ import { ROUTE_META_TAGS_KEY } from './meta-tags';
 import { ANALOG_PAGE_ENDPOINTS, ANALOG_META_KEY } from './endpoints';
 import { injectRouteEndpointURL } from './inject-route-endpoint-url';
 
-export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
+export function toRouteConfig(
+  routeMeta: RouteMeta<never> | undefined,
+): RouteConfig {
   if (routeMeta && isRedirectRouteMeta(routeMeta)) {
     return routeMeta;
   }
@@ -74,7 +76,7 @@ export function toRouteConfig(routeMeta: RouteMeta | undefined): RouteConfig {
 }
 
 function isRedirectRouteMeta(
-  routeMeta: RouteMeta,
+  routeMeta: RouteMeta<never>,
 ): routeMeta is RedirectRouteMeta {
   return !!routeMeta.redirectTo;
 }

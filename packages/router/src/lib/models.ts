@@ -1,16 +1,26 @@
 import { Type } from '@angular/core';
 import {
+  ActivatedRouteSnapshot,
   CanActivateChildFn,
   CanActivateFn,
   CanDeactivateFn,
   CanMatchFn,
   DeprecatedGuard,
-  ResolveFn,
+  MaybeAsync,
+  RedirectCommand,
+  ResourceContext,
+  ResourceResult,
   Route,
+  RouterStateSnapshot,
 } from '@angular/router';
 
 import { AnalogJsonLdDocument } from './json-ld';
 import { MetaTag } from './meta-tags';
+import type {
+  AnalogRoutePath,
+  RouteActivatedRouteSnapshot,
+  RouteResourceContext,
+} from './to-route';
 
 type OmittedRouteProps =
   | 'path'
@@ -24,18 +34,46 @@ type OmittedRouteProps =
 
 export type RouteConfig = Omit<Route, OmittedRouteProps>;
 
-export interface DefaultRouteMeta extends Omit<
+type RouteContextFor<P> = [P] extends [never]
+  ? never
+  : [P] extends [AnalogRoutePath]
+    ? RouteResourceContext<P>
+    : ResourceContext;
+
+type RouteSnapshotFor<P> = [P] extends [never]
+  ? never
+  : [P] extends [AnalogRoutePath]
+    ? RouteActivatedRouteSnapshot<P>
+    : ActivatedRouteSnapshot;
+
+type RouteResolveFn<T, P extends AnalogRoutePath | undefined = undefined> = (
+  route: RouteSnapshotFor<P>,
+  state: RouterStateSnapshot,
+) => MaybeAsync<T | RedirectCommand>;
+
+export interface DefaultRouteMeta<
+  P extends AnalogRoutePath | undefined = undefined,
+> extends Omit<
   Route,
-  OmittedRouteProps | keyof RedirectRouteMeta
+  | OmittedRouteProps
+  | keyof RedirectRouteMeta
+  | 'resolve'
+  | 'resources'
+  | 'title'
 > {
   canActivate?: CanActivateFn[] | DeprecatedGuard[];
   canActivateChild?: CanActivateChildFn[];
   canDeactivate?: CanDeactivateFn<unknown>[];
   canMatch?: CanMatchFn[];
-  resolve?: { [key: string | symbol]: ResolveFn<unknown> };
-  title?: string | ResolveFn<string>;
-  meta?: MetaTag[] | ResolveFn<MetaTag[]>;
-  jsonLd?: AnalogJsonLdDocument | ResolveFn<AnalogJsonLdDocument | undefined>;
+  resolve?: { [key: string | symbol]: RouteResolveFn<unknown, P> };
+  resources?: (
+    ctx: RouteContextFor<P>,
+  ) => ResourceResult | Promise<ResourceResult>;
+  title?: string | RouteResolveFn<string, P>;
+  meta?: MetaTag[] | RouteResolveFn<MetaTag[], P>;
+  jsonLd?:
+    | AnalogJsonLdDocument
+    | RouteResolveFn<AnalogJsonLdDocument | undefined, P>;
 }
 
 export interface RedirectRouteMeta {
@@ -43,11 +81,11 @@ export interface RedirectRouteMeta {
   pathMatch?: Route['pathMatch'];
 }
 
-export type RouteMeta =
+export type RouteMeta<P extends AnalogRoutePath | undefined = undefined> =
   // enforce exclusive union
-  (DefaultRouteMeta & { redirectTo?: never }) | RedirectRouteMeta;
+  (DefaultRouteMeta<P> & { redirectTo?: never }) | RedirectRouteMeta;
 
 export type RouteExport = {
   default: Type<unknown>;
-  routeMeta?: RouteMeta;
+  routeMeta?: RouteMeta<never>;
 };
