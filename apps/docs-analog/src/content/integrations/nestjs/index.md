@@ -8,6 +8,16 @@ A custom server runs on Node.js. Prerendering, static site generation and deploy
 
 :::
 
+## Creating a new project
+
+`create-analog` can scaffold a new project with this setup:
+
+```shell
+npm create analog@latest my-app -- --template latest --server nestjs
+```
+
+To add NestJS to an existing project, follow the steps below.
+
 ## Step 1: Install NestJS
 
 <Tabs groupId="package-manager">
@@ -60,10 +70,7 @@ import angular from '@analogjs/vite-plugin-angular';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [
-    analog({ ssr: true, server: { entry: 'src/server/main.ts' } }),
-    angular(),
-  ],
+  plugins: [analog({ server: { entry: 'src/server/main.ts' } }), angular()],
 });
 ```
 
