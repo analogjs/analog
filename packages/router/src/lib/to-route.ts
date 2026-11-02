@@ -1,5 +1,6 @@
-import type { Signal } from '@angular/core';
+import type { Resource, Signal, WritableResource } from '@angular/core';
 import {
+  type ActivatedRoute,
   type ActivatedRouteSnapshot,
   type Data as RouterData,
   DefaultUrlSerializer,
@@ -7,8 +8,7 @@ import {
   type Params,
   PRIMARY_OUTLET,
   type RedirectCommand,
-  type ResourceContext,
-  type ResourceResult,
+  type Route,
   UrlSegment,
   UrlSegmentGroup,
   UrlTree,
@@ -248,6 +248,41 @@ export type RouteDataOutput<P extends string> = P extends keyof AnalogRouteTable
     >
   : Record<string, unknown>;
 
+type FallbackResourceResult = Record<
+  string,
+  Resource<unknown> & Pick<WritableResource<unknown>, 'reload'>
+>;
+
+type PropOr<T, K extends PropertyKey, Fallback> = K extends keyof T
+  ? NonNullable<T[K]>
+  : Fallback;
+
+/**
+ * Expected return type of `routeMeta.resources`, matching `@angular/router`'s
+ * `ResourceResult` across Angular versions with and without router resources.
+ */
+export type RouteResourceResult = PropOr<
+  ActivatedRoute,
+  'resources',
+  FallbackResourceResult
+>;
+
+interface FallbackResourceContext {
+  params: Signal<Params>;
+  queryParams: Signal<Params>;
+  fragment: Signal<string | null>;
+  data: Signal<RouterData>;
+  resources: Signal<RouteResourceResult>;
+}
+
+type ExtractResourceContext<T> = 'resources' extends keyof T
+  ? PropOr<T, 'resources', never> extends (ctx: infer Ctx) => unknown
+    ? Ctx
+    : FallbackResourceContext
+  : FallbackResourceContext;
+
+type BaseResourceContext = ExtractResourceContext<Route>;
+
 /**
  * Resources for a page route: `routeMeta.resources` results from its ancestor
  * layouts and the page, with nearer keys overriding outer keys.
@@ -255,7 +290,7 @@ export type RouteDataOutput<P extends string> = P extends keyof AnalogRouteTable
 export type RouteResourcesOutput<P extends string> =
   P extends keyof AnalogRouteTable
     ? Simplify<InheritedRouteResources<PageRouteMetas<P>>>
-    : ResourceResult;
+    : RouteResourceResult;
 
 /**
  * `ResourceContext` narrowed with typed `params`, `queryParams`, `data`
@@ -263,7 +298,7 @@ export type RouteResourcesOutput<P extends string> =
  * `resources` (inherited ancestor layout resources) from the route table.
  */
 export type RouteResourceContext<P extends string = string> = Omit<
-  ResourceContext,
+  BaseResourceContext,
   'params' | 'queryParams' | 'data' | 'resources'
 > & {
   params: Signal<
@@ -283,7 +318,7 @@ export type RouteResourceContext<P extends string = string> = Omit<
   resources: Signal<
     P extends keyof AnalogRouteTable
       ? Simplify<InheritedRouteResources<LayoutRouteMetas<P>>>
-      : ResourceResult
+      : RouteResourceResult
   >;
 };
 

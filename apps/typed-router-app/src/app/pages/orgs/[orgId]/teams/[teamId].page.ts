@@ -12,11 +12,7 @@ export const routeMeta = {
   },
   resources: (ctx) => ({
     teamResource: resource({
-      params: () => {
-        const org = ctx.resources().orgResource.value();
-        if (!org) return undefined;
-        return { orgId: org.id, teamId: ctx.params().teamId };
-      },
+      params: ctx.params,
       loader: async ({ params }) => findTeam(params.orgId, params.teamId),
     }),
   }),

@@ -1,4 +1,4 @@
-import { Component, inject, resource } from '@angular/core';
+import { Component, inject, resource, VERSION } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -23,6 +23,9 @@ import { buildRouteLink } from './to-route';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createRoutes } from './routes';
+
+const supportsResourceInheritance =
+  Number(VERSION.major) * 100 + Number(VERSION.minor) >= 2203;
 
 describe('typed filename paths', () => {
   it.each([
@@ -333,136 +336,140 @@ describe('route resources', () => {
     });
   });
 
-  it('inherits ancestor layout resources across ctx.resources() and injectResources() and applies overrides', async () => {
-    @Component({
-      standalone: true,
-      imports: [RouterOutlet],
-      template: '<router-outlet />',
-    })
-    class Layout {}
-    @Component({ standalone: true, template: '' })
-    class LeafPage {
-      resources = injectResources();
-    }
+  it.runIf(supportsResourceInheritance)(
+    'inherits ancestor layout resources across ctx.resources() and injectResources() and applies overrides',
+    async () => {
+      @Component({
+        standalone: true,
+        imports: [RouterOutlet],
+        template: '<router-outlet />',
+      })
+      class Layout {}
+      @Component({ standalone: true, template: '' })
+      class LeafPage {
+        resources = injectResources();
+      }
 
-    TestBed.configureTestingModule({
-      providers: [
-        provideRouter(
-          createRoutes({
-            '/src/app/pages/orgs/[orgId].page.ts': async () => ({
-              default: Layout,
-              routeMeta: {
-                resources: (ctx) => ({
-                  org: resource({
-                    params: () => ctx.params()['orgId'],
-                    loader: async ({ params: orgId }) => ({ orgId }),
-                  }),
-                  badge: resource({
-                    loader: async () => 1,
-                  }),
-                }),
-              },
-            }),
-            '/src/app/pages/orgs/[orgId]/teams/[teamId].page.ts': async () => ({
-              default: Layout,
-              routeMeta: {
-                resources: (ctx) => ({
-                  team: resource({
-                    params: () => {
-                      const org = ctx.resources()['org']?.value() as
-                        | { orgId: string }
-                        | undefined;
-                      if (!org) return undefined;
-                      return {
-                        teamId: ctx.params()['teamId'],
-                        orgId: org.orgId,
-                      };
-                    },
-                    loader: async ({ params }) => params,
-                  }),
-                  badge: resource({
-                    loader: async () => 'team-badge',
-                  }),
-                }),
-              },
-            }),
-            '/src/app/pages/orgs/[orgId]/teams/[teamId]/members/index.page.ts':
-              async () => ({
-                default: LeafPage,
-              }),
-            '/src/app/pages/orgs/[orgId]/teams/[teamId]/members/[memberId].page.ts':
-              async () => ({
-                default: LeafPage,
+      TestBed.configureTestingModule({
+        providers: [
+          provideRouter(
+            createRoutes({
+              '/src/app/pages/orgs/[orgId].page.ts': async () => ({
+                default: Layout,
                 routeMeta: {
                   resources: (ctx) => ({
-                    member: resource({
-                      params: () => {
-                        const org = ctx.resources()['org']?.value() as
-                          | { orgId: string }
-                          | undefined;
-                        const team = ctx.resources()['team']?.value() as
-                          | { teamId: string; orgId: string }
-                          | undefined;
-                        const badge = ctx.resources()['badge']?.value() as
-                          | string
-                          | undefined;
-                        if (!org || !team || !badge) return undefined;
-                        return {
-                          memberId: ctx.params()['memberId'],
-                          orgId: org.orgId,
-                          teamId: team.teamId,
-                          badge,
-                        };
-                      },
-                      loader: async ({ params }) => params,
+                    org: resource({
+                      params: () => ctx.params()['orgId'],
+                      loader: async ({ params: orgId }) => ({ orgId }),
+                    }),
+                    badge: resource({
+                      loader: async () => 1,
                     }),
                   }),
                 },
               }),
-            '/src/app/pages/orgs.[orgId].audit.page.ts': async () => ({
-              default: LeafPage,
+              '/src/app/pages/orgs/[orgId]/teams/[teamId].page.ts':
+                async () => ({
+                  default: Layout,
+                  routeMeta: {
+                    resources: (ctx) => ({
+                      team: resource({
+                        params: () => {
+                          const org = ctx.resources()['org']?.value() as
+                            | { orgId: string }
+                            | undefined;
+                          if (!org) return undefined;
+                          return {
+                            teamId: ctx.params()['teamId'],
+                            orgId: org.orgId,
+                          };
+                        },
+                        loader: async ({ params }) => params,
+                      }),
+                      badge: resource({
+                        loader: async () => 'team-badge',
+                      }),
+                    }),
+                  },
+                }),
+              '/src/app/pages/orgs/[orgId]/teams/[teamId]/members/index.page.ts':
+                async () => ({
+                  default: LeafPage,
+                }),
+              '/src/app/pages/orgs/[orgId]/teams/[teamId]/members/[memberId].page.ts':
+                async () => ({
+                  default: LeafPage,
+                  routeMeta: {
+                    resources: (ctx) => ({
+                      member: resource({
+                        params: () => {
+                          const org = ctx.resources()['org']?.value() as
+                            | { orgId: string }
+                            | undefined;
+                          const team = ctx.resources()['team']?.value() as
+                            | { teamId: string; orgId: string }
+                            | undefined;
+                          const badge = ctx.resources()['badge']?.value() as
+                            | string
+                            | undefined;
+                          if (!org || !team || !badge) return undefined;
+                          return {
+                            memberId: ctx.params()['memberId'],
+                            orgId: org.orgId,
+                            teamId: team.teamId,
+                            badge,
+                          };
+                        },
+                        loader: async ({ params }) => params,
+                      }),
+                    }),
+                  },
+                }),
+              '/src/app/pages/orgs.[orgId].audit.page.ts': async () => ({
+                default: LeafPage,
+              }),
             }),
-          }),
-          withRouterResources(),
-        ),
-      ],
-    });
-
-    const harness = await RouterTestingHarness.create();
-    const leaf = () =>
-      harness.routeDebugElement!.query(By.directive(LeafPage))
-        .componentInstance as LeafPage;
-
-    // Child with no routeMeta.resources inherits outer and inner layout resources and overrides
-    await harness.navigateByUrl('/orgs/acme/teams/core/members');
-    await vi.waitFor(() => {
-      expect(leaf().resources['org']?.value()).toEqual({ orgId: 'acme' });
-      expect(leaf().resources['team']?.value()).toEqual({
-        teamId: 'core',
-        orgId: 'acme',
+            withRouterResources(),
+          ),
+        ],
       });
-      expect(leaf().resources['badge']?.value()).toBe('team-badge');
-    });
 
-    // Leaf chains ctx.resources() across both layouts and exposes merged resources via injectResources()
-    await harness.navigateByUrl('/orgs/acme/teams/core/members/ada');
-    await vi.waitFor(() => {
-      expect(leaf().resources['org']?.value()).toEqual({ orgId: 'acme' });
-      expect(leaf().resources['team']?.value()).toEqual({
-        teamId: 'core',
-        orgId: 'acme',
-      });
-      expect(leaf().resources['badge']?.value()).toBe('team-badge');
-      expect(leaf().resources['member']?.value()).toEqual({
-        memberId: 'ada',
-        orgId: 'acme',
-        teamId: 'core',
-        badge: 'team-badge',
-      });
-    });
+      const harness = await RouterTestingHarness.create();
+      const leaf = () =>
+        harness.routeDebugElement!.query(By.directive(LeafPage))
+          .componentInstance as LeafPage;
 
-    // Dot-notation sibling is not wrapped by orgs/[orgId].page.ts and does not inherit its resources
-    const audit = await harness.navigateByUrl('/orgs/acme/audit', LeafPage);
-    expect(audit.resources).toEqual({});
-  });
+      // Child with no routeMeta.resources inherits outer and inner layout resources and overrides
+      await harness.navigateByUrl('/orgs/acme/teams/core/members');
+      await vi.waitFor(() => {
+        expect(leaf().resources['org']?.value()).toEqual({ orgId: 'acme' });
+        expect(leaf().resources['team']?.value()).toEqual({
+          teamId: 'core',
+          orgId: 'acme',
+        });
+        expect(leaf().resources['badge']?.value()).toBe('team-badge');
+      });
+
+      // Leaf chains ctx.resources() across both layouts and exposes merged resources via injectResources()
+      await harness.navigateByUrl('/orgs/acme/teams/core/members/ada');
+      await vi.waitFor(() => {
+        expect(leaf().resources['org']?.value()).toEqual({ orgId: 'acme' });
+        expect(leaf().resources['team']?.value()).toEqual({
+          teamId: 'core',
+          orgId: 'acme',
+        });
+        expect(leaf().resources['badge']?.value()).toBe('team-badge');
+        expect(leaf().resources['member']?.value()).toEqual({
+          memberId: 'ada',
+          orgId: 'acme',
+          teamId: 'core',
+          badge: 'team-badge',
+        });
+      });
+
+      // Dot-notation sibling is not wrapped by orgs/[orgId].page.ts and does not inherit its resources
+      const audit = await harness.navigateByUrl('/orgs/acme/audit', LeafPage);
+      expect(audit.resources).toEqual({});
+    },
+  );
 });

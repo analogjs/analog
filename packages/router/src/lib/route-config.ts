@@ -72,7 +72,7 @@ export function toRouteConfig(
     },
   };
 
-  return routeConfig;
+  return routeConfig as RouteConfig;
 }
 
 function isRedirectRouteMeta(

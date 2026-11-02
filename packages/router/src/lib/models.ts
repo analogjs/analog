@@ -8,8 +8,6 @@ import {
   DeprecatedGuard,
   MaybeAsync,
   RedirectCommand,
-  ResourceContext,
-  ResourceResult,
   Route,
   RouterStateSnapshot,
 } from '@angular/router';
@@ -20,6 +18,7 @@ import type {
   AnalogRoutePath,
   RouteActivatedRouteSnapshot,
   RouteResourceContext,
+  RouteResourceResult,
 } from './to-route';
 
 type OmittedRouteProps =
@@ -38,7 +37,7 @@ type RouteContextFor<P> = [P] extends [never]
   ? never
   : [P] extends [AnalogRoutePath]
     ? RouteResourceContext<P>
-    : ResourceContext;
+    : RouteResourceContext;
 
 type RouteSnapshotFor<P> = [P] extends [never]
   ? never
@@ -68,7 +67,7 @@ export interface DefaultRouteMeta<
   resolve?: { [key: string | symbol]: RouteResolveFn<unknown, P> };
   resources?: (
     ctx: RouteContextFor<P>,
-  ) => ResourceResult | Promise<ResourceResult>;
+  ) => RouteResourceResult | Promise<RouteResourceResult>;
   title?: string | RouteResolveFn<string, P>;
   meta?: MetaTag[] | RouteResolveFn<MetaTag[], P>;
   jsonLd?:

@@ -1050,4 +1050,105 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     listeners.get('unlink')!(renamed);
     expect(diagnostics().join('\n')).toContain('"/renamed"');
   }, 20_000);
+
+  it('compiles cleanly against Angular versions prior to router resources', async () => {
+    const root = fixture();
+    mkdirSync(join(root, 'legacy-router/types'), { recursive: true });
+    const routerTypesDir = resolve(
+      import.meta.dirname,
+      '../../../../node_modules/@angular/router/types',
+    );
+    const chunkDts = readFileSync(
+      join(routerTypesDir, '_router_module-chunk.d.ts'),
+      'utf8',
+    )
+      .replace(/type ResourceResult\s*=[\s\S]*?;\n/, '')
+      .replace(/interface ResourceContext\s*\{[\s\S]*?\n\}\n/, '')
+      .replace(/\s*resources\?:\s*\(ctx:\s*ResourceContext\)[^;]*;/g, '')
+      .replace(/\s*resources\?:\s*ResourceResult;/g, '')
+      .replace(/\bResourceContext,\s*/g, '')
+      .replace(/\bResourceResult,\s*/g, '')
+      .replace(/declare function withRouterResources[\s\S]*?;\n/, '')
+      .replace(/\bwithRouterResources,\s*/g, '');
+    const routerDts = readFileSync(join(routerTypesDir, 'router.d.ts'), 'utf8')
+      .replace(/\bResourceContext,\s*/g, '')
+      .replace(/\bResourceResult,\s*/g, '')
+      .replace(/declare function withRouterResources[\s\S]*?;\n/, '')
+      .replace(/\bwithRouterResources,\s*/g, '');
+    writeFileSync(
+      join(root, 'legacy-router/types/_router_module-chunk.d.ts'),
+      chunkDts,
+    );
+    writeFileSync(join(root, 'legacy-router/types/router.d.ts'), routerDts);
+
+    const tsconfig = JSON.parse(
+      readFileSync(join(root, 'tsconfig.json'), 'utf8'),
+    );
+    tsconfig.compilerOptions.skipLibCheck = false;
+    tsconfig.compilerOptions.paths = {
+      '@angular/router': ['./legacy-router/types/router.d.ts'],
+    };
+    writeFileSync(join(root, 'tsconfig.json'), JSON.stringify(tsconfig));
+    writeFileSync(
+      join(root, 'src/env.d.ts'),
+      'interface FetchEvent extends Event { readonly request: Request; respondWith(r: Response | PromiseLike<Response>): void; waitUntil(f: Promise<unknown>): void; }\n',
+    );
+
+    const pages = join(root, 'src/app/pages');
+    mkdirSync(join(pages, 'blog'));
+    writeFileSync(
+      join(pages, 'blog.page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        data: { section: 'blog' as const },
+        resources: () => ({
+          theme: resource({ loader: async () => 'dark' as const }),
+        }),
+      } satisfies RouteMeta;
+      export default class BlogLayout {}
+    `,
+    );
+    writeFileSync(
+      join(pages, 'blog/[slug].page.ts'),
+      `
+      import { resource } from '@angular/core';
+      import type { RouteMeta } from '@analogjs/router';
+      export const routeMeta = {
+        resources: (ctx) => ({
+          post: resource({
+            params: () => ({
+              slug: ctx.params().slug,
+              section: ctx.data().section,
+              theme: ctx.resources().theme.value(),
+            }),
+            loader: async ({ params }) => params,
+          }),
+        }),
+      } satisfies RouteMeta<'/blog/[slug]'>;
+      export default class BlogPostPage {}
+    `,
+    );
+    writeFileSync(
+      join(root, 'src/consumer.ts'),
+      `
+      import { injectResources, injectRouteData } from '@analogjs/router';
+      import type { ResourceRef } from '@angular/core';
+      // @ts-expect-error legacy @angular/router has no ResourceContext export
+      import type { ResourceContext } from '@angular/router';
+
+      const res = injectResources('/blog/[slug]');
+      const themeRef: ResourceRef<'dark' | undefined> = res.theme;
+      const postSlug: string | undefined = res.post.value()?.slug;
+      const untyped = injectResources();
+      const untypedVal: unknown = untyped['anyKey']?.value();
+      const section: 'blog' = injectRouteData('/blog/[slug]')().section;
+      void [themeRef, postSlug, untypedVal, section];
+    `,
+    );
+
+    await configure(root);
+    expect(compile(root).messages).toEqual([]);
+  });
 });

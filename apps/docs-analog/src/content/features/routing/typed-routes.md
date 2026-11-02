@@ -155,7 +155,7 @@ As with Angular's route data inheritance, a page's keys override the same keys f
 
 ## Access route resources
 
-When using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route and inherited from its ancestor [layout routes](/docs/features/routing/overview#layout-routes) via `routeMeta.resources`. As with route data, a child route's resource keys override matching keys from its layouts.
+On Angular 22.2+, when using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources` (and on Angular 22.3+, resources inherited from ancestor [layout routes](/docs/features/routing/overview#layout-routes) as well). As with route data, a child route's resource keys override matching keys from its layouts.
 
 Pass the route path to `RouteMeta` to type `ctx.params`, `ctx.queryParams`, `ctx.data`, and inherited ancestor `ctx.resources` inside `routeMeta.resources`:
 
@@ -181,7 +181,7 @@ const resources = injectResources('/products/[id]');
 const product = resources.product.value();
 ```
 
-Calling `injectResources()` without a route path returns untyped route resources (`ResourceResult`). Shared URLs have no typed resource keys, matching `injectRouteData`. The other typed-routing helpers do not require router resources.
+Calling `injectResources()` without a route path returns untyped route resources. On older Angular versions without router resources, it returns an empty object. Shared URLs have no typed resource keys, matching `injectRouteData`. The other typed-routing helpers do not require router resources.
 
 ## Navigate relative to the current route
 

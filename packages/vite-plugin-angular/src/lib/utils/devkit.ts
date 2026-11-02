@@ -9,7 +9,7 @@ const require = createRequire(import.meta.url);
 
 const angularMajor = Number(VERSION.major);
 const angularMinor = Number(VERSION.minor);
-const angularPatch = Number.parseInt(VERSION.patch, 10);
+const angularPatch = Number(VERSION.patch);
 const padVersion = (version: number) => String(version).padStart(2, '0');
 const angularFullVersion = Number(
   `${angularMajor}${padVersion(angularMinor)}${padVersion(angularPatch)}`,

@@ -21,18 +21,18 @@ packages:
 catalog:
   # Keep the Angular runtime/compiler patch set aligned so compiler-cli,
   # language-service, and the framework runtime all resolve the same release.
-  '@angular/animations': 22.3.0-next.3
+  '@angular/animations': 22.2.0
   '@angular/cdk': 22.2.0
-  '@angular/common': 22.3.0-next.3
-  '@angular/compiler': 22.3.0-next.3
-  '@angular/core': 22.3.0-next.3
-  '@angular/forms': 22.3.0-next.3
-  '@angular/localize': 22.3.0-next.3
+  '@angular/common': 22.2.0
+  '@angular/compiler': 22.2.0
+  '@angular/core': 22.2.0
+  '@angular/forms': 22.2.0
+  '@angular/localize': 22.2.0
   '@angular/material': 22.2.0
-  '@angular/platform-browser': 22.3.0-next.3
-  '@angular/platform-browser-dynamic': 22.3.0-next.3
-  '@angular/platform-server': 22.3.0-next.3
-  '@angular/router': 22.3.0-next.3
+  '@angular/platform-browser': 22.2.0
+  '@angular/platform-browser-dynamic': 22.2.0
+  '@angular/platform-server': 22.2.0
+  '@angular/router': 22.2.0
   '@angular/ssr': 22.2.0
   '@astrojs/mdx': ^5.0.3
   '@astrojs/markdown-component': ^1.0.5
@@ -78,8 +78,8 @@ catalog:
   '@angular-eslint/template-parser': 22.6.0
   '@angular/build': 22.2.0
   '@angular/cli': 22.2.0
-  '@angular/compiler-cli': 22.3.0-next.3
-  '@angular/language-service': 22.3.0-next.3
+  '@angular/compiler-cli': 22.2.0
+  '@angular/language-service': 22.2.0
   '@babel/core': ^8.0.0
   '@commitlint/cli': ^20.5.0
   '@commitlint/config-conventional': ^20.5.0
@@ -198,17 +198,17 @@ catalog:
   zone.js: ^0.16.3
 
 overrides:
-  '@angular/animations': 22.3.0-next.3
-  '@angular/common': 22.3.0-next.3
-  '@angular/compiler': 22.3.0-next.3
-  '@angular/core': 22.3.0-next.3
-  '@angular/forms': 22.3.0-next.3
-  '@angular/platform-browser': 22.3.0-next.3
-  '@angular/platform-browser-dynamic': 22.3.0-next.3
-  '@angular/platform-server': 22.3.0-next.3
-  '@angular/router': 22.3.0-next.3
-  '@angular/compiler-cli': 22.3.0-next.3
-  '@angular/language-service': 22.3.0-next.3
+  '@angular/animations': 22.2.0
+  '@angular/common': 22.2.0
+  '@angular/compiler': 22.2.0
+  '@angular/core': 22.2.0
+  '@angular/forms': 22.2.0
+  '@angular/platform-browser': 22.2.0
+  '@angular/platform-browser-dynamic': 22.2.0
+  '@angular/platform-server': 22.2.0
+  '@angular/router': 22.2.0
+  '@angular/compiler-cli': 22.2.0
+  '@angular/language-service': 22.2.0
   '@playwright/test': 1.60.0
   playwright: 1.60.0
 
