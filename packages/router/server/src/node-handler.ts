@@ -27,7 +27,12 @@ export function createAnalogHandler(
     Promise.resolve(req)
       .then((req) => handleAnalogRequest(toRequest(req), { req, res }))
       .then((response) => (response ? writeResponse(response, res) : next()))
-      .catch(next);
+      .catch((error: Error) => {
+        // A render the client walked away from isn't an error for the host.
+        if (!(res.closed && error.name === 'AbortError')) {
+          next(error);
+        }
+      });
   };
 }
 
