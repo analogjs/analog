@@ -143,6 +143,51 @@ describe('createAnalogHandler', () => {
     expect(errors).toEqual([]);
   });
 
+  it('aborts a render whose client disconnected while it was loading', async () => {
+    let loading = false;
+    let release!: () => void;
+    const loaded = new Promise<void>((resolve) => (release = resolve));
+    let signal: AbortSignal | undefined;
+    ANALOG_SERVER_MANIFEST.render = async () => {
+      loading = true;
+      await loaded;
+      return async (_url, _document, context) => {
+        signal = context.signal;
+        return '<html></html>';
+      };
+    };
+    const client = new AbortController();
+
+    const response = fetch(`${base}/slow`, { signal: client.signal });
+    await vi.waitFor(() => expect(loading).toBe(true));
+    client.abort();
+    await response.catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    release();
+
+    await vi.waitFor(() => expect(signal?.aborted).toBe(true));
+  });
+
+  it('passes a stream that fails mid-response to next() as an error', async () => {
+    ANALOG_SERVER_MANIFEST.render = async () => async () =>
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('<html>'));
+          controller.error(new Error('render failed'));
+        },
+      });
+
+    await fetch(`${base}/failing`)
+      .then((response) => response.text())
+      .catch(() => undefined);
+
+    await vi.waitFor(() =>
+      expect(errors).toEqual([
+        expect.objectContaining({ message: 'render failed' }),
+      ]),
+    );
+  });
+
   it('passes a request it cannot convert to next() as an error', async () => {
     const body = await new Promise<string>((resolve, reject) => {
       request(`${base}/bad-host`, { headers: { host: 'bad host' } }, (res) =>
