@@ -167,7 +167,12 @@ app.get('/report', (req, res, next) => {
 
 [i18n](/docs/features/i18n/overview) works with a custom server: configure `i18n` in `analog()` and `provideI18n()` as usual, and the locale is detected per request from the URL prefix or the `Accept-Language` header.
 
-[Locale workers](/docs/features/i18n/overview#concurrent-server-rendering) come from Nitro, so every locale renders in one JavaScript context. Overlapping requests in different locales can produce mixed-language pages, as on Nitro without workers.
+[Locale workers](/docs/features/i18n/overview#concurrent-server-rendering) come from Nitro, so every locale renders in one JavaScript context. Overlapping requests in different locales can produce mixed-language pages, as on Nitro without workers. Setting `i18n.workers: true` with a custom server fails the build.
+
+Two details of locale detection apply here as on Nitro:
+
+- `Accept-Language` tags must match a configured locale exactly: `fr-FR` doesn't match `fr`, and the default locale is used.
+- In the browser, the locale comes from the URL. A page rendered in a locale detected from `Accept-Language` at an unprefixed URL switches to the default locale after hydration. Use [locale-prefixed URLs](/docs/features/i18n/overview#url-based-locale-routing) to keep the server and browser on the same locale.
 
 ## Building and running
 
