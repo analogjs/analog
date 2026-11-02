@@ -52,12 +52,19 @@ describe('createAnalogHandler', () => {
   let server: Server;
   let base: string;
   let errors: unknown[];
+  let closed: Set<string>;
 
   beforeEach(async () => {
     Object.assign(ANALOG_SERVER_MANIFEST, manifest);
     errors = [];
+    closed = new Set();
     const handle = createAnalogHandler();
     server = createServer(async (req, res) => {
+      res.once('close', () => closed.add(req.url ?? ''));
+      // A host whose own setup outlasts the client, as the dev server's can.
+      if (req.url === '/late') {
+        await new Promise((resolve) => req.socket.once('close', resolve));
+      }
       // A body parser that ran first and kept the original bytes.
       if (req.url?.endsWith('?parsed')) {
         (req as { rawBody?: Buffer }).rawBody = Buffer.from(
@@ -162,8 +169,25 @@ describe('createAnalogHandler', () => {
     await vi.waitFor(() => expect(loading).toBe(true));
     client.abort();
     await response.catch(() => undefined);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await vi.waitFor(() => expect(closed.has('/slow')).toBe(true));
     release();
+
+    await vi.waitFor(() => expect(signal?.aborted).toBe(true));
+  });
+
+  it('aborts a render whose client left before Analog ran', async () => {
+    let signal: AbortSignal | undefined;
+    ANALOG_SERVER_MANIFEST.render =
+      async () => async (_url, _document, context) => {
+        signal = context.signal;
+        return '<html></html>';
+      };
+    const client = new AbortController();
+
+    const response = fetch(`${base}/late`, { signal: client.signal });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    client.abort();
+    await response.catch(() => undefined);
 
     await vi.waitFor(() => expect(signal?.aborted).toBe(true));
   });

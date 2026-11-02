@@ -275,11 +275,17 @@ async function renderPage(
  */
 function renderSignal(request: Request, res: ServerResponse): AbortSignal {
   const closed = new AbortController();
-  res.once('close', () => {
+  const abortIfUnfinished = () => {
     if (!res.writableEnded) {
       closed.abort();
     }
-  });
+  };
+  // In dev the host app is created first, so the client may already be gone.
+  if (res.closed) {
+    abortIfUnfinished();
+  } else {
+    res.once('close', abortIfUnfinished);
+  }
   return AbortSignal.any([request.signal, closed.signal]);
 }
 
