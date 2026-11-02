@@ -109,8 +109,8 @@ async function writeResponse(
   await pipeline(
     Readable.fromWeb(response.body as NodeReadableStream<Uint8Array>),
     res,
-  ).catch((error) => {
-    if (!res.destroyed) {
+  ).catch((error: NodeJS.ErrnoException) => {
+    if (error.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
       throw error;
     }
   });

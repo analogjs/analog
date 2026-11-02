@@ -245,6 +245,8 @@ async function renderPage(
   context: AnalogRequestContext,
   fetch: typeof $fetch,
 ): Promise<Response> {
+  // Before any await, so a disconnect during setup isn't missed.
+  const signal = renderSignal(request, context.res);
   const path = `${url.pathname}${url.search}`;
   const req = context.req as ServerContext['req'];
   req.originalUrl ??= path;
@@ -253,7 +255,7 @@ async function renderPage(
     req,
     res: context.res,
     fetch,
-    signal: renderSignal(request, context.res),
+    signal,
     renderErrorsAsHtml: true,
   });
   const headers = new Headers({ 'content-type': 'text/html; charset=utf-8' });
