@@ -149,7 +149,7 @@ export function injectResources(
   options?: InjectOptions,
 ): unknown {
   const { route } = resolveArgs(fromOrOptions, options);
-  return 'resources' in route ? (route.resources ?? {}) : {};
+  return route.resources ?? {};
 }
 
 export { injectResources as injectRouteResources };

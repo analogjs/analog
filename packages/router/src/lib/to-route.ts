@@ -196,6 +196,17 @@ type RouteResourceMap<Meta> = Meta extends {
     : EmptyObject
   : EmptyObject;
 
+// Routes inherit ancestor layout resources; child keys override parent keys.
+type InheritedRouteResources<Metas, Resources = EmptyObject> = Metas extends [
+  infer Meta,
+  ...infer Rest,
+]
+  ? InheritedRouteResources<
+      Rest,
+      Merge<Resources, RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
+    >
+  : Resources;
+
 type LayoutRouteMetas<P extends keyof AnalogRouteTable> =
   AnalogRouteTable[P] extends {
     layoutRouteMeta: infer Metas extends unknown[];
@@ -238,23 +249,22 @@ export type RouteDataOutput<P extends string> = P extends keyof AnalogRouteTable
   : Record<string, unknown>;
 
 /**
- * Resources for a page route: `routeMeta.resources` results defined on the page.
+ * Resources for a page route: `routeMeta.resources` results from its ancestor
+ * layouts and the page, with nearer keys overriding outer keys.
  */
 export type RouteResourcesOutput<P extends string> =
   P extends keyof AnalogRouteTable
-    ? AnalogRouteTable[P] extends { routeMeta: infer Meta }
-      ? Simplify<RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
-      : EmptyObject
+    ? Simplify<InheritedRouteResources<PageRouteMetas<P>>>
     : ResourceResult;
 
 /**
- * `ResourceContext` narrowed with typed `params`, `queryParams`, and `data`
- * (ancestor layout data/resolvers plus the page's server `load`) from the
- * route table.
+ * `ResourceContext` narrowed with typed `params`, `queryParams`, `data`
+ * (ancestor layout data/resolvers plus the page's server `load`), and
+ * `resources` (inherited ancestor layout resources) from the route table.
  */
 export type RouteResourceContext<P extends string = string> = Omit<
   ResourceContext,
-  'params' | 'queryParams' | 'data'
+  'params' | 'queryParams' | 'data' | 'resources'
 > & {
   params: Signal<
     P extends keyof AnalogRouteTable ? RouteParamsOutput<P> : Params
@@ -269,6 +279,11 @@ export type RouteResourceContext<P extends string = string> = Omit<
             PageLoadData<P>
         >
       : RouterData
+  >;
+  resources: Signal<
+    P extends keyof AnalogRouteTable
+      ? Simplify<InheritedRouteResources<LayoutRouteMetas<P>>>
+      : ResourceResult
   >;
 };
 

@@ -1,11 +1,17 @@
 import { injectRouteData, LinkTo, type RouteMeta } from '@analogjs/router';
-import { Component } from '@angular/core';
+import { Component, resource } from '@angular/core';
 import { RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { findOrg } from '../../data';
 
 export const routeMeta = {
   resolve: { org: (route) => findOrg(route.params.orgId) },
+  resources: (ctx) => ({
+    orgResource: resource({
+      params: ctx.params,
+      loader: async ({ params }) => findOrg(params.orgId),
+    }),
+  }),
 } satisfies RouteMeta<'/orgs/[orgId]'>;
 
 @Component({

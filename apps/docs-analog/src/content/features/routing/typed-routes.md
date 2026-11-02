@@ -155,7 +155,9 @@ As with Angular's route data inheritance, a page's keys override the same keys f
 
 ## Access route resources
 
-On Angular 22.2+, when using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route via `routeMeta.resources`:
+When using `withRouterResources()`, `injectResources` returns the reactive resources defined on the route and inherited from its ancestor [layout routes](/docs/features/routing/overview#layout-routes) via `routeMeta.resources`. As with route data, a child route's resource keys override matching keys from its layouts.
+
+Pass the route path to `RouteMeta` to type `ctx.params`, `ctx.queryParams`, `ctx.data`, and inherited ancestor `ctx.resources` inside `routeMeta.resources`:
 
 ```ts
 // src/app/pages/products/[id].page.ts
@@ -165,18 +167,21 @@ import { injectResources, type RouteMeta } from '@analogjs/router';
 export const routeMeta = {
   resources: (ctx) => ({
     product: resource({
-      params: ctx.params,
-      loader: async ({ params }) => fetchProduct(params.id),
+      params: () => ({
+        id: ctx.params().id,
+        catalog: ctx.resources().catalog.value(),
+      }),
+      loader: async ({ params }) => fetchProduct(params.id, params.catalog),
     }),
   }),
 } satisfies RouteMeta<'/products/[id]'>;
 
 const resources = injectResources('/products/[id]');
-// resources.product is a typed Resource instance
+// resources.product and inherited resources.catalog are typed Resource instances
 const product = resources.product.value();
 ```
 
-Calling `injectResources()` without a route path returns untyped route resources (`ResourceResult`). On older Angular versions without router resources, it returns an empty object. The other typed-routing helpers do not require router resources.
+Calling `injectResources()` without a route path returns untyped route resources (`ResourceResult`). Shared URLs have no typed resource keys, matching `injectRouteData`. The other typed-routing helpers do not require router resources.
 
 ## Navigate relative to the current route
 

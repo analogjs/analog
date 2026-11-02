@@ -279,8 +279,9 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       type MissingTableMeta = RouteMeta<'/about'>;
       const untypedMeta = {
         resources: (ctx) => {
-          void [ctx.params(), ctx.queryParams(), ctx.data(), ctx.fragment()];
-          return {};
+          const inherited = ctx.resources();
+          void inherited['anyKey']?.value();
+          return inherited;
         },
       } satisfies RouteMeta;
       injectParams();
@@ -352,9 +353,13 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
           profile,
           load: () => 'shadowed',
         },
-        resources: () => ({
-          feed: resource({ loader: async () => ({ items: ['a', 'b'] }) }),
-        }),
+        resources: (ctx) => {
+          const inherited = ctx.resources();
+          void inherited['anyKey']?.value();
+          return {
+            feed: resource({ loader: async () => ({ items: ['a', 'b'] }) }),
+          };
+        },
       } satisfies RouteMeta;
       export default class Page {}
     `,
@@ -416,11 +421,18 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
           const hash: string | null = ctx.fragment();
           const blogTitle: string = ctx.data().title;
           const nav: string[] = ctx.data().nav;
+          const theme: 'dark' | undefined = ctx.resources().theme.value();
+          const parentAccent: number | undefined = ctx.resources().accent.value();
+          // @ts-expect-error a route's own resources are not on its setup context
+          ctx.resources().likes;
+          // @ts-expect-error unknown ancestor resources are rejected
+          ctx.resources().missing;
           // @ts-expect-error layout server load is not inherited into child context data
           ctx.data().load;
-          void [slug, preview, hash, blogTitle, nav];
+          void [slug, preview, hash, blogTitle, nav, theme, parentAccent];
           return {
             likes: resource({ loader: async () => 10 }),
+            accent: resource({ loader: async () => 'amber' }),
           };
         },
       } satisfies RouteMeta<'/blog/[slug]'>;
@@ -434,6 +446,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
         injectLoad,
         injectResources,
         injectRouteData,
+        injectRouteResources,
         type RouteMeta,
       } from '@analogjs/router';
       import type { ResourceRef } from '@angular/core';
@@ -474,14 +487,20 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       const feedItems: string[] | undefined = userRes.feed.value()?.items;
 
       const blogRes = injectResources('/blog/[slug]');
+      const blogResAlias = injectRouteResources('/blog/[slug]');
       const likesRes: ResourceRef<number | undefined> = blogRes.likes;
-      // @ts-expect-error layout resources are not inherited by child routes
-      blogRes.theme;
+      const themeRes: ResourceRef<'dark' | undefined> = blogRes.theme;
+      const aliasThemeRes: ResourceRef<'dark' | undefined> = blogResAlias.theme;
+      const accentRes: ResourceRef<string | undefined> = blogRes.accent;
+      // @ts-expect-error child resource overrides ancestor layout resource of the same key
+      const oldAccent: ResourceRef<number | undefined> = blogRes.accent;
 
       // @ts-expect-error unknown resource key is rejected
       userRes.missing;
       // @ts-expect-error wrong resource value type is rejected
       const invalidFeed: number = userRes.feed.value();
+      // @ts-expect-error wrong inherited resource value type is rejected
+      const invalidTheme: number | undefined = blogRes.theme.value();
       // @ts-expect-error shared URLs have no typed resource keys
       injectResources('/blog').theme;
       // @ts-expect-error resource helpers require a known route
@@ -526,7 +545,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     expect(compile(root).messages).toEqual([]);
   });
 
-  it('inherits static and resolved data across multi-level layouts', async () => {
+  it('inherits resources, resource context, and resolved data across multi-level layouts', async () => {
     const root = fixture();
     const pages = join(root, 'src/app/pages');
     mkdirSync(join(pages, 'orgs/[orgId]/teams/[teamId]/members'), {
@@ -535,6 +554,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     writeFileSync(
       join(pages, 'orgs/[orgId].page.ts'),
       `
+      import { resource } from '@angular/core';
       import type { RouteMeta } from '@analogjs/router';
       export const routeMeta = {
         data: { scope: 'org' as const, tier: 'pro' as const },
@@ -542,6 +562,13 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
           org: (route) => ({ id: route.params.orgId, name: 'Acme' }),
           sharedResolved: () => 100,
         },
+        resources: (ctx) => ({
+          orgInfo: resource({
+            params: ctx.params,
+            loader: async ({ params }) => ({ orgId: params.orgId }),
+          }),
+          badge: resource({ loader: async () => 1 }),
+        }),
       } satisfies RouteMeta<'/orgs/[orgId]'>;
       export default class OrgLayout {}
     `,
@@ -549,6 +576,7 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
     writeFileSync(
       join(pages, 'orgs/[orgId]/teams/[teamId].page.ts'),
       `
+      import { resource } from '@angular/core';
       import { of } from 'rxjs';
       import type { RouteMeta } from '@analogjs/router';
       export const routeMeta = {
@@ -561,6 +589,23 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
               tier: route.data.tier,
             }),
           sharedResolved: () => 'team-level',
+        },
+        resources: (ctx) => {
+          const parentOrgId: string | undefined = ctx.resources().orgInfo.value()?.orgId;
+          const parentBadge: number | undefined = ctx.resources().badge.value();
+          // @ts-expect-error own teamInfo resource is not in ctx.resources()
+          ctx.resources().teamInfo;
+          void [parentOrgId, parentBadge];
+          return {
+            teamInfo: resource({
+              params: () => ({
+                teamId: ctx.params().teamId,
+                orgId: ctx.resources().orgInfo.value()?.orgId,
+              }),
+              loader: async ({ params }) => params,
+            }),
+            badge: resource({ loader: async () => 'team-badge' }),
+          };
         },
       } satisfies RouteMeta<'/orgs/[orgId]/teams/[teamId]'>;
       export default class TeamLayout {}
@@ -594,13 +639,20 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
           },
         },
         resources: (ctx) => {
+          const badge: string | undefined = ctx.resources().badge.value();
+          // @ts-expect-error middle layout badge overrides outer layout number badge
+          const numericBadge: number | undefined = ctx.resources().badge.value();
+          // @ts-expect-error own activity resource is not on ctx.resources()
+          ctx.resources().activity;
           const scope: 'team' = ctx.data().scope;
           const projects: string[] = ctx.data().load.projects;
-          void [scope, projects];
+          void [badge, scope, projects];
           return {
             activity: resource({
               params: () => ({
                 memberId: ctx.params().memberId,
+                teamId: ctx.resources().teamInfo.value()?.teamId,
+                orgId: ctx.resources().orgInfo.value()?.orgId,
                 projects: ctx.data().load.projects,
               }),
               loader: async ({ params }) => params,
@@ -619,17 +671,31 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       join(root, 'src/consumer.ts'),
       `
       import { injectResources, injectRouteData } from '@analogjs/router';
+      import type { ResourceRef } from '@angular/core';
 
-      // Leaf page with no routeMeta inherits multi-level layout data
+      // Leaf page with no routeMeta still inherits multi-level layout resources & data
+      const listRes = injectResources('/orgs/[orgId]/teams/[teamId]/members');
+      const listOrgRes: ResourceRef<{ orgId: string } | undefined> = listRes.orgInfo;
+      const listTeamRes: ResourceRef<{ teamId: string; orgId: string | undefined } | undefined> =
+        listRes.teamInfo;
+      const listBadge: ResourceRef<string | undefined> = listRes.badge;
+      // @ts-expect-error unknown resource on child without routeMeta is rejected
+      listRes.missing;
+
       const listData = injectRouteData('/orgs/[orgId]/teams/[teamId]/members')();
       const listScope: 'team' = listData.scope;
       const listTier: 'pro' = listData.tier;
       const listOrgName: string = listData.team.orgName;
       const listSharedResolved: string = listData.sharedResolved;
 
-      // Leaf page with own resources & resolvers merges layout data & own resources
+      // Leaf page with own resources & resolvers merges all 3 levels
       const memberRes = injectResources('/orgs/[orgId]/teams/[teamId]/members/[memberId]');
+      const memberOrg: string | undefined = memberRes.orgInfo.value()?.orgId;
+      const memberTeam: string | undefined = memberRes.teamInfo.value()?.teamId;
+      const memberBadge: string | undefined = memberRes.badge.value();
       const memberProjects: string[] | undefined = memberRes.activity.value()?.projects;
+      // @ts-expect-error outer number badge was overridden by team layout string badge
+      const wrongBadge: number | undefined = memberRes.badge.value();
 
       const memberData = injectRouteData('/orgs/[orgId]/teams/[teamId]/members/[memberId]')();
       const memberId: string = memberData.member.memberId;
@@ -637,15 +703,24 @@ describe('typed routing consumer integration', { timeout: 20_000 }, () => {
       const loadedProjects: string[] = memberData.load.projects;
 
       // Dot-notation sibling is NOT wrapped by orgs/[orgId].page.ts
+      const auditRes = injectResources('/orgs/[orgId]/audit');
       const auditData = injectRouteData('/orgs/[orgId]/audit')();
+      // @ts-expect-error dot-notation route does not inherit folder layout resources
+      auditRes.orgInfo;
       // @ts-expect-error dot-notation route does not inherit folder layout data
       auditData.tier;
 
       void [
+        listOrgRes,
+        listTeamRes,
+        listBadge,
         listScope,
         listTier,
         listOrgName,
         listSharedResolved,
+        memberOrg,
+        memberTeam,
+        memberBadge,
         memberProjects,
         memberId,
         resolvedFromTeam,
