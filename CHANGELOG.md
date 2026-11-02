@@ -1,3 +1,13 @@
+# [3.0.0-beta.24](https://github.com/analogjs/analog/compare/v3.0.0-beta.23...v3.0.0-beta.24) (2026-11-02)
+
+### Bug Fixes
+
+- **create-analog:** describe the build without Nitro-specific paths ([2118521](https://github.com/analogjs/analog/commit/2118521bb8595188a4bfb0c8644cd15dbe4abb56))
+
+### Features
+
+- **create-analog:** add a NestJS server option behind a default ([f1b36ed](https://github.com/analogjs/analog/commit/f1b36ed9e883ab9e85cf0d037d1ecd4762826904)), closes [analogjs/analog#2725](https://github.com/analogjs/analog/issues/2725)
+
 # [3.0.0-beta.23](https://github.com/analogjs/analog/compare/v3.0.0-beta.22...v3.0.0-beta.23) (2026-11-02)
 
 ### Bug Fixes
