@@ -1,3 +1,13 @@
+# [3.0.0-beta.27](https://github.com/analogjs/analog/compare/v3.0.0-beta.26...v3.0.0-beta.27) (2026-11-02)
+
+### Bug Fixes
+
+- **router:** type RouteMeta resolvers and resource context ([4233dcb](https://github.com/analogjs/analog/commit/4233dcb2706c8793037b9eb0f4a3d69db63c7521))
+
+### Features
+
+- **router:** inherit ancestor route resources in ResourceContext and injectResources ([205c043](https://github.com/analogjs/analog/commit/205c043e245d69d54932c8ece762420057ac6525)), closes [angular/angular#70587](https://github.com/angular/angular/issues/70587)
+
 # [3.0.0-beta.26](https://github.com/analogjs/analog/compare/v3.0.0-beta.25...v3.0.0-beta.26) (2026-11-02)
 
 ### Features
