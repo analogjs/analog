@@ -187,7 +187,7 @@ export function serverPlugin(
     return `{
   apiPrefix: ${JSON.stringify(apiPrefix)},
   template: ${template},
-  render: () => import(${JSON.stringify(normalizePath(options.entryServer ?? `${src}/main.server.ts`))}).then((m) => m.default),
+  render: () => import(${JSON.stringify(normalizePath(resolve(root, options.entryServer ?? 'src/main.server.ts')))}).then((m) => m.default),
   config: ${
     appConfig
       ? `() => import(${JSON.stringify(appConfig)}).then((m) => m.config)`
