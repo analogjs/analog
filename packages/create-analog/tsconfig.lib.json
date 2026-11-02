@@ -17,6 +17,7 @@
     "**/*.spec.ts",
     "**/*.test.ts",
     "src/test-setup.ts",
-    "template-*/**"
+    "template-*/**",
+    "files/**"
   ]
 }

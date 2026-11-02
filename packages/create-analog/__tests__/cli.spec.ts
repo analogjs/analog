@@ -173,6 +173,118 @@ test(
   },
 );
 
+test('scaffolds Nitro without the server prompt by default', () => {
+  const { stdout } = run(
+    [projectName, '--template', 'latest', '--skipTailwind', 'true'],
+    { cwd: tmpDir },
+  );
+
+  expect(stdout).not.toContain('Which server would you like to use?');
+  expect(readGeneratedViteConfig()).toMatch(
+    /import nitro from '@analogjs\/vite-plugin-nitro';[\s\S]*plugins:\s*\[\s*analog\(\),\s*angular\(\),\s*nitro\(\),\s*\]/,
+  );
+  expect(
+    readFileSync(join(genPath, 'src/server/routes/api/v1/hello.ts'), 'utf-8'),
+  ).toContain('defineEventHandler');
+});
+
+test(
+  'scaffolds a NestJS server with --server nestjs',
+  { timeout: 30_000 },
+  async () => {
+    // Scaffold inside the workspace so Vite can resolve node_modules
+    const localGenPath = join(__dirname, projectName);
+    await remove(localGenPath);
+
+    try {
+      run(
+        [
+          projectName,
+          '--template',
+          'latest',
+          '--server',
+          'nestjs',
+          '--skipTailwind',
+          'true',
+        ],
+        { cwd: __dirname },
+      );
+
+      const viteConfig = readFileSync(
+        join(localGenPath, 'vite.config.ts'),
+        'utf-8',
+      );
+      expect(viteConfig).toContain(
+        "analog({ server: { entry: 'src/server/main.ts' } })",
+      );
+      expect(viteConfig).not.toContain('nitro');
+      expect(viteConfig).not.toContain('__');
+
+      const loaded = await loadConfigFromFile(
+        { command: 'build', mode: 'production' },
+        join(localGenPath, 'vite.config.ts'),
+      );
+      expect(loaded?.config).toBeTruthy();
+
+      const serverFiles = readdirSync(join(localGenPath, 'src/server')).sort();
+      expect(serverFiles).toEqual([
+        'app.module.ts',
+        'hello.controller.ts',
+        'hello.service.ts',
+        'main.ts',
+      ]);
+
+      const pkg = readJsonSync(join(localGenPath, 'package.json'));
+      expect(Object.keys(pkg.dependencies)).toEqual(
+        expect.arrayContaining([
+          '@nestjs/common',
+          '@nestjs/core',
+          '@nestjs/platform-express',
+          'h3',
+          'reflect-metadata',
+        ]),
+      );
+      expect(
+        pkg.devDependencies['@analogjs/vite-plugin-nitro'],
+      ).toBeUndefined();
+      expect(pkg.scripts.preview).toBe('node dist/server/main.js');
+
+      const tsconfig = readJsonSync(join(localGenPath, 'tsconfig.json'));
+      expect(tsconfig.compilerOptions).toMatchObject({
+        experimentalDecorators: true,
+        emitDecoratorMetadata: true,
+      });
+    } finally {
+      await remove(localGenPath);
+    }
+  },
+);
+
+test('rejects --server nestjs for templates other than latest', () => {
+  expect(() =>
+    run(
+      [
+        projectName,
+        '--template',
+        'blog',
+        '--server',
+        'nestjs',
+        '--skipTailwind',
+        'true',
+      ],
+      { cwd: tmpDir },
+    ),
+  ).toThrow('only available for the Full-stack Application');
+});
+
+test('rejects an unknown --server', () => {
+  expect(() =>
+    run([projectName, '--template', 'latest', '--server', 'hono'], {
+      cwd: tmpDir,
+    }),
+  ).toThrow('Unknown server "hono"');
+});
+
 test('keeps the vite/vitest overrides by default', () => {
   run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
     cwd: tmpDir,
