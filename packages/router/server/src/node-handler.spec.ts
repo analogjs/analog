@@ -53,13 +53,16 @@ describe('createAnalogHandler', () => {
   let base: string;
   let errors: unknown[];
   let closed: Set<string>;
+  let received: Set<string>;
 
   beforeEach(async () => {
     Object.assign(ANALOG_SERVER_MANIFEST, manifest);
     errors = [];
     closed = new Set();
+    received = new Set();
     const handle = createAnalogHandler();
     server = createServer(async (req, res) => {
+      received.add(req.url ?? '');
       res.once('close', () => closed.add(req.url ?? ''));
       // A host whose own setup outlasts the client, as the dev server's can.
       if (req.url === '/late') {
@@ -185,7 +188,7 @@ describe('createAnalogHandler', () => {
     const client = new AbortController();
 
     const response = fetch(`${base}/late`, { signal: client.signal });
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await vi.waitFor(() => expect(received.has('/late')).toBe(true));
     client.abort();
     await response.catch(() => undefined);
 
