@@ -98,7 +98,13 @@ export function createAnalogRequestHandler(
         : null;
     }
     if (request.method === 'GET' && !url.pathname.startsWith(apiPrefix)) {
-      return renderPage(manifest, url, context, serverFetch(baseUrl(context)));
+      return renderPage(
+        manifest,
+        request,
+        url,
+        context,
+        serverFetch(baseUrl(context)),
+      );
     }
     return null;
   }
@@ -234,6 +240,7 @@ function pageEndpointEvent(
 
 async function renderPage(
   manifest: AnalogServerManifest,
+  request: Request,
   url: URL,
   context: AnalogRequestContext,
   fetch: typeof $fetch,
@@ -246,12 +253,32 @@ async function renderPage(
     req,
     res: context.res,
     fetch,
+    signal: renderSignal(request, context.res),
+    renderErrorsAsHtml: true,
   });
-  // The status carries anything the app set through RESPONSE while rendering.
-  return new Response(html, {
-    status: context.res.statusCode,
-    headers: { 'content-type': 'text/html; charset=utf-8' },
+  const headers = new Headers({ 'content-type': 'text/html; charset=utf-8' });
+  // As on Nitro, so intermediaries don't cache or buffer partial HTML.
+  if (typeof html !== 'string') {
+    headers.set('content-encoding', 'identity');
+    headers.set('cache-control', 'no-store, no-transform');
+  }
+  // The status carries anything the app set through RESPONSE before the
+  // response started.
+  return new Response(html, { status: context.res.statusCode, headers });
+}
+
+/**
+ * Aborted when the client disconnects: fetch-native hosts abort the
+ * `Request`, Node hosts close `res` before the response finishes.
+ */
+function renderSignal(request: Request, res: ServerResponse): AbortSignal {
+  const closed = new AbortController();
+  res.once('close', () => {
+    if (!res.writableEnded) {
+      closed.abort();
+    }
   });
+  return AbortSignal.any([request.signal, closed.signal]);
 }
 
 /**

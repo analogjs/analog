@@ -86,6 +86,33 @@ describe('createAnalogRequestHandler', () => {
     expect(await response?.text()).toContain('<p>/missing</p>');
   });
 
+  it('streams pages uncached and unbuffered until the request aborts', async () => {
+    let signal: AbortSignal | undefined;
+    ANALOG_SERVER_MANIFEST.render =
+      async () => async (_url, _document, context) => {
+        signal = context.signal;
+        return new ReadableStream({
+          start: (controller) =>
+            controller.enqueue(new TextEncoder().encode('<html>shell')),
+        });
+      };
+    const client = new AbortController();
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/streamed`, { signal: client.signal }),
+    );
+    const { value } = await response!.body!.getReader().read();
+
+    expect(new TextDecoder().decode(value)).toBe('<html>shell');
+    expect(response?.headers.get('cache-control')).toBe(
+      'no-store, no-transform',
+    );
+    expect(response?.headers.get('content-encoding')).toBe('identity');
+    expect(signal?.aborted).toBe(false);
+    client.abort();
+    expect(signal?.aborted).toBe(true);
+  });
+
   it('serves page endpoints with route params', async () => {
     const response = await createAnalogRequestHandler()(
       new Request(`${origin}/api/_analog/pages/users/42`),

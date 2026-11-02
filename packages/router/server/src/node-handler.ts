@@ -105,8 +105,13 @@ async function writeResponse(
     res.end();
     return;
   }
+  // A client that disconnects mid-response isn't an error for the host.
   await pipeline(
     Readable.fromWeb(response.body as NodeReadableStream<Uint8Array>),
     res,
-  );
+  ).catch((error) => {
+    if (!res.destroyed) {
+      throw error;
+    }
+  });
 }
