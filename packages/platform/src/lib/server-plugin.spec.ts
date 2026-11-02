@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { Plugin } from 'vite';
-import { normalizePath } from 'vite';
+import { createServer, normalizePath } from 'vite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { serverPlugin } from './server-plugin';
@@ -119,6 +119,35 @@ describe('serverPlugin', () => {
     expect(config.environments['client'].build.outDir).toBe(
       join(root, 'dist/client'),
     );
+  });
+
+  it('defines the API prefix and locales the router reads', async () => {
+    writeFileSync(
+      join(root, 'src/values.js'),
+      'export default [ANALOG_API_PREFIX, ANALOG_I18N_DEFAULT_LOCALE, ANALOG_I18N_LOCALES];',
+    );
+    const server = await createServer({
+      root,
+      configFile: false,
+      logLevel: 'silent',
+      server: { middlewareMode: true, ws: false },
+      plugins: [
+        serverPlugin(
+          { entry: 'src/server/main.ts' },
+          {
+            workspaceRoot: root,
+            apiPrefix: 'services',
+            i18n: { defaultLocale: 'en', locales: ['en', 'fr'] },
+          },
+        ),
+      ],
+    });
+    try {
+      const values = await server.ssrLoadModule('/src/values.js');
+      expect(values['default']).toEqual(['services', 'en', ['en', 'fr']]);
+    } finally {
+      await server.close();
+    }
   });
 
   it('refuses to run alongside nitro()', () => {

@@ -71,6 +71,16 @@ export function serverPlugin(
       const outDir = (name: string) =>
         resolve(workspaceRoot, 'dist', rootDir(), name);
       return {
+        // Build-time values the router reads, as `nitro()` defines them.
+        define: {
+          ANALOG_API_PREFIX: JSON.stringify(apiPrefix),
+          ...(options.i18n && {
+            ANALOG_I18N_DEFAULT_LOCALE: JSON.stringify(
+              options.i18n.defaultLocale,
+            ),
+            ANALOG_I18N_LOCALES: JSON.stringify(options.i18n.locales),
+          }),
+        },
         environments: {
           client: {
             build: {
