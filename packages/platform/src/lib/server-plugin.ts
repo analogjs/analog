@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { relative, resolve } from 'node:path';
+import type { NodeHttp1Handler } from 'srvx';
+import { toNodeHandler } from 'srvx/node';
 import {
   normalizePath,
   type Connect,
@@ -30,7 +32,11 @@ type ServerApp = {
   ) => void;
   close?: () => Promise<void>;
 };
-type ServerEntry = { createApp: () => Promise<ServerApp> };
+type FetchHandler = (request: Request) => Response | Promise<Response>;
+type ServerEntry = {
+  createApp?: () => Promise<ServerApp>;
+  default?: { fetch?: FetchHandler };
+};
 
 /**
  * Builds and serves the app from `server.entry` instead of Nitro: the client
@@ -229,7 +235,7 @@ function devMiddleware(
     const loaded = (await viteServer.ssrLoadModule(entry)) as ServerEntry;
     if (current?.entry !== loaded) {
       const previous = current;
-      current = { entry: loaded, app: loaded.createApp() };
+      current = { entry: loaded, app: createApp(loaded) };
       void previous?.app.then(
         (app) => app.close?.(),
         () => undefined,
@@ -245,6 +251,34 @@ function devMiddleware(
         viteServer.ssrFixStacktrace(error);
         next(error);
       });
+  };
+}
+
+/**
+ * The entry's `createApp()`, or a Node app around the `fetch` of a Fetchable
+ * entry (https://fetchable.org).
+ */
+async function createApp(entry: ServerEntry): Promise<ServerApp> {
+  if (entry.createApp) {
+    return entry.createApp();
+  }
+  const fetchable = entry.default;
+  const handleRequest = fetchable?.fetch;
+  if (typeof handleRequest !== 'function') {
+    throw new Error(
+      '[@analogjs/platform] The server entry must export `createApp()` or a default export with `fetch(request)`.',
+    );
+  }
+  // Connect middleware is typed with the HTTP/1 request and response.
+  const handle = toNodeHandler((request) =>
+    handleRequest.call(fetchable, request),
+  ) as NodeHttp1Handler;
+  return {
+    handle: (req, res, next) => {
+      Promise.resolve()
+        .then(() => handle(req, res))
+        .catch(next);
+    },
   };
 }
 

@@ -145,6 +145,30 @@ Pass your app's `fetch`, `createAnalogRequestHandler({ fetch: (request) => app.f
 
 Node servers that have the Node request and response can pass them as a second argument, `handleAnalogRequest(request, { req, res })`, so they become Analog's `REQUEST` and `RESPONSE` tokens. `createAnalogHandler()` does this for you.
 
+## Fetchable entry
+
+Instead of `createApp()`, the server entry can be a [Fetchable](https://fetchable.org) module: its default export has a `fetch(request)` method that returns a `Response`. Platforms and runtimes that invoke Fetchable modules, such as Netlify Functions, Cloudflare Workers, Deno and Bun, run the built entry without a server of your own.
+
+```ts
+// src/server/main.ts
+import { createAnalogRequestHandler } from '@analogjs/router/server';
+
+const handleAnalogRequest = createAnalogRequestHandler();
+
+export default {
+  async fetch(request: Request) {
+    return (
+      (await handleAnalogRequest(request)) ??
+      new Response('Not Found', { status: 404 })
+    );
+  },
+};
+```
+
+A Hono app is already Fetchable, so the entry can `export default app`.
+
+In development, Analog serves the entry's `fetch` behind Vite. When the entry exports both, `createApp()` is used. The built `dist/server/main.js` keeps the default export and doesn't listen on a port, so the platform serves `dist/client`. Serve it without an index fallback so `/` is server-rendered.
+
 ## Streaming
 
 [Streaming SSR](/docs/features/server/streaming-ssr) works with a custom server: enable `experimental.streaming` and export `renderStream` from `main.server.ts`. Analog returns the document as a stream with `Cache-Control: no-store, no-transform`, and stops rendering when the client disconnects.
@@ -173,7 +197,7 @@ Two details of locale detection apply here as on Nitro:
 
 ## Building and running
 
-`vite build` builds the client into `dist/client` and the server entry into `dist/server/main.js`. Run it with Node:
+`vite build` builds the client into `dist/client` and the server entry into `dist/server/main.js`. Run an entry that starts its own server with Node:
 
 ```shell
 node dist/server/main.js

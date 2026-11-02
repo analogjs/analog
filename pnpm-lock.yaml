@@ -423,6 +423,9 @@ catalogs:
     shiki:
       specifier: ^1.29.2 || ^4.0.2
       version: 4.0.2
+    srvx:
+      specifier: ^1.0.8
+      version: 1.0.8
     start-server-and-test:
       specifier: ^3.0.0
       version: 3.0.2
@@ -1540,6 +1543,9 @@ importers:
       shiki:
         specifier: 'catalog:'
         version: 4.0.2
+      srvx:
+        specifier: 'catalog:'
+        version: 1.0.8
       tinyglobby:
         specifier: 'catalog:'
         version: 0.2.16

@@ -96,8 +96,9 @@ export interface ServerOptions {
   /**
    * The server entry, relative to the project root. It exports
    * `createApp(): Promise<{ handle, close? }>`, which the dev server mounts,
-   * and starts its own server in production. TypeScript in the entry's
-   * directory is compiled by Vite.
+   * and starts its own server in production, or is a Fetchable module whose
+   * default export has `fetch(request)`. TypeScript in the entry's directory
+   * is compiled by Vite.
    */
   entry: string;
 }

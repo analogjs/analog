@@ -1,4 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { createServer as createHttpServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import type { Plugin } from 'vite';
@@ -147,6 +149,44 @@ describe('serverPlugin', () => {
       expect(values['default']).toEqual(['services', 'en', ['en', 'fr']]);
     } finally {
       await server.close();
+    }
+  });
+
+  it('serves requests from a Fetchable entry in dev', async () => {
+    writeFileSync(
+      join(root, 'src/main.ts'),
+      [
+        'export default {',
+        '  async fetch(request) {',
+        '    const { pathname } = new URL(request.url);',
+        '    const body = `${request.method} ${pathname} ${await request.text()}`;',
+        "    return new Response(body, { status: 201, headers: { 'x-entry': 'fetchable' } });",
+        '  },',
+        '};',
+      ].join('\n'),
+    );
+    const vite = await createServer({
+      root,
+      configFile: false,
+      logLevel: 'silent',
+      server: { middlewareMode: true, ws: false },
+      plugins: [
+        serverPlugin({ entry: 'src/main.ts' }, { workspaceRoot: root }),
+      ],
+    });
+    const http = createHttpServer(vite.middlewares).listen(0);
+    try {
+      const { port } = http.address() as AddressInfo;
+      const response = await fetch(`http://localhost:${port}/services/echo`, {
+        method: 'POST',
+        body: 'hello',
+      });
+      expect(response.status).toBe(201);
+      expect(response.headers.get('x-entry')).toBe('fetchable');
+      expect(await response.text()).toBe('POST /services/echo hello');
+    } finally {
+      http.close();
+      await vite.close();
     }
   });
 
