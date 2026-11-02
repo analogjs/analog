@@ -150,6 +150,17 @@ describe('serverPlugin', () => {
     }
   });
 
+  it('refuses to require locale workers', () => {
+    const plugin = serverPlugin(
+      { entry: 'src/server/main.ts' },
+      { i18n: { defaultLocale: 'en', locales: ['en', 'fr'], workers: true } },
+    ) as Plugin & Hooks;
+
+    expect(() => plugin.config({ root }, { command: 'build' })).toThrow(
+      /`i18n.workers` needs Nitro/,
+    );
+  });
+
   it('refuses to run alongside nitro()', () => {
     const plugin = serverPlugin({ entry: 'src/server/main.ts' }) as Plugin &
       Hooks;

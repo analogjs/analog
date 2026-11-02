@@ -66,6 +66,11 @@ export function serverPlugin(
           '[@analogjs/platform] `analog({ server })` replaces Nitro; remove `nitro()` from the Vite plugins.',
         );
       }
+      if (options.i18n?.workers === true) {
+        throw new Error(
+          '[@analogjs/platform] `i18n.workers` needs Nitro; remove it to use `analog({ server })`, which renders without locale workers.',
+        );
+      }
       root = normalizePath(resolve(config.root ?? process.cwd()));
       isBuild = command === 'build';
       const outDir = (name: string) =>
