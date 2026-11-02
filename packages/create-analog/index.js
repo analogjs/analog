@@ -133,6 +133,7 @@ const NESTJS_DEPENDENCIES = {
   '@nestjs/platform-express': '^12.3.2',
   h3: '^1.13.0',
   'reflect-metadata': '^0.2.2',
+  srvx: '^1.0.8',
 };
 
 /** @type {Readonly<Record<string, string>>} */
