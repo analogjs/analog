@@ -61,7 +61,7 @@ const DEFAULT_TARGET_DIR = 'analog-project';
 const DEFAULT_BLOG_HIGHLIGHTER = 'prismjs';
 
 /** @type {readonly Template[]} */
-const H3_TEMPLATES = ['latest', 'blog', 'minimal'];
+const H3_TEMPLATES = ['latest', 'blog', 'minimal', 'angular-v20'];
 const VERSIONED_TEMPLATE = /^angular-v\d+$/;
 
 // Avoids autoconversion to number of the project name by defining that the args

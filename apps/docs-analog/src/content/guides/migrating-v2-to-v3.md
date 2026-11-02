@@ -233,6 +233,21 @@ plugins: [
 
 Add `nitro` to the app's `devDependencies` instead of `@analogjs/vite-plugin-nitro`. API routes and middleware are written against the h3 version of the Nitro release in use: h3 v1 for Nitro v2 and h3 v2 for Nitro v3. Handlers that only use helpers available in both, such as `defineEventHandler`, `readBody`, `getQuery`, and `getCookie`, work on either.
 
+###### Nitro v3 requirements
+
+Analog supports the Nitro v3 release candidate (`3.0.261029-rc`). It requires Node `>=22.22.0`, higher than the Node 22 floor for Nitro v2 apps. `unstorage`, `db0`, `ocache`, and `unenv` are no longer installed with Nitro and are added on demand, so add them to `dependencies` when your server code uses them.
+
+Coming from a Nitro v3 beta, note these changes:
+
+- `useStorage` is now `useKV` from `nitro/kv`. The old name still works.
+- Cached handlers and functions store entries in memory by default. Set `cache: { driver: 'kv' }` in the `nitro()` config to keep using KV storage.
+- Catch-all routes such as `src/server/routes/api/[...slug].ts` also match the parent path.
+- Server route file names with a dotted suffix must use a method (`.get`), an environment (`.dev`), or a known extension (`.xml`, `.json`). Rename other files or add the suffix to `scanSuffixes`.
+- Hooks in the `nitro()` config run after the preset's hooks instead of replacing them.
+- Netlify output moves to `.netlify/v1`, and Azure uses the Functions v4 model by default.
+
+See Nitro's [upgrade guide](https://nitro.build/blog/v3-rc#upgrading-from-beta) for the full list.
+
 ###### Nx targets
 
 Build Nitro v3 apps with `@analogjs/platform:vite` and serve them with `@analogjs/platform:vite-dev-server`. `nitro/vite` runs prerendering and the server build from Vite's `buildApp` hook. `@analogjs/platform:vite` calls `builder.buildApp()`, but `@nx/vite:build` builds each environment directly, so prerendering and the server output are skipped.
