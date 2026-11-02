@@ -163,6 +163,12 @@ app.get('/report', (req, res, next) => {
 });
 ```
 
+## Internationalization
+
+[i18n](/docs/features/i18n/overview) works with a custom server: configure `i18n` in `analog()` and `provideI18n()` as usual, and the locale is detected per request from the URL prefix or the `Accept-Language` header.
+
+[Locale workers](/docs/features/i18n/overview#concurrent-server-rendering) come from Nitro, so every locale renders in one JavaScript context. Overlapping requests in different locales can produce mixed-language pages, as on Nitro without workers.
+
 ## Building and running
 
 `vite build` builds the client into `dist/client` and the server entry into `dist/server/main.js`. Run it with Node:
@@ -177,4 +183,4 @@ The server bundle is an ES module, named `main.mjs` instead when your `package.j
 
 - Prerendering, static site generation and deployment presets need Nitro.
 - File-based API routes in `src/server/routes` aren't served; use your server's own routes.
-- Runtime i18n isn't supported yet.
+- Locale workers and i18n prerendering need Nitro.
