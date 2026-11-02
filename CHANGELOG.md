@@ -1,3 +1,9 @@
+# [3.0.0-beta.25](https://github.com/analogjs/analog/compare/v3.0.0-beta.24...v3.0.0-beta.25) (2026-11-02)
+
+### Bug Fixes
+
+- **astro-angular:** preserve rehype import in published middleware ([#2727](https://github.com/analogjs/analog/issues/2727)) ([cc8396d](https://github.com/analogjs/analog/commit/cc8396d61b0ebea4d09e1cf8c399f531bd73dba3))
+
 # [3.0.0-beta.24](https://github.com/analogjs/analog/compare/v3.0.0-beta.23...v3.0.0-beta.24) (2026-11-02)
 
 ### Bug Fixes
