@@ -235,7 +235,7 @@ Add `nitro` to the app's `devDependencies` instead of `@analogjs/vite-plugin-nit
 
 ###### Nitro v3 requirements
 
-Analog supports the Nitro v3 release candidate (`3.0.261029-rc`). It requires Node `>=22.22.0`, higher than the Node 22 floor for Nitro v2 apps. `unstorage`, `db0`, `ocache`, and `unenv` are no longer installed with Nitro and are added on demand, so add them to `dependencies` when your server code uses them.
+Analog supports the Nitro v3 release candidate (`3.0.261103-rc`). It requires Node `>=22.22.0`, higher than the Node 22 floor for Nitro v2 apps. `unstorage`, `db0`, `ocache`, and `unenv` are no longer installed with Nitro and are added on demand, so add them to `dependencies` when your server code uses them. Nitro skips these installs in CI by default.
 
 Coming from a Nitro v3 beta, note these changes:
 
@@ -245,6 +245,8 @@ Coming from a Nitro v3 beta, note these changes:
 - Server route file names with a dotted suffix must use a method (`.get`), an environment (`.dev`), or a known extension (`.xml`, `.json`). Rename other files or add the suffix to `scanSuffixes`.
 - Hooks in the `nitro()` config run after the preset's hooks instead of replacing them.
 - Netlify output moves to `.netlify/v1`, and Azure uses the Functions v4 model by default.
+- Server routes under the client `assetsDir` (`/assets/` by default) return 404 in production builds.
+- Without a Vite `base`, Nitro's `baseURL` is used as the Vite `base`, and the reverse. A `baseURL` set in the `nitro()` config takes precedence.
 
 See Nitro's [upgrade guide](https://nitro.build/blog/v3-rc#upgrading-from-beta) for the full list.
 

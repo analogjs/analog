@@ -709,7 +709,7 @@ function serverFnIdPlugin(projectRoot: string): {
 /**
  * Builds the h3 handler installed as Nitro's `renderer.handler`. Short-circuits
  * `ssr: false` routes to the raw client template; otherwise dispatches the
- * request to the SSR service env (`fetchViteEnv("ssr", req)` works in dev via
+ * request to the SSR service env (`fetchService("ssr", req)` works in dev via
  * the env-runner and in prod via the `__nitro_vite_envs__` global set up by
  * nitro/vite's `prodSetup`).
  */
@@ -750,7 +750,7 @@ export default defineHandler(async (event) => {
  * this function is bundler-agnostic: works in Vite-built main bundles and
  * Rolldown-built prerender bundles alike.
  *
- * - Dev: dispatch through nitro/vite's env runner (\`fetchViteEnv\`); the SSR
+ * - Dev: dispatch through nitro/vite's env runner (\`fetchService\`); the SSR
  *   service module isn't on disk yet, so we delegate to the runner.
  * - Build / prerender: re-export the built SSR entry directly from the
  *   filesystem. By the time Nitro's bundlers ask for \`#analog/ssr\`, Vite has
@@ -760,14 +760,14 @@ export default defineHandler(async (event) => {
 function generateSsrServiceVirtual(nitro: Nitro): string {
   if (nitro.options.dev) {
     return `
-import { fetchViteEnv } from 'nitro/vite/runtime';
+import { fetchService } from 'nitro/services';
 export default {
   // The dev runner answers from a worker, and a rejection there comes back as
   // something Nitro cannot turn into a response, so the request hangs with no
   // status and no message. Answer with the failure instead.
   async fetch(req) {
     try {
-      return await fetchViteEnv('ssr', req);
+      return await fetchService('ssr', req);
     } catch (err) {
       console.error('[analog ssr]', err);
       const message = err instanceof Error ? (err.stack ?? err.message) : String(err);
