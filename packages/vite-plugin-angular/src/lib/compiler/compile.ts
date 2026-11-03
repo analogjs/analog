@@ -2,7 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as o from '@angular/compiler';
 import MagicString from 'magic-string';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import {
   ConstantPool,
   compileComponentFromMetadata,
@@ -269,7 +270,7 @@ export function compile(
     isPartial ? 'partial' : 'full',
     registry?.size ?? 0,
   );
-  const oxcProgram = opts.oxcProgram ?? parseSync(fileName, sourceCode).program;
+  const oxcProgram = opts.oxcProgram ?? parseOxc(fileName, sourceCode).program;
   const oxcClassMap = new Map<string, any>();
   for (const stmt of oxcProgram.body) {
     const decl =
@@ -1461,15 +1462,35 @@ export function compile(
     }
   }
 
+  if (sideEffects.length > 0) {
+    ms.append('\n\n' + sideEffects.join('\n'));
+  }
+
+  // 4. Lower class field initializers to constructor assignments when
+  //    useDefineForClassFields is false (standard Angular tsconfig).
+  //    Uses the original OXC AST positions which are still valid for MagicString
+  //    since MagicString tracks edits relative to the original source.
+  //    Ivy static definitions (ɵcmp, ɵfac) are not in the original AST so they
+  //    are unaffected, and shouldLowerField skips static fields regardless.
+  if (!useDefineForClassFields) {
+    lowerClassFields(ms, sourceCode, oxcProgram);
+  }
+
+  // 5. Elide imports that are only used in type positions (type annotations,
+  //    implements, generics, etc.).  Without this pass, single-file transpilers
+  //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
+  //    and will leave the import in the output, causing runtime errors.
+  //    Detection runs once on the final output; helpers are appended for
+  //    analysis only, since their position does not affect references.
+  const helperCode = helpers.join('\n');
+  const willElide = detectTypeOnlyImportNames(
+    ms.toString() + '\n' + helperCode,
+  );
   if (helpers.length > 0) {
     // Insert helpers after the last import / top-level non-class statement,
-    // well before any class that references them.
-    // Detect which imported names are type-only so we skip imports that will
-    // be fully removed by elideTypeOnlyImportsMagicString (step 4).
-    // Inserting at a position inside a soon-to-be-removed range would cause
-    // MagicString to discard the helpers along with the import.
-    const willElide = detectTypeOnlyImportNames(ms.toString());
-
+    // well before any class that references them. Skip imports that will be
+    // fully removed by type elision (step 5): inserting inside a
+    // soon-to-be-removed range would discard the helpers with the import.
     let insertPos = 0;
     for (const stmt of oxcProgram.body as any[]) {
       const { decl } = toTopLevelStatement(stmt);
@@ -1522,30 +1543,12 @@ export function compile(
     // `intro` (from `ms.prepend`), which always emits before any
     // `appendLeft` content at position 0.
     if (insertPos === 0) {
-      ms.appendLeft(0, helpers.join('\n') + '\n');
+      ms.appendLeft(0, helperCode + '\n');
     } else {
-      ms.appendRight(insertPos, '\n' + helpers.join('\n') + '\n');
+      ms.appendRight(insertPos, '\n' + helperCode + '\n');
     }
   }
-  if (sideEffects.length > 0) {
-    ms.append('\n\n' + sideEffects.join('\n'));
-  }
-
-  // 4. Lower class field initializers to constructor assignments when
-  //    useDefineForClassFields is false (standard Angular tsconfig).
-  //    Uses the original OXC AST positions which are still valid for MagicString
-  //    since MagicString tracks edits relative to the original source.
-  //    Ivy static definitions (ɵcmp, ɵfac) are not in the original AST so they
-  //    are unaffected, and shouldLowerField skips static fields regardless.
-  if (!useDefineForClassFields) {
-    lowerClassFields(ms, sourceCode, oxcProgram);
-  }
-
-  // 5. Elide imports that are only used in type positions (type annotations,
-  //    implements, generics, etc.).  Without this pass, single-file transpilers
-  //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
-  //    and will leave the import in the output, causing runtime errors.
-  elideTypeOnlyImportsMagicString(ms, oxcProgram);
+  elideTypeOnlyImportsMagicString(ms, oxcProgram, willElide);
 
   const map = ms.generateMap({
     source: fileName,

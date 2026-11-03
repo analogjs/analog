@@ -1,6 +1,7 @@
 import { promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './compiler/utils.js';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
@@ -145,7 +146,7 @@ export function fastCompilePlugin(
     // collectRelativeReExports swallows and returns []).
     let program: ReturnType<typeof parseSync>['program'] | undefined;
     try {
-      program = parseSync(file, code).program;
+      program = parseOxc(file, code).program;
     } catch {
       program = undefined;
     }
@@ -365,7 +366,7 @@ export function fastCompilePlugin(
       // its own, preserving their individual failure semantics.
       let program: ReturnType<typeof parseSync>['program'] | undefined;
       try {
-        program = parseSync(file, code).program;
+        program = parseOxc(file, code).program;
       } catch {
         program = undefined;
       }
@@ -534,7 +535,7 @@ export function fastCompilePlugin(
       let program: ReturnType<typeof parseSync>['program'];
       try {
         code = await fsPromises.readFile(current, 'utf-8');
-        program = parseSync(current, code).program;
+        program = parseOxc(current, code).program;
       } catch {
         return;
       }
@@ -649,7 +650,7 @@ export function fastCompilePlugin(
     // Single OXC parse of the post-inline source, shared by every AST
     // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
     // so its program can never be reused here.
-    const { program: oxcProgram } = parseSync(id, code);
+    const { program: oxcProgram } = parseOxc(id, code);
 
     // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
     // whenever a style needs a non-`css` preprocessor — either the configured

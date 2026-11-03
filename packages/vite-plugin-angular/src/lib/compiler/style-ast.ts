@@ -1,4 +1,5 @@
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 
 type ProgramNode = ReturnType<typeof parseSync>['program']['body'][number];
 
@@ -26,7 +27,7 @@ function getTemplateLiteralText(node: any): string | undefined {
  */
 export function extractStyleUrls(code: string, fileName: string): string[] {
   const urls: string[] = [];
-  const { program } = parseSync(fileName, code);
+  const { program } = parseOxc(fileName, code);
 
   for (const node of program.body) {
     const decl = getClassDeclaration(node);
@@ -76,7 +77,7 @@ export function extractInlineStyles(
   program?: ReturnType<typeof parseSync>['program'],
 ): string[] {
   const styles: string[] = [];
-  program ??= parseSync(fileName, code).program;
+  program ??= parseOxc(fileName, code).program;
 
   for (const node of program.body) {
     const decl = getClassDeclaration(node);

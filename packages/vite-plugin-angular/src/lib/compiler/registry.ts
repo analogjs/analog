@@ -1,4 +1,5 @@
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import { COMPILABLE_DECORATORS } from './constants.js';
 
 export interface RegistryInput {
@@ -74,7 +75,7 @@ export function scanFile(
     return entries;
   }
 
-  program ??= parseSync(fileName, code).program;
+  program ??= parseOxc(fileName, code).program;
 
   // First pass: collect tuple barrels — top-level `const X = [A, B, C]`
   // (with or without `export`/`as const`) where every element is a bare

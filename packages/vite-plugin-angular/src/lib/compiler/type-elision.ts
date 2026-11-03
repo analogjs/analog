@@ -1,5 +1,6 @@
 import MagicString from 'magic-string';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 
 // ── Type-only import elision via OXC AST ────────────────────────────────
 
@@ -55,7 +56,7 @@ function analyzeTypeOnlyImports(
   ast: any;
   typeOnlyNames: Set<string>;
 } {
-  const ast = program ?? parseSync('file.ts', code).program;
+  const ast = program ?? parseOxc('file.ts', code).program;
 
   // Step 1 – collect all value-imported names (skip `import type` / `{ type X }`)
   // Namespace imports (`import * as ns`) are intentionally skipped — they are
@@ -367,16 +368,17 @@ export function elideTypeOnlyImports(code: string): string {
  * Detects type-only names from `ms.toString()` (the fully-mutated code),
  * but reads import positions from `ms.original` (the coordinate system
  * MagicString expects). `originalProgram`, when provided, must be a parse
- * of `ms.original` — never of the mutated text.
+ * of `ms.original` — never of the mutated text. `typeOnlyNames` may be passed
+ * when the caller already analysed the mutated code.
  */
 export function elideTypeOnlyImportsMagicString(
   ms: MagicString,
   originalProgram?: ReturnType<typeof parseSync>['program'],
+  typeOnlyNames = detectTypeOnlyImportNames(ms.toString()),
 ): void {
-  const typeOnlyNames = detectTypeOnlyImportNames(ms.toString());
   if (typeOnlyNames.size === 0) return;
 
   // Parse the original source to get positions in MagicString's coordinate system
-  const ast = originalProgram ?? parseSync('file.ts', ms.original).program;
+  const ast = originalProgram ?? parseOxc('file.ts', ms.original).program;
   applyElisionEdits(ms, ast, ms.original, typeOnlyNames);
 }

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import MagicString from 'magic-string';
 import { extractInlineStyles as extractStylesFromAst } from './style-ast.js';
 
@@ -69,7 +70,7 @@ export async function inlineResourceUrls(
     return { code, styleExtensions, resourceDependencies: [] };
   }
 
-  const { program } = parseSync(fileName, code);
+  const { program } = parseOxc(fileName, code);
   const ms = new MagicString(code);
   let changed = false;
   const dir = path.dirname(fileName);
