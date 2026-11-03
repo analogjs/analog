@@ -57,4 +57,19 @@ describe('NgLite Compiler', () => {
       expect(idx).toBeLessThan(scopeEnd);
     }
   });
+
+  it('keeps constructor DI token imports for nested decorated classes', () => {
+    const result = compile(
+      `import { Logger } from './logger';
+      export function setup() {
+        @Injectable()
+        class Svc { constructor(private logger: Logger) {} }
+        return Svc;
+      }`,
+      'setup.ts',
+    );
+    expect(result).toContain("import { Logger } from './logger'");
+    expect(result).toContain('ɵɵinject(Logger)');
+    expect(result).not.toContain('ɵɵinvalidFactory');
+  });
 });

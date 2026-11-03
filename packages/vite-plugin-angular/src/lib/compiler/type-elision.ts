@@ -1,6 +1,6 @@
 import MagicString from 'magic-string';
 import type { parseSync } from 'oxc-parser';
-import { parseOxc } from './utils.js';
+import { findAllClasses, parseOxc } from './utils.js';
 
 // ── Type-only import elision via OXC AST ────────────────────────────────
 
@@ -165,7 +165,7 @@ function analyzeTypeOnlyImports(
 }
 
 /**
- * Walk the program looking for decorated classes with constructors and add
+ * Walk the program (including nested scopes) looking for decorated classes with constructors and add
  * the type names from constructor parameter annotations to `valueReferenced`.
  *
  * Constructor parameter types are TypeScript type positions, but for decorated
@@ -178,19 +178,8 @@ function collectConstructorDiTokens(
   importedNames: Set<string>,
   valueReferenced: Set<string>,
 ): void {
-  for (const stmt of (ast as any).body || []) {
-    const classNode =
-      stmt.type === 'ExportNamedDeclaration' ||
-      stmt.type === 'ExportDefaultDeclaration'
-        ? (stmt as any).declaration
-        : stmt;
-    if (
-      !classNode ||
-      (classNode.type !== 'ClassDeclaration' &&
-        classNode.type !== 'ClassExpression')
-    ) {
-      continue;
-    }
+  // Include classes nested in function scopes, which compile() also compiles.
+  for (const classNode of findAllClasses(ast)) {
     if (!classNode.decorators?.length) continue;
 
     const ctor = (classNode.body?.body || []).find(
