@@ -8,13 +8,23 @@ import {
 
 // Raw transfer reads the AST straight from Rust memory instead of going
 // through JSON (~3x faster). Not yet in oxc-parser's published types.
-const parserOptions = {
-  experimentalRawTransfer: rawTransferSupported(),
-} as ParserOptions;
+const rawTransferOptions = { experimentalRawTransfer: true } as ParserOptions;
+let useRawTransfer = rawTransferSupported();
 
-/** Parse with oxc-parser, using raw transfer when the platform supports it. */
+/**
+ * Parse with oxc-parser, using raw transfer when the platform supports it.
+ * Falls back to the default transfer for this and later calls if raw
+ * transfer throws (e.g. its large buffer cannot be allocated).
+ */
 export function parseOxc(fileName: string, code: string): ParseResult {
-  return parseSync(fileName, code, parserOptions);
+  if (useRawTransfer) {
+    try {
+      return parseSync(fileName, code, rawTransferOptions);
+    } catch {
+      useRawTransfer = false;
+    }
+  }
+  return parseSync(fileName, code);
 }
 
 /** Recursively find all class declarations in an OXC AST, including nested scopes. */

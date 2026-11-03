@@ -345,8 +345,14 @@ export function compile(
     ivyCode: string[]; // "static ɵfac = ...", "static ɵcmp = ...", etc.
     decorators: any[]; // Angular decorators to remove (OXC nodes)
     classEnd: number; // Position of closing } in original source
+    // setClassMetadata calls for classes nested in a function scope, which
+    // must be emitted next to the class rather than at module scope.
+    scopedMetadata: o.Statement[];
   }
   const classResults: ClassCompileResult[] = [];
+  const topLevelClasses = new Set(
+    (oxcProgram.body as any[]).map((stmt) => toTopLevelStatement(stmt).decl),
+  );
   // Track synthetic imports needed for NgModule export expansion.
   // Maps exported class name → import specifier.
   const syntheticImports = new Map<string, string>();
@@ -1187,6 +1193,7 @@ export function compile(
       typeOnlyImports,
     );
     const propDecorators = buildPropDecorators(node, sourceCode, 'i0.');
+    const scopedMetadata: o.Statement[] = [];
     angularDecorators.forEach((dec) => {
       const decName = decoratorCallName(dec, sourceCode)!;
       const decArgsNode = dec.expression.arguments[0];
@@ -1283,9 +1290,12 @@ export function compile(
         const classMetadataExpr = isPartial
           ? compileDeclareClassMetadata(classMetaInput)
           : compileClassMetadata(classMetaInput);
-        constantPool.statements.push(
-          new o.ExpressionStatement(classMetadataExpr),
-        );
+        const metadataStmt = new o.ExpressionStatement(classMetadataExpr);
+        if (topLevelClasses.has(node)) {
+          constantPool.statements.push(metadataStmt);
+        } else {
+          scopedMetadata.push(metadataStmt);
+        }
       } catch (e) {
         // Skip if compileClassMetadata fails — surfaced via DEBUG=analog-fast-compile
         if (debugCompile.enabled) {
@@ -1315,6 +1325,7 @@ export function compile(
       ivyCode,
       decorators: [...angularDecorators, ...memberDecorators],
       classEnd: node.end,
+      scopedMetadata,
     });
   }
 
@@ -1438,6 +1449,10 @@ export function compile(
     if (cr.ivyCode.length > 0) {
       const memberCode = cr.ivyCode.map((c) => '  ' + c + ';').join('\n');
       ms.appendLeft(cr.classEnd - 1, '\n' + memberCode + '\n');
+    }
+
+    for (const stmt of cr.scopedMetadata) {
+      ms.appendLeft(cr.classEnd, `\n/*@__PURE__*/ ${emitAngularStmt(stmt)}`);
     }
   }
 

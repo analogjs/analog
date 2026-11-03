@@ -79,7 +79,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `styles.ts`           | Style preprocessing via Vite's `preprocessCSS` (OXC-based extraction)                                                                                                          |
 | `type-elision.ts`     | OXC-based type-only import detection and elision (usage analysis, no type-checker needed)                                                                                      |
 | `constants.ts`        | Shared Angular name sets (`ANGULAR_DECORATORS`, `COMPILABLE_DECORATORS`, `FIELD_DECORATORS`, `SIGNAL_APIS`) — single source of truth to prevent drift                          |
-| `utils.ts`            | Type-only import detection (syntactic), class finder, `forwardRef` unwrapper (TS + OXC versions)                                                                               |
+| `utils.ts`            | `parseOxc` (raw-transfer parse with fallback), OXC class finder and walker, `forwardRef` unwrapper                                                                             |
 
 ## What's Supported
 

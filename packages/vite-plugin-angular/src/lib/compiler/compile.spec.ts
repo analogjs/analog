@@ -40,11 +40,21 @@ describe('NgLite Compiler', () => {
       `export function setup() {
         @NgModule({ providers: [] })
         class TestModule {}
-        return TestModule;
+        @Component({ selector: 'x-nested', template: '<p>{{ v }}</p>' })
+        class Nested { v = input(0); }
+        return [TestModule, Nested];
       }`,
       'setup.ts',
     );
     expect(result).toContain('static ɵmod');
+    expect(result).toContain('static ɵcmp');
     expect(result).not.toContain('@NgModule');
+    // setClassMetadata references the class, so it must stay inside setup().
+    const scopeEnd = result.indexOf('return [TestModule, Nested]');
+    for (const cls of ['TestModule', 'Nested']) {
+      const idx = result.indexOf(`ɵsetClassMetadata(${cls},`);
+      expect(idx).toBeGreaterThan(-1);
+      expect(idx).toBeLessThan(scopeEnd);
+    }
   });
 });
