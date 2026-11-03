@@ -15,15 +15,15 @@ import { findUser } from '../../data';
 
 export const routeMeta = {
   resolve: {
-    profile: async (route) => findUser(route.paramMap.get('userId')),
+    profile: async (route) => findUser(route.params.userId),
   },
   resources: (ctx) => ({
     userResource: resource({
       params: ctx.params,
-      loader: async ({ params }) => findUser(params['userId']),
+      loader: async ({ params }) => findUser(params.userId),
     }),
   }),
-} satisfies RouteMeta;
+} satisfies RouteMeta<'/users/[userId]'>;
 
 @Component({
   imports: [LinkTo],

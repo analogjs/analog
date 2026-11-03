@@ -24,7 +24,7 @@ To add NestJS to an existing project, follow the steps below.
   <TabItem value="npm">
 
 ```shell
-npm install @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h3
+npm install @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h3 srvx
 ```
 
   </TabItem>
@@ -32,7 +32,7 @@ npm install @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadat
   <TabItem label="yarn" value="yarn">
 
 ```shell
-yarn add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h3
+yarn add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h3 srvx
 ```
 
   </TabItem>
@@ -40,7 +40,7 @@ yarn add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h
   <TabItem value="pnpm">
 
 ```shell
-pnpm add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h3
+pnpm add @nestjs/common @nestjs/core @nestjs/platform-express reflect-metadata h3 srvx
 ```
 
   </TabItem>
@@ -104,7 +104,7 @@ Server-side rendering and page endpoints fetch Analog's own routes in-process. T
 
 ## Step 4: Create the server entry
 
-The entry exports `createApp()`, which the dev server mounts behind Vite, and listens in production:
+The entry is a [Fetchable](https://fetchable.org) module. srvx's `toFetchHandler()` turns NestJS's Express instance into the `fetch` the dev server calls, and the entry listens on its own port in production:
 
 ```ts
 // src/server/main.ts
@@ -112,36 +112,32 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { fileURLToPath } from 'node:url';
+import { toFetchHandler } from 'srvx/node';
 
 import { AppModule } from './app.module';
 
-async function createNestApp() {
-  // Keeps the request body for Analog after Nest's body parsers have run.
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true,
-  });
+// Keeps the request body for Analog after Nest's body parsers have run.
+const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+  rawBody: true,
+});
 
-  // Vite serves client files in development.
-  if (!import.meta.env.DEV) {
-    const clientDir = fileURLToPath(new URL('../client', import.meta.url));
-    app.useStaticAssets(clientDir, { index: false });
-  }
-
-  return app.init();
+// Vite serves client files in development.
+if (!import.meta.env.DEV) {
+  const clientDir = fileURLToPath(new URL('../client', import.meta.url));
+  app.useStaticAssets(clientDir, { index: false });
 }
 
-export async function createApp() {
-  const app = await createNestApp();
-  return {
-    handle: app.getHttpAdapter().getInstance(),
-    close: () => app.close(),
-  };
-}
+await app.init();
+const server = app.getHttpAdapter().getInstance();
 
 if (!import.meta.env.DEV) {
-  const app = await createNestApp();
   await app.listen(process.env['PORT'] ?? 3000);
 }
+
+export default {
+  fetch: toFetchHandler((req, res) => server(req, res)),
+  close: () => app.close(),
+};
 ```
 
 A few details matter here:
@@ -149,7 +145,8 @@ A few details matter here:
 - `rawBody: true` keeps the original request bytes, so form actions and server functions can read bodies that NestJS's parsers already consumed.
 - Static files are registered before `app.init()`. Anything registered after it sits behind NestJS's 404 handler, and `init()` is also where the Analog handler is mounted.
 - `index: false` keeps `/` server-rendered instead of returning the client's `index.html`.
-- In development, Analog creates a new NestJS app when server code changes, and calls `close()` on the previous one.
+- `(req, res) => server(req, res)` calls Express without a `next` callback, so a request nothing handles gets a `404` instead of an empty response.
+- In development, Analog reloads the entry when server code changes, and calls `close()` on the previous one.
 
 ## Using the Fastify adapter
 
@@ -181,7 +178,7 @@ pnpm add @nestjs/platform-fastify serve-static
   </TabItem>
 </Tabs>
 
-The module from [Step 3](#step-3-mount-analog-in-your-module) stays the same. The entry creates a Fastify app and hands Vite Fastify's request handler:
+The module from [Step 3](#step-3-mount-analog-in-your-module) stays the same. The entry creates a Fastify app and exports Fastify's request handler as its `fetch`:
 
 ```ts
 // src/server/main.ts
@@ -193,39 +190,33 @@ import {
 } from '@nestjs/platform-fastify';
 import { fileURLToPath } from 'node:url';
 import serveStatic from 'serve-static';
+import { toFetchHandler } from 'srvx/node';
 
 import { AppModule } from './app.module';
 
-async function createNestApp() {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter(),
-  );
+const app = await NestFactory.create<NestFastifyApplication>(
+  AppModule,
+  new FastifyAdapter(),
+);
 
-  // Vite serves client files in development.
-  if (!import.meta.env.DEV) {
-    const clientDir = fileURLToPath(new URL('../client', import.meta.url));
-    app.use(serveStatic(clientDir, { index: false }));
-  }
-
-  await app.init();
-  await app.getHttpAdapter().getInstance().ready();
-  return app;
+// Vite serves client files in development.
+if (!import.meta.env.DEV) {
+  const clientDir = fileURLToPath(new URL('../client', import.meta.url));
+  app.use(serveStatic(clientDir, { index: false }));
 }
 
-export async function createApp() {
-  const app = await createNestApp();
-  const fastify = app.getHttpAdapter().getInstance();
-  return {
-    handle: (req, res) => fastify.routing(req, res),
-    close: () => app.close(),
-  };
-}
+await app.init();
+const fastify = app.getHttpAdapter().getInstance();
+await fastify.ready();
 
 if (!import.meta.env.DEV) {
-  const app = await createNestApp();
   await app.listen(process.env['PORT'] ?? 3000, '0.0.0.0');
 }
+
+export default {
+  fetch: toFetchHandler((req, res) => fastify.routing(req, res)),
+  close: () => app.close(),
+};
 ```
 
 How it differs from Express:
@@ -239,10 +230,10 @@ How it differs from Express:
 
 Under `vite`, NestJS runs inside the dev server rather than listening on its own port:
 
-- The first request Vite doesn't serve itself calls `createApp()`, which runs `NestFactory.create()` and `init()`.
+- The first request Vite doesn't serve itself loads the entry, which runs `NestFactory.create()` and `init()`.
 - Vite serves client files and HMR, and passes every other request to NestJS, which routes it as in production.
 - Vite compiles the NestJS code, so there's no `nest start --watch` or `tsc` step.
-- When server code changes, the next request creates a new NestJS app and calls `close()` on the previous one, so shutdown hooks run.
+- When server code changes, the next request reloads the entry, creating a new NestJS app, and calls `close()` on the previous one, so shutdown hooks run.
 - To reach controllers from [server-side fetches](/docs/features/server/custom-server#server-side-fetches), point the origin at Vite's dev server, such as `http://localhost:5173`.
 
 ## Using NestJS services from Angular code

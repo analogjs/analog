@@ -242,6 +242,7 @@ test(
           '@nestjs/platform-express',
           'h3',
           'reflect-metadata',
+          'srvx',
         ]),
       );
       expect(

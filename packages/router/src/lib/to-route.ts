@@ -1,8 +1,14 @@
+import type { Resource, Signal, WritableResource } from '@angular/core';
 import {
   type ActivatedRoute,
+  type ActivatedRouteSnapshot,
+  type Data as RouterData,
   DefaultUrlSerializer,
+  type MaybeAsync,
+  type Params,
   PRIMARY_OUTLET,
-  type ResolveFn,
+  type RedirectCommand,
+  type Route,
   UrlSegment,
   UrlSegmentGroup,
   UrlTree,
@@ -159,10 +165,10 @@ type RouteResolvers<Meta> = Meta extends { resolve?: infer Resolvers }
   : EmptyObject;
 
 type ResolvedRouteData<Meta> = {
-  [K in keyof RouteResolvers<Meta>]: RouteResolvers<Meta>[K] extends ResolveFn<
-    infer T
-  >
-    ? T
+  [K in keyof RouteResolvers<Meta>]: RouteResolvers<Meta>[K] extends (
+    ...args: never[]
+  ) => MaybeAsync<infer T>
+    ? Exclude<T, RedirectCommand>
     : unknown;
 };
 
@@ -190,12 +196,26 @@ type RouteResourceMap<Meta> = Meta extends {
     : EmptyObject
   : EmptyObject;
 
-type PageRouteMetas<P extends keyof AnalogRouteTable> = [
-  ...(AnalogRouteTable[P] extends {
+// Routes inherit ancestor layout resources; child keys override parent keys.
+type InheritedRouteResources<Metas, Resources = EmptyObject> = Metas extends [
+  infer Meta,
+  ...infer Rest,
+]
+  ? InheritedRouteResources<
+      Rest,
+      Merge<Resources, RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
+    >
+  : Resources;
+
+type LayoutRouteMetas<P extends keyof AnalogRouteTable> =
+  AnalogRouteTable[P] extends {
     layoutRouteMeta: infer Metas extends unknown[];
   }
     ? Metas
-    : []),
+    : [];
+
+type PageRouteMetas<P extends keyof AnalogRouteTable> = [
+  ...LayoutRouteMetas<P>,
   ...(AnalogRouteTable[P] extends { routeMeta: infer Meta } ? [Meta] : []),
 ];
 
@@ -228,17 +248,94 @@ export type RouteDataOutput<P extends string> = P extends keyof AnalogRouteTable
     >
   : Record<string, unknown>;
 
+type FallbackResourceResult = Record<
+  string,
+  Resource<unknown> & Pick<WritableResource<unknown>, 'reload'>
+>;
+
+type PropOr<T, K extends PropertyKey, Fallback> = K extends keyof T
+  ? NonNullable<T[K]>
+  : Fallback;
+
 /**
- * Resources for a page route: `routeMeta.resources` results defined on the page.
+ * Expected return type of `routeMeta.resources`, matching `@angular/router`'s
+ * `ResourceResult` across Angular versions with and without router resources.
+ */
+export type RouteResourceResult = PropOr<
+  ActivatedRoute,
+  'resources',
+  FallbackResourceResult
+>;
+
+interface FallbackResourceContext {
+  params: Signal<Params>;
+  queryParams: Signal<Params>;
+  fragment: Signal<string | null>;
+  data: Signal<RouterData>;
+  resources: Signal<RouteResourceResult>;
+}
+
+type ExtractResourceContext<T> = 'resources' extends keyof T
+  ? PropOr<T, 'resources', never> extends (ctx: infer Ctx) => unknown
+    ? Ctx
+    : FallbackResourceContext
+  : FallbackResourceContext;
+
+type BaseResourceContext = ExtractResourceContext<Route>;
+
+/**
+ * Resources for a page route: `routeMeta.resources` results from its ancestor
+ * layouts and the page, with nearer keys overriding outer keys.
  */
 export type RouteResourcesOutput<P extends string> =
   P extends keyof AnalogRouteTable
-    ? AnalogRouteTable[P] extends { routeMeta: infer Meta }
-      ? Simplify<RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
-      : EmptyObject
-    : ActivatedRoute extends { resources: infer Resources }
-      ? Resources
-      : EmptyObject;
+    ? Simplify<InheritedRouteResources<PageRouteMetas<P>>>
+    : RouteResourceResult;
+
+/**
+ * `ResourceContext` narrowed with typed `params`, `queryParams`, `data`
+ * (ancestor layout data/resolvers plus the page's server `load`), and
+ * `resources` (inherited ancestor layout resources) from the route table.
+ */
+export type RouteResourceContext<P extends string = string> = Omit<
+  BaseResourceContext,
+  'params' | 'queryParams' | 'data' | 'resources'
+> & {
+  params: Signal<
+    P extends keyof AnalogRouteTable ? RouteParamsOutput<P> : Params
+  >;
+  queryParams: Signal<
+    P extends keyof AnalogRouteTable ? RouteQueryOutput<P> : Params
+  >;
+  data: Signal<
+    P extends keyof AnalogRouteTable
+      ? Simplify<
+          Omit<InheritedRouteData<LayoutRouteMetas<P>>, 'load'> &
+            PageLoadData<P>
+        >
+      : RouterData
+  >;
+  resources: Signal<
+    P extends keyof AnalogRouteTable
+      ? Simplify<InheritedRouteResources<LayoutRouteMetas<P>>>
+      : RouteResourceResult
+  >;
+};
+
+/**
+ * `ActivatedRouteSnapshot` narrowed with typed `params`, `queryParams`, and
+ * inherited ancestor layout `data` for resolvers on `RouteMeta<P>`.
+ */
+export type RouteActivatedRouteSnapshot<P extends string = string> = Omit<
+  ActivatedRouteSnapshot,
+  'params' | 'queryParams' | 'data'
+> & {
+  params: P extends keyof AnalogRouteTable ? RouteParamsOutput<P> : Params;
+  queryParams: P extends keyof AnalogRouteTable ? RouteQueryOutput<P> : Params;
+  data: P extends keyof AnalogRouteTable
+    ? Simplify<Omit<InheritedRouteData<LayoutRouteMetas<P>>, 'load'>>
+    : RouterData;
+};
 
 type SplitPath<S extends string> = S extends ''
   ? []

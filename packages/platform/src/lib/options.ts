@@ -94,9 +94,9 @@ export interface I18nOptions {
 
 export interface ServerOptions {
   /**
-   * The server entry, relative to the project root. It exports
-   * `createApp(): Promise<{ handle, close? }>`, which the dev server mounts,
-   * and starts its own server in production. TypeScript in the entry's
+   * The server entry, relative to the project root: a Fetchable module whose
+   * default export has `fetch(request)`, and optionally `close()`, which the
+   * dev server calls before reloading the entry. TypeScript in the entry's
    * directory is compiled by Vite.
    */
   entry: string;
@@ -105,10 +105,10 @@ export interface ServerOptions {
 export interface Options {
   ssr?: boolean;
   /**
-   * Serve the app from your own server entry (NestJS, Express, Hono, …)
-   * instead of Nitro, using `createAnalogHandler()` or
-   * `createAnalogRequestHandler()` from `@analogjs/router/server`. Don't add
-   * `nitro()` alongside it.
+   * Serve the app from your own Fetchable server entry (plain, Hono, Express,
+   * NestJS, …) instead of Nitro, using `createAnalogRequestHandler()` or
+   * `createAnalogHandler()` from `@analogjs/router/server`. Don't add `nitro()`
+   * alongside it.
    */
   server?: ServerOptions;
   /**

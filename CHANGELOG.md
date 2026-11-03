@@ -1,3 +1,31 @@
+# [3.0.0-beta.28](https://github.com/analogjs/analog/compare/v3.0.0-beta.27...v3.0.0-beta.28) (2026-11-03)
+
+### Features
+
+- **platform:** support Nitro v3 RC 3.0.261103-rc ([#2732](https://github.com/analogjs/analog/issues/2732)) ([693cf75](https://github.com/analogjs/analog/commit/693cf75511b0af9c53a7ccc743dc462a566f7f00))
+
+# [3.0.0-beta.27](https://github.com/analogjs/analog/compare/v3.0.0-beta.26...v3.0.0-beta.27) (2026-11-02)
+
+### Bug Fixes
+
+- **router:** type RouteMeta resolvers and resource context ([4233dcb](https://github.com/analogjs/analog/commit/4233dcb2706c8793037b9eb0f4a3d69db63c7521))
+
+### Features
+
+- **router:** inherit ancestor route resources in ResourceContext and injectResources ([205c043](https://github.com/analogjs/analog/commit/205c043e245d69d54932c8ece762420057ac6525)), closes [angular/angular#70587](https://github.com/angular/angular/issues/70587)
+
+# [3.0.0-beta.26](https://github.com/analogjs/analog/compare/v3.0.0-beta.25...v3.0.0-beta.26) (2026-11-02)
+
+### Features
+
+- **platform:** use Fetchable server entries for analog({ server }) ([#2729](https://github.com/analogjs/analog/issues/2729)) ([2e8d867](https://github.com/analogjs/analog/commit/2e8d8675db5d1cb84a07e7a56bf3eea18f37cfd2))
+
+# [3.0.0-beta.25](https://github.com/analogjs/analog/compare/v3.0.0-beta.24...v3.0.0-beta.25) (2026-11-02)
+
+### Bug Fixes
+
+- **astro-angular:** preserve rehype import in published middleware ([#2727](https://github.com/analogjs/analog/issues/2727)) ([cc8396d](https://github.com/analogjs/analog/commit/cc8396d61b0ebea4d09e1cf8c399f531bd73dba3))
+
 # [3.0.0-beta.24](https://github.com/analogjs/analog/compare/v3.0.0-beta.23...v3.0.0-beta.24) (2026-11-02)
 
 ### Bug Fixes

@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/platform",
-  "version": "3.0.0-beta.24",
+  "version": "3.0.0-beta.28",
   "description": "The fullstack meta-framework for Angular",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
@@ -39,6 +39,7 @@
     "ofetch": "catalog:",
     "oxc-parser": "catalog:",
     "rolldown": "catalog:",
+    "srvx": "catalog:",
     "tinyglobby": "catalog:",
     "vitefu": "catalog:",
     "xmlbuilder2": "catalog:"

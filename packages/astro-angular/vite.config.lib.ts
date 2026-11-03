@@ -63,6 +63,7 @@ export default defineConfig({
         /^rxjs/,
         /^vite/,
         /^node:/,
+        'rehype',
         'tslib',
       ],
       output: {
