@@ -1,68 +1,29 @@
-import * as ts from 'typescript';
 import * as path from 'node:path';
 
-/** Collect type-only imported names: `import type { X }` and `import { type X }`. */
-export function collectTypeOnlyImports(sf: ts.SourceFile): Set<string> {
-  const result = new Set<string>();
-  for (const stmt of sf.statements) {
-    if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue;
-    const clause = stmt.importClause;
-    if (clause.isTypeOnly) {
-      if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
-        for (const el of clause.namedBindings.elements)
-          result.add(el.name.text);
-      }
-      if (clause.name) result.add(clause.name.text);
-    } else if (
-      clause.namedBindings &&
-      ts.isNamedImports(clause.namedBindings)
-    ) {
-      for (const el of clause.namedBindings.elements) {
-        if (el.isTypeOnly) result.add(el.name.text);
-      }
-    }
-  }
+/** Recursively find all class declarations in an OXC AST, including nested scopes. */
+export function findAllClasses(program: any): any[] {
+  const result: any[] = [];
+  walkOxc(program, (node) => {
+    if (node.type === 'ClassDeclaration') result.push(node);
+    return true;
+  });
   return result;
 }
 
-/** Recursively find all class declarations in a source file, including nested scopes. */
-export function findAllClasses(sf: ts.SourceFile): ts.ClassDeclaration[] {
-  const result: ts.ClassDeclaration[] = [];
-  function walk(node: ts.Node) {
-    if (ts.isClassDeclaration(node)) result.push(node);
-    ts.forEachChild(node, walk);
+/**
+ * Depth-first walk over OXC AST nodes. `visit` returns `false` to skip a
+ * node's children.
+ */
+export function walkOxc(node: any, visit: (node: any) => boolean): void {
+  if (Array.isArray(node)) {
+    for (const child of node) walkOxc(child, visit);
+    return;
   }
-  walk(sf);
-  return result;
-}
-
-/** Unwrap forwardRef(() => X) to X. Returns the original node if not a forwardRef call. */
-export function unwrapForwardRef(node: ts.Expression): ts.Expression {
-  if (
-    ts.isCallExpression(node) &&
-    ts.isIdentifier(node.expression) &&
-    node.expression.text === 'forwardRef'
-  ) {
-    const arg = node.arguments[0];
-    if (arg && ts.isArrowFunction(arg)) {
-      if (ts.isBlock(arg.body)) {
-        const stmt = arg.body.statements[0];
-        if (stmt && ts.isReturnStatement(stmt) && stmt.expression)
-          return stmt.expression;
-      } else {
-        return arg.body;
-      }
-    }
-    if (
-      arg &&
-      ts.isFunctionExpression(arg) &&
-      arg.body.statements.length === 1
-    ) {
-      const stmt = arg.body.statements[0];
-      if (ts.isReturnStatement(stmt) && stmt.expression) return stmt.expression;
-    }
+  if (!node || typeof node.type !== 'string' || !visit(node)) return;
+  for (const key in node) {
+    const value = node[key];
+    if (value && typeof value === 'object') walkOxc(value, visit);
   }
-  return node;
 }
 
 /** Unwrap forwardRef(() => X) to X for OXC AST nodes. Returns the original node if not a forwardRef call. */

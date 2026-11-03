@@ -1,4 +1,3 @@
-import * as ts from 'typescript';
 import * as o from '@angular/compiler';
 import { ComponentRegistry } from './registry.js';
 
@@ -99,24 +98,21 @@ export interface ImportInfo {
  * `import('./p').then(m => m.OriginalExportName)` for aliased named
  * imports.
  */
-export function buildImportMap(sf: ts.SourceFile): Map<string, ImportInfo> {
+export function buildImportMap(program: any): Map<string, ImportInfo> {
   const result = new Map<string, ImportInfo>();
-  for (const stmt of sf.statements) {
-    if (!ts.isImportDeclaration(stmt) || !stmt.importClause) continue;
-    const path = (stmt.moduleSpecifier as ts.StringLiteral).text;
-    const clause = stmt.importClause;
-    if (clause.name) {
-      result.set(clause.name.text, {
-        path,
-        isDefault: true,
-        exportName: 'default',
-      });
-    }
-    if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
-      for (const el of clause.namedBindings.elements) {
-        // `import { Foo as Bar }` → propertyName is `Foo`, name is `Bar`.
-        // `import { Foo }`        → propertyName is undefined.
-        const exportName = el.propertyName?.text ?? el.name.text;
+  for (const stmt of program.body) {
+    if (stmt.type !== 'ImportDeclaration') continue;
+    const path: string = stmt.source.value;
+    for (const spec of stmt.specifiers) {
+      if (spec.type === 'ImportDefaultSpecifier') {
+        result.set(spec.local.name, {
+          path,
+          isDefault: true,
+          exportName: 'default',
+        });
+      } else if (spec.type === 'ImportSpecifier') {
+        // `import { Foo as Bar }` → imported is `Foo`, local is `Bar`.
+        const exportName: string = spec.imported.name ?? spec.imported.value;
         const info: ImportInfo = { path, isDefault: false, exportName };
         // Key the map by BOTH the local binding and the original export
         // name. The defer-dep lookup uses the className from the
@@ -124,8 +120,8 @@ export function buildImportMap(sf: ts.SourceFile): Map<string, ImportInfo> {
         // source file (`HeavyWidget`), not the consumer's local alias
         // (`Widget`). Without the export-name key, aliased imports
         // would silently produce no defer dependency at all.
-        result.set(el.name.text, info);
-        if (exportName !== el.name.text) {
+        result.set(spec.local.name, info);
+        if (exportName !== spec.local.name) {
           result.set(exportName, info);
         }
       }
@@ -147,7 +143,7 @@ export function buildImportMap(sf: ts.SourceFile): Map<string, ImportInfo> {
  */
 export function buildDeferDependencyMap(
   parsedTemplate: any,
-  sourceFile: ts.SourceFile,
+  program: any,
   registry: ComponentRegistry | undefined,
   localSelectors: Map<string, string>,
 ): { blocks: Map<any, any>; deferredImports: Set<string> } {
@@ -180,7 +176,7 @@ export function buildDeferDependencyMap(
   }
 
   // Build className → importPath map
-  const importMap = buildImportMap(sourceFile);
+  const importMap = buildImportMap(program);
 
   // Find defer-only component class names
   const deferredImports = new Set<string>();

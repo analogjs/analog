@@ -30,7 +30,7 @@ Source file (.ts)
          │
          ▼
        compile(code, fileName, { registry })
-         ts.createSourceFile ──▶ extractMetadata / detectSignals / detectFieldDecorators
+         OXC parse ──▶ extractMetadata / detectSignals / detectFieldDecorators
            │
            ▼
          @angular/compiler
@@ -43,7 +43,7 @@ Source file (.ts)
            compileClassMetadata()
            │
            ▼
-         JSEmitter (Angular output AST → JavaScript strings, ~4x faster than ts.Printer)
+         JSEmitter (Angular output AST → JavaScript strings)
            │
            ▼
          MagicString (surgical edits on original source → JS + source map)
@@ -68,7 +68,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `compile.ts`          | Single-file compiler: OXC-based metadata extraction + Ivy codegen via `@angular/compiler` APIs. Supports full (`ɵɵdefineComponent`) and partial (`ɵɵngDeclareComponent`) modes |
 | `registry.ts`         | OXC-based file scanner, extracts selectors, inputs, outputs, sourcePackage tracking                                                                                            |
 | `metadata.ts`         | OXC-based decorator metadata extraction (`extractMetadata`, `collectStringConstants`, `detectSignals`, `detectFieldDecorators`, `extractConstructorDeps`)                      |
-| `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`), handles OXC/TS WrappedNodeExpr, bare module refs (`ngImport: i0`), `$localize`                  |
+| `js-emitter.ts`       | Angular output AST → JavaScript string emitter, handles OXC WrappedNodeExpr, bare module refs (`ngImport: i0`), `$localize`                                                    |
 | `ast-translator.ts`   | Angular output AST → TypeScript AST translator, handles bare module refs and `$localize` for partial/i18n output                                                               |
 | `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                                                                                                        |
 | `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs, sub-entry resolution)                                                                 |
@@ -334,13 +334,13 @@ In Vite dev mode, only requested files are compiled on demand. A typical page lo
 
 ### Compilation Breakdown (medium component)
 
-| Phase              | % of time | Tool                                |
-| ------------------ | --------- | ----------------------------------- |
-| Template parsing   | ~46%      | `@angular/compiler` (JS)            |
-| TypeScript parsing | ~29%      | `ts.createSourceFile` (JS)          |
-| Code emission      | ~25%      | Inline string emitter + MagicString |
+| Phase            | Tool                                |
+| ---------------- | ----------------------------------- |
+| Source parsing   | `oxc-parser` (Rust)                 |
+| Template parsing | `@angular/compiler` (JS)            |
+| Code emission    | Inline string emitter + MagicString |
 
-The dominant cost is Angular's template parser — JavaScript that can't be replaced with Rust without reimplementing the Angular template compiler.
+`compile()` does not load the `typescript` package. The dominant cost is Angular's template parser — JavaScript that can't be replaced with Rust without reimplementing the Angular template compiler.
 
 ### Registry Cold Scan
 

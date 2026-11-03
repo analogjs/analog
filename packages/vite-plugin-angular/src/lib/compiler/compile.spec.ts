@@ -34,4 +34,17 @@ describe('NgLite Compiler', () => {
     expect(service).not.toContain('providedIn: "root"');
     expect(service).not.toContain("providedIn: 'root'");
   });
+
+  it('compiles decorated classes nested in function scopes', () => {
+    const result = compile(
+      `export function setup() {
+        @NgModule({ providers: [] })
+        class TestModule {}
+        return TestModule;
+      }`,
+      'setup.ts',
+    );
+    expect(result).toContain('static ɵmod');
+    expect(result).not.toContain('@NgModule');
+  });
 });
