@@ -1,3 +1,9 @@
+# [3.0.0-beta.29](https://github.com/analogjs/analog/compare/v3.0.0-beta.28...v3.0.0-beta.29) (2026-11-03)
+
+### Performance Improvements
+
+- **vite-plugin-angular:** drop typescript and cut oxc transfer cost in fastCompile ([#2733](https://github.com/analogjs/analog/issues/2733)) ([a95ce0f](https://github.com/analogjs/analog/commit/a95ce0fb36436f3249896dfb88faedb93e531469))
+
 # [3.0.0-beta.28](https://github.com/analogjs/analog/compare/v3.0.0-beta.27...v3.0.0-beta.28) (2026-11-03)
 
 ### Features
