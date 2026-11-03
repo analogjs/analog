@@ -1,14 +1,4 @@
-import * as ts from 'typescript';
 import * as o from '@angular/compiler';
-
-/** Shared printer — only used as fallback for complex WrappedNodeExpr (e.g. decorator args). */
-const sharedPrinter = ts.createPrinter({ removeComments: true });
-const emptySourceFile = ts.createSourceFile(
-  '_.ts',
-  '',
-  ts.ScriptTarget.Latest,
-  false,
-);
 
 // Operator metadata table — name, JS string, and precedence (higher = tighter
 // binding). Used to build version-aware lookup maps below.
@@ -200,12 +190,9 @@ function escapeForLocalize(input: string): string {
 }
 
 /**
- * Emits Angular output AST directly to JavaScript strings, bypassing
- * ts.factory node creation and ts.Printer serialization (~4x faster).
+ * Emits Angular output AST directly to JavaScript strings.
  */
 class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
-  /** Set by compile() so WrappedNodeExpr fallback can print with correct source context. */
-  static _currentSourceFile: ts.SourceFile | undefined;
   /** Set by compile() so OXC-based WrappedNodeExpr can slice original source. */
   static _currentSourceCode: string | undefined;
 
@@ -241,25 +228,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       return 'null';
     }
 
-    // TypeScript AST nodes: identified by numeric `kind` property
-    if (node.kind === ts.SyntaxKind.Identifier)
-      return (node as ts.Identifier).escapedText as string;
-    if (node.kind === ts.SyntaxKind.StringLiteral)
-      return JSON.stringify((node as ts.StringLiteral).text);
-    if (node.kind === ts.SyntaxKind.NumericLiteral)
-      return (node as ts.NumericLiteral).text;
-    if (node.kind === ts.SyntaxKind.TrueKeyword) return 'true';
-    if (node.kind === ts.SyntaxKind.FalseKeyword) return 'false';
-    if (node.kind === ts.SyntaxKind.NullKeyword) return 'null';
-    if (node.kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral)
-      return '`' + (node as ts.NoSubstitutionTemplateLiteral).text + '`';
-    // Fallback for complex wrapped TS nodes (e.g. decorator arguments, array literals).
-    // Use currentSourceFile when available for correct position-based printing.
-    return sharedPrinter.printNode(
-      ts.EmitHint.Unspecified,
-      node,
-      JSEmitter._currentSourceFile || emptySourceFile,
-    );
+    return 'null';
   }
   visitExternalExpr(ast: o.ExternalExpr) {
     const name = ast.value.name;
@@ -616,11 +585,6 @@ export function emitAngularExpr(expr: o.Expression): string {
 /** Emit Angular output AST statement directly to a JavaScript string. */
 export function emitAngularStmt(stmt: o.Statement): string {
   return stmt.visitStatement(stringEmitter, null);
-}
-
-/** Set the current source file for WrappedNodeExpr fallback printing. */
-export function setEmitterSourceFile(sf: ts.SourceFile | undefined): void {
-  JSEmitter._currentSourceFile = sf;
 }
 
 /** Set the current source code for OXC-based WrappedNodeExpr slice fallback. */

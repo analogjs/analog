@@ -1,4 +1,4 @@
-import { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import MagicString from 'magic-string';
 import { detectTypeOnlyImportNames } from './type-elision.js';
 import {
@@ -129,7 +129,7 @@ export function jitTransform(
   sourceCode: string,
   fileName: string,
 ): JitTransformResult {
-  const { program } = parseSync(fileName, sourceCode);
+  const { program } = parseOxc(fileName, sourceCode);
   const ms = new MagicString(sourceCode, { filename: fileName });
   const typeOnlyImports = detectTypeOnlyImportNames(sourceCode, program);
   let hasAngularClass = false;

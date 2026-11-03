@@ -1,4 +1,5 @@
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RegistryEntry, RegistryInput } from './registry.js';
@@ -22,7 +23,7 @@ export function scanDtsFile(code: string, fileName: string): RegistryEntry[] {
   )
     return [];
 
-  const { program } = parseSync(fileName, code);
+  const { program } = parseOxc(fileName, code);
   const entries: RegistryEntry[] = [];
 
   visitStatements(program.body, fileName, entries);
@@ -192,7 +193,7 @@ function collectExportedClassesFromDts(
 
   let program: any;
   try {
-    program = parseSync(filePath, code).program;
+    program = parseOxc(filePath, code).program;
   } catch {
     return;
   }
@@ -303,7 +304,7 @@ export function collectImportedPackages(
   program?: ReturnType<typeof parseSync>['program'],
 ): Set<string> {
   const packages = new Set<string>();
-  program ??= parseSync(fileName, code).program;
+  program ??= parseOxc(fileName, code).program;
 
   for (const stmt of program.body) {
     if (stmt.type !== 'ImportDeclaration') continue;
@@ -349,7 +350,7 @@ export function collectReExports(
 ): string[] {
   if (!program) {
     try {
-      program = parseSync(fileName, code).program;
+      program = parseOxc(fileName, code).program;
     } catch {
       return [];
     }
@@ -385,7 +386,7 @@ export function collectAllImports(
 ): string[] {
   if (!program) {
     try {
-      program = parseSync(fileName, code).program;
+      program = parseOxc(fileName, code).program;
     } catch {
       return [];
     }

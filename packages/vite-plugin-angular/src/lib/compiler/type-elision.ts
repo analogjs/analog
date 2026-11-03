@@ -1,5 +1,6 @@
 import MagicString from 'magic-string';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { findAllClasses, parseOxc } from './utils.js';
 
 // ── Type-only import elision via OXC AST ────────────────────────────────
 
@@ -55,7 +56,7 @@ function analyzeTypeOnlyImports(
   ast: any;
   typeOnlyNames: Set<string>;
 } {
-  const ast = program ?? parseSync('file.ts', code).program;
+  const ast = program ?? parseOxc('file.ts', code).program;
 
   // Step 1 – collect all value-imported names (skip `import type` / `{ type X }`)
   // Namespace imports (`import * as ns`) are intentionally skipped — they are
@@ -164,7 +165,7 @@ function analyzeTypeOnlyImports(
 }
 
 /**
- * Walk the program looking for decorated classes with constructors and add
+ * Walk the program (including nested scopes) looking for decorated classes with constructors and add
  * the type names from constructor parameter annotations to `valueReferenced`.
  *
  * Constructor parameter types are TypeScript type positions, but for decorated
@@ -177,24 +178,16 @@ function collectConstructorDiTokens(
   importedNames: Set<string>,
   valueReferenced: Set<string>,
 ): void {
-  for (const stmt of (ast as any).body || []) {
-    const classNode =
-      stmt.type === 'ExportNamedDeclaration' ||
-      stmt.type === 'ExportDefaultDeclaration'
-        ? (stmt as any).declaration
-        : stmt;
-    if (
-      !classNode ||
-      (classNode.type !== 'ClassDeclaration' &&
-        classNode.type !== 'ClassExpression')
-    ) {
-      continue;
-    }
+  // Include classes nested in function scopes, which compile() also compiles.
+  for (const classNode of findAllClasses(ast)) {
     if (!classNode.decorators?.length) continue;
 
-    const ctor = (classNode.body?.body || []).find(
+    const ctors = (classNode.body?.body || []).filter(
       (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
     );
+    // Match extractConstructorDeps: overload signatures have no body, so read
+    // the implementation's parameters.
+    const ctor = ctors.find((m: any) => m.value?.body != null) ?? ctors[0];
     if (!ctor) continue;
 
     const params: any[] = ctor.value?.params?.items || ctor.value?.params || [];
@@ -367,16 +360,17 @@ export function elideTypeOnlyImports(code: string): string {
  * Detects type-only names from `ms.toString()` (the fully-mutated code),
  * but reads import positions from `ms.original` (the coordinate system
  * MagicString expects). `originalProgram`, when provided, must be a parse
- * of `ms.original` — never of the mutated text.
+ * of `ms.original` — never of the mutated text. `typeOnlyNames` may be passed
+ * when the caller already analysed the mutated code.
  */
 export function elideTypeOnlyImportsMagicString(
   ms: MagicString,
   originalProgram?: ReturnType<typeof parseSync>['program'],
+  typeOnlyNames = detectTypeOnlyImportNames(ms.toString()),
 ): void {
-  const typeOnlyNames = detectTypeOnlyImportNames(ms.toString());
   if (typeOnlyNames.size === 0) return;
 
   // Parse the original source to get positions in MagicString's coordinate system
-  const ast = originalProgram ?? parseSync('file.ts', ms.original).program;
+  const ast = originalProgram ?? parseOxc('file.ts', ms.original).program;
   applyElisionEdits(ms, ast, ms.original, typeOnlyNames);
 }

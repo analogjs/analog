@@ -1,9 +1,9 @@
-import * as ts from 'typescript';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as o from '@angular/compiler';
 import MagicString from 'magic-string';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import {
   ConstantPool,
   compileComponentFromMetadata,
@@ -32,7 +32,11 @@ import {
   compileDeclareClassMetadata,
 } from '@angular/compiler';
 import { ComponentRegistry } from './registry.js';
-import { findAllClasses, resolveSyntheticImportSpecifier } from './utils.js';
+import {
+  findAllClasses,
+  resolveSyntheticImportSpecifier,
+  walkOxc,
+} from './utils.js';
 import { ANGULAR_DECORATORS, FIELD_DECORATORS } from './constants.js';
 import { angularVersionAtLeast } from './angular-version.js';
 import {
@@ -43,7 +47,6 @@ import {
 import {
   emitAngularExpr,
   emitAngularStmt,
-  setEmitterSourceFile,
   setEmitterSourceCode,
 } from './js-emitter.js';
 import { lowerClassFields } from './class-field-lowering.js';
@@ -120,13 +123,35 @@ type CompileDeclaration = {
   isComponent?: boolean;
 };
 
-function hasExportModifier(node: ts.Node): boolean {
-  return (
-    ts.canHaveModifiers(node) &&
-    ts
-      .getModifiers(node)
-      ?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) === true
-  );
+/** A top-level statement with any `export` wrapper unwrapped. */
+interface TopLevelStatement {
+  /** The declaration (or the statement itself when not exported). */
+  decl: any;
+  exported: boolean;
+  /** Start of the whole statement, including leading class decorators. */
+  start: number;
+  end: number;
+}
+
+function toTopLevelStatement(stmt: any): TopLevelStatement {
+  const isExport =
+    (stmt.type === 'ExportNamedDeclaration' ||
+      stmt.type === 'ExportDefaultDeclaration') &&
+    stmt.declaration;
+  const decl = isExport ? stmt.declaration : stmt;
+  return {
+    decl,
+    exported: !!isExport,
+    start: Math.min(stmt.start, decl.decorators?.[0]?.start ?? stmt.start),
+    end: stmt.end,
+  };
+}
+
+/** Get the callee name of a decorator call, e.g. `Component` for `@Component(...)`. */
+function decoratorCallName(dec: any, sourceCode: string): string | undefined {
+  const callee = dec.expression;
+  if (callee?.type !== 'CallExpression') return undefined;
+  return sourceCode.slice(callee.callee.start, callee.callee.end);
 }
 
 /**
@@ -150,58 +175,76 @@ function providersToExpr(
   return value;
 }
 
+const LAZY_SCOPE_TYPES = new Set([
+  'FunctionDeclaration',
+  'FunctionExpression',
+  'ArrowFunctionExpression',
+  'ClassDeclaration',
+  'ClassExpression',
+  'TSFunctionType',
+  'TSConstructorType',
+  'TSMethodSignature',
+  'TSCallSignatureDeclaration',
+  'TSConstructSignatureDeclaration',
+]);
+
 /**
  * Collect identifier names referenced in eagerly-evaluated code only.
  * Skips function/arrow/class bodies so that lazy references
  * (e.g. `const TOKEN = () => LaterClass`) are not treated as dependencies.
+ * The root node's own children are always walked.
  */
-function collectIdentifiers(node: ts.Node): Set<string> {
+function collectIdentifiers(root: any): Set<string> {
   const ids = new Set<string>();
-  function walk(n: ts.Node) {
-    if (ts.isIdentifier(n)) {
-      ids.add(n.text);
-    }
-    // Stop recursing into lazily-evaluated scopes
-    if (ts.isFunctionLike(n) || ts.isClassLike(n)) {
-      return;
-    }
-    ts.forEachChild(n, walk);
-  }
-  ts.forEachChild(node, walk);
+  walkOxc(root, (n) => {
+    if (n.type === 'Identifier') ids.add(n.name);
+    return n === root || !LAZY_SCOPE_TYPES.has(n.type);
+  });
   return ids;
 }
 
-/** Extract the names defined by a top-level statement. */
-function getDefinedNames(stmt: ts.Statement): string[] {
-  if (ts.isVariableStatement(stmt)) {
+/** Extract the names defined by a top-level declaration. */
+function getDefinedNames(decl: any): string[] {
+  if (decl.type === 'VariableDeclaration') {
     const names: string[] = [];
-    for (const decl of stmt.declarationList.declarations) {
-      collectBindingNames(decl.name, names);
+    for (const d of decl.declarations) {
+      collectBindingNames(d.id, names);
     }
     return names;
   }
-  if (ts.isFunctionDeclaration(stmt) && stmt.name) {
-    return [stmt.name.text];
-  }
-  if (ts.isClassDeclaration(stmt) && stmt.name) {
-    return [stmt.name.text];
+  if (
+    (decl.type === 'FunctionDeclaration' || decl.type === 'ClassDeclaration') &&
+    decl.id
+  ) {
+    return [decl.id.name];
   }
   return [];
 }
 
-/** Recursively collect all bound identifiers from a binding name/pattern. */
-function collectBindingNames(name: ts.BindingName, out: string[]): void {
-  if (ts.isIdentifier(name)) {
-    out.push(name.text);
-  } else if (
-    ts.isObjectBindingPattern(name) ||
-    ts.isArrayBindingPattern(name)
-  ) {
-    for (const el of name.elements) {
-      if (!ts.isOmittedExpression(el)) {
-        collectBindingNames(el.name, out);
+/** Recursively collect all bound identifiers from a binding pattern. */
+function collectBindingNames(pattern: any, out: string[]): void {
+  if (!pattern) return;
+  switch (pattern.type) {
+    case 'Identifier':
+      out.push(pattern.name);
+      break;
+    case 'ObjectPattern':
+      for (const prop of pattern.properties) {
+        collectBindingNames(
+          prop.type === 'RestElement' ? prop.argument : prop.value,
+          out,
+        );
       }
-    }
+      break;
+    case 'ArrayPattern':
+      for (const el of pattern.elements) collectBindingNames(el, out);
+      break;
+    case 'RestElement':
+      collectBindingNames(pattern.argument, out);
+      break;
+    case 'AssignmentPattern':
+      collectBindingNames(pattern.left, out);
+      break;
   }
 }
 
@@ -227,14 +270,7 @@ export function compile(
     isPartial ? 'partial' : 'full',
     registry?.size ?? 0,
   );
-  const origSourceFile = ts.createSourceFile(
-    fileName,
-    sourceCode,
-    ts.ScriptTarget.Latest,
-    false,
-  );
-  // OXC parse for metadata extraction (faster than TS for decorator/signal analysis)
-  const oxcProgram = opts.oxcProgram ?? parseSync(fileName, sourceCode).program;
+  const oxcProgram = opts.oxcProgram ?? parseOxc(fileName, sourceCode).program;
   const oxcClassMap = new Map<string, any>();
   for (const stmt of oxcProgram.body) {
     const decl =
@@ -264,20 +300,15 @@ export function compile(
   const importSpecifierByName = new Map<string, string>();
   const importedNames = new Set<string>();
 
-  for (const stmt of origSourceFile.statements) {
-    if (
-      !ts.isImportDeclaration(stmt) ||
-      !stmt.importClause?.namedBindings ||
-      !ts.isNamedImports(stmt.importClause.namedBindings)
-    ) {
-      continue;
-    }
+  for (const stmt of oxcProgram.body as any[]) {
+    if (stmt.type !== 'ImportDeclaration') continue;
 
-    const moduleSpecifier = (stmt.moduleSpecifier as ts.StringLiteral).text;
+    const moduleSpecifier: string = stmt.source.value;
     // Explicit `import type { X }` — declaration-level type-only import
-    const isDeclarationTypeOnly = stmt.importClause.isTypeOnly;
-    for (const element of stmt.importClause.namedBindings.elements) {
-      const localName = element.name.text;
+    const isDeclarationTypeOnly = stmt.importKind === 'type';
+    for (const element of stmt.specifiers) {
+      if (element.type !== 'ImportSpecifier') continue;
+      const localName: string = element.local.name;
       importedNames.add(localName);
       importSpecifierByName.set(localName, moduleSpecifier);
       // Explicit `import { type X }` — specifier-level type-only import.
@@ -285,14 +316,11 @@ export function compile(
       // DI tokens. Add them to typeOnlyImports so extractConstructorDeps
       // surfaces ɵɵinvalidFactory() instead of emitting a broken
       // ɵɵdirectiveInject(X) referring to a non-existent value.
-      if (isDeclarationTypeOnly || element.isTypeOnly) {
+      if (isDeclarationTypeOnly || element.importKind === 'type') {
         typeOnlyImports.add(localName);
       }
     }
   }
-
-  // Inject 'import * as i0 from "@angular/core"'
-  const sourceFile = injectAngularImport(origSourceFile);
 
   // Build a file-local selector map as fallback when no external registry is provided.
   // Skip the expensive extractMetadata scan when a registry covers all classes.
@@ -310,44 +338,44 @@ export function compile(
   }
 
   const bindingParser = isPartial ? undefined : makeBindingParser();
-  setEmitterSourceFile(origSourceFile);
   setEmitterSourceCode(sourceCode);
 
   // --- Direct walk: compile each Angular-decorated class and collect string outputs ---
-  // This replaces the previous ts.transform + printer.printNode approach.
-  // By emitting strings directly from the Angular output AST, we skip both
-  // ts.factory node creation and ts.Printer serialization (~4x faster).
   interface ClassCompileResult {
     ivyCode: string[]; // "static ɵfac = ...", "static ɵcmp = ...", etc.
-    decorators: ts.Decorator[]; // Angular decorators to remove
+    decorators: any[]; // Angular decorators to remove (OXC nodes)
     classEnd: number; // Position of closing } in original source
+    // setClassMetadata calls for classes nested in a function scope, which
+    // must be emitted next to the class rather than at module scope.
+    scopedMetadata: o.Statement[];
   }
   const classResults: ClassCompileResult[] = [];
+  const topLevelClasses = new Set(
+    (oxcProgram.body as any[]).map((stmt) => toTopLevelStatement(stmt).decl),
+  );
   // Track synthetic imports needed for NgModule export expansion.
   // Maps exported class name → import specifier.
   const syntheticImports = new Map<string, string>();
 
   // ANGULAR_DECORATORS imported from utils
 
-  for (const node of findAllClasses(origSourceFile)) {
-    const decorators = ts.getDecorators(node);
+  for (const node of findAllClasses(oxcProgram)) {
+    const decorators: any[] = node.decorators;
     if (!decorators || decorators.length === 0) continue;
 
-    const className = node.name?.text;
+    const className: string | undefined = node.id?.name;
     if (!className) continue;
 
-    const angularDecorators = decorators.filter((dec) => {
-      if (!ts.isCallExpression(dec.expression)) return false;
-      const name = dec.expression.expression.getText(origSourceFile);
-      return ANGULAR_DECORATORS.has(name);
-    });
+    const angularDecorators = decorators.filter((dec) =>
+      ANGULAR_DECORATORS.has(decoratorCallName(dec, sourceCode) ?? ''),
+    );
     if (angularDecorators.length === 0) continue;
 
     const ivyCode: string[] = [];
     let targetType: FactoryTarget = FactoryTarget.Injectable;
     // Store resolved resources per decorator for metadata inlining
     const resolvedResources = new Map<
-      ts.Decorator,
+      any,
       { template?: string; styles?: string[] }
     >();
 
@@ -364,41 +392,15 @@ export function compile(
     // `BrnPopover extends BrnDialog` lose every input declared on the
     // base, and any host directive that references those inputs by
     // public name fails at runtime with NG0311.
-    const extendsClause = node.heritageClauses?.find(
-      (h) => h.token === ts.SyntaxKind.ExtendsKeyword,
-    );
-    const usesInheritance = !!extendsClause && extendsClause.types.length > 0;
-
-    // Look up the corresponding OXC class node for metadata extraction
-    const oxcNode = oxcClassMap.get(className);
+    const usesInheritance = !!node.superClass;
 
     let classCompileError: Error | null = null;
 
     angularDecorators.forEach((dec) => {
-      const decoratorName = (
-        dec.expression as ts.CallExpression
-      ).expression.getText(origSourceFile);
-      // Find the matching OXC decorator by name
-      const oxcDec = oxcNode?.decorators?.find((d: any) => {
-        const expr = d.expression;
-        return (
-          expr?.type === 'CallExpression' && expr.callee?.name === decoratorName
-        );
-      });
-      const meta = extractMetadata(oxcDec, sourceCode, stringConsts);
-      const sigs = oxcNode
-        ? detectSignals(oxcNode, sourceCode)
-        : { inputs: {}, outputs: {}, viewQueries: [], contentQueries: [] };
-      const fields = oxcNode
-        ? detectFieldDecorators(oxcNode, sourceCode)
-        : {
-            inputs: {},
-            outputs: {},
-            viewQueries: [],
-            contentQueries: [],
-            hostProperties: {},
-            hostListeners: {},
-          };
+      const decoratorName = decoratorCallName(dec, sourceCode)!;
+      const meta = extractMetadata(dec, sourceCode, stringConsts);
+      const sigs = detectSignals(node, sourceCode);
+      const fields = detectFieldDecorators(node, sourceCode);
       const hostBindings = parseHostBindings(meta.hostRaw || {});
 
       const hostMetadata: o.R3HostMetadata = {
@@ -858,7 +860,7 @@ export function compile(
               mode: 0,
               blocks: buildDeferDependencyMap(
                 parsedTemplate,
-                sourceFile,
+                oxcProgram,
                 registry,
                 localSelectors,
               ).blocks,
@@ -1153,9 +1155,7 @@ export function compile(
     }
 
     // Generate factory
-    const deps = oxcNode
-      ? extractConstructorDeps(oxcNode, sourceCode, typeOnlyImports)
-      : [];
+    const deps = extractConstructorDeps(node, sourceCode, typeOnlyImports);
     if (deps === null) {
       const baseVar = `ɵ${className}_BaseFactory`;
       ivyCode.unshift(
@@ -1187,33 +1187,38 @@ export function compile(
     }
 
     // Emit setClassMetadata for runtime decorator reflection (devMode only)
-    const ctorParameters = oxcNode
-      ? buildCtorParameters(oxcNode, sourceCode, typeOnlyImports)
-      : null;
-    const propDecorators = oxcNode
-      ? buildPropDecorators(oxcNode, sourceCode, 'i0.')
-      : null;
+    const ctorParameters = buildCtorParameters(
+      node,
+      sourceCode,
+      typeOnlyImports,
+    );
+    const propDecorators = buildPropDecorators(node, sourceCode, 'i0.');
+    const scopedMetadata: o.Statement[] = [];
     angularDecorators.forEach((dec) => {
-      const call = dec.expression as ts.CallExpression;
-      const decName = call.expression.getText(origSourceFile);
-      const decArgsNode = call.arguments[0];
+      const decName = decoratorCallName(dec, sourceCode)!;
+      const decArgsNode = dec.expression.arguments[0];
+      const textOf = (n: any) => sourceCode.slice(n.start, n.end);
 
       // Build the decorator args for setClassMetadata, inlining resources if needed.
       const resources = resolvedResources.get(dec);
       let metadataArgsExpr: string | null = null;
       if (decArgsNode) {
-        if (resources && ts.isObjectLiteralExpression(decArgsNode)) {
+        if (resources && decArgsNode.type === 'ObjectExpression') {
           // Inline external templateUrl/styleUrl(s) into the metadata so Angular's
           // runtime doesn't try to fetch relative URLs (which fails during SSR).
           const rewrittenProps: string[] = [];
           let needsTransform = false;
-          for (const prop of (decArgsNode as ts.ObjectLiteralExpression)
-            .properties) {
-            if (!ts.isPropertyAssignment(prop)) {
-              rewrittenProps.push(prop.getText(origSourceFile));
+          for (const prop of decArgsNode.properties) {
+            if (
+              prop.type !== 'Property' ||
+              prop.shorthand ||
+              prop.method ||
+              prop.kind !== 'init'
+            ) {
+              rewrittenProps.push(textOf(prop));
               continue;
             }
-            const propName = prop.name?.getText(origSourceFile);
+            const propName = textOf(prop.key);
 
             if (propName === 'templateUrl' && resources.template) {
               rewrittenProps.push(
@@ -1229,14 +1234,14 @@ export function compile(
               );
               needsTransform = true;
             } else {
-              rewrittenProps.push(prop.getText(origSourceFile));
+              rewrittenProps.push(textOf(prop));
             }
           }
           metadataArgsExpr = needsTransform
             ? `{${rewrittenProps.join(', ')}}`
-            : decArgsNode.getText(origSourceFile);
+            : textOf(decArgsNode);
         } else {
-          metadataArgsExpr = decArgsNode.getText(origSourceFile);
+          metadataArgsExpr = textOf(decArgsNode);
         }
       }
 
@@ -1254,7 +1259,7 @@ export function compile(
         // the surrounding try/catch would silently disable class metadata
         // emission for every class in the project.
         const classMetaInput = {
-          type: new o.WrappedNodeExpr(ts.factory.createIdentifier(className)),
+          type: new o.WrappedNodeExpr(className),
           decorators: new o.LiteralArrayExpr([
             new o.LiteralMapExpr([
               {
@@ -1285,9 +1290,12 @@ export function compile(
         const classMetadataExpr = isPartial
           ? compileDeclareClassMetadata(classMetaInput)
           : compileClassMetadata(classMetaInput);
-        constantPool.statements.push(
-          new o.ExpressionStatement(classMetadataExpr),
-        );
+        const metadataStmt = new o.ExpressionStatement(classMetadataExpr);
+        if (topLevelClasses.has(node)) {
+          constantPool.statements.push(metadataStmt);
+        } else {
+          scopedMetadata.push(metadataStmt);
+        }
       } catch (e) {
         // Skip if compileClassMetadata fails — surfaced via DEBUG=analog-fast-compile
         if (debugCompile.enabled) {
@@ -1304,14 +1312,10 @@ export function compile(
     // Collect member decorators (@HostListener, @HostBinding, @Input, @Output,
     // @ViewChild, @ContentChild, etc.) so they are removed from the source.
     // The metadata has already been extracted by detectFieldDecorators().
-    const memberDecorators: ts.Decorator[] = [];
-    for (const member of node.members) {
-      const mDecorators = ts.getDecorators(member as any);
-      if (!mDecorators) continue;
-      for (const dec of mDecorators) {
-        if (!ts.isCallExpression(dec.expression)) continue;
-        const decName = dec.expression.expression.getText(origSourceFile);
-        if (FIELD_DECORATORS.has(decName)) {
+    const memberDecorators: any[] = [];
+    for (const member of node.body.body) {
+      for (const dec of member.decorators ?? []) {
+        if (FIELD_DECORATORS.has(decoratorCallName(dec, sourceCode) ?? '')) {
           memberDecorators.push(dec);
         }
       }
@@ -1320,7 +1324,8 @@ export function compile(
     classResults.push({
       ivyCode,
       decorators: [...angularDecorators, ...memberDecorators],
-      classEnd: node.getEnd(),
+      classEnd: node.end,
+      scopedMetadata,
     });
   }
 
@@ -1350,63 +1355,56 @@ export function compile(
   // definition and cause a TDZ error at runtime.
   if (classResults.length > 0) {
     // Find the position right before the first class (any class, not just Angular-decorated)
+    const statements = (oxcProgram.body as any[]).map(toTopLevelStatement);
     let firstClassPos = Infinity;
     const nonHoistableNames = new Set<string>();
-    for (const stmt of origSourceFile.statements) {
-      if (ts.isClassDeclaration(stmt)) {
-        firstClassPos = stmt.getStart(origSourceFile);
+    for (const { decl, start } of statements) {
+      if (decl.type === 'ClassDeclaration') {
+        firstClassPos = start;
         // The first class itself is non-hoistable — statements hoisted
         // before it must not reference it.
-        if (stmt.name) {
-          nonHoistableNames.add(stmt.name.text);
+        if (decl.id) {
+          nonHoistableNames.add(decl.id.name);
         }
         break;
       }
     }
 
     // Pass 1: collect names defined by statements that will NOT be hoisted
-    // (classes, exported vars/functions) and therefore remain after firstClassPos.
-    for (const stmt of origSourceFile.statements) {
-      const stmtStart = stmt.getStart(origSourceFile);
-      if (stmtStart <= firstClassPos) continue;
+    // (classes, enums, exported vars/functions) and therefore remain after
+    // firstClassPos.
+    for (const { decl, exported, start } of statements) {
+      if (start <= firstClassPos) continue;
 
-      if (ts.isClassDeclaration(stmt) && stmt.name) {
-        nonHoistableNames.add(stmt.name.text);
-      }
-      if (ts.isEnumDeclaration(stmt)) {
-        nonHoistableNames.add(stmt.name.text);
-      }
-      if (ts.isVariableStatement(stmt) && hasExportModifier(stmt)) {
-        for (const decl of stmt.declarationList.declarations) {
-          const names: string[] = [];
-          collectBindingNames(decl.name, names);
-          for (const n of names) {
-            nonHoistableNames.add(n);
-          }
-        }
-      }
       if (
-        ts.isFunctionDeclaration(stmt) &&
-        hasExportModifier(stmt) &&
-        stmt.name
+        decl.type === 'ClassDeclaration' ||
+        decl.type === 'TSEnumDeclaration'
       ) {
-        nonHoistableNames.add(stmt.name.text);
+        if (decl.id) nonHoistableNames.add(decl.id.name);
+      } else if (
+        exported &&
+        (decl.type === 'VariableDeclaration' ||
+          decl.type === 'FunctionDeclaration')
+      ) {
+        for (const n of getDefinedNames(decl)) {
+          nonHoistableNames.add(n);
+        }
       }
     }
 
     // Pass 2: for each hoist candidate, check if it references any
     // non-hoistable name. If it does, skip it and add its own names to the
     // non-hoistable set (transitivity).
-    for (const stmt of origSourceFile.statements) {
-      const stmtStart = stmt.getStart(origSourceFile);
-      if (stmtStart <= firstClassPos) continue;
+    for (const { decl, exported, start, end } of statements) {
+      if (start <= firstClassPos) continue;
 
       const isCandidate =
-        (ts.isVariableStatement(stmt) && !hasExportModifier(stmt)) ||
-        (ts.isFunctionDeclaration(stmt) && !hasExportModifier(stmt));
+        !exported &&
+        (decl.type === 'VariableDeclaration' ||
+          decl.type === 'FunctionDeclaration');
       if (!isCandidate) continue;
 
-      const referencedIds = collectIdentifiers(stmt);
+      const referencedIds = collectIdentifiers(decl);
       let referencesNonHoistable = false;
       for (const id of referencedIds) {
         if (nonHoistableNames.has(id)) {
@@ -1417,14 +1415,14 @@ export function compile(
 
       if (referencesNonHoistable) {
         // Don't hoist — mark this statement's names as non-hoistable too
-        for (const name of getDefinedNames(stmt)) {
+        for (const name of getDefinedNames(decl)) {
           nonHoistableNames.add(name);
         }
       } else {
         // Move rather than re-insert so the statement keeps its source map.
         // The separating newline is attached to the moved chunk.
-        ms.appendLeft(stmt.getEnd(), '\n');
-        ms.move(stmtStart, stmt.getEnd(), firstClassPos);
+        ms.appendLeft(end, '\n');
+        ms.move(start, end, firstClassPos);
       }
     }
   }
@@ -1433,8 +1431,8 @@ export function compile(
   for (const cr of classResults) {
     // Remove Angular decorators from source
     for (const dec of cr.decorators) {
-      const start = dec.getStart(origSourceFile);
-      const end = dec.getEnd();
+      const start = dec.start;
+      const end = dec.end;
       let trimEnd = end;
       while (
         trimEnd < sourceCode.length &&
@@ -1451,6 +1449,10 @@ export function compile(
     if (cr.ivyCode.length > 0) {
       const memberCode = cr.ivyCode.map((c) => '  ' + c + ';').join('\n');
       ms.appendLeft(cr.classEnd - 1, '\n' + memberCode + '\n');
+    }
+
+    for (const stmt of cr.scopedMetadata) {
+      ms.appendLeft(cr.classEnd, `\n/*@__PURE__*/ ${emitAngularStmt(stmt)}`);
     }
   }
 
@@ -1475,41 +1477,63 @@ export function compile(
     }
   }
 
+  if (sideEffects.length > 0) {
+    ms.append('\n\n' + sideEffects.join('\n'));
+  }
+
+  // 4. Lower class field initializers to constructor assignments when
+  //    useDefineForClassFields is false (standard Angular tsconfig).
+  //    Uses the original OXC AST positions which are still valid for MagicString
+  //    since MagicString tracks edits relative to the original source.
+  //    Ivy static definitions (ɵcmp, ɵfac) are not in the original AST so they
+  //    are unaffected, and shouldLowerField skips static fields regardless.
+  if (!useDefineForClassFields) {
+    lowerClassFields(ms, sourceCode, oxcProgram);
+  }
+
+  // 5. Elide imports that are only used in type positions (type annotations,
+  //    implements, generics, etc.).  Without this pass, single-file transpilers
+  //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
+  //    and will leave the import in the output, causing runtime errors.
+  //    Detection runs once on the final output; helpers are appended for
+  //    analysis only, since their position does not affect references.
+  const helperCode = helpers.join('\n');
+  const willElide = detectTypeOnlyImportNames(
+    ms.toString() + '\n' + helperCode,
+  );
   if (helpers.length > 0) {
     // Insert helpers after the last import / top-level non-class statement,
-    // well before any class that references them.
-    // Detect which imported names are type-only so we skip imports that will
-    // be fully removed by elideTypeOnlyImportsMagicString (step 4).
-    // Inserting at a position inside a soon-to-be-removed range would cause
-    // MagicString to discard the helpers along with the import.
-    const willElide = detectTypeOnlyImportNames(ms.toString());
-
+    // well before any class that references them. Skip imports that will be
+    // fully removed by type elision (step 5): inserting inside a
+    // soon-to-be-removed range would discard the helpers with the import.
     let insertPos = 0;
-    for (const stmt of origSourceFile.statements) {
-      if (ts.isImportDeclaration(stmt)) {
+    for (const stmt of oxcProgram.body as any[]) {
+      const { decl } = toTopLevelStatement(stmt);
+      if (stmt.type === 'ImportDeclaration') {
         // Skip imports that will be entirely removed by type elision
-        if (willElide.size > 0 && stmt.importClause) {
-          const clause = stmt.importClause;
-          const namedBindings =
-            clause.namedBindings && ts.isNamedImports(clause.namedBindings)
-              ? clause.namedBindings.elements
-              : undefined;
-          const defaultName = clause.name;
-          const allElided =
-            (!defaultName || willElide.has(defaultName.text)) &&
-            (!namedBindings ||
-              namedBindings.every(
-                (el) => el.isTypeOnly || willElide.has(el.name.text),
-              ));
+        if (willElide.size > 0 && stmt.specifiers.length > 0) {
+          const allElided = stmt.specifiers.every(
+            (spec: any) =>
+              spec.type === 'ImportNamespaceSpecifier' ||
+              spec.importKind === 'type' ||
+              willElide.has(spec.local.name),
+          );
           if (allElided) continue;
         }
-        insertPos = stmt.getEnd();
+        insertPos = stmt.end;
       } else if (
-        ts.isVariableStatement(stmt) &&
-        !stmt.getText(origSourceFile).includes('class')
+        decl.type === 'VariableDeclaration' &&
+        !sourceCode.slice(stmt.start, stmt.end).includes('class')
       ) {
-        insertPos = stmt.getEnd();
-      } else if (!ts.isExportAssignment(stmt)) {
+        insertPos = stmt.end;
+      } else if (
+        stmt.type !== 'TSExportAssignment' &&
+        !(
+          stmt.type === 'ExportDefaultDeclaration' &&
+          decl.type !== 'ClassDeclaration' &&
+          decl.type !== 'FunctionDeclaration'
+        )
+      ) {
         // Stop at the first class or non-import/non-variable statement
         break;
       }
@@ -1534,30 +1558,12 @@ export function compile(
     // `intro` (from `ms.prepend`), which always emits before any
     // `appendLeft` content at position 0.
     if (insertPos === 0) {
-      ms.appendLeft(0, helpers.join('\n') + '\n');
+      ms.appendLeft(0, helperCode + '\n');
     } else {
-      ms.appendRight(insertPos, '\n' + helpers.join('\n') + '\n');
+      ms.appendRight(insertPos, '\n' + helperCode + '\n');
     }
   }
-  if (sideEffects.length > 0) {
-    ms.append('\n\n' + sideEffects.join('\n'));
-  }
-
-  // 4. Lower class field initializers to constructor assignments when
-  //    useDefineForClassFields is false (standard Angular tsconfig).
-  //    Uses the original OXC AST positions which are still valid for MagicString
-  //    since MagicString tracks edits relative to the original source.
-  //    Ivy static definitions (ɵcmp, ɵfac) are not in the original AST so they
-  //    are unaffected, and shouldLowerField skips static fields regardless.
-  if (!useDefineForClassFields) {
-    lowerClassFields(ms, sourceCode, oxcProgram);
-  }
-
-  // 5. Elide imports that are only used in type positions (type annotations,
-  //    implements, generics, etc.).  Without this pass, single-file transpilers
-  //    like OXC / esbuild cannot tell that `import { SomeType }` is type-only
-  //    and will leave the import in the output, causing runtime errors.
-  elideTypeOnlyImportsMagicString(ms, oxcProgram);
+  elideTypeOnlyImportsMagicString(ms, oxcProgram, willElide);
 
   const map = ms.generateMap({
     source: fileName,
@@ -1580,19 +1586,4 @@ export function compile(
     map,
     resourceDependencies,
   };
-}
-
-function injectAngularImport(sf: ts.SourceFile) {
-  return ts.factory.updateSourceFile(sf, [
-    ts.factory.createImportDeclaration(
-      undefined,
-      ts.factory.createImportClause(
-        false,
-        undefined,
-        ts.factory.createNamespaceImport(ts.factory.createIdentifier('i0')),
-      ),
-      ts.factory.createStringLiteral('@angular/core'),
-    ),
-    ...sf.statements,
-  ]);
 }
