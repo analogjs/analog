@@ -72,4 +72,20 @@ describe('NgLite Compiler', () => {
     expect(result).toContain('ɵɵinject(Logger)');
     expect(result).not.toContain('ɵɵinvalidFactory');
   });
+
+  it('keeps DI token imports used only by an overloaded constructor implementation', () => {
+    const result = compile(
+      `import { Logger } from './logger';
+      @Injectable()
+      export class Svc {
+        constructor();
+        constructor(logger: Logger);
+        constructor(private logger?: Logger) {}
+      }`,
+      'svc.ts',
+    );
+    expect(result).toContain("import { Logger } from './logger'");
+    expect(result).toContain('ɵɵinject(Logger');
+    expect(result).not.toContain('ɵɵinvalidFactory');
+  });
 });

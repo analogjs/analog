@@ -182,9 +182,12 @@ function collectConstructorDiTokens(
   for (const classNode of findAllClasses(ast)) {
     if (!classNode.decorators?.length) continue;
 
-    const ctor = (classNode.body?.body || []).find(
+    const ctors = (classNode.body?.body || []).filter(
       (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor',
     );
+    // Match extractConstructorDeps: overload signatures have no body, so read
+    // the implementation's parameters.
+    const ctor = ctors.find((m: any) => m.value?.body != null) ?? ctors[0];
     if (!ctor) continue;
 
     const params: any[] = ctor.value?.params?.items || ctor.value?.params || [];
