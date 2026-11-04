@@ -2,9 +2,18 @@ import * as path from 'node:path';
 import * as realFs from 'node:fs';
 import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
-import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import {
+  afterEach,
+  assert,
+  beforeEach,
+  describe,
+  it,
+  expect,
+  vi,
+} from 'vitest';
 import { normalizePath, preprocessCSS, resolveConfig } from 'vite';
 import { NgtscProgram } from '@angular/compiler-cli';
+import type { AngularCompilation } from '@angular/build/private';
 
 vi.mock('vite', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vite')>();
@@ -30,17 +39,30 @@ vi.mock('@angular/compiler-cli', async (importOriginal) => {
 // compilation used here has no `close`, so this also stands in for the
 // worker-backed one's teardown.
 const compilationClose = vi.hoisted(() => vi.fn());
+const compilationInitialize = vi.hoisted(() =>
+  vi.fn<(...args: Parameters<AngularCompilation['initialize']>) => void>(),
+);
 
 vi.mock('./utils/devkit.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./utils/devkit.js')>();
   return {
     ...actual,
     // Zone patches MessagePort in this suite; compile in-process.
-    createAngularCompilation: async (jit: boolean, browserOnly: boolean) =>
-      Object.assign(
-        await actual.createAngularCompilation(jit, browserOnly, false),
-        { close: compilationClose },
-      ),
+    createAngularCompilation: async (jit: boolean, browserOnly: boolean) => {
+      const compilation = await actual.createAngularCompilation(
+        jit,
+        browserOnly,
+        false,
+      );
+      const initialize = compilation.initialize.bind(compilation);
+      return Object.assign(compilation, {
+        close: compilationClose,
+        initialize: (...args: Parameters<AngularCompilation['initialize']>) => {
+          compilationInitialize(...args);
+          return initialize(...args);
+        },
+      });
+    },
     // Exercise compilation without Map methods, as with Angular 22.2's cache.
     SourceFileCache: class {
       private cache = new actual.SourceFileCache();
@@ -1563,6 +1585,56 @@ export class AppComponent {}
     },
     60_000,
   );
+
+  it('reads external stylesheets when the compilation API passes empty data', async () => {
+    const mainPlugin = createAppBuildPlugin({
+      experimental: { useAngularCompilationAPI: true },
+    });
+    await mainPlugin.config(
+      { root: fixtureDir, build: {} },
+      { command: 'build' },
+    );
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'production' },
+      'build',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+
+    try {
+      await mainPlugin.buildStart.call(ctx);
+      const hostOptions = compilationInitialize.mock.lastCall?.[1];
+      assert(hostOptions, 'AngularCompilation.initialize() was not called');
+      const { transformStylesheet } = hostOptions;
+
+      // @angular/build >= 22.2.4 passes '' for external stylesheets.
+      const external = await transformStylesheet(
+        '',
+        componentPath,
+        stylePath,
+        0,
+        'AppComponent',
+      );
+      expect(external).toMatch(/h1\s*{\s*color:\s*red;?\s*}/);
+
+      const inline = await transformStylesheet(
+        'h1 { color: blue; }',
+        componentPath,
+        undefined,
+        0,
+        'AppComponent',
+      );
+      expect(inline).toContain('color: blue');
+    } finally {
+      await mainPlugin.buildEnd.call(ctx);
+      await mainPlugin.closeBundle();
+    }
+  }, 60_000);
 
   it('emits JavaScript through the compilation API with isolatedModules enabled', async () => {
     const tsconfigPath = path.join(fixtureDir, 'tsconfig.json');
