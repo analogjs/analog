@@ -1,5 +1,10 @@
 import { NgtscProgram } from '@angular/compiler-cli';
-import { mkdirSync, writeFileSync, promises as fsPromises } from 'node:fs';
+import {
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  promises as fsPromises,
+} from 'node:fs';
 import {
   basename,
   dirname,
@@ -1114,6 +1119,11 @@ export function angular(options?: PluginOptions): Plugin[] {
           order,
           className,
         ) {
+          // @angular/build >= 22.2.4 no longer reads external stylesheets in readResource
+          if (resourceFile && !data) {
+            data = readFileSync(resourceFile, 'utf-8');
+          }
+
           // Only emit external style filenames once the first (inlined)
           // compilation has finished. Returning a filename here while
           // `externalRuntimeStyles` is still off would leak the hash
