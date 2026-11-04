@@ -1,3 +1,9 @@
+## [2.9.6](https://github.com/analogjs/analog/compare/v2.9.5...v2.9.6) (2026-11-04)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** read external stylesheets in compilation API transformStylesheet ([#2735](https://github.com/analogjs/analog/issues/2735)) ([916681d](https://github.com/analogjs/analog/commit/916681d70f78a8735d1e5fa4ba9cd87e39b8a847))
+
 ## [2.9.5](https://github.com/analogjs/analog/compare/v2.9.4...v2.9.5) (2026-11-01)
 
 ### Bug Fixes
