@@ -18,6 +18,14 @@ export interface AnalyzeAnalogRouteFileOptions {
 const PAGE_FILE_RE = /\.page\.ts$/;
 const ROUTER_OUTLET_RE = /\bRouterOutlet\b|<router-outlet(?:\s|>)/;
 
+// Valid AST node types: grouping parentheses, as, satisfies, angle-bracket type assertion
+const WRAPPER_EXPRESSIONS = new Set([
+  'ParenthesizedExpression',
+  'TSAsExpression',
+  'TSSatisfiesExpression',
+  'TSTypeAssertion',
+]);
+
 export function analyzeAnalogRouteFile(
   options: AnalyzeAnalogRouteFileOptions,
 ): AnalogRouteIdiomDiagnostic[] {
@@ -69,9 +77,8 @@ export function analyzeAnalogRouteFile(
   }
 
   if (
-    routeMetaInfo?.hasRedirect &&
-    routeMetaInfo.redirectTo &&
-    !routeMetaInfo.redirectTo.startsWith('/')
+    routeMetaInfo?.redirectTarget &&
+    !routeMetaInfo.redirectTarget.startsWith('/')
   ) {
     diagnostics.push({
       code: 'relative-redirect',
@@ -158,15 +165,18 @@ function getRouteMetaInfo(
   bindingName: string,
 ): {
   hasRedirect: boolean;
-  redirectTo?: string;
+  redirectTarget?: string;
 } | null {
-  const routeMetaNode = getExportedBindingInitializer(program, bindingName);
+  const routeMetaNode = unwrapExpression(
+    getExportedBindingInitializer(program, bindingName),
+  );
 
   if (routeMetaNode?.type !== 'ObjectExpression') {
     return null;
   }
 
-  let redirectTo: string | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let redirectTo: any;
 
   for (const property of routeMetaNode.properties ?? []) {
     if (property?.type !== 'Property') {
@@ -174,16 +184,23 @@ function getRouteMetaInfo(
     }
 
     const keyName = getPropertyName(property.key);
+
     if (keyName !== 'redirectTo') {
       continue;
     }
 
-    redirectTo = getStringValue(property.value);
+    redirectTo = property.value;
+  }
+
+  const value = unwrapExpression(redirectTo);
+
+  if (!value || isNullish(value)) {
+    return { hasRedirect: false };
   }
 
   return {
-    hasRedirect: typeof redirectTo === 'string' && redirectTo.length > 0,
-    redirectTo,
+    hasRedirect: true,
+    redirectTarget: getStaticRedirectTarget(value),
   };
 }
 
@@ -312,24 +329,44 @@ function getPropertyName(
   return undefined;
 }
 
-function getStringValue(
+function getStaticRedirectTarget(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   node: any,
 ): string | undefined {
   if (
-    (node?.type === 'Literal' || node?.type === 'StringLiteral') &&
+    (node.type === 'Literal' || node.type === 'StringLiteral') &&
     typeof node.value === 'string'
   ) {
     return node.value;
   }
 
-  if (
-    node?.type === 'TemplateLiteral' &&
-    node.expressions?.length === 0 &&
-    node.quasis?.length === 1
-  ) {
-    return node.quasis[0].value.cooked ?? node.quasis[0].value.raw;
+  if (node.type === 'TemplateLiteral') {
+    const lead = node.quasis?.[0]?.value.cooked ?? node.quasis?.[0]?.value.raw;
+    return lead || undefined;
   }
 
   return undefined;
+}
+
+function isNullish(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  node: any,
+): boolean {
+  return (
+    (node.type === 'Literal' && node.value === null) ||
+    (node.type === 'Identifier' && node.name === 'undefined') ||
+    (node.type === 'UnaryExpression' && node.operator === 'void')
+  );
+}
+
+function unwrapExpression(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  node: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any | undefined {
+  while (node && WRAPPER_EXPRESSIONS.has(node.type)) {
+    node = node.expression;
+  }
+
+  return node;
 }
