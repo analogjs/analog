@@ -1,3 +1,10 @@
+# [3.0.0-beta.30](https://github.com/analogjs/analog/compare/v3.0.0-beta.29...v3.0.0-beta.30) (2026-11-04)
+
+### Bug Fixes
+
+- **platform:** recognize dynamic redirects in route diagnostics ([a1e8136](https://github.com/analogjs/analog/commit/a1e8136791098cc01b6b4eb45eccf9c58f6fcea6)), closes [analogjs/analog#2709](https://github.com/analogjs/analog/issues/2709)
+- **router:** accept a redirect function in RedirectRouteMeta ([fc605a5](https://github.com/analogjs/analog/commit/fc605a5285c30a7aff36b4a67ec405a3156a77aa))
+
 # [3.0.0-beta.29](https://github.com/analogjs/analog/compare/v3.0.0-beta.28...v3.0.0-beta.29) (2026-11-03)
 
 ### Performance Improvements
