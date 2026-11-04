@@ -76,7 +76,7 @@ export interface DefaultRouteMeta<
 }
 
 export interface RedirectRouteMeta {
-  redirectTo: string;
+  redirectTo: NonNullable<Route['redirectTo']>;
   pathMatch?: Route['pathMatch'];
 }
 

@@ -184,7 +184,12 @@ type InheritedRouteData<Metas, Data = EmptyObject> = Metas extends [
 ]
   ? InheritedRouteData<
       Rest,
-      Merge<Data, RouteMetaData<Exclude<Meta, { redirectTo: string }>>>
+      Merge<
+        Data,
+        RouteMetaData<
+          Exclude<Meta, { redirectTo: NonNullable<Route['redirectTo']> }>
+        >
+      >
     >
   : Data;
 
@@ -203,7 +208,12 @@ type InheritedRouteResources<Metas, Resources = EmptyObject> = Metas extends [
 ]
   ? InheritedRouteResources<
       Rest,
-      Merge<Resources, RouteResourceMap<Exclude<Meta, { redirectTo: string }>>>
+      Merge<
+        Resources,
+        RouteResourceMap<
+          Exclude<Meta, { redirectTo: NonNullable<Route['redirectTo']> }>
+        >
+      >
     >
   : Resources;
 

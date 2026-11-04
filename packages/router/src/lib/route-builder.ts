@@ -243,7 +243,7 @@ function toRoutes<TFile>(
             module!().then((m) => {
               if (import.meta.env.DEV) {
                 const hasModuleDefault = !!m.default;
-                const hasRedirect = !!m.routeMeta?.redirectTo;
+                const hasRedirect = m.routeMeta?.redirectTo != null;
 
                 if (!hasModuleDefault && !hasRedirect) {
                   console.warn(
