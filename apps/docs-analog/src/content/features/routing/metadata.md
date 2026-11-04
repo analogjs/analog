@@ -68,6 +68,15 @@ export const routeMeta: RouteMeta = {
 
 Navigating to `/cities` redirects to `/cities/new-york`.
 
+Dynamic redirects are also supported. `redirectTo` accepts Angular's `RedirectFunction`, which provides the matched route's params, query params and data, can use `inject()`, and returns the target path or a `UrlTree`:
+
+```ts
+export const routeMeta: RouteMeta = {
+  redirectTo: ({ params }) => `/cities/${params['cityId']}`,
+  pathMatch: 'full',
+};
+```
+
 :::note
 
 Nested redirects always require an absolute path.
