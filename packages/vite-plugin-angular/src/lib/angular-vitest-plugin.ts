@@ -79,6 +79,7 @@ export function angularVitestPlugin(): Plugin {
             loader: 'js',
             format: 'esm',
             target: 'es2016',
+            supported: { 'import-meta': true },
             sourcemap: true,
             sourcefile: id,
           });
