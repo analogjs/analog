@@ -75,5 +75,5 @@ export function toRouteConfig(
 function isRedirectRouteMeta(
   routeMeta: RouteMeta<never>,
 ): routeMeta is RedirectRouteMeta {
-  return !!routeMeta.redirectTo;
+  return routeMeta.redirectTo != null;
 }

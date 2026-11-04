@@ -1,10 +1,14 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { ActivatedRouteSnapshot } from '@angular/router';
+import type {
+  ActivatedRouteSnapshot,
+  PartialMatchRouteSnapshot,
+} from '@angular/router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX, BASE_URL, INTERNAL_FETCH } from '../../tokens/src';
+import type { RouteMeta } from './models';
 import { toRouteConfig } from './route-config';
 import { ANALOG_META_KEY, ANALOG_PAGE_ENDPOINTS } from './endpoints';
 import { requestContextInterceptor } from './request-context';
@@ -21,6 +25,23 @@ describe('toRouteConfig', () => {
     const meta = { redirectTo: '/home', pathMatch: 'full' as const };
     const config = toRouteConfig(meta);
     expect(config.redirectTo).toBe('/home');
+  });
+
+  it('returns a redirect function config unchanged', () => {
+    const redirectTo = ({ params }: PartialMatchRouteSnapshot) =>
+      `/users/${params['id']}`;
+    const meta: RouteMeta = { redirectTo, pathMatch: 'full' };
+    const config = toRouteConfig(meta);
+
+    expect(config.redirectTo).toBe(redirectTo);
+    expect(config.pathMatch).toBe('full');
+  });
+
+  it('keeps redirectTo off non-redirect metas', () => {
+    // @ts-expect-error redirectTo belongs to redirect routes only
+    const meta: RouteMeta = { title: 'Users', redirectTo: '/users' };
+
+    expect(toRouteConfig(meta).redirectTo).toBe('/users');
   });
 
   // Regression: content routes (from .md files in the pages directory) are
