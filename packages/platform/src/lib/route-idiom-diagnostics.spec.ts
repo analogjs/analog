@@ -81,6 +81,159 @@ describe('route-idiom-diagnostics', () => {
     );
   });
 
+  it('does not warn about missing default exports for function redirects', () => {
+    const diagnostics = analyzeAnalogRouteFile({
+      filename: '/workspace/src/app/pages/users/[userId]/index.page.ts',
+      code: [
+        'export const routeMeta = {',
+        "  redirectTo: ({ params }) => `/users/${params['userId']}/profile`,",
+        "  pathMatch: 'full',",
+        '};',
+      ].join('\n'),
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
+      'missing-default-export',
+    );
+  });
+
+  it('does not warn about missing default exports for identifier redirects', () => {
+    const diagnostics = analyzeAnalogRouteFile({
+      filename: '/workspace/src/app/pages/index.page.ts',
+      code: [
+        "const redirect = () => '/';",
+        '',
+        'export const routeMeta = {',
+        '  redirectTo: redirect,',
+        "  pathMatch: 'full',",
+        '};',
+      ].join('\n'),
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
+      'missing-default-export',
+    );
+  });
+
+  it('treats an absolute template redirect as a redirect-only route', () => {
+    const diagnostics = analyzeAnalogRouteFile({
+      filename: '/workspace/src/app/pages/index.page.ts',
+      code: [
+        "const id = 'me';",
+        '',
+        'export const routeMeta = {',
+        '  redirectTo: `/users/${id}`,',
+        "  pathMatch: 'full',",
+        '};',
+      ].join('\n'),
+    });
+
+    const codes = diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(codes).not.toContain('missing-default-export');
+    expect(codes).not.toContain('relative-redirect');
+  });
+
+  it('warns on relative template redirect targets', () => {
+    const diagnostics = analyzeAnalogRouteFile({
+      filename: '/workspace/src/app/pages/cities/index.page.ts',
+      code: [
+        "const id = 'new-york';",
+        '',
+        'export const routeMeta = {',
+        '  redirectTo: `cities/${id}`,',
+        "  pathMatch: 'full',",
+        '};',
+      ].join('\n'),
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'relative-redirect',
+    );
+  });
+
+  it('does not warn on template redirect targets without a static prefix', () => {
+    const diagnostics = analyzeAnalogRouteFile({
+      filename: '/workspace/src/app/pages/index.page.ts',
+      code: [
+        "const prefix = '/account';",
+        '',
+        'export const routeMeta = {',
+        '  redirectTo: `${prefix}/settings`,',
+        "  pathMatch: 'full',",
+        '};',
+      ].join('\n'),
+    });
+
+    const codes = diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(codes).not.toContain('missing-default-export');
+    expect(codes).not.toContain('relative-redirect');
+  });
+
+  it.each([
+    ['satisfies', 'export const routeMeta = {', '} satisfies RouteMeta;'],
+    ['as', 'export const routeMeta = {', '} as RouteMeta;'],
+    ['a type assertion', 'export const routeMeta = <RouteMeta>{', '};'],
+    ['parentheses', 'export const routeMeta = ({', '});'],
+  ])(
+    'does not warn about missing default exports for valid redirect-only routes wrapped in %s',
+    (_wrapper, open, close) => {
+      const diagnostics = analyzeAnalogRouteFile({
+        filename: '/workspace/src/app/pages/index.page.ts',
+        code: [
+          "import type { RouteMeta } from '@analogjs/router';",
+          '',
+          open,
+          "  redirectTo: '/home',",
+          "  pathMatch: 'full',",
+          close,
+        ].join('\n'),
+      });
+
+      expect(diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
+        'missing-default-export',
+      );
+    },
+  );
+
+  it.each(['null', 'undefined', 'null as any'])(
+    'warns about missing default exports when redirectTo is %s',
+    (value) => {
+      const diagnostics = analyzeAnalogRouteFile({
+        filename: '/workspace/src/app/pages/index.page.ts',
+        code: [
+          'export const routeMeta = {',
+          `  redirectTo: ${value},`,
+          "  pathMatch: 'full',",
+          '};',
+        ].join('\n'),
+      });
+
+      expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+        'missing-default-export',
+      );
+    },
+  );
+
+  it('warns when function redirect routes also default-export a component', () => {
+    const diagnostics = analyzeAnalogRouteFile({
+      filename: '/workspace/src/app/pages/index.page.ts',
+      code: [
+        'export const routeMeta = {',
+        "  redirectTo: () => '/home',",
+        "  pathMatch: 'full',",
+        '};',
+        '',
+        'export default class HomeRedirectPage {}',
+      ].join('\n'),
+    });
+
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      'redirect-with-component',
+    );
+  });
+
   it('warns when a layout-looking route does not reference RouterOutlet', () => {
     const diagnostics = analyzeAnalogRouteFile({
       filename: '/workspace/src/app/pages/products.page.ts',
