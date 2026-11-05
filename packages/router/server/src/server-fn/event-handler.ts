@@ -120,5 +120,12 @@ export async function callServerFn(
       responseHeaders.append(key, item);
     }
   }
+  if (isNullBodyStatus(status)) {
+    return new Response(null, { status, headers: responseHeaders });
+  }
   return Response.json(body ?? null, { status, headers: responseHeaders });
+}
+
+function isNullBodyStatus(status: number): boolean {
+  return status === 204 || status === 205 || status === 304;
 }

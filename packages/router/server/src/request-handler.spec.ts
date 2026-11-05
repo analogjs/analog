@@ -28,6 +28,12 @@ const manifest: AnalogServerManifest = {
       serverFn({ id: 'shout', method: 'POST' }, async (input: unknown) => ({
         text: (input as { text: string }).text.toUpperCase(),
       })),
+    async () =>
+      serverFn(
+        { id: 'noContent', method: 'POST' },
+        async () =>
+          new Response(null, { status: 204, headers: { 'x-done': '1' } }),
+      ),
   ],
   pageEndpoints: {
     '/api/_analog/pages/users/:id': async () => ({
@@ -198,6 +204,19 @@ describe('createAnalogRequestHandler', () => {
     expect(await malformed?.json()).toEqual({
       message: 'Malformed request body',
     });
+  });
+
+  it('returns an empty body for null-body statuses', async () => {
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/_analog/fn/noContent`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin },
+      }),
+    );
+
+    expect(response?.status).toBe(204);
+    expect(response?.headers.get('x-done')).toBe('1');
+    expect(response?.body).toBeNull();
   });
 
   it('reports a failing server config only on server function requests', async () => {
