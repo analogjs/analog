@@ -683,7 +683,7 @@ function registerServerFns(nitro: Nitro, context: NitroPluginContext): void {
 
   nitro.options.handlers.push(getServerFnDispatchHandler());
   nitro.options.virtual[SERVER_FN_DISPATCH_VIRTUAL] =
-    buildServerFnDispatchModule({ modules, appConfigModule });
+    buildServerFnDispatchModule({ modules, appConfigModule, root });
 }
 
 /**
