@@ -1,3 +1,9 @@
+# [3.0.0-beta.32](https://github.com/analogjs/analog/compare/v3.0.0-beta.31...v3.0.0-beta.32) (2026-11-05)
+
+### Bug Fixes
+
+- **router:** fix SSR error responses, transfer state, request bodies, query keys and meta tags ([#2750](https://github.com/analogjs/analog/issues/2750)) ([9951424](https://github.com/analogjs/analog/commit/99514248fa4d31da4fd11b9a3a4aa3e340e7ba9c))
+
 # [3.0.0-beta.31](https://github.com/analogjs/analog/compare/v3.0.0-beta.30...v3.0.0-beta.31) (2026-11-05)
 
 ### Bug Fixes
