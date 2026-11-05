@@ -10,6 +10,7 @@ import {
 
 function makeCtx(
   url = 'http://localhost/',
+  request = new Request(url),
 ): Parameters<ReturnType<typeof definePageLoadQueries>>[0] {
   return {
     params: {},
@@ -19,7 +20,7 @@ function makeCtx(
     // `definePageLoad` reads the URL from `event.web.request` when the
     // event carries a web request, which is the path used here.
     event: {
-      web: { request: new Request(url), url: new URL(url) },
+      web: { request, url: new URL(url) },
       node: { req: {}, res: {} },
     } as never,
   };
@@ -78,6 +79,50 @@ describe('definePageLoadQueries', () => {
     await load(makeCtx());
 
     expect(factory).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels pending queries when the request aborts', async () => {
+    const controller = new AbortController();
+    const request = new Request('http://localhost/', {
+      signal: controller.signal,
+    });
+    let querySignal: AbortSignal | undefined;
+
+    const load = definePageLoadQueries({
+      handler: async ({ client }) => {
+        const prefetch = client.prefetchQuery({
+          queryKey: ['posts'],
+          queryFn: ({ signal }) => {
+            querySignal = signal;
+            return new Promise((_, reject) =>
+              signal.addEventListener('abort', () => reject(signal.reason)),
+            );
+          },
+        });
+        controller.abort();
+        await prefetch;
+      },
+    });
+
+    await load(makeCtx('http://localhost/', request));
+
+    expect(querySignal?.aborted).toBe(true);
+  });
+
+  it('does not run the handler when the request is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const request = new Request('http://localhost/', {
+      signal: controller.signal,
+    });
+    const handler = vi.fn();
+
+    const load = definePageLoadQueries({ handler });
+
+    await expect(load(makeCtx('http://localhost/', request))).rejects.toThrow(
+      expect.objectContaining({ name: 'AbortError' }),
+    );
+    expect(handler).not.toHaveBeenCalled();
   });
 
   it('short-circuits with a 422 Response before calling the handler when params validation fails', async () => {

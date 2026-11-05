@@ -1,5 +1,5 @@
 import type { HttpClient } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+import { fromEvent, lastValueFrom, takeUntil, type Observable } from 'rxjs';
 import type {
   CreateQueryOptions,
   CreateMutationOptions,
@@ -34,6 +34,13 @@ function buildUrl(base: string, params?: Record<string, unknown>): string {
   return `${base}${separator}${parts.join('&')}`;
 }
 
+function fetchUntilAborted<T>(
+  request: Observable<T>,
+  signal: AbortSignal,
+): Promise<T> {
+  return lastValueFrom(request.pipe(takeUntil(fromEvent(signal, 'abort'))));
+}
+
 export function serverQueryOptions<
   TRoute extends ApiRouteHandler<any, any, any>,
   TError = DefaultError,
@@ -50,11 +57,12 @@ export function serverQueryOptions<
   const { query, ...rest } = options;
   return {
     ...rest,
-    queryFn: () =>
-      lastValueFrom(
+    queryFn: ({ signal }: { signal: AbortSignal }) =>
+      fetchUntilAborted(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, query as Record<string, any>),
         ),
+        signal,
       ),
   } as CreateQueryOptions<InferRouteResult<TRoute>, TError, TData, TQueryKey>;
 }
@@ -83,7 +91,13 @@ export function serverMutationOptions<
 > {
   return {
     mutationFn: (body: InferRouteBody<TRoute>) =>
-      lastValueFrom(http.post<InferRouteResult<TRoute>>(url, body)),
+      lastValueFrom(
+        http.post<InferRouteResult<TRoute>>(
+          url,
+          body === undefined ? null : JSON.stringify(body),
+          { headers: { 'content-type': 'application/json' } },
+        ),
+      ),
     ...options,
   } as CreateMutationOptions<
     InferRouteResult<TRoute>,
@@ -130,11 +144,12 @@ export function serverInfiniteQueryOptions<
   const { query: buildQuery, ...rest } = options;
   return {
     ...rest,
-    queryFn: (context: { pageParam: TPageParam }) =>
-      lastValueFrom(
+    queryFn: (context: { pageParam: TPageParam; signal: AbortSignal }) =>
+      fetchUntilAborted(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, buildQuery(context) as Record<string, any>),
         ),
+        context.signal,
       ),
   } as CreateInfiniteQueryOptions<
     InferRouteResult<TRoute>,
