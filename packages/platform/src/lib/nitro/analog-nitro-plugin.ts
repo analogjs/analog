@@ -724,23 +724,29 @@ const TEMPLATE = ${JSON.stringify(template)};
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
   // 'x-analog-no-ssr' is stamped on the route rule headers by
-  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // writes those headers after the handler runs, so read the matched rules.
+  // injectAnalogRouteRuleHeaders. Nitro writes those headers after the
+  // handler runs, so read the matched rules.
   const { routeRules } = getRouteRules(event.req.method, event.url.pathname);
   if (routeRules?.headers?.['x-analog-no-ssr'] === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
   // The SSR service renders without a Node response, so forward the
-  // \`streaming: false\` rule on the request for the renderer to read.
+  // \`streaming: false\` rule on the request for the renderer to read. Only
+  // the route rule decides it, never the client.
+  const headers = new Headers(event.req.headers);
+  headers.delete('x-analog-no-ssr');
+  headers.delete('x-analog-no-streaming');
   if (routeRules?.headers?.['x-analog-no-streaming'] === 'true') {
-    const headers = new Headers(event.req.headers);
     headers.set('x-analog-no-streaming', 'true');
-    return service.fetch(
-      new Request(event.req.url, { method: event.req.method, headers }),
-    );
   }
-  return service.fetch(event.req);
+  return service.fetch(
+    new Request(event.req.url, {
+      method: event.req.method,
+      headers,
+      signal: event.req.signal,
+    }),
+  );
 });
 `;
 }
@@ -881,12 +887,12 @@ function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
 }
 
 /**
- * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
- * any rule with `ssr: false`, and `x-analog-no-streaming: true` onto any rule
- * with `streaming: false`. Kept as response-header hints for downstream
- * consumers (CDN, edge logic); the actual SSR short-circuit happens inside
- * the SSR renderer virtual above, and the router falls back to a buffered
- * render when it sees the streaming hint.
+ * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr` onto any rule
+ * setting `ssr`, and `x-analog-no-streaming` onto any rule setting
+ * `streaming`. Nitro drops `false` values when it merges rules, so the headers
+ * carry them, and a narrower `true` rule overrides with `'false'`. The SSR
+ * renderer virtual above reads them from the matched rules, and they reach
+ * the response as hints for downstream consumers (CDN, edge logic).
  */
 export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   const routeRules = nitro.options.routeRules as
@@ -902,11 +908,14 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   if (!routeRules) return;
 
   for (const rule of Object.values(routeRules)) {
-    if (rule?.ssr === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    if (typeof rule?.ssr === 'boolean') {
+      rule.headers = { ...rule.headers, 'x-analog-no-ssr': String(!rule.ssr) };
     }
-    if (rule?.streaming === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
+    if (typeof rule?.streaming === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-streaming': String(!rule.streaming),
+      };
     }
   }
 }
@@ -978,13 +987,6 @@ export default {
     // Preserve the query string so Angular's router + injectQuery() and
     // server data loaders that read from req.url see the full path+query.
     const requestUrl = requestPath + url.search;
-
-    if (req.headers.get('x-analog-no-ssr') === 'true') {
-      return new Response(TEMPLATE, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
-    }
 
     const reqShim = {
       headers: Object.fromEntries(req.headers.entries()),

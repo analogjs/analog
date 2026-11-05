@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createRouteRulesMatcher } from 'h3/rules';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -42,6 +43,13 @@ function callLoad(plugin: any, id: string) {
     return hook.call({} as any, id);
   }
   return hook?.handler.call({} as any, id);
+}
+
+function runModule(code: string, imports: Record<string, unknown>) {
+  return new Function(
+    ...Object.keys(imports),
+    code.replace(/^import .+;$/gm, '').replace('export default', 'return'),
+  )(...Object.values(imports));
 }
 
 describe('analogNitroPlugin', () => {
@@ -245,7 +253,6 @@ describe('analogNitroPlugin', () => {
     // ship markup pointing at an entry that a build does not emit.
     expect(code).toContain('/assets/main-abc.js');
     expect(code).not.toContain('id=\\"app\\"');
-    expect(code).toContain("'x-analog-no-ssr'");
   });
 
   it('fails loudly when a build produced no client document', () => {
@@ -360,6 +367,88 @@ describe('analogNitroPlugin', () => {
     for (const hook of hooksFor('prerender:init')) hook(prerenderer);
     expect(prerenderer.options.renderer).toEqual({
       handler: '#analog/ssr-renderer',
+    });
+  });
+
+  describe('SSR renderer route rules', () => {
+    async function createRenderer(routeRules: Record<string, object>) {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      const nitroMock: any = {
+        options: {
+          rootDir: projectRoot,
+          buildDir: join(projectRoot, '.nitro'),
+          handlers: [],
+          scanDirs: [],
+          virtual: {},
+          renderer: {},
+          routeRules,
+          dev: true,
+        },
+        hooks: { hook: vi.fn() },
+      };
+      await (plugin as any).nitro.setup(nitroMock);
+
+      const matchRouteRules = createRouteRulesMatcher(
+        nitroMock.options.routeRules,
+      );
+      const fetch = vi.fn(async (_req: Request) => new Response('rendered'));
+      const handler = runModule(
+        nitroMock.options.virtual['#analog/ssr-renderer'](),
+        {
+          defineHandler: (fn: unknown) => fn,
+          getRouteRules: matchRouteRules,
+          ssr: { fetch },
+        },
+      );
+      const render = async (path: string, headers?: Record<string, string>) => {
+        const req = new Request(`http://localhost${path}`, { headers });
+        const result = await handler({
+          req,
+          url: new URL(req.url),
+          res: { headers: new Headers() },
+        });
+        return { result, forwarded: fetch.mock.calls.at(-1)?.[0] };
+      };
+      return { render, fetch };
+    }
+
+    it('lets a narrower ssr: true rule override a broader ssr: false', async () => {
+      const { render, fetch } = await createRenderer({
+        '/**': { ssr: false },
+        '/live/**': { ssr: true },
+      });
+
+      expect(typeof (await render('/other')).result).toBe('string');
+      expect(fetch).not.toHaveBeenCalled();
+      expect((await render('/live/page')).result).toBeInstanceOf(Response);
+    });
+
+    it('lets a narrower streaming: true rule override a broader streaming: false', async () => {
+      const { render } = await createRenderer({
+        '/**': { streaming: false },
+        '/live/**': { streaming: true },
+      });
+
+      const buffered = (await render('/other')).forwarded;
+      expect(buffered?.headers.get('x-analog-no-streaming')).toBe('true');
+      const streamed = (await render('/live/page')).forwarded;
+      expect(streamed?.headers.has('x-analog-no-streaming')).toBe(false);
+    });
+
+    it('ignores client-sent ssr and streaming opt-out headers', async () => {
+      const { render } = await createRenderer({});
+
+      const { result, forwarded } = await render('/page', {
+        'x-analog-no-ssr': 'true',
+        'x-analog-no-streaming': 'true',
+        accept: 'text/html',
+      });
+
+      expect(result).toBeInstanceOf(Response);
+      expect(forwarded?.headers.has('x-analog-no-ssr')).toBe(false);
+      expect(forwarded?.headers.has('x-analog-no-streaming')).toBe(false);
+      expect(forwarded?.headers.get('accept')).toBe('text/html');
     });
   });
 
