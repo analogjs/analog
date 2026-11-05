@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -401,6 +401,113 @@ export class ExtComponent {}
         typeof fakePath === 'string' && fakePath.endsWith('.scss'),
     );
     expect(scssCall).toBeDefined();
+  });
+
+  async function transformCssStyleUrlComponent(
+    plugin: ReturnType<typeof buildPlugin>,
+  ) {
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`;
+    try {
+      await getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        code,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      );
+    } catch {
+      // Only the preprocessCSS calls are asserted.
+    }
+  }
+
+  it('runs an external .css styleUrl through preprocessCSS', async () => {
+    await transformCssStyleUrlComponent(buildPlugin());
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringContaining('display: block'),
+      expect.stringMatching(/\.css$/),
+      undefined,
+    );
+  });
+
+  it('preprocesses an external styleUrl at its own path', async () => {
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    try {
+      await getTransformHandler(buildPlugin()).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './__fixtures__/test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/ext.component.ts`,
+      );
+    } catch {
+      // Only the preprocessCSS calls are asserted.
+    }
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringContaining('display: block'),
+      resolve(__dirname, 'compiler/__fixtures__/test.component.css'),
+      undefined,
+    );
+  });
+
+  it('warns when a stylesheet cannot be processed', async () => {
+    const plugin = buildPlugin();
+    const logger = { warn: vi.fn() };
+    await (plugin.configResolved as any)({ plugins: [], logger });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    mockPreprocessCSS.mockRejectedValue(new Error('Unknown utility'));
+    try {
+      await getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      );
+    } catch {
+      // Only the warning is asserted.
+    }
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/\.css.*Unknown utility/s),
+      expect.anything(),
+    );
+  });
+
+  it('applies a registered style preprocessor before preprocessCSS', async () => {
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [
+        {
+          name: 'prepender',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerStylePreprocessor(
+                (code: string) => `@reference "tailwindcss";\n${code}`,
+              );
+            },
+          },
+        },
+      ],
+    });
+
+    await transformCssStyleUrlComponent(plugin);
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringMatching(/^@reference "tailwindcss";\n:host/),
+      expect.stringMatching(/\.css$/),
+      expect.anything(),
+    );
   });
 });
 

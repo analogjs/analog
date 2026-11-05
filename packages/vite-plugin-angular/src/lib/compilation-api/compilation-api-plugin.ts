@@ -29,6 +29,7 @@ import {
   debugStylesV,
   type DebugOption,
 } from '../utils/debug.js';
+import { warnStylesheetError } from '../utils/stylesheet-warning.js';
 import {
   getTsConfigPath,
   createTsConfigGetter,
@@ -365,6 +366,11 @@ export function angularCompilationPlugin(
           order: number,
           className: string | null,
         ) {
+          // @angular/build >= 22.2.4 no longer reads external stylesheets in readResource
+          if (resourceFile && !data) {
+            data = readFileSync(resourceFile, 'utf-8');
+          }
+
           const filename =
             resourceFile ??
             containingFile.replace(
@@ -435,6 +441,7 @@ export function angularCompilationPlugin(
               resourceFile: resourceFile ?? '(inline)',
               error: String(e),
             });
+            warnStylesheetError(resolvedConfig.logger, filename, e);
           }
 
           return stylesheetResult?.code || '';

@@ -24,7 +24,10 @@ describe('angularCompilationPlugin', () => {
     )!;
   }
 
-  async function configure(plugin: ReturnType<typeof getCompilerPlugin>) {
+  async function configure(
+    plugin: ReturnType<typeof getCompilerPlugin>,
+    logger?: { warn: (msg: string) => void },
+  ) {
     await (plugin.config as any)(
       { root: tempRoot, mode: 'development' },
       { command: 'serve', mode: 'development' },
@@ -36,6 +39,7 @@ describe('angularCompilationPlugin', () => {
       build: {},
       server: { hmr: true },
       plugins: [],
+      logger,
     });
   }
 
@@ -209,6 +213,105 @@ describe('angularCompilationPlugin', () => {
     const hostOptions = initializeMock.mock.calls[0][1];
     expect(hostOptions.processWebWorker('./worker.ts')).toBe('./worker.ts');
     expect(emitAffectedFilesMock).toHaveBeenCalledOnce();
+  });
+
+  it('reads external stylesheets when the compilation API passes empty data', async () => {
+    const initializeMock = vi.fn().mockResolvedValue({
+      externalStylesheets: new Map(),
+      templateUpdates: new Map(),
+    });
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: initializeMock,
+      update: vi.fn(),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi.fn().mockResolvedValue([]),
+    });
+    preprocessCSSMock.mockImplementation(async (code: string) => ({ code }));
+
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      include: [],
+    });
+    await configure(plugin);
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+
+    const { transformStylesheet } = initializeMock.mock.calls[0][1];
+    const componentPath = join(tempRoot, 'app.component.ts');
+    const stylePath = join(tempRoot, 'app.component.css');
+    writeFileSync(stylePath, 'h1 { color: red; }');
+
+    // @angular/build >= 22.2.4 passes '' for external stylesheets.
+    await expect(
+      transformStylesheet('', componentPath, stylePath, 0, 'AppComponent'),
+    ).resolves.toContain('color: red');
+    await expect(
+      transformStylesheet(
+        'h1 { color: blue; }',
+        componentPath,
+        null,
+        0,
+        'AppComponent',
+      ),
+    ).resolves.toContain('color: blue');
+  });
+
+  it('warns when a stylesheet cannot be processed', async () => {
+    const initializeMock = vi.fn().mockResolvedValue({
+      externalStylesheets: new Map(),
+      templateUpdates: new Map(),
+    });
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: initializeMock,
+      update: vi.fn(),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi.fn().mockResolvedValue([]),
+    });
+    preprocessCSSMock.mockRejectedValue(new Error('Unknown utility'));
+    const logger = { warn: vi.fn() };
+
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      include: [],
+    });
+    await configure(plugin, logger);
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+
+    const { transformStylesheet } = initializeMock.mock.calls[0][1];
+    const stylePath = join(tempRoot, 'app.component.css');
+    await transformStylesheet(
+      '.a { @apply bogus; }',
+      join(tempRoot, 'app.component.ts'),
+      stylePath,
+      0,
+      'AppComponent',
+    );
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/app\.component\.css.*Unknown utility/s),
+      expect.anything(),
+    );
   });
 
   it('hands the stylesheet registry to analog.setup configurators', async () => {

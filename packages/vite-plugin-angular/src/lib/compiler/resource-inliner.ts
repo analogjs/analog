@@ -9,14 +9,13 @@ export interface InlineResourceResult {
   /** The modified source code, or the original if no changes were needed. */
   code: string;
   /**
-   * Source extension (without the leading dot, lower-cased — e.g. `scss`) of
-   * each inlined external style, keyed by its position in the flat per-file
-   * style list produced by {@link extractInlineStyles}. Lets the caller run
-   * each external `styleUrl` through the right preprocessor by its own file
-   * extension, independent of the `inlineStylesExtension` option (which governs
-   * truly-inline `styles: [...]` template strings).
+   * Absolute path of each inlined external style, keyed by its position in
+   * the flat per-file style list produced by {@link extractInlineStyles}. Lets
+   * the caller preprocess each external `styleUrl` as its own file (extension
+   * and relative imports), independent of the `inlineStylesExtension` option
+   * (which governs truly-inline `styles: [...]` template strings).
    */
-  styleExtensions: Map<number, string>;
+  stylePaths: Map<number, string>;
   /**
    * Absolute paths of every external resource file successfully read and
    * inlined. Callers record these so a later edit to the resource file can
@@ -57,17 +56,17 @@ function countInlineStyleLiterals(arrayExpr: any): number {
  * merged into that existing array instead of emitting a second `styles`
  * property (which would be a duplicate object literal key).
  *
- * Returns the modified source code plus the per-style-index extension map
+ * Returns the modified source code plus the per-style-index path map
  * (see {@link InlineResourceResult}).
  */
 export async function inlineResourceUrls(
   code: string,
   fileName: string,
 ): Promise<InlineResourceResult> {
-  const styleExtensions = new Map<number, string>();
+  const stylePaths = new Map<number, string>();
 
   if (!code.includes('templateUrl') && !code.includes('styleUrl')) {
-    return { code, styleExtensions, resourceDependencies: [] };
+    return { code, stylePaths, resourceDependencies: [] };
   }
 
   const { program } = parseOxc(fileName, code);
@@ -223,13 +222,13 @@ export async function inlineResourceUrls(
 
     // Collect the props we want to rewrite. Contents from styleUrl /
     // styleUrls are accumulated so that multiple url-based props in one
-    // decorator collapse into a single `styles` array write. `extensions`
-    // tracks each content's source extension in the same order.
+    // decorator collapse into a single `styles` array write. `paths`
+    // tracks each content's source path in the same order.
     const templateUrlRewrites: Array<{ prop: any; content: string }> = [];
     const cssProps: Array<{
       prop: any;
       contents: string[];
-      extensions: string[];
+      paths: string[];
     }> = [];
 
     for (const rp of plan.resourceProps) {
@@ -246,14 +245,13 @@ export async function inlineResourceUrls(
           cssProps.push({
             prop: rp.prop,
             contents: [content],
-            extensions: [extensionOf(rp.resolvedPath)],
+            paths: [rp.resolvedPath],
           });
         }
       } else {
         // styleUrls is all-or-nothing: keep the original property if any
         // entry failed to read.
         const contents: string[] = [];
-        const extensions: string[] = [];
         let allRead = true;
         for (const p of rp.resolvedPaths) {
           const content = fileContents.get(p);
@@ -262,10 +260,9 @@ export async function inlineResourceUrls(
             break;
           }
           contents.push(content);
-          extensions.push(extensionOf(p));
         }
         if (allRead && contents.length > 0) {
-          cssProps.push({ prop: rp.prop, contents, extensions });
+          cssProps.push({ prop: rp.prop, contents, paths: rp.resolvedPaths });
         }
       }
     }
@@ -281,7 +278,7 @@ export async function inlineResourceUrls(
 
     if (cssProps.length > 0) {
       const allContents = cssProps.flatMap((c) => c.contents);
-      const allExtensions = cssProps.flatMap((c) => c.extensions);
+      const allPaths = cssProps.flatMap((c) => c.paths);
 
       if (existingStylesArray) {
         // Filter out null holes in case the source already has a sparse array.
@@ -348,9 +345,7 @@ export async function inlineResourceUrls(
       // The appended external styles occupy the flat indices after any
       // pre-existing inline styles for this component.
       const externalBase = flatStyleBase + existingInlineCount;
-      allExtensions.forEach((ext, k) => {
-        if (ext) styleExtensions.set(externalBase + k, ext);
-      });
+      allPaths.forEach((p, k) => stylePaths.set(externalBase + k, p));
       flatStyleBase = externalBase + allContents.length;
     } else {
       flatStyleBase += existingInlineCount;
@@ -359,16 +354,11 @@ export async function inlineResourceUrls(
 
   return {
     code: changed ? ms.toString() : code,
-    styleExtensions,
+    stylePaths,
     resourceDependencies: [...pathsToRead].filter(
       (p) => fileContents.get(p) !== undefined,
     ),
   };
-}
-
-/** Lower-cased file extension without the leading dot (e.g. `scss`), or `''`. */
-function extensionOf(filePath: string): string {
-  return path.extname(filePath).slice(1).toLowerCase();
 }
 
 /**

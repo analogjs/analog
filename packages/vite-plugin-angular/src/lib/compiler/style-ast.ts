@@ -76,8 +76,30 @@ export function extractInlineStyles(
   fileName: string,
   program?: ReturnType<typeof parseSync>['program'],
 ): string[] {
-  const styles: string[] = [];
   program ??= parseOxc(fileName, code).program;
+  return [...componentInlineStyles(program).values()].flat();
+}
+
+/**
+ * Map each @Component decorator node to the range of its styles in the flat
+ * per-file list returned by {@link extractInlineStyles}.
+ */
+export function inlineStyleRanges(
+  program: ReturnType<typeof parseSync>['program'],
+): Map<any, { start: number; count: number }> {
+  const ranges = new Map<any, { start: number; count: number }>();
+  let start = 0;
+  for (const [decorator, styles] of componentInlineStyles(program)) {
+    ranges.set(decorator, { start, count: styles.length });
+    start += styles.length;
+  }
+  return ranges;
+}
+
+function componentInlineStyles(
+  program: ReturnType<typeof parseSync>['program'],
+): Map<any, string[]> {
+  const result = new Map<any, string[]>();
 
   for (const node of program.body) {
     const decl = getClassDeclaration(node);
@@ -90,6 +112,9 @@ export function extractInlineStyles(
 
       const arg = expr.arguments?.[0];
       if (!arg || arg.type !== 'ObjectExpression') continue;
+
+      const styles: string[] = [];
+      result.set(dec, styles);
 
       for (const prop of arg.properties) {
         if (prop.type !== 'Property') continue;
@@ -122,5 +147,5 @@ export function extractInlineStyles(
     }
   }
 
-  return styles;
+  return result;
 }
