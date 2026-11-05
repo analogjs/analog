@@ -41,6 +41,8 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
+import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
 import {
   discoverAnalogIntegrations,
@@ -82,6 +84,7 @@ export function fastCompilePlugin(
   let resolvedConfig: ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];
+  let stylePreprocessor: StylePreprocessor | undefined;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
 
@@ -652,47 +655,51 @@ export function fastCompilePlugin(
     // so its program can never be reused here.
     const { program: oxcProgram } = parseOxc(id, code);
 
-    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
-    // whenever a style needs a non-`css` preprocessor — either the configured
-    // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
-    // own extension.
+    // Pre-resolve component styles through the registered style preprocessor
+    // and Vite's CSS pipeline (Sass/Less, PostCSS, Tailwind), like ngtsc does.
+    // External styleUrls are processed by their own extension; truly inline
+    // `styles: [...]` use `inlineStylesExtension`.
     let resolvedInlineStyles: Map<number, string> | undefined;
+    const styleStrings = extractInlineStyles(code, id, oxcProgram);
 
-    const inlineExt = pluginOptions.inlineStylesExtension;
-    const styleNeedsPreprocess = (ext: string) => ext !== '' && ext !== 'css';
-
-    if (styleNeedsPreprocess(inlineExt) || styleExtensions.size > 0) {
-      const styleStrings = extractInlineStyles(code, id, oxcProgram);
-
-      if (styleStrings.length > 0) {
-        resolvedInlineStyles = new Map();
-        for (let i = 0; i < styleStrings.length; i++) {
-          // External styleUrls are preprocessed by their own extension; truly
-          // inline `styles: [...]` fall back to `inlineStylesExtension`.
-          const ext = styleExtensions.get(i) ?? inlineExt;
-          if (!styleNeedsPreprocess(ext)) continue;
-          try {
-            const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
-            const processed = await preprocessCSS(
-              styleStrings[i],
-              fakePath,
-              resolvedConfig,
+    if (styleStrings.length > 0) {
+      resolvedInlineStyles = new Map();
+      for (let i = 0; i < styleStrings.length; i++) {
+        const ext =
+          styleExtensions.get(i) ??
+          (pluginOptions.inlineStylesExtension || 'css');
+        try {
+          const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
+          const preprocessed = preprocessStylesheet(
+            styleStrings[i],
+            fakePath,
+            stylePreprocessor,
+            {
+              filename: fakePath,
+              containingFile: id,
+              order: i,
+              inline: !styleExtensions.has(i),
+            },
+          );
+          const processed = await preprocessCSS(
+            preprocessed,
+            fakePath,
+            resolvedConfig,
+          );
+          resolvedInlineStyles.set(i, processed.code);
+        } catch (e) {
+          if (debugCompile.enabled) {
+            debugCompile(
+              'inline style #%d preprocessing failed in %s: %s',
+              i,
+              id,
+              (e as Error)?.message,
             );
-            resolvedInlineStyles.set(i, processed.code);
-          } catch (e) {
-            if (debugCompile.enabled) {
-              debugCompile(
-                'inline style #%d preprocessing failed in %s: %s',
-                i,
-                id,
-                (e as Error)?.message,
-              );
-            }
-            // Skip styles that can't be preprocessed
           }
+          // Skip styles that can't be preprocessed
         }
-        if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
       }
+      if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
     }
 
     ensureDtsRegistryForSource(code, id, oxcProgram);
@@ -819,6 +826,7 @@ export function fastCompilePlugin(
       const integrations = await discoverAnalogIntegrations(config);
       transformFilter = integrations.transformFilter;
       componentRegistries = integrations.componentRegistries;
+      stylePreprocessor = integrations.stylePreprocessor;
     },
     async buildStart() {
       await initFastCompile();

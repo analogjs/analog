@@ -402,6 +402,63 @@ export class ExtComponent {}
     );
     expect(scssCall).toBeDefined();
   });
+
+  async function transformCssStyleUrlComponent(
+    plugin: ReturnType<typeof buildPlugin>,
+  ) {
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`;
+    try {
+      await getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        code,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      );
+    } catch {
+      // Only the preprocessCSS calls are asserted.
+    }
+  }
+
+  it('runs an external .css styleUrl through preprocessCSS', async () => {
+    await transformCssStyleUrlComponent(buildPlugin());
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringContaining('display: block'),
+      expect.stringMatching(/\.css$/),
+      undefined,
+    );
+  });
+
+  it('applies a registered style preprocessor before preprocessCSS', async () => {
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [
+        {
+          name: 'prepender',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerStylePreprocessor(
+                (code: string) => `@reference "tailwindcss";\n${code}`,
+              );
+            },
+          },
+        },
+      ],
+    });
+
+    await transformCssStyleUrlComponent(plugin);
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringMatching(/^@reference "tailwindcss";\n:host/),
+      expect.stringMatching(/\.css$/),
+      expect.anything(),
+    );
+  });
 });
 
 describe('fastCompilePlugin transform filter', () => {
