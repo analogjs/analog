@@ -425,6 +425,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
   let initialCompilation = false;
   let activeBuilds = 0;
+  let closeRequested = false;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
   let styleTransform: (
@@ -453,6 +454,19 @@ export function angular(options?: PluginOptions): Plugin[] {
     tsconfigResolver.invalidateAll();
     releaseCssPreprocessorWorkers();
     stylesheetRegistry = undefined;
+  }
+
+  async function closeCompilation() {
+    hotUpdates.close();
+    await compilationLock;
+    declarationFiles.forEach(
+      ({ declarationFileDir, declarationPath, data }) => {
+        mkdirSync(declarationFileDir, { recursive: true });
+        writeFileSync(declarationPath, data, 'utf-8');
+      },
+    );
+    declarationFiles.length = 0;
+    releaseCompilation();
   }
 
   function angularPlugin(): Plugin {
@@ -657,8 +671,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Environments (e.g. client and ssr) build in parallel and share this
         // plugin's compilation state, so only reset after the last one ends.
         activeBuilds = Math.max(0, activeBuilds - 1);
-        if (watchMode || activeBuilds > 0) return;
-        releaseCompilation();
+        if (activeBuilds > 0) return;
+        if (closeRequested) return closeCompilation();
+        if (!watchMode) releaseCompilation();
       },
       async handleHotUpdate(ctx) {
         if (isIgnoredHmrFile(ctx.file)) {
@@ -1421,18 +1436,9 @@ export function angular(options?: PluginOptions): Plugin[] {
           };
         },
       },
-      async closeBundle() {
-        if (activeBuilds > 0) return;
-        hotUpdates.close();
-        await compilationLock;
-        declarationFiles.forEach(
-          ({ declarationFileDir, declarationPath, data }) => {
-            mkdirSync(declarationFileDir, { recursive: true });
-            writeFileSync(declarationPath, data, 'utf-8');
-          },
-        );
-        declarationFiles.length = 0;
-        releaseCompilation();
+      closeBundle() {
+        closeRequested = true;
+        if (activeBuilds === 0) return closeCompilation();
       },
     };
   }

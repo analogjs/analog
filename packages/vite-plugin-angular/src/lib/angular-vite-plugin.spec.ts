@@ -1981,9 +1981,14 @@ export class AppComponent {}
     expect(ctx.error).not.toHaveBeenCalled();
   }, 60_000);
 
-  it.each([false, true])(
-    'reuses the watched builder between compilations and releases it on close (jit=%s)',
-    async (jit) => {
+  it.each([
+    { jit: false, closeBeforeEnd: false },
+    { jit: true, closeBeforeEnd: false },
+    { jit: false, closeBeforeEnd: true },
+    { jit: true, closeBeforeEnd: true },
+  ])(
+    'reuses the watched builder and releases it on close (jit=$jit, closeBeforeEnd=$closeBeforeEnd)',
+    async ({ jit, closeBeforeEnd }) => {
       const require = createRequire(import.meta.url);
       const ts = require('typescript');
       const tsModule = require.cache[require.resolve('typescript')]!;
@@ -2032,14 +2037,26 @@ export class AppComponent {}
       );
       expect(retained?.code).toContain('AppComponent');
 
-      await plugin.closeBundle();
-      await plugin.closeBundle();
+      if (closeBeforeEnd) {
+        await plugin.buildStart.call(ctx);
+        await plugin.closeBundle();
+        const active = await plugin.transform.handler.call(
+          ctx,
+          code,
+          componentPath,
+        );
+        expect(active?.code).toContain('AppComponent');
+        await plugin.buildEnd.call(ctx);
+      } else {
+        await plugin.closeBundle();
+      }
       const released = await plugin.transform.handler.call(
         ctx,
         code,
         componentPath,
       );
       expect(released).toBeUndefined();
+      await plugin.closeBundle();
       await plugin.buildStart.call(ctx);
       expect(createBuilder.mock.calls.at(-1)?.[jit ? 3 : 2]).toBeUndefined();
       await plugin.buildEnd.call(ctx);
