@@ -29,6 +29,7 @@ import {
   debugStylesV,
   type DebugOption,
 } from '../utils/debug.js';
+import { warnStylesheetError } from '../utils/stylesheet-warning.js';
 import {
   getTsConfigPath,
   createTsConfigGetter,
@@ -440,6 +441,7 @@ export function angularCompilationPlugin(
               resourceFile: resourceFile ?? '(inline)',
               error: String(e),
             });
+            warnStylesheetError(resolvedConfig.logger, filename, e);
           }
 
           return stylesheetResult?.code || '';

@@ -1657,6 +1657,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         stylesheetRegistry,
         sourceFileCache,
         stylePreprocessor: pluginOptions.stylePreprocessor,
+        logger: resolvedConfig?.logger,
       });
     }
 

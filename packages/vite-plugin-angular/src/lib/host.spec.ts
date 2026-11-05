@@ -45,6 +45,29 @@ describe('augmentHostWithResources', () => {
     expect(result).toEqual({ content: '.demo{color:red}' });
   });
 
+  it('warns when a stylesheet cannot be processed', async () => {
+    const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
+    const transform = vi.fn().mockRejectedValue(new Error('Unknown utility'));
+    const logger = { warn: vi.fn() };
+
+    augmentHostWithResources(host, transform as any, {
+      inlineStylesExtension: 'css',
+      logger: logger as any,
+    });
+
+    const result = await (host as any).transformResource('.a {}', {
+      type: 'style',
+      resourceFile: '/project/src/app/demo.component.css',
+      containingFile: '/project/src/app/demo.component.ts',
+    });
+
+    expect(result).toBeNull();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/demo\.component\.css.*Unknown utility/s),
+      expect.anything(),
+    );
+  });
+
   it('falls back to the containing file for inline style filenames', async () => {
     const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
     const transform = vi

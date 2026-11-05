@@ -25,6 +25,7 @@ import {
   ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
 } from './compiler/index.js';
+import { warnStylesheetError } from './utils/stylesheet-warning.js';
 
 import {
   TS_EXT_REGEX,
@@ -668,8 +669,8 @@ export function fastCompilePlugin(
         const ext =
           styleExtensions.get(i) ??
           (pluginOptions.inlineStylesExtension || 'css');
+        const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
         try {
-          const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
           const preprocessed = preprocessStylesheet(
             styleStrings[i],
             fakePath,
@@ -688,15 +689,7 @@ export function fastCompilePlugin(
           );
           resolvedInlineStyles.set(i, processed.code);
         } catch (e) {
-          if (debugCompile.enabled) {
-            debugCompile(
-              'inline style #%d preprocessing failed in %s: %s',
-              i,
-              id,
-              (e as Error)?.message,
-            );
-          }
-          // Skip styles that can't be preprocessed
+          warnStylesheetError(resolvedConfig.logger, fakePath, e);
         }
       }
       if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
