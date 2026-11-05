@@ -22,7 +22,13 @@ export function injectRouteEndpointURL(route: ActivatedRouteSnapshot): URL {
   url.pathname = `${
     url.pathname.endsWith('/') ? url.pathname : url.pathname + '/'
   }${apiPrefix}/_analog${routeConfig[ANALOG_META_KEY].endpoint}`;
-  url.search = `${new URLSearchParams(queryParams).toString()}`;
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(queryParams)) {
+    for (const item of [value].flat()) {
+      search.append(key, String(item));
+    }
+  }
+  url.search = search.toString();
   url.hash = hash ?? '';
 
   Object.keys(params).forEach((param) => {
