@@ -365,6 +365,11 @@ export function angularCompilationPlugin(
           order: number,
           className: string | null,
         ) {
+          // @angular/build >= 22.2.4 no longer reads external stylesheets in readResource
+          if (resourceFile && !data) {
+            data = readFileSync(resourceFile, 'utf-8');
+          }
+
           const filename =
             resourceFile ??
             containingFile.replace(

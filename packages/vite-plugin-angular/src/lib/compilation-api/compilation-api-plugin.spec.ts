@@ -211,6 +211,57 @@ describe('angularCompilationPlugin', () => {
     expect(emitAffectedFilesMock).toHaveBeenCalledOnce();
   });
 
+  it('reads external stylesheets when the compilation API passes empty data', async () => {
+    const initializeMock = vi.fn().mockResolvedValue({
+      externalStylesheets: new Map(),
+      templateUpdates: new Map(),
+    });
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: initializeMock,
+      update: vi.fn(),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi.fn().mockResolvedValue([]),
+    });
+    preprocessCSSMock.mockImplementation(async (code: string) => ({ code }));
+
+    const plugin = getCompilerPlugin({
+      tsconfig: () => join(tempRoot, 'tsconfig.json'),
+      workspaceRoot: tempRoot,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      disableTypeChecking: true,
+      supportedBrowsers: ['safari 15'],
+      fileReplacements: [],
+      include: [],
+    });
+    await configure(plugin);
+    await (plugin.buildStart as any).call({
+      addWatchFile: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+    });
+
+    const { transformStylesheet } = initializeMock.mock.calls[0][1];
+    const componentPath = join(tempRoot, 'app.component.ts');
+    const stylePath = join(tempRoot, 'app.component.css');
+    writeFileSync(stylePath, 'h1 { color: red; }');
+
+    // @angular/build >= 22.2.4 passes '' for external stylesheets.
+    await expect(
+      transformStylesheet('', componentPath, stylePath, 0, 'AppComponent'),
+    ).resolves.toContain('color: red');
+    await expect(
+      transformStylesheet(
+        'h1 { color: blue; }',
+        componentPath,
+        null,
+        0,
+        'AppComponent',
+      ),
+    ).resolves.toContain('color: blue');
+  });
+
   it('hands the stylesheet registry to analog.setup configurators', async () => {
     const configure = vi.fn();
     const plugin = getCompilerPlugin({
