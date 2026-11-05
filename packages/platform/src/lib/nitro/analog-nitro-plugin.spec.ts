@@ -564,6 +564,18 @@ describe('analogNitroPlugin', () => {
       expect(cookies).toEqual(['a=1; Path=/', 'b=2']);
     });
 
+    it('reads an unset set-cookie as undefined like Node does', async () => {
+      let cookies: unknown = 'unread';
+      const entry = createEntry((_url, _template, { res }) => {
+        cookies = res.getHeader('set-cookie');
+        return '<html></html>';
+      });
+
+      await entry.fetch(new Request('http://localhost/x'));
+
+      expect(cookies).toBeUndefined();
+    });
+
     it('responds without a body for null-body statuses', async () => {
       const entry = createEntry((_url, _template, { res }) => {
         res.statusCode = 304;
@@ -574,6 +586,20 @@ describe('analogNitroPlugin', () => {
 
       expect(response.status).toBe(304);
       expect(response.body).toBeNull();
+    });
+
+    it('cancels a stream it cannot send for a null-body status', async () => {
+      const cancel = vi.fn();
+      const entry = createEntry((_url, _template, { res }) => {
+        res.statusCode = 304;
+        return new ReadableStream({ cancel });
+      });
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.status).toBe(304);
+      expect(cancel).toHaveBeenCalled();
+      expect(response.headers.has('cache-control')).toBe(false);
     });
 
     it('leaves buffered renders cacheable', async () => {

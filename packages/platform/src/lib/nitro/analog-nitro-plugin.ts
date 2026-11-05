@@ -998,10 +998,13 @@ export default {
     const resHeaders = new Headers();
     const resShim = {
       statusCode: 200,
-      getHeader: (name) =>
-        name.toLowerCase() === 'set-cookie'
-          ? resHeaders.getSetCookie()
-          : (resHeaders.get(name) ?? undefined),
+      getHeader(name) {
+        if (name.toLowerCase() !== 'set-cookie') {
+          return resHeaders.get(name) ?? undefined;
+        }
+        const cookies = resHeaders.getSetCookie();
+        return cookies.length ? cookies : undefined;
+      },
       hasHeader: (name) => resHeaders.has(name),
       setHeader(name, value) {
         resHeaders.delete(name);
@@ -1030,14 +1033,19 @@ export default {
       if (!headers.has('content-type')) {
         headers.set('content-type', 'text/html; charset=utf-8');
       }
+      const status = resShim.statusCode;
+      if ([204, 205, 304].includes(status)) {
+        if (typeof html !== 'string') {
+          await html.cancel();
+        }
+        return new Response(null, { status, headers });
+      }
       // So intermediaries don't cache or buffer partial HTML.
       if (typeof html !== 'string' && !html[Symbol.for('analog.bufferedStream')]) {
         headers.set('content-encoding', 'identity');
         headers.set('cache-control', 'no-store, no-transform');
       }
-      const status = resShim.statusCode;
-      const body = [204, 205, 304].includes(status) ? null : html;
-      return new Response(body, { status, headers });
+      return new Response(html, { status, headers });
     } catch (err) {
       console.error('[analog ssr]', err);
       const status = err?.statusCode ?? err?.status;
