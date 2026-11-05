@@ -4,7 +4,7 @@ import {
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
-import { TransferState } from '@angular/core';
+import { TransferState, makeStateKey } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { $fetch } from 'ofetch';
 import { EMPTY, lastValueFrom, of } from 'rxjs';
@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX, BASE_URL, INTERNAL_FETCH } from '../../tokens/src';
 
+import { makeCacheKey } from './cache-key';
 import { requestContextInterceptor } from './request-context';
 
 describe('requestContextInterceptor', () => {
@@ -144,5 +145,46 @@ describe('requestContextInterceptor', () => {
 
     expect(error).toBeInstanceOf(HttpErrorResponse);
     expect(error).toMatchObject({ status: 404, error: { message: 'Missing' } });
+  });
+
+  it('does not store responses in TransferState when transferCache is false', async () => {
+    TestBed.overrideProvider(INTERNAL_FETCH, {
+      useValue: $fetch.create(
+        {},
+        { fetch: async () => Response.json({ ok: true }) },
+      ),
+    });
+
+    const response = await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(
+          new HttpRequest('GET', '/api/v1/todos', null, {
+            transferCache: false,
+          }),
+          () => EMPTY,
+        ),
+      ),
+    );
+
+    expect(response).toMatchObject({ body: { ok: true } });
+    expect(TestBed.inject(TransferState).isEmpty).toBe(true);
+  });
+
+  it('ignores transferred responses on the client when transferCache is false', async () => {
+    const request = new HttpRequest('GET', '/api/v1/todos', null, {
+      transferCache: false,
+    });
+    TestBed.inject(TransferState).set(
+      makeStateKey<unknown>(`analog_${makeCacheKey(request, '/api/v1/todos')}`),
+      { body: { cached: true } },
+    );
+    const next = vi.fn(() => of(new HttpResponse({ body: { fresh: true } })));
+
+    const response = await TestBed.runInInjectionContext(() =>
+      lastValueFrom(requestContextInterceptor(request, next)),
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(response).toMatchObject({ body: { fresh: true } });
   });
 });

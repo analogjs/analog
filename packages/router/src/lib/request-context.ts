@@ -1,5 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
+  ApplicationRef,
+  InjectionToken,
   PLATFORM_ID,
   TransferState,
   inject,
@@ -62,6 +64,26 @@ function mergeFetchParams(
   );
 }
 
+const TRANSFER_CACHE_STATE = new InjectionToken<{ isActive: boolean }>(
+  'ANALOG_TRANSFER_CACHE_STATE',
+  { providedIn: 'root', factory: () => ({ isActive: true }) },
+);
+
+/**
+ * Stops restoring transferred responses once the app is first stable,
+ * matching Angular's HTTP transfer cache.
+ */
+export function deactivateTransferCacheWhenStable(): () => void {
+  const appRef = inject(ApplicationRef);
+  const cacheState = inject(TRANSFER_CACHE_STATE);
+
+  return () => {
+    appRef.whenStable().then(() => {
+      cacheState.isActive = false;
+    });
+  };
+}
+
 function parseJsonOrText(text: string): unknown {
   try {
     return JSON.parse(text);
@@ -87,6 +109,7 @@ export function requestContextInterceptor(
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
+  const cacheState = inject(TRANSFER_CACHE_STATE);
   const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   const nitroGlobal = globalThis as typeof globalThis & {
     $fetch?: ServerInternalFetch;
@@ -148,7 +171,9 @@ export function requestContextInterceptor(
 
           const transferResponse = new HttpResponse(cacheResponse);
 
-          transferState.set(storeKey, cacheResponse);
+          if (req.transferCache !== false) {
+            transferState.set(storeKey, cacheResponse);
+          }
           return transferResponse;
         }),
     );
@@ -162,7 +187,10 @@ export function requestContextInterceptor(
     const { pathname, search } = toAbsoluteUrl(req.urlWithParams);
     const cacheKey = makeCacheKey(req, `${pathname}${search}`);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
-    const cacheRestoreResponse = transferState.get(storeKey, null);
+    const cacheRestoreResponse =
+      req.transferCache !== false && cacheState.isActive
+        ? transferState.get(storeKey, null)
+        : null;
 
     if (cacheRestoreResponse) {
       transferState.remove(storeKey);

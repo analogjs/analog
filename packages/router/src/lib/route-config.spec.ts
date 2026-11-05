@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_PREFIX, BASE_URL, INTERNAL_FETCH } from '../../tokens/src';
 import type { RouteMeta } from './models';
+import { getLoadResolver } from './get-load-resolver';
 import { toRouteConfig } from './route-config';
 import { ANALOG_META_KEY, ANALOG_PAGE_ENDPOINTS } from './endpoints';
 import { requestContextInterceptor } from './request-context';
@@ -94,7 +95,7 @@ describe('toRouteConfig', () => {
       TestBed.resetTestingModule();
     });
 
-    it('records the page load in TransferState for hydration', async () => {
+    function setup() {
       ANALOG_PAGE_ENDPOINTS[endpointKey] = () => Promise.resolve({});
       const internalFetch = Object.assign(vi.fn(), {
         raw: vi.fn().mockResolvedValue({
@@ -112,10 +113,14 @@ describe('toRouteConfig', () => {
           { provide: INTERNAL_FETCH, useValue: internalFetch },
         ],
       });
+      const load = toRouteConfig(undefined).resolve?.['load'] as (
+        route: ActivatedRouteSnapshot,
+      ) => Promise<unknown>;
       const route = {
         routeConfig: {
           path: 'about',
           [ANALOG_META_KEY]: { endpoint: '/pages/about', endpointKey },
+          resolve: { load },
         },
         queryParams: {},
         params: {},
@@ -123,9 +128,11 @@ describe('toRouteConfig', () => {
         parent: null,
       } as unknown as ActivatedRouteSnapshot;
 
-      const load = toRouteConfig(undefined).resolve?.['load'] as (
-        route: ActivatedRouteSnapshot,
-      ) => Promise<unknown>;
+      return { internalFetch, load, route };
+    }
+
+    it('records the page load in TransferState for hydration', async () => {
+      const { load, route } = setup();
       const result = await TestBed.runInInjectionContext(() => load(route));
 
       expect(result).toEqual({ about: true });
@@ -138,6 +145,18 @@ describe('toRouteConfig', () => {
           expect.objectContaining({ body: { about: true } }),
         ],
       ]);
+    });
+
+    it('fetches the page load once per route snapshot', async () => {
+      const { internalFetch, load, route } = setup();
+
+      const [loaded, resolved] = await TestBed.runInInjectionContext(() =>
+        Promise.all([load(route), getLoadResolver(route)]),
+      );
+
+      expect(loaded).toEqual({ about: true });
+      expect(resolved).toEqual({ about: true });
+      expect(internalFetch.raw).toHaveBeenCalledOnce();
     });
   });
 });
