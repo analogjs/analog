@@ -39,7 +39,7 @@ export const search = serverFn(
 );
 ```
 
-The `input` schema is any [Standard Schema](https://standardschema.dev) validator; valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected without the handler ever running.
+The `input` schema is any [Standard Schema](https://standardschema.dev) validator; valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected with a `422` without the handler ever running.
 
 Input travels in the request body, so any server function that takes input uses `POST`. `GET` is reserved for input-less reads, where it buys HTTP and CDN cacheability.
 

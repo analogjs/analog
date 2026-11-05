@@ -58,7 +58,7 @@ export interface DispatchServerFnOptions {
  * 2. look up the function by id
  * 3. enforce the configured HTTP method (405 on mismatch)
  * 4. require a JSON body on input-bearing calls (415 otherwise)
- * 5. validate `input` against the Standard-Schema (4xx on failure)
+ * 5. validate `input` against the Standard-Schema (422 on failure)
  * 6. build a per-request injector (REQUEST/RESPONSE + app providers)
  * 7. run the interceptor chain, then the handler, re-entering
  *    `runInInjectionContext` at every hop so `inject()` works even after an
@@ -127,7 +127,7 @@ export async function dispatchServerFn(
   if (def.config.input) {
     const result = await def.config.input['~standard'].validate(rawInput);
     if ('issues' in result && result.issues) {
-      return { status: 400, body: { errors: result.issues } };
+      return { status: 422, body: { errors: result.issues } };
     }
     input = (result as { value: unknown }).value;
   }

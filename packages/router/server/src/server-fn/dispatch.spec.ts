@@ -157,7 +157,7 @@ describe('dispatchServerFn', () => {
     expect(result.status).toBe(415);
   });
 
-  it('400s input that fails validation, without running the handler', async () => {
+  it('422s input that fails validation, without running the handler', async () => {
     let ran = false;
     serverFn({ id: 'validated', input: stringInput }, async () => {
       ran = true;
@@ -171,7 +171,7 @@ describe('dispatchServerFn', () => {
       { method: 'POST' },
     );
 
-    expect(result.status).toBe(400);
+    expect(result.status).toBe(422);
     expect(ran).toBe(false);
   });
 
