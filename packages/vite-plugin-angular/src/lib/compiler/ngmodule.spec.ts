@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { parseSync } from 'oxc-parser';
+import { transformSync } from 'oxc-transform';
 import { compileCode as compile } from './test-helpers';
 import { expectCompiles, buildRegistry } from './test-helpers';
 
@@ -228,6 +230,48 @@ describe('NgModule export expansion', () => {
     expect(result).not.toContain(
       'import { ButtonComponent } from "./shared.module"',
     );
+  });
+
+  it('binds an expanded export that is also imported type-only to a runtime value', () => {
+    const moduleSrc = `
+      import { NgModule, Component } from '@angular/core';
+      @Component({ selector: 'p-autocomplete', template: '' })
+      export class AutoComplete {}
+      @NgModule({ imports: [AutoComplete], exports: [AutoComplete] })
+      export class AutoCompleteModule {}
+    `;
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { AutoCompleteModule, type AutoComplete } from './autocomplete';
+      @Component({
+        selector: 'app-root',
+        imports: [AutoCompleteModule],
+        template: '<p-autocomplete />'
+      })
+      export class AppComponent {
+        ac?: AutoComplete;
+      }
+    `;
+
+    const registry = buildRegistry({ 'autocomplete.ts': moduleSrc });
+    const { code } = transformSync(
+      'app.ts',
+      compile(appSrc, 'app.ts', registry),
+    );
+
+    const valueBindings = parseSync('app.js', code).program.body.flatMap((s) =>
+      s.type === 'ImportDeclaration'
+        ? s.specifiers.map((spec) => spec.local.name)
+        : s.type === 'ExportNamedDeclaration' &&
+            s.declaration?.type === 'ClassDeclaration'
+          ? [s.declaration.id?.name]
+          : [],
+    );
+    const deps = code.match(/dependencies: \(\) => \[([^\]]*)\]/)?.[1];
+    expect(deps).toContain('AutoComplete');
+    for (const dep of deps?.split(',') ?? []) {
+      expect(valueBindings).toContain(dep.trim());
+    }
   });
 });
 

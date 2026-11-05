@@ -299,6 +299,7 @@ export function compile(
   const typeOnlyImports = detectTypeOnlyImportNames(sourceCode, oxcProgram);
   const importSpecifierByName = new Map<string, string>();
   const importedNames = new Set<string>();
+  const typeOnlyImportedNames = new Set<string>();
 
   for (const stmt of oxcProgram.body as any[]) {
     if (stmt.type !== 'ImportDeclaration') continue;
@@ -309,7 +310,6 @@ export function compile(
     for (const element of stmt.specifiers) {
       if (element.type !== 'ImportSpecifier') continue;
       const localName: string = element.local.name;
-      importedNames.add(localName);
       importSpecifierByName.set(localName, moduleSpecifier);
       // Explicit `import { type X }` — specifier-level type-only import.
       // Both forms erase the symbol at runtime, so they cannot be used as
@@ -318,6 +318,9 @@ export function compile(
       // ɵɵdirectiveInject(X) referring to a non-existent value.
       if (isDeclarationTypeOnly || element.importKind === 'type') {
         typeOnlyImports.add(localName);
+        typeOnlyImportedNames.add(localName);
+      } else {
+        importedNames.add(localName);
       }
     }
   }
@@ -356,6 +359,10 @@ export function compile(
   // Track synthetic imports needed for NgModule export expansion.
   // Maps exported class name → import specifier.
   const syntheticImports = new Map<string, string>();
+  // A type-only import is erased at runtime, so its synthetic value import
+  // needs an alias to avoid redeclaring the type-only binding.
+  const dependencyLocalName = (name: string) =>
+    typeOnlyImportedNames.has(name) ? `ɵngDep_${name}` : name;
 
   // ANGULAR_DECORATORS imported from utils
 
@@ -480,7 +487,9 @@ export function compile(
               for (const memberName of expanded) {
                 const memberEntry = registry?.get(memberName);
                 if (!memberEntry || memberEntry.kind === 'tuple') continue;
-                const memberRef = new o.WrappedNodeExpr(memberName);
+                const memberRef = new o.WrappedNodeExpr(
+                  dependencyLocalName(memberName),
+                );
                 if (!importedNames.has(memberName)) {
                   const memberSpecifier = resolveSyntheticImportSpecifier(
                     fileName,
@@ -548,7 +557,9 @@ export function compile(
                   const kind = exportedEntry.kind === 'pipe' ? 1 : 0;
                   // Create a reference to the exported class. If it's not
                   // already imported, track it for synthetic import injection.
-                  const exportedRef = new o.WrappedNodeExpr(exportedName);
+                  const exportedRef = new o.WrappedNodeExpr(
+                    dependencyLocalName(exportedName),
+                  );
                   const exportedSpecifier = resolveSyntheticImportSpecifier(
                     fileName,
                     exportedEntry,
@@ -695,7 +706,7 @@ export function compile(
                 }
                 const kind = entry.kind === 'pipe' ? 1 : 0;
                 const decl: CompileDeclaration = {
-                  type: new o.WrappedNodeExpr(name),
+                  type: new o.WrappedNodeExpr(dependencyLocalName(name)),
                   selector: entry.selector || `_unresolved-${name}`,
                   kind,
                   ...(kind === 1 ? { name: entry.pipeName } : {}),
@@ -1339,9 +1350,11 @@ export function compile(
 
   // 1b. Inject synthetic imports for NgModule-exported classes
   for (const [name, specifier] of syntheticImports) {
-    if (!importedNames.has(name)) {
-      ms.prepend(`import { ${name} } from "${specifier}";\n`);
-      importedNames.add(name);
+    const localName = dependencyLocalName(name);
+    if (!importedNames.has(localName)) {
+      const binding = localName === name ? name : `${name} as ${localName}`;
+      ms.prepend(`import { ${binding} } from "${specifier}";\n`);
+      importedNames.add(localName);
     }
   }
 
