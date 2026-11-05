@@ -1,3 +1,9 @@
+# [3.0.0-beta.31](https://github.com/analogjs/analog/compare/v3.0.0-beta.30...v3.0.0-beta.31) (2026-11-05)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** fix fastCompile type-only NgModule exports and component stylesheet processing ([#2752](https://github.com/analogjs/analog/issues/2752)) ([2e7f1df](https://github.com/analogjs/analog/commit/2e7f1dfcc67f667686ead641f0f41ebfab1e1938))
+
 # [3.0.0-beta.30](https://github.com/analogjs/analog/compare/v3.0.0-beta.29...v3.0.0-beta.30) (2026-11-04)
 
 ### Bug Fixes
