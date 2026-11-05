@@ -998,7 +998,10 @@ export default {
     const resHeaders = new Headers();
     const resShim = {
       statusCode: 200,
-      getHeader: (name) => resHeaders.get(name) ?? undefined,
+      getHeader: (name) =>
+        name.toLowerCase() === 'set-cookie'
+          ? resHeaders.getSetCookie()
+          : (resHeaders.get(name) ?? undefined),
       hasHeader: (name) => resHeaders.has(name),
       setHeader(name, value) {
         resHeaders.delete(name);
@@ -1032,7 +1035,9 @@ export default {
         headers.set('content-encoding', 'identity');
         headers.set('cache-control', 'no-store, no-transform');
       }
-      return new Response(html, { status: resShim.statusCode, headers });
+      const status = resShim.statusCode;
+      const body = [204, 205, 304].includes(status) ? null : html;
+      return new Response(body, { status, headers });
     } catch (err) {
       console.error('[analog ssr]', err);
       const status = err?.statusCode ?? err?.status;

@@ -551,6 +551,31 @@ describe('analogNitroPlugin', () => {
       );
     });
 
+    it('reads set-cookie back as a list like Node does', async () => {
+      let cookies: unknown;
+      const entry = createEntry((_url, _template, { res }) => {
+        res.setHeader('Set-Cookie', ['a=1; Path=/', 'b=2']);
+        cookies = res.getHeader('set-cookie');
+        return '<html></html>';
+      });
+
+      await entry.fetch(new Request('http://localhost/x'));
+
+      expect(cookies).toEqual(['a=1; Path=/', 'b=2']);
+    });
+
+    it('responds without a body for null-body statuses', async () => {
+      const entry = createEntry((_url, _template, { res }) => {
+        res.statusCode = 304;
+        return '<html></html>';
+      });
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.status).toBe(304);
+      expect(response.body).toBeNull();
+    });
+
     it('leaves buffered renders cacheable', async () => {
       const entry = createEntry(() =>
         Object.assign(new ReadableStream(), {
