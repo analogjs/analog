@@ -1809,7 +1809,7 @@ export class AppComponent {}
       expect(ctx.error).not.toHaveBeenCalled();
     } finally {
       await mainPlugin.buildEnd.call(ctx);
-      mainPlugin.closeBundle();
+      await mainPlugin.closeBundle();
     }
   }, 60_000);
 
@@ -1975,6 +1975,46 @@ export class AppComponent {}
     expect(after.code).not.toContain('before-delete');
     expect(ctx.error).not.toHaveBeenCalled();
   }, 60_000);
+
+  it.each([false, true])(
+    'releases watched compilation output on close, not buildEnd (jit=%s)',
+    async (jit) => {
+      const plugin = createAppBuildPlugin({ jit });
+      await plugin.config({ root: fixtureDir }, { command: 'serve' });
+      const config = await resolveConfig(
+        { configFile: false, root: fixtureDir },
+        'serve',
+      );
+      plugin.configResolved(config);
+      const ctx = {
+        environment: { config },
+        warn: vi.fn(),
+        error: vi.fn(),
+        addWatchFile: vi.fn(),
+      };
+      const code = realFs.readFileSync(componentPath, 'utf-8');
+
+      await plugin.buildStart.call(ctx);
+      await plugin.buildEnd.call(ctx);
+      const retained = await plugin.transform.handler.call(
+        ctx,
+        code,
+        componentPath,
+      );
+      expect(retained?.code).toContain('AppComponent');
+
+      await plugin.closeBundle();
+      await plugin.closeBundle();
+      const released = await plugin.transform.handler.call(
+        ctx,
+        code,
+        componentPath,
+      );
+      expect(released).toBeUndefined();
+      expect(ctx.error).not.toHaveBeenCalled();
+    },
+    60_000,
+  );
 
   it('releases production compilation output at buildEnd', async () => {
     const mainPlugin = createAppBuildPlugin();
