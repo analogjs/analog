@@ -154,12 +154,12 @@ export async function dispatchServerFn(
   // handler outside the context and break `inject()`.
   const runInCtx = <T>(fn: () => T): T => runInInjectionContext(injector, fn);
   const interceptors = injector.get(SERVER_FN_INTERCEPTORS, []);
-  const outcome = await runInterceptors(
-    interceptors,
-    input,
-    def.handler,
-    runInCtx,
-  );
+  let outcome: unknown;
+  try {
+    outcome = await runInterceptors(interceptors, input, def.handler, runInCtx);
+  } finally {
+    injector.destroy();
+  }
 
   if (outcome instanceof Response) {
     const text = await outcome.text();

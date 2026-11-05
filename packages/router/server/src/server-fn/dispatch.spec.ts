@@ -1,6 +1,6 @@
-import { Injectable, Injector, inject } from '@angular/core';
+import { DestroyRef, Injectable, Injector, inject } from '@angular/core';
 import { BASE_URL, LOCALE, REQUEST } from '@analogjs/router/tokens';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { dispatchServerFn } from './dispatch';
 import { serverFnRegistry } from './registry';
@@ -239,5 +239,25 @@ describe('dispatchServerFn', () => {
     );
 
     expect(result).toEqual({ status: 200, body: 'ok' });
+  });
+
+  it('destroys the per-call injector after the handler settles', async () => {
+    const onDestroy = vi.fn();
+    serverFn({ id: 'ok' }, async () => {
+      inject(DestroyRef).onDestroy(onDestroy);
+      return 'ok';
+    });
+    serverFn({ id: 'throws' }, async () => {
+      inject(DestroyRef).onDestroy(onDestroy);
+      throw new Error('boom');
+    });
+
+    await dispatchServerFn('ok', undefined, eventFor());
+    expect(onDestroy).toHaveBeenCalledTimes(1);
+
+    await expect(
+      dispatchServerFn('throws', undefined, eventFor()),
+    ).rejects.toThrow('boom');
+    expect(onDestroy).toHaveBeenCalledTimes(2);
   });
 });
