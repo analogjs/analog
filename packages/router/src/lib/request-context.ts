@@ -6,6 +6,7 @@ import {
   makeStateKey,
 } from '@angular/core';
 import {
+  HttpErrorResponse,
   HttpEvent,
   HttpHandlerFn,
   HttpHeaders,
@@ -61,6 +62,14 @@ function mergeFetchParams(
   );
 }
 
+function parseJsonOrText(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 /**
  * Interceptor that is server-aware when making HttpClient requests.
  * Server-side requests use the full URL
@@ -112,6 +121,8 @@ export function requestContextInterceptor(
           body: req.body ? req.body : undefined,
           params: fetchParams,
           responseType,
+          parseResponse: responseType === 'json' ? parseJsonOrText : undefined,
+          ignoreResponseError: true,
           headers: req.headers
             .keys()
             .reduce((hdrs: Record<string, string>, current: string) => {
@@ -127,6 +138,14 @@ export function requestContextInterceptor(
             statusText: res.statusText ?? 'OK',
             url: fetchUrl,
           };
+
+          if (cacheResponse.status >= 400) {
+            throw new HttpErrorResponse({
+              ...cacheResponse,
+              error: cacheResponse.body,
+            });
+          }
+
           const transferResponse = new HttpResponse(cacheResponse);
 
           transferState.set(storeKey, cacheResponse);

@@ -1,9 +1,16 @@
-import { HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpParams,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
+import { TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { lastValueFrom, of } from 'rxjs';
+import { $fetch } from 'ofetch';
+import { EMPTY, lastValueFrom, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { API_PREFIX, BASE_URL } from '../../tokens/src';
+import { API_PREFIX, BASE_URL, INTERNAL_FETCH } from '../../tokens/src';
 
 import { requestContextInterceptor } from './request-context';
 
@@ -103,5 +110,39 @@ describe('requestContextInterceptor', () => {
         },
       }),
     );
+  });
+
+  async function requestWithServerResponse(response: Response) {
+    TestBed.overrideProvider(INTERNAL_FETCH, {
+      useValue: $fetch.create({}, { fetch: async () => response }),
+    });
+
+    return TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(
+          new HttpRequest('GET', '/api/v1/todos'),
+          () => EMPTY,
+        ),
+      ),
+    ).catch((error: unknown) => error);
+  }
+
+  it('rejects text error responses with an HttpErrorResponse', async () => {
+    const error = await requestWithServerResponse(
+      new Response('Not found', { status: 404 }),
+    );
+
+    expect(error).toBeInstanceOf(HttpErrorResponse);
+    expect(error).toMatchObject({ status: 404, error: 'Not found' });
+    expect(TestBed.inject(TransferState).isEmpty).toBe(true);
+  });
+
+  it('rejects JSON error responses with an HttpErrorResponse', async () => {
+    const error = await requestWithServerResponse(
+      Response.json({ message: 'Missing' }, { status: 404 }),
+    );
+
+    expect(error).toBeInstanceOf(HttpErrorResponse);
+    expect(error).toMatchObject({ status: 404, error: { message: 'Missing' } });
   });
 });
