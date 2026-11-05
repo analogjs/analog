@@ -83,7 +83,13 @@ export function serverMutationOptions<
 > {
   return {
     mutationFn: (body: InferRouteBody<TRoute>) =>
-      lastValueFrom(http.post<InferRouteResult<TRoute>>(url, body)),
+      lastValueFrom(
+        http.post<InferRouteResult<TRoute>>(
+          url,
+          body === undefined ? null : JSON.stringify(body),
+          { headers: { 'content-type': 'application/json' } },
+        ),
+      ),
     ...options,
   } as CreateMutationOptions<
     InferRouteResult<TRoute>,
