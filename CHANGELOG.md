@@ -1,3 +1,9 @@
+# [3.0.0-beta.33](https://github.com/analogjs/analog/compare/v3.0.0-beta.32...v3.0.0-beta.33) (2026-11-05)
+
+### Bug Fixes
+
+- **router:** send TanStack Query mutation bodies as JSON and honour cancellation ([#2751](https://github.com/analogjs/analog/issues/2751)) ([7970838](https://github.com/analogjs/analog/commit/79708381cc9b3935abd458aef8b5013dddc13b29))
+
 # [3.0.0-beta.32](https://github.com/analogjs/analog/compare/v3.0.0-beta.31...v3.0.0-beta.32) (2026-11-05)
 
 ### Bug Fixes
