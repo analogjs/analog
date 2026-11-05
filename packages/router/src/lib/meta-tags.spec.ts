@@ -17,6 +17,10 @@ import {
 } from './meta-tags';
 
 describe('updateMetaTagsOnRouteChange', () => {
+  afterEach(() => {
+    document.head.querySelectorAll('meta').forEach((meta) => meta.remove());
+  });
+
   function setup() {
     @Component({
       selector: 'analogjs-meta-tags-test',
@@ -231,9 +235,8 @@ describe('updateMetaTagsOnRouteChange', () => {
     );
   });
 
-  it('lefts over meta tags from the previous route that are not changed', async () => {
-    const { router, getMetaElements, parentMetaTagValues, childMetaTagValues } =
-      setup();
+  it('removes meta tags from the previous route that are no longer set', async () => {
+    const { router, getMetaElements, parentMetaTagValues } = setup();
 
     await router.navigateByUrl('/child');
 
@@ -258,16 +261,54 @@ describe('updateMetaTagsOnRouteChange', () => {
     expect(metaElements.itempropImage.content).toBe(
       parentMetaTagValues.itempropImage,
     );
-    // meta tags that are not changed
-    expect(metaElements.httpEquivContentSec.content).toBe(
-      childMetaTagValues.httpEquivContentSec,
-    );
-    expect(metaElements.author.content).toBe(childMetaTagValues.author);
-    expect(metaElements.ogDescription.content).toBe(
-      childMetaTagValues.ogDescription,
-    );
-    expect(metaElements.itempropDescription.content).toBe(
-      childMetaTagValues.itempropDescription,
-    );
+    expect(metaElements.httpEquivContentSec).toBeNull();
+    expect(metaElements.author).toBeNull();
+    expect(metaElements.ogDescription).toBeNull();
+    expect(metaElements.itempropDescription).toBeNull();
+  });
+
+  it('restores the original document meta tags when a route no longer sets them', async () => {
+    @Component({ selector: 'analogjs-meta-tags-page', template: '' })
+    class PageComponent {}
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([
+          {
+            path: '',
+            component: PageComponent,
+            data: {
+              [ROUTE_META_TAGS_KEY]: [
+                { name: 'description', content: 'Home Description' },
+              ],
+            },
+          },
+          { path: 'about', component: PageComponent },
+        ]),
+        provideLocationMocks(),
+        provideAppInitializer(() => updateMetaTagsOnRouteChange()),
+      ],
+    });
+    const router = TestBed.inject(Router);
+    const document = TestBed.inject(DOCUMENT);
+    const indexDescription = document.createElement('meta');
+    indexDescription.name = 'description';
+    indexDescription.content = 'Index Description';
+    document.head.appendChild(indexDescription);
+
+    await router.navigateByUrl('/');
+    expect(
+      document
+        .querySelector('meta[name="description"]')
+        ?.getAttribute('content'),
+    ).toBe('Home Description');
+
+    await router.navigateByUrl('/about');
+    expect(
+      Array.from(
+        document.querySelectorAll('meta[name="description"]'),
+        (meta) => meta.getAttribute('content'),
+      ),
+    ).toEqual(['Index Description']);
   });
 });

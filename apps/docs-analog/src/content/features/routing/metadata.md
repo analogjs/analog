@@ -110,6 +110,8 @@ export default class RefreshComponent {}
 
 The above example sets meta tag `<meta http-equiv="refresh" content="30">`, which forces the browser to refresh the page every 30 seconds.
 
+Meta tags from parent routes are merged with those of child routes, with child routes taking precedence. When you navigate to a route that no longer sets a meta tag, the tag is removed, or restored to its original value if it was defined in `index.html`.
+
 To read more about possible standard meta tags, please visit official [docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta).
 
 ## Open Graph meta tags
