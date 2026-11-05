@@ -7,6 +7,7 @@ import { $fetch } from 'ofetch';
 import { createRouter } from 'radix3';
 
 import { getBaseUrl } from './provide-server-context';
+import { BUFFERED_STREAM } from './utils/stream-request';
 import { createServerFnAppInjector } from './server-fn/app-injector';
 import { dispatchServerFn } from './server-fn/dispatch';
 import {
@@ -260,7 +261,7 @@ async function renderPage(
   });
   const headers = new Headers({ 'content-type': 'text/html; charset=utf-8' });
   // As on Nitro, so intermediaries don't cache or buffer partial HTML.
-  if (typeof html !== 'string') {
+  if (typeof html !== 'string' && !(BUFFERED_STREAM in html)) {
     headers.set('content-encoding', 'identity');
     headers.set('cache-control', 'no-store, no-transform');
   }

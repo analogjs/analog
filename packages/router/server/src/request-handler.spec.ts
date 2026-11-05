@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAnalogRequestHandler } from './request-handler';
 import { serverFnRegistry } from './server-fn/registry';
+import { BUFFERED_STREAM } from './utils/stream-request';
 import { serverFn } from './server-fn/server-fn';
 import {
   ANALOG_SERVER_MANIFEST,
@@ -84,6 +85,18 @@ describe('createAnalogRequestHandler', () => {
     expect(response?.status).toBe(404);
     expect(response?.headers.get('x-rendered')).toBe('/missing');
     expect(await response?.text()).toContain('<p>/missing</p>');
+  });
+
+  it('leaves buffered renders cacheable', async () => {
+    ANALOG_SERVER_MANIFEST.render = async () => async () =>
+      Object.assign(new ReadableStream(), { [BUFFERED_STREAM]: true });
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/buffered`),
+    );
+
+    expect(response?.headers.has('cache-control')).toBe(false);
+    expect(response?.headers.has('content-encoding')).toBe(false);
   });
 
   it('streams pages uncached and unbuffered until the request aborts', async () => {

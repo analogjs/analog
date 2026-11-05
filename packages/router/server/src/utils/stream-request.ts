@@ -42,3 +42,8 @@ export function streamingDisabledByRoute(
     serverContext?.req?.headers?.['x-analog-no-streaming'] === 'true'
   );
 }
+
+/** Marks the single-chunk stream of a buffered render, which is safe to cache. */
+export const BUFFERED_STREAM: unique symbol = Symbol.for(
+  'analog.bufferedStream',
+);
