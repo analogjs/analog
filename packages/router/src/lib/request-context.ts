@@ -84,14 +84,6 @@ export function deactivateTransferCacheWhenStable(): () => void {
   };
 }
 
-function parseJsonOrText(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}
-
 /**
  * Interceptor that is server-aware when making HttpClient requests.
  * Server-side requests use the full URL
@@ -144,7 +136,8 @@ export function requestContextInterceptor(
           body: req.body ? req.body : undefined,
           params: fetchParams,
           responseType,
-          parseResponse: responseType === 'json' ? parseJsonOrText : undefined,
+          parseResponse:
+            responseType === 'json' ? (text: string) => text : undefined,
           ignoreResponseError: true,
           headers: req.headers
             .keys()
@@ -161,6 +154,20 @@ export function requestContextInterceptor(
             statusText: res.statusText ?? 'OK',
             url: fetchUrl,
           };
+
+          if (responseType === 'json' && typeof res._data === 'string') {
+            try {
+              cacheResponse.body =
+                res._data === '' ? null : JSON.parse(res._data);
+            } catch (error) {
+              if (cacheResponse.status < 400) {
+                throw new HttpErrorResponse({
+                  ...cacheResponse,
+                  error: { error, text: res._data },
+                });
+              }
+            }
+          }
 
           if (cacheResponse.status >= 400) {
             throw new HttpErrorResponse({

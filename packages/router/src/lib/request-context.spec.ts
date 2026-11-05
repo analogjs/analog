@@ -138,6 +138,22 @@ describe('requestContextInterceptor', () => {
     expect(TestBed.inject(TransferState).isEmpty).toBe(true);
   });
 
+  it('rejects malformed JSON in a successful response with an HttpErrorResponse', async () => {
+    const error = await requestWithServerResponse(
+      new Response('{bad', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    expect(error).toBeInstanceOf(HttpErrorResponse);
+    expect(error).toMatchObject({
+      status: 200,
+      error: { error: expect.any(SyntaxError), text: '{bad' },
+    });
+    expect(TestBed.inject(TransferState).isEmpty).toBe(true);
+  });
+
   it('rejects JSON error responses with an HttpErrorResponse', async () => {
     const error = await requestWithServerResponse(
       Response.json({ message: 'Missing' }, { status: 404 }),
