@@ -1,4 +1,5 @@
 import { SourceMap } from 'node:module';
+import { resolve } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import * as ts from 'typescript';
 import {
@@ -2427,12 +2428,12 @@ describe('OXC-based resource inlining', () => {
     expect(styles[1]).toBe('p { margin: 0 }');
   });
 
-  it('reports the source extension of an inlined external styleUrl', async () => {
-    // Regression: fastCompile must preprocess external `styleUrl`s by their own
-    // file extension (e.g. `.scss`), independent of `inlineStylesExtension`.
-    // `inlineResourceUrls` surfaces each inlined external style's extension at
+  it('reports the source path of an inlined external styleUrl', async () => {
+    // Regression: fastCompile must preprocess external `styleUrl`s as their own
+    // file (e.g. `.scss`), independent of `inlineStylesExtension`.
+    // `inlineResourceUrls` surfaces each inlined external style's path at
     // the flat index that `extractInlineStyles`/`resolvedInlineStyles` use.
-    const { styleExtensions } = await inlineResourceUrls(
+    const { stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2445,11 +2446,13 @@ describe('OXC-based resource inlining', () => {
       __dirname + '/__fixtures__/test.component.ts',
     );
 
-    expect(styleExtensions.get(0)).toBe('scss');
+    expect(stylePaths.get(0)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.scss'),
+    );
   });
 
-  it('reports a css extension for plain external styleUrls', async () => {
-    const { styleExtensions } = await inlineResourceUrls(
+  it('reports the source path of external styleUrls', async () => {
+    const { stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2462,13 +2465,15 @@ describe('OXC-based resource inlining', () => {
       __dirname + '/__fixtures__/test.component.ts',
     );
 
-    expect(styleExtensions.get(0)).toBe('css');
+    expect(stylePaths.get(0)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.css'),
+    );
   });
 
   it('indexes an external styleUrl after pre-existing inline styles', async () => {
     // Inline `styles: [...]` come first in the flat list; the external scss
     // styleUrl is appended after it, so it must map to index 1 (not 0).
-    const { styleExtensions } = await inlineResourceUrls(
+    const { stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2482,37 +2487,17 @@ describe('OXC-based resource inlining', () => {
       __dirname + '/__fixtures__/test.component.ts',
     );
 
-    expect(styleExtensions.has(0)).toBe(false);
-    expect(styleExtensions.get(1)).toBe('scss');
-  });
-
-  it('reports the source extension for each preprocessable styleUrl type', async () => {
-    // The fast-compile path preprocesses each external style by its own
-    // extension, so every preprocessable style language must be surfaced
-    // distinctly (not collapsed onto a single `inlineStylesExtension`).
-    for (const ext of ['css', 'scss', 'less']) {
-      const { styleExtensions } = await inlineResourceUrls(
-        `
-        import { Component } from '@angular/core';
-        @Component({
-          selector: 'app-ext',
-          template: '',
-          styleUrl: './test.component.${ext}'
-        })
-        export class ExtComponent {}
-      `,
-        __dirname + '/__fixtures__/test.component.ts',
-      );
-
-      expect(styleExtensions.get(0), `extension for .${ext}`).toBe(ext);
-    }
+    expect(stylePaths.has(0)).toBe(false);
+    expect(stylePaths.get(1)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.scss'),
+    );
   });
 
   it('merges a singular `styles` string with an external styleUrl without duplicating the key', async () => {
     // Regression: a non-array `styles` (single string/template) plus an
     // external `styleUrl` must collapse into one `styles` key, and the external
     // style must be indexed *after* the existing inline style (index 1).
-    const { code, styleExtensions } = await inlineResourceUrls(
+    const { code, stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2531,8 +2516,10 @@ describe('OXC-based resource inlining', () => {
     // The original inline style is preserved.
     expect(code).toContain(':host { display: block; }');
     // External scss is mapped after the singular inline style.
-    expect(styleExtensions.has(0)).toBe(false);
-    expect(styleExtensions.get(1)).toBe('scss');
+    expect(stylePaths.has(0)).toBe(false);
+    expect(stylePaths.get(1)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.scss'),
+    );
   });
 });
 

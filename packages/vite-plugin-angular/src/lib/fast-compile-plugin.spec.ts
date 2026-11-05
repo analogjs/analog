@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -430,6 +430,30 @@ export class ExtComponent {}
     expect(mockPreprocessCSS).toHaveBeenCalledWith(
       expect.stringContaining('display: block'),
       expect.stringMatching(/\.css$/),
+      undefined,
+    );
+  });
+
+  it('preprocesses an external styleUrl at its own path', async () => {
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    try {
+      await getTransformHandler(buildPlugin()).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './__fixtures__/test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/ext.component.ts`,
+      );
+    } catch {
+      // Only the preprocessCSS calls are asserted.
+    }
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringContaining('display: block'),
+      resolve(__dirname, 'compiler/__fixtures__/test.component.css'),
       undefined,
     );
   });

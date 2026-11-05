@@ -636,12 +636,12 @@ export function fastCompilePlugin(
     }
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation.
-    // `styleExtensions` carries the source extension of each inlined external
-    // style so it can be preprocessed by its own file type (e.g. an external
-    // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
+    // `stylePaths` carries the source path of each inlined external style so
+    // it is preprocessed as its own file (e.g. an external `.scss` styleUrl or
+    // a relative `@import`) regardless of the `inlineStylesExtension` option.
     const inlined = await inlineResourceUrls(code, id);
     code = inlined.code;
-    const { styleExtensions } = inlined;
+    const { stylePaths } = inlined;
 
     // Track inlined resources for HMR. `compile()` only reports resources it
     // reads through its own fallback (a templateUrl/styleUrl the inliner did
@@ -658,7 +658,7 @@ export function fastCompilePlugin(
 
     // Pre-resolve component styles through the registered style preprocessor
     // and Vite's CSS pipeline (Sass/Less, PostCSS, Tailwind), like ngtsc does.
-    // External styleUrls are processed by their own extension; truly inline
+    // External styleUrls are processed as their own file; truly inline
     // `styles: [...]` use `inlineStylesExtension`.
     let resolvedInlineStyles: Map<number, string> | undefined;
     const styleStrings = extractInlineStyles(code, id, oxcProgram);
@@ -666,30 +666,32 @@ export function fastCompilePlugin(
     if (styleStrings.length > 0) {
       resolvedInlineStyles = new Map();
       for (let i = 0; i < styleStrings.length; i++) {
-        const ext =
-          styleExtensions.get(i) ??
-          (pluginOptions.inlineStylesExtension || 'css');
-        const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
+        const stylePath =
+          stylePaths.get(i) ??
+          id.replace(
+            /\.ts$/,
+            `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
+          );
         try {
           const preprocessed = preprocessStylesheet(
             styleStrings[i],
-            fakePath,
+            stylePath,
             stylePreprocessor,
             {
-              filename: fakePath,
+              filename: stylePath,
               containingFile: id,
               order: i,
-              inline: !styleExtensions.has(i),
+              inline: !stylePaths.has(i),
             },
           );
           const processed = await preprocessCSS(
             preprocessed,
-            fakePath,
+            stylePath,
             resolvedConfig,
           );
           resolvedInlineStyles.set(i, processed.code);
         } catch (e) {
-          warnStylesheetError(resolvedConfig.logger, fakePath, e);
+          warnStylesheetError(resolvedConfig.logger, stylePath, e);
         }
       }
       if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
