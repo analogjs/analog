@@ -82,7 +82,7 @@ export function parseFormData(
 
 async function readJsonBody(event: H3Event): Promise<unknown> {
   try {
-    return await readBody(event);
+    return await readBody(event, { strict: true });
   } catch (error) {
     const request = getRequest(event);
     if (!request || request.bodyUsed) {

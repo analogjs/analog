@@ -206,46 +206,58 @@ describe('typed helpers with h3 v1', () => {
     );
   });
 
-  function postJson(body: string) {
+  function postJson(body: string, contentType = 'application/json') {
     return new Request('http://localhost/', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': contentType },
       body,
     });
   }
 
-  it('rejects malformed JSON in an API route with a 400', async () => {
-    const handler = vi.fn(() => ({ ok: true }));
-    const app = createApp().use(
-      defineEventHandler(defineApiRoute({ input: z.unknown(), handler })),
-    );
+  const jsonContentTypes = [
+    'application/json',
+    'application/json; charset=utf-8',
+    'application/vnd.api+json',
+  ];
 
-    const response = await toWebHandler(app)(postJson('{bad'));
+  it.each(jsonContentTypes)(
+    'rejects malformed %s in an API route with a 400',
+    async (contentType) => {
+      const handler = vi.fn(() => ({ ok: true }));
+      const app = createApp().use(
+        defineEventHandler(defineApiRoute({ input: z.any(), handler })),
+      );
 
-    expect(response.status).toBe(400);
-    expect(handler).not.toHaveBeenCalled();
-  });
+      const response = await toWebHandler(app)(postJson('{bad', contentType));
 
-  it('rejects malformed JSON in a page action with a 400', async () => {
-    const handler = vi.fn(() => json({ ok: true }));
-    const action = defineAction({ handler });
-    const app = createApp().use(
-      defineEventHandler((event) =>
-        action({
-          params: event.context.params,
-          event,
-          req: event.node.req,
-          res: event.node.res,
-          fetch: vi.fn() as unknown as PageServerAction['fetch'],
-        }),
-      ),
-    );
+      expect(response.status).toBe(400);
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
 
-    const response = await toWebHandler(app)(postJson('{bad'));
+  it.each(jsonContentTypes)(
+    'rejects malformed %s in a page action with a 400',
+    async (contentType) => {
+      const handler = vi.fn(() => json({ ok: true }));
+      const action = defineAction({ handler });
+      const app = createApp().use(
+        defineEventHandler((event) =>
+          action({
+            params: event.context.params,
+            event,
+            req: event.node.req,
+            res: event.node.res,
+            fetch: vi.fn() as unknown as PageServerAction['fetch'],
+          }),
+        ),
+      );
 
-    expect(response.status).toBe(400);
-    expect(handler).not.toHaveBeenCalled();
-  });
+      const response = await toWebHandler(app)(postJson('{bad', contentType));
+
+      expect(response.status).toBe(400);
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
 
   it('passes a JSON null body through as null', async () => {
     const app = createApp().use(
