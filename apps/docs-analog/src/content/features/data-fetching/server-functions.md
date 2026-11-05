@@ -39,7 +39,7 @@ export const search = serverFn(
 );
 ```
 
-The `input` schema is any [Standard Schema](https://standardschema.dev) validator; valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected without the handler ever running.
+The `input` schema is any [Standard Schema](https://standardschema.dev) validator; valibot, zod, and arktype all conform. It runs on the server before the handler, and invalid input is rejected with a `422` without the handler ever running.
 
 Input travels in the request body, so any server function that takes input uses `POST`. `GET` is reserved for input-less reads, where it buys HTTP and CDN cacheability.
 
@@ -113,6 +113,8 @@ export const getGreeting = serverFn(async () => {
 ```
 
 `REQUEST`, `RESPONSE`, and `BASE_URL` are always available. `LOCALE` is provided only when a locale can be detected from the URL prefix or the `Accept-Language` header, so read it with `inject(LOCALE, { optional: true })`. The raw h3 event is deliberately not exposed, which keeps handlers testable by overriding those tokens.
+
+On fetch-native hosts such as Bun, Deno, and Cloudflare Workers, `REQUEST` and `RESPONSE` are Node objects created from the incoming `Request` with `node:http`, so Cloudflare Workers need the `nodejs_compat` compatibility flag.
 
 Handlers resolve dependencies from **your app's own server config**. There is no separate provider list to maintain. The dispatch endpoint bootstraps the application from `app.config.server.ts` (the same config `main.server.ts` renders with), so anything the app configures is available in a handler exactly as it is inside a component during SSR: `providedIn: 'root'` services, tokens bound with `useValue`, and app-level providers alike. A `providedIn: 'root'` service just works with no registration at all.
 

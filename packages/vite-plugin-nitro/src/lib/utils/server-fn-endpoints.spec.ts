@@ -1,3 +1,7 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -23,13 +27,14 @@ describe('getServerFnDispatchHandler', () => {
 });
 
 describe('buildServerFnDispatchModule', () => {
+  const root = fileURLToPath(new URL('.', import.meta.url));
   const modules = [
     { file: '/ws/app/src/app/server-fns/products.server.ts' },
     { file: '/ws/app/src/app/pages/shipping/index.server.ts' },
   ];
 
   it('imports every discovered module for registration side-effects', () => {
-    const src = buildServerFnDispatchModule({ modules });
+    const src = buildServerFnDispatchModule({ modules, root });
     expect(src).toContain(
       `import "/ws/app/src/app/server-fns/products.server.ts";`,
     );
@@ -39,7 +44,7 @@ describe('buildServerFnDispatchModule', () => {
   });
 
   it('loads the Angular JIT compiler, which the linker never reaches here', () => {
-    const src = buildServerFnDispatchModule({ modules });
+    const src = buildServerFnDispatchModule({ modules, root });
 
     // Must be first: the partially-compiled Angular imports below it are
     // evaluated in order, and they need the compiler already registered.
@@ -51,6 +56,7 @@ describe('buildServerFnDispatchModule', () => {
   it('bootstraps against the app server config when one is given', () => {
     const src = buildServerFnDispatchModule({
       modules,
+      root,
       appConfigModule: '/ws/app/src/app/app.config.server.ts',
     });
     expect(src).toContain(
@@ -60,13 +66,13 @@ describe('buildServerFnDispatchModule', () => {
   });
 
   it('falls back to an empty config when the app has none', () => {
-    const src = buildServerFnDispatchModule({ modules });
+    const src = buildServerFnDispatchModule({ modules, root });
     expect(src).toContain('const serverFnAppConfig = { providers: [] };');
     expect(src).not.toContain('import { config as serverFnAppConfig }');
   });
 
   it('wires the app injector into the runtime event handler', () => {
-    const src = buildServerFnDispatchModule({ modules });
+    const src = buildServerFnDispatchModule({ modules, root });
     // The transport logic lives in `createServerFnEventHandler`
     // (unit-tested in the router package); this module only wires it up, so it
     // must not re-inline dispatch or h3 request handling.
@@ -83,9 +89,24 @@ describe('buildServerFnDispatchModule', () => {
   it('emits posix-style import specifiers unchanged', () => {
     const src = buildServerFnDispatchModule({
       modules: [{ file: '/ws/app/src/app/a.server.ts' }],
+      root,
       appConfigModule: '/ws/app/src/app/app.config.server.ts',
     });
     expect(src).toContain('import "/ws/app/src/app/a.server.ts";');
     expect(src).toContain(`from "/ws/app/src/app/app.config.server.ts";`);
+  });
+
+  it('loads zone.js when it resolves from the app root', () => {
+    const src = buildServerFnDispatchModule({ modules, root });
+    expect(src).toContain(`import 'zone.js/node';`);
+  });
+
+  it('skips zone.js when it does not resolve from the app root', () => {
+    const src = buildServerFnDispatchModule({
+      modules,
+      root: mkdtempSync(join(tmpdir(), 'analog-zoneless-')),
+    });
+    expect(src).not.toContain('zone.js');
+    expect(src).toContain(`import '@angular/platform-server/init';`);
   });
 });

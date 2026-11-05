@@ -1,4 +1,5 @@
-import { Injector } from '@angular/core';
+import { Injector, inject } from '@angular/core';
+import { RESPONSE } from '@analogjs/router/tokens';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Keep h3 real except `readBody`, whose parse-failure path is what the
@@ -121,5 +122,29 @@ describe('handleServerFnRequest', () => {
 
     expect(res.statusCode).toBe(400);
     expect(body).toEqual({ message: 'Malformed request body' });
+  });
+
+  it('serves events without a Node request from their fetch Request', async () => {
+    serverFn({ id: 'shout', method: 'POST' }, async (input: unknown) => {
+      inject(RESPONSE).setHeader('x-shout', 'yes');
+      return (input as { text: string }).text.toUpperCase();
+    });
+
+    const response = (await handleServerFnRequest(
+      {
+        method: 'POST',
+        context: { params: { id: 'shout' } },
+        req: new Request('http://localhost/_analog/fn/shout', {
+          method: 'POST',
+          headers: jsonHeaders,
+          body: JSON.stringify({ text: 'hi' }),
+        }),
+      } as never,
+      Injector.create({ providers: [] }),
+    )) as Response;
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('x-shout')).toBe('yes');
+    expect(await response.json()).toBe('HI');
   });
 });

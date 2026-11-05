@@ -155,6 +155,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
                 [SERVER_FN_DISPATCH_VIRTUAL]: buildServerFnDispatchModule({
                   modules: serverFnModules,
                   appConfigModule: serverFnAppConfigModule,
+                  root: resolve(workspaceRoot, rootDir),
                 }),
               }
             : {};
