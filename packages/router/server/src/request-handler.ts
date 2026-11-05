@@ -1,14 +1,14 @@
 import type { Injector } from '@angular/core';
 import type { ServerContext } from '@analogjs/router/tokens';
 import * as h3 from 'h3';
-import { IncomingMessage, ServerResponse } from 'node:http';
-import { Socket } from 'node:net';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { $fetch } from 'ofetch';
 import { createRouter } from 'radix3';
 
 import { getBaseUrl } from './provide-server-context';
 import { createServerFnAppInjector } from './server-fn/app-injector';
-import { dispatchServerFn } from './server-fn/dispatch';
+import { callServerFn } from './server-fn/event-handler';
+import { nodeContext, withResponseHeaders } from './server-fn/node-context';
 import {
   ANALOG_SERVER_MANIFEST,
   type AnalogServerManifest,
@@ -161,39 +161,6 @@ function serverManifest(): AnalogServerManifest {
   return ANALOG_SERVER_MANIFEST as AnalogServerManifest;
 }
 
-async function callServerFn(
-  id: string,
-  request: Request,
-  context: AnalogRequestContext,
-  parent: Injector,
-): Promise<Response> {
-  let input: unknown;
-  if (request.method !== 'GET') {
-    const text = await request.text();
-    try {
-      input = text ? JSON.parse(text) : undefined;
-    } catch {
-      return Response.json(
-        { message: 'Malformed request body' },
-        { status: 400 },
-      );
-    }
-  }
-  const { status, body, headers } = await dispatchServerFn(
-    id,
-    input,
-    { node: context },
-    { parent, method: request.method },
-  );
-  const responseHeaders = new Headers();
-  for (const [key, value] of Object.entries(headers ?? {})) {
-    for (const item of [value].flat()) {
-      responseHeaders.append(key, item);
-    }
-  }
-  return Response.json(body ?? null, { status, headers: responseHeaders });
-}
-
 async function callPageEndpoint(
   match: PageRoute & { params?: Record<string, string> },
   request: Request,
@@ -287,49 +254,4 @@ function renderSignal(request: Request, res: ServerResponse): AbortSignal {
     res.once('close', abortIfUnfinished);
   }
   return AbortSignal.any([request.signal, closed.signal]);
-}
-
-/**
- * A Node request/response pair for a bare `Request`, carrying what Analog
- * reads: method, URL, headers and protocol. The same approach as h3's web
- * adapter; it needs `node:http` (Node, Bun, Deno).
- */
-function nodeContext(request: Request, url: URL): AnalogRequestContext {
-  const socket = new Socket();
-  Object.defineProperty(socket, 'encrypted', {
-    value: url.protocol === 'https:',
-  });
-  const req = new IncomingMessage(socket);
-  const path = `${url.pathname}${url.search}`;
-  req.method = request.method;
-  req.url = path;
-  Object.assign(req, { originalUrl: path });
-  req.headers = { host: url.host, ...Object.fromEntries(request.headers) };
-  return { req, res: new ServerResponse(req) };
-}
-
-/** Headers the app set on the created response, under Analog's own. */
-function withResponseHeaders(
-  response: Response,
-  res: ServerResponse,
-): Response {
-  const headers = new Headers();
-  for (const [key, value] of Object.entries(res.getHeaders())) {
-    for (const item of [value ?? []].flat()) {
-      headers.append(key, String(item));
-    }
-  }
-  response.headers.forEach((value, key) => {
-    if (key !== 'set-cookie') {
-      headers.set(key, value);
-    }
-  });
-  for (const cookie of response.headers.getSetCookie()) {
-    headers.append('set-cookie', cookie);
-  }
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
 }
