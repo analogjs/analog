@@ -1422,6 +1422,7 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       async closeBundle() {
+        if (activeBuilds > 0) return;
         hotUpdates.close();
         await compilationLock;
         declarationFiles.forEach(

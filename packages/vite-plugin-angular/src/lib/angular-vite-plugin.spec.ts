@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import * as realFs from 'node:fs';
-import { SourceMap } from 'node:module';
+import { createRequire, SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import path, { join } from 'node:path';
 import { normalizePath, preprocessCSS, resolveConfig, type Plugin } from 'vite';
@@ -1453,7 +1453,7 @@ export class AppComponent {}
     60_000,
   );
 
-  it('keeps AOT output for environments still building after another ends', async () => {
+  it('keeps AOT output for environments still building after another ends and closes', async () => {
     const plugin = createAppBuildPlugin({ jit: false });
     await plugin.config({ root: fixtureDir, build: {} }, { command: 'build' });
     const config = await resolveConfig(
@@ -1471,6 +1471,7 @@ export class AppComponent {}
     await plugin.buildStart.call(ctx);
     await plugin.buildStart.call(ctx);
     await plugin.buildEnd.call(ctx);
+    await plugin.closeBundle();
 
     const code = realFs.readFileSync(componentPath, 'utf-8');
     const result = await plugin.transform.handler.call(
@@ -1481,6 +1482,10 @@ export class AppComponent {}
     expect(result?.code).toContain('ɵcmp');
 
     await plugin.buildEnd.call(ctx);
+    await plugin.closeBundle();
+    expect(
+      await plugin.transform.handler.call(ctx, code, componentPath),
+    ).toBeUndefined();
   }, 60_000);
 
   it.each([
@@ -1977,9 +1982,27 @@ export class AppComponent {}
   }, 60_000);
 
   it.each([false, true])(
-    'releases watched compilation output on close, not buildEnd (jit=%s)',
+    'reuses the watched builder between compilations and releases it on close (jit=%s)',
     async (jit) => {
-      const plugin = createAppBuildPlugin({ jit });
+      const require = createRequire(import.meta.url);
+      const ts = require('typescript');
+      const tsModule = require.cache[require.resolve('typescript')]!;
+      const createBuilder = vi.fn(
+        ts.createEmitAndSemanticDiagnosticsBuilderProgram,
+      );
+      tsModule.exports = new Proxy(ts, {
+        get(target, property, receiver) {
+          return property === 'createEmitAndSemanticDiagnosticsBuilderProgram'
+            ? createBuilder
+            : Reflect.get(target, property, receiver);
+        },
+      });
+      let plugin;
+      try {
+        plugin = createAppBuildPlugin({ jit });
+      } finally {
+        tsModule.exports = ts;
+      }
       await plugin.config({ root: fixtureDir }, { command: 'serve' });
       const config = await resolveConfig(
         { configFile: false, root: fixtureDir },
@@ -1996,6 +2019,12 @@ export class AppComponent {}
 
       await plugin.buildStart.call(ctx);
       await plugin.buildEnd.call(ctx);
+      const firstBuilder = createBuilder.mock.results.at(-1)?.value;
+      expect(firstBuilder).toBeDefined();
+      await plugin.buildStart.call(ctx);
+      await plugin.buildEnd.call(ctx);
+      expect(createBuilder.mock.calls.at(-1)?.[jit ? 3 : 2]).toBe(firstBuilder);
+
       const retained = await plugin.transform.handler.call(
         ctx,
         code,
@@ -2011,6 +2040,10 @@ export class AppComponent {}
         componentPath,
       );
       expect(released).toBeUndefined();
+      await plugin.buildStart.call(ctx);
+      expect(createBuilder.mock.calls.at(-1)?.[jit ? 3 : 2]).toBeUndefined();
+      await plugin.buildEnd.call(ctx);
+      await plugin.closeBundle();
       expect(ctx.error).not.toHaveBeenCalled();
     },
     60_000,
