@@ -4,9 +4,14 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { QueryClient } from '@tanstack/angular-query-experimental';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { serverMutationOptions } from './server-query';
+import {
+  serverInfiniteQueryOptions,
+  serverMutationOptions,
+  serverQueryOptions,
+} from './server-query';
 
 function setup() {
   TestBed.configureTestingModule({
@@ -37,5 +42,46 @@ describe('serverMutationOptions', () => {
     request.flush({ ok: true });
 
     await expect(result).resolves.toEqual({ ok: true });
+  });
+});
+
+describe('server query cancellation', () => {
+  beforeEach(() => TestBed.resetTestingModule());
+
+  it('cancels the request when the query is cancelled', async () => {
+    const { http, controller } = setup();
+    const client = new QueryClient();
+
+    void client
+      .fetchQuery(
+        serverQueryOptions<any>(http, '/api/todos', { queryKey: ['todos'] }),
+      )
+      .catch(() => undefined);
+    const request = await vi.waitFor(() => controller.expectOne('/api/todos'));
+    await client.cancelQueries();
+
+    expect(request.cancelled).toBe(true);
+  });
+
+  it('cancels the request when the infinite query is cancelled', async () => {
+    const { http, controller } = setup();
+    const client = new QueryClient();
+
+    void client
+      .fetchInfiniteQuery(
+        serverInfiniteQueryOptions<any>(http, '/api/todos', {
+          queryKey: ['todos'],
+          query: ({ pageParam }) => ({ page: pageParam }),
+          initialPageParam: 1,
+          getNextPageParam: () => undefined,
+        }) as any,
+      )
+      .catch(() => undefined);
+    const request = await vi.waitFor(() =>
+      controller.expectOne('/api/todos?page=1'),
+    );
+    await client.cancelQueries();
+
+    expect(request.cancelled).toBe(true);
   });
 });
