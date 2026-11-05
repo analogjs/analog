@@ -1,3 +1,9 @@
+# [3.0.0-beta.34](https://github.com/analogjs/analog/compare/v3.0.0-beta.33...v3.0.0-beta.34) (2026-11-05)
+
+### Bug Fixes
+
+- **router:** run server functions on fetch-native hosts and return 422 for invalid input ([#2753](https://github.com/analogjs/analog/issues/2753)) ([e7cc3dd](https://github.com/analogjs/analog/commit/e7cc3dd347198d0156e5c60b77401185aea13a2c))
+
 # [3.0.0-beta.33](https://github.com/analogjs/analog/compare/v3.0.0-beta.32...v3.0.0-beta.33) (2026-11-05)
 
 ### Bug Fixes
