@@ -403,12 +403,14 @@ describe('analogNitroPlugin', () => {
       );
       const render = async (path: string, headers?: Record<string, string>) => {
         const req = new Request(`http://localhost${path}`, { headers });
+        const waitUntil = vi.fn();
         const result = await handler({
           req,
           url: new URL(req.url),
           res: { headers: new Headers() },
+          waitUntil,
         });
-        return { result, forwarded: fetch.mock.calls.at(-1)?.[0] };
+        return { result, forwarded: fetch.mock.calls.at(-1)?.[0], waitUntil };
       };
       return { render, fetch };
     }
@@ -449,6 +451,128 @@ describe('analogNitroPlugin', () => {
       expect(forwarded?.headers.has('x-analog-no-ssr')).toBe(false);
       expect(forwarded?.headers.has('x-analog-no-streaming')).toBe(false);
       expect(forwarded?.headers.get('accept')).toBe('text/html');
+    });
+
+    it('forwards waitUntil to the SSR service', async () => {
+      const { render } = await createRenderer({});
+
+      const { forwarded, waitUntil } = await render('/page');
+      const task = Promise.resolve();
+      (
+        forwarded as Request & { waitUntil(task: Promise<void>): void }
+      ).waitUntil(task);
+
+      expect(waitUntil).toHaveBeenCalledWith(task);
+    });
+  });
+
+  describe('SSR entry', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+
+    function createEntry(renderer: (...args: any[]) => unknown) {
+      vi.stubGlobal('$fetch', vi.fn());
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot, 'serve');
+      return runModule(
+        callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry'),
+        {
+          nitroServerFetch: vi.fn(),
+          createFetch: () => vi.fn(),
+          renderer,
+        },
+      );
+    }
+
+    it('responds with the status of a failed render', async () => {
+      const entry = createEntry(() => {
+        throw Object.assign(new Error('Not found'), { statusCode: 404 });
+      });
+      vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+    });
+
+    it('responds with the status the app set on the response', async () => {
+      const entry = createEntry((_url, _template, { res }) => {
+        res.statusCode = 404;
+        return '<html></html>';
+      });
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.status).toBe(404);
+    });
+
+    it('passes the request signal and waitUntil to the renderer', async () => {
+      let context: any;
+      const entry = createEntry((_url, _template, ctx) => {
+        context = ctx;
+        return '<html></html>';
+      });
+      const abort = new AbortController();
+      const waitUntil = vi.fn();
+      const request = Object.assign(
+        new Request('http://localhost/x', { signal: abort.signal }),
+        { waitUntil },
+      );
+
+      await entry.fetch(request);
+      abort.abort();
+      const task = Promise.resolve();
+      context.waitUntil(task);
+
+      expect(context.signal.aborted).toBe(true);
+      expect(waitUntil).toHaveBeenCalledWith(task);
+      expect(context.renderErrorsAsHtml).toBe(true);
+    });
+
+    it('responds with the headers the app set on the response', async () => {
+      const entry = createEntry((_url, _template, { res }) => {
+        res.setHeader('cache-control', 'max-age=60');
+        res.setHeader('set-cookie', ['a=1', 'b=2']);
+        res.setHeader('x-removed', 'yes');
+        res.removeHeader('x-removed');
+        return '<html></html>';
+      });
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.headers.get('cache-control')).toBe('max-age=60');
+      expect(response.headers.getSetCookie()).toEqual(['a=1', 'b=2']);
+      expect(response.headers.has('x-removed')).toBe(false);
+      expect(response.headers.get('content-type')).toBe(
+        'text/html; charset=utf-8',
+      );
+    });
+
+    it('leaves buffered renders cacheable', async () => {
+      const entry = createEntry(() =>
+        Object.assign(new ReadableStream(), {
+          [Symbol.for('analog.bufferedStream')]: true,
+        }),
+      );
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.headers.has('cache-control')).toBe(false);
+      expect(response.headers.has('content-encoding')).toBe(false);
+    });
+
+    it('keeps streamed responses from being buffered or cached', async () => {
+      const entry = createEntry(() => new ReadableStream());
+
+      const response = await entry.fetch(new Request('http://localhost/x'));
+
+      expect(response.headers.get('content-encoding')).toBe('identity');
+      expect(response.headers.get('cache-control')).toBe(
+        'no-store, no-transform',
+      );
     });
   });
 

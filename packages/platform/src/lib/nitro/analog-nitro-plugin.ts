@@ -740,13 +740,13 @@ export default defineHandler(async (event) => {
   if (routeRules?.headers?.['x-analog-no-streaming'] === 'true') {
     headers.set('x-analog-no-streaming', 'true');
   }
-  return service.fetch(
-    new Request(event.req.url, {
-      method: event.req.method,
-      headers,
-      signal: event.req.signal,
-    }),
-  );
+  const request = new Request(event.req.url, {
+    method: event.req.method,
+    headers,
+    signal: event.req.signal,
+  });
+  request.waitUntil = (task) => event.waitUntil(task);
+  return service.fetch(request);
 });
 `;
 }
@@ -994,25 +994,54 @@ export default {
       originalUrl: requestUrl,
       connection: {},
     };
+    // Carries the status and headers the app sets through RESPONSE.
+    const resHeaders = new Headers();
+    const resShim = {
+      statusCode: 200,
+      getHeader: (name) => resHeaders.get(name) ?? undefined,
+      hasHeader: (name) => resHeaders.has(name),
+      setHeader(name, value) {
+        resHeaders.delete(name);
+        for (const item of [value].flat()) {
+          resHeaders.append(name, String(item));
+        }
+        return resShim;
+      },
+      removeHeader: (name) => resHeaders.delete(name),
+    };
 
     try {
       const html = await renderer(requestUrl, TEMPLATE, {
         req: reqShim,
+        res: resShim,
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
         // and throws TypeError during prerender/SSR.
         fetch: ssrOFetch,
+        signal: req.signal,
+        waitUntil: req.waitUntil?.bind(req),
+        renderErrorsAsHtml: true,
       });
-      return new Response(html, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
+      const headers = new Headers(resHeaders);
+      if (!headers.has('content-type')) {
+        headers.set('content-type', 'text/html; charset=utf-8');
+      }
+      // So intermediaries don't cache or buffer partial HTML.
+      if (typeof html !== 'string' && !html[Symbol.for('analog.bufferedStream')]) {
+        headers.set('content-encoding', 'identity');
+        headers.set('cache-control', 'no-store, no-transform');
+      }
+      return new Response(html, { status: resShim.statusCode, headers });
     } catch (err) {
       console.error('[analog ssr]', err);
+      const status = err?.statusCode ?? err?.status;
       return new Response(TEMPLATE, {
-        status: 500,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
+        status: status >= 400 && status <= 599 ? status : 500,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+        },
       });
     }
   },
