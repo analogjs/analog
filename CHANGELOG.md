@@ -1,3 +1,9 @@
+# [3.0.0-beta.35](https://github.com/analogjs/analog/compare/v3.0.0-beta.34...v3.0.0-beta.35) (2026-11-05)
+
+### Bug Fixes
+
+- **platform:** honour narrower SSR route rules and give the SSR entry the full render context ([#2754](https://github.com/analogjs/analog/issues/2754)) ([a05a6fb](https://github.com/analogjs/analog/commit/a05a6fb9250e9882c245ad69e180a771fe13222d))
+
 # [3.0.0-beta.34](https://github.com/analogjs/analog/compare/v3.0.0-beta.33...v3.0.0-beta.34) (2026-11-05)
 
 ### Bug Fixes
