@@ -180,6 +180,10 @@ export function defineApiRoute<
         ? await parseRequestData(event)
         : undefined;
 
+    if (requestData instanceof Response) {
+      return requestData;
+    }
+
     if (options.input) {
       data = requestData;
 
