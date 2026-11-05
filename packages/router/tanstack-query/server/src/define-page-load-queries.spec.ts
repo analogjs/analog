@@ -109,6 +109,22 @@ describe('definePageLoadQueries', () => {
     expect(querySignal?.aborted).toBe(true);
   });
 
+  it('does not run the handler when the request is already aborted', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const request = new Request('http://localhost/', {
+      signal: controller.signal,
+    });
+    const handler = vi.fn();
+
+    const load = definePageLoadQueries({ handler });
+
+    await expect(load(makeCtx('http://localhost/', request))).rejects.toThrow(
+      expect.objectContaining({ name: 'AbortError' }),
+    );
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('short-circuits with a 422 Response before calling the handler when params validation fails', async () => {
     const failingSchema: StandardSchemaV1<unknown, { id: string }> = {
       '~standard': {

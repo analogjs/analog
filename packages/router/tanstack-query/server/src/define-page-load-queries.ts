@@ -96,8 +96,9 @@ export function definePageLoadQueries<
     params: options.params,
     query: options.query,
     handler: async (ctx): Promise<PageLoadQueriesResult<TData>> => {
-      const client = options.client?.() ?? new QueryClient();
       const signal = getRequestSignal(ctx.event);
+      signal?.throwIfAborted();
+      const client = options.client?.() ?? new QueryClient();
       const cancel = () => void client.cancelQueries();
       signal?.addEventListener('abort', cancel, { once: true });
       try {
