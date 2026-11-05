@@ -267,7 +267,9 @@ async function renderPage(
   }
   // The status carries anything the app set through RESPONSE before the
   // response started.
-  return new Response(html, { status: context.res.statusCode, headers });
+  const status = context.res.statusCode;
+  const body = [204, 205, 304].includes(status) ? null : html;
+  return new Response(body, { status, headers });
 }
 
 /**

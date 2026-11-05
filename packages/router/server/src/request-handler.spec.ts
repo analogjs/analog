@@ -87,6 +87,22 @@ describe('createAnalogRequestHandler', () => {
     expect(await response?.text()).toContain('<p>/missing</p>');
   });
 
+  it('renders null-body statuses without a body', async () => {
+    ANALOG_SERVER_MANIFEST.render =
+      async () =>
+      async (_url, document, { res }) => {
+        res.statusCode = 304;
+        return document;
+      };
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/cached`),
+    );
+
+    expect(response?.status).toBe(304);
+    expect(response?.body).toBeNull();
+  });
+
   it('leaves buffered renders cacheable', async () => {
     ANALOG_SERVER_MANIFEST.render = async () => async () =>
       Object.assign(new ReadableStream(), { [BUFFERED_STREAM]: true });
