@@ -60,6 +60,7 @@ import {
 import { buildDeferDependencyMap } from './defer.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
+import { inlineStyleRanges } from './style-ast.js';
 
 /**
  * COMPLETE EXHAUSTIVE ANGULAR LITE COMPILER
@@ -271,6 +272,7 @@ export function compile(
     registry?.size ?? 0,
   );
   const oxcProgram = opts.oxcProgram ?? parseOxc(fileName, sourceCode).program;
+  const styleRanges = resolvedInlineStyles && inlineStyleRanges(oxcProgram);
   const oxcClassMap = new Map<string, any>();
   for (const stmt of oxcProgram.body) {
     const decl =
@@ -758,11 +760,11 @@ export function compile(
             }
           }
 
-          if (resolvedInlineStyles) {
-            for (const [idx, css] of resolvedInlineStyles) {
-              if (idx < meta.styles.length) {
-                meta.styles[idx] = css;
-              }
+          const styleRange = styleRanges?.get(dec);
+          if (resolvedInlineStyles && styleRange) {
+            for (let k = 0; k < styleRange.count; k++) {
+              const css = resolvedInlineStyles.get(styleRange.start + k);
+              if (css !== undefined) meta.styles[k] = css;
             }
           }
 

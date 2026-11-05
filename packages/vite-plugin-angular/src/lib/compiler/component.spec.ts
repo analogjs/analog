@@ -1357,6 +1357,31 @@ export class BottomNav {}
       expect(result.code).toContain('_nghost-%COMP%');
     });
 
+    it('applies file-wide resolvedInlineStyles indices to the owning component', () => {
+      const resolvedInlineStyles = new Map([
+        [0, '.first { color: red; }'],
+        [1, '.second { color: blue; }'],
+      ]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'app-first', template: '', styles: ['.first {}'] })
+        export class FirstComponent {}
+        @Component({ selector: 'app-second', template: '', styles: ['.second {}'] })
+        export class SecondComponent {}
+      `,
+        'two-components.ts',
+        { resolvedInlineStyles },
+      );
+
+      const [first, second] = result.code.split('class SecondComponent');
+      expect(first).toContain('color: red');
+      expect(first).not.toContain('color: blue');
+      expect(second).toContain('color: blue');
+      expect(second).not.toContain('color: red');
+    });
+
     it('leaves inline styles untouched when no resolvedInlineStyles', () => {
       const result = rawCompile(
         `
