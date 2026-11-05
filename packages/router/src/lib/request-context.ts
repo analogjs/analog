@@ -1,11 +1,14 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
+  ApplicationRef,
+  InjectionToken,
   PLATFORM_ID,
   TransferState,
   inject,
   makeStateKey,
 } from '@angular/core';
 import {
+  HttpErrorResponse,
   HttpEvent,
   HttpHandlerFn,
   HttpHeaders,
@@ -61,6 +64,26 @@ function mergeFetchParams(
   );
 }
 
+const TRANSFER_CACHE_STATE = new InjectionToken<{ isActive: boolean }>(
+  'ANALOG_TRANSFER_CACHE_STATE',
+  { providedIn: 'root', factory: () => ({ isActive: true }) },
+);
+
+/**
+ * Stops restoring transferred responses once the app is first stable,
+ * matching Angular's HTTP transfer cache.
+ */
+export function deactivateTransferCacheWhenStable(): () => void {
+  const appRef = inject(ApplicationRef);
+  const cacheState = inject(TRANSFER_CACHE_STATE);
+
+  return () => {
+    appRef.whenStable().then(() => {
+      cacheState.isActive = false;
+    });
+  };
+}
+
 /**
  * Interceptor that is server-aware when making HttpClient requests.
  * Server-side requests use the full URL
@@ -78,6 +101,7 @@ export function requestContextInterceptor(
   const apiPrefix = injectAPIPrefix();
   const baseUrl = injectBaseURL();
   const transferState = inject(TransferState);
+  const cacheState = inject(TRANSFER_CACHE_STATE);
   const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   const nitroGlobal = globalThis as typeof globalThis & {
     $fetch?: ServerInternalFetch;
@@ -112,6 +136,9 @@ export function requestContextInterceptor(
           body: req.body ? req.body : undefined,
           params: fetchParams,
           responseType,
+          parseResponse:
+            responseType === 'json' ? (text: string) => text : undefined,
+          ignoreResponseError: true,
           headers: req.headers
             .keys()
             .reduce((hdrs: Record<string, string>, current: string) => {
@@ -127,9 +154,33 @@ export function requestContextInterceptor(
             statusText: res.statusText ?? 'OK',
             url: fetchUrl,
           };
+
+          if (responseType === 'json' && typeof res._data === 'string') {
+            try {
+              cacheResponse.body =
+                res._data === '' ? null : JSON.parse(res._data);
+            } catch (error) {
+              if (cacheResponse.status < 400) {
+                throw new HttpErrorResponse({
+                  ...cacheResponse,
+                  error: { error, text: res._data },
+                });
+              }
+            }
+          }
+
+          if (cacheResponse.status >= 400) {
+            throw new HttpErrorResponse({
+              ...cacheResponse,
+              error: cacheResponse.body,
+            });
+          }
+
           const transferResponse = new HttpResponse(cacheResponse);
 
-          transferState.set(storeKey, cacheResponse);
+          if (req.transferCache !== false) {
+            transferState.set(storeKey, cacheResponse);
+          }
           return transferResponse;
         }),
     );
@@ -143,7 +194,10 @@ export function requestContextInterceptor(
     const { pathname, search } = toAbsoluteUrl(req.urlWithParams);
     const cacheKey = makeCacheKey(req, `${pathname}${search}`);
     const storeKey = makeStateKey<unknown>(`analog_${cacheKey}`);
-    const cacheRestoreResponse = transferState.get(storeKey, null);
+    const cacheRestoreResponse =
+      req.transferCache !== false && cacheState.isActive
+        ? transferState.get(storeKey, null)
+        : null;
 
     if (cacheRestoreResponse) {
       transferState.remove(storeKey);

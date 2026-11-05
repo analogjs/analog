@@ -1,7 +1,18 @@
-import { Component } from '@angular/core';
+import {
+  APP_BOOTSTRAP_LISTENER,
+  ApplicationRef,
+  Component,
+  ComponentRef,
+  TransferState,
+  makeStateKey,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { DOCUMENT } from '@angular/common';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpRequest,
+  provideHttpClient,
+} from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -10,6 +21,7 @@ import { provideLocationMocks } from '@angular/common/testing';
 import { ROUTES, Router } from '@angular/router';
 import { describe, expect, it, vi } from 'vitest';
 
+import { makeCacheKey } from './cache-key';
 import { RouteExport } from './models';
 import { ROUTE_JSON_LD_KEY } from './json-ld';
 import { ROUTE_META_TAGS_KEY } from './meta-tags';
@@ -260,6 +272,34 @@ describe('provideFileRouter integration', () => {
 
     TestBed.inject(HttpTestingController)
       .expectOne(new URL('/api/hello', window.location.origin).href)
+      .flush({});
+  });
+
+  it('stops restoring transferred responses once the app is stable', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideFileRouter(),
+        provideLocationMocks(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+    const url = '/api/hello';
+    TestBed.inject(TransferState).set(
+      makeStateKey<unknown>(
+        `analog_${makeCacheKey(new HttpRequest('GET', url), url)}`,
+      ),
+      { body: { cached: true } },
+    );
+
+    for (const listener of TestBed.inject(APP_BOOTSTRAP_LISTENER)) {
+      listener({} as ComponentRef<unknown>);
+    }
+    await TestBed.inject(ApplicationRef).whenStable();
+    TestBed.inject(HttpClient).get(url).subscribe();
+
+    TestBed.inject(HttpTestingController)
+      .expectOne(new URL(url, window.location.origin).href)
       .flush({});
   });
 });

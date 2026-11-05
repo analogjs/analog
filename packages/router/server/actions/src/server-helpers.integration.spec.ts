@@ -205,4 +205,87 @@ describe('typed helpers with h3 v1', () => {
       JSON.parse('{"constructor":["one","two"],"__proto__":"value"}'),
     );
   });
+
+  function postJson(body: string, contentType = 'application/json') {
+    return new Request('http://localhost/', {
+      method: 'POST',
+      headers: { 'content-type': contentType },
+      body,
+    });
+  }
+
+  const jsonContentTypes = [
+    'application/json',
+    'application/json; charset=utf-8',
+    'application/vnd.api+json',
+  ];
+
+  it.each(jsonContentTypes)(
+    'rejects malformed %s in an API route with a 400',
+    async (contentType) => {
+      const handler = vi.fn(() => ({ ok: true }));
+      const app = createApp().use(
+        defineEventHandler(defineApiRoute({ input: z.any(), handler })),
+      );
+
+      const response = await toWebHandler(app)(postJson('{bad', contentType));
+
+      expect(response.status).toBe(400);
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(jsonContentTypes)(
+    'rejects malformed %s in a page action with a 400',
+    async (contentType) => {
+      const handler = vi.fn(() => json({ ok: true }));
+      const action = defineAction({ handler });
+      const app = createApp().use(
+        defineEventHandler((event) =>
+          action({
+            params: event.context.params,
+            event,
+            req: event.node.req,
+            res: event.node.res,
+            fetch: vi.fn() as unknown as PageServerAction['fetch'],
+          }),
+        ),
+      );
+
+      const response = await toWebHandler(app)(postJson('{bad', contentType));
+
+      expect(response.status).toBe(400);
+      expect(handler).not.toHaveBeenCalled();
+    },
+  );
+
+  it('passes a JSON null body through as null', async () => {
+    const app = createApp().use(
+      defineEventHandler(
+        defineApiRoute({
+          input: z.unknown(),
+          handler: ({ data }) => ({ data }),
+        }),
+      ),
+    );
+
+    const response = await toWebHandler(app)(postJson('null'));
+
+    expect(await response.json()).toEqual({ data: null });
+  });
+
+  it('treats an empty JSON body as an empty object', async () => {
+    const app = createApp().use(
+      defineEventHandler(
+        defineApiRoute({
+          input: z.unknown(),
+          handler: ({ data }) => ({ data }),
+        }),
+      ),
+    );
+
+    const response = await toWebHandler(app)(postJson(''));
+
+    expect(await response.json()).toEqual({ data: {} });
+  });
 });

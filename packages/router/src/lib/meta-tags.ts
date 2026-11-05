@@ -52,11 +52,35 @@ export function updateMetaTagsOnRouteChange(
   router: Router = inject(Router),
   metaService: Meta = inject(Meta),
 ): void {
+  const originalTags = new Map<string, HTMLMetaElement | null>();
+
   router.events
     .pipe(filter((event) => event instanceof NavigationEnd))
     .subscribe(() => {
       const metaTagMap = getMetaTagMap(router.routerState.snapshot.root);
+
+      for (const [metaTagSelector, originalTag] of originalTags) {
+        if (metaTagSelector in metaTagMap) {
+          continue;
+        }
+
+        if (originalTag) {
+          metaService.getTag(metaTagSelector)?.replaceWith(originalTag);
+        } else {
+          metaService.removeTag(metaTagSelector);
+        }
+        originalTags.delete(metaTagSelector);
+      }
+
       for (const metaTagSelector in metaTagMap) {
+        if (!originalTags.has(metaTagSelector)) {
+          const originalTag = metaService.getTag(metaTagSelector);
+          originalTags.set(
+            metaTagSelector,
+            (originalTag?.cloneNode() as HTMLMetaElement | undefined) ?? null,
+          );
+        }
+
         const metaTag = metaTagMap[
           metaTagSelector as MetaTagSelector
         ] as NgMetaTag;

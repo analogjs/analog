@@ -1,6 +1,8 @@
 import type { H3Event } from 'h3';
 import { getRequestURL, readBody, readFormData } from 'h3';
 
+import { fail } from './actions';
+
 type RequestEntryValue = string | File;
 type ParsedRequestValue = RequestEntryValue | RequestEntryValue[];
 
@@ -78,6 +80,22 @@ export function parseFormData(
   return result;
 }
 
+async function readJsonBody(event: H3Event): Promise<unknown> {
+  try {
+    return await readBody(event, { strict: true });
+  } catch (error) {
+    const request = getRequest(event);
+    if (!request || request.bodyUsed) {
+      throw error;
+    }
+    const text = await request.text();
+    return text ? JSON.parse(text) : undefined;
+  }
+}
+
+/**
+ * Resolves to a 400 `Response` when a JSON body is malformed.
+ */
 export async function parseRequestData(event: H3Event): Promise<unknown> {
   const method = event.method.toUpperCase();
 
@@ -90,13 +108,10 @@ export async function parseRequestData(event: H3Event): Promise<unknown> {
 
   if (isJsonContentType(contentType)) {
     try {
-      return (await readBody(event)) ?? {};
+      const body = await readJsonBody(event);
+      return body === undefined ? {} : body;
     } catch {
-      try {
-        return (await getRequest(event)?.json()) ?? {};
-      } catch {
-        return {};
-      }
+      return fail(400, { message: 'Invalid JSON body' });
     }
   }
 

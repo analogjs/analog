@@ -1,4 +1,5 @@
 import {
+  APP_BOOTSTRAP_LISTENER,
   DOCUMENT,
   EnvironmentProviders,
   inject,
@@ -12,7 +13,10 @@ import { Router } from '@angular/router';
 import { API_PREFIX } from '../../tokens/src/index.js';
 
 import { cookieInterceptor } from './cookie-interceptor';
-import { requestContextInterceptor } from './request-context';
+import {
+  deactivateTransferCacheWhenStable,
+  requestContextInterceptor,
+} from './request-context';
 import { updateJsonLdOnRouteChange } from './json-ld';
 import { updateMetaTagsOnRouteChange } from './meta-tags';
 import { createRoutes as createBaseRoutes } from './route-builder';
@@ -131,6 +135,11 @@ export function provideFileRouterWithRoutes(
       provide: HTTP_ROOT_INTERCEPTOR_FNS,
       multi: true,
       useValue: requestContextInterceptor,
+    },
+    {
+      provide: APP_BOOTSTRAP_LISTENER,
+      multi: true,
+      useFactory: deactivateTransferCacheWhenStable,
     },
     {
       provide: HTTP_ROOT_INTERCEPTOR_FNS,

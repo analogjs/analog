@@ -101,6 +101,10 @@ async function handleValidatedRequest<
   type Data = InferSchema<TSchema, Record<string, unknown>>;
   const body = await parseRequestData(ctx.event);
 
+  if (body instanceof Response) {
+    return body;
+  }
+
   let data: unknown = body;
 
   if (options.schema) {
