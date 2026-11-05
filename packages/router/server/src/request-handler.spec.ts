@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAnalogRequestHandler } from './request-handler';
 import { serverFnRegistry } from './server-fn/registry';
+import { BUFFERED_STREAM } from './utils/stream-request';
 import { serverFn } from './server-fn/server-fn';
 import {
   ANALOG_SERVER_MANIFEST,
@@ -90,6 +91,52 @@ describe('createAnalogRequestHandler', () => {
     expect(response?.status).toBe(404);
     expect(response?.headers.get('x-rendered')).toBe('/missing');
     expect(await response?.text()).toContain('<p>/missing</p>');
+  });
+
+  it('renders null-body statuses without a body', async () => {
+    ANALOG_SERVER_MANIFEST.render =
+      async () =>
+      async (_url, document, { res }) => {
+        res.statusCode = 304;
+        return document;
+      };
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/cached`),
+    );
+
+    expect(response?.status).toBe(304);
+    expect(response?.body).toBeNull();
+  });
+
+  it('cancels a stream it cannot send for a null-body status', async () => {
+    const cancel = vi.fn();
+    ANALOG_SERVER_MANIFEST.render =
+      async () =>
+      async (_url, _document, { res }) => {
+        res.statusCode = 304;
+        return new ReadableStream({ cancel });
+      };
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/cached`),
+    );
+
+    expect(response?.status).toBe(304);
+    expect(cancel).toHaveBeenCalled();
+    expect(response?.headers.has('cache-control')).toBe(false);
+  });
+
+  it('leaves buffered renders cacheable', async () => {
+    ANALOG_SERVER_MANIFEST.render = async () => async () =>
+      Object.assign(new ReadableStream(), { [BUFFERED_STREAM]: true });
+
+    const response = await createAnalogRequestHandler()(
+      new Request(`${origin}/buffered`),
+    );
+
+    expect(response?.headers.has('cache-control')).toBe(false);
+    expect(response?.headers.has('content-encoding')).toBe(false);
   });
 
   it('streams pages uncached and unbuffered until the request aborts', async () => {

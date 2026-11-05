@@ -6,6 +6,7 @@ import { $fetch } from 'ofetch';
 import { createRouter } from 'radix3';
 
 import { getBaseUrl } from './provide-server-context';
+import { BUFFERED_STREAM } from './utils/stream-request';
 import { createServerFnAppInjector } from './server-fn/app-injector';
 import { callServerFn } from './server-fn/event-handler';
 import { nodeContext, withResponseHeaders } from './server-fn/node-context';
@@ -226,14 +227,21 @@ async function renderPage(
     renderErrorsAsHtml: true,
   });
   const headers = new Headers({ 'content-type': 'text/html; charset=utf-8' });
+  // The status carries anything the app set through RESPONSE before the
+  // response started.
+  const status = context.res.statusCode;
+  if ([204, 205, 304].includes(status)) {
+    if (typeof html !== 'string') {
+      await html.cancel();
+    }
+    return new Response(null, { status, headers });
+  }
   // As on Nitro, so intermediaries don't cache or buffer partial HTML.
-  if (typeof html !== 'string') {
+  if (typeof html !== 'string' && !(BUFFERED_STREAM in html)) {
     headers.set('content-encoding', 'identity');
     headers.set('cache-control', 'no-store, no-transform');
   }
-  // The status carries anything the app set through RESPONSE before the
-  // response started.
-  return new Response(html, { status: context.res.statusCode, headers });
+  return new Response(html, { status, headers });
 }
 
 /**

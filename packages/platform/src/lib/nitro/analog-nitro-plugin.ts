@@ -724,23 +724,29 @@ const TEMPLATE = ${JSON.stringify(template)};
 export default defineHandler(async (event) => {
   event.res.headers.set('content-type', 'text/html; charset=utf-8');
   // 'x-analog-no-ssr' is stamped on the route rule headers by
-  // injectAnalogRouteRuleHeaders for routeRules with \`ssr: false\`. Nitro
-  // writes those headers after the handler runs, so read the matched rules.
+  // injectAnalogRouteRuleHeaders. Nitro writes those headers after the
+  // handler runs, so read the matched rules.
   const { routeRules } = getRouteRules(event.req.method, event.url.pathname);
   if (routeRules?.headers?.['x-analog-no-ssr'] === 'true') {
     return TEMPLATE;
   }
   const service = ssr.default ?? ssr;
   // The SSR service renders without a Node response, so forward the
-  // \`streaming: false\` rule on the request for the renderer to read.
+  // \`streaming: false\` rule on the request for the renderer to read. Only
+  // the route rule decides it, never the client.
+  const headers = new Headers(event.req.headers);
+  headers.delete('x-analog-no-ssr');
+  headers.delete('x-analog-no-streaming');
   if (routeRules?.headers?.['x-analog-no-streaming'] === 'true') {
-    const headers = new Headers(event.req.headers);
     headers.set('x-analog-no-streaming', 'true');
-    return service.fetch(
-      new Request(event.req.url, { method: event.req.method, headers }),
-    );
   }
-  return service.fetch(event.req);
+  const request = new Request(event.req.url, {
+    method: event.req.method,
+    headers,
+    signal: event.req.signal,
+  });
+  request.waitUntil = (task) => event.waitUntil(task);
+  return service.fetch(request);
 });
 `;
 }
@@ -881,12 +887,12 @@ function sanitizeNitroBundlerConfig(rollupConfig: { output?: unknown }): void {
 }
 
 /**
- * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr: true` onto
- * any rule with `ssr: false`, and `x-analog-no-streaming: true` onto any rule
- * with `streaming: false`. Kept as response-header hints for downstream
- * consumers (CDN, edge logic); the actual SSR short-circuit happens inside
- * the SSR renderer virtual above, and the router falls back to a buffered
- * render when it sees the streaming hint.
+ * Walks Nitro's resolved routeRules and stamps `x-analog-no-ssr` onto any rule
+ * setting `ssr`, and `x-analog-no-streaming` onto any rule setting
+ * `streaming`. Nitro drops `false` values when it merges rules, so the headers
+ * carry them, and a narrower `true` rule overrides with `'false'`. The SSR
+ * renderer virtual above reads them from the matched rules, and they reach
+ * the response as hints for downstream consumers (CDN, edge logic).
  */
 export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   const routeRules = nitro.options.routeRules as
@@ -902,11 +908,14 @@ export function injectAnalogRouteRuleHeaders(nitro: Nitro): void {
   if (!routeRules) return;
 
   for (const rule of Object.values(routeRules)) {
-    if (rule?.ssr === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-ssr': 'true' };
+    if (typeof rule?.ssr === 'boolean') {
+      rule.headers = { ...rule.headers, 'x-analog-no-ssr': String(!rule.ssr) };
     }
-    if (rule?.streaming === false) {
-      rule.headers = { ...rule.headers, 'x-analog-no-streaming': 'true' };
+    if (typeof rule?.streaming === 'boolean') {
+      rule.headers = {
+        ...rule.headers,
+        'x-analog-no-streaming': String(!rule.streaming),
+      };
     }
   }
 }
@@ -979,38 +988,73 @@ export default {
     // server data loaders that read from req.url see the full path+query.
     const requestUrl = requestPath + url.search;
 
-    if (req.headers.get('x-analog-no-ssr') === 'true') {
-      return new Response(TEMPLATE, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
-    }
-
     const reqShim = {
       headers: Object.fromEntries(req.headers.entries()),
       url: requestUrl,
       originalUrl: requestUrl,
       connection: {},
     };
+    // Carries the status and headers the app sets through RESPONSE.
+    const resHeaders = new Headers();
+    const resShim = {
+      statusCode: 200,
+      getHeader(name) {
+        if (name.toLowerCase() !== 'set-cookie') {
+          return resHeaders.get(name) ?? undefined;
+        }
+        const cookies = resHeaders.getSetCookie();
+        return cookies.length ? cookies : undefined;
+      },
+      hasHeader: (name) => resHeaders.has(name),
+      setHeader(name, value) {
+        resHeaders.delete(name);
+        for (const item of [value].flat()) {
+          resHeaders.append(name, String(item));
+        }
+        return resShim;
+      },
+      removeHeader: (name) => resHeaders.delete(name),
+    };
 
     try {
       const html = await renderer(requestUrl, TEMPLATE, {
         req: reqShim,
+        res: resShim,
         // Pass the ofetch-wrapped fetch — INTERNAL_FETCH is consumed by the
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
         // and throws TypeError during prerender/SSR.
         fetch: ssrOFetch,
+        signal: req.signal,
+        waitUntil: req.waitUntil?.bind(req),
+        renderErrorsAsHtml: true,
       });
-      return new Response(html, {
-        status: 200,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
-      });
+      const headers = new Headers(resHeaders);
+      if (!headers.has('content-type')) {
+        headers.set('content-type', 'text/html; charset=utf-8');
+      }
+      const status = resShim.statusCode;
+      if ([204, 205, 304].includes(status)) {
+        if (typeof html !== 'string') {
+          await html.cancel();
+        }
+        return new Response(null, { status, headers });
+      }
+      // So intermediaries don't cache or buffer partial HTML.
+      if (typeof html !== 'string' && !html[Symbol.for('analog.bufferedStream')]) {
+        headers.set('content-encoding', 'identity');
+        headers.set('cache-control', 'no-store, no-transform');
+      }
+      return new Response(html, { status, headers });
     } catch (err) {
       console.error('[analog ssr]', err);
+      const status = err?.statusCode ?? err?.status;
       return new Response(TEMPLATE, {
-        status: 500,
-        headers: { 'content-type': 'text/html; charset=utf-8' },
+        status: status >= 400 && status <= 599 ? status : 500,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'cache-control': 'no-store',
+        },
       });
     }
   },

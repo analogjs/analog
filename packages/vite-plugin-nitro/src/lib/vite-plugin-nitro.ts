@@ -832,8 +832,9 @@ function getAnalogOptions(userConfig: UserConfig): Options | undefined {
 }
 
 /**
- * Stamps `ssr: false` and `streaming: false` route rules as response headers,
- * which the renderers read to skip SSR or streaming for matching routes.
+ * Stamps `ssr` and `streaming` route rules as response headers, which the
+ * renderers read to skip SSR or streaming for matching routes. `true` rules
+ * stamp `'false'` so they override a broader `false` rule.
  */
 function withAnalogRouteRuleHeaders(nitroOptions: NitroConfig): NitroConfig {
   if (!nitroOptions.routeRules) {
@@ -847,9 +848,11 @@ function withAnalogRouteRuleHeaders(nitroOptions: NitroConfig): NitroConfig {
         ...rule,
         headers: {
           ...rule.headers,
-          ...(rule.ssr === false ? { 'x-analog-no-ssr': 'true' } : {}),
-          ...(rule.streaming === false
-            ? { 'x-analog-no-streaming': 'true' }
+          ...(typeof rule.ssr === 'boolean'
+            ? { 'x-analog-no-ssr': String(!rule.ssr) }
+            : {}),
+          ...(typeof rule.streaming === 'boolean'
+            ? { 'x-analog-no-streaming': String(!rule.streaming) }
             : {}),
         },
       },

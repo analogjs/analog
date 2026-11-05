@@ -1,3 +1,5 @@
+import { defu } from 'defu';
+import { toRouteMatcher, createRouter } from 'radix3';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PrerenderContentFile } from './options';
@@ -66,6 +68,38 @@ describe('nitro', () => {
       const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
       expect(nitroConfig.routeRules?.['/client']?.headers).toEqual({
         'x-analog-no-ssr': 'true',
+      });
+    });
+
+    it('lets a narrower true route rule override a broader false one', async () => {
+      const { buildServer } = await import('./build-server');
+      const config = await runConfig(
+        nitro({
+          routeRules: {
+            '/**': { ssr: false, streaming: false },
+            '/live/**': { ssr: true, streaming: true },
+          },
+        }),
+      );
+      await config.builder.buildApp({
+        build: vi.fn(),
+        environments: { client: {} },
+      });
+
+      const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
+      // Merged the way Nitro v2 resolves the rules for a path.
+      const matcher = toRouteMatcher(
+        createRouter({ routes: nitroConfig.routeRules }),
+      );
+      const headersFor = (path: string) =>
+        defu({}, ...matcher.matchAll(path).reverse()).headers;
+      expect(headersFor('/live/page')).toEqual({
+        'x-analog-no-ssr': 'false',
+        'x-analog-no-streaming': 'false',
+      });
+      expect(headersFor('/other')).toEqual({
+        'x-analog-no-ssr': 'true',
+        'x-analog-no-streaming': 'true',
       });
     });
 

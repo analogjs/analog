@@ -50,7 +50,11 @@ import { provideServerContext } from './provide-server-context';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
 import { bodyInner, headInner } from './utils/stream-html';
 import { createStreamShell } from './utils/stream-shell';
-import { isLikelyBot, streamingDisabledByRoute } from './utils/stream-request';
+import {
+  BUFFERED_STREAM,
+  isLikelyBot,
+  streamingDisabledByRoute,
+} from './utils/stream-request';
 import { DEFER_RECONCILE_RUNTIME } from './defer-reconcile-runtime';
 import { createSsrStream } from './utils/ssr-stream-lifecycle';
 import { createSsrNavigationTracker } from './ssr-navigation';
@@ -259,12 +263,15 @@ export function renderStream(
         ],
       });
       navigation.throwIfFailed();
-      return new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode(html as string));
-          controller.close();
-        },
-      });
+      return Object.assign(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(html as string));
+            controller.close();
+          },
+        }),
+        { [BUFFERED_STREAM]: true },
+      );
     }
 
     installCaptureDispatcher();
