@@ -301,7 +301,10 @@ export function angular(options?: PluginOptions): Plugin[] {
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
 
   const ts = require('typescript');
-  let builder: ts.BuilderProgram | ts.EmitAndSemanticDiagnosticsBuilderProgram;
+  let cachedBuilder:
+    | ts.BuilderProgram
+    | ts.EmitAndSemanticDiagnosticsBuilderProgram
+    | undefined;
   let nextProgram: NgtscProgram | undefined;
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
@@ -422,6 +425,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   };
   let initialCompilation = false;
   let activeBuilds = 0;
+  let closeRequested = false;
   const declarationFiles: DeclarationFile[] = [];
   const fileTransformMap = new Map<string, string>();
   let styleTransform: (
@@ -433,6 +437,38 @@ export function angular(options?: PluginOptions): Plugin[] {
   const hotUpdates = createHotUpdateBatcher((ids) =>
     performCompilation(resolvedConfig, ids),
   );
+  function releaseCompilation() {
+    cachedBuilder = undefined;
+    nextProgram = undefined;
+    cachedHost = undefined;
+    cachedHostKey = undefined;
+    outputFile = undefined;
+    outputFiles.clear();
+    fileTransformMap.clear();
+    tsSourceFileCache.clear();
+    sourceFileCache.clear();
+    sourceFileCache.modifiedFiles.clear();
+    sourceFileCache.babelFileCache?.clear();
+    sourceFileCache.typeScriptFileCache?.clear();
+    sourceFileCache.referencedFiles = undefined;
+    tsconfigResolver.invalidateAll();
+    releaseCssPreprocessorWorkers();
+    stylesheetRegistry = undefined;
+  }
+
+  async function closeCompilation() {
+    hotUpdates.close();
+    await compilationLock;
+    declarationFiles.forEach(
+      ({ declarationFileDir, declarationPath, data }) => {
+        mkdirSync(declarationFileDir, { recursive: true });
+        writeFileSync(declarationPath, data, 'utf-8');
+      },
+    );
+    declarationFiles.length = 0;
+    releaseCompilation();
+  }
+
   function angularPlugin(): Plugin {
     let isProd = false;
 
@@ -635,21 +671,9 @@ export function angular(options?: PluginOptions): Plugin[] {
         // Environments (e.g. client and ssr) build in parallel and share this
         // plugin's compilation state, so only reset after the last one ends.
         activeBuilds = Math.max(0, activeBuilds - 1);
-        if (watchMode || activeBuilds > 0) return;
-        nextProgram = undefined;
-        cachedHost = undefined;
-        cachedHostKey = undefined;
-        outputFile = undefined;
-        outputFiles.clear();
-        fileTransformMap.clear();
-        tsSourceFileCache.clear();
-        sourceFileCache.clear();
-        sourceFileCache.modifiedFiles.clear();
-        sourceFileCache.babelFileCache?.clear();
-        sourceFileCache.typeScriptFileCache?.clear();
-        sourceFileCache.referencedFiles = undefined;
-        tsconfigResolver.invalidateAll();
-        releaseCssPreprocessorWorkers();
+        if (activeBuilds > 0) return;
+        if (closeRequested) return closeCompilation();
+        if (!watchMode) releaseCompilation();
       },
       async handleHotUpdate(ctx) {
         if (isIgnoredHmrFile(ctx.file)) {
@@ -1413,15 +1437,8 @@ export function angular(options?: PluginOptions): Plugin[] {
         },
       },
       closeBundle() {
-        hotUpdates.close();
-        declarationFiles.forEach(
-          ({ declarationFileDir, declarationPath, data }) => {
-            mkdirSync(declarationFileDir, { recursive: true });
-            writeFileSync(declarationPath, data, 'utf-8');
-          },
-        );
-        declarationFiles.length = 0;
-        if (!watchMode) releaseCssPreprocessorWorkers();
+        closeRequested = true;
+        if (activeBuilds === 0) return closeCompilation();
       },
     };
   }
@@ -1669,9 +1686,12 @@ export function angular(options?: PluginOptions): Plugin[] {
     let typeScriptProgram: ts.Program;
     let angularCompiler: NgtscProgram['compiler'];
     // Declaration changes can invalidate diagnostics in unchanged consumers.
+    let builder:
+      | ts.BuilderProgram
+      | ts.EmitAndSemanticDiagnosticsBuilderProgram;
     const oldBuilder = ids?.some((id) => EXCLUDED_TS_EXT_REGEX.test(id))
       ? undefined
-      : (builder ?? ts.readBuilderProgram(tsCompilerOptions, host));
+      : (cachedBuilder ?? ts.readBuilderProgram(tsCompilerOptions, host));
 
     if (!jit) {
       // Create the Angular specific program that contains the Angular compiler
@@ -1708,6 +1728,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       // using an abstract builder that only wraps a TypeScript program.
       builder = ts.createAbstractBuilder(typeScriptProgram, host, oldBuilder);
     }
+    cachedBuilder = builder;
 
     if (angularCompiler!) {
       await angularCompiler.analyzeAsync();
