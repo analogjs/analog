@@ -54,9 +54,6 @@ catalogs:
     '@astrojs/react':
       specifier: ^5.0.2
       version: 5.0.3
-    '@babel/core':
-      specifier: ^8.0.0
-      version: 8.0.1
     '@commitlint/cli':
       specifier: ^20.5.0
       version: 20.5.0
@@ -1559,9 +1556,6 @@ importers:
         specifier: 'catalog:'
         version: 4.0.3
     devDependencies:
-      '@babel/core':
-        specifier: 'catalog:'
-        version: 8.0.1
       '@nx/angular':
         specifier: 'catalog:'
         version: 24.0.0(4a5f50ebe1f4381cec3dc63d969074a3)
