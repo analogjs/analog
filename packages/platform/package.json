@@ -45,7 +45,6 @@
     "xmlbuilder2": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "catalog:",
     "@nx/angular": "catalog:",
     "@nx/devkit": "catalog:",
     "@nx/vite": "catalog:",

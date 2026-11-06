@@ -1,27 +1,15 @@
 import { createRequire } from 'node:module';
-import { pathToFileURL } from 'node:url';
 
-import type { PluginItem, transformAsync } from '@babel/core';
-import type { Plugin, SourceMapInput } from 'rolldown';
+import type { JavaScriptTransformer } from '@angular/build/private';
+import type { Plugin } from 'rolldown';
 
-const require = createRequire(import.meta.url);
-
-type BabelCore = { transformAsync: typeof transformAsync };
-
-/**
- * Loads the `@babel/core` release that `@angular/compiler-cli` depends on.
- * The linker Babel plugin asserts the Babel major it was built against
- * (Angular 22.0 needs Babel 7, Angular 22.1+ needs Babel 8), so resolving
- * through compiler-cli keeps both in sync, including in strict pnpm layouts.
- */
-async function loadBabel(): Promise<BabelCore> {
-  const compilerCliRequire = createRequire(
-    require.resolve('@angular/compiler-cli/package.json'),
-  );
-  const babelEntry = compilerCliRequire.resolve('@babel/core');
-  const babel = await import(pathToFileURL(babelEntry).href);
-  return babel.transformAsync ? babel : babel.default;
-}
+// Resolve `@angular/build` through `@analogjs/vite-plugin-angular`, which
+// declares it as a peer, so strict pnpm layouts find the consumer's copy.
+const require = createRequire(
+  createRequire(import.meta.url).resolve(
+    '@analogjs/vite-plugin-angular/package.json',
+  ),
+);
 
 /**
  * Rolldown plugin that runs the Angular Linker against partially-compiled
@@ -33,55 +21,48 @@ async function loadBabel(): Promise<BabelCore> {
  * server bundle would need JIT (eval) at runtime — forbidden on
  * `workerd` / edge runtimes and unnecessary anywhere else.
  *
- * Loaded lazily so apps that never trigger the SSR optimizer don't
- * incur the babel + compiler-cli/linker cost.
+ * Links through `@angular/build`'s JavaScript transformer, which uses
+ * Angular's native (OXC) linker on 22.2+ and the Babel linker before that.
+ * The constructor and `transformData` calls stay within the subset shared
+ * by every supported `@angular/build` version.
  */
 export function angularLinkerPlugin(): Plugin {
-  let linkerBabelPlugin: PluginItem | undefined;
-  let needsLinkingFn: ((id: string, code: string) => boolean) | undefined;
-  let transformAsyncFn: BabelCore['transformAsync'] | undefined;
-
-  async function ensureLoaded() {
-    if (linkerBabelPlugin && needsLinkingFn && transformAsyncFn) return;
-
-    const linker = await import('@angular/compiler-cli/linker');
-    needsLinkingFn = linker.needsLinking;
-
-    const linkerBabel = await import('@angular/compiler-cli/linker/babel');
-    linkerBabelPlugin =
-      (linkerBabel as { default?: PluginItem }).default ??
-      (linkerBabel as PluginItem);
-
-    transformAsyncFn = (await loadBabel()).transformAsync;
-  }
+  let transformer: JavaScriptTransformer | undefined;
 
   return {
     name: 'analogjs-platform-angular-linker',
     async transform(code: string, id: string) {
       if (!id.endsWith('.mjs') && !id.endsWith('.js')) return;
 
-      // Cheap pre-check before pulling babel/compiler-cli into memory.
+      // Cheap pre-check before starting the transformer's worker pool.
       if (!code.includes('ɵɵngDeclare')) return;
 
-      await ensureLoaded();
-      if (!needsLinkingFn!(id, code)) return;
-
-      const result = await transformAsyncFn!(code, {
-        filename: id,
-        plugins: [linkerBabelPlugin!],
-        sourceMaps: true,
-        compact: false,
-        configFile: false,
-        babelrc: false,
+      transformer ??= new (require('@angular/build/private')
+        .JavaScriptTransformer as typeof JavaScriptTransformer)({
+        sourcemap: true,
+        thirdPartySourcemaps: true,
+        maxConcurrency: 1,
       });
+      const result = Buffer.from(
+        await transformer.transformData(id, code),
+      ).toString();
 
-      if (result?.code) {
-        return {
-          code: result.code,
-          map: (result.map ?? null) as SourceMapInput,
-        };
-      }
-      return;
+      return result === code ? undefined : splitInlineSourceMap(result);
     },
+    async buildEnd() {
+      await transformer?.close();
+      transformer = undefined;
+    },
+  };
+}
+
+function splitInlineSourceMap(code: string): { code: string; map?: string } {
+  const match = code.match(
+    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
+  );
+  if (match?.index === undefined) return { code };
+  return {
+    code: code.slice(0, match.index),
+    map: Buffer.from(match[1]!, 'base64').toString(),
   };
 }
