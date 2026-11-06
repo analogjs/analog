@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
 import { parseSync } from 'oxc-parser';
-import { normalizePath, type Plugin } from 'vite';
+import { normalizePath, searchForWorkspaceRoot, type Plugin } from 'vite';
 
 import {
   createRouteFileDiscovery,
@@ -27,7 +27,6 @@ export interface TypedRoutesPluginOptions extends TypedRoutingOptions {
 }
 
 export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
-  const workspaceRoot = normalizePath(options.workspaceRoot ?? process.cwd());
   const outFile = options.outFile ?? 'src/routeTree.gen.d.ts';
   if (!outFile.endsWith('.d.ts')) {
     throw new Error(
@@ -35,6 +34,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
     );
   }
   let root: string;
+  let workspaceRoot: string;
   let command: 'build' | 'serve';
   let discovery: RouteFileDiscovery;
 
@@ -113,7 +113,12 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
     name: 'analog-typed-routes',
     config(config, env) {
       command = env.command;
-      root = normalizePath(resolve(workspaceRoot, config.root ?? '.'));
+      root = normalizePath(
+        resolve(options.workspaceRoot ?? process.cwd(), config.root ?? '.'),
+      );
+      workspaceRoot = normalizePath(
+        options.workspaceRoot ?? searchForWorkspaceRoot(root),
+      );
       discovery = createRouteFileDiscovery({
         root,
         workspaceRoot,
