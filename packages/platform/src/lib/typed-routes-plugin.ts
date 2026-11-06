@@ -117,7 +117,9 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         resolve(options.workspaceRoot ?? process.cwd(), config.root ?? '.'),
       );
       workspaceRoot = normalizePath(
-        options.workspaceRoot ?? searchForWorkspaceRoot(root),
+        options.workspaceRoot ??
+          process.env['NX_WORKSPACE_ROOT'] ??
+          searchForWorkspaceRoot(root),
       );
       discovery = createRouteFileDiscovery({
         root,
