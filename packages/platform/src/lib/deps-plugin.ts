@@ -1,8 +1,8 @@
 import { dirname, resolve } from 'node:path';
 import { normalizePath, type Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
-import { angularLinkerPlugin } from '@analogjs/vite-plugin-angular';
 
+import { angularLinkerPlugin } from './nitro/angular-linker-plugin.js';
 import { Options } from './options.js';
 import { debugPlatform } from './utils/debug.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
