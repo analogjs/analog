@@ -2,6 +2,10 @@ import { resolve } from 'node:path';
 import { ServerResponse } from 'node:http';
 import { Connect, normalizePath, Plugin, ViteDevServer } from 'vite';
 
+import {
+  isAngularBuildContext,
+  type AngularBuildContext,
+} from './angular-build-context.js';
 import { EmitFileResult } from './models.js';
 import { debugHmr } from './utils/debug.js';
 
@@ -14,12 +18,22 @@ export interface ComponentUpdates {
     file: string,
     className: string,
   ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined;
+  rootDir?: string;
 }
 
-export function liveReloadPlugin({
-  classNames,
-  fileEmitter,
-}: ComponentUpdates): Plugin {
+export function liveReloadPlugin(
+  ctxOrUpdates?: AngularBuildContext | ComponentUpdates,
+): Plugin {
+  const updates: ComponentUpdates = isAngularBuildContext(ctxOrUpdates)
+    ? ctxOrUpdates.hmr
+    : (ctxOrUpdates ?? {
+        classNames: new Map<string, string>(),
+        fileEmitter: () => undefined,
+      });
+
+  const resolveFileId = (fileId: string): string =>
+    normalizePath(resolve(updates.rootDir ?? process.cwd(), fileId));
+
   return {
     name: 'analogjs-live-reload-plugin',
     apply: 'serve',
@@ -55,10 +69,10 @@ export function liveReloadPlugin({
         }
 
         const [fileId, className] = decodeURIComponent(componentId).split('@');
-        const resolvedId = normalizePath(resolve(process.cwd(), fileId));
+        const resolvedId = resolveFileId(fileId);
         const invalidated =
           !!server.moduleGraph.getModuleById(resolvedId)
-            ?.lastInvalidationTimestamp && classNames.get(resolvedId);
+            ?.lastInvalidationTimestamp && updates.classNames.get(resolvedId);
 
         // don't send an HMR update until the file has been invalidated
         if (!invalidated) {
@@ -69,7 +83,7 @@ export function liveReloadPlugin({
           return;
         }
 
-        const result = fileEmitter(resolvedId, className);
+        const result = updates.fileEmitter(resolvedId, className);
         debugHmr('middleware: served component update', {
           resolvedId,
           hasCode: !!result?.hmrUpdateCode,
@@ -102,10 +116,7 @@ export function liveReloadPlugin({
         }
 
         const [fileId, className] = decodeURIComponent(componentId).split('@');
-        const result = fileEmitter(
-          normalizePath(resolve(process.cwd(), fileId)),
-          className,
-        );
+        const result = updates.fileEmitter(resolveFileId(fileId), className);
 
         return result?.hmrUpdateCode || '';
       }

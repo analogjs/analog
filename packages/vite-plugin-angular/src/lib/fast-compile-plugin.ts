@@ -1,5 +1,5 @@
 import { promises as fsPromises } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import type { parseSync } from 'oxc-parser';
 import { parseOxc } from './compiler/utils.js';
 import * as vite from 'vite';
@@ -7,6 +7,12 @@ import * as vite from 'vite';
 import * as compilerCli from '@angular/compiler-cli';
 import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 
+import {
+  createAngularBuildContext,
+  isAngularBuildContext,
+  type AngularBuildContext,
+  type AngularBuildContextOptions,
+} from './angular-build-context.js';
 import {
   compile,
   scanFile,
@@ -20,7 +26,6 @@ import {
   inlineResourceUrls,
   extractInlineStyles,
   generateHmrCode,
-  debugCompile,
   debugRegistry,
   ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
@@ -35,13 +40,10 @@ import {
   isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
-import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
-import {
-  loadVirtualRawModule,
-  rewriteHtmlRawImport,
-} from './utils/virtual-resources.js';
-import { markStylePathSafe } from './utils/safe-module-paths.js';
+import { isRolldown } from './utils/rolldown.js';
+import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
@@ -50,6 +52,10 @@ import {
   type ComponentRegistryEntries,
   type TransformFilter,
 } from './analog-plugin-interop.js';
+import {
+  loadAngularVirtualModule,
+  resolveAngularVirtualId,
+} from './virtual-modules-plugin.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -62,6 +68,19 @@ export interface FastCompilePluginOptions {
   fastCompileMode?: 'full' | 'partial';
   disableTypeChecking?: boolean;
   typeChecker?: TypeCheckerOption;
+  include?: string[];
+}
+
+function isFastCompilePluginOptions(
+  value: unknown,
+): value is FastCompilePluginOptions {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !isAngularBuildContext(value) &&
+    'tsconfigGetter' in value &&
+    typeof (value as FastCompilePluginOptions).tsconfigGetter === 'function'
+  );
 }
 
 type ResolveImport = (spec: string, importer: string) => Promise<string | null>;
@@ -80,8 +99,33 @@ export function getPathsBasePath(
 }
 
 export function fastCompilePlugin(
-  pluginOptions: FastCompilePluginOptions,
+  optionsOrCtx?:
+    | AngularBuildContext
+    | FastCompilePluginOptions
+    | AngularBuildContextOptions,
 ): Plugin {
+  const sharedCtx = isAngularBuildContext(optionsOrCtx)
+    ? optionsOrCtx
+    : isFastCompilePluginOptions(optionsOrCtx)
+      ? undefined
+      : createAngularBuildContext({
+          ...optionsOrCtx,
+          compilationBackend: 'fast',
+        });
+
+  const pluginOptions: FastCompilePluginOptions = sharedCtx
+    ? sharedCtx.options
+    : (optionsOrCtx as FastCompilePluginOptions);
+
+  const tsconfigResolver =
+    sharedCtx?.tsconfigResolver ??
+    new TsconfigResolver({
+      workspaceRoot: pluginOptions.workspaceRoot,
+      include: pluginOptions.include ?? [],
+      liveReload: pluginOptions.liveReload,
+      isTest: pluginOptions.isTest,
+    });
+
   let resolvedConfig: ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];
@@ -93,6 +137,7 @@ export function fastCompilePlugin(
   const registry: ComponentRegistry = new Map();
   const resourceToSource = new Map<string, string>();
   const scannedDtsPackages = new Set<string>();
+  const emittedMaps = new Map<string, string>();
   let projectRoot = '';
   let useDefineForClassFields = true;
   let tsConfig: ReturnType<typeof compilerCli.readConfiguration>;
@@ -211,7 +256,8 @@ export function fastCompilePlugin(
     }
   }
 
-  async function initFastCompile() {
+  async function initFastCompile(): Promise<void> {
+    emittedMaps.clear();
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
     registry.clear();
@@ -226,18 +272,19 @@ export function fastCompilePlugin(
   }
 
   /** Scan all source files reachable from the tsconfig into the registry. */
-  async function scanProject() {
+  async function scanProject(): Promise<void> {
     const config = tsConfig;
-    // Collect candidate files: tsconfig rootNames PLUS the entry points
-    // named in `compilerOptions.paths`. App tsconfigs typically only
-    // include the app's own sources, so workspace library entry barrels
-    // (e.g. `HlmSelectImports = [HlmSelect, HlmSelectContent, ...] as
-    // const`) live outside `rootNames` and would otherwise miss the
-    // initial scan. The compiler then can't see that `HlmSelectImports`
-    // is a tuple barrel and emits the bare identifier into the parent
-    // component's `dependencies()` list, where Angular's runtime
+    const extraIncludes = tsconfigResolver.ensureIncludeCache();
+    // Collect candidate files: tsconfig rootNames PLUS explicit/integration
+    // include globs PLUS the entry points named in `compilerOptions.paths`.
+    // App tsconfigs typically only include the app's own sources, so workspace
+    // library entry barrels (e.g. `HlmSelectImports = [HlmSelect,
+    // HlmSelectContent, ...] as const`) live outside `rootNames` and would
+    // otherwise miss the initial scan. The compiler then can't see that
+    // `HlmSelectImports` is a tuple barrel and emits the bare identifier into
+    // the parent component's `dependencies()` list, where Angular's runtime
     // silently drops it because arrays don't have a directive def.
-    const candidates = new Set<string>(config.rootNames);
+    const candidates = new Set<string>([...config.rootNames, ...extraIncludes]);
     const tsPaths = config.options?.paths;
     const baseUrl = getPathsBasePath(config.options, projectRoot);
     // Cold-start dedup caches shared by the three scan phases below
@@ -424,7 +471,8 @@ export function fastCompilePlugin(
         targets.filter((t): t is string => !!t).map((t) => walkImports(t)),
       );
     };
-    await Promise.all(config.rootNames.map((file) => walkImports(file)));
+    const walkRoots = [...new Set([...config.rootNames, ...extraIncludes])];
+    await Promise.all(walkRoots.map((file) => walkImports(file)));
 
     // Library barrels typically `export * from './lib/...'` rather than
     // declaring directives directly, so the entry file alone gives us
@@ -465,7 +513,7 @@ export function fastCompilePlugin(
     code: string,
     id: string,
     program?: ReturnType<typeof parseSync>['program'],
-  ) {
+  ): void {
     for (const pkg of collectImportedPackages(code, id, program)) {
       if (scannedDtsPackages.has(pkg)) continue;
       scannedDtsPackages.add(pkg);
@@ -492,7 +540,7 @@ export function fastCompilePlugin(
     id: string,
     program: ReturnType<typeof parseSync>['program'],
     resolveImport: ResolveImport,
-  ) {
+  ): Promise<void> {
     await Promise.all(
       collectAllImports(code, id, program).map(async (spec) => {
         const file = await resolveImport(spec, id);
@@ -665,6 +713,9 @@ export function fastCompilePlugin(
 
     if (styleStrings.length > 0) {
       resolvedInlineStyles = new Map();
+      const activeConfig = sharedCtx?.resolvedConfig ?? resolvedConfig;
+      const activeStylePreprocessor =
+        sharedCtx?.stylePreprocessor ?? stylePreprocessor;
       for (let i = 0; i < styleStrings.length; i++) {
         const stylePath =
           stylePaths.get(i) ??
@@ -676,7 +727,7 @@ export function fastCompilePlugin(
           const preprocessed = preprocessStylesheet(
             styleStrings[i],
             stylePath,
-            stylePreprocessor,
+            activeStylePreprocessor,
             {
               filename: stylePath,
               containingFile: id,
@@ -687,11 +738,11 @@ export function fastCompilePlugin(
           const processed = await preprocessCSS(
             preprocessed,
             stylePath,
-            resolvedConfig,
+            activeConfig,
           );
           resolvedInlineStyles.set(i, processed.code);
         } catch (e) {
-          warnStylesheetError(resolvedConfig.logger, stylePath, e);
+          warnStylesheetError(activeConfig?.logger, stylePath, e);
         }
       }
       if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
@@ -715,10 +766,13 @@ export function fastCompilePlugin(
     // Without this merge, a TS `@Component({ imports: [X] })` that
     // references such a class hits `_unresolved-${className}` as its
     // selector and the tag never matches at runtime.
+    const activeComponentRegistries = sharedCtx
+      ? sharedCtx.componentRegistries
+      : componentRegistries;
     let compileRegistry: ComponentRegistry = registry;
-    if (componentRegistries.some((external) => external.size > 0)) {
+    if (activeComponentRegistries.some((external) => external.size > 0)) {
       compileRegistry = new Map(registry);
-      for (const external of componentRegistries) {
+      for (const external of activeComponentRegistries) {
         for (const [k, v] of external) compileRegistry.set(k, v);
       }
     }
@@ -758,7 +812,8 @@ export function fastCompilePlugin(
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
-    if (watchMode && pluginOptions.liveReload) {
+    const activeWatchMode = sharedCtx ? sharedCtx.watchMode : watchMode;
+    if (activeWatchMode && pluginOptions.liveReload) {
       const fileDeclarations = registryEntriesOf(id);
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
@@ -769,31 +824,57 @@ export function fastCompilePlugin(
     return { code: outputCode, map: stripped.map };
   }
 
-  function resolveTsConfigPath() {
-    const { root, isProd, isLib } = tsConfigResolutionContext!;
+  function resolveTsConfigPath(): string {
+    if (sharedCtx) {
+      return sharedCtx.resolveTsConfigPath();
+    }
+    const resolution = tsConfigResolutionContext ?? {
+      root: resolvedConfig?.root || '.',
+      isProd: isProdMode(resolvedConfig?.mode),
+      isLib: !!resolvedConfig?.build?.lib,
+    };
     return getTsConfigPath(
-      root,
+      resolution.root,
       pluginOptions.tsconfigGetter(),
-      isProd,
+      resolution.isProd,
       pluginOptions.isTest,
-      isLib,
+      resolution.isLib,
       pluginOptions.workspaceRoot,
     );
   }
 
+  const compilerApi = {
+    angularCompiler: true as const,
+    getTsConfigPath: resolveTsConfigPath,
+    getSourceMap: (id: string): string | undefined =>
+      emittedMaps.get(normalizePath(id)),
+    hasEmitted: (id: string): boolean => emittedMaps.has(normalizePath(id)),
+  };
+
+  sharedCtx?.registerCompiler({
+    name: '@analogjs/vite-plugin-angular-fast-compile',
+    getTsConfigPath: compilerApi.getTsConfigPath,
+    getSourceMap: compilerApi.getSourceMap,
+    hasEmitted: compilerApi.hasEmitted,
+  });
+
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
-    api: { getTsConfigPath: resolveTsConfigPath },
+    api: compilerApi,
     enforce: 'pre' as const,
-    async config(config, { command }) {
+    async config(config, { command, mode }) {
       watchMode = command === 'serve';
       const isProd = isProdMode(config.mode);
 
-      tsConfigResolutionContext = {
-        root: config.root || '.',
-        isProd,
-        isLib: !!config?.build?.lib,
-      };
+      if (sharedCtx) {
+        sharedCtx.initConfig(config, { command, mode });
+      } else {
+        tsConfigResolutionContext = {
+          root: config.root || '.',
+          isProd,
+          isLib: !!config?.build?.lib,
+        };
+      }
 
       const preliminaryTsConfigPath = resolveTsConfigPath();
 
@@ -808,30 +889,46 @@ export function fastCompilePlugin(
 
       // No `resolve.conditions` extension here: the `style` condition is
       // scoped to `.css`-extension requests by
-      // `cssExtensionStyleResolverPlugin`, registered once at the
-      // `angular()` factory level (which is the only public entry point
-      // that wires this plugin in).
+      // `cssExtensionStyleResolverPlugin`.
       return {
-        ...(vite.rolldownVersion ? { oxc: {} as any } : { esbuild: false }),
+        ...(isRolldown() ? { oxc: {} as any } : { esbuild: false }),
         ...depOptimizer,
       };
     },
     async configResolved(config) {
       resolvedConfig = config;
-      const integrations = await discoverAnalogIntegrations(config);
-      transformFilter = integrations.transformFilter;
-      componentRegistries = integrations.componentRegistries;
-      stylePreprocessor = integrations.stylePreprocessor;
+      if (sharedCtx) {
+        const integrations = await sharedCtx.resolveConfig(config);
+        transformFilter = integrations.transformFilter;
+        componentRegistries = integrations.componentRegistries;
+        stylePreprocessor = integrations.stylePreprocessor;
+      } else {
+        const integrations = await discoverAnalogIntegrations(config);
+        transformFilter = integrations.transformFilter;
+        componentRegistries = integrations.componentRegistries;
+        stylePreprocessor = integrations.stylePreprocessor;
+        tsconfigResolver.setIntegrationIncludes(integrations.include);
+      }
     },
     async buildStart() {
       await initFastCompile();
     },
     closeBundle() {
-      if (!watchMode) {
+      const activeWatchMode = sharedCtx ? sharedCtx.watchMode : watchMode;
+      if (!activeWatchMode) {
+        emittedMaps.clear();
         releaseCssPreprocessorWorkers();
       }
     },
     async handleHotUpdate(ctx) {
+      if (
+        sharedCtx
+          ? sharedCtx.hmr.isIgnoredFile(ctx.file)
+          : isIgnoredHmrFile(ctx.file)
+      ) {
+        return [];
+      }
+
       // Resource file changes → invalidate parent .ts module
       if (resourceToSource.has(ctx.file)) {
         const parentSource = resourceToSource.get(ctx.file)!;
@@ -877,48 +974,17 @@ export function fastCompilePlugin(
       return ctx.modules;
     },
     resolveId(id, importer) {
-      if (id.startsWith(VIRTUAL_RAW_PREFIX)) {
-        return `\0${id}`;
-      }
-
-      if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const filePath = normalizePath(
-          resolve(dirname(importer as string), id.split(';')[1]),
-        );
-        if (id.includes(':style')) {
-          markStylePathSafe(resolvedConfig, filePath);
-          return filePath + '?inline';
-        }
-        return toVirtualRawId(filePath);
-      }
-
-      const rawRewrite = rewriteHtmlRawImport(id, importer);
-      if (rawRewrite) return rawRewrite;
-
-      // User `.scss?inline` / `.css?inline` imports: resolve and mark
-      // safe so Vite's native CSS pipeline handles them.
-      if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
-        const filePath = id.split('?')[0];
-        const resolved = isAbsolute(filePath)
-          ? normalizePath(filePath)
-          : normalizePath(resolve(dirname(importer), filePath));
-        markStylePathSafe(resolvedConfig, resolved);
-        return resolved + '?inline';
-      }
-
-      return undefined;
+      return resolveAngularVirtualId(id, importer, {
+        jit: pluginOptions.jit,
+        resolvedConfig: sharedCtx?.resolvedConfig ?? resolvedConfig,
+      });
     },
     async load(id) {
-      const rawModule = await loadVirtualRawModule(this, id);
-      if (rawModule !== undefined) return rawModule;
-
-      // Vitest fallback: module-runner can skip resolveId, so the bare
-      // ?inline query reaches load. Mark safe and let Vite handle it.
-      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        markStylePathSafe(resolvedConfig, id.split('?')[0]);
-      }
-
-      return;
+      return loadAngularVirtualModule(
+        this,
+        id,
+        sharedCtx?.resolvedConfig ?? resolvedConfig,
+      );
     },
     transform: {
       filter: {
@@ -936,26 +1002,41 @@ export function fastCompilePlugin(
         },
       },
       async handler(code, id) {
-        if (transformFilter && !transformFilter(code, id)) {
+        const activeTransformFilter =
+          sharedCtx?.transformFilter ?? transformFilter;
+        if (activeTransformFilter && !activeTransformFilter(code, id)) {
           return;
         }
 
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleFastCompileTransform(code, id, async (spec, importer) => {
-          const resolved = await this.resolve(spec, importer, {
-            skipSelf: true,
-          });
-          if (!resolved || resolved.external) return null;
-          const file = normalizePath(resolved.id.split('?')[0]);
-          // Package declarations come from the lazy `.d.ts` scanner instead.
-          return TS_EXT_REGEX.test(file) &&
-            !EXCLUDED_TS_EXT_REGEX.test(file) &&
-            !file.includes('/node_modules/')
-            ? file
-            : null;
-        });
+        const transformed = await handleFastCompileTransform(
+          code,
+          id,
+          async (spec, importer) => {
+            const resolved = await this.resolve(spec, importer, {
+              skipSelf: true,
+            });
+            if (!resolved || resolved.external) return null;
+            const file = normalizePath(resolved.id.split('?')[0]);
+            // Package declarations come from the lazy `.d.ts` scanner instead.
+            return TS_EXT_REGEX.test(file) &&
+              !EXCLUDED_TS_EXT_REGEX.test(file) &&
+              !file.includes('/node_modules/')
+              ? file
+              : null;
+          },
+        );
+        if (transformed?.map) {
+          emittedMaps.set(
+            normalizePath(id),
+            typeof transformed.map === 'string'
+              ? transformed.map
+              : JSON.stringify(transformed.map),
+          );
+        }
+        return transformed;
       },
     },
   };
