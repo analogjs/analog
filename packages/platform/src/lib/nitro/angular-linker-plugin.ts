@@ -3,7 +3,13 @@ import { createRequire } from 'node:module';
 import type { JavaScriptTransformer } from '@angular/build/private';
 import type { Plugin } from 'rolldown';
 
-const require = createRequire(import.meta.url);
+// Resolve `@angular/build` through `@analogjs/vite-plugin-angular`, which
+// declares it as a peer, so strict pnpm layouts find the consumer's copy.
+const require = createRequire(
+  createRequire(import.meta.url).resolve(
+    '@analogjs/vite-plugin-angular/package.json',
+  ),
+);
 
 /**
  * Rolldown plugin that runs the Angular Linker against partially-compiled
