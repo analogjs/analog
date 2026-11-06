@@ -74,7 +74,7 @@ jobs:
         run: pnpm exec nx run-many --target test
 
       - name: E2E
-        run: pnpm exec nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e --parallel=1
+        run: pnpm exec nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e
 
       # Finalize the distributed run regardless of earlier step outcome.
       - name: Complete CI run
