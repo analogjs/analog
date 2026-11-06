@@ -1,3 +1,9 @@
+# [3.0.0-beta.37](https://github.com/analogjs/analog/compare/v3.0.0-beta.36...v3.0.0-beta.37) (2026-11-06)
+
+### Bug Fixes
+
+- **platform:** resolve typed routes workspace root from the project root ([#2756](https://github.com/analogjs/analog/issues/2756)) ([e3e6de0](https://github.com/analogjs/analog/commit/e3e6de040533f491fc6c0abb804145b1043f13c1))
+
 # [3.0.0-beta.36](https://github.com/analogjs/analog/compare/v3.0.0-beta.35...v3.0.0-beta.36) (2026-11-06)
 
 ### Bug Fixes
