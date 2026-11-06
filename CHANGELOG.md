@@ -1,3 +1,10 @@
+# [3.0.0-beta.36](https://github.com/analogjs/analog/compare/v3.0.0-beta.35...v3.0.0-beta.36) (2026-11-06)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** preserve import.meta during Vitest downleveling ([#2737](https://github.com/analogjs/analog/issues/2737)) ([dfa2401](https://github.com/analogjs/analog/commit/dfa2401b3dbaf2b55c9fb161882c0f86a4bfd252))
+- **vite-plugin-angular:** release compiler state when watched projects close ([#2739](https://github.com/analogjs/analog/issues/2739)) ([dc95070](https://github.com/analogjs/analog/commit/dc95070f2036526cb42bc4447279cdb705df6462))
+
 # [3.0.0-beta.35](https://github.com/analogjs/analog/compare/v3.0.0-beta.34...v3.0.0-beta.35) (2026-11-05)
 
 ### Bug Fixes
