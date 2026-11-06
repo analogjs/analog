@@ -20,6 +20,7 @@ export function serverModePlugin(entryServer?: string): Plugin[] {
   return [
     {
       name: 'analogjs-server-mode-plugin',
+      enforce: 'post',
       configResolved(config) {
         entryServerPath = normalizePath(
           resolve(config.root, entryServer ?? 'src/main.server.ts'),
