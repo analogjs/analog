@@ -4,7 +4,6 @@ export {
 } from './lib/compilation-api/index.js';
 import { angular } from './lib/angular-vite-plugin.js';
 export { angular } from './lib/angular-vite-plugin.js';
-export { angularLinkerPlugin } from './lib/angular-linker-plugin.js';
 export type { PluginOptions } from './lib/angular-vite-plugin.js';
 export type {
   AnalogIntegrationPlugin,
