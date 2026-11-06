@@ -1,7 +1,28 @@
 // source: https://github.com/Myrmod/vitejs-theming/blob/master/build-plugins/rollup/replace-files.js
 import { isAbsolute, resolve } from 'node:path';
 import { Plugin } from 'vite';
+import {
+  isAngularBuildContext,
+  type AngularBuildContext,
+} from '../angular-build-context.js';
 import { debugCompiler } from '../utils/debug.js';
+
+export interface FileReplacementsPluginOptions {
+  replacements?: FileReplacement[];
+  workspaceRoot?: string;
+}
+
+export function fileReplacementsPlugin(
+  ctxOrOptions?: AngularBuildContext | FileReplacementsPluginOptions,
+): Plugin | undefined {
+  const replacements = isAngularBuildContext(ctxOrOptions)
+    ? ctxOrOptions.options.fileReplacements
+    : (ctxOrOptions?.replacements ?? []);
+  const workspaceRoot = isAngularBuildContext(ctxOrOptions)
+    ? ctxOrOptions.options.workspaceRoot
+    : (ctxOrOptions?.workspaceRoot ?? process.cwd());
+  return replaceFiles(replacements, workspaceRoot) || undefined;
+}
 
 export function replaceFiles(
   replacements: FileReplacement[],

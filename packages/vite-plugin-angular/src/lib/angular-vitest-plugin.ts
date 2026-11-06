@@ -1,7 +1,11 @@
-import type { Plugin, TransformResult, UserConfig } from 'vite';
+import type { Plugin, UserConfig } from 'vite';
 // Use the namespace import so these runtime helpers still resolve on Vite 6,
 // which does not expose them as named exports.
 import * as vite from 'vite';
+import {
+  isAngularBuildContext,
+  type AngularBuildContext,
+} from './angular-build-context.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 
 const vitestAngularSetupEntries = [
@@ -132,8 +136,13 @@ export function angularVitestEsbuildPlugin(): Plugin {
  * `//# sourceMappingURL=` auto-detection does.
  */
 export function angularVitestSourcemapPlugin(
-  getInMap?: (id: string) => string | undefined,
+  ctxOrGetInMap?: AngularBuildContext | ((id: string) => string | undefined),
 ): Plugin {
+  const getInMap: ((id: string) => string | undefined) | undefined =
+    isAngularBuildContext(ctxOrGetInMap)
+      ? (id: string) => ctxOrGetInMap.compiler?.getSourceMap?.(id)
+      : ctxOrGetInMap;
+
   return {
     name: '@analogjs/vitest-angular-sourcemap-plugin',
     transform: {
@@ -178,11 +187,11 @@ export function angularVitestSourcemapPlugin(
 }
 
 export function angularVitestPlugins(
-  getInMap?: (id: string) => string | undefined,
+  ctxOrGetInMap?: AngularBuildContext | ((id: string) => string | undefined),
 ): Plugin[] {
   return [
     angularVitestPlugin(),
     angularVitestEsbuildPlugin(),
-    angularVitestSourcemapPlugin(getInMap),
+    angularVitestSourcemapPlugin(ctxOrGetInMap),
   ];
 }

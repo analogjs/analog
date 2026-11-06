@@ -1,20 +1,33 @@
 import { Plugin, ResolvedConfig, preprocessCSS } from 'vite';
 import {
+  isAngularBuildContext,
+  type AngularBuildContext,
+} from './angular-build-context.js';
+import { discoverAnalogIntegrations } from './analog-plugin-interop.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
+import { preprocessStylesheet } from './stylesheet-registry.js';
+import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
+import { debugStyles } from './utils/debug.js';
+import {
   JIT_INLINE_STYLE_PREFIX,
   getJitInlineStyles,
   hashJitInlineStyles,
 } from './utils/jit-inline-styles.js';
-import { debugStyles } from './utils/debug.js';
-import { discoverAnalogIntegrations } from './analog-plugin-interop.js';
-import { preprocessStylesheet } from './stylesheet-registry.js';
-import type { StylePreprocessor } from './style-preprocessor.js';
-import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 
-export function jitPlugin({
-  inlineStylesExtension,
-}: {
-  inlineStylesExtension: string;
-}): Plugin {
+export interface JitPluginOptions {
+  inlineStylesExtension?: string;
+}
+
+export function jitPlugin(
+  ctxOrOptions?: AngularBuildContext | JitPluginOptions,
+): Plugin {
+  const sharedCtx = isAngularBuildContext(ctxOrOptions)
+    ? ctxOrOptions
+    : undefined;
+  const inlineStylesExtension = isAngularBuildContext(ctxOrOptions)
+    ? ctxOrOptions.options.inlineStylesExtension
+    : (ctxOrOptions?.inlineStylesExtension ?? 'css');
+
   let config: ResolvedConfig;
   let stylePreprocessor: StylePreprocessor | undefined;
 
@@ -22,10 +35,16 @@ export function jitPlugin({
     name: '@analogjs/vite-plugin-angular-jit',
     configResolved(_config) {
       config = _config;
+      sharedCtx?.setResolvedConfig(_config);
     },
     async buildStart() {
-      stylePreprocessor = (await discoverAnalogIntegrations(config))
-        .stylePreprocessor;
+      if (sharedCtx) {
+        await sharedCtx.refreshIntegrations(config);
+        stylePreprocessor = sharedCtx.stylePreprocessor;
+      } else {
+        stylePreprocessor = (await discoverAnalogIntegrations(config))
+          .stylePreprocessor;
+      }
     },
     resolveId(id: string) {
       if (id.startsWith('virtual:angular')) {
@@ -43,10 +62,12 @@ export function jitPlugin({
           'base64',
         ).toString();
         const filename = `${styleIdHash}.${inlineStylesExtension}`;
+        const activePreprocessor =
+          stylePreprocessor ?? sharedCtx?.stylePreprocessor;
         const preprocessed = preprocessStylesheet(
           decodedStyles,
           filename,
-          stylePreprocessor,
+          activePreprocessor,
           { filename, inline: true },
         );
 
@@ -56,7 +77,7 @@ export function jitPlugin({
           const compiled = await preprocessCSS(
             preprocessed,
             `${filename}?direct`,
-            config,
+            config ?? sharedCtx?.resolvedConfig!,
           );
           styles = compiled?.code;
         } catch (e) {
