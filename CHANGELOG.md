@@ -1,3 +1,9 @@
+# [3.0.0-beta.38](https://github.com/analogjs/analog/compare/v3.0.0-beta.37...v3.0.0-beta.38) (2026-11-06)
+
+### Bug Fixes
+
+- **platform:** set ngServerMode in the SSR entry after Angular compiles it ([#2755](https://github.com/analogjs/analog/issues/2755)) ([1813a4d](https://github.com/analogjs/analog/commit/1813a4d78421b9ef35f2f18f61a42fae0375d037))
+
 # [3.0.0-beta.37](https://github.com/analogjs/analog/compare/v3.0.0-beta.36...v3.0.0-beta.37) (2026-11-06)
 
 ### Bug Fixes
