@@ -152,7 +152,7 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions): {
   optimizeDeps: vite.DepOptimizationOptions;
 } {
   const defineOptions = {
-    ngJitMode: 'false',
+    ...(opts.jit ? {} : { ngJitMode: 'false' }),
     ngI18nClosureMode: 'false',
     ...(opts.watchMode ? {} : { ngDevMode: 'false' }),
   };

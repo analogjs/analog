@@ -200,19 +200,11 @@ export function isModuleForChangedResource(
   );
 }
 
-export function diagnoseComponentStylesheetPipeline(
-  changedFile: string,
+function resolveDirectStylesheetSourcePath(
+  normalizedFile: string,
   directModule: ModuleNode,
-  stylesheetRegistry: AnalogStylesheetRegistry | undefined,
-  wrapperModules: ModuleNode[],
-  stylePreprocessor?: StylePreprocessor,
-): ComponentStylesheetPipelineDiagnosis {
-  const normalizedFile = normalizePath(changedFile.split('?')[0]);
-  const sourceExists = existsSync(normalizedFile);
-  const sourceCode = sourceExists
-    ? readFileSync(normalizedFile, 'utf-8')
-    : undefined;
-
+  stylesheetRegistry?: AnalogStylesheetRegistry,
+): { directRequestPath?: string; sourcePath: string | undefined } {
   const directRequestPath = directModule.id
     ? getFilenameFromPath(directModule.id)
     : undefined;
@@ -226,6 +218,28 @@ export function diagnoseComponentStylesheetPipeline(
         directRequestPath.replace(/^\//, ''),
       ))
     : normalizedFile;
+
+  return { directRequestPath, sourcePath };
+}
+
+export function diagnoseComponentStylesheetPipeline(
+  changedFile: string,
+  directModule: ModuleNode,
+  stylesheetRegistry: AnalogStylesheetRegistry | undefined,
+  wrapperModules: ModuleNode[],
+  stylePreprocessor?: StylePreprocessor,
+): ComponentStylesheetPipelineDiagnosis {
+  const normalizedFile = normalizePath(changedFile.split('?')[0]);
+  const sourceExists = existsSync(normalizedFile);
+  const sourceCode = sourceExists
+    ? readFileSync(normalizedFile, 'utf-8')
+    : undefined;
+
+  const { directRequestPath, sourcePath } = resolveDirectStylesheetSourcePath(
+    normalizedFile,
+    directModule,
+    stylesheetRegistry,
+  );
   const registryCode = directRequestPath
     ? stylesheetRegistry?.getServedContent(directRequestPath)
     : undefined;
@@ -254,29 +268,49 @@ export function diagnoseComponentStylesheetPipeline(
     );
   }
 
-  if (sourceCode && registryCode) {
-    // Compare against the same served representation that the registry stores,
-    // not the raw file on disk. Analog intentionally prepends `@reference`
-    // and rewrites relative imports before the stylesheet reaches Vite, so a
-    // raw-source hash comparison would flag a false positive on every healthy
-    // update.
-    let expectedRegistryCode = preprocessStylesheet(
-      sourceCode,
-      normalizedFile,
-      stylePreprocessor,
-    );
-    expectedRegistryCode = rewriteRelativeCssImports(
-      expectedRegistryCode,
-      normalizedFile,
-    );
-    const sourceDigest = describeStylesheetContent(expectedRegistryCode).digest;
-    const registryDigest = describeStylesheetContent(registryCode).digest;
-    if (sourceDigest !== registryDigest) {
-      anomalies.push('source_registry_mismatch');
-      hints.push(
-        'The source file changed, but the served stylesheet content in the registry is still stale.',
+  const registryDescription = registryCode
+    ? describeStylesheetContent(registryCode)
+    : undefined;
+  let sourceDescription:
+    | ReturnType<typeof describeStylesheetContent>
+    | undefined;
+
+  if (sourceCode !== undefined) {
+    try {
+      // Compare against the same served representation that the registry stores,
+      // not the raw file on disk. Analog intentionally prepends `@reference`
+      // and rewrites relative imports before the stylesheet reaches Vite, so a
+      // raw-source hash comparison would flag a false positive on every healthy
+      // update.
+      let expectedRegistryCode = preprocessStylesheet(
+        sourceCode,
+        normalizedFile,
+        stylePreprocessor,
       );
+      expectedRegistryCode = rewriteRelativeCssImports(
+        expectedRegistryCode,
+        normalizedFile,
+      );
+      sourceDescription = describeStylesheetContent(expectedRegistryCode);
+    } catch {
+      anomalies.push('source_preprocess_failed');
+      hints.push(
+        'Diagnostic preprocessing of the source stylesheet failed; falling back to raw source summary.',
+      );
+      sourceDescription = describeStylesheetContent(sourceCode);
     }
+  }
+
+  if (
+    sourceDescription &&
+    registryDescription &&
+    !anomalies.includes('source_preprocess_failed') &&
+    sourceDescription.digest !== registryDescription.digest
+  ) {
+    anomalies.push('source_registry_mismatch');
+    hints.push(
+      'The source file changed, but the served stylesheet content in the registry is still stale.',
+    );
   }
 
   if (trackedRequestIds.length === 0) {
@@ -309,17 +343,8 @@ export function diagnoseComponentStylesheetPipeline(
   return {
     file: changedFile,
     sourcePath,
-    source: sourceCode
-      ? describeStylesheetContent(
-          rewriteRelativeCssImports(
-            preprocessStylesheet(sourceCode, normalizedFile, stylePreprocessor),
-            normalizedFile,
-          ),
-        )
-      : undefined,
-    registry: registryCode
-      ? describeStylesheetContent(registryCode)
-      : undefined,
+    source: sourceDescription,
+    registry: registryDescription,
     dependencies,
     diagnostics,
     tags,
@@ -587,13 +612,32 @@ export async function handleDirectComponentStyleHmr(options: {
     fileModules,
     stylesheetRegistry,
   );
-  const stylesheetDiagnosis = diagnoseComponentStylesheetPipeline(
-    file,
+  const normalizedFile = normalizePath(file.split('?')[0]);
+  const { sourcePath } = resolveDirectStylesheetSourcePath(
+    normalizedFile,
     directModule,
     stylesheetRegistry,
-    wrapperModules,
-    stylePreprocessor,
   );
+  const trackedRequestIds =
+    stylesheetRegistry?.getRequestIdsForSource(sourcePath ?? '') ?? [];
+
+  let stylesheetDiagnosis: ComponentStylesheetPipelineDiagnosis | undefined;
+  if (debugHmrV.enabled) {
+    try {
+      stylesheetDiagnosis = diagnoseComponentStylesheetPipeline(
+        file,
+        directModule,
+        stylesheetRegistry,
+        wrapperModules,
+        stylePreprocessor,
+      );
+    } catch (error) {
+      debugHmrV('component stylesheet pipeline diagnosis failed', {
+        file,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
   debugStylesV('HMR: component stylesheet changed', {
     file: directModule.file,
     encapsulation,
@@ -604,7 +648,9 @@ export async function handleDirectComponentStyleHmr(options: {
     wrapperIds: wrapperModules.map((mod) => mod.id),
     availableModuleIds: fileModules.map((mod) => mod.id),
   });
-  debugHmrV('component stylesheet pipeline diagnosis', stylesheetDiagnosis);
+  if (stylesheetDiagnosis) {
+    debugHmrV('component stylesheet pipeline diagnosis', stylesheetDiagnosis);
+  }
 
   // Drop Vite's cached direct-module transform before wrapper lookup and patching continue.
   server.moduleGraph.invalidateModule(directModule);
@@ -618,8 +664,8 @@ export async function handleDirectComponentStyleHmr(options: {
 
   // CSS-only HMR is safe only when the browser-visible wrapper is known and the
   // component is not using Shadow DOM.
-  const trackedWrapperRequestIds = stylesheetDiagnosis.trackedRequestIds.filter(
-    (id) => id.includes('?ngcomp='),
+  const trackedWrapperRequestIds = trackedRequestIds.filter((id) =>
+    id.includes('?ngcomp='),
   );
   const canUseCssUpdate =
     encapsulation !== 'shadow' &&
@@ -642,16 +688,18 @@ export async function handleDirectComponentStyleHmr(options: {
       path: directModule.url,
       acceptedPath: directModule.file!,
     });
-    logComponentStylesheetHmrOutcome({
-      file,
-      encapsulation,
-      diagnosis: stylesheetDiagnosis,
-      outcome: 'css-update',
-      directModuleId: directModule.id ?? undefined,
-      wrapperIds: wrapperModules
-        .map((mod) => mod.id)
-        .filter((id): id is string => id !== null),
-    });
+    if (stylesheetDiagnosis) {
+      logComponentStylesheetHmrOutcome({
+        file,
+        encapsulation,
+        diagnosis: stylesheetDiagnosis,
+        outcome: 'css-update',
+        directModuleId: directModule.id ?? undefined,
+        wrapperIds: wrapperModules
+          .map((mod) => mod.id)
+          .filter((id): id is string => id !== null),
+      });
+    }
 
     return union(
       fileModules
@@ -684,16 +732,18 @@ export async function handleDirectComponentStyleHmr(options: {
     directId: directModule.id,
     trackedRequestIds: stylesheetRegistry?.getRequestIdsForSource(file) ?? [],
   });
-  logComponentStylesheetHmrOutcome({
-    file,
-    encapsulation,
-    diagnosis: stylesheetDiagnosis,
-    outcome: 'full-reload',
-    directModuleId: directModule.id ?? undefined,
-    wrapperIds: wrapperModules
-      .map((mod) => mod.id)
-      .filter((id): id is string => id !== null),
-  });
+  if (stylesheetDiagnosis) {
+    logComponentStylesheetHmrOutcome({
+      file,
+      encapsulation,
+      diagnosis: stylesheetDiagnosis,
+      outcome: 'full-reload',
+      directModuleId: directModule.id ?? undefined,
+      wrapperIds: wrapperModules
+        .map((mod) => mod.id)
+        .filter((id): id is string => id !== null),
+    });
+  }
   sendFullReload(server, {
     file,
     encapsulation,

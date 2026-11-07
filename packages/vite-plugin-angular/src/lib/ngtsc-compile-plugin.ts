@@ -228,7 +228,7 @@ export function ngtscCompilePlugin(
     angularCompiler: true as const,
     getTsConfigPath: (): string => ctx.resolveTsConfigPath(),
     getSourceMap: (id: string): string | undefined =>
-      outputFiles.get(normalizePath(id))?.map,
+      outputFiles.get(normalizeEmitterLookupId(id))?.map,
     hasEmitted: (id: string): boolean =>
       outputFiles.has(normalizeEmitterLookupId(id)),
   };
@@ -275,6 +275,7 @@ export function ngtscCompilePlugin(
   }
 
   async function closeCompilation(): Promise<void> {
+    closeRequested = false;
     hotUpdates.close();
     await compilationLock;
     declarationFiles.forEach(
