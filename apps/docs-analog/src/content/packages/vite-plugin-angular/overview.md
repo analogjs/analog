@@ -178,3 +178,39 @@ Create a `tsconfig.app.json` in the root of the project.
 For Angular component styles that use Tailwind utilities like `@apply`, add a `@reference` to your root stylesheet in those component stylesheets and follow the Tailwind guide for Analog:
 
 - https://analogjs.org/docs/integrations/tailwind
+
+## Composing with other plugins
+
+`angular()` returns one compiler plugin plus companion plugins for live reload, file replacements, JIT resources, Vitest, and style encapsulation. Companion plugins are named `@analogjs/vite-plugin-angular:<role>`, so you can identify every one of them by that prefix. The compiler plugin keeps its own name, which depends on the compilation path:
+
+| Compilation path             | Compiler plugin name                            |
+| ---------------------------- | ----------------------------------------------- |
+| Default (ngtsc)              | `@analogjs/vite-plugin-angular`                 |
+| `fastCompile: true`          | `@analogjs/vite-plugin-angular-fast-compile`    |
+| `compilation: 'ngp'`         | `@analogjs/vite-plugin-angular-ngp`             |
+| `angularCompilationPlugin()` | `@analogjs/vite-plugin-angular-compilation-api` |
+
+To read compiler state from another Vite plugin, look up the active compiler with `findAngularCompiler()` instead of matching these names:
+
+```ts
+import type { Plugin } from 'vite';
+import { findAngularCompiler } from '@analogjs/vite-plugin-angular';
+
+export function myPlugin(): Plugin {
+  return {
+    name: 'my-plugin',
+    configResolved(config) {
+      const compiler = findAngularCompiler(config.plugins);
+      const tsconfig = compiler?.api.getTsConfigPath();
+    },
+  };
+}
+```
+
+Every compiler exposes the same `api`:
+
+- `getTsConfigPath()` returns the tsconfig the compiler reads.
+- `componentUpdates` is set when the compiler serves Angular component HMR updates.
+- `getSourceMap(id)` returns the emitted source map for a compiled file, when the compiler keeps one.
+
+To change how Angular compiles, such as preprocessing component styles or adding include globs, expose an `analog.setup()` hook from your plugin as described in the [Style Pipeline guide](/docs/guides/style-pipeline).
