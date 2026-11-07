@@ -636,7 +636,7 @@ export function angularCompilationPlugin(
       // node_modules (`ɵɵngDeclareInjectable/Factory`). Without the
       // linker plugin, those declarations reach the browser unprocessed
       // and Angular tries to JIT-compile them at runtime. Mirror the
-      // deps-optimizer wiring from `angular-vite-plugin.ts` so the
+      // deps-optimizer wiring from `ngtsc-compile-plugin.ts` so the
       // linker runs on `.[cm]?js` deps under both rolldown and esbuild.
       const useRolldown = isRolldown();
       const preliminaryTsConfigPath = resolveTsConfigPath();

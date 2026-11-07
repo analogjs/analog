@@ -1,5 +1,5 @@
 // Shared Vite plugin helpers for routing component resources (templates)
-// through virtual module ids. Both angular-vite-plugin and fast-compile-plugin
+// through virtual module ids. Both ngtsc-compile-plugin and fast-compile-plugin
 // use these so the rewriting + loading behavior stays in sync between them.
 //
 // Style ?inline imports now flow through Vite's native CSS pipeline via

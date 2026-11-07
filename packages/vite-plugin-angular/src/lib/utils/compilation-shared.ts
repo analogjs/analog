@@ -1,5 +1,5 @@
 /**
- * Shared utilities used by both angular-vite-plugin.ts and
+ * Shared utilities used by both ngtsc-compile-plugin.ts and
  * compilation-api/compilation-api-plugin.ts.
  */
 

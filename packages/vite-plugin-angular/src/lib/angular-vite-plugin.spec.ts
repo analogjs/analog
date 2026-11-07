@@ -42,14 +42,16 @@ vi.mock('./utils/devkit.js', async (importOriginal) => {
   };
 });
 
+import { angular, type PluginOptions } from './angular-vite-plugin';
 import {
-  angular,
   createFsWatcherCacheInvalidator,
   evictDeletedFileMetadata,
   findTemplateOwnerModules,
   findComponentStylesheetWrapperModules,
   getModulesForChangedFile,
   isModuleForChangedResource,
+} from './ngtsc-compile-plugin';
+import {
   isIgnoredHmrFile,
   injectViteIgnoreForHmrMetadata,
   mapTemplateUpdatesToFiles,
@@ -57,8 +59,7 @@ import {
   toAngularCompilationFileReplacements,
   isTestWatchMode,
   getBrowserModeCliOverride,
-  type PluginOptions,
-} from './ngtsc-compile-plugin';
+} from './utils/compilation-shared';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers';
 import { normalizeIncludeGlob } from './utils/tsconfig-resolver';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';

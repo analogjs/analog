@@ -90,7 +90,7 @@ async function setupLegacyTransformPlugin() {
     createJitResourceTransformer: vi.fn(() => vi.fn()),
   }));
 
-  const { angular } = await import('./ngtsc-compile-plugin');
+  const { angular } = await import('./angular-vite-plugin');
   const plugin = angular({
     tsconfig: tsconfigPath,
     workspaceRoot,

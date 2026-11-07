@@ -2,7 +2,7 @@
  * Shared tsconfig resolution logic used by both the ngtsc and compilation-api
  * compilation plugins. Encapsulates the caching, include-glob discovery,
  * tsconfig-graph expansion, and path-root resolution that were previously
- * duplicated across angular-vite-plugin.ts and compilation-api-plugin.ts.
+ * duplicated across ngtsc-compile-plugin.ts and compilation-api-plugin.ts.
  */
 
 import * as compilerCli from '@angular/compiler-cli';

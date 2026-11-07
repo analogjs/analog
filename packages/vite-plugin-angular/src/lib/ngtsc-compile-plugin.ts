@@ -1,12 +1,6 @@
 import { NgtscProgram } from '@angular/compiler-cli';
 import { union } from 'es-toolkit';
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {
   basename,
   dirname,
@@ -23,7 +17,6 @@ import * as ts from 'typescript';
 import {
   ModuleNode,
   normalizePath,
-  Plugin,
   preprocessCSS,
   ResolvedConfig,
   ViteDevServer,
@@ -54,9 +47,6 @@ import {
   type TransformFilter,
 } from './analog-plugin-interop.js';
 
-import { fastCompilePlugin } from './fast-compile-plugin.js';
-import { ngpCompilePlugin } from './ngp-compile-plugin.js';
-import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
   isComponentStyleSheet,
   getComponentStyleSheetMeta,
@@ -68,7 +58,6 @@ import {
 } from './utils/devkit.js';
 import {
   activateDeferredDebug,
-  applyDebugOption,
   debugCompiler,
   debugCompilerV,
   debugEmit,
@@ -77,10 +66,8 @@ import {
   debugHmrV,
   debugStyles,
   debugStylesV,
-  type DebugOption,
 } from './utils/debug.js';
 import {
-  createTsConfigGetter,
   EXCLUDED_TS_EXT_REGEX,
   getTsConfigPath,
   isProdMode,
@@ -90,11 +77,7 @@ import {
 import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
-import {
-  toVirtualRawId,
-  toVirtualStyleId,
-  VIRTUAL_RAW_PREFIX,
-} from './utils/virtual-ids.js';
+import { toVirtualRawId, VIRTUAL_RAW_PREFIX } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
 const require = createRequire(import.meta.url);
@@ -106,7 +89,6 @@ import {
   FileReplacementSSR,
   FileReplacementWith,
 } from './plugins/file-replacements.plugin.js';
-import { angularSupportPlugins } from './support-plugins.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheet,
@@ -114,23 +96,10 @@ import {
 } from './stylesheet-registry.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
 
-export {
-  DiagnosticModes,
-  injectViteIgnoreForHmrMetadata,
-  isIgnoredHmrFile,
-  toAngularCompilationFileReplacements,
-  mapTemplateUpdatesToFiles,
-  refreshStylesheetRegistryForFile,
-  describeStylesheetContent,
-  isTestWatchMode,
-  getBrowserModeCliOverride,
-} from './utils/compilation-shared.js';
 import {
-  DiagnosticModes,
   injectViteIgnoreForHmrMetadata,
   isIgnoredHmrFile,
   describeStylesheetContent,
-  refreshStylesheetRegistryForFile,
   isTestWatchMode,
   getBrowserModeCliOverride,
 } from './utils/compilation-shared.js';
@@ -139,93 +108,18 @@ import {
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { createHotUpdateBatcher } from './hot-update-batch.js';
-import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
 
-export interface PluginOptions {
-  /**
-   * Path to the tsconfig used for compilation, or a function returning it.
-   * Defaults to `tsconfig.app.json` (`tsconfig.lib.json` for libraries,
-   * `tsconfig.spec.json` in tests).
-   */
-  tsconfig?: string | (() => string);
-  /**
-   * Absolute path to the workspace root. Defaults to `NX_WORKSPACE_ROOT`,
-   * then `process.cwd()`.
-   */
-  workspaceRoot?: string;
-  /**
-   * Stylesheet extension used for inline component `styles`. Defaults to `css`.
-   */
-  inlineStylesExtension?: string;
-  /**
-   * Compile components in JIT mode. Defaults to `true` in tests and `false`
-   * otherwise.
-   */
-  jit?: boolean;
-  /**
-   * Additional files to include in compilation, as globs relative to the
-   * workspace root.
-   */
-  include?: string[];
-  /**
-   * Enables Analog's Angular live-reload/HMR pipeline during development/watch mode.
-   *
-   * This is separate from Vite's `server.hmr` option, which configures the
-   * HMR client transport.
-   *
-   * Defaults to `true` for watch mode, or `false` with `compilation: 'ngp'`,
-   * which reloads the page on every change unless this is `true`. Set to
-   * `false` to disable Angular reload updates while keeping other stylesheet
-   * externalization behavior available when needed.
-   */
-  liveReload?: boolean;
-  /**
-   * Skip semantic and Angular template diagnostics during compilation.
-   * Defaults to `true`, or `false` with `compilation: 'ngp'`, which requires
-   * a TypeScript 7 type checker (see `typeChecker`).
-   */
-  disableTypeChecking?: boolean;
-  /**
-   * TypeScript 7 type checker used with `compilation: 'ngp'`: `'tsgo'`
-   * (default), `'tsrs'`, or a command serving the TypeScript 7 language
-   * server over stdio (`args` defaults to `['--lsp', '--stdio']`).
-   */
-  typeChecker?: TypeCheckerOption;
-  /**
-   * Replace source files at build time, like `fileReplacements` in
-   * `angular.json`.
-   */
-  fileReplacements?: FileReplacement[];
-  /**
-   * Opt into the fast compile path. Skips Angular's template type-checking
-   * and routes compilation through an internal single-pass transform when
-   * `compilation` is not specified.
-   * Defaults to `false`.
-   */
-  fastCompile?: boolean;
-  /**
-   * Selects the compilation path, overriding fastCompile. Defaults to 'ngtsc';
-   * 'ngp' is experimental and falls back to 'ngtsc' under Vitest's JIT default.
-   */
-  compilation?: 'ngtsc' | 'ngp';
-  /**
-   * Compilation output mode used when `fastCompile` is enabled.
-   * - `'full'` (default): Emit final Ivy definitions for application builds.
-   * - `'partial'`: Emit partial declarations for library publishing.
-   */
-  fastCompileMode?: 'full' | 'partial';
-  /**
-   * Enable debug logging for specific scopes.
-   *
-   * - `true` → enables all `analog:angular:*` scopes
-   * - `string[]` → enables listed namespaces (e.g. `['analog:angular:hmr']`)
-   * - `{ scopes?, mode? }` → object form with optional `mode: 'build' | 'dev'`
-   *   to restrict output to a specific Vite command (omit for both)
-   *
-   * Also responds to the `DEBUG` env var (Node.js) or `localStorage.debug`
-   * (browser), using the `obug` convention.
-   */
-  debug?: DebugOption;
+export interface NgtscCompilePluginOptions {
+  tsconfigGetter: () => string;
+  workspaceRoot: string;
+  inlineStylesExtension: string;
+  jit: boolean;
+  include: string[];
+  liveReload: boolean;
+  disableTypeChecking: boolean;
+  fileReplacements: FileReplacement[];
+  isTest: boolean;
+  isAstroIntegration: boolean;
 }
 
 export function evictDeletedFileMetadata(
@@ -249,44 +143,28 @@ interface DeclarationFile {
   data: string;
 }
 
-export function angular(options?: PluginOptions): Plugin[] {
-  applyDebugOption(options?.debug, options?.workspaceRoot);
+/**
+ * Compiles Angular with `NgtscProgram`, or with TypeScript plus Angular's
+ * JIT transforms when `jit` is enabled.
+ */
+export function ngtscCompilePlugin(
+  options: NgtscCompilePluginOptions,
+): AngularCompilerPlugin {
+  const { isTest, jit, isAstroIntegration } = options;
+  // Vitest's runner doesn't support Vite's WebSocket-based HMR. This does NOT
+  // block style externalization — shouldExternalizeStyles() independently
+  // checks externalizeStylesRequested, so plugin-driven component styles
+  // still work in unit tests.
+  const liveReload = options.liveReload && !isTest;
+  if (isTest) {
+    debugHmr('hmr disabled', { angularVersion: angularFullVersion, isTest });
+  }
   // Set on each compilation from the Vite plugins' `analog.setup()` hooks.
   let externalizeStylesRequested = false;
   let configureStylesheetRegistry: StylesheetRegistryConfigurator | undefined;
   let transformFilter: TransformFilter | undefined;
-  const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  const compilation =
-    options?.compilation === 'ngp' && !(isTest && options.jit === undefined)
-      ? 'ngp'
-      : 'ngtsc';
-  const liveReload = options?.liveReload ?? compilation !== 'ngp';
+  let stylePreprocessor: StylePreprocessor | undefined;
   const classNames = new Map<string, string>();
-
-  /**
-   * Normalize plugin options so defaults
-   * are used for values not provided.
-   */
-  const pluginOptions = {
-    tsconfigGetter: createTsConfigGetter(options?.tsconfig),
-    workspaceRoot:
-      options?.workspaceRoot ??
-      process.env['NX_WORKSPACE_ROOT'] ??
-      process.cwd(),
-    inlineStylesExtension: options?.inlineStylesExtension ?? 'css',
-    jit: options?.jit,
-    include: options?.include ?? [],
-    liveReload,
-    disableTypeChecking: options?.disableTypeChecking ?? compilation !== 'ngp',
-    fileReplacements: options?.fileReplacements ?? [],
-    fastCompile:
-      options?.compilation === undefined && (options?.fastCompile ?? false),
-    compilation,
-    fastCompileMode: options?.fastCompileMode ?? 'full',
-    // Set on each compilation from preprocessors registered by Vite plugins
-    // through `analog.setup()`.
-    stylePreprocessor: undefined as StylePreprocessor | undefined,
-  };
 
   let resolvedConfig: ResolvedConfig;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
@@ -300,9 +178,9 @@ export function angular(options?: PluginOptions): Plugin[] {
   let cachedHost: ts.CompilerHost | undefined;
   let cachedHostKey: string | undefined;
   const tsconfigResolver = new TsconfigResolver({
-    workspaceRoot: pluginOptions.workspaceRoot,
-    include: pluginOptions.include,
-    liveReload: pluginOptions.liveReload,
+    workspaceRoot: options.workspaceRoot,
+    include: options.include,
+    liveReload: options.liveReload,
     isTest,
   });
   function invalidateFsCaches() {
@@ -322,11 +200,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   function shouldEnableLiveReload(): boolean {
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
-    return !!(
-      effectiveWatchMode &&
-      pluginOptions.liveReload &&
-      hasViteHmrTransport()
-    );
+    return !!(effectiveWatchMode && liveReload && hasViteHmrTransport());
   }
 
   /**
@@ -363,10 +237,7 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   let deferInitialCompilation = isVitestVscode;
-  const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
 
-  const jit =
-    typeof pluginOptions?.jit !== 'undefined' ? pluginOptions.jit : isTest;
   let viteServer: ViteDevServer | undefined;
 
   const styleUrlsResolver = new StyleUrlsResolver();
@@ -462,24 +333,11 @@ export function angular(options?: PluginOptions): Plugin[] {
   function angularPlugin(): AngularCompilerPlugin {
     let isProd = false;
 
-    if (isTest) {
-      // Test mode: disable HMR because
-      // Vitest's runner doesn't support Vite's WebSocket-based HMR.
-      // This does NOT block style externalization — shouldExternalizeStyles()
-      // independently checks externalizeStylesRequested, so plugin-driven
-      // component styles still work in unit tests.
-      pluginOptions.liveReload = false;
-      debugHmr('hmr disabled', {
-        angularVersion: angularFullVersion,
-        isTest,
-      });
-    }
-
     return {
       name: '@analogjs/vite-plugin-angular',
       api: {
         getTsConfigPath: resolveTsConfigPath,
-        componentUpdates: { classNames, fileEmitter },
+        componentUpdates: liveReload ? { classNames, fileEmitter } : undefined,
         getSourceMap: (id) => outputFiles.get(normalizePath(id))?.map,
       },
       async config(config, { command }) {
@@ -824,7 +682,7 @@ export function angular(options?: PluginOptions): Plugin[] {
                   isDirect,
                   stylesheetRegistry,
                   wrapperModules,
-                  pluginOptions.stylePreprocessor,
+                  stylePreprocessor,
                 );
                 debugStylesV('HMR: component stylesheet changed', {
                   file: isDirect.file,
@@ -1458,35 +1316,10 @@ export function angular(options?: PluginOptions): Plugin[] {
     return JSON.stringify(sourceMap);
   }
 
-  const createFastCompilePlugin =
-    pluginOptions.compilation === 'ngp' ? ngpCompilePlugin : fastCompilePlugin;
-  const compilationPlugin: AngularCompilerPlugin =
-    pluginOptions.compilation === 'ngp' || pluginOptions.fastCompile
-      ? createFastCompilePlugin({
-          tsconfigGetter: pluginOptions.tsconfigGetter,
-          workspaceRoot: pluginOptions.workspaceRoot,
-          inlineStylesExtension: pluginOptions.inlineStylesExtension,
-          jit,
-          liveReload: pluginOptions.liveReload,
-          isTest,
-          isAstroIntegration,
-          fastCompileMode: pluginOptions.fastCompileMode,
-          disableTypeChecking: pluginOptions.disableTypeChecking,
-          typeChecker: options?.typeChecker,
-        })
-      : angularPlugin();
-
-  return angularSupportPlugins(compilationPlugin, {
-    jit,
-    isTest,
-    liveReload: pluginOptions.liveReload,
-    inlineStylesExtension: pluginOptions.inlineStylesExtension,
-    fileReplacements: pluginOptions.fileReplacements,
-    workspaceRoot: pluginOptions.workspaceRoot,
-  });
+  return angularPlugin();
 
   function resolveTsConfigPath() {
-    const tsconfigValue = pluginOptions.tsconfigGetter();
+    const tsconfigValue = options.tsconfigGetter();
 
     return getTsConfigPath(
       tsConfigResolutionContext!.root,
@@ -1494,7 +1327,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsConfigResolutionContext!.isProd,
       isTest,
       tsConfigResolutionContext!.isLib,
-      pluginOptions.workspaceRoot,
+      options.workspaceRoot,
     );
   }
 
@@ -1507,7 +1340,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     try {
       await previousLock;
       const integrations = await discoverAnalogIntegrations(config);
-      pluginOptions.stylePreprocessor = integrations.stylePreprocessor;
+      stylePreprocessor = integrations.stylePreprocessor;
       externalizeStylesRequested = integrations.externalizeStyles;
       configureStylesheetRegistry = integrations.configureStylesheetRegistry;
       transformFilter = integrations.transformFilter;
@@ -1554,7 +1387,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     }
 
     debugCompiler('tsCompilerOptions (NgtscProgram path)', {
-      liveReload: pluginOptions.liveReload,
+      liveReload: liveReload,
       viteHmr: hasViteHmrTransport(),
       externalizeStylesRequested,
       shouldExternalize: shouldExternalizeStyles(),
@@ -1579,9 +1412,9 @@ export function angular(options?: PluginOptions): Plugin[] {
       tsCompilerOptions['supportTestBed'] = true;
     }
 
-    const replacements = pluginOptions.fileReplacements.map((rp) =>
+    const replacements = options.fileReplacements.map((rp) =>
       join(
-        pluginOptions.workspaceRoot,
+        options.workspaceRoot,
         (rp as FileReplacementSSR).ssr || (rp as FileReplacementWith).with,
       ),
     );
@@ -1630,18 +1463,18 @@ export function angular(options?: PluginOptions): Plugin[] {
         : undefined;
       if (stylesheetRegistry) {
         configureStylesheetRegistry?.(stylesheetRegistry, {
-          workspaceRoot: pluginOptions.workspaceRoot,
+          workspaceRoot: options.workspaceRoot,
         });
       }
       debugStyles('stylesheet registry initialized (NgtscProgram path)', {
         externalizeStyles,
       });
       augmentHostWithResources(host, styleTransform, {
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
+        inlineStylesExtension: options.inlineStylesExtension,
         isProd,
         stylesheetRegistry,
         sourceFileCache,
-        stylePreprocessor: pluginOptions.stylePreprocessor,
+        stylePreprocessor,
         logger: resolvedConfig?.logger,
       });
     }
@@ -1701,7 +1534,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     if (angularCompiler!) {
       await angularCompiler.analyzeAsync();
 
-      if (!pluginOptions.disableTypeChecking) {
+      if (!options.disableTypeChecking) {
         // TypeScript builds the program diagnostics lazily and records why each
         // file is in the program as an index into `referencedFiles`, which
         // includes the shim references Angular tags onto every source file.
@@ -1731,8 +1564,8 @@ export function angular(options?: PluginOptions): Plugin[] {
     const fileMetadata = getFileMetadata(
       builder,
       angularCompiler!,
-      pluginOptions.liveReload,
-      pluginOptions.disableTypeChecking,
+      liveReload,
+      options.disableTypeChecking,
     );
 
     const writeFileCallback: ts.WriteFileCallback = (
@@ -2016,14 +1849,6 @@ export function isModuleForChangedResource(
   return (
     normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
   );
-}
-
-function safeStatMtimeMs(file: string): number | undefined {
-  try {
-    return statSync(file).mtimeMs;
-  } catch {
-    return undefined;
-  }
 }
 
 function diagnoseComponentStylesheetPipeline(

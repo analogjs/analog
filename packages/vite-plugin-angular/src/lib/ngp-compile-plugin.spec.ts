@@ -5,7 +5,7 @@ import type { AddressInfo } from 'node:net';
 import { resolve } from 'node:path';
 import { createServer, normalizePath, type ViteDevServer } from 'vite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { angular, type PluginOptions } from './ngtsc-compile-plugin';
+import { angular, type PluginOptions } from './angular-vite-plugin';
 
 describe('compilation selection', () => {
   it.each<{ options: PluginOptions; name: string }>([

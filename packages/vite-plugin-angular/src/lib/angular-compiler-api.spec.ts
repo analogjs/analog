@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { angular, type PluginOptions } from './ngtsc-compile-plugin';
+import { angular, type PluginOptions } from './angular-vite-plugin';
 import { findAngularCompiler } from './angular-compiler-api';
 import { angularCompilationPlugin } from './compilation-api/index';
 
 describe('findAngularCompiler', () => {
+  beforeEach(() => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('VITEST', '');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it.each<{ options: PluginOptions; name: string; serves: boolean }>([
     { options: {}, name: '@analogjs/vite-plugin-angular', serves: true },
     {
@@ -32,6 +41,16 @@ describe('findAngularCompiler', () => {
       '@analogjs/vite-plugin-angular-compilation-api',
     );
     expect(compiler?.api.componentUpdates).toBeDefined();
+  });
+
+  it('omits ngtsc component updates under Vitest', () => {
+    vi.stubEnv('VITEST', 'true');
+    const plugins = angular({ jit: false });
+
+    expect(findAngularCompiler(plugins)?.api.componentUpdates).toBeUndefined();
+    expect(plugins.map(({ name }) => name)).not.toContain(
+      '@analogjs/vite-plugin-angular:live-reload',
+    );
   });
 
   it('returns undefined without an Angular compiler', () => {
