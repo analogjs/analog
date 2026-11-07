@@ -30,10 +30,8 @@ import { warnStylesheetError } from './utils/stylesheet-warning.js';
 import {
   TS_EXT_REGEX,
   EXCLUDED_TS_EXT_REGEX,
-  getTsConfigPath,
   createDepOptimizerConfig,
-  isProdMode,
-  type TsConfigResolutionContext,
+  createTsConfigPathResolver,
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
@@ -87,7 +85,7 @@ export function fastCompilePlugin(
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];
   let stylePreprocessor: StylePreprocessor | undefined;
-  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
+  const tsconfigPath = createTsConfigPathResolver(pluginOptions);
   let watchMode = false;
 
   // fast-compile plugin state
@@ -220,7 +218,7 @@ export function fastCompilePlugin(
     lazyScans.clear();
     importersByFile.clear();
     projectScan = undefined;
-    const resolvedTsConfigPath = resolveTsConfigPath();
+    const resolvedTsConfigPath = tsconfigPath.resolve();
     projectRoot = dirname(resolvedTsConfigPath);
     tsConfig = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = tsConfig.options?.useDefineForClassFields ?? true;
@@ -770,36 +768,16 @@ export function fastCompilePlugin(
     return { code: outputCode, map: stripped.map };
   }
 
-  function resolveTsConfigPath() {
-    const { root, isProd, isLib } = tsConfigResolutionContext!;
-    return getTsConfigPath(
-      root,
-      pluginOptions.tsconfigGetter(),
-      isProd,
-      pluginOptions.isTest,
-      isLib,
-      pluginOptions.workspaceRoot,
-    );
-  }
-
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
-    api: { getTsConfigPath: resolveTsConfigPath },
+    api: { getTsConfigPath: tsconfigPath.resolve },
     enforce: 'pre' as const,
     async config(config, { command }) {
       watchMode = command === 'serve';
-      const isProd = isProdMode(config.mode);
-
-      tsConfigResolutionContext = {
-        root: config.root || '.',
-        isProd,
-        isLib: !!config?.build?.lib,
-      };
-
-      const preliminaryTsConfigPath = resolveTsConfigPath();
+      const { isProd } = tsconfigPath.configure(config);
 
       const depOptimizer = createDepOptimizerConfig({
-        tsconfig: preliminaryTsConfigPath,
+        tsconfig: tsconfigPath.resolve(),
         isProd,
         jit: pluginOptions.jit,
         watchMode,

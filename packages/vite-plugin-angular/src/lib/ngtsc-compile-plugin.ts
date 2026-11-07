@@ -23,10 +23,6 @@ import {
 } from 'vite';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import {
-  createCompilerPlugin,
-  createRolldownCompilerPlugin,
-} from './compiler-plugin.js';
-import {
   StyleUrlsResolver,
   TemplateUrlsResolver,
 } from './component-resolvers.js';
@@ -68,15 +64,14 @@ import {
   debugStylesV,
 } from './utils/debug.js';
 import {
+  createDepOptimizerConfig,
+  createTsConfigPathResolver,
   EXCLUDED_TS_EXT_REGEX,
-  getTsConfigPath,
-  isProdMode,
   TS_EXT_REGEX,
-  type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
-import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
+import { getJsTransformConfigKey } from './utils/rolldown.js';
 import { toVirtualRawId, VIRTUAL_RAW_PREFIX } from './utils/virtual-ids.js';
 import { type SourceFileCache as SourceFileCacheType } from './utils/source-file-cache.js';
 
@@ -167,7 +162,7 @@ export function ngtscCompilePlugin(
   const classNames = new Map<string, string>();
 
   let resolvedConfig: ResolvedConfig;
-  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
+  const tsconfigPath = createTsConfigPathResolver(options);
 
   const ts = require('typescript');
   let cachedBuilder:
@@ -331,92 +326,36 @@ export function ngtscCompilePlugin(
   }
 
   function angularPlugin(): AngularCompilerPlugin {
-    let isProd = false;
-
     return {
       name: '@analogjs/vite-plugin-angular',
       api: {
-        getTsConfigPath: resolveTsConfigPath,
+        getTsConfigPath: tsconfigPath.resolve,
         componentUpdates: liveReload ? { classNames, fileEmitter } : undefined,
         getSourceMap: (id) => outputFiles.get(normalizePath(id))?.map,
       },
       async config(config, { command }) {
         activateDeferredDebug(command);
         watchMode = command === 'serve';
-        isProd = isProdMode(config.mode);
-
-        // Store the config context for later resolution in configResolved
-        tsConfigResolutionContext = {
-          root: config.root || '.',
-          isProd,
-          isLib: !!config?.build?.lib,
-        };
-
-        // Do a preliminary resolution for esbuild plugin (before configResolved)
-        const preliminaryTsConfigPath = resolveTsConfigPath();
-
-        const esbuild = config.esbuild ?? false;
-        const oxc = config.oxc ?? false;
-
-        const defineOptions = {
-          ngJitMode: 'false',
-          ngI18nClosureMode: 'false',
-          ...(watchMode ? {} : { ngDevMode: 'false' }),
-        };
-        const useRolldown = isRolldown();
+        const { isProd } = tsconfigPath.configure(config);
         const jsTransformConfigKey = getJsTransformConfigKey();
-        const jsTransformConfigValue =
-          jsTransformConfigKey === 'oxc' ? oxc : esbuild;
-
-        const rolldownOptions: vite.DepOptimizationOptions['rolldownOptions'] =
-          {
-            plugins: [
-              createRolldownCompilerPlugin(
-                {
-                  tsconfig: preliminaryTsConfigPath,
-                  sourcemap: !isProd,
-                  advancedOptimizations: isProd,
-                  jit,
-                  incremental: watchMode,
-                },
-                isTest,
-                // Astro manages the transformer lifecycle externally.
-                !isAstroIntegration,
-              ),
-            ],
-          };
-
-        const esbuildOptions: vite.DepOptimizationOptions['esbuildOptions'] = {
-          plugins: [
-            createCompilerPlugin(
-              {
-                tsconfig: preliminaryTsConfigPath,
-                sourcemap: !isProd,
-                advancedOptimizations: isProd,
-                jit,
-                incremental: watchMode,
-              },
-              isTest,
-              !isAstroIntegration,
-            ),
-          ],
-          define: defineOptions,
-        };
 
         // `resolve.conditions` is intentionally not extended with `style`
         // here: that condition is scoped to `.css`-extension requests via
-        // `cssExtensionStyleResolverPlugin` (registered in the returned
-        // plugin array). Adding `style` globally caused Tailwind v4's JS
-        // plugin resolver — which inherits Vite's global conditions — to
-        // pick the `style` export of packages like `tailwindcss-primeui`
-        // and feed a `.css` file to Node's ESM loader.
+        // `cssExtensionStyleResolverPlugin`. Adding `style` globally caused
+        // Tailwind v4's JS plugin resolver — which inherits Vite's global
+        // conditions — to pick the `style` export of packages like
+        // `tailwindcss-primeui` and feed a `.css` file to Node's ESM loader.
         return {
-          [jsTransformConfigKey]: jsTransformConfigValue,
-          optimizeDeps: {
-            include: ['rxjs/operators', 'rxjs', 'tslib'],
-            exclude: ['@angular/platform-server'],
-            ...(useRolldown ? { rolldownOptions } : { esbuildOptions }),
-          },
+          [jsTransformConfigKey]: config[jsTransformConfigKey] ?? false,
+          ...createDepOptimizerConfig({
+            tsconfig: tsconfigPath.resolve(),
+            isProd,
+            jit,
+            watchMode,
+            isTest,
+            isAstroIntegration,
+            includeTslib: true,
+          }),
         };
       },
       configResolved(config) {
@@ -1318,19 +1257,6 @@ export function ngtscCompilePlugin(
 
   return angularPlugin();
 
-  function resolveTsConfigPath() {
-    const tsconfigValue = options.tsconfigGetter();
-
-    return getTsConfigPath(
-      tsConfigResolutionContext!.root,
-      tsconfigValue,
-      tsConfigResolutionContext!.isProd,
-      isTest,
-      tsConfigResolutionContext!.isLib,
-      options.workspaceRoot,
-    );
-  }
-
   async function performCompilation(config: ResolvedConfig, ids?: string[]) {
     let resolve: (() => unknown) | undefined;
     const previousLock = compilationLock;
@@ -1366,7 +1292,7 @@ export function ngtscCompilePlugin(
       }
     }
 
-    const resolvedTsConfigPath = resolveTsConfigPath();
+    const resolvedTsConfigPath = tsconfigPath.resolve();
     const cached = tsconfigResolver.getCachedTsconfigOptions(
       resolvedTsConfigPath,
       config,

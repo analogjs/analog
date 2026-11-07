@@ -6,6 +6,7 @@ import {
   createCompilerPlugin,
   createRolldownCompilerPlugin,
 } from '../compiler-plugin.js';
+import { isRolldown } from './rolldown.js';
 import {
   createPersistentTransformCache,
   resolveTransformCacheDir,
@@ -128,6 +129,43 @@ export function getTsConfigPath(
   return resolvedPath;
 }
 
+export interface TsConfigPathResolver {
+  /** Records the root, mode and library flag from the `config` hook. */
+  configure(config: vite.UserConfig): TsConfigResolutionContext;
+  /** Resolves the tsconfig path. Call after `configure()`. */
+  resolve(): string;
+}
+
+export function createTsConfigPathResolver(options: {
+  tsconfigGetter: () => string;
+  workspaceRoot: string;
+  isTest: boolean;
+}): TsConfigPathResolver {
+  let context: TsConfigResolutionContext | undefined;
+
+  return {
+    configure(config) {
+      context = {
+        root: config.root || '.',
+        isProd: isProdMode(config.mode),
+        isLib: !!config.build?.lib,
+      };
+      return context;
+    },
+    resolve() {
+      const { root, isProd, isLib } = context!;
+      return getTsConfigPath(
+        root,
+        options.tsconfigGetter(),
+        isProd,
+        options.isTest,
+        isLib,
+        options.workspaceRoot,
+      );
+    },
+  };
+}
+
 export function createTsConfigGetter(
   tsconfigOrGetter?: string | (() => string),
 ) {
@@ -145,6 +183,8 @@ export interface DepOptimizerOptions {
   watchMode: boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
+  /** Prebundles `tslib` for compilers whose output imports its helpers. */
+  includeTslib?: boolean;
 }
 
 export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
@@ -203,9 +243,13 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
   // longer needs to leak it into Vite's global `resolve.conditions`.
   return {
     optimizeDeps: {
-      include: ['rxjs/operators', 'rxjs'],
+      include: [
+        'rxjs/operators',
+        'rxjs',
+        ...(opts.includeTslib ? ['tslib'] : []),
+      ],
       exclude: ['@angular/platform-server'],
-      ...(vite.rolldownVersion ? { rolldownOptions } : { esbuildOptions }),
+      ...(isRolldown() ? { rolldownOptions } : { esbuildOptions }),
     },
   };
 }

@@ -580,6 +580,25 @@ describe('angularCompilationPlugin', () => {
     ).not.toContain('@analogjs/vite-plugin-angular:live-reload');
   });
 
+  it('links dependencies with the rolldown optimizer', async () => {
+    vi.resetModules();
+    vi.doMock('../utils/rolldown.js', () => ({
+      isRolldown: () => true,
+      getJsTransformConfigKey: () => 'oxc',
+    }));
+    ({ angularCompilationPlugin } = await import('../../index.js'));
+    const config = await (
+      getCompilerPlugin({ tsconfig: join(tempRoot, 'tsconfig.json') })
+        .config as any
+    )({ root: tempRoot }, { command: 'serve', mode: 'development' });
+    const [linker] = config.optimizeDeps.rolldownOptions.plugins;
+
+    expect(linker.load).toBeTypeOf('object');
+    expect(linker.buildEnd).toBeTypeOf('function');
+    expect(config.optimizeDeps.include).toContain('tslib');
+    vi.doUnmock('../utils/rolldown.js');
+  });
+
   it('shares companion plugins with angular()', async () => {
     const { angular } = await import('../../index.js');
     const options = { jit: false, liveReload: true };

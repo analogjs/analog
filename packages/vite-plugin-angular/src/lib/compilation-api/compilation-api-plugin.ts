@@ -31,17 +31,12 @@ import {
 } from '../utils/debug.js';
 import { warnStylesheetError } from '../utils/stylesheet-warning.js';
 import {
-  getTsConfigPath,
+  createDepOptimizerConfig,
   createTsConfigGetter,
+  createTsConfigPathResolver,
   TS_EXT_REGEX,
-  type TsConfigResolutionContext,
 } from '../utils/plugin-config.js';
 import { TsconfigResolver } from '../utils/tsconfig-resolver.js';
-import { isRolldown } from '../utils/rolldown.js';
-import {
-  createCompilerPlugin,
-  createRolldownCompilerPlugin,
-} from '../compiler-plugin.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheetResult,
@@ -126,7 +121,11 @@ export function angularCompilationPlugin(
     isAstroIntegration: process.env['ANALOG_ASTRO'] === 'true',
   };
   let resolvedConfig: ResolvedConfig;
-  let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
+  const tsconfigPath = createTsConfigPathResolver({
+    tsconfigGetter: pluginOptions.tsconfigGetter,
+    workspaceRoot: pluginOptions.workspaceRoot,
+    isTest,
+  });
   let watchMode = false;
   let stylePreprocessor: StylePreprocessor | undefined;
   let transformFilter: TransformFilter | undefined;
@@ -176,17 +175,6 @@ export function angularCompilationPlugin(
     const effectiveWatchMode = isTest ? testWatchMode : watchMode;
     if (!effectiveWatchMode) return false;
     return !!(shouldEnableLiveReload() || externalizeStylesRequested);
-  }
-
-  function resolveTsConfigPath() {
-    const tsconfigValue = pluginOptions.tsconfigGetter();
-    return getTsConfigPath(
-      tsConfigResolutionContext!.root,
-      tsconfigValue,
-      tsConfigResolutionContext!.isProd,
-      isTest,
-      tsConfigResolutionContext!.isLib,
-    );
   }
 
   function resolveCompilationApiTsConfigPath(
@@ -293,7 +281,7 @@ export function angularCompilationPlugin(
       await compilation.update(modifiedFiles);
     }
 
-    const resolvedTsConfigPath = resolveTsConfigPath();
+    const resolvedTsConfigPath = tsconfigPath.resolve();
     const compilationApiTsConfigPath = resolveCompilationApiTsConfigPath(
       resolvedTsConfigPath,
       config,
@@ -607,7 +595,7 @@ export function angularCompilationPlugin(
   const compilerPlugin: AngularCompilerPlugin = {
     name: '@analogjs/vite-plugin-angular-compilation-api',
     api: {
-      getTsConfigPath: resolveTsConfigPath,
+      getTsConfigPath: tsconfigPath.resolve,
       componentUpdates,
       getSourceMap: (id) => outputFiles.get(normalizePath(id))?.map,
     },
@@ -615,15 +603,7 @@ export function angularCompilationPlugin(
     async config(config, { command }) {
       activateDeferredDebug(command);
       watchMode = command === 'serve';
-      const isProd =
-        config.mode === 'production' ||
-        process.env['NODE_ENV'] === 'production';
-
-      tsConfigResolutionContext = {
-        root: config.root || '.',
-        isProd,
-        isLib: !!config?.build?.lib,
-      };
+      const { isProd } = tsconfigPath.configure(config);
 
       debugCompilationApi('enabled (Angular %s)', angularFullVersion);
 
@@ -633,57 +613,20 @@ export function angularCompilationPlugin(
 
       // The compilation API owns user-source transforms, but deps
       // optimization still bundles partial-compiled Angular libs from
-      // node_modules (`ɵɵngDeclareInjectable/Factory`). Without the
-      // linker plugin, those declarations reach the browser unprocessed
-      // and Angular tries to JIT-compile them at runtime. Mirror the
-      // deps-optimizer wiring from `ngtsc-compile-plugin.ts` so the
-      // linker runs on `.[cm]?js` deps under both rolldown and esbuild.
-      const useRolldown = isRolldown();
-      const preliminaryTsConfigPath = resolveTsConfigPath();
-      const compilerPluginOptions = {
-        tsconfig: preliminaryTsConfigPath,
-        sourcemap: !isProd,
-        advancedOptimizations: isProd,
-        jit: pluginOptions.jit,
-        incremental: watchMode,
-      };
-
-      // No `resolve.conditions` extension here: the `style` condition is
-      // scoped to `.css`-extension requests by
-      // `cssExtensionStyleResolverPlugin`, registered once at the
-      // `angularCompilationPlugin()` factory level. Adding `style` globally caused
-      // Tailwind v4's JS plugin resolver to pick the `style` exports of
-      // packages such as `tailwindcss-primeui`, which then crashed Node's
-      // ESM loader when it tried to import the resulting `.css` file.
+      // node_modules (`ɵɵngDeclareInjectable/Factory`), so the linker
+      // still runs on `.[cm]?js` deps.
       return {
         esbuild: undefined,
         oxc: undefined,
-        optimizeDeps: {
-          include: ['rxjs/operators', 'rxjs', 'tslib'],
-          exclude: ['@angular/platform-server'],
-          ...(useRolldown
-            ? {
-                rolldownOptions: {
-                  plugins: [
-                    createRolldownCompilerPlugin(
-                      compilerPluginOptions,
-                      !pluginOptions.isAstroIntegration,
-                    ),
-                  ],
-                },
-              }
-            : {
-                esbuildOptions: {
-                  plugins: [
-                    createCompilerPlugin(
-                      compilerPluginOptions,
-                      isTest,
-                      !pluginOptions.isAstroIntegration,
-                    ),
-                  ],
-                },
-              }),
-        },
+        ...createDepOptimizerConfig({
+          tsconfig: tsconfigPath.resolve(),
+          isProd,
+          jit: pluginOptions.jit,
+          watchMode,
+          isTest,
+          isAstroIntegration: pluginOptions.isAstroIntegration,
+          includeTslib: true,
+        }),
       };
     },
     async configResolved(config) {

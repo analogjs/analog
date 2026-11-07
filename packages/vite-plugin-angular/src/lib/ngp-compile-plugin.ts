@@ -10,10 +10,8 @@ import {
 import type { FastCompilePluginOptions } from './fast-compile-plugin.js';
 import {
   createDepOptimizerConfig,
-  getTsConfigPath,
-  isProdMode,
+  createTsConfigPathResolver,
   TS_EXT_REGEX,
-  type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { angularFullVersion } from './utils/devkit.js';
@@ -168,7 +166,7 @@ export function ngpCompilePlugin(
     );
   }
 
-  let configContext: TsConfigResolutionContext;
+  const tsconfigPath = createTsConfigPathResolver(options);
   let resolvedConfig: vite.ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let watchMode = false;
@@ -199,17 +197,6 @@ export function ngpCompilePlugin(
     /type=script/,
     /@ng\/component/,
   ]);
-
-  function resolveTsConfigPath() {
-    return getTsConfigPath(
-      configContext.root,
-      options.tsconfigGetter(),
-      configContext.isProd,
-      options.isTest,
-      configContext.isLib,
-      options.workspaceRoot,
-    );
-  }
 
   async function prepareResources(
     file: NgpFile,
@@ -312,7 +299,7 @@ export function ngpCompilePlugin(
     tcbCode?: string | null,
   ) {
     typeChecker ??= new LspTypeChecker(
-      resolveTsConfigPath(),
+      tsconfigPath.resolve(),
       options.typeChecker,
     );
     typeChecker.queueFile(filePath, sourceCode, tcbCode);
@@ -469,19 +456,15 @@ export function ngpCompilePlugin(
     name: '@analogjs/vite-plugin-angular-ngp',
     enforce: 'pre',
     api: {
-      getTsConfigPath: resolveTsConfigPath,
+      getTsConfigPath: tsconfigPath.resolve,
       componentUpdates,
     },
     config(config, { command }) {
       watchMode = command === 'serve';
-      configContext = {
-        root: config.root || '.',
-        isProd: isProdMode(config.mode),
-        isLib: !!config.build?.lib,
-      };
+      const { isProd } = tsconfigPath.configure(config);
       const depOptimizer = createDepOptimizerConfig({
-        tsconfig: resolveTsConfigPath(),
-        isProd: configContext.isProd,
+        tsconfig: tsconfigPath.resolve(),
+        isProd,
         jit: false,
         watchMode,
         isTest: options.isTest,
@@ -523,7 +506,7 @@ export function ngpCompilePlugin(
     async buildStart() {
       activeBuilds++;
       if (!analyzer) {
-        const tsconfig = resolveTsConfigPath();
+        const tsconfig = tsconfigPath.resolve();
         const ngp = await loadNgp(tsconfig);
         api = ngp.api;
         analyzer = await api.createAnalyzer(tsconfig, {
