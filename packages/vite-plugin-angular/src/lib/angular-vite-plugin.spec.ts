@@ -58,7 +58,7 @@ import {
   isTestWatchMode,
   getBrowserModeCliOverride,
   type PluginOptions,
-} from './angular-vite-plugin';
+} from './ngtsc-compile-plugin';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers';
 import { normalizeIncludeGlob } from './utils/tsconfig-resolver';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';

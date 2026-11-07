@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Plugin } from 'vite';
 import { encapsulateStyle } from '@angular/compiler';
-import { angular } from './angular-vite-plugin';
+import { angular } from './ngtsc-compile-plugin';
 import {
   encapsulationPlugin as encapsulateComponentStylesPlugin,
   encapsulateViteCssOutput,

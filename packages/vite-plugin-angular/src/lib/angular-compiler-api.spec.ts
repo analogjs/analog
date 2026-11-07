@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { angular, type PluginOptions } from './angular-vite-plugin';
+import { angular, type PluginOptions } from './ngtsc-compile-plugin';
 import { findAngularCompiler } from './angular-compiler-api';
 import { angularCompilationPlugin } from './compilation-api/index';
 
