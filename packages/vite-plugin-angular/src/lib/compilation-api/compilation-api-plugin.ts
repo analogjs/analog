@@ -68,16 +68,7 @@ import {
   getBrowserModeCliOverride,
 } from '../utils/compilation-shared.js';
 import { createHotUpdateBatcher } from '../hot-update-batch.js';
-import { angularVitestPlugins } from '../angular-vitest-plugin.js';
-import { buildOptimizerPlugin } from '../angular-build-optimizer-plugin.js';
-import { jitPlugin } from '../angular-jit-plugin.js';
-import { liveReloadPlugin } from '../live-reload-plugin.js';
-import { virtualModulesPlugin } from '../virtual-modules-plugin.js';
-import { encapsulationPlugin } from '../encapsulation-plugin.js';
-import { nxFolderPlugin } from '../nx-folder-plugin.js';
-import { routerPlugin } from '../router-plugin.js';
-import { replaceFiles } from '../plugins/file-replacements.plugin.js';
-import { cssExtensionStyleResolverPlugin } from '../utils/css-extension-resolver.js';
+import { angularSupportPlugins } from '../support-plugins.js';
 import { loadVirtualRawModule } from '../utils/virtual-resources.js';
 import type { AngularCompilerPlugin } from '../angular-compiler-api.js';
 
@@ -119,7 +110,6 @@ export function angularCompilationPlugin(
 
   applyDebugOption(options.debug, options.workspaceRoot);
   const isTest = process.env['NODE_ENV'] === 'test' || !!process.env['VITEST'];
-  const isStackBlitz = !!process.versions['webcontainer'];
   const pluginOptions = {
     tsconfigGetter: createTsConfigGetter(options.tsconfig),
     workspaceRoot:
@@ -954,22 +944,12 @@ export function angularCompilationPlugin(
     },
   };
 
-  return [
-    cssExtensionStyleResolverPlugin(),
-    replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
-    virtualModulesPlugin({ jit: pluginOptions.jit }),
-    compilerPlugin,
-    pluginOptions.liveReload && liveReloadPlugin(componentUpdates),
-    ...(isTest && !isStackBlitz
-      ? angularVitestPlugins(compilerPlugin.api.getSourceMap)
-      : []),
-    pluginOptions.jit &&
-      jitPlugin({ inlineStylesExtension: pluginOptions.inlineStylesExtension }),
-    buildOptimizerPlugin({
-      jit: pluginOptions.jit,
-    }),
-    routerPlugin(),
-    nxFolderPlugin(),
-    encapsulationPlugin(),
-  ].filter(Boolean) as Plugin[];
+  return angularSupportPlugins(compilerPlugin, {
+    jit: pluginOptions.jit,
+    isTest,
+    liveReload: pluginOptions.liveReload,
+    inlineStylesExtension: pluginOptions.inlineStylesExtension,
+    fileReplacements: pluginOptions.fileReplacements,
+    workspaceRoot: pluginOptions.workspaceRoot,
+  });
 }

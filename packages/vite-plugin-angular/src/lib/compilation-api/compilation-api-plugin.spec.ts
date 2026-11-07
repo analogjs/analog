@@ -580,6 +580,20 @@ describe('angularCompilationPlugin', () => {
     ).not.toContain('@analogjs/vite-plugin-angular:live-reload');
   });
 
+  it('shares companion plugins with angular()', async () => {
+    const { angular } = await import('../../index.js');
+    const options = { jit: false, liveReload: true };
+    const companions = (plugins: { name: string }[], compiler: string) =>
+      plugins.map(({ name }) => name).filter((name) => name !== compiler);
+
+    expect(
+      companions(
+        angularCompilationPlugin(options),
+        '@analogjs/vite-plugin-angular-compilation-api',
+      ),
+    ).toEqual(companions(angular(options), '@analogjs/vite-plugin-angular'));
+  });
+
   it.each([
     [200000, createAngularCompilationMock],
     [200100, undefined],

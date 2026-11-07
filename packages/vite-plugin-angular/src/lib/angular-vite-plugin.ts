@@ -29,8 +29,6 @@ import {
   ViteDevServer,
 } from 'vite';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
-import { buildOptimizerPlugin } from './angular-build-optimizer-plugin.js';
-import { jitPlugin } from './angular-jit-plugin.js';
 import {
   createCompilerPlugin,
   createRolldownCompilerPlugin,
@@ -60,12 +58,9 @@ import { fastCompilePlugin } from './fast-compile-plugin.js';
 import { ngpCompilePlugin } from './ngp-compile-plugin.js';
 import { ANGULAR_DECORATOR_CALL_RE } from './compiler/index.js';
 import {
-  encapsulationPlugin,
   isComponentStyleSheet,
   getComponentStyleSheetMeta,
 } from './encapsulation-plugin.js';
-import { virtualModulesPlugin } from './virtual-modules-plugin.js';
-import { angularVitestPlugins } from './angular-vitest-plugin.js';
 import {
   createJitResourceTransformer,
   SourceFileCache,
@@ -89,13 +84,11 @@ import {
   EXCLUDED_TS_EXT_REGEX,
   getTsConfigPath,
   isProdMode,
-  isServerEnvironment,
   TS_EXT_REGEX,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
 import { toJitInlineStyleId } from './utils/jit-inline-styles.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
-import { cssExtensionStyleResolverPlugin } from './utils/css-extension-resolver.js';
 import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
 import {
   toVirtualRawId,
@@ -106,17 +99,14 @@ import { type SourceFileCache as SourceFileCacheType } from './utils/source-file
 
 const require = createRequire(import.meta.url);
 
-import { liveReloadPlugin } from './live-reload-plugin.js';
 import type { AngularCompilerPlugin } from './angular-compiler-api.js';
 import { EmitFileResult } from './models.js';
-import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
   FileReplacement,
   FileReplacementSSR,
   FileReplacementWith,
-  replaceFiles,
 } from './plugins/file-replacements.plugin.js';
-import { routerPlugin } from './router-plugin.js';
+import { angularSupportPlugins } from './support-plugins.js';
 import {
   AnalogStylesheetRegistry,
   preprocessStylesheet,
@@ -373,7 +363,6 @@ export function angular(options?: PluginOptions): Plugin[] {
   }
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   let deferInitialCompilation = isVitestVscode;
-  const isStackBlitz = !!process.versions['webcontainer'];
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
 
   const jit =
@@ -1487,37 +1476,14 @@ export function angular(options?: PluginOptions): Plugin[] {
         })
       : angularPlugin();
 
-  return [
-    // Scope the `style` package-export condition to `.css`-extension
-    // requests so packages like `@angular/material/prebuilt-themes/*.css`
-    // (gated only under `style`) still resolve from JS imports, without
-    // leaking `style` into Vite's global `resolve.conditions` and
-    // breaking Tailwind v4's JS plugin resolver for packages with mixed
-    // exports such as `tailwindcss-primeui`.
-    cssExtensionStyleResolverPlugin(),
-    replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
-    virtualModulesPlugin({ jit }),
-    pluginOptions.liveReload &&
-      compilationPlugin.api.componentUpdates &&
-      liveReloadPlugin(compilationPlugin.api.componentUpdates),
-    // `compilationPlugin` is `angularPlugin()`, `fastCompilePlugin()`, or
-    // `ngpCompilePlugin()` depending on `compilation` and `fastCompile`.
-    compilationPlugin,
-    ...(isTest && !isStackBlitz
-      ? angularVitestPlugins(compilationPlugin.api.getSourceMap)
-      : []),
-    (jit &&
-      jitPlugin({
-        inlineStylesExtension: pluginOptions.inlineStylesExtension,
-      })) as Plugin,
-    buildOptimizerPlugin({
-      jit,
-    }),
-    !isTest && devServerModePlugin(),
-    routerPlugin(),
-    nxFolderPlugin(),
-    encapsulationPlugin(),
-  ].filter(Boolean) as Plugin[];
+  return angularSupportPlugins(compilationPlugin, {
+    jit,
+    isTest,
+    liveReload: pluginOptions.liveReload,
+    inlineStylesExtension: pluginOptions.inlineStylesExtension,
+    fileReplacements: pluginOptions.fileReplacements,
+    workspaceRoot: pluginOptions.workspaceRoot,
+  });
 
   function resolveTsConfigPath() {
     const tsconfigValue = pluginOptions.tsconfigGetter();
@@ -2050,23 +2016,6 @@ export function isModuleForChangedResource(
   return (
     normalizePath((sourcePath ?? '').split('?')[0]) === normalizedChangedFile
   );
-}
-
-function devServerModePlugin(): Plugin {
-  return {
-    name: '@analogjs/vite-plugin-angular:dev-server-mode',
-    apply: 'serve',
-    // After other plugins' hooks, so a consumer they set is taken into account.
-    configEnvironment: {
-      order: 'post',
-      handler(name, config) {
-        if (isServerEnvironment(name, config)) {
-          return { define: { ngServerMode: 'true' } };
-        }
-        return undefined;
-      },
-    },
-  };
 }
 
 function safeStatMtimeMs(file: string): number | undefined {
