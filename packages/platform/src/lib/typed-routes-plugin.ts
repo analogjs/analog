@@ -3,6 +3,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
 import { parseSync } from 'oxc-parser';
 import { normalizePath, searchForWorkspaceRoot, type Plugin } from 'vite';
+import { findAngularCompiler } from '@analogjs/vite-plugin-angular';
 
 import {
   createRouteFileDiscovery,
@@ -131,19 +132,8 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       generate();
     },
     configResolved(config) {
-      const compiler = config.plugins.find(
-        (plugin) =>
-          plugin.name === '@analogjs/vite-plugin-angular' ||
-          plugin.name === '@analogjs/vite-plugin-angular-fast-compile' ||
-          plugin.name === '@analogjs/vite-plugin-angular-compilation-api' ||
-          plugin.name === '@analogjs/vite-plugin-angular-ngp',
-      );
-      getTsConfigPath = compiler?.api?.getTsConfigPath;
-      if (compiler && !getTsConfigPath) {
-        throw new Error(
-          '[analog] Typed routing requires a matching @analogjs/vite-plugin-angular version to verify the application tsconfig.',
-        );
-      }
+      getTsConfigPath = findAngularCompiler(config.plugins)?.api
+        .getTsConfigPath;
       verifyTypeInclusion();
     },
     buildStart() {
