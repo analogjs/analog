@@ -2059,7 +2059,7 @@ export function isModuleForChangedResource(
 
 function devServerModePlugin(): Plugin {
   return {
-    name: '@analogjs/vite-plugin-angular-dev-server-mode',
+    name: '@analogjs/vite-plugin-angular:dev-server-mode',
     apply: 'serve',
     // After other plugins' hooks, so a consumer they set is taken into account.
     configEnvironment: {

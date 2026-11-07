@@ -21,7 +21,7 @@ export function liveReloadPlugin({
   fileEmitter,
 }: ComponentUpdates): Plugin {
   return {
-    name: 'analogjs-live-reload-plugin',
+    name: '@analogjs/vite-plugin-angular:live-reload',
     apply: 'serve',
     configureServer(server: ViteDevServer) {
       if (server.config.server.hmr === false) {

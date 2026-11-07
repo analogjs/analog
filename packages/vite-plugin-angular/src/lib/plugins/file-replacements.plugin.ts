@@ -12,7 +12,7 @@ export function replaceFiles(
   }
 
   return {
-    name: 'rollup-plugin-replace-files',
+    name: '@analogjs/vite-plugin-angular:file-replacements',
     enforce: 'pre',
     async resolveId(source, importer, options) {
       const resolved = await this.resolve(source, importer, {

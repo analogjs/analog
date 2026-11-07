@@ -568,14 +568,16 @@ describe('angularCompilationPlugin', () => {
       ),
     ).toHaveLength(1);
     expect(
-      names.filter((name) => name === 'analogjs-live-reload-plugin'),
+      names.filter(
+        (name) => name === '@analogjs/vite-plugin-angular:live-reload',
+      ),
     ).toHaveLength(1);
     expect(names).not.toContain('@analogjs/vite-plugin-angular');
     expect(
       angularCompilationPlugin({ liveReload: false }).map(
         (plugin) => plugin.name,
       ),
-    ).not.toContain('analogjs-live-reload-plugin');
+    ).not.toContain('@analogjs/vite-plugin-angular:live-reload');
   });
 
   it.each([
@@ -626,10 +628,10 @@ describe('angularCompilationPlugin', () => {
       'file:///@ng/component?c=' +
       encodeURIComponent(filename + '@AppComponent');
     const firstMiddleware = first.find(
-      (plugin) => plugin.name === 'analogjs-live-reload-plugin',
+      (plugin) => plugin.name === '@analogjs/vite-plugin-angular:live-reload',
     )!;
     const secondMiddleware = second.find(
-      (plugin) => plugin.name === 'analogjs-live-reload-plugin',
+      (plugin) => plugin.name === '@analogjs/vite-plugin-angular:live-reload',
     )!;
     expect((firstMiddleware.load as any)('\0' + request, { ssr: true })).toBe(
       hmrCode,

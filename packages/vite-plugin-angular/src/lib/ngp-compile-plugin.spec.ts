@@ -60,7 +60,9 @@ describe('compilation selection', () => {
     );
     // Only NGP serves `/@ng/component` updates; fast compile inlines its HMR.
     expect(
-      ngp.filter((name) => name !== 'analogjs-live-reload-plugin'),
+      ngp.filter(
+        (name) => name !== '@analogjs/vite-plugin-angular:live-reload',
+      ),
     ).toEqual(
       fastCompile.map((name) =>
         name === '@analogjs/vite-plugin-angular-fast-compile'
@@ -68,7 +70,7 @@ describe('compilation selection', () => {
           : name,
       ),
     );
-    expect(ngp).toContain('analogjs-live-reload-plugin');
+    expect(ngp).toContain('@analogjs/vite-plugin-angular:live-reload');
   });
 
   it.each([{ jit: true }, { jit: false, fastCompileMode: 'partial' as const }])(

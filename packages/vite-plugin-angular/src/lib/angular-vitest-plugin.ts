@@ -21,7 +21,7 @@ const vitestAngularSetupEntries = [
  */
 export function angularVitestPlugin(): Plugin {
   return {
-    name: '@analogjs/vitest-angular-esm-plugin',
+    name: '@analogjs/vite-plugin-angular:vitest-esm',
     apply: 'serve',
     enforce: 'post',
     config(userConfig) {
@@ -104,7 +104,7 @@ export function angularVitestPlugin(): Plugin {
  */
 export function angularVitestEsbuildPlugin(): Plugin {
   return {
-    name: '@analogjs/vitest-angular-esbuild-oxc-plugin',
+    name: '@analogjs/vite-plugin-angular:vitest-transform',
     enforce: 'pre',
     config(userConfig: UserConfig) {
       const jsTransformConfigKey = getJsTransformConfigKey();
@@ -135,7 +135,7 @@ export function angularVitestSourcemapPlugin(
   getInMap?: (id: string) => string | undefined,
 ): Plugin {
   return {
-    name: '@analogjs/vitest-angular-sourcemap-plugin',
+    name: '@analogjs/vite-plugin-angular:vitest-sourcemap',
     transform: {
       filter: {
         // Match `.ts` at the end of the path OR before a `?` query string.

@@ -7,7 +7,7 @@ import { normalizePath, Plugin } from 'vite';
  */
 export function nxFolderPlugin(): Plugin {
   return {
-    name: 'analogjs-nx-folder-plugin',
+    name: '@analogjs/vite-plugin-angular:nx-folder',
     apply: 'serve',
     handleHotUpdate(ctx) {
       if (ctx.file.includes(normalizePath('/.nx/'))) {

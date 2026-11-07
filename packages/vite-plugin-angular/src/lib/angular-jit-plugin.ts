@@ -19,7 +19,7 @@ export function jitPlugin({
   let stylePreprocessor: StylePreprocessor | undefined;
 
   return {
-    name: '@analogjs/vite-plugin-angular-jit',
+    name: '@analogjs/vite-plugin-angular:jit',
     configResolved(_config) {
       config = _config;
     },

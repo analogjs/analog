@@ -31,7 +31,7 @@ export function routerPlugin(): Plugin {
    * Transforms Angular packages the didn't get picked up by Vite's pre-optimization.
    */
   return {
-    name: 'analogjs-router-optimization',
+    name: '@analogjs/vite-plugin-angular:router',
     enforce: 'pre',
     apply: 'serve',
     buildEnd() {

@@ -64,7 +64,7 @@ import { normalizeIncludeGlob } from './utils/tsconfig-resolver';
 import { AnalogStylesheetRegistry } from './stylesheet-registry.js';
 import * as rolldownUtils from './utils/rolldown.js';
 
-const hmrPluginNames = ['analogjs-live-reload-plugin'];
+const hmrPluginNames = ['@analogjs/vite-plugin-angular:live-reload'];
 const originalNodeEnv = process.env['NODE_ENV'];
 const originalVitestEnv = process.env['VITEST'];
 
@@ -166,7 +166,7 @@ describe('angularVitePlugin', () => {
 
     function findServerModePlugin(options: { fastCompile?: boolean } = {}) {
       return angular({ tsconfig: 'tsconfig.json', ...options }).find(
-        (p) => p.name === '@analogjs/vite-plugin-angular-dev-server-mode',
+        (p) => p.name === '@analogjs/vite-plugin-angular:dev-server-mode',
       );
     }
 

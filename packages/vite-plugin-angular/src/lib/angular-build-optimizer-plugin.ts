@@ -29,7 +29,7 @@ export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
   }
 
   return {
-    name: '@analogjs/vite-plugin-angular-optimizer',
+    name: '@analogjs/vite-plugin-angular:build-optimizer',
     // Normally build-only. Astro's Cloudflare integration (`@astrojs/cloudflare`)
     // transforms SSR modules through a serve-style `workerd` runner *during*
     // `astro build`; an `apply: 'build'` plugin is excluded from that pipeline,
