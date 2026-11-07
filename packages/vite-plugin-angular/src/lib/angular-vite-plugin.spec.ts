@@ -270,10 +270,18 @@ describe('liveReload option', () => {
     expect(names).toEqual(expect.not.arrayContaining(hmrPluginNames));
   });
 
-  it('enables HMR helper plugins by default', () => {
+  it('registers one HMR middleware by default', () => {
     const names = angular().map((plugin) => plugin.name);
 
-    expect(names).toEqual(expect.arrayContaining(hmrPluginNames));
+    expect(names.filter((name) => hmrPluginNames.includes(name))).toHaveLength(
+      1,
+    );
+  });
+
+  it('skips the HMR middleware for fast compile, which emits its own HMR code', () => {
+    const names = angular({ fastCompile: true }).map((plugin) => plugin.name);
+
+    expect(names).toEqual(expect.not.arrayContaining(hmrPluginNames));
   });
 });
 

@@ -106,7 +106,10 @@ import { type SourceFileCache as SourceFileCacheType } from './utils/source-file
 
 const require = createRequire(import.meta.url);
 
-import { liveReloadPlugin } from './live-reload-plugin.js';
+import {
+  liveReloadPlugin,
+  type ComponentUpdates,
+} from './live-reload-plugin.js';
 import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
@@ -237,7 +240,6 @@ export interface PluginOptions {
   debug?: DebugOption;
 }
 
-const classNames = new Map();
 export function evictDeletedFileMetadata(
   file: string,
   {
@@ -271,6 +273,7 @@ export function angular(options?: PluginOptions): Plugin[] {
       ? 'ngp'
       : 'ngtsc';
   const liveReload = options?.liveReload ?? compilation !== 'ngp';
+  const classNames = new Map<string, string>();
 
   /**
    * Normalize plugin options so defaults
@@ -634,7 +637,7 @@ export function angular(options?: PluginOptions): Plugin[] {
           tsSourceFileCache.delete(id);
           sourceFileCache.invalidate(new Set([id]));
           evictDeletedFileMetadata(file, {
-            classNamesMap: classNames as Map<string, string>,
+            classNamesMap: classNames,
             fileTransformMap,
           });
           return invalidateCompilationOnFsChange();
@@ -1034,8 +1037,12 @@ export function angular(options?: PluginOptions): Plugin[] {
             mod.importers.forEach((imp) => {
               ctx.server.moduleGraph.invalidateModule(imp);
 
-              if (shouldExternalizeStyles() && classNames.get(imp.id)) {
-                updates.push(imp.id as string);
+              if (
+                shouldExternalizeStyles() &&
+                imp.id &&
+                classNames.get(imp.id)
+              ) {
+                updates.push(imp.id);
               } else {
                 mods.push(imp);
               }
@@ -1477,6 +1484,13 @@ export function angular(options?: PluginOptions): Plugin[] {
           typeChecker: options?.typeChecker,
         })
       : angularPlugin();
+  // Fast compile emits its own HMR code and never requests `/@ng/component`.
+  const componentUpdates: ComponentUpdates | undefined =
+    pluginOptions.compilation === 'ngp'
+      ? compilationPlugin.api.componentUpdates
+      : pluginOptions.fastCompile
+        ? undefined
+        : { classNames, fileEmitter };
 
   return [
     // Scope the `style` package-export condition to `.css`-extension
@@ -1489,18 +1503,11 @@ export function angular(options?: PluginOptions): Plugin[] {
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
     pluginOptions.liveReload &&
-      liveReloadPlugin(
-        pluginOptions.compilation === 'ngp'
-          ? compilationPlugin.api.componentUpdates
-          : { classNames, fileEmitter },
-      ),
+      componentUpdates &&
+      liveReloadPlugin(componentUpdates),
     // `compilationPlugin` is `angularPlugin()`, `fastCompilePlugin()`, or
     // `ngpCompilePlugin()` depending on `compilation` and `fastCompile`.
     compilationPlugin,
-    !pluginOptions.fastCompile &&
-      pluginOptions.compilation === 'ngtsc' &&
-      pluginOptions.liveReload &&
-      liveReloadPlugin({ classNames, fileEmitter }),
     ...(isTest && !isStackBlitz
       ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
       : []),
@@ -1808,6 +1815,9 @@ export function angular(options?: PluginOptions): Plugin[] {
 
       const metadata = watchMode ? fileMetadata(filename) : {};
       const existing = outputFiles.get(filename);
+      if (metadata.className) {
+        classNames.set(filename, metadata.className);
+      }
 
       outputFiles.set(filename, {
         ...(existing ?? {}),
@@ -2338,8 +2348,6 @@ function sendHMRComponentUpdate(server: ViteDevServer, id: string) {
     id: encodeURIComponent(id),
     timestamp: Date.now(),
   });
-
-  classNames.delete(id);
 }
 
 function sendCssUpdate(
@@ -2472,6 +2480,7 @@ export function getFileMetadata(
     warnings?: (string | ts.DiagnosticMessageChain)[];
     hmrUpdateCode?: string | null;
     hmrEligible?: boolean;
+    className?: string;
   } => {
     const sourceFile = program.getSourceFile(file);
     if (!sourceFile) {
@@ -2500,13 +2509,13 @@ export function getFileMetadata(
     let hmrUpdateCode: string | null | undefined = undefined;
 
     let hmrEligible = false;
+    let className: string | undefined;
     if (hmrEnabled) {
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && (node as any).name != null) {
           hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node as any);
           if (hmrUpdateCode) {
-            const className = (node as any).name.getText();
-            classNames.set(file, className);
+            className = (node as any).name.getText();
             hmrEligible = true;
             debugHmr('NgtscProgram emitHmrUpdateModule', { file, className });
           }
@@ -2514,7 +2523,7 @@ export function getFileMetadata(
       }
     }
 
-    return { errors, warnings, hmrUpdateCode, hmrEligible };
+    return { errors, warnings, hmrUpdateCode, hmrEligible, className };
   };
 }
 

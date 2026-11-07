@@ -610,7 +610,6 @@ export function angularCompilationPlugin(
       id: encodeURIComponent(id),
       timestamp: Date.now(),
     });
-    classNames.delete(id);
   }
 
   const compilerPlugin: Plugin = {
