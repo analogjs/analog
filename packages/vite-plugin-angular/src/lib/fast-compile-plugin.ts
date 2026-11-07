@@ -5,7 +5,7 @@ import { parseOxc } from './compiler/utils.js';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
-import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
+import { normalizePath, preprocessCSS, ResolvedConfig } from 'vite';
 
 import {
   compile,
@@ -50,6 +50,7 @@ import {
   type ComponentRegistryEntries,
   type TransformFilter,
 } from './analog-plugin-interop.js';
+import type { AngularCompilerPlugin } from './angular-compiler-api.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -81,7 +82,7 @@ export function getPathsBasePath(
 
 export function fastCompilePlugin(
   pluginOptions: FastCompilePluginOptions,
-): Plugin {
+): AngularCompilerPlugin {
   let resolvedConfig: ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
   let componentRegistries: ComponentRegistryEntries[] = [];

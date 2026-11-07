@@ -106,10 +106,8 @@ import { type SourceFileCache as SourceFileCacheType } from './utils/source-file
 
 const require = createRequire(import.meta.url);
 
-import {
-  liveReloadPlugin,
-  type ComponentUpdates,
-} from './live-reload-plugin.js';
+import { liveReloadPlugin } from './live-reload-plugin.js';
+import type { AngularCompilerPlugin } from './angular-compiler-api.js';
 import { EmitFileResult } from './models.js';
 import { nxFolderPlugin } from './nx-folder-plugin.js';
 import {
@@ -472,7 +470,7 @@ export function angular(options?: PluginOptions): Plugin[] {
     releaseCompilation();
   }
 
-  function angularPlugin(): Plugin {
+  function angularPlugin(): AngularCompilerPlugin {
     let isProd = false;
 
     if (isTest) {
@@ -490,7 +488,11 @@ export function angular(options?: PluginOptions): Plugin[] {
 
     return {
       name: '@analogjs/vite-plugin-angular',
-      api: { getTsConfigPath: resolveTsConfigPath },
+      api: {
+        getTsConfigPath: resolveTsConfigPath,
+        componentUpdates: { classNames, fileEmitter },
+        getSourceMap: (id) => outputFiles.get(normalizePath(id))?.map,
+      },
       async config(config, { command }) {
         activateDeferredDebug(command);
         watchMode = command === 'serve';
@@ -1469,7 +1471,7 @@ export function angular(options?: PluginOptions): Plugin[] {
 
   const createFastCompilePlugin =
     pluginOptions.compilation === 'ngp' ? ngpCompilePlugin : fastCompilePlugin;
-  const compilationPlugin =
+  const compilationPlugin: AngularCompilerPlugin =
     pluginOptions.compilation === 'ngp' || pluginOptions.fastCompile
       ? createFastCompilePlugin({
           tsconfigGetter: pluginOptions.tsconfigGetter,
@@ -1484,13 +1486,6 @@ export function angular(options?: PluginOptions): Plugin[] {
           typeChecker: options?.typeChecker,
         })
       : angularPlugin();
-  // Fast compile emits its own HMR code and never requests `/@ng/component`.
-  const componentUpdates: ComponentUpdates | undefined =
-    pluginOptions.compilation === 'ngp'
-      ? compilationPlugin.api.componentUpdates
-      : pluginOptions.fastCompile
-        ? undefined
-        : { classNames, fileEmitter };
 
   return [
     // Scope the `style` package-export condition to `.css`-extension
@@ -1503,13 +1498,13 @@ export function angular(options?: PluginOptions): Plugin[] {
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit }),
     pluginOptions.liveReload &&
-      componentUpdates &&
-      liveReloadPlugin(componentUpdates),
+      compilationPlugin.api.componentUpdates &&
+      liveReloadPlugin(compilationPlugin.api.componentUpdates),
     // `compilationPlugin` is `angularPlugin()`, `fastCompilePlugin()`, or
     // `ngpCompilePlugin()` depending on `compilation` and `fastCompile`.
     compilationPlugin,
     ...(isTest && !isStackBlitz
-      ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
+      ? angularVitestPlugins(compilationPlugin.api.getSourceMap)
       : []),
     (jit &&
       jitPlugin({

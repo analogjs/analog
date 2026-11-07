@@ -79,6 +79,7 @@ import { routerPlugin } from '../router-plugin.js';
 import { replaceFiles } from '../plugins/file-replacements.plugin.js';
 import { cssExtensionStyleResolverPlugin } from '../utils/css-extension-resolver.js';
 import { loadVirtualRawModule } from '../utils/virtual-resources.js';
+import type { AngularCompilerPlugin } from '../angular-compiler-api.js';
 
 const require = createRequire(import.meta.url);
 const ts = require('typescript');
@@ -612,9 +613,14 @@ export function angularCompilationPlugin(
     });
   }
 
-  const compilerPlugin: Plugin = {
+  const componentUpdates = { classNames, fileEmitter };
+  const compilerPlugin: AngularCompilerPlugin = {
     name: '@analogjs/vite-plugin-angular-compilation-api',
-    api: { getTsConfigPath: resolveTsConfigPath },
+    api: {
+      getTsConfigPath: resolveTsConfigPath,
+      componentUpdates,
+      getSourceMap: (id) => outputFiles.get(normalizePath(id))?.map,
+    },
     enforce: 'pre' as const,
     async config(config, { command }) {
       activateDeferredDebug(command);
@@ -953,9 +959,9 @@ export function angularCompilationPlugin(
     replaceFiles(pluginOptions.fileReplacements, pluginOptions.workspaceRoot),
     virtualModulesPlugin({ jit: pluginOptions.jit }),
     compilerPlugin,
-    pluginOptions.liveReload && liveReloadPlugin({ classNames, fileEmitter }),
+    pluginOptions.liveReload && liveReloadPlugin(componentUpdates),
     ...(isTest && !isStackBlitz
-      ? angularVitestPlugins((id) => outputFiles.get(normalizePath(id))?.map)
+      ? angularVitestPlugins(compilerPlugin.api.getSourceMap)
       : []),
     pluginOptions.jit &&
       jitPlugin({ inlineStylesExtension: pluginOptions.inlineStylesExtension }),

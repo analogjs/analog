@@ -23,6 +23,7 @@ import {
   type FileChangeType,
 } from './utils/lsp-type-checker.js';
 import type { ComponentUpdates } from './live-reload-plugin.js';
+import type { AngularCompilerPlugin } from './angular-compiler-api.js';
 
 // The unpublished NGP API is loaded at runtime. Model only the surface we use.
 interface NgpDiagnostic {
@@ -160,7 +161,7 @@ function transpile(
 
 export function ngpCompilePlugin(
   options: FastCompilePluginOptions,
-): vite.Plugin {
+): AngularCompilerPlugin {
   if (options.jit || options.fastCompileMode === 'partial') {
     throw new Error(
       "compilation: 'ngp' requires jit: false and fastCompileMode: 'full'.",
@@ -469,8 +470,6 @@ export function ngpCompilePlugin(
     enforce: 'pre',
     api: {
       getTsConfigPath: resolveTsConfigPath,
-      output,
-      ready: () => pending,
       componentUpdates,
     },
     config(config, { command }) {

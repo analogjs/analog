@@ -5,6 +5,12 @@ export {
 import { angular } from './lib/angular-vite-plugin.js';
 export { angular } from './lib/angular-vite-plugin.js';
 export type { PluginOptions } from './lib/angular-vite-plugin.js';
+export {
+  findAngularCompiler,
+  type AngularCompilerApi,
+  type AngularCompilerPlugin,
+} from './lib/angular-compiler-api.js';
+export type { ComponentUpdates } from './lib/live-reload-plugin.js';
 export type {
   AnalogIntegrationPlugin,
   AnalogPluginContext,
