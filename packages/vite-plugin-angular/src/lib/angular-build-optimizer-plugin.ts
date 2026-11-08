@@ -1,8 +1,22 @@
 import type { Plugin, UserConfig } from 'vite';
+import {
+  isAngularBuildContext,
+  type AngularBuildContext,
+} from './angular-build-context.js';
 import { JavaScriptTransformer } from './utils/devkit.js';
 import { isProdMode, isServerEnvironment } from './utils/plugin-config.js';
 
-export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
+export interface BuildOptimizerPluginOptions {
+  jit?: boolean;
+}
+
+export function buildOptimizerPlugin(
+  ctxOrOptions?: AngularBuildContext | BuildOptimizerPluginOptions,
+): Plugin {
+  const jit = isAngularBuildContext(ctxOrOptions)
+    ? ctxOrOptions.options.jit
+    : (ctxOrOptions?.jit ?? false);
+
   const transformers = new Map<
     string,
     InstanceType<typeof JavaScriptTransformer>
@@ -139,7 +153,7 @@ export function buildOptimizerPlugin({ jit }: { jit: boolean }): Plugin {
 
 export function extractInlineSourceMap(
   code: string,
-  id: string,
+  _id: string,
 ): { code: string; map: string | null } {
   const sourceMapMatch = code.match(
     /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,

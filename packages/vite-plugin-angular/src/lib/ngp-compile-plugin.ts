@@ -7,7 +7,16 @@ import {
   discoverAnalogIntegrations,
   type TransformFilter,
 } from './analog-plugin-interop.js';
+import {
+  createAngularBuildContext,
+  isAngularBuildContext,
+  type AngularBuildContext,
+  type AngularBuildContextOptions,
+} from './angular-build-context.js';
 import type { FastCompilePluginOptions } from './fast-compile-plugin.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
+import { preprocessStylesheet } from './stylesheet-registry.js';
+import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import {
   createDepOptimizerConfig,
   getTsConfigPath,
@@ -22,7 +31,12 @@ import {
   LspTypeChecker,
   type FileChangeType,
 } from './utils/lsp-type-checker.js';
+import { isRolldown } from './utils/rolldown.js';
 import type { ComponentUpdates } from './live-reload-plugin.js';
+import {
+  loadAngularVirtualModule,
+  resolveAngularVirtualId,
+} from './virtual-modules-plugin.js';
 
 // The unpublished NGP API is loaded at runtime. Model only the surface we use.
 interface NgpDiagnostic {
@@ -102,6 +116,18 @@ interface NgpApi {
   ) => NgpCompiler;
 }
 
+function isFastCompileOptions(
+  value: unknown,
+): value is FastCompilePluginOptions {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !isAngularBuildContext(value) &&
+    'tsconfigGetter' in value &&
+    typeof (value as FastCompilePluginOptions).tsconfigGetter === 'function'
+  );
+}
+
 // Interim NGP build bundled with this package until @angular/ngp is published
 const BUNDLED_NGP = new URL('../../ngp/', import.meta.url);
 
@@ -159,17 +185,35 @@ function transpile(
 }
 
 export function ngpCompilePlugin(
-  options: FastCompilePluginOptions,
+  optionsOrCtx?:
+    | AngularBuildContext
+    | FastCompilePluginOptions
+    | AngularBuildContextOptions,
 ): vite.Plugin {
+  const sharedCtx = isAngularBuildContext(optionsOrCtx)
+    ? optionsOrCtx
+    : isFastCompileOptions(optionsOrCtx)
+      ? undefined
+      : createAngularBuildContext({
+          jit: false,
+          ...optionsOrCtx,
+          compilationBackend: 'ngp',
+        });
+
+  const options: FastCompilePluginOptions = sharedCtx
+    ? sharedCtx.options
+    : (optionsOrCtx as FastCompilePluginOptions);
+
   if (options.jit || options.fastCompileMode === 'partial') {
     throw new Error(
       "compilation: 'ngp' requires jit: false and fastCompileMode: 'full'.",
     );
   }
 
-  let configContext: TsConfigResolutionContext;
+  let configContext: TsConfigResolutionContext | undefined;
   let resolvedConfig: vite.ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
+  let stylePreprocessor: StylePreprocessor | undefined;
   let watchMode = false;
   let hmr = false;
   let activeBuilds = 0;
@@ -180,16 +224,23 @@ export function ngpCompilePlugin(
   const filesByPath = new Map<string, { file: NgpFile; chunk: NgpChunk }>();
   const chunkContexts = new Map<NgpChunk, Promise<unknown>>();
   const output = new Map<string, Promise<NgpResult>>();
+  const emittedMaps = new Map<string, string>();
   // Last compiled source of each file, compared on edits for HMR
   const sources = new Map<string, string>();
   // Watched files mapped to the source files that depend on them
   const dependents = new Map<string, Set<string>>();
   const hmrUpdateCode = new Map<string, string>();
+  const classNames = sharedCtx
+    ? sharedCtx.hmr.classNames
+    : new Map<string, string>();
+  const fileEmitter = (file: string, className: string) => ({
+    hmrUpdateCode: hmrUpdateCode.get(`${file}@${className}`),
+  });
+  sharedCtx?.hmr.setFileEmitter(fileEmitter);
+
   const componentUpdates: ComponentUpdates = {
-    classNames: new Map(),
-    fileEmitter: (file, className) => ({
-      hmrUpdateCode: hmrUpdateCode.get(`${file}@${className}`),
-    }),
+    classNames,
+    fileEmitter,
   };
   let pending = Promise.resolve();
   const filter = vite.createFilter(TS_EXT_REGEX, [
@@ -199,22 +250,53 @@ export function ngpCompilePlugin(
     /@ng\/component/,
   ]);
 
-  function resolveTsConfigPath() {
+  function resolveTsConfigPath(): string {
+    if (sharedCtx) {
+      return sharedCtx.resolveTsConfigPath();
+    }
+    const ctx = configContext ?? {
+      root: resolvedConfig?.root || '.',
+      isProd: isProdMode(resolvedConfig?.mode),
+      isLib: !!resolvedConfig?.build?.lib,
+    };
     return getTsConfigPath(
-      configContext.root,
+      ctx.root,
       options.tsconfigGetter(),
-      configContext.isProd,
+      ctx.isProd,
       options.isTest,
-      configContext.isLib,
+      ctx.isLib,
       options.workspaceRoot,
     );
   }
+
+  const compilerApi = {
+    angularCompiler: true as const,
+    getTsConfigPath: resolveTsConfigPath,
+    getSourceMap: (id: string): string | undefined =>
+      emittedMaps.get(vite.normalizePath(id)),
+    hasEmitted: (id: string): boolean =>
+      filesByPath.has(vite.normalizePath(id)),
+    output,
+    ready: (): Promise<void> => pending,
+    componentUpdates,
+  };
+
+  sharedCtx?.registerCompiler({
+    name: '@analogjs/vite-plugin-angular-ngp',
+    getTsConfigPath: compilerApi.getTsConfigPath,
+    getSourceMap: compilerApi.getSourceMap,
+    hasEmitted: compilerApi.hasEmitted,
+  });
 
   async function prepareResources(
     file: NgpFile,
     watch: (path: string) => void,
   ): Promise<NgpFile> {
     watch(file.filePath);
+    const activeConfig = sharedCtx?.resolvedConfig ?? resolvedConfig;
+    const activeStylePreprocessor =
+      sharedCtx?.stylePreprocessor ?? stylePreprocessor;
+
     return {
       ...file,
       classes: await Promise.all(
@@ -224,11 +306,29 @@ export function ngpCompilePlugin(
           if (component.templateUrl) watch(component.templateUrl.resolvedPath);
           for (const style of component.styleUrls ?? [])
             watch(style.resolvedPath);
-          const preprocess = async (content: string, path: string) => {
-            const result = await vite.preprocessCSS(
+          const preprocess = async (
+            content: string,
+            path: string,
+            order: number,
+            inline: boolean,
+          ) => {
+            const preprocessed = preprocessStylesheet(
               content,
               path,
-              resolvedConfig,
+              activeStylePreprocessor,
+              {
+                filename: path,
+                containingFile: file.filePath,
+                resourceFile: inline ? undefined : path,
+                className: metadata.className,
+                order,
+                inline,
+              },
+            );
+            const result = await vite.preprocessCSS(
+              preprocessed,
+              path,
+              activeConfig,
             );
             result.deps?.forEach(watch);
             return result.code;
@@ -244,6 +344,8 @@ export function ngpCompilePlugin(
                     preprocess(
                       style,
                       `${file.filePath}.inline-${classIndex}-${index}.${options.inlineStylesExtension}`,
+                      index,
+                      true,
                     ),
                   ),
                 )),
@@ -251,7 +353,12 @@ export function ngpCompilePlugin(
                 component.stylesFromUrls &&
                 (await Promise.all(
                   component.stylesFromUrls.map((style, index) =>
-                    preprocess(style, component.styleUrls![index].resolvedPath),
+                    preprocess(
+                      style,
+                      component.styleUrls![index].resolvedPath,
+                      index,
+                      false,
+                    ),
                   ),
                 )),
             },
@@ -261,7 +368,7 @@ export function ngpCompilePlugin(
     };
   }
 
-  async function indexChunks(update?: () => Promise<string[]>) {
+  async function indexChunks(update?: () => Promise<string[]>): Promise<void> {
     if (update) {
       const invalidated = await update();
       for (const filePath of invalidated) {
@@ -291,7 +398,7 @@ export function ngpCompilePlugin(
     }
   }
 
-  function enqueueIndex(update: () => Promise<string[]>) {
+  function enqueueIndex(update: () => Promise<string[]>): Promise<void> {
     pending = pending.catch(() => {}).then(() => indexChunks(update));
     return pending;
   }
@@ -309,7 +416,7 @@ export function ngpCompilePlugin(
     filePath: string,
     sourceCode: string,
     tcbCode?: string | null,
-  ) {
+  ): Promise<void> {
     typeChecker ??= new LspTypeChecker(
       resolveTsConfigPath(),
       options.typeChecker,
@@ -388,7 +495,7 @@ export function ngpCompilePlugin(
     return task;
   }
 
-  function componentNames(normPath: string) {
+  function componentNames(normPath: string): string[] {
     return (filesByPath.get(normPath)?.file.classes ?? []).flatMap(
       ({ className, component }) => (component && className ? [className] : []),
     );
@@ -406,13 +513,13 @@ export function ngpCompilePlugin(
     }
     const stale = sources.get(normPath);
     if (stale === undefined) return [];
-    const classNames = findHmrComponentUpdates(
+    const matchedClassNames = findHmrComponentUpdates(
       normPath,
       stale,
       await read(),
       new Set(componentNames(normPath)),
     );
-    return (classNames ?? []).map((className) => ({
+    return (matchedClassNames ?? []).map((className) => ({
       file: normPath,
       className,
     }));
@@ -435,7 +542,7 @@ export function ngpCompilePlugin(
   async function sendComponentUpdates(
     updates: ComponentUpdate[],
     server: vite.ViteDevServer,
-  ) {
+  ): Promise<boolean> {
     try {
       for (const file of new Set(updates.map((update) => update.file))) {
         await compileFile(file, () => {});
@@ -467,29 +574,29 @@ export function ngpCompilePlugin(
   return {
     name: '@analogjs/vite-plugin-angular-ngp',
     enforce: 'pre',
-    api: {
-      getTsConfigPath: resolveTsConfigPath,
-      output,
-      ready: () => pending,
-      componentUpdates,
-    },
-    config(config, { command }) {
+    api: compilerApi,
+    config(config, { command, mode }) {
       watchMode = command === 'serve';
-      configContext = {
-        root: config.root || '.',
-        isProd: isProdMode(config.mode),
-        isLib: !!config.build?.lib,
-      };
+      const isProd = isProdMode(config.mode);
+      if (sharedCtx) {
+        sharedCtx.initConfig(config, { command, mode });
+      } else {
+        configContext = {
+          root: config.root || '.',
+          isProd,
+          isLib: !!config.build?.lib,
+        };
+      }
       const depOptimizer = createDepOptimizerConfig({
         tsconfig: resolveTsConfigPath(),
-        isProd: configContext.isProd,
+        isProd,
         jit: false,
         watchMode,
         isTest: options.isTest,
         isAstroIntegration: options.isAstroIntegration,
       });
       return {
-        ...(vite.rolldownVersion ? { oxc: {} as any } : { esbuild: false }),
+        ...(isRolldown() ? { oxc: {} as any } : { esbuild: false }),
         ...depOptimizer,
       };
     },
@@ -500,8 +607,11 @@ export function ngpCompilePlugin(
         options.liveReload &&
         !options.isTest &&
         config.server.hmr !== false;
-      const integrations = await discoverAnalogIntegrations(config);
+      const integrations = sharedCtx
+        ? await sharedCtx.resolveConfig(config)
+        : await discoverAnalogIntegrations(config);
       transformFilter = integrations.transformFilter;
+      stylePreprocessor = integrations.stylePreprocessor;
     },
     configureServer(server) {
       const changeTypes: Record<string, FileChangeType> = {
@@ -538,8 +648,23 @@ export function ngpCompilePlugin(
         this.addWatchFile(path);
       }
     },
+    resolveId(id, importer) {
+      return resolveAngularVirtualId(id, importer, {
+        jit: false,
+        resolvedConfig: sharedCtx?.resolvedConfig ?? resolvedConfig,
+      });
+    },
+    async load(id) {
+      return loadAngularVirtualModule(
+        this,
+        id,
+        sharedCtx?.resolvedConfig ?? resolvedConfig,
+      );
+    },
     async transform(code, id) {
-      if (!filter(id) || transformFilter?.(code, id) === false) return;
+      const activeTransformFilter =
+        sharedCtx?.transformFilter ?? transformFilter;
+      if (!filter(id) || activeTransformFilter?.(code, id) === false) return;
       const filePath = vite.normalizePath(id.split('?')[0]);
       await pending;
       let result = await compileFile(filePath, (path) =>
@@ -559,9 +684,25 @@ export function ngpCompilePlugin(
         includeContent: true,
         hires: true,
       });
-      return transpile(source, filePath, map);
+      const transpiled = await transpile(source, filePath, map);
+      if (transpiled?.map) {
+        emittedMaps.set(
+          filePath,
+          typeof transpiled.map === 'string'
+            ? transpiled.map
+            : JSON.stringify(transpiled.map),
+        );
+      }
+      return transpiled;
     },
     async handleHotUpdate(ctx) {
+      if (
+        sharedCtx
+          ? sharedCtx.hmr.isIgnoredFile(ctx.file)
+          : isIgnoredHmrFile(ctx.file)
+      ) {
+        return [];
+      }
       const normPath = vite.normalizePath(ctx.file);
       const updates = hmr ? await findComponentUpdates(normPath, ctx.read) : [];
       await enqueueIndex(() =>
@@ -595,6 +736,7 @@ export function ngpCompilePlugin(
       filesByPath.clear();
       chunkContexts.clear();
       output.clear();
+      emittedMaps.clear();
       sources.clear();
       dependents.clear();
       releaseCssPreprocessorWorkers();
