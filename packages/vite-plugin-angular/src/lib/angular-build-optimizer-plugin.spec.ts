@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect } from 'vitest';
-import type { Plugin, UserConfig } from 'vite';
+import { resolveConfig, type Plugin, type UserConfig } from 'vite';
 import {
   buildOptimizerPlugin,
   extractInlineSourceMap,
@@ -106,6 +106,44 @@ describe('buildOptimizerPlugin config()', () => {
     expect(config.define).toEqual(
       expect.objectContaining({ ngServerMode: 'false' }),
     );
+  });
+
+  function resolveEnvironments(mode: string, plugins: Plugin[] = []) {
+    return resolveConfig(
+      {
+        configFile: false,
+        mode,
+        environments: { ssr: {}, edge: {} },
+        plugins: [createPlugin(), ...plugins],
+      },
+      'build',
+    ).then((config) => config.environments);
+  }
+
+  it('should set ngServerMode to true for production server environments', async () => {
+    const environments = await resolveEnvironments('production');
+
+    expect(environments['client'].define?.['ngServerMode']).toBe('false');
+    expect(environments['ssr'].define?.['ngServerMode']).toBe('true');
+    expect(environments['edge'].define?.['ngServerMode']).toBe('true');
+  });
+
+  it("should respect a consumer set by a later plugin's configEnvironment", async () => {
+    const environments = await resolveEnvironments('production', [
+      {
+        name: 'later',
+        configEnvironment: (name) =>
+          name === 'edge' ? { consumer: 'client' } : undefined,
+      },
+    ]);
+
+    expect(environments['edge'].define?.['ngServerMode']).toBe('false');
+  });
+
+  it('should leave environment defines alone outside production', async () => {
+    const environments = await resolveEnvironments('development');
+
+    expect(environments['ssr'].define?.['ngServerMode']).toBeUndefined();
   });
 
   it('should set ngServerMode to false when build.ssr is undefined', () => {

@@ -1,6 +1,6 @@
 import type { Plugin, UserConfig } from 'vite';
 import { JavaScriptTransformer } from './utils/devkit.js';
-import { isProdMode } from './utils/plugin-config.js';
+import { isProdMode, isServerEnvironment } from './utils/plugin-config.js';
 
 export function buildOptimizerPlugin({
   jit,
@@ -62,6 +62,21 @@ export function buildOptimizerPlugin({
             }
           : {},
       } as UserConfig;
+    },
+    // The top-level define keys `ngServerMode` off the legacy `build.ssr`
+    // flag. Environment API builds run the server through a server
+    // environment while `build.ssr` stays unset, so give that environment its
+    // own value; otherwise the guard compiles to `false` and browser-only
+    // code such as `afterNextRender` callbacks runs during SSR. Runs after
+    // other plugins' hooks, so a consumer they set is taken into account.
+    configEnvironment: {
+      order: 'post',
+      handler(name, config) {
+        if (isProd && isServerEnvironment(name, config)) {
+          return { define: { ngServerMode: 'true' } };
+        }
+        return undefined;
+      },
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;

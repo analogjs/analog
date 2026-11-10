@@ -44,6 +44,21 @@ export function isProdMode(mode: string | undefined): boolean {
   return mode === 'production' || process.env['NODE_ENV'] === 'production';
 }
 
+/**
+ * Whether a Vite environment runs on the server. `configEnvironment` sees the
+ * environment's options before Vite resolves them, so an unset `consumer`
+ * falls back to Vite's own default: every environment except `client` is a
+ * server environment.
+ */
+export function isServerEnvironment(
+  name: string,
+  config: { consumer?: string },
+): boolean {
+  return (
+    (config.consumer ?? (name === 'client' ? 'client' : 'server')) === 'server'
+  );
+}
+
 export interface TsConfigResolutionContext {
   root: string;
   isProd: boolean;
