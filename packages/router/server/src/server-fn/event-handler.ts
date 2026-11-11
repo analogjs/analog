@@ -7,12 +7,8 @@ import {
   type H3Event,
 } from 'h3';
 
-import { dispatchServerFn } from './dispatch';
-import {
-  assertNodeContext,
-  nodeContext,
-  withResponseHeaders,
-} from './node-context';
+import { dispatchServerFn, type DispatchResult } from './dispatch';
+import { nodeContext, withResponseHeaders } from './node-context';
 import type { AnalogRequestContext } from '../request-handler';
 
 /**
@@ -42,7 +38,7 @@ export function createServerFnEventHandler(
 export async function handleServerFnRequest(
   event: H3Event,
   appInjector: Injector | Promise<Injector>,
-): Promise<unknown> {
+): Promise<Response> {
   const id = getRouterParam(event, 'id') ?? '';
   if (!event.node?.req) {
     return handleServerFnFetch(
@@ -51,7 +47,6 @@ export async function handleServerFnRequest(
       await appInjector,
     );
   }
-  const node = assertNodeContext(event);
 
   // h3 parses the body before dispatch gets a say, and its parse error is an
   // HTML/500-shaped response rather than the JSON contract callers expect.
@@ -60,23 +55,16 @@ export async function handleServerFnRequest(
     try {
       input = await readBody(event);
     } catch {
-      node.res.statusCode = 400;
-      return { message: 'Malformed request body' };
+      return malformedBodyResponse();
     }
   }
 
-  const { status, body, headers } = await dispatchServerFn(id, input, event, {
-    parent: await appInjector,
-    method: event.method,
-  });
-
-  node.res.statusCode = status;
-  if (headers) {
-    for (const [key, value] of Object.entries(headers)) {
-      node.res.setHeader(key, value);
-    }
-  }
-  return body;
+  return serverFnResponse(
+    await dispatchServerFn(id, input, event, {
+      parent: await appInjector,
+      method: event.method,
+    }),
+  );
 }
 
 /** h3 v2 on fetch-native hosts (workerd, Bun, Deno) has a `Request` only. */
@@ -102,18 +90,20 @@ export async function callServerFn(
     try {
       input = text ? JSON.parse(text) : undefined;
     } catch {
-      return Response.json(
-        { message: 'Malformed request body' },
-        { status: 400 },
-      );
+      return malformedBodyResponse();
     }
   }
-  const { status, body, headers } = await dispatchServerFn(
-    id,
-    input,
-    { node: context },
-    { parent, method: request.method },
+  return serverFnResponse(
+    await dispatchServerFn(
+      id,
+      input,
+      { node: context },
+      { parent, method: request.method },
+    ),
   );
+}
+
+function serverFnResponse({ status, body, headers }: DispatchResult): Response {
   const responseHeaders = new Headers();
   for (const [key, value] of Object.entries(headers ?? {})) {
     for (const item of [value].flat()) {
@@ -124,6 +114,10 @@ export async function callServerFn(
     return new Response(null, { status, headers: responseHeaders });
   }
   return Response.json(body ?? null, { status, headers: responseHeaders });
+}
+
+function malformedBodyResponse(): Response {
+  return Response.json({ message: 'Malformed request body' }, { status: 400 });
 }
 
 function isNullBodyStatus(status: number): boolean {
