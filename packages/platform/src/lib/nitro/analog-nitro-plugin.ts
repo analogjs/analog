@@ -546,7 +546,11 @@ export function analogNitroPlugin(options: Options = {}): Plugin {
               serverFnIdPlugin(resolve(context.workspaceRoot, context.rootDir)),
             );
           }
-          applyAnalogNitroExternals(rollupConfig);
+          // Same rule as Nitro's own externals: worker presets ship a single
+          // self-contained bundle with no module resolver.
+          if (nitro.options.node && nitro.options.noExternals !== true) {
+            applyAnalogNitroExternals(rollupConfig);
+          }
           sanitizeNitroBundlerConfig(rollupConfig);
         });
 

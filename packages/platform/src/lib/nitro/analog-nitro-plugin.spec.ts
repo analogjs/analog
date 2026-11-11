@@ -303,6 +303,37 @@ describe('analogNitroPlugin', () => {
     expect(hookFn).toHaveBeenCalledWith('build:config', expect.any(Function));
   });
 
+  it.each([
+    [{ node: true }, true],
+    [{ node: false, noExternals: true }, false],
+  ])(
+    'externalizes rxjs only for presets with a module resolver (%o)',
+    async (presetOptions, externalized) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot);
+      const hooks: Record<string, (...args: any[]) => unknown> = {};
+      await (plugin as any).nitro.setup({
+        options: {
+          rootDir: projectRoot,
+          buildDir: join(projectRoot, '.nitro'),
+          handlers: [],
+          scanDirs: [],
+          virtual: {},
+          renderer: {},
+          ...presetOptions,
+        },
+        hooks: { hook: (name: string, fn: any) => (hooks[name] = fn) },
+      });
+
+      const rolldown: any = { plugins: [], output: {} };
+      hooks['build:config'](undefined, { rolldown });
+
+      expect(
+        (rolldown.external ?? []).some((p: RegExp) => p.test('rxjs')),
+      ).toBe(externalized);
+    },
+  );
+
   it('resolves a built SSR entry emitted with a .js extension', async () => {
     const buildDir = join(projectRoot, '.nitro');
     const ssrDir = join(buildDir, 'vite/services/ssr');
