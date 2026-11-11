@@ -119,6 +119,44 @@ describe('AnchorNavigationDirective', () => {
     expect(router.navigateByUrl).toBeCalledWith('/page?query=analog#section1');
   }));
 
+  it('navigates when clicking an element nested inside an internal link', fakeAsync(() => {
+    const { router, handleNavigation, selectById } = setup();
+
+    selectById('nested-code').click();
+    tick();
+
+    expect(handleNavigation.mock.results[0].value).toEqual(false);
+    expect(router.navigateByUrl).toBeCalledWith('/docs');
+  }));
+
+  it.each([
+    { ctrlKey: true },
+    { metaKey: true },
+    { shiftKey: true },
+    { altKey: true },
+    { button: 1 },
+  ])('leaves modified clicks to the browser (%o)', (init) => {
+    const { router, handleNavigation, selectById } = setup();
+
+    selectById('relative-page').dispatchEvent(
+      new MouseEvent('click', { bubbles: true, cancelable: true, ...init }),
+    );
+
+    expect(handleNavigation.mock.results[0].value).toEqual(true);
+    expect(router.navigateByUrl).not.toBeCalled();
+  });
+
+  it('leaves clicks already prevented by another handler to the browser', () => {
+    const { router, handleNavigation, selectById } = setup();
+    const link = selectById('relative-page');
+    link.addEventListener('click', (event) => event.preventDefault());
+
+    link.click();
+
+    expect(handleNavigation.mock.results[0].value).toEqual(true);
+    expect(router.navigateByUrl).not.toBeCalled();
+  });
+
   it('navigates to a fragment-only anchor using the current page path and search when a <base> element is present', fakeAsync(() => {
     // A <base> element makes the browser resolve a fragment-only href
     // (e.g. href="#section1") against the base URL, not the current
@@ -160,9 +198,11 @@ function setup() {
   class PreventRealNavigationDirective {
     @HostListener('click', ['$event'])
     preventClick(event: Event) {
-      if (event.target instanceof HTMLAnchorElement) {
+      const anchor =
+        event.target instanceof Element ? event.target.closest('a') : null;
+      if (anchor) {
         event.preventDefault();
-        navigationResult.navigatedTo = event.target.href;
+        navigationResult.navigatedTo = anchor.href;
       }
     }
   }
@@ -202,6 +242,7 @@ function setup() {
           Page with Search, Hash, and Trailing Slash
         </a>
         <a id="fragment-only" href="#section1">Fragment Only</a>
+        <a href="/docs"><code id="nested-code">docs</code></a>
       </div>
     `,
   })
