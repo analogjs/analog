@@ -23,7 +23,8 @@ export function withContentListLoader(): Provider {
   return {
     provide: CONTENT_LIST_LOADER,
     useFactory() {
-      return async () => injectContentFiles();
+      const files = injectContentFiles();
+      return async () => files;
     },
   };
 }

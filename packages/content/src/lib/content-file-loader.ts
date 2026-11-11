@@ -21,7 +21,8 @@ export function withContentFileLoader(): Provider {
   return {
     provide: CONTENT_FILE_LOADER,
     useFactory() {
-      return async () => injectContentFilesMap();
+      const files = injectContentFilesMap();
+      return async () => files;
     },
   };
 }
