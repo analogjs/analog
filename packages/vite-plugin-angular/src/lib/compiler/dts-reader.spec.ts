@@ -265,14 +265,16 @@ export { I } from './i';
 
   it('collectAllImports skips type-only imports and exports', () => {
     expect(collectAllImports(code, 'x.ts')).toEqual([
+      './b',
       './cd',
       './side-effect',
+      './f',
       './h',
       './i',
     ]);
   });
 
   it('collectReExports skips type-only re-exports', () => {
-    expect(collectReExports(code, 'x.ts')).toEqual(['./h', './i']);
+    expect(collectReExports(code, 'x.ts')).toEqual(['./f', './h', './i']);
   });
 });

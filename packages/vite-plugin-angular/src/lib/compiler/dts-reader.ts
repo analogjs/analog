@@ -406,12 +406,7 @@ export function collectAllImports(
 }
 
 function isTypeOnly(stmt: any): boolean {
-  if (stmt.importKind === 'type' || stmt.exportKind === 'type') return true;
-  const specifiers: any[] = stmt.specifiers ?? [];
-  return (
-    specifiers.length > 0 &&
-    specifiers.every((s) => s.importKind === 'type' || s.exportKind === 'type')
-  );
+  return stmt.importKind === 'type' || stmt.exportKind === 'type';
 }
 
 // ---------------------------------------------------------------------------
