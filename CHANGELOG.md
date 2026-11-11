@@ -1,3 +1,11 @@
+# [3.0.0-beta.41](https://github.com/analogjs/analog/compare/v3.0.0-beta.40...v3.0.0-beta.41) (2026-11-11)
+
+### Bug Fixes
+
+- **content:** handle nested link targets and modified clicks in anchor navigation ([#2768](https://github.com/analogjs/analog/issues/2768)) ([a47a164](https://github.com/analogjs/analog/commit/a47a1644f27946e6f41eb9c09c268152820e849a))
+- **platform:** zone.js detection, worker-preset externals, per-request SSR fetch ([#2772](https://github.com/analogjs/analog/issues/2772)) ([e4b3c45](https://github.com/analogjs/analog/commit/e4b3c4562713f5b63c1c5f717f1610154de06a74))
+- **router:** skip HTTP transfer cache for TanStack Query helpers ([#2769](https://github.com/analogjs/analog/issues/2769)) ([fb28994](https://github.com/analogjs/analog/commit/fb289945a003514ed578f9b2da094381ef1dc4b4))
+
 # [3.0.0-beta.40](https://github.com/analogjs/analog/compare/v3.0.0-beta.39...v3.0.0-beta.40) (2026-11-11)
 
 ### Bug Fixes
