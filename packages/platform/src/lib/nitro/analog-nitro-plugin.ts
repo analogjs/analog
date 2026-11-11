@@ -986,11 +986,25 @@ if (typeof globalThis.$fetch === 'undefined') {
 }
 
 // Like h3's fetchWithEvent: in-process requests carry the incoming request's
-// headers (minus hop-by-hop) and are cancelled with it.
+// headers (minus hop-by-hop) and are cancelled with it. Conditional and range
+// headers describe the document, not the data it loads.
+const DOCUMENT_ONLY_HEADERS = [
+  'if-match',
+  'if-none-match',
+  'if-modified-since',
+  'if-unmodified-since',
+  'if-range',
+  'range',
+];
 const requestOFetch = (req) =>
   createFetch({
     fetch: (resource, init) => {
-      const headers = new Headers(getProxyRequestHeaders({ req }, { host: true }));
+      const headers = new Headers(
+        getProxyRequestHeaders(
+          { req },
+          { host: true, filterHeaders: DOCUMENT_ONLY_HEADERS },
+        ),
+      );
       new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
       const signal = init?.signal
         ? AbortSignal.any([req.signal, init.signal])

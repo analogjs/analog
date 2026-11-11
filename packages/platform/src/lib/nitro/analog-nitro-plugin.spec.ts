@@ -308,6 +308,8 @@ describe('analogNitroPlugin', () => {
   it.each([
     [{ node: true }, true],
     [{ node: false, noExternals: true }, false],
+    [{ node: true, noExternals: true }, false],
+    [{ node: false }, false],
   ])(
     'externalizes rxjs only for presets with a module resolver (%o)',
     async (presetOptions, externalized) => {
@@ -537,6 +539,7 @@ describe('analogNitroPlugin', () => {
             authorization: 'Bearer token',
             accept: 'text/html',
             'keep-alive': 'timeout=5',
+            'if-none-match': '"page"',
           },
           signal: abort.signal,
         }),
@@ -548,6 +551,7 @@ describe('analogNitroPlugin', () => {
       expect(init.headers.get('authorization')).toBe('Bearer token');
       expect(init.headers.get('accept')).toBe('text/plain');
       expect(init.headers.has('keep-alive')).toBe(false);
+      expect(init.headers.has('if-none-match')).toBe(false);
       expect(init.signal.aborted).toBe(true);
     });
 
