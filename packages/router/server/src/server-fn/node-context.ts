@@ -33,8 +33,8 @@ export function assertNodeContext(
 /**
  * A Node request/response pair for a bare `Request`, carrying what Analog
  * reads: method, URL, headers and protocol, plus the `Request` and its abort
- * `signal`. The same approach as h3's web
- * adapter; it needs `node:http` (Node, Bun, Deno).
+ * `signal`. The same approach as h3's web adapter; it needs `node:http` (Node,
+ * Bun, Deno).
  */
 export function nodeContext(request: Request, url: URL): AnalogRequestContext {
   const socket = new Socket();
