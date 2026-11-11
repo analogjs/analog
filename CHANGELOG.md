@@ -1,3 +1,10 @@
+## [2.9.7](https://github.com/analogjs/analog/compare/v2.9.6...v2.9.7) (2026-11-11)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** set ngServerMode for server environments ([#2763](https://github.com/analogjs/analog/issues/2763)) ([769b5cf](https://github.com/analogjs/analog/commit/769b5cfcdeb99542dccc117039803da08b0ed590))
+- **vite-plugin-nitro:** build sitemap before server with Environment API ([#2762](https://github.com/analogjs/analog/issues/2762)) ([1cf59a7](https://github.com/analogjs/analog/commit/1cf59a7194a4ce35bf76582a430df0212bd4d9d3))
+
 ## [2.9.6](https://github.com/analogjs/analog/compare/v2.9.5...v2.9.6) (2026-11-04)
 
 ### Bug Fixes
