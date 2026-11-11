@@ -52,7 +52,7 @@ import {
   isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
-import { warnStylesheetError } from './utils/stylesheet-warning.js';
+import { reportStylesheetError } from './utils/stylesheet-warning.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
 
 export interface PluginOptions {
@@ -626,10 +626,11 @@ export function createAngularBuildContext(
           resourceFile: input.resourceFile ?? '(inline)',
           error: String(e),
         });
-        warnStylesheetError(
+        reportStylesheetError(
           input.logger ?? ctx.resolvedConfig?.logger,
           filename,
           e,
+          ctx.resolvedConfig?.command === 'build',
         );
       }
 

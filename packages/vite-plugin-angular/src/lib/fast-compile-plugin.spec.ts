@@ -484,6 +484,29 @@ export class ExtComponent {}
     );
   });
 
+  it('fails the build when a stylesheet cannot be processed', async () => {
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [],
+      command: 'build',
+      logger: { warn: vi.fn() },
+    });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    mockPreprocessCSS.mockRejectedValue(new Error('Unknown utility'));
+
+    await expect(
+      getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      ),
+    ).rejects.toThrow(/\.css.*Unknown utility/s);
+  });
+
   it('applies a registered style preprocessor before preprocessCSS', async () => {
     const plugin = buildPlugin();
     await (plugin.configResolved as any)({

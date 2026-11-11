@@ -68,6 +68,24 @@ describe('augmentHostWithResources', () => {
     );
   });
 
+  it('fails the build when a stylesheet cannot be processed', async () => {
+    const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
+    const transform = vi.fn().mockRejectedValue(new Error('Unknown utility'));
+
+    augmentHostWithResources(host, transform as any, {
+      inlineStylesExtension: 'css',
+      isBuild: true,
+    });
+
+    await expect(
+      (host as any).transformResource('.a {}', {
+        type: 'style',
+        resourceFile: '/project/src/app/demo.component.css',
+        containingFile: '/project/src/app/demo.component.ts',
+      }),
+    ).rejects.toThrow(/demo\.component\.css.*Unknown utility/s);
+  });
+
   it('falls back to the containing file for inline style filenames', async () => {
     const host = { readFile: vi.fn() } as unknown as ts.CompilerHost;
     const transform = vi
