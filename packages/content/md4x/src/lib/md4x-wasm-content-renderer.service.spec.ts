@@ -102,6 +102,21 @@ describe('Md4xWasmContentRendererService', () => {
       expect(result.toc[0].text).toBe('Level 3 ?? complex && &@@');
     });
 
+    it('keeps ids aligned past raw HTML headings and honors {#id}', async () => {
+      const renderer = setup();
+      const result = await renderer.render(
+        '<h2 class="raw">Raw</h2>\n\n## Custom {#my-id}\n\n## Next',
+      );
+
+      expect(result.toc).toEqual([
+        { id: 'my-id', level: 2, text: 'Custom' },
+        { id: 'next', level: 2, text: 'Next' },
+      ]);
+      expect(result.content).toContain('<h2 class="raw">Raw</h2>');
+      expect(result.content).toContain('<h2 id="my-id">Custom</h2>');
+      expect(result.content).toContain('<h2 id="next">Next</h2>');
+    });
+
     it('handles all six heading levels', async () => {
       const renderer = setup();
       const result = await renderer.render(

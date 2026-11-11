@@ -134,7 +134,7 @@ catalog:
   marked-highlight: ^2.2.3
   marked-mangle: ^1.1.12
   marked-shiki: ^1.2.1
-  md4x: ^0.0.25
+  md4x: ^0.0.30
   mermaid: ^11.13.0
   minimist: ^1.2.8
   ng-packagr: 22.2.1
@@ -261,7 +261,7 @@ catalogs:
     vitest: ^4.0.7 || ^5.0.0
     zone.js: '>=0.15.0'
   peerContentOptional:
-    md4x: '>=0.0.20'
+    md4x: '>=0.0.28'
     satori: ^0.10.14
 
 # Build-script allowlists belong in the root package.json under pnpm.* config.
