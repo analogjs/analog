@@ -61,6 +61,7 @@ export function serverQueryOptions<
       fetchUntilAborted(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, query as Record<string, any>),
+          { transferCache: false },
         ),
         signal,
       ),
@@ -148,6 +149,7 @@ export function serverInfiniteQueryOptions<
       fetchUntilAborted(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, buildQuery(context) as Record<string, any>),
+          { transferCache: false },
         ),
         context.signal,
       ),
