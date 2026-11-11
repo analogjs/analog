@@ -1,3 +1,5 @@
+import { NitroConfig } from 'nitropack';
+import { ConfigEnv, UserConfig, ViteBuilder } from 'vite';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PrerenderContentFile } from './options';
@@ -32,6 +34,48 @@ describe('nitro', () => {
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
     expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
+  });
+
+  describe('when building with the Vite Environment API', () => {
+    it('builds the sitemap into the public assets before the server', async () => {
+      // Arrange
+      const { buildServerImportSpy, buildSitemapImportSpy } =
+        await mockBuildFunctions();
+      const plugin = nitro({
+        ssr: true,
+        prerender: {
+          routes: ['/', '/about'],
+          sitemap: { host: 'https://example.com' },
+        },
+      });
+      const config = (await (
+        plugin[1].config as (
+          config: UserConfig,
+          env: ConfigEnv,
+        ) => Promise<UserConfig>
+      )({}, { command: 'build' } as ConfigEnv)) as UserConfig;
+      const builder = {
+        environments: { client: {}, ssr: {} },
+        build: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ViteBuilder;
+
+      // Act
+      await config.builder?.buildApp?.(builder);
+
+      // Assert
+      expect(buildSitemapImportSpy).toHaveBeenCalledTimes(1);
+      expect(buildServerImportSpy).toHaveBeenCalledTimes(1);
+      expect(buildSitemapImportSpy.mock.invocationCallOrder[0]).toBeLessThan(
+        buildServerImportSpy.mock.invocationCallOrder[0],
+      );
+
+      const nitroConfig = buildServerImportSpy.mock.calls[0][1] as NitroConfig;
+      const sitemapDir = buildSitemapImportSpy.mock.calls[0][3];
+      expect(sitemapDir).toBe(
+        (nitroConfig.publicAssets as { dir: string }[])[0].dir,
+      );
+      expect(sitemapDir).not.toBe(nitroConfig.output?.publicDir);
+    });
   });
 
   describe.skip('when prerendering is configured...', () => {

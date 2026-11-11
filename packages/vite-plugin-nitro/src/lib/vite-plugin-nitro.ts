@@ -559,35 +559,28 @@ export function nitro(options?: Options, nitroOptions?: NitroConfig): Plugin[] {
                 '#analog/ssr': ssrEntry,
               };
 
+              if (
+                nitroConfig.prerender?.routes?.length &&
+                options?.prerender?.sitemap
+              ) {
+                console.log('Building Sitemap...');
+                // build before the server so Nitro includes it in its public assets
+                await buildSitemap(
+                  config,
+                  options.prerender.sitemap,
+                  nitroConfig.prerender.routes,
+                  clientOutputPath,
+                  routeSitemaps,
+                  options.i18n,
+                );
+              }
+
               await buildServer(
                 options,
                 nitroConfig,
                 routeSourceFiles,
                 i18nWorkers,
               );
-
-              if (
-                nitroConfig.prerender?.routes?.length &&
-                options?.prerender?.sitemap
-              ) {
-                const publicDir = nitroConfig.output?.publicDir;
-                if (!publicDir) {
-                  throw new Error(
-                    'Nitro public output directory is required to build the sitemap.',
-                  );
-                }
-
-                console.log('Building Sitemap...');
-                // sitemap needs to be built after all directories are built
-                await buildSitemap(
-                  config,
-                  options.prerender.sitemap,
-                  nitroConfig.prerender.routes,
-                  publicDir,
-                  routeSitemaps,
-                  options.i18n,
-                );
-              }
 
               console.log(
                 `\n\nThe '@analogjs/platform' server has been successfully built.`,
