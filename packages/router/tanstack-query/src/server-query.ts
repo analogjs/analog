@@ -96,10 +96,7 @@ export function serverMutationOptions<
         http.post<InferRouteResult<TRoute>>(
           url,
           body === undefined ? null : JSON.stringify(body),
-          {
-            headers: { 'content-type': 'application/json' },
-            transferCache: false,
-          },
+          { headers: { 'content-type': 'application/json' } },
         ),
       ),
     ...options,

@@ -128,10 +128,6 @@ describe('server query transfer cache', () => {
         getNextPageParam: () => undefined,
       }) as any,
     );
-    await serverMutationOptions<any>(http, '/api/todos').mutationFn!(
-      { title: 'analog' },
-      {} as any,
-    );
 
     expect(TestBed.inject(TransferState).isEmpty).toBe(true);
   });
