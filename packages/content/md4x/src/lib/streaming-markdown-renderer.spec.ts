@@ -172,6 +172,42 @@ describe('streamMarkdown', () => {
     await expect(reader.read()).rejects.toThrow('Stream interrupted');
   });
 
+  it('cancels and releases the input when the output is cancelled', async () => {
+    let cancelReason: unknown;
+    const input = new ReadableStream<string>({
+      pull(controller) {
+        controller.enqueue('# Chunk\n\n');
+      },
+      cancel(reason) {
+        cancelReason = reason;
+      },
+    });
+    const output = await streamMarkdown(input);
+    const reader = output.getReader();
+    await reader.read();
+
+    await reader.cancel('stop');
+
+    expect(cancelReason).toBe('stop');
+    expect(input.locked).toBe(false);
+  });
+
+  it('releases the input when it errors', async () => {
+    const input = createErrorStream([], 0);
+    const output = await streamMarkdown(input);
+
+    await expect(output.getReader().read()).rejects.toThrow();
+
+    expect(input.locked).toBe(false);
+  });
+
+  it('releases the input on completion', async () => {
+    const input = createChunkStream(['# Done']);
+    await collectStream(await streamMarkdown(input));
+
+    expect(input.locked).toBe(false);
+  });
+
   // ── Large content ────────────────────────────────────────────────
 
   it('handles many small chunks', async () => {
