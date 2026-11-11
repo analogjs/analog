@@ -1,6 +1,6 @@
 import type { NitroEventHandler } from 'nitro/types';
-import { createRequire } from 'node:module';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { normalizePath } from 'vite';
 
 import type { ServerFnHandlerModule } from './get-server-fn-handlers.js';
@@ -106,11 +106,18 @@ export default createServerFnEventHandler(
 `;
 }
 
+/**
+ * Looks in the `node_modules` folders the bundler resolves from. `require.resolve`
+ * also searches `NODE_PATH`, where pnpm's bin shims add the hoisted store, and
+ * would find a `zone.js` the bundler cannot import.
+ */
 function hasZoneJs(root: string): boolean {
-  try {
-    createRequire(join(root, 'noop.js')).resolve('zone.js/node');
-    return true;
-  } catch {
-    return false;
+  for (let dir = root; ; dir = dirname(dir)) {
+    if (existsSync(join(dir, 'node_modules', 'zone.js', 'package.json'))) {
+      return true;
+    }
+    if (dirname(dir) === dir) {
+      return false;
+    }
   }
 }
