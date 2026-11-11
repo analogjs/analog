@@ -267,7 +267,7 @@ describe('updateMetaTagsOnRouteChange', () => {
     expect(metaElements.itempropDescription).toBeNull();
   });
 
-  it('restores the original document meta tags when a route no longer sets them', async () => {
+  function setupPages(headTag: string) {
     @Component({ selector: 'analogjs-meta-tags-page', template: '' })
     class PageComponent {}
 
@@ -289,26 +289,48 @@ describe('updateMetaTagsOnRouteChange', () => {
         provideAppInitializer(() => updateMetaTagsOnRouteChange()),
       ],
     });
-    const router = TestBed.inject(Router);
     const document = TestBed.inject(DOCUMENT);
-    const indexDescription = document.createElement('meta');
-    indexDescription.name = 'description';
-    indexDescription.content = 'Index Description';
-    document.head.appendChild(indexDescription);
-
-    await router.navigateByUrl('/');
-    expect(
-      document
-        .querySelector('meta[name="description"]')
-        ?.getAttribute('content'),
-    ).toBe('Home Description');
-
-    await router.navigateByUrl('/about');
-    expect(
+    document.head.insertAdjacentHTML('beforeend', headTag);
+    const getDescriptions = () =>
       Array.from(
         document.querySelectorAll('meta[name="description"]'),
         (meta) => meta.getAttribute('content'),
-      ),
-    ).toEqual(['Index Description']);
+      );
+
+    return { router: TestBed.inject(Router), getDescriptions };
+  }
+
+  it('restores the original document meta tags when a route no longer sets them', async () => {
+    const { router, getDescriptions } = setupPages(
+      '<meta name="description" content="Index Description">',
+    );
+
+    await router.navigateByUrl('/');
+    expect(getDescriptions()).toEqual(['Home Description']);
+
+    await router.navigateByUrl('/about');
+    expect(getDescriptions()).toEqual(['Index Description']);
+  });
+
+  it('removes server-rendered route meta tags after hydration', async () => {
+    const { router, getDescriptions } = setupPages(
+      '<meta name="description" content="Home Description" data-analog-route-meta="">',
+    );
+
+    await router.navigateByUrl('/');
+    await router.navigateByUrl('/about');
+
+    expect(getDescriptions()).toEqual([]);
+  });
+
+  it('restores document meta tags replaced during server rendering', async () => {
+    const { router, getDescriptions } = setupPages(
+      `<meta name="description" content="Home Description" data-analog-route-meta='{"name":"description","content":"Index Description"}'>`,
+    );
+
+    await router.navigateByUrl('/');
+    await router.navigateByUrl('/about');
+
+    expect(getDescriptions()).toEqual(['Index Description']);
   });
 });
