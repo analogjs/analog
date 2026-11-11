@@ -5,8 +5,10 @@ import {
 } from '@angular/core';
 import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
 import type { H3Event } from 'h3';
+import type { ServerResponse } from 'node:http';
 
 import { detectLocale, getBaseUrl } from '../provide-server-context';
+import type { AnalogRequestContext } from '../request-handler';
 import { serverFnRegistry } from './registry';
 import { assertNodeContext, nodeContext } from './node-context';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
@@ -77,11 +79,21 @@ export async function dispatchServerFn(
   event: Pick<H3Event, 'node'> & { req?: unknown },
   options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
+  if (event.node?.req || !(event.req instanceof Request)) {
+    return dispatchInContext(id, rawInput, assertNodeContext(event), options);
+  }
+  const context = nodeContext(event.req, new URL(event.req.url));
+  const result = await dispatchInContext(id, rawInput, context, options);
+  return withContextHeaders(result, context.res);
+}
+
+async function dispatchInContext(
+  id: string,
+  rawInput: unknown,
+  node: AnalogRequestContext,
+  options: DispatchServerFnOptions,
+): Promise<DispatchResult> {
   const { parent, providers = [], method, allowedOrigins = [] } = options;
-  const node =
-    event.node?.req || !(event.req instanceof Request)
-      ? assertNodeContext(event)
-      : nodeContext(event.req, new URL(event.req.url));
   const headers = (node.req.headers ?? {}) as HeaderBag;
 
   // Same-origin guard runs first — before we even confirm the function exists —
@@ -187,6 +199,24 @@ export async function dispatchServerFn(
   }
 
   return { status: 200, body: outcome };
+}
+
+/** Headers set through `RESPONSE`, under those of a returned `Response`. */
+function withContextHeaders(
+  result: DispatchResult,
+  res: ServerResponse,
+): DispatchResult {
+  const headers: Record<string, string | string[]> = {};
+  for (const [key, value] of Object.entries(res.getHeaders())) {
+    if (value !== undefined) {
+      headers[key] = Array.isArray(value) ? value : String(value);
+    }
+  }
+  for (const [key, value] of Object.entries(result.headers ?? {})) {
+    headers[key] =
+      key === 'set-cookie' ? [headers[key] ?? [], value].flat() : value;
+  }
+  return Object.keys(headers).length ? { ...result, headers } : result;
 }
 
 function isJsonContentType(headers: HeaderBag): boolean {

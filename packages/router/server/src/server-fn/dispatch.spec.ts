@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable, Injector, inject } from '@angular/core';
-import { BASE_URL, LOCALE, REQUEST } from '@analogjs/router/tokens';
+import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { dispatchServerFn } from './dispatch';
@@ -131,6 +131,38 @@ describe('dispatchServerFn', () => {
     );
 
     expect(result).toEqual({ status: 200, body: 'example.com' });
+  });
+
+  it('returns headers set through RESPONSE on a fetch-only event', async () => {
+    serverFn({ id: 'cookies' }, async () => {
+      const res = inject(RESPONSE);
+      res.setHeader('set-cookie', ['a=1']);
+      res.setHeader('x-app', 'app');
+      res.setHeader('x-both', 'app');
+      return new Response(null, {
+        status: 303,
+        headers: [
+          ['location', '/next'],
+          ['x-both', 'response'],
+          ['set-cookie', 'b=2'],
+          ['set-cookie', 'c=3'],
+        ],
+      });
+    });
+
+    const result = await dispatchServerFn(
+      'cookies',
+      undefined,
+      { req: new Request('http://example.com/_analog/fn/cookies') } as never,
+      { method: 'GET' },
+    );
+
+    expect(result.headers).toEqual({
+      'set-cookie': ['a=1', 'b=2', 'c=3'],
+      'x-app': 'app',
+      'x-both': 'response',
+      location: '/next',
+    });
   });
 
   it('404s an unknown function', async () => {
