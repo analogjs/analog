@@ -61,6 +61,7 @@ export function serverQueryOptions<
       fetchUntilAborted(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, query as Record<string, any>),
+          { transferCache: false },
         ),
         signal,
       ),
@@ -95,7 +96,10 @@ export function serverMutationOptions<
         http.post<InferRouteResult<TRoute>>(
           url,
           body === undefined ? null : JSON.stringify(body),
-          { headers: { 'content-type': 'application/json' } },
+          {
+            headers: { 'content-type': 'application/json' },
+            transferCache: false,
+          },
         ),
       ),
     ...options,
@@ -148,6 +152,7 @@ export function serverInfiniteQueryOptions<
       fetchUntilAborted(
         http.get<InferRouteResult<TRoute>>(
           buildUrl(url, buildQuery(context) as Record<string, any>),
+          { transferCache: false },
         ),
         context.signal,
       ),
