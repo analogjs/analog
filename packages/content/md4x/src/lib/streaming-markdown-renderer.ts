@@ -23,14 +23,25 @@ export async function streamMarkdown(
   const { renderToHtml, heal } = await import('md4x/napi');
 
   let buffer = '';
+  let closed = false;
   const reader = input.getReader();
+
+  const release = (reason?: unknown) => {
+    closed = true;
+    return reader.cancel(reason).finally(() => reader.releaseLock());
+  };
 
   return new ReadableStream<string>({
     async pull(controller) {
       try {
         const { done, value } = await reader.read();
+        if (closed) {
+          return;
+        }
 
         if (done) {
+          closed = true;
+          reader.releaseLock();
           if (buffer) {
             const source = options?.heal ? heal(buffer) : buffer;
             controller.enqueue(renderToHtml(source));
@@ -44,10 +55,11 @@ export async function streamMarkdown(
         controller.enqueue(renderToHtml(source));
       } catch (error) {
         controller.error(error);
+        await release(error).catch(() => undefined);
       }
     },
-    cancel() {
-      reader.cancel();
+    cancel(reason) {
+      return release(reason);
     },
   });
 }
