@@ -1,3 +1,9 @@
+# [3.0.0-beta.39](https://github.com/analogjs/analog/compare/v3.0.0-beta.38...v3.0.0-beta.39) (2026-11-11)
+
+### Bug Fixes
+
+- **platform:** declare the http sitemap and xhtml namespaces ([#2765](https://github.com/analogjs/analog/issues/2765)) ([ec66339](https://github.com/analogjs/analog/commit/ec663396f520765af5cb011a6f14b6a3449a7f92))
+
 # [3.0.0-beta.38](https://github.com/analogjs/analog/compare/v3.0.0-beta.37...v3.0.0-beta.38) (2026-11-06)
 
 ### Bug Fixes
