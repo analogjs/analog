@@ -35,12 +35,12 @@ export class Md4xContentRendererService extends ContentRenderer {
   private options = inject(MD4X_RENDERER_OPTIONS, { optional: true });
 
   override async render(content: string): Promise<RenderedContent> {
-    const { renderToHtml, parseMeta } = await import('md4x/napi');
-    const html = renderToHtml(content, {
-      heal: this.options?.heal,
+    const { renderToHtml, parseMeta, heal } = await import('md4x/napi');
+    const source = this.options?.heal ? heal(content) : content;
+    const html = renderToHtml(source, {
       highlighter: this.options?.highlighter,
       headingIds: true,
     });
-    return { content: html, toc: parseMeta(content).headings };
+    return { content: html, toc: parseMeta(source).headings };
   }
 }

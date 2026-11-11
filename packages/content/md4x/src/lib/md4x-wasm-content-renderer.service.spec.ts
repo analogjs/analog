@@ -208,6 +208,18 @@ describe('Md4xWasmContentRendererService', () => {
       expect(result.content).toContain('</strong>');
     });
 
+    it('builds the TOC from the healed content', async () => {
+      const renderer = setup({ heal: true });
+      const result = await renderer.render(
+        '## Intro [link](https://example.com',
+      );
+
+      expect(result.toc).toEqual([
+        { id: 'intro-link', level: 2, text: 'Intro link' },
+      ]);
+      expect(result.content).toContain('<h2 id="intro-link">');
+    });
+
     it('does not heal when option is not set', async () => {
       const renderer = setup();
       const result = await renderer.render('**unclosed bold');

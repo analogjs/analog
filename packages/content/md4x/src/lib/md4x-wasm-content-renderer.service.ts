@@ -27,11 +27,11 @@ export class Md4xWasmContentRendererService extends ContentRenderer {
     }
     await this.initPromise;
 
-    const html = wasm.renderToHtml(content, {
-      heal: this.options?.heal,
+    const source = this.options?.heal ? wasm.heal(content) : content;
+    const html = wasm.renderToHtml(source, {
       highlighter: this.options?.highlighter,
       headingIds: true,
     });
-    return { content: html, toc: wasm.parseMeta(content).headings };
+    return { content: html, toc: wasm.parseMeta(source).headings };
   }
 }
