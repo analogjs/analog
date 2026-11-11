@@ -262,7 +262,7 @@ catalogs:
     vitest: ^4.0.7 || ^5.0.0
     zone.js: '>=0.15.0'
   peerContentOptional:
-    md4x: '>=0.0.28'
+    md4x: '>=0.0.29'
     satori: ^0.10.14
 
 # Build-script allowlists belong in the root package.json under pnpm.* config.

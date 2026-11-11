@@ -321,6 +321,18 @@ Lorem ipsum 2....
   // ── Options: heal ────────────────────────────────────────────────
 
   describe('heal option', () => {
+    it('builds the TOC from the healed content', async () => {
+      const renderer = setup({ heal: true });
+      const result = await renderer.render(
+        '## Intro [link](https://example.com',
+      );
+
+      expect(result.toc).toEqual([
+        { id: 'intro-link', level: 2, text: 'Intro link' },
+      ]);
+      expect(result.content).toContain('<h2 id="intro-link">');
+    });
+
     it('heals unclosed bold', async () => {
       const renderer = setup({ heal: true });
       const result = await renderer.render('**bold without closing');

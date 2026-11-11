@@ -525,7 +525,7 @@ catalogs:
       version: 8.0.8
   peerContentOptional:
     md4x:
-      specifier: '>=0.0.28'
+      specifier: '>=0.0.29'
       version: 0.0.30
     satori:
       specifier: ^0.10.14

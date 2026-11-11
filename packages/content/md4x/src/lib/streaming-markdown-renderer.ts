@@ -26,7 +26,10 @@ export async function streamMarkdown(
   let closed = false;
   const reader = input.getReader();
 
-  const release = (reason?: unknown) => {
+  const release = async (reason?: unknown) => {
+    if (closed) {
+      return;
+    }
     closed = true;
     return reader.cancel(reason).finally(() => reader.releaseLock());
   };

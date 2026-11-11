@@ -208,6 +208,15 @@ describe('streamMarkdown', () => {
     expect(input.locked).toBe(false);
   });
 
+  it('cancels cleanly after the input completes with output still queued', async () => {
+    const input = createChunkStream(['# One\n\n']);
+    const reader = (await streamMarkdown(input)).getReader();
+    await reader.read();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    await expect(reader.cancel('stop')).resolves.toBeUndefined();
+  });
+
   // ── Large content ────────────────────────────────────────────────
 
   it('handles many small chunks', async () => {
