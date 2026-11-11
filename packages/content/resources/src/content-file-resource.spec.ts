@@ -60,6 +60,42 @@ Body content`),
     });
   });
 
+  it('waits for the content file loader instead of failing first', async () => {
+    let resolveFiles!: (files: Record<string, () => Promise<string>>) => void;
+    const files = new Promise<Record<string, () => Promise<string>>>(
+      (resolve) => (resolveFiles = resolve),
+    );
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ slug: 'test' })) },
+        },
+        { provide: ContentRenderer, useClass: TestContentRenderer },
+        { provide: CONTENT_FILE_LOADER, useValue: () => files },
+        {
+          provide: TEST_RESOURCE_TOKEN,
+          useFactory: () => contentFileResource(),
+        },
+      ],
+    });
+
+    const result = TestBed.inject(TEST_RESOURCE_TOKEN);
+    result.value();
+    TestBed.tick();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(result.error()).toBeUndefined();
+    expect(result.status()).toBe('loading');
+
+    resolveFiles({
+      '/src/content/test.md': () => Promise.resolve('# Test'),
+    });
+    await settleResource(result);
+
+    expect(result.value()?.content).toBe('# Test');
+  });
+
   it('returns empty toc for module/object content', async () => {
     const contentFiles = {
       '/src/content/object-content.md': () =>

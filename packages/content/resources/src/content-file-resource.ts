@@ -9,7 +9,6 @@ import {
 import { ActivatedRoute } from '@angular/router';
 
 import { toSignal } from '@angular/core/rxjs-interop';
-import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import type { ContentFile } from '../../src/lib/content-file';
 import { injectContentLocale } from '../../src/lib/content-locale';
@@ -212,7 +211,6 @@ export function contentFileResource(
   const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
   const locale = injectContentLocale();
-  const contentFilesMap = toSignal(from(loaderPromise()));
   const input =
     params ||
     toSignal(
@@ -223,14 +221,14 @@ export function contentFileResource(
     );
 
   return resource({
-    params: computed(() => ({ input: input(), files: contentFilesMap() })),
-    loader: async ({ params: resourceParams }) => {
-      const { input: param, files } = resourceParams;
+    params: computed(() => ({ input: input() })),
+    loader: async ({ params: { input: param } }) => {
+      const files = await loaderPromise();
 
       if (typeof param === 'string') {
         if (param) {
           const file = await getContentFile(
-            files!,
+            files,
             param,
             fallback,
             locale,
@@ -260,7 +258,7 @@ export function contentFileResource(
         };
       } else {
         const file = await getContentFile(
-          files!,
+          files,
           param.customFilename,
           fallback,
           locale,
