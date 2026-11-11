@@ -946,6 +946,7 @@ function generateSsrEntryWrapper(
 // as event replay on the server.
 import ${JSON.stringify(SERVER_MODE_ID)};
 import { serverFetch as nitroServerFetch } from 'nitro';
+import { getProxyRequestHeaders } from 'nitro/h3';
 import { createFetch } from 'ofetch';
 import renderer from ${JSON.stringify(entryServer)};
 
@@ -983,6 +984,20 @@ const ssrOFetch = createFetch({ fetch: ssrFetch });
 if (typeof globalThis.$fetch === 'undefined') {
   globalThis.$fetch = ssrOFetch;
 }
+
+// Like h3's fetchWithEvent: in-process requests carry the incoming request's
+// headers (minus hop-by-hop) and are cancelled with it.
+const requestOFetch = (req) =>
+  createFetch({
+    fetch: (resource, init) => {
+      const headers = new Headers(getProxyRequestHeaders({ req }, { host: true }));
+      new Headers(init?.headers).forEach((value, name) => headers.set(name, value));
+      const signal = init?.signal
+        ? AbortSignal.any([req.signal, init.signal])
+        : req.signal;
+      return ssrFetch(resource, { ...init, headers, signal });
+    },
+  });
 
 export default {
   async fetch(req) {
@@ -1028,7 +1043,7 @@ export default {
         // router's request-context interceptor via \`serverFetch.raw(...)\`,
         // which is ofetch's response-shape API. Plain fetch lacks \`.raw\`
         // and throws TypeError during prerender/SSR.
-        fetch: ssrOFetch,
+        fetch: requestOFetch(req),
         signal: req.signal,
         waitUntil: req.waitUntil?.bind(req),
         renderErrorsAsHtml: true,
