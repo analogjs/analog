@@ -191,6 +191,24 @@ describe('build sitemap', () => {
     expect(writeFileSyncMock).toHaveBeenCalled();
   });
 
+  it('should declare the http sitemap namespace', async () => {
+    existsSyncMock.mockReturnValue(true);
+
+    await buildSitemap(
+      config,
+      { host: 'https://host.com' },
+      ['/about'],
+      '/tmp/analog/public',
+      {},
+    );
+
+    const xml = writeFileSyncMock.mock.calls[0]?.[1];
+    expect(xml).toContain(
+      'xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
+    );
+    expect(xml).not.toContain('https://www.sitemaps.org');
+  });
+
   it('should refuse to write to the current working directory', async () => {
     existsSyncMock.mockReturnValue(true);
     const errorSpy = vi
