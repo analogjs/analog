@@ -1,4 +1,4 @@
-import { makeStateKey, TransferState } from '@angular/core';
+import { makeStateKey, signal, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -16,6 +16,10 @@ import type { ServerFn } from './types';
 const getProducts = createServerFnRef<void, string[]>({ id: 'abc123' });
 const getProduct = createServerFnRef<{ id: string }, { name: string }>({
   id: 'def456',
+  input: {},
+});
+const nullableInput = createServerFnRef<string | null, string>({
+  id: 'ghi789',
   input: {},
 });
 
@@ -93,6 +97,56 @@ describe('injectServerFn', () => {
     request.flush({ name: 'keyboard' });
 
     await expect(pending).resolves.toEqual({ name: 'keyboard' });
+  });
+
+  it('cancels the in-flight request when the resource params change', async () => {
+    setup();
+    const id = signal('p1');
+    TestBed.runInInjectionContext(() =>
+      injectServerFn(getProduct, () => ({ id: id() })),
+    );
+    const http = TestBed.inject(HttpTestingController);
+
+    TestBed.tick();
+    const first = await vi.waitFor(() => http.expectOne('/_analog/fn/def456'));
+    id.set('p2');
+    TestBed.tick();
+
+    expect(first.cancelled).toBe(true);
+  });
+
+  it('sends null and string inputs as JSON', async () => {
+    setup();
+    const call = TestBed.runInInjectionContext(() =>
+      injectServerFnMutation(nullableInput),
+    );
+    const http = TestBed.inject(HttpTestingController);
+
+    void call(null);
+    void call('text');
+    const [nullRequest, stringRequest] = http.match('/_analog/fn/ghi789');
+
+    expect(nullRequest.request.body).toBe('null');
+    expect(stringRequest.request.body).toBe('"text"');
+    expect(stringRequest.request.headers.get('Content-Type')).toBe(
+      'application/json',
+    );
+  });
+
+  it('does not hydrate a null input from the no-input seed', async () => {
+    setup();
+    TestBed.inject(TransferState).set(
+      makeStateKey<string>('__analog_fn_ghi789__'),
+      'no-input seed',
+    );
+    TestBed.runInInjectionContext(() =>
+      injectServerFn(nullableInput, () => null),
+    );
+
+    TestBed.tick();
+    await vi.waitFor(() =>
+      TestBed.inject(HttpTestingController).expectOne('/_analog/fn/ghi789'),
+    );
   });
 
   it('dispatches in-process instead of over HTTP during SSR', async () => {
