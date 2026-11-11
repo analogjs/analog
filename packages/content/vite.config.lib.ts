@@ -49,6 +49,7 @@ export default defineConfig({
         /^rxjs/,
         /^md4x/,
         /^vite/,
+        'entities',
         'front-matter',
         'sharp',
         'tslib',

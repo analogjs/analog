@@ -87,6 +87,7 @@
     }
   },
   "dependencies": {
+    "entities": "catalog:",
     "tslib": "catalog:"
   },
   "devDependencies": {
