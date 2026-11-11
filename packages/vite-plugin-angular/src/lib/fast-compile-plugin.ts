@@ -30,7 +30,7 @@ import {
   ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
 } from './compiler/index.js';
-import { warnStylesheetError } from './utils/stylesheet-warning.js';
+import { reportStylesheetError } from './utils/stylesheet-warning.js';
 
 import {
   TS_EXT_REGEX,
@@ -742,7 +742,12 @@ export function fastCompilePlugin(
           );
           resolvedInlineStyles.set(i, processed.code);
         } catch (e) {
-          warnStylesheetError(activeConfig?.logger, stylePath, e);
+          reportStylesheetError(
+            activeConfig?.logger,
+            stylePath,
+            e,
+            activeConfig?.command === 'build',
+          );
         }
       }
       if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;

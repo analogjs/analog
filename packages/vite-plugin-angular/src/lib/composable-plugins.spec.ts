@@ -215,6 +215,26 @@ describe('composable Angular Vite plugins', () => {
       expect(ctx.compiler?.getSourceMap).toBe(compiler.api.getSourceMap);
     });
 
+    it('warns on stylesheet errors during serve and throws during build', async () => {
+      const ctx = createAngularBuildContext();
+      const logger = { warn: vi.fn() };
+      const input = {
+        data: '.a {}',
+        containingFile: '/project/src/app/demo.component.ts',
+        resourceFile: '/project/src/app/demo.component.css',
+        eagerTransform: vi.fn().mockRejectedValue(new Error('Unknown utility')),
+      };
+
+      ctx.resolvedConfig = { command: 'serve', logger } as any;
+      await expect(ctx.styles.transformStylesheet(input)).resolves.toBeNull();
+      expect(logger.warn).toHaveBeenCalledOnce();
+
+      ctx.resolvedConfig = { command: 'build', logger } as any;
+      await expect(ctx.styles.transformStylesheet(input)).rejects.toThrow(
+        /demo\.component\.css.*Unknown utility/s,
+      );
+    });
+
     it('registers /.nx/ ignore filter onto ctx.hmr when nxFolderPlugin is composed with context', () => {
       const ctx = createAngularBuildContext();
       expect(

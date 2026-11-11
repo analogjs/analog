@@ -444,6 +444,7 @@ export function ngtscCompilePlugin(
         sourceFileCache,
         stylePreprocessor: ctx.stylePreprocessor,
         logger: ctx.resolvedConfig?.logger,
+        isBuild: ctx.resolvedConfig?.command === 'build',
       });
     }
 

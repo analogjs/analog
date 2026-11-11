@@ -15,7 +15,7 @@ import {
   registerStylesheetContent,
 } from './stylesheet-registry.js';
 import { debugStyles } from './utils/debug.js';
-import { warnStylesheetError } from './utils/stylesheet-warning.js';
+import { reportStylesheetError } from './utils/stylesheet-warning.js';
 import type { SourceFileCache } from './utils/source-file-cache.js';
 import { EXCLUDED_TS_EXT_REGEX, TS_EXT_REGEX } from './utils/plugin-config.js';
 
@@ -88,6 +88,7 @@ export function augmentHostWithResources(
     sourceFileCache?: SourceFileCache;
     stylePreprocessor?: StylePreprocessor;
     logger?: Logger;
+    isBuild?: boolean;
   },
 ): void {
   const resourceHost = host as CompilerHost;
@@ -184,7 +185,7 @@ export function augmentHostWithResources(
         resourceFile: context.resourceFile ?? '(inline)',
         error: String(e),
       });
-      warnStylesheetError(options.logger, filename, e);
+      reportStylesheetError(options.logger, filename, e, !!options.isBuild);
     }
 
     if (!stylesheetResult?.code) {
