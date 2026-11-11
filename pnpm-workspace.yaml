@@ -114,6 +114,7 @@ catalog:
   eslint-plugin-playwright: ^2.10.1
   eslint-plugin-storybook: 10.3.5
   front-matter: ^4.0.2
+  entities: ^8.0.0
   es-toolkit: ^1.45.1
   execa: ^9.6.1
   fast-glob: ^3.3.3

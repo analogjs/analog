@@ -1,16 +1,16 @@
 // Credit for modified source: https://github.com/etherCorps/sveltekit-og/blob/main/src/lib/api.ts
 
 import satori from 'satori';
-import { html as toReactElement } from 'satori-html';
 import sharp from 'sharp';
 
 import { ImageResponseOptions } from './options';
+import { parseHtml } from './parse-html';
 
 export const generateImage = async (
   element: string,
   options: ImageResponseOptions,
 ): Promise<Buffer> => {
-  const elementHtml = toReactElement(element);
+  const elementHtml = parseHtml(element);
   const svg = await satori(elementHtml as any, {
     width: options.width || 1200,
     height: options.height || 630,
