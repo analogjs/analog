@@ -1,4 +1,4 @@
-import { Directive, HostListener, inject } from '@angular/core';
+import { Directive, ElementRef, HostListener, inject } from '@angular/core';
 import { DOCUMENT, Location } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -8,13 +8,20 @@ import { Router } from '@angular/router';
 })
 export class AnchorNavigationDirective {
   private readonly document = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly location = inject(Location);
   private readonly router = inject(Router);
 
-  @HostListener('click', ['$event.target'])
-  handleNavigation(element: EventTarget | null): boolean {
+  @HostListener('click', ['$event.target', '$event'])
+  handleNavigation(target: EventTarget | null, event?: MouseEvent): boolean {
+    if (event && shouldSkipClick(event)) {
+      return true;
+    }
+
+    const element = target instanceof Element ? target.closest('a') : null;
     if (
-      element instanceof HTMLAnchorElement &&
+      element &&
+      this.host.nativeElement.contains(element) &&
       isInternalUrl(element, this.document) &&
       hasTargetSelf(element) &&
       !hasDownloadAttribute(element)
@@ -43,6 +50,17 @@ export class AnchorNavigationDirective {
 
     return true;
   }
+}
+
+function shouldSkipClick(event: MouseEvent): boolean {
+  return (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey ||
+    event.altKey
+  );
 }
 
 function hasDownloadAttribute(anchorElement: HTMLAnchorElement): boolean {
