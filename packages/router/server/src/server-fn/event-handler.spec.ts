@@ -124,6 +124,86 @@ describe('handleServerFnRequest', () => {
     expect(body).toEqual({ message: 'Malformed request body' });
   });
 
+  describe('on h3 v2, which replies from event.res', () => {
+    function h3v2Event(options: Parameters<typeof fakeEvent>[0]) {
+      const event = fakeEvent(options) as never as {
+        res: { status?: number; headers: Headers };
+        node: { res: FakeRes };
+      };
+      event.res = { headers: new Headers() };
+      return event;
+    }
+
+    it('writes a validation failure status to event.res', async () => {
+      const handler = vi.fn();
+      serverFn(
+        {
+          id: 'validated',
+          method: 'POST',
+          input: {
+            '~standard': {
+              version: 1,
+              vendor: 'test',
+              validate: () => ({ issues: [{ message: 'invalid' }] }),
+            },
+          },
+        } as never,
+        handler,
+      );
+
+      const event = h3v2Event({
+        id: 'validated',
+        method: 'POST',
+        body: { unexpected: true },
+        headers: jsonHeaders,
+      });
+      const body = await handleServerFnRequest(
+        event as never,
+        Injector.create({ providers: [] }),
+      );
+
+      expect(event.res.status).toBe(422);
+      expect(body).toHaveProperty('errors');
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('writes a redirect status and Location to event.res', async () => {
+      serverFn({ id: 'redirect' }, async () => {
+        return new Response(null, {
+          status: 303,
+          headers: { Location: '/destination' },
+        });
+      });
+
+      const event = h3v2Event({ id: 'redirect', method: 'GET' });
+      await handleServerFnRequest(
+        event as never,
+        Injector.create({ providers: [] }),
+      );
+
+      expect(event.res.status).toBe(303);
+      expect(event.res.headers.get('location')).toBe('/destination');
+    });
+
+    it('writes the malformed-body status to event.res', async () => {
+      serverFn({ id: 'write2', method: 'POST' }, async () => 'never');
+
+      const event = h3v2Event({
+        id: 'write2',
+        method: 'POST',
+        bodyThrows: true,
+        headers: jsonHeaders,
+      });
+      const body = await handleServerFnRequest(
+        event as never,
+        Injector.create({ providers: [] }),
+      );
+
+      expect(event.res.status).toBe(400);
+      expect(body).toEqual({ message: 'Malformed request body' });
+    });
+  });
+
   it('serves events without a Node request from their fetch Request', async () => {
     serverFn({ id: 'shout', method: 'POST' }, async (input: unknown) => {
       inject(RESPONSE).setHeader('x-shout', 'yes');

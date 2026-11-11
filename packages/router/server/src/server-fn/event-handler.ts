@@ -1,4 +1,5 @@
 import type { Injector } from '@angular/core';
+import type { ServerResponse } from 'node:http';
 import {
   eventHandler,
   getRouterParam,
@@ -60,7 +61,7 @@ export async function handleServerFnRequest(
     try {
       input = await readBody(event);
     } catch {
-      node.res.statusCode = 400;
+      writeHead(event, node.res, 400);
       return { message: 'Malformed request body' };
     }
   }
@@ -70,13 +71,36 @@ export async function handleServerFnRequest(
     method: event.method,
   });
 
-  node.res.statusCode = status;
-  if (headers) {
-    for (const [key, value] of Object.entries(headers)) {
-      node.res.setHeader(key, value);
-    }
-  }
+  writeHead(event, node.res, status, headers);
   return body;
+}
+
+/**
+ * h3 v2 builds the reply from `event.res` and ignores a status or header
+ * written to the Node response, so a 422 or a redirect answered 200 there.
+ * h3 v1 has only the Node response.
+ */
+function writeHead(
+  event: H3Event,
+  nodeRes: ServerResponse,
+  status: number,
+  headers: Record<string, string | string[]> = {},
+): void {
+  const res = (event as { res?: { status?: number; headers?: unknown } }).res;
+  if (res?.headers instanceof Headers) {
+    res.status = status;
+    for (const [key, value] of Object.entries(headers)) {
+      res.headers.delete(key);
+      for (const item of [value].flat()) {
+        res.headers.append(key, item);
+      }
+    }
+    return;
+  }
+  nodeRes.statusCode = status;
+  for (const [key, value] of Object.entries(headers)) {
+    nodeRes.setHeader(key, value);
+  }
 }
 
 /** h3 v2 on fetch-native hosts (workerd, Bun, Deno) has a `Request` only. */
