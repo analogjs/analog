@@ -1,3 +1,10 @@
+# [3.0.0-beta.42](https://github.com/analogjs/analog/compare/v3.0.0-beta.41...v3.0.0-beta.42) (2026-11-11)
+
+### Bug Fixes
+
+- **content:** md4x follow-ups for heal TOC, stream cancel and peer floor ([#2778](https://github.com/analogjs/analog/issues/2778)) ([ed452c6](https://github.com/analogjs/analog/commit/ed452c6561968a8c22db920736af0f364740d6c0))
+- **router:** keep RESPONSE headers when dispatching a fetch-only event ([#2777](https://github.com/analogjs/analog/issues/2777)) ([8a9d240](https://github.com/analogjs/analog/commit/8a9d24075ba1c286f3e4f5b00316fb384f4deef9))
+
 # [3.0.0-beta.41](https://github.com/analogjs/analog/compare/v3.0.0-beta.40...v3.0.0-beta.41) (2026-11-11)
 
 ### Bug Fixes
