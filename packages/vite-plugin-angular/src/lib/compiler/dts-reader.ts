@@ -366,7 +366,7 @@ export function collectReExports(
     // ExportNamedDeclaration without `source` is `export { x }` (no
     // re-export), which we don't care about here.
     const specifier: string | undefined = stmt.source?.value;
-    if (specifier) result.push(specifier);
+    if (specifier && !isTypeOnly(stmt)) result.push(specifier);
   }
   return result;
 }
@@ -399,10 +399,19 @@ export function collectAllImports(
       stmt.type === 'ExportNamedDeclaration'
     ) {
       const specifier: string | undefined = stmt.source?.value;
-      if (specifier) result.push(specifier);
+      if (specifier && !isTypeOnly(stmt)) result.push(specifier);
     }
   }
   return result;
+}
+
+function isTypeOnly(stmt: any): boolean {
+  if (stmt.importKind === 'type' || stmt.exportKind === 'type') return true;
+  const specifiers: any[] = stmt.specifiers ?? [];
+  return (
+    specifiers.length > 0 &&
+    specifiers.every((s) => s.importKind === 'type' || s.exportKind === 'type')
+  );
 }
 
 // ---------------------------------------------------------------------------
