@@ -124,6 +124,10 @@ export default class QueryPageComponent {
 
 Use `serverQueryOptions` and `serverMutationOptions` from `@analogjs/router/tanstack-query` to get end-to-end type safety between server routes and client queries. Define the server route with `defineApiRoute` from `@analogjs/router/server/actions` and export it so its types can be referenced from the component.
 
+:::note
+`serverQueryOptions` and `serverInfiniteQueryOptions` skip the HTTP transfer cache, because their results already reach the client through the dehydrated Query cache. With the default `staleTime` of `0`, hydrated queries refetch when they mount. Set a `staleTime` (for example `new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } })`) to reuse the server-rendered data instead.
+:::
+
 ```ts
 // src/server/routes/api/v1/todos.get.ts
 import { defineApiRoute } from '@analogjs/router/server/actions';
