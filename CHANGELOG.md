@@ -1,3 +1,14 @@
+# [3.0.0-beta.40](https://github.com/analogjs/analog/compare/v3.0.0-beta.39...v3.0.0-beta.40) (2026-11-11)
+
+### Bug Fixes
+
+- **content:** decode HTML entities in OG image markup ([#2774](https://github.com/analogjs/analog/issues/2774)) ([3f9677f](https://github.com/analogjs/analog/commit/3f9677f27ae6625e447101aa915959a1e01b5988))
+- **content:** load content resources inside the resource loader ([#2776](https://github.com/analogjs/analog/issues/2776)) ([c3189a5](https://github.com/analogjs/analog/commit/c3189a54134fbf329be3ec5e4a25ff0387576b72))
+- **content:** use md4x heading ids and release the streamMarkdown reader ([#2770](https://github.com/analogjs/analog/issues/2770)) ([0c36d38](https://github.com/analogjs/analog/commit/0c36d38ec7f6206ab60ea10ec4f9c71a47257860))
+- **router:** remove server-rendered route meta tags after hydration ([#2773](https://github.com/analogjs/analog/issues/2773)) ([6569bbc](https://github.com/analogjs/analog/commit/6569bbcc62f34fc41489a61e6f4e20c34b74de33))
+- **router:** server-function status, abort and input encoding fixes ([#2775](https://github.com/analogjs/analog/issues/2775)) ([6ec7b5f](https://github.com/analogjs/analog/commit/6ec7b5f16bb8793d1c440a306d4bcbe032014960))
+- **vite-plugin-angular:** fail build on stylesheet errors and skip type-only edges ([#2771](https://github.com/analogjs/analog/issues/2771)) ([2d23234](https://github.com/analogjs/analog/commit/2d23234d25c0bf175f518e8d802692494e8f73ec))
+
 # [3.0.0-beta.39](https://github.com/analogjs/analog/compare/v3.0.0-beta.38...v3.0.0-beta.39) (2026-11-11)
 
 ### Bug Fixes
