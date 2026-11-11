@@ -1,7 +1,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { getProxyRequestHeaders } from 'h3';
 import { createRouteRulesMatcher } from 'h3/rules';
+import { createFetch } from 'ofetch';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -303,6 +305,39 @@ describe('analogNitroPlugin', () => {
     expect(hookFn).toHaveBeenCalledWith('build:config', expect.any(Function));
   });
 
+  it.each([
+    [{ node: true }, true],
+    [{ node: false, noExternals: true }, false],
+    [{ node: true, noExternals: true }, false],
+    [{ node: false }, false],
+  ])(
+    'externalizes rxjs only for presets with a module resolver (%o)',
+    async (presetOptions, externalized) => {
+      const plugin = analogNitroPlugin({ workspaceRoot });
+      callConfig(plugin, projectRoot);
+      const hooks: Record<string, (...args: any[]) => unknown> = {};
+      await (plugin as any).nitro.setup({
+        options: {
+          rootDir: projectRoot,
+          buildDir: join(projectRoot, '.nitro'),
+          handlers: [],
+          scanDirs: [],
+          virtual: {},
+          renderer: {},
+          ...presetOptions,
+        },
+        hooks: { hook: (name: string, fn: any) => (hooks[name] = fn) },
+      });
+
+      const rolldown: any = { plugins: [], output: {} };
+      hooks['build:config'](undefined, { rolldown });
+
+      expect(
+        (rolldown.external ?? []).some((p: RegExp) => p.test('rxjs')),
+      ).toBe(externalized);
+    },
+  );
+
   it('resolves a built SSR entry emitted with a .js extension', async () => {
     const buildDir = join(projectRoot, '.nitro');
     const ssrDir = join(buildDir, 'vite/services/ssr');
@@ -472,19 +507,53 @@ describe('analogNitroPlugin', () => {
       vi.restoreAllMocks();
     });
 
-    function createEntry(renderer: (...args: any[]) => unknown) {
+    function createEntry(
+      renderer: (...args: any[]) => unknown,
+      nitroServerFetch = vi.fn(),
+    ) {
       vi.stubGlobal('$fetch', vi.fn());
       const plugin = analogNitroPlugin({ workspaceRoot });
       callConfig(plugin, projectRoot, 'serve');
       return runModule(
         callLoad(plugin, '\0virtual:@analogjs/nitro/ssr-entry'),
         {
-          nitroServerFetch: vi.fn(),
-          createFetch: () => vi.fn(),
+          nitroServerFetch,
+          getProxyRequestHeaders,
+          createFetch,
           renderer,
         },
       );
     }
+
+    it('forwards the request headers and signal to in-process fetches', async () => {
+      const nitroServerFetch = vi.fn(async () => Response.json({}));
+      const entry = createEntry(async (_url, _template, ctx) => {
+        await ctx.fetch('/api/data', { headers: { accept: 'text/plain' } });
+        return '<html></html>';
+      }, nitroServerFetch);
+      const abort = new AbortController();
+
+      await entry.fetch(
+        new Request('http://localhost/x', {
+          headers: {
+            authorization: 'Bearer token',
+            accept: 'text/html',
+            'keep-alive': 'timeout=5',
+            'if-none-match': '"page"',
+          },
+          signal: abort.signal,
+        }),
+      );
+      const [url, init] = nitroServerFetch.mock.calls[0] as any[];
+      abort.abort();
+
+      expect(url).toBe('http://localhost/api/data');
+      expect(init.headers.get('authorization')).toBe('Bearer token');
+      expect(init.headers.get('accept')).toBe('text/plain');
+      expect(init.headers.has('keep-alive')).toBe(false);
+      expect(init.headers.has('if-none-match')).toBe(false);
+      expect(init.signal.aborted).toBe(true);
+    });
 
     it('responds with the status of a failed render', async () => {
       const entry = createEntry(() => {
