@@ -120,6 +120,19 @@ describe('dispatchServerFn', () => {
     expect(result.body).toBe('listed');
   });
 
+  it('dispatches an h3 event that only carries a fetch Request', async () => {
+    serverFn({ id: 'host' }, async () => inject(REQUEST).headers['host']);
+
+    const result = await dispatchServerFn(
+      'host',
+      undefined,
+      { req: new Request('http://example.com/_analog/fn/host') } as never,
+      { method: 'GET' },
+    );
+
+    expect(result).toEqual({ status: 200, body: 'example.com' });
+  });
+
   it('404s an unknown function', async () => {
     const result = await dispatchServerFn('nope', undefined, eventFor(), {
       method: 'GET',

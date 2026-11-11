@@ -1,5 +1,5 @@
 import { Injector, inject } from '@angular/core';
-import { RESPONSE } from '@analogjs/router/tokens';
+import { REQUEST, RESPONSE, type ServerRequest } from '@analogjs/router/tokens';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Keep h3 real except `readBody`, whose parse-failure path is what the
@@ -22,12 +22,6 @@ import { handleServerFnRequest } from './event-handler';
 import { serverFnRegistry } from './registry';
 import { serverFn } from './server-fn';
 
-type FakeRes = {
-  statusCode: number;
-  headers: Record<string, string | string[]>;
-  setHeader(key: string, value: string | string[]): void;
-};
-
 function fakeEvent(options: {
   id: string;
   method?: string;
@@ -35,19 +29,12 @@ function fakeEvent(options: {
   bodyThrows?: boolean;
   headers?: Record<string, string>;
 }) {
-  const res: FakeRes = {
-    statusCode: 200,
-    headers: {},
-    setHeader(key, value) {
-      this.headers[key] = value;
-    },
-  };
   return {
     method: options.method ?? 'GET',
     context: { params: { id: options.id } },
     node: {
       req: { headers: options.headers ?? {} },
-      res,
+      res: {},
     },
     // `readBody(event)` reads `event._requestBody` under h3's unenv shim in
     // tests; model it (and the throwing case) directly.
@@ -63,19 +50,16 @@ describe('handleServerFnRequest', () => {
 
   const jsonHeaders = { 'content-type': 'application/json' };
 
-  it('dispatches a GET and writes the status and body', async () => {
+  it('dispatches a GET and returns the status and body as a Response', async () => {
     serverFn({ id: 'read' }, async () => ({ ok: true }));
 
-    const event = fakeEvent({ id: 'read', method: 'GET' });
-    const body = await handleServerFnRequest(
-      event,
+    const response = await handleServerFnRequest(
+      fakeEvent({ id: 'read', method: 'GET' }),
       Injector.create({ providers: [] }),
     );
 
-    expect(body).toEqual({ ok: true });
-    expect(
-      (event as never as { node: { res: FakeRes } }).node.res.statusCode,
-    ).toBe(200);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
   });
 
   it('accepts a promised injector, awaiting it before dispatch', async () => {
@@ -84,44 +68,76 @@ describe('handleServerFnRequest', () => {
     const event = fakeEvent({ id: 'read2', method: 'GET' });
     const injector = Promise.resolve(Injector.create({ providers: [] }));
 
-    await expect(handleServerFnRequest(event, injector)).resolves.toBe('ok');
+    const response = await handleServerFnRequest(event, injector);
+    expect(await response.json()).toBe('ok');
   });
 
-  it('propagates response headers onto the h3 response', async () => {
+  it('carries a returned Response status and headers on the Node path', async () => {
     serverFn({ id: 'redir' }, async () => {
       return new Response(null, {
-        status: 302,
+        status: 303,
         headers: { Location: '/next' },
       });
     });
 
-    const event = fakeEvent({ id: 'redir', method: 'GET' });
-    const res = (event as never as { node: { res: FakeRes } }).node.res;
+    const response = await handleServerFnRequest(
+      fakeEvent({ id: 'redir', method: 'GET' }),
+      Injector.create({ providers: [] }),
+    );
 
-    await handleServerFnRequest(event, Injector.create({ providers: [] }));
+    expect(response.status).toBe(303);
+    expect(response.headers.get('location')).toBe('/next');
+  });
 
-    expect(res.statusCode).toBe(302);
-    expect(res.headers['location']).toBe('/next');
+  it('answers invalid input with 422 on the Node path', async () => {
+    serverFn(
+      {
+        id: 'validated',
+        method: 'POST',
+        input: {
+          '~standard': {
+            version: 1,
+            vendor: 'spec',
+            validate: () => ({ issues: [{ message: 'invalid' }] }),
+          },
+        },
+      },
+      async () => 'never',
+    );
+
+    const response = await handleServerFnRequest(
+      fakeEvent({
+        id: 'validated',
+        method: 'POST',
+        body: {},
+        headers: jsonHeaders,
+      }),
+      Injector.create({ providers: [] }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({
+      errors: [{ message: 'invalid' }],
+    });
   });
 
   it('returns 400 with the JSON error contract when the body is malformed', async () => {
     serverFn({ id: 'write', method: 'POST' }, async () => 'never');
 
-    const event = fakeEvent({
-      id: 'write',
-      method: 'POST',
-      bodyThrows: true,
-      headers: jsonHeaders,
-    });
-    const res = (event as never as { node: { res: FakeRes } }).node.res;
-
-    const body = await handleServerFnRequest(
-      event,
+    const response = await handleServerFnRequest(
+      fakeEvent({
+        id: 'write',
+        method: 'POST',
+        bodyThrows: true,
+        headers: jsonHeaders,
+      }),
       Injector.create({ providers: [] }),
     );
 
-    expect(res.statusCode).toBe(400);
-    expect(body).toEqual({ message: 'Malformed request body' });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      message: 'Malformed request body',
+    });
   });
 
   it('serves events without a Node request from their fetch Request', async () => {
@@ -130,7 +146,7 @@ describe('handleServerFnRequest', () => {
       return (input as { text: string }).text.toUpperCase();
     });
 
-    const response = (await handleServerFnRequest(
+    const response = await handleServerFnRequest(
       {
         method: 'POST',
         context: { params: { id: 'shout' } },
@@ -141,10 +157,35 @@ describe('handleServerFnRequest', () => {
         }),
       } as never,
       Injector.create({ providers: [] }),
-    )) as Response;
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get('x-shout')).toBe('yes');
     expect(await response.json()).toBe('HI');
+  });
+
+  it('exposes the fetch Request and its abort signal on REQUEST', async () => {
+    serverFn({ id: 'aborted' }, async () => {
+      const req = inject(REQUEST) as ServerRequest & { request: Request };
+      return { aborted: req.signal.aborted, url: req.request.url };
+    });
+    const controller = new AbortController();
+    controller.abort();
+
+    const response = await handleServerFnRequest(
+      {
+        method: 'GET',
+        context: { params: { id: 'aborted' } },
+        req: new Request('http://localhost/_analog/fn/aborted', {
+          signal: controller.signal,
+        }),
+      } as never,
+      Injector.create({ providers: [] }),
+    );
+
+    expect(await response.json()).toEqual({
+      aborted: true,
+      url: 'http://localhost/_analog/fn/aborted',
+    });
   });
 });

@@ -10,7 +10,7 @@ import {
   type StateKey,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable, takeUntil } from 'rxjs';
 
 import type { ServerFn } from './types';
 import { SERVER_FN_DISPATCHER } from './dispatcher';
@@ -36,7 +36,11 @@ export class ServerFnClient {
     return !!this.dispatcher;
   }
 
-  async call<In, Out>(fn: ServerFn<In, Out>, input: In): Promise<Out> {
+  async call<In, Out>(
+    fn: ServerFn<In, Out>,
+    input: In,
+    signal?: AbortSignal,
+  ): Promise<Out> {
     if (this.dispatcher) {
       return this.dispatcher(fn, input, this.injector);
     }
@@ -44,16 +48,18 @@ export class ServerFnClient {
     const request$ =
       fn.method === 'GET'
         ? this.http.get<Out>(fn.url)
-        : this.http.post<Out>(fn.url, input ?? {});
-    return firstValueFrom(request$);
+        : this.http.post<Out>(fn.url, requestBody(input), {
+            headers: { 'Content-Type': 'application/json' },
+          });
+    return firstValueFrom(untilAborted(request$, signal));
   }
 
   /** Key a read's value for TransferState hydration (fn id + input). */
-  stateKey<Out>(fn: ServerFn<unknown, Out>, input: unknown): StateKey<Out> {
+  stateKey<In, Out>(fn: ServerFn<In, Out>, input: In): StateKey<Out> {
     return makeStateKey<Out>(`__analog_fn_${fn.id}_${stableInput(input)}`);
   }
 
-  readSeed<Out>(fn: ServerFn<unknown, Out>, input: unknown): Out | undefined {
+  readSeed<In, Out>(fn: ServerFn<In, Out>, input: In): Out | undefined {
     const key = this.stateKey(fn, input);
     if (this.transferState.hasKey(key)) {
       const value = this.transferState.get(key, undefined as unknown as Out);
@@ -63,7 +69,7 @@ export class ServerFnClient {
     return undefined;
   }
 
-  writeSeed<Out>(fn: ServerFn<unknown, Out>, input: unknown, value: Out): void {
+  writeSeed<In, Out>(fn: ServerFn<In, Out>, input: In, value: Out): void {
     this.transferState.set(this.stateKey(fn, input), value);
   }
 }
@@ -102,15 +108,15 @@ export function injectServerFn<In, Out>(
 
   return resource<Out | undefined, unknown>({
     params: () => (args ? args() : NO_INPUT),
-    loader: async ({ params }) => {
+    loader: async ({ params, abortSignal }) => {
       const input = (params === NO_INPUT ? undefined : params) as In;
       // Hydrate from the SSR seed on first client render; else fetch and (on
       // the server) seed for the client.
-      const seeded = client.readSeed(fn as ServerFn<unknown, Out>, input);
+      const seeded = client.readSeed(fn, input);
       if (seeded !== undefined) return seeded;
-      const value = await client.call(fn, input);
+      const value = await client.call(fn, input, abortSignal);
       if (client.isServer) {
-        client.writeSeed(fn as ServerFn<unknown, Out>, input, value);
+        client.writeSeed(fn, input, value);
       }
       return value;
     },
@@ -132,6 +138,28 @@ export function injectServerFnMutation<In, Out>(
 }
 
 function stableInput(input: unknown): string {
-  if (input === undefined || input === null) return '_';
+  if (input === undefined) return '_';
   return JSON.stringify(input);
+}
+
+// HttpClient sends a string as text/plain and drops a `null` body.
+function requestBody(input: unknown): unknown {
+  if (input === undefined) return {};
+  return typeof input === 'string' || input === null
+    ? JSON.stringify(input)
+    : input;
+}
+
+function untilAborted<T>(
+  source: Observable<T>,
+  signal?: AbortSignal,
+): Observable<T> {
+  if (!signal) return source;
+  const aborted = new Observable<never>((subscriber) => {
+    const abort = () => subscriber.error(signal.reason);
+    if (signal.aborted) abort();
+    else signal.addEventListener('abort', abort, { once: true });
+    return () => signal.removeEventListener('abort', abort);
+  });
+  return source.pipe(takeUntil(aborted));
 }

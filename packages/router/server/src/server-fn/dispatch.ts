@@ -8,7 +8,7 @@ import type { H3Event } from 'h3';
 
 import { detectLocale, getBaseUrl } from '../provide-server-context';
 import { serverFnRegistry } from './registry';
-import { assertNodeContext } from './node-context';
+import { assertNodeContext, nodeContext } from './node-context';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
 import {
   SERVER_FN_ALLOWED_ORIGINS,
@@ -74,11 +74,14 @@ export interface DispatchServerFnOptions {
 export async function dispatchServerFn(
   id: string,
   rawInput: unknown,
-  event: Pick<H3Event, 'node'>,
+  event: Pick<H3Event, 'node'> & { req?: unknown },
   options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
   const { parent, providers = [], method, allowedOrigins = [] } = options;
-  const node = assertNodeContext(event);
+  const node =
+    event.node?.req || !(event.req instanceof Request)
+      ? assertNodeContext(event)
+      : nodeContext(event.req, new URL(event.req.url));
   const headers = (node.req.headers ?? {}) as HeaderBag;
 
   // Same-origin guard runs first — before we even confirm the function exists —
