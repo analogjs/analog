@@ -1,4 +1,4 @@
-import { Directive, HostListener, inject } from '@angular/core';
+import { Directive, ElementRef, HostListener, inject } from '@angular/core';
 import { DOCUMENT, Location } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 })
 export class AnchorNavigationDirective {
   private readonly document = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly location = inject(Location);
   private readonly router = inject(Router);
 
@@ -20,6 +21,7 @@ export class AnchorNavigationDirective {
     const element = target instanceof Element ? target.closest('a') : null;
     if (
       element &&
+      this.host.nativeElement.contains(element) &&
       isInternalUrl(element, this.document) &&
       hasTargetSelf(element) &&
       !hasDownloadAttribute(element)

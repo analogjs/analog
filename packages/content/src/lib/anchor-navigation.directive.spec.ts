@@ -129,6 +129,15 @@ describe('AnchorNavigationDirective', () => {
     expect(router.navigateByUrl).toBeCalledWith('/docs');
   }));
 
+  it('ignores links that wrap the directive host', fakeAsync(() => {
+    const { router, selectById } = setup();
+
+    selectById('inside-wrapped-host').click();
+    tick();
+
+    expect(router.navigateByUrl).not.toBeCalled();
+  }));
+
   it.each([
     { ctrlKey: true },
     { metaKey: true },
@@ -244,6 +253,12 @@ function setup() {
         <a id="fragment-only" href="#section1">Fragment Only</a>
         <a href="/docs"><code id="nested-code">docs</code></a>
       </div>
+
+      <a href="/outer">
+        <span analogAnchorNavigation>
+          <span id="inside-wrapped-host">Inside Wrapped Host</span>
+        </span>
+      </a>
     `,
   })
   class TestComponent {
