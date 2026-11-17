@@ -231,7 +231,9 @@ export function buildDeferDependencyMap(
         ),
         [innerFn],
       );
-      blockDeps.push(new o.ArrowFunctionExpr([], importExpr));
+      // Angular's dependency resolver returns the import promises themselves.
+      // A function in the array would be taken for an already-loaded class.
+      blockDeps.push(importExpr);
     }
 
     if (blockDeps.length > 0) {
