@@ -129,6 +129,13 @@ export interface PluginOptions {
    */
   fastCompileMode?: 'full' | 'partial';
   /**
+   * Experimental: compile `.tsrx` modules (TypeScript Render Extensions) as
+   * Angular components. Requires `fastCompile: true` and the optional
+   * `@tsrx/core` peer dependency.
+   * Defaults to `false`.
+   */
+  tsrx?: boolean;
+  /**
    * Enable debug logging for specific scopes.
    *
    * - `true` → enables all `analog:angular:*` scopes
@@ -173,6 +180,7 @@ export interface NormalizedAngularOptions {
   compilation: AngularCompilationBackend;
   fastCompile: boolean;
   fastCompileMode: 'full' | 'partial';
+  tsrx: boolean;
   supportedBrowsers: string[];
   isTest: boolean;
   isStackBlitz: boolean;
@@ -471,6 +479,12 @@ export function createAngularBuildContext(
   const isAstroIntegration = process.env['ANALOG_ASTRO'] === 'true';
   const isVitestVscode = !!process.env['VITEST_VSCODE'];
   const compilation = resolveBackend(options, isTest);
+  if (options?.tsrx && compilation !== 'fast') {
+    throw new Error(
+      '[@analogjs/vite-plugin-angular]: `tsrx` requires the fast compile path. ' +
+        'Set `fastCompile: true` (and leave `compilation` unset) to compile .tsrx files.',
+    );
+  }
 
   // Test mode under NgtscProgram disables WebSocket-based liveReload because
   // Vitest's runner does not consume Angular's component-update WS events.
@@ -502,6 +516,7 @@ export function createAngularBuildContext(
     compilation,
     fastCompile: compilation === 'fast',
     fastCompileMode: options?.fastCompileMode ?? 'full',
+    tsrx: !!options?.tsrx,
     supportedBrowsers: options?.supportedBrowsers ?? ['safari 15'],
     isTest,
     isStackBlitz,

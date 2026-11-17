@@ -17,6 +17,10 @@ let useRawTransfer = rawTransferSupported();
  * transfer throws (e.g. its large buffer cannot be allocated).
  */
 export function parseOxc(fileName: string, code: string): ParseResult {
+  // Lowered `.tsrx` modules are TypeScript; OXC picks the language from the extension.
+  if (fileName.endsWith('.tsrx')) {
+    fileName += '.ts';
+  }
   if (useRawTransfer) {
     try {
       return parseSync(fileName, code, rawTransferOptions);

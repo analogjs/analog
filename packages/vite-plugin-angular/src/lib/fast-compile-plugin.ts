@@ -44,6 +44,15 @@ import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { isRolldown } from './utils/rolldown.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
+import {
+  firstDiagnosticLoc,
+  formatTsrxDiagnostics,
+  isTsrxFile,
+  lowerTsrxForScan,
+  lowerTsrxModule,
+  remapTsrxSourceMap,
+  TSRX_EXT_REGEX,
+} from './tsrx/fast-compile.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
@@ -66,6 +75,8 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  /** Compile `.tsrx` modules as Angular components (experimental). */
+  tsrx?: boolean;
   disableTypeChecking?: boolean;
   typeChecker?: TypeCheckerOption;
   include?: string[];
@@ -116,6 +127,24 @@ export function fastCompilePlugin(
   const pluginOptions: FastCompilePluginOptions = sharedCtx
     ? sharedCtx.options
     : (optionsOrCtx as FastCompilePluginOptions);
+
+  const tsrxEnabled = !!pluginOptions.tsrx;
+
+  /** Whether `file` is a module this plugin compiles. */
+  const isCompiledSource = (file: string): boolean =>
+    TS_EXT_REGEX.test(file) || (tsrxEnabled && isTsrxFile(file));
+
+  /**
+   * Reads a source file for registry scanning. `.tsrx` modules are lowered to
+   * TypeScript first so the scanner sees their component classes.
+   */
+  const readScanSource = async (file: string): Promise<string> => {
+    const code = await fsPromises.readFile(file, 'utf-8');
+    if (!tsrxEnabled || !isTsrxFile(file)) {
+      return code;
+    }
+    return (await lowerTsrxForScan(code, file)).code;
+  };
 
   const tsconfigResolver =
     sharedCtx?.tsconfigResolver ??
@@ -176,8 +205,7 @@ export function fastCompilePlugin(
     visited.add(file);
     let code: string;
     try {
-      code =
-        fileContents?.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+      code = fileContents?.get(file) ?? (await readScanSource(file));
       fileContents?.set(file, code);
     } catch (e) {
       if (debugRegistry.enabled) {
@@ -305,7 +333,7 @@ export function fastCompilePlugin(
     const results = await Promise.all(
       Array.from(candidates).map(async (file) => {
         try {
-          const code = await fsPromises.readFile(file, 'utf-8');
+          const code = await readScanSource(file);
           fileContents.set(file, code);
           const entries = scanFile(code, file);
           scanResults.set(file, entries);
@@ -406,8 +434,7 @@ export function fastCompilePlugin(
       importWalkVisited.add(file);
       let code: string;
       try {
-        code =
-          fileContents.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+        code = fileContents.get(file) ?? (await readScanSource(file));
         fileContents.set(file, code);
       } catch {
         return;
@@ -586,7 +613,7 @@ export function fastCompilePlugin(
       let code: string;
       let program: ReturnType<typeof parseSync>['program'];
       try {
-        code = await fsPromises.readFile(current, 'utf-8');
+        code = await readScanSource(current);
         program = parseOxc(current, code).program;
       } catch {
         return;
@@ -611,6 +638,23 @@ export function fastCompilePlugin(
     };
     await visit(file);
     return visited;
+  }
+
+  /**
+   * The element selector of a component or directive class, for TSRX template
+   * tags. Includes registries contributed through `analog.setup()`.
+   */
+  function lookupSelector(className: string): string | null {
+    const registries = sharedCtx
+      ? sharedCtx.componentRegistries
+      : componentRegistries;
+    const entry =
+      registry.get(className) ??
+      registries.map((r) => r.get(className)).find((e) => e !== undefined);
+    if (!entry || (entry.kind !== 'component' && entry.kind !== 'directive')) {
+      return null;
+    }
+    return entry.selector;
   }
 
   function registryEntriesOf(file: string) {
@@ -720,7 +764,7 @@ export function fastCompilePlugin(
         const stylePath =
           stylePaths.get(i) ??
           id.replace(
-            /\.ts$/,
+            /\.tsx?$|\.tsrx$/,
             `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
           );
         try {
@@ -943,7 +987,7 @@ export function fastCompilePlugin(
         }
       }
 
-      if (TS_EXT_REGEX.test(ctx.file)) {
+      if (isCompiledSource(ctx.file)) {
         const [fileId] = ctx.file.split('?');
 
         // Remove old entries from this file
@@ -994,7 +1038,9 @@ export function fastCompilePlugin(
     transform: {
       filter: {
         id: {
-          include: [TS_EXT_REGEX],
+          include: tsrxEnabled
+            ? [TS_EXT_REGEX, TSRX_EXT_REGEX]
+            : [TS_EXT_REGEX],
           // `?raw` ids already carry Vite's native raw-loader output
           // (`export default "<source>"`). Recompiling them as Angular/TS
           // would strip that default export, so leave them to Vite (#2356).
@@ -1013,25 +1059,66 @@ export function fastCompilePlugin(
           return;
         }
 
-        if (id.includes('.ts?')) {
+        if (id.includes('.ts?') || id.includes('.tsrx?')) {
           id = id.replace(/\?(.*)/, '');
         }
+        const resolveImport: ResolveImport = async (spec, importer) => {
+          const resolved = await this.resolve(spec, importer, {
+            skipSelf: true,
+          });
+          if (!resolved || resolved.external) return null;
+          const file = normalizePath(resolved.id.split('?')[0]);
+          // Package declarations come from the lazy `.d.ts` scanner instead.
+          return isCompiledSource(file) &&
+            !EXCLUDED_TS_EXT_REGEX.test(file) &&
+            !file.includes('/node_modules/')
+            ? file
+            : null;
+        };
+
+        if (tsrxEnabled && isTsrxFile(id)) {
+          // Lower once to discover what the module imports, scan those into
+          // the registry, then lower again with their selectors known.
+          const scan = await lowerTsrxForScan(code, id);
+          if (scan.diagnostics.length === 0) {
+            await resolveImportedDeclarations(
+              scan.code,
+              id,
+              parseOxc(id, scan.code).program,
+              resolveImport,
+            );
+          }
+          const lowered = await lowerTsrxModule(code, id, {
+            resolveSelector: (name) => lookupSelector(name),
+          });
+          if (lowered.diagnostics.length > 0) {
+            this.error({
+              message: formatTsrxDiagnostics(lowered, code, id),
+              id,
+              loc: firstDiagnosticLoc(lowered, code, id),
+            });
+          }
+          const transformed = await handleFastCompileTransform(
+            lowered.code,
+            id,
+            resolveImport,
+          );
+          if (!transformed) {
+            return transformed;
+          }
+          const map = transformed.map
+            ? remapTsrxSourceMap(transformed.map, lowered.sourceMap)
+            : null;
+          if (map) {
+            emittedMaps.set(normalizePath(id), JSON.stringify(map));
+          }
+          return { code: transformed.code, map };
+        }
+
         const transformed = await handleFastCompileTransform(
           code,
           id,
-          async (spec, importer) => {
-            const resolved = await this.resolve(spec, importer, {
-              skipSelf: true,
-            });
-            if (!resolved || resolved.external) return null;
-            const file = normalizePath(resolved.id.split('?')[0]);
-            // Package declarations come from the lazy `.d.ts` scanner instead.
-            return TS_EXT_REGEX.test(file) &&
-              !EXCLUDED_TS_EXT_REGEX.test(file) &&
-              !file.includes('/node_modules/')
-              ? file
-              : null;
-          },
+          resolveImport,
         );
         if (transformed?.map) {
           emittedMaps.set(
