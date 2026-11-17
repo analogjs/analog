@@ -2,8 +2,11 @@ import { parseTemplate } from '@angular/compiler';
 import { parseModule, parseStyle } from '@tsrx/core';
 import { describe, expect, it } from 'vitest';
 
-import { compile } from '../compiler/compile';
-import { buildRegistry } from '../compiler/test-helpers';
+// The fast compiler's internals aren't public API; tests compile through its source.
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { compile } from '../../../vite-plugin-angular/src/lib/compiler/compile';
+// eslint-disable-next-line @nx/enforce-module-boundaries
+import { buildRegistry } from '../../../vite-plugin-angular/src/lib/compiler/test-helpers';
 import {
   type EstreeNode,
   lowerTsrx,

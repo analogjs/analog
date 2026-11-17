@@ -24,17 +24,13 @@
     "url": "https://github.com/sponsors/brandonroberts"
   },
   "peerDependencies": {
-    "@angular/build": "catalog:peerAngularBuilders",
-    "@tsrx/core": "catalog:"
+    "@angular/build": "catalog:peerAngularBuilders"
   },
   "peerDependenciesMeta": {
     "@angular/build": {
       "optional": true
     },
     "vite": {
-      "optional": true
-    },
-    "@tsrx/core": {
       "optional": true
     }
   },
@@ -52,7 +48,6 @@
     ]
   },
   "dependencies": {
-    "@jridgewell/sourcemap-codec": "catalog:",
     "es-toolkit": "catalog:",
     "magic-string": "catalog:",
     "obug": "catalog:",
@@ -96,8 +91,5 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
-  },
-  "devDependencies": {
-    "@tsrx/core": "catalog:"
   }
 }

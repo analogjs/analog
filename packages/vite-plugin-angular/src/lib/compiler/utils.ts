@@ -16,9 +16,21 @@ let useRawTransfer = rawTransferSupported();
  * Falls back to the default transfer for this and later calls if raw
  * transfer throws (e.g. its large buffer cannot be allocated).
  */
+const JS_TS_EXTENSIONS = [
+  '.ts',
+  '.tsx',
+  '.mts',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+];
+
 export function parseOxc(fileName: string, code: string): ParseResult {
-  // Lowered `.tsrx` modules are TypeScript; OXC picks the language from the extension.
-  if (fileName.endsWith('.tsrx')) {
+  // OXC picks the language from the extension. Modules of other source
+  // formats reach the compiler already converted to TypeScript.
+  if (!JS_TS_EXTENSIONS.some((ext) => fileName.endsWith(ext))) {
     fileName += '.ts';
   }
   if (useRawTransfer) {

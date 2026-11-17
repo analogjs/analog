@@ -17,7 +17,7 @@ import {
   lowerTsrxForScan,
   lowerTsrxModule,
   tsrxImportSpecifiers,
-} from './fast-compile';
+} from './cache';
 
 let fileCounter = 0;
 /** A fresh file name per test so the module-level cache doesn't leak between tests. */
@@ -37,7 +37,7 @@ export function App() @{
 }
 `;
 
-describe('TSRX fast-compile caching', () => {
+describe('TSRX parse and lowering cache', () => {
   beforeEach(() => {
     parseModule.calls = 0;
   });

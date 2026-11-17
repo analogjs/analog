@@ -1,0 +1,24 @@
+{
+  "name": "@analogjs/vite-plugin-tsrx",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Experimental: compile TSRX (TypeScript Render Extensions) modules as Angular components with Analog's fast compile path",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@analogjs/vite-plugin-angular": "workspace:*",
+    "@jridgewell/sourcemap-codec": "catalog:",
+    "@tsrx/core": "catalog:"
+  },
+  "peerDependencies": {
+    "@angular/compiler": "catalog:",
+    "vite": "catalog:peerCompat"
+  }
+}

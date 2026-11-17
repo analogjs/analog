@@ -1,10 +1,9 @@
 /**
- * Glue between the TSRX lowering and the fast compile path.
- *
- * `.tsrx` modules are lowered into TypeScript with ordinary `@Component`
- * classes, then compiled by the fast compiler like any other source file.
- * TSRX is only supported on the fast compile path.
+ * Cached parsing and lowering of `.tsrx` modules, shared by registry scans and
+ * compiles so each source is parsed once.
  */
+
+import { parseModule, parseStyle } from '@tsrx/core';
 
 import {
   type EstreeNode,
@@ -24,26 +23,12 @@ export function isTsrxFile(id: string): boolean {
   return path.endsWith('.tsrx');
 }
 
-let parsersPromise: Promise<TsrxParsers> | undefined;
-
-/** Loads the parsers from `@tsrx/core`, an optional peer dependency. */
-export function loadTsrxParsers(): Promise<TsrxParsers> {
-  parsersPromise ??= import('@tsrx/core').then(
-    (core): TsrxParsers => ({
-      parseModule: (source, fileName) => core.parseModule(source, fileName),
-      // `location` only seeds the stylesheet hash, which the lowering doesn't use.
-      parseStyle: (css) =>
-        core.parseStyle(css, { filename: '', line: 0, column: 0 }, {}),
-    }),
-    () => {
-      throw new Error(
-        '[@analogjs/vite-plugin-angular]: `tsrx` is enabled but `@tsrx/core` is not installed. ' +
-          'Install it to compile .tsrx files.',
-      );
-    },
-  );
-  return parsersPromise;
-}
+const parsers: TsrxParsers = {
+  parseModule: (source, fileName) => parseModule(source, fileName),
+  // `location` only seeds the stylesheet hash, which the lowering doesn't use.
+  parseStyle: (css) =>
+    parseStyle(css, { filename: '', line: 0, column: 0 }, {}),
+};
 
 /** Per-file cache of parse and lowering results, keyed by the source text. */
 interface CachedModule {
@@ -68,11 +53,7 @@ function cachedModule(fileName: string, source: string): CachedModule {
 }
 
 /** Parsers whose `parseModule` parses `entry`'s source at most once. */
-async function cachingParsers(
-  entry: CachedModule,
-  fileName: string,
-): Promise<TsrxParsers> {
-  const parsers = await loadTsrxParsers();
+function cachingParsers(entry: CachedModule, fileName: string): TsrxParsers {
   return {
     parseModule: (source, file) => {
       if (file !== fileName || source !== entry.source) {
@@ -106,10 +87,7 @@ export async function tsrxImportSpecifiers(
   const entry = cachedModule(fileName, code);
   let program: EstreeNode;
   try {
-    program = (await cachingParsers(entry, fileName)).parseModule(
-      code,
-      fileName,
-    );
+    program = cachingParsers(entry, fileName).parseModule(code, fileName);
   } catch {
     return [];
   }
@@ -146,17 +124,12 @@ export async function lowerTsrxForScan(
   }
   if (entry.scan === undefined) {
     let resolvedSelectors = false;
-    const result = lowerTsrx(
-      code,
-      fileName,
-      await cachingParsers(entry, fileName),
-      {
-        resolveSelector: () => {
-          resolvedSelectors = true;
-          return 'tsrx-unresolved';
-        },
+    const result = lowerTsrx(code, fileName, cachingParsers(entry, fileName), {
+      resolveSelector: () => {
+        resolvedSelectors = true;
+        return 'tsrx-unresolved';
       },
-    );
+    });
     entry.scan = { result, resolvedSelectors };
   }
   return entry.scan.result;
@@ -177,12 +150,7 @@ export async function lowerTsrxModule(
   entry.compiled =
     entry.scan && !entry.scan.resolvedSelectors
       ? entry.scan.result
-      : lowerTsrx(
-          code,
-          fileName,
-          await cachingParsers(entry, fileName),
-          resolver,
-        );
+      : lowerTsrx(code, fileName, cachingParsers(entry, fileName), resolver);
   return entry.compiled;
 }
 

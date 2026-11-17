@@ -44,16 +44,11 @@ import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { isRolldown } from './utils/rolldown.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
-import {
-  firstDiagnosticLoc,
-  formatTsrxDiagnostics,
-  isTsrxFile,
-  lowerTsrxForScan,
-  lowerTsrxModule,
-  remapTsrxSourceMap,
-  tsrxImportSpecifiers,
-  TSRX_GLOB,
-} from './tsrx/fast-compile.js';
+import type {
+  FastCompileApi,
+  FastCompileResolve,
+  FastCompileSourceFormat,
+} from './fast-compile-api.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
@@ -76,8 +71,6 @@ export interface FastCompilePluginOptions {
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
-  /** Compile `.tsrx` modules as Angular components (experimental). */
-  tsrx?: boolean;
   disableTypeChecking?: boolean;
   typeChecker?: TypeCheckerOption;
   include?: string[];
@@ -129,23 +122,46 @@ export function fastCompilePlugin(
     ? sharedCtx.options
     : (optionsOrCtx as FastCompilePluginOptions);
 
-  const tsrxEnabled = !!pluginOptions.tsrx;
+  /** Source formats registered through `api.fastCompile.registerSourceFormat`. */
+  const sourceFormats: FastCompileSourceFormat[] = [];
+  const sourceFormatOf = (
+    file: string,
+  ): FastCompileSourceFormat | undefined => {
+    const path = file.split('?')[0];
+    return sourceFormats.find((format) => format.test(path));
+  };
 
-  /** Whether `file` is a module this plugin compiles. */
+  /** Whether `file` is a module compiled through this plugin. */
   const isCompiledSource = (file: string): boolean =>
-    TS_EXT_REGEX.test(file) || (tsrxEnabled && isTsrxFile(file));
+    TS_EXT_REGEX.test(file) || sourceFormatOf(file) !== undefined;
 
   /**
-   * Reads a source file for registry scanning. `.tsrx` modules are lowered to
-   * TypeScript first so the scanner sees their component classes.
+   * Reads a source file for registry scanning. Modules of a registered source
+   * format are converted to TypeScript first so the scanner sees their classes.
    */
   const readScanSource = async (file: string): Promise<string> => {
     const code = await fsPromises.readFile(file, 'utf-8');
-    if (!tsrxEnabled || !isTsrxFile(file)) {
-      return code;
-    }
-    return (await lowerTsrxForScan(code, file)).code;
+    const format = sourceFormatOf(file);
+    return format ? format.toScanSource(code, file) : code;
   };
+
+  /**
+   * Adapts a Vite-style resolver to the scanner's: only source files this
+   * plugin compiles, outside `node_modules` (package declarations come from
+   * the lazy `.d.ts` scanner instead).
+   */
+  const toResolveImport =
+    (resolve: FastCompileResolve): ResolveImport =>
+    async (spec, importer) => {
+      const resolved = await resolve(spec, importer);
+      if (!resolved || resolved.external) return null;
+      const file = normalizePath(resolved.id.split('?')[0]);
+      return isCompiledSource(file) &&
+        !EXCLUDED_TS_EXT_REGEX.test(file) &&
+        !file.includes('/node_modules/')
+        ? file
+        : null;
+    };
 
   const tsconfigResolver =
     sharedCtx?.tsconfigResolver ??
@@ -658,8 +674,9 @@ export function fastCompilePlugin(
   }
 
   /**
-   * The element selector of a component or directive class, for TSRX template
-   * tags. Includes registries contributed through `analog.setup()`.
+   * The element selector of a component or directive class, for source formats
+   * that reference components by class. Includes registries contributed
+   * through `analog.setup()`.
    */
   function lookupSelector(className: string): string | null {
     const registries = sharedCtx
@@ -780,7 +797,7 @@ export function fastCompilePlugin(
       for (let i = 0; i < styleStrings.length; i++) {
         const stylePath =
           stylePaths.get(i) ??
-          (isTsrxFile(id) ? id.slice(0, -'.tsrx'.length) + '.ts' : id).replace(
+          (sourceFormatOf(id) ? id + '.ts' : id).replace(
             /\.ts$/,
             `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
           );
@@ -909,12 +926,50 @@ export function fastCompilePlugin(
     );
   }
 
+  const fastCompile: FastCompileApi = {
+    registerSourceFormat(format) {
+      if (!sourceFormats.includes(format)) {
+        sourceFormats.push(format);
+      }
+    },
+    scanImports(specifiers, importer, resolve) {
+      return resolveImportSpecifiers(
+        specifiers,
+        importer,
+        toResolveImport(resolve),
+      );
+    },
+    resolveSelector: lookupSelector,
+    async compile(code, id, { resolve, mapToSource }) {
+      const transformed = await handleFastCompileTransform(
+        code,
+        id,
+        toResolveImport(resolve),
+      );
+      if (!transformed) {
+        return undefined;
+      }
+      const map =
+        transformed.map && mapToSource
+          ? mapToSource(transformed.map)
+          : (transformed.map ?? null);
+      if (map) {
+        emittedMaps.set(
+          normalizePath(id),
+          typeof map === 'string' ? map : JSON.stringify(map),
+        );
+      }
+      return { code: transformed.code, map };
+    },
+  };
+
   const compilerApi = {
     angularCompiler: true as const,
     getTsConfigPath: resolveTsConfigPath,
     getSourceMap: (id: string): string | undefined =>
       emittedMaps.get(normalizePath(id)),
     hasEmitted: (id: string): boolean => emittedMaps.has(normalizePath(id)),
+    fastCompile,
   };
 
   sharedCtx?.registerCompiler({
@@ -1055,7 +1110,7 @@ export function fastCompilePlugin(
     transform: {
       filter: {
         id: {
-          include: tsrxEnabled ? [TS_EXT_REGEX, TSRX_GLOB] : [TS_EXT_REGEX],
+          include: [TS_EXT_REGEX],
           // `?raw` ids already carry Vite's native raw-loader output
           // (`export default "<source>"`). Recompiling them as Angular/TS
           // would strip that default export, so leave them to Vite (#2356).
@@ -1074,58 +1129,12 @@ export function fastCompilePlugin(
           return;
         }
 
-        if (id.includes('.ts?') || (tsrxEnabled && isTsrxFile(id))) {
+        if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        const resolveImport: ResolveImport = async (spec, importer) => {
-          const resolved = await this.resolve(spec, importer, {
-            skipSelf: true,
-          });
-          if (!resolved || resolved.external) return null;
-          const file = normalizePath(resolved.id.split('?')[0]);
-          // Package declarations come from the lazy `.d.ts` scanner instead.
-          return isCompiledSource(file) &&
-            !EXCLUDED_TS_EXT_REGEX.test(file) &&
-            !file.includes('/node_modules/')
-            ? file
-            : null;
-        };
-
-        if (tsrxEnabled && isTsrxFile(id)) {
-          // Scan what the module imports into the registry, read straight
-          // from its (cached) TSRX parse, then lower it once with those
-          // selectors known.
-          await resolveImportSpecifiers(
-            await tsrxImportSpecifiers(code, id),
-            id,
-            resolveImport,
-          );
-          const lowered = await lowerTsrxModule(code, id, {
-            resolveSelector: (name) => lookupSelector(name),
-          });
-          if (lowered.diagnostics.length > 0) {
-            this.error({
-              message: formatTsrxDiagnostics(lowered, code, id),
-              id,
-              loc: firstDiagnosticLoc(lowered, code, id),
-            });
-          }
-          const transformed = await handleFastCompileTransform(
-            lowered.code,
-            id,
-            resolveImport,
-          );
-          if (!transformed) {
-            return transformed;
-          }
-          const map = transformed.map
-            ? remapTsrxSourceMap(transformed.map, lowered.sourceMap)
-            : null;
-          if (map) {
-            emittedMaps.set(normalizePath(id), JSON.stringify(map));
-          }
-          return { code: transformed.code, map };
-        }
+        const resolveImport = toResolveImport((spec, importer) =>
+          this.resolve(spec, importer, { skipSelf: true }),
+        );
 
         const transformed = await handleFastCompileTransform(
           code,
