@@ -1,3 +1,9 @@
+# [3.0.0-beta.44](https://github.com/analogjs/analog/compare/v3.0.0-beta.43...v3.0.0-beta.44) (2026-11-17)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** lazy-load [@defer](https://github.com/defer) dependencies in fast compile ([#2784](https://github.com/analogjs/analog/issues/2784)) ([4ec2ae9](https://github.com/analogjs/analog/commit/4ec2ae9050a35e8933941a9317314f5b12a3ee79))
+
 # [3.0.0-beta.43](https://github.com/analogjs/analog/compare/v3.0.0-beta.42...v3.0.0-beta.43) (2026-11-17)
 
 ### Features
