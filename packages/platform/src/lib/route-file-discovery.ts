@@ -63,6 +63,11 @@ export function createRouteFileDiscovery(
     return path === dir || path.startsWith(`${dir}/`);
   }
 
+  /** Page route files: `.page.ts`, or `.page.tsrx` for TSRX components. */
+  function isPageFile(path: string): boolean {
+    return path.endsWith('.page.ts') || path.endsWith('.page.tsrx');
+  }
+
   function getAppLocalFileKind(path: string): 'route' | 'content' | null {
     if (
       path.endsWith('.md') &&
@@ -71,7 +76,7 @@ export function createRouteFileDiscovery(
       )
     )
       return 'content';
-    if (path.endsWith('.page.ts') && isWithinDir(path, `${root}/src/app/pages`))
+    if (isPageFile(path) && isWithinDir(path, `${root}/src/app/pages`))
       return 'route';
     return null;
   }
@@ -87,7 +92,7 @@ export function createRouteFileDiscovery(
       return 'content';
     }
     if (
-      normalized.endsWith('.page.ts') &&
+      isPageFile(normalized) &&
       additionalPagesRoots.some((dir) => isWithinDir(normalized, dir))
     ) {
       return 'route';
@@ -104,10 +109,14 @@ export function createRouteFileDiscovery(
   }
 
   function scanRouteFiles(): string[] {
-    const appLocalGlobs = [`${root}/src/app/pages/**/*.page.ts`];
-    const additionalGlobs = additionalPagesDirs.map(
-      (dir) => `${joinDir(dir)}/**/*.page.ts`,
-    );
+    const appLocalGlobs = [
+      `${root}/src/app/pages/**/*.page.ts`,
+      `${root}/src/app/pages/**/*.page.tsrx`,
+    ];
+    const additionalGlobs = additionalPagesDirs.flatMap((dir) => [
+      `${joinDir(dir)}/**/*.page.ts`,
+      `${joinDir(dir)}/**/*.page.tsrx`,
+    ]);
 
     const appLocal = globSync(appLocalGlobs, {
       dot: true,

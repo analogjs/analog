@@ -32,6 +32,20 @@ describe('createRouteFileDiscovery', () => {
     ).toBe('route');
   });
 
+  it('tracks TSRX page files as routes', () => {
+    expect(
+      discovery.getDiscoveredFileKind(
+        '/workspace/apps/analog-app/src/app/pages/about.page.tsrx',
+      ),
+    ).toBe('route');
+
+    expect(
+      discovery.getDiscoveredFileKind(
+        '/workspace/libs/shared/feature/src/pages/blog/[slug].page.tsrx',
+      ),
+    ).toBe('route');
+  });
+
   it('tracks app and additional markdown files as content', () => {
     expect(
       discovery.getDiscoveredFileKind(

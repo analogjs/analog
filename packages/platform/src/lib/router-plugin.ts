@@ -93,7 +93,11 @@ export function routerPlugin(options?: Options): Plugin[] {
     routeFilesCache ??= globSync(
       [
         `${root}/src/app/pages/**/*.page.ts`,
-        ...additionalPagesDirs.map((dir) => `${dir}/**/*.page.ts`),
+        `${root}/src/app/pages/**/*.page.tsrx`,
+        ...additionalPagesDirs.flatMap((dir) => [
+          `${dir}/**/*.page.ts`,
+          `${dir}/**/*.page.tsrx`,
+        ]),
       ],
       { dot: true, absolute: true },
     );
@@ -124,8 +128,8 @@ export function routerPlugin(options?: Options): Plugin[] {
     return endpointFilesCache;
   };
   const discoverPageRouteFiles = () => {
-    pageRouteFilesCache ??= discoverRouteFiles().filter((file) =>
-      file.endsWith('.page.ts'),
+    pageRouteFilesCache ??= discoverRouteFiles().filter(
+      (file) => file.endsWith('.page.ts') || file.endsWith('.page.tsrx'),
     );
 
     return pageRouteFilesCache;
@@ -137,6 +141,7 @@ export function routerPlugin(options?: Options): Plugin[] {
     endpointFilesCache = undefined;
   };
   const reportRouteDiagnostics = (path: string) => {
+    // The route idiom checks parse TypeScript; `.page.tsrx` files are skipped.
     if (!path.endsWith('.page.ts')) {
       return;
     }

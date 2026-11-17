@@ -101,10 +101,12 @@ describe('discoverLibraryRoutes', () => {
 });
 
 describe('pageGlobs', () => {
-  it('maps directories to *.page.ts globs', () => {
+  it('maps directories to *.page.ts and *.page.tsrx globs', () => {
     expect(pageGlobs(['/libs/foo', '/libs/bar'])).toEqual([
       '/libs/foo/**/*.page.ts',
+      '/libs/foo/**/*.page.tsrx',
       '/libs/bar/**/*.page.ts',
+      '/libs/bar/**/*.page.tsrx',
     ]);
   });
 

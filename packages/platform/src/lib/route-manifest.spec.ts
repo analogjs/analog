@@ -47,6 +47,16 @@ describe('filenameToRoutePath', () => {
     );
   });
 
+  it.each([
+    ['/src/app/pages/about.page.tsrx', '/about'],
+    ['/src/app/pages/index.page.tsrx', '/'],
+    ['/src/app/pages/users/[id].page.tsrx', '/users/[id]'],
+    ['/src/app/pages/(auth)/login.page.tsrx', '/login'],
+    ['/src/app/pages/docs/[...slug].page.tsrx', '/docs/[...slug]'],
+  ])('strips the TSRX page extension from %s', (filename, expected) => {
+    expect(filenameToRoutePath(filename)).toBe(expected);
+  });
+
   describe('group segments', () => {
     it('should strip named index/group route', () => {
       expect(filenameToRoutePath('/src/app/pages/(home).page.ts')).toBe('/');
@@ -272,6 +282,15 @@ describe('generateRouteManifest', () => {
     expect(manifest.routes[0].fullPath).toBe('/');
     expect(manifest.routes[1].fullPath).toBe('/about');
     expect(manifest.routes[2].fullPath).toBe('/users/[id]');
+  });
+
+  it('should pair a TSRX layout with its index page without a collision', () => {
+    const manifest = generateRouteManifest([
+      '/src/app/pages/docs.page.tsrx',
+      '/src/app/pages/docs/index.page.ts',
+    ]);
+
+    expect(manifest.collisions).toEqual([]);
   });
 
   it('should sort static routes before dynamic routes', () => {
