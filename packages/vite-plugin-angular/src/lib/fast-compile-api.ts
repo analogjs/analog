@@ -48,7 +48,8 @@ export interface FastCompileApi {
   registerSourceFormat(format: FastCompileSourceFormat): void;
   /**
    * Scans the modules behind `specifiers`, imported by `importer`, into the
-   * component registry so `resolveSelector` knows their selectors.
+   * component registry so `resolveSelector` knows their selectors. Relative
+   * imports are scanned from source; packages from their `.d.ts` declarations.
    */
   scanImports(
     specifiers: string[],

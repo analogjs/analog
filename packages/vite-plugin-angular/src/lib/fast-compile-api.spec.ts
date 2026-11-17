@@ -86,6 +86,16 @@ export class Badge {}
     expect(api.resolveSelector('Badge')).toBe('x-badge');
   });
 
+  it('scans imported packages from their declarations', async () => {
+    expect(api.resolveSelector('RouterOutlet')).toBeNull();
+    await api.scanImports(
+      ['@angular/router'],
+      `${dir}/app.custom`,
+      async () => null,
+    );
+    expect(api.resolveSelector('RouterOutlet')).toBe('router-outlet');
+  });
+
   it('ignores imports of unregistered formats', async () => {
     const other = `${dir}/other.unknown`;
     writeFileSync(

@@ -558,12 +558,22 @@ export function fastCompilePlugin(
     id: string,
     program?: ReturnType<typeof parseSync>['program'],
   ): void {
-    for (const pkg of collectImportedPackages(code, id, program)) {
+    ensureDtsRegistryForPackages(collectImportedPackages(code, id, program));
+  }
+
+  /** Scan the `.d.ts` declarations of `packages` into the registry, once each. */
+  function ensureDtsRegistryForPackages(packages: Iterable<string>): void {
+    for (const pkg of packages) {
       if (scannedDtsPackages.has(pkg)) continue;
       scannedDtsPackages.add(pkg);
 
       try {
-        const dtsEntries = scanPackageDts(pkg, projectRoot, scannedDtsPackages);
+        const dtsEntries = scanPackageDts(
+          pkg,
+          // Before a tsconfig resolves, look up packages from the working directory.
+          projectRoot || process.cwd(),
+          scannedDtsPackages,
+        );
         for (const entry of dtsEntries) {
           if (!registry.has(entry.className)) {
             registry.set(entry.className, entry);
@@ -933,6 +943,18 @@ export function fastCompilePlugin(
       }
     },
     scanImports(specifiers, importer, resolve) {
+      // Packages' Angular classes come from their `.d.ts` declarations;
+      // relative imports are scanned from source.
+      ensureDtsRegistryForPackages(
+        specifiers
+          .filter((spec) => !spec.startsWith('.') && !spec.startsWith('/'))
+          .map((spec) => {
+            const parts = spec.split('/');
+            return spec.startsWith('@')
+              ? parts.slice(0, 2).join('/')
+              : parts[0];
+          }),
+      );
       return resolveImportSpecifiers(
         specifiers,
         importer,
