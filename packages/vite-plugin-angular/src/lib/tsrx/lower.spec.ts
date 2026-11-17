@@ -254,6 +254,109 @@ export class Counter {
     );
   });
 
+  describe('meta export', () => {
+    const CART = `import { Component, signal } from '@angular/core';
+import { CartStore } from './cart-store';
+
+export const meta = {
+  selector: 'app-cart',
+  providers: [CartStore],
+  host: { class: 'cart', '[class.empty]': 'isEmpty()' },
+} satisfies Component;
+
+export function Cart() @{
+  const items = signal<string[]>([]);
+  const isEmpty = () => items().length === 0;
+  <ul>{items().length}</ul>
+}
+`;
+
+    it('merges meta into @Component', () => {
+      const { code, diagnostics } = lower(CART);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain(`@Component({
+  selector: 'app-cart',
+  providers: [CartStore],
+  host: { class: 'cart', '[class.empty]': 'isEmpty()' },
+  template: "<ul>{{ $fc.b0() }}</ul>",`);
+      expect(code).not.toContain('tsrx-cart');
+      // Host expressions run against the instance, so referenced locals are exposed.
+      expect(code).toContain('return {b0: ɵb0, isEmpty};');
+      expect(code).toContain(
+        '  protected readonly isEmpty = this.$fc.isEmpty;\n}',
+      );
+      // The user's value import of Component is reused.
+      expect(code).toContain(
+        `import { ChangeDetectionStrategy as ɵngChangeDetectionStrategy } from '@angular/core';`,
+      );
+    });
+
+    it('compiles with the fast compiler', () => {
+      const { code } = lower(CART);
+      const result = compile(code, '/app/test.tsrx', buildRegistry({}));
+      expect(result.code).toContain('"app-cart"');
+      expect(result.code).toContain('CartStore');
+      expect(result.code).toContain('hostAttrs');
+    });
+
+    it('uses the meta selector for local tags', () => {
+      const { code, diagnostics } = lower(`
+        export const meta = { selector: 'app-card' };
+        function Wrapper() @{
+          <Card />
+        }
+        export function Card() @{
+          <p>card</p>
+        }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain('template: "<app-card></app-card>"');
+    });
+
+    it('rejects fields that come from the template', () => {
+      expect(
+        errors(`
+          export const meta = { styles: ['p {}'], template: '<p></p>' };
+          export function C() @{ <p /> }
+        `),
+      ).toEqual([
+        expect.stringContaining("'styles' cannot be set in `meta`"),
+        expect.stringContaining("'template' cannot be set in `meta`"),
+      ]);
+    });
+
+    it('requires a single exported component', () => {
+      expect(
+        errors(`
+          export const meta = { selector: 'x-a' };
+          export function A() @{ <p /> }
+          export function B() @{ <p /> }
+        `),
+      ).toEqual([expect.stringContaining('exports 2')]);
+    });
+
+    it('asks for a value import of Component', () => {
+      expect(
+        errors(`
+          import { type Component } from '@angular/core';
+          export const meta = { selector: 'x-a' } satisfies Component;
+          export function A() @{ <p /> }
+        `),
+      ).toEqual([
+        expect.stringContaining('Change `type Component` to `Component`'),
+      ]);
+    });
+
+    it('rejects other bindings named Component', () => {
+      expect(
+        errors(`
+          const Component = 1;
+          export function A() @{ <p /> }
+        `),
+      ).toEqual([expect.stringContaining('uses it for something else')]);
+    });
+  });
+
   describe('errors', () => {
     it('rejects parameters', () => {
       expect(

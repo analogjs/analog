@@ -175,16 +175,58 @@ export function lowerTsrx(
   }
 
   const imports = collectImports(program);
-  const existingDecorator = localNameOf(imports, CORE_MODULE, 'Component');
-  const decoratorName =
-    existingDecorator ??
-    (isNameTaken(program, imports, 'Component') ? 'ɵngComponent' : 'Component');
-  const localComponents = new Set<string>(
-    program.body.flatMap((stmt: EstreeNode) => {
-      const fn = componentFunction(stmt);
-      return fn ? [fn.id.name as string] : [];
-    }),
+  // The fast compiler recognizes the decorator by its literal name, so the
+  // lowering always emits `@Component` and needs that name to be Angular's.
+  const decoratorName = 'Component';
+  const decoratorBinding = componentBinding(program);
+  const existingDecorator =
+    decoratorBinding?.kind === 'core-value' ? decoratorName : null;
+  if (decoratorBinding !== null && decoratorBinding.kind !== 'core-value') {
+    diagnostics.push({
+      message:
+        decoratorBinding.kind === 'core-type'
+          ? "TSRX components need `Component` as a value. Change `type Component` to `Component` in the '@angular/core' import."
+          : "TSRX components need the name `Component` for Angular's decorator, but this file uses it for something else. Rename it.",
+      start: decoratorBinding.node.start,
+      end: decoratorBinding.node.end,
+    });
+  }
+  // `export const meta = { … }` carries the `@Component` metadata of the
+  // file's single exported component.
+  const meta = extractMeta(program, diagnostics);
+  const exported = (program.body as EstreeNode[]).filter(
+    (stmt) => stmt.type !== 'FunctionDeclaration' && componentFunction(stmt),
   );
+  let metaTarget: EstreeNode | null = null;
+  if (meta !== null) {
+    if (exported.length === 1) {
+      metaTarget = componentFunction(exported[0]);
+    } else {
+      diagnostics.push({
+        message:
+          exported.length === 0
+            ? '`meta` applies to the exported component, but this file exports none.'
+            : '`meta` applies to a single exported component, but this file exports ' +
+              `${exported.length}. Move the other components into their own files.`,
+        start: meta.node.start,
+        end: meta.node.end,
+      });
+    }
+  }
+
+  // Selectors of the components declared in this file, for local template tags.
+  const localComponents = new Map<string, string>();
+  for (const stmt of program.body as EstreeNode[]) {
+    const fn = componentFunction(stmt);
+    if (fn) {
+      const name = fn.id.name as string;
+      localComponents.set(
+        name,
+        (fn === metaTarget ? meta?.selector : undefined) ??
+          defaultSelector(name),
+      );
+    }
+  }
 
   const replacements: { start: number; end: number; text: MappedText }[] = [];
   const helpers = new Set<string>();
@@ -208,7 +250,7 @@ export function lowerTsrx(
       replacements.push({
         start: stmt.start,
         end: stmt.end,
-        text: lowerer.lower(stmt, fn),
+        text: lowerer.lower(stmt, fn, fn === metaTarget ? meta : null),
       });
     } catch (e) {
       if (!(e instanceof TsrxLoweringError)) {
@@ -235,12 +277,8 @@ export function lowerTsrx(
   // Appended rather than prepended so line numbers before the first component are preserved.
   // Imports and type aliases are hoisted, so their position does not matter.
   const injected: string[] = [];
-  if (existingDecorator === null) {
-    injected.push(
-      decoratorName === 'Component'
-        ? 'Component'
-        : `Component as ${decoratorName}`,
-    );
+  if (existingDecorator === null && decoratorBinding === null) {
+    injected.push(decoratorName);
   }
   injected.push('ChangeDetectionStrategy as ɵngChangeDetectionStrategy');
   const trailer = [
@@ -259,6 +297,155 @@ export function lowerTsrx(
     diagnostics,
     sourceMap: TsrxSourceMap.fromMappedText(fileName, source, out),
   };
+}
+
+/** The `export const meta = { … }` of a module. */
+interface ComponentMeta {
+  /** The object literal. */
+  node: EstreeNode;
+  /** Its properties, copied into `@Component`. */
+  properties: EstreeNode[];
+  /** The selector, when set to a string literal. */
+  selector?: string;
+}
+
+/** Names a top-level body statement declares. */
+function declaredNames(stmt: EstreeNode): string[] {
+  if (stmt.type === 'FunctionDeclaration' && stmt.id) {
+    return [stmt.id.name];
+  }
+  if (stmt.type === 'VariableDeclaration') {
+    return (stmt.declarations as EstreeNode[])
+      .filter((d) => d.id.type === 'Identifier')
+      .map((d) => d.id.name);
+  }
+  return [];
+}
+
+/**
+ * Identifiers used in `meta.host` binding and listener expressions
+ * (`'[class.x]': 'expr'`, `'(event)': 'expr'`). Over-approximates: property
+ * names after a dot are skipped, other words that aren't body locals are
+ * ignored by the caller.
+ */
+function hostReferences(meta: ComponentMeta | null): Set<string> {
+  const names = new Set<string>();
+  const host = meta?.properties.find(
+    (p) =>
+      (p.key.type === 'Identifier' ? p.key.name : p.key.value) === 'host' &&
+      p.value.type === 'ObjectExpression',
+  );
+  for (const prop of (host?.value.properties ?? []) as EstreeNode[]) {
+    const key =
+      prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
+    if (
+      typeof key !== 'string' ||
+      !/^[[(]/.test(key) ||
+      prop.value?.type !== 'Literal' ||
+      typeof prop.value.value !== 'string'
+    ) {
+      continue;
+    }
+    for (const match of (prop.value.value as string).matchAll(
+      /(?<![.\w$])[A-Za-z_$][\w$]*/g,
+    )) {
+      names.add(match[0]);
+    }
+  }
+  return names;
+}
+
+/** `@Component` fields that come from the template and may not be set in `meta`. */
+const DERIVED_META_FIELDS = new Set([
+  'template',
+  'templateUrl',
+  'imports',
+  'changeDetection',
+  'styles',
+]);
+
+/**
+ * Finds and validates `export const meta = { … }`. Like decorator metadata, it
+ * must be a static object literal, optionally with `satisfies`/`as`.
+ */
+function extractMeta(
+  program: EstreeNode,
+  diagnostics: TsrxDiagnostic[],
+): ComponentMeta | null {
+  for (const stmt of program.body as EstreeNode[]) {
+    const decl =
+      stmt.type === 'ExportNamedDeclaration' ? stmt.declaration : null;
+    if (decl?.type !== 'VariableDeclaration') {
+      continue;
+    }
+    for (const d of decl.declarations as EstreeNode[]) {
+      if (d.id.type !== 'Identifier' || d.id.name !== 'meta') {
+        continue;
+      }
+      let init = d.init;
+      while (
+        init &&
+        (init.type === 'TSSatisfiesExpression' ||
+          init.type === 'TSAsExpression')
+      ) {
+        init = init.expression;
+      }
+      if (decl.kind !== 'const' || init?.type !== 'ObjectExpression') {
+        diagnostics.push({
+          message:
+            '`meta` must be a `const` initialized with an object literal.',
+          start: d.start,
+          end: d.end,
+        });
+        return null;
+      }
+      const meta: ComponentMeta = { node: init, properties: [] };
+      for (const prop of init.properties as EstreeNode[]) {
+        const key =
+          prop.type === 'Property' && !prop.computed
+            ? prop.key.type === 'Identifier'
+              ? prop.key.name
+              : prop.key.value
+            : null;
+        if (typeof key !== 'string') {
+          diagnostics.push({
+            message: '`meta` properties must be plain `key: value` entries.',
+            start: prop.start,
+            end: prop.end,
+          });
+          continue;
+        }
+        if (DERIVED_META_FIELDS.has(key)) {
+          diagnostics.push({
+            message:
+              key === 'styles'
+                ? "'styles' cannot be set in `meta`; use a <style> element (or styleUrl)."
+                : `'${key}' cannot be set in \`meta\`; it comes from the template.`,
+            start: prop.start,
+            end: prop.end,
+          });
+          continue;
+        }
+        if (key === 'selector') {
+          if (
+            prop.value.type !== 'Literal' ||
+            typeof prop.value.value !== 'string'
+          ) {
+            diagnostics.push({
+              message: '`meta.selector` must be a string literal.',
+              start: prop.value.start,
+              end: prop.value.end,
+            });
+            continue;
+          }
+          meta.selector = prop.value.value;
+        }
+        meta.properties.push(prop);
+      }
+      return meta;
+    }
+  }
+  return null;
 }
 
 /** Returns the component function declared by a top-level statement, if any. */
@@ -289,13 +476,17 @@ class ComponentLowerer {
     private readonly source: string,
     private readonly fileName: string,
     private readonly imports: Map<string, ImportedName>,
-    private readonly localComponents: Set<string>,
+    private readonly localComponents: Map<string, string>,
     private readonly resolver: TsrxSelectorResolver,
     private readonly helpers: Set<string>,
     private readonly decoratorName: string,
   ) {}
 
-  lower(stmt: EstreeNode, fn: EstreeNode): MappedText {
+  lower(
+    stmt: EstreeNode,
+    fn: EstreeNode,
+    meta: ComponentMeta | null,
+  ): MappedText {
     const name = fn.id.name as string;
     if (fn.params.length > 0) {
       throw new TsrxLoweringError(
@@ -314,9 +505,16 @@ class ComponentLowerer {
     const fields: MappedText[] = [];
     const aliases: MappedText[] = [];
     const statements: MappedText[] = [];
+    // Body locals by name, for exposing the ones host bindings reference.
+    const locals = new Map<string, EstreeNode>();
+    const memberNames = new Set<string>();
     for (const s of block.body as EstreeNode[]) {
+      for (const local of declaredNames(s)) {
+        locals.set(local, s);
+      }
       const member = this.getMemberDeclaration(s);
       if (member !== null) {
+        memberNames.add(member.id.name);
         fields.push(
           mt`  readonly ${this.copy(member.id)} = ${this.copy(member.init)};`.from(
             s,
@@ -338,10 +536,14 @@ class ComponentLowerer {
     }
     const template = this.lowerChild(block.render, []);
 
-    const metaProps: (string | MappedText)[] = [
-      `selector: ${JSON.stringify(defaultSelector(name))}`,
-      mt`template: ${jsonLiteral(template)}`.from(block.render),
-    ];
+    const metaProps: (string | MappedText)[] = [];
+    if (meta?.selector === undefined) {
+      metaProps.push(`selector: ${JSON.stringify(defaultSelector(name))}`);
+    }
+    for (const prop of meta?.properties ?? []) {
+      metaProps.push(this.copy(prop));
+    }
+    metaProps.push(mt`template: ${jsonLiteral(template)}`.from(block.render));
     if (this.deps.size > 0) {
       metaProps.push(`imports: [${[...this.deps].join(', ')}]`);
     }
@@ -358,11 +560,23 @@ class ComponentLowerer {
         : stmt.type === 'ExportDefaultDeclaration'
           ? 'export default '
           : '';
+    // Host binding expressions run against the instance, so body locals they
+    // reference are exposed as fields. Signals and functions keep their
+    // identity, so the field always reflects the local.
+    const exposed = [...hostReferences(meta)].filter(
+      (n) => locals.has(n) && !memberNames.has(n),
+    );
+    const exposedFields = exposed.map((n) =>
+      mt`  protected readonly ${n} = this.${TSRX_BINDINGS_FIELD}.${n};`.from(
+        locals.get(n)!,
+      ),
+    );
+    const returned = [...this.keys.map((k) => `${k}: ɵ${k}`), ...exposed];
     const setup = [
       ...aliases,
       ...statements,
       ...this.bindings.map((b) => mt`    ${b}`),
-      `    return {${this.keys.map((k) => `${k}: ɵ${k}`).join(', ')}};`,
+      `    return {${returned.join(', ')}};`,
     ];
     return joinMapped(
       [
@@ -374,6 +588,7 @@ class ComponentLowerer {
         mt`  protected readonly ${TSRX_BINDINGS_FIELD} = (() => {`.from(block),
         ...setup,
         '  })();',
+        ...exposedFields,
         '}',
       ],
       '\n',
@@ -784,7 +999,7 @@ class ComponentLowerer {
     const name = tag.name as string;
     let selector: string | null;
     if (this.localComponents.has(name)) {
-      selector = defaultSelector(name);
+      selector = this.localComponents.get(name)!;
     } else {
       const imported = this.imports.get(name);
       selector =
@@ -962,42 +1177,51 @@ function collectImports(program: EstreeNode): Map<string, ImportedName> {
   return imports;
 }
 
-function localNameOf(
-  imports: Map<string, ImportedName>,
-  module: string,
-  importedName: string,
-): string | null {
-  for (const [local, i] of imports) {
-    if (i.module === module && i.importedName === importedName) {
-      return local;
+/**
+ * How the module binds the name `Component`: Angular's decorator as a value or
+ * type import, something else, or nothing (`null`).
+ */
+function componentBinding(program: EstreeNode): {
+  kind: 'core-value' | 'core-type' | 'other';
+  node: EstreeNode;
+} | null {
+  const name = 'Component';
+  for (const stmt of program.body as EstreeNode[]) {
+    if (stmt.type === 'ImportDeclaration') {
+      for (const spec of stmt.specifiers as EstreeNode[]) {
+        if (spec.local.name !== name) {
+          continue;
+        }
+        const imported =
+          spec.type === 'ImportSpecifier'
+            ? spec.imported.type === 'Identifier'
+              ? spec.imported.name
+              : String(spec.imported.value)
+            : null;
+        if (stmt.source.value !== CORE_MODULE || imported !== name) {
+          return { kind: 'other', node: spec };
+        }
+        const isType = stmt.importKind === 'type' || spec.importKind === 'type';
+        return { kind: isType ? 'core-type' : 'core-value', node: spec };
+      }
+      continue;
     }
-  }
-  return null;
-}
-
-function isNameTaken(
-  program: EstreeNode,
-  imports: Map<string, ImportedName>,
-  name: string,
-): boolean {
-  if (imports.has(name)) {
-    return true;
-  }
-  return (program.body as EstreeNode[]).some((stmt) => {
     const decl =
       stmt.type.startsWith('Export') && stmt.declaration
         ? stmt.declaration
         : stmt;
     if (decl.id?.name === name) {
-      return true;
+      return { kind: 'other', node: decl.id };
     }
-    return (
-      decl.type === 'VariableDeclaration' &&
-      decl.declarations.some(
-        (d: EstreeNode) => d.id.type === 'Identifier' && d.id.name === name,
-      )
-    );
-  });
+    if (decl.type === 'VariableDeclaration') {
+      for (const d of decl.declarations as EstreeNode[]) {
+        if (d.id.type === 'Identifier' && d.id.name === name) {
+          return { kind: 'other', node: d.id };
+        }
+      }
+    }
+  }
+  return null;
 }
 
 const TEMPLATE_NODE_TYPES = new Set([
