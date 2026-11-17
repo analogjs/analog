@@ -554,7 +554,6 @@ export function ngtscCompilePlugin(
       // Skip declaration outputs and declaration source files.
       if (
         filename.includes('ngtypecheck.ts') ||
-        filename.includes('.d.') ||
         _filename.endsWith('.d.ts') ||
         _filename.endsWith('.d.mts') ||
         _filename.endsWith('.d.cts')
