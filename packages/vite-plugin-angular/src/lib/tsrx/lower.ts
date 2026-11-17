@@ -16,7 +16,7 @@
  * becomes (roughly)
  *
  * ```ts
- * @Component({selector: 'tsrx-counter', template: '<button (click)="$fc.b0($event)">{{ $fc.b1() }}</button>', …})
+ * @Component({selector: 'Counter', template: '<button (click)="$fc.b0($event)">{{ $fc.b1() }}</button>', …})
  * export class Counter {
  *   readonly step = input(1);
  *   protected readonly $fc = (() => {
@@ -38,6 +38,7 @@
 import {
   type AST,
   CssSelector,
+  DomElementSchemaRegistry,
   ImplicitReceiver,
   Lexer,
   ParseLocation,
@@ -156,28 +157,28 @@ class TsrxLoweringError extends Error {
   }
 }
 
-/** Selector given to TSRX components, derived from the function name. */
+/**
+ * Selector given to TSRX components without an `XMeta` selector: the component
+ * name itself, matching how it is written as a tag (`<Counter />`).
+ */
 export function defaultSelector(name: string): string {
-  let kebab = '';
-  for (let i = 0; i < name.length; i++) {
-    const ch = name[i];
-    const prev = name[i - 1];
-    const isUpper = ch !== ch.toLowerCase();
-    const prevIsLowerOrDigit =
-      prev !== undefined && (prev !== prev.toUpperCase() || isDigit(prev));
-    kebab +=
-      isUpper && prevIsLowerOrDigit ? '-' + ch.toLowerCase() : ch.toLowerCase();
-  }
-  return 'tsrx-' + kebab;
+  return name;
+}
+
+const domSchema = new DomElementSchemaRegistry();
+
+/**
+ * Whether a selector-less component named `name` would collide with a native
+ * element. `document.createElement` lowercases names in HTML documents, so a
+ * `Button` host element would be a real `<button>`.
+ */
+function isNativeElementName(name: string): boolean {
+  return domSchema.hasElement(name.toLowerCase(), []);
 }
 
 function isUpperCaseStart(name: string): boolean {
   const ch = name[0];
   return ch !== undefined && ch !== ch.toLowerCase();
-}
-
-function isDigit(ch: string): boolean {
-  return ch >= '0' && ch <= '9';
 }
 
 /**
@@ -243,11 +244,24 @@ export function lowerTsrx(
 
   // Selectors of the components declared in this file, for local template tags.
   const localComponents = new Map<string, string>();
-  for (const name of componentNames) {
-    localComponents.set(
-      name,
-      metas.get(name)?.selector ?? defaultSelector(name),
-    );
+  for (const stmt of program.body as EstreeNode[]) {
+    const fn = componentFunction(stmt);
+    if (!fn) {
+      continue;
+    }
+    const name = fn.id.name as string;
+    const metaSelector = metas.get(name)?.selector;
+    if (metaSelector === undefined && isNativeElementName(name)) {
+      diagnostics.push({
+        message:
+          `\`${name}\` would render as a native <${name.toLowerCase()}> element, because HTML ` +
+          `element names are case-insensitive. Rename the component or set a selector in ` +
+          `\`${name}${META_SUFFIX}\`.`,
+        start: fn.id.start,
+        end: fn.id.end,
+      });
+    }
+    localComponents.set(name, metaSelector ?? defaultSelector(name));
   }
 
   const replacements: { start: number; end: number; text: MappedText }[] = [];

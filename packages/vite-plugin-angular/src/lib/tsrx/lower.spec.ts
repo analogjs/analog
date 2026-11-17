@@ -69,7 +69,7 @@ describe('TSRX lowering (Angular target)', () => {
     const { code, diagnostics } = lower(COUNTER);
     expect(diagnostics).toEqual([]);
     expect(code).toContain(`@Component({
-  selector: "tsrx-counter",
+  selector: "Counter",
   template: "<button class=\\"counter\\" (click)=\\"$fc.b0($event)\\">Count: {{ $fc.b1() }}</button>",
   changeDetection: ɵngChangeDetectionStrategy.OnPush,
 })
@@ -93,7 +93,7 @@ export class Counter {
     const { code } = lower(COUNTER);
     const result = compile(code, '/app/test.tsrx', buildRegistry({}));
     expect(result.code).toContain('ɵɵdefineComponent');
-    expect(result.code).toContain('"tsrx-counter"');
+    expect(result.code).toContain('[["Counter"]]');
     expect(result.code).not.toContain('@Component');
   });
 
@@ -317,7 +317,7 @@ export class Counter {
     );
     expect(diagnostics).toEqual([]);
     expect(code).toContain(
-      'template: "<div><tsrx-badge></tsrx-badge><button matButton>Go</button></div>"',
+      'template: "<div><Badge></Badge><button matButton>Go</button></div>"',
     );
     expect(code).toContain('imports: [Badge, MatButton]');
   });
@@ -370,9 +370,24 @@ export class Counter {
     ).toBe('<div role="option" class="chip"></div>');
   });
 
-  it('kebab-cases default selectors', () => {
-    const { code } = lower(`export function HTML5VideoPlayer2D() @{ <p /> }`);
-    expect(code).toContain('selector: "tsrx-html5-video-player2-d"');
+  it('uses the component name as the default selector', () => {
+    const { code } = lower(`export function TodoList() @{ <p /> }`);
+    expect(code).toContain('selector: "TodoList"');
+  });
+
+  it('rejects names that collide with native elements', () => {
+    expect(errors(`export function Button() @{ <p /> }`)).toEqual([
+      expect.stringContaining(
+        '`Button` would render as a native <button> element',
+      ),
+    ]);
+    // A selector in ButtonMeta resolves it.
+    expect(
+      errors(`
+        export const ButtonMeta = { selector: 'app-button' };
+        export function Button() @{ <p /> }
+      `),
+    ).toEqual([]);
   });
 
   describe('XMeta exports', () => {
@@ -400,7 +415,7 @@ export function Cart() @{
   providers: [CartStore],
   host: { class: 'cart', '[class.empty]': 'isEmpty()' },
   template: "<ul>{{ $fc.b0() }}</ul>",`);
-      expect(code).not.toContain('tsrx-cart');
+      expect(code).not.toContain('selector: "Cart"');
       // Host expressions run against the instance, so referenced locals are exposed.
       expect(code).toContain('return {b0: ɵb0, isEmpty};');
       expect(code).toContain(
@@ -443,7 +458,7 @@ export function Cart() @{
   host: { role: 'listitem' },
   template: "<span>item</span>",`);
       // No CartEmptyMeta: defaults apply.
-      expect(code).toContain('selector: "tsrx-cart-empty"');
+      expect(code).toContain('selector: "CartEmpty"');
     });
 
     it('leaves routeMeta and other camelCase exports alone', () => {
@@ -454,7 +469,7 @@ export function Cart() @{
       `);
       expect(diagnostics).toEqual([]);
       expect(code).toContain("export const routeMeta = { title: 'Cart' };");
-      expect(code).toContain('selector: "tsrx-cart"');
+      expect(code).toContain('selector: "Cart"');
     });
 
     it('reports XMeta exports with no matching component', () => {
@@ -507,7 +522,7 @@ export function Cart() @{
       expect(
         errors(`
           const Component = 1;
-          export function A() @{ <p /> }
+          export function Widget() @{ <p /> }
         `),
       ).toEqual([expect.stringContaining('uses it for something else')]);
     });
