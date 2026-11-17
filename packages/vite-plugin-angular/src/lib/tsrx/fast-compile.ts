@@ -10,25 +10,31 @@ import {
   type EstreeNode,
   lowerTsrx,
   type TsrxLoweringResult,
-  type TsrxParser,
+  type TsrxParsers,
   type TsrxSelectorResolver,
 } from './lower.js';
 import { remapSourceMap, type TsrxSourceMap } from './source-map.js';
 
-/** Matches `.tsrx` module ids, with or without a query string. */
-export const TSRX_EXT_REGEX: RegExp = /\.tsrx(?:$|\?)/;
+/** Vite transform filter pattern for `.tsrx` modules. */
+export const TSRX_GLOB = '**/*.tsrx';
 
+/** Whether a module id (possibly with a query) is a `.tsrx` module. */
 export function isTsrxFile(id: string): boolean {
-  return TSRX_EXT_REGEX.test(id);
+  const path = id.split('?')[0];
+  return path.endsWith('.tsrx');
 }
 
-let parserPromise: Promise<TsrxParser> | undefined;
+let parsersPromise: Promise<TsrxParsers> | undefined;
 
-/** Loads `parseModule` from `@tsrx/core`, an optional peer dependency. */
-export function loadTsrxParser(): Promise<TsrxParser> {
-  parserPromise ??= import('@tsrx/core').then(
-    (core) => (source: string, fileName: string) =>
-      core.parseModule(source, fileName) as unknown as EstreeNode,
+/** Loads the parsers from `@tsrx/core`, an optional peer dependency. */
+export function loadTsrxParsers(): Promise<TsrxParsers> {
+  parsersPromise ??= import('@tsrx/core').then(
+    (core): TsrxParsers => ({
+      parseModule: (source, fileName) => core.parseModule(source, fileName),
+      // `location` only seeds the stylesheet hash, which the lowering doesn't use.
+      parseStyle: (css) =>
+        core.parseStyle(css, { filename: '', line: 0, column: 0 }, {}),
+    }),
     () => {
       throw new Error(
         '[@analogjs/vite-plugin-angular]: `tsrx` is enabled but `@tsrx/core` is not installed. ' +
@@ -36,7 +42,7 @@ export function loadTsrxParser(): Promise<TsrxParser> {
       );
     },
   );
-  return parserPromise;
+  return parsersPromise;
 }
 
 /**
@@ -56,7 +62,7 @@ export async function lowerTsrxForScan(
   code: string,
   fileName: string,
 ): Promise<TsrxLoweringResult> {
-  return lowerTsrx(code, fileName, await loadTsrxParser(), SCAN_RESOLVER);
+  return lowerTsrx(code, fileName, await loadTsrxParsers(), SCAN_RESOLVER);
 }
 
 /** Lowers a `.tsrx` module for compilation. */
@@ -65,7 +71,7 @@ export async function lowerTsrxModule(
   fileName: string,
   resolver: TsrxSelectorResolver,
 ): Promise<TsrxLoweringResult> {
-  return lowerTsrx(code, fileName, await loadTsrxParser(), resolver);
+  return lowerTsrx(code, fileName, await loadTsrxParsers(), resolver);
 }
 
 /** Formats lowering diagnostics as `file:line:column - message` with a code frame. */
@@ -77,7 +83,7 @@ export function formatTsrxDiagnostics(
   return result.diagnostics
     .map((d) => {
       const { line, column } = lineAndColumn(source, d.start);
-      const frameLine = source.split(/\r\n|\n|\r/)[line] ?? '';
+      const frameLine = lineText(source, d.start);
       const width = Math.max(1, Math.min(d.end, source.length) - d.start);
       const underline =
         ' '.repeat(column) +
@@ -119,7 +125,31 @@ function lineAndColumn(
   source: string,
   offset: number,
 ): { line: number; column: number } {
-  const before = source.slice(0, offset);
-  const lines = before.split(/\r\n|\n|\r/);
-  return { line: lines.length - 1, column: lines[lines.length - 1].length };
+  let line = 0;
+  let lineStart = 0;
+  for (let i = 0; i < offset && i < source.length; i++) {
+    const ch = source[i];
+    if (ch === '\n' || (ch === '\r' && source[i + 1] !== '\n')) {
+      line++;
+      lineStart = i + 1;
+    }
+  }
+  return { line, column: offset - lineStart };
+}
+
+/** The text of the line containing `offset`. */
+function lineText(source: string, offset: number): string {
+  let start = offset;
+  while (
+    start > 0 &&
+    source[start - 1] !== '\n' &&
+    source[start - 1] !== '\r'
+  ) {
+    start--;
+  }
+  let end = offset;
+  while (end < source.length && source[end] !== '\n' && source[end] !== '\r') {
+    end++;
+  }
+  return source.slice(start, end);
 }

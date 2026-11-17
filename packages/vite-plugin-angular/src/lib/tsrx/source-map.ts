@@ -368,10 +368,7 @@ export function remapSourceMap(json: string, map: TsrxSourceMap): string {
   });
 
   raw.mappings = encode(mappings);
-  raw.sources[sourceIndex] = raw.sources[sourceIndex].replace(
-    /\.tsrx\.ts$/,
-    '.tsrx',
-  );
+  raw.sources[sourceIndex] = stripProgramSuffix(raw.sources[sourceIndex]);
   if (
     raw.sourcesContent !== undefined &&
     raw.sourcesContent[sourceIndex] != null
@@ -379,4 +376,9 @@ export function remapSourceMap(json: string, map: TsrxSourceMap): string {
     raw.sourcesContent[sourceIndex] = map.originalText;
   }
   return JSON.stringify(raw);
+}
+
+/** `Counter.tsrx.ts` (a program file name) → `Counter.tsrx`. */
+function stripProgramSuffix(source: string): string {
+  return source.endsWith('.tsrx.ts') ? source.slice(0, -'.ts'.length) : source;
 }

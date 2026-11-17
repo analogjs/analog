@@ -36,6 +36,21 @@
  */
 
 import {
+  type AST,
+  CssSelector,
+  ImplicitReceiver,
+  Lexer,
+  ParseLocation,
+  Parser,
+  ParseSourceFile,
+  ParseSourceSpan,
+  type PropertyRead,
+  RecursiveAstVisitor,
+  type SafePropertyRead,
+  ThisReceiver,
+} from '@angular/compiler';
+
+import {
   jsonLiteral,
   joinMapped,
   MappedText,
@@ -83,8 +98,13 @@ const VOID_ELEMENTS = new Set([
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EstreeNode = any;
 
-/** Parses a TSRX module, e.g. `parseModule` from `@tsrx/core`. */
-export type TsrxParser = (source: string, fileName: string) => EstreeNode;
+/** The `@tsrx/core` parsers the lowering uses. */
+export interface TsrxParsers {
+  /** Parses a TSRX module (`parseModule`). */
+  parseModule(source: string, fileName: string): EstreeNode;
+  /** Parses the content of a `<style>` element (`parseStyle`). */
+  parseStyle(css: string): EstreeNode;
+}
 
 /** Resolves the selector of a component referenced as a template tag. */
 export interface TsrxSelectorResolver {
@@ -138,7 +158,26 @@ class TsrxLoweringError extends Error {
 
 /** Selector given to TSRX components, derived from the function name. */
 export function defaultSelector(name: string): string {
-  return 'tsrx-' + name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  let kebab = '';
+  for (let i = 0; i < name.length; i++) {
+    const ch = name[i];
+    const prev = name[i - 1];
+    const isUpper = ch !== ch.toLowerCase();
+    const prevIsLowerOrDigit =
+      prev !== undefined && (prev !== prev.toUpperCase() || isDigit(prev));
+    kebab +=
+      isUpper && prevIsLowerOrDigit ? '-' + ch.toLowerCase() : ch.toLowerCase();
+  }
+  return 'tsrx-' + kebab;
+}
+
+function isUpperCaseStart(name: string): boolean {
+  const ch = name[0];
+  return ch !== undefined && ch !== ch.toLowerCase();
+}
+
+function isDigit(ch: string): boolean {
+  return ch >= '0' && ch <= '9';
 }
 
 /**
@@ -147,13 +186,13 @@ export function defaultSelector(name: string): string {
 export function lowerTsrx(
   source: string,
   fileName: string,
-  parse: TsrxParser,
+  parsers: TsrxParsers,
   resolver: TsrxSelectorResolver,
 ): TsrxLoweringResult {
   const diagnostics: TsrxDiagnostic[] = [];
   let program: EstreeNode;
   try {
-    program = parse(source, fileName);
+    program = parsers.parseModule(source, fileName);
   } catch (e) {
     // Parse errors from @tsrx/core carry offsets.
     const err = e as { message?: string; pos?: number; end?: number };
@@ -241,6 +280,7 @@ export function lowerTsrx(
       const lowerer = new ComponentLowerer(
         source,
         fileName,
+        parsers,
         imports,
         localComponents,
         resolver,
@@ -322,37 +362,74 @@ function declaredNames(stmt: EstreeNode): string[] {
   return [];
 }
 
+/** Collects the component members an Angular expression reads. */
+class InstanceReads extends RecursiveAstVisitor {
+  readonly names = new Set<string>();
+
+  override visitPropertyRead(ast: PropertyRead, context: unknown): unknown {
+    this.record(ast.receiver, ast.name);
+    return super.visitPropertyRead(ast, context);
+  }
+
+  override visitSafePropertyRead(
+    ast: SafePropertyRead,
+    context: unknown,
+  ): unknown {
+    this.record(ast.receiver, ast.name);
+    return super.visitSafePropertyRead(ast, context);
+  }
+
+  private record(receiver: AST, name: string): void {
+    // Reads off the component itself: `foo` or `this.foo`, not `a.foo`.
+    if (
+      receiver instanceof ImplicitReceiver ||
+      receiver instanceof ThisReceiver
+    ) {
+      this.names.add(name);
+    }
+  }
+}
+
 /**
- * Identifiers used in `meta.host` binding and listener expressions
- * (`'[class.x]': 'expr'`, `'(event)': 'expr'`). Over-approximates: property
- * names after a dot are skipped, other words that aren't body locals are
- * ignored by the caller.
+ * Names the `meta.host` binding (`'[class.x]': 'expr'`) and listener
+ * (`'(event)': 'expr'`) expressions read off the component, parsed with
+ * Angular's expression parser. Static attributes are skipped. Parse errors
+ * are left for the Angular compile to report.
  */
-function hostReferences(meta: ComponentMeta | null): Set<string> {
-  const names = new Set<string>();
+function hostReferences(
+  meta: ComponentMeta | null,
+  fileName: string,
+): Set<string> {
+  const reads = new InstanceReads();
   const host = meta?.properties.find(
     (p) =>
       (p.key.type === 'Identifier' ? p.key.name : p.key.value) === 'host' &&
       p.value.type === 'ObjectExpression',
   );
+  const parser = new Parser(new Lexer());
   for (const prop of (host?.value.properties ?? []) as EstreeNode[]) {
     const key =
       prop.key?.type === 'Identifier' ? prop.key.name : prop.key?.value;
     if (
       typeof key !== 'string' ||
-      !/^[[(]/.test(key) ||
       prop.value?.type !== 'Literal' ||
       typeof prop.value.value !== 'string'
     ) {
       continue;
     }
-    for (const match of (prop.value.value as string).matchAll(
-      /(?<![.\w$])[A-Za-z_$][\w$]*/g,
-    )) {
-      names.add(match[0]);
+    const expression = prop.value.value as string;
+    const file = new ParseSourceFile(expression, fileName);
+    const span = new ParseSourceSpan(
+      new ParseLocation(file, 0, 0, 0),
+      new ParseLocation(file, expression.length, 0, expression.length),
+    );
+    if (key.startsWith('[')) {
+      parser.parseBinding(expression, span, 0).visit(reads);
+    } else if (key.startsWith('(')) {
+      parser.parseAction(expression, span, 0).visit(reads);
     }
   }
-  return names;
+  return reads.names;
 }
 
 /** `@Component` fields that come from the template and may not be set in `meta`. */
@@ -475,6 +552,7 @@ class ComponentLowerer {
   constructor(
     private readonly source: string,
     private readonly fileName: string,
+    private readonly parsers: TsrxParsers,
     private readonly imports: Map<string, ImportedName>,
     private readonly localComponents: Map<string, string>,
     private readonly resolver: TsrxSelectorResolver,
@@ -563,7 +641,7 @@ class ComponentLowerer {
     // Host binding expressions run against the instance, so body locals they
     // reference are exposed as fields. Signals and functions keep their
     // identity, so the field always reflects the local.
-    const exposed = [...hostReferences(meta)].filter(
+    const exposed = [...hostReferences(meta, this.fileName)].filter(
       (n) => locals.has(n) && !memberNames.has(n),
     );
     const exposedFields = exposed.map((n) =>
@@ -952,7 +1030,7 @@ class ComponentLowerer {
     let tagName: string;
     let extraAttrs: string[] = [];
 
-    if (nameNode.type === 'JSXIdentifier' && /^[A-Z]/.test(nameNode.name)) {
+    if (nameNode.type === 'JSXIdentifier' && isUpperCaseStart(nameNode.name)) {
       ({ tagName, extraAttrs } = this.resolveComponentTag(nameNode));
       this.deps.add(nameNode.name);
     } else if (nameNode.type === 'JSXIdentifier') {
@@ -967,7 +1045,7 @@ class ComponentLowerer {
     }
 
     const isComponent =
-      nameNode.type === 'JSXIdentifier' && /^[A-Z]/.test(nameNode.name);
+      nameNode.type === 'JSXIdentifier' && isUpperCaseStart(nameNode.name);
     const attrs: (string | MappedText)[] = [...extraAttrs];
     for (const attr of opening.attributes as EstreeNode[]) {
       const lowered = this.lowerAttribute(attr, scope, isComponent);
@@ -1097,7 +1175,10 @@ class ComponentLowerer {
       }
       const attrName = namespace === 'attr' ? `attr.${name}` : name;
       // Keep `{{`/`@` in static values from being interpreted by the template parser.
-      if (/[{}@]/.test(value.value) || namespace === 'attr') {
+      if (
+        ['{', '}', '@'].some((ch) => value.value.includes(ch)) ||
+        namespace === 'attr'
+      ) {
         return mt`[${attrName}]="${escapeAttr(singleQuoted(value.value))}"`;
       }
       return mt`${name}="${escapeAttr(value.value)}"`;
@@ -1113,7 +1194,12 @@ class ComponentLowerer {
 
     // TSRX events are props named `onX`. DOM events are lowercase (`onKeyDown` → `keydown`);
     // component outputs keep their casing (`onValueChange` → `valueChange`).
-    if (namespace === null && /^on[A-Z]/.test(name)) {
+    if (
+      namespace === null &&
+      name.length > 2 &&
+      name.startsWith('on') &&
+      isUpperCaseStart(name.slice(2))
+    ) {
       const event = isComponent
         ? name[2].toLowerCase() + name.slice(3)
         : name.slice(2).toLowerCase();
@@ -1147,9 +1233,33 @@ class ComponentLowerer {
   private lowerStyle(node: EstreeNode): MappedText {
     const start = node.openingElement.end;
     const end = node.closingElement.start;
-    const css = this.source
-      .slice(start, end)
-      .replace(/:global\(([^)]*)\)/g, '::ng-deep $1');
+    const content = this.source.slice(start, end);
+
+    // Find every `:global` in the stylesheet's AST. Offsets are relative to `content`.
+    const globals: EstreeNode[] = [];
+    const visit = (n: EstreeNode): void => {
+      if (n.type === 'PseudoClassSelector' && n.name === 'global') {
+        globals.push(n);
+      }
+      forEachChild(n, visit);
+    };
+    visit(this.parsers.parseStyle(content));
+
+    // `:global(x)` → `::ng-deep x`, spliced back to front so offsets stay valid.
+    let css = content;
+    for (const g of globals.sort((a, b) => b.start - a.start)) {
+      if (!g.args) {
+        throw new TsrxLoweringError(
+          { start: start + g.start, end: start + g.end },
+          'The `:global { … }` block form is not supported by the Angular target. Use `:global(selector)`.',
+        );
+      }
+      css =
+        css.slice(0, g.start) +
+        '::ng-deep ' +
+        content.slice(g.args.start, g.args.end) +
+        css.slice(g.end);
+    }
     return mt`${css}`.from({ start, end });
   }
 }
@@ -1364,46 +1474,89 @@ function isWhitespaceText(node: EstreeNode): boolean {
 }
 
 /**
- * Converts a component selector into the tag and attributes used to instantiate it. Uses the
- * first selector in a comma-separated list; attribute-only selectors are placed on a `<div>`.
+ * Converts a component selector into the tag and attributes used to instantiate
+ * it, using Angular's selector parser. Uses the first selector of a list;
+ * attribute- or class-only selectors are placed on a `<div>`.
  */
 function parseSelector(
   selector: string,
 ): { tagName: string; extraAttrs: string[] } | null {
-  const first = selector.split(',')[0].trim();
-  const match = /^([a-zA-Z][\w-]*)?((?:\[[^\]=\s]+(?:=[^\]]*)?\])*)$/.exec(
-    first,
-  );
-  if (match === null || (match[1] === undefined && match[2] === '')) {
+  let parsed: CssSelector | undefined;
+  try {
+    parsed = CssSelector.parse(selector)[0];
+  } catch {
+    return null;
+  }
+  if (
+    parsed === undefined ||
+    parsed.notSelectors.length > 0 ||
+    (parsed.element === null &&
+      parsed.attrs.length === 0 &&
+      parsed.classNames.length === 0)
+  ) {
     return null;
   }
   const extraAttrs: string[] = [];
-  for (const attr of match[2].matchAll(/\[([^\]=\s]+)(?:=([^\]]*))?\]/g)) {
-    const value = attr[2]?.replace(/^["']|["']$/g, '');
-    extraAttrs.push(
-      value !== undefined ? `${attr[1]}="${escapeAttr(value)}"` : attr[1],
-    );
+  for (let i = 0; i < parsed.attrs.length; i += 2) {
+    const name = parsed.attrs[i];
+    const value = parsed.attrs[i + 1];
+    extraAttrs.push(value === '' ? name : `${name}="${escapeAttr(value)}"`);
   }
-  return { tagName: match[1] ?? 'div', extraAttrs };
+  if (parsed.classNames.length > 0) {
+    extraAttrs.push(`class="${escapeAttr(parsed.classNames.join(' '))}"`);
+  }
+  return { tagName: parsed.element ?? 'div', extraAttrs };
+}
+
+/** Splits text into lines on CRLF, LF or CR. */
+function splitLines(text: string): string[] {
+  const lines: string[] = [];
+  let current = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '\r' || ch === '\n') {
+      lines.push(current);
+      current = '';
+      if (ch === '\r' && text[i + 1] === '\n') {
+        i++;
+      }
+    } else {
+      current += ch;
+    }
+  }
+  lines.push(current);
+  return lines;
+}
+
+function trimSpacesStart(line: string): string {
+  let i = 0;
+  while (line[i] === ' ') i++;
+  return line.slice(i);
+}
+
+function trimSpacesEnd(line: string): string {
+  let i = line.length;
+  while (line[i - 1] === ' ') i--;
+  return line.slice(0, i);
 }
 
 /** Applies JSX whitespace semantics: lines are trimmed and blank lines dropped. */
 function cleanJsxText(text: string): string {
-  const lines = text.split(/\r\n|\n|\r/);
+  const lines = splitLines(text).map((l) => l.replaceAll('\t', ' '));
   let lastNonEmpty = 0;
   lines.forEach((line, i) => {
-    if (/[^ \t]/.test(line)) {
+    if (line.trim() !== '') {
       lastNonEmpty = i;
     }
   });
   let out = '';
   lines.forEach((raw, i) => {
-    let line = raw.replace(/\t/g, ' ');
+    let line = raw;
     if (i !== 0) {
-      line = line.replace(/^ +/, '');
+      line = trimSpacesStart(line);
     }
     if (i !== lines.length - 1) {
-      line = line.replace(/ +$/, '');
+      line = trimSpacesEnd(line);
     }
     if (line !== '') {
       out += i !== lastNonEmpty ? line + ' ' : line;
@@ -1412,19 +1565,20 @@ function cleanJsxText(text: string): string {
   return out;
 }
 
+/** Escapes characters Angular's template parser would treat as syntax in text. */
 function escapeText(text: string): string {
   return text
-    .replace(/@/g, '&#64;')
-    .replace(/\{/g, '&#123;')
-    .replace(/\}/g, '&#125;');
+    .replaceAll('@', '&#64;')
+    .replaceAll('{', '&#123;')
+    .replaceAll('}', '&#125;');
 }
 
 function singleQuoted(value: string): string {
-  return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
 }
 
 function escapeAttr(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
 }
 
 function params(locals: Local[]): string {

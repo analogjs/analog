@@ -51,7 +51,7 @@ import {
   lowerTsrxForScan,
   lowerTsrxModule,
   remapTsrxSourceMap,
-  TSRX_EXT_REGEX,
+  TSRX_GLOB,
 } from './tsrx/fast-compile.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
@@ -763,8 +763,8 @@ export function fastCompilePlugin(
       for (let i = 0; i < styleStrings.length; i++) {
         const stylePath =
           stylePaths.get(i) ??
-          id.replace(
-            /\.tsx?$|\.tsrx$/,
+          (isTsrxFile(id) ? id.slice(0, -'.tsrx'.length) + '.ts' : id).replace(
+            /\.ts$/,
             `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
           );
         try {
@@ -1038,9 +1038,7 @@ export function fastCompilePlugin(
     transform: {
       filter: {
         id: {
-          include: tsrxEnabled
-            ? [TS_EXT_REGEX, TSRX_EXT_REGEX]
-            : [TS_EXT_REGEX],
+          include: tsrxEnabled ? [TS_EXT_REGEX, TSRX_GLOB] : [TS_EXT_REGEX],
           // `?raw` ids already carry Vite's native raw-loader output
           // (`export default "<source>"`). Recompiling them as Angular/TS
           // would strip that default export, so leave them to Vite (#2356).
@@ -1059,7 +1057,7 @@ export function fastCompilePlugin(
           return;
         }
 
-        if (id.includes('.ts?') || id.includes('.tsrx?')) {
+        if (id.includes('.ts?') || (tsrxEnabled && isTsrxFile(id))) {
           id = id.replace(/\?(.*)/, '');
         }
         const resolveImport: ResolveImport = async (spec, importer) => {

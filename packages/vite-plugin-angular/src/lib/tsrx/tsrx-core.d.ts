@@ -6,4 +6,9 @@ declare module '@tsrx/core' {
     fileName: string,
     options?: unknown,
   ): unknown;
+  export function parseStyle(
+    content: string,
+    location: { filename: string; line: number; column: number },
+    options: { loose?: boolean },
+  ): unknown;
 }

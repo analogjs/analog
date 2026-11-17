@@ -1,19 +1,28 @@
 import { parseTemplate } from '@angular/compiler';
-import { parseModule } from '@tsrx/core';
+import { parseModule, parseStyle } from '@tsrx/core';
 import { describe, expect, it } from 'vitest';
 
 import { compile } from '../compiler/compile';
 import { buildRegistry } from '../compiler/test-helpers';
-import { type EstreeNode, lowerTsrx, type TsrxLoweringResult } from './lower';
+import {
+  type EstreeNode,
+  lowerTsrx,
+  type TsrxLoweringResult,
+  type TsrxParsers,
+} from './lower';
 
-const parse = (source: string, fileName: string) =>
-  parseModule(source, fileName) as EstreeNode;
+const parsers: TsrxParsers = {
+  parseModule: (source, fileName) =>
+    parseModule(source, fileName) as EstreeNode,
+  parseStyle: (css) =>
+    parseStyle(css, { filename: '', line: 0, column: 0 }, {}) as EstreeNode,
+};
 
 function lower(
   source: string,
   selectors: Record<string, string> = {},
 ): TsrxLoweringResult {
-  return lowerTsrx(source, '/app/test.tsrx', parse, {
+  return lowerTsrx(source, '/app/test.tsrx', parsers, {
     resolveSelector: (name) => selectors[name] ?? null,
   });
 }
@@ -25,9 +34,10 @@ function template(
 ): string {
   const result = lower(source, selectors);
   expect(result.diagnostics.map((d) => d.message)).toEqual([]);
-  const templates = [...result.code.matchAll(/^ {2}template: (".*"),$/gm)].map(
-    (m) => JSON.parse(m[1]) as string,
-  );
+  const templates = result.code
+    .split('\n')
+    .filter((line) => line.startsWith('  template: "') && line.endsWith('",'))
+    .map((line) => JSON.parse(line.slice('  template: '.length, -1)) as string);
   expect(templates.length).toBe(1);
   // Every generated template must be valid Angular template syntax.
   const parsed = parseTemplate(templates[0], '/app/test.tsrx');
@@ -236,22 +246,57 @@ export class Counter {
     expect(code).toContain('imports: [Badge, MatButton]');
   });
 
-  it('moves <style> into component styles', () => {
-    const { code } = lower(`
+  it('moves <style> into component styles, mapping :global to ::ng-deep', () => {
+    const { code, diagnostics } = lower(`
       export function C() @{
         <div class="box">
           <p>hi</p>
           <style>
-            .box { padding: 1rem; }
-            :global(body) { margin: 0; }
-          </style>
+.box { padding: 1rem; }
+:global(body) { margin: 0; }
+.a :global(.b > p) { color: red; }
+</style>
         </div>
       }
     `);
+    expect(diagnostics).toEqual([]);
     expect(code).toContain('template: "<div class=\\"box\\"><p>hi</p></div>"');
-    expect(code).toMatch(
-      /styles: \[".*\.box \{ padding: 1rem; \}.*::ng-deep body \{ margin: 0; \}.*"\]/,
+    expect(code).toContain(
+      'styles: ["\\n.box { padding: 1rem; }\\n::ng-deep body { margin: 0; }\\n.a ::ng-deep .b > p { color: red; }\\n"]',
     );
+  });
+
+  it('rejects the :global block form', () => {
+    expect(
+      errors(`
+        export function C() @{
+          <div>
+            <style>:global { p { margin: 0; } }</style>
+          </div>
+        }
+      `),
+    ).toEqual([
+      expect.stringContaining('`:global { … }` block form is not supported'),
+    ]);
+  });
+
+  it("resolves class and attribute selectors with Angular's selector parser", () => {
+    expect(
+      template(
+        `
+        import { Chip } from './chip';
+        export function C() @{
+          <Chip />
+        }
+      `,
+        { Chip: '.chip[role=option]' },
+      ),
+    ).toBe('<div role="option" class="chip"></div>');
+  });
+
+  it('kebab-cases default selectors', () => {
+    const { code } = lower(`export function HTML5VideoPlayer2D() @{ <p /> }`);
+    expect(code).toContain('selector: "tsrx-html5-video-player2-d"');
   });
 
   describe('meta export', () => {
