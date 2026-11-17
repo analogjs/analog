@@ -198,8 +198,15 @@ export function lowerTsrx(
     // Parse errors from @tsrx/core carry offsets.
     const err = e as { message?: string; pos?: number; end?: number };
     const start = err.pos ?? 0;
+    const message = err.message ?? String(e);
+    const block = message.startsWith("'}' expected")
+      ? angularBlockAround(source, start)
+      : null;
     diagnostics.push({
-      message: err.message ?? String(e),
+      message:
+        block === null
+          ? message
+          : `${message} An @${block} block renders a single node, like @if and @for; wrap multiple nodes or text in a fragment '<>…</>'.`,
       start,
       end: err.end ?? start,
     });
@@ -354,6 +361,45 @@ interface DeferMatch {
   connected: { header: BlockHeader; content: EstreeNode }[];
   /** Index of the last child the block consumed. */
   lastIndex: number;
+}
+
+const ANGULAR_BLOCK_NAMES = ['defer', 'placeholder', 'loading', 'error'];
+
+/**
+ * The name of the Angular block (`@defer`, `@placeholder`, `@loading` or
+ * `@error`) whose `{ … }` body directly contains `pos`, if any. Used only to
+ * explain a parse error, so a miss just means no hint.
+ */
+function angularBlockAround(source: string, pos: number): string | null {
+  // Walk back to the `{` that opens the body `pos` is directly inside.
+  let depth = 0;
+  let open = pos - 1;
+  for (; open >= 0; open--) {
+    const ch = source[open];
+    if (ch === '}') depth++;
+    else if (ch === '{' && depth-- === 0) break;
+  }
+  if (open < 0) {
+    return null;
+  }
+  // Then back over `@name`, optional `( … )`, and whitespace before the `{`.
+  let end = open - 1;
+  while (end >= 0 && isWhitespace(source[end])) end--;
+  if (source[end] === ')') {
+    let parens = 0;
+    for (; end >= 0; end--) {
+      if (source[end] === ')') parens++;
+      else if (source[end] === '(' && --parens === 0) break;
+    }
+    end--;
+    while (end >= 0 && isWhitespace(source[end])) end--;
+  }
+  let start = end;
+  while (start >= 0 && isIdentifierChar(source[start])) start--;
+  const name = source.slice(start + 1, end + 1);
+  return source[start] === '@' && ANGULAR_BLOCK_NAMES.includes(name)
+    ? name
+    : null;
 }
 
 /** The JSX inside a `{ … }` container following a block header, if that's what `node` is. */

@@ -639,6 +639,29 @@ export function Cart() @{
       ]);
     });
 
+    it('explains multiple nodes in an Angular @defer block', () => {
+      expect(
+        errors(
+          `export function C() @{ <section>@defer (on viewport) { <p>a</p> <p>b</p> } @placeholder { <p /> }</section> }`,
+        ),
+      ).toEqual([
+        expect.stringContaining(
+          "An @defer block renders a single node, like @if and @for; wrap multiple nodes or text in a fragment '<>…</>'.",
+        ),
+      ]);
+      expect(
+        errors(
+          `export function C() @{ <section>@defer { <A /> } @placeholder (minimum 1s) { <p>a</p> <p>b</p> }</section> }`,
+        ),
+      ).toEqual([expect.stringContaining('An @placeholder block renders')]);
+    });
+
+    it('adds no @defer hint to unrelated parse errors', () => {
+      expect(errors(`export function C() @{ <div>{ a b }</div> }`)).toEqual([
+        expect.not.stringContaining('@defer'),
+      ]);
+    });
+
     it('reports parse errors with positions', () => {
       const result = lower(`export function C() @{\n  <div>\n}\n`);
       expect(result.diagnostics.length).toBe(1);
