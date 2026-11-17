@@ -709,6 +709,63 @@ describe('@Component', () => {
       expect(result.code).toContain('DepsFn');
     });
 
+    describe('defer-only dependencies are not eager', () => {
+      const heavySrc = `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
+        export class HeavyWidget {}
+      `;
+
+      function compileWithTemplate(template: string) {
+        const registry = new Map();
+        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+          registry.set(entry.className, entry);
+        }
+        return rawCompile(
+          `
+          import { Component } from '@angular/core';
+          import { HeavyWidget } from './heavy-widget';
+          @Component({
+            selector: 'app-page',
+            template: ${JSON.stringify(template)},
+            imports: [HeavyWidget]
+          })
+          export class Page {}
+        `,
+          'page.ts',
+          { registry },
+        ).code;
+      }
+
+      it('leaves a defer-only component out of the eager dependencies and metadata', () => {
+        const code = compileWithTemplate(
+          '@defer (on viewport) { <heavy-widget /> } @placeholder { <p>…</p> }',
+        );
+        // The dependency function returns the import promise itself, as
+        // Angular's runtime expects, not a function that would import it.
+        expect(code).toMatch(/DepsFn = \(\) => \[import\("\.\/heavy-widget"\)/);
+        expect(code).toMatch(/dependencies: \(\) => \[Page\]/);
+        // Class metadata resolves the deferred class through the dynamic import,
+        // so nothing references the static import and it can be dropped.
+        expect(code).toContain('ɵsetClassMetadataAsync');
+      });
+
+      it('keeps a component that is also used eagerly', () => {
+        const code = compileWithTemplate(
+          '<heavy-widget /> @defer (on viewport) { <heavy-widget /> } @placeholder { <p>…</p> }',
+        );
+        expect(code).toMatch(/dependencies: \(\) => \[HeavyWidget, Page\]/);
+        expect(code).not.toContain('ɵsetClassMetadataAsync');
+      });
+
+      it('keeps a component used in a @placeholder eager', () => {
+        const code = compileWithTemplate(
+          '@defer (on viewport) { <heavy-widget /> } @placeholder { <heavy-widget /> }',
+        );
+        expect(code).toMatch(/dependencies: \(\) => \[HeavyWidget, Page\]/);
+      });
+    });
+
     // Regression: Angular v21 renamed `SwitchBlock.cases` to
     // `SwitchBlock.groups` (each group holds the case body in
     // `children`). The defer walker only traversed `cases`, so any

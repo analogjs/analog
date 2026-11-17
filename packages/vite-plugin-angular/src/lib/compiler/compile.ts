@@ -22,6 +22,7 @@ import {
   ParseLocation,
   ParseSourceSpan,
   compileClassMetadata,
+  compileComponentClassMetadata,
   compileDeclareComponentFromMetadata,
   compileDeclareDirectiveFromMetadata,
   compileDeclarePipeFromMetadata,
@@ -57,7 +58,7 @@ import {
   detectFieldDecorators,
   extractConstructorDeps,
 } from './metadata.js';
-import { buildDeferDependencyMap } from './defer.js';
+import { buildDeferDependencyMap, buildImportMap } from './defer.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
 import { inlineStyleRanges } from './style-ast.js';
@@ -330,6 +331,14 @@ export function compile(
   // Build a file-local selector map as fallback when no external registry is provided.
   // Skip the expensive extractMetadata scan when a registry covers all classes.
   const localSelectors = new Map<string, string>();
+  /**
+   * Per component class: the dependencies only its @defer blocks use, which
+   * its class metadata must load lazily (`ɵsetClassMetadataAsync`).
+   */
+  const deferredMetadataDeps = new Map<
+    string,
+    { symbolName: string; importPath: string; isDefaultImport: boolean }[]
+  >();
   if (!registry) {
     for (const [clsName, oxcNode] of oxcClassMap) {
       const decs: any[] = oxcNode.decorators || [];
@@ -815,6 +824,45 @@ export function compile(
             return;
           }
 
+          // Classes used only inside @defer blocks load through the blocks'
+          // dynamic import()s, so they must not also be eager dependencies:
+          // that would keep their module in this chunk. Once nothing else
+          // references them, the TypeScript strip pass drops their imports.
+          const deferDependencies = buildDeferDependencyMap(
+            parsedTemplate,
+            oxcProgram,
+            registry,
+            localSelectors,
+          );
+          if (!isPartial && deferDependencies.deferredImports.size > 0) {
+            const importMap = buildImportMap(oxcProgram);
+            const metadataDeps: {
+              symbolName: string;
+              importPath: string;
+              isDefaultImport: boolean;
+            }[] = [];
+            for (let i = declarations.length - 1; i >= 0; i--) {
+              const name = declarationName(declarations[i]);
+              const info = name !== null ? importMap.get(name) : undefined;
+              if (
+                name === null ||
+                info === undefined ||
+                !deferDependencies.deferredImports.has(name)
+              ) {
+                continue;
+              }
+              declarations.splice(i, 1);
+              metadataDeps.unshift({
+                symbolName: name,
+                importPath: info.path,
+                isDefaultImport: info.isDefault,
+              });
+            }
+            if (metadataDeps.length > 0) {
+              deferredMetadataDeps.set(className, metadataDeps);
+            }
+          }
+
           const componentMeta: CompileMetadata & {
             name: string;
             type: o.R3Reference;
@@ -871,12 +919,7 @@ export function compile(
             usesInheritance,
             defer: {
               mode: 0,
-              blocks: buildDeferDependencyMap(
-                parsedTemplate,
-                oxcProgram,
-                registry,
-                localSelectors,
-              ).blocks,
+              blocks: deferDependencies.blocks,
             },
             declarationListEmitMode: 1,
             i18nUseExternalIds: opts.i18nUseExternalIds ?? false,
@@ -1300,9 +1343,17 @@ export function compile(
             ? new o.WrappedNodeExpr(propDecorators)
             : null,
         };
+        // A component whose @defer blocks load some dependencies lazily must
+        // not reference them eagerly in its metadata either.
+        const deferredDeps =
+          decName === 'Component'
+            ? deferredMetadataDeps.get(className)
+            : undefined;
         const classMetadataExpr = isPartial
           ? compileDeclareClassMetadata(classMetaInput)
-          : compileClassMetadata(classMetaInput);
+          : deferredDeps
+            ? compileComponentClassMetadata(classMetaInput, deferredDeps)
+            : compileClassMetadata(classMetaInput);
         const metadataStmt = new o.ExpressionStatement(classMetadataExpr);
         if (topLevelClasses.has(node)) {
           constantPool.statements.push(metadataStmt);
@@ -1601,4 +1652,19 @@ export function compile(
     map,
     resourceDependencies,
   };
+}
+
+/** The local class name an `imports` entry declares, when it is a plain identifier. */
+function declarationName(declaration: CompileDeclaration): string | null {
+  const node = (declaration.type as { node?: unknown }).node as
+    | string
+    | { type?: string; name?: string }
+    | undefined;
+  if (typeof node === 'string') {
+    return node;
+  }
+  if (node?.type === 'Identifier' && typeof node.name === 'string') {
+    return node.name;
+  }
+  return declaration.className ?? null;
 }
