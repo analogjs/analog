@@ -12,6 +12,7 @@ const links = [
   { path: '/contact', label: 'Contact' },
   { path: '/blog', label: 'Blog' },
   { path: '/boundary', label: 'Error boundary' },
+  { path: '/defer', label: 'Defer' },
 ];
 
 export function App() @{

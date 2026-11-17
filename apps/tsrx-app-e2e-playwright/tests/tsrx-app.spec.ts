@@ -167,3 +167,43 @@ describe('error boundary', () => {
     await expect.poll(() => text('#flaky')).toBe('Widget rendered fine');
   });
 });
+
+describe('deferred views', () => {
+  test('renders placeholders and loads deferred components lazily', async () => {
+    await open('/defer');
+    const requested: string[] = [];
+    page.on('request', (request) => requested.push(request.url()));
+
+    // Placeholders are server-rendered.
+    expect(await text('#details-placeholder')).toBe(
+      'Details load when you click the button.',
+    );
+    expect(await text('#chart-placeholder')).toBe(
+      'The chart loads when this scrolls into view.',
+    );
+    await hydrated(page);
+
+    // on interaction(loadDetails): the component's code loads on click.
+    expect(requested.some((url) => url.includes('lazy-details'))).toBe(false);
+    await page.click('#load-details');
+    await expect
+      .poll(() => text('#details'))
+      .toBe('These details were loaded on interaction.');
+    expect(requested.some((url) => url.includes('lazy-details'))).toBe(true);
+
+    // when ready(): a condition on component state.
+    expect(await text('#ready-placeholder')).toBe('Waiting for the condition.');
+    await page.click('#mark-ready');
+    await expect
+      .poll(() => text('#ready-content'))
+      .toBe('The condition became true.');
+
+    // on viewport: the chart's code loads once its placeholder scrolls into view.
+    expect(requested.some((url) => url.includes('heavy-chart'))).toBe(false);
+    await page.locator('#chart-placeholder').scrollIntoViewIfNeeded();
+    await expect
+      .poll(() => text('#chart'))
+      .toContain('Loaded lazily by @defer (on viewport)');
+    expect(requested.some((url) => url.includes('heavy-chart'))).toBe(true);
+  });
+});
