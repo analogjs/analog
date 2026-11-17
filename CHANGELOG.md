@@ -1,3 +1,9 @@
+# [3.0.0-beta.43](https://github.com/analogjs/analog/compare/v3.0.0-beta.42...v3.0.0-beta.43) (2026-11-17)
+
+### Features
+
+- **router:** migrate to stable Angular Query ([#2598](https://github.com/analogjs/analog/issues/2598)) ([a2cd90f](https://github.com/analogjs/analog/commit/a2cd90f6119ab064613b8dea1959bc4974312fec))
+
 # [3.0.0-beta.42](https://github.com/analogjs/analog/compare/v3.0.0-beta.41...v3.0.0-beta.42) (2026-11-11)
 
 ### Bug Fixes
