@@ -299,11 +299,11 @@ export class Counter {
     expect(code).toContain('selector: "tsrx-html5-video-player2-d"');
   });
 
-  describe('meta export', () => {
+  describe('XMeta exports', () => {
     const CART = `import { Component, signal } from '@angular/core';
 import { CartStore } from './cart-store';
 
-export const meta = {
+export const CartMeta = {
   selector: 'app-cart',
   providers: [CartStore],
   host: { class: 'cart', '[class.empty]': 'isEmpty()' },
@@ -316,7 +316,7 @@ export function Cart() @{
 }
 `;
 
-    it('merges meta into @Component', () => {
+    it('merges XMeta into the @Component of X', () => {
       const { code, diagnostics } = lower(CART);
       expect(diagnostics).toEqual([]);
       expect(code).toContain(`@Component({
@@ -344,47 +344,82 @@ export function Cart() @{
       expect(result.code).toContain('hostAttrs');
     });
 
-    it('uses the meta selector for local tags', () => {
+    it('maps each XMeta to its own component, exported or not', () => {
       const { code, diagnostics } = lower(`
-        export const meta = { selector: 'app-card' };
-        function Wrapper() @{
-          <Card />
+        export const CartMeta = { selector: 'app-cart' };
+        export function Cart() @{
+          <ul><CartItem /></ul>
         }
-        export function Card() @{
-          <p>card</p>
+
+        export const CartItemMeta = { selector: 'app-cart-item', host: { role: 'listitem' } };
+        function CartItem() @{
+          <span>item</span>
+        }
+
+        export function CartEmpty() @{
+          <p>empty</p>
         }
       `);
       expect(diagnostics).toEqual([]);
-      expect(code).toContain('template: "<app-card></app-card>"');
+      expect(code).toContain(`  selector: 'app-cart',
+  template: "<ul><app-cart-item></app-cart-item></ul>",`);
+      expect(code).toContain(`  selector: 'app-cart-item',
+  host: { role: 'listitem' },
+  template: "<span>item</span>",`);
+      // No CartEmptyMeta: defaults apply.
+      expect(code).toContain('selector: "tsrx-cart-empty"');
+    });
+
+    it('leaves routeMeta and other camelCase exports alone', () => {
+      const { code, diagnostics } = lower(`
+        export const routeMeta = { title: 'Cart' };
+        export const pageMeta = { description: 'x' };
+        export function Cart() @{ <p /> }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain("export const routeMeta = { title: 'Cart' };");
+      expect(code).toContain('selector: "tsrx-cart"');
+    });
+
+    it('reports XMeta exports with no matching component', () => {
+      expect(
+        errors(`
+          export const CardMeta = { selector: 'app-card' };
+          export function Cart() @{ <p /> }
+        `),
+      ).toEqual([
+        expect.stringContaining(
+          "`CardMeta` doesn't match a component in this file",
+        ),
+      ]);
+    });
+
+    it('ignores non-object exports named like metadata', () => {
+      expect(
+        errors(`
+          export const ThemeMeta = createTheme();
+          export function Cart() @{ <p /> }
+        `),
+      ).toEqual([]);
     });
 
     it('rejects fields that come from the template', () => {
       expect(
         errors(`
-          export const meta = { styles: ['p {}'], template: '<p></p>' };
+          export const CMeta = { styles: ['p {}'], template: '<p></p>' };
           export function C() @{ <p /> }
         `),
       ).toEqual([
-        expect.stringContaining("'styles' cannot be set in `meta`"),
-        expect.stringContaining("'template' cannot be set in `meta`"),
+        expect.stringContaining("'styles' cannot be set in `CMeta`"),
+        expect.stringContaining("'template' cannot be set in `CMeta`"),
       ]);
-    });
-
-    it('requires a single exported component', () => {
-      expect(
-        errors(`
-          export const meta = { selector: 'x-a' };
-          export function A() @{ <p /> }
-          export function B() @{ <p /> }
-        `),
-      ).toEqual([expect.stringContaining('exports 2')]);
     });
 
     it('asks for a value import of Component', () => {
       expect(
         errors(`
           import { type Component } from '@angular/core';
-          export const meta = { selector: 'x-a' } satisfies Component;
+          export const AMeta = { selector: 'x-a' } satisfies Component;
           export function A() @{ <p /> }
         `),
       ).toEqual([

@@ -230,41 +230,24 @@ export function lowerTsrx(
       end: decoratorBinding.node.end,
     });
   }
-  // `export const meta = { … }` carries the `@Component` metadata of the
-  // file's single exported component.
-  const meta = extractMeta(program, diagnostics);
-  const exported = (program.body as EstreeNode[]).filter(
-    (stmt) => stmt.type !== 'FunctionDeclaration' && componentFunction(stmt),
-  );
-  let metaTarget: EstreeNode | null = null;
-  if (meta !== null) {
-    if (exported.length === 1) {
-      metaTarget = componentFunction(exported[0]);
-    } else {
-      diagnostics.push({
-        message:
-          exported.length === 0
-            ? '`meta` applies to the exported component, but this file exports none.'
-            : '`meta` applies to a single exported component, but this file exports ' +
-              `${exported.length}. Move the other components into their own files.`,
-        start: meta.node.start,
-        end: meta.node.end,
-      });
-    }
-  }
-
-  // Selectors of the components declared in this file, for local template tags.
-  const localComponents = new Map<string, string>();
+  // `export const XMeta = { … }` carries the `@Component` metadata of the
+  // component `X` declared in this file.
+  const componentNames = new Set<string>();
   for (const stmt of program.body as EstreeNode[]) {
     const fn = componentFunction(stmt);
     if (fn) {
-      const name = fn.id.name as string;
-      localComponents.set(
-        name,
-        (fn === metaTarget ? meta?.selector : undefined) ??
-          defaultSelector(name),
-      );
+      componentNames.add(fn.id.name as string);
     }
+  }
+  const metas = extractMetas(program, componentNames, diagnostics);
+
+  // Selectors of the components declared in this file, for local template tags.
+  const localComponents = new Map<string, string>();
+  for (const name of componentNames) {
+    localComponents.set(
+      name,
+      metas.get(name)?.selector ?? defaultSelector(name),
+    );
   }
 
   const replacements: { start: number; end: number; text: MappedText }[] = [];
@@ -290,7 +273,7 @@ export function lowerTsrx(
       replacements.push({
         start: stmt.start,
         end: stmt.end,
-        text: lowerer.lower(stmt, fn, fn === metaTarget ? meta : null),
+        text: lowerer.lower(stmt, fn, metas.get(fn.id.name) ?? null),
       });
     } catch (e) {
       if (!(e instanceof TsrxLoweringError)) {
@@ -339,7 +322,7 @@ export function lowerTsrx(
   };
 }
 
-/** The `export const meta = { … }` of a module. */
+/** A component's metadata export, `export const XMeta = { … }`. */
 interface ComponentMeta {
   /** The object literal. */
   node: EstreeNode;
@@ -391,7 +374,7 @@ class InstanceReads extends RecursiveAstVisitor {
 }
 
 /**
- * Names the `meta.host` binding (`'[class.x]': 'expr'`) and listener
+ * Names the `XMeta.host` binding (`'[class.x]': 'expr'`) and listener
  * (`'(event)': 'expr'`) expressions read off the component, parsed with
  * Angular's expression parser. Static attributes are skipped. Parse errors
  * are left for the Angular compile to report.
@@ -432,7 +415,7 @@ function hostReferences(
   return reads.names;
 }
 
-/** `@Component` fields that come from the template and may not be set in `meta`. */
+/** `@Component` fields that come from the template and may not be set in `XMeta`. */
 const DERIVED_META_FIELDS = new Set([
   'template',
   'templateUrl',
@@ -441,14 +424,21 @@ const DERIVED_META_FIELDS = new Set([
   'styles',
 ]);
 
+/** The suffix that names a component's metadata export: `XMeta` for `X`. */
+const META_SUFFIX = 'Meta';
+
 /**
- * Finds and validates `export const meta = { … }`. Like decorator metadata, it
- * must be a static object literal, optionally with `satisfies`/`as`.
+ * Finds and validates the metadata exports of a module: `export const XMeta =
+ * { … }` for each component `X` declared in it. Like decorator metadata, each
+ * must be a static object literal, optionally with `satisfies`/`as`. Only
+ * PascalCase prefixes count, so Analog's `routeMeta` passes through untouched.
  */
-function extractMeta(
+function extractMetas(
   program: EstreeNode,
+  componentNames: Set<string>,
   diagnostics: TsrxDiagnostic[],
-): ComponentMeta | null {
+): Map<string, ComponentMeta> {
+  const metas = new Map<string, ComponentMeta>();
   for (const stmt of program.body as EstreeNode[]) {
     const decl =
       stmt.type === 'ExportNamedDeclaration' ? stmt.declaration : null;
@@ -456,7 +446,19 @@ function extractMeta(
       continue;
     }
     for (const d of decl.declarations as EstreeNode[]) {
-      if (d.id.type !== 'Identifier' || d.id.name !== 'meta') {
+      const exportName: string | undefined =
+        d.id.type === 'Identifier' ? d.id.name : undefined;
+      if (
+        exportName === undefined ||
+        exportName.length <= META_SUFFIX.length ||
+        !exportName.endsWith(META_SUFFIX)
+      ) {
+        continue;
+      }
+      const component = exportName.slice(0, -META_SUFFIX.length);
+      // Components are PascalCase. camelCase exports such as Analog's
+      // `routeMeta` belong to someone else.
+      if (!isUpperCaseStart(component)) {
         continue;
       }
       let init = d.init;
@@ -467,15 +469,30 @@ function extractMeta(
       ) {
         init = init.expression;
       }
-      if (decl.kind !== 'const' || init?.type !== 'ObjectExpression') {
+      const isMetadataShaped = init?.type === 'ObjectExpression';
+
+      if (!componentNames.has(component)) {
+        // Only object literals look like metadata; leave other exports alone.
+        if (isMetadataShaped) {
+          diagnostics.push({
+            message:
+              `\`${exportName}\` doesn't match a component in this file. ` +
+              `Metadata for a component \`X\` is exported as \`XMeta\`, next to \`function X() @{ … }\`.`,
+            start: d.id.start,
+            end: d.id.end,
+          });
+        }
+        continue;
+      }
+      if (decl.kind !== 'const' || !isMetadataShaped) {
         diagnostics.push({
-          message:
-            '`meta` must be a `const` initialized with an object literal.',
+          message: `\`${exportName}\` must be a \`const\` initialized with an object literal.`,
           start: d.start,
           end: d.end,
         });
-        return null;
+        continue;
       }
+
       const meta: ComponentMeta = { node: init, properties: [] };
       for (const prop of init.properties as EstreeNode[]) {
         const key =
@@ -486,7 +503,7 @@ function extractMeta(
             : null;
         if (typeof key !== 'string') {
           diagnostics.push({
-            message: '`meta` properties must be plain `key: value` entries.',
+            message: `\`${exportName}\` properties must be plain \`key: value\` entries.`,
             start: prop.start,
             end: prop.end,
           });
@@ -496,8 +513,8 @@ function extractMeta(
           diagnostics.push({
             message:
               key === 'styles'
-                ? "'styles' cannot be set in `meta`; use a <style> element (or styleUrl)."
-                : `'${key}' cannot be set in \`meta\`; it comes from the template.`,
+                ? `'styles' cannot be set in \`${exportName}\`; use a <style> element (or styleUrl).`
+                : `'${key}' cannot be set in \`${exportName}\`; it comes from the template.`,
             start: prop.start,
             end: prop.end,
           });
@@ -509,7 +526,7 @@ function extractMeta(
             typeof prop.value.value !== 'string'
           ) {
             diagnostics.push({
-              message: '`meta.selector` must be a string literal.',
+              message: `\`${exportName}.selector\` must be a string literal.`,
               start: prop.value.start,
               end: prop.value.end,
             });
@@ -519,10 +536,10 @@ function extractMeta(
         }
         meta.properties.push(prop);
       }
-      return meta;
+      metas.set(component, meta);
     }
   }
-  return null;
+  return metas;
 }
 
 /** Returns the component function declared by a top-level statement, if any. */
