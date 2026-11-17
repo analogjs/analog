@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery } from '@tanstack/angular-query';
 import { serverQueryOptions } from '@analogjs/router/tanstack-query';
 
 import type { route as postsRoute } from '../../server/routes/api/v1/query-posts';
@@ -126,7 +126,7 @@ export default class TanStackQueryLoadPage {
   readonly postsQuery = injectQuery(() =>
     serverQueryOptions<typeof postsRoute>(this.http, '/api/v1/query-posts', {
       queryKey: ['analog-query-load-posts', this.scope()] as const,
-      query: { scope: this.scope() },
+      query: { scope: this.scope(), postId: '', author: '' },
       staleTime: 60_000,
     }),
   );

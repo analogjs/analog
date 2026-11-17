@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from '@analogjs/router/server/actions';
-import { QueryClient } from '@tanstack/angular-query-experimental';
+import { QueryClient } from '@tanstack/angular-query';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
