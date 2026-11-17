@@ -158,6 +158,82 @@ export class Counter {
       );
     });
 
+    it('maps @try / @catch to @boundary / @error', () => {
+      const source = `
+        import { Risky } from './risky';
+        export function C() @{
+          <div>
+            @try {
+              <Risky />
+            } @catch (err, reset) {
+              <button onClick={reset}>{String(err)}</button>
+            }
+          </div>
+        }
+      `;
+      expect(template(source, { Risky: 'x-risky' })).toBe(
+        '<div>@boundary {<x-risky></x-risky>} @error (let err = $error, reset = $reset) ' +
+          '{<button (click)="$fc.b0($event, reset)">{{ $fc.b1(err) }}</button>}</div>',
+      );
+      // `err` and `reset` reach the hoisted closures as typed parameters.
+      const { code } = lower(source, { Risky: 'x-risky' });
+      expect(code).toContain(
+        'const ɵb0 = ($event: any, reset: () => void) => ((reset) as (e: any) => unknown)($event);',
+      );
+      expect(code).toContain('const ɵb1 = (err: unknown) => (String(err));');
+    });
+
+    it('maps a bare @catch', () => {
+      expect(
+        template(`
+          export function C() @{
+            <div>
+              @try {
+                <p>main</p>
+              } @catch {
+                <p>fallback</p>
+              }
+            </div>
+          }
+        `),
+      ).toBe('<div>@boundary {<p>main</p>} @error {<p>fallback</p>}</div>');
+    });
+
+    it('compiles @try with the fast compiler', () => {
+      const { code } = lower(`
+        export function C() @{
+          <div>
+            @try {
+              <p>main</p>
+            } @catch (err, reset) {
+              <button onClick={reset}>{String(err)}</button>
+            }
+          </div>
+        }
+      `);
+      const result = compile(code, '/app/test.tsrx', buildRegistry({}));
+      expect(result.code).toContain('ɵɵboundaryCreate(');
+      expect(result.code).toContain('$reset');
+    });
+
+    it('rejects @pending', () => {
+      expect(
+        errors(`
+          export function C() @{
+            <div>
+              @try {
+                <p>main</p>
+              } @pending {
+                <p>loading</p>
+              } @catch {
+                <p>fallback</p>
+              }
+            </div>
+          }
+        `),
+      ).toEqual([expect.stringContaining('@pending is not supported')]);
+    });
+
     it('maps @switch', () => {
       expect(
         template(`

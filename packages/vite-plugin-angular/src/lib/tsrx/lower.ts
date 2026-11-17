@@ -844,10 +844,7 @@ class ComponentLowerer {
       case 'JSXSwitchExpression':
         return this.lowerSwitch(node, scope);
       case 'JSXTryExpression':
-        throw new TsrxLoweringError(
-          node,
-          '@try is not supported by the Angular target yet.',
-        );
+        return this.lowerTry(node, scope);
       case 'JSXCodeBlock':
         throw new TsrxLoweringError(
           node,
@@ -1004,6 +1001,57 @@ class ComponentLowerer {
       out.append(mt` @empty {${this.lowerBranch(node.empty, scope)}}`);
     }
     return out.from(node);
+  }
+
+  /**
+   * `@try { … } @catch (err, reset) { … }` → Angular's error boundary,
+   * `@boundary { … } @error (let err = $error, reset = $reset) { … }`.
+   */
+  private lowerTry(node: EstreeNode, scope: Local[]): MappedText {
+    if (node.pending) {
+      throw new TsrxLoweringError(
+        node.pendingKeyword ?? node.pending,
+        '@pending is not supported by the Angular target: @boundary catches errors but has no pending state.',
+      );
+    }
+    if (node.finalizer) {
+      throw new TsrxLoweringError(
+        node.finalizer,
+        '@finally is not supported by the Angular target.',
+      );
+    }
+    const handler = node.handler;
+    if (!handler) {
+      throw new TsrxLoweringError(
+        node,
+        'The Angular target needs a @catch block after @try to render when an error is caught.',
+      );
+    }
+
+    // `err` and `reset` become template variables of the @error block.
+    const lets: string[] = [];
+    const inner: Local[] = [...scope];
+    for (const [param, source, type] of [
+      [handler.param, '$error', 'unknown'],
+      [handler.resetParam, '$reset', '() => void'],
+    ] as const) {
+      if (!param) {
+        continue;
+      }
+      if (param.type !== 'Identifier') {
+        throw new TsrxLoweringError(
+          param,
+          'The Angular target needs plain @catch parameters, e.g. @catch (err, reset).',
+        );
+      }
+      lets.push(`${param.name} = ${source}`);
+      inner.push({ name: param.name, type });
+    }
+
+    const block = this.lowerBranch(node.block, scope);
+    const fallback = this.lowerBranch(handler.body, inner);
+    const params = lets.length > 0 ? ` (let ${lets.join(', ')})` : '';
+    return mt`@boundary {${block}} @error${params} {${fallback}}`.from(node);
   }
 
   private lowerSwitch(node: EstreeNode, scope: Local[]): MappedText {
