@@ -1308,6 +1308,31 @@ importers:
 
   apps/tanstack-query-app-e2e: {}
 
+  apps/tsrx-app:
+    dependencies:
+      '@analogjs/content':
+        specifier: workspace:*
+        version: link:../../packages/content
+      '@analogjs/router':
+        specifier: workspace:*
+        version: link:../../packages/router
+      h3:
+        specifier: catalog:nitroV2
+        version: 1.15.11
+    devDependencies:
+      '@analogjs/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-angular
+      '@analogjs/vite-plugin-nitro':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-nitro
+      '@analogjs/vite-plugin-tsrx':
+        specifier: workspace:*
+        version: link:../../packages/vite-plugin-tsrx
+
   apps/typed-router-app:
     dependencies:
       '@analogjs/router':

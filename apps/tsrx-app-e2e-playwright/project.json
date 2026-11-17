@@ -1,0 +1,23 @@
+{
+  "name": "tsrx-app-e2e-playwright",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/tsrx-app-e2e-playwright/src",
+  "projectType": "application",
+  "tags": [],
+  "implicitDependencies": ["tsrx-app"],
+  "targets": {
+    "e2e": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["tsrx-app:build"],
+      "options": {
+        "cwd": "",
+        "command": "start-server-and-test 'node dist/apps/tsrx-app/analog/server/index.mjs' http-get://127.0.0.1:43061/api/v1/products 'nx run tsrx-app-e2e-playwright:vitest'",
+        "env": {
+          "PORT": "43061",
+          "HOST": "127.0.0.1",
+          "E2E_BASE_URL": "http://127.0.0.1:43061"
+        }
+      }
+    }
+  }
+}
