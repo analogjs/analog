@@ -336,6 +336,109 @@ export function lowerTsrx(
   };
 }
 
+/** `@name (params)` in text, as part of a `@defer` block. */
+interface BlockHeader {
+  name: string;
+  /** Offset of the `@`. */
+  start: number;
+  /** The text between the parentheses, if there are any. */
+  params: Span | null;
+  /** Offset just past the header and the whitespace after it. */
+  end: number;
+}
+
+interface DeferMatch {
+  /** Text in the same JSXText node before `@defer`. */
+  textBefore: Span | null;
+  main: { header: BlockHeader; content: EstreeNode };
+  connected: { header: BlockHeader; content: EstreeNode }[];
+  /** Index of the last child the block consumed. */
+  lastIndex: number;
+}
+
+/** The JSX inside a `{ … }` container following a block header, if that's what `node` is. */
+function blockContent(node: EstreeNode | undefined): EstreeNode | null {
+  if (node?.type !== 'JSXExpressionContainer') {
+    return null;
+  }
+  const expr = node.expression;
+  return expr.type === 'JSXElement' || expr.type === 'JSXFragment'
+    ? expr
+    : null;
+}
+
+function isWhitespace(ch: string | undefined): boolean {
+  return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
+}
+
+function isIdentifierChar(ch: string): boolean {
+  return (
+    ch === '_' ||
+    ch === '$' ||
+    (ch >= 'a' && ch <= 'z') ||
+    (ch >= 'A' && ch <= 'Z') ||
+    (ch >= '0' && ch <= '9')
+  );
+}
+
+/** Index of the `)` matching the `(` at `open`, skipping quoted strings, or -1. */
+function findClosingParen(src: string, open: number, limit: number): number {
+  let depth = 0;
+  for (let i = open; i < limit; i++) {
+    const ch = src[i];
+    if (ch === "'" || ch === '"' || ch === '`') {
+      i = skipString(src, i, limit);
+    } else if (ch === '(') {
+      depth++;
+    } else if (ch === ')' && --depth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/** Index of the closing quote of the string starting at `start`. */
+function skipString(src: string, start: number, limit: number): number {
+  const quote = src[start];
+  for (let i = start + 1; i < limit; i++) {
+    if (src[i] === '\\') {
+      i++;
+    } else if (src[i] === quote) {
+      return i;
+    }
+  }
+  return limit;
+}
+
+/** Splits `span` of `src` on `separator` outside parentheses and strings. */
+function splitTopLevel(src: string, span: Span, separator: string): Span[] {
+  const parts: Span[] = [];
+  let depth = 0;
+  let start = span.start;
+  for (let i = span.start; i < span.end; i++) {
+    const ch = src[i];
+    if (ch === "'" || ch === '"' || ch === '`') {
+      i = skipString(src, i, span.end);
+    } else if (ch === '(') {
+      depth++;
+    } else if (ch === ')') {
+      depth--;
+    } else if (ch === separator && depth === 0) {
+      parts.push({ start, end: i });
+      start = i + 1;
+    }
+  }
+  parts.push({ start, end: span.end });
+  return parts;
+}
+
+function trimSpan(src: string, span: Span): Span {
+  let { start, end } = span;
+  while (start < end && isWhitespace(src[start])) start++;
+  while (end > start && isWhitespace(src[end - 1])) end--;
+  return { start, end };
+}
+
 /** A component's metadata export, `export const XMeta = { … }`. */
 interface ComponentMeta {
   /** The object literal. */
@@ -921,10 +1024,198 @@ class ComponentLowerer {
   }
 
   private lowerChildren(children: EstreeNode[], scope: Local[]): MappedText {
-    return joinMapped(
-      children.map((c) => this.lowerChild(c, scope)),
-      '',
+    const out = new MappedText();
+    for (let i = 0; i < children.length; i++) {
+      const defer = this.matchDefer(children, i);
+      if (defer === null) {
+        out.append(this.lowerChild(children[i], scope));
+        continue;
+      }
+      if (defer.textBefore !== null) {
+        out.append(
+          mt`${escapeText(cleanJsxText(this.source.slice(defer.textBefore.start, defer.textBefore.end)))}`.from(
+            defer.textBefore,
+          ),
+        );
+      }
+      out.append(this.lowerDefer(defer, scope));
+      i = defer.lastIndex;
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------------------------
+  // @defer
+  //
+  // TSRX has no `@defer` block, and its parser reads Angular's block syntax as
+  // text plus expression containers: `@defer (on viewport) { <A /> }
+  // @placeholder { <p /> }` arrives as JSXText `@defer (on viewport) `, a
+  // container holding `<A />`, JSXText ` @placeholder `, and a container
+  // holding `<p />`. That sequence is lowered to Angular's real `@defer`.
+
+  /** Recognizes a `@defer` block starting in `children[index]`, if any. */
+  private matchDefer(children: EstreeNode[], index: number): DeferMatch | null {
+    const text = children[index];
+    if (text.type !== 'JSXText') {
+      return null;
+    }
+    const at = this.source.lastIndexOf('@defer', text.end - 1);
+    if (at < text.start) {
+      return null;
+    }
+    const header = this.readBlockHeader(at, text.end, ['defer']);
+    const content = blockContent(children[index + 1]);
+    if (header === null || header.end !== text.end || content === null) {
+      return null;
+    }
+
+    const match: DeferMatch = {
+      textBefore: at > text.start ? { start: text.start, end: at } : null,
+      main: { header, content },
+      connected: [],
+      lastIndex: index + 1,
+    };
+    // Connected blocks: whitespace, `@placeholder|@loading|@error (…)`, then `{ … }`.
+    while (match.lastIndex + 2 < children.length) {
+      const next = children[match.lastIndex + 1];
+      if (next?.type !== 'JSXText') {
+        break;
+      }
+      let start = next.start;
+      while (start < next.end && isWhitespace(this.source[start])) {
+        start++;
+      }
+      const connected = this.readBlockHeader(start, next.end, [
+        'placeholder',
+        'loading',
+        'error',
+      ]);
+      const connectedContent = blockContent(children[match.lastIndex + 2]);
+      if (
+        connected === null ||
+        connected.end !== next.end ||
+        connectedContent === null
+      ) {
+        break;
+      }
+      match.connected.push({ header: connected, content: connectedContent });
+      match.lastIndex += 2;
+    }
+    return match;
+  }
+
+  /**
+   * Reads `@name`, optional `( … )` parameters and trailing whitespace from
+   * `this.source[start..limit)`. Returns `null` if it isn't one of `names`.
+   */
+  private readBlockHeader(
+    start: number,
+    limit: number,
+    names: string[],
+  ): BlockHeader | null {
+    const src = this.source;
+    if (src[start] !== '@') {
+      return null;
+    }
+    const name = names.find(
+      (n) =>
+        src.startsWith(n, start + 1) &&
+        !isIdentifierChar(src[start + 1 + n.length] ?? ''),
     );
+    if (name === undefined || (start > 0 && isIdentifierChar(src[start - 1]))) {
+      return null;
+    }
+    let pos = start + 1 + name.length;
+    while (pos < limit && isWhitespace(src[pos])) pos++;
+
+    let params: Span | null = null;
+    if (src[pos] === '(') {
+      const close = findClosingParen(src, pos, limit);
+      if (close === -1) {
+        throw new TsrxLoweringError(
+          { start, end: limit },
+          `Unclosed parameters for @${name}.`,
+        );
+      }
+      params = { start: pos + 1, end: close };
+      pos = close + 1;
+      while (pos < limit && isWhitespace(src[pos])) pos++;
+    }
+    return { name, start, params, end: pos };
+  }
+
+  private lowerDefer(defer: DeferMatch, scope: Local[]): MappedText {
+    const { header, content } = defer.main;
+    const out = new MappedText();
+    out.append('@defer');
+    if (header.params !== null) {
+      out.append(mt` (${this.lowerDeferTriggers(header.params, scope)})`);
+    }
+    out.append(mt` {${this.lowerChild(content, scope)}}`);
+
+    for (const block of defer.connected) {
+      const params =
+        block.header.params === null
+          ? ''
+          : mt` (${new MappedText().copy(this.source, trimSpan(this.source, block.header.params))})`;
+      out.append(
+        mt` @${block.header.name}${params} {${this.lowerChild(block.content, scope)}}`.from(
+          { start: block.header.start, end: block.content.end },
+        ),
+      );
+    }
+    return out.from({ start: header.start, end: content.end });
+  }
+
+  /**
+   * Passes `@defer` triggers through to Angular, except the expressions of
+   * `when`, `prefetch when` and `hydrate when`, which read component state and
+   * so become hoisted bindings like any other template expression.
+   */
+  private lowerDeferTriggers(params: Span, scope: Local[]): MappedText {
+    const parts = splitTopLevel(this.source, params, ';').map((part) =>
+      trimSpan(this.source, part),
+    );
+    return joinMapped(
+      parts.map((part) => {
+        const text = this.source.slice(part.start, part.end);
+        const keyword = ['when ', 'prefetch when ', 'hydrate when '].find((k) =>
+          text.startsWith(k),
+        );
+        if (keyword === undefined) {
+          return new MappedText().copy(this.source, part);
+        }
+        const expr = this.parseExpressionAt({
+          start: part.start + keyword.length,
+          end: part.end,
+        });
+        return mt`${keyword}${this.bindValue(expr, scope).call}`.from(part);
+      }),
+      '; ',
+    );
+  }
+
+  /**
+   * Parses the expression at `span` of the source. Everything outside the span
+   * is blanked, so the resulting AST's offsets are positions in the source.
+   */
+  private parseExpressionAt(span: Span): EstreeNode {
+    let padded = '';
+    for (let i = 0; i < this.source.length; i++) {
+      const ch = this.source[i];
+      padded += (i >= span.start && i < span.end) || ch === '\n' ? ch : ' ';
+    }
+    let program: EstreeNode;
+    try {
+      program = this.parsers.parseModule(padded, this.fileName);
+    } catch {
+      throw new TsrxLoweringError(span, 'Expected an expression.');
+    }
+    const [statement] = program.body as EstreeNode[];
+    if (program.body.length !== 1 || statement.type !== 'ExpressionStatement') {
+      throw new TsrxLoweringError(span, 'Expected an expression.');
+    }
+    return statement.expression;
   }
 
   /** Lowers the body of a `@if`/`@for`/`@switch` block or a conditional branch. */

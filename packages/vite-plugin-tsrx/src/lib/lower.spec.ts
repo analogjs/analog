@@ -237,6 +237,91 @@ export class Counter {
       ).toEqual([expect.stringContaining('@pending is not supported')]);
     });
 
+    it('maps Angular @defer syntax with connected blocks', () => {
+      expect(
+        template(
+          `
+          import { HeavyChart } from './heavy-chart';
+          export function C() @{
+            <section>
+              {'Chart: '}
+              @defer (on viewport; prefetch on idle) {
+                <HeavyChart />
+              } @placeholder (minimum 500ms) {
+                <p>{'Scroll down'}</p>
+              } @loading (after 100ms; minimum 1s) {
+                <p>{'Loading…'}</p>
+              } @error {
+                <p>{'Failed'}</p>
+              }
+            </section>
+          }
+        `,
+          { HeavyChart: 'heavy-chart' },
+        ),
+      ).toBe(
+        '<section>Chart: @defer (on viewport; prefetch on idle) {<heavy-chart></heavy-chart>} ' +
+          '@placeholder (minimum 500ms) {<p>Scroll down</p>} ' +
+          '@loading (after 100ms; minimum 1s) {<p>Loading…</p>} @error {<p>Failed</p>}</section>',
+      );
+    });
+
+    it('binds @defer when-conditions and keeps template-ref triggers', () => {
+      const source = `
+        import { signal } from '@angular/core';
+        export function C() @{
+          const ready = signal(false);
+          <div>
+            <button ref="load">{'Load'}</button>
+            @defer (on interaction(load); when ready() && true) {
+              <p>{'Details'}</p>
+            }
+          </div>
+        }
+      `;
+      expect(template(source)).toBe(
+        '<div><button #load>Load</button>' +
+          '@defer (on interaction(load); when $fc.b0()) {<p>Details</p>}</div>',
+      );
+      expect(lower(source).code).toContain(
+        'const ɵb0 = () => (ready() && true);',
+      );
+    });
+
+    it('maps a bare @defer and leaves other @ text alone', () => {
+      expect(
+        template(`
+          export function C() @{
+            <div>
+              {'Email me @ home'}
+              @defer {
+                <p>{'later'}</p>
+              }
+            </div>
+          }
+        `),
+      ).toBe('<div>Email me &#64; home@defer {<p>later</p>}</div>');
+    });
+
+    it('maps @defer source positions to the TSRX', () => {
+      const source = `
+        import { signal } from '@angular/core';
+        export function C() @{
+          const ready = signal(false);
+          <div>
+            @defer (when ready()) {
+              <p>{'x'}</p>
+            }
+          </div>
+        }
+      `;
+      const { code, sourceMap } = lower(source);
+      const generated = code.indexOf('ready()');
+      expect(sourceMap.toOriginalOffset(generated)).toBe(
+        source.indexOf('ready()'),
+      );
+    });
+
     it('maps @switch', () => {
       expect(
         template(`
