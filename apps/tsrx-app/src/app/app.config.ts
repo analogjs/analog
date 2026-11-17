@@ -5,6 +5,7 @@ import type { ApplicationConfig } from '@angular/core';
 import {
   provideClientHydration,
   withEventReplay,
+  withIncrementalHydration,
 } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
@@ -12,6 +13,6 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(),
     provideHttpClient(withFetch()),
     provideContent(withMarkdownRenderer()),
-    provideClientHydration(withEventReplay()),
+    provideClientHydration(withEventReplay(), withIncrementalHydration()),
   ],
 };

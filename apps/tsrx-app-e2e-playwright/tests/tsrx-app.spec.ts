@@ -46,9 +46,15 @@ afterEach(async () => {
   expect(unexpected).toEqual([]);
 });
 
-/** Waits for hydration: Angular removes the `ngh` markers once it has hydrated. */
+/**
+ * Waits for hydration: Angular removes the `ngh` markers once it has hydrated.
+ * Markers inside `@defer` blocks left dehydrated by incremental hydration
+ * (`ngb`) stay until those blocks hydrate.
+ */
 async function hydrated(page: Page): Promise<void> {
-  await page.waitForFunction(() => !document.querySelector('[ngh]'));
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll('[ngh]')].every((el) => el.closest('[ngb]')),
+  );
 }
 
 const text = (selector: string) => page.locator(selector).first().innerText();
@@ -205,5 +211,32 @@ describe('deferred views', () => {
       .poll(() => text('#chart'))
       .toContain('Loaded lazily by @defer (on viewport)');
     expect(requested.some((url) => url.includes('heavy-chart'))).toBe(true);
+  });
+});
+
+describe('incremental hydration', () => {
+  test('hydrates a @defer block on interaction and never loads hydrate never', async () => {
+    await open('/defer');
+    const requested: string[] = [];
+    page.on('request', (request) => requested.push(request.url()));
+
+    // Both blocks render their content on the server, not a placeholder.
+    expect(await text('#like')).toBe('Likes: 0');
+    expect(await text('#server-note')).toBe(
+      'Rendered on the server and never hydrated.',
+    );
+    expect(requested.some((url) => url.includes('like-button'))).toBe(false);
+
+    // The first click loads and hydrates the block, then is replayed.
+    await page.click('#like');
+    await expect.poll(() => text('#like')).toBe('Likes: 1');
+    expect(requested.some((url) => url.includes('like-button'))).toBe(true);
+    await page.click('#like');
+    await expect.poll(() => text('#like')).toBe('Likes: 2');
+
+    // hydrate never: the code is never requested.
+    await page.locator('#chart-placeholder').scrollIntoViewIfNeeded();
+    await expect.poll(() => text('#chart')).toContain('Loaded lazily');
+    expect(requested.some((url) => url.includes('server-note'))).toBe(false);
   });
 });

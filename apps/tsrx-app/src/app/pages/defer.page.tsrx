@@ -3,6 +3,8 @@ import { signal } from '@angular/core';
 
 import { LazyDetails } from '../components/lazy-details.tsrx';
 import { HeavyChart } from '../components/heavy-chart.tsrx';
+import { LikeButton } from '../components/like-button.tsrx';
+import { ServerNote } from '../components/server-note.tsrx';
 
 export const routeMeta: RouteMeta = { title: 'Deferred views' };
 
@@ -27,6 +29,15 @@ export default function DeferPage() @{
       <p id="ready-content">{'The condition became true.'}</p>
     } @placeholder {
       <p id="ready-placeholder">{'Waiting for the condition.'}</p>
+    }
+
+    <h2>{'Incremental hydration'}</h2>
+    <p>{'Server-rendered content whose code loads on the first click:'}</p>
+    @defer (hydrate on interaction) {
+      <LikeButton />
+    }
+    @defer (hydrate never) {
+      <ServerNote />
     }
 
     <h2>{'On viewport'}</h2>
