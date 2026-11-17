@@ -6,6 +6,8 @@ Use route `load` functions when data should be resolved before the page componen
 
 ## Step 1: Install TanStack Query
 
+`@tanstack/angular-query` requires Angular 20.1 or later.
+
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
