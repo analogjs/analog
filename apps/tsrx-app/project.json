@@ -56,8 +56,17 @@
         }
       }
     },
+    "tsrx-types": {
+      "executor": "nx:run-commands",
+      "dependsOn": [{ "projects": ["vite-plugin-tsrx"], "target": "build" }],
+      "options": {
+        "cwd": "apps/tsrx-app",
+        "command": "pnpm exec tsrx-types -p tsconfig.app.json"
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
+      "dependsOn": ["tsrx-types"],
       "options": {
         "cwd": "apps/tsrx-app",
         "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"

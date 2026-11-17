@@ -79,7 +79,7 @@ describe('TSRX lowering (Angular target)', () => {
 export class Counter {
   readonly initial = input.required<number>();
   readonly changed = output<number>();
-  protected readonly $fc = (() => {
+  /** @internal */ protected readonly $fc = (() => {
     const initial = this.initial;
     const changed = this.changed;
     const count = signal(0);`);
@@ -507,7 +507,7 @@ export function Cart() @{
       // Host expressions run against the instance, so referenced locals are exposed.
       expect(code).toContain('return {b0: ɵb0, isEmpty};');
       expect(code).toContain(
-        '  protected readonly isEmpty = this.$fc.isEmpty;\n}',
+        '  /** @internal */ protected readonly isEmpty = this.$fc.isEmpty;\n}',
       );
       // The user's value import of Component is reused.
       expect(code).toContain(

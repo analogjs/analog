@@ -19,7 +19,7 @@
  * @Component({selector: 'Counter', template: '<button (click)="$fc.b0($event)">{{ $fc.b1() }}</button>', …})
  * export class Counter {
  *   readonly step = input(1);
- *   protected readonly $fc = (() => {
+ *   protected readonly $fc = (() => {   // marked @internal
  *     const step = this.step;
  *     const count = signal(0);
  *     const ɵb0 = ($event: any) => ((() => count.update((c) => c + step())) as (e: any) => unknown)($event);
@@ -825,7 +825,7 @@ class ComponentLowerer {
       (n) => locals.has(n) && !memberNames.has(n),
     );
     const exposedFields = exposed.map((n) =>
-      mt`  protected readonly ${n} = this.${TSRX_BINDINGS_FIELD}.${n};`.from(
+      mt`  /** @internal */ protected readonly ${n} = this.${TSRX_BINDINGS_FIELD}.${n};`.from(
         locals.get(n)!,
       ),
     );
@@ -843,7 +843,9 @@ class ComponentLowerer {
         ),
         mt`${exportPrefix}class ${this.copy(fn.id)} {`,
         ...fields,
-        mt`  protected readonly ${TSRX_BINDINGS_FIELD} = (() => {`.from(block),
+        mt`  /** @internal */ protected readonly ${TSRX_BINDINGS_FIELD} = (() => {`.from(
+          block,
+        ),
         ...setup,
         '  })();',
         ...exposedFields,

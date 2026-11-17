@@ -34,3 +34,37 @@ export function Counter() @{
 - `@if`, `@for` (`key` → `track`), `@switch` and `@try`/`@catch` (→
   `@boundary`/`@error`) map to Angular's control flow.
 - `.page.tsrx` files work as `@analogjs/router` pages.
+- Angular's `@defer` syntax works as-is:
+  `@defer (on viewport) { <Chart /> } @placeholder { <p>…</p> }`. Like `@if`,
+  each block renders a single node; wrap several in `<>…</>`.
+
+## Types
+
+TypeScript can't read `.tsrx` files, so the plugin writes a declaration file
+for each one, with types inferred from its lowered code. They go in
+`node_modules/.analog/tsrx-types`, mirroring your sources
+(`src/app/counter.tsrx` → `src/app/counter.d.tsrx.ts`), so nothing is
+generated next to your sources or committed.
+
+Point TypeScript at them in the tsconfig that type-checks your app:
+
+```json
+{
+  "compilerOptions": {
+    "allowArbitraryExtensions": true,
+    "rootDirs": [".", "node_modules/.analog/tsrx-types"]
+  }
+}
+```
+
+The dev server writes them at startup and keeps them up to date as you edit.
+`vite build` doesn't, so generate them before type-checking in CI:
+
+```sh
+tsrx-types -p tsconfig.app.json && tsc -p tsconfig.app.json --noEmit
+```
+
+Options: `tsrx({ types: { tsconfig, outDir } })` changes where they're read
+from and written to, and `tsrx({ types: false })` turns the dev server's
+generation off. The generator is also available programmatically from
+`@analogjs/vite-plugin-tsrx/types`.

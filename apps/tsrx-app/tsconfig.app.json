@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "types": ["vite/client"],
-    "composite": false
+    "composite": false,
+    "allowArbitraryExtensions": true,
+    "rootDirs": [".", "node_modules/.analog/tsrx-types"]
   },
   "files": ["src/main.ts", "src/main.server.ts"],
   "include": ["src/**/*.ts"]
