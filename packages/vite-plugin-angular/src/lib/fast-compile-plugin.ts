@@ -51,6 +51,7 @@ import {
   lowerTsrxForScan,
   lowerTsrxModule,
   remapTsrxSourceMap,
+  tsrxImportSpecifiers,
   TSRX_GLOB,
 } from './tsrx/fast-compile.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
@@ -568,8 +569,24 @@ export function fastCompilePlugin(
     program: ReturnType<typeof parseSync>['program'],
     resolveImport: ResolveImport,
   ): Promise<void> {
+    await resolveImportSpecifiers(
+      collectAllImports(code, id, program),
+      id,
+      resolveImport,
+    );
+  }
+
+  /**
+   * Scan the files behind `specs`, imported by `id`, into the registry and
+   * record `id` as their importer.
+   */
+  async function resolveImportSpecifiers(
+    specs: string[],
+    id: string,
+    resolveImport: ResolveImport,
+  ): Promise<void> {
     await Promise.all(
-      collectAllImports(code, id, program).map(async (spec) => {
+      specs.map(async (spec) => {
         const file = await resolveImport(spec, id);
         if (!file) return;
         for (const scanned of await scanOnDemand(file, resolveImport)) {
@@ -1075,17 +1092,14 @@ export function fastCompilePlugin(
         };
 
         if (tsrxEnabled && isTsrxFile(id)) {
-          // Lower once to discover what the module imports, scan those into
-          // the registry, then lower again with their selectors known.
-          const scan = await lowerTsrxForScan(code, id);
-          if (scan.diagnostics.length === 0) {
-            await resolveImportedDeclarations(
-              scan.code,
-              id,
-              parseOxc(id, scan.code).program,
-              resolveImport,
-            );
-          }
+          // Scan what the module imports into the registry, read straight
+          // from its (cached) TSRX parse, then lower it once with those
+          // selectors known.
+          await resolveImportSpecifiers(
+            await tsrxImportSpecifiers(code, id),
+            id,
+            resolveImport,
+          );
           const lowered = await lowerTsrxModule(code, id, {
             resolveSelector: (name) => lookupSelector(name),
           });

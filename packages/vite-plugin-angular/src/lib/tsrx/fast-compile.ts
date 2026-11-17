@@ -45,33 +45,145 @@ export function loadTsrxParsers(): Promise<TsrxParsers> {
   return parsersPromise;
 }
 
-/**
- * Selectors are only needed for template tags, which registry scanning ignores.
- * Lowering for a scan resolves every tag to a placeholder.
- */
-const SCAN_RESOLVER: TsrxSelectorResolver = {
-  resolveSelector: () => 'tsrx-unresolved',
-};
+/** Per-file cache of parse and lowering results, keyed by the source text. */
+interface CachedModule {
+  source: string;
+  /** The TSRX parse, or the error it threw. */
+  parsed?: { program: EstreeNode } | { error: unknown };
+  /** A lowering made for registry scanning, with placeholder tag selectors. */
+  scan?: { result: TsrxLoweringResult; resolvedSelectors: boolean };
+  /** The latest lowering made for compilation. */
+  compiled?: TsrxLoweringResult;
+}
+
+const modules = new Map<string, CachedModule>();
+
+function cachedModule(fileName: string, source: string): CachedModule {
+  let entry = modules.get(fileName);
+  if (entry === undefined || entry.source !== source) {
+    entry = { source };
+    modules.set(fileName, entry);
+  }
+  return entry;
+}
+
+/** Parsers whose `parseModule` parses `entry`'s source at most once. */
+async function cachingParsers(
+  entry: CachedModule,
+  fileName: string,
+): Promise<TsrxParsers> {
+  const parsers = await loadTsrxParsers();
+  return {
+    parseModule: (source, file) => {
+      if (file !== fileName || source !== entry.source) {
+        return parsers.parseModule(source, file);
+      }
+      if (entry.parsed === undefined) {
+        try {
+          entry.parsed = { program: parsers.parseModule(source, file) };
+        } catch (error) {
+          entry.parsed = { error };
+        }
+      }
+      if ('error' in entry.parsed) {
+        throw entry.parsed.error;
+      }
+      return entry.parsed.program;
+    },
+    parseStyle: parsers.parseStyle,
+  };
+}
 
 /**
- * Lowers a `.tsrx` module just far enough for registry scanning and import
- * discovery: the resulting TypeScript declares the same classes, selectors,
- * inputs, outputs and imports as the real compile.
+ * The module specifiers a `.tsrx` module imports or re-exports, read from its
+ * (cached) parse. Returns none when the module fails to parse; the lowering
+ * reports that error.
+ */
+export async function tsrxImportSpecifiers(
+  code: string,
+  fileName: string,
+): Promise<string[]> {
+  const entry = cachedModule(fileName, code);
+  let program: EstreeNode;
+  try {
+    program = (await cachingParsers(entry, fileName)).parseModule(
+      code,
+      fileName,
+    );
+  } catch {
+    return [];
+  }
+  const specifiers: string[] = [];
+  for (const stmt of program.body as EstreeNode[]) {
+    const isImport =
+      stmt.type === 'ImportDeclaration' && stmt.importKind !== 'type';
+    const isReExport =
+      (stmt.type === 'ExportNamedDeclaration' ||
+        stmt.type === 'ExportAllDeclaration') &&
+      stmt.source &&
+      stmt.exportKind !== 'type';
+    if ((isImport || isReExport) && typeof stmt.source.value === 'string') {
+      specifiers.push(stmt.source.value);
+    }
+  }
+  return specifiers;
+}
+
+/**
+ * Lowers a `.tsrx` module for registry scanning: the resulting TypeScript
+ * declares the same classes, selectors, inputs and outputs as the compiled
+ * module. Template tags don't matter to the scanner, so the module's latest
+ * compile lowering is reused when there is one; otherwise tags resolve to a
+ * placeholder.
  */
 export async function lowerTsrxForScan(
   code: string,
   fileName: string,
 ): Promise<TsrxLoweringResult> {
-  return lowerTsrx(code, fileName, await loadTsrxParsers(), SCAN_RESOLVER);
+  const entry = cachedModule(fileName, code);
+  if (entry.compiled) {
+    return entry.compiled;
+  }
+  if (entry.scan === undefined) {
+    let resolvedSelectors = false;
+    const result = lowerTsrx(
+      code,
+      fileName,
+      await cachingParsers(entry, fileName),
+      {
+        resolveSelector: () => {
+          resolvedSelectors = true;
+          return 'tsrx-unresolved';
+        },
+      },
+    );
+    entry.scan = { result, resolvedSelectors };
+  }
+  return entry.scan.result;
 }
 
-/** Lowers a `.tsrx` module for compilation. */
+/**
+ * Lowers a `.tsrx` module for compilation. Selectors of imported components
+ * can change while this module's source doesn't, so the module is lowered again
+ * on every call, unless its scan lowering resolved no selectors at all, in which
+ * case that lowering already is the final output.
+ */
 export async function lowerTsrxModule(
   code: string,
   fileName: string,
   resolver: TsrxSelectorResolver,
 ): Promise<TsrxLoweringResult> {
-  return lowerTsrx(code, fileName, await loadTsrxParsers(), resolver);
+  const entry = cachedModule(fileName, code);
+  entry.compiled =
+    entry.scan && !entry.scan.resolvedSelectors
+      ? entry.scan.result
+      : lowerTsrx(
+          code,
+          fileName,
+          await cachingParsers(entry, fileName),
+          resolver,
+        );
+  return entry.compiled;
 }
 
 /** Formats lowering diagnostics as `file:line:column - message` with a code frame. */
