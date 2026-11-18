@@ -509,17 +509,40 @@ interface ComponentMeta {
   selector?: string;
 }
 
-/** Names a top-level body statement declares. */
+/** Names a statement declares in its scope, including destructured ones. */
 function declaredNames(stmt: EstreeNode): string[] {
-  if (stmt.type === 'FunctionDeclaration' && stmt.id) {
+  if (
+    (stmt.type === 'FunctionDeclaration' || stmt.type === 'ClassDeclaration') &&
+    stmt.id
+  ) {
     return [stmt.id.name];
   }
   if (stmt.type === 'VariableDeclaration') {
-    return (stmt.declarations as EstreeNode[])
-      .filter((d) => d.id.type === 'Identifier')
-      .map((d) => d.id.name);
+    return (stmt.declarations as EstreeNode[]).flatMap((d) =>
+      patternNames(d.id),
+    );
   }
   return [];
+}
+
+/** Names a binding pattern (`a`, `{ a, b: c }`, `[a, ...rest]`, `a = 1`) binds. */
+function patternNames(pattern: EstreeNode | null): string[] {
+  switch (pattern?.type) {
+    case 'Identifier':
+      return [pattern.name];
+    case 'ObjectPattern':
+      return (pattern.properties as EstreeNode[]).flatMap((p) =>
+        patternNames(p.type === 'RestElement' ? p.argument : p.value),
+      );
+    case 'ArrayPattern':
+      return (pattern.elements as (EstreeNode | null)[]).flatMap(patternNames);
+    case 'RestElement':
+      return patternNames(pattern.argument);
+    case 'AssignmentPattern':
+      return patternNames(pattern.left);
+    default:
+      return [];
+  }
 }
 
 /** Collects the component members an Angular expression reads. */
@@ -2017,27 +2040,84 @@ function rejectStrayTemplates(
   visit(stmt);
 }
 
-/** Collects identifier references in an expression (not property names or object keys). */
-function visitIdentifiers(node: EstreeNode, add: (name: string) => void): void {
-  if (node.type === 'Identifier') {
-    add(node.name);
-    return;
-  }
-  if (node.type === 'MemberExpression') {
-    visitIdentifiers(node.object, add);
-    if (node.computed) {
-      visitIdentifiers(node.property, add);
+/**
+ * Collects the free identifier references in an expression: not property names
+ * or object keys, and not names that a nested function, block or catch clause
+ * declares (`(initial) => initial` doesn't read an outer `initial`).
+ */
+function visitIdentifiers(
+  node: EstreeNode,
+  add: (name: string) => void,
+  shadowed: ReadonlySet<string> = new Set(),
+): void {
+  const visit = (child: EstreeNode, names: ReadonlySet<string> = shadowed) =>
+    visitIdentifiers(child, add, names);
+  const declaring = (names: string[]) =>
+    names.length === 0 ? shadowed : new Set([...shadowed, ...names]);
+  switch (node.type) {
+    case 'Identifier':
+      if (!shadowed.has(node.name)) {
+        add(node.name);
+      }
+      return;
+    case 'MemberExpression':
+      visit(node.object);
+      if (node.computed) {
+        visit(node.property);
+      }
+      return;
+    case 'Property':
+      if (node.shorthand) {
+        break;
+      }
+      if (node.computed) {
+        visit(node.key);
+      }
+      visit(node.value);
+      return;
+    case 'ArrowFunctionExpression':
+    case 'FunctionExpression':
+    case 'FunctionDeclaration': {
+      const names = (node.params as EstreeNode[]).flatMap(patternNames);
+      if (node.type === 'FunctionExpression' && node.id) {
+        names.push(node.id.name);
+      }
+      if (node.body.type === 'BlockStatement') {
+        names.push(...(node.body.body as EstreeNode[]).flatMap(declaredNames));
+      }
+      const inner = declaring(names);
+      // Parameters are visited for their default values.
+      for (const param of node.params as EstreeNode[]) {
+        visit(param, inner);
+      }
+      visit(node.body, inner);
+      return;
     }
-    return;
-  }
-  if (node.type === 'Property' && !node.shorthand) {
-    if (node.computed) {
-      visitIdentifiers(node.key, add);
+    case 'BlockStatement':
+    case 'StaticBlock': {
+      const inner = declaring(
+        (node.body as EstreeNode[]).flatMap(declaredNames),
+      );
+      forEachChild(node, (c) => visit(c, inner));
+      return;
     }
-    visitIdentifiers(node.value, add);
-    return;
+    case 'CatchClause': {
+      const inner = declaring(patternNames(node.param));
+      forEachChild(node, (c) => visit(c, inner));
+      return;
+    }
+    case 'ForStatement':
+    case 'ForInStatement':
+    case 'ForOfStatement': {
+      const head = node.type === 'ForStatement' ? node.init : node.left;
+      const inner = declaring(
+        head?.type === 'VariableDeclaration' ? declaredNames(head) : [],
+      );
+      forEachChild(node, (c) => visit(c, inner));
+      return;
+    }
   }
-  forEachChild(node, (c) => visitIdentifiers(c, add));
+  forEachChild(node, (c) => visit(c));
 }
 
 /**

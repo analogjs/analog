@@ -853,13 +853,26 @@ export function C() @{
       ).toEqual([
         "`value` becomes a class field, which is initialized before the component body runs, so it can't read `initial`. Move `initial` out of the component, to module scope.",
       ]);
-      // Module-scope values are fine.
+      // Destructured locals count too.
       expect(
         errors(`import { input } from '@angular/core';
-const initial = 2;
 export function C() @{
+  const { initial } = { initial: 2 };
   const value = input(initial);
   <p>{value()}</p>
+}`),
+      ).toEqual([expect.stringContaining("so it can't read `initial`")]);
+      // Module-scope values are fine, and so are names a nested function
+      // declares, even when the body declares the same name.
+      expect(
+        errors(`import { input } from '@angular/core';
+const start = 2;
+export function C() @{
+  const initial = 1;
+  const value = input(start);
+  const first = input([1].map((initial) => initial)[0]);
+  const last = input([1].reduce((acc, n) => { const initial = n; return initial; }, 0));
+  <p>{value()}{first()}{last()}{initial}</p>
 }`),
       ).toEqual([]);
     });
