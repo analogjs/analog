@@ -24,78 +24,25 @@ var init_analyzer_wasm = __esm({
     WasmAnalyzer = class {
       inner;
       streams = /* @__PURE__ */ new Map();
-      metadataRequests = /* @__PURE__ */ new Map();
-      microtaskScheduled = false;
-      pumpTimer = null;
+      isPumping = false;
       constructor(inner) {
         this.inner = inner;
       }
-      hasActivePumpWork() {
-        if (this.metadataRequests.size > 0) {
-          return true;
-        }
-        for (const stream of this.streams.values()) {
-          if (!stream.ended) {
-            return true;
-          }
-        }
-        return false;
-      }
-      clearPumpTimer() {
-        if (this.pumpTimer !== null) {
-          clearTimeout(this.pumpTimer);
-          this.pumpTimer = null;
-        }
-      }
       schedulePump() {
-        if (this.microtaskScheduled) {
+        if (this.isPumping) {
           return;
         }
-        this.clearPumpTimer();
-        this.microtaskScheduled = true;
-        queueMicrotask(this.pumpLoop);
-      }
-      dispatchEvent(event) {
-        if (event.event === "metadataResult") {
-          const pending = this.metadataRequests.get(event.id);
-          if (pending) {
-            this.metadataRequests.delete(event.id);
-            if (event.error !== void 0) {
-              pending.reject(new Error(event.error));
-            } else {
-              pending.resolve(event.data ?? null);
-            }
-          }
-          return;
-        }
-        const stream = this.streams.get(event.id);
-        if (!stream) {
-          return;
-        }
-        if (event.event === "analysisResult" && event.data != null) {
-          stream.queue.push(event.data);
-        } else if (event.event === "analysisComplete") {
-          stream.ended = true;
-          stream.queue.push(null);
-        } else if (event.event === "analysisError" && event.error !== void 0) {
-          stream.ended = true;
-          stream.error = new Error(event.error);
-        }
-        if (stream.nextResolve) {
-          const resolve3 = stream.nextResolve;
-          stream.nextResolve = null;
-          resolve3(null);
-        }
+        this.isPumping = true;
+        setTimeout(this.pumpLoop, 0);
       }
       pumpLoop = () => {
-        this.microtaskScheduled = false;
-        this.clearPumpTimer();
-        if (!this.hasActivePumpWork()) {
+        if (this.streams.size === 0) {
+          this.isPumping = false;
           return;
         }
         const start = Date.now();
         let idleCount = 0;
-        while (this.hasActivePumpWork() && Date.now() - start < 15) {
+        while (this.streams.size > 0 && Date.now() - start < 15) {
           const eventStr = this.inner.pump();
           if (!eventStr) {
             idleCount++;
@@ -107,13 +54,29 @@ var init_analyzer_wasm = __esm({
           idleCount = 0;
           try {
             const event = JSON.parse(eventStr);
-            this.dispatchEvent(event);
+            const stream = this.streams.get(event.id);
+            if (stream) {
+              if (event.event === "analysisResult" && event.data) {
+                stream.queue.push(event.data);
+              } else if (event.event === "analysisComplete") {
+                stream.queue.push(null);
+              } else if (event.event === "analysisError" && event.error) {
+                stream.error = new Error(event.error);
+              }
+              if (stream.nextResolve) {
+                const resolve3 = stream.nextResolve;
+                stream.nextResolve = null;
+                resolve3(null);
+              }
+            }
           } catch (e) {
             console.error("Failed to parse WASM pump event", e);
           }
         }
-        if (this.hasActivePumpWork() && !this.microtaskScheduled) {
-          this.pumpTimer = setTimeout(this.pumpLoop, 0);
+        if (this.streams.size > 0) {
+          setTimeout(this.pumpLoop, 0);
+        } else {
+          this.isPumping = false;
         }
       };
       analyze() {
@@ -169,7 +132,7 @@ var init_analyzer_wasm = __esm({
        */
       async *consumeStream(start) {
         const id = start();
-        const stream = { queue: [], nextResolve: null, ended: false };
+        const stream = { queue: [], nextResolve: null };
         this.streams.set(id, stream);
         this.schedulePump();
         try {
@@ -195,28 +158,21 @@ var init_analyzer_wasm = __esm({
       }
       /**
        * Unregisters stream `id` and drops the engine's receiver for it. Once a stream has ended
-       * the engine has already dropped the receiver, so `close_stream` does nothing then. If
-       * `close()` already cleared `streams` and freed `inner`, skip `close_stream` so cleanup does
-       * not touch the freed WASM handle. Older engine builds do not export `close_stream`; for those
-       * only the JS side is released.
+       * the engine has already dropped the receiver, so `close_stream` does nothing then. Older
+       * engine builds do not export `close_stream`; for those only the JS side is released.
        */
       releaseStream(id) {
-        if (!this.streams.delete(id)) {
-          return;
-        }
+        this.streams.delete(id);
         const close = this.inner.close_stream ?? this.inner.closeStream;
         close?.call(this.inner, id);
       }
       async getMetadataForFile(filePath) {
-        const id = this.invoke(
-          this.inner.requestMetadata ?? this.inner.request_metadata,
-          "requestMetadata",
-          JSON.stringify(filePath)
+        const res = this.invoke(
+          this.inner.getMetadataForFile ?? this.inner.get_metadata_for_file,
+          "getMetadataForFile",
+          filePath
         );
-        return new Promise((resolve3, reject) => {
-          this.metadataRequests.set(id, { resolve: resolve3, reject });
-          this.schedulePump();
-        });
+        return res ? JSON.parse(res) : null;
       }
       async updateFileContent(updates) {
         const res = this.invoke(
@@ -244,13 +200,6 @@ var init_analyzer_wasm = __esm({
           this.inner.setEntryPoints ?? this.inner.set_entry_points,
           "setEntryPoints",
           JSON.stringify(entryPoints)
-        );
-        return JSON.parse(res);
-      }
-      async clearResolutionCache() {
-        const res = this.invoke(
-          this.inner.clearResolutionCache ?? this.inner.clear_resolution_cache,
-          "clearResolutionCache"
         );
         return JSON.parse(res);
       }
@@ -295,22 +244,6 @@ var init_analyzer_wasm = __esm({
         return raw ? JSON.parse(raw) : {};
       }
       close() {
-        this.clearPumpTimer();
-        const closeError = new Error("WasmAnalyzer closed");
-        for (const pending of this.metadataRequests.values()) {
-          pending.reject(closeError);
-        }
-        this.metadataRequests.clear();
-        for (const stream of this.streams.values()) {
-          stream.ended = true;
-          stream.error = closeError;
-          if (stream.nextResolve) {
-            const resolve3 = stream.nextResolve;
-            stream.nextResolve = null;
-            resolve3(null);
-          }
-        }
-        this.streams.clear();
         try {
           this.inner.free();
         } catch {
@@ -379,9 +312,6 @@ var init_analyzer_napi = __esm({
       }
       async setEntryPoints(entryPoints) {
         return this.analyzer.setEntryPoints(entryPoints);
-      }
-      async clearResolutionCache() {
-        return this.analyzer.clearResolutionCache();
       }
       async getTsFileForTemplate(templatePath) {
         return this.analyzer.getTsFileForTemplate(templatePath);
@@ -568,21 +498,19 @@ async function wasmCandidates(options) {
       out.push({ backend: "wasm", spec, origin });
     }
   };
-  const [ngAnalyzeWasmDirIndex, bundledWasm, bazelBinWasm, inRepoWasm] = await Promise.all([
+  const wasmBinRel = path4.join(
+    "packages",
+    "compiler-cli",
+    "preprocessor",
+    "ng-analyze",
+    "ng_analyze_wasm",
+    "ng_analyze_wasm.js"
+  );
+  const [ngAnalyzeWasmDirIndex, bundledWasm, bazelBinWasm, bazelOutWasm, inRepoWasm] = await Promise.all([
     options.ngAnalyzeDir ? existingPath(path4.join(options.ngAnalyzeDir, "..", "ng-analyze-wasm", "ng_analyze.js")) : null,
     existingPath(path4.resolve(SELF_DIR, "../ng-analyze/ng_analyze_wasm/ng_analyze_wasm.js")),
-    !IS_INSTALLED ? walkUpFor(
-      path4.join(
-        "dist",
-        "bin",
-        "packages",
-        "compiler-cli",
-        "preprocessor",
-        "ng-analyze",
-        "ng_analyze_wasm",
-        "ng_analyze_wasm.js"
-      )
-    ) : null,
+    !IS_INSTALLED ? walkUpFor(path4.join("dist", "bin", wasmBinRel)) : null,
+    !IS_INSTALLED ? walkUpFor(wasmBinRel) : null,
     !IS_INSTALLED ? walkUpFor(path4.join("ng-analyze-wasm", "ng_analyze.js")) : null
   ]);
   push(options.wasmBinding, "wasmBinding option");
@@ -590,6 +518,7 @@ async function wasmCandidates(options) {
   push(ngAnalyzeWasmDirIndex, "ngAnalyzeDir option");
   push(bundledWasm, "bundled ng_analyze_wasm");
   push(bazelBinWasm, "bazel-bin ng_analyze_wasm");
+  push(bazelOutWasm, "bazel-out ng_analyze_wasm");
   push("ng-exp-compiler-arch-wasm", "ng-exp-compiler-arch-wasm package");
   push(inRepoWasm, "in-repo ng-analyze-wasm/");
   return out;
@@ -45436,23 +45365,6 @@ var HybridCompiler = class {
     });
   }
   /**
-   * Flushes cached module resolutions in the underlying analyzer and refreshes stale analyses on
-   * the queued delta pass.
-   */
-  async clearResolutionCache() {
-    await this.enqueueUpdate(async () => {
-      if (!this.analyzer.clearResolutionCache) {
-        throw new Error("Analyzer does not support clearResolutionCache");
-      }
-      const invalidated = await this.analyzer.clearResolutionCache();
-      const changed = invalidated.filter((filePath) => !filePath.endsWith(".d.ts"));
-      if (this.incrementalEnabled && changed.length > 0) {
-        this.incremental.recordChanges(changed, []);
-      }
-      return invalidated;
-    });
-  }
-  /**
    * Applies file invalidations already executed on `this.analyzer` (e.g. when reusing a
    * `HybridCompiler` across persistent worker requests with `run()`).
    */
@@ -46465,9 +46377,6 @@ var SidecarAnalyzer = class {
   }
   async setEntryPoints(entryPoints) {
     return this.callRpc("setEntryPoints", entryPoints);
-  }
-  async clearResolutionCache() {
-    return this.callRpc("clearResolutionCache", null);
   }
   async getTsFileForTemplate(templatePath) {
     return this.callRpc("getTsFileForTemplate", { templatePath });

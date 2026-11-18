@@ -18,7 +18,7 @@ const { build } = createRequire(require.resolve('vite/package.json'))(
   'esbuild',
 );
 
-const revision = '943ec3bd8d609212d200158eedc8a513466a8368';
+const revision = '53ef99a543e037b64c596e9c3e147cb365062cea';
 const output = resolve('packages/vite-plugin-angular/ngp');
 const source =
   process.env.NGP_SOURCE ?? (await mkdtemp(join(tmpdir(), 'analog-ngp-')));
