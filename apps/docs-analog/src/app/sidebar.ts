@@ -289,6 +289,11 @@ export function getSidebar(): SidebarNode[] {
           id: 'integrations/tanstack-query/index',
           label: $localize`:@@sidebar.tanstack-query:TanStack Query`,
         },
+        {
+          kind: 'doc',
+          id: 'integrations/tsrx/index',
+          label: $localize`:@@sidebar.tsrx:TSRX`,
+        },
       ],
     },
     {
