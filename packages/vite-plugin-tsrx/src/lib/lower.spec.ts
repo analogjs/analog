@@ -862,6 +862,15 @@ export function C() @{
   <p>{value()}</p>
 }`),
       ).toEqual([expect.stringContaining("so it can't read `initial`")]);
+      // A parameter default doesn't see the function body's declarations.
+      expect(
+        errors(`import { input } from '@angular/core';
+export function C() @{
+  const initial = 2;
+  const value = input(((x = initial) => { const initial = 3; return x; })());
+  <p>{value()}</p>
+}`),
+      ).toEqual([expect.stringContaining("so it can't read `initial`")]);
       // Module-scope values are fine, and so are names a nested function
       // declares, even when the body declares the same name.
       expect(

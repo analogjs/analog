@@ -2082,15 +2082,13 @@ function visitIdentifiers(
       if (node.type === 'FunctionExpression' && node.id) {
         names.push(node.id.name);
       }
-      if (node.body.type === 'BlockStatement') {
-        names.push(...(node.body.body as EstreeNode[]).flatMap(declaredNames));
-      }
-      const inner = declaring(names);
-      // Parameters are visited for their default values.
+      // Parameter defaults see the parameters, not the body's declarations;
+      // the body (a block, or an arrow's expression) sees both.
+      const params = declaring(names);
       for (const param of node.params as EstreeNode[]) {
-        visit(param, inner);
+        visit(param, params);
       }
-      visit(node.body, inner);
+      visit(node.body, params);
       return;
     }
     case 'BlockStatement':
