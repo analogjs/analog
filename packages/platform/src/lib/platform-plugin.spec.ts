@@ -167,7 +167,9 @@ describe('platformPlugin', () => {
 
     expect(addInclude).toHaveBeenCalledWith([
       '/libs/shared/feature/**/*.page.ts',
+      '/libs/shared/feature/**/*.page.tsrx',
       '/libs/other/**/*.page.ts',
+      '/libs/other/**/*.page.tsrx',
     ]);
   });
 

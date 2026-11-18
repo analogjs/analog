@@ -14,6 +14,14 @@ export type {
   StylesheetRegistryContext,
   TransformFilter,
 } from './lib/analog-plugin-interop.js';
+export {
+  findFastCompileApi,
+  type FastCompileApi,
+  type FastCompileOptions,
+  type FastCompileResolve,
+  type FastCompileSourceFormat,
+  type SourceMapInput,
+} from './lib/fast-compile-api.js';
 export type {
   RegistryEntry as ComponentRegistryEntry,
   RegistryInput as ComponentRegistryInput,

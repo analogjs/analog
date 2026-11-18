@@ -44,6 +44,11 @@ import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { isRolldown } from './utils/rolldown.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
+import type {
+  FastCompileApi,
+  FastCompileResolve,
+  FastCompileSourceFormat,
+} from './fast-compile-api.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
@@ -117,6 +122,47 @@ export function fastCompilePlugin(
     ? sharedCtx.options
     : (optionsOrCtx as FastCompilePluginOptions);
 
+  /** Source formats registered through `api.fastCompile.registerSourceFormat`. */
+  const sourceFormats: FastCompileSourceFormat[] = [];
+  const sourceFormatOf = (
+    file: string,
+  ): FastCompileSourceFormat | undefined => {
+    const path = file.split('?')[0];
+    return sourceFormats.find((format) => format.test(path));
+  };
+
+  /** Whether `file` is a module compiled through this plugin. */
+  const isCompiledSource = (file: string): boolean =>
+    TS_EXT_REGEX.test(file) || sourceFormatOf(file) !== undefined;
+
+  /**
+   * Reads a source file for registry scanning. Modules of a registered source
+   * format are converted to TypeScript first so the scanner sees their classes.
+   */
+  const readScanSource = async (file: string): Promise<string> => {
+    const code = await fsPromises.readFile(file, 'utf-8');
+    const format = sourceFormatOf(file);
+    return format ? format.toScanSource(code, file) : code;
+  };
+
+  /**
+   * Adapts a Vite-style resolver to the scanner's: only source files this
+   * plugin compiles, outside `node_modules` (package declarations come from
+   * the lazy `.d.ts` scanner instead).
+   */
+  const toResolveImport =
+    (resolve: FastCompileResolve): ResolveImport =>
+    async (spec, importer) => {
+      const resolved = await resolve(spec, importer);
+      if (!resolved || resolved.external) return null;
+      const file = normalizePath(resolved.id.split('?')[0]);
+      return isCompiledSource(file) &&
+        !EXCLUDED_TS_EXT_REGEX.test(file) &&
+        !file.includes('/node_modules/')
+        ? file
+        : null;
+    };
+
   const tsconfigResolver =
     sharedCtx?.tsconfigResolver ??
     new TsconfigResolver({
@@ -176,8 +222,7 @@ export function fastCompilePlugin(
     visited.add(file);
     let code: string;
     try {
-      code =
-        fileContents?.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+      code = fileContents?.get(file) ?? (await readScanSource(file));
       fileContents?.set(file, code);
     } catch (e) {
       if (debugRegistry.enabled) {
@@ -305,7 +350,7 @@ export function fastCompilePlugin(
     const results = await Promise.all(
       Array.from(candidates).map(async (file) => {
         try {
-          const code = await fsPromises.readFile(file, 'utf-8');
+          const code = await readScanSource(file);
           fileContents.set(file, code);
           const entries = scanFile(code, file);
           scanResults.set(file, entries);
@@ -406,8 +451,7 @@ export function fastCompilePlugin(
       importWalkVisited.add(file);
       let code: string;
       try {
-        code =
-          fileContents.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+        code = fileContents.get(file) ?? (await readScanSource(file));
         fileContents.set(file, code);
       } catch {
         return;
@@ -514,12 +558,22 @@ export function fastCompilePlugin(
     id: string,
     program?: ReturnType<typeof parseSync>['program'],
   ): void {
-    for (const pkg of collectImportedPackages(code, id, program)) {
+    ensureDtsRegistryForPackages(collectImportedPackages(code, id, program));
+  }
+
+  /** Scan the `.d.ts` declarations of `packages` into the registry, once each. */
+  function ensureDtsRegistryForPackages(packages: Iterable<string>): void {
+    for (const pkg of packages) {
       if (scannedDtsPackages.has(pkg)) continue;
       scannedDtsPackages.add(pkg);
 
       try {
-        const dtsEntries = scanPackageDts(pkg, projectRoot, scannedDtsPackages);
+        const dtsEntries = scanPackageDts(
+          pkg,
+          // Before a tsconfig resolves, look up packages from the working directory.
+          projectRoot || process.cwd(),
+          scannedDtsPackages,
+        );
         for (const entry of dtsEntries) {
           if (!registry.has(entry.className)) {
             registry.set(entry.className, entry);
@@ -541,8 +595,24 @@ export function fastCompilePlugin(
     program: ReturnType<typeof parseSync>['program'],
     resolveImport: ResolveImport,
   ): Promise<void> {
+    await resolveImportSpecifiers(
+      collectAllImports(code, id, program),
+      id,
+      resolveImport,
+    );
+  }
+
+  /**
+   * Scan the files behind `specs`, imported by `id`, into the registry and
+   * record `id` as their importer.
+   */
+  async function resolveImportSpecifiers(
+    specs: string[],
+    id: string,
+    resolveImport: ResolveImport,
+  ): Promise<void> {
     await Promise.all(
-      collectAllImports(code, id, program).map(async (spec) => {
+      specs.map(async (spec) => {
         const file = await resolveImport(spec, id);
         if (!file) return;
         for (const scanned of await scanOnDemand(file, resolveImport)) {
@@ -586,7 +656,7 @@ export function fastCompilePlugin(
       let code: string;
       let program: ReturnType<typeof parseSync>['program'];
       try {
-        code = await fsPromises.readFile(current, 'utf-8');
+        code = await readScanSource(current);
         program = parseOxc(current, code).program;
       } catch {
         return;
@@ -611,6 +681,24 @@ export function fastCompilePlugin(
     };
     await visit(file);
     return visited;
+  }
+
+  /**
+   * The element selector of a component or directive class, for source formats
+   * that reference components by class. Includes registries contributed
+   * through `analog.setup()`.
+   */
+  function lookupSelector(className: string): string | null {
+    const registries = sharedCtx
+      ? sharedCtx.componentRegistries
+      : componentRegistries;
+    const entry =
+      registry.get(className) ??
+      registries.map((r) => r.get(className)).find((e) => e !== undefined);
+    if (!entry || (entry.kind !== 'component' && entry.kind !== 'directive')) {
+      return null;
+    }
+    return entry.selector;
   }
 
   function registryEntriesOf(file: string) {
@@ -719,7 +807,7 @@ export function fastCompilePlugin(
       for (let i = 0; i < styleStrings.length; i++) {
         const stylePath =
           stylePaths.get(i) ??
-          id.replace(
+          (sourceFormatOf(id) ? id + '.ts' : id).replace(
             /\.ts$/,
             `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
           );
@@ -848,12 +936,62 @@ export function fastCompilePlugin(
     );
   }
 
+  const fastCompile: FastCompileApi = {
+    registerSourceFormat(format) {
+      if (!sourceFormats.includes(format)) {
+        sourceFormats.push(format);
+      }
+    },
+    scanImports(specifiers, importer, resolve) {
+      // Packages' Angular classes come from their `.d.ts` declarations;
+      // relative imports are scanned from source.
+      ensureDtsRegistryForPackages(
+        specifiers
+          .filter((spec) => !spec.startsWith('.') && !spec.startsWith('/'))
+          .map((spec) => {
+            const parts = spec.split('/');
+            return spec.startsWith('@')
+              ? parts.slice(0, 2).join('/')
+              : parts[0];
+          }),
+      );
+      return resolveImportSpecifiers(
+        specifiers,
+        importer,
+        toResolveImport(resolve),
+      );
+    },
+    resolveSelector: lookupSelector,
+    async compile(code, id, { resolve, mapToSource }) {
+      const transformed = await handleFastCompileTransform(
+        code,
+        id,
+        toResolveImport(resolve),
+      );
+      if (!transformed) {
+        return undefined;
+      }
+      const map =
+        transformed.map && mapToSource
+          ? mapToSource(transformed.map)
+          : (transformed.map ?? null);
+      if (map) {
+        emittedMaps.set(
+          normalizePath(id),
+          typeof map === 'string' ? map : JSON.stringify(map),
+        );
+      }
+      return { code: transformed.code, map };
+    },
+  };
+
   const compilerApi = {
     angularCompiler: true as const,
     getTsConfigPath: resolveTsConfigPath,
     getSourceMap: (id: string): string | undefined =>
       emittedMaps.get(normalizePath(id)),
     hasEmitted: (id: string): boolean => emittedMaps.has(normalizePath(id)),
+    fastCompile,
   };
 
   sharedCtx?.registerCompiler({
@@ -943,7 +1081,7 @@ export function fastCompilePlugin(
         }
       }
 
-      if (TS_EXT_REGEX.test(ctx.file)) {
+      if (isCompiledSource(ctx.file)) {
         const [fileId] = ctx.file.split('?');
 
         // Remove old entries from this file
@@ -1016,22 +1154,14 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
+        const resolveImport = toResolveImport((spec, importer) =>
+          this.resolve(spec, importer, { skipSelf: true }),
+        );
+
         const transformed = await handleFastCompileTransform(
           code,
           id,
-          async (spec, importer) => {
-            const resolved = await this.resolve(spec, importer, {
-              skipSelf: true,
-            });
-            if (!resolved || resolved.external) return null;
-            const file = normalizePath(resolved.id.split('?')[0]);
-            // Package declarations come from the lazy `.d.ts` scanner instead.
-            return TS_EXT_REGEX.test(file) &&
-              !EXCLUDED_TS_EXT_REGEX.test(file) &&
-              !file.includes('/node_modules/')
-              ? file
-              : null;
-          },
+          resolveImport,
         );
         if (transformed?.map) {
           emittedMaps.set(

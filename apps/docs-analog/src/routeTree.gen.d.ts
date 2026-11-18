@@ -471,6 +471,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/integrations/tsrx': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/introduction': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;

@@ -83,7 +83,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         filename,
       ].find((file) => existsSync(file));
       if (!pageFile) return undefined;
-      const serverFile = pageFile.replace(/\.page\.ts$/, '.server.ts');
+      const serverFile = pageFile.replace(/\.page\.(?:ts|tsrx)$/, '.server.ts');
       return {
         routeMeta: hasNamedExport(pageFile, 'routeMeta')
           ? toImportSpecifier(dirname(outputPath), pageFile)

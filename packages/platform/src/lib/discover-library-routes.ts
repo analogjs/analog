@@ -111,10 +111,13 @@ export function discoverLibraryRoutes(
 }
 
 /**
- * Builds `${dir}/**\/*.page.ts` globs for each provided directory. The
- * platform registers these with Angular compilation through `analog.setup()`
- * for every `additionalPagesDirs` entry.
+ * Builds `${dir}/**\/*.page.ts` and `${dir}/**\/*.page.tsrx` globs for each
+ * provided directory. The platform registers these with Angular compilation
+ * through `analog.setup()` for every `additionalPagesDirs` entry.
  */
 export function pageGlobs(dirs: string[]): string[] {
-  return dirs.map((dir) => `${dir}/**/*.page.ts`);
+  return dirs.flatMap((dir) => [
+    `${dir}/**/*.page.ts`,
+    `${dir}/**/*.page.tsrx`,
+  ]);
 }

@@ -98,6 +98,7 @@
         "packages/storybook-angular/**/*",
         "packages/vite-plugin-angular/**/*",
         "packages/vite-plugin-angular-tools/**/*",
+        "packages/tsrx-angular/**/*",
         "packages/vite-plugin-nitro/**/*",
         "packages/vitest-angular-tools/**/*"
       ]
@@ -110,7 +111,8 @@
       },
       "include": [
         "apps/astro-app-e2e-playwright/**/*",
-        "apps/streaming-app-e2e-playwright/**/*"
+        "apps/streaming-app-e2e-playwright/**/*",
+        "apps/tsrx-app-e2e-playwright/**/*"
       ]
     },
     {
@@ -133,6 +135,7 @@
         "apps/blog-app-e2e/**/*",
         "apps/docs-analog/**/*",
         "apps/streaming-app-e2e-playwright/**/*",
+        "apps/tsrx-app-e2e-playwright/**/*",
         "apps/tailwind-debug-app/**/*",
         "apps/tanstack-query-app/**/*",
         "apps/tanstack-query-app-e2e/**/*",
@@ -146,6 +149,7 @@
         "packages/platform/**/*",
         "packages/router/**/*",
         "packages/vite-plugin-angular-tools/**/*",
+        "packages/tsrx-angular/**/*",
         "packages/vite-plugin-nitro/**/*",
         "packages/vitest-angular-tools/**/*"
       ]

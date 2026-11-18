@@ -17,6 +17,18 @@ describe('routes', () => {
     expect(routes).toEqual([]);
   });
 
+  describe('a TSRX page route', () => {
+    const files: Files = {
+      '/src/app/pages/users/[id].page.tsrx': () =>
+        Promise.resolve<RouteExport>({ default: RouteComponent }),
+    };
+
+    it('should derive its path like a .page.ts route', () => {
+      const [route] = createRoutes(files);
+      expect(route.path).toBe('users');
+    });
+  });
+
   describe('a root static route', () => {
     const files: Files = {
       '/src/app/pages/about.page.ts': () =>
@@ -1131,6 +1143,12 @@ describe('routes', () => {
     // The handlers are mounted with every group stripped, so a group before
     // the last segment has to be stripped here too or the request lands on a
     // path nothing answers.
+    it('should map a TSRX page to its .server.ts endpoint', async () => {
+      expect(await endpointFor('/src/app/pages/(auth)/sign-up.page.tsrx')).toBe(
+        '/pages/-auth-/sign-up',
+      );
+    });
+
     it('should strip a group before the last segment', async () => {
       expect(await endpointFor('/src/app/pages/(auth)/sign-up.page.ts')).toBe(
         '/pages/-auth-/sign-up',

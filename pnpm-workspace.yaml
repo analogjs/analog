@@ -49,6 +49,7 @@ catalog:
   '@nx/vite': 24.0.0
   '@nx/vitest': 24.0.0
   '@nx/web': 24.0.0
+  '@jridgewell/sourcemap-codec': ^1.5.5
   '@oxc-angular/vite': ^0.0.23
   '@oxc-project/runtime': ^0.124.0
   '@playwright/test': 1.60.0
@@ -60,6 +61,7 @@ catalog:
   '@standard-schema/spec': ^1.1.0
   '@tanstack/angular-query': 5.108.0
   '@tanstack/query-core': 5.108.0
+  '@tsrx/core': ^0.6.2
   '@types/hast': ^3.0.4
   '@types/node': ^25.5.0
   '@types/prismjs': ^1.26.6

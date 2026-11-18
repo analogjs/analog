@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "outDir": "../../dist/out-tsc",
+    "declaration": true,
+    "isolatedDeclarations": true,
+    "types": [],
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "composite": false
+  },
+  "include": ["**/*.ts"],
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "vite.config.ts",
+    "vite.config.lib.ts",
+    "oxlint.config.ts"
+  ]
+}

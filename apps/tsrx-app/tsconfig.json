@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": ["vite/client"],
+    "allowArbitraryExtensions": true,
+    "rootDirs": [".", "node_modules/.analog/tsrx-types"]
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.editor.json" }
+  ]
+}
