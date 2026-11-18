@@ -343,7 +343,7 @@ export function lowerTsrx(
   };
 }
 
-/** `@name (params)` in text, as part of a `@defer` block. */
+/** `@name (params)` in text, as part of a `@defer` or `@boundary` block. */
 interface BlockHeader {
   name: string;
   /** Offset of the `@`. */
@@ -354,8 +354,9 @@ interface BlockHeader {
   end: number;
 }
 
-interface DeferMatch {
-  /** Text in the same JSXText node before `@defer`. */
+/** An Angular `@defer` or `@boundary` block, with its connected blocks. */
+interface BlockMatch {
+  /** Text in the same JSXText node before the block. */
   textBefore: Span | null;
   main: { header: BlockHeader; content: EstreeNode };
   connected: { header: BlockHeader; content: EstreeNode }[];
@@ -363,12 +364,25 @@ interface DeferMatch {
   lastIndex: number;
 }
 
-const ANGULAR_BLOCK_NAMES = ['defer', 'placeholder', 'loading', 'error'];
+/** Angular blocks TSRX has no syntax for, each with its connected blocks. */
+const ANGULAR_BLOCKS: Record<string, string[]> = {
+  defer: ['placeholder', 'loading', 'error'],
+  boundary: ['error'],
+};
+
+const ANGULAR_BLOCK_NAMES = [
+  ...new Set(
+    Object.entries(ANGULAR_BLOCKS).flatMap(([name, connected]) => [
+      name,
+      ...connected,
+    ]),
+  ),
+];
 
 /**
- * The name of the Angular block (`@defer`, `@placeholder`, `@loading` or
- * `@error`) whose `{ … }` body directly contains `pos`, if any. Used only to
- * explain a parse error, so a miss just means no hint.
+ * The name of the Angular block (`@defer`, `@boundary` or a connected block)
+ * whose `{ … }` body directly contains `pos`, if any. Used only to explain a
+ * parse error, so a miss just means no hint.
  */
 function angularBlockAround(source: string, pos: number): string | null {
   // Walk back to the `{` that opens the body `pos` is directly inside.
@@ -1074,56 +1088,69 @@ class ComponentLowerer {
   private lowerChildren(children: EstreeNode[], scope: Local[]): MappedText {
     const out = new MappedText();
     for (let i = 0; i < children.length; i++) {
-      const defer = this.matchDefer(children, i);
-      if (defer === null) {
+      const block = this.matchAngularBlock(children, i);
+      if (block === null) {
+        this.rejectStrayBlock(children, i);
         out.append(this.lowerChild(children[i], scope));
         continue;
       }
-      if (defer.textBefore !== null) {
+      if (block.textBefore !== null) {
         out.append(
-          mt`${escapeText(cleanJsxText(this.source.slice(defer.textBefore.start, defer.textBefore.end)))}`.from(
-            defer.textBefore,
+          mt`${escapeText(cleanJsxText(this.source.slice(block.textBefore.start, block.textBefore.end)))}`.from(
+            block.textBefore,
           ),
         );
       }
-      out.append(this.lowerDefer(defer, scope));
-      i = defer.lastIndex;
+      out.append(
+        block.main.header.name === 'defer'
+          ? this.lowerDefer(block, scope)
+          : this.lowerBoundary(block, scope),
+      );
+      i = block.lastIndex;
     }
     return out;
   }
 
   // ---------------------------------------------------------------------------------------------
-  // @defer
+  // @defer and @boundary
   //
-  // TSRX has no `@defer` block, and its parser reads Angular's block syntax as
-  // text plus expression containers: `@defer (on viewport) { <A /> }
-  // @placeholder { <p /> }` arrives as JSXText `@defer (on viewport) `, a
-  // container holding `<A />`, JSXText ` @placeholder `, and a container
-  // holding `<p />`. That sequence is lowered to Angular's real `@defer`.
+  // TSRX has no `@defer` or `@boundary` block, and its parser reads Angular's
+  // block syntax as text plus expression containers: `@defer (on viewport) {
+  // <A /> } @placeholder { <p /> }` arrives as JSXText `@defer (on viewport) `,
+  // a container holding `<A />`, JSXText ` @placeholder `, and a container
+  // holding `<p />`. That sequence is lowered to Angular's real block.
 
-  /** Recognizes a `@defer` block starting in `children[index]`, if any. */
-  private matchDefer(children: EstreeNode[], index: number): DeferMatch | null {
+  /** Recognizes a `@defer` or `@boundary` block starting in `children[index]`, if any. */
+  private matchAngularBlock(
+    children: EstreeNode[],
+    index: number,
+  ): BlockMatch | null {
     const text = children[index];
     if (text.type !== 'JSXText') {
       return null;
     }
-    const at = this.source.lastIndexOf('@defer', text.end - 1);
+    const at = this.source.lastIndexOf('@', text.end - 1);
     if (at < text.start) {
       return null;
     }
-    const header = this.readBlockHeader(at, text.end, ['defer']);
+    const header = this.readBlockHeader(
+      at,
+      text.end,
+      Object.keys(ANGULAR_BLOCKS),
+    );
     const content = blockContent(children[index + 1]);
     if (header === null || header.end !== text.end || content === null) {
       return null;
     }
 
-    const match: DeferMatch = {
+    const match: BlockMatch = {
       textBefore: at > text.start ? { start: text.start, end: at } : null,
       main: { header, content },
       connected: [],
       lastIndex: index + 1,
     };
     // Connected blocks: whitespace, `@placeholder|@loading|@error (…)`, then `{ … }`.
+    const connectedNames = ANGULAR_BLOCKS[header.name];
     while (match.lastIndex + 2 < children.length) {
       const next = children[match.lastIndex + 1];
       if (next?.type !== 'JSXText') {
@@ -1133,11 +1160,7 @@ class ComponentLowerer {
       while (start < next.end && isWhitespace(this.source[start])) {
         start++;
       }
-      const connected = this.readBlockHeader(start, next.end, [
-        'placeholder',
-        'loading',
-        'error',
-      ]);
+      const connected = this.readBlockHeader(start, next.end, connectedNames);
       const connectedContent = blockContent(children[match.lastIndex + 2]);
       if (
         connected === null ||
@@ -1192,7 +1215,47 @@ class ComponentLowerer {
     return { name, start, params, end: pos };
   }
 
-  private lowerDefer(defer: DeferMatch, scope: Local[]): MappedText {
+  /**
+   * Rejects `@name { … }` for an Angular block that wasn't recognized, such as
+   * an `@error` with no `@boundary` or `@defer` before it, so it doesn't
+   * silently render as text.
+   */
+  private rejectStrayBlock(children: EstreeNode[], index: number): void {
+    const text = children[index];
+    const next = children[index + 1];
+    if (
+      text.type !== 'JSXText' ||
+      next?.type !== 'JSXExpressionContainer' ||
+      next.expression.type === 'JSXEmptyExpression'
+    ) {
+      return;
+    }
+    const at = this.source.lastIndexOf('@', text.end - 1);
+    if (at < text.start) {
+      return;
+    }
+    const header = this.readBlockHeader(at, text.end, ANGULAR_BLOCK_NAMES);
+    if (header === null || header.end !== text.end) {
+      return;
+    }
+    const span = { start: header.start, end: next.end };
+    if (ANGULAR_BLOCKS[header.name] !== undefined) {
+      throw new TsrxLoweringError(
+        span,
+        `An @${header.name} block needs markup, e.g. @${header.name} { <Widget /> }.`,
+      );
+    }
+    const parents = Object.keys(ANGULAR_BLOCKS)
+      .filter((name) => ANGULAR_BLOCKS[name].includes(header.name))
+      .map((name) => `@${name}`)
+      .join(' or ');
+    throw new TsrxLoweringError(
+      span,
+      `@${header.name} must directly follow a ${parents} block.`,
+    );
+  }
+
+  private lowerDefer(defer: BlockMatch, scope: Local[]): MappedText {
     const { header, content } = defer.main;
     const out = new MappedText();
     out.append('@defer');
@@ -1213,6 +1276,94 @@ class ComponentLowerer {
       );
     }
     return out.from({ start: header.start, end: content.end });
+  }
+
+  /**
+   * Angular's `@boundary { … } @error (let err = $error, reset = $reset; when
+   * cond) { … }`, written as-is. `let` variables (and `$error` and `$reset`
+   * themselves) reach the `@error` block's bindings as parameters, and `when`
+   * conditions become bindings that receive the error variable.
+   */
+  private lowerBoundary(boundary: BlockMatch, scope: Local[]): MappedText {
+    const { header, content } = boundary.main;
+    if (header.params !== null) {
+      throw new TsrxLoweringError(
+        { start: header.start, end: header.end },
+        '@boundary takes no parameters. Conditions go on @error, e.g. @error (let err; when isNotFound(err)).',
+      );
+    }
+    const out = mt`@boundary {${this.lowerChild(content, scope)}}`;
+    for (const block of boundary.connected) {
+      const vars: Local[] = [
+        { name: '$error', type: 'unknown' },
+        { name: '$reset', type: '() => void' },
+      ];
+      const parts =
+        block.header.params === null
+          ? []
+          : splitTopLevel(this.source, block.header.params, ';')
+              .map((part) => trimSpan(this.source, part))
+              .filter((part) => part.end > part.start);
+      for (const part of parts) {
+        if (!this.source.startsWith('when ', part.start)) {
+          vars.push(...this.boundaryLets(part));
+        }
+      }
+      const inner = [...scope, ...vars];
+      const errorVars = vars.filter((v) => v.type === 'unknown');
+      const params = joinMapped(
+        parts.map((part) => {
+          if (!this.source.startsWith('when ', part.start)) {
+            return new MappedText().copy(this.source, part);
+          }
+          const expr = this.parseExpressionAt({
+            start: part.start + 'when '.length,
+            end: part.end,
+          });
+          return mt`when ${this.bindValue(expr, [...scope, ...errorVars]).call}`.from(
+            part,
+          );
+        }),
+        '; ',
+      );
+      out.append(
+        mt` @error${parts.length > 0 ? mt` (${params})` : ''} {${this.lowerChild(block.content, inner)}}`.from(
+          { start: block.header.start, end: block.content.end },
+        ),
+      );
+    }
+    return out.from({ start: header.start, end: content.end });
+  }
+
+  /**
+   * The variables of an `@error` block's `let err = $error, reset = $reset`
+   * parameter (`let err` alone is `$error`; `let` may be left out).
+   */
+  private boundaryLets(part: Span): Local[] {
+    const text = this.source.slice(part.start, part.end);
+    const body = text.startsWith('let ') ? text.slice(4) : text;
+    const locals: Local[] = [];
+    for (const declaration of body.split(',')) {
+      const [name, value = '$error'] = declaration
+        .split('=')
+        .map((s) => s.trim());
+      const valid =
+        name !== '' &&
+        [...name].every(isIdentifierChar) &&
+        !(name[0] >= '0' && name[0] <= '9') &&
+        (value === '$error' || value === '$reset');
+      if (!valid) {
+        throw new TsrxLoweringError(
+          part,
+          `Unsupported @error parameter '${text}'. Expected 'let err = $error, reset = $reset' or 'when condition'.`,
+        );
+      }
+      locals.push({
+        name,
+        type: value === '$error' ? 'unknown' : '() => void',
+      });
+    }
+    return locals;
   }
 
   /**

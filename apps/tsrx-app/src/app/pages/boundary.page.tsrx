@@ -23,9 +23,9 @@ export default function BoundaryPage() @{
 
   <section>
     <h1>{'Error boundary'}</h1>
-    @try {
+    @boundary {
       <Flaky fail={failing()} />
-    } @catch (err, reset) {
+    } @error (let err = $error, reset = $reset) {
       <div id="fallback">
         <p>{'Caught: '}{(err as Error).message}</p>
         <button id="retry" onClick={() => retry(reset)}>{'Retry'}</button>

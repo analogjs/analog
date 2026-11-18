@@ -219,6 +219,113 @@ export class Counter {
       expect(result.code).toContain('$reset');
     });
 
+    it('maps native @boundary / @error syntax', () => {
+      const source = `
+        import { Risky } from './risky';
+        export function C() @{
+          <div>
+            @boundary {
+              <Risky />
+            } @error (let err = $error, reset = $reset) {
+              <button onClick={reset}>{String(err)}</button>
+            }
+          </div>
+        }
+      `;
+      expect(template(source, { Risky: 'x-risky' })).toBe(
+        '<div>@boundary {<x-risky></x-risky>} @error (let err = $error, reset = $reset) ' +
+          '{<button (click)="$fc.b0($event, reset)">{{ $fc.b1(err) }}</button>}</div>',
+      );
+      const { code } = lower(source, { Risky: 'x-risky' });
+      expect(code).toContain(
+        'const ɵb0 = ($event: any, reset: () => void) => ((reset) as (e: any) => unknown)($event);',
+      );
+      expect(code).toContain('const ɵb1 = (err: unknown) => (String(err));');
+    });
+
+    it('binds @error when-conditions with the error variable', () => {
+      const source = `
+        import { signal } from '@angular/core';
+        const isNotFound = (e: unknown) => (e as Error).message === '404';
+        export function C() @{
+          const strict = signal(true);
+          <div>
+            @boundary {
+              <p>{'main'}</p>
+            } @error (let err; when strict() && isNotFound(err)) {
+              <p>{'Not found'}</p>
+            } @error {
+              <p>{String($error)}</p>
+            }
+          </div>
+        }
+      `;
+      expect(template(source)).toBe(
+        '<div>@boundary {<p>main</p>} @error (let err; when $fc.b0(err)) {<p>Not found</p>} ' +
+          '@error {<p>{{ $fc.b1($error) }}</p>}</div>',
+      );
+      const { code } = lower(source);
+      expect(code).toContain(
+        'const ɵb0 = (err: unknown) => (strict() && isNotFound(err));',
+      );
+      expect(code).toContain(
+        'const ɵb1 = ($error: unknown) => (String($error));',
+      );
+    });
+
+    it('compiles native @boundary with the fast compiler', () => {
+      const { code } = lower(`
+        export function C() @{
+          <div>
+            @boundary {
+              <p>{'main'}</p>
+            } @error (let err; when String(err) === '404') {
+              <p>{'Not found'}</p>
+            } @error (let err, reset = $reset) {
+              <button onClick={reset}>{String(err)}</button>
+            }
+          </div>
+        }
+      `);
+      const result = compile(code, '/app/test.tsrx', buildRegistry({}));
+      expect(result.code).toContain('ɵɵboundaryCreate(');
+      // The when-condition reads the caught error.
+      expect(result.code).toContain(
+        '(bnd_r4.error === null ? 2 : (ctx.$fc.b0(bnd_r4.error) ? 3 : 4))',
+      );
+      expect(result.code).toContain('$reset');
+    });
+
+    it('rejects stray and malformed @boundary blocks', () => {
+      expect(
+        errors(`export function C() @{ <div>@error { <p>{'x'}</p> }</div> }`),
+      ).toEqual(['@error must directly follow a @defer or @boundary block.']);
+      expect(
+        errors(
+          `export function C() @{ <div>@boundary { <p /> } @placeholder { <p /> }</div> }`,
+        ),
+      ).toEqual(['@placeholder must directly follow a @defer block.']);
+      expect(
+        errors(`export function C() @{ <div>@boundary {'text'}</div> }`),
+      ).toEqual([
+        'An @boundary block needs markup, e.g. @boundary { <Widget /> }.',
+      ]);
+      expect(
+        errors(
+          `export function C() @{ <div>@boundary (x) { <p /> } @error { <p /> }</div> }`,
+        ),
+      ).toEqual([expect.stringContaining('@boundary takes no parameters')]);
+      expect(
+        errors(
+          `export function C() @{ <div>@boundary { <p /> } @error (let err = oops) { <p /> }</div> }`,
+        ),
+      ).toEqual([
+        expect.stringContaining(
+          "Unsupported @error parameter 'let err = oops'",
+        ),
+      ]);
+    });
+
     it('rejects @pending', () => {
       expect(
         errors(`
@@ -654,6 +761,11 @@ export function Cart() @{
           `export function C() @{ <section>@defer { <A /> } @placeholder (minimum 1s) { <p>a</p> <p>b</p> }</section> }`,
         ),
       ).toEqual([expect.stringContaining('An @placeholder block renders')]);
+      expect(
+        errors(
+          `export function C() @{ <section>@boundary { <p>a</p> <p>b</p> } @error { <p /> }</section> }`,
+        ),
+      ).toEqual([expect.stringContaining('An @boundary block renders')]);
     });
 
     it('adds no @defer hint to unrelated parse errors', () => {

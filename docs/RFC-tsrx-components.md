@@ -110,13 +110,26 @@ unchanged.
 | `@for (const x of xs; key x.id)` / `@empty`           | `@for (…; track …)`; `track $index` without key |
 | `@switch` / `@case` / `@default`                      | the same                                        |
 | `@try` / `@catch (err, reset)`                        | `@boundary` / `@error`                          |
+| `@boundary` / `@error (let err; when …)`              | the same; `when` conditions bound               |
 | `@defer (…)` / `@placeholder` / `@loading` / `@error` | the same; triggers and `when` conditions bound  |
 
 `@defer` is written in Angular's own syntax instead of as a tag, because its
 triggers (`on interaction(ref)`, `hydrate on viewport`, `when cond()`) are
-Angular concepts and a tag would need its own mini-language for them. Like
-TSRX's `@if` and `@for`, each block renders a single node; a parse error inside
-a `@defer`-family block says to wrap multiple nodes in a fragment `<>…</>`.
+Angular concepts and a tag would need its own mini-language for them.
+
+`@boundary` is also written as-is, alongside TSRX's `@try`/`@catch`, so the
+Angular form's extras are available: several `@error` blocks, `when`
+conditions that read the error (`@error (let err; when isNotFound(err))`), and
+`$error`/`$reset` without `let`. `@error` variables reach the block's bindings
+as typed parameters (`unknown` and `() => void`), and a `when` condition
+becomes a binding that receives the error.
+
+TSRX's parser has no syntax for either block, so it reads them as text followed
+by expression containers; the lowering recognizes that sequence and rebuilds
+the Angular block. An `@error`, `@placeholder` or `@loading` that doesn't
+follow its block, or a block without markup, is an error rather than literal
+text. Like TSRX's `@if` and `@for`, each block renders a single node; a parse
+error inside one says to wrap multiple nodes in a fragment `<>…</>`.
 
 ### Component metadata: `XMeta`
 
@@ -263,14 +276,16 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
 
 ## Test Coverage
 
-- **`vite-plugin-tsrx`**: 49 tests.
-  - `lower.spec.ts` (38): class shape; compiling with the fast compiler;
-    `@if`/`@for`/`@switch`/`@try`→`@boundary`; `@defer` blocks, triggers,
+- **`vite-plugin-tsrx`**: 53 tests.
+  - `lower.spec.ts` (42): class shape; compiling with the fast compiler;
+    `@if`/`@for`/`@switch`/`@try`→`@boundary`; native `@boundary` with `let`,
+    `$error`, multiple `@error` blocks, and `when` conditions compiled to read
+    the caught error; stray and malformed blocks; `@defer` blocks, triggers,
     `when` bindings, and source positions; attributes, events, namespaces,
     refs, and component output casing; local and imported tags; styles and
     `:global`; selector parsing and defaults; native-name collisions; `XMeta`
     merging, validation, and `routeMeta` pass-through; errors, including the
-    `@defer` single-node hint; source maps. Every generated template is parsed
+    `@defer` and `@boundary` single-node hints; source maps. Every generated template is parsed
     with Angular's `parseTemplate`.
   - `cache.spec.ts` (6): one parse per source across discovery, scans, and
     compiles; scan/compile lowering reuse; re-parse on change; cached parse
@@ -288,7 +303,7 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
 - **`tsrx-app-e2e-playwright`** (10, dev and production builds): `routeMeta` and
   client navigation; inputs, outputs, providers, and two-way models after
   hydration; server loads, an API route, and a missing product; form actions;
-  markdown content; error boundary fallback and reset; deferred views; and
+  markdown content; a native `@boundary` fallback and reset; deferred views; and
   incremental hydration (`hydrate on interaction`, `hydrate never`).
 - **Typecheck**: `nx typecheck tsrx-app` builds first, then type-checks the app
   against the generated declarations with `tsgo`.

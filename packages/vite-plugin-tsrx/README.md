@@ -34,9 +34,12 @@ export function Counter() @{
 - `@if`, `@for` (`key` → `track`), `@switch` and `@try`/`@catch` (→
   `@boundary`/`@error`) map to Angular's control flow.
 - `.page.tsrx` files work as `@analogjs/router` pages.
-- Angular's `@defer` syntax works as-is:
-  `@defer (on viewport) { <Chart /> } @placeholder { <p>…</p> }`. Like `@if`,
-  each block renders a single node; wrap several in `<>…</>`.
+- Angular's `@defer` and `@boundary` syntax works as-is:
+  `@defer (on viewport) { <Chart /> } @placeholder { <p>…</p> }`,
+  `@boundary { <Widget /> } @error (let err = $error, reset = $reset) { … }`.
+  `@error` `let` variables, `$error`, `$reset` and `when` conditions are
+  usable in the block. Like `@if`, each block renders a single node; wrap
+  several in `<>…</>`.
 
 ## Types
 

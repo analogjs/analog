@@ -16,7 +16,7 @@ const demos = [
   { path: '/products', title: 'Products', about: 'a layout route, server loads, an API route and route params' },
   { path: '/contact', title: 'Contact', about: 'form actions with server-side validation' },
   { path: '/blog', title: 'Blog', about: 'markdown content files' },
-  { path: '/boundary', title: 'Error boundary', about: '@try / @catch as Angular @boundary' },
+  { path: '/boundary', title: 'Error boundary', about: 'Angular @boundary / @error syntax' },
   { path: '/defer', title: 'Deferred views', about: 'Angular @defer syntax with lazy-loaded components' },
 ];
 
