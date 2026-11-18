@@ -1,11 +1,14 @@
 import * as compilerCli from '@angular/compiler-cli';
+import { promises as fsPromises } from 'node:fs';
 import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type MagicString from 'magic-string';
+import { glob } from 'tinyglobby';
 import * as vite from 'vite';
 import {
   discoverAnalogIntegrations,
+  type ComponentRegistryEntries,
   type TransformFilter,
 } from './analog-plugin-interop.js';
 import {
@@ -14,7 +17,14 @@ import {
   type AngularBuildContext,
   type AngularBuildContextOptions,
 } from './angular-build-context.js';
+import { ComponentScanner } from './component-scanner.js';
+import type { FastCompileResolve } from './fast-compile-api.js';
 import type { FastCompilePluginOptions } from './fast-compile-plugin.js';
+import type {
+  NgpCompileApi,
+  NgpLoweredModule,
+  NgpSourceFormat,
+} from './ngp-compile-api.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import { isIgnoredHmrFile } from './utils/compilation-shared.js';
@@ -31,7 +41,9 @@ import { findHmrComponentUpdates } from './utils/hmr-component-updates.js';
 import {
   LspTypeChecker,
   type FileChangeType,
+  type SourceLocation,
 } from './utils/lsp-type-checker.js';
+import { createNgpHostFs, type NgpHostFs } from './utils/ngp-host-fs.js';
 import { isRolldown } from './utils/rolldown.js';
 import type { ComponentUpdates } from './live-reload-plugin.js';
 import {
@@ -104,6 +116,21 @@ interface NgpAnalyzerOptions {
   backend?: 'wasm';
   wasmBinding?: string;
   enableHmr?: boolean;
+  hostFs?: NgpHostFs;
+}
+
+/** NGP's `FileUpdateType`. */
+const FILE_CREATED = 0;
+const FILE_DELETED = 1;
+const FILE_CHANGED = 2;
+
+/** A module of a registered source format, lowered to its program file. */
+interface SourceModule {
+  sourceFile: string;
+  /** The source it was lowered from. */
+  source: string;
+  format: NgpSourceFormat;
+  lowered: NgpLoweredModule;
 }
 
 interface NgpApi {
@@ -136,10 +163,20 @@ function isFastCompileOptions(
 // Interim NGP build bundled with this package until @angular/ngp is published
 const BUNDLED_NGP = new URL('../../ngp/', import.meta.url);
 
+/**
+ * @param needsHostFs Whether source formats are registered, which only the
+ *   WebAssembly backend can read through `hostFs`.
+ */
 async function loadNgp(
   tsconfig: string,
+  needsHostFs: boolean,
 ): Promise<{ api: NgpApi; analyzerOptions: NgpAnalyzerOptions }> {
   const nativeBinding = process.env['ANALOG_NGP_NATIVE_BINDING'];
+  if (nativeBinding && needsHostFs) {
+    throw new Error(
+      "[@analogjs/vite-plugin-angular]: Source formats such as TSRX can't be compiled with a native NGP analyzer build. Unset ANALOG_NGP_NATIVE_BINDING to use NGP's default WebAssembly analyzer.",
+    );
+  }
   let modulePath = process.env['ANALOG_NGP_COMPILER'];
   if (!modulePath) {
     try {
@@ -165,7 +202,11 @@ async function loadNgp(
   }
   return {
     api: await import(pathToFileURL(resolve(modulePath)).href),
-    analyzerOptions: nativeBinding ? { nativeBinding } : {},
+    analyzerOptions: nativeBinding
+      ? { nativeBinding }
+      : needsHostFs
+        ? { backend: 'wasm' }
+        : {},
   };
 }
 
@@ -218,6 +259,7 @@ export function ngpCompilePlugin(
   let configContext: TsConfigResolutionContext | undefined;
   let resolvedConfig: vite.ResolvedConfig;
   let transformFilter: TransformFilter | undefined;
+  let componentRegistries: ComponentRegistryEntries[] = [];
   let stylePreprocessor: StylePreprocessor | undefined;
   let watchMode = false;
   let hmr = false;
@@ -248,12 +290,27 @@ export function ngpCompilePlugin(
     fileEmitter,
   };
   let pending = Promise.resolve();
-  const filter = vite.createFilter(TS_EXT_REGEX, [
+  const excluded = [
     /node_modules/,
     /[?&]raw\b/,
     /type=script/,
     /@ng\/component/,
-  ]);
+  ];
+  const filter = vite.createFilter(TS_EXT_REGEX, excluded);
+  const sourceFilter = vite.createFilter(null, excluded);
+
+  // Source formats registered through `api.ngp`, the component registry their
+  // lowering looks selectors up in, and their modules by program file
+  // (`x.tsrx` → `x.tsrx.ts`)
+  const sourceFormats: NgpSourceFormat[] = [];
+  const scanner = new ComponentScanner();
+  const sourceModules = new Map<string, SourceModule>();
+  const programFileOf = (file: string): string | undefined => {
+    const programFile = `${file}.ts`;
+    return sourceModules.has(programFile) ? programFile : undefined;
+  };
+  const sourceFileOf = (file: string): string =>
+    sourceModules.get(file)?.sourceFile ?? file;
 
   function resolveTsConfigPath(): string {
     if (sharedCtx) {
@@ -274,6 +331,15 @@ export function ngpCompilePlugin(
     );
   }
 
+  const ngp: NgpCompileApi = {
+    registerSourceFormat(format) {
+      if (!sourceFormats.includes(format)) {
+        sourceFormats.push(format);
+        scanner.registerSourceFormat(format);
+      }
+    },
+  };
+
   const compilerApi = {
     angularCompiler: true as const,
     getTsConfigPath: resolveTsConfigPath,
@@ -284,7 +350,133 @@ export function ngpCompilePlugin(
     output,
     ready: (): Promise<void> => pending,
     componentUpdates,
+    ngp,
   };
+
+  /** Lowers a module of a source format. Returns whether its TypeScript changed. */
+  async function lowerSourceModule(
+    sourceFile: string,
+    source: string,
+    format: NgpSourceFormat,
+    resolve: FastCompileResolve,
+  ): Promise<boolean> {
+    const lowered = await format.lower(source, sourceFile, {
+      scanImports: (specifiers) =>
+        scanner.scanImports(specifiers, sourceFile, resolve),
+      resolveSelector: (className) =>
+        scanner.lookupSelector(
+          className,
+          sharedCtx?.componentRegistries ?? componentRegistries,
+        ),
+    });
+    const programFile = `${sourceFile}.ts`;
+    const changed =
+      sourceModules.get(programFile)?.lowered.code !== lowered.code;
+    sourceModules.set(programFile, { sourceFile, source, format, lowered });
+    return changed;
+  }
+
+  /** Lowers every module of the registered source formats under `root`. */
+  async function lowerSourceModules(
+    root: string,
+    resolve: FastCompileResolve,
+  ): Promise<void> {
+    scanner.reset(root);
+    sourceModules.clear();
+    await Promise.all(
+      sourceFormats.map(async (format) => {
+        const files = await glob(format.include, {
+          cwd: root,
+          absolute: true,
+          ignore: ['**/node_modules/**'],
+        });
+        await Promise.all(
+          files.map(async (file) => {
+            const sourceFile = vite.normalizePath(
+              await fsPromises.realpath(file),
+            );
+            const source = await fsPromises.readFile(sourceFile, 'utf-8');
+            await lowerSourceModule(sourceFile, source, format, resolve);
+          }),
+        );
+      }),
+    );
+  }
+
+  /**
+   * Lowers the source modules a change to `file` affects again: the module
+   * itself, and those that looked up selectors in it. Returns the program
+   * files whose TypeScript changed.
+   */
+  async function relowerSourceModules(
+    file: string,
+    resolve: FastCompileResolve,
+  ): Promise<string[]> {
+    const affected = [file, ...(scanner.importersByFile.get(file) ?? [])]
+      .map(programFileOf)
+      .filter((programFile) => programFile !== undefined);
+    scanner.invalidate(file);
+    const changed = await Promise.all(
+      affected.map(async (programFile) => {
+        const { sourceFile, format } = sourceModules.get(programFile)!;
+        const source = await fsPromises.readFile(sourceFile, 'utf-8');
+        const relowered = await lowerSourceModule(
+          sourceFile,
+          source,
+          format,
+          resolve,
+        );
+        return relowered ? [programFile] : [];
+      }),
+    );
+    return changed.flat();
+  }
+
+  /** Lowers a source module added on the dev server, or drops a removed one. */
+  async function syncSourceModule(
+    event: 'add' | 'unlink',
+    file: string,
+    server: vite.ViteDevServer,
+  ): Promise<void> {
+    const format = sourceFormats.find((f) => f.test(file));
+    if (!format || !analyzer) return;
+    const programFile = `${file}.ts`;
+    if (event === 'add') {
+      const source = await fsPromises.readFile(file, 'utf-8');
+      await lowerSourceModule(file, source, format, serverResolve(server));
+    } else {
+      sourceModules.delete(programFile);
+    }
+    await enqueueIndex(() =>
+      analyzer!.invalidateFiles([
+        {
+          filePath: programFile,
+          updateType: event === 'add' ? FILE_CREATED : FILE_DELETED,
+        },
+      ]),
+    );
+  }
+
+  function serverResolve(server: vite.ViteDevServer): FastCompileResolve {
+    return (specifier, importer) =>
+      server.pluginContainer.resolveId(specifier, importer);
+  }
+
+  /** Maps a type error in a program file to the source module's location. */
+  function toSourceLocation(location: SourceLocation): SourceLocation {
+    const sourceModule = sourceModules.get(vite.normalizePath(location.file));
+    const mapped = sourceModule?.lowered.toSourceLocation(
+      location.line - 1,
+      location.character - 1,
+    );
+    return mapped
+      ? {
+          file: sourceModule!.sourceFile,
+          line: mapped.line + 1,
+          character: mapped.column + 1,
+        }
+      : location;
+  }
 
   sharedCtx?.registerCompiler({
     name: '@analogjs/vite-plugin-angular-ngp',
@@ -430,6 +622,16 @@ export function ngpCompilePlugin(
     typeChecker ??= new LspTypeChecker(
       resolveTsConfigPath(),
       options.typeChecker,
+      {
+        inMemoryFiles: () =>
+          new Map(
+            [...sourceModules].map(([file, { lowered }]) => [
+              file,
+              lowered.code,
+            ]),
+          ),
+        mapLocation: toSourceLocation,
+      },
     );
     typeChecker.queueFile(filePath, sourceCode, tcbCode);
     if (!watchMode) return;
@@ -447,9 +649,9 @@ export function ngpCompilePlugin(
     const { file: analyzed, chunk } = filesByPath.get(normPath)!;
     const [file, context, content] = await Promise.all([
       prepareResources(analyzed, (path) => {
-        const key = vite.normalizePath(path);
+        const key = sourceFileOf(vite.normalizePath(path));
         dependents.set(key, (dependents.get(key) ?? new Set()).add(normPath));
-        watch(path);
+        watch(key);
       }),
       getChunkContext(chunk),
       analyzer!.getFileContent(analyzed.filePath),
@@ -563,14 +765,17 @@ export function ngpCompilePlugin(
       );
       if (codes.some((code) => !code)) return false;
       updates.forEach(({ file, className }, index) => {
-        hmrUpdateCode.set(`${file}@${className}`, codes[index]!);
-        componentUpdates.classNames.set(file, className);
+        // Components of a source module update through the module itself
+        const sourceFile = sourceModules.get(file)?.sourceFile;
+        const moduleFile = sourceFile ?? file;
+        hmrUpdateCode.set(`${moduleFile}@${className}`, codes[index]!);
+        componentUpdates.classNames.set(moduleFile, className);
         server.moduleGraph
-          .getModulesByFile(file)
+          .getModulesByFile(moduleFile)
           ?.forEach((mod) => server.moduleGraph.invalidateModule(mod));
         server.ws.send('angular:component-update', {
           id: encodeURIComponent(
-            `${filesByPath.get(file)!.file.filePath}@${className}`,
+            `${sourceFile ?? filesByPath.get(file)!.file.filePath}@${className}`,
           ),
           timestamp: Date.now(),
         });
@@ -622,6 +827,7 @@ export function ngpCompilePlugin(
         ? await sharedCtx.resolveConfig(config)
         : await discoverAnalogIntegrations(config);
       transformFilter = integrations.transformFilter;
+      componentRegistries = integrations.componentRegistries;
       stylePreprocessor = integrations.stylePreprocessor;
     },
     configureServer(server) {
@@ -633,6 +839,9 @@ export function ngpCompilePlugin(
       server.watcher.on('all', (event, path) => {
         const type = changeTypes[event];
         if (type) typeChecker?.notifyFileChanged(path, type);
+        if (event === 'add' || event === 'unlink') {
+          void syncSourceModule(event, vite.normalizePath(path), server);
+        }
       });
       server.httpServer?.on('close', () => {
         typeChecker?.close();
@@ -646,11 +855,20 @@ export function ngpCompilePlugin(
       activeBuilds++;
       if (!analyzer) {
         const tsconfig = resolveTsConfigPath();
-        const ngp = await loadNgp(tsconfig);
+        const hasSourceFormats = sourceFormats.length > 0;
+        const ngp = await loadNgp(tsconfig, hasSourceFormats);
         api = ngp.api;
+        if (hasSourceFormats) {
+          await lowerSourceModules(dirname(tsconfig), (specifier, importer) =>
+            this.resolve(specifier, importer, { skipSelf: true }),
+          );
+        }
         analyzer = await api.createAnalyzer(tsconfig, {
           ...ngp.analyzerOptions,
           enableHmr: hmr,
+          hostFs: hasSourceFormats
+            ? createNgpHostFs((path) => sourceModules.get(path)?.lowered.code)
+            : undefined,
         });
         pending = indexChunks();
       }
@@ -675,36 +893,87 @@ export function ngpCompilePlugin(
     async transform(code, id) {
       const activeTransformFilter =
         sharedCtx?.transformFilter ?? transformFilter;
-      if (!filter(id) || activeTransformFilter?.(code, id) === false) return;
       const filePath = vite.normalizePath(id.split('?')[0]);
-      await pending;
-      let result = await compileFile(filePath, (path) =>
-        this.addWatchFile(path),
-      );
-      if (result && result.magicString.original !== code) {
-        await enqueueIndex(() =>
-          analyzer!.updateFileContent([{ filePath, content: code }]),
+      const sourceFormat = scanner.sourceFormatOf(filePath);
+      if (
+        !(sourceFormat ? sourceFilter(id) : filter(id)) ||
+        activeTransformFilter?.(code, id) === false
+      ) {
+        return;
+      }
+      const programFile = programFileOf(filePath);
+      if (sourceFormat && !programFile) {
+        this.error(
+          `${filePath} is outside ${dirname(resolveTsConfigPath())}, where '${sourceFormat.name}' modules are compiled from.`,
         );
-        result = await compileFile(filePath, (path) => this.addWatchFile(path));
+      }
+      await pending;
+      let lowered: NgpLoweredModule | undefined;
+      if (programFile) {
+        const { source, format } = sourceModules.get(programFile)!;
+        // Edited without a hot update, as in `vite build --watch`
+        if (source !== code) {
+          await lowerSourceModule(filePath, code, format, (spec, importer) =>
+            this.resolve(spec, importer, { skipSelf: true }),
+          );
+        }
+        lowered = sourceModules.get(programFile)!.lowered;
+        if (lowered.error) {
+          this.error({
+            message: lowered.error.message,
+            id: filePath,
+            loc: lowered.error.loc && { file: filePath, ...lowered.error.loc },
+          });
+        }
+      }
+      const compiledFile = programFile ?? filePath;
+      const compiledCode = lowered ? lowered.code : code;
+      const watch = (path: string) => this.addWatchFile(path);
+      let result = await compileFile(compiledFile, watch);
+      if (result && result.magicString.original !== compiledCode) {
+        await enqueueIndex(() =>
+          analyzer!.updateFileContent([
+            { filePath: compiledFile, content: compiledCode },
+          ]),
+        );
+        result = await compileFile(compiledFile, watch);
+      } else if (!result && lowered) {
+        this.error(
+          `${filePath} is not part of the TypeScript program of ${resolveTsConfigPath()}. Import it, or add it to the tsconfig's \`include\`.`,
+        );
       } else if (!result && options.disableTypeChecking !== true) {
         await checkTypes(filePath, code);
       }
-      const source = result?.magicString.toString() ?? code;
+      let source = result?.magicString.toString() ?? code;
+      if (lowered && result) {
+        // Component HMR ids name the program file; the dev server knows the module
+        source = source.replaceAll(
+          encodeURIComponent(
+            `${filesByPath.get(compiledFile)!.file.filePath}@`,
+          ),
+          encodeURIComponent(`${filePath}@`),
+        );
+      }
       const map = result?.magicString.generateMap({
-        source: filePath,
+        source: compiledFile,
         includeContent: true,
         hires: true,
       });
-      const transpiled = await transpile(source, filePath, map);
-      if (transpiled?.map) {
+      const transpiled = await transpile(source, compiledFile, map);
+      const outputMap =
+        lowered && transpiled.map
+          ? lowered.mapToSource(JSON.stringify(transpiled.map))
+          : transpiled.map;
+      if (outputMap) {
         emittedMaps.set(
           filePath,
-          typeof transpiled.map === 'string'
-            ? transpiled.map
-            : JSON.stringify(transpiled.map),
+          typeof outputMap === 'string' ? outputMap : JSON.stringify(outputMap),
         );
       }
-      return transpiled;
+      return {
+        code: transpiled.code,
+        map: outputMap as vite.Rollup.SourceMapInput,
+      };
     },
     async handleHotUpdate(ctx) {
       if (
@@ -715,10 +984,37 @@ export function ngpCompilePlugin(
         return [];
       }
       const normPath = vite.normalizePath(ctx.file);
-      const updates = hmr ? await findComponentUpdates(normPath, ctx.read) : [];
-      await enqueueIndex(() =>
-        analyzer!.invalidateFiles([{ filePath: ctx.file, updateType: 2 }]),
-      );
+      const programFile = programFileOf(normPath);
+      const relowered = sourceFormats.length
+        ? await relowerSourceModules(normPath, serverResolve(ctx.server))
+        : [];
+      // Modules lowered again against changed selectors reload the page
+      const updates =
+        hmr && relowered.every((file) => file === programFile)
+          ? await findComponentUpdates(
+              programFile ?? normPath,
+              programFile
+                ? () => sourceModules.get(programFile)!.lowered.code
+                : ctx.read,
+            )
+          : [];
+      if (!programFile) {
+        await enqueueIndex(() =>
+          analyzer!.invalidateFiles([
+            { filePath: ctx.file, updateType: FILE_CHANGED },
+          ]),
+        );
+      }
+      if (relowered.length) {
+        await enqueueIndex(() =>
+          analyzer!.updateFileContent(
+            relowered.map((filePath) => ({
+              filePath,
+              content: sourceModules.get(filePath)!.lowered.code,
+            })),
+          ),
+        );
+      }
       if (updates.length && (await sendComponentUpdates(updates, ctx.server))) {
         return [];
       }
@@ -750,6 +1046,7 @@ export function ngpCompilePlugin(
       emittedMaps.clear();
       sources.clear();
       dependents.clear();
+      sourceModules.clear();
       releaseCssPreprocessorWorkers();
     },
   };
