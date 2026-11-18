@@ -130,6 +130,20 @@ export function Shop() @{
 </a>
 ```
 
+NgModules are applied with `use` too. Write the components they export as tags by their selector, since only standalone components can be used by class name:
+
+```tsx
+import { FormsModule } from '@angular/forms';
+import { LegacyModule } from './legacy.module';
+
+export function SignUp() @{
+  <form use={[FormsModule, LegacyModule]}>
+    <input name="email" ngModel="" />
+    <legacy-banner />
+  </form>
+}
+```
+
 ### Template syntax
 
 | TSRX                                   | Angular                                 |
