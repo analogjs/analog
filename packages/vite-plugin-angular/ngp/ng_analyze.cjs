@@ -50,7 +50,52 @@ class WasmAnalyzer {
         return ret[0] >>> 0;
     }
     /**
-     * Releases the stream `id` when its consumer stops reading before it ends.
+     * @param {string} paths_json
+     * @returns {string}
+     */
+    canonical_paths(paths_json) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(paths_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.wasmanalyzer_canonical_paths(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * @returns {string}
+     */
+    clear_resolution_cache() {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.wasmanalyzer_clear_resolution_cache(this.__wbg_ptr);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * Releases the stream or metadata request `id` when its consumer stops reading before it ends.
      *
      * Dropping the receiver closes the channel. The engine's sends to a closed channel
      * are ignored, so the analysis is no longer observed but is not cancelled. The NAPI
@@ -60,6 +105,21 @@ class WasmAnalyzer {
      */
     close_stream(id) {
         wasm.wasmanalyzer_close_stream(this.__wbg_ptr, id);
+    }
+    /**
+     * @returns {string}
+     */
+    get_compiler_options() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.wasmanalyzer_get_compiler_options(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
     }
     /**
      * @param {string} file_path
@@ -185,6 +245,43 @@ class WasmAnalyzer {
             wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
         }
         return v3;
+    }
+    /**
+     * @param {string} module_ref_json
+     * @returns {number}
+     */
+    request_metadata(module_ref_json) {
+        const ptr0 = passStringToWasm0(module_ref_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.wasmanalyzer_request_metadata(this.__wbg_ptr, ptr0, len0);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return ret[0] >>> 0;
+    }
+    /**
+     * @param {string} entry_points_json
+     * @returns {string}
+     */
+    set_entry_points(entry_points_json) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(entry_points_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.wasmanalyzer_set_entry_points(this.__wbg_ptr, ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
     }
     /**
      * @param {string} updates_json

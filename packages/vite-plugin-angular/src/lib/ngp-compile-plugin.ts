@@ -536,11 +536,12 @@ export function ngpCompilePlugin(
   }
 
   async function emitHmrUpdate(file: string, className: string) {
-    // NGP emits only the update module of the class named by `hmrUpdateTarget`
+    // NGP emits only the update module of the class named by `hmrUpdateTarget`,
+    // and only when it doesn't reuse the file's previously processed output
     const target = Object.assign(
       Object.create(Object.getPrototypeOf(compiler)),
       compiler,
-      { hmrUpdateTarget: className },
+      { hmrUpdateTarget: className, reuseProcessedFiles: false },
     );
     const { result } = await processFile(file, target, () => {});
     return (
