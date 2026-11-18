@@ -441,6 +441,8 @@ export class LspTypeChecker {
     string,
     { sourceCode: string; tcbCode?: string | null }
   >();
+  /** The text last sent for each open in-memory file. */
+  private inMemoryText = new Map<string, string>();
   private buffer = Buffer.alloc(0);
   private exitError: Error | undefined;
   readonly ready: Promise<void>;
@@ -622,8 +624,19 @@ export class LspTypeChecker {
     const inMemoryFiles = this.host?.inMemoryFiles() ?? new Map();
     const isInMemory = (filePath: string) =>
       inMemoryFiles.has(filePath.replace(/\\/g, '/'));
+    // Keep the checker's in-memory files in step with the host's
+    for (const filePath of this.inMemoryText.keys()) {
+      if (!inMemoryFiles.has(filePath)) {
+        this.inMemoryText.delete(filePath);
+        const uri = pathToFileURL(resolve(filePath)).href;
+        if (this.versions.delete(uri)) {
+          this.notify('textDocument/didClose', { textDocument: { uri } });
+        }
+      }
+    }
     for (const [filePath, text] of inMemoryFiles) {
-      if (!this.versions.has(pathToFileURL(resolve(filePath)).href)) {
+      if (this.inMemoryText.get(filePath) !== text) {
+        this.inMemoryText.set(filePath, text);
         this.updateDocument(filePath, text);
       }
     }

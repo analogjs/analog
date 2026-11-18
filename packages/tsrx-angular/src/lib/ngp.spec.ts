@@ -269,6 +269,17 @@ export function Parent() @{
     expect(await requestUpdate(id)).toContain('After');
   });
 
+  it('ignores a module removed before it could be read', async () => {
+    await serve({ 'src/counter.tsrx': COUNTER, 'src/app.ts': APP('2') });
+    await server!.transformRequest('/src/app.ts');
+    const error = vi.spyOn(server!.config.logger, 'error');
+
+    server!.watcher.emit('all', 'add', `${root}/src/gone.tsrx`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(error).not.toHaveBeenCalled();
+  });
+
   it('reports lowering errors', async () => {
     await serve({
       'src/broken.tsrx': `export function Broken() @{

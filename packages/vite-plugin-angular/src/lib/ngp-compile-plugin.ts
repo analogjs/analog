@@ -305,6 +305,8 @@ export function ngpCompilePlugin(
   const sourceFormats: NgpSourceFormat[] = [];
   const scanner = new ComponentScanner();
   const sourceModules = new Map<string, SourceModule>();
+  // Lowerings started per program file, so one finishing after a newer one is dropped
+  const loweringRevisions = new Map<string, number>();
   const programFileOf = (file: string): string | undefined => {
     const programFile = `${file}.ts`;
     return sourceModules.has(programFile) ? programFile : undefined;
@@ -360,6 +362,9 @@ export function ngpCompilePlugin(
     format: NgpSourceFormat,
     resolve: FastCompileResolve,
   ): Promise<boolean> {
+    const programFile = `${sourceFile}.ts`;
+    const revision = (loweringRevisions.get(programFile) ?? 0) + 1;
+    loweringRevisions.set(programFile, revision);
     const lowered = await format.lower(source, sourceFile, {
       scanImports: (specifiers) =>
         scanner.scanImports(specifiers, sourceFile, resolve),
@@ -369,7 +374,7 @@ export function ngpCompilePlugin(
           sharedCtx?.componentRegistries ?? componentRegistries,
         ),
     });
-    const programFile = `${sourceFile}.ts`;
+    if (loweringRevisions.get(programFile) !== revision) return false;
     const changed =
       sourceModules.get(programFile)?.lowered.code !== lowered.code;
     sourceModules.set(programFile, { sourceFile, source, format, lowered });
@@ -410,6 +415,7 @@ export function ngpCompilePlugin(
    */
   async function relowerSourceModules(
     file: string,
+    read: () => string | Promise<string>,
     resolve: FastCompileResolve,
   ): Promise<string[]> {
     const affected = [file, ...(scanner.importersByFile.get(file) ?? [])]
@@ -419,7 +425,10 @@ export function ngpCompilePlugin(
     const changed = await Promise.all(
       affected.map(async (programFile) => {
         const { sourceFile, format } = sourceModules.get(programFile)!;
-        const source = await fsPromises.readFile(sourceFile, 'utf-8');
+        const source =
+          sourceFile === file
+            ? await read()
+            : await fsPromises.readFile(sourceFile, 'utf-8');
         const relowered = await lowerSourceModule(
           sourceFile,
           source,
@@ -438,14 +447,23 @@ export function ngpCompilePlugin(
     file: string,
     server: vite.ViteDevServer,
   ): Promise<void> {
-    const format = sourceFormats.find((f) => f.test(file));
-    if (!format || !analyzer) return;
+    if (!analyzer) return;
     const programFile = `${file}.ts`;
     if (event === 'add') {
+      // The modules found at startup: under the tsconfig's directory
+      const root = vite.normalizePath(dirname(resolveTsConfigPath()));
+      const format = sourceFormats.find((f) => f.test(file));
+      if (
+        !format ||
+        !file.startsWith(`${root}/`) ||
+        file.includes('/node_modules/')
+      ) {
+        return;
+      }
       const source = await fsPromises.readFile(file, 'utf-8');
       await lowerSourceModule(file, source, format, serverResolve(server));
-    } else {
-      sourceModules.delete(programFile);
+    } else if (!sourceModules.delete(programFile)) {
+      return;
     }
     await enqueueIndex(() =>
       analyzer!.invalidateFiles([
@@ -840,7 +858,15 @@ export function ngpCompilePlugin(
         const type = changeTypes[event];
         if (type) typeChecker?.notifyFileChanged(path, type);
         if (event === 'add' || event === 'unlink') {
-          void syncSourceModule(event, vite.normalizePath(path), server);
+          syncSourceModule(event, vite.normalizePath(path), server).catch(
+            (error: NodeJS.ErrnoException) => {
+              // Removed again before it was read
+              if (error.code === 'ENOENT') return;
+              server.config.logger.error(
+                `[@analogjs/vite-plugin-angular]: ${error.message}`,
+              );
+            },
+          );
         }
       });
       server.httpServer?.on('close', () => {
@@ -933,8 +959,18 @@ export function ngpCompilePlugin(
       const compiledFile = programFile ?? filePath;
       const compiledCode = lowered ? lowered.code : code;
       const watch = (path: string) => this.addWatchFile(path);
-      let result = await compileFile(compiledFile, watch);
-      if (result && result.magicString.original !== compiledCode) {
+      let result: NgpResult | undefined;
+      try {
+        result = await compileFile(compiledFile, watch);
+      } catch (error) {
+        // A failed compile stays cached until its file is updated, so only
+        // report it if it compiled this content
+        if (sources.get(compiledFile) === compiledCode) throw error;
+      }
+      if (
+        filesByPath.has(compiledFile) &&
+        sources.get(compiledFile) !== compiledCode
+      ) {
         await enqueueIndex(() =>
           analyzer!.updateFileContent([
             { filePath: compiledFile, content: compiledCode },
@@ -990,7 +1026,11 @@ export function ngpCompilePlugin(
       const normPath = vite.normalizePath(ctx.file);
       const programFile = programFileOf(normPath);
       const relowered = sourceFormats.length
-        ? await relowerSourceModules(normPath, serverResolve(ctx.server))
+        ? await relowerSourceModules(
+            normPath,
+            ctx.read,
+            serverResolve(ctx.server),
+          )
         : [];
       // Modules lowered again against changed selectors reload the page
       const updates =
