@@ -434,6 +434,86 @@ export class HelloComponent {}
       }
     }, 30_000);
 
+    it('compiles components when the tsconfig is reached through a symlink', async () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      vi.stubEnv('VITEST', '');
+
+      // Vite resolves module ids through symlinks; the TypeScript program
+      // names files by the tsconfig path as given. Both must name one file.
+      const realRoot = makeTempDir('analog-symlinked-root-');
+      const root = join(makeTempDir('analog-symlink-'), 'app');
+      symlinkSync(realRoot, root, 'junction');
+      symlinkSync(
+        resolve(import.meta.dirname, '../../../../node_modules'),
+        join(realRoot, 'node_modules'),
+        'junction',
+      );
+      const tsconfig = join(root, 'tsconfig.json');
+      writeFileSync(
+        join(root, 'hello.component.ts'),
+        `import { Component } from '@angular/core';
+@Component({
+  selector: 'app-hello',
+  template: '<span>Through a symlink</span>',
+})
+export class HelloComponent {}
+`,
+        'utf-8',
+      );
+      writeFileSync(
+        tsconfig,
+        JSON.stringify({
+          compilerOptions: {
+            target: 'es2022',
+            module: 'esnext',
+            moduleResolution: 'bundler',
+            sourceMap: true,
+            skipLibCheck: true,
+            types: [],
+          },
+          files: ['hello.component.ts'],
+        }),
+        'utf-8',
+      );
+
+      const ctx = createAngularBuildContext({
+        tsconfig,
+        workspaceRoot: root,
+        jit: false,
+        liveReload: true,
+      });
+      const server = await createServer({
+        configFile: false,
+        root,
+        logLevel: 'silent',
+        server: { middlewareMode: true, ws: false, watch: null },
+        optimizeDeps: { noDiscovery: true },
+        plugins: [
+          virtualModulesPlugin(ctx),
+          componentStylesPlugin(ctx),
+          ngtscCompilePlugin(ctx),
+          encapsulationPlugin(),
+        ],
+      });
+
+      try {
+        const transformed = await server.transformRequest(
+          '/hello.component.ts',
+        );
+        expect(transformed?.code).toContain('ɵcmp');
+        expect(transformed?.code).toContain('Through a symlink');
+
+        // Either spelling of the path finds the emitted file.
+        for (const dir of [root, realRoot]) {
+          const id = normalizePath(join(dir, 'hello.component.ts'));
+          expect(ctx.compiler?.hasEmitted?.(id)).toBe(true);
+          expect(ctx.compiler?.getSourceMap?.(id)).toBeTypeOf('string');
+        }
+      } finally {
+        await server.close();
+      }
+    }, 30_000);
+
     it('preserves emitted library .d.ts declarations across watch-mode rebuilds when emptyOutDir runs after buildEnd', async () => {
       vi.stubEnv('NODE_ENV', 'production');
       vi.stubEnv('VITEST', '');
