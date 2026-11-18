@@ -196,11 +196,18 @@ async function keepTypesUpToDate(
   options: TsrxTypesPluginOptions,
 ): Promise<void> {
   const root = server.config.root;
-  const types = await typeGenerator(root, options);
+  const logger = server.config.logger;
+  // Started with `void`, so a failure to load the generator is logged here
+  // instead of becoming an unhandled rejection.
+  const types = await typeGenerator(root, options).catch((e: unknown) => {
+    logger.error(`[tsrx types] ${e instanceof Error ? e.message : e}`, {
+      timestamp: true,
+    });
+    return undefined;
+  });
   if (types === undefined) {
     return;
   }
-  const logger = server.config.logger;
 
   let running = false;
   let again = false;
