@@ -1,3 +1,9 @@
+# [3.0.0-beta.47](https://github.com/analogjs/analog/compare/v3.0.0-beta.46...v3.0.0-beta.47) (2026-11-18)
+
+### Features
+
+- **tsrx-angular:** experimental support for TSRX components ([#2789](https://github.com/analogjs/analog/issues/2789)) ([5958a13](https://github.com/analogjs/analog/commit/5958a13d6cab4769b779bf497012e6b86717b6f0))
+
 # [3.0.0-beta.46](https://github.com/analogjs/analog/compare/v3.0.0-beta.45...v3.0.0-beta.46) (2026-11-18)
 
 ### Bug Fixes
