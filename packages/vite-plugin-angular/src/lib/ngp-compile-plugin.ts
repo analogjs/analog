@@ -694,7 +694,7 @@ export function ngpCompilePlugin(
         ].filter((diagnostic) => diagnostic.category === 1);
         if (errors.length) {
           throw new Error(
-            `${file.filePath}: ${errors.map((error) => error.messageText).join('\n')}`,
+            `${sourceFileOf(normPath)}: ${errors.map((error) => error.messageText).join('\n')}`,
           );
         }
         if (options.disableTypeChecking !== true) {

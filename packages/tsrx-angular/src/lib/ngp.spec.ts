@@ -237,6 +237,19 @@ export function Parent() @{
     );
   });
 
+  it('reports compile errors against the .tsrx module', async () => {
+    await serve({
+      'src/host.tsrx': `export function Host() @{
+  <x-unknown />
+}
+`,
+    });
+
+    await expect(server!.transformRequest('/src/host.tsrx')).rejects.toThrow(
+      /\/host\.tsrx: 'x-unknown' is not a known element/,
+    );
+  });
+
   it('reports type errors at .tsrx locations', async () => {
     await serve(
       {
