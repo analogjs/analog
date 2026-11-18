@@ -784,8 +784,11 @@ class ComponentLowerer {
       for (const local of declaredNames(s)) {
         locals.set(local, s);
       }
+    }
+    for (const s of block.body as EstreeNode[]) {
       const member = this.getMemberDeclaration(s);
       if (member !== null) {
+        rejectBodyReads(member, locals);
         memberNames.add(member.id.name);
         fields.push(
           mt`  readonly ${this.copy(member.id)} = ${this.copy(member.init)};`.from(
@@ -838,12 +841,26 @@ class ComponentLowerer {
     const exposed = [...hostReferences(meta, this.fileName)].filter(
       (n) => locals.has(n) && !memberNames.has(n),
     );
+    // `let` and `var` locals can change after setup, so they are read and
+    // written through accessors instead of copied once.
+    const isMutable = (n: string) => {
+      const decl = locals.get(n)!;
+      return decl.type === 'VariableDeclaration' && decl.kind !== 'const';
+    };
     const exposedFields = exposed.map((n) =>
-      mt`  /** @internal */ protected readonly ${n} = this.${TSRX_BINDINGS_FIELD}.${n};`.from(
-        locals.get(n)!,
-      ),
+      (isMutable(n)
+        ? mt`  /** @internal */ protected get ${n}() { return this.${TSRX_BINDINGS_FIELD}.${n}; }\n  /** @internal */ protected set ${n}(ɵvalue) { this.${TSRX_BINDINGS_FIELD}.${n} = ɵvalue; }`
+        : mt`  /** @internal */ protected readonly ${n} = this.${TSRX_BINDINGS_FIELD}.${n};`
+      ).from(locals.get(n)!),
     );
-    const returned = [...this.keys.map((k) => `${k}: ɵ${k}`), ...exposed];
+    const returned = [
+      ...this.keys.map((k) => `${k}: ɵ${k}`),
+      ...exposed.map((n) =>
+        isMutable(n)
+          ? `get ${n}() { return ${n}; }, set ${n}(ɵvalue) { ${n} = ɵvalue; }`
+          : n,
+      ),
+    ];
     const setup = [
       ...aliases,
       ...statements,
@@ -1004,6 +1021,7 @@ class ComponentLowerer {
   private lowerChild(node: EstreeNode, scope: Local[]): MappedText {
     switch (node.type) {
       case 'JSXText':
+        // `value` has entities decoded (`&lt;` is `<`), so it is plain text.
         return mt`${escapeText(cleanJsxText(node.value))}`.from(node);
       case 'JSXExpressionContainer':
         return node.expression.type === 'JSXEmptyExpression'
@@ -1096,7 +1114,7 @@ class ComponentLowerer {
       }
       if (block.textBefore !== null) {
         out.append(
-          mt`${escapeText(cleanJsxText(this.source.slice(block.textBefore.start, block.textBefore.end)))}`.from(
+          mt`${escapeTemplateSyntax(cleanJsxText(this.source.slice(block.textBefore.start, block.textBefore.end)))}`.from(
             block.textBefore,
           ),
         );
@@ -2022,6 +2040,28 @@ function visitIdentifiers(node: EstreeNode, add: (name: string) => void): void {
   forEachChild(node, (c) => visitIdentifiers(c, add));
 }
 
+/**
+ * Member APIs become class fields, which are initialized before the component
+ * body runs, so their initializers can't read names the body declares.
+ */
+function rejectBodyReads(
+  member: { id: EstreeNode; init: EstreeNode },
+  locals: Map<string, EstreeNode>,
+): void {
+  let read: string | undefined;
+  visitIdentifiers(member.init, (n) => {
+    if (read === undefined && n !== member.id.name && locals.has(n)) {
+      read = n;
+    }
+  });
+  if (read !== undefined) {
+    throw new TsrxLoweringError(
+      member.init,
+      `\`${member.id.name}\` becomes a class field, which is initialized before the component body runs, so it can't read \`${read}\`. Move \`${read}\` out of the component, to module scope.`,
+    );
+  }
+}
+
 function isExpression(node: EstreeNode): boolean {
   return (
     !isTemplateNode(node) &&
@@ -2134,8 +2174,21 @@ function cleanJsxText(text: string): string {
   return out;
 }
 
-/** Escapes characters Angular's template parser would treat as syntax in text. */
+/** Escapes plain text (a string, or JSX text with entities decoded) for a template. */
 function escapeText(text: string): string {
+  return escapeTemplateSyntax(
+    text
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;'),
+  );
+}
+
+/**
+ * Escapes characters Angular's template parser would treat as syntax in text.
+ * For raw JSX source text, whose entities are already HTML.
+ */
+function escapeTemplateSyntax(text: string): string {
   return text
     .replaceAll('@', '&#64;')
     .replaceAll('{', '&#123;')

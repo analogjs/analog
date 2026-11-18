@@ -252,6 +252,9 @@ directory. Works with `tsc` and `tsgo`.
 - Fast compile only (`angular({ fastCompile: true })`).
 - Components take no parameters and can't be `async` or generators; inputs are
   `input()`/`model()`.
+- Member APIs become class fields, initialized before the body runs, so their
+  initializers (`input(initial)`) can't read names the body declares; such
+  values go at module scope.
 - Lists use `@for`, not `.map()`. Statements inside template blocks, spread
   attributes, `@for await`, `@pending` and `@finally` are rejected with
   messages saying what to do instead.
@@ -305,8 +308,8 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
 
 ## Test Coverage
 
-- **`vite-plugin-tsrx`**: 56 tests.
-  - `lower.spec.ts` (45): class shape; compiling with the fast compiler;
+- **`vite-plugin-tsrx`**: 62 tests.
+  - `lower.spec.ts` (49): class shape; compiling with the fast compiler;
     `@if`/`@for`/`@switch`/`@try`→`@boundary`; native `@boundary` with `let`,
     `$error`, multiple `@error` blocks, and `when` conditions compiled to read
     the caught error; stray and malformed blocks; `<ng-content>` slots,
@@ -316,8 +319,12 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
     refs, and component output casing; local and imported tags; styles and
     `:global`; selector parsing and defaults; native-name collisions; `XMeta`
     merging, validation, and `routeMeta` pass-through; errors, including the
-    `@defer` and `@boundary` single-node hints; source maps. Every generated template is parsed
-    with Angular's `parseTemplate`.
+    `@defer` and `@boundary` single-node hints; member initializers that
+    read body locals; mutable host locals read and written through accessors;
+    text and string children escaped as text; source maps. Every generated
+    template is parsed with Angular's `parseTemplate`.
+  - `source-map.spec.ts` (2): copied ranges win over equal-bounds wrappers;
+    character mappings survive JSON escapes.
   - `cache.spec.ts` (6): one parse per source across discovery, scans, and
     compiles; scan/compile lowering reuse; re-parse on change; cached parse
     errors.
@@ -331,9 +338,10 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
   `component.spec.ts` (merged with #2784).
 - **`platform` / `router`**: `.page.tsrx` discovery, path derivation, and a TSRX
   layout paired with an index page.
-- **`tsrx-app-e2e-playwright`** (11, dev and production builds): `routeMeta` and
+- **`tsrx-app-e2e-playwright`** (12, dev and production builds): `routeMeta` and
   client navigation; inputs, outputs, providers, and two-way models after
-  hydration; server loads, an API route, and a missing product; form actions;
+  hydration; server loads, an API route, and a missing product; form actions,
+  including a failed submission;
   markdown content; a native `@boundary` fallback and reset; deferred views;
   incremental hydration (`hydrate on interaction`, `hydrate never`); and content
   projection into named, default, and fallback slots of a TSRX component and a
@@ -401,6 +409,15 @@ Deferred views and incremental hydration:
 - **Fresh clones.** Editors report `.tsrx` imports as missing until the dev
   server or a build has written the declarations once. A TypeScript language
   service plugin could serve them without files on disk.
+- **Same-named components.** Tags resolve to selectors through the fast
+  compiler's registry, which is keyed by class name, so two components with
+  the same class name in different modules resolve to the same selector, even
+  when imported under different aliases. Keying the registry by module and
+  export name is a fast compile change that also applies to `.ts` components.
+- **`routeMeta` in typed routes.** Typed routing (experimental) detects
+  `routeMeta` exports with oxc, which can't parse TSRX, so `.page.tsrx` routes
+  have no `routeMeta` in the generated route table. Runtime routing is not
+  affected. Detecting it needs the TSRX parser from `@analogjs/platform`.
 - **The full compilation path.** Only the fast compile path is supported.
 - **Publishing.** The package is private (`0.0.0`) and built from this
   repository.

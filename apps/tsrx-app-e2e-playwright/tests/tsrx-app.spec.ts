@@ -1,4 +1,4 @@
-import { Browser, chromium, Page } from 'playwright';
+import { Browser, chromium, Page, type Request } from 'playwright';
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 
 // End-to-end checks for the TSRX demo app: every page is a `.tsrx` component,
@@ -26,8 +26,13 @@ afterAll(async () => {
   await browser.close();
 });
 
-async function open(path: string): Promise<Page> {
+/** Opens `path`, passing every request from the start of navigation to `onRequest`. */
+async function open(
+  path: string,
+  onRequest?: (request: Request) => void,
+): Promise<Page> {
   page = await browser.newPage();
+  if (onRequest) page.on('request', onRequest);
   consoleErrors = [];
   expectedErrors = [INTENTIONAL_ERROR];
   page.on('pageerror', (error) => consoleErrors.push(String(error)));
@@ -144,6 +149,33 @@ describe('contact', () => {
       .poll(() => text('#contact-success'))
       .toBe('Thanks, Ada! We received your message.');
   });
+
+  test('reports a failed submission and keeps the form for a retry', async () => {
+    await open('/contact');
+    await hydrated(page);
+    // Fail the first submission in the network, then let the retry through.
+    let failed = false;
+    await page.route('**/contact*', (route) => {
+      if (route.request().method() === 'POST' && !failed) {
+        failed = true;
+        return route.abort();
+      }
+      return route.fallback();
+    });
+    expectedErrors.push('ERR_FAILED');
+
+    await page.fill('#name', 'Ada');
+    await page.fill('#email', 'ada@example.com');
+    await page.click('#send');
+    await expect
+      .poll(() => text('#contact-errors'))
+      .toBe('Something went wrong. Please try again.');
+
+    await page.click('#send');
+    await expect
+      .poll(() => text('#contact-success'))
+      .toBe('Thanks, Ada! We received your message.');
+  });
 });
 
 describe('blog', () => {
@@ -176,9 +208,8 @@ describe('error boundary', () => {
 
 describe('deferred views', () => {
   test('renders placeholders and loads deferred components lazily', async () => {
-    await open('/defer');
     const requested: string[] = [];
-    page.on('request', (request) => requested.push(request.url()));
+    await open('/defer', (request) => requested.push(request.url()));
 
     // Placeholders are server-rendered.
     expect(await text('#details-placeholder')).toBe(
@@ -216,9 +247,8 @@ describe('deferred views', () => {
 
 describe('incremental hydration', () => {
   test('hydrates a @defer block on interaction and never loads hydrate never', async () => {
-    await open('/defer');
     const requested: string[] = [];
-    page.on('request', (request) => requested.push(request.url()));
+    await open('/defer', (request) => requested.push(request.url()));
 
     // Both blocks render their content on the server, not a placeholder.
     expect(await text('#like')).toBe('Likes: 0');

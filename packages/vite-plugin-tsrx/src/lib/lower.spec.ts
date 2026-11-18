@@ -452,6 +452,34 @@ export class Counter {
     });
   });
 
+  describe('text', () => {
+    it('renders string children and decoded entities as text, not markup', () => {
+      expect(
+        template(`
+          export function C() @{
+            <p>{'<b>bold?</b> &amp;'} a &lt;i&gt; &amp; b {\`{x} @y\`}</p>
+          }
+        `),
+      ).toBe(
+        '<p>&lt;b&gt;bold?&lt;/b&gt; &amp;amp; a &lt;i&gt; &amp; b &#123;x&#125; &#64;y</p>',
+      );
+    });
+
+    it('keeps entities in text before an Angular block', () => {
+      expect(
+        template(`
+          export function C() @{
+            <div>
+              Fish &amp; chips @defer {
+                <p>{'later'}</p>
+              }
+            </div>
+          }
+        `),
+      ).toBe('<div>Fish &amp; chips @defer {<p>later</p>}</div>');
+    });
+  });
+
   describe('attributes', () => {
     it('maps events, shorthand, namespaces and refs', () => {
       expect(
@@ -697,6 +725,29 @@ export function Cart() @{
       expect(result.code).toContain('hostAttrs');
     });
 
+    it('reads and writes mutable host locals through accessors', () => {
+      const { code, diagnostics } = lower(`
+        export const ClickerMeta = { host: { '[attr.data-clicks]': 'clicks', '(click)': 'clicks = clicks + 1' } };
+        export function Clicker() @{
+          let clicks = 0;
+          <p>{'Click me'}</p>
+        }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain(
+        'get clicks() { return clicks; }, set clicks(ɵvalue) { clicks = ɵvalue; }',
+      );
+      expect(code).toContain(
+        '/** @internal */ protected get clicks() { return this.$fc.clicks; }',
+      );
+      expect(code).toContain(
+        '/** @internal */ protected set clicks(ɵvalue) { this.$fc.clicks = ɵvalue; }',
+      );
+      expect(code).not.toContain('protected readonly clicks');
+      const result = compile(code, '/app/test.tsrx', buildRegistry({}));
+      expect(result.code).toContain('ctx.clicks = ctx.clicks + 1');
+    });
+
     it('maps each XMeta to its own component, exported or not', () => {
       const { code, diagnostics } = lower(`
         export const CartMeta = { selector: 'app-cart' };
@@ -791,6 +842,28 @@ export function Cart() @{
   });
 
   describe('errors', () => {
+    it('rejects member initializers that read body locals', () => {
+      expect(
+        errors(`import { input } from '@angular/core';
+export function C() @{
+  const initial = 2;
+  const value = input(initial);
+  <p>{value()}</p>
+}`),
+      ).toEqual([
+        "`value` becomes a class field, which is initialized before the component body runs, so it can't read `initial`. Move `initial` out of the component, to module scope.",
+      ]);
+      // Module-scope values are fine.
+      expect(
+        errors(`import { input } from '@angular/core';
+const initial = 2;
+export function C() @{
+  const value = input(initial);
+  <p>{value()}</p>
+}`),
+      ).toEqual([]);
+    });
+
     it('rejects parameters', () => {
       expect(
         errors(`export function C(props: { a: string }) @{ <p /> }`),

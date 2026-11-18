@@ -77,6 +77,10 @@ export function tsrx(options: TsrxPluginOptions = {}): Plugin {
         await typesWritten;
       }
     },
+    watchChange() {
+      // `vite build --watch`: a change starts a new build, which writes them again.
+      typesWritten = undefined;
+    },
     configResolved(resolvedConfig) {
       config = resolvedConfig;
       fastCompile = findFastCompileApi(config.plugins);

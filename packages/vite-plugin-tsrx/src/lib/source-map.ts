@@ -145,11 +145,43 @@ export function jsonLiteral(content: MappedText): MappedText {
   const out = new MappedText();
   out.text = literal;
   for (const s of content.segments) {
-    out.segments.push({
-      ...s,
-      genStart: offsets[s.genStart],
-      genEnd: offsets[s.genEnd],
-    });
+    if (!s.exact) {
+      out.segments.push({
+        ...s,
+        genStart: offsets[s.genStart],
+        genEnd: offsets[s.genEnd],
+      });
+      continue;
+    }
+    // An escape (`"` -> `\"`) lengthens the text, so an exact copy is split:
+    // runs of unescaped characters stay exact, and each escape maps to the
+    // character it stands for.
+    let run = s.genStart;
+    const pushRun = (end: number) => {
+      if (end > run) {
+        out.segments.push({
+          genStart: offsets[run],
+          genEnd: offsets[end],
+          origStart: s.origStart + (run - s.genStart),
+          origEnd: s.origStart + (end - s.genStart),
+          exact: true,
+        });
+      }
+    };
+    for (let i = s.genStart; i < s.genEnd; i++) {
+      if (offsets[i + 1] - offsets[i] === 1) continue;
+      pushRun(i);
+      const orig = s.origStart + (i - s.genStart);
+      out.segments.push({
+        genStart: offsets[i],
+        genEnd: offsets[i + 1],
+        origStart: orig,
+        origEnd: orig + 1,
+        exact: false,
+      });
+      run = i + 1;
+    }
+    pushRun(s.genEnd);
   }
   return out;
 }
@@ -175,9 +207,18 @@ export class TsrxSourceMap {
   ) {
     // Sweep the (properly nested) segments, outermost first, emitting the innermost segment for
     // each stretch of generated text.
+    // A wrapper (`from()`) is recorded after what it wraps, so among segments
+    // with equal bounds the later one is the outer one and sorts first.
     const sorted = segments
-      .filter((s) => s.genEnd > s.genStart)
-      .sort((a, b) => a.genStart - b.genStart || b.genEnd - a.genEnd);
+      .map((segment, index) => ({ segment, index }))
+      .filter(({ segment: s }) => s.genEnd > s.genStart)
+      .sort(
+        (a, b) =>
+          a.segment.genStart - b.segment.genStart ||
+          b.segment.genEnd - a.segment.genEnd ||
+          b.index - a.index,
+      )
+      .map(({ segment }) => segment);
     const stack: Segment[] = [];
     let cursor = 0;
     const emitUpTo = (pos: number) => {

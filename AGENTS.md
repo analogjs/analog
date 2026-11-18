@@ -115,6 +115,7 @@ Projects with caching explicitly disabled (`"cache": false` on their build targe
 
 - `router` — outputs to `node_modules/@analogjs/router`
 - `content` — outputs to `node_modules/@analogjs/content`
+- `tsrx-app` — writes TSRX declarations to `apps/tsrx-app/node_modules/.analog/tsrx-types`
 - `my-package` — explicitly opted out of build caching
 
 ## Contribution Patterns & Best Practices
