@@ -63,12 +63,12 @@ jobs:
       # build excludes astro-app; e2e is limited to analog-app-e2e/blog-app-e2e),
       # which a single run-many cannot express. Ordering (test/e2e depend on
       # build) is modeled by the Nx task graph, so no coordinator-level gating is
-      # needed. --parallel values are preserved as per-agent task concurrency.
+      # needed.
       - name: Lint
         run: pnpm exec nx run-many --target lint --all --exclude=content,platform,router
 
       - name: Build
-        run: pnpm exec nx run-many --target build --all --parallel=1 --exclude=astro-app
+        run: pnpm exec nx run-many --target build --all --exclude=astro-app
 
       - name: Test
         run: pnpm exec nx run-many --target test
