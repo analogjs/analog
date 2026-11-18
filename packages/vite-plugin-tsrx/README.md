@@ -33,6 +33,8 @@ export function Counter() @{
   …) need an `XMeta` selector.
 - `@if`, `@for` (`key` → `track`), `@switch` and `@try`/`@catch` (→
   `@boundary`/`@error`) map to Angular's control flow.
+- Components project children with Angular's `<ng-content>` (`select`,
+  fallback content, `ngProjectAs`), and `contentChild()` queries them.
 - `.page.tsrx` files work as `@analogjs/router` pages.
 - Angular's `@defer` and `@boundary` syntax works as-is:
   `@defer (on viewport) { <Chart /> } @placeholder { <p>…</p> }`,

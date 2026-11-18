@@ -517,6 +517,73 @@ export class Counter {
     expect(code).toContain('imports: [Badge, MatButton]');
   });
 
+  describe('content projection', () => {
+    const CARD = `
+      import { contentChild, ElementRef } from '@angular/core';
+      export const CardMeta = { selector: 'app-card' };
+      export function Card() @{
+        const title = contentChild<ElementRef>('title');
+        <article>
+          <header><ng-content select="[card-title]" /></header>
+          <ng-content />
+          <ng-content select="[card-footer]">{'No footer'}</ng-content>
+          <p>{title() ? 'titled' : 'untitled'}</p>
+        </article>
+      }
+    `;
+
+    it('passes <ng-content> slots and fallback content through', () => {
+      expect(template(CARD)).toBe(
+        '<article><header><ng-content select="[card-title]"></ng-content></header>' +
+          '<ng-content></ng-content><ng-content select="[card-footer]">No footer</ng-content>' +
+          '<p>{{ $fc.b0() }}</p></article>',
+      );
+    });
+
+    it('compiles slots and content queries with the fast compiler', () => {
+      const { code } = compile(
+        lower(CARD).code,
+        '/app/test.tsrx',
+        buildRegistry({}),
+      );
+      expect(code).toContain(
+        'const _c2 = ["[card-title]", "*", "[card-footer]"];',
+      );
+      expect(code).toContain('ngContentSelectors: _c2');
+      // The footer slot renders its fallback when nothing is projected into it.
+      expect(code).toContain(
+        'ɵɵprojection(4, 2, null, Card_ProjectionFallback_4_Template',
+      );
+      expect(code).toContain('ɵɵcontentQuerySignal(dirIndex, ctx.title, _c0');
+    });
+
+    it('projects children, refs and ngProjectAs into a component', () => {
+      expect(
+        template(
+          `
+          import { signal } from '@angular/core';
+          import { Card } from './card.tsrx';
+          export function Page() @{
+            const n = signal(1);
+            <Card>
+              <h2 card-title ref="title">{'Title '}{n()}</h2>
+              @if (n() > 0) {
+                <p>{'Body'}</p>
+              }
+              <ng-container ngProjectAs="[card-footer]">{'Footer'}</ng-container>
+            </Card>
+          }
+        `,
+          { Card: 'app-card' },
+        ),
+      ).toBe(
+        '<app-card><h2 card-title #title>Title {{ $fc.b0() }}</h2>' +
+          '@if ($fc.b1()) {<p>Body</p>}' +
+          '<ng-container ngProjectAs="[card-footer]">Footer</ng-container></app-card>',
+      );
+    });
+  });
+
   it('moves <style> into component styles, mapping :global to ::ng-deep', () => {
     const { code, diagnostics } = lower(`
       export function C() @{

@@ -13,6 +13,7 @@ const links = [
   { path: '/blog', label: 'Blog' },
   { path: '/boundary', label: 'Error boundary' },
   { path: '/defer', label: 'Defer' },
+  { path: '/projection', label: 'Projection' },
 ];
 
 export function App() @{

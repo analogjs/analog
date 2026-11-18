@@ -131,6 +131,35 @@ follow its block, or a block without markup, is an error rather than literal
 text. Like TSRX's `@if` and `@for`, each block renders a single node; a parse
 error inside one says to wrap multiple nodes in a fragment `<>…</>`.
 
+### Content projection
+
+TSRX components take no parameters, so there is no `children` prop; they
+project with Angular's `<ng-content>`, which the lowering passes through
+unchanged, along with `select`, fallback content, and `ngProjectAs`. Children
+written inside a component tag are projected as usual, and they bind to the
+parent's state, since their closures live in the parent:
+
+```tsrx
+export function Card() @{
+  const title = contentChild<ElementRef>('title');
+  <article>
+    <header><ng-content select="[card-title]" /></header>
+    <ng-content />
+    <ng-content select="[card-footer]">{'No footer given.'}</ng-content>
+  </article>
+}
+
+// In another component:
+<Card>
+  <h2 card-title ref="title">{'Title'}</h2>
+  <p>{'Clicked '}{clicks()}{' times.'}</p>
+</Card>
+```
+
+`contentChild()` and `contentChildren()` query projected content, including
+template refs set with `ref` in the parent. Projection works in both
+directions with `.ts` components.
+
 ### Component metadata: `XMeta`
 
 `export const XMeta = { … }` carries `@Component` metadata for component `X` in
@@ -276,11 +305,13 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
 
 ## Test Coverage
 
-- **`vite-plugin-tsrx`**: 53 tests.
-  - `lower.spec.ts` (42): class shape; compiling with the fast compiler;
+- **`vite-plugin-tsrx`**: 56 tests.
+  - `lower.spec.ts` (45): class shape; compiling with the fast compiler;
     `@if`/`@for`/`@switch`/`@try`→`@boundary`; native `@boundary` with `let`,
     `$error`, multiple `@error` blocks, and `when` conditions compiled to read
-    the caught error; stray and malformed blocks; `@defer` blocks, triggers,
+    the caught error; stray and malformed blocks; `<ng-content>` slots,
+    fallback content, and content queries compiled to projection
+    instructions; children, refs, and `ngProjectAs` projected into a component; `@defer` blocks, triggers,
     `when` bindings, and source positions; attributes, events, namespaces,
     refs, and component output casing; local and imported tags; styles and
     `:global`; selector parsing and defaults; native-name collisions; `XMeta`
@@ -300,11 +331,14 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
   `component.spec.ts` (merged with #2784).
 - **`platform` / `router`**: `.page.tsrx` discovery, path derivation, and a TSRX
   layout paired with an index page.
-- **`tsrx-app-e2e-playwright`** (10, dev and production builds): `routeMeta` and
+- **`tsrx-app-e2e-playwright`** (11, dev and production builds): `routeMeta` and
   client navigation; inputs, outputs, providers, and two-way models after
   hydration; server loads, an API route, and a missing product; form actions;
-  markdown content; a native `@boundary` fallback and reset; deferred views; and
-  incremental hydration (`hydrate on interaction`, `hydrate never`).
+  markdown content; a native `@boundary` fallback and reset; deferred views;
+  incremental hydration (`hydrate on interaction`, `hydrate never`); and content
+  projection into named, default, and fallback slots of a TSRX component and a
+  `.ts` component, with `contentChild()` and reactive, conditional projected
+  content after hydration.
 - **Typecheck**: `nx typecheck tsrx-app` builds first, then type-checks the app
   against the generated declarations with `tsgo`.
 
@@ -367,8 +401,6 @@ Deferred views and incremental hydration:
 - **Fresh clones.** Editors report `.tsrx` imports as missing until the dev
   server or a build has written the declarations once. A TypeScript language
   service plugin could serve them without files on disk.
-- **Content projection.** Not designed or tested for TSRX components that
-  receive children.
 - **The full compilation path.** Only the fast compile path is supported.
 - **Publishing.** The package is private (`0.0.0`) and built from this
   repository.

@@ -240,3 +240,40 @@ describe('incremental hydration', () => {
     expect(requested.some((url) => url.includes('server-note'))).toBe(false);
   });
 });
+
+describe('content projection', () => {
+  test('projects into named, default and fallback slots, and stays reactive', async () => {
+    await open('/projection');
+
+    // Server-rendered into the right slots.
+    expect(await text('#full-card header')).toBe('Projected title');
+    expect(await text('#full-card footer')).toBe('A projected footer.');
+    expect(await text('#bare-card header')).toBe('');
+    expect(await text('#bare-card footer')).toBe('No footer given.');
+    expect(await text('#panel h3')).toBe('A .ts component');
+
+    // contentChild() sees the projected template ref, and only where it's given.
+    expect(await text('#full-card .query')).toBe(
+      'contentChild: Projected title',
+    );
+    expect(await text('#bare-card .query')).toBe('contentChild: none');
+
+    // Projected content keeps binding to the parent's state after hydration.
+    await hydrated(page);
+    await page.click('#card-click');
+    await expect.poll(() => text('#card-body')).toBe('Clicked 1 times.');
+    expect(await text('#panel-body')).toBe(
+      'TSRX markup projected into it, clicked 1 times.',
+    );
+
+    expect(await page.locator('#card-details').count()).toBe(0);
+    await page.click('#card-expand');
+    await expect
+      .poll(() => text('#card-details'))
+      .toBe('Conditionally projected details.');
+    // Conditional content lands in the default slot, not the footer.
+    expect(await page.locator('#full-card footer #card-details').count()).toBe(
+      0,
+    );
+  });
+});

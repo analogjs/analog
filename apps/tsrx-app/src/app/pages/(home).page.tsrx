@@ -18,6 +18,7 @@ const demos = [
   { path: '/blog', title: 'Blog', about: 'markdown content files' },
   { path: '/boundary', title: 'Error boundary', about: 'Angular @boundary / @error syntax' },
   { path: '/defer', title: 'Deferred views', about: 'Angular @defer syntax with lazy-loaded components' },
+  { path: '/projection', title: 'Content projection', about: '<ng-content> slots, fallback content and contentChild()' },
 ];
 
 export default function HomePage() @{
