@@ -911,8 +911,12 @@ export function ngpCompilePlugin(
       let lowered: NgpLoweredModule | undefined;
       if (programFile) {
         const { source, format } = sourceModules.get(programFile)!;
-        // Edited without a hot update, as in `vite build --watch`
-        if (source !== code) {
+        // Edited without a hot update, as in `vite build --watch`. A transform
+        // that started before a hot update can carry the previous code.
+        if (
+          source !== code &&
+          code === (await fsPromises.readFile(filePath, 'utf-8'))
+        ) {
           await lowerSourceModule(filePath, code, format, (spec, importer) =>
             this.resolve(spec, importer, { skipSelf: true }),
           );

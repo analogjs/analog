@@ -200,6 +200,51 @@ export function Parent() @{
     ).toContain('"y-child"');
   });
 
+  it('ignores a transform of code older than the latest change', async () => {
+    const child = (
+      selector: string,
+    ) => `import { Component } from '@angular/core';
+
+export const ChildMeta = { selector: '${selector}' } satisfies Component;
+
+export function Child() @{
+  <p>Child</p>
+}
+`;
+    await serve({
+      'src/child.tsrx': child('x-child'),
+      'src/parent.tsrx': `import { Child } from './child.tsrx';
+
+export function Parent() @{
+  <Child />
+}
+`,
+    });
+    await server!.transformRequest('/src/parent.tsrx');
+    await update('src/child.tsrx', child('y-child'));
+
+    // A transform that loaded the module before the edit, finishing after it
+    const plugin = server!.config.plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular-ngp',
+    )!;
+    await (plugin.transform as any).call(
+      {
+        resolve: (id: string, importer: string) =>
+          server!.pluginContainer.resolveId(id, importer),
+        addWatchFile: () => undefined,
+        error: (e: unknown) => {
+          throw e;
+        },
+      },
+      child('x-child'),
+      `${root}/src/child.tsrx`,
+    );
+
+    expect(
+      (await server!.transformRequest('/src/parent.tsrx'))?.code,
+    ).toContain('"y-child"');
+  });
+
   it('updates a component in place after a template change', async () => {
     const greeting = (text: string) => `export function Greeting() @{
   <p>{'${text}'}</p>
