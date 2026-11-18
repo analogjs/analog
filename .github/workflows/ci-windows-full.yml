@@ -37,6 +37,6 @@ jobs:
       # the OS-independent cache the linux agents populated, so this genuinely
       # exercises the build on Windows. Mirrors the old `pnpm build` filters.
       - name: Build
-        run: pnpm exec nx run-many --target build --all --parallel=1 --exclude=astro-app --skip-nx-cache
+        run: pnpm exec nx run-many --target build --all --exclude=astro-app --skip-nx-cache
       - name: Verify
         run: more dist\apps\blog-app\analog\public\index.html
