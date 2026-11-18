@@ -1,3 +1,9 @@
+# [3.0.0-beta.45](https://github.com/analogjs/analog/compare/v3.0.0-beta.44...v3.0.0-beta.45) (2026-11-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** resolve symlinks in ngtsc compile plugin paths ([#2787](https://github.com/analogjs/analog/issues/2787)) ([7ad25e2](https://github.com/analogjs/analog/commit/7ad25e297826b3f586d6fe601b7fb14831643007))
+
 # [3.0.0-beta.44](https://github.com/analogjs/analog/compare/v3.0.0-beta.43...v3.0.0-beta.44) (2026-11-17)
 
 ### Bug Fixes
