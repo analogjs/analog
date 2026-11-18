@@ -1,3 +1,9 @@
+# [3.0.0-beta.46](https://github.com/analogjs/analog/compare/v3.0.0-beta.45...v3.0.0-beta.46) (2026-11-18)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** pass tsconfig angularCompilerOptions to NGP ([#2790](https://github.com/analogjs/analog/issues/2790)) ([777b228](https://github.com/analogjs/analog/commit/777b228cc9b3f459ecd51a612982c8b33ee5a3bd))
+
 # [3.0.0-beta.45](https://github.com/analogjs/analog/compare/v3.0.0-beta.44...v3.0.0-beta.45) (2026-11-18)
 
 ### Bug Fixes
