@@ -19,7 +19,7 @@
   },
   "peerDependencies": {
     "@angular/compiler": "catalog:",
-    "typescript": "catalog:",
+    "typescript": "*",
     "vite": "catalog:peerCompat"
   }
 }
