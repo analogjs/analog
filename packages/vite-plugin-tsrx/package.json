@@ -5,17 +5,10 @@
   "description": "Experimental: compile TSRX (TypeScript Render Extensions) modules as Angular components with Analog's fast compile path",
   "type": "module",
   "license": "MIT",
-  "bin": {
-    "tsrx-types": "./dist/src/cli.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
       "default": "./dist/src/index.js"
-    },
-    "./types": {
-      "types": "./dist/src/types.d.ts",
-      "default": "./dist/src/types.js"
     },
     "./package.json": "./package.json"
   },

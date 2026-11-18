@@ -34,8 +34,6 @@ export default defineConfig({
     lib: {
       entry: {
         'src/index': resolve(pkgDir, 'src/index.ts'),
-        'src/cli': resolve(pkgDir, 'src/cli.ts'),
-        'src/types': resolve(pkgDir, 'src/types.ts'),
       },
       formats: ['es' as const],
     },

@@ -1,4 +1,8 @@
-export { tsrx, type TsrxPluginOptions } from './lib/plugin.js';
+export {
+  tsrx,
+  type TsrxPluginOptions,
+  type TsrxTypesPluginOptions,
+} from './lib/plugin.js';
 export {
   defaultSelector,
   lowerTsrx,

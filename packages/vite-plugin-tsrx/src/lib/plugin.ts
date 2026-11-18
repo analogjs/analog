@@ -5,7 +5,7 @@ import {
 } from '@analogjs/vite-plugin-angular';
 import { existsSync } from 'node:fs';
 import { resolve as resolvePath } from 'node:path';
-import type { Plugin, Rollup, ViteDevServer } from 'vite';
+import type { Plugin, ResolvedConfig, Rollup, ViteDevServer } from 'vite';
 
 import {
   firstDiagnosticLoc,
@@ -17,25 +17,26 @@ import {
   TSRX_GLOB,
   tsrxImportSpecifiers,
 } from './cache.js';
+import type { TsrxTypesResult } from './types.js';
 
 export interface TsrxPluginOptions {
   /**
-   * Writes TypeScript declarations for `.tsrx` files while the dev server
-   * runs, so `tsc` and editors type-check imports of them. `vite build` doesn't
-   * write them; run the `tsrx-types` CLI before type-checking in CI.
+   * Writes TypeScript declarations for `.tsrx` files, so `tsc` and editors
+   * type-check imports of them: once on `vite build`, and on the dev server at
+   * startup and after every change.
    *
    * Default: on, with the Vite root's `tsconfig.app.json` (or `tsconfig.json`)
    * and `node_modules/.analog/tsrx-types` next to it. See the README for the
    * tsconfig options that read them.
    */
-  types?:
-    | boolean
-    | {
-        /** Default: `tsconfig.app.json`, else `tsconfig.json`, in the Vite root. */
-        tsconfig?: string;
-        /** Relative to the tsconfig. Default: `node_modules/.analog/tsrx-types`. */
-        outDir?: string;
-      };
+  types?: boolean | TsrxTypesPluginOptions;
+}
+
+export interface TsrxTypesPluginOptions {
+  /** Default: `tsconfig.app.json`, else `tsconfig.json`, in the Vite root. */
+  tsconfig?: string;
+  /** Relative to the tsconfig. Default: `node_modules/.analog/tsrx-types`. */
+  outDir?: string;
 }
 
 /**
@@ -52,19 +53,32 @@ export interface TsrxPluginOptions {
  */
 export function tsrx(options: TsrxPluginOptions = {}): Plugin {
   let fastCompile: FastCompileApi | undefined;
+  let config: ResolvedConfig;
+  let typesWritten: Promise<void> | undefined;
+  const typesOptions =
+    options.types === false
+      ? undefined
+      : options.types === true
+        ? {}
+        : (options.types ?? {});
 
   return {
     name: '@analogjs/vite-plugin-tsrx',
     enforce: 'pre',
     configureServer(server) {
-      if (options.types !== false) {
-        void keepTypesUpToDate(
-          server,
-          options.types === true ? {} : (options.types ?? {}),
-        );
+      if (typesOptions) {
+        void keepTypesUpToDate(server, typesOptions);
       }
     },
-    configResolved(config) {
+    async buildStart() {
+      // Once per build, which can run several environments (client, SSR).
+      if (typesOptions && config.command === 'build') {
+        typesWritten ??= writeTypes(config, typesOptions);
+        await typesWritten;
+      }
+    },
+    configResolved(resolvedConfig) {
+      config = resolvedConfig;
       fastCompile = findFastCompileApi(config.plugins);
       if (!fastCompile) {
         throw new Error(
@@ -128,15 +142,8 @@ export function tsrx(options: TsrxPluginOptions = {}): Plugin {
   };
 }
 
-/**
- * Generates `.tsrx` declarations at startup and again after source changes,
- * in the background so the dev server never waits for TypeScript.
- */
-async function keepTypesUpToDate(
-  server: ViteDevServer,
-  options: { tsconfig?: string; outDir?: string },
-): Promise<void> {
-  const root = server.config.root;
+/** A declaration generator for the Vite root's tsconfig, if it has one. */
+async function typeGenerator(root: string, options: TsrxTypesPluginOptions) {
   const tsconfig =
     options.tsconfig !== undefined
       ? resolvePath(root, options.tsconfig)
@@ -144,12 +151,51 @@ async function keepTypesUpToDate(
           .map((name) => resolvePath(root, name))
           .find((path) => existsSync(path));
   if (tsconfig === undefined) {
-    return;
+    return undefined;
   }
   // Loaded only here, so the plugin doesn't pull in TypeScript otherwise.
   const { TsrxTypeGenerator, formatTsrxTypeDiagnostics } =
     await import('./types.js');
   const generator = new TsrxTypeGenerator({ tsconfig, outDir: options.outDir });
+  return {
+    generate: () => generator.generate(),
+    format: (result: TsrxTypesResult) =>
+      formatTsrxTypeDiagnostics(result.diagnostics, root),
+  };
+}
+
+/** Generates `.tsrx` declarations once, for `vite build`. */
+async function writeTypes(
+  config: ResolvedConfig,
+  options: TsrxTypesPluginOptions,
+): Promise<void> {
+  try {
+    const types = await typeGenerator(config.root, options);
+    if (types === undefined) {
+      return;
+    }
+    const report = types.format(await types.generate());
+    if (report !== '') {
+      config.logger.warn(`[tsrx types]\n${report}`);
+    }
+  } catch (e) {
+    config.logger.error(`[tsrx types] ${e instanceof Error ? e.message : e}`);
+  }
+}
+
+/**
+ * Generates `.tsrx` declarations at startup and again after source changes,
+ * in the background so the dev server never waits for TypeScript.
+ */
+async function keepTypesUpToDate(
+  server: ViteDevServer,
+  options: TsrxTypesPluginOptions,
+): Promise<void> {
+  const root = server.config.root;
+  const types = await typeGenerator(root, options);
+  if (types === undefined) {
+    return;
+  }
   const logger = server.config.logger;
 
   let running = false;
@@ -163,10 +209,9 @@ async function keepTypesUpToDate(
     }
     running = true;
     try {
-      const result = await generator.generate();
       // Lowering errors also fail the module's transform, so only report
       // diagnostics when they change.
-      const report = formatTsrxTypeDiagnostics(result.diagnostics, root);
+      const report = types.format(await types.generate());
       if (report !== lastReport && report !== '') {
         logger.warn(`[tsrx types]\n${report}`, { timestamp: true });
       }

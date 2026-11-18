@@ -57,14 +57,8 @@ Point TypeScript at them in the tsconfig that type-checks your app:
 }
 ```
 
-The dev server writes them at startup and keeps them up to date as you edit.
-`vite build` doesn't, so generate them before type-checking in CI:
-
-```sh
-tsrx-types -p tsconfig.app.json && tsc -p tsconfig.app.json --noEmit
-```
+`vite build` writes them, and the dev server writes them at startup and keeps
+them up to date as you edit. In CI, build before type-checking.
 
 Options: `tsrx({ types: { tsconfig, outDir } })` changes where they're read
-from and written to, and `tsrx({ types: false })` turns the dev server's
-generation off. The generator is also available programmatically from
-`@analogjs/vite-plugin-tsrx/types`.
+from and written to, and `tsrx({ types: false })` turns them off.

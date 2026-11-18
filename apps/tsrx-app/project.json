@@ -16,7 +16,8 @@
       "outputs": [
         "{options.outputPath}",
         "{workspaceRoot}/dist/apps/tsrx-app/ssr",
-        "{workspaceRoot}/dist/apps/tsrx-app/analog"
+        "{workspaceRoot}/dist/apps/tsrx-app/analog",
+        "{projectRoot}/node_modules/.analog/tsrx-types"
       ],
       "defaultConfiguration": "production",
       "options": {
@@ -56,17 +57,9 @@
         }
       }
     },
-    "tsrx-types": {
-      "executor": "nx:run-commands",
-      "dependsOn": [{ "projects": ["vite-plugin-tsrx"], "target": "build" }],
-      "options": {
-        "cwd": "apps/tsrx-app",
-        "command": "pnpm exec tsrx-types -p tsconfig.app.json"
-      }
-    },
     "typecheck": {
       "executor": "nx:run-commands",
-      "dependsOn": ["tsrx-types"],
+      "dependsOn": ["build"],
       "options": {
         "cwd": "apps/tsrx-app",
         "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
