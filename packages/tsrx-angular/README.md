@@ -1,7 +1,8 @@
 # @analogjs/tsrx-angular
 
 Experimental: compile [TSRX](https://tsrx.dev) modules as Angular components
-with Analog's fast compile path. Not published; build it from this repository.
+with Analog's fast compile path or NGP compilation. Not published; build it
+from this repository.
 
 ```ts
 // vite.config.ts
@@ -10,8 +11,14 @@ import { tsrxAngular } from '@analogjs/tsrx-angular';
 
 export default defineConfig({
   plugins: [tsrxAngular(), angular({ fastCompile: true })],
+  // or, with type checking of TSRX setup code and templates:
+  // plugins: [tsrxAngular(), angular({ compilation: 'ngp' })],
 });
 ```
+
+With NGP, `.tsrx` modules under the tsconfig's directory are lowered when the
+build starts and compiled as `<name>.tsrx.ts`, which the tsconfig's `include`
+must cover. Type errors point at the `.tsrx` source.
 
 ```tsrx
 import { Component, input, signal } from '@angular/core';

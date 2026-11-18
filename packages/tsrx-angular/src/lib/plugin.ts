@@ -1,7 +1,11 @@
 import {
   findFastCompileApi,
+  findNgpCompileApi,
   type FastCompileApi,
   type FastCompileResolve,
+  type FastCompileSourceFormat,
+  type NgpLowerContext,
+  type NgpLoweredModule,
 } from '@analogjs/vite-plugin-angular';
 import { existsSync } from 'node:fs';
 import { resolve as resolvePath } from 'node:path';
@@ -44,11 +48,12 @@ export interface TsrxTypesPluginOptions {
  * Angular components.
  *
  * Each `function Name() @{ … }` is lowered to an ordinary `@Component` class
- * and compiled by `@analogjs/vite-plugin-angular`'s fast compile path, which
- * must be enabled:
+ * and compiled by `@analogjs/vite-plugin-angular`'s fast compile path or its
+ * NGP compilation, one of which must be enabled:
  *
  * ```ts
  * plugins: [tsrxAngular(), angular({ fastCompile: true })]
+ * plugins: [tsrxAngular(), angular({ compilation: 'ngp' })]
  * ```
  */
 export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
@@ -84,18 +89,27 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
     configResolved(resolvedConfig) {
       config = resolvedConfig;
       fastCompile = findFastCompileApi(config.plugins);
-      if (!fastCompile) {
-        throw new Error(
-          '[@analogjs/tsrx-angular]: TSRX components compile through the fast compile path of ' +
-            '@analogjs/vite-plugin-angular. Add `angular({ fastCompile: true })` to your Vite plugins.',
-        );
-      }
-      fastCompile.registerSourceFormat({
+      const ngp = fastCompile ? undefined : findNgpCompileApi(config.plugins);
+      const format: FastCompileSourceFormat = {
         name: 'tsrx',
         test: isTsrxFile,
         toScanSource: async (code, path) =>
           (await lowerTsrxForScan(code, path)).code,
-      });
+      };
+      if (fastCompile) {
+        fastCompile.registerSourceFormat(format);
+      } else if (ngp) {
+        ngp.registerSourceFormat({
+          ...format,
+          include: TSRX_GLOB,
+          lower: lowerForNgp,
+        });
+      } else {
+        throw new Error(
+          '[@analogjs/tsrx-angular]: TSRX components compile through @analogjs/vite-plugin-angular. ' +
+            "Add `angular({ fastCompile: true })` or `angular({ compilation: 'ngp' })` to your Vite plugins.",
+        );
+      }
     },
     transform: {
       filter: {
@@ -105,7 +119,11 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
         },
       },
       async handler(code, id) {
-        const compiler = fastCompile!;
+        // NGP compiles `.tsrx` modules itself, from `lowerForNgp`.
+        if (!fastCompile) {
+          return undefined;
+        }
+        const compiler = fastCompile;
         const path = id.split('?')[0];
         const resolve: FastCompileResolve = (specifier, importer) =>
           this.resolve(specifier, importer, { skipSelf: true });
@@ -143,6 +161,31 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
         };
       },
     },
+  };
+}
+
+/** Lowers a `.tsrx` module to the TypeScript NGP compiles in its place. */
+async function lowerForNgp(
+  code: string,
+  path: string,
+  { scanImports, resolveSelector }: NgpLowerContext,
+): Promise<NgpLoweredModule> {
+  await scanImports(await tsrxImportSpecifiers(code, path));
+  const lowered = await lowerTsrxModule(code, path, {
+    resolveSelector: (className) => resolveSelector(className),
+  });
+  return {
+    code: lowered.code,
+    error:
+      lowered.diagnostics.length > 0
+        ? {
+            message: formatTsrxDiagnostics(lowered, code, path),
+            loc: firstDiagnosticLoc(lowered, code, path),
+          }
+        : undefined,
+    mapToSource: (map) => remapTsrxSourceMap(map, lowered.sourceMap),
+    toSourceLocation: (line, column) =>
+      lowered.sourceMap.toOriginalLineAndColumn(line, column),
   };
 }
 

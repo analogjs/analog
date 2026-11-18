@@ -16,7 +16,7 @@ export function Counter() @{
 ```
 
 :::caution
-TSRX support is experimental. `@analogjs/tsrx-angular` isn't published to npm yet, and it only works with [fast compile](/docs/guides/angular-compilation).
+TSRX support is experimental. `@analogjs/tsrx-angular` isn't published to npm yet, and it only works with [fast compile](/docs/guides/angular-compilation) or [NGP compilation](/docs/guides/angular-compilation#ngp-compilation-experimental).
 :::
 
 ## Step 1: Add the plugin
@@ -35,7 +35,25 @@ export default defineConfig({
 });
 ```
 
-The plugin throws at startup if `angular()` isn't running with `fastCompile: true`.
+The plugin throws at startup if `angular()` isn't running with `fastCompile: true` or `compilation: 'ngp'`.
+
+### With NGP compilation
+
+TSRX components also compile with [NGP](/docs/guides/angular-compilation#ngp-compilation-experimental), which type-checks their setup code and template expressions, along with the inputs that `.ts` templates bind on them:
+
+```ts
+export default defineConfig({
+  plugins: [analog(), tsrxAngular(), angular({ compilation: 'ngp' })],
+});
+```
+
+Type errors point at the `.tsrx` file:
+
+```
+src/app/components/price.tsrx:9:22 - error TS2339: Property 'toFixd' does not exist on type 'number'.
+```
+
+NGP compiles the `.tsrx` modules under the directory of your app's tsconfig, and the tsconfig's `include` must cover their names with `.ts` added, as `src/**/*.ts` covers `src/app/components/price.tsrx.ts`. NGP reads them through its default WebAssembly analyzer, so TSRX can't be compiled with a native analyzer build (`ANALOG_NGP_NATIVE_BINDING`).
 
 ## Step 2: Configure TypeScript
 
@@ -290,14 +308,14 @@ export default function ProductListPage() @{
 
 ## Limitations
 
-- TSRX only works with fast compile.
+- TSRX only works with fast compile or NGP compilation.
 - Components can't take parameters or be `async`. Declare inputs with `input()` and `model()`.
 - Lists use `@for`, not `.map()`.
 - Each `@if`, `@for` and `@defer` block renders one node. Wrap several in a fragment.
-- Template expressions aren't type-checked by `tsc` yet; only imports of `.tsrx` modules are.
+- Template expressions aren't type-checked by `tsc` yet; only imports of `.tsrx` modules are. NGP compilation type-checks them while it compiles.
 - Editors report `.tsrx` imports as missing until a build or the dev server has written the declarations once.
 - Typed routes don't pick up `routeMeta` from `.page.tsrx` files. Runtime routing isn't affected.
 
 ## Example app
 
-The [`tsrx-app`](https://github.com/analogjs/analog/tree/beta/apps/tsrx-app) in the Analog repository is written entirely in TSRX. It covers server loads, an API route, form actions, markdown content, `@boundary`, deferred views, incremental hydration and content projection.
+The [`tsrx-app`](https://github.com/analogjs/analog/tree/beta/apps/tsrx-app) in the Analog repository is written entirely in TSRX. It covers server loads, an API route, form actions, markdown content, `@boundary`, deferred views, incremental hydration and content projection. It compiles with NGP; set `ANALOG_FAST_COMPILE=true` to build or serve it with fast compile instead.
