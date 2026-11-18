@@ -254,3 +254,67 @@ export class Child {}
     );
   });
 });
+
+describe('NGP angularCompilerOptions', () => {
+  const tmp = resolve(import.meta.dirname, '../../../../tmp');
+  let root: string;
+  let server: ViteDevServer | undefined;
+
+  afterEach(async () => {
+    await server?.close();
+    server = undefined;
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  async function transform(typeCheckHostBindings: boolean) {
+    mkdirSync(tmp, { recursive: true });
+    root = normalizePath(mkdtempSync(resolve(tmp, 'ngp-options-')));
+    writeFileSync(
+      resolve(root, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: { strict: true, skipLibCheck: true, types: [] },
+        files: ['map.ts'],
+        angularCompilerOptions: { typeCheckHostBindings },
+      }),
+    );
+    writeFileSync(
+      resolve(root, 'map.ts'),
+      `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'x-map',
+  template: '',
+  host: { '[markers]': 'markers' },
+})
+export class XMap {
+  protected markers: string[] = [];
+}
+`,
+    );
+    server = await createServer({
+      configFile: false,
+      root,
+      logLevel: 'silent',
+      server: { middlewareMode: true, ws: false, watch: null },
+      optimizeDeps: { noDiscovery: true },
+      plugins: angular({
+        compilation: 'ngp',
+        jit: false,
+        disableTypeChecking: true,
+        tsconfig: resolve(root, 'tsconfig.json'),
+      }),
+    });
+    return server.transformRequest('/map.ts');
+  }
+
+  it('reads them from the tsconfig', async () => {
+    const result = await transform(false);
+    expect(result?.code).toMatch(/ɵɵ(dom)?[pP]roperty\(["']markers["']/);
+  });
+
+  it('still checks host bindings when the tsconfig asks for it', async () => {
+    await expect(transform(true)).rejects.toThrow(
+      /Can't bind to 'markers' since it isn't a known property of 'x-map'/,
+    );
+  });
+});

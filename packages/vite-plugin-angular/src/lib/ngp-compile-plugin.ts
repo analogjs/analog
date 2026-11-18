@@ -1,3 +1,4 @@
+import * as compilerCli from '@angular/compiler-cli';
 import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -112,8 +113,12 @@ interface NgpApi {
   ): Promise<NgpAnalyzer>;
   HybridCompiler: new (
     analyzer: NgpAnalyzer,
-    options: { optimize: boolean; enableHmr: boolean },
+    options: Record<string, unknown> & {
+      optimize: boolean;
+      enableHmr: boolean;
+    },
   ) => NgpCompiler;
+  buildTypeCheckingConfig(options: Record<string, unknown>): unknown;
 }
 
 function isFastCompileOptions(
@@ -380,9 +385,14 @@ export function ngpCompilePlugin(
       filesByPath.clear();
       chunkContexts.clear();
       output.clear();
+      const angularOptions = compilerCli.readConfiguration(
+        resolveTsConfigPath(),
+      ).options as Record<string, unknown>;
       compiler = new api.HybridCompiler(analyzer!, {
+        ...angularOptions,
         optimize: true,
         enableHmr: hmr,
+        tcbConfig: api.buildTypeCheckingConfig(angularOptions),
       });
     }
     const chunks = update
