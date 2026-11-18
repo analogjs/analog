@@ -269,6 +269,30 @@ export function Parent() @{
     expect(await requestUpdate(id)).toContain('After');
   });
 
+  it('lowers a module again once the module it was missing is added', async () => {
+    await serve({
+      'src/parent.tsrx': `import { Child } from './child.tsrx';
+
+export function Parent() @{
+  <Child />
+}
+`,
+    });
+    await expect(server!.transformRequest('/src/parent.tsrx')).rejects.toThrow(
+      /selector of 'Child'/,
+    );
+
+    write('src/child.tsrx', `export function Child() @{\n  <p>Child</p>\n}\n`);
+    server!.watcher.emit('all', 'add', `${root}/src/child.tsrx`);
+
+    await vi.waitFor(async () => {
+      server!.moduleGraph.invalidateAll();
+      expect(
+        (await server!.transformRequest('/src/parent.tsrx'))?.code,
+      ).toContain('"Child"');
+    });
+  });
+
   it('ignores a module removed before it could be read', async () => {
     await serve({ 'src/counter.tsrx': COUNTER, 'src/app.ts': APP('2') });
     await server!.transformRequest('/src/app.ts');

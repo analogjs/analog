@@ -441,6 +441,18 @@ export function ngpCompilePlugin(
     return changed.flat();
   }
 
+  /** Sends the lowered TypeScript of `programFiles` to the analyzer. */
+  function updateProgramFiles(programFiles: string[]): Promise<void> {
+    return enqueueIndex(() =>
+      analyzer!.updateFileContent(
+        programFiles.map((filePath) => ({
+          filePath,
+          content: sourceModules.get(filePath)!.lowered.code,
+        })),
+      ),
+    );
+  }
+
   /** Lowers a source module added on the dev server, or drops a removed one. */
   async function syncSourceModule(
     event: 'add' | 'unlink',
@@ -449,30 +461,56 @@ export function ngpCompilePlugin(
   ): Promise<void> {
     if (!analyzer) return;
     const programFile = `${file}.ts`;
-    if (event === 'add') {
-      // The modules found at startup: under the tsconfig's directory
-      const root = vite.normalizePath(dirname(resolveTsConfigPath()));
-      const format = sourceFormats.find((f) => f.test(file));
-      if (
-        !format ||
-        !file.startsWith(`${root}/`) ||
-        file.includes('/node_modules/')
-      ) {
-        return;
+    if (event === 'unlink') {
+      // Also drops a lowering of the module still in progress
+      loweringRevisions.set(
+        programFile,
+        (loweringRevisions.get(programFile) ?? 0) + 1,
+      );
+      if (sourceModules.delete(programFile)) {
+        await enqueueIndex(() =>
+          analyzer!.invalidateFiles([
+            { filePath: programFile, updateType: FILE_DELETED },
+          ]),
+        );
       }
-      const source = await fsPromises.readFile(file, 'utf-8');
-      await lowerSourceModule(file, source, format, serverResolve(server));
-    } else if (!sourceModules.delete(programFile)) {
       return;
     }
+    // The modules found at startup: under the tsconfig's directory
+    const root = vite.normalizePath(dirname(resolveTsConfigPath()));
+    const format = sourceFormats.find((f) => f.test(file));
+    if (
+      !format ||
+      !file.startsWith(`${root}/`) ||
+      file.includes('/node_modules/')
+    ) {
+      return;
+    }
+    const resolve = serverResolve(server);
+    const source = await fsPromises.readFile(file, 'utf-8');
+    await lowerSourceModule(file, source, format, resolve);
+    // Removed while it was lowered
+    if (!sourceModules.has(programFile)) return;
     await enqueueIndex(() =>
       analyzer!.invalidateFiles([
-        {
-          filePath: programFile,
-          updateType: event === 'add' ? FILE_CREATED : FILE_DELETED,
-        },
+        { filePath: programFile, updateType: FILE_CREATED },
       ]),
     );
+    // Modules that failed to lower may have been missing this one
+    const failed = [...sourceModules.values()]
+      .filter((m) => m.lowered.error && m.sourceFile !== file)
+      .map((m) => m.sourceFile);
+    const relowered = await Promise.all(
+      failed.map((failedFile) =>
+        relowerSourceModules(
+          failedFile,
+          () => fsPromises.readFile(failedFile, 'utf-8'),
+          resolve,
+        ),
+      ),
+    );
+    const changed = [...new Set(relowered.flat())];
+    if (changed.length) await updateProgramFiles(changed);
   }
 
   function serverResolve(server: vite.ViteDevServer): FastCompileResolve {
@@ -1049,16 +1087,7 @@ export function ngpCompilePlugin(
           ]),
         );
       }
-      if (relowered.length) {
-        await enqueueIndex(() =>
-          analyzer!.updateFileContent(
-            relowered.map((filePath) => ({
-              filePath,
-              content: sourceModules.get(filePath)!.lowered.code,
-            })),
-          ),
-        );
-      }
+      if (relowered.length) await updateProgramFiles(relowered);
       if (updates.length && (await sendComponentUpdates(updates, ctx.server))) {
         return [];
       }
