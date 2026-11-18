@@ -60,7 +60,8 @@ jobs:
 
       # Distributed across agents. Kept as separate commands because each target
       # has a distinct project filter (lint excludes content/platform/router;
-      # build excludes astro-app; e2e is limited to analog-app-e2e/blog-app-e2e),
+      # build excludes astro-app; e2e is limited to analog-app-e2e/blog-app-e2e/
+      # tsrx-app-e2e-playwright, the last covering TSRX under NGP),
       # which a single run-many cannot express. Ordering (test/e2e depend on
       # build) is modeled by the Nx task graph, so no coordinator-level gating is
       # needed.
@@ -74,7 +75,7 @@ jobs:
         run: pnpm exec nx run-many --target test
 
       - name: E2E
-        run: pnpm exec nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e
+        run: pnpm exec nx run-many --target e2e --projects=analog-app-e2e,blog-app-e2e,tsrx-app-e2e-playwright
 
       # Finalize the distributed run regardless of earlier step outcome.
       - name: Complete CI run
