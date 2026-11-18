@@ -1,4 +1,4 @@
-# @analogjs/vite-plugin-tsrx
+# @analogjs/tsrx-angular
 
 Experimental: compile [TSRX](https://tsrx.dev) modules as Angular components
 with Analog's fast compile path. Not published; build it from this repository.
@@ -6,7 +6,7 @@ with Analog's fast compile path. Not published; build it from this repository.
 ```ts
 // vite.config.ts
 import angular from '@analogjs/vite-plugin-angular';
-import { tsrx } from '@analogjs/vite-plugin-tsrx';
+import { tsrx } from '@analogjs/tsrx-angular';
 
 export default defineConfig({
   plugins: [tsrx(), angular({ fastCompile: true })],

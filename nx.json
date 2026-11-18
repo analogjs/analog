@@ -98,7 +98,7 @@
         "packages/storybook-angular/**/*",
         "packages/vite-plugin-angular/**/*",
         "packages/vite-plugin-angular-tools/**/*",
-        "packages/vite-plugin-tsrx/**/*",
+        "packages/tsrx-angular/**/*",
         "packages/vite-plugin-nitro/**/*",
         "packages/vitest-angular-tools/**/*"
       ]
@@ -149,7 +149,7 @@
         "packages/platform/**/*",
         "packages/router/**/*",
         "packages/vite-plugin-angular-tools/**/*",
-        "packages/vite-plugin-tsrx/**/*",
+        "packages/tsrx-angular/**/*",
         "packages/vite-plugin-nitro/**/*",
         "packages/vitest-angular-tools/**/*"
       ]

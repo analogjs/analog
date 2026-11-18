@@ -11,6 +11,6 @@
     "@analogjs/platform": "workspace:*",
     "@analogjs/vite-plugin-angular": "workspace:*",
     "@analogjs/vite-plugin-nitro": "workspace:*",
-    "@analogjs/vite-plugin-tsrx": "workspace:*"
+    "@analogjs/tsrx-angular": "workspace:*"
   }
 }

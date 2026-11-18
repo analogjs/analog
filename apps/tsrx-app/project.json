@@ -12,7 +12,7 @@
         "platform:build",
         "router:build",
         "content:build",
-        "vite-plugin-tsrx:build"
+        "tsrx-angular:build"
       ],
       "outputs": [
         "{options.outputPath}",
@@ -41,7 +41,7 @@
         "platform:build",
         "router:build",
         "content:build",
-        "vite-plugin-tsrx:build"
+        "tsrx-angular:build"
       ],
       "defaultConfiguration": "development",
       "options": {

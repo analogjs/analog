@@ -19,6 +19,7 @@ export default {
         'content',
         'content-plugin',
         'nx-plugin',
+        'tsrx-angular',
       ],
     ],
   },

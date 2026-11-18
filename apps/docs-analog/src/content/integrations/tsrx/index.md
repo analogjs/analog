@@ -1,6 +1,6 @@
 # TSRX Components
 
-[TSRX](https://tsrx.dev) (TypeScript Render Extensions) lets you write a component as a function. Its body holds the setup code and ends in markup. `@analogjs/vite-plugin-tsrx` compiles each `.tsrx` component to an ordinary Angular `@Component` class, so signals, dependency injection, control flow, `@defer`, hydration and SSR behave as they do in `.ts` components. The two kinds of component can import each other.
+[TSRX](https://tsrx.dev) (TypeScript Render Extensions) lets you write a component as a function. Its body holds the setup code and ends in markup. `@analogjs/tsrx-angular` compiles each `.tsrx` component to an ordinary Angular `@Component` class, so signals, dependency injection, control flow, `@defer`, hydration and SSR behave as they do in `.ts` components. The two kinds of component can import each other.
 
 ```tsx
 import { Component, input, signal } from '@angular/core';
@@ -16,7 +16,7 @@ export function Counter() @{
 ```
 
 :::caution
-TSRX support is experimental. `@analogjs/vite-plugin-tsrx` isn't published to npm yet, and it only works with [fast compile](/docs/guides/angular-compilation).
+TSRX support is experimental. `@analogjs/tsrx-angular` isn't published to npm yet, and it only works with [fast compile](/docs/guides/angular-compilation).
 :::
 
 ## Step 1: Add the plugin
@@ -27,7 +27,7 @@ Add `tsrx()` before `angular()`, and turn on fast compile:
 // vite.config.ts
 import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
-import { tsrx } from '@analogjs/vite-plugin-tsrx';
+import { tsrx } from '@analogjs/tsrx-angular';
 import { defineConfig } from 'vite';
 
 export default defineConfig({

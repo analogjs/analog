@@ -1,7 +1,7 @@
 {
-  "name": "vite-plugin-tsrx",
+  "name": "tsrx-angular",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/vite-plugin-tsrx/src",
+  "sourceRoot": "packages/tsrx-angular/src",
   "projectType": "library",
   "tags": [],
   "implicitDependencies": ["vite-plugin-angular"],
@@ -12,7 +12,7 @@
       "dependsOn": ["vite-plugin-angular:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
-        "command": "vite build -c packages/vite-plugin-tsrx/vite.config.lib.ts"
+        "command": "vite build -c packages/tsrx-angular/vite.config.lib.ts"
       }
     },
     "test": {
@@ -21,7 +21,7 @@
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "packages/vite-plugin-tsrx",
+        "cwd": "packages/tsrx-angular",
         "command": "pnpm exec tsgo --build tsconfig.lib.json --emitDeclarationOnly"
       }
     }

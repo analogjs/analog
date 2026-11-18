@@ -4,7 +4,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/vite-plugin-tsrx',
+  cacheDir: '../../node_modules/.vite/tsrx-angular',
   test: {
     reporters: ['default'],
     globals: true,

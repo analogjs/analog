@@ -1323,15 +1323,15 @@ importers:
       '@analogjs/platform':
         specifier: workspace:*
         version: link:../../packages/platform
+      '@analogjs/tsrx-angular':
+        specifier: workspace:*
+        version: link:../../packages/tsrx-angular
       '@analogjs/vite-plugin-angular':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-angular
       '@analogjs/vite-plugin-nitro':
         specifier: workspace:*
         version: link:../../packages/vite-plugin-nitro
-      '@analogjs/vite-plugin-tsrx':
-        specifier: workspace:*
-        version: link:../../packages/vite-plugin-tsrx
 
   apps/typed-router-app:
     dependencies:
@@ -1676,6 +1676,27 @@ importers:
         specifier: catalog:peerCompat
         version: 8.0.8(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass-embedded@1.105.1)(sass@1.105.1)(terser@5.51.2)(yaml@2.9.0)
 
+  packages/tsrx-angular:
+    dependencies:
+      '@analogjs/vite-plugin-angular':
+        specifier: workspace:*
+        version: link:../vite-plugin-angular
+      '@angular/compiler':
+        specifier: 22.2.0
+        version: 22.2.0
+      '@jridgewell/sourcemap-codec':
+        specifier: 'catalog:'
+        version: 1.6.0
+      '@tsrx/core':
+        specifier: 'catalog:'
+        version: 0.6.2(@typescript-eslint/types@8.70.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      vite:
+        specifier: catalog:peerCompat
+        version: 8.0.8(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass-embedded@1.105.1)(sass@1.105.1)(terser@5.51.2)(yaml@2.9.0)
+
   packages/vite-plugin-angular:
     dependencies:
       '@angular/build':
@@ -1734,27 +1755,6 @@ importers:
       xmlbuilder2:
         specifier: 'catalog:'
         version: 4.0.3
-
-  packages/vite-plugin-tsrx:
-    dependencies:
-      '@analogjs/vite-plugin-angular':
-        specifier: workspace:*
-        version: link:../vite-plugin-angular
-      '@angular/compiler':
-        specifier: 22.2.0
-        version: 22.2.0
-      '@jridgewell/sourcemap-codec':
-        specifier: 'catalog:'
-        version: 1.6.0
-      '@tsrx/core':
-        specifier: 'catalog:'
-        version: 0.6.2(@typescript-eslint/types@8.70.1)
-      typescript:
-        specifier: 'catalog:'
-        version: 6.0.3
-      vite:
-        specifier: catalog:peerCompat
-        version: 8.0.8(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(less@4.9.1)(sass-embedded@1.105.1)(sass@1.105.1)(terser@5.51.2)(yaml@2.9.0)
 
   packages/vitest-angular:
     dependencies:

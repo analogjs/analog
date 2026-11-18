@@ -63,7 +63,7 @@ export function tsrx(options: TsrxPluginOptions = {}): Plugin {
         : (options.types ?? {});
 
   return {
-    name: '@analogjs/vite-plugin-tsrx',
+    name: '@analogjs/tsrx-angular',
     enforce: 'pre',
     configureServer(server) {
       if (typesOptions) {
@@ -86,7 +86,7 @@ export function tsrx(options: TsrxPluginOptions = {}): Plugin {
       fastCompile = findFastCompileApi(config.plugins);
       if (!fastCompile) {
         throw new Error(
-          '[@analogjs/vite-plugin-tsrx]: TSRX components compile through the fast compile path of ' +
+          '[@analogjs/tsrx-angular]: TSRX components compile through the fast compile path of ' +
             '@analogjs/vite-plugin-angular. Add `angular({ fastCompile: true })` to your Vite plugins.',
         );
       }

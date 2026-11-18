@@ -1,5 +1,5 @@
 {
-  "name": "@analogjs/vite-plugin-tsrx",
+  "name": "@analogjs/tsrx-angular",
   "version": "0.0.0",
   "private": true,
   "description": "Experimental: compile TSRX (TypeScript Render Extensions) modules as Angular components with Analog's fast compile path",
