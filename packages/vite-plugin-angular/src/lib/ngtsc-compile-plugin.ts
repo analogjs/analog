@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import {
   basename,
@@ -180,18 +180,41 @@ export function ngtscCompilePlugin(
   let outputFile: ((file: string) => void) | undefined;
   const outputFiles = new Map<string, EmitFileResult>();
 
+  // Vite resolves module ids through symlinks, while the TypeScript program
+  // names files by the tsconfig path as given. Both sides go through
+  // `toRealPath` so `/var/...` and `/private/var/...` (macOS) or a symlinked
+  // workspace name the same file.
+  const realPaths = new Map<string, string>();
+  const toRealPath = (file: string): string => {
+    const normalizedFile = normalizePath(file);
+    const cachedPath = realPaths.get(normalizedFile);
+    if (cachedPath !== undefined) {
+      return cachedPath;
+    }
+
+    let realPath: string;
+    try {
+      realPath = normalizePath(realpathSync(normalizedFile));
+    } catch {
+      // Not on disk (yet): leave it as is and don't cache it.
+      return normalizedFile;
+    }
+    realPaths.set(normalizedFile, realPath);
+    return realPath;
+  };
+
   const normalizeEmitterLookupId = (file: string): string => {
     const normalizedFile = normalizePath(file);
 
     if (!normalizedFile.startsWith('/@fs/')) {
-      return normalizedFile;
+      return toRealPath(normalizedFile);
     }
 
     const fsPath = normalizedFile
       .slice('/@fs'.length)
       .replace(/^\/([A-Za-z]:\/)/, '$1');
 
-    return normalizePath(fsPath);
+    return toRealPath(fsPath);
   };
 
   const describeEmitMarkers = (content: string) => ({
@@ -395,10 +418,14 @@ export function ngtscCompilePlugin(
       ),
     );
     // Merge + dedupe root names
-    rootNames = union(
-      union(rootNames, ctx.tsconfigResolver.ensureIncludeCache()),
-      replacements,
-    );
+    rootNames = [
+      ...new Set(
+        union(
+          union(rootNames, ctx.tsconfigResolver.ensureIncludeCache()),
+          replacements,
+        ).map(toRealPath),
+      ),
+    ];
     const hostKey = JSON.stringify(tsCompilerOptions);
     let host: ts.CompilerHost;
 
@@ -600,7 +627,7 @@ export function ngtscCompilePlugin(
     };
 
     const writeOutputFile = (id: string): void => {
-      const sourceFile = builder.getSourceFile(id);
+      const sourceFile = builder.getSourceFile(toRealPath(id));
       if (!sourceFile) {
         return;
       }
@@ -627,10 +654,11 @@ export function ngtscCompilePlugin(
             !filename.includes('.ngtypecheck.')
           ) {
             // output to library root instead /src
+            const root = toRealPath(config.root);
             const declarationPath = resolve(
-              config.root,
+              root,
               config.build.outDir,
-              relative(config.root, filename),
+              relative(root, filename),
             ).replace('/src/', '/');
 
             const declarationFileDir = declarationPath
