@@ -1,5 +1,11 @@
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createServer as createHttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { dirname, join } from 'node:path';
@@ -11,12 +17,14 @@ import { tsrxAngular } from './plugin.js';
 
 // Fixtures live inside the package so `@angular/core` resolves from them.
 let root: string;
+let roots: string[] = [];
 let server: ViteDevServer | undefined;
 
 afterEach(async () => {
   await server?.close();
   server = undefined;
-  rmSync(root, { recursive: true, force: true });
+  for (const dir of roots) rmSync(dir, { recursive: true, force: true });
+  roots = [];
   vi.unstubAllEnvs();
 });
 
@@ -27,9 +35,16 @@ function write(name: string, text: string): void {
 
 async function serve(
   files: Record<string, string>,
-  { typeCheck = false, liveReload = false } = {},
+  { typeCheck = false, liveReload = false, hmr = true, symlinked = false } = {},
 ): Promise<ViteDevServer> {
   root = normalizePath(mkdtempSync(join(import.meta.dirname, '.ngp-spec-')));
+  roots.push(root);
+  if (symlinked) {
+    // The project reached through a symlink, as in some workspaces
+    symlinkSync(root, `${root}-link`, 'dir');
+    root = `${root}-link`;
+    roots.push(root);
+  }
   write(
     'tsconfig.json',
     JSON.stringify({
@@ -56,7 +71,7 @@ async function serve(
     configFile: false,
     root,
     logLevel: 'silent',
-    server: { middlewareMode: true, ws: false, watch: null },
+    server: { middlewareMode: true, ws: false, watch: null, hmr },
     optimizeDeps: { noDiscovery: true },
     plugins: [
       tsrxAngular({ types: false }),
@@ -72,9 +87,10 @@ async function serve(
   return server;
 }
 
-/** Edits a file and runs the NGP plugin's hot update for it. */
+/** Edits a file and runs the plugins' file event and hot update for it, as Vite does. */
 async function update(name: string, text: string): Promise<void> {
   write(name, text);
+  await fileEvent(name, 'update');
   const plugin = server!.config.plugins.find(
     (p) => p.name === '@analogjs/vite-plugin-angular-ngp',
   )!;
@@ -85,6 +101,17 @@ async function update(name: string, text: string): Promise<void> {
     modules: [],
     timestamp: Date.now(),
   });
+}
+
+/** Reports a file event to the plugins, as the dev server's watcher does. */
+function fileEvent(
+  name: string,
+  event: 'create' | 'update' | 'delete',
+): Promise<void> {
+  return server!.environments.client.pluginContainer.watchChange(
+    `${root}/${name}`,
+    { event },
+  );
 }
 
 /** Fetches the update module of an edited component. */
@@ -101,6 +128,22 @@ async function requestUpdate(componentId: string): Promise<string> {
     http.close();
   }
 }
+
+const CHILD = (selector: string) => `import { Component } from '@angular/core';
+
+export const ChildMeta = { selector: '${selector}' } satisfies Component;
+
+export function Child() @{
+  <p>Child</p>
+}
+`;
+
+const PARENT = `import { Child } from './child.tsrx';
+
+export function Parent() @{
+  <Child />
+}
+`;
 
 const COUNTER = `import { input } from '@angular/core';
 
@@ -283,7 +326,7 @@ export function Parent() @{
     );
 
     write('src/child.tsrx', `export function Child() @{\n  <p>Child</p>\n}\n`);
-    server!.watcher.emit('all', 'add', `${root}/src/child.tsrx`);
+    await fileEvent('src/child.tsrx', 'create');
 
     await vi.waitFor(async () => {
       server!.moduleGraph.invalidateAll();
@@ -296,12 +339,50 @@ export function Parent() @{
   it('ignores a module removed before it could be read', async () => {
     await serve({ 'src/counter.tsrx': COUNTER, 'src/app.ts': APP('2') });
     await server!.transformRequest('/src/app.ts');
-    const error = vi.spyOn(server!.config.logger, 'error');
 
-    server!.watcher.emit('all', 'add', `${root}/src/gone.tsrx`);
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await expect(fileEvent('src/gone.tsrx', 'create')).resolves.toBeUndefined();
+  });
 
-    expect(error).not.toHaveBeenCalled();
+  it('compiles modules of a project reached through a symlink', async () => {
+    await serve(
+      { 'src/child.tsrx': CHILD('x-child'), 'src/parent.tsrx': PARENT },
+      { symlinked: true },
+    );
+    expect(
+      (await server!.transformRequest('/src/parent.tsrx'))?.code,
+    ).toContain('"x-child"');
+
+    await update('src/child.tsrx', CHILD('y-child'));
+
+    expect(
+      (await server!.transformRequest('/src/parent.tsrx'))?.code,
+    ).toContain('"y-child"');
+  });
+
+  it('lowers importers again without HMR', async () => {
+    await serve(
+      { 'src/child.tsrx': CHILD('x-child'), 'src/parent.tsrx': PARENT },
+      { hmr: false },
+    );
+    await server!.transformRequest('/src/parent.tsrx');
+
+    write('src/child.tsrx', CHILD('y-child'));
+    await fileEvent('src/child.tsrx', 'update');
+
+    expect(
+      (await server!.transformRequest('/src/parent.tsrx'))?.code,
+    ).toContain('"y-child"');
+  });
+
+  it('compiles a module requested before its file event', async () => {
+    await serve({ 'src/counter.tsrx': COUNTER });
+    await server!.transformRequest('/src/counter.tsrx');
+
+    write('src/later.tsrx', `export function Later() @{\n  <p>Later</p>\n}\n`);
+
+    expect((await server!.transformRequest('/src/later.tsrx'))?.code).toContain(
+      'ɵɵdefineComponent',
+    );
   });
 
   it('reports lowering errors', async () => {

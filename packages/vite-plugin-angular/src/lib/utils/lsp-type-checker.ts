@@ -621,9 +621,14 @@ export class LspTypeChecker {
     this.queued.clear();
     await this.ready;
 
-    const inMemoryFiles = this.host?.inMemoryFiles() ?? new Map();
-    const isInMemory = (filePath: string) =>
-      inMemoryFiles.has(filePath.replace(/\\/g, '/'));
+    const toKey = (filePath: string) => filePath.replace(/\\/g, '/');
+    const inMemoryFiles = new Map(
+      [...(this.host?.inMemoryFiles() ?? [])].map(([filePath, text]) => [
+        toKey(filePath),
+        text,
+      ]),
+    );
+    const isInMemory = (filePath: string) => inMemoryFiles.has(toKey(filePath));
     // Keep the checker's in-memory files in step with the host's
     for (const filePath of this.inMemoryText.keys()) {
       if (!inMemoryFiles.has(filePath)) {

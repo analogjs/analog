@@ -17,8 +17,6 @@ import {
   compile,
   scanFile,
   declaresNonStandaloneComponent,
-  scanPackageDts,
-  collectImportedPackages,
   collectRelativeReExports,
   collectAllImports,
   jitTransform,
@@ -404,7 +402,7 @@ export function fastCompilePlugin(
       } catch {
         return;
       }
-      // Single parse shared by scanFile, collectImportedPackages, and
+      // Single parse shared by scanFile, the package `.d.ts` scan, and
       // collectAllImports. On a parse error each consumer re-parses on
       // its own, preserving their individual failure semantics.
       let program: ReturnType<typeof parseSync>['program'] | undefined;

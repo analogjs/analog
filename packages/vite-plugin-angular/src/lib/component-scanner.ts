@@ -197,6 +197,13 @@ export class ComponentScanner {
     return entry.selector;
   }
 
+  /** The files scanned for `importer`. */
+  dependenciesOf(importer: string): string[] {
+    return [...this.importersByFile]
+      .filter(([, importers]) => importers.has(importer))
+      .map(([file]) => file);
+  }
+
   entriesOf(file: string): RegistryEntry[] {
     return [...this.registry.values()].filter((e) => e.fileName === file);
   }

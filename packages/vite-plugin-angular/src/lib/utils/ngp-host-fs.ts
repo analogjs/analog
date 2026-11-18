@@ -1,5 +1,5 @@
 import * as fs from 'node:fs';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, posix } from 'node:path';
 import { normalizePath } from 'vite';
 
 interface HostStat {
@@ -24,12 +24,40 @@ export interface NgpHostFs {
 
 const FILE: HostStat = { isFile: true, isDir: false, isSymlink: false };
 
+// The errors NGP's own host treats as a missing file
+const NOT_FOUND_CODES = new Set([
+  'ENOENT',
+  'ENOTDIR',
+  'ENAMETOOLONG',
+  'EINVAL',
+]);
+
 function orNull<T>(read: () => T): T | null {
   try {
     return read();
-  } catch {
-    return null;
+  } catch (error) {
+    if (NOT_FOUND_CODES.has((error as NodeJS.ErrnoException).code ?? '')) {
+      return null;
+    }
+    throw error;
   }
+}
+
+const canonicalDirs = new Map<string, string>();
+
+/**
+ * `path`, normalized, with the symlinks of its directory resolved. Lowered
+ * modules are keyed by these paths, whichever path a file is reached by.
+ */
+export function canonicalPath(path: string): string {
+  const normalized = normalizePath(path);
+  const dir = posix.dirname(normalized);
+  let real = canonicalDirs.get(dir);
+  if (real === undefined) {
+    real = orNull(() => normalizePath(fs.realpathSync(dir))) ?? dir;
+    canonicalDirs.set(dir, real);
+  }
+  return `${real}/${posix.basename(normalized)}`;
 }
 
 function toStat(
@@ -53,9 +81,9 @@ function toStat(
 export function createNgpHostFs(
   programCode: (path: string) => string | undefined,
 ): NgpHostFs {
-  const programFile = (path: string) => programCode(normalizePath(path));
+  const programFile = (path: string) => programCode(canonicalPath(path));
   const isHidden = (path: string) =>
-    programCode(`${normalizePath(path)}.ts`) !== undefined;
+    programCode(`${canonicalPath(path)}.ts`) !== undefined;
   const encoder = new TextEncoder();
 
   return {
@@ -95,12 +123,11 @@ export function createNgpHostFs(
       );
       return (
         entries &&
-        entries.map((entry) => ({
-          ...toStat(entry),
-          name: isHidden(join(path, entry.name))
-            ? `${entry.name}.ts`
-            : entry.name,
-        }))
+        entries.map((entry) =>
+          isHidden(join(path, entry.name))
+            ? { ...FILE, name: `${entry.name}.ts` }
+            : { ...toStat(entry), name: entry.name },
+        )
       );
     },
   };
