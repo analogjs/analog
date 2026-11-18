@@ -48,10 +48,10 @@ export interface TsrxTypesPluginOptions {
  * must be enabled:
  *
  * ```ts
- * plugins: [tsrx(), angular({ fastCompile: true })]
+ * plugins: [tsrxAngular(), angular({ fastCompile: true })]
  * ```
  */
-export function tsrx(options: TsrxPluginOptions = {}): Plugin {
+export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
   let fastCompile: FastCompileApi | undefined;
   let config: ResolvedConfig;
   let typesWritten: Promise<void> | undefined;

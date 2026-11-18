@@ -3,7 +3,7 @@
 import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
 import nitro from '@analogjs/vite-plugin-nitro';
-import { tsrx } from '@analogjs/tsrx-angular';
+import { tsrxAngular } from '@analogjs/tsrx-angular';
 import { defineConfig } from 'vite';
 
 // Demo app for TSRX components (`.tsrx`) in Analog. TSRX compiles through the
@@ -27,7 +27,7 @@ export default defineConfig(() => {
           routes: ['/', '/blog', '/blog/tsrx-in-analog'],
         },
       }),
-      tsrx(),
+      tsrxAngular(),
       angular({ fastCompile: true }),
       nitro(),
     ],

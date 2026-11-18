@@ -6,10 +6,10 @@ with Analog's fast compile path. Not published; build it from this repository.
 ```ts
 // vite.config.ts
 import angular from '@analogjs/vite-plugin-angular';
-import { tsrx } from '@analogjs/tsrx-angular';
+import { tsrxAngular } from '@analogjs/tsrx-angular';
 
 export default defineConfig({
-  plugins: [tsrx(), angular({ fastCompile: true })],
+  plugins: [tsrxAngular(), angular({ fastCompile: true })],
 });
 ```
 
@@ -65,5 +65,5 @@ Point TypeScript at them in the tsconfig that type-checks your app:
 `vite build` writes them, and the dev server writes them at startup and keeps
 them up to date as you edit. In CI, build before type-checking.
 
-Options: `tsrx({ types: { tsconfig, outDir } })` changes where they're read
-from and written to, and `tsrx({ types: false })` turns them off.
+Options: `tsrxAngular({ types: { tsconfig, outDir } })` changes where they're read
+from and written to, and `tsrxAngular({ types: false })` turns them off.

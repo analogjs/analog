@@ -35,7 +35,7 @@ type-check imports of them.
 
 ```ts
 // vite.config.ts
-plugins: [analog(), tsrx(), angular({ fastCompile: true })];
+plugins: [analog(), tsrxAngular(), angular({ fastCompile: true })];
 ```
 
 ## Motivation
@@ -243,8 +243,8 @@ directory:
 and again, in the background, shortly after a `.tsrx` or `.ts` file is added,
 changed, or removed. Files that fail to lower keep their previous declarations,
 and stale ones are removed. There is no separate CLI: CI type-checks after a
-build. `tsrx({ types: false })` turns this off, and
-`tsrx({ types: { tsconfig, outDir } })` changes the tsconfig and output
+build. `tsrxAngular({ types: false })` turns this off, and
+`tsrxAngular({ types: { tsconfig, outDir } })` changes the tsconfig and output
 directory. Works with `tsc` and `tsgo`.
 
 ### Constraints
@@ -270,7 +270,7 @@ directory. Works with `tsc` and `tsgo`.
 | `packages/tsrx-angular/src/lib/lower.ts`                                                                                       | TSRX → `@Component` class lowering: member APIs, `$fc` closures, templates, control flow, `@defer`, `XMeta`, selectors, styles, diagnostics |
 | `packages/tsrx-angular/src/lib/source-map.ts`                                                                                  | `MappedText` and `TsrxSourceMap`: map lowered offsets and emitted source maps back to the `.tsrx`                                           |
 | `packages/tsrx-angular/src/lib/cache.ts`                                                                                       | Parses each module once across import discovery, registry scans, and compiles                                                               |
-| `packages/tsrx-angular/src/lib/plugin.ts`                                                                                      | The `tsrx()` Vite plugin: registers the format, transforms `.tsrx`, writes declarations on build and in dev                                 |
+| `packages/tsrx-angular/src/lib/plugin.ts`                                                                                      | The `tsrxAngular()` Vite plugin: registers the format, transforms `.tsrx`, writes declarations on build and in dev                          |
 | `packages/tsrx-angular/src/lib/types.ts`                                                                                       | `TsrxTypeGenerator`: emits `.d.tsrx.ts` declarations from lowered code with a virtual compiler host                                         |
 | `packages/tsrx-angular/src/index.ts`                                                                                           | Exports `tsrx`, `lowerTsrx`, `defaultSelector`, `TsrxSourceMap`, and option/result types                                                    |
 | `packages/vite-plugin-angular/src/lib/fast-compile-api.ts`                                                                     | `FastCompileApi` types and `findFastCompileApi()`                                                                                           |
@@ -286,7 +286,7 @@ dependencies (analogjs/analog#2784, fixing #2785).
 ### Data Flow
 
 ```
-tsrx() configResolved
+tsrxAngular() configResolved
   └─ findFastCompileApi(plugins).registerSourceFormat({ test: *.tsrx, toScanSource })
 
 transform(foo.tsrx)

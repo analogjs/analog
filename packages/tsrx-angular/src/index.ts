@@ -1,5 +1,5 @@
 export {
-  tsrx,
+  tsrxAngular,
   type TsrxPluginOptions,
   type TsrxTypesPluginOptions,
 } from './lib/plugin.js';

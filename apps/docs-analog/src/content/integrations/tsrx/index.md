@@ -21,17 +21,17 @@ TSRX support is experimental. `@analogjs/tsrx-angular` isn't published to npm ye
 
 ## Step 1: Add the plugin
 
-Add `tsrx()` before `angular()`, and turn on fast compile:
+Add `tsrxAngular()` before `angular()`, and turn on fast compile:
 
 ```ts
 // vite.config.ts
 import analog from '@analogjs/platform';
 import angular from '@analogjs/vite-plugin-angular';
-import { tsrx } from '@analogjs/tsrx-angular';
+import { tsrxAngular } from '@analogjs/tsrx-angular';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [analog(), tsrx(), angular({ fastCompile: true })],
+  plugins: [analog(), tsrxAngular(), angular({ fastCompile: true })],
 });
 ```
 
@@ -58,7 +58,7 @@ Point TypeScript at that folder in the tsconfig that type-checks your app:
 
 The types are inferred from the compiled component, so `input(1)` is an `InputSignal<number>`. `vite build` writes the declarations, and the dev server writes them at startup and keeps them up to date while you edit. In CI, build before type-checking.
 
-To change where they're read from and written to, use `tsrx({ types: { tsconfig, outDir } })`. To turn them off, use `tsrx({ types: false })`.
+To change where they're read from and written to, use `tsrxAngular({ types: { tsconfig, outDir } })`. To turn them off, use `tsrxAngular({ types: false })`.
 
 ## Writing components
 
