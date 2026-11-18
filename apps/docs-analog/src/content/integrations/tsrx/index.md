@@ -55,6 +55,8 @@ src/app/components/price.tsrx:9:22 - error TS2339: Property 'toFixd' does not ex
 
 NGP compiles the `.tsrx` modules under the directory of your app's tsconfig, and the tsconfig's `include` must cover their names with `.ts` added, as `src/**/*.ts` covers `src/app/components/price.tsrx.ts`. NGP reads them through its default WebAssembly analyzer, so TSRX can't be compiled with a native analyzer build (`ANALOG_NGP_NATIVE_BINDING`).
 
+Under Vitest, `angular()` compiles with ngtsc unless `jit: false` is set, so a Vite config that Vitest also loads needs `angular({ compilation: 'ngp', jit: false })` for TSRX.
+
 ## Step 2: Configure TypeScript
 
 TypeScript can't read `.tsrx` files. To let `tsc` and your editor type-check imports of them, the plugin writes a declaration file for each `.tsrx` module to `node_modules/.analog/tsrx-types`. The folder mirrors your sources, so nothing is generated next to them or committed:

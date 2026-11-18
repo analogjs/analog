@@ -229,10 +229,15 @@ src/app/components/price.tsrx  →  src/app/components/price.tsrx.ts (in memory)
 real file is required: NGP's `virtualFiles` option also serves the lowered code,
 but imports still resolve to the real `.tsrx` beside it.
 
-- **Changes.** Editing a module lowers it again, along with the modules that
-  looked up selectors in it, and passes them to `analyzer.updateFileContent`.
-  New and removed modules on the dev server are lowered or dropped and
-  reported to the analyzer.
+- **Changes.** `watchChange`, which the dev server runs with or without HMR
+  and `vite build --watch` runs too, lowers an edited module again along with
+  the modules that looked up selectors in it, lowers new modules, drops removed
+  ones, and passes the results to the analyzer. Lowering and those analyzer
+  updates run one change at a time, so the modules a change lowers again reach
+  the analyzer together. A module is also lowered on each transform, as with
+  fast compile, and registers the files its selectors came from as watch files,
+  so it's transformed again when they change. Modules are keyed by path with
+  symlinked directories resolved.
 - **HMR.** In-place component updates work as for `.ts` components. NGP names
   components by their program file (`price.tsrx.ts`), so the plugin uses the
   module's path in component ids, the module the dev server knows.
@@ -379,13 +384,15 @@ transform(foo.tsrx)
   ├─ compile foo.tsrx.ts → type-check (tsgo, in-memory document) → errors at .tsrx positions
   └─ transpile, source map remapped to foo.tsrx
 
-handleHotUpdate(foo.tsrx or an imported .ts)
-  └─ lower again (+ importers) → updateFileContent → HMR or reload
+watchChange(foo.tsrx or an imported .ts)
+  └─ lower again (+ importers), add or drop modules → updateFileContent
+
+handleHotUpdate → in-place HMR, or reload
 ```
 
 ## Test Coverage
 
-- **`tsrx-angular`**: 69 tests.
+- **`tsrx-angular`**: 76 tests.
   - `lower.spec.ts` (49): class shape; compiling with the fast compiler;
     `@if`/`@for`/`@switch`/`@try`→`@boundary`; native `@boundary` with `let`,
     `$error`, multiple `@error` blocks, and `when` conditions compiled to read
@@ -409,11 +416,17 @@ handleHotUpdate(foo.tsrx or an imported .ts)
     `tsc` type-checking of `.tsrx` imports; unchanged files not rewritten and
     stale files removed; lowering errors keep previous declarations; custom
     `outDir`.
-  - `ngp.spec.ts` (7, real NGP): compiling `.tsrx` modules and their `.ts`
+  - `ngp.spec.ts` (14, real NGP): compiling `.tsrx` modules and their `.ts`
     importers; modules nothing imports; selectors of imported `.ts` and `.tsrx`
-    components; importers lowered again after a selector change; in-place HMR
-    after a template change; lowering errors; type errors at `.tsrx` positions,
-    with the importer checked first.
+    components; importers lowered again after a selector change, with and
+    without HMR; a transform of code older than the latest change; in-place
+    HMR after a template change; modules added later, requested before their
+    file event, or removed before they could be read; a project reached
+    through a symlink; lowering and compile errors; type errors at `.tsrx`
+    positions, with the importer checked first.
+  - In `vite-plugin-angular`: a file fixed after a failed compile without a hot
+    update; the type checker following the text and removal of in-memory
+    files.
 - **`vite-plugin-angular`**: `fast-compile-api.spec.ts` (5): finding the API;
   compiling another format's TypeScript; scanning registered formats and
   packages; ignoring unregistered formats. Defer-only dependency tests in
