@@ -38,13 +38,9 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
-      # `prepare` enables .githooks; commitlint would reject the action's
-      # `graft: sync …` commit, so this job commits without hooks.
-      - name: Disable git hooks
-        run: git config --unset core.hookspath
-      - uses: brandonroberts/graft/packages/action@5277c3cbd457c190356c3ae16f1e0781ed406d67 # v0.2.5
+      - uses: brandonroberts/graft/packages/action@435724c8ae04fda1e5723d7ab541d9d7535d8127 # v0.2.6
         with:
-          graft-command: npx -y @graftsync/cli@0.2.5
+          graft-command: npx -y @graftsync/cli@0.2.6
           install-command: pnpm install --frozen-lockfile
           base-branch: beta
           tags: latest
