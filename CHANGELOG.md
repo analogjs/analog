@@ -1,3 +1,9 @@
+# [3.0.0-beta.48](https://github.com/analogjs/analog/compare/v3.0.0-beta.47...v3.0.0-beta.48) (2026-11-19)
+
+### Features
+
+- **tsrx-angular:** compile TSRX components with NGP ([#2795](https://github.com/analogjs/analog/issues/2795)) ([3dd5fce](https://github.com/analogjs/analog/commit/3dd5fceee878bdd33d67e85f5e81ffb1f24c4d30)), closes [analogjs/analog#2791](https://github.com/analogjs/analog/issues/2791)
+
 # [3.0.0-beta.47](https://github.com/analogjs/analog/compare/v3.0.0-beta.46...v3.0.0-beta.47) (2026-11-18)
 
 ### Features
