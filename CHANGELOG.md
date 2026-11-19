@@ -1,3 +1,9 @@
+# [3.0.0-beta.49](https://github.com/analogjs/analog/compare/v3.0.0-beta.48...v3.0.0-beta.49) (2026-11-19)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** avoid stack overflow for large inline sourcemaps ([#2796](https://github.com/analogjs/analog/issues/2796)) ([af69897](https://github.com/analogjs/analog/commit/af69897f9af8ae535d20ef42f760eceb5f37fdb8)), closes [#2669](https://github.com/analogjs/analog/issues/2669)
+
 # [3.0.0-beta.48](https://github.com/analogjs/analog/compare/v3.0.0-beta.47...v3.0.0-beta.48) (2026-11-19)
 
 ### Features
