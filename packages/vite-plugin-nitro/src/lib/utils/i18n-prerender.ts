@@ -13,20 +13,24 @@ import { I18nPrerenderOptions } from '../options.js';
  *
  * @param routes - The original routes to expand
  * @param i18n - The i18n prerender configuration
+ * @param apiPrefix - The API route prefix (default `api`); API routes are not localized
  * @returns Expanded routes with locale prefixes
  */
 export function expandRoutesWithLocales(
   routes: string[],
   i18n: I18nPrerenderOptions,
+  apiPrefix = 'api',
 ): string[] {
   const expanded = new Set<string>();
+  const apiRoute = `/${apiPrefix.replace(/^\/+|\/+$/g, '')}`;
 
   for (const route of routes) {
     // API routes and explicitly localized routes don't need locale prefixes.
     const firstSegment = route.split('/').filter(Boolean)[0];
     if (
       route.includes('/_analog/') ||
-      route.startsWith('/api/') ||
+      route === apiRoute ||
+      route.startsWith(`${apiRoute}/`) ||
       i18n.locales.includes(firstSegment)
     ) {
       expanded.add(route);

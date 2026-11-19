@@ -46,6 +46,20 @@ describe('expandRoutesWithLocales', () => {
     expect(result).not.toContain('/en/api/v1/users');
   });
 
+  it('should honor a custom API prefix', () => {
+    const result = expandRoutesWithLocales(
+      ['/about', '/services', '/services/v1/users', '/api'],
+      i18n,
+      '/services',
+    );
+
+    expect(result).toContain('/services');
+    expect(result).toContain('/services/v1/users');
+    expect(result).not.toContain('/en/services');
+    expect(result).not.toContain('/en/services/v1/users');
+    expect(result).toContain('/en/api');
+  });
+
   it('should expand multiple routes', () => {
     const result = expandRoutesWithLocales(['/about', '/contact'], i18n);
 
@@ -58,10 +72,24 @@ describe('expandRoutesWithLocales', () => {
   });
 
   it('should not duplicate routes', () => {
-    const result = expandRoutesWithLocales(['/about'], i18n);
-    const aboutRoutes = result.filter((r) => r === '/about');
+    const result = expandRoutesWithLocales(
+      ['/about', '/fr/about', '/about', '/api/users', '/api/users'],
+      i18n,
+    );
 
-    expect(aboutRoutes.length).toBeLessThanOrEqual(1);
+    expect(result).toEqual([
+      '/en/about',
+      '/fr/about',
+      '/de/about',
+      '/about',
+      '/api/users',
+    ]);
+  });
+
+  it('should preserve explicitly localized routes without expanding them again', () => {
+    const routes = ['/fr', '/de/', '/en/about', '/fr/docs/introduction'];
+
+    expect(expandRoutesWithLocales(routes, i18n)).toEqual(routes);
   });
 });
 

@@ -1111,10 +1111,14 @@ async function wirePrerender(
   } = await collectRoutes(prerender?.routes, context, apiPrefix);
 
   const expanded = options.i18n
-    ? expandRoutesWithLocales(collected, {
-        defaultLocale: options.i18n.defaultLocale,
-        locales: options.i18n.locales,
-      })
+    ? expandRoutesWithLocales(
+        collected,
+        {
+          defaultLocale: options.i18n.defaultLocale,
+          locales: options.i18n.locales,
+        },
+        apiPrefix,
+      )
     : collected;
 
   const nitroPrerender = (nitro.options.prerender ??= {}) as Record<

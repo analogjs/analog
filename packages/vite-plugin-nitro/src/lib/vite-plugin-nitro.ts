@@ -380,6 +380,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
               nitroConfig.prerender.routes = expandRoutesWithLocales(
                 nitroConfig.prerender.routes.filter(Boolean) as string[],
                 options.i18n,
+                apiPrefix,
               );
             }
           }

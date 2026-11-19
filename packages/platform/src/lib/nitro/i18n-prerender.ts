@@ -9,39 +9,42 @@ import type { I18nPrerenderOptions } from './types.js';
  *
  * The default locale's routes are included both with and without the prefix
  * so that `/about` and `/en/about` both render.
+ * Routes that already have a configured locale prefix are kept as-is.
  */
 export function expandRoutesWithLocales(
   routes: string[],
   i18n: I18nPrerenderOptions,
+  apiPrefix = 'api',
 ): string[] {
-  const expanded: string[] = [];
+  const expanded = new Set<string>();
+  const apiRoute = `/${apiPrefix.replace(/^\/+|\/+$/g, '')}`;
 
   for (const route of routes) {
-    // Skip locale expansion for internal analog endpoints and API routes.
-    // `startsWith('/api/')` alone misses the bare `/api` path, which
-    // would otherwise get locale-prefixed and produce phantom routes like
-    // `/en/api`.
+    // Skip locale expansion for internal analog endpoints, API routes and
+    // explicitly localized routes.
+    // The bare API route (e.g. `/api`) is skipped too, which would otherwise
+    // get locale-prefixed and produce phantom routes like `/en/api`.
+    const firstSegment = route.split('/').filter(Boolean)[0];
     if (
       route.includes('/_analog/') ||
-      route === '/api' ||
-      route.startsWith('/api/')
+      route === apiRoute ||
+      route.startsWith(`${apiRoute}/`) ||
+      i18n.locales.includes(firstSegment)
     ) {
-      expanded.push(route);
+      expanded.add(route);
       continue;
     }
 
     for (const locale of i18n.locales) {
       const prefix = `/${locale}`;
       const localizedRoute = route === '/' ? prefix : `${prefix}${route}`;
-      expanded.push(localizedRoute);
+      expanded.add(localizedRoute);
     }
 
-    if (!expanded.includes(route)) {
-      expanded.push(route);
-    }
+    expanded.add(route);
   }
 
-  return expanded;
+  return [...expanded];
 }
 
 /**
