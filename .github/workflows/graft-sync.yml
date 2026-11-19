@@ -25,8 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: beta
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
@@ -38,9 +36,28 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
-      - uses: brandonroberts/graft/packages/action@e152797abdb4426389d470314e63a420f3430a4b # v0.2.7
-        with:
-          graft-command: npx -y @graftsync/cli@0.2.7
-          install-command: pnpm install --frozen-lockfile
-          base-branch: beta
-          tags: latest
+      # TRIAL (not for merge): run the nx upgrade through Graft with nx's agentic migrations,
+      # and show what it did. Nothing is pushed.
+      - name: Check the agent's key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: test -n "$ANTHROPIC_API_KEY" || { echo "::error::Add the ANTHROPIC_API_KEY repository secret"; exit 1; }
+      - run: npm install --global @anthropic-ai/claude-code
+      - name: Git identity for nx's migration commits
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: graft sync nx 24.0.6 (agentic)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: time npx -y @graftsync/cli@0.2.7 sync --version 24.0.6 --install
+      - name: What changed
+        if: always()
+        run: |
+          cat .grafts/.report/sync.md || true
+          git log --oneline ${{ github.sha }}..HEAD
+          git status --short
+          git diff --stat ${{ github.sha }}
+          git diff ${{ github.sha }} -- . ':!pnpm-lock.yaml' | head -400
+          find tools/ai-migrations -type f -print 2>/dev/null || true
+          ls .nx/migrate-runs 2>/dev/null && cat .nx/migrate-runs/*/RUNBOOK.md 2>/dev/null | head -200 || true
