@@ -26,6 +26,7 @@ export function expandRoutesWithLocales(
     const firstSegment = route.split('/').filter(Boolean)[0];
     if (
       route.includes('/_analog/') ||
+      route === '/api' ||
       route.startsWith('/api/') ||
       i18n.locales.includes(firstSegment)
     ) {
