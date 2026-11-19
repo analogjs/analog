@@ -1,3 +1,9 @@
+# [3.0.0-beta.52](https://github.com/analogjs/analog/compare/v3.0.0-beta.51...v3.0.0-beta.52) (2026-11-19)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** exclude internal routes and honour per-route config in sitemap ([#2808](https://github.com/analogjs/analog/issues/2808)) ([75e9a3b](https://github.com/analogjs/analog/commit/75e9a3be3bd91f11e7756f9379aabcd0a4f63af6))
+
 # [3.0.0-beta.51](https://github.com/analogjs/analog/compare/v3.0.0-beta.50...v3.0.0-beta.51) (2026-11-19)
 
 ### Bug Fixes
