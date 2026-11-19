@@ -29,8 +29,11 @@ export async function buildSitemap(
   i18nOptions?: I18nPrerenderOptions,
   apiPrefix = '/api',
 ): Promise<void> {
+  // Internal static-data endpoints and routes with query params are not
+  // canonical pages, so they are left out of the sitemap.
   const routeList: string[] = (await optionHasRoutes(routes)).filter(
-    (route) => !route.startsWith(`${apiPrefix}/_analog/pages/`),
+    (route) =>
+      !route.startsWith(`${apiPrefix}/_analog/pages/`) && !route.includes('?'),
   );
 
   if (routeList.length) {

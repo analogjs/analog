@@ -82,6 +82,23 @@ describe('build sitemap', () => {
     expect(xml).not.toContain('_analog');
   });
 
+  it('should exclude routes with query params', async () => {
+    const spy = vi.spyOn(fs, 'writeFileSync');
+
+    await buildSitemap(
+      config,
+      { host: 'http://host.com' },
+      ['/blog', '/blog?page=2', '/search?q=analog'],
+      'dist',
+      {},
+    );
+
+    const xml = spy.mock.calls.at(-1)![1] as string;
+    expect(xml).toContain('<loc>http://host.com/blog</loc>');
+    expect(xml).not.toContain('page=2');
+    expect(xml).not.toContain('q=analog');
+  });
+
   it('should apply per-route sitemap config when the host ends with a slash', async () => {
     const spy = vi.spyOn(fs, 'writeFileSync');
 
