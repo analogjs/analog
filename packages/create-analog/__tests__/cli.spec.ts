@@ -286,17 +286,15 @@ test('rejects an unknown --server', () => {
   ).toThrow('Unknown server "hono"');
 });
 
-test('keeps the vite/vitest overrides by default', () => {
+test('keeps the vite override by default', () => {
   run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
     cwd: tmpDir,
   });
   const pkg = readJsonSync(join(genPath, 'package.json'));
-  expect(pkg.overrides).toBeDefined();
-  expect(pkg.overrides).toHaveProperty('vite');
-  expect(pkg.overrides).toHaveProperty('vitest');
+  expect(pkg.overrides).toEqual({ vite: '$vite' });
 });
 
-test('strips the vite/vitest overrides with --skipViteOverrides', () => {
+test('strips the vite override with --skipViteOverrides', () => {
   run(
     [
       projectName,
