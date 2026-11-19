@@ -1,3 +1,9 @@
+# [3.0.0-beta.51](https://github.com/analogjs/analog/compare/v3.0.0-beta.50...v3.0.0-beta.51) (2026-11-19)
+
+### Bug Fixes
+
+- **platform:** skip localized routes and dedupe i18n prerender routes ([#2807](https://github.com/analogjs/analog/issues/2807)) ([2e0476f](https://github.com/analogjs/analog/commit/2e0476f760c58e39211cadd674514c2141abda06))
+
 # [3.0.0-beta.50](https://github.com/analogjs/analog/compare/v3.0.0-beta.49...v3.0.0-beta.50) (2026-11-19)
 
 ### Bug Fixes
