@@ -103,6 +103,10 @@ When asked to capture a modification as a graft (new, or migrating an existing p
 2. **Write the intent first,** with the person who owns the modification if you can: _Why_,
    the _Invariants_ (observable behaviors, one per bullet), _Where to look_ (by behavior), and
    _Anchors_ (what the variant matches on and why).
+   Ask too **how they upgrade the package by hand.** If it's more than bumping its version
+   (companion packages that move with it, a migration tool such as `nx migrate` or `ng update`),
+   record that command as `upgrade` in `.grafts/config.json`, with `{version}` where the new
+   version goes, so `graft sync --install` (and the GitHub Action) upgrade the same way.
 3. **Write the variant.** For `patch`, make the change in the installed package
    (`node_modules/<pkg>`), then run `graft capture <id>`: it writes the difference from the
    published package as the variant (replacing the scaffold stub), and refuses binary changes.

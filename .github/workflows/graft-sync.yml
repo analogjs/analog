@@ -38,9 +38,9 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
-      - uses: brandonroberts/graft/packages/action@435724c8ae04fda1e5723d7ab541d9d7535d8127 # v0.2.6
+      - uses: brandonroberts/graft/packages/action@e152797abdb4426389d470314e63a420f3430a4b # v0.2.7
         with:
-          graft-command: npx -y @graftsync/cli@0.2.6
+          graft-command: npx -y @graftsync/cli@0.2.7
           install-command: pnpm install --frozen-lockfile
           base-branch: beta
           tags: latest
