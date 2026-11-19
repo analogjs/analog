@@ -1,3 +1,9 @@
+# [3.0.0-beta.50](https://github.com/analogjs/analog/compare/v3.0.0-beta.49...v3.0.0-beta.50) (2026-11-19)
+
+### Bug Fixes
+
+- **create-analog:** drop the vitest override from templates ([#2803](https://github.com/analogjs/analog/issues/2803)) ([48064b9](https://github.com/analogjs/analog/commit/48064b93181233c62c1fa2367d77e8ee1c427aa7))
+
 # [3.0.0-beta.49](https://github.com/analogjs/analog/compare/v3.0.0-beta.48...v3.0.0-beta.49) (2026-11-19)
 
 ### Bug Fixes
