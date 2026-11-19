@@ -12,6 +12,8 @@ on:
     - cron: '30 11 * * *'
       timezone: 'America/Chicago'
   workflow_dispatch:
+  push:
+    branches: [trial/graft-agentic-nx]
 
 permissions:
   contents: write
