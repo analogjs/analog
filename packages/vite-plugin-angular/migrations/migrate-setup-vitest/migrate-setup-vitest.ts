@@ -1,5 +1,13 @@
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
-import { NodePackageInstallTask } from '@angular-devkit/schematics/tasks/index.js';
+import { createRequire } from 'node:module';
+
+// CommonJS resolution supports `tasks` both before and after Angular 22.3
+// added an exports map, which native ESM imports cannot do with one specifier.
+const {
+  NodePackageInstallTask,
+}: typeof import('@angular-devkit/schematics/tasks') = createRequire(
+  import.meta.url,
+)('@angular-devkit/schematics/tasks');
 
 const OLD_IMPORT = '@analogjs/vite-plugin-angular/setup-vitest';
 const NEW_IMPORT = '@analogjs/vitest-angular/setup-zone';
