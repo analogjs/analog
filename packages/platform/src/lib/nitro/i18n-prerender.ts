@@ -14,20 +14,21 @@ import type { I18nPrerenderOptions } from './types.js';
 export function expandRoutesWithLocales(
   routes: string[],
   i18n: I18nPrerenderOptions,
+  apiPrefix = 'api',
 ): string[] {
   const expanded = new Set<string>();
+  const apiRoute = `/${apiPrefix.replace(/^\/+|\/+$/g, '')}`;
 
   for (const route of routes) {
     // Skip locale expansion for internal analog endpoints, API routes and
     // explicitly localized routes.
-    // `startsWith('/api/')` alone misses the bare `/api` path, which
-    // would otherwise get locale-prefixed and produce phantom routes like
-    // `/en/api`.
+    // The bare API route (e.g. `/api`) is skipped too, which would otherwise
+    // get locale-prefixed and produce phantom routes like `/en/api`.
     const firstSegment = route.split('/').filter(Boolean)[0];
     if (
       route.includes('/_analog/') ||
-      route === '/api' ||
-      route.startsWith('/api/') ||
+      route === apiRoute ||
+      route.startsWith(`${apiRoute}/`) ||
       i18n.locales.includes(firstSegment)
     ) {
       expanded.add(route);
