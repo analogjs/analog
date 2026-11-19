@@ -390,6 +390,61 @@ export class Greeter {
       map: null,
     });
   });
+
+  it('extracts a multi-megabyte inline sourcemap (#2669)', () => {
+    const mapObj = {
+      version: 3,
+      sources: ['compiler.ts'],
+      sourcesContent: ['x'.repeat(4 * 1024 * 1024)],
+      names: [],
+      mappings: 'AAAA',
+    };
+    const base64Map = Buffer.from(JSON.stringify(mapObj)).toString('base64');
+    const sourceCode = 'export const compiler = true;';
+    const code = `${sourceCode}\n//# sourceMappingURL=data:application/json;base64,${base64Map}`;
+
+    const result = extractInlineSourceMap(code, '/x/compiler.mjs');
+
+    expect(result.code).toBe(sourceCode);
+    expect(JSON.parse(result.map)).toEqual(mapObj);
+  });
+
+  it('ignores trailing whitespace after the sourceMappingURL comment', () => {
+    const base64Map = Buffer.from('{"version":3}').toString('base64');
+    const sourceCode = 'export const a = 1;';
+    const code = `${sourceCode}\n//# sourceMappingURL=data:application/json;base64,${base64Map} \r\n`;
+
+    const result = extractInlineSourceMap(code, '/x/test.js');
+
+    expect(result).toEqual({ code: sourceCode, map: '{"version":3}' });
+  });
+
+  it.each([
+    ['LF', '\n'],
+    ['CRLF', '\r\n'],
+    ['CR', '\r'],
+    ['LS', '\u2028'],
+    ['PS', '\u2029'],
+  ])(
+    'keeps code that follows the sourceMappingURL comment after %s',
+    (_name, lineTerminator) => {
+      const base64Map = Buffer.from('{"version":3}').toString('base64');
+      const code = `export const a = 1;\n//# sourceMappingURL=data:application/json;base64,${base64Map}${lineTerminator}console.log(a);`;
+
+      const result = extractInlineSourceMap(code, '/x/test.js');
+
+      expect(result).toEqual({ code, map: null });
+    },
+  );
+
+  it('keeps a sourceMappingURL that is part of a string literal', () => {
+    const base64Map = Buffer.from('{"version":3}').toString('base64');
+    const code = `export const url = "//# sourceMappingURL=data:application/json;base64,${base64Map}";`;
+
+    const result = extractInlineSourceMap(code, '/x/test.js');
+
+    expect(result).toEqual({ code, map: null });
+  });
 });
 
 describe('buildOptimizerPlugin lifecycle & environment handling', () => {

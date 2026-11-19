@@ -155,17 +155,33 @@ export function extractInlineSourceMap(
   code: string,
   _id: string,
 ): { code: string; map: string | null } {
-  const sourceMapMatch = code.match(
-    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
-  );
-  if (!sourceMapMatch || sourceMapMatch.index === undefined) {
-    return {
-      code,
-      map: null,
-    };
+  // Matching the whole comment with one regex can throw "Maximum call stack
+  // size exceeded" on multi-megabyte payloads (#2669), so search by index.
+  const prefix = '//# sourceMappingURL=data:application/json';
+  const separator = ';base64,';
+  const commentStart = code.lastIndexOf(prefix);
+  if (commentStart === -1) {
+    return { code, map: null };
   }
+
+  const tail = code.slice(commentStart + prefix.length).trimEnd();
+  const base64Start = tail.indexOf(separator);
+  const payload = tail.slice(base64Start + separator.length);
+  // Only a terminal comment counts: anything other than base64 characters
+  // and trailing whitespace after `;base64,` leaves the code untouched.
+  if (
+    base64Start === -1 ||
+    !/^(?:;charset=[^;,]+)?$/.test(tail.slice(0, base64Start)) ||
+    payload === '' ||
+    /[^A-Za-z0-9+/=]/.test(payload)
+  ) {
+    return { code, map: null };
+  }
+
+  const codeEnd =
+    code[commentStart - 1] === '\n' ? commentStart - 1 : commentStart;
   return {
-    code: code.slice(0, sourceMapMatch.index),
-    map: Buffer.from(sourceMapMatch[1]!, 'base64').toString(),
+    code: code.slice(0, codeEnd),
+    map: Buffer.from(payload, 'base64').toString(),
   };
 }
