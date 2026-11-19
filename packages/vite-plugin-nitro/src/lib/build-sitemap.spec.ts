@@ -120,4 +120,19 @@ describe('build sitemap', () => {
     const xml = spy.mock.calls.at(-1)![1] as string;
     expect(xml).toContain('<lastmod>2024-01-01</lastmod>');
   });
+
+  it('should ignore inherited properties when looking up per-route config', async () => {
+    const spy = vi.spyOn(fs, 'writeFileSync');
+
+    await buildSitemap(
+      config,
+      { host: 'http://host.com/' },
+      ['/valueOf'],
+      'dist',
+      {},
+    );
+
+    const xml = spy.mock.calls.at(-1)![1] as string;
+    expect(xml).toContain('<loc>http://host.com/valueOf</loc>');
+  });
 });

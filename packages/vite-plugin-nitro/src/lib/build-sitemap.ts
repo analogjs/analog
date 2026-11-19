@@ -37,7 +37,11 @@ export async function buildSitemap(
     const slash = checkSlash(sitemapConfig.host || '');
     const sitemapData: PagesJson[] = routeList.map((page: string) => {
       const path = page.replace(/^\/+/g, '');
-      const config = routeSitemaps[`/${path}`] ?? routeSitemaps[path];
+      const config =
+        routeSitemaps[`/${path}`] ??
+        (Object.prototype.hasOwnProperty.call(routeSitemaps, path)
+          ? routeSitemaps[path]
+          : undefined);
       const props = typeof config === 'object' ? config : config?.();
 
       return {
