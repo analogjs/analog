@@ -1,0 +1,45 @@
+# Re-verifies the grafts in .grafts/ when their upstream packages release.
+# A graft that still fits opens a PR with the bump (ci.yml checks behavior);
+# one that needs an agent or a human opens an issue with the sync report.
+#
+# Requires: Settings → Actions → General → "Allow GitHub Actions to create and
+# approve pull requests". Otherwise the action pushes the branch and opens an
+# issue with a link to open the PR.
+name: Graft sync
+
+on:
+  schedule:
+    - cron: '37 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency: graft-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: beta
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - uses: brandonroberts/graft/packages/action@5277c3cbd457c190356c3ae16f1e0781ed406d67 # v0.2.5
+        with:
+          graft-command: npx -y @graftsync/cli@0.2.5
+          install-command: pnpm install --frozen-lockfile
+          base-branch: beta
+          tags: latest
