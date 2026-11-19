@@ -23,6 +23,7 @@ concurrency: graft-sync
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,7 +39,16 @@ jobs:
           cache-dependency-path: '**/pnpm-lock.yaml'
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
+      # nx migrate --agentic=claude-code (.grafts/config.json) hands prompt-based migrations to
+      # Claude Code, and commits per migration.
+      - run: npm install --global @anthropic-ai/claude-code@2.1.328
+      - name: Git identity for nx's migration commits
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
       - uses: brandonroberts/graft/packages/action@e152797abdb4426389d470314e63a420f3430a4b # v0.2.7
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
           graft-command: npx -y @graftsync/cli@0.2.7
           install-command: pnpm install --frozen-lockfile
