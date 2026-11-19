@@ -45,10 +45,7 @@ jobs:
 
       # Fails if a graft in .grafts/ isn't actually applied to node_modules.
       - name: Graft check
-        uses: brandonroberts/graft/packages/action@5277c3cbd457c190356c3ae16f1e0781ed406d67 # v0.2.5
-        with:
-          graft-command: npx -y @graftsync/cli@0.2.5
-          sync: false
+        run: npx -y @graftsync/cli@0.2.5 check
 
       # Start the distributed run. Agents are stopped once the last distributed
       # target (e2e) finishes; the run itself is finalized explicitly so a
