@@ -42,15 +42,20 @@ jobs:
       # nx migrate --agentic=claude-code (.grafts/config.json) hands prompt-based migrations to
       # Claude Code, and commits per migration.
       - run: npm install --global @anthropic-ai/claude-code@2.1.328
-      - name: Git identity for nx's migration commits
+      - name: Git identity for nx's migration commits (Graft's commit uses it too)
+        env:
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          test -n "$GIT_USER_NAME" && test -n "$GIT_USER_EMAIL" || { echo "::error::Set the GIT_USER_NAME and GIT_USER_EMAIL secrets"; exit 1; }
+          git config user.name "$GIT_USER_NAME"
+          git config user.email "$GIT_USER_EMAIL"
       - uses: brandonroberts/graft/packages/action@e152797abdb4426389d470314e63a420f3430a4b # v0.2.7
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
           graft-command: npx -y @graftsync/cli@0.2.7
+          commit-author: ${{ secrets.GIT_USER_NAME }} <${{ secrets.GIT_USER_EMAIL }}>
           install-command: pnpm install --frozen-lockfile
           base-branch: beta
           tags: latest
