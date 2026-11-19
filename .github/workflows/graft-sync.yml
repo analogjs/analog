@@ -50,11 +50,11 @@ jobs:
           test -n "$GIT_USER_NAME" && test -n "$GIT_USER_EMAIL" || { echo "::error::Set the GIT_USER_NAME and GIT_USER_EMAIL secrets"; exit 1; }
           git config user.name "$GIT_USER_NAME"
           git config user.email "$GIT_USER_EMAIL"
-      - uses: brandonroberts/graft/packages/action@e152797abdb4426389d470314e63a420f3430a4b # v0.2.7
+      - uses: brandonroberts/graft/packages/action@108193710ec58d828f1c09200977a34edd369d51 # v0.2.9
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
-          graft-command: npx -y @graftsync/cli@0.2.7
+          graft-command: npx -y @graftsync/cli@0.2.9
           commit-author: ${{ secrets.GIT_USER_NAME }} <${{ secrets.GIT_USER_EMAIL }}>
           install-command: pnpm install --frozen-lockfile
           base-branch: beta

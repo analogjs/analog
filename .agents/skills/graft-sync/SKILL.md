@@ -67,6 +67,11 @@ Reports from `sync` land in `.grafts/.report/` (`sync.md`, `sync.json`, and per 
 1. **Run the deterministic first pass first.** `graft sync --version X --install`.
    Never re-derive what already passes. Green grafts are done — `sync` already bumped
    `verified` and wrote History. Only grafts marked `needs-agent` are yours.
+   If the project has an `upgrade` command, read its output in the report ("Output of …" in
+   `sync.md`, `installOutput` in `sync.json`) even when sync is green. A tool may have left
+   work for you there: e.g. `nx migrate --agentic` run from inside an agent prints steps for the
+   calling agent and leaves the migrations unapplied. Do that work, and prove it with the
+   project's tests, before you call the upgrade done.
 2. **Gather context for each `needs-agent` graft**, in this order:
    `graft show <id>` → the reasons in the sync report → `graft check <id> --version <target>` →
    `graft diff <id>` (from `verified` to the target).
