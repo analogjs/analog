@@ -27,18 +27,21 @@ export async function buildSitemap(
     PrerenderSitemapConfig | (() => PrerenderSitemapConfig) | undefined
   >,
   i18nOptions?: I18nPrerenderOptions,
+  apiPrefix = '/api',
 ): Promise<void> {
-  const routeList: string[] = await optionHasRoutes(routes);
+  const routeList: string[] = (await optionHasRoutes(routes)).filter(
+    (route) => !route.startsWith(`${apiPrefix}/_analog/pages/`),
+  );
 
   if (routeList.length) {
     const slash = checkSlash(sitemapConfig.host || '');
     const sitemapData: PagesJson[] = routeList.map((page: string) => {
-      const url = `${slash}${page.replace(/^\/+/g, '')}`;
-      const config = routeSitemaps[url];
+      const path = page.replace(/^\/+/g, '');
+      const config = routeSitemaps[`/${path}`];
       const props = typeof config === 'object' ? config : config?.();
 
       return {
-        page: `${sitemapConfig.host}${url}`,
+        page: `${sitemapConfig.host}${slash}${path}`,
         lastMod: props?.lastmod ?? new Date().toISOString().split('T')[0],
         changefreq: props?.changefreq,
         priority: props?.priority,

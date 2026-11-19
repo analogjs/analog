@@ -47,4 +47,62 @@ describe('build sitemap', () => {
     );
     expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
   });
+
+  it('should exclude internal static-data routes', async () => {
+    const spy = vi.spyOn(fs, 'writeFileSync');
+
+    await buildSitemap(
+      config,
+      sitemapConfig,
+      ['/about', '/api/_analog/pages//about'],
+      'dist',
+      {},
+    );
+
+    const xml = spy.mock.calls.at(-1)![1] as string;
+    expect(xml).toContain('<loc>http://host.com/about</loc>');
+    expect(xml).not.toContain('_analog');
+  });
+
+  it('should exclude internal static-data routes under a custom api prefix', async () => {
+    const spy = vi.spyOn(fs, 'writeFileSync');
+
+    await buildSitemap(
+      config,
+      sitemapConfig,
+      ['/about', '/services/_analog/pages//about'],
+      'dist',
+      {},
+      undefined,
+      '/services',
+    );
+
+    const xml = spy.mock.calls.at(-1)![1] as string;
+    expect(xml).toContain('<loc>http://host.com/about</loc>');
+    expect(xml).not.toContain('_analog');
+  });
+
+  it('should apply per-route sitemap config when the host ends with a slash', async () => {
+    const spy = vi.spyOn(fs, 'writeFileSync');
+
+    await buildSitemap(
+      config,
+      { host: 'http://host.com/' },
+      ['/about'],
+      'dist',
+      {
+        '/about': {
+          lastmod: '2024-01-01',
+          changefreq: 'weekly',
+          priority: '0.5',
+        },
+      },
+    );
+
+    const xml = spy.mock.calls.at(-1)![1] as string;
+    expect(xml).toContain('<loc>http://host.com/about</loc>');
+    expect(xml).toContain('<lastmod>2024-01-01</lastmod>');
+    expect(xml).toContain('<changefreq>weekly</changefreq>');
+    expect(xml).toContain('<priority>0.5</priority>');
+  });
 });
