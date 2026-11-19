@@ -56,6 +56,9 @@
     "rolldown": "catalog:",
     "tinyglobby": "catalog:"
   },
+  "devDependencies": {
+    "@angular/build": "catalog:"
+  },
   "builders": "./dist/src/lib/tools/builders.json",
   "ng-update": {
     "packageGroup": [

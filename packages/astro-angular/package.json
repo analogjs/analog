@@ -59,6 +59,9 @@
     "@analogjs/vite-plugin-angular": "workspace:*",
     "rehype": "catalog:"
   },
+  "devDependencies": {
+    "@angular/build": "catalog:"
+  },
   "peerDependencies": {
     "@angular/build": "catalog:peerAngular20Plus",
     "@angular/animations": "catalog:peerAngular20Plus",
