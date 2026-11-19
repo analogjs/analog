@@ -40,6 +40,8 @@ interface FileMeta {
 export const TCB_TEMPLATE_SOURCES_PREFIX = 'ngp-tcb-template-sources:';
 
 const IGNORED_TCB_CODES = new Set([6133, 6199, 2695, 7006]);
+// "The inferred type of 'x' cannot be named": in-memory files are never emitted
+const IGNORED_IN_MEMORY_CODES = new Set([2742, 2883]);
 const BATCH_SIZE = 32;
 
 const TCB_IMPORT_ALIAS = /^(?:_tcb_)?_?i\d+$/;
@@ -347,6 +349,24 @@ const LSP_ARGS = ['--lsp', '--stdio'];
 /** LSP `FileChangeType`: 1 created, 2 changed, 3 deleted. */
 export type FileChangeType = 1 | 2 | 3;
 
+/** A reported location, with a one-based line and character. */
+export interface SourceLocation {
+  file: string;
+  line: number;
+  character: number;
+}
+
+/** Hooks for checking files that don't exist on disk. */
+export interface LspTypeCheckerHost {
+  /**
+   * The text of files that exist only in memory, by normalized path. They're
+   * opened before any check, so imports of them resolve.
+   */
+  inMemoryFiles(): ReadonlyMap<string, string>;
+  /** Maps a reported location to the source it was generated from. */
+  mapLocation(location: SourceLocation): SourceLocation;
+}
+
 function resolveTsgoBinary(tsconfig: string): string {
   if (process.env['TSNATIVE_BINARY_PATH'])
     return process.env['TSNATIVE_BINARY_PATH'];
@@ -421,11 +441,17 @@ export class LspTypeChecker {
     string,
     { sourceCode: string; tcbCode?: string | null }
   >();
+  /** The text last sent for each open in-memory file. */
+  private inMemoryText = new Map<string, string>();
   private buffer = Buffer.alloc(0);
   private exitError: Error | undefined;
   readonly ready: Promise<void>;
 
-  constructor(tsconfig: string, option: TypeCheckerOption = 'tsgo') {
+  constructor(
+    tsconfig: string,
+    option: TypeCheckerOption = 'tsgo',
+    private readonly host?: LspTypeCheckerHost,
+  ) {
     const cwd = dirname(tsconfig);
     const { command, args } = resolveTypeChecker(tsconfig, option);
     this.proc = spawn(command, args, {
@@ -522,6 +548,7 @@ export class LspTypeChecker {
     sourceLineCount?: number,
     lines?: string[],
     tcbRanges?: TcbLineRange[],
+    inMemory = false,
   ): Promise<string[]> {
     const resolvedPath = resolve(filePath);
     const errors: string[] = [];
@@ -530,6 +557,7 @@ export class LspTypeChecker {
     });
     for (const item of (diag?.items ?? []) as LspDiagnostic[]) {
       if (item.severity !== 1) continue;
+      if (inMemory && IGNORED_IN_MEMORY_CODES.has(Number(item.code))) continue;
       const line = item.range.start.line;
       if (sourceLineCount !== undefined && line >= sourceLineCount) {
         if (
@@ -543,17 +571,28 @@ export class LspTypeChecker {
             range && lines && templateLocation(range, lines, item.range.start);
           errors.push(
             location
-              ? `${location.file}:${location.line}:${location.character} - error TS${item.code}: ${item.message}`
+              ? `${this.formatLocation(location)} - error TS${item.code}: ${item.message}`
               : `${range?.filePath ?? filePath} (template): error TS${item.code}: ${item.message}`,
           );
         }
       } else {
+        const location = {
+          file: filePath,
+          line: line + 1,
+          character: item.range.start.character + 1,
+        };
         errors.push(
-          `${filePath}:${line + 1}:${item.range.start.character + 1} - error TS${item.code}: ${item.message}`,
+          `${this.formatLocation(location)} - error TS${item.code}: ${item.message}`,
         );
       }
     }
     return errors;
+  }
+
+  private formatLocation(location: SourceLocation): string {
+    const { file, line, character } =
+      this.host?.mapLocation(location) ?? location;
+    return `${file}:${line}:${character}`;
   }
 
   /** Reports a change on disk; an open copy is closed so the checker rereads the file. */
@@ -582,6 +621,31 @@ export class LspTypeChecker {
     this.queued.clear();
     await this.ready;
 
+    const toKey = (filePath: string) => filePath.replace(/\\/g, '/');
+    const inMemoryFiles = new Map(
+      [...(this.host?.inMemoryFiles() ?? [])].map(([filePath, text]) => [
+        toKey(filePath),
+        text,
+      ]),
+    );
+    const isInMemory = (filePath: string) => inMemoryFiles.has(toKey(filePath));
+    // Keep the checker's in-memory files in step with the host's
+    for (const filePath of this.inMemoryText.keys()) {
+      if (!inMemoryFiles.has(filePath)) {
+        this.inMemoryText.delete(filePath);
+        const uri = pathToFileURL(resolve(filePath)).href;
+        if (this.versions.delete(uri)) {
+          this.notify('textDocument/didClose', { textDocument: { uri } });
+        }
+      }
+    }
+    for (const [filePath, text] of inMemoryFiles) {
+      if (this.inMemoryText.get(filePath) !== text) {
+        this.inMemoryText.set(filePath, text);
+        this.updateDocument(filePath, text);
+      }
+    }
+
     const metas: FileMeta[] = [];
     let updatesCount = 0;
     const update = async (filePath: string, text: string) => {
@@ -608,7 +672,7 @@ export class LspTypeChecker {
       for (let i = 0; i < entries.length; i++) {
         const [filePath, { sourceCode, tcbCode }] = entries[i];
         const uri = pathToFileURL(resolve(filePath)).href;
-        if (tcbCode && !this.versions.has(uri)) {
+        if (tcbCode && !this.versions.has(uri) && !isInMemory(filePath)) {
           const relocated = relocateTcb(
             filePath,
             tcbCode,
@@ -632,7 +696,9 @@ export class LspTypeChecker {
         if (i === 0) continue;
 
         const { text, meta } = inPlaceDocument(filePath, sourceCode, tcbCode);
-        if (tcbCode || this.versions.has(uri)) await update(filePath, text);
+        if (tcbCode || this.versions.has(uri) || isInMemory(filePath)) {
+          await update(filePath, text);
+        }
         metas.push(meta);
       }
 
@@ -667,7 +733,11 @@ export class LspTypeChecker {
       }
 
       const hasHostTcb = hostTcbRanges.length > 0;
-      if (hasHostTcb || this.versions.has(hostUri)) {
+      if (
+        hasHostTcb ||
+        this.versions.has(hostUri) ||
+        isInMemory(hostFilePath)
+      ) {
         this.updateDocument(hostFilePath, hostLines.join('\n'));
       }
       metas.unshift({
@@ -680,7 +750,12 @@ export class LspTypeChecker {
       for (const [filePath, { sourceCode, tcbCode }] of entries) {
         const { text, meta } = inPlaceDocument(filePath, sourceCode, tcbCode);
         const uri = pathToFileURL(resolve(filePath)).href;
-        if (tcbCode || watchMode || this.versions.has(uri)) {
+        if (
+          tcbCode ||
+          watchMode ||
+          this.versions.has(uri) ||
+          isInMemory(filePath)
+        ) {
           await update(filePath, text);
         }
         metas.push(meta);
@@ -695,6 +770,7 @@ export class LspTypeChecker {
         first.sourceLineCount,
         first.lines,
         first.tcbRanges,
+        isInMemory(first.filePath),
       )),
     );
 
@@ -702,7 +778,13 @@ export class LspTypeChecker {
       const slice = metas.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
         slice.map(({ filePath, sourceLineCount, lines, tcbRanges }) =>
-          this.checkFile(filePath, sourceLineCount, lines, tcbRanges),
+          this.checkFile(
+            filePath,
+            sourceLineCount,
+            lines,
+            tcbRanges,
+            isInMemory(filePath),
+          ),
         ),
       );
       for (const res of batchResults) {

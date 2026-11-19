@@ -17,10 +17,7 @@ import {
   compile,
   scanFile,
   declaresNonStandaloneComponent,
-  scanPackageDts,
-  collectImportedPackages,
   collectRelativeReExports,
-  collectReExports,
   collectAllImports,
   jitTransform,
   inlineResourceUrls,
@@ -44,11 +41,8 @@ import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import { isRolldown } from './utils/rolldown.js';
 import { TsconfigResolver } from './utils/tsconfig-resolver.js';
-import type {
-  FastCompileApi,
-  FastCompileResolve,
-  FastCompileSourceFormat,
-} from './fast-compile-api.js';
+import type { FastCompileApi } from './fast-compile-api.js';
+import { ComponentScanner, type ResolveImport } from './component-scanner.js';
 import type { StylePreprocessor } from './style-preprocessor.js';
 import { preprocessStylesheet } from './stylesheet-registry.js';
 import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
@@ -88,8 +82,6 @@ function isFastCompilePluginOptions(
   );
 }
 
-type ResolveImport = (spec: string, importer: string) => Promise<string | null>;
-
 /**
  * Directory that `compilerOptions.paths` targets resolve against. Mirrors
  * TypeScript: `baseUrl` when set, otherwise the directory of the config
@@ -122,46 +114,9 @@ export function fastCompilePlugin(
     ? sharedCtx.options
     : (optionsOrCtx as FastCompilePluginOptions);
 
-  /** Source formats registered through `api.fastCompile.registerSourceFormat`. */
-  const sourceFormats: FastCompileSourceFormat[] = [];
-  const sourceFormatOf = (
-    file: string,
-  ): FastCompileSourceFormat | undefined => {
-    const path = file.split('?')[0];
-    return sourceFormats.find((format) => format.test(path));
-  };
-
-  /** Whether `file` is a module compiled through this plugin. */
-  const isCompiledSource = (file: string): boolean =>
-    TS_EXT_REGEX.test(file) || sourceFormatOf(file) !== undefined;
-
-  /**
-   * Reads a source file for registry scanning. Modules of a registered source
-   * format are converted to TypeScript first so the scanner sees their classes.
-   */
-  const readScanSource = async (file: string): Promise<string> => {
-    const code = await fsPromises.readFile(file, 'utf-8');
-    const format = sourceFormatOf(file);
-    return format ? format.toScanSource(code, file) : code;
-  };
-
-  /**
-   * Adapts a Vite-style resolver to the scanner's: only source files this
-   * plugin compiles, outside `node_modules` (package declarations come from
-   * the lazy `.d.ts` scanner instead).
-   */
-  const toResolveImport =
-    (resolve: FastCompileResolve): ResolveImport =>
-    async (spec, importer) => {
-      const resolved = await resolve(spec, importer);
-      if (!resolved || resolved.external) return null;
-      const file = normalizePath(resolved.id.split('?')[0]);
-      return isCompiledSource(file) &&
-        !EXCLUDED_TS_EXT_REGEX.test(file) &&
-        !file.includes('/node_modules/')
-        ? file
-        : null;
-    };
+  // Component registry shared with source formats through `api.fastCompile`
+  const scanner = new ComponentScanner();
+  const registry = scanner.registry;
 
   const tsconfigResolver =
     sharedCtx?.tsconfigResolver ??
@@ -180,19 +135,12 @@ export function fastCompilePlugin(
   let watchMode = false;
 
   // fast-compile plugin state
-  const registry: ComponentRegistry = new Map();
   const resourceToSource = new Map<string, string>();
-  const scannedDtsPackages = new Set<string>();
   const emittedMaps = new Map<string, string>();
-  let projectRoot = '';
   let useDefineForClassFields = true;
   let tsConfig: ReturnType<typeof compilerCli.readConfiguration>;
 
-  // Files scanned on demand (mapped to the barrel chain they pulled in), which
-  // modules were compiled against each scanned file, and the one-time
-  // whole-project scan non-standalone components fall back to.
-  const lazyScans = new Map<string, Promise<Set<string>>>();
-  const importersByFile = new Map<string, Set<string>>();
+  // The one-time whole-project scan non-standalone components fall back to.
   let projectScan: Promise<void> | undefined;
 
   /**
@@ -222,7 +170,7 @@ export function fastCompilePlugin(
     visited.add(file);
     let code: string;
     try {
-      code = fileContents?.get(file) ?? (await readScanSource(file));
+      code = fileContents?.get(file) ?? (await scanner.readScanSource(file));
       fileContents?.set(file, code);
     } catch (e) {
       if (debugRegistry.enabled) {
@@ -305,13 +253,10 @@ export function fastCompilePlugin(
     emittedMaps.clear();
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
-    registry.clear();
-    scannedDtsPackages.clear();
-    lazyScans.clear();
-    importersByFile.clear();
     projectScan = undefined;
     const resolvedTsConfigPath = resolveTsConfigPath();
-    projectRoot = dirname(resolvedTsConfigPath);
+    const projectRoot = dirname(resolvedTsConfigPath);
+    scanner.reset(projectRoot);
     tsConfig = compilerCli.readConfiguration(resolvedTsConfigPath);
     useDefineForClassFields = tsConfig.options?.useDefineForClassFields ?? true;
   }
@@ -331,6 +276,7 @@ export function fastCompilePlugin(
     // silently drops it because arrays don't have a directive def.
     const candidates = new Set<string>([...config.rootNames, ...extraIncludes]);
     const tsPaths = config.options?.paths;
+    const projectRoot = scanner.projectRoot;
     const baseUrl = getPathsBasePath(config.options, projectRoot);
     // Cold-start dedup caches shared by the three scan phases below
     // (candidates scan, walkImports, scanBarrelExports). Scoped to this
@@ -350,7 +296,7 @@ export function fastCompilePlugin(
     const results = await Promise.all(
       Array.from(candidates).map(async (file) => {
         try {
-          const code = await readScanSource(file);
+          const code = await scanner.readScanSource(file);
           fileContents.set(file, code);
           const entries = scanFile(code, file);
           scanResults.set(file, entries);
@@ -451,12 +397,12 @@ export function fastCompilePlugin(
       importWalkVisited.add(file);
       let code: string;
       try {
-        code = fileContents.get(file) ?? (await readScanSource(file));
+        code = fileContents.get(file) ?? (await scanner.readScanSource(file));
         fileContents.set(file, code);
       } catch {
         return;
       }
-      // Single parse shared by scanFile, collectImportedPackages, and
+      // Single parse shared by scanFile, the package `.d.ts` scan, and
       // collectAllImports. On a parse error each consumer re-parses on
       // its own, preserving their individual failure semantics.
       let program: ReturnType<typeof parseSync>['program'] | undefined;
@@ -479,22 +425,7 @@ export function fastCompilePlugin(
       // BrowserModule → CommonModule → NgIf). Doing this at buildStart means the
       // registry is complete before any component transforms, so non-standalone
       // component scope resolves regardless of file transform order.
-      for (const pkg of collectImportedPackages(code, file, program)) {
-        if (scannedDtsPackages.has(pkg)) continue;
-        scannedDtsPackages.add(pkg);
-        try {
-          for (const entry of scanPackageDts(
-            pkg,
-            projectRoot,
-            scannedDtsPackages,
-          )) {
-            if (!registry.has(entry.className))
-              registry.set(entry.className, entry);
-          }
-        } catch {
-          // Package may not have .d.ts or not be Angular
-        }
-      }
+      scanner.ensureDtsRegistryForSource(code, file, program);
       const dir = dirname(file);
       const targets = await Promise.all(
         collectAllImports(code, file, program).map((spec) => {
@@ -551,158 +482,6 @@ export function fastCompilePlugin(
       registry.size,
       candidates.size,
     );
-  }
-
-  function ensureDtsRegistryForSource(
-    code: string,
-    id: string,
-    program?: ReturnType<typeof parseSync>['program'],
-  ): void {
-    ensureDtsRegistryForPackages(collectImportedPackages(code, id, program));
-  }
-
-  /** Scan the `.d.ts` declarations of `packages` into the registry, once each. */
-  function ensureDtsRegistryForPackages(packages: Iterable<string>): void {
-    for (const pkg of packages) {
-      if (scannedDtsPackages.has(pkg)) continue;
-      scannedDtsPackages.add(pkg);
-
-      try {
-        const dtsEntries = scanPackageDts(
-          pkg,
-          // Before a tsconfig resolves, look up packages from the working directory.
-          projectRoot || process.cwd(),
-          scannedDtsPackages,
-        );
-        for (const entry of dtsEntries) {
-          if (!registry.has(entry.className)) {
-            registry.set(entry.className, entry);
-          }
-        }
-      } catch {
-        // Package may not have .d.ts files or may not be Angular
-      }
-    }
-  }
-
-  /**
-   * Scan the source files `id` imports into the registry on demand and record
-   * `id` as their importer, so a metadata change in any of them recompiles it.
-   */
-  async function resolveImportedDeclarations(
-    code: string,
-    id: string,
-    program: ReturnType<typeof parseSync>['program'],
-    resolveImport: ResolveImport,
-  ): Promise<void> {
-    await resolveImportSpecifiers(
-      collectAllImports(code, id, program),
-      id,
-      resolveImport,
-    );
-  }
-
-  /**
-   * Scan the files behind `specs`, imported by `id`, into the registry and
-   * record `id` as their importer.
-   */
-  async function resolveImportSpecifiers(
-    specs: string[],
-    id: string,
-    resolveImport: ResolveImport,
-  ): Promise<void> {
-    await Promise.all(
-      specs.map(async (spec) => {
-        const file = await resolveImport(spec, id);
-        if (!file) return;
-        for (const scanned of await scanOnDemand(file, resolveImport)) {
-          let importers = importersByFile.get(scanned);
-          if (!importers) {
-            importers = new Set();
-            importersByFile.set(scanned, importers);
-          }
-          importers.add(id);
-        }
-      }),
-    );
-  }
-
-  function scanOnDemand(
-    file: string,
-    resolveImport: ResolveImport,
-  ): Promise<Set<string>> {
-    let scan = lazyScans.get(file);
-    if (!scan) {
-      scan = scanWithReExports(file, resolveImport);
-      lazyScans.set(file, scan);
-    }
-    return scan;
-  }
-
-  /**
-   * Scan a file and everything it re-exports, resolving specifiers through
-   * Vite so path aliases work. Tuple barrels and NgModules can list classes
-   * their file imports without re-exporting, so their imports are followed
-   * too. Returns every file scanned.
-   */
-  async function scanWithReExports(
-    file: string,
-    resolveImport: ResolveImport,
-  ): Promise<Set<string>> {
-    const visited = new Set<string>();
-    const visit = async (current: string): Promise<void> => {
-      if (visited.has(current)) return;
-      visited.add(current);
-      let code: string;
-      let program: ReturnType<typeof parseSync>['program'];
-      try {
-        code = await readScanSource(current);
-        program = parseOxc(current, code).program;
-      } catch {
-        return;
-      }
-      const entries = scanFile(code, current, program);
-      for (const entry of entries) {
-        if (!registry.has(entry.className)) {
-          registry.set(entry.className, entry);
-        }
-      }
-      ensureDtsRegistryForSource(code, current, program);
-      const followsImports = entries.some(
-        (e) => e.kind === 'tuple' || e.kind === 'ngmodule',
-      );
-      const specifiers = followsImports
-        ? collectAllImports(code, current, program)
-        : collectReExports(code, current, program);
-      for (const spec of specifiers) {
-        const dep = await resolveImport(spec, current);
-        if (dep) await visit(dep);
-      }
-    };
-    await visit(file);
-    return visited;
-  }
-
-  /**
-   * The element selector of a component or directive class, for source formats
-   * that reference components by class. Includes registries contributed
-   * through `analog.setup()`.
-   */
-  function lookupSelector(className: string): string | null {
-    const registries = sharedCtx
-      ? sharedCtx.componentRegistries
-      : componentRegistries;
-    const entry =
-      registry.get(className) ??
-      registries.map((r) => r.get(className)).find((e) => e !== undefined);
-    if (!entry || (entry.kind !== 'component' && entry.kind !== 'directive')) {
-      return null;
-    }
-    return entry.selector;
-  }
-
-  function registryEntriesOf(file: string) {
-    return [...registry.values()].filter((e) => e.fileName === file);
   }
 
   async function handleFastCompileTransform(
@@ -807,7 +586,7 @@ export function fastCompilePlugin(
       for (let i = 0; i < styleStrings.length; i++) {
         const stylePath =
           stylePaths.get(i) ??
-          (sourceFormatOf(id) ? id + '.ts' : id).replace(
+          (scanner.sourceFormatOf(id) ? id + '.ts' : id).replace(
             /\.ts$/,
             `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
           );
@@ -841,12 +620,17 @@ export function fastCompilePlugin(
       if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
     }
 
-    ensureDtsRegistryForSource(code, id, oxcProgram);
+    scanner.ensureDtsRegistryForSource(code, id, oxcProgram);
 
     for (const entry of scanFile(code, id, oxcProgram)) {
       registry.set(entry.className, entry);
     }
-    await resolveImportedDeclarations(code, id, oxcProgram, resolveImport);
+    // Scan what `id` imports, and recompile it when their metadata changes.
+    await scanner.resolveImportSpecifiers(
+      collectAllImports(code, id, oxcProgram),
+      id,
+      resolveImport,
+    );
     if (declaresNonStandaloneComponent(oxcProgram)) {
       projectScan ??= scanProject();
       await projectScan;
@@ -907,7 +691,7 @@ export function fastCompilePlugin(
     // Append HMR code in dev mode
     const activeWatchMode = sharedCtx ? sharedCtx.watchMode : watchMode;
     if (activeWatchMode && pluginOptions.liveReload) {
-      const fileDeclarations = registryEntriesOf(id);
+      const fileDeclarations = scanner.entriesOf(id);
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
         outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
@@ -937,36 +721,19 @@ export function fastCompilePlugin(
   }
 
   const fastCompile: FastCompileApi = {
-    registerSourceFormat(format) {
-      if (!sourceFormats.includes(format)) {
-        sourceFormats.push(format);
-      }
-    },
-    scanImports(specifiers, importer, resolve) {
-      // Packages' Angular classes come from their `.d.ts` declarations;
-      // relative imports are scanned from source.
-      ensureDtsRegistryForPackages(
-        specifiers
-          .filter((spec) => !spec.startsWith('.') && !spec.startsWith('/'))
-          .map((spec) => {
-            const parts = spec.split('/');
-            return spec.startsWith('@')
-              ? parts.slice(0, 2).join('/')
-              : parts[0];
-          }),
-      );
-      return resolveImportSpecifiers(
-        specifiers,
-        importer,
-        toResolveImport(resolve),
-      );
-    },
-    resolveSelector: lookupSelector,
+    registerSourceFormat: (format) => scanner.registerSourceFormat(format),
+    scanImports: (specifiers, importer, resolve) =>
+      scanner.scanImports(specifiers, importer, resolve),
+    resolveSelector: (className) =>
+      scanner.lookupSelector(
+        className,
+        sharedCtx ? sharedCtx.componentRegistries : componentRegistries,
+      ),
     async compile(code, id, { resolve, mapToSource }) {
       const transformed = await handleFastCompileTransform(
         code,
         id,
-        toResolveImport(resolve),
+        scanner.toResolveImport(resolve),
       );
       if (!transformed) {
         return undefined;
@@ -1081,14 +848,13 @@ export function fastCompilePlugin(
         }
       }
 
-      if (isCompiledSource(ctx.file)) {
+      if (scanner.isCompiledSource(ctx.file)) {
         const [fileId] = ctx.file.split('?');
 
-        // Remove old entries from this file
-        const oldEntries = registryEntriesOf(fileId);
-        for (const entry of oldEntries) {
-          registry.delete(entry.className);
-        }
+        // Remove old entries from this file. Cached scans that pulled in
+        // this file may now be incomplete.
+        const oldEntries = scanner.entriesOf(fileId);
+        scanner.invalidate(fileId);
 
         // Rescan the changed file via the barrel-aware scanner so an
         // edited barrel re-export picks up newly-referenced files.
@@ -1098,14 +864,12 @@ export function fastCompilePlugin(
 
         // Importers compiled the old selector/inputs/outputs into their
         // templates, so recompile them when this file's metadata changed.
-        // Cached scans that pulled in this file may now be incomplete.
-        lazyScans.clear();
         const metadataChanged =
           JSON.stringify(oldEntries) !==
-          JSON.stringify(registryEntriesOf(fileId));
+          JSON.stringify(scanner.entriesOf(fileId));
         if (metadataChanged) {
           const importerModules = [
-            ...(importersByFile.get(fileId) ?? []),
+            ...(scanner.importersByFile.get(fileId) ?? []),
           ].flatMap((importer) => [
             ...(ctx.server.moduleGraph.getModulesByFile(importer) ?? []),
           ]);
@@ -1154,7 +918,7 @@ export function fastCompilePlugin(
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        const resolveImport = toResolveImport((spec, importer) =>
+        const resolveImport = scanner.toResolveImport((spec, importer) =>
           this.resolve(spec, importer, { skipSelf: true }),
         );
 

@@ -82,6 +82,42 @@ describe.each<TypeCheckerOption>(['tsgo', 'tsrs'])(
       expect(errors[0]).toContain("'missing'");
     });
 
+    it('follows the text and removal of in-memory files', async () => {
+      const dir = realpathSync(mkdtempSync(resolve(tmpdir(), 'lsp-checker-')));
+      try {
+        writeFileSync(
+          resolve(dir, 'tsconfig.json'),
+          JSON.stringify({ compilerOptions: { strict: true, noEmit: true } }),
+        );
+        const dep = resolve(dir, 'dep.ts');
+        const main = resolve(dir, 'main.ts');
+        const mainSource =
+          "import { value } from './dep';\nconst n: number = value;\n";
+        writeFileSync(main, mainSource);
+        const inMemory = new Map([[dep, 'export const value = 1;\n']]);
+        checker = new LspTypeChecker(resolve(dir, 'tsconfig.json'), option, {
+          inMemoryFiles: () => inMemory,
+          mapLocation: (location) => location,
+        });
+        checker.queueFile(main, mainSource);
+        expect(await checker.flushQueue(true)).toEqual([]);
+
+        inMemory.set(dep, "export const value = 'one';\n");
+        checker.queueFile(main, mainSource);
+        expect(await checker.flushQueue(true)).toEqual([
+          expect.stringContaining('TS2322'),
+        ]);
+
+        inMemory.delete(dep);
+        checker.queueFile(main, mainSource);
+        expect(await checker.flushQueue(true)).toEqual([
+          expect.stringContaining('TS2307'),
+        ]);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
     it.each([
       { depOpen: false, state: 'unopened' },
       { depOpen: true, state: 'open' },

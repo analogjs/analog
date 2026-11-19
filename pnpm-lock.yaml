@@ -1691,7 +1691,7 @@ importers:
         specifier: 'catalog:'
         version: 0.6.2(@typescript-eslint/types@8.70.1)
       typescript:
-        specifier: 'catalog:'
+        specifier: '*'
         version: 6.0.3
       vite:
         specifier: catalog:peerCompat

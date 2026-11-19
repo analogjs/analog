@@ -6,8 +6,11 @@ import nitro from '@analogjs/vite-plugin-nitro';
 import { tsrxAngular } from '@analogjs/tsrx-angular';
 import { defineConfig } from 'vite';
 
-// Demo app for TSRX components (`.tsrx`) in Analog. TSRX compiles through the
-// fast compile path, so `angular()` runs with `fastCompile: true`.
+// Demo app for TSRX components (`.tsrx`) in Analog. TSRX compiles through NGP,
+// which also type-checks it; `ANALOG_FAST_COMPILE=true` uses the fast compile
+// path instead.
+const fastCompile = process.env['ANALOG_FAST_COMPILE'] === 'true';
+
 export default defineConfig(() => {
   return {
     root: import.meta.dirname,
@@ -28,7 +31,7 @@ export default defineConfig(() => {
         },
       }),
       tsrxAngular(),
-      angular({ fastCompile: true }),
+      angular(fastCompile ? { fastCompile: true } : { compilation: 'ngp' }),
       nitro(),
     ],
   };

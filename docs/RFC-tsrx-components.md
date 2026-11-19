@@ -1,8 +1,8 @@
 # RFC: TSRX Components for Angular
 
-**Status:** Implemented, experimental (feat/tsrx-angular branch)
+**Status:** Implemented, experimental (analogjs/analog#2789; NGP compilation in analogjs/analog#2791)
 **Author:** Brandon Roberts
-**Date:** 2026-11-17
+**Date:** 2026-11-17, updated 2026-11-18
 **Packages:** @analogjs/tsrx-angular (new, private), @analogjs/vite-plugin-angular, @analogjs/platform, @analogjs/router
 
 ---
@@ -26,9 +26,10 @@ export function Counter() @{
 ```
 
 A new Vite plugin, `@analogjs/tsrx-angular`, lowers each `.tsrx` module to
-an ordinary `@Component` class and hands it to the fast compile path of
-`@analogjs/vite-plugin-angular`. The Angular compiler then analyzes,
-type-checks, and generates code for it like any other component. `.tsrx` files
+an ordinary `@Component` class and hands it to `@analogjs/vite-plugin-angular`,
+through either its fast compile path or NGP compilation. The Angular compiler
+then analyzes and generates code for it like any other component; under NGP it
+also type-checks the setup code and template expressions. `.tsrx` files
 work as components, layouts, and `@analogjs/router` pages (`.page.tsrx`), and
 the plugin writes TypeScript declarations for them so `tsc` and editors can
 type-check imports of them.
@@ -36,6 +37,8 @@ type-check imports of them.
 ```ts
 // vite.config.ts
 plugins: [analog(), tsrxAngular(), angular({ fastCompile: true })];
+// or, with type checking:
+plugins: [analog(), tsrxAngular(), angular({ compilation: 'ngp' })];
 ```
 
 ## Motivation
@@ -51,9 +54,9 @@ plugins: [analog(), tsrxAngular(), angular({ fastCompile: true })];
   `input()`/`output()`/`model()`, DI, providers, host bindings, control flow,
   `@defer`, hydration, and SSR all behave as they do for hand-written
   components. TSRX components and `.ts` components import each other freely.
-- **A test of the fast compile path's extensibility.** Supporting another
-  source format exercises the fast compiler as a general Angular backend, and
-  the `api.fastCompile` hooks added for it are format-agnostic.
+- **A test of the compilers' extensibility.** Supporting another source format
+  exercises the fast compiler and NGP as general Angular backends, and the
+  `api.fastCompile` and `api.ngp` hooks added for it are format-agnostic.
 
 ## Design
 
@@ -178,9 +181,10 @@ elements once lowercased (`Button`, `A`, `Input`) are errors, since
 `document.createElement` would produce the native element; they need an
 `XMeta` selector.
 
-Tags for imported components resolve through the fast compiler's component
-registry, which now scans `.tsrx` modules and packages' `.d.ts` declarations on
-demand. Class and attribute selectors (`button[matButton]`, `.chip[role=option]`)
+Tags for imported components resolve through a component registry
+(`ComponentScanner`) that scans `.tsrx` modules, relative `.ts` sources and
+packages' `.d.ts` declarations on demand. Both compilers share it, so selector
+lookup doesn't depend on fast compile. Class and attribute selectors (`button[matButton]`, `.chip[role=option]`)
 are expanded with Angular's own `CssSelector` parser.
 
 ### Fast compile API
@@ -199,6 +203,57 @@ plugin, found with `findFastCompileApi(config.plugins)`:
   and records the remapped source map.
 
 Nothing in the API is TSRX-specific.
+
+### NGP compilation
+
+With `angular({ compilation: 'ngp' })`, the NGP plugin exposes `api.ngp`, found
+with `findNgpCompileApi(config.plugins)`:
+
+- `registerSourceFormat({ name, test, toScanSource, include, lower })`: `include`
+  globs the format's modules relative to the tsconfig's directory, and
+  `lower(code, path, { scanImports, resolveSelector })` returns the lowered
+  TypeScript with `mapToSource` (source maps), `toSourceLocation` (type
+  errors), and an optional lowering error.
+
+NGP analyzes the whole program when the build starts, and its WebAssembly
+analyzer reads files synchronously through a `hostFs` option. So the plugin
+lowers every module up front and serves each one through a `hostFs` overlay as a
+TypeScript file named after it, hiding the module itself:
+
+```
+src/app/components/price.tsrx  →  src/app/components/price.tsrx.ts (in memory)
+```
+
+`import './price.tsrx'` then resolves to the lowered file, and a tsconfig
+`include` of `src/**/*.ts` finds `.page.tsrx` modules nothing imports. Hiding the
+real file is required: NGP's `virtualFiles` option also serves the lowered code,
+but imports still resolve to the real `.tsrx` beside it.
+
+- **Changes.** `watchChange`, which the dev server runs with or without HMR
+  and `vite build --watch` runs too, lowers an edited module again along with
+  the modules that looked up selectors in it, lowers new modules, drops removed
+  ones, and passes the results to the analyzer. Lowering and those analyzer
+  updates run one change at a time, so the modules a change lowers again reach
+  the analyzer together. A module is also lowered on each transform, as with
+  fast compile, and registers the files its selectors came from as watch files,
+  so it's transformed again when they change. Modules are keyed by path with
+  symlinked directories resolved.
+- **HMR.** In-place component updates work as for `.ts` components. NGP names
+  components by their program file (`price.tsrx.ts`), so the plugin uses the
+  module's path in component ids, the module the dev server knows.
+- **Source maps** combine NGP's map with `TsrxSourceMap`.
+- **Type checking.** NGP's type-check blocks run through `tsgo`, which reads
+  from disk, so lowered files are opened as in-memory documents before any
+  check, and every reported location is mapped back to the `.tsrx` module.
+  Template expressions are closures in the lowered code, so they're
+  type-checked along with the setup code, and `.ts` templates' bindings to
+  TSRX inputs are checked against the inputs' types. "Inferred type cannot be
+  named" errors (TS2742, TS2883) are ignored in lowered files, which are never
+  emitted; their declarations come from the type generator with
+  `stripInternal`.
+- **Backend.** Only the WebAssembly analyzer takes `hostFs`, so a native
+  analyzer build (`ANALOG_NGP_NATIVE_BINDING`) is an error with TSRX. The
+  Angular team expects to ship `@angular/ngp` as WebAssembly first.
 
 ### Routing
 
@@ -249,7 +304,10 @@ directory. Works with `tsc` and `tsgo`.
 
 ### Constraints
 
-- Fast compile only (`angular({ fastCompile: true })`).
+- Fast compile (`angular({ fastCompile: true })`) or NGP compilation
+  (`angular({ compilation: 'ngp' })`), not the default ngtsc path.
+- Under NGP, modules must be under the tsconfig's directory, and the tsconfig's
+  `include` must cover their `.tsrx.ts` names.
 - Components take no parameters and can't be `async` or generators; inputs are
   `input()`/`model()`.
 - Member APIs become class fields, initialized before the body runs, so their
@@ -275,10 +333,15 @@ directory. Works with `tsc` and `tsgo`.
 | `packages/tsrx-angular/src/index.ts`                                                                                           | Exports `tsrx`, `lowerTsrx`, `defaultSelector`, `TsrxSourceMap`, and option/result types                                                    |
 | `packages/vite-plugin-angular/src/lib/fast-compile-api.ts`                                                                     | `FastCompileApi` types and `findFastCompileApi()`                                                                                           |
 | `packages/vite-plugin-angular/src/lib/fast-compile-plugin.ts`                                                                  | Registered source formats in scans and HMR, `scanImports` for relative and package imports, `resolveSelector`, `compile`                    |
+| `packages/vite-plugin-angular/src/lib/component-scanner.ts`                                                                    | `ComponentScanner`: the on-demand component registry, shared by fast compile and NGP                                                        |
+| `packages/vite-plugin-angular/src/lib/ngp-compile-api.ts`                                                                      | `NgpCompileApi` types and `findNgpCompileApi()`                                                                                             |
+| `packages/vite-plugin-angular/src/lib/ngp-compile-plugin.ts`                                                                   | `api.ngp`: lowering at build start, re-lowering on change, program files in transform, HMR and type checking                                |
+| `packages/vite-plugin-angular/src/lib/utils/ngp-host-fs.ts`                                                                    | The `hostFs` overlay serving lowered modules as `<module>.ts`                                                                               |
+| `packages/vite-plugin-angular/src/lib/utils/lsp-type-checker.ts`                                                               | In-memory files opened before checks; reported locations mapped to their source                                                             |
 | `packages/platform/src/lib/{route-file-discovery,route-manifest,router-plugin,typed-routes-plugin,discover-library-routes}.ts` | `.page.tsrx` as route files                                                                                                                 |
 | `packages/router/src/lib/route-builder.ts`                                                                                     | Strips `.page.tsrx` when deriving route paths                                                                                               |
-| `apps/tsrx-app`                                                                                                                | Demo app where every page, layout, and component is a `.tsrx` file                                                                          |
-| `apps/tsrx-app-e2e-playwright`                                                                                                 | End-to-end tests for the demo app                                                                                                           |
+| `apps/tsrx-app`                                                                                                                | Demo app where every page, layout, and component is a `.tsrx` file; built with NGP, or fast compile with `ANALOG_FAST_COMPILE=true`         |
+| `apps/tsrx-app-e2e-playwright`                                                                                                 | End-to-end tests for the demo app, run in CI                                                                                                |
 
 Separately merged to `beta`: fast compile now lazy-loads defer-only
 dependencies (analogjs/analog#2784, fixing #2785).
@@ -306,9 +369,30 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
        └─ node_modules/.analog/tsrx-types/**/foo.d.tsrx.ts
 ```
 
+Under NGP:
+
+```
+tsrxAngular() configResolved
+  └─ findNgpCompileApi(plugins).registerSourceFormat({ include: **/*.tsrx, lower, … })
+
+NGP buildStart
+  ├─ glob include → lower(code, { scanImports, resolveSelector }) for each module
+  └─ createAnalyzer(tsconfig, { hostFs: overlay serving foo.tsrx.ts, hiding foo.tsrx })
+
+transform(foo.tsrx)
+  ├─ lowering error? → this.error() at the .tsrx position
+  ├─ compile foo.tsrx.ts → type-check (tsgo, in-memory document) → errors at .tsrx positions
+  └─ transpile, source map remapped to foo.tsrx
+
+watchChange(foo.tsrx or an imported .ts)
+  └─ lower again (+ importers), add or drop modules → updateFileContent
+
+handleHotUpdate → in-place HMR, or reload
+```
+
 ## Test Coverage
 
-- **`tsrx-angular`**: 62 tests.
+- **`tsrx-angular`**: 76 tests.
   - `lower.spec.ts` (49): class shape; compiling with the fast compiler;
     `@if`/`@for`/`@switch`/`@try`→`@boundary`; native `@boundary` with `let`,
     `$error`, multiple `@error` blocks, and `when` conditions compiled to read
@@ -332,13 +416,25 @@ vite build (buildStart, once) / dev server (startup + watcher, debounced)
     `tsc` type-checking of `.tsrx` imports; unchanged files not rewritten and
     stale files removed; lowering errors keep previous declarations; custom
     `outDir`.
+  - `ngp.spec.ts` (14, real NGP): compiling `.tsrx` modules and their `.ts`
+    importers; modules nothing imports; selectors of imported `.ts` and `.tsrx`
+    components; importers lowered again after a selector change, with and
+    without HMR; a transform of code older than the latest change; in-place
+    HMR after a template change; modules added later, requested before their
+    file event, or removed before they could be read; a project reached
+    through a symlink; lowering and compile errors; type errors at `.tsrx`
+    positions, with the importer checked first.
+  - In `vite-plugin-angular`: a file fixed after a failed compile without a hot
+    update; the type checker following the text and removal of in-memory
+    files.
 - **`vite-plugin-angular`**: `fast-compile-api.spec.ts` (5): finding the API;
   compiling another format's TypeScript; scanning registered formats and
   packages; ignoring unregistered formats. Defer-only dependency tests in
   `component.spec.ts` (merged with #2784).
 - **`platform` / `router`**: `.page.tsrx` discovery, path derivation, and a TSRX
   layout paired with an index page.
-- **`tsrx-app-e2e-playwright`** (12, dev and production builds): `routeMeta` and
+- **`tsrx-app-e2e-playwright`** (12, production build with NGP in CI; also
+  passes with `ANALOG_FAST_COMPILE=true`): `routeMeta` and
   client navigation; inputs, outputs, providers, and two-way models after
   hydration; server loads, an API route, and a missing product; form actions,
   including a failed submission;
@@ -398,11 +494,11 @@ Deferred views and incremental hydration:
 
 ## Future Work
 
-- **Template type errors.** Only imports of `.tsrx` modules are type-checked by
-  `tsc`; an invalid expression inside a template is not. The declaration
-  generator already builds a program over the lowered code, so its semantic
-  diagnostics can be reported at `.tsrx` positions via `TsrxSourceMap`, in the
-  build, the dev server, or both.
+- **Template type errors outside NGP.** NGP type-checks templates and setup
+  code; with fast compile, and with `tsc` alone, only imports of `.tsrx`
+  modules are. The declaration generator already builds a program over the
+  lowered code, so its semantic diagnostics could be reported at `.tsrx`
+  positions via `TsrxSourceMap`.
 - **Multiple nodes per block.** `@defer`, `@if`, and `@for` blocks render one
   node because `@tsrx/core`'s parser requires it; lifting that is an upstream
   change.
@@ -418,6 +514,12 @@ Deferred views and incremental hydration:
   `routeMeta` exports with oxc, which can't parse TSRX, so `.page.tsrx` routes
   have no `routeMeta` in the generated route table. Runtime routing is not
   affected. Detecting it needs the TSRX parser from `@analogjs/platform`.
-- **The full compilation path.** Only the fast compile path is supported.
+- **The default compilation path.** ngtsc isn't supported; fast compile and
+  NGP are.
+- **NGP outside the tsconfig's directory.** `.tsrx` modules elsewhere, such as
+  pages in workspace libraries, aren't lowered. `hostFs` reads are synchronous,
+  so a module can't be lowered on first read.
+- **NGP's API.** `hostFs` isn't public yet; the overlay tracks the bundled
+  build and may need to follow changes before `@angular/ngp` ships.
 - **Publishing.** The package is private (`0.0.0`) and built from this
   repository.

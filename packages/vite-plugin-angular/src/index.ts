@@ -22,6 +22,13 @@ export {
   type FastCompileSourceFormat,
   type SourceMapInput,
 } from './lib/fast-compile-api.js';
+export {
+  findNgpCompileApi,
+  type NgpCompileApi,
+  type NgpLowerContext,
+  type NgpLoweredModule,
+  type NgpSourceFormat,
+} from './lib/ngp-compile-api.js';
 export type {
   RegistryEntry as ComponentRegistryEntry,
   RegistryInput as ComponentRegistryInput,

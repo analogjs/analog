@@ -318,3 +318,59 @@ export class XMap {
     );
   });
 });
+
+describe('NGP compile errors', () => {
+  const tmp = resolve(import.meta.dirname, '../../../../tmp');
+  let root: string;
+  let server: ViteDevServer | undefined;
+
+  afterEach(async () => {
+    await server?.close();
+    server = undefined;
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  const component = (
+    template: string,
+  ) => `import { Component } from '@angular/core';
+
+@Component({ selector: 'app-root', template: '${template}' })
+export class App {}
+`;
+
+  it('compiles a file fixed after a failed compile without a hot update', async () => {
+    mkdirSync(tmp, { recursive: true });
+    root = normalizePath(mkdtempSync(resolve(tmp, 'ngp-errors-')));
+    writeFileSync(
+      resolve(root, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: { strict: true, skipLibCheck: true, types: [] },
+        files: ['app.ts'],
+      }),
+    );
+    writeFileSync(resolve(root, 'app.ts'), component('<x-unknown />'));
+    server = await createServer({
+      configFile: false,
+      root,
+      logLevel: 'silent',
+      server: { middlewareMode: true, ws: false, watch: null },
+      optimizeDeps: { noDiscovery: true },
+      plugins: angular({
+        compilation: 'ngp',
+        jit: false,
+        disableTypeChecking: true,
+        tsconfig: resolve(root, 'tsconfig.json'),
+      }),
+    });
+    await expect(server.transformRequest('/app.ts')).rejects.toThrow(
+      /'x-unknown' is not a known element/,
+    );
+
+    // As in `vite build --watch`, which has no hot update
+    writeFileSync(resolve(root, 'app.ts'), component('<p>Fixed</p>'));
+    server.moduleGraph.invalidateAll();
+
+    const result = await server.transformRequest('/app.ts');
+    expect(result?.code).toMatch(/ɵɵtext\(\d+, ["']Fixed["']\)/);
+  });
+});
