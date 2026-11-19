@@ -72,7 +72,8 @@ catalog:
   '@vitest/coverage-v8': 5.0.0
   '@vitest/ui': 5.0.0
   # Nx 24.0.x deep-imports `@angular-devkit/architect/node/index.js`, which the
-  # exports map added in 0.2203.0 blocks. Keep 0.2202.x until Nx supports it.
+  # exports map added in 0.2203.0 blocks. Keep 0.2202.x until Nx ships the fix.
+  # https://github.com/nrwl/nx/issues/37955, fixed by https://github.com/nrwl/nx/pull/37951
   '@angular-devkit/architect': 0.2202.0
   '@angular-devkit/build-angular': 22.3.0
   '@angular-devkit/core': 22.3.0
