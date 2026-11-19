@@ -530,6 +530,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
                   publicDir,
                   routeSitemaps,
                   options.i18n,
+                  apiPrefix,
                 );
               }
 
@@ -626,6 +627,7 @@ export function nitro(pluginOptions: NitroPluginOptions = {}): Plugin[] {
               clientOutputPath,
               routeSitemaps,
               options.i18n,
+              apiPrefix,
             );
           }
 
