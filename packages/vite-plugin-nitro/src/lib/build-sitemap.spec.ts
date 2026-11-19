@@ -105,4 +105,19 @@ describe('build sitemap', () => {
     expect(xml).toContain('<changefreq>weekly</changefreq>');
     expect(xml).toContain('<priority>0.5</priority>');
   });
+
+  it('should still apply per-route sitemap config keyed without a leading slash', async () => {
+    const spy = vi.spyOn(fs, 'writeFileSync');
+
+    await buildSitemap(
+      config,
+      { host: 'http://host.com/' },
+      ['/about'],
+      'dist',
+      { about: { lastmod: '2024-01-01' } },
+    );
+
+    const xml = spy.mock.calls.at(-1)![1] as string;
+    expect(xml).toContain('<lastmod>2024-01-01</lastmod>');
+  });
 });
