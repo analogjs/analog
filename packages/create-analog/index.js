@@ -156,8 +156,8 @@ async function init() {
   const skipGit = fromBoolArg(argv.skipGit ?? argv['skip-git']) ?? false;
 
   // Internal flag (no prompt): when set, strip the `overrides` block that
-  // pins vite from the generated package.json. Defaults to keeping it,
-  // preserving current behavior.
+  // pins vite/vitest from the generated package.json. Defaults to keeping
+  // them, preserving current behavior.
   const skipViteOverrides = fromBoolArg(argv.skipViteOverrides);
 
   const getProjectName = () =>
@@ -370,6 +370,7 @@ async function init() {
 
   if (skipViteOverrides && pkg.overrides) {
     delete pkg.overrides.vite;
+    delete pkg.overrides.vitest;
     if (Object.keys(pkg.overrides).length === 0) {
       delete pkg.overrides;
     }
