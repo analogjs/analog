@@ -72,9 +72,10 @@ catalog:
   '@vitest/coverage-v8': 5.0.0
   '@vitest/ui': 5.0.0
   # Nx 24.0.x deep-imports `@angular-devkit/architect/node/index.js`, which the
-  # exports map added in 0.2203.0 blocks. Keep 0.2202.x until Nx ships the fix.
+  # exports map added in 0.2203.0 blocks. Patched by the graft in
+  # .grafts/nx-architect-node-subpath until Nx ships the fix.
   # https://github.com/nrwl/nx/issues/37955, fixed by https://github.com/nrwl/nx/pull/37951
-  '@angular-devkit/architect': 0.2202.0
+  '@angular-devkit/architect': 0.2203.0
   '@angular-devkit/build-angular': 22.3.0
   '@angular-devkit/core': 22.3.0
   '@angular-devkit/schematics': 22.3.0
@@ -269,6 +270,9 @@ catalogs:
   peerContentOptional:
     md4x: '>=0.0.29'
     satori: ^0.10.14
+patchedDependencies:
+  nx: .grafts/nx-architect-node-subpath/variants/v24.patch
+ignorePatchFailures: false
 
 # Build-script allowlists belong in the root package.json under pnpm.* config.
 # Keep this file focused on workspace membership and shared dependency versions.

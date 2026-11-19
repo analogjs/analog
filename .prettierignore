@@ -15,3 +15,5 @@ pnpm-lock.yaml
 **/routeTree.gen.ts
 /packages/vite-plugin-angular/ngp
 .nx/self-healing
+/.grafts/.cache
+/.grafts/.report

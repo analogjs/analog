@@ -43,6 +43,10 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile --prefer-offline
 
+      # Fails if a graft in .grafts/ isn't actually applied to node_modules.
+      - name: Graft check
+        run: npx -y @graftsync/cli@0.2.5 check
+
       # Start the distributed run. Agents are stopped once the last distributed
       # target (e2e) finishes; the run itself is finalized explicitly so a
       # failure in any step still records and shuts the run down cleanly.

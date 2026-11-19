@@ -1,0 +1,13 @@
+diff --git a/dist/src/adapter/ngcli-adapter.js b/dist/src/adapter/ngcli-adapter.js
+index c9755d663669cfbe1de29ba646a21216981b0731..1b37e1b2f109fe37fa02857c4a108552283a24ab 100644
+--- a/dist/src/adapter/ngcli-adapter.js
++++ b/dist/src/adapter/ngcli-adapter.js
+@@ -938,7 +938,7 @@ function saveProjectsConfigurationsInWrappedSchematic(host, content) {
+     }
+ }
+ async function getWrappedWorkspaceNodeModulesArchitectHost(workspace, root, projects) {
+-    const { WorkspaceNodeModulesArchitectHost: AngularWorkspaceNodeModulesArchitectHost, } = await (0, handle_import_1.handleImport)('@angular-devkit/architect/node/index.js');
++    const { WorkspaceNodeModulesArchitectHost: AngularWorkspaceNodeModulesArchitectHost, } = await (0, handle_import_1.handleImport)('@angular-devkit/architect/node');
+     class WrappedWorkspaceNodeModulesArchitectHost extends AngularWorkspaceNodeModulesArchitectHost {
+         constructor(workspace, root, projects) {
+             super(workspace, root);
