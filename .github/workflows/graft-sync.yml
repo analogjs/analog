@@ -9,7 +9,8 @@ name: Graft sync
 
 on:
   schedule:
-    - cron: '37 5 * * 1'
+    - cron: '30 11 * * *'
+      timezone: 'America/Chicago'
   workflow_dispatch:
 
 permissions:
