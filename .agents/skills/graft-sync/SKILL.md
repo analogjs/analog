@@ -126,15 +126,21 @@ When asked to capture a modification as a graft (new, or migrating an existing p
 6. **Check it:** `graft sync` (green), and the project's tests pass.
 7. **Find the variant's real range:** `graft replay <id>` checks every published version.
    Record what you learn in _History_.
-8. **Offer automation.** Without it, nothing re-verifies the graft when upstream releases. Ask
+8. **Check it in CI:** add a `graft check` step to the project's CI right after dependencies
+   are installed (`npx graft check`, or `npx -y @graftsync/cli@<version> check` without the
+   dependency). It fails the build when a graft isn't applied. It's a plain `run` step, so no
+   third-party action needs approving.
+9. **Offer automation.** Without it, nothing re-verifies the graft when upstream releases. Ask
    the person whether to set up the Graft GitHub Action, how often it should run (a `schedule`,
-   `workflow_dispatch`, or both), and whether grafts that need an agent should run one
-   (`agent-command`) or open an issue. If they agree, write `.github/workflows/graft-sync.yml`
-   following the action's README (`brandonroberts/graft/packages/action@main`, `contents`,
-   `pull-requests` and `issues: write`, the project's install step first), and add the action
-   with `sync: false` to their CI right after install. You can't do the GitHub side: tell them
-   to allow Actions to create pull requests (or use a GitHub App token as `github-token`) and to
-   add the agent's API key as a repository secret.
+   `workflow_dispatch`, or both), whether it should propose prereleases or only stable releases
+   (`tags: latest`), and whether grafts that need an agent should run one (`agent-command`) or
+   open an issue. If they agree, write `.github/workflows/graft-sync.yml` following the
+   action's README: `contents`, `pull-requests` and `issues: write`, the project's install step
+   first, and the action pinned to the release tag of the CLI version in use
+   (`brandonroberts/graft/packages/action@v<version>`) with `graft-command` at that same
+   version when the project doesn't depend on `@graftsync/cli`. You can't do the GitHub side:
+   tell them to allow Actions to create pull requests (or use a GitHub App token as
+   `github-token`) and to add the agent's API key as a repository secret.
 
 ## Rules
 
