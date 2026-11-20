@@ -1026,40 +1026,39 @@ export function ngtscCompilePlugin(
           }
         }
 
+        const importers = fileModules.flatMap((mod) => [...mod.importers]);
+        if (importers.length === 0) return [];
+
+        importers.forEach((imp) =>
+          hmrCtx.server.moduleGraph.invalidateModule(imp),
+        );
+        await hotUpdates.schedule(
+          hmrCtx.file,
+          importers.map((imp) => imp.id as string),
+        );
+
+        // Classify after compiling: the compile is what records component
+        // class names, and the map may have been cleared since the last one.
         const mods: ModuleNode[] = [];
         const updates: string[] = [];
-        fileModules.forEach((mod) => {
-          mod.importers.forEach((imp) => {
-            hmrCtx.server.moduleGraph.invalidateModule(imp);
-
-            if (
-              ctx.shouldExternalizeStyles() &&
-              imp.id &&
-              ctx.hmr.classNames.get(imp.id)
-            ) {
-              updates.push(imp.id);
-            } else {
-              mods.push(imp);
-            }
-          });
+        importers.forEach((imp) => {
+          if (
+            ctx.shouldExternalizeStyles() &&
+            imp.id &&
+            ctx.hmr.classNames.get(imp.id)
+          ) {
+            updates.push(imp.id);
+          } else {
+            mods.push(imp);
+          }
         });
         debugHmrV('resource importer analysis', {
           file: hmrCtx.file,
           fileModuleCount: fileModules.length,
-          importerCount: fileModules.reduce(
-            (count, mod) => count + mod.importers.size,
-            0,
-          ),
+          importerCount: importers.length,
           updates,
           mods: mods.map((mod) => mod.id),
         });
-
-        if (mods.length === 0 && updates.length === 0) return mods;
-
-        await hotUpdates.schedule(hmrCtx.file, [
-          ...mods.map((mod) => mod.id as string),
-          ...updates,
-        ]);
 
         if (updates.length > 0) {
           debugHmr('resource importer component updates', {
