@@ -2,7 +2,7 @@
 id: nx-architect-node-subpath
 rootstock:
   package: nx
-  verified: 24.0.0
+  verified: 24.0.6
 mechanism: patch
 targets:
   - dist/src/adapter/ngcli-adapter.js
@@ -72,3 +72,4 @@ declares (`@angular-devkit/architect/node`) breaks.
   devkit 22.3 packages.
 - 2026-11-19: `graft replay` shows the v24 variant fits nx 24.0.0–24.0.6. The deep import is
   unchanged in 24.1.0-beta.2. Earlier majors (≤23.x) aren't covered and don't need to be.
+- 2026-11-20: Verified against nx@24.0.6 by `graft sync` (cheap path, variant ./variants/v24.patch unchanged).
