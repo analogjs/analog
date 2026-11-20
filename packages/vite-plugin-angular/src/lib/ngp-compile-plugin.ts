@@ -900,9 +900,7 @@ export function ngpCompilePlugin(
           .getModulesByFile(moduleFile)
           ?.forEach((mod) => server.moduleGraph.invalidateModule(mod));
         server.ws.send('angular:component-update', {
-          id: encodeURIComponent(
-            `${sourceFile ?? filesByPath.get(file)!.file.filePath}@${className}`,
-          ),
+          id: encodeURIComponent(`${moduleFile}@${className}`),
           timestamp: Date.now(),
         });
       });
@@ -1143,14 +1141,15 @@ export function ngpCompilePlugin(
         await checkTypes(filePath, code);
       }
       let source = result?.magicString.toString() ?? code;
-      if (lowered && result) {
-        // Component HMR ids name the program file; the dev server knows the module
-        source = source.replaceAll(
-          encodeURIComponent(
-            `${filesByPath.get(compiledFile)!.file.filePath}@`,
-          ),
-          encodeURIComponent(`${filePath}@`),
-        );
+      if (result) {
+        const analyzerFile = filesByPath.get(compiledFile)!.file.filePath;
+        if (analyzerFile !== filePath) {
+          // Component HMR ids name the analyzer's file; the dev server knows the module
+          source = source.replaceAll(
+            encodeURIComponent(`${analyzerFile}@`),
+            encodeURIComponent(`${filePath}@`),
+          );
+        }
       }
       const map = result?.magicString.generateMap({
         source: compiledFile,
