@@ -1,6 +1,6 @@
 # Re-verifies the grafts in .grafts/ when their upstream packages release.
-# A graft that still fits opens a PR with the bump (ci.yml checks behavior);
-# one that needs an agent or a human opens an issue with the sync report.
+# Skips upgrades when existing variants still fit unchanged (on-unchanged: skip);
+# opens a PR when a graft regenerates or an issue when a graft needs attention.
 #
 # Requires: Settings → Actions → General → "Allow GitHub Actions to create and
 # approve pull requests". Otherwise the action pushes the branch and opens an
@@ -50,11 +50,11 @@ jobs:
           test -n "$GIT_USER_NAME" && test -n "$GIT_USER_EMAIL" || { echo "::error::Set the GIT_USER_NAME and GIT_USER_EMAIL secrets"; exit 1; }
           git config user.name "$GIT_USER_NAME"
           git config user.email "$GIT_USER_EMAIL"
-      - uses: brandonroberts/graft/packages/action@108193710ec58d828f1c09200977a34edd369d51 # v0.2.9
+      - uses: brandonroberts/graft/packages/action@7da50797b60246804c030e1652275d785e8f5882 # v0.3.1
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
-          graft-command: npx -y @graftsync/cli@0.2.9
+          graft-command: npx -y @graftsync/cli@0.3.1
           commit-author: ${{ secrets.GIT_USER_NAME }} <${{ secrets.GIT_USER_EMAIL }}>
           install-command: pnpm install --frozen-lockfile
           base-branch: beta
