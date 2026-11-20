@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import MagicString from 'magic-string';
 import { parseSync } from 'oxc-parser';
+import { fromWasmPath } from './ngp-host-fs.js';
 
 interface LspDiagnostic {
   range: { start: { line: number; character: number } };
@@ -202,11 +203,14 @@ function templateLocation(
 
   const id = /(tcb\d+)$/.exec(tcbFunction.id.name)![1];
   const source = range.templateSources[id];
-  const file = source?.templateFile ?? range.filePath;
+  const templateFile = source?.templateFile
+    ? fromWasmPath(source.templateFile)
+    : undefined;
+  const file = templateFile ?? range.filePath;
   let content = range.sourceCode;
-  if (source?.templateFile) {
+  if (templateFile) {
     try {
-      content = readFileSync(source.templateFile, 'utf-8');
+      content = readFileSync(templateFile, 'utf-8');
     } catch {
       return null;
     }
