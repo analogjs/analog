@@ -70,8 +70,10 @@ Reports from `sync` land in `.grafts/.report/` (`sync.md`, `sync.json`, and per 
    If the project has an `upgrade` command, read its output in the report ("Output of …" in
    `sync.md`, `installOutput` in `sync.json`) even when sync is green. A tool may have left
    work for you there: e.g. `nx migrate --agentic` run from inside an agent prints steps for the
-   calling agent and leaves the migrations unapplied. Do that work, and prove it with the
-   project's tests, before you call the upgrade done.
+   calling agent and leaves the migrations unapplied. If the upgrade entry configures `needsAgentIf`,
+   `sync` marks the graft `needs-agent` (exit 1) without bumping `verified` until you finish those
+   steps and re-run `graft sync`. Either way, finish that work and prove it with the project's
+   tests before you call the upgrade done.
 2. **Gather context for each `needs-agent` graft**, in this order:
    `graft show <id>` → the reasons in the sync report → `graft check <id> --version <target>` →
    `graft diff <id>` (from `verified` to the target).
