@@ -1,3 +1,9 @@
+# [3.0.0-beta.53](https://github.com/analogjs/analog/compare/v3.0.0-beta.52...v3.0.0-beta.53) (2026-11-20)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** translate Windows paths at NGP WebAssembly boundary ([#2811](https://github.com/analogjs/analog/issues/2811)) ([506d646](https://github.com/analogjs/analog/commit/506d6465a928b74277f510d507f53222d6ec9d46))
+
 # [3.0.0-beta.52](https://github.com/analogjs/analog/compare/v3.0.0-beta.51...v3.0.0-beta.52) (2026-11-19)
 
 ### Bug Fixes
