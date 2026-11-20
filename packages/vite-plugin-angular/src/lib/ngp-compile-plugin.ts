@@ -46,6 +46,8 @@ import {
 import {
   canonicalPath,
   createNgpHostFs,
+  fromWasmPath,
+  toWasmPath,
   type NgpHostFs,
 } from './utils/ngp-host-fs.js';
 import { isRolldown } from './utils/rolldown.js';
@@ -273,6 +275,8 @@ export function ngpCompilePlugin(
   let compiler: NgpCompiler | undefined;
   let typeChecker: LspTypeChecker | undefined;
   let api: NgpApi;
+  let toAnalyzerPath = (path: string) => path;
+  let fromAnalyzerPath = vite.normalizePath;
   const filesByPath = new Map<string, { file: NgpFile; chunk: NgpChunk }>();
   const chunkContexts = new Map<NgpChunk, Promise<unknown>>();
   const output = new Map<string, Promise<NgpResult>>();
@@ -490,7 +494,14 @@ export function ngpCompilePlugin(
     if (updates.length === 0) return;
     for (const { filePath, content } of updates)
       analyzed.set(filePath, content);
-    await enqueueIndex(() => analyzer!.updateFileContent(updates));
+    await enqueueIndex(() =>
+      analyzer!.updateFileContent(
+        updates.map(({ filePath, content }) => ({
+          filePath: toAnalyzerPath(filePath),
+          content,
+        })),
+      ),
+    );
   }
 
   /** Reads a source file, or `undefined` if it was removed. */
@@ -519,7 +530,7 @@ export function ngpCompilePlugin(
     analyzed.set(programFile, sourceModule.lowered.code);
     await enqueueIndex(() =>
       analyzer!.invalidateFiles([
-        { filePath: programFile, updateType: FILE_CREATED },
+        { filePath: toAnalyzerPath(programFile), updateType: FILE_CREATED },
       ]),
     );
   }
@@ -532,7 +543,7 @@ export function ngpCompilePlugin(
     if (!sourceModules.delete(programFile)) return;
     await enqueueIndex(() =>
       analyzer!.invalidateFiles([
-        { filePath: programFile, updateType: FILE_DELETED },
+        { filePath: toAnalyzerPath(programFile), updateType: FILE_DELETED },
       ]),
     );
   }
@@ -586,7 +597,8 @@ export function ngpCompilePlugin(
     file: NgpFile,
     watch: (path: string) => void,
   ): Promise<NgpFile> {
-    watch(file.filePath);
+    const hostFilePath = fromAnalyzerPath(file.filePath);
+    watch(hostFilePath);
     const activeConfig = sharedCtx?.resolvedConfig ?? resolvedConfig;
     const activeStylePreprocessor =
       sharedCtx?.stylePreprocessor ?? stylePreprocessor;
@@ -597,9 +609,10 @@ export function ngpCompilePlugin(
         file.classes.map(async (metadata, classIndex) => {
           const component = metadata.component;
           if (!component) return metadata;
-          if (component.templateUrl) watch(component.templateUrl.resolvedPath);
+          if (component.templateUrl)
+            watch(fromAnalyzerPath(component.templateUrl.resolvedPath));
           for (const style of component.styleUrls ?? [])
-            watch(style.resolvedPath);
+            watch(fromAnalyzerPath(style.resolvedPath));
           const preprocess = async (
             content: string,
             path: string,
@@ -612,7 +625,7 @@ export function ngpCompilePlugin(
               activeStylePreprocessor,
               {
                 filename: path,
-                containingFile: file.filePath,
+                containingFile: hostFilePath,
                 resourceFile: inline ? undefined : path,
                 className: metadata.className,
                 order,
@@ -637,7 +650,7 @@ export function ngpCompilePlugin(
                   component.styles.map((style, index) =>
                     preprocess(
                       style,
-                      `${file.filePath}.inline-${classIndex}-${index}.${options.inlineStylesExtension}`,
+                      `${hostFilePath}.inline-${classIndex}-${index}.${options.inlineStylesExtension}`,
                       index,
                       true,
                     ),
@@ -649,7 +662,9 @@ export function ngpCompilePlugin(
                   component.stylesFromUrls.map((style, index) =>
                     preprocess(
                       style,
-                      component.styleUrls![index].resolvedPath,
+                      fromAnalyzerPath(
+                        component.styleUrls![index].resolvedPath,
+                      ),
                       index,
                       false,
                     ),
@@ -666,7 +681,7 @@ export function ngpCompilePlugin(
     if (update) {
       const invalidated = await update();
       for (const filePath of invalidated) {
-        output.delete(vite.normalizePath(filePath));
+        output.delete(fromAnalyzerPath(filePath));
         compiler!.fileCache.delete(filePath);
       }
       chunkContexts.clear();
@@ -689,13 +704,13 @@ export function ngpCompilePlugin(
       : compiler!.analyzeOptimized();
     for await (const chunk of chunks) {
       for (const file of chunk.files) {
-        const normPath = vite.normalizePath(file.filePath);
+        const normPath = fromAnalyzerPath(file.filePath);
         filesByPath.set(normPath, { file, chunk });
         output.delete(normPath);
         compiler!.fileCache.delete(file.filePath);
       }
       for (const removed of chunk.removedFiles ?? []) {
-        const normPath = vite.normalizePath(removed);
+        const normPath = fromAnalyzerPath(removed);
         filesByPath.delete(normPath);
         output.delete(normPath);
       }
@@ -805,7 +820,11 @@ export function ngpCompilePlugin(
           );
         }
         if (options.disableTypeChecking !== true) {
-          await checkTypes(file.filePath, content, result.tcb?.code);
+          await checkTypes(
+            fromAnalyzerPath(file.filePath),
+            content,
+            result.tcb?.code,
+          );
         }
         return result;
       })();
@@ -997,18 +1016,26 @@ export function ngpCompilePlugin(
         const tsconfig = resolveTsConfigPath();
         const hasSourceFormats = sourceFormats.length > 0;
         const ngp = await loadNgp(tsconfig, hasSourceFormats);
+        const isWasm = ngp.analyzerOptions.backend === 'wasm';
+        toAnalyzerPath = isWasm ? toWasmPath : (path) => path;
+        fromAnalyzerPath = isWasm ? fromWasmPath : vite.normalizePath;
         api = ngp.api;
         if (hasSourceFormats) {
           await lowerSourceModules(dirname(tsconfig), (specifier, importer) =>
             this.resolve(specifier, importer, { skipSelf: true }),
           );
         }
-        analyzer = await api.createAnalyzer(tsconfig, {
+        analyzer = await api.createAnalyzer(toAnalyzerPath(tsconfig), {
           ...ngp.analyzerOptions,
           enableHmr: hmr,
-          hostFs: hasSourceFormats
-            ? createNgpHostFs((path) => sourceModules.get(path)?.lowered.code)
-            : undefined,
+          hostFs:
+            hasSourceFormats || isWasm
+              ? createNgpHostFs(
+                  hasSourceFormats
+                    ? (path) => sourceModules.get(path)?.lowered.code
+                    : undefined,
+                )
+              : undefined,
         });
         pending = indexChunks();
       }
@@ -1101,7 +1128,10 @@ export function ngpCompilePlugin(
         if (lowered) analyzed.set(compiledFile, compiledCode);
         await enqueueIndex(() =>
           analyzer!.updateFileContent([
-            { filePath: compiledFile, content: compiledCode },
+            {
+              filePath: toAnalyzerPath(compiledFile),
+              content: compiledCode,
+            },
           ]),
         );
         result = await compileFile(compiledFile, watch);
@@ -1175,7 +1205,7 @@ export function ngpCompilePlugin(
         if (!programFile) {
           await enqueueIndex(() =>
             analyzer!.invalidateFiles([
-              { filePath: ctx.file, updateType: FILE_CHANGED },
+              { filePath: toAnalyzerPath(ctx.file), updateType: FILE_CHANGED },
             ]),
           );
         }

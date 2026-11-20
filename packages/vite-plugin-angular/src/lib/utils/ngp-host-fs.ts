@@ -70,61 +70,93 @@ function toStat(
   };
 }
 
+const WINDOWS_DRIVE_RE = /^[A-Za-z]:(?:\/|$)/;
+const WASM_WINDOWS_DRIVE_RE = /^\/([A-Za-z]:)(\/|$)/;
+
+/**
+ * Converts a host path to the POSIX-absolute form NGP's WebAssembly backend
+ * expects (`D:\a\b` → `/D:/a/b`). POSIX and relative paths are unchanged.
+ */
+export function toWasmPath(path: string): string {
+  const normalized = normalizePath(path);
+  return WINDOWS_DRIVE_RE.test(normalized) ? `/${normalized}` : normalized;
+}
+
+/**
+ * Converts a path returned by NGP's WebAssembly backend back to a normalized
+ * host path (`/D:/a/b` → `D:/a/b`).
+ */
+export function fromWasmPath(path: string): string {
+  const normalized = normalizePath(path);
+  return normalized.replace(
+    WASM_WINDOWS_DRIVE_RE,
+    (_, drive: string, sep: string) => `${drive}${sep || '/'}`,
+  );
+}
+
 /**
  * The disk, with each module of a source format served as a TypeScript file
  * named after it (`x.tsrx` as `x.tsrx.ts`) and the module itself hidden, so an
- * import of `./x.tsrx` resolves to its TypeScript.
+ * import of `./x.tsrx` resolves to its TypeScript. Also translates Windows
+ * drive paths at the WebAssembly boundary.
  *
  * @param programCode The TypeScript of a module's program file, by the file's
  *   normalized, canonical path.
  */
 export function createNgpHostFs(
-  programCode: (path: string) => string | undefined,
+  programCode?: (path: string) => string | undefined,
 ): NgpHostFs {
-  const programFile = (path: string) => programCode(canonicalPath(path));
+  const programFile = (path: string) => programCode?.(canonicalPath(path));
   const isHidden = (path: string) =>
-    programCode(`${canonicalPath(path)}.ts`) !== undefined;
+    programCode?.(`${canonicalPath(path)}.ts`) !== undefined;
   const encoder = new TextEncoder();
 
   return {
     read(path) {
-      const code = programFile(path);
+      const hostPath = fromWasmPath(path);
+      const code = programFile(hostPath);
       if (code !== undefined) return encoder.encode(code);
-      if (isHidden(path)) return null;
-      const buffer = orNull(() => fs.readFileSync(path));
+      if (isHidden(hostPath)) return null;
+      const buffer = orNull(() => fs.readFileSync(hostPath));
       return buffer && new Uint8Array(buffer);
     },
     metadata(path) {
-      if (programFile(path) !== undefined) return FILE;
-      if (isHidden(path)) return null;
-      const stats = orNull(() => fs.statSync(path));
+      const hostPath = fromWasmPath(path);
+      if (programFile(hostPath) !== undefined) return FILE;
+      if (isHidden(hostPath)) return null;
+      const stats = orNull(() => fs.statSync(hostPath));
       return stats && toStat(stats);
     },
     symlinkMetadata(path) {
-      if (programFile(path) !== undefined) return FILE;
-      if (isHidden(path)) return null;
-      const stats = orNull(() => fs.lstatSync(path));
+      const hostPath = fromWasmPath(path);
+      if (programFile(hostPath) !== undefined) return FILE;
+      if (isHidden(hostPath)) return null;
+      const stats = orNull(() => fs.lstatSync(hostPath));
       return stats && toStat(stats);
     },
     readLink(path) {
-      return orNull(() => fs.readlinkSync(path, 'utf-8'));
+      const target = orNull(() => fs.readlinkSync(fromWasmPath(path), 'utf-8'));
+      return target !== null ? toWasmPath(target) : null;
     },
     canonicalize(path) {
-      if (programFile(path) !== undefined) {
-        const dir = orNull(() => fs.realpathSync(dirname(path)));
-        return dir && join(dir, basename(path));
+      const hostPath = fromWasmPath(path);
+      if (programFile(hostPath) !== undefined) {
+        const dir = orNull(() => fs.realpathSync(dirname(hostPath)));
+        return dir && toWasmPath(join(dir, basename(hostPath)));
       }
-      if (isHidden(path)) return null;
-      return orNull(() => fs.realpathSync(path));
+      if (isHidden(hostPath)) return null;
+      const real = orNull(() => fs.realpathSync(hostPath));
+      return real && toWasmPath(real);
     },
     readDir(path) {
+      const hostPath = fromWasmPath(path);
       const entries = orNull(() =>
-        fs.readdirSync(path, { withFileTypes: true }),
+        fs.readdirSync(hostPath, { withFileTypes: true }),
       );
       return (
         entries &&
         entries.map((entry) =>
-          isHidden(join(path, entry.name))
+          isHidden(join(hostPath, entry.name))
             ? { ...FILE, name: `${entry.name}.ts` }
             : { ...toStat(entry), name: entry.name },
         )
