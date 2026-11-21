@@ -1818,6 +1818,69 @@ export class AppComponent {}
     }
   }, 60_000);
 
+  it('sends a component update for a template edit after a non-component file change', async () => {
+    const mainPlugin = createAppBuildPlugin({ liveReload: true });
+    await mainPlugin.config({ root: fixtureDir }, { command: 'serve' });
+    const resolvedConfig = await resolveConfig(
+      { configFile: false, root: fixtureDir, mode: 'development' },
+      'serve',
+    );
+    mainPlugin.configResolved(resolvedConfig);
+    const ctx = {
+      environment: { config: resolvedConfig },
+      warn: vi.fn(),
+      error: vi.fn(),
+      addWatchFile: vi.fn(),
+    };
+    const server = {
+      moduleGraph: { invalidateModule: vi.fn(), getModulesByFile: vi.fn() },
+      ws: { send: vi.fn() },
+    };
+    const editTemplate = (content: string) => {
+      realFs.writeFileSync(templatePath, content);
+      return mainPlugin.handleHotUpdate({
+        file: templatePath,
+        modules: [
+          {
+            id: templatePath,
+            file: templatePath,
+            importers: new Set([{ id: componentPath }]),
+          },
+        ],
+        server,
+      });
+    };
+    const componentUpdates = () =>
+      server.ws.send.mock.calls.filter(
+        ([event]) => event === 'angular:component-update',
+      ).length;
+    try {
+      await mainPlugin.buildStart.call(ctx);
+      await mainPlugin.transform.handler.call(
+        ctx,
+        realFs.readFileSync(componentPath, 'utf8'),
+        componentPath,
+      );
+
+      await editTemplate('<h1>first</h1>');
+      expect(componentUpdates()).toBe(1);
+
+      const unrelated = normalizePath(path.join(fixtureDir, 'src/util.ts'));
+      realFs.writeFileSync(unrelated, 'export const util = 1;');
+      await mainPlugin.handleHotUpdate({
+        file: unrelated,
+        modules: [],
+        server,
+      });
+
+      await editTemplate('<h1>second</h1>');
+      expect(componentUpdates()).toBe(2);
+    } finally {
+      await mainPlugin.buildEnd.call(ctx);
+      await mainPlugin.closeBundle();
+    }
+  }, 60_000);
+
   it('refreshes diagnostics when a declaration changes without restarting', async () => {
     const declaration = path.join(fixtureDir, 'src/routes.d.ts');
     realFs.writeFileSync(declaration, "type RoutePath = '/about';");
