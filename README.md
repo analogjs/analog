@@ -76,7 +76,7 @@ Follow the prompts to scaffold the project and start the development server.
   &nbsp;&nbsp;
   <a href="https://snyder.tech/" target="_blank"><picture><source media="(prefers-color-scheme: dark)" srcset="./apps/docs-analog/public/img/logos/snyder-logo.light.svg"><img src="./apps/docs-analog/public/img/logos/snyder-logo.dark.svg" height="40" align="middle" alt="Snyder Tech" /></picture></a>
   &nbsp;&nbsp;
-  <a href="https://coderabbit.link/analogjs" target="_blank"><img src="./apps/docs-analog/public/img/logos/coderabbit.svg" height="40" align="middle" alt="CodeRabbit" /></a>
+  <a href="https://coderabbit.link/analogjs" target="_blank"><picture><source media="(prefers-color-scheme: dark)" srcset="./apps/docs-analog/public/img/logos/coderabbit.svg"><img src="./apps/docs-analog/public/img/logos/coderabbit.dark.svg" height="40" align="middle" alt="CodeRabbit" /></picture></a>
 </p>
 
 ## Supporting Analog
