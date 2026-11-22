@@ -31,7 +31,7 @@ import { localizeDocsLink } from '../routes';
       <div class="flex min-w-0 items-center gap-2 text-sm sm:gap-4">
         <docs-search />
         @if (headerNav().length > 0) {
-          <nav class="hidden gap-4 sm:flex">
+          <nav class="hidden gap-4 md:flex">
             @for (link of headerNav(); track link.label) {
               @if (link.linkTo) {
                 <a [linkTo]="localizeDocsLink(link.linkTo, locale())">{{
