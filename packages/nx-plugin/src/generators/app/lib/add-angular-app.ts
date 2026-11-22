@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { getWorkspaceLayout, Tree } from '@nx/devkit';
 import { NormalizedOptions } from '../generator';
 
@@ -8,7 +9,19 @@ export async function addAngularApp(
   const isNx = tree.exists('/nx.json');
   const appsDir = isNx ? getWorkspaceLayout(tree).appsDir : 'projects';
 
-  const { applicationGenerator } = await import('@nx/angular/generators');
+  let generators: typeof import('@nx/angular/generators');
+  try {
+    generators = await import('@nx/angular/generators');
+  } catch (error) {
+    // Nx's ensurePackage registers packages on NODE_PATH, which Node's ESM loader ignores.
+    try {
+      generators = createRequire(__filename)('@nx/angular/generators');
+    } catch {
+      throw error;
+    }
+  }
+
+  const { applicationGenerator } = generators;
   type ApplicationSchema = Parameters<typeof applicationGenerator>[1];
   const appOptions: ApplicationSchema = {
     name: options.analogAppName,
