@@ -1,3 +1,10 @@
+# [3.0.0-beta.55](https://github.com/analogjs/analog/compare/v3.0.0-beta.54...v3.0.0-beta.55) (2026-11-22)
+
+### Bug Fixes
+
+- **nx-plugin:** fall back to CJS require when loading @nx/angular/generators ([#2819](https://github.com/analogjs/analog/issues/2819)) ([69e06d5](https://github.com/analogjs/analog/commit/69e06d585ba1e4c8d7de2ecbb760fc32200c2298))
+- **vite-plugin-angular:** let Vite choose legacy builder when no config.builder is set ([#2820](https://github.com/analogjs/analog/issues/2820)) ([aefadea](https://github.com/analogjs/analog/commit/aefadea28c716d9a888f69c11a86493745c90d31))
+
 # [3.0.0-beta.54](https://github.com/analogjs/analog/compare/v3.0.0-beta.53...v3.0.0-beta.54) (2026-11-22)
 
 ### Bug Fixes
