@@ -71,17 +71,13 @@ Follow the prompts to scaffold the project and start the development server.
 
 ### Sponsors
 
-<a href="https://nx.dev" target="_blank">
-  <img src="./apps/docs-analog/public/img/logos/nx-logo.dark.svg" width="100px" height="100px" alt="NxDevTools" />
-</a>
-
-<a href="https://snyder.tech/" target="_blank">
-  <img src="./apps/docs-analog/public/img/logos/snyder-logo.light.svg" width="250px" height="100px" alt="Snyder Tech" />
-</a>
-
-<a href="https://coderabbit.link/analogjs" target="_blank">
-  <img src="./apps/docs-analog/public/img/logos/coderabbit.svg" width="250px" height="100px" alt="CodeRabbit" />
-</a>
+<p>
+  <a href="https://nx.dev" target="_blank"><picture><source media="(prefers-color-scheme: dark)" srcset="./apps/docs-analog/public/img/logos/nx-logo.light.svg"><img src="./apps/docs-analog/public/img/logos/nx-logo.dark.svg" height="80" align="middle" alt="Nx" /></picture></a>
+  &nbsp;&nbsp;
+  <a href="https://snyder.tech/" target="_blank"><picture><source media="(prefers-color-scheme: dark)" srcset="./apps/docs-analog/public/img/logos/snyder-logo.light.svg"><img src="./apps/docs-analog/public/img/logos/snyder-logo.dark.svg" height="40" align="middle" alt="Snyder Tech" /></picture></a>
+  &nbsp;&nbsp;
+  <a href="https://coderabbit.link/analogjs" target="_blank"><picture><source media="(prefers-color-scheme: dark)" srcset="./apps/docs-analog/public/img/logos/coderabbit.svg"><img src="./apps/docs-analog/public/img/logos/coderabbit.dark.svg" height="40" align="middle" alt="CodeRabbit" /></picture></a>
+</p>
 
 ## Supporting Analog
 
