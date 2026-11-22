@@ -1,3 +1,9 @@
+# [3.0.0-beta.54](https://github.com/analogjs/analog/compare/v3.0.0-beta.53...v3.0.0-beta.54) (2026-11-22)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** keep template HMR in place after non-component file changes ([#2817](https://github.com/analogjs/analog/issues/2817)) ([e1d5a77](https://github.com/analogjs/analog/commit/e1d5a77fc2392bdc01e0c54650e358558a6f6cb3))
+
 # [3.0.0-beta.53](https://github.com/analogjs/analog/compare/v3.0.0-beta.52...v3.0.0-beta.53) (2026-11-20)
 
 ### Bug Fixes
