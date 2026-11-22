@@ -12,7 +12,7 @@ async function viteBuilder(
   options: ViteBuildSchema,
   context: BuilderContext,
 ): Promise<BuilderOutput> {
-  const { createBuilder } = await import('vite');
+  const { createBuilder } = await Function('return import("vite")')();
   if (!context.target) {
     throw new Error('Builder must be executed with a target');
   }

@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { BuilderContext, BuilderOutput } from '@angular-devkit/architect';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@angular-devkit/architect', async (importOriginal) => {
   const actual =
@@ -15,6 +15,8 @@ vi.mock('@angular-devkit/architect', async (importOriginal) => {
 
 import viteBuilderDefault from './vite-build.impl';
 import type { ViteBuildSchema } from './schema';
+
+const OriginalFunction = globalThis.Function;
 
 const viteBuilder = viteBuilderDefault as (
   options: ViteBuildSchema,
@@ -46,7 +48,19 @@ function createMockContext(workspaceRoot: string): BuilderContext {
 describe('viteBuilder', () => {
   const tempDirs: string[] = [];
 
+  beforeEach(() => {
+    vi.spyOn(globalThis, 'Function').mockImplementation(((
+      ...args: string[]
+    ) => {
+      if (args.length === 1 && args[0] === 'return import("vite")') {
+        return () => import('vite');
+      }
+      return OriginalFunction(...args);
+    }) as unknown as FunctionConstructor);
+  });
+
   afterEach(() => {
+    vi.restoreAllMocks();
     for (const dir of tempDirs.splice(0)) {
       rmSync(dir, { recursive: true, force: true });
     }
