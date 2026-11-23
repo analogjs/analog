@@ -1,9 +1,30 @@
 import { describe, it, expect } from 'vitest';
 import { moduleRunnerTransformSync, transformSync } from 'oxc-transform';
+import { angularVersionAtLeast } from './angular-version';
 import { jitTransform } from './jit-transform';
 
-describe('JIT transform preserves @Injectable', () => {
-  it('keeps @Injectable decorator for providedIn registration', () => {
+/**
+ * Runs `source` through jitTransform and the TypeScript strip, then
+ * evaluates the result as a module and returns its exports.
+ */
+async function runJit(
+  source: string,
+  decorator: { legacy: boolean },
+): Promise<Record<string, any>> {
+  const jit = jitTransform(source, 'runtime.service.ts').code;
+  const { code: js } = transformSync('runtime.service.ts', jit, { decorator });
+  const { code } = moduleRunnerTransformSync('runtime.service.js', js);
+  const exports: Record<string, any> = {};
+  await new Function(
+    '__vite_ssr_import__',
+    '__vite_ssr_exports__',
+    `return (async () => {${code}})()`,
+  )((id: string) => import(id), exports);
+  return exports;
+}
+
+describe('JIT transform applies @Injectable', () => {
+  it('applies @Injectable to the class for providedIn registration', () => {
     const result = jitTransform(
       `
       import { Injectable } from '@angular/core';
@@ -16,8 +37,8 @@ describe('JIT transform preserves @Injectable', () => {
       'my.service.ts',
     ).code;
 
-    expect(result).toContain('@Injectable');
-    expect(result).toContain("providedIn: 'root'");
+    expect(result).not.toContain('@Injectable');
+    expect(result).toContain("Injectable({ providedIn: 'root' })(MyService);");
     // Should NOT emit static decorators array for Injectable
     expect(result).not.toContain('MyService.decorators');
   });
@@ -55,8 +76,9 @@ describe('JIT transform preserves @Injectable', () => {
       'data.service.ts',
     ).code;
 
-    // @Injectable stays, class is otherwise untouched
-    expect(result).toContain('@Injectable');
+    expect(result).toContain(
+      "Injectable({ providedIn: 'root' })(DataService);",
+    );
     expect(result).not.toContain('DataService.decorators');
   });
 
@@ -113,7 +135,7 @@ describe('JIT transform preserves @Injectable', () => {
   });
 
   it('resolves constructor params typed only by annotation at runtime', async () => {
-    const jit = jitTransform(
+    const exports = await runJit(
       `
       import { Injectable, Inject, InjectionToken } from '@angular/core';
 
@@ -128,20 +150,10 @@ describe('JIT transform preserves @Injectable', () => {
         constructor(readonly dep: Dep, @Inject(CONFIG) readonly config: Config) {}
       }
     `,
-      'typed-param.service.ts',
-    ).code;
-    const { code: js } = transformSync('typed-param.service.ts', jit, {
-      decorator: { legacy: true },
-    });
-    const { code } = moduleRunnerTransformSync('typed-param.service.js', js);
+      { legacy: true },
+    );
 
     const core = await import('@angular/core');
-    const exports: Record<string, any> = {};
-    await new Function(
-      '__vite_ssr_import__',
-      '__vite_ssr_exports__',
-      `return (async () => {${code}})()`,
-    )((id: string) => import(id), exports);
     const { Dep, TypedParam, CONFIG } = exports;
     const config = { value: 'x' };
     const instance = core.Injector.create({
@@ -150,6 +162,94 @@ describe('JIT transform preserves @Injectable', () => {
 
     expect(instance.dep).toBeInstanceOf(Dep);
     expect(instance.config).toBe(config);
+  });
+
+  it('runs @Injectable classes without legacy decorator lowering', async () => {
+    // The plugin strips TypeScript with standard (non-legacy) decorators, so
+    // a decorator left in the JIT output would reach the runtime as syntax.
+    const exports = await runJit(
+      `
+      import { Injectable } from '@angular/core';
+
+      @Injectable()
+      export class Dep {}
+
+      @Injectable({ providedIn: 'root' })
+      export class Root {
+        constructor(readonly dep: Dep) {}
+      }
+
+      export @Injectable() class AfterExport {}
+    `,
+      { legacy: false },
+    );
+
+    const core = await import('@angular/core');
+    const { Dep, Root, AfterExport } = exports;
+    const injector = core.Injector.create({
+      providers: [Dep, Root, AfterExport],
+    });
+
+    expect(Root.ɵprov.providedIn).toBe('root');
+    expect(injector.get<{ dep: unknown }>(Root).dep).toBeInstanceOf(Dep);
+    expect(injector.get(AfterExport)).toBeInstanceOf(AfterExport);
+  });
+
+  // `@Service` landed in Angular 22.
+  it.skipIf(!angularVersionAtLeast(22))(
+    'runs @Service classes without legacy decorator lowering',
+    async () => {
+      const { Svc } = await runJit(
+        `
+        import { Service } from '@angular/core';
+
+        @Service()
+        export class Svc {}
+      `,
+        { legacy: false },
+      );
+
+      expect(Svc.ɵprov.providedIn).toBe('root');
+    },
+  );
+
+  it('keeps legacy decorator order beside a non-Angular class decorator', async () => {
+    const { seen } = await runJit(
+      `
+      import { Injectable } from '@angular/core';
+
+      export const seen: boolean[] = [];
+      function Outer() {
+        return (cls: any) => {
+          seen.push(Object.hasOwn(cls, 'ɵprov'));
+        };
+      }
+
+      @Outer()
+      @Injectable({ providedIn: 'root' })
+      export class Decorated {}
+    `,
+      { legacy: true },
+    );
+
+    // Legacy decorators apply bottom to top: @Injectable before @Outer.
+    expect(seen).toEqual([true]);
+  });
+
+  it('applies @Injectable beside @Component without legacy decorator lowering', async () => {
+    const { Both } = await runJit(
+      `
+      import { Component, Injectable } from '@angular/core';
+
+      @Injectable({ providedIn: 'root' })
+      @Component({ selector: 'jit-both', template: '' })
+      export class Both {}
+    `,
+      { legacy: false },
+    );
+
+    expect(Both.ɵprov.providedIn).toBe('root');
+    expect(Both.ɵcmp.selectors).toEqual([['jit-both']]);
   });
 });
 
