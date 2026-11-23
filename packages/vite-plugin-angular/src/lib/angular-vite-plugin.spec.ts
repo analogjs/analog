@@ -1,5 +1,7 @@
 import * as path from 'node:path';
+import { join } from 'node:path';
 import * as realFs from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { SourceMap } from 'node:module';
 import { tmpdir } from 'node:os';
 import {
@@ -384,6 +386,107 @@ describe('JIT resolveId', () => {
       normalizePath('/project/src/app/my-component.css') + '?inline',
     );
   });
+
+  describe.each([
+    { fastCompile: false, pluginName: '@analogjs/vite-plugin-angular' },
+    {
+      fastCompile: true,
+      pluginName: '@analogjs/vite-plugin-angular-fast-compile',
+    },
+  ])(
+    'a style ?inline URL of a module restored from fsModuleCache (#2822), fastCompile: $fastCompile',
+    ({ fastCompile, pluginName }) => {
+      /**
+       * Runs `test` with a Vite root on disk and the `resolveId` Vitest calls
+       * for a cached module's import: by URL, with the default importer.
+       */
+      function withViteRoot(
+        test: (root: string, resolveId: (url: string) => string) => void,
+      ): void {
+        const root = mkdtempSync(join(tmpdir(), 'analog-style-url-'));
+        const plugin = angular({ jit: true, fastCompile }).find(
+          (p) => p.name === pluginName,
+        );
+
+        (plugin as any).configResolved({
+          root,
+          server: { watch: {} },
+          safeModulePaths: new Set(),
+        });
+
+        try {
+          test(root, (url) =>
+            (plugin as any).resolveId(url, join(root, 'index.html')),
+          );
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      }
+
+      it('should resolve a root-relative URL to the file under the Vite root', () => {
+        withViteRoot((root, resolveId) => {
+          writeFileSync(join(root, 'my-component.css'), '');
+
+          expect(resolveId('/my-component.css?inline')).toBe(
+            normalizePath(join(root, 'my-component.css')) + '?inline',
+          );
+        });
+      });
+
+      it('should keep the path as given when no file is under the Vite root', () => {
+        withViteRoot((root, resolveId) => {
+          mkdirSync(join(root, 'directory.css'));
+
+          expect(resolveId('/elsewhere/my-component.css?inline')).toBe(
+            '/elsewhere/my-component.css?inline',
+          );
+          expect(resolveId('/directory.css?inline')).toBe(
+            '/directory.css?inline',
+          );
+        });
+      });
+
+      it('should keep an absolute path under the Vite root as given when the root does not nest itself', () => {
+        withViteRoot((root, resolveId) => {
+          writeFileSync(join(root, 'x.css'), '');
+
+          expect(resolveId(`${root}/x.css?inline`)).toBe(
+            normalizePath(join(root, 'x.css')) + '?inline',
+          );
+        });
+      });
+
+      // POSIX only: a Windows root (`C:/…`) cannot nest its own path, and no
+      // root-relative URL starts with it.
+      it.skipIf(process.platform === 'win32')(
+        'should resolve a URL under the Vite root path to the file under the root that nests its own path',
+        () => {
+          withViteRoot((root, resolveId) => {
+            mkdirSync(join(root, root), { recursive: true });
+            writeFileSync(join(root, root, 'x.css'), '');
+
+            expect(resolveId(`${root}/x.css?inline`)).toBe(
+              normalizePath(join(root, root, 'x.css')) + '?inline',
+            );
+            expect(resolveId(`${root}/missing.css?inline`)).toBe(
+              normalizePath(`${root}/missing.css`) + '?inline',
+            );
+          });
+        },
+      );
+
+      it('should resolve a /@fs/ URL to the file outside the Vite root', () => {
+        withViteRoot((_root, resolveId) => {
+          expect(resolveId('/@fs/outside/my-component.css?inline')).toBe(
+            '/outside/my-component.css?inline',
+          );
+          expect(resolveId('/@fs/C:/outside/my-component.css?inline')).toBe(
+            'C:/outside/my-component.css?inline',
+          );
+        });
+      });
+    },
+  );
 
   it('should resolve style ?inline imports even without jit mode', () => {
     const plugins = angular();
