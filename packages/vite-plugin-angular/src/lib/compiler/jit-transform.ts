@@ -44,9 +44,8 @@ function findAllClasses(node: any): any[] {
 }
 
 /**
- * `@Injectable` and `@Service` stay on the class — their decorator functions
- * self-register ɵprov/ɵfac at class definition time and there is no JIT
- * compile entry point to call instead.
+ * `@Injectable` and `@Service` have no JIT compile entry point: their
+ * decorator functions self-register ɵprov/ɵfac when applied to the class.
  */
 function isSelfRegisteringDecorator(dec: any): boolean {
   const name: string | undefined = dec.expression?.callee?.name;
@@ -59,6 +58,23 @@ function removeDecorator(ms: MagicString, sourceCode: string, dec: any): void {
   while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
     trimEnd++;
   ms.remove(dec.start, trimEnd);
+}
+
+/**
+ * Replace a self-registering decorator on a class declaration with a call
+ * after the class, as a legacy decorator runs. The output then needs no
+ * decorator lowering, which the TypeScript strip only does when tsconfig
+ * sets `experimentalDecorators`.
+ */
+function applySelfRegisteringDecorator(
+  ms: MagicString,
+  sourceCode: string,
+  node: any,
+  dec: any,
+): void {
+  const call = sourceCode.slice(dec.expression.start, dec.expression.end);
+  removeDecorator(ms, sourceCode, dec);
+  ms.appendLeft(node.end, `\n${call}(${node.id.name});\n`);
 }
 
 const DI_PARAM_DECORATORS = new Set([
@@ -163,15 +179,18 @@ export function jitTransform(
     if (!className) continue;
 
     if (angularDecs.length === 0) {
-      // @Injectable/@Service keep their decorator, but without a type
-      // checker or emitDecoratorMetadata a param typed only by annotation
-      // has no runtime DI token unless captured in ctorParameters. A class
-      // expression's name is not in scope after it, so only declarations.
+      // A class expression's name is not in scope after it, so only
+      // declarations get their @Injectable/@Service applied after the class.
+      const selfRegistering = decorators.find(isSelfRegisteringDecorator);
+      if (!selfRegistering || node.type !== 'ClassDeclaration') continue;
+      hasAngularClass = true;
+      // Without a type checker or emitDecoratorMetadata a param typed only
+      // by annotation has no runtime DI token unless captured in
+      // ctorParameters.
       const ctorParams =
         needsInjectableCtorParameters(node, decorators) &&
         buildCtorParameters(node, sourceCode, typeOnlyImports);
       if (ctorParams) {
-        hasAngularClass = true;
         for (const dec of ctorParamDecorators(node)) {
           removeDecorator(ms, sourceCode, dec);
         }
@@ -180,6 +199,7 @@ export function jitTransform(
           `\n${className}.ctorParameters = () => [${ctorParams}];\n`,
         );
       }
+      applySelfRegisteringDecorator(ms, sourceCode, node, selfRegistering);
       continue;
     }
     hasAngularClass = true;

@@ -44,15 +44,17 @@ describe('JIT Transform', () => {
       expect(result).toContain('type: Pipe');
     });
 
-    it('preserves @Injectable on the class (no ɵcompileInjectable JIT entry point)', () => {
+    it('applies @Injectable as a call (no ɵcompileInjectable JIT entry point)', () => {
       const result = transform(`
         import { Injectable } from '@angular/core';
         @Injectable({ providedIn: 'root' })
         export class MyService {}
       `);
 
-      // @Injectable must remain so Angular's decorator self-registers ɵprov
-      expect(result).toMatch(/@Injectable/);
+      // Angular's decorator function self-registers ɵprov when applied
+      expect(result).toContain(
+        "Injectable({ providedIn: 'root' })(MyService);",
+      );
       expect(result).not.toContain('MyService.decorators');
     });
 

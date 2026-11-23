@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { moduleRunnerTransformSync, transformSync } from 'oxc-transform';
 import { jitTransform } from './jit-transform';
 
-describe('JIT transform preserves @Injectable', () => {
-  it('keeps @Injectable decorator for providedIn registration', () => {
+describe('JIT transform applies @Injectable', () => {
+  it('applies @Injectable to the class for providedIn registration', () => {
     const result = jitTransform(
       `
       import { Injectable } from '@angular/core';
@@ -16,8 +16,8 @@ describe('JIT transform preserves @Injectable', () => {
       'my.service.ts',
     ).code;
 
-    expect(result).toContain('@Injectable');
-    expect(result).toContain("providedIn: 'root'");
+    expect(result).not.toContain('@Injectable');
+    expect(result).toContain("Injectable({ providedIn: 'root' })(MyService);");
     // Should NOT emit static decorators array for Injectable
     expect(result).not.toContain('MyService.decorators');
   });
@@ -55,8 +55,9 @@ describe('JIT transform preserves @Injectable', () => {
       'data.service.ts',
     ).code;
 
-    // @Injectable stays, class is otherwise untouched
-    expect(result).toContain('@Injectable');
+    expect(result).toContain(
+      "Injectable({ providedIn: 'root' })(DataService);",
+    );
     expect(result).not.toContain('DataService.decorators');
   });
 
@@ -150,6 +151,50 @@ describe('JIT transform preserves @Injectable', () => {
 
     expect(instance.dep).toBeInstanceOf(Dep);
     expect(instance.config).toBe(config);
+  });
+
+  it('runs @Injectable classes without legacy decorator lowering', async () => {
+    const jit = jitTransform(
+      `
+      import { Injectable } from '@angular/core';
+
+      @Injectable()
+      export class Dep {}
+
+      @Injectable({ providedIn: 'root' })
+      export class Root {
+        constructor(readonly dep: Dep) {}
+      }
+
+      export @Injectable() class AfterExport {}
+    `,
+      'standard-decorators.service.ts',
+    ).code;
+    // The plugin strips TypeScript with standard (non-legacy) decorators, so
+    // a decorator left in the JIT output would reach the runtime as syntax.
+    const { code: js } = transformSync('standard-decorators.service.ts', jit, {
+      decorator: { legacy: false },
+    });
+    const { code } = moduleRunnerTransformSync(
+      'standard-decorators.service.js',
+      js,
+    );
+
+    const core = await import('@angular/core');
+    const exports: Record<string, any> = {};
+    await new Function(
+      '__vite_ssr_import__',
+      '__vite_ssr_exports__',
+      `return (async () => {${code}})()`,
+    )((id: string) => import(id), exports);
+    const { Dep, Root, AfterExport } = exports;
+    const injector = core.Injector.create({
+      providers: [Dep, Root, AfterExport],
+    });
+
+    expect(Root.ɵprov.providedIn).toBe('root');
+    expect(injector.get(Root).dep).toBeInstanceOf(Dep);
+    expect(injector.get(AfterExport)).toBeInstanceOf(AfterExport);
   });
 });
 
