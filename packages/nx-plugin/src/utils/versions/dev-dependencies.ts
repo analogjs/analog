@@ -3,6 +3,7 @@ import { stripIndents } from '@nx/devkit';
 import {
   ANALOG_JS_PLATFORM,
   ANALOG_JS_VITE_PLUGIN_ANGULAR,
+  ANALOG_JS_VITE_PLUGIN_NITRO,
   ANALOG_JS_VITEST_ANGULAR,
   JSDOM,
   VITE_TSCONFIG_PATHS,
@@ -15,6 +16,7 @@ import {
 const devDependencyKeys = [
   '@analogjs/platform',
   '@analogjs/vite-plugin-angular',
+  '@analogjs/vite-plugin-nitro',
   '@analogjs/vitest-angular',
   'jsdom',
   'vite-tsconfig-paths',
@@ -39,6 +41,7 @@ export const getAnalogDevDependencies = (
   return {
     '@analogjs/platform': ANALOG_JS_PLATFORM,
     '@analogjs/vite-plugin-angular': ANALOG_JS_VITE_PLUGIN_ANGULAR,
+    '@analogjs/vite-plugin-nitro': ANALOG_JS_VITE_PLUGIN_NITRO,
     '@analogjs/vitest-angular': ANALOG_JS_VITEST_ANGULAR,
     jsdom: JSDOM,
     'vite-tsconfig-paths': VITE_TSCONFIG_PATHS,
