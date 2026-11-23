@@ -808,7 +808,7 @@ class ComponentLowerer {
       }
     }
     for (const s of block.body as EstreeNode[]) {
-      const member = this.getMemberDeclaration(s);
+      const member = this.getMemberDeclaration(s, locals);
       if (member !== null) {
         rejectBodyReads(member, locals);
         memberNames.add(member.id.name);
@@ -915,6 +915,7 @@ class ComponentLowerer {
    */
   private getMemberDeclaration(
     stmt: EstreeNode,
+    locals: Map<string, EstreeNode>,
   ): { id: EstreeNode; init: EstreeNode } | null {
     if (
       stmt.type !== 'VariableDeclaration' ||
@@ -937,9 +938,11 @@ class ComponentLowerer {
     }
     let memberApi: string | null = null;
     if (callee.type === 'Identifier') {
-      const imported = this.imports.get(callee.name);
-      if (imported?.kind === 'value' && imported.module === CORE_MODULE) {
-        memberApi = imported.importedName;
+      if (!locals.has(callee.name)) {
+        const imported = this.imports.get(callee.name);
+        if (imported?.kind === 'value' && imported.module === CORE_MODULE) {
+          memberApi = imported.importedName;
+        }
       }
     } else if (
       callee.type === 'MemberExpression' &&
@@ -947,9 +950,11 @@ class ComponentLowerer {
       callee.object.type === 'Identifier' &&
       callee.property.type === 'Identifier'
     ) {
-      const imported = this.imports.get(callee.object.name);
-      if (imported?.kind === 'namespace' && imported.module === CORE_MODULE) {
-        memberApi = callee.property.name;
+      if (!locals.has(callee.object.name)) {
+        const imported = this.imports.get(callee.object.name);
+        if (imported?.kind === 'namespace' && imported.module === CORE_MODULE) {
+          memberApi = callee.property.name;
+        }
       }
     }
     if (memberApi === null || !MEMBER_APIS.has(memberApi)) {

@@ -635,13 +635,12 @@ export function fastCompilePlugin(
     const activeComponentRegistries = sharedCtx
       ? sharedCtx.componentRegistries
       : componentRegistries;
-    let compileRegistry: ComponentRegistry = registry;
-    if (activeComponentRegistries.some((external) => external.size > 0)) {
-      compileRegistry = new Map(registry);
-      for (const external of activeComponentRegistries) {
-        for (const [k, v] of external) compileRegistry.set(k, v);
-      }
-    }
+    const compileRegistry = buildCompileRegistry(
+      scanner,
+      oxcProgram,
+      id,
+      activeComponentRegistries,
+    );
 
     const result = compile(code, id, {
       registry: compileRegistry,
@@ -931,4 +930,76 @@ export function fastCompilePlugin(
       },
     },
   };
+}
+
+/**
+ * Builds the registry view for compiling `id`, overlaying external registries,
+ * this file's value import bindings (including aliases, default imports, and
+ * same-named components from distinct modules), and declarations from `id`
+ * itself. Reuses `scanner.registry` directly when no overrides apply.
+ */
+function buildCompileRegistry(
+  scanner: ComponentScanner,
+  program: ReturnType<typeof parseSync>['program'],
+  id: string,
+  externalRegistries: readonly ComponentRegistryEntries[],
+): ComponentRegistry {
+  let compileRegistry: ComponentRegistry = scanner.registry;
+  const ensureOverlay = (): ComponentRegistry => {
+    if (compileRegistry === scanner.registry) {
+      compileRegistry = new Map(scanner.registry);
+    }
+    return compileRegistry;
+  };
+
+  if (externalRegistries.some((external) => external.size > 0)) {
+    const overlay = ensureOverlay();
+    for (const external of externalRegistries) {
+      for (const [k, v] of external) overlay.set(k, v);
+    }
+  }
+
+  for (const stmt of program.body || []) {
+    if (
+      stmt.type !== 'ImportDeclaration' ||
+      (stmt as any).importKind === 'type' ||
+      !stmt.source?.value
+    ) {
+      continue;
+    }
+    const moduleSpecifier: string = stmt.source.value;
+    for (const spec of (stmt as any).specifiers || []) {
+      if (spec.importKind === 'type') continue;
+      let importedName: string | undefined;
+      let localName: string | undefined;
+      if (spec.type === 'ImportDefaultSpecifier') {
+        importedName = 'default';
+        localName = spec.local?.name;
+      } else if (spec.type === 'ImportSpecifier') {
+        importedName =
+          spec.imported?.type === 'Identifier'
+            ? spec.imported.name
+            : typeof spec.imported?.value === 'string'
+              ? spec.imported.value
+              : undefined;
+        localName = spec.local?.name;
+      }
+      if (!importedName || !localName) continue;
+      const entry = scanner.lookupEntry(importedName, externalRegistries, {
+        moduleSpecifier,
+        containingFile: id,
+      });
+      if (entry && compileRegistry.get(localName) !== entry) {
+        ensureOverlay().set(localName, entry);
+      }
+    }
+  }
+
+  for (const localEntry of scanner.entriesOf(id)) {
+    if (compileRegistry.get(localEntry.className) !== localEntry) {
+      ensureOverlay().set(localEntry.className, localEntry);
+    }
+  }
+
+  return compileRegistry;
 }

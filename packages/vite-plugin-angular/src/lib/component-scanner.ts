@@ -33,6 +33,20 @@ export interface SelectorLookupContext {
   containingFile?: string;
 }
 
+interface ReExportTarget {
+  file: string;
+  importedName: string;
+}
+
+interface FileExportMap {
+  /** `export { LocalName as ExportedName }` for declarations in this file. */
+  localAliases: Map<string, string>;
+  /** `export { ImportedName as ExportedName } from './target'`. */
+  namedReExports: Map<string, ReExportTarget>;
+  /** `export * from './target'` (excluding `export * as ns from`). */
+  starReExports: string[];
+}
+
 /**
  * Angular classes scanned from source files and package `.d.ts` declarations,
  * so source formats can look up the selectors of the components they import
@@ -48,9 +62,11 @@ export class ComponentScanner {
   readonly importersByFile: Map<string, Set<string>> = new Map();
   /** Entries declared in each scanned source file, keyed by normalized path. */
   private readonly entriesByFile: Map<string, RegistryEntry[]> = new Map();
-  /** Scanned files (direct target first, then re-exports) per importer and specifier. */
-  private readonly resolvedImports: Map<string, Map<string, Set<string>>> =
+  /** Direct resolved target file per importer and module specifier. */
+  private readonly resolvedImports: Map<string, Map<string, string>> =
     new Map();
+  /** Export aliases and re-export bindings per scanned file, keyed by normalized path. */
+  private readonly reExportsByFile: Map<string, FileExportMap> = new Map();
   private readonly sourceFormats: FastCompileSourceFormat[] = [];
   private root = '';
 
@@ -67,6 +83,7 @@ export class ComponentScanner {
     this.importersByFile.clear();
     this.entriesByFile.clear();
     this.resolvedImports.clear();
+    this.reExportsByFile.clear();
   }
 
   registerSourceFormat(format: FastCompileSourceFormat): void {
@@ -185,13 +202,17 @@ export class ComponentScanner {
           this.resolvedImports.get(importerKey)?.delete(spec);
           return;
         }
-        const scannedFiles = await this.scanOnDemand(file, resolveImport);
+        const normalizedFile = normalizePath(file);
+        const scannedFiles = await this.scanOnDemand(
+          normalizedFile,
+          resolveImport,
+        );
         let bySpec = this.resolvedImports.get(importerKey);
         if (!bySpec) {
           bySpec = new Map();
           this.resolvedImports.set(importerKey, bySpec);
         }
-        bySpec.set(spec, scannedFiles);
+        bySpec.set(spec, normalizedFile);
         for (const scanned of scannedFiles) {
           let importers = this.importersByFile.get(scanned);
           if (!importers) {
@@ -201,6 +222,39 @@ export class ComponentScanner {
           importers.add(id);
         }
       }),
+    );
+  }
+
+  /**
+   * Resolves the registry entry for an imported or global Angular declaration.
+   * When `context` gives the importing file and module specifier, exported
+   * bindings on the resolved module (including barrel re-exports) are followed
+   * before falling back to the global registry.
+   */
+  lookupEntry(
+    className: string,
+    external: readonly ComponentRegistryEntries[] = [],
+    context?: SelectorLookupContext,
+  ): RegistryEntry | undefined {
+    if (context?.moduleSpecifier && context.containingFile) {
+      const targetFile = this.resolvedImports
+        .get(normalizePath(context.containingFile))
+        ?.get(context.moduleSpecifier);
+      if (targetFile) {
+        const match = this.resolveExportedEntry(
+          targetFile,
+          className,
+          new Set(),
+        );
+        if (match) {
+          return match;
+        }
+      }
+    }
+
+    return (
+      this.registry.get(className) ??
+      external.map((r) => r.get(className)).find((e) => e !== undefined)
     );
   }
 
@@ -215,31 +269,7 @@ export class ComponentScanner {
     external: readonly ComponentRegistryEntries[] = [],
     context?: SelectorLookupContext,
   ): string | null {
-    if (context?.moduleSpecifier && context.containingFile) {
-      const scannedFiles = this.resolvedImports
-        .get(normalizePath(context.containingFile))
-        ?.get(context.moduleSpecifier);
-      if (scannedFiles) {
-        for (const scannedFile of scannedFiles) {
-          const entries = this.entriesByFile.get(normalizePath(scannedFile));
-          if (!entries) continue;
-          const match = entries.find(
-            (entry) =>
-              isSelectableEntry(entry) &&
-              (className === 'default'
-                ? entry.isDefaultExport === true
-                : entry.className === className),
-          );
-          if (match) {
-            return match.selector;
-          }
-        }
-      }
-    }
-
-    const entry =
-      this.registry.get(className) ??
-      external.map((r) => r.get(className)).find((e) => e !== undefined);
+    const entry = this.lookupEntry(className, external, context);
     if (!entry || !isSelectableEntry(entry)) {
       return null;
     }
@@ -267,10 +297,10 @@ export class ComponentScanner {
     overwrite = false,
   ): void {
     const key = normalizePath(file);
-    const previous = overwrite ? this.entriesByFile.get(key) : undefined;
+    const previous = this.entriesByFile.get(key);
     if (entries.length > 0) {
       this.entriesByFile.set(key, entries);
-    } else if (overwrite) {
+    } else {
       this.entriesByFile.delete(key);
     }
     if (previous) {
@@ -282,7 +312,8 @@ export class ComponentScanner {
       }
     }
     for (const entry of entries) {
-      if (overwrite || !this.registry.has(entry.className)) {
+      const current = this.registry.get(entry.className);
+      if (overwrite || !current || normalizePath(current.fileName) === key) {
         this.registry.set(entry.className, entry);
       }
     }
@@ -297,6 +328,7 @@ export class ComponentScanner {
       this.removeFromRegistryIfOwned(entry.className, key);
     }
     this.resolvedImports.delete(key);
+    this.reExportsByFile.delete(key);
     this.lazyScans.clear();
   }
 
@@ -304,6 +336,60 @@ export class ComponentScanner {
     if (!this.registry.has(entry.className)) {
       this.registry.set(entry.className, entry);
     }
+  }
+
+  private resolveExportedEntry(
+    file: string,
+    exportName: string,
+    visited: Set<string>,
+  ): RegistryEntry | undefined {
+    const visitKey = `${file}\0${exportName}`;
+    if (visited.has(visitKey)) {
+      return undefined;
+    }
+    visited.add(visitKey);
+
+    const exportMap = this.reExportsByFile.get(file);
+    const namedReExport = exportMap?.namedReExports.get(exportName);
+    if (namedReExport) {
+      return this.resolveExportedEntry(
+        namedReExport.file,
+        namedReExport.importedName,
+        visited,
+      );
+    }
+
+    const entries = this.entriesByFile.get(file);
+    if (entries) {
+      if (exportName === 'default') {
+        const localDefault = exportMap?.localAliases.get('default');
+        const match = entries.find(
+          (entry) =>
+            entry.isDefaultExport === true ||
+            (localDefault !== undefined && entry.className === localDefault),
+        );
+        if (match) {
+          return match;
+        }
+      } else {
+        const localName = exportMap?.localAliases.get(exportName) ?? exportName;
+        const match = entries.find((entry) => entry.className === localName);
+        if (match) {
+          return match;
+        }
+      }
+    }
+
+    if (exportName !== 'default' && exportMap) {
+      for (const starFile of exportMap.starReExports) {
+        const match = this.resolveExportedEntry(starFile, exportName, visited);
+        if (match) {
+          return match;
+        }
+      }
+    }
+
+    return undefined;
   }
 
   private removeFromRegistryIfOwned(className: string, ownerKey: string): void {
@@ -345,28 +431,43 @@ export class ComponentScanner {
   ): Promise<Set<string>> {
     const visited = new Set<string>();
     const visit = async (current: string): Promise<void> => {
-      if (visited.has(current)) return;
-      visited.add(current);
+      const currentKey = normalizePath(current);
+      if (visited.has(currentKey)) return;
+      visited.add(currentKey);
       let code: string;
       let program: OxcProgram;
       try {
-        code = await this.readScanSource(current);
-        program = parseOxc(current, code).program;
+        code = await this.readScanSource(currentKey);
+        program = parseOxc(currentKey, code).program;
       } catch {
         return;
       }
-      const entries = scanFile(code, current, program);
-      this.recordFileEntries(current, entries);
-      this.ensureDtsRegistryForSource(code, current, program);
+      const entries = scanFile(code, currentKey, program);
+      this.recordFileEntries(currentKey, entries);
+      this.ensureDtsRegistryForSource(code, currentKey, program);
       const followsImports = entries.some(
         (e) => e.kind === 'tuple' || e.kind === 'ngmodule',
       );
       const specifiers = followsImports
-        ? collectAllImports(code, current, program)
-        : collectReExports(code, current, program);
+        ? collectAllImports(code, currentKey, program)
+        : collectReExports(code, currentKey, program);
+
+      const resolvedBySpec = new Map<string, string>();
       for (const spec of specifiers) {
-        const dep = await resolveImport(spec, current);
-        if (dep) await visit(dep);
+        if (resolvedBySpec.has(spec)) continue;
+        const dep = await resolveImport(spec, currentKey);
+        if (dep) resolvedBySpec.set(spec, normalizePath(dep));
+      }
+
+      const exportMap = collectFileExportMap(program, resolvedBySpec);
+      if (exportMap) {
+        this.reExportsByFile.set(currentKey, exportMap);
+      } else {
+        this.reExportsByFile.delete(currentKey);
+      }
+
+      for (const dep of resolvedBySpec.values()) {
+        await visit(dep);
       }
     };
     await visit(file);
@@ -376,4 +477,69 @@ export class ComponentScanner {
 
 function isSelectableEntry(entry: RegistryEntry): boolean {
   return entry.kind === 'component' || entry.kind === 'directive';
+}
+
+function moduleExportName(node: any): string | undefined {
+  if (!node) return undefined;
+  if (node.type === 'Identifier') return node.name;
+  if (node.type === 'Literal' && typeof node.value === 'string') {
+    return node.value;
+  }
+  return undefined;
+}
+
+function collectFileExportMap(
+  program: OxcProgram,
+  resolvedBySpec: Map<string, string>,
+): FileExportMap | null {
+  const localAliases = new Map<string, string>();
+  const namedReExports = new Map<string, ReExportTarget>();
+  const starReExports: string[] = [];
+
+  for (const stmt of program.body || []) {
+    if ((stmt as any).exportKind === 'type') continue;
+    if (stmt.type === 'ExportNamedDeclaration') {
+      const source: string | undefined = stmt.source?.value;
+      if (!source) {
+        for (const spec of (stmt as any).specifiers || []) {
+          if (spec.exportKind === 'type') continue;
+          const localName = moduleExportName(spec.local);
+          const exportedName = moduleExportName(spec.exported);
+          if (localName && exportedName && localName !== exportedName) {
+            localAliases.set(exportedName, localName);
+          }
+        }
+      } else {
+        const targetFile = resolvedBySpec.get(source);
+        if (!targetFile) continue;
+        for (const spec of (stmt as any).specifiers || []) {
+          if (spec.exportKind === 'type') continue;
+          const importedName = moduleExportName(spec.local);
+          const exportedName = moduleExportName(spec.exported);
+          if (importedName && exportedName) {
+            namedReExports.set(exportedName, {
+              file: targetFile,
+              importedName,
+            });
+          }
+        }
+      }
+    } else if (stmt.type === 'ExportAllDeclaration') {
+      if ((stmt as any).exported) continue;
+      const source: string | undefined = stmt.source?.value;
+      const targetFile = source ? resolvedBySpec.get(source) : undefined;
+      if (targetFile && !starReExports.includes(targetFile)) {
+        starReExports.push(targetFile);
+      }
+    }
+  }
+
+  if (
+    localAliases.size === 0 &&
+    namedReExports.size === 0 &&
+    starReExports.length === 0
+  ) {
+    return null;
+  }
+  return { localAliases, namedReExports, starReExports };
 }

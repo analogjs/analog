@@ -652,6 +652,27 @@ export class Counter {
     );
   });
 
+  it('does not hoist Angular member APIs when shadowed by a body local', () => {
+    const { code, diagnostics } = lower(`
+      import { input } from '@angular/core';
+      import * as ng from '@angular/core';
+
+      export function Counter() @{
+        const input = (v: number) => v + 1;
+        const ng = { input: (v: number) => v + 2 };
+        const fromNamed = input(1);
+        const fromNs = ng.input(1);
+        <p>{fromNamed}{fromNs}</p>
+      }
+    `);
+
+    expect(diagnostics).toEqual([]);
+    expect(code).not.toContain('readonly fromNamed');
+    expect(code).not.toContain('readonly fromNs');
+    expect(code).toContain('    const fromNamed = input(1);');
+    expect(code).toContain('    const fromNs = ng.input(1);');
+  });
+
   it('does not resolve namespace imports as component tags', () => {
     expect(
       errors(`
