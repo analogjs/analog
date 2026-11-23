@@ -806,6 +806,36 @@ describe('JIT resolveId', () => {
     );
   });
 
+  it('should resolve a root-relative style ?inline URL against the Vite root (#2822)', () => {
+    const root = mkdtempSync(join(tmpdir(), 'analog-root-relative-style-'));
+    writeFileSync(join(root, 'my-component.css'), '');
+    const plugins = angular({ jit: true });
+    const mainPlugin = plugins.find(
+      (p) => p.name === '@analogjs/vite-plugin-angular',
+    );
+
+    (mainPlugin as any).configResolved({
+      root,
+      server: { watch: {} },
+      safeModulePaths: new Set(),
+    });
+
+    try {
+      // Vitest re-resolves the imports of a module restored from
+      // fsModuleCache by URL, with the default importer.
+      const result = (mainPlugin as any).resolveId(
+        '/my-component.css?inline',
+        join(root, 'index.html'),
+      );
+
+      expect(result).toBe(
+        normalizePath(join(root, 'my-component.css')) + '?inline',
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it('should resolve style ?inline imports even without jit mode', () => {
     const plugins = angular();
     const mainPlugin = plugins.find(

@@ -1,4 +1,5 @@
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { normalizePath, type Plugin, type ResolvedConfig } from 'vite';
 import {
   isAngularBuildContext,
@@ -13,6 +14,23 @@ import {
 
 export interface VirtualModulesPluginOptions {
   jit?: boolean;
+}
+
+/**
+ * The file a root-relative URL (`/src/app/a.css`) points at, read as Vite's
+ * own resolver reads it: the file under the Vite root, when it exists.
+ * Vitest resolves the imports of a module restored from `fsModuleCache` by
+ * these URLs, so they must resolve to the same file as the original import.
+ */
+function resolveRootRelativeUrl(
+  url: string,
+  root: string | undefined,
+): string | undefined {
+  if (!root || !url.startsWith('/') || url.startsWith(`${root}/`)) {
+    return undefined;
+  }
+  const filePath = join(root, url);
+  return existsSync(filePath) ? filePath : undefined;
 }
 
 export function resolveAngularVirtualId(
@@ -48,9 +66,12 @@ export function resolveAngularVirtualId(
   // safe so Vite's native CSS pipeline handles them.
   if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
     const filePath = id.split('?')[0];
-    const resolved = isAbsolute(filePath)
-      ? normalizePath(filePath)
-      : normalizePath(resolve(dirname(importer), filePath));
+    const resolved = normalizePath(
+      resolveRootRelativeUrl(filePath, options.resolvedConfig?.root) ??
+        (isAbsolute(filePath)
+          ? filePath
+          : resolve(dirname(importer), filePath)),
+    );
     markStylePathSafe(options.resolvedConfig, resolved);
     return resolved + '?inline';
   }
