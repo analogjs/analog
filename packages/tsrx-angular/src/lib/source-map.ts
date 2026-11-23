@@ -372,10 +372,15 @@ interface RawSourceMap {
  */
 export function remapSourceMap(json: string, map: TsrxSourceMap): string {
   const raw = JSON.parse(json) as RawSourceMap;
-  const base = map.fileName.slice(map.fileName.lastIndexOf('/') + 1);
+  const fileName = normalizePathSeparators(map.fileName);
+  const base = fileName.slice(fileName.lastIndexOf('/') + 1);
   // The program file of `Counter.tsrx` is `Counter.tsrx.ts`.
-  const matches = (source: string) =>
-    [base, base + '.ts'].some((b) => source === b || source.endsWith('/' + b));
+  const matches = (source: string) => {
+    const normalized = normalizePathSeparators(source);
+    return [base, base + '.ts'].some(
+      (b) => normalized === b || normalized.endsWith('/' + b),
+    );
+  };
   const sourceIndex =
     raw.sources.length === 1 ? 0 : raw.sources.findIndex(matches);
   if (sourceIndex === -1) {
@@ -417,6 +422,10 @@ export function remapSourceMap(json: string, map: TsrxSourceMap): string {
     raw.sourcesContent[sourceIndex] = map.originalText;
   }
   return JSON.stringify(raw);
+}
+
+function normalizePathSeparators(filePath: string): string {
+  return filePath.replaceAll('\\', '/');
 }
 
 /** `Counter.tsrx.ts` (a program file name) → `Counter.tsrx`. */
