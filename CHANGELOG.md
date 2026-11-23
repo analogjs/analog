@@ -1,3 +1,10 @@
+# [3.0.0-beta.61](https://github.com/analogjs/analog/compare/v3.0.0-beta.60...v3.0.0-beta.61) (2026-11-23)
+
+### Bug Fixes
+
+- **tsrx-angular:** clean up dev type watcher and evict deleted cache entries ([#2840](https://github.com/analogjs/analog/issues/2840)) ([18cd97b](https://github.com/analogjs/analog/commit/18cd97b1657e8e943c3e16e44e0ee9244316e3a6))
+- **tsrx-angular:** normalize Windows paths in remapSourceMap ([#2843](https://github.com/analogjs/analog/issues/2843)) ([bb48ba1](https://github.com/analogjs/analog/commit/bb48ba1af7bd093a132da0656c3cd4f1e4418c52))
+
 # [3.0.0-beta.60](https://github.com/analogjs/analog/compare/v3.0.0-beta.59...v3.0.0-beta.60) (2026-11-23)
 
 ### Bug Fixes
