@@ -24,24 +24,15 @@ const NITRO_PLUGIN_PKG = '@analogjs/vite-plugin-nitro';
 const MIGRATION_DOC_URL =
   'https://analogjs.org/docs/guides/migrating-v2-to-v3#analog-angular-and-nitro-are-now-separate-plugins';
 
-const VITE_CONFIG_NAMES = new Set([
-  'vite.config.ts',
-  'vite.config.mts',
-  'vite.config.cts',
-  'vite.config.js',
-  'vite.config.mjs',
-  'vite.config.cjs',
-  'vitest.config.ts',
-  'vitest.config.mts',
-  'vitest.config.cts',
-  'vitest.config.js',
-  'vitest.config.mjs',
-  'vitest.config.cjs',
-]);
+const CONFIG_PREFIXES = ['vite.config.', 'vitest.config.'];
+const CONFIG_EXTENSIONS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'];
 
 function isViteConfig(filePath: string): boolean {
   const file = filePath.slice(filePath.lastIndexOf('/') + 1);
-  return VITE_CONFIG_NAMES.has(file);
+  return (
+    CONFIG_PREFIXES.some((prefix) => file.startsWith(prefix)) &&
+    CONFIG_EXTENSIONS.some((ext) => file.endsWith(ext))
+  );
 }
 
 function usesLegacyPluginShape(source: string): boolean {
