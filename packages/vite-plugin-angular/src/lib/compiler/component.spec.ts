@@ -1391,6 +1391,37 @@ export class BottomNav {}
       expect(result.code).toContain('_nghost-%COMP%');
     });
 
+    it('applies resolvedInlineStyles at their own positions in a styles array', () => {
+      const resolvedInlineStyles = new Map([
+        [0, '.a { padding: 1rem; }'],
+        [1, '.b { margin: 2rem; }'],
+      ]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        const shared = '.shared {}';
+        @Component({
+          selector: 'app-inline-scss',
+          template: '<p>hi</p>',
+          styles: ['.a { padding: $var; }', shared, \`.b { margin: $m; }\`]
+        })
+        export class InlineScssComponent {}
+      `,
+        'inline-scss.ts',
+        { resolvedInlineStyles },
+      );
+
+      const definition = result.code.slice(
+        result.code.indexOf('ɵɵdefineComponent'),
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      // The middle entry is `shared`'s, whatever ɵcmp makes of an identifier.
+      expect(definition).toMatch(
+        /styles: \[".a\[_ngcontent-%COMP%\] \{ padding: 1rem; \}", [^,]+, ".b\[_ngcontent-%COMP%\] \{ margin: 2rem; \}"\]/,
+      );
+    });
+
     it('applies resolvedInlineStyles to the styles in setClassMetadata', () => {
       // A TestBed override recompiles the component from its class metadata,
       // so those styles must be the processed ones ɵcmp got.

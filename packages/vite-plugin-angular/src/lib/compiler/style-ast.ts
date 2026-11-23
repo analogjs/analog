@@ -89,10 +89,14 @@ export function extractInlineStyles(
     .map((style) => style.text);
 }
 
-/** An inline style string and the AST node it was read from. */
+/**
+ * An inline style string, the AST node it was read from, and its position in
+ * the `styles` array (0 for a single `styles` value).
+ */
 export interface InlineStyle {
   text: string;
   node: any;
+  index: number;
 }
 
 /**
@@ -145,10 +149,10 @@ function componentInlineStyles(
         if (key !== 'styles') continue;
 
         const nodes = val?.type === 'ArrayExpression' ? val.elements : [val];
-        for (const node of nodes) {
+        nodes.forEach((node: any, index: number) => {
           const text = styleText(node);
-          if (text !== undefined) styles.push({ text, node });
-        }
+          if (text !== undefined) styles.push({ text, node, index });
+        });
       }
     }
   }

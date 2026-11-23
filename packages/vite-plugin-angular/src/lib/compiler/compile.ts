@@ -61,7 +61,11 @@ import {
 import { buildDeferDependencyMap, buildImportMap } from './defer.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
-import { inlineStyleRanges, type InlineStyleRange } from './style-ast.js';
+import {
+  inlineStyleRanges,
+  type InlineStyle,
+  type InlineStyleRange,
+} from './style-ast.js';
 
 /**
  * COMPLETE EXHAUSTIVE ANGULAR LITE COMPILER
@@ -156,25 +160,42 @@ function decoratorCallName(dec: any, sourceCode: string): string | undefined {
   return sourceCode.slice(callee.callee.start, callee.callee.end);
 }
 
+/** An inline style and the CSS the style pipeline produced for it. */
+interface ResolvedInlineStyle extends InlineStyle {
+  css: string;
+}
+
 /**
- * Source text of a `styles` value with each inline style that went through
- * the CSS pipeline replaced by its processed CSS, so the class metadata a
- * TestBed override recompiles from carries the same styles as ɵcmp.
+ * Pair each inline style of a component with its processed CSS, skipping the
+ * ones whose processing failed.
+ */
+function resolveInlineStyles(
+  range: InlineStyleRange | undefined,
+  resolvedInlineStyles: Map<number, string> | undefined,
+): ResolvedInlineStyle[] {
+  if (!range || !resolvedInlineStyles) return [];
+  return range.styles.flatMap((style, k) => {
+    const css = resolvedInlineStyles.get(range.start + k);
+    return css === undefined ? [] : [{ ...style, css }];
+  });
+}
+
+/**
+ * Source text of a `styles` value with each resolved inline style replaced by
+ * its processed CSS, so the class metadata a TestBed override recompiles from
+ * carries the same styles as ɵcmp.
  */
 function withResolvedInlineStyles(
   stylesNode: any,
-  range: InlineStyleRange | undefined,
-  resolvedInlineStyles: Map<number, string>,
+  styles: ResolvedInlineStyle[],
   sourceCode: string,
 ): string {
   let text = '';
   let pos = stylesNode.start;
-  range?.styles.forEach(({ node }, k) => {
-    const css = resolvedInlineStyles.get(range.start + k);
-    if (css === undefined) return;
+  for (const { node, css } of styles) {
     text += sourceCode.slice(pos, node.start) + JSON.stringify(css);
     pos = node.end;
-  });
+  }
   return text + sourceCode.slice(pos, stylesNode.end);
 }
 
@@ -791,12 +812,11 @@ export function compile(
             }
           }
 
-          const styleRange = styleRanges?.get(dec);
-          if (resolvedInlineStyles && styleRange) {
-            for (let k = 0; k < styleRange.styles.length; k++) {
-              const css = resolvedInlineStyles.get(styleRange.start + k);
-              if (css !== undefined) meta.styles[k] = css;
-            }
+          for (const { index, css } of resolveInlineStyles(
+            styleRanges?.get(dec),
+            resolvedInlineStyles,
+          )) {
+            meta.styles[index] = css;
           }
 
           // Store resolved resources for metadata inlining
@@ -1286,6 +1306,10 @@ export function compile(
           // runtime doesn't try to fetch relative URLs (which fails during SSR).
           const rewrittenProps: string[] = [];
           let needsTransform = false;
+          const inlineStyles = resolveInlineStyles(
+            styleRanges?.get(dec),
+            resolvedInlineStyles,
+          );
           for (const prop of decArgsNode.properties) {
             if (
               prop.type !== 'Property' ||
@@ -1311,15 +1335,11 @@ export function compile(
                 `styles: [${resources.styles.map((s) => JSON.stringify(s)).join(', ')}]`,
               );
               needsTransform = true;
-            } else if (propName === 'styles' && resolvedInlineStyles) {
-              const stylesText = withResolvedInlineStyles(
-                prop.value,
-                styleRanges?.get(dec),
-                resolvedInlineStyles,
-                sourceCode,
+            } else if (propName === 'styles' && inlineStyles.length > 0) {
+              rewrittenProps.push(
+                `styles: ${withResolvedInlineStyles(prop.value, inlineStyles, sourceCode)}`,
               );
-              rewrittenProps.push(`styles: ${stylesText}`);
-              needsTransform ||= stylesText !== textOf(prop.value);
+              needsTransform = true;
             } else {
               rewrittenProps.push(textOf(prop));
             }
