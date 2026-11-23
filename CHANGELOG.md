@@ -1,3 +1,10 @@
+# [3.0.0-beta.63](https://github.com/analogjs/analog/compare/v3.0.0-beta.62...v3.0.0-beta.63) (2026-11-23)
+
+### Bug Fixes
+
+- **tsrx-angular:** respect tsconfig include/exclude and paths aliases in TsrxTypeGenerator ([#2842](https://github.com/analogjs/analog/issues/2842)) ([ac34b21](https://github.com/analogjs/analog/commit/ac34b21f949cdc53f5ad704b58143100cf011c70))
+- **tsrx-angular:** support default imports, namespace member APIs, and module-scoped selectors ([#2845](https://github.com/analogjs/analog/issues/2845)) ([21a45a7](https://github.com/analogjs/analog/commit/21a45a74872aaff570d69bdf139099a981a5474b))
+
 # [3.0.0-beta.62](https://github.com/analogjs/analog/compare/v3.0.0-beta.61...v3.0.0-beta.62) (2026-11-23)
 
 ### Bug Fixes
