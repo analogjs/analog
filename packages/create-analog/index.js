@@ -621,7 +621,7 @@ function addPnpmDependencies(pkg, template) {
   if (H3_TEMPLATES.includes(template)) {
     pkg.dependencies ??= {};
     pkg.dependencies.h3 = '^1.13.0';
-    pkg.dependencies.ofetch = '2.0.0-alpha.3';
+    pkg.dependencies.ofetch = '^1.5.1';
   }
 }
 
