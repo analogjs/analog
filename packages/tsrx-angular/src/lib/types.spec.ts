@@ -277,10 +277,12 @@ export { amount, name, List };
       [generated('src/components/price.d.tsrx.ts')]:
         'export declare class Price { readonly stale: string; }\n',
       'src/components/price.tsrx': `import { input } from '@angular/core';
+import type { Product } from '../models.js';
 
 export function Price() @{
   const amount = input(0);
-  <span>{amount()}</span>
+  const product = input.required<Product>();
+  <span>{amount()}{product().name}</span>
 }
 `,
       'src/list.tsrx': `import { Price } from '@components/price.tsrx';
@@ -307,8 +309,9 @@ export function BaseUrlConsumer() @{
 import { createPrice } from './list.tsrx';
 
 const ok: number = createPrice().amount();
+const productName: string = createPrice().product().name;
 const bad: string = new Price().amount();
-export { ok, bad };
+export { ok, productName, bad };
 `,
     });
 
@@ -318,8 +321,12 @@ export { ok, bad };
 
     expect(result.diagnostics).toEqual([]);
     const price = read(generated('src/components/price.d.tsrx.ts'));
+    expect(price).toContain(`import type { Product } from '../models.js';`);
     expect(price).toContain(
       'readonly amount: import("@angular/core").InputSignal<number>;',
+    );
+    expect(price).toContain(
+      'readonly product: import("@angular/core").InputSignal<Product>;',
     );
     expect(price).not.toContain('stale');
 
@@ -335,6 +342,189 @@ export { ok, bad };
     expect(typeErrors()).toEqual([
       `Type 'number' is not assignable to type 'string'.`,
     ]);
+  });
+
+  it('discovers .tsrx modules imported from configured tsconfig entrypoints', async () => {
+    write({
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          target: 'es2022',
+          module: 'preserve',
+          moduleResolution: 'bundler',
+          experimentalDecorators: false,
+          skipLibCheck: true,
+          types: [],
+          allowArbitraryExtensions: true,
+          rootDirs: ['.', 'node_modules/.analog/tsrx-types'],
+        },
+        files: ['src/main.ts'],
+        include: ['src/**/*.d.ts'],
+      }),
+      'src/env.d.ts': 'export {};\n',
+      'src/badge.tsrx': `import { input } from '@angular/core';
+
+export function Badge() @{
+  const label = input('sale');
+  <span>{label()}</span>
+}
+`,
+      'src/list.tsrx': `import { Badge } from './badge.tsrx';
+import { Price } from './price.tsrx';
+
+export default function List() @{
+  <div>
+    <Badge />
+    <Price amount={1} />
+  </div>
+}
+`,
+      'src/bootstrap.ts': `import List from './list.tsrx';
+export { List };
+`,
+      'src/main.ts': `import { List } from './bootstrap';
+import { Price } from './price.tsrx';
+const amount: number = new Price().amount();
+export { amount, List };
+`,
+      // Unimported `.tsrx` outside `include` with invalid syntax proves it is never lowered.
+      'src/unimported.tsrx': 'export function Unimported() @{ <div> }\n',
+    });
+
+    const generator = new TsrxTypeGenerator({
+      tsconfig: join(root, 'tsconfig.json'),
+    });
+    expect(generator.findTsrxFiles()).toEqual([
+      join(root, 'src/badge.tsrx'),
+      join(root, 'src/list.tsrx'),
+      join(root, 'src/price.tsrx'),
+    ]);
+
+    const result = await generator.generate();
+    expect(result.diagnostics).toEqual([]);
+    expect(result.written.map((f) => f.slice(root.length + 1)).sort()).toEqual([
+      generated('src/badge.d.tsrx.ts'),
+      generated('src/list.d.tsrx.ts'),
+      generated('src/price.d.tsrx.ts'),
+    ]);
+    expect(existsSync(join(root, generated('src/unimported.d.tsrx.ts')))).toBe(
+      false,
+    );
+    expect(typeErrors()).toEqual([]);
+  });
+
+  it('excludes node_modules entries even when listed in tsconfig files', async () => {
+    write({
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          target: 'es2022',
+          module: 'preserve',
+          moduleResolution: 'bundler',
+          experimentalDecorators: false,
+          skipLibCheck: true,
+          types: [],
+          allowArbitraryExtensions: true,
+          rootDirs: ['.', 'node_modules/.analog/tsrx-types'],
+        },
+        files: ['src/price.tsrx', 'node_modules/demo/comp.tsrx'],
+      }),
+      // Invalid syntax proves it is excluded and never lowered.
+      'node_modules/demo/comp.tsrx': 'export function Comp() @{ <div> }\n',
+    });
+
+    const generator = new TsrxTypeGenerator({
+      tsconfig: join(root, 'tsconfig.json'),
+    });
+    expect(generator.findTsrxFiles()).toEqual([join(root, 'src/price.tsrx')]);
+
+    const result = await generator.generate();
+    expect(result.diagnostics).toEqual([]);
+    expect(result.written.map((f) => f.slice(root.length + 1))).toEqual([
+      generated('src/price.d.tsrx.ts'),
+    ]);
+
+    // A project located under a `node_modules` ancestor still includes its own files.
+    write({
+      'node_modules/my-app/tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          target: 'es2022',
+          module: 'preserve',
+          moduleResolution: 'bundler',
+          types: [],
+        },
+        files: ['src/comp.tsrx', 'node_modules/dep/ignored.tsrx'],
+      }),
+      'node_modules/my-app/src/comp.tsrx':
+        'export function Comp() @{ <div /> }\n',
+      'node_modules/my-app/node_modules/dep/ignored.tsrx':
+        'export function Ignored() @{ <div /> }\n',
+    });
+    const nested = new TsrxTypeGenerator({
+      tsconfig: join(root, 'node_modules/my-app/tsconfig.json'),
+    });
+    expect(nested.findTsrxFiles()).toEqual([
+      join(root, 'node_modules/my-app/src/comp.tsrx'),
+    ]);
+  });
+
+  it('preserves tsconfig paths candidate order across disk and lowered .tsrx modules', async () => {
+    rmSync(join(root, 'src/price.tsrx'));
+    rmSync(join(root, 'src/list.tsrx'));
+    write({
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          target: 'es2022',
+          module: 'preserve',
+          moduleResolution: 'bundler',
+          experimentalDecorators: false,
+          skipLibCheck: true,
+          types: [],
+          allowArbitraryExtensions: true,
+          rootDirs: ['.', 'node_modules/.analog/tsrx-types'],
+          paths: {
+            '@preferred': ['./src/value.ts', './src/fallback.tsrx'],
+            '@fallback': ['./src/missing.ts', './src/fallback.tsrx'],
+          },
+        },
+        include: ['src/**/*.ts'],
+      }),
+      'src/value.ts': `export const value = 'from-ts' as const;\n`,
+      'src/fallback.tsrx': `export const value = 42 as const;
+
+export function Fallback() @{ <span /> }
+`,
+      'src/consumer.tsrx': `import { value as preferred } from '@preferred';
+import { value as fallback } from '@fallback';
+
+export function readPreferred() {
+  return preferred;
+}
+
+export function readFallback() {
+  return fallback;
+}
+
+export function Consumer() @{ <span /> }
+`,
+    });
+
+    const result = await new TsrxTypeGenerator({
+      tsconfig: join(root, 'tsconfig.json'),
+    }).generate();
+
+    expect(result.diagnostics).toEqual([]);
+    const consumer = read(generated('src/consumer.d.tsrx.ts'));
+    expect(consumer).toContain(
+      'export declare function readPreferred(): "from-ts";',
+    );
+    expect(consumer).toContain('export declare function readFallback(): 42;');
   });
 
   it('discovers all .tsrx files in apps/tsrx-app via tsconfig.app.json', () => {
