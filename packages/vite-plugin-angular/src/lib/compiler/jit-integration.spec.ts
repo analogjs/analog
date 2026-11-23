@@ -163,12 +163,12 @@ describe('JIT transform applies @Injectable', () => {
     expect(instance.config).toBe(config);
   });
 
-  it('runs @Injectable classes without legacy decorator lowering', async () => {
+  it('runs @Injectable and @Service classes without legacy decorator lowering', async () => {
     // The plugin strips TypeScript with standard (non-legacy) decorators, so
     // a decorator left in the JIT output would reach the runtime as syntax.
     const exports = await runJit(
       `
-      import { Injectable } from '@angular/core';
+      import { Injectable, Service } from '@angular/core';
 
       @Injectable()
       export class Dep {}
@@ -179,12 +179,15 @@ describe('JIT transform applies @Injectable', () => {
       }
 
       export @Injectable() class AfterExport {}
+
+      @Service()
+      export class Svc {}
     `,
       { legacy: false },
     );
 
     const core = await import('@angular/core');
-    const { Dep, Root, AfterExport } = exports;
+    const { Dep, Root, AfterExport, Svc } = exports;
     const injector = core.Injector.create({
       providers: [Dep, Root, AfterExport],
     });
@@ -192,6 +195,7 @@ describe('JIT transform applies @Injectable', () => {
     expect(Root.ɵprov.providedIn).toBe('root');
     expect(injector.get(Root).dep).toBeInstanceOf(Dep);
     expect(injector.get(AfterExport)).toBeInstanceOf(AfterExport);
+    expect(Svc.ɵprov.providedIn).toBe('root');
   });
 
   it('keeps legacy decorator order beside a non-Angular class decorator', async () => {
