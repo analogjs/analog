@@ -3,6 +3,7 @@ import { stripIndents } from '@nx/devkit';
 import {
   ANALOG_JS_CONTENT,
   ANALOG_JS_ROUTER,
+  H3,
   MARKED,
   MARKED_GFM_HEADING_ID,
   MARKED_HIGHLIGHT,
@@ -13,6 +14,7 @@ import {
 const dependencyKeys = [
   '@analogjs/content',
   '@analogjs/router',
+  'h3',
   'marked',
   'marked-gfm-heading-id',
   'marked-highlight',
@@ -40,6 +42,7 @@ const getDependencies = (escapedAngularVersion: string) => {
   return {
     '@analogjs/content': ANALOG_JS_CONTENT,
     '@analogjs/router': ANALOG_JS_ROUTER,
+    h3: H3,
     marked: MARKED,
     'marked-gfm-heading-id': MARKED_GFM_HEADING_ID,
     'marked-highlight': MARKED_HIGHLIGHT,
