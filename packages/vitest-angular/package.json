@@ -65,6 +65,12 @@
     "zone.js": "catalog:peerVitestAngular"
   },
   "peerDependenciesMeta": {
+    "@angular-devkit/architect": {
+      "optional": true
+    },
+    "@angular-devkit/schematics": {
+      "optional": true
+    },
     "zone.js": {
       "optional": true
     }

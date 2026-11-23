@@ -508,6 +508,23 @@ import { ContentRenderer, type TableOfContentItem } from '@analogjs/content';
 provideContent(withMarkdownRenderer({ loadMermaid: () => import('mermaid') }));
 ```
 
+#### `injectContentFiles()` and `injectContentFilesMap()` require an injection context
+
+In v3, `injectContentFiles()` and `injectContentFilesMap()` call Angular's `inject()` internally and throw `NG0203` if called outside an injection context. If a custom `CONTENT_LIST_LOADER` or `CONTENT_FILE_LOADER` provider called them inside the returned async loader callback, hoist the call into `useFactory()`:
+
+```diff-ts
+ {
+   provide: CONTENT_LIST_LOADER,
+   useFactory() {
++    const localPosts = injectContentFiles();
+     return async () => {
+-      const localPosts = injectContentFiles();
+       return [...localPosts, ...externalPosts];
+     };
+   },
+ }
+```
+
 ### Vite Plugin Angular
 
 #### The `supportedBrowsers` option was removed
