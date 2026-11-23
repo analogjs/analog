@@ -18,13 +18,19 @@ export interface VirtualModulesPluginOptions {
 
 const FS_PREFIX = '/@fs/';
 
+function isDirectory(path: string): boolean {
+  return statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false;
+}
+
 /**
  * The file a URL that Vite wrote into a module's code points at. Vitest
  * resolves the imports of a module restored from `fsModuleCache` by these
  * URLs, so they must resolve to the same file as the original import.
  * `/@fs/<path>` is that path. A root-relative URL (`/src/app/a.css`) is the
  * file under the Vite root when there is one; otherwise the caller reads it
- * as the path given, which is the order Vite tries the two in.
+ * as the path given, which is the order Vite tries the two in. A URL that
+ * already starts with the root's path is root-relative only when the root
+ * holds a directory at its own path (`/app/app`), as in Vite's resolver.
  */
 function resolveViteUrl(
   url: string,
@@ -35,7 +41,10 @@ function resolveViteUrl(
     // `/@fs/C:/a.css` on Windows, `/@fs/home/a.css` elsewhere.
     return /^[A-Z]:/i.test(fsPath) ? fsPath : `/${fsPath}`;
   }
-  if (!root || !url.startsWith('/') || url.startsWith(`${root}/`)) {
+  if (!root || !url.startsWith('/')) {
+    return undefined;
+  }
+  if (url.startsWith(`${root}/`) && !isDirectory(join(root, root))) {
     return undefined;
   }
   const filePath = join(root, url);

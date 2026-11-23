@@ -857,6 +857,20 @@ describe('JIT resolveId', () => {
       });
     });
 
+    it('should resolve a URL under the Vite root path to the file under the root that nests its own path', () => {
+      withViteRoot((root, resolveId) => {
+        mkdirSync(join(root, root), { recursive: true });
+        writeFileSync(join(root, root, 'x.css'), '');
+
+        expect(resolveId(`${root}/x.css?inline`)).toBe(
+          normalizePath(join(root, root, 'x.css')) + '?inline',
+        );
+        expect(resolveId(`${root}/missing.css?inline`)).toBe(
+          normalizePath(`${root}/missing.css`) + '?inline',
+        );
+      });
+    });
+
     it('should resolve a /@fs/ URL to the file outside the Vite root', () => {
       withViteRoot((_root, resolveId) => {
         expect(resolveId('/@fs/outside/my-component.css?inline')).toBe(
