@@ -434,6 +434,15 @@ export class ExtComponent {}
     );
   });
 
+  it('puts the preprocessed styleUrl CSS into setClassMetadata', async () => {
+    await transformCssStyleUrlComponent(buildPlugin());
+
+    const compiled: string = mockTransformWithOxc.mock.calls.at(-1)![0];
+    expect(compiled.slice(compiled.indexOf('ɵsetClassMetadata'))).toContain(
+      'styles: [":host{}\\n"]',
+    );
+  });
+
   it('preprocesses an external styleUrl at its own path', async () => {
     mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
     mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });

@@ -1389,7 +1389,37 @@ export class BottomNav {}
       // Preprocessed CSS used in ɵcmp styles (ShadowCss applied)
       expect(result.code).toContain('padding: 1rem');
       expect(result.code).toContain('_nghost-%COMP%');
-      // Note: $var still appears in setClassMetadata (preserves original decorator args)
+    });
+
+    it('applies resolvedInlineStyles to the styles in setClassMetadata', () => {
+      // A TestBed override recompiles the component from its class metadata,
+      // so those styles must be the processed ones ɵcmp got.
+      const resolvedInlineStyles = new Map([
+        [0, '.a { padding: 1rem; }'],
+        [1, '.b { margin: 2rem; }'],
+      ]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        const shared = '.shared {}';
+        @Component({
+          selector: 'app-inline-scss',
+          template: '<p>hi</p>',
+          styles: ['.a { padding: $var; }', shared, \`.b { margin: $m; }\`]
+        })
+        export class InlineScssComponent {}
+      `,
+        'inline-scss.ts',
+        { resolvedInlineStyles },
+      );
+
+      const metadata = result.code.slice(
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      expect(metadata).toContain(
+        'styles: [".a { padding: 1rem; }", shared, ".b { margin: 2rem; }"]',
+      );
     });
 
     it('applies resolvedInlineStyles to singular string style', () => {
@@ -1433,7 +1463,9 @@ export class BottomNav {}
         { resolvedInlineStyles },
       );
 
-      const [first, second] = result.code.split('class SecondComponent');
+      const [first, second] = result.code
+        .slice(0, result.code.indexOf('ɵsetClassMetadata'))
+        .split('class SecondComponent');
       expect(first).toContain('color: red');
       expect(first).not.toContain('color: blue');
       expect(second).toContain('color: blue');
