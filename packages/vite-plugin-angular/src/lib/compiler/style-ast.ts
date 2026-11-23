@@ -10,8 +10,16 @@ function getClassDeclaration(node: ProgramNode): any {
     : node;
 }
 
-function getPropertyKey(prop: any): string | undefined {
+/** An object property's key, quoted (`'styles'`) or not (`styles`). */
+export function getPropertyKey(prop: any): string | undefined {
   return prop.key?.name || prop.key?.value;
+}
+
+function styleText(node: any): string | undefined {
+  if (node?.type === 'Literal' && typeof node.value === 'string') {
+    return node.value;
+  }
+  return getTemplateLiteralText(node);
 }
 
 function getTemplateLiteralText(node: any): string | undefined {
@@ -77,20 +85,38 @@ export function extractInlineStyles(
   program?: ReturnType<typeof parseSync>['program'],
 ): string[] {
   program ??= parseOxc(fileName, code).program;
-  return [...componentInlineStyles(program).values()].flat();
+  return [...componentInlineStyles(program).values()]
+    .flat()
+    .map((style) => style.text);
 }
 
 /**
- * Map each @Component decorator node to the range of its styles in the flat
+ * An inline style string, the AST node it was read from, and its position in
+ * the `styles` array (0 for a single `styles` value).
+ */
+export interface InlineStyle {
+  text: string;
+  node: any;
+  index: number;
+}
+
+/**
+ * A component's inline styles and the index of the first one in the flat
  * per-file list returned by {@link extractInlineStyles}.
  */
+export interface InlineStyleRange {
+  start: number;
+  styles: InlineStyle[];
+}
+
+/** Map each @Component decorator node to its {@link InlineStyleRange}. */
 export function inlineStyleRanges(
   program: ReturnType<typeof parseSync>['program'],
-): Map<any, { start: number; count: number }> {
-  const ranges = new Map<any, { start: number; count: number }>();
+): Map<any, InlineStyleRange> {
+  const ranges = new Map<any, InlineStyleRange>();
   let start = 0;
   for (const [decorator, styles] of componentInlineStyles(program)) {
-    ranges.set(decorator, { start, count: styles.length });
+    ranges.set(decorator, { start, styles });
     start += styles.length;
   }
   return ranges;
@@ -98,8 +124,8 @@ export function inlineStyleRanges(
 
 function componentInlineStyles(
   program: ReturnType<typeof parseSync>['program'],
-): Map<any, string[]> {
-  const result = new Map<any, string[]>();
+): Map<any, InlineStyle[]> {
+  const result = new Map<any, InlineStyle[]>();
 
   for (const node of program.body) {
     const decl = getClassDeclaration(node);
@@ -113,7 +139,7 @@ function componentInlineStyles(
       const arg = expr.arguments?.[0];
       if (!arg || arg.type !== 'ObjectExpression') continue;
 
-      const styles: string[] = [];
+      const styles: InlineStyle[] = [];
       result.set(dec, styles);
 
       for (const prop of arg.properties) {
@@ -123,26 +149,11 @@ function componentInlineStyles(
 
         if (key !== 'styles') continue;
 
-        if (val?.type === 'ArrayExpression') {
-          for (const el of val.elements) {
-            if (el?.type === 'Literal' && typeof el.value === 'string') {
-              styles.push(el.value);
-              continue;
-            }
-
-            const templateText = getTemplateLiteralText(el);
-            if (templateText !== undefined) {
-              styles.push(templateText);
-            }
-          }
-        } else if (val?.type === 'Literal' && typeof val.value === 'string') {
-          styles.push(val.value);
-        } else {
-          const templateText = getTemplateLiteralText(val);
-          if (templateText !== undefined) {
-            styles.push(templateText);
-          }
-        }
+        const nodes = val?.type === 'ArrayExpression' ? val.elements : [val];
+        nodes.forEach((node: any, index: number) => {
+          const text = styleText(node);
+          if (text !== undefined) styles.push({ text, node, index });
+        });
       }
     }
   }

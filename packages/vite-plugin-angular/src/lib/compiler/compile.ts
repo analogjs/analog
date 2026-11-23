@@ -61,7 +61,12 @@ import {
 import { buildDeferDependencyMap, buildImportMap } from './defer.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
-import { inlineStyleRanges } from './style-ast.js';
+import {
+  getPropertyKey,
+  inlineStyleRanges,
+  type InlineStyle,
+  type InlineStyleRange,
+} from './style-ast.js';
 
 /**
  * COMPLETE EXHAUSTIVE ANGULAR LITE COMPILER
@@ -154,6 +159,45 @@ function decoratorCallName(dec: any, sourceCode: string): string | undefined {
   const callee = dec.expression;
   if (callee?.type !== 'CallExpression') return undefined;
   return sourceCode.slice(callee.callee.start, callee.callee.end);
+}
+
+/** An inline style and the CSS the style pipeline produced for it. */
+interface ResolvedInlineStyle extends InlineStyle {
+  css: string;
+}
+
+/**
+ * Pair each inline style of a component with its processed CSS, skipping the
+ * ones whose processing failed.
+ */
+function resolveInlineStyles(
+  range: InlineStyleRange | undefined,
+  resolvedInlineStyles: Map<number, string> | undefined,
+): ResolvedInlineStyle[] {
+  if (!range || !resolvedInlineStyles) return [];
+  return range.styles.flatMap((style, k) => {
+    const css = resolvedInlineStyles.get(range.start + k);
+    return css === undefined ? [] : [{ ...style, css }];
+  });
+}
+
+/**
+ * Source text of a `styles` value with each resolved inline style replaced by
+ * its processed CSS, so the class metadata a TestBed override recompiles from
+ * carries the same styles as ɵcmp.
+ */
+function withResolvedInlineStyles(
+  stylesNode: any,
+  styles: ResolvedInlineStyle[],
+  sourceCode: string,
+): string {
+  let text = '';
+  let pos = stylesNode.start;
+  for (const { node, css } of styles) {
+    text += sourceCode.slice(pos, node.start) + JSON.stringify(css);
+    pos = node.end;
+  }
+  return text + sourceCode.slice(pos, stylesNode.end);
 }
 
 /**
@@ -769,18 +813,22 @@ export function compile(
             }
           }
 
-          const styleRange = styleRanges?.get(dec);
-          if (resolvedInlineStyles && styleRange) {
-            for (let k = 0; k < styleRange.count; k++) {
-              const css = resolvedInlineStyles.get(styleRange.start + k);
-              if (css !== undefined) meta.styles[k] = css;
-            }
+          for (const { index, css } of resolveInlineStyles(
+            styleRanges?.get(dec),
+            resolvedInlineStyles,
+          )) {
+            meta.styles[index] = css;
           }
 
-          // Store resolved resources for metadata inlining
+          // Store resolved resources for metadata inlining. `styles` is set only
+          // when a styleUrl was read here, and then holds every style ɵcmp got,
+          // inline ones included.
           resolvedResources.set(dec, {
             template: templateContent || undefined,
-            styles: meta.styles?.length > 0 ? [...meta.styles] : undefined,
+            styles:
+              meta.styleUrls.length > 0 && meta.styles?.length > 0
+                ? [...meta.styles]
+                : undefined,
           });
 
           const parsedTemplate = parseTemplate(templateContent, fileName, {
@@ -1264,6 +1312,11 @@ export function compile(
           // runtime doesn't try to fetch relative URLs (which fails during SSR).
           const rewrittenProps: string[] = [];
           let needsTransform = false;
+          const inlineStyles = resolveInlineStyles(
+            styleRanges?.get(dec),
+            resolvedInlineStyles,
+          );
+          let resourceStylesWritten = false;
           for (const prop of decArgsNode.properties) {
             if (
               prop.type !== 'Property' ||
@@ -1274,7 +1327,7 @@ export function compile(
               rewrittenProps.push(textOf(prop));
               continue;
             }
-            const propName = textOf(prop.key);
+            const propName = getPropertyKey(prop);
 
             if (propName === 'templateUrl' && resources.template) {
               rewrittenProps.push(
@@ -1282,11 +1335,23 @@ export function compile(
               );
               needsTransform = true;
             } else if (
-              (propName === 'styleUrl' || propName === 'styleUrls') &&
-              resources.styles?.length
+              (propName === 'styleUrl' ||
+                propName === 'styleUrls' ||
+                propName === 'styles') &&
+              resources.styles
             ) {
+              // One `styles` key for all of them: a second one would win
+              // over the first and drop its styles.
+              if (!resourceStylesWritten) {
+                rewrittenProps.push(
+                  `styles: [${resources.styles.map((s) => JSON.stringify(s)).join(', ')}]`,
+                );
+                resourceStylesWritten = true;
+              }
+              needsTransform = true;
+            } else if (propName === 'styles' && inlineStyles.length > 0) {
               rewrittenProps.push(
-                `styles: [${resources.styles.map((s) => JSON.stringify(s)).join(', ')}]`,
+                `styles: ${withResolvedInlineStyles(prop.value, inlineStyles, sourceCode)}`,
               );
               needsTransform = true;
             } else {
