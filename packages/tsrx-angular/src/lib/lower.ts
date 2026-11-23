@@ -499,6 +499,49 @@ function trimSpan(src: string, span: Span): Span {
   return { start, end };
 }
 
+/**
+ * Matches a `when` clause (`when`, or with `allowModifiers`, `prefetch when` /
+ * `hydrate when`) at the start of a trimmed `part`, allowing arbitrary
+ * whitespace or an immediate `(` after `when`.
+ */
+function matchWhenClause(
+  src: string,
+  part: Span,
+  allowModifiers: boolean,
+): { keyword: string; expr: Span } | null {
+  let pos = part.start;
+  let prefix = '';
+  if (allowModifiers) {
+    for (const mod of ['prefetch', 'hydrate']) {
+      const after = pos + mod.length;
+      if (
+        after < part.end &&
+        src.startsWith(mod, pos) &&
+        isWhitespace(src[after])
+      ) {
+        prefix = `${mod} `;
+        pos = after;
+        while (pos < part.end && isWhitespace(src[pos])) pos++;
+        break;
+      }
+    }
+  }
+  const afterWhen = pos + 'when'.length;
+  if (
+    afterWhen >= part.end ||
+    !src.startsWith('when', pos) ||
+    (!isWhitespace(src[afterWhen]) && src[afterWhen] !== '(')
+  ) {
+    return null;
+  }
+  pos = afterWhen;
+  while (pos < part.end && isWhitespace(src[pos])) pos++;
+  return {
+    keyword: `${prefix}when`,
+    expr: { start: pos, end: part.end },
+  };
+}
+
 /** A component's metadata export, `export const XMeta = { … }`. */
 interface ComponentMeta {
   /** The object literal. */
@@ -1167,25 +1210,24 @@ class ComponentLowerer {
     index: number,
   ): BlockMatch | null {
     const text = children[index];
-    if (text.type !== 'JSXText') {
+    const content = blockContent(children[index + 1]);
+    if (text.type !== 'JSXText' || content === null) {
       return null;
     }
-    const at = this.source.lastIndexOf('@', text.end - 1);
-    if (at < text.start) {
-      return null;
-    }
-    const header = this.readBlockHeader(
-      at,
+    const header = this.findTrailingBlockHeader(
+      text.start,
       text.end,
       Object.keys(ANGULAR_BLOCKS),
     );
-    const content = blockContent(children[index + 1]);
-    if (header === null || header.end !== text.end || content === null) {
+    if (header === null) {
       return null;
     }
 
     const match: BlockMatch = {
-      textBefore: at > text.start ? { start: text.start, end: at } : null,
+      textBefore:
+        header.start > text.start
+          ? { start: text.start, end: header.start }
+          : null,
       main: { header, content },
       connected: [],
       lastIndex: index + 1,
@@ -1217,6 +1259,34 @@ class ComponentLowerer {
   }
 
   /**
+   * Finds a trailing `@name` block header in `this.source[start..limit)` that
+   * extends all the way to `limit`. Scans left-to-right so `@` characters
+   * inside a header's parameters don't hide the outer block header.
+   */
+  private findTrailingBlockHeader(
+    start: number,
+    limit: number,
+    names: string[],
+  ): BlockHeader | null {
+    for (let pos = start; pos < limit; ) {
+      const at = this.source.indexOf('@', pos);
+      if (at === -1 || at >= limit) {
+        return null;
+      }
+      const header = this.readBlockHeader(at, limit, names);
+      if (header !== null) {
+        if (header.end === limit) {
+          return header;
+        }
+        pos = header.end;
+      } else {
+        pos = at + 1;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Reads `@name`, optional `( … )` parameters and trailing whitespace from
    * `this.source[start..limit)`. Returns `null` if it isn't one of `names`.
    */
@@ -1229,11 +1299,14 @@ class ComponentLowerer {
     if (src[start] !== '@') {
       return null;
     }
-    const name = names.find(
-      (n) =>
+    const name = names.find((n) => {
+      const after = start + 1 + n.length;
+      return (
+        after <= limit &&
         src.startsWith(n, start + 1) &&
-        !isIdentifierChar(src[start + 1 + n.length] ?? ''),
-    );
+        (after === limit || !isIdentifierChar(src[after] ?? ''))
+      );
+    });
     if (name === undefined || (start > 0 && isIdentifierChar(src[start - 1]))) {
       return null;
     }
@@ -1241,7 +1314,7 @@ class ComponentLowerer {
     while (pos < limit && isWhitespace(src[pos])) pos++;
 
     let params: Span | null = null;
-    if (src[pos] === '(') {
+    if (pos < limit && src[pos] === '(') {
       const close = findClosingParen(src, pos, limit);
       if (close === -1) {
         throw new TsrxLoweringError(
@@ -1271,12 +1344,12 @@ class ComponentLowerer {
     ) {
       return;
     }
-    const at = this.source.lastIndexOf('@', text.end - 1);
-    if (at < text.start) {
-      return;
-    }
-    const header = this.readBlockHeader(at, text.end, ANGULAR_BLOCK_NAMES);
-    if (header === null || header.end !== text.end) {
+    const header = this.findTrailingBlockHeader(
+      text.start,
+      text.end,
+      ANGULAR_BLOCK_NAMES,
+    );
+    if (header === null) {
       return;
     }
     const span = { start: header.start, end: next.end };
@@ -1345,22 +1418,23 @@ class ComponentLowerer {
           : splitTopLevel(this.source, block.header.params, ';')
               .map((part) => trimSpan(this.source, part))
               .filter((part) => part.end > part.start);
-      for (const part of parts) {
-        if (!this.source.startsWith('when ', part.start)) {
+      const parsedParts = parts.map((part) => ({
+        part,
+        when: matchWhenClause(this.source, part, false),
+      }));
+      for (const { part, when } of parsedParts) {
+        if (when === null) {
           vars.push(...this.boundaryLets(part));
         }
       }
       const inner = [...scope, ...vars];
       const errorVars = vars.filter((v) => v.type === 'unknown');
       const params = joinMapped(
-        parts.map((part) => {
-          if (!this.source.startsWith('when ', part.start)) {
+        parsedParts.map(({ part, when }) => {
+          if (when === null) {
             return new MappedText().copy(this.source, part);
           }
-          const expr = this.parseExpressionAt({
-            start: part.start + 'when '.length,
-            end: part.end,
-          });
+          const expr = this.parseExpressionAt(when.expr);
           return mt`when ${this.bindValue(expr, [...scope, ...errorVars]).call}`.from(
             part,
           );
@@ -1418,36 +1492,28 @@ class ComponentLowerer {
     );
     return joinMapped(
       parts.map((part) => {
-        const text = this.source.slice(part.start, part.end);
-        const keyword = ['when ', 'prefetch when ', 'hydrate when '].find((k) =>
-          text.startsWith(k),
-        );
-        if (keyword === undefined) {
+        const matched = matchWhenClause(this.source, part, true);
+        if (matched === null) {
           return new MappedText().copy(this.source, part);
         }
-        const expr = this.parseExpressionAt({
-          start: part.start + keyword.length,
-          end: part.end,
-        });
-        return mt`${keyword}${this.bindValue(expr, scope).call}`.from(part);
+        const expr = this.parseExpressionAt(matched.expr);
+        return mt`${matched.keyword} ${this.bindValue(expr, scope).call}`.from(
+          part,
+        );
       }),
       '; ',
     );
   }
 
   /**
-   * Parses the expression at `span` of the source. Everything outside the span
-   * is blanked, so the resulting AST's offsets are positions in the source.
+   * Parses the expression at `span` of the source and shifts its AST offsets
+   * back into source coordinates.
    */
   private parseExpressionAt(span: Span): EstreeNode {
-    let padded = '';
-    for (let i = 0; i < this.source.length; i++) {
-      const ch = this.source[i];
-      padded += (i >= span.start && i < span.end) || ch === '\n' ? ch : ' ';
-    }
+    const exprSource = this.source.slice(span.start, span.end);
     let program: EstreeNode;
     try {
-      program = this.parsers.parseModule(padded, this.fileName);
+      program = this.parsers.parseModule(exprSource, this.fileName);
     } catch {
       throw new TsrxLoweringError(span, 'Expected an expression.');
     }
@@ -1455,6 +1521,7 @@ class ComponentLowerer {
     if (program.body.length !== 1 || statement.type !== 'ExpressionStatement') {
       throw new TsrxLoweringError(span, 'Expected an expression.');
     }
+    shiftOffsets(statement.expression, span.start);
     return statement.expression;
   }
 
@@ -1988,6 +2055,17 @@ function forEachChild(
       visit(value as EstreeNode);
     }
   }
+}
+
+/** Shifts numeric `start`/`end` offsets on `node` and its descendants by `delta`. */
+function shiftOffsets(node: EstreeNode, delta: number): void {
+  if (typeof node.start === 'number') {
+    node.start += delta;
+  }
+  if (typeof node.end === 'number') {
+    node.end += delta;
+  }
+  forEachChild(node, (child) => shiftOffsets(child, delta));
 }
 
 function containsTemplate(node: EstreeNode | null | undefined): boolean {

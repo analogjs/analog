@@ -324,6 +324,38 @@ export class Counter {
           "Unsupported @error parameter 'let err = oops'",
         ),
       ]);
+      expect(
+        errors(
+          `export function C() @{ <div>@error (when tag === '@x') { <p /> }</div> }`,
+        ),
+      ).toEqual(['@error must directly follow a @defer or @boundary block.']);
+    });
+
+    it('handles @ and parenthesized when-conditions in @boundary @error blocks', () => {
+      const source = `
+        import { Widget } from './widget';
+        const isCode = (e: unknown, code: string) => String(e) === code;
+        export function C() @{
+          <div>
+            @boundary {
+              <Widget />
+            } @error (let err; when(isCode(err, '@fatal'))) {
+              <p>{'Fatal'}</p>
+            }
+          </div>
+        }
+      `;
+      expect(template(source, { Widget: 'x-widget' })).toBe(
+        '<div>@boundary {<x-widget></x-widget>} @error (let err; when $fc.b0(err)) {<p>Fatal</p>}</div>',
+      );
+      const { code, sourceMap } = lower(source, { Widget: 'x-widget' });
+      expect(code).toContain(
+        "const ɵb0 = (err: unknown) => (isCode(err, '@fatal'));",
+      );
+      const expr = "isCode(err, '@fatal')";
+      expect(sourceMap.toOriginalOffset(code.indexOf(expr))).toBe(
+        source.indexOf(expr),
+      );
     });
 
     it('rejects @pending', () => {
@@ -393,6 +425,85 @@ export class Counter {
       expect(lower(source).code).toContain(
         'const ɵb0 = () => (ready() && true);',
       );
+    });
+
+    it('handles @ inside @defer trigger parameters and preceding text', () => {
+      const source = `
+        import { signal } from '@angular/core';
+        import { Panel } from './panel';
+        export function C() @{
+          const role = signal('@admin');
+          <div>
+            Contact a@b.com @defer (when role() === '@admin') {
+              <Panel />
+            }
+          </div>
+        }
+      `;
+      expect(template(source, { Panel: 'x-panel' })).toBe(
+        '<div>Contact a&#64;b.com @defer (when $fc.b0()) {<x-panel></x-panel>}</div>',
+      );
+      const { code, sourceMap } = lower(source, { Panel: 'x-panel' });
+      expect(code).toContain("const ɵb0 = () => (role() === '@admin');");
+      const expr = "role() === '@admin'";
+      expect(sourceMap.toOriginalOffset(code.indexOf(expr))).toBe(
+        source.indexOf(expr),
+      );
+
+      // A `@defer` string inside parameters does not hide the outer `@defer`.
+      expect(
+        template(
+          `
+          import { signal } from '@angular/core';
+          import { Panel } from './panel';
+          export function C() @{
+            const tag = signal('@defer');
+            <div>
+              @defer (when tag() === '@defer') {
+                <Panel />
+              }
+            </div>
+          }
+        `,
+          { Panel: 'x-panel' },
+        ),
+      ).toBe('<div>@defer (when $fc.b0()) {<x-panel></x-panel>}</div>');
+
+      // Unclosed parameters still report an error.
+      expect(
+        errors(
+          `export function C() @{ <div>@defer (on viewport { <p /> }</div> }`,
+        ),
+      ).toEqual(['Unclosed parameters for @defer.']);
+    });
+
+    it('accepts flexible whitespace and parenthesized when clauses in @defer', () => {
+      const source = `
+        import { signal } from '@angular/core';
+        import { Panel } from './panel';
+        export function C() @{
+          const ready = signal(false);
+          const warm = signal(false);
+          const hydrated = signal(false);
+          <div>
+            @defer (when(ready()); prefetch\twhen\n  (warm()); hydrate\n  when(hydrated())) {
+              <Panel />
+            }
+          </div>
+        }
+      `;
+      expect(template(source, { Panel: 'x-panel' })).toBe(
+        '<div>@defer (when $fc.b0(); prefetch when $fc.b1(); hydrate when $fc.b2()) {<x-panel></x-panel>}</div>',
+      );
+      const { code, sourceMap } = lower(source, { Panel: 'x-panel' });
+      expect(code).toContain('const ɵb0 = () => (ready());');
+      expect(code).toContain('const ɵb1 = () => (warm());');
+      expect(code).toContain('const ɵb2 = () => (hydrated());');
+      for (const expr of ['ready()', 'warm()', 'hydrated()']) {
+        expect(sourceMap.toOriginalOffset(code.indexOf(expr))).toBe(
+          source.indexOf(expr),
+        );
+      }
     });
 
     it('maps a bare @defer and leaves other @ text alone', () => {
