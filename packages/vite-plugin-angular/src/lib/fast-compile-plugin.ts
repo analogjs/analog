@@ -197,14 +197,10 @@ export function fastCompilePlugin(
       entries = scanFile(code, file, program);
       scanResults?.set(file, entries);
     }
-    for (const entry of entries) {
-      // At buildStart we want stable registry entries (don't overwrite
-      // an earlier scan with a barrel re-scan); HMR explicitly asks
-      // for overwrite so updated metadata replaces stale entries.
-      if (overwrite || !registry.has(entry.className)) {
-        registry.set(entry.className, entry);
-      }
-    }
+    // At buildStart we want stable registry entries (don't overwrite
+    // an earlier scan with a barrel re-scan); HMR explicitly asks
+    // for overwrite so updated metadata replaces stale entries.
+    scanner.recordFileEntries(file, entries, overwrite);
     // Collect every relative re-export specifier via OXC AST so
     // recursive scans can't trip over each other (a shared `/g` regex
     // would have its `lastIndex` reset by each recursive call and
@@ -300,7 +296,7 @@ export function fastCompilePlugin(
           fileContents.set(file, code);
           const entries = scanFile(code, file);
           scanResults.set(file, entries);
-          return entries;
+          return { file, entries };
         } catch (e) {
           if (debugRegistry.enabled) {
             debugRegistry(
@@ -309,15 +305,13 @@ export function fastCompilePlugin(
               (e as Error)?.message,
             );
           }
-          return []; // Skip unreadable files
+          return { file, entries: [] }; // Skip unreadable files
         }
       }),
     );
 
-    for (const entries of results) {
-      for (const entry of entries) {
-        registry.set(entry.className, entry);
-      }
+    for (const { file, entries } of results) {
+      scanner.recordFileEntries(file, entries, true);
     }
 
     // Walk the transitive import graph from the root files so the registry also
@@ -416,10 +410,7 @@ export function fastCompilePlugin(
         entries = scanFile(code, file, program);
         scanResults.set(file, entries);
       }
-      for (const entry of entries) {
-        if (!registry.has(entry.className))
-          registry.set(entry.className, entry);
-      }
+      scanner.recordFileEntries(file, entries);
       // Pre-scan the `.d.ts` of every external package this file imports (and,
       // transitively, packages those packages' NgModules re-export — e.g.
       // BrowserModule → CommonModule → NgIf). Doing this at buildStart means the
@@ -622,9 +613,7 @@ export function fastCompilePlugin(
 
     scanner.ensureDtsRegistryForSource(code, id, oxcProgram);
 
-    for (const entry of scanFile(code, id, oxcProgram)) {
-      registry.set(entry.className, entry);
-    }
+    scanner.recordFileEntries(id, scanFile(code, id, oxcProgram), true);
     // Scan what `id` imports, and recompile it when their metadata changes.
     await scanner.resolveImportSpecifiers(
       collectAllImports(code, id, oxcProgram),
@@ -646,13 +635,12 @@ export function fastCompilePlugin(
     const activeComponentRegistries = sharedCtx
       ? sharedCtx.componentRegistries
       : componentRegistries;
-    let compileRegistry: ComponentRegistry = registry;
-    if (activeComponentRegistries.some((external) => external.size > 0)) {
-      compileRegistry = new Map(registry);
-      for (const external of activeComponentRegistries) {
-        for (const [k, v] of external) compileRegistry.set(k, v);
-      }
-    }
+    const compileRegistry = buildCompileRegistry(
+      scanner,
+      oxcProgram,
+      id,
+      activeComponentRegistries,
+    );
 
     const result = compile(code, id, {
       registry: compileRegistry,
@@ -724,10 +712,13 @@ export function fastCompilePlugin(
     registerSourceFormat: (format) => scanner.registerSourceFormat(format),
     scanImports: (specifiers, importer, resolve) =>
       scanner.scanImports(specifiers, importer, resolve),
-    resolveSelector: (className) =>
+    resolveSelector: (className, moduleSpecifier, containingFile) =>
       scanner.lookupSelector(
         className,
         sharedCtx ? sharedCtx.componentRegistries : componentRegistries,
+        moduleSpecifier !== undefined && containingFile !== undefined
+          ? { moduleSpecifier, containingFile }
+          : undefined,
       ),
     async compile(code, id, { resolve, mapToSource }) {
       const transformed = await handleFastCompileTransform(
@@ -939,4 +930,76 @@ export function fastCompilePlugin(
       },
     },
   };
+}
+
+/**
+ * Builds the registry view for compiling `id`, overlaying external registries,
+ * this file's value import bindings (including aliases, default imports, and
+ * same-named components from distinct modules), and declarations from `id`
+ * itself. Reuses `scanner.registry` directly when no overrides apply.
+ */
+function buildCompileRegistry(
+  scanner: ComponentScanner,
+  program: ReturnType<typeof parseSync>['program'],
+  id: string,
+  externalRegistries: readonly ComponentRegistryEntries[],
+): ComponentRegistry {
+  let compileRegistry: ComponentRegistry = scanner.registry;
+  const ensureOverlay = (): ComponentRegistry => {
+    if (compileRegistry === scanner.registry) {
+      compileRegistry = new Map(scanner.registry);
+    }
+    return compileRegistry;
+  };
+
+  if (externalRegistries.some((external) => external.size > 0)) {
+    const overlay = ensureOverlay();
+    for (const external of externalRegistries) {
+      for (const [k, v] of external) overlay.set(k, v);
+    }
+  }
+
+  for (const stmt of program.body || []) {
+    if (
+      stmt.type !== 'ImportDeclaration' ||
+      (stmt as any).importKind === 'type' ||
+      !stmt.source?.value
+    ) {
+      continue;
+    }
+    const moduleSpecifier: string = stmt.source.value;
+    for (const spec of (stmt as any).specifiers || []) {
+      if (spec.importKind === 'type') continue;
+      let importedName: string | undefined;
+      let localName: string | undefined;
+      if (spec.type === 'ImportDefaultSpecifier') {
+        importedName = 'default';
+        localName = spec.local?.name;
+      } else if (spec.type === 'ImportSpecifier') {
+        importedName =
+          spec.imported?.type === 'Identifier'
+            ? spec.imported.name
+            : typeof spec.imported?.value === 'string'
+              ? spec.imported.value
+              : undefined;
+        localName = spec.local?.name;
+      }
+      if (!importedName || !localName) continue;
+      const entry = scanner.lookupEntry(importedName, externalRegistries, {
+        moduleSpecifier,
+        containingFile: id,
+      });
+      if (entry && compileRegistry.get(localName) !== entry) {
+        ensureOverlay().set(localName, entry);
+      }
+    }
+  }
+
+  for (const localEntry of scanner.entriesOf(id)) {
+    if (compileRegistry.get(localEntry.className) !== localEntry) {
+      ensureOverlay().set(localEntry.className, localEntry);
+    }
+  }
+
+  return compileRegistry;
 }

@@ -137,10 +137,9 @@ export interface TsrxLoweringResult {
   sourceMap: TsrxSourceMap;
 }
 
-interface ImportedName {
-  module: string;
-  importedName: string;
-}
+type ImportedName =
+  | { kind: 'value'; module: string; importedName: string }
+  | { kind: 'namespace'; module: string };
 
 /** A template-local variable that hoisted closures receive as a parameter. */
 interface Local {
@@ -852,7 +851,7 @@ class ComponentLowerer {
       }
     }
     for (const s of block.body as EstreeNode[]) {
-      const member = this.getMemberDeclaration(s);
+      const member = this.getMemberDeclaration(s, locals);
       if (member !== null) {
         rejectBodyReads(member, locals);
         memberNames.add(member.id.name);
@@ -959,6 +958,7 @@ class ComponentLowerer {
    */
   private getMemberDeclaration(
     stmt: EstreeNode,
+    locals: Map<string, EstreeNode>,
   ): { id: EstreeNode; init: EstreeNode } | null {
     if (
       stmt.type !== 'VariableDeclaration' ||
@@ -979,14 +979,28 @@ class ComponentLowerer {
     ) {
       callee = callee.object;
     }
-    if (callee.type !== 'Identifier') {
-      return null;
-    }
-    const imported = this.imports.get(callee.name);
-    if (
-      imported?.module !== CORE_MODULE ||
-      !MEMBER_APIS.has(imported.importedName)
+    let memberApi: string | null = null;
+    if (callee.type === 'Identifier') {
+      if (!locals.has(callee.name)) {
+        const imported = this.imports.get(callee.name);
+        if (imported?.kind === 'value' && imported.module === CORE_MODULE) {
+          memberApi = imported.importedName;
+        }
+      }
+    } else if (
+      callee.type === 'MemberExpression' &&
+      !callee.computed &&
+      callee.object.type === 'Identifier' &&
+      callee.property.type === 'Identifier'
     ) {
+      if (!locals.has(callee.object.name)) {
+        const imported = this.imports.get(callee.object.name);
+        if (imported?.kind === 'namespace' && imported.module === CORE_MODULE) {
+          memberApi = callee.property.name;
+        }
+      }
+    }
+    if (memberApi === null || !MEMBER_APIS.has(memberApi)) {
       return null;
     }
     // The type annotation (if any) lives on the identifier's range in acorn-typescript.
@@ -1772,7 +1786,7 @@ class ComponentLowerer {
     } else {
       const imported = this.imports.get(name);
       selector =
-        imported === undefined
+        imported?.kind !== 'value'
           ? null
           : this.resolver.resolveSelector(
               imported.importedName,
@@ -1965,14 +1979,31 @@ function collectImports(program: EstreeNode): Map<string, ImportedName> {
       continue;
     }
     for (const spec of stmt.specifiers as EstreeNode[]) {
-      if (spec.type !== 'ImportSpecifier' || spec.importKind === 'type') {
+      if (spec.importKind === 'type') {
         continue;
       }
-      const importedName =
-        spec.imported.type === 'Identifier'
-          ? spec.imported.name
-          : String(spec.imported.value);
-      imports.set(spec.local.name, { module: stmt.source.value, importedName });
+      if (spec.type === 'ImportSpecifier') {
+        const importedName =
+          spec.imported.type === 'Identifier'
+            ? spec.imported.name
+            : String(spec.imported.value);
+        imports.set(spec.local.name, {
+          kind: 'value',
+          module: stmt.source.value,
+          importedName,
+        });
+      } else if (spec.type === 'ImportDefaultSpecifier') {
+        imports.set(spec.local.name, {
+          kind: 'value',
+          module: stmt.source.value,
+          importedName: 'default',
+        });
+      } else if (spec.type === 'ImportNamespaceSpecifier') {
+        imports.set(spec.local.name, {
+          kind: 'namespace',
+          module: stmt.source.value,
+        });
+      }
     }
   }
   return imports;

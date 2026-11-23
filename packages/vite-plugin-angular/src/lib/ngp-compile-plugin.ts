@@ -392,10 +392,16 @@ export function ngpCompilePlugin(
     const lowered = await format.lower(source, sourceFile, {
       scanImports: (specifiers) =>
         scanner.scanImports(specifiers, sourceFile, resolve),
-      resolveSelector: (className) =>
+      resolveSelector: (className, moduleSpecifier, containingFile) =>
         scanner.lookupSelector(
           className,
           sharedCtx?.componentRegistries ?? componentRegistries,
+          moduleSpecifier !== undefined
+            ? {
+                moduleSpecifier,
+                containingFile: containingFile ?? sourceFile,
+              }
+            : undefined,
         ),
     });
     // Removed while it was lowered
