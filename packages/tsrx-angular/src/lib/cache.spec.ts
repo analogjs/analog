@@ -14,6 +14,8 @@ vi.mock('@tsrx/core', async (importOriginal) => {
 });
 
 import {
+  clearTsrxCache,
+  evictTsrxCache,
   lowerTsrxForScan,
   lowerTsrxModule,
   tsrxImportSpecifiers,
@@ -106,5 +108,35 @@ describe('TSRX parse and lowering cache', () => {
     const result = await lowerTsrxForScan(broken, file);
     expect(result.diagnostics.length).toBe(1);
     expect(parseModule.calls).toBe(1);
+  });
+
+  it('evicts a single entry (stripping query strings) without affecting others', async () => {
+    const fileA = nextFile();
+    const fileB = nextFile();
+    await lowerTsrxForScan(STANDALONE, fileA);
+    await lowerTsrxForScan(STANDALONE, fileB);
+    expect(parseModule.calls).toBe(2);
+
+    evictTsrxCache(`${fileA}?import`);
+
+    await lowerTsrxForScan(STANDALONE, fileB);
+    expect(parseModule.calls).toBe(2);
+
+    await lowerTsrxForScan(STANDALONE, fileA);
+    expect(parseModule.calls).toBe(3);
+  });
+
+  it('clears all cached entries', async () => {
+    const fileA = nextFile();
+    const fileB = nextFile();
+    await lowerTsrxForScan(STANDALONE, fileA);
+    await lowerTsrxForScan(STANDALONE, fileB);
+    expect(parseModule.calls).toBe(2);
+
+    clearTsrxCache();
+
+    await lowerTsrxForScan(STANDALONE, fileA);
+    await lowerTsrxForScan(STANDALONE, fileB);
+    expect(parseModule.calls).toBe(4);
   });
 });

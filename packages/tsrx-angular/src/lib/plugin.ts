@@ -12,6 +12,8 @@ import { resolve as resolvePath } from 'node:path';
 import type { Plugin, ResolvedConfig, Rollup, ViteDevServer } from 'vite';
 
 import {
+  clearTsrxCache,
+  evictTsrxCache,
   firstDiagnosticLoc,
   formatTsrxDiagnostics,
   isTsrxFile,
@@ -60,6 +62,7 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
   let fastCompile: FastCompileApi | undefined;
   let config: ResolvedConfig;
   let typesWritten: Promise<void> | undefined;
+  let cleanupServer: (() => void) | undefined;
   const typesOptions =
     options.types === false
       ? undefined
@@ -71,9 +74,24 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
     name: '@analogjs/tsrx-angular',
     enforce: 'pre',
     configureServer(server) {
-      if (typesOptions) {
-        void keepTypesUpToDate(server, typesOptions);
-      }
+      cleanupServer?.();
+      const stopTypes = typesOptions
+        ? keepTypesUpToDate(server, typesOptions)
+        : undefined;
+      const cleanup = () => {
+        if (cleanupServer !== cleanup) {
+          return;
+        }
+        cleanupServer = undefined;
+        server.httpServer?.off?.('close', cleanup);
+        stopTypes?.();
+        clearTsrxCache();
+      };
+      cleanupServer = cleanup;
+      server.httpServer?.once('close', cleanup);
+    },
+    closeBundle() {
+      cleanupServer?.();
     },
     async buildStart() {
       // Once per build, which can run several environments (client, SSR).
@@ -82,7 +100,10 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
         await typesWritten;
       }
     },
-    watchChange() {
+    watchChange(id, { event }) {
+      if (event === 'delete' && isTsrxFile(id)) {
+        evictTsrxCache(id);
+      }
       // `vite build --watch`: a change starts a new build, which writes them again.
       typesWritten = undefined;
     },
@@ -233,64 +254,108 @@ async function writeTypes(
 /**
  * Generates `.tsrx` declarations at startup and again after source changes,
  * in the background so the dev server never waits for TypeScript.
+ *
+ * Returns a cleanup function that unregisters watcher listeners, clears any
+ * pending debounce timer, and suppresses further runs.
  */
-async function keepTypesUpToDate(
+function keepTypesUpToDate(
   server: ViteDevServer,
   options: TsrxTypesPluginOptions,
-): Promise<void> {
+): () => void {
   const root = server.config.root;
   const logger = server.config.logger;
-  // Started with `void`, so a failure to load the generator is logged here
-  // instead of becoming an unhandled rejection.
-  const types = await typeGenerator(root, options).catch((e: unknown) => {
-    logger.error(`[tsrx types] ${e instanceof Error ? e.message : e}`, {
-      timestamp: true,
-    });
-    return undefined;
-  });
-  if (types === undefined) {
-    return;
-  }
-
+  let closed = false;
   let running = false;
   let again = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let lastReport = '';
-  const run = async (): Promise<void> => {
-    if (running) {
-      again = true;
+  let schedule: ((file: string) => void) | undefined;
+
+  const stop = (): void => {
+    if (closed) {
       return;
     }
-    running = true;
-    try {
-      // Lowering errors also fail the module's transform, so only report
-      // diagnostics when they change.
-      const report = types.format(await types.generate());
-      if (report !== lastReport && report !== '') {
-        logger.warn(`[tsrx types]\n${report}`, { timestamp: true });
-      }
-      lastReport = report;
-    } catch (e) {
-      logger.error(`[tsrx types] ${e instanceof Error ? e.message : e}`, {
-        timestamp: true,
-      });
-    } finally {
-      running = false;
-      if (again) {
-        again = false;
-        void run();
-      }
-    }
-  };
-  const schedule = (file: string): void => {
-    if (!file.endsWith('.tsrx') && !file.endsWith('.ts')) {
-      return;
-    }
+    closed = true;
+    again = false;
     clearTimeout(timer);
-    timer = setTimeout(() => void run(), 100);
+    timer = undefined;
+    if (schedule && typeof server.watcher?.off === 'function') {
+      server.watcher.off('add', schedule);
+      server.watcher.off('change', schedule);
+      server.watcher.off('unlink', schedule);
+    }
   };
-  server.watcher.on('add', schedule);
-  server.watcher.on('change', schedule);
-  server.watcher.on('unlink', schedule);
-  await run();
+
+  void (async () => {
+    // Started without awaiting, so a failure to load the generator is logged
+    // here instead of becoming an unhandled rejection.
+    const types = await typeGenerator(root, options).catch((e: unknown) => {
+      if (!closed) {
+        logger.error(`[tsrx types] ${e instanceof Error ? e.message : e}`, {
+          timestamp: true,
+        });
+      }
+      return undefined;
+    });
+    if (closed || types === undefined) {
+      return;
+    }
+
+    const run = async (): Promise<void> => {
+      if (closed) {
+        return;
+      }
+      if (running) {
+        again = true;
+        return;
+      }
+      running = true;
+      try {
+        // Lowering errors also fail the module's transform, so only report
+        // diagnostics when they change.
+        const result = await types.generate();
+        if (closed) {
+          return;
+        }
+        const report = types.format(result);
+        if (report !== lastReport && report !== '') {
+          logger.warn(`[tsrx types]\n${report}`, { timestamp: true });
+        }
+        lastReport = report;
+      } catch (e) {
+        if (!closed) {
+          logger.error(`[tsrx types] ${e instanceof Error ? e.message : e}`, {
+            timestamp: true,
+          });
+        }
+      } finally {
+        running = false;
+        const rerun = again && !closed;
+        again = false;
+        if (rerun) {
+          void run();
+        }
+      }
+    };
+
+    schedule = (file: string): void => {
+      if (closed || (!file.endsWith('.tsrx') && !file.endsWith('.ts'))) {
+        return;
+      }
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        timer = undefined;
+        void run();
+      }, 100);
+    };
+
+    if (typeof server.watcher?.on === 'function') {
+      server.watcher.on('add', schedule);
+      server.watcher.on('change', schedule);
+      server.watcher.on('unlink', schedule);
+    }
+    await run();
+  })();
+
+  return stop;
 }
