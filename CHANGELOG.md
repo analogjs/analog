@@ -1,3 +1,9 @@
+# [3.0.0-beta.59](https://github.com/analogjs/analog/compare/v3.0.0-beta.58...v3.0.0-beta.59) (2026-11-23)
+
+### Bug Fixes
+
+- **platform:** allow Nitro v3 stable releases in optional peer range ([#2830](https://github.com/analogjs/analog/issues/2830)) ([dcf5ad7](https://github.com/analogjs/analog/commit/dcf5ad7c49c7d8d3b6e482b1f409391aafb172bf))
+
 # [3.0.0-beta.58](https://github.com/analogjs/analog/compare/v3.0.0-beta.57...v3.0.0-beta.58) (2026-11-23)
 
 ### Bug Fixes

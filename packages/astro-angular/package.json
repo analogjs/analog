@@ -1,6 +1,6 @@
 {
   "name": "@analogjs/astro-angular",
-  "version": "3.0.0-beta.58",
+  "version": "3.0.0-beta.59",
   "description": "Use Angular components within Astro",
   "type": "module",
   "author": "Brandon Roberts <robertsbt@gmail.com>",
