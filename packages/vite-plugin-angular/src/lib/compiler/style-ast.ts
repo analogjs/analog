@@ -96,14 +96,19 @@ export interface InlineStyle {
 }
 
 /**
- * Map each @Component decorator node to its inline styles and the index of
- * the first one in the flat per-file list returned by
- * {@link extractInlineStyles}.
+ * A component's inline styles and the index of the first one in the flat
+ * per-file list returned by {@link extractInlineStyles}.
  */
+export interface InlineStyleRange {
+  start: number;
+  styles: InlineStyle[];
+}
+
+/** Map each @Component decorator node to its {@link InlineStyleRange}. */
 export function inlineStyleRanges(
   program: ReturnType<typeof parseSync>['program'],
-): Map<any, { start: number; styles: InlineStyle[] }> {
-  const ranges = new Map<any, { start: number; styles: InlineStyle[] }>();
+): Map<any, InlineStyleRange> {
+  const ranges = new Map<any, InlineStyleRange>();
   let start = 0;
   for (const [decorator, styles] of componentInlineStyles(program)) {
     ranges.set(decorator, { start, styles });

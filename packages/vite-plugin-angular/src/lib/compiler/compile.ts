@@ -61,7 +61,7 @@ import {
 import { buildDeferDependencyMap, buildImportMap } from './defer.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
-import { inlineStyleRanges, type InlineStyle } from './style-ast.js';
+import { inlineStyleRanges, type InlineStyleRange } from './style-ast.js';
 
 /**
  * COMPLETE EXHAUSTIVE ANGULAR LITE COMPILER
@@ -163,7 +163,7 @@ function decoratorCallName(dec: any, sourceCode: string): string | undefined {
  */
 function withResolvedInlineStyles(
   stylesNode: any,
-  range: { start: number; styles: InlineStyle[] } | undefined,
+  range: InlineStyleRange | undefined,
   resolvedInlineStyles: Map<number, string>,
   sourceCode: string,
 ): string {
