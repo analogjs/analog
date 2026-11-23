@@ -445,28 +445,37 @@ export function Emitter() @{
   <button onClick={() => changed.emit(1)}>Emit</button>
 }
 `,
-        'src/bad-output.tsrx': `import { Emitter } from './emitter.tsrx';
+        'src/bad.tsrx': `import { Emitter } from './emitter.tsrx';
 
-export function BadOutput() @{
-  <Emitter onChanged={(v: string) => console.log(v)} />
+function handle(e: MouseEvent): void;
+function handle(e: KeyboardEvent): void;
+function handle(e: MouseEvent | KeyboardEvent): void {
+  console.log(e.type);
 }
-`,
-        'src/bad-dom.tsrx': `export function BadDom() @{
-  <button onClick={(e: KeyboardEvent) => console.log(e)}>Click</button>
+
+export function Bad() @{
+  <div>
+    <Emitter onChanged={(v: string) => console.log(v)} />
+    <button onClick={(e: KeyboardEvent) => console.log(e)}>Click</button>
+    <Emitter onChanged={handle} />
+  </div>
 }
 `,
       },
       { typeCheck: true },
     );
 
-    await expect(
-      server!.transformRequest('/src/bad-output.tsrx'),
-    ).rejects.toThrow(
-      /bad-output\.tsrx:4:\d+ - error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'/,
+    const err = await server!
+      .transformRequest('/src/bad.tsrx')
+      .then(() => null)
+      .catch((e: unknown) => (e instanceof Error ? e.message : String(e)));
+    expect(err).toMatch(
+      /bad\.tsrx:11:\d+ - error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'/,
     );
-    await expect(server!.transformRequest('/src/bad-dom.tsrx')).rejects.toThrow(
-      /bad-dom\.tsrx:2:\d+ - error TS(2345|2740): .*(PointerEvent|MouseEvent).*KeyboardEvent/,
+    expect(err).toMatch(
+      /bad\.tsrx:12:\d+ - error TS(2345|2740): .*(PointerEvent|MouseEvent).*KeyboardEvent/,
     );
+    expect(err).toMatch(/bad\.tsrx:13:\d+ - error TS(2345|2769):/);
   });
 
   it('type-checks valid event and output handlers under NGP', async () => {
@@ -482,6 +491,12 @@ export function Emitter() @{
         'src/valid.tsrx': `import { signal } from '@angular/core';
 import { Emitter } from './emitter.tsrx';
 
+function handleInteraction(e: MouseEvent): void;
+function handleInteraction(e: KeyboardEvent): void;
+function handleInteraction(e: MouseEvent | KeyboardEvent): void {
+  console.log(e.type);
+}
+
 export function Valid() @{
   const count = signal(0);
   const flag = signal(false);
@@ -489,6 +504,13 @@ export function Valid() @{
   const onMouse = (e: MouseEvent) => console.log(e.clientX);
   const onAny = (e: Event) => console.log(e.type);
   const pick = (id: number, e: MouseEvent) => console.log(id, e.clientX);
+  const actions = {
+    label: 'ok',
+    handle(this: { label: string }, e: MouseEvent) {
+      console.log(this.label, e.clientX);
+    },
+  };
+  const maybeActions = signal<{ handle(e: MouseEvent): void } | undefined>(undefined);
 
   <div>
     <Emitter onChanged={() => count.update((c) => c + 1)} />
@@ -498,9 +520,23 @@ export function Valid() @{
     <Emitter onChanged={flag() ? () => count.set(0) : (v: number) => count.set(v)} />
     <button onClick={() => count.set(0)}>Reset</button>
     <button onClick={(e: Event) => console.log(e.type)}>Event</button>
+    <button onClick={(e) => console.log(e.type)}>Unannotated</button>
+    <button onClick={({ type }) => console.log(type)}>Destructured</button>
+    <button onClick={(e = null) => console.log(e)}>Defaulted</button>
+    <button onClick={(...args) => console.log(args.length)}>Rest</button>
+    <button onClick={function(e) { console.log(e.type); }}>FnExpr</button>
     <button onClick={flag() ? onMouse : onAny}>Union</button>
+    <button onClick={handleInteraction}>Overloaded click</button>
+    <button onKeyDown={handleInteraction}>Overloaded keydown</button>
+    <button onClick={actions.handle}>Member</button>
+    <button onClick={actions['handle']}>Computed member</button>
+    <button onClick={maybeActions()?.handle}>Optional member</button>
+    <button onClick={maybeActions()?.['handle']}>Optional computed</button>
     @for (const item of items(); key item.id) {
-      <button onClick={(e: MouseEvent) => pick(item.id, e)}>{item.id}</button>
+      <>
+        <button onClick={(e: MouseEvent) => pick(item.id, e)}>{item.id}</button>
+        <button onClick={(e) => pick(item.id, e)}>{item.id}</button>
+      </>
     }
   </div>
 }

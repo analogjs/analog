@@ -110,6 +110,7 @@ describe('TsrxTypeGenerator', () => {
     );
     // Lowering internals are stripped.
     expect(price).not.toContain('$fc');
+    expect(price).not.toContain('ɵngEventHandler');
     expect(price).not.toContain('ɵngEventParam');
     expect(price).not.toContain('secret');
 

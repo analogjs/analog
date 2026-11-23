@@ -1,5 +1,6 @@
 import { parseTemplate } from '@angular/compiler';
 import { parseModule, parseStyle } from '@tsrx/core';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 // The fast compiler's internals aren't public API; tests compile through its source.
@@ -85,15 +86,16 @@ export class Counter {
     const count = signal(0);`);
     expect(code).toContain('const ɵb0h = () => (inc);');
     expect(code).toContain(
-      'const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>) => (ɵb0h() as (e: typeof $event) => unknown)($event);',
+      'const ɵb0 = (($event: unknown) => (ɵb0h() as (e: unknown) => unknown)($event)) as unknown as ɵngEventHandler<ReturnType<typeof ɵb0h>>;',
     );
     expect(code).toContain('const ɵb1 = () => (initial() + count());');
     expect(code).toContain(
       `import { Component, ChangeDetectionStrategy as ɵngChangeDetectionStrategy } from '@angular/core';`,
     );
     expect(code).toContain(
-      'type ɵngEventParam<T> = [T] extends [(event: infer E) => unknown] ? E : never;',
+      'type ɵngEventHandler<T> = T extends () => unknown ? Parameters<T> extends [] ? (event: unknown) => unknown : OmitThisParameter<T> : OmitThisParameter<T>;',
     );
+    expect(code).not.toContain('ɵngEventParam');
   });
 
   it('compiles with the fast compiler', () => {
@@ -525,13 +527,34 @@ export class Counter {
       ).toBe('<app-picker (valueChange)="$fc.b0($event)"></app-picker>');
     });
 
-    it('omits ɵngEventParam when there are no event bindings', () => {
+    it('omits event helper types when there are no event bindings', () => {
       const { code, diagnostics } = lower(`
         export function C() @{
           <p>{'hello'}</p>
         }
       `);
       expect(diagnostics).toEqual([]);
+      expect(code).not.toContain('ɵngEventHandler');
+      expect(code).not.toContain('ɵngEventParam');
+    });
+
+    it('retains contextual typing for unannotated inline handlers without emitting event helpers', () => {
+      const { code, diagnostics } = lower(`
+        export function C() @{
+          <div>
+            <button onClick={(e) => console.log(e.type)}>Arrow</button>
+            <button onKeyDown={({ key }) => console.log(key)}>Destructured</button>
+            <button onFocus={(e = null) => console.log(e)}>Defaulted</button>
+            <button onBlur={(...args) => console.log(args.length)}>Rest</button>
+            <button onMouseDown={function(e) { console.log(e); }}>Fn</button>
+          </div>
+        }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain(
+        'const ɵb0 = ($event: any) => (((e) => console.log(e.type)) as (e: any) => unknown)($event);',
+      );
+      expect(code).not.toContain('ɵngEventHandler');
       expect(code).not.toContain('ɵngEventParam');
     });
 
@@ -576,9 +599,127 @@ export class Counter {
       expect(diagnostics).toEqual([]);
       expect(code).toContain('const ɵb0h = () => (flag() ? onA : onB);');
       expect(code).toContain(
-        'const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>) => (ɵb0h() as (e: typeof $event) => unknown)($event);',
+        'const ɵb0 = (($event: unknown) => (ɵb0h() as (e: unknown) => unknown)($event)) as unknown as ɵngEventHandler<ReturnType<typeof ɵb0h>>;',
       );
       expect(code).toContain('return {b0: ɵb0};');
+    });
+
+    it('preserves this receiver and lazy single evaluation for member-expression handlers', () => {
+      const source = `
+        export function C() @{
+          <div>
+            <button onClick={getActions().handle}>Dot</button>
+            <button onClick={getActions()[getKey()]}>Computed</button>
+            <button onClick={getMaybe()?.handle}>Optional</button>
+            <button onClick={getMaybe()?.[getKey()]}>OptionalComputed</button>
+            @for (const item of getItems()) {
+              <button onClick={item.handle}>{item.label}</button>
+            }
+          </div>
+        }
+      `;
+      const { code, diagnostics } = lower(source);
+      expect(diagnostics).toEqual([]);
+
+      // Execute the lowered class in strict mode so a detached method would receive `this === undefined`.
+      const js = ts.transpileModule(code.replace(/^import\s+.*;$/gm, ''), {
+        compilerOptions: {
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.CommonJS,
+          experimentalDecorators: true,
+        },
+      }).outputText;
+
+      const calls: string[] = [];
+      let receiverReads = 0;
+      let keyReads = 0;
+      const actions = {
+        label: 'actions',
+        handle(this: { label: string }, e: { type: string }) {
+          calls.push(`${this.label}:${e.type}`);
+          return false;
+        },
+      };
+      let maybe: typeof actions | undefined = undefined;
+      const item = {
+        label: 'row-1',
+        handle(this: { label: string }, e: { type: string }) {
+          calls.push(`${this.label}:${e.type}`);
+        },
+      };
+
+      const exportsObj: Record<string, unknown> = {};
+      new Function(
+        'exports',
+        'Component',
+        'ɵngChangeDetectionStrategy',
+        'getActions',
+        'getKey',
+        'getMaybe',
+        'getItems',
+        js,
+      )(
+        exportsObj,
+        () => (target: unknown) => target,
+        { OnPush: 0 },
+        () => {
+          receiverReads++;
+          return actions;
+        },
+        () => {
+          keyReads++;
+          return 'handle';
+        },
+        () => maybe,
+        () => [item],
+      );
+
+      const Ctor = exportsObj['C'] as new () => {
+        $fc: Record<string, (...args: unknown[]) => unknown>;
+      };
+      const $fc = new Ctor().$fc;
+
+      // Handler expressions are not evaluated during component construction.
+      expect(receiverReads).toBe(0);
+      expect(keyReads).toBe(0);
+
+      // Dot member preserves `this`, propagates return value, and evaluates receiver once.
+      expect($fc['b0']({ type: 'click' })).toBe(false);
+      expect(receiverReads).toBe(1);
+      expect(calls).toEqual(['actions:click']);
+
+      // Computed member preserves `this` and evaluates receiver and key once.
+      expect($fc['b1']({ type: 'dblclick' })).toBe(false);
+      expect(receiverReads).toBe(2);
+      expect(keyReads).toBe(1);
+      expect(calls).toEqual(['actions:click', 'actions:dblclick']);
+
+      // Optional chain does not throw and short-circuits computed key when receiver is undefined.
+      expect($fc['b2']({ type: 'click' })).toBeUndefined();
+      expect($fc['b3']({ type: 'click' })).toBeUndefined();
+      expect(keyReads).toBe(1);
+
+      // Optional chain preserves `this` once receiver is defined.
+      maybe = actions;
+      expect($fc['b2']({ type: 'opt' })).toBe(false);
+      expect($fc['b3']({ type: 'opt-comp' })).toBe(false);
+      expect(keyReads).toBe(2);
+      expect(calls).toEqual([
+        'actions:click',
+        'actions:dblclick',
+        'actions:opt',
+        'actions:opt-comp',
+      ]);
+
+      // Member handler inside @for preserves the loop item as `this`.
+      $fc['b5']({ type: 'row' }, item);
+      expect(calls).toEqual([
+        'actions:click',
+        'actions:dblclick',
+        'actions:opt',
+        'actions:opt-comp',
+        'row-1:row',
+      ]);
     });
   });
 
