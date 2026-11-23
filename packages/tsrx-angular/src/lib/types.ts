@@ -28,7 +28,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 import { lowerTsrxForScan } from './cache.js';
@@ -38,6 +38,17 @@ import type { TsrxSourceMap } from './source-map.js';
 export const DEFAULT_TSRX_TYPES_DIR = 'node_modules/.analog/tsrx-types';
 
 const DECLARATION_SUFFIX = '.d.tsrx.ts';
+const WALKABLE_EXTENSIONS = [
+  '.tsrx',
+  '.ts',
+  '.tsx',
+  '.mts',
+  '.cts',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+];
 
 export interface TsrxTypesOptions {
   /** The tsconfig whose compiler options the declarations are emitted with. */
@@ -92,18 +103,19 @@ export class TsrxTypeGenerator {
     );
   }
 
-  /** The `.tsrx` files under the tsconfig's directory, outside `node_modules`. */
+  /**
+   * The `.tsrx` files matched by the tsconfig's `include`, `exclude`, and
+   * `files`, including `.tsrx` modules imported from configured entrypoints.
+   */
   findTsrxFiles(): string[] {
-    return ts.sys
-      .readDirectory(this.rootDir, ['.tsrx'], ['**/node_modules', '**/dist'])
-      .map((f) => resolve(f))
-      .sort();
+    return this.parseTsconfig().tsrxFiles;
   }
 
   async generate(): Promise<TsrxTypesResult> {
+    const { options, tsrxFiles } = this.parseTsconfig();
     const diagnostics: TsrxTypeDiagnostic[] = [];
     const lowered = new Map<string, LoweredModule>();
-    for (const file of this.findTsrxFiles()) {
+    for (const file of tsrxFiles) {
       const source = readFileSync(file, 'utf8');
       const result = await lowerTsrxForScan(source, file);
       if (result.diagnostics.length > 0) {
@@ -123,7 +135,6 @@ export class TsrxTypeGenerator {
       });
     }
 
-    const options = this.compilerOptions();
     const host = this.compilerHost(options, lowered);
     this.program = ts.createProgram({
       rootNames: [...lowered.keys()],
@@ -170,12 +181,31 @@ export class TsrxTypeGenerator {
     return { written, removed, diagnostics };
   }
 
-  private compilerOptions(): ts.CompilerOptions {
+  private parseTsconfig(): {
+    options: ts.CompilerOptions;
+    tsrxFiles: string[];
+  } {
     const parsed = ts.getParsedCommandLineOfConfigFile(
       this.tsconfig,
       {},
       {
         ...ts.sys,
+        readDirectory: (rootDir, extensions, excludes, includes, depth) => [
+          ...ts.sys.readDirectory(
+            rootDir,
+            extensions,
+            [...(excludes ?? []), '**/node_modules'],
+            includes,
+            depth,
+          ),
+          ...ts.sys.readDirectory(
+            rootDir,
+            ['.tsrx'],
+            toTsrxPatterns([...(excludes ?? []), '**/node_modules']),
+            includes ? toTsrxPatterns(includes) : includes,
+            depth,
+          ),
+        ],
         onUnRecoverableConfigFileDiagnostic: (d) => {
           throw new Error(ts.flattenDiagnosticMessageText(d.messageText, '\n'));
         },
@@ -184,7 +214,7 @@ export class TsrxTypeGenerator {
     if (parsed === undefined) {
       throw new Error(`Could not read ${this.tsconfig}.`);
     }
-    return {
+    const options: ts.CompilerOptions = {
       ...parsed.options,
       declaration: true,
       emitDeclarationOnly: true,
@@ -203,6 +233,136 @@ export class TsrxTypeGenerator {
       rootDir: undefined,
       outFile: undefined,
     };
+    const tsrxFiles = this.discoverTsrxFiles(options, parsed.fileNames);
+    return { options, tsrxFiles };
+  }
+
+  /**
+   * Walks imports starting from the tsconfig's matched entrypoints and `.tsrx`
+   * files so `.tsrx` modules imported from `files`/`include` are discovered.
+   */
+  private discoverTsrxFiles(
+    options: ts.CompilerOptions,
+    seedFiles: readonly string[],
+  ): string[] {
+    const resolveOptions: ts.CompilerOptions = {
+      ...options,
+      allowArbitraryExtensions: true,
+    };
+    const isProjectTsrx = (file: string): boolean =>
+      !isInNodeModules(this.rootDir, file) && existsSync(file);
+    const resolveHost = this.createResolutionHost(
+      {
+        fileExists: ts.sys.fileExists,
+        readFile: ts.sys.readFile,
+        directoryExists: ts.sys.directoryExists,
+        getDirectories: ts.sys.getDirectories,
+        realpath: ts.sys.realpath,
+        useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
+      },
+      isProjectTsrx,
+    );
+    const cache = ts.createModuleResolutionCache(
+      this.rootDir,
+      (fileName) =>
+        ts.sys.useCaseSensitiveFileNames ? fileName : fileName.toLowerCase(),
+      resolveOptions,
+    );
+
+    const tsrxFiles = new Set<string>();
+    const visited = new Set<string>();
+    const queue: string[] = [];
+
+    const enqueue = (file: string): void => {
+      if (
+        visited.has(file) ||
+        !existsSync(file) ||
+        isInNodeModules(this.rootDir, file) ||
+        isOutDirDeclaration(this.outDir, file)
+      ) {
+        return;
+      }
+      visited.add(file);
+      if (file.endsWith('.tsrx')) {
+        tsrxFiles.add(file);
+      }
+      if (isWalkableModule(file)) {
+        queue.push(file);
+      }
+    };
+
+    for (const file of seedFiles) {
+      enqueue(resolve(file));
+    }
+
+    for (let i = 0; i < queue.length; i++) {
+      const file = queue[i];
+      const source = readFileSync(file, 'utf8');
+      const containingFile = file.endsWith('.tsrx') ? virtualName(file) : file;
+      const mode = ts.getImpliedNodeFormatForFile(
+        containingFile,
+        cache.getPackageJsonInfoCache(),
+        resolveHost,
+        resolveOptions,
+      );
+      for (const imported of ts.preProcessFile(source, true, true)
+        .importedFiles) {
+        const resolved = ts.resolveModuleName(
+          imported.fileName,
+          containingFile,
+          resolveOptions,
+          resolveHost,
+          cache,
+          undefined,
+          mode,
+        );
+        const resolvedFileName = resolved.resolvedModule?.resolvedFileName;
+        if (resolvedFileName === undefined) continue;
+        const abs = resolve(resolvedFileName);
+        const tsrxFile = tsrxFromDeclaration(abs);
+        if (tsrxFile !== undefined && isProjectTsrx(tsrxFile)) {
+          enqueue(tsrxFile);
+        } else {
+          enqueue(abs);
+        }
+      }
+    }
+
+    return [...tsrxFiles].sort();
+  }
+
+  /**
+   * Unified `ModuleResolutionHost` that sees both disk files and `.tsrx`
+   * modules (mapped through `.d.tsrx.ts` arbitrary-extension probes) while
+   * hiding stale declarations in `outDir`.
+   */
+  private createResolutionHost(
+    base: ts.ModuleResolutionHost,
+    hasTsrx: (tsrxFile: string) => boolean,
+  ): ts.ModuleResolutionHost {
+    const useCaseSensitiveFileNames =
+      typeof base.useCaseSensitiveFileNames === 'function'
+        ? base.useCaseSensitiveFileNames()
+        : base.useCaseSensitiveFileNames;
+    return {
+      fileExists: (fileName) => {
+        const abs = resolve(fileName);
+        if (isOutDirDeclaration(this.outDir, abs)) {
+          return false;
+        }
+        const tsrxFile = tsrxFromDeclaration(abs);
+        if (tsrxFile !== undefined && hasTsrx(tsrxFile)) {
+          return true;
+        }
+        return base.fileExists(fileName);
+      },
+      readFile: (fileName) => base.readFile(fileName),
+      directoryExists: base.directoryExists?.bind(base),
+      getDirectories: base.getDirectories?.bind(base),
+      realpath: base.realpath?.bind(base),
+      getCurrentDirectory: () => this.rootDir,
+      useCaseSensitiveFileNames,
+    };
   }
 
   /** A host that serves each `.tsrx` file's lowered code as `<file>.tsrx.ts`. */
@@ -214,11 +374,6 @@ export class TsrxTypeGenerator {
     const getSourceFile = host.getSourceFile.bind(host);
     const fileExists = host.fileExists.bind(host);
     const readFile = host.readFile.bind(host);
-    const resolutionCache = ts.createModuleResolutionCache(
-      this.rootDir,
-      host.getCanonicalFileName,
-      options,
-    );
 
     host.getSourceFile = (fileName, languageVersion, onError, shouldCreate) => {
       const module = lowered.get(resolve(fileName));
@@ -239,38 +394,65 @@ export class TsrxTypeGenerator {
     host.writeFile = () => {
       throw new Error('Declarations are written by TsrxTypeGenerator.');
     };
-    // `./x.tsrx` resolves to its lowered code, wherever it is imported from.
+
+    const resolveOptions: ts.CompilerOptions = {
+      ...options,
+      allowArbitraryExtensions: true,
+    };
+    const resolutionCache = ts.createModuleResolutionCache(
+      this.rootDir,
+      host.getCanonicalFileName,
+      resolveOptions,
+    );
+    const hasLoweredTsrx = (tsrxFile: string): boolean =>
+      lowered.has(virtualName(tsrxFile));
+    const resolveHost = this.createResolutionHost(host, hasLoweredTsrx);
+
     host.resolveModuleNameLiterals = (
       literals,
       containingFile,
       redirected,
       compilerOptions,
-    ) =>
-      literals.map((literal) => {
-        const specifier = literal.text;
-        if (specifier.startsWith('.') && specifier.endsWith('.tsrx')) {
-          const target = virtualName(
-            resolve(dirname(containingFile), specifier),
-          );
-          if (lowered.has(target)) {
-            return {
-              resolvedModule: {
-                resolvedFileName: target,
-                extension: ts.Extension.Ts,
-                isExternalLibraryImport: false,
-              },
-            };
-          }
-        }
-        return ts.resolveModuleName(
-          specifier,
-          containingFile,
+      containingSourceFile,
+    ) => {
+      const effectiveOptions =
+        compilerOptions === options
+          ? resolveOptions
+          : { ...compilerOptions, allowArbitraryExtensions: true };
+      const cache = compilerOptions === options ? resolutionCache : undefined;
+      return literals.map((literal) => {
+        const mode = ts.getModeForUsageLocation(
+          containingSourceFile,
+          literal,
           compilerOptions,
-          host,
-          resolutionCache,
-          redirected,
         );
+        const resolved = ts.resolveModuleName(
+          literal.text,
+          containingFile,
+          effectiveOptions,
+          resolveHost,
+          cache,
+          redirected,
+          mode,
+        );
+        const resolvedModule = resolved.resolvedModule;
+        if (resolvedModule === undefined) return resolved;
+        const tsrxFile = tsrxFromDeclaration(
+          resolve(resolvedModule.resolvedFileName),
+        );
+        if (tsrxFile === undefined || !hasLoweredTsrx(tsrxFile)) {
+          return resolved;
+        }
+        return {
+          ...resolved,
+          resolvedModule: {
+            ...resolvedModule,
+            resolvedFileName: virtualName(tsrxFile),
+            extension: ts.Extension.Ts,
+          },
+        };
       });
+    };
     return host;
   }
 
@@ -304,6 +486,53 @@ export function formatTsrxTypeDiagnostics(
 /** The name the lowered code of a `.tsrx` file goes by in the program. */
 function virtualName(tsrxFile: string): string {
   return resolve(tsrxFile) + '.ts';
+}
+
+/** `<dir>/x.d.tsrx.ts` -> `<dir>/x.tsrx`, or `undefined` for other paths. */
+function tsrxFromDeclaration(file: string): string | undefined {
+  return file.endsWith(DECLARATION_SUFFIX)
+    ? file.slice(0, -DECLARATION_SUFFIX.length) + '.tsrx'
+    : undefined;
+}
+
+function isInNodeModules(rootDir: string, file: string): boolean {
+  return relative(rootDir, file).split(/[\\/]/).includes('node_modules');
+}
+
+function isInsideDir(dir: string, file: string): boolean {
+  const rel = relative(dir, file);
+  return rel !== '' && !isAbsolute(rel) && rel.split(/[\\/]/)[0] !== '..';
+}
+
+function isOutDirDeclaration(outDir: string, file: string): boolean {
+  return file.endsWith(DECLARATION_SUFFIX) && isInsideDir(outDir, file);
+}
+
+function isWalkableModule(file: string): boolean {
+  return WALKABLE_EXTENSIONS.some((ext) => file.endsWith(ext));
+}
+
+/**
+ * Adapts tsconfig `include`/`exclude` patterns for `.tsrx` files: wildcard
+ * `.ts` patterns (such as `src/**\/*.ts` or `**\/*.spec.ts`) and `.tsrx.ts`
+ * patterns also match the corresponding `.tsrx` files, while `.d.ts` and exact
+ * `.ts` file paths stay unchanged.
+ */
+function toTsrxPatterns(patterns: readonly string[]): string[] {
+  const result: string[] = [];
+  for (const pattern of patterns) {
+    result.push(pattern);
+    if (pattern.endsWith('.tsrx.ts')) {
+      result.push(pattern.slice(0, -'.ts'.length));
+    } else if (
+      pattern.endsWith('.ts') &&
+      !pattern.endsWith('.d.ts') &&
+      /[*?]/.test(pattern)
+    ) {
+      result.push(pattern.slice(0, -'.ts'.length) + '.tsrx');
+    }
+  }
+  return result;
 }
 
 function listDeclarations(dir: string): string[] {
