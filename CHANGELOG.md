@@ -1,3 +1,9 @@
+# [3.0.0-beta.64](https://github.com/analogjs/analog/compare/v3.0.0-beta.63...v3.0.0-beta.64) (2026-11-23)
+
+### Bug Fixes
+
+- **tsrx-angular:** preserve event and output handler parameter types ([#2844](https://github.com/analogjs/analog/issues/2844)) ([64a48ae](https://github.com/analogjs/analog/commit/64a48ae7d386f078717a71d4c45bd79d919e4d7e))
+
 # [3.0.0-beta.63](https://github.com/analogjs/analog/compare/v3.0.0-beta.62...v3.0.0-beta.63) (2026-11-23)
 
 ### Bug Fixes
