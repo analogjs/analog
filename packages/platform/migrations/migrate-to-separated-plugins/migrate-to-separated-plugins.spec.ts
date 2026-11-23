@@ -424,6 +424,74 @@ describe('migrate-to-separated-plugins', () => {
         `import nitro from '@analogjs/vite-plugin-nitro';`,
       );
     });
+
+    it('rewrites a legacy vitest.config.mts that uses analog()', () => {
+      tree.create(
+        '/projects/www/vitest.config.mts',
+        [
+          `import analog from '@analogjs/platform';`,
+          `import { defineConfig } from 'vitest/config';`,
+          ``,
+          `export default defineConfig(() => ({`,
+          `  plugins: [`,
+          `    analog({`,
+          `      static: true,`,
+          `      vite: {`,
+          `        inlineStylesExtension: 'scss',`,
+          `      },`,
+          `    }),`,
+          `  ],`,
+          `}));`,
+        ].join('\n'),
+      );
+      tree.create(
+        '/vitest.config.mts',
+        [
+          `import angular from '@analogjs/vite-plugin-angular';`,
+          `import { defineConfig } from 'vitest/config';`,
+          `export default defineConfig({ plugins: [angular()] });`,
+        ].join('\n'),
+      );
+      tree.create('/package.json', PKG);
+
+      const { context } = createContext();
+      migrateToSeparatedPlugins()(tree, context);
+
+      const result = tree.readContent('/projects/www/vitest.config.mts');
+      expect(result).toContain(
+        `import angular from '@analogjs/vite-plugin-angular';`,
+      );
+      expect(result).toContain(
+        `import nitro from '@analogjs/vite-plugin-nitro';`,
+      );
+      expect(result).toContain(
+        `angular({\n        inlineStylesExtension: 'scss',\n      })`,
+      );
+      expect(result).toContain(`nitro()`);
+      // Non-platform vitest.config.mts stays untouched.
+      expect(tree.readContent('/vitest.config.mts')).not.toContain('nitro');
+    });
+
+    it('rewrites configs using double-quoted @analogjs/platform imports', () => {
+      tree.create(
+        '/vite.config.ts',
+        [
+          `import analog from "@analogjs/platform";`,
+          `export default { plugins: [analog({ ssr: true })] };`,
+        ].join('\n'),
+      );
+      tree.create('/package.json', PKG);
+
+      const { context } = createContext();
+      migrateToSeparatedPlugins()(tree, context);
+
+      const result = tree.readContent('/vite.config.ts');
+      expect(result).toContain(
+        `import angular from '@analogjs/vite-plugin-angular';`,
+      );
+      expect(result).toContain(`angular()`);
+      expect(result).toContain(`nitro()`);
+    });
   });
 });
 

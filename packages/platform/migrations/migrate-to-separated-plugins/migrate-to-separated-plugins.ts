@@ -12,34 +12,36 @@ const {
   import.meta.url,
 )('@angular-devkit/schematics/tasks');
 
-const ANALOG_PLATFORM_IMPORT = `from '@analogjs/platform'`;
-const ANGULAR_PLUGIN_IMPORT = `from '@analogjs/vite-plugin-angular'`;
-const NITRO_IMPORTS = [
-  `from '@analogjs/vite-plugin-nitro'`,
-  `from 'nitro/vite'`,
+const ANALOG_PLATFORM_IMPORT_RE = /from\s+['"]@analogjs\/platform['"]/;
+const ANGULAR_PLUGIN_IMPORT_RE =
+  /from\s+['"]@analogjs\/vite-plugin-angular['"]/;
+const NITRO_IMPORT_RES = [
+  /from\s+['"]@analogjs\/vite-plugin-nitro['"]/,
+  /from\s+['"]nitro\/vite['"]/,
 ];
 const ANGULAR_PLUGIN_PKG = '@analogjs/vite-plugin-angular';
 const NITRO_PLUGIN_PKG = '@analogjs/vite-plugin-nitro';
 const MIGRATION_DOC_URL =
   'https://analogjs.org/docs/guides/migrating-v2-to-v3#analog-angular-and-nitro-are-now-separate-plugins';
 
-const VITE_CONFIG_EXTENSIONS = ['.ts', '.mts', '.js', '.mjs'];
+const CONFIG_PREFIXES = ['vite.config.', 'vitest.config.'];
+const CONFIG_EXTENSIONS = ['.ts', '.mts', '.cts', '.js', '.mjs', '.cjs'];
 
 function isViteConfig(filePath: string): boolean {
   const file = filePath.slice(filePath.lastIndexOf('/') + 1);
-  if (!file.startsWith('vite.config.')) {
-    return false;
-  }
-  return VITE_CONFIG_EXTENSIONS.some((ext) => file.endsWith(ext));
+  return (
+    CONFIG_PREFIXES.some((prefix) => file.startsWith(prefix)) &&
+    CONFIG_EXTENSIONS.some((ext) => file.endsWith(ext))
+  );
 }
 
 function usesLegacyPluginShape(source: string): boolean {
-  if (!source.includes(ANALOG_PLATFORM_IMPORT)) {
+  if (!ANALOG_PLATFORM_IMPORT_RE.test(source)) {
     return false;
   }
   if (
-    source.includes(ANGULAR_PLUGIN_IMPORT) &&
-    NITRO_IMPORTS.some((nitroImport) => source.includes(nitroImport))
+    ANGULAR_PLUGIN_IMPORT_RE.test(source) &&
+    NITRO_IMPORT_RES.some((re) => re.test(source))
   ) {
     return false;
   }
