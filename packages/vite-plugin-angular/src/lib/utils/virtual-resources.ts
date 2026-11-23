@@ -8,8 +8,9 @@
 
 import { promises as fsPromises } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
-import { normalizePath } from 'vite';
+import { normalizePath, type ResolvedConfig } from 'vite';
 
+import { markStylePathSafe } from './safe-module-paths.js';
 import {
   fromVirtualRawId,
   isVirtualRawId,
@@ -47,6 +48,27 @@ export function rewriteHtmlRawImport(
   if (!id.includes('.html?raw')) return undefined;
   const resolved = resolveImportPath(id, importer);
   return resolved ? toVirtualRawId(resolved) : undefined;
+}
+
+/**
+ * Resolve a user `.scss?inline` / `.css?inline` import to its file and mark
+ * it safe, so Vite's native CSS pipeline handles it. Returns undefined when
+ * the id doesn't match, so callers can fall through to the next check.
+ */
+export function resolveStyleInlineImport(
+  id: string,
+  importer: string | undefined,
+  config: ResolvedConfig | undefined,
+): string | undefined {
+  if (!/\.(css|scss|sass|less)\?inline$/.test(id) || !importer) {
+    return undefined;
+  }
+  const filePath = id.split('?')[0];
+  const resolved = isAbsolute(filePath)
+    ? normalizePath(filePath)
+    : normalizePath(resolve(dirname(importer), filePath));
+  markStylePathSafe(config, resolved);
+  return resolved + '?inline';
 }
 
 /**

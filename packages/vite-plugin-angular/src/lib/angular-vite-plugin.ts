@@ -93,6 +93,7 @@ import {
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
+  resolveStyleInlineImport,
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
@@ -679,16 +680,12 @@ export function angular(options?: PluginOptions): Plugin[] {
         const rawRewrite = rewriteHtmlRawImport(id, importer);
         if (rawRewrite) return rawRewrite;
 
-        // User `.scss?inline` / `.css?inline` imports: resolve and mark
-        // safe so Vite's native CSS pipeline handles them.
-        if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
-          const filePath = id.split('?')[0];
-          const resolved = isAbsolute(filePath)
-            ? normalizePath(filePath)
-            : normalizePath(resolve(dirname(importer), filePath));
-          markStylePathSafe(resolvedConfig, resolved);
-          return resolved + '?inline';
-        }
+        const styleImport = resolveStyleInlineImport(
+          id,
+          importer,
+          resolvedConfig,
+        );
+        if (styleImport) return styleImport;
 
         // Map angular external styleUrls to the source file
         if (isComponentStyleSheet(id)) {
