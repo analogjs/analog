@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { statSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { normalizePath, type Plugin, type ResolvedConfig } from 'vite';
 import {
@@ -16,21 +16,32 @@ export interface VirtualModulesPluginOptions {
   jit?: boolean;
 }
 
+const FS_PREFIX = '/@fs/';
+
 /**
- * The file a root-relative URL (`/src/app/a.css`) points at, read as Vite's
- * own resolver reads it: the file under the Vite root, when it exists.
- * Vitest resolves the imports of a module restored from `fsModuleCache` by
- * these URLs, so they must resolve to the same file as the original import.
+ * The file a URL that Vite wrote into a module's code points at. Vitest
+ * resolves the imports of a module restored from `fsModuleCache` by these
+ * URLs, so they must resolve to the same file as the original import.
+ * `/@fs/<path>` is that path. A root-relative URL (`/src/app/a.css`) is the
+ * file under the Vite root when there is one; otherwise the caller reads it
+ * as the path given, which is the order Vite tries the two in.
  */
-function resolveRootRelativeUrl(
+function resolveViteUrl(
   url: string,
   root: string | undefined,
 ): string | undefined {
+  if (url.startsWith(FS_PREFIX)) {
+    const fsPath = url.slice(FS_PREFIX.length);
+    // `/@fs/C:/a.css` on Windows, `/@fs/home/a.css` elsewhere.
+    return /^[A-Z]:/i.test(fsPath) ? fsPath : `/${fsPath}`;
+  }
   if (!root || !url.startsWith('/') || url.startsWith(`${root}/`)) {
     return undefined;
   }
   const filePath = join(root, url);
-  return existsSync(filePath) ? filePath : undefined;
+  return statSync(filePath, { throwIfNoEntry: false })?.isFile()
+    ? filePath
+    : undefined;
 }
 
 export function resolveAngularVirtualId(
@@ -67,7 +78,7 @@ export function resolveAngularVirtualId(
   if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
     const filePath = id.split('?')[0];
     const resolved = normalizePath(
-      resolveRootRelativeUrl(filePath, options.resolvedConfig?.root) ??
+      resolveViteUrl(filePath, options.resolvedConfig?.root) ??
         (isAbsolute(filePath)
           ? filePath
           : resolve(dirname(importer), filePath)),
