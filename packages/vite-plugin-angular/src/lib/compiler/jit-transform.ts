@@ -373,6 +373,17 @@ export function jitTransform(
       removeDecorator(ms, sourceCode, dec);
     }
 
+    if (appliesSelfRegistering) {
+      classStatements.push(
+        applySelfRegisteringDecorator(
+          ms,
+          sourceCode,
+          className,
+          selfRegistering,
+        ),
+      );
+    }
+
     // Insert this class's metadata statements directly after the class body
     // so they execute in the class's own lexical scope. `node.end` is the
     // position just past the closing brace (decorators were stripped before

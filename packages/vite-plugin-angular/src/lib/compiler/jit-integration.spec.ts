@@ -216,6 +216,22 @@ describe('JIT transform applies @Injectable', () => {
     // Legacy decorators apply bottom to top: @Injectable before @Outer.
     expect(seen).toEqual([true]);
   });
+
+  it('applies @Injectable beside @Component without legacy decorator lowering', async () => {
+    const { Both } = await runJit(
+      `
+      import { Component, Injectable } from '@angular/core';
+
+      @Injectable({ providedIn: 'root' })
+      @Component({ selector: 'jit-both', template: '' })
+      export class Both {}
+    `,
+      { legacy: false },
+    );
+
+    expect(Both.ɵprov.providedIn).toBe('root');
+    expect(Both.ɵcmp.selectors).toEqual([['jit-both']]);
+  });
 });
 
 describe('JIT transform ctorParameters via OXC', () => {
