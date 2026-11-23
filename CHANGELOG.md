@@ -1,3 +1,10 @@
+# [3.0.0-beta.57](https://github.com/analogjs/analog/compare/v3.0.0-beta.56...v3.0.0-beta.57) (2026-11-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** apply @Injectable/@Service as a call in fastCompile JIT ([#2826](https://github.com/analogjs/analog/issues/2826)) ([26eb96f](https://github.com/analogjs/analog/commit/26eb96f6e4298aa5bd1c1a8446504026e311a14f))
+- **vite-plugin-angular:** use preprocessed styles in fastCompile class metadata ([#2827](https://github.com/analogjs/analog/issues/2827)) ([9c032a3](https://github.com/analogjs/analog/commit/9c032a3570f09be6ce42aab264947ee95336b43b))
+
 # [3.0.0-beta.56](https://github.com/analogjs/analog/compare/v3.0.0-beta.55...v3.0.0-beta.56) (2026-11-23)
 
 ### Bug Fixes
