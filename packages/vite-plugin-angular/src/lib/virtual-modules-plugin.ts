@@ -1,4 +1,5 @@
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { statSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { normalizePath, type Plugin, type ResolvedConfig } from 'vite';
 import {
   isAngularBuildContext,
@@ -13,6 +14,43 @@ import {
 
 export interface VirtualModulesPluginOptions {
   jit?: boolean;
+}
+
+const FS_PREFIX = '/@fs/';
+
+function isDirectory(path: string): boolean {
+  return statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false;
+}
+
+/**
+ * The file a URL that Vite wrote into a module's code points at. Vitest
+ * resolves the imports of a module restored from `fsModuleCache` by these
+ * URLs, so they must resolve to the same file as the original import.
+ * `/@fs/<path>` is that path. A root-relative URL (`/src/app/a.css`) is the
+ * file under the Vite root when there is one; otherwise the caller reads it
+ * as the path given, which is the order Vite tries the two in. A URL that
+ * already starts with the root's path is root-relative only when the root
+ * holds a directory at its own path (`/app/app`), as in Vite's resolver.
+ */
+function resolveViteUrl(
+  url: string,
+  root: string | undefined,
+): string | undefined {
+  if (url.startsWith(FS_PREFIX)) {
+    const fsPath = url.slice(FS_PREFIX.length);
+    // `/@fs/C:/a.css` on Windows, `/@fs/home/a.css` elsewhere.
+    return /^[A-Z]:/i.test(fsPath) ? fsPath : `/${fsPath}`;
+  }
+  if (!root || !url.startsWith('/')) {
+    return undefined;
+  }
+  if (url.startsWith(`${root}/`) && !isDirectory(join(root, root))) {
+    return undefined;
+  }
+  const filePath = join(root, url);
+  return statSync(filePath, { throwIfNoEntry: false })?.isFile()
+    ? filePath
+    : undefined;
 }
 
 export function resolveAngularVirtualId(
@@ -48,9 +86,12 @@ export function resolveAngularVirtualId(
   // safe so Vite's native CSS pipeline handles them.
   if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
     const filePath = id.split('?')[0];
-    const resolved = isAbsolute(filePath)
-      ? normalizePath(filePath)
-      : normalizePath(resolve(dirname(importer), filePath));
+    const resolved = normalizePath(
+      resolveViteUrl(filePath, options.resolvedConfig?.root) ??
+        (isAbsolute(filePath)
+          ? filePath
+          : resolve(dirname(importer), filePath)),
+    );
     markStylePathSafe(options.resolvedConfig, resolved);
     return resolved + '?inline';
   }
