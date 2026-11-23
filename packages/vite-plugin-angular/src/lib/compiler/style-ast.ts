@@ -10,7 +10,8 @@ function getClassDeclaration(node: ProgramNode): any {
     : node;
 }
 
-function getPropertyKey(prop: any): string | undefined {
+/** An object property's key, quoted (`'styles'`) or not (`styles`). */
+export function getPropertyKey(prop: any): string | undefined {
   return prop.key?.name || prop.key?.value;
 }
 

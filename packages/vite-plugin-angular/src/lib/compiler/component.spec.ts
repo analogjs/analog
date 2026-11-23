@@ -1453,6 +1453,29 @@ export class BottomNav {}
       );
     });
 
+    it('applies resolvedInlineStyles to a quoted styles key in setClassMetadata', () => {
+      const resolvedInlineStyles = new Map([[0, '.a { padding: 1rem; }']]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        @Component({
+          selector: 'app-inline-scss',
+          template: '<p>hi</p>',
+          'styles': ['.a { padding: $var; }']
+        })
+        export class InlineScssComponent {}
+      `,
+        'inline-scss.ts',
+        { resolvedInlineStyles },
+      );
+
+      const metadata = result.code.slice(
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      expect(metadata).toContain('styles: [".a { padding: 1rem; }"]');
+    });
+
     it('applies resolvedInlineStyles to singular string style', () => {
       const compiledCss = ':host { color: red; } h1 { font-size: 2rem; }';
       const resolvedInlineStyles = new Map([[0, compiledCss]]);

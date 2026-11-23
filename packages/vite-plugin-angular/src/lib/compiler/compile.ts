@@ -62,6 +62,7 @@ import { buildDeferDependencyMap, buildImportMap } from './defer.js';
 import { buildCtorParameters, buildPropDecorators } from './jit-metadata.js';
 import { debugCompile, debugEmit } from './debug.js';
 import {
+  getPropertyKey,
   inlineStyleRanges,
   type InlineStyle,
   type InlineStyleRange,
@@ -1320,7 +1321,7 @@ export function compile(
               rewrittenProps.push(textOf(prop));
               continue;
             }
-            const propName = textOf(prop.key);
+            const propName = getPropertyKey(prop);
 
             if (propName === 'templateUrl' && resources.template) {
               rewrittenProps.push(
