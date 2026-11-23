@@ -60,7 +60,7 @@
     "marked-highlight": "catalog:",
     "marked-mangle": "catalog:",
     "marked-shiki": "catalog:",
-    "nitro": "catalog:",
+    "nitro": "catalog:peerCompat",
     "shiki": "catalog:",
     "vite": "catalog:peerCompat"
   },
