@@ -70,7 +70,7 @@ export function Price() @{
   const amount = input(0);
   const product = input.required<Product>();
   const secret = 'internal';
-  <span>{secret}{amount()}{product().name}</span>
+  <span onClick={(e: MouseEvent) => console.log(e)}>{secret}{amount()}{product().name}</span>
 }
 `,
     'src/list.tsrx': `import { Price } from './price.tsrx';
@@ -110,6 +110,8 @@ describe('TsrxTypeGenerator', () => {
     );
     // Lowering internals are stripped.
     expect(price).not.toContain('$fc');
+    expect(price).not.toContain('ɵngEventHandler');
+    expect(price).not.toContain('ɵngEventParam');
     expect(price).not.toContain('secret');
 
     const list = read(generated('src/list.d.tsrx.ts'));

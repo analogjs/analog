@@ -22,7 +22,8 @@
  *   protected readonly $fc = (() => {   // marked @internal
  *     const step = this.step;
  *     const count = signal(0);
- *     const ɵb0 = ($event: any) => ((() => count.update((c) => c + step())) as (e: any) => unknown)($event);
+ *     const ɵb0h = () => (() => count.update((c) => c + step()));
+ *     const ɵb0 = (($event: unknown) => (ɵb0h() as (e: unknown) => unknown)($event)) as unknown as ɵngEventHandler<ReturnType<typeof ɵb0h>>;
  *     const ɵb1 = () => (count());
  *     return {b0: ɵb0, b1: ɵb1};
  *   })();
@@ -331,6 +332,16 @@ export function lowerTsrx(
   if (helpers.has('ForItem')) {
     trailer.push(
       'type ɵngForItem<T> = T extends null | undefined ? never : T extends Iterable<infer U> ? U : never;',
+    );
+  }
+  if (helpers.has('EventHandler')) {
+    trailer.push(
+      'type ɵngEventHandler<T> = T extends () => unknown ? Parameters<T> extends [] ? (event: unknown) => unknown : OmitThisParameter<T> : OmitThisParameter<T>;',
+    );
+  }
+  if (helpers.has('EventParam')) {
+    trailer.push(
+      'type ɵngEventParam<T> = [T] extends [(event: infer E) => unknown] ? E : never;',
     );
   }
   out.append(trailer.join('\n') + '\n');
@@ -1038,17 +1049,77 @@ class ComponentLowerer {
     rejectTemplates(expr);
     const locals = this.freeLocals(expr, scope);
     const id = this.nextId();
-    const all = [{ name: '$event', type: 'any' }, ...locals];
-    this.bindings.push(
-      mt`const ɵ${id} = (${params(all)}) => ((${this.copy(expr)}) as (e: any) => unknown)($event);`.from(
-        expr,
-      ),
-    );
-    return this.call(
-      expr,
-      id,
-      all.map((l) => l.name),
-    );
+    const localNames = locals.map((l) => l.name);
+
+    if (hasUnannotatedEventParam(expr)) {
+      const all = [{ name: '$event', type: 'any' }, ...locals];
+      this.bindings.push(
+        mt`const ɵ${id} = (${params(all)}) => ((${this.copy(expr)}) as (e: any) => unknown)($event);`.from(
+          expr,
+        ),
+      );
+      return this.call(expr, id, ['$event', ...localNames]);
+    }
+
+    const handlerId = `ɵ${id}h`;
+    const localArgs = localNames.join(', ');
+    const isChain = expr.type === 'ChainExpression';
+    const member = isChain ? expr.expression : expr;
+    const isMember =
+      member.type === 'MemberExpression' && member.object.type !== 'Super';
+
+    let factory: MappedText;
+    let handlerType: string;
+    if (isMember) {
+      const access = member.computed
+        ? mt`${isChain ? '?.' : ''}[${this.copy(member.property)}]`
+        : mt`${isChain ? '?.' : '.'}${this.copy(member.property)}`;
+      factory =
+        mt`const ${handlerId} = (${params(locals)}) => { const ɵr = (${this.copy(member.object)}); return { r: ɵr, f: ɵr${access} }; };`.from(
+          expr,
+        );
+      handlerType = isChain
+        ? `NonNullable<ReturnType<typeof ${handlerId}>['f']>`
+        : `ReturnType<typeof ${handlerId}>['f']`;
+    } else {
+      factory =
+        mt`const ${handlerId} = (${params(locals)}) => (${this.copy(expr)});`.from(
+          expr,
+        );
+      handlerType = `ReturnType<typeof ${handlerId}>`;
+    }
+
+    const invoke = (eventType: string): string => {
+      if (!isMember) {
+        return `(${handlerId}(${localArgs}) as (e: ${eventType}) => unknown)($event)`;
+      }
+      const call = isChain
+        ? `(ɵh.f as ((this: unknown, e: ${eventType}) => unknown) | undefined)?.call(ɵh.r, $event)`
+        : `(ɵh.f as (this: unknown, e: ${eventType}) => unknown).call(ɵh.r, $event)`;
+      return `{ const ɵh = ${handlerId}(${localArgs}); return ${call}; }`;
+    };
+
+    let wrapper: MappedText;
+    if (locals.length === 0) {
+      this.helpers.add('EventHandler');
+      wrapper =
+        mt`const ɵ${id} = (($event: unknown) => ${invoke('unknown')}) as unknown as ɵngEventHandler<${handlerType}>;`.from(
+          expr,
+        );
+    } else {
+      this.helpers.add('EventParam');
+      const all = [
+        { name: '$event', type: `ɵngEventParam<${handlerType}>` },
+        ...locals,
+      ];
+      wrapper =
+        mt`const ɵ${id} = (${params(all)}) => ${invoke('typeof $event')};`.from(
+          expr,
+        );
+    }
+
+    this.bindings.push(factory, wrapper);
+    return this.call(expr, id, ['$event', ...localNames]);
   }
 
   /** Exposes a writable signal for a two-way binding. */
@@ -2406,4 +2477,30 @@ function escapeAttr(value: string): string {
 
 function params(locals: Local[]): string {
   return locals.map((l) => `${l.name}: ${l.type}`).join(', ');
+}
+
+/**
+ * Whether `expr` is an inline function whose event parameter has no type
+ * annotation and therefore relies on contextual typing under `strict`.
+ */
+function hasUnannotatedEventParam(expr: EstreeNode): boolean {
+  if (
+    expr.type !== 'ArrowFunctionExpression' &&
+    expr.type !== 'FunctionExpression'
+  ) {
+    return false;
+  }
+  const fnParams = expr.params as EstreeNode[];
+  const eventParam =
+    expr.type === 'FunctionExpression' &&
+    fnParams[0]?.type === 'Identifier' &&
+    fnParams[0].name === 'this'
+      ? fnParams[1]
+      : fnParams[0];
+  if (!eventParam) {
+    return false;
+  }
+  return eventParam.type === 'AssignmentPattern'
+    ? !eventParam.left?.typeAnnotation
+    : !eventParam.typeAnnotation;
 }
