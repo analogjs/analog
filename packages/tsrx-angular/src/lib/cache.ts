@@ -4,6 +4,7 @@
  */
 
 import { parseModule, parseStyle } from '@tsrx/core';
+import { normalizePath } from 'vite';
 
 import {
   type EstreeNode,
@@ -43,13 +44,28 @@ interface CachedModule {
 
 const modules = new Map<string, CachedModule>();
 
+function cacheKey(fileName: string): string {
+  return normalizePath(fileName.split('?')[0]);
+}
+
 function cachedModule(fileName: string, source: string): CachedModule {
-  let entry = modules.get(fileName);
+  const key = cacheKey(fileName);
+  let entry = modules.get(key);
   if (entry === undefined || entry.source !== source) {
     entry = { source };
-    modules.set(fileName, entry);
+    modules.set(key, entry);
   }
   return entry;
+}
+
+/** Evicts a single module from the parse and lowering cache. */
+export function evictTsrxCache(fileName: string): void {
+  modules.delete(cacheKey(fileName));
+}
+
+/** Clears all entries from the parse and lowering cache. */
+export function clearTsrxCache(): void {
+  modules.clear();
 }
 
 /** Parsers whose `parseModule` parses `entry`'s source at most once. */
