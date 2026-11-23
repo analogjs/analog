@@ -106,6 +106,56 @@ describe('Registry scanFile', () => {
       'pipe',
     ]);
   });
+
+  it('marks inline default-exported classes with isDefaultExport', () => {
+    const entries = scanFile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-default', template: '' })
+      export default class DefaultComponent {}
+    `,
+      'default.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].className).toBe('DefaultComponent');
+    expect(entries[0].selector).toBe('app-default');
+    expect(entries[0].isDefaultExport).toBe(true);
+  });
+
+  it('marks classes default-exported by a separate export default statement', () => {
+    const entries = scanFile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-other', template: '' })
+      export class OtherComponent {}
+      @Component({ selector: 'app-main', template: '' })
+      class MainComponent {}
+      export default MainComponent;
+    `,
+      'main.ts',
+    );
+
+    expect(entries).toHaveLength(2);
+    expect(entries[0].isDefaultExport).toBeUndefined();
+    expect(entries[1].className).toBe('MainComponent');
+    expect(entries[1].isDefaultExport).toBe(true);
+  });
+
+  it('marks classes default-exported via export { Name as default }', () => {
+    const entries = scanFile(
+      `
+      import { Component } from '@angular/core';
+      @Component({ selector: 'app-aliased', template: '' })
+      class AliasedComponent {}
+      export { AliasedComponent as default };
+    `,
+      'aliased.ts',
+    );
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0].isDefaultExport).toBe(true);
+  });
 });
 
 describe('Registry input/output extraction', () => {

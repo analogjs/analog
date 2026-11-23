@@ -212,6 +212,95 @@ export function Card() @{
     );
   });
 
+  it('compiles default-exported .tsrx and .ts components under original or aliased names', async () => {
+    await serve({
+      'src/panel.tsrx': `export default function Panel() @{
+  <section>Panel</section>
+}
+`,
+      'src/badge.ts': `import { Component } from '@angular/core';
+
+@Component({ selector: 'x-default-badge', template: '<span>Badge</span>' })
+class Badge {}
+
+export default Badge;
+`,
+      'src/page.tsrx': `import Panel from './panel.tsrx';
+import CustomBadge from './badge';
+
+export function Page() @{
+  <div>
+    <Panel />
+    <CustomBadge />
+  </div>
+}
+`,
+    });
+
+    const page = await server!.transformRequest('/src/page.tsrx');
+    expect(page?.code).toContain('"Panel"');
+    expect(page?.code).toContain('"x-default-badge"');
+    expect(page?.code).toMatch(
+      /dependencies: \[(Panel, CustomBadge|CustomBadge, Panel)\]/,
+    );
+  });
+
+  it('compiles same-named components from different modules imported under aliases', async () => {
+    await serve({
+      'src/a/card.tsrx': `import { Component } from '@angular/core';
+
+export const CardMeta = { selector: 'x-card-a' } satisfies Component;
+
+export function Card() @{
+  <p>A</p>
+}
+`,
+      'src/b/card.tsrx': `import { Component } from '@angular/core';
+
+export const CardMeta = { selector: 'x-card-b' } satisfies Component;
+
+export function Card() @{
+  <p>B</p>
+}
+`,
+      'src/page.tsrx': `import { Card as ACard } from './a/card.tsrx';
+import { Card as BCard } from './b/card.tsrx';
+
+export function Page() @{
+  <div>
+    <ACard />
+    <BCard />
+  </div>
+}
+`,
+    });
+
+    const page = await server!.transformRequest('/src/page.tsrx');
+    expect(page?.code).toContain('"x-card-a"');
+    expect(page?.code).toContain('"x-card-b"');
+    expect(page?.code).toMatch(/dependencies: \[(ACard, BCard|BCard, ACard)\]/);
+  });
+
+  it('compiles namespace-imported Angular member APIs', async () => {
+    await serve({
+      'src/counter.tsrx': `import * as ng from '@angular/core';
+
+export function Counter() @{
+  const step = ng.input.required<number>();
+  const changed = ng.output<number>();
+  <button onClick={() => changed.emit(step())}>{step()}</button>
+}
+`,
+    });
+
+    const counter = await server!.transformRequest('/src/counter.tsrx');
+    expect(counter?.code).toContain('ɵɵdefineComponent');
+    expect(counter?.code).toContain('inputs:');
+    expect(counter?.code).toContain('step');
+    expect(counter?.code).toContain('outputs:');
+    expect(counter?.code).toContain('changed');
+  });
+
   it('lowers importers again when a component changes its selector', async () => {
     const child = (
       selector: string,

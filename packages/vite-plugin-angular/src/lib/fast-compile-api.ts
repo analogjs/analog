@@ -57,7 +57,11 @@ export interface FastCompileApi {
     resolve: FastCompileResolve,
   ): Promise<void>;
   /** The element selector of a component or directive class, if known. */
-  resolveSelector(className: string): string | null;
+  resolveSelector(
+    className: string,
+    moduleSpecifier?: string,
+    containingFile?: string,
+  ): string | null;
   /** Compiles TypeScript produced for module `id`. */
   compile(
     code: string,

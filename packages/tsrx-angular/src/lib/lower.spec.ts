@@ -545,6 +545,124 @@ export class Counter {
     expect(code).toContain('imports: [Badge, MatButton]');
   });
 
+  it('resolves default-imported and aliased default-imported component tags', () => {
+    const calls: [string, string, string][] = [];
+    const result = lowerTsrx(
+      `
+      import Card from './card.tsrx';
+      import CustomBadge from './badge.ts';
+
+      export function App() @{
+        <div>
+          <Card />
+          <CustomBadge />
+        </div>
+      }
+    `,
+      '/app/test.tsrx',
+      parsers,
+      {
+        resolveSelector: (name, moduleSpecifier, containingFile) => {
+          calls.push([name, moduleSpecifier, containingFile]);
+          if (name === 'default' && moduleSpecifier === './card.tsrx') {
+            return 'Card';
+          }
+          if (name === 'default' && moduleSpecifier === './badge.ts') {
+            return 'x-badge';
+          }
+          return null;
+        },
+      },
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(calls).toEqual([
+      ['default', './card.tsrx', '/app/test.tsrx'],
+      ['default', './badge.ts', '/app/test.tsrx'],
+    ]);
+    expect(result.code).toContain(
+      'template: "<div><Card></Card><x-badge></x-badge></div>"',
+    );
+    expect(result.code).toContain('imports: [Card, CustomBadge]');
+  });
+
+  it('resolves same-named components from different modules imported under aliases', () => {
+    const calls: [string, string, string][] = [];
+    const result = lowerTsrx(
+      `
+      import { Card as ACard } from './a';
+      import { Card as BCard } from './b';
+
+      export function App() @{
+        <div>
+          <ACard />
+          <BCard />
+        </div>
+      }
+    `,
+      '/app/test.tsrx',
+      parsers,
+      {
+        resolveSelector: (name, moduleSpecifier, containingFile) => {
+          calls.push([name, moduleSpecifier, containingFile]);
+          if (name === 'Card' && moduleSpecifier === './a') return 'x-card-a';
+          if (name === 'Card' && moduleSpecifier === './b') return 'x-card-b';
+          return null;
+        },
+      },
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(calls).toEqual([
+      ['Card', './a', '/app/test.tsrx'],
+      ['Card', './b', '/app/test.tsrx'],
+    ]);
+    expect(result.code).toContain(
+      'template: "<div><x-card-a></x-card-a><x-card-b></x-card-b></div>"',
+    );
+    expect(result.code).toContain('imports: [ACard, BCard]');
+  });
+
+  it('hoists namespace-imported Angular member APIs to class fields', () => {
+    const { code, diagnostics } = lower(`
+      import * as ng from '@angular/core';
+      import * as other from './other';
+
+      export function Counter() @{
+        const step = ng.input(1);
+        const label = ng.input.required<string>();
+        const changed = ng.output<number>();
+        const value = ng.model(0);
+        const el = ng.viewChild('el');
+        const localOnly = other.input(1);
+        <button ref="el" onClick={() => changed.emit(value() + step())}>{label()}{el()}{localOnly}</button>
+      }
+    `);
+
+    expect(diagnostics).toEqual([]);
+    expect(code).toContain('  readonly step = ng.input(1);');
+    expect(code).toContain('  readonly label = ng.input.required<string>();');
+    expect(code).toContain('  readonly changed = ng.output<number>();');
+    expect(code).toContain('  readonly value = ng.model(0);');
+    expect(code).toContain("  readonly el = ng.viewChild('el');");
+    expect(code).not.toContain('readonly localOnly');
+    expect(code).toContain('    const localOnly = other.input(1);');
+    expect(code).toContain(
+      "import { Component, ChangeDetectionStrategy as ɵngChangeDetectionStrategy } from '@angular/core';",
+    );
+  });
+
+  it('does not resolve namespace imports as component tags', () => {
+    expect(
+      errors(`
+        import * as Card from './card';
+        export function App() @{ <Card /> }
+      `),
+    ).toEqual([
+      expect.stringContaining(`Could not determine the selector of 'Card'`),
+    ]);
+  });
+
   describe('content projection', () => {
     const CARD = `
       import { contentChild, ElementRef } from '@angular/core';

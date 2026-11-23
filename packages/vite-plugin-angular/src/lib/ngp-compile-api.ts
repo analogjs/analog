@@ -34,7 +34,11 @@ export interface NgpLowerContext {
    */
   scanImports(specifiers: string[]): Promise<void>;
   /** The element selector of a component or directive class, if known. */
-  resolveSelector(className: string): string | null;
+  resolveSelector(
+    className: string,
+    moduleSpecifier?: string,
+    containingFile?: string,
+  ): string | null;
 }
 
 export interface NgpLoweredModule {

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { normalizePath } from 'vite';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ComponentScanner } from './component-scanner';
 import { findFastCompileApi, type FastCompileApi } from './fast-compile-api';
 import { fastCompilePlugin } from './fast-compile-plugin';
 
@@ -94,6 +95,150 @@ export class Badge {}
       async () => null,
     );
     expect(api.resolveSelector('RouterOutlet')).toBe('router-outlet');
+    expect(
+      api.resolveSelector(
+        'RouterOutlet',
+        '@angular/router',
+        `${dir}/app.custom`,
+      ),
+    ).toBe('router-outlet');
+  });
+
+  it('resolves same-named components per imported module without colliding', async () => {
+    api.registerSourceFormat(customFormat);
+    const cardA = `${dir}/card-a.custom`;
+    const cardB = `${dir}/card-b.custom`;
+    const app = `${dir}/app.custom`;
+    writeFileSync(
+      cardA,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-card-a', template: '' })
+export class Card {}
+`,
+    );
+    writeFileSync(
+      cardB,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-card-b', template: '' })
+export class Card {}
+`,
+    );
+
+    const files: Record<string, string> = {
+      './card-a.custom': cardA,
+      './card-b.custom': cardB,
+    };
+    await api.scanImports(Object.keys(files), app, async (spec) =>
+      files[spec] ? { id: files[spec] } : null,
+    );
+
+    expect(api.resolveSelector('Card', './card-a.custom', app)).toBe(
+      'x-card-a',
+    );
+    expect(api.resolveSelector('Card', './card-b.custom', app)).toBe(
+      'x-card-b',
+    );
+  });
+
+  it('resolves default exports by module and respects direct target over barrels', async () => {
+    api.registerSourceFormat(customFormat);
+    const inlineDefault = `${dir}/inline-default.custom`;
+    const separateDefault = `${dir}/separate-default.custom`;
+    const namedOnly = `${dir}/named-only.custom`;
+    const barrel = `${dir}/barrel.custom`;
+    const app = `${dir}/app.custom`;
+    writeFileSync(
+      inlineDefault,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-inline-default', template: '' })
+export default class InlineCard {}
+`,
+    );
+    writeFileSync(
+      separateDefault,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-separate-default', template: '' })
+class SeparateCard {}
+export default SeparateCard;
+`,
+    );
+    writeFileSync(
+      namedOnly,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-named-only', template: '' })
+export class NamedOnly {}
+`,
+    );
+    writeFileSync(
+      barrel,
+      `export { default } from './inline-default.custom';\n`,
+    );
+
+    const files: Record<string, string> = {
+      './inline-default.custom': inlineDefault,
+      './separate-default.custom': separateDefault,
+      './named-only.custom': namedOnly,
+      './barrel.custom': barrel,
+    };
+    await api.scanImports(Object.keys(files), app, async (spec) =>
+      files[spec] ? { id: files[spec] } : null,
+    );
+
+    expect(api.resolveSelector('default', './inline-default.custom', app)).toBe(
+      'x-inline-default',
+    );
+    expect(
+      api.resolveSelector('default', './separate-default.custom', app),
+    ).toBe('x-separate-default');
+    expect(api.resolveSelector('default', './barrel.custom', app)).toBe(
+      'x-inline-default',
+    );
+    expect(
+      api.resolveSelector('default', './named-only.custom', app),
+    ).toBeNull();
+  });
+
+  it('restores another file entry in global registry when a duplicate class file is invalidated', async () => {
+    const scanner = new ComponentScanner();
+    scanner.registerSourceFormat(customFormat);
+    const cardA = `${dir}/a.custom`;
+    const cardB = `${dir}/b.custom`;
+    const app = `${dir}/app.custom`;
+    writeFileSync(
+      cardA,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-card-a', template: '' })
+export class Card {}
+`,
+    );
+    writeFileSync(
+      cardB,
+      `import { Component } from '@angular/core';
+@Component({ selector: 'x-card-b', template: '' })
+export class Card {}
+`,
+    );
+
+    const files: Record<string, string> = {
+      './a.custom': cardA,
+      './b.custom': cardB,
+    };
+    await scanner.scanImports(Object.keys(files), app, async (spec) =>
+      files[spec] ? { id: files[spec] } : null,
+    );
+    expect(scanner.lookupSelector('Card')).toBe('x-card-a');
+    expect(scanner.entriesOf(cardA)).toHaveLength(1);
+    expect(scanner.entriesOf(cardB)).toHaveLength(1);
+
+    scanner.invalidate(cardA);
+    expect(scanner.entriesOf(cardA)).toHaveLength(0);
+    expect(scanner.lookupSelector('Card')).toBe('x-card-b');
+    expect(
+      scanner.lookupSelector('Card', [], {
+        moduleSpecifier: './b.custom',
+        containingFile: app,
+      }),
+    ).toBe('x-card-b');
   });
 
   it('ignores imports of unregistered formats', async () => {

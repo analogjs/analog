@@ -50,6 +50,8 @@ export interface RegistryEntry {
   outputs?: Record<string, string>;
   /** The package this declaration was scanned from (e.g. "@angular/cdk") */
   sourcePackage?: string;
+  /** Whether this declaration is the file's default export */
+  isDefaultExport?: boolean;
 }
 
 /** Maps class name → registry entry */
@@ -120,6 +122,31 @@ export function scanFile(
     }
   }
 
+  // Collect the local identifier name of a separate `export default Foo` or
+  // `export { Foo as default }` so classes declared earlier are marked too.
+  let defaultExportedName: string | undefined;
+  for (const node of program.body) {
+    if (
+      node.type === 'ExportDefaultDeclaration' &&
+      (node as any).declaration?.type === 'Identifier'
+    ) {
+      defaultExportedName = (node as any).declaration.name;
+    } else if (
+      node.type === 'ExportNamedDeclaration' &&
+      !(node as any).source
+    ) {
+      for (const spec of (node as any).specifiers || []) {
+        const exported =
+          spec.exported?.type === 'Identifier'
+            ? spec.exported.name
+            : spec.exported?.value;
+        if (exported === 'default' && spec.local?.type === 'Identifier') {
+          defaultExportedName = spec.local.name;
+        }
+      }
+    }
+  }
+
   for (const node of program.body) {
     // Handle `class Foo {}`, `export class Foo {}`, and `export default class Foo {}`
     const decl =
@@ -132,6 +159,9 @@ export function scanFile(
     if (!decl.id?.name) continue;
 
     const className: string = decl.id.name;
+    const isDefaultExport =
+      node.type === 'ExportDefaultDeclaration' ||
+      className === defaultExportedName;
     const decorators: any[] = decl.decorators || [];
 
     for (const dec of decorators) {
@@ -208,6 +238,7 @@ export function scanFile(
           imports: moduleImports || [],
           fileName,
           className,
+          ...(isDefaultExport ? { isDefaultExport: true } : {}),
         });
       } else if (decoratorName === 'Pipe' && pipeName) {
         entries.push({
@@ -216,6 +247,7 @@ export function scanFile(
           pipeName,
           fileName,
           className,
+          ...(isDefaultExport ? { isDefaultExport: true } : {}),
         });
       } else if (selector) {
         // Extract inputs/outputs from class members
@@ -364,6 +396,7 @@ export function scanFile(
           className,
           ...(Object.keys(inputs).length > 0 ? { inputs } : {}),
           ...(Object.keys(outputs).length > 0 ? { outputs } : {}),
+          ...(isDefaultExport ? { isDefaultExport: true } : {}),
         });
       }
     }

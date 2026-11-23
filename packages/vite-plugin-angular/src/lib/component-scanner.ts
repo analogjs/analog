@@ -27,6 +27,12 @@ export type ResolveImport = (
   importer: string,
 ) => Promise<string | null>;
 
+/** Optional import site context for module-scoped selector lookup. */
+export interface SelectorLookupContext {
+  moduleSpecifier?: string;
+  containingFile?: string;
+}
+
 /**
  * Angular classes scanned from source files and package `.d.ts` declarations,
  * so source formats can look up the selectors of the components they import
@@ -40,6 +46,11 @@ export class ComponentScanner {
   readonly lazyScans: Map<string, Promise<Set<string>>> = new Map();
   /** Modules compiled against each scanned file. */
   readonly importersByFile: Map<string, Set<string>> = new Map();
+  /** Entries declared in each scanned source file, keyed by normalized path. */
+  private readonly entriesByFile: Map<string, RegistryEntry[]> = new Map();
+  /** Scanned files (direct target first, then re-exports) per importer and specifier. */
+  private readonly resolvedImports: Map<string, Map<string, Set<string>>> =
+    new Map();
   private readonly sourceFormats: FastCompileSourceFormat[] = [];
   private root = '';
 
@@ -54,6 +65,8 @@ export class ComponentScanner {
     this.scannedDtsPackages.clear();
     this.lazyScans.clear();
     this.importersByFile.clear();
+    this.entriesByFile.clear();
+    this.resolvedImports.clear();
   }
 
   registerSourceFormat(format: FastCompileSourceFormat): void {
@@ -164,11 +177,22 @@ export class ComponentScanner {
     id: string,
     resolveImport: ResolveImport,
   ): Promise<void> {
+    const importerKey = normalizePath(id);
     await Promise.all(
       specs.map(async (spec) => {
         const file = await resolveImport(spec, id);
-        if (!file) return;
-        for (const scanned of await this.scanOnDemand(file, resolveImport)) {
+        if (!file) {
+          this.resolvedImports.get(importerKey)?.delete(spec);
+          return;
+        }
+        const scannedFiles = await this.scanOnDemand(file, resolveImport);
+        let bySpec = this.resolvedImports.get(importerKey);
+        if (!bySpec) {
+          bySpec = new Map();
+          this.resolvedImports.set(importerKey, bySpec);
+        }
+        bySpec.set(spec, scannedFiles);
+        for (const scanned of scannedFiles) {
           let importers = this.importersByFile.get(scanned);
           if (!importers) {
             importers = new Set();
@@ -182,16 +206,41 @@ export class ComponentScanner {
 
   /**
    * The element selector of a component or directive class. `external` are
-   * registries contributed through `analog.setup()`.
+   * registries contributed through `analog.setup()`. When `context` gives the
+   * importing file and module specifier, declarations scanned from that module
+   * (and its re-exports) are checked before falling back to the global registry.
    */
   lookupSelector(
     className: string,
     external: readonly ComponentRegistryEntries[] = [],
+    context?: SelectorLookupContext,
   ): string | null {
+    if (context?.moduleSpecifier && context.containingFile) {
+      const scannedFiles = this.resolvedImports
+        .get(normalizePath(context.containingFile))
+        ?.get(context.moduleSpecifier);
+      if (scannedFiles) {
+        for (const scannedFile of scannedFiles) {
+          const entries = this.entriesByFile.get(normalizePath(scannedFile));
+          if (!entries) continue;
+          const match = entries.find(
+            (entry) =>
+              isSelectableEntry(entry) &&
+              (className === 'default'
+                ? entry.isDefaultExport === true
+                : entry.className === className),
+          );
+          if (match) {
+            return match.selector;
+          }
+        }
+      }
+    }
+
     const entry =
       this.registry.get(className) ??
       external.map((r) => r.get(className)).find((e) => e !== undefined);
-    if (!entry || (entry.kind !== 'component' && entry.kind !== 'directive')) {
+    if (!entry || !isSelectableEntry(entry)) {
       return null;
     }
     return entry.selector;
@@ -205,20 +254,70 @@ export class ComponentScanner {
   }
 
   entriesOf(file: string): RegistryEntry[] {
-    return [...this.registry.values()].filter((e) => e.fileName === file);
+    return this.entriesByFile.get(normalizePath(file)) ?? [];
+  }
+
+  /**
+   * Records the entries scanned from a source file in both per-file storage
+   * and the global registry.
+   */
+  recordFileEntries(
+    file: string,
+    entries: RegistryEntry[],
+    overwrite = false,
+  ): void {
+    const key = normalizePath(file);
+    const previous = overwrite ? this.entriesByFile.get(key) : undefined;
+    if (entries.length > 0) {
+      this.entriesByFile.set(key, entries);
+    } else if (overwrite) {
+      this.entriesByFile.delete(key);
+    }
+    if (previous) {
+      const nextNames = new Set(entries.map((e) => e.className));
+      for (const old of previous) {
+        if (!nextNames.has(old.className)) {
+          this.removeFromRegistryIfOwned(old.className, key);
+        }
+      }
+    }
+    for (const entry of entries) {
+      if (overwrite || !this.registry.has(entry.className)) {
+        this.registry.set(entry.className, entry);
+      }
+    }
   }
 
   /** Drops what was scanned from `file`, so the next scan reads it again. */
   invalidate(file: string): void {
-    for (const entry of this.entriesOf(file)) {
-      this.registry.delete(entry.className);
+    const key = normalizePath(file);
+    const oldEntries = this.entriesByFile.get(key) ?? [];
+    this.entriesByFile.delete(key);
+    for (const entry of oldEntries) {
+      this.removeFromRegistryIfOwned(entry.className, key);
     }
+    this.resolvedImports.delete(key);
     this.lazyScans.clear();
   }
 
   private addEntry(entry: RegistryEntry): void {
     if (!this.registry.has(entry.className)) {
       this.registry.set(entry.className, entry);
+    }
+  }
+
+  private removeFromRegistryIfOwned(className: string, ownerKey: string): void {
+    const current = this.registry.get(className);
+    if (!current || normalizePath(current.fileName) !== ownerKey) {
+      return;
+    }
+    this.registry.delete(className);
+    for (const entries of this.entriesByFile.values()) {
+      const replacement = entries.find((e) => e.className === className);
+      if (replacement) {
+        this.registry.set(className, replacement);
+        break;
+      }
     }
   }
 
@@ -257,9 +356,7 @@ export class ComponentScanner {
         return;
       }
       const entries = scanFile(code, current, program);
-      for (const entry of entries) {
-        this.addEntry(entry);
-      }
+      this.recordFileEntries(current, entries);
       this.ensureDtsRegistryForSource(code, current, program);
       const followsImports = entries.some(
         (e) => e.kind === 'tuple' || e.kind === 'ngmodule',
@@ -275,4 +372,8 @@ export class ComponentScanner {
     await visit(file);
     return visited;
   }
+}
+
+function isSelectableEntry(entry: RegistryEntry): boolean {
+  return entry.kind === 'component' || entry.kind === 'directive';
 }

@@ -137,7 +137,12 @@ export function tsrxAngular(options: TsrxPluginOptions = {}): Plugin {
           resolve,
         );
         const lowered = await lowerTsrxModule(code, path, {
-          resolveSelector: (className) => compiler.resolveSelector(className),
+          resolveSelector: (className, moduleSpecifier, containingFile) =>
+            compiler.resolveSelector(
+              className,
+              moduleSpecifier,
+              containingFile,
+            ),
         });
         if (lowered.diagnostics.length > 0) {
           this.error({
@@ -172,7 +177,8 @@ async function lowerForNgp(
 ): Promise<NgpLoweredModule> {
   await scanImports(await tsrxImportSpecifiers(code, path));
   const lowered = await lowerTsrxModule(code, path, {
-    resolveSelector: (className) => resolveSelector(className),
+    resolveSelector: (className, moduleSpecifier, containingFile) =>
+      resolveSelector(className, moduleSpecifier, containingFile),
   });
   return {
     code: lowered.code,
