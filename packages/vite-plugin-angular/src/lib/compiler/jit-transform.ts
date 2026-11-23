@@ -61,20 +61,20 @@ function removeDecorator(ms: MagicString, sourceCode: string, dec: any): void {
 }
 
 /**
- * Replace a self-registering decorator on a class declaration with a call
- * after the class, as a legacy decorator runs. The output then needs no
+ * Remove a self-registering decorator and return the statement that applies
+ * it to the class, as a legacy decorator runs. The output then needs no
  * decorator lowering, which the TypeScript strip only does when tsconfig
  * sets `experimentalDecorators`.
  */
 function applySelfRegisteringDecorator(
   ms: MagicString,
   sourceCode: string,
-  node: any,
+  className: string,
   dec: any,
-): void {
-  const call = sourceCode.slice(dec.expression.start, dec.expression.end);
+): string {
   removeDecorator(ms, sourceCode, dec);
-  ms.appendLeft(node.end, `\n${call}(${node.id.name});\n`);
+  const call = sourceCode.slice(dec.expression.start, dec.expression.end);
+  return `${call}(${className});`;
 }
 
 const DI_PARAM_DECORATORS = new Set([
@@ -109,12 +109,9 @@ function ctorParamDecorators(classNode: any): any[] {
  * provider option replaces the constructor, or when a non-DI parameter
  * decorator must keep running as written.
  */
-function needsInjectableCtorParameters(node: any, decorators: any[]): boolean {
-  const dec = decorators.find(isSelfRegisteringDecorator);
-  const options = dec?.expression.arguments?.[0];
+function needsInjectableCtorParameters(node: any, dec: any): boolean {
+  const options = dec.expression.arguments?.[0];
   return (
-    !!dec &&
-    node.type === 'ClassDeclaration' &&
     !options?.properties?.some((p: any) => PROVIDER_KEYS.has(p.key?.name)) &&
     ctorParamDecorators(node).every((d: any) =>
       DI_PARAM_DECORATORS.has(d.expression?.callee?.name),
@@ -187,19 +184,25 @@ export function jitTransform(
       // Without a type checker or emitDecoratorMetadata a param typed only
       // by annotation has no runtime DI token unless captured in
       // ctorParameters.
+      const statements: string[] = [];
       const ctorParams =
-        needsInjectableCtorParameters(node, decorators) &&
+        needsInjectableCtorParameters(node, selfRegistering) &&
         buildCtorParameters(node, sourceCode, typeOnlyImports);
       if (ctorParams) {
         for (const dec of ctorParamDecorators(node)) {
           removeDecorator(ms, sourceCode, dec);
         }
-        ms.appendLeft(
-          node.end,
-          `\n${className}.ctorParameters = () => [${ctorParams}];\n`,
-        );
+        statements.push(`${className}.ctorParameters = () => [${ctorParams}];`);
       }
-      applySelfRegisteringDecorator(ms, sourceCode, node, selfRegistering);
+      statements.push(
+        applySelfRegisteringDecorator(
+          ms,
+          sourceCode,
+          className,
+          selfRegistering,
+        ),
+      );
+      ms.appendLeft(node.end, `\n${statements.join('\n')}\n`);
       continue;
     }
     hasAngularClass = true;
