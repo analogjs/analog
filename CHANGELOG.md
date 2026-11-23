@@ -1,3 +1,9 @@
+# [3.0.0-beta.60](https://github.com/analogjs/analog/compare/v3.0.0-beta.59...v3.0.0-beta.60) (2026-11-23)
+
+### Bug Fixes
+
+- **vitest-angular:** mark Angular DevKit peers optional and document content injection context ([#2832](https://github.com/analogjs/analog/issues/2832)) ([ad0d760](https://github.com/analogjs/analog/commit/ad0d7607fd4c0a5e087ee94523c8253975fb9eba))
+
 # [3.0.0-beta.59](https://github.com/analogjs/analog/compare/v3.0.0-beta.58...v3.0.0-beta.59) (2026-11-23)
 
 ### Bug Fixes
