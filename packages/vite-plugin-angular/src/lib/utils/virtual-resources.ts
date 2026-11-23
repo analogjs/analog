@@ -3,8 +3,8 @@
 // use these so the rewriting + loading behavior stays in sync between them.
 //
 // Style ?inline imports now flow through Vite's native CSS pipeline via
-// safeModulePaths (see safe-module-paths.ts). Only template ?raw imports
-// still use virtual ids.
+// safeModulePaths (see safe-module-paths.ts); resolveStyleInlineImport
+// resolves their ids. Only template ?raw imports still use virtual ids.
 
 import { promises as fsPromises, statSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
