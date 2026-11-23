@@ -8,7 +8,7 @@
   "targets": {
     "build-self": {
       "executor": "nx:run-commands",
-      "cache": false,
+      "cache": true,
       "dependsOn": ["vite-plugin-angular:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
@@ -21,7 +21,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "cache": false,
+      "cache": true,
       "dependsOn": ["build-self", "nx-plugin:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {

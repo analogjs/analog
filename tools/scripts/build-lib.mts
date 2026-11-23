@@ -131,21 +131,37 @@ function pruneNonDeclarationFilesRecursive(dir: string): void {
     return;
   }
 
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      return;
+    }
+    throw err;
+  }
+
+  for (const entry of entries) {
     const entryPath = resolve(dir, entry.name);
 
     if (entry.isDirectory()) {
       pruneNonDeclarationFilesRecursive(entryPath);
 
-      if (readdirSync(entryPath).length === 0) {
-        rmSync(entryPath, { recursive: true });
+      try {
+        if (readdirSync(entryPath).length === 0) {
+          rmSync(entryPath, { recursive: true, force: true });
+        }
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+          throw err;
+        }
       }
 
       continue;
     }
 
     if (!entry.name.endsWith('.d.ts')) {
-      rmSync(entryPath);
+      rmSync(entryPath, { force: true });
     }
   }
 }

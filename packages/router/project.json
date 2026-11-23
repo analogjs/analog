@@ -15,7 +15,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "cache": false,
+      "cache": true,
       "dependsOn": [
         "assert-deps",
         "vite-plugin-angular:build",
