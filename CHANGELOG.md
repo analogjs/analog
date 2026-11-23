@@ -1,3 +1,9 @@
+# [3.0.0-beta.65](https://github.com/analogjs/analog/compare/v3.0.0-beta.64...v3.0.0-beta.65) (2026-11-23)
+
+### Bug Fixes
+
+- **platform:** match vitest.config.\* and double-quoted imports in separated plugins migration ([#2846](https://github.com/analogjs/analog/issues/2846)) ([ca3f6ec](https://github.com/analogjs/analog/commit/ca3f6ec4f2d21ae403f5492a47c4f81651aab1f0))
+
 # [3.0.0-beta.64](https://github.com/analogjs/analog/compare/v3.0.0-beta.63...v3.0.0-beta.64) (2026-11-23)
 
 ### Bug Fixes
