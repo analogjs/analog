@@ -183,4 +183,168 @@ export { amount, name, List };
     }).generate();
     expect(existsSync(join(root, '.types/src/price.d.tsrx.ts'))).toBe(true);
   });
+
+  it('respects tsconfig include and exclude (including via extends)', async () => {
+    write({
+      'tsconfig.base.json': JSON.stringify({
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          target: 'es2022',
+          module: 'preserve',
+          moduleResolution: 'bundler',
+          experimentalDecorators: false,
+          skipLibCheck: true,
+          types: [],
+          allowArbitraryExtensions: true,
+          rootDirs: ['.', 'node_modules/.analog/tsrx-types'],
+        },
+        include: ['src/**/*.ts'],
+        exclude: ['**/*.spec.ts', 'src/fixtures/**', 'src/ignored.tsrx'],
+      }),
+      'tsconfig.json': JSON.stringify({
+        extends: './tsconfig.base.json',
+      }),
+      // Invalid syntax outside `include` proves it is never lowered.
+      'outside/broken.tsrx': 'export function Broken() @{ <div> }\n',
+      'src/fixtures/demo.tsrx': 'export function Demo() @{ <div /> }\n',
+      'src/price.spec.tsrx': 'export function PriceSpec() @{ <div /> }\n',
+      'src/ignored.tsrx': 'export function Ignored() @{ <div /> }\n',
+    });
+
+    const generator = new TsrxTypeGenerator({
+      tsconfig: join(root, 'tsconfig.json'),
+    });
+    expect(generator.findTsrxFiles()).toEqual([
+      join(root, 'src/list.tsrx'),
+      join(root, 'src/price.tsrx'),
+    ]);
+
+    const result = await generator.generate();
+    expect(result.diagnostics).toEqual([]);
+    expect(result.written.map((f) => f.slice(root.length + 1)).sort()).toEqual([
+      generated('src/list.d.tsrx.ts'),
+      generated('src/price.d.tsrx.ts'),
+    ]);
+    expect(existsSync(join(root, generated('outside/broken.d.tsrx.ts')))).toBe(
+      false,
+    );
+    expect(
+      existsSync(join(root, generated('src/fixtures/demo.d.tsrx.ts'))),
+    ).toBe(false);
+    expect(existsSync(join(root, generated('src/price.spec.d.tsrx.ts')))).toBe(
+      false,
+    );
+    expect(existsSync(join(root, generated('src/ignored.d.tsrx.ts')))).toBe(
+      false,
+    );
+  });
+
+  it('resolves .tsrx imports through tsconfig paths and baseUrl aliases', async () => {
+    rmSync(join(root, 'src/price.tsrx'));
+    rmSync(join(root, 'src/list.tsrx'));
+    write({
+      'package.json': JSON.stringify({ type: 'module' }),
+      'tsconfig.base.json': JSON.stringify({
+        compilerOptions: {
+          paths: {
+            '@components/*': [
+              './src/components/*',
+              './node_modules/.analog/tsrx-types/src/components/*',
+            ],
+          },
+        },
+      }),
+      'tsconfig.json': JSON.stringify({
+        extends: './tsconfig.base.json',
+        compilerOptions: {
+          strict: true,
+          noEmit: true,
+          target: 'es2022',
+          module: 'nodenext',
+          moduleResolution: 'nodenext',
+          baseUrl: '.',
+          ignoreDeprecations: '6.0',
+          experimentalDecorators: false,
+          skipLibCheck: true,
+          types: [],
+          allowArbitraryExtensions: true,
+          rootDirs: ['.', 'node_modules/.analog/tsrx-types'],
+        },
+        include: ['src/**/*.ts'],
+      }),
+      // Stale declaration on disk proves generation resolves freshly lowered code.
+      [generated('src/components/price.d.tsrx.ts')]:
+        'export declare class Price { readonly stale: string; }\n',
+      'src/components/price.tsrx': `import { input } from '@angular/core';
+
+export function Price() @{
+  const amount = input(0);
+  <span>{amount()}</span>
+}
+`,
+      'src/list.tsrx': `import { Price } from '@components/price.tsrx';
+
+export function createPrice() {
+  return new Price();
+}
+
+export default function List() @{
+  <Price amount={1} />
+}
+`,
+      'src/base-url.tsrx': `import { Price } from 'src/components/price.tsrx';
+
+export function createFromBaseUrl() {
+  return new Price();
+}
+
+export function BaseUrlConsumer() @{
+  <Price amount={2} />
+}
+`,
+      'src/main.ts': `import { Price } from '@components/price.tsrx';
+import { createPrice } from './list.tsrx';
+
+const ok: number = createPrice().amount();
+const bad: string = new Price().amount();
+export { ok, bad };
+`,
+    });
+
+    const result = await new TsrxTypeGenerator({
+      tsconfig: join(root, 'tsconfig.json'),
+    }).generate();
+
+    expect(result.diagnostics).toEqual([]);
+    const price = read(generated('src/components/price.d.tsrx.ts'));
+    expect(price).toContain(
+      'readonly amount: import("@angular/core").InputSignal<number>;',
+    );
+    expect(price).not.toContain('stale');
+
+    const list = read(generated('src/list.d.tsrx.ts'));
+    expect(list).toContain(`import { Price } from '@components/price.tsrx';`);
+    expect(list).toContain('export declare function createPrice(): Price;');
+
+    const baseUrlConsumer = read(generated('src/base-url.d.tsrx.ts'));
+    expect(baseUrlConsumer).toContain(
+      'export declare function createFromBaseUrl(): Price;',
+    );
+
+    expect(typeErrors()).toEqual([
+      `Type 'number' is not assignable to type 'string'.`,
+    ]);
+  });
+
+  it('discovers all .tsrx files in apps/tsrx-app via tsconfig.app.json', () => {
+    const appRoot = join(import.meta.dirname, '../../../../apps/tsrx-app');
+    const files = new TsrxTypeGenerator({
+      tsconfig: join(appRoot, 'tsconfig.app.json'),
+    }).findTsrxFiles();
+
+    expect(files).toContain(join(appRoot, 'src/app/app.tsrx'));
+    expect(files).toContain(join(appRoot, 'src/app/components/price.tsrx'));
+    expect(files).toContain(join(appRoot, 'src/app/pages/(home).page.tsrx'));
+  });
 });
