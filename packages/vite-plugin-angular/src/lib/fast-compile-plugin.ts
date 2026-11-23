@@ -1,5 +1,5 @@
 import { promises as fsPromises } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { parseSync } from 'oxc-parser';
 import * as vite from 'vite';
 
@@ -40,6 +40,7 @@ import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.
 import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
 import {
   loadVirtualRawModule,
+  resolveStyleInlineImport,
   rewriteHtmlRawImport,
 } from './utils/virtual-resources.js';
 import { markStylePathSafe } from './utils/safe-module-paths.js';
@@ -790,16 +791,12 @@ export function fastCompilePlugin(
       const rawRewrite = rewriteHtmlRawImport(id, importer);
       if (rawRewrite) return rawRewrite;
 
-      // User `.scss?inline` / `.css?inline` imports: resolve and mark
-      // safe so Vite's native CSS pipeline handles them.
-      if (/\.(css|scss|sass|less)\?inline$/.test(id) && importer) {
-        const filePath = id.split('?')[0];
-        const resolved = isAbsolute(filePath)
-          ? normalizePath(filePath)
-          : normalizePath(resolve(dirname(importer), filePath));
-        markStylePathSafe(resolvedConfig, resolved);
-        return resolved + '?inline';
-      }
+      const styleImport = resolveStyleInlineImport(
+        id,
+        importer,
+        resolvedConfig,
+      );
+      if (styleImport) return styleImport;
 
       return undefined;
     },

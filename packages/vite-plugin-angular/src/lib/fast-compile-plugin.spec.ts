@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
+import { normalizePath } from 'vite';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 let mockRolldownVersion: string | undefined;
@@ -411,6 +412,29 @@ describe('fastCompilePlugin transform filter', () => {
     expect(matchesExclude('/src/app/foo.ts')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?t=12345')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?component')).toBe(false);
+  });
+});
+
+describe('fastCompilePlugin resolveId', () => {
+  it('should resolve style ?inline imports to absolute ?inline paths', () => {
+    const plugin = buildPlugin();
+
+    (plugin as any).configResolved({ safeModulePaths: new Set() });
+
+    const resolveId = (plugin as any).resolveId;
+
+    expect(
+      resolveId(
+        './my-component.scss?inline',
+        '/project/src/app/my-component.ts',
+      ),
+    ).toBe(normalizePath('/project/src/app/my-component.scss') + '?inline');
+    expect(
+      resolveId(
+        '/project/src/app/my-component.css?inline',
+        '/project/src/app/other.ts',
+      ),
+    ).toBe(normalizePath('/project/src/app/my-component.css') + '?inline');
   });
 });
 
