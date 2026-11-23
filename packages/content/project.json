@@ -15,7 +15,7 @@
     },
     "build-self": {
       "executor": "nx:run-commands",
-      "cache": false,
+      "cache": true,
       "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {
@@ -24,7 +24,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "cache": false,
+      "cache": true,
       "dependsOn": ["build-self", "content-plugin:build"],
       "outputs": ["{projectRoot}/dist"],
       "options": {

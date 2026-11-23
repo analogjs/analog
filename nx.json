@@ -9,7 +9,19 @@
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "inputs": [
+        "production",
+        "^production",
+        "buildTooling",
+        {
+          "dependentTasksOutputFiles": "**/*",
+          "transitive": false
+        }
+      ]
+    },
+    "build-self": {
+      "cache": true,
+      "inputs": ["production", "^production", "buildTooling"]
     },
     "test": {
       "dependsOn": ["^build"],
@@ -53,6 +65,13 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals", "projectSpecificFiles"],
     "sharedGlobals": [],
+    "buildTooling": [
+      "{workspaceRoot}/pnpm-workspace.yaml",
+      "{workspaceRoot}/tools/build/**/*",
+      "{workspaceRoot}/tools/scripts/build-lib.mts",
+      "{workspaceRoot}/tools/scripts/verify-package-artifacts.mts",
+      "{workspaceRoot}/tools/scripts/copy-src-assets.mts"
+    ],
     "production": [
       "default",
       "!{projectRoot}/src/test-setup.[jt]s",
