@@ -193,6 +193,29 @@ describe('JIT transform applies @Injectable', () => {
     expect(injector.get(Root).dep).toBeInstanceOf(Dep);
     expect(injector.get(AfterExport)).toBeInstanceOf(AfterExport);
   });
+
+  it('keeps legacy decorator order beside a non-Angular class decorator', async () => {
+    const { seen } = await runJit(
+      `
+      import { Injectable } from '@angular/core';
+
+      export const seen: boolean[] = [];
+      function Outer() {
+        return (cls: any) => {
+          seen.push(Object.hasOwn(cls, 'ɵprov'));
+        };
+      }
+
+      @Outer()
+      @Injectable({ providedIn: 'root' })
+      export class Decorated {}
+    `,
+      { legacy: true },
+    );
+
+    // Legacy decorators apply bottom to top: @Injectable before @Outer.
+    expect(seen).toEqual([true]);
+  });
 });
 
 describe('JIT transform ctorParameters via OXC', () => {

@@ -52,6 +52,17 @@ function isSelfRegisteringDecorator(dec: any): boolean {
   return name === 'Injectable' || name === 'Service';
 }
 
+/**
+ * Whether jitTransform removes every class decorator. A decorator left for
+ * the TypeScript strip would run at class definition, ahead of a
+ * self-registering decorator applied after the class, reversing legacy order.
+ */
+function removesEveryClassDecorator(decorators: any[]): boolean {
+  return decorators.every((dec: any) =>
+    ANGULAR_DECORATORS.has(dec.expression?.callee?.name),
+  );
+}
+
 /** Remove a decorator along with its trailing whitespace. */
 function removeDecorator(ms: MagicString, sourceCode: string, dec: any): void {
   let trimEnd: number = dec.end;
@@ -175,12 +186,17 @@ export function jitTransform(
     const className: string | undefined = node.id?.name;
     if (!className) continue;
 
+    // A class expression's name is not in scope after it, so only
+    // declarations get their @Injectable/@Service applied after the class.
+    const selfRegistering =
+      node.type === 'ClassDeclaration'
+        ? decorators.find(isSelfRegisteringDecorator)
+        : undefined;
+    const appliesSelfRegistering =
+      !!selfRegistering && removesEveryClassDecorator(decorators);
+
     if (angularDecs.length === 0) {
-      // A class expression's name is not in scope after it, so only
-      // declarations get their @Injectable/@Service applied after the class.
-      const selfRegistering = decorators.find(isSelfRegisteringDecorator);
-      if (!selfRegistering || node.type !== 'ClassDeclaration') continue;
-      hasAngularClass = true;
+      if (!selfRegistering) continue;
       // Without a type checker or emitDecoratorMetadata a param typed only
       // by annotation has no runtime DI token unless captured in
       // ctorParameters.
@@ -194,14 +210,18 @@ export function jitTransform(
         }
         statements.push(`${className}.ctorParameters = () => [${ctorParams}];`);
       }
-      statements.push(
-        applySelfRegisteringDecorator(
-          ms,
-          sourceCode,
-          className,
-          selfRegistering,
-        ),
-      );
+      if (appliesSelfRegistering) {
+        statements.push(
+          applySelfRegisteringDecorator(
+            ms,
+            sourceCode,
+            className,
+            selfRegistering,
+          ),
+        );
+      }
+      if (statements.length === 0) continue;
+      hasAngularClass = true;
       ms.appendLeft(node.end, `\n${statements.join('\n')}\n`);
       continue;
     }
