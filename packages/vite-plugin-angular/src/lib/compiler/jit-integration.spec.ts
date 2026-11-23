@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { moduleRunnerTransformSync, transformSync } from 'oxc-transform';
+import { angularVersionAtLeast } from './angular-version';
 import { jitTransform } from './jit-transform';
 
 /**
@@ -163,12 +164,12 @@ describe('JIT transform applies @Injectable', () => {
     expect(instance.config).toBe(config);
   });
 
-  it('runs @Injectable and @Service classes without legacy decorator lowering', async () => {
+  it('runs @Injectable classes without legacy decorator lowering', async () => {
     // The plugin strips TypeScript with standard (non-legacy) decorators, so
     // a decorator left in the JIT output would reach the runtime as syntax.
     const exports = await runJit(
       `
-      import { Injectable, Service } from '@angular/core';
+      import { Injectable } from '@angular/core';
 
       @Injectable()
       export class Dep {}
@@ -179,15 +180,12 @@ describe('JIT transform applies @Injectable', () => {
       }
 
       export @Injectable() class AfterExport {}
-
-      @Service()
-      export class Svc {}
     `,
       { legacy: false },
     );
 
     const core = await import('@angular/core');
-    const { Dep, Root, AfterExport, Svc } = exports;
+    const { Dep, Root, AfterExport } = exports;
     const injector = core.Injector.create({
       providers: [Dep, Root, AfterExport],
     });
@@ -195,8 +193,25 @@ describe('JIT transform applies @Injectable', () => {
     expect(Root.ɵprov.providedIn).toBe('root');
     expect(injector.get<{ dep: unknown }>(Root).dep).toBeInstanceOf(Dep);
     expect(injector.get(AfterExport)).toBeInstanceOf(AfterExport);
-    expect(Svc.ɵprov.providedIn).toBe('root');
   });
+
+  // `@Service` landed in Angular 22.
+  it.skipIf(!angularVersionAtLeast(22))(
+    'runs @Service classes without legacy decorator lowering',
+    async () => {
+      const { Svc } = await runJit(
+        `
+        import { Service } from '@angular/core';
+
+        @Service()
+        export class Svc {}
+      `,
+        { legacy: false },
+      );
+
+      expect(Svc.ɵprov.providedIn).toBe('root');
+    },
+  );
 
   it('keeps legacy decorator order beside a non-Angular class decorator', async () => {
     const { seen } = await runJit(
