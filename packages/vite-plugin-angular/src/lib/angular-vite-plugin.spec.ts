@@ -857,6 +857,16 @@ describe('JIT resolveId', () => {
       });
     });
 
+    it('should keep an absolute path under the Vite root as given when the root does not nest itself', () => {
+      withViteRoot((root, resolveId) => {
+        writeFileSync(join(root, 'x.css'), '');
+
+        expect(resolveId(`${root}/x.css?inline`)).toBe(
+          normalizePath(join(root, 'x.css')) + '?inline',
+        );
+      });
+    });
+
     // POSIX only: a Windows root (`C:/…`) cannot nest its own path, and no
     // root-relative URL starts with it.
     it.skipIf(process.platform === 'win32')(
