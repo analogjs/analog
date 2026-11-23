@@ -1268,12 +1268,23 @@ class ComponentLowerer {
     limit: number,
     names: string[],
   ): BlockHeader | null {
+    let firstError: TsrxLoweringError | undefined;
     for (let pos = start; pos < limit; ) {
       const at = this.source.indexOf('@', pos);
       if (at === -1 || at >= limit) {
-        return null;
+        break;
       }
-      const header = this.readBlockHeader(at, limit, names);
+      let header: BlockHeader | null;
+      try {
+        header = this.readBlockHeader(at, limit, names);
+      } catch (e) {
+        if (!(e instanceof TsrxLoweringError)) {
+          throw e;
+        }
+        firstError ??= e;
+        pos = at + 1;
+        continue;
+      }
       if (header !== null) {
         if (header.end === limit) {
           return header;
@@ -1282,6 +1293,9 @@ class ComponentLowerer {
       } else {
         pos = at + 1;
       }
+    }
+    if (firstError !== undefined) {
+      throw firstError;
     }
     return null;
   }

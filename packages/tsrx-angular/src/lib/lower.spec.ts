@@ -469,6 +469,13 @@ export class Counter {
         ),
       ).toBe('<div>@defer (when $fc.b0()) {<x-panel></x-panel>}</div>');
 
+      // An earlier literal `@defer (` does not block a valid trailing `@defer`.
+      expect(
+        template(
+          `export function C() @{ <div>Example: @defer ( followed by @defer { <p /> }</div> }`,
+        ),
+      ).toBe('<div>Example: &#64;defer ( followed by @defer {<p></p>}</div>');
+
       // Unclosed parameters still report an error.
       expect(
         errors(
