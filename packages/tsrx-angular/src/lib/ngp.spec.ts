@@ -434,4 +434,82 @@ export function Counter() @{
       /counter\.tsrx:5:19 - error TS2339: Property 'nope' does not exist on type 'number'/,
     );
   });
+
+  it('reports type errors for mismatched output and DOM event handlers', async () => {
+    await serve(
+      {
+        'src/emitter.tsrx': `import { output } from '@angular/core';
+
+export function Emitter() @{
+  const changed = output<number>();
+  <button onClick={() => changed.emit(1)}>Emit</button>
+}
+`,
+        'src/bad-output.tsrx': `import { Emitter } from './emitter.tsrx';
+
+export function BadOutput() @{
+  <Emitter onChanged={(v: string) => console.log(v)} />
+}
+`,
+        'src/bad-dom.tsrx': `export function BadDom() @{
+  <button onClick={(e: KeyboardEvent) => console.log(e)}>Click</button>
+}
+`,
+      },
+      { typeCheck: true },
+    );
+
+    await expect(
+      server!.transformRequest('/src/bad-output.tsrx'),
+    ).rejects.toThrow(
+      /bad-output\.tsrx:4:\d+ - error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'/,
+    );
+    await expect(server!.transformRequest('/src/bad-dom.tsrx')).rejects.toThrow(
+      /bad-dom\.tsrx:2:\d+ - error TS(2345|2740): .*(PointerEvent|MouseEvent).*KeyboardEvent/,
+    );
+  });
+
+  it('type-checks valid event and output handlers under NGP', async () => {
+    await serve(
+      {
+        'src/emitter.tsrx': `import { output } from '@angular/core';
+
+export function Emitter() @{
+  const changed = output<number>();
+  <button onClick={() => changed.emit(1)}>Emit</button>
+}
+`,
+        'src/valid.tsrx': `import { signal } from '@angular/core';
+import { Emitter } from './emitter.tsrx';
+
+export function Valid() @{
+  const count = signal(0);
+  const flag = signal(false);
+  const items = signal<{ id: number }[]>([]);
+  const onMouse = (e: MouseEvent) => console.log(e.clientX);
+  const onAny = (e: Event) => console.log(e.type);
+  const pick = (id: number, e: MouseEvent) => console.log(id, e.clientX);
+
+  <div>
+    <Emitter onChanged={() => count.update((c) => c + 1)} />
+    <Emitter onChanged={(v: number) => count.set(v)} />
+    <Emitter onChanged={(v?: number) => count.set(v ?? 0)} />
+    <Emitter onChanged={(...args: number[]) => count.set(args.length)} />
+    <Emitter onChanged={flag() ? () => count.set(0) : (v: number) => count.set(v)} />
+    <button onClick={() => count.set(0)}>Reset</button>
+    <button onClick={(e: Event) => console.log(e.type)}>Event</button>
+    <button onClick={flag() ? onMouse : onAny}>Union</button>
+    @for (const item of items(); key item.id) {
+      <button onClick={(e: MouseEvent) => pick(item.id, e)}>{item.id}</button>
+    }
+  </div>
+}
+`,
+      },
+      { typeCheck: true },
+    );
+
+    const valid = await server!.transformRequest('/src/valid.tsrx');
+    expect(valid?.code).toContain('ɵɵdefineComponent');
+  });
 });

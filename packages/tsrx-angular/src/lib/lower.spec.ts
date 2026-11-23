@@ -83,12 +83,16 @@ export class Counter {
     const initial = this.initial;
     const changed = this.changed;
     const count = signal(0);`);
+    expect(code).toContain('const ɵb0h = () => (inc);');
     expect(code).toContain(
-      'const ɵb0 = ($event: any) => ((inc) as (e: any) => unknown)($event);',
+      'const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>) => (ɵb0h() as (e: typeof $event) => unknown)($event);',
     );
     expect(code).toContain('const ɵb1 = () => (initial() + count());');
     expect(code).toContain(
       `import { Component, ChangeDetectionStrategy as ɵngChangeDetectionStrategy } from '@angular/core';`,
+    );
+    expect(code).toContain(
+      'type ɵngEventParam<T> = [T] extends [(event: infer E) => unknown] ? E : never;',
     );
   });
 
@@ -180,8 +184,9 @@ export class Counter {
       );
       // `err` and `reset` reach the hoisted closures as typed parameters.
       const { code } = lower(source, { Risky: 'x-risky' });
+      expect(code).toContain('const ɵb0h = (reset: () => void) => (reset);');
       expect(code).toContain(
-        'const ɵb0 = ($event: any, reset: () => void) => ((reset) as (e: any) => unknown)($event);',
+        'const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>, reset: () => void) => (ɵb0h(reset) as (e: typeof $event) => unknown)($event);',
       );
       expect(code).toContain('const ɵb1 = (err: unknown) => (String(err));');
     });
@@ -237,8 +242,9 @@ export class Counter {
           '{<button (click)="$fc.b0($event, reset)">{{ $fc.b1(err) }}</button>}</div>',
       );
       const { code } = lower(source, { Risky: 'x-risky' });
+      expect(code).toContain('const ɵb0h = (reset: () => void) => (reset);');
       expect(code).toContain(
-        'const ɵb0 = ($event: any, reset: () => void) => ((reset) as (e: any) => unknown)($event);',
+        'const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>, reset: () => void) => (ɵb0h(reset) as (e: typeof $event) => unknown)($event);',
       );
       expect(code).toContain('const ɵb1 = (err: unknown) => (String(err));');
     });
@@ -517,6 +523,62 @@ export class Counter {
           { Picker: 'app-picker' },
         ),
       ).toBe('<app-picker (valueChange)="$fc.b0($event)"></app-picker>');
+    });
+
+    it('omits ɵngEventParam when there are no event bindings', () => {
+      const { code, diagnostics } = lower(`
+        export function C() @{
+          <p>{'hello'}</p>
+        }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).not.toContain('ɵngEventParam');
+    });
+
+    it('passes @for loop locals to event handler factory and wrapper', () => {
+      const { code, diagnostics } = lower(`
+        import { signal } from '@angular/core';
+        export function C() @{
+          const items = signal<{ id: number }[]>([]);
+          const select = (item: { id: number }, e: MouseEvent) => console.log(item, e);
+          <ul>
+            @for (const item of items(); key item.id) {
+              <li><button onClick={(e: MouseEvent) => select(item, e)}>{item.id}</button></li>
+            }
+          </ul>
+        }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain(
+        'const ɵb2h = (item: ɵngForItem<ReturnType<typeof ɵb0>>) => ((e: MouseEvent) => select(item, e));',
+      );
+      expect(code).toContain(
+        'const ɵb2 = ($event: ɵngEventParam<ReturnType<typeof ɵb2h>>, item: ɵngForItem<ReturnType<typeof ɵb0>>) => (ɵb2h(item) as (e: typeof $event) => unknown)($event);',
+      );
+      expect(code).toContain('(click)=\\"$fc.b2($event, item)\\"');
+      expect(code).toContain('return {b0: ɵb0, b1: ɵb1, b2: ɵb2, b3: ɵb3};');
+      // Fast compiler emits the listener call with $event and the loop local.
+      const compiled = compile(code, '/app/test.tsrx', buildRegistry({}));
+      expect(compiled.code).toContain('ɵɵdefineComponent');
+      expect(compiled.code).toContain('ctx_r2.$fc.b2($event, item_r2)');
+    });
+
+    it('keeps conditional event handler expressions lazy in the handler factory', () => {
+      const { code, diagnostics } = lower(`
+        import { signal } from '@angular/core';
+        export function C() @{
+          const flag = signal(false);
+          const onA = (e: MouseEvent) => console.log(e);
+          const onB = (e: Event) => console.log(e);
+          <button onClick={flag() ? onA : onB}>Go</button>
+        }
+      `);
+      expect(diagnostics).toEqual([]);
+      expect(code).toContain('const ɵb0h = () => (flag() ? onA : onB);');
+      expect(code).toContain(
+        'const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>) => (ɵb0h() as (e: typeof $event) => unknown)($event);',
+      );
+      expect(code).toContain('return {b0: ɵb0};');
     });
   });
 
@@ -958,6 +1020,18 @@ export function C() @{
       expect(sourceMap.toOriginalSpan(call, 9)).toEqual({
         start: original,
         length: 'initial() + count()'.length,
+      });
+
+      // The event handler expression in ɵb0h and the template listener call both map to `inc`.
+      const incInFactory = code.indexOf('(inc)') + 1;
+      const originalInc = COUNTER.indexOf('{inc}') + 1;
+      expect(sourceMap.toOriginalOffset(incInFactory)).toBe(originalInc);
+      const eventCall = code.indexOf('$fc.b0($event)');
+      expect(
+        sourceMap.toOriginalSpan(eventCall, '$fc.b0($event)'.length),
+      ).toEqual({
+        start: originalInc,
+        length: 'inc'.length,
       });
     });
   });

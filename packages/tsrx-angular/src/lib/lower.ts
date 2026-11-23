@@ -22,7 +22,8 @@
  *   protected readonly $fc = (() => {   // marked @internal
  *     const step = this.step;
  *     const count = signal(0);
- *     const ɵb0 = ($event: any) => ((() => count.update((c) => c + step())) as (e: any) => unknown)($event);
+ *     const ɵb0h = () => (() => count.update((c) => c + step()));
+ *     const ɵb0 = ($event: ɵngEventParam<ReturnType<typeof ɵb0h>>) => (ɵb0h() as (e: typeof $event) => unknown)($event);
  *     const ɵb1 = () => (count());
  *     return {b0: ɵb0, b1: ɵb1};
  *   })();
@@ -332,6 +333,11 @@ export function lowerTsrx(
   if (helpers.has('ForItem')) {
     trailer.push(
       'type ɵngForItem<T> = T extends null | undefined ? never : T extends Iterable<infer U> ? U : never;',
+    );
+  }
+  if (helpers.has('EventParam')) {
+    trailer.push(
+      'type ɵngEventParam<T> = [T] extends [(event: infer E) => unknown] ? E : never;',
     );
   }
   out.append(trailer.join('\n') + '\n');
@@ -979,11 +985,23 @@ class ComponentLowerer {
   /** Hoists an event handler. The handler expression is re-evaluated on every event. */
   private bindEvent(expr: EstreeNode, scope: Local[]): MappedText {
     rejectTemplates(expr);
+    this.helpers.add('EventParam');
     const locals = this.freeLocals(expr, scope);
     const id = this.nextId();
-    const all = [{ name: '$event', type: 'any' }, ...locals];
+    const handlerId = `ɵ${id}h`;
+    const localNames = locals.map((l) => l.name);
+    const all = [
+      {
+        name: '$event',
+        type: `ɵngEventParam<ReturnType<typeof ${handlerId}>>`,
+      },
+      ...locals,
+    ];
     this.bindings.push(
-      mt`const ɵ${id} = (${params(all)}) => ((${this.copy(expr)}) as (e: any) => unknown)($event);`.from(
+      mt`const ${handlerId} = (${params(locals)}) => (${this.copy(expr)});`.from(
+        expr,
+      ),
+      mt`const ɵ${id} = (${params(all)}) => (${handlerId}(${localNames.join(', ')}) as (e: typeof $event) => unknown)($event);`.from(
         expr,
       ),
     );
