@@ -193,7 +193,7 @@ describe('JIT transform applies @Injectable', () => {
     });
 
     expect(Root.ɵprov.providedIn).toBe('root');
-    expect(injector.get(Root).dep).toBeInstanceOf(Dep);
+    expect(injector.get<{ dep: unknown }>(Root).dep).toBeInstanceOf(Dep);
     expect(injector.get(AfterExport)).toBeInstanceOf(AfterExport);
     expect(Svc.ɵprov.providedIn).toBe('root');
   });
