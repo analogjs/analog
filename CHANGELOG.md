@@ -1,3 +1,9 @@
+## [2.9.8](https://github.com/analogjs/analog/compare/v2.9.7...v2.9.8) (2026-11-23)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** resolve style ?inline URLs that Vitest re-resolves from fsModuleCache (2.x) ([#2831](https://github.com/analogjs/analog/issues/2831)) ([d7117b5](https://github.com/analogjs/analog/commit/d7117b5ce62d2656af72c236c484e01a953a3777))
+
 ## [2.9.7](https://github.com/analogjs/analog/compare/v2.9.6...v2.9.7) (2026-11-11)
 
 ### Bug Fixes
