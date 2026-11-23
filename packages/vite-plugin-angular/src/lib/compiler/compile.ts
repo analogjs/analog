@@ -820,10 +820,15 @@ export function compile(
             meta.styles[index] = css;
           }
 
-          // Store resolved resources for metadata inlining
+          // Store resolved resources for metadata inlining. `styles` is set only
+          // when a styleUrl was read here, and then holds every style ɵcmp got,
+          // inline ones included.
           resolvedResources.set(dec, {
             template: templateContent || undefined,
-            styles: meta.styles?.length > 0 ? [...meta.styles] : undefined,
+            styles:
+              meta.styleUrls.length > 0 && meta.styles?.length > 0
+                ? [...meta.styles]
+                : undefined,
           });
 
           const parsedTemplate = parseTemplate(templateContent, fileName, {
@@ -1311,6 +1316,7 @@ export function compile(
             styleRanges?.get(dec),
             resolvedInlineStyles,
           );
+          let resourceStylesWritten = false;
           for (const prop of decArgsNode.properties) {
             if (
               prop.type !== 'Property' ||
@@ -1329,12 +1335,19 @@ export function compile(
               );
               needsTransform = true;
             } else if (
-              (propName === 'styleUrl' || propName === 'styleUrls') &&
-              resources.styles?.length
+              (propName === 'styleUrl' ||
+                propName === 'styleUrls' ||
+                propName === 'styles') &&
+              resources.styles
             ) {
-              rewrittenProps.push(
-                `styles: [${resources.styles.map((s) => JSON.stringify(s)).join(', ')}]`,
-              );
+              // One `styles` key for all of them: a second one would win
+              // over the first and drop its styles.
+              if (!resourceStylesWritten) {
+                rewrittenProps.push(
+                  `styles: [${resources.styles.map((s) => JSON.stringify(s)).join(', ')}]`,
+                );
+                resourceStylesWritten = true;
+              }
               needsTransform = true;
             } else if (propName === 'styles' && inlineStyles.length > 0) {
               rewrittenProps.push(

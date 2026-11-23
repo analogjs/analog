@@ -1476,6 +1476,35 @@ export class BottomNav {}
       expect(metadata).toContain('styles: [".a { padding: 1rem; }"]');
     });
 
+    it('merges a styleUrl the inliner leaves in place with inline styles into one setClassMetadata styles key', async () => {
+      // The inliner only inlines a string-literal styleUrl; compile() also
+      // reads a template-literal one, itself.
+      const fileName = resolve(__dirname, 'mixed.component.ts');
+      const { code } = await inlineResourceUrls(
+        `
+        import { Component } from '@angular/core';
+        @Component({
+          selector: 'app-mixed',
+          template: '<p>hi</p>',
+          styleUrl: \`./__fixtures__/test.component.css\`,
+          styles: ['.a { padding: $var; }']
+        })
+        export class MixedComponent {}
+      `,
+        fileName,
+      );
+      const resolvedInlineStyles = new Map([[0, '.a { padding: 1rem; }']]);
+
+      const result = rawCompile(code, fileName, { resolvedInlineStyles });
+
+      const metadata = result.code.slice(
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      expect(metadata.match(/styles:/g)).toHaveLength(1);
+      expect(metadata).toContain('padding: 1rem');
+      expect(metadata).toContain('display: block');
+    });
+
     it('applies resolvedInlineStyles to singular string style', () => {
       const compiledCss = ':host { color: red; } h1 { font-size: 2rem; }';
       const resolvedInlineStyles = new Map([[0, compiledCss]]);
