@@ -1,3 +1,9 @@
+# [3.0.0-beta.62](https://github.com/analogjs/analog/compare/v3.0.0-beta.61...v3.0.0-beta.62) (2026-11-23)
+
+### Bug Fixes
+
+- **tsrx-angular:** harden [@defer](https://github.com/defer) and [@boundary](https://github.com/boundary) block parsing ([#2841](https://github.com/analogjs/analog/issues/2841)) ([b363266](https://github.com/analogjs/analog/commit/b3632667be8cb8c1033a2c8aaa572173580fae57))
+
 # [3.0.0-beta.61](https://github.com/analogjs/analog/compare/v3.0.0-beta.60...v3.0.0-beta.61) (2026-11-23)
 
 ### Bug Fixes
