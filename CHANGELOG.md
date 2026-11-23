@@ -1,3 +1,9 @@
+# [3.0.0-beta.56](https://github.com/analogjs/analog/compare/v3.0.0-beta.55...v3.0.0-beta.56) (2026-11-23)
+
+### Bug Fixes
+
+- **nx-plugin:** register angular and nitro plugins in init generator template ([#2823](https://github.com/analogjs/analog/issues/2823)) ([30c5098](https://github.com/analogjs/analog/commit/30c5098e8f1c52c4e5efa5d08051b331ebc579ee))
+
 # [3.0.0-beta.55](https://github.com/analogjs/analog/compare/v3.0.0-beta.54...v3.0.0-beta.55) (2026-11-22)
 
 ### Bug Fixes
