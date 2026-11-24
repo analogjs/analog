@@ -31,7 +31,6 @@ import {
   DiagnosticModes,
   injectViteIgnoreForHmrMetadata,
   mapTemplateUpdatesToFiles,
-  selectHmrUpdateCode,
   toAngularCompilationFileReplacements,
 } from '../utils/compilation-shared.js';
 import {
@@ -211,9 +210,9 @@ export function compilationApiPlugin(
     return outputFiles.get(normalizedFile);
   };
 
-  ctx.hmr.setFileEmitter((file, className) =>
-    selectHmrUpdateCode(fileEmitter(file), className),
-  );
+  ctx.hmr.setFileEmitter((file, className) => ({
+    hmrUpdateCode: fileEmitter(file)?.hmrUpdateCodes?.get(className),
+  }));
 
   const compilerApi = {
     angularCompiler: true as const,
@@ -449,7 +448,6 @@ export function compilationApiPlugin(
         warnings: warnings.map(
           (warning: { text?: string }) => warning.text || '',
         ),
-        hmrUpdateCode: mergedUpdates?.values().next().value,
         hmrUpdateCodes: mergedUpdates?.size ? mergedUpdates : undefined,
         hmrEligible: !!fileUpdates?.size,
       });

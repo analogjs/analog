@@ -115,26 +115,6 @@ export function mapTemplateUpdatesToFiles(
   return updatesByFile;
 }
 
-export function selectHmrUpdateCode(
-  result:
-    | {
-        hmrUpdateCode?: string | null;
-        hmrUpdateCodes?: Map<string, string>;
-      }
-    | undefined,
-  className: string,
-): { hmrUpdateCode?: string | null } | undefined {
-  if (!result) {
-    return undefined;
-  }
-
-  const hmrUpdateCode = result.hmrUpdateCodes?.size
-    ? result.hmrUpdateCodes.get(className)
-    : result.hmrUpdateCode;
-
-  return { hmrUpdateCode };
-}
-
 export function describeStylesheetContent(code: string): {
   length: number;
   digest: string;

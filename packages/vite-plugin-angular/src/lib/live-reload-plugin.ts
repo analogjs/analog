@@ -6,7 +6,7 @@ import {
   isAngularBuildContext,
   type AngularBuildContext,
 } from './angular-build-context.js';
-import { EmitFileResult } from './models.js';
+import { HmrUpdateResult } from './models.js';
 import { debugHmr } from './utils/debug.js';
 
 const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
@@ -14,10 +14,7 @@ const FILE_PREFIX = 'file:';
 
 export interface ComponentUpdates {
   classNames: Map<string, Set<string>>;
-  fileEmitter: (
-    file: string,
-    className: string,
-  ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined;
+  fileEmitter: (file: string, className: string) => HmrUpdateResult | undefined;
   rootDir?: string;
 }
 

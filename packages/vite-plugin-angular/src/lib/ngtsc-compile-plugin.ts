@@ -56,7 +56,6 @@ import type {
 import {
   describeStylesheetContent,
   injectViteIgnoreForHmrMetadata,
-  selectHmrUpdateCode,
 } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import {
@@ -99,7 +98,6 @@ interface DeclarationFile {
 export interface FileMetadataResult {
   errors?: string[];
   warnings?: (string | ts.DiagnosticMessageChain)[];
-  hmrUpdateCode?: string | null;
   hmrUpdateCodes?: Map<string, string>;
   hmrEligible?: boolean;
 }
@@ -247,9 +245,9 @@ export function ngtscCompilePlugin(
     return emittedResult;
   };
 
-  ctx.hmr.setFileEmitter((file, className) =>
-    selectHmrUpdateCode(fileEmitter(file), className),
-  );
+  ctx.hmr.setFileEmitter((file, className) => ({
+    hmrUpdateCode: fileEmitter(file)?.hmrUpdateCodes?.get(className),
+  }));
 
   const compilerApi = {
     angularCompiler: true as const,
@@ -617,7 +615,6 @@ export function ngtscCompilePlugin(
         dependencies: [],
         errors: metadata.errors,
         warnings: metadata.warnings,
-        hmrUpdateCode: metadata.hmrUpdateCode,
         hmrUpdateCodes: metadata.hmrUpdateCodes,
         hmrEligible: metadata.hmrEligible,
       });
@@ -869,8 +866,13 @@ export function ngtscCompilePlugin(
             hmrEligible: !!result?.hmrEligible,
             hasClassName: !!fileClassNames?.size,
             classNames: fileClassNames ? [...fileClassNames] : undefined,
-            updateCode: result?.hmrUpdateCode
-              ? describeStylesheetContent(result.hmrUpdateCode)
+            updateCodes: result?.hmrUpdateCodes
+              ? Object.fromEntries(
+                  [...result.hmrUpdateCodes].map(([name, code]) => [
+                    name,
+                    describeStylesheetContent(code),
+                  ]),
+                )
               : undefined,
             errors: result?.errors?.length ?? 0,
             warnings: result?.warnings?.length ?? 0,
@@ -1395,12 +1397,9 @@ export function getFileMetadata(
       }
     }
 
-    const hmrUpdateCode = hmrUpdateCodes.values().next().value;
-
     return {
       errors,
       warnings,
-      hmrUpdateCode,
       hmrUpdateCodes: hmrUpdateCodes.size > 0 ? hmrUpdateCodes : undefined,
       hmrEligible,
     };

@@ -18,7 +18,7 @@ import {
   type TransformFilter,
 } from './analog-plugin-interop.js';
 import { isComponentStyleSheet } from './encapsulation-plugin.js';
-import type { EmitFileResult } from './models.js';
+import type { HmrUpdateResult } from './models.js';
 import type { FileReplacement } from './plugins/file-replacements.plugin.js';
 import {
   normalizeStylesheetDependencies,
@@ -192,15 +192,9 @@ export type HmrIgnorePredicate = (file: string) => boolean;
 export interface AngularHmrStore {
   readonly rootDir: string;
   readonly classNames: Map<string, Set<string>>;
-  fileEmitter: (
-    file: string,
-    className: string,
-  ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined;
+  fileEmitter: (file: string, className: string) => HmrUpdateResult | undefined;
   setFileEmitter(
-    emitter: (
-      file: string,
-      className: string,
-    ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined,
+    emitter: (file: string, className: string) => HmrUpdateResult | undefined,
   ): void;
   addClassName(fileId: string, className: string): void;
   toComponentUpdateId(fileId: string, className?: string): string;
@@ -396,7 +390,7 @@ export function createAngularHmrStore(
   let activeEmitter: (
     file: string,
     className: string,
-  ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined = () => undefined;
+  ) => HmrUpdateResult | undefined = () => undefined;
 
   return {
     rootDir,
