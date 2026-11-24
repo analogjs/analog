@@ -503,28 +503,6 @@ Analog 支持通过 [Render](https://render.com/) 进行部署，几乎无需额
 
 4. 点击 'Create Static Site'。
 
-## Edgio
-
-Analog 支持通过 [Edgio](https://edg.io) 进行部署，几乎无需额外配置。
-
-1. 安装 Edgio CLI：
-
-```bash
-npm i -g @edgio/cli
-```
-
-2. 在项目目录中初始化 Edgio：
-
-```bash
-edgio init --connector=@edgio/analogjs
-```
-
-3. 部署到 Edgio
-
-```bash
-edgio deploy
-```
-
 ## GitHub Pages（静态站点部署）
 
 Analog 支持在 [GitHub Pages](https://pages.github.com/) 上部署静态站点。

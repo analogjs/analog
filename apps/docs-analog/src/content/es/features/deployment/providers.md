@@ -523,28 +523,6 @@ Si usas Analog para pre-renderizar contenido estático, puedes desplegar un siti
 
 4. Haz clic en 'Create Static Site'
 
-## Edgio
-
-Analog soporta el despliegue en [Edgio](https://edg.io) con configuración mínima.
-
-1. Instala la CLI de Edgio:
-
-```bash
-npm i -g @edgio/cli
-```
-
-2. En el directorio de tu proyecto, inicializa Edgio:
-
-```bash
-edgio init --connector=@edgio/analogjs
-```
-
-3. Despliega a Edgio
-
-```bash
-edgio deploy
-```
-
 ## GitHub Pages (Despliegue de Sitio Estático)
 
 Analog soporta el despliegue de un sitio estático en [GitHub Pages](https://pages.github.com/).
