@@ -599,12 +599,13 @@ export async function handleDirectComponentStyleHmr(options: {
   } = options;
   const { encapsulation } = getComponentStyleSheetMeta(directModule.id!);
 
-  // Angular exposes one component stylesheet through two module shapes:
-  // 1. a `?direct&ngcomp=...` CSS module that Vite can patch with a normal `css-update`
-  // 2. a `?ngcomp=...` JS wrapper module that embeds `__vite__css` for Angular's runtime
+  // Angular can load one component stylesheet through two module shapes:
+  // 1. a `?direct&ngcomp=...` CSS module, such as a browser `<link>`, that Vite
+  //    can patch with a normal `css-update`
+  // 2. a `?ngcomp=...` JS wrapper module that embeds `__vite__css`
   //
-  // Value: invalidate the browser-visible wrapper before patching the direct CSS
-  // module so Angular re-evaluates the same live wrapper it is actually using.
+  // Invalidate any live wrapper before patching the direct CSS module so it is
+  // re-evaluated with the new content.
   const wrapperModules = await findComponentStylesheetWrapperModules(
     server,
     file,
@@ -662,14 +663,17 @@ export async function handleDirectComponentStyleHmr(options: {
       'Ensure Vite drops stale direct CSS transform results before wrapper or fallback handling continues.',
   });
 
-  // CSS-only HMR is safe only when the browser-visible wrapper is known and the
-  // component is not using Shadow DOM.
+  // A css-update needs a live direct request or a known wrapper. Vite's CSS
+  // hot replacement does not search shadow roots.
   const trackedWrapperRequestIds = trackedRequestIds.filter((id) =>
     id.includes('?ngcomp='),
   );
+  const isLiveDirectRequest = !!directModule.id?.includes('?direct&ngcomp=');
   const canUseCssUpdate =
     encapsulation !== 'shadow' &&
-    (wrapperModules.length > 0 || trackedWrapperRequestIds.length > 0);
+    (wrapperModules.length > 0 ||
+      trackedWrapperRequestIds.length > 0 ||
+      isLiveDirectRequest);
 
   if (canUseCssUpdate) {
     wrapperModules.forEach((mod) => server.moduleGraph.invalidateModule(mod));
@@ -682,7 +686,9 @@ export async function handleDirectComponentStyleHmr(options: {
       hint:
         wrapperModules.length > 0
           ? 'Live wrapper modules were found and invalidated before sending the CSS update.'
-          : 'No live wrapper ModuleNode was available, but the wrapper request id is already tracked, so Analog is trusting the browser-visible wrapper identity and patching the direct stylesheet instead of forcing a reload.',
+          : trackedWrapperRequestIds.length > 0
+            ? 'No live wrapper ModuleNode was available, but the wrapper request id is already tracked, so Analog is trusting the browser-visible wrapper identity and patching the direct stylesheet instead of forcing a reload.'
+            : 'No wrapper module is known; patching the live direct stylesheet request.',
     });
     sendCssUpdate(server, {
       path: directModule.url,
@@ -718,17 +724,14 @@ export async function handleDirectComponentStyleHmr(options: {
     );
   }
 
-  // If the browser-visible `?ngcomp=...` wrapper cannot be trusted, prefer
-  // correctness over a partial patch and reload.
+  const reason =
+    encapsulation === 'shadow'
+      ? 'shadow-encapsulation'
+      : 'missing-wrapper-module';
   debugHmrV('component stylesheet hmr fallback: full reload', {
     file,
     encapsulation,
-    reason:
-      trackedWrapperRequestIds.length === 0
-        ? 'missing-wrapper-module'
-        : encapsulation === 'shadow'
-          ? 'shadow-encapsulation'
-          : 'tracked-wrapper-still-not-patchable',
+    reason,
     directId: directModule.id,
     trackedRequestIds: stylesheetRegistry?.getRequestIdsForSource(file) ?? [],
   });
@@ -747,10 +750,7 @@ export async function handleDirectComponentStyleHmr(options: {
   sendFullReload(server, {
     file,
     encapsulation,
-    reason:
-      wrapperModules.length === 0
-        ? 'missing-wrapper-module'
-        : 'shadow-encapsulation',
+    reason,
     directId: directModule.id,
     trackedRequestIds: stylesheetRegistry?.getRequestIdsForSource(file) ?? [],
   });

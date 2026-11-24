@@ -49,6 +49,7 @@ import {
   findTemplateOwnerModules,
   findComponentStylesheetWrapperModules,
   getModulesForChangedFile,
+  handleDirectComponentStyleHmr,
   isModuleForChangedResource,
   isIgnoredHmrFile,
   injectViteIgnoreForHmrMetadata,
@@ -627,6 +628,61 @@ describe('findComponentStylesheetWrapperModules', () => {
     expect(result).toEqual([wrapperModule]);
     expect(server.moduleGraph.getModuleByUrl).toHaveBeenCalledWith(
       '/abc123.css?ngcomp=ng-c1&e=0',
+    );
+  });
+});
+
+describe('handleDirectComponentStyleHmr', () => {
+  // A browser loads an external component stylesheet through a <link>, so
+  // only the `?direct&ngcomp=` CSS module exists, with no JS wrapper module.
+  async function editLinkedStylesheet(encapsulation: string) {
+    const file = '/workspace/src/app/demo.component.css';
+    const sourceModule = { id: file, file, url: file, type: 'css' } as any;
+    const directId = `${file}?direct&ngcomp=ng-c1&e=${encapsulation}`;
+    const directModule = { id: directId, file, url: directId, type: 'css' };
+    const server = {
+      ws: { send: vi.fn() },
+      moduleGraph: {
+        invalidateModule: vi.fn(),
+        getModuleByUrl: vi.fn(),
+        getModuleById: vi.fn(),
+      },
+    } as any;
+
+    await handleDirectComponentStyleHmr({
+      server,
+      file,
+      directModule: directModule as any,
+      fileModules: [sourceModule, directModule as any],
+      stylesheetRegistry: new AnalogStylesheetRegistry(),
+    });
+
+    return server.ws.send.mock.calls.map(([payload]: unknown[]) => payload);
+  }
+
+  it('sends a css-update for a stylesheet loaded through a link element', async () => {
+    const payloads = await editLinkedStylesheet('0');
+
+    expect(payloads).toEqual([
+      {
+        type: 'update',
+        updates: [
+          expect.objectContaining({
+            type: 'css-update',
+            path: '/workspace/src/app/demo.component.css?direct&ngcomp=ng-c1&e=0',
+            acceptedPath: '/workspace/src/app/demo.component.css',
+          }),
+        ],
+      },
+    ]);
+  });
+
+  it('reloads for a shadow DOM stylesheet', async () => {
+    const payloads = await editLinkedStylesheet('3');
+
+    expect(payloads).toContainEqual({ type: 'full-reload' });
+    expect(payloads).not.toContainEqual(
+      expect.objectContaining({ type: 'update' }),
     );
   });
 });
