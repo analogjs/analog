@@ -1,3 +1,9 @@
+## [3.0.1-beta.1](https://github.com/analogjs/analog/compare/v3.0.0...v3.0.1-beta.1) (2026-11-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** support multi-component HMR updates and pass through unknown @ng/component requests ([#2854](https://github.com/analogjs/analog/issues/2854)) ([2663eb4](https://github.com/analogjs/analog/commit/2663eb4a9f716209e654a4d28a78c1b9a52f9716))
+
 # [3.0.0](https://github.com/analogjs/analog/compare/v2.9.8...v3.0.0) (2026-11-24)
 
 - feat(platform)!: register library page globs with Angular through analog.setup ([88ee690](https://github.com/analogjs/analog/commit/88ee690742a3d66adcd65ae6ffcc71ea2f5a9452))
