@@ -1,3 +1,9 @@
+# [3.0.0-beta.66](https://github.com/analogjs/analog/compare/v3.0.0-beta.65...v3.0.0-beta.66) (2026-11-24)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** build sitemap before server with Environment API ([#2847](https://github.com/analogjs/analog/issues/2847)) ([691d89e](https://github.com/analogjs/analog/commit/691d89e8295291950c0f90e8c18f55949eac69d8))
+
 # [3.0.0-beta.65](https://github.com/analogjs/analog/compare/v3.0.0-beta.64...v3.0.0-beta.65) (2026-11-23)
 
 ### Bug Fixes
