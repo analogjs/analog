@@ -1,4 +1,5 @@
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { RegistryEntry, RegistryInput } from './registry.js';
@@ -22,7 +23,7 @@ export function scanDtsFile(code: string, fileName: string): RegistryEntry[] {
   )
     return [];
 
-  const { program } = parseSync(fileName, code);
+  const { program } = parseOxc(fileName, code);
   const entries: RegistryEntry[] = [];
 
   visitStatements(program.body, fileName, entries);
@@ -192,7 +193,7 @@ function collectExportedClassesFromDts(
 
   let program: any;
   try {
-    program = parseSync(filePath, code).program;
+    program = parseOxc(filePath, code).program;
   } catch {
     return;
   }
@@ -303,7 +304,7 @@ export function collectImportedPackages(
   program?: ReturnType<typeof parseSync>['program'],
 ): Set<string> {
   const packages = new Set<string>();
-  program ??= parseSync(fileName, code).program;
+  program ??= parseOxc(fileName, code).program;
 
   for (const stmt of program.body) {
     if (stmt.type !== 'ImportDeclaration') continue;
@@ -333,9 +334,23 @@ export function collectRelativeReExports(
   fileName: string,
   program?: ReturnType<typeof parseSync>['program'],
 ): string[] {
+  return collectReExports(code, fileName, program).filter((specifier) =>
+    specifier.startsWith('.'),
+  );
+}
+
+/**
+ * Parse a source file with OXC and return every specifier it re-exports from
+ * (relative AND bare) via `export * from` or `export { … } from`.
+ */
+export function collectReExports(
+  code: string,
+  fileName: string,
+  program?: ReturnType<typeof parseSync>['program'],
+): string[] {
   if (!program) {
     try {
-      program = parseSync(fileName, code).program;
+      program = parseOxc(fileName, code).program;
     } catch {
       return [];
     }
@@ -351,8 +366,7 @@ export function collectRelativeReExports(
     // ExportNamedDeclaration without `source` is `export { x }` (no
     // re-export), which we don't care about here.
     const specifier: string | undefined = stmt.source?.value;
-    if (!specifier || !specifier.startsWith('.')) continue;
-    result.push(specifier);
+    if (specifier && !isTypeOnly(stmt)) result.push(specifier);
   }
   return result;
 }
@@ -372,7 +386,7 @@ export function collectAllImports(
 ): string[] {
   if (!program) {
     try {
-      program = parseSync(fileName, code).program;
+      program = parseOxc(fileName, code).program;
     } catch {
       return [];
     }
@@ -385,10 +399,14 @@ export function collectAllImports(
       stmt.type === 'ExportNamedDeclaration'
     ) {
       const specifier: string | undefined = stmt.source?.value;
-      if (specifier) result.push(specifier);
+      if (specifier && !isTypeOnly(stmt)) result.push(specifier);
     }
   }
   return result;
+}
+
+function isTypeOnly(stmt: any): boolean {
+  return stmt.importKind === 'type' || stmt.exportKind === 'type';
 }
 
 // ---------------------------------------------------------------------------

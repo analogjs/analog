@@ -3,6 +3,8 @@ import {
   scanDtsFile,
   collectImportedPackages,
   collectRelativeReExports,
+  collectAllImports,
+  collectReExports,
 } from './dts-reader';
 
 describe('scanDtsFile', () => {
@@ -245,5 +247,34 @@ describe('collectRelativeReExports', () => {
   it('skips bare-specifier re-exports', () => {
     const code = `export * from '@angular/core';`;
     expect(collectRelativeReExports(code, 'i.ts')).toEqual([]);
+  });
+});
+
+describe('type-only module edges', () => {
+  const code = `
+import type { A } from './a';
+import { type B } from './b';
+import { type C, D } from './cd';
+import './side-effect';
+export type { E } from './e';
+export { type F } from './f';
+export type * from './g';
+export * from './h';
+export { I } from './i';
+`;
+
+  it('collectAllImports skips type-only imports and exports', () => {
+    expect(collectAllImports(code, 'x.ts')).toEqual([
+      './b',
+      './cd',
+      './side-effect',
+      './f',
+      './h',
+      './i',
+    ]);
+  });
+
+  it('collectReExports skips type-only re-exports', () => {
+    expect(collectReExports(code, 'x.ts')).toEqual(['./f', './h', './i']);
   });
 });

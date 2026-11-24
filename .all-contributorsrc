@@ -1026,8 +1026,12 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/707567?v=4",
       "profile": "https://snyder.tech",
       "contributions": [
+        "code",
         "doc",
-        "infra"
+        "test",
+        "bug",
+        "infra",
+        "maintenance"
       ]
     },
     {
@@ -1322,7 +1326,8 @@
       "profile": "https://github.com/pmpak",
       "contributions": [
         "doc"
-      ],
+      ]
+    },
     {
       "login": "xygon",
       "name": "Will Stewart",

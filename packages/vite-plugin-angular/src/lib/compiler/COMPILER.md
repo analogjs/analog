@@ -12,7 +12,7 @@ export default defineConfig({
 });
 ```
 
-Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler` >=17, `@angular/compiler-cli` >=17, `@angular/build` >=17, `vite` >=6. Compatibility validated against `17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`, and `next` on every PR via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing). Components that use `@defer` at runtime require Angular 18+.
+Peer dependencies (inherited from `vite-plugin-angular`): `@angular/compiler`, `@angular/compiler-cli`, and `@angular/build` `^20.0.0 || ^21.0.0 || ^22.0.0`, `vite` >=6. Compatibility validated against `20.0.0`, `21.0.0`, and `next` on `beta`-targeted PRs that touch the compiler via the matrix in `.github/workflows/compiler-compat.yml` (see § Compatibility Testing).
 
 ## Architecture
 
@@ -30,7 +30,7 @@ Source file (.ts)
          │
          ▼
        compile(code, fileName, { registry })
-         ts.createSourceFile ──▶ extractMetadata / detectSignals / detectFieldDecorators
+         OXC parse ──▶ extractMetadata / detectSignals / detectFieldDecorators
            │
            ▼
          @angular/compiler
@@ -43,7 +43,7 @@ Source file (.ts)
            compileClassMetadata()
            │
            ▼
-         JSEmitter (Angular output AST → JavaScript strings, ~4x faster than ts.Printer)
+         JSEmitter (Angular output AST → JavaScript strings)
            │
            ▼
          MagicString (surgical edits on original source → JS + source map)
@@ -68,7 +68,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `compile.ts`          | Single-file compiler: OXC-based metadata extraction + Ivy codegen via `@angular/compiler` APIs. Supports full (`ɵɵdefineComponent`) and partial (`ɵɵngDeclareComponent`) modes |
 | `registry.ts`         | OXC-based file scanner, extracts selectors, inputs, outputs, sourcePackage tracking                                                                                            |
 | `metadata.ts`         | OXC-based decorator metadata extraction (`extractMetadata`, `collectStringConstants`, `detectSignals`, `detectFieldDecorators`, `extractConstructorDeps`)                      |
-| `js-emitter.ts`       | Angular output AST → JavaScript string emitter (~4x faster than `ts.Printer`), handles OXC/TS WrappedNodeExpr, bare module refs (`ngImport: i0`), `$localize`                  |
+| `js-emitter.ts`       | Angular output AST → JavaScript string emitter, handles OXC WrappedNodeExpr, bare module refs (`ngImport: i0`), `$localize`                                                    |
 | `ast-translator.ts`   | Angular output AST → TypeScript AST translator, handles bare module refs and `$localize` for partial/i18n output                                                               |
 | `resource-inliner.ts` | OXC-based `templateUrl`/`styleUrl` inlining and inline style extraction                                                                                                        |
 | `dts-reader.ts`       | OXC-based `.d.ts` scanner for pre-compiled Angular packages (selectors, inputs, outputs, sub-entry resolution)                                                                 |
@@ -79,7 +79,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `styles.ts`           | Style preprocessing via Vite's `preprocessCSS` (OXC-based extraction)                                                                                                          |
 | `type-elision.ts`     | OXC-based type-only import detection and elision (usage analysis, no type-checker needed)                                                                                      |
 | `constants.ts`        | Shared Angular name sets (`ANGULAR_DECORATORS`, `COMPILABLE_DECORATORS`, `FIELD_DECORATORS`, `SIGNAL_APIS`) — single source of truth to prevent drift                          |
-| `utils.ts`            | Type-only import detection (syntactic), class finder, `forwardRef` unwrapper (TS + OXC versions)                                                                               |
+| `utils.ts`            | `parseOxc` (raw-transfer parse with fallback), OXC class finder and walker, `forwardRef` unwrapper                                                                             |
 
 ## What's Supported
 
@@ -131,7 +131,7 @@ The existing vite-plugin-angular plugins (build optimizer, router, vitest, etc.)
 | `templateUrl`              | Supported (inlined at compile time)                           |
 | `styles` (array or string) | Supported (ShadowCss emulated encapsulation)                  |
 | `styleUrl` / `styleUrls`   | Supported (inlined at compile time)                           |
-| `standalone`               | Supported (defaults `true` for Angular 19+)                   |
+| `standalone`               | Supported (defaults `true`)                                   |
 | `changeDetection`          | Supported (OnPush / Default)                                  |
 | `encapsulation`            | Supported (Emulated / None / ShadowDom)                       |
 | `imports`                  | Supported (resolved via registry)                             |
@@ -240,7 +240,7 @@ HMR code is generated by `generateHmrCode()` (exported from `@analogjs/angular-c
 
 External template and style changes invalidate the parent `.ts` module, triggering re-compilation and HMR. Preprocessed styles are cached by mtime for fast re-compilation.
 
-When `liveReload` is enabled, the first compilation inlines and encapsulates component styles the normal Angular way so first paint is not waiting on `<link>` stylesheets. After that compilation succeeds, later rebuilds emit component styles as external stylesheets (`externalRuntimeStyles`) loaded via `<link>` URLs that carry `ngcomp` and `e` query params. The incremental `NgtscProgram` from the inlined first pass cannot be reused for that switch: it keeps `externalRuntimeStyles: false` and still preloads `styleUrl`s, while the new host remaps those urls to hash filenames that do not exist on disk (`Unable to locate component resource: <hash>.scss`). Analog therefore discards the incremental program/host once, on the first rebuild that enables external styles. Vite compiles those files first (SCSS/Sass/Less → CSS → `const __vite__css = "..."`). A dedicated post plugin (`analogjs-encapsulate-component-styles`) then runs Angular's `encapsulateStyle` on the compiled CSS so `:host` / `:host-context` become valid emulated-encapsulation selectors. This cannot live in the main TypeScript transform: that hook's filter is TS-only, and encapsulation must run _after_ preprocessor compilation. `_enableHmr` is on from the first compile so already-loaded modules can accept component updates as soon as a file changes.
+Component styles externalized for `liveReload` or `analog.setup()` pass through Vite's CSS preprocessors before the shared post plugin (`@analogjs/vite-plugin-angular:encapsulation`) applies Angular's `encapsulateStyle`. It handles both raw CSS and Vite CSS modules so `:host` and `:host-context` receive emulated-encapsulation selectors after SCSS/Sass/Less compilation.
 
 ## Source Maps
 
@@ -334,13 +334,13 @@ In Vite dev mode, only requested files are compiled on demand. A typical page lo
 
 ### Compilation Breakdown (medium component)
 
-| Phase              | % of time | Tool                                |
-| ------------------ | --------- | ----------------------------------- |
-| Template parsing   | ~46%      | `@angular/compiler` (JS)            |
-| TypeScript parsing | ~29%      | `ts.createSourceFile` (JS)          |
-| Code emission      | ~25%      | Inline string emitter + MagicString |
+| Phase            | Tool                                |
+| ---------------- | ----------------------------------- |
+| Source parsing   | `oxc-parser` (Rust)                 |
+| Template parsing | `@angular/compiler` (JS)            |
+| Code emission    | Inline string emitter + MagicString |
 
-The dominant cost is Angular's template parser — JavaScript that can't be replaced with Rust without reimplementing the Angular template compiler.
+`compile()` does not load the `typescript` package. The dominant cost is Angular's template parser — JavaScript that can't be replaced with Rust without reimplementing the Angular template compiler.
 
 ### Registry Cold Scan
 
@@ -356,17 +356,17 @@ The registry scan uses OXC's native Rust parser for ~1.5x faster file scanning a
 
 The compiler detects the installed `@angular/compiler` version at startup and adapts:
 
-| Feature                    | Angular 19 | Angular 20+              | Angular 21+          | Angular 22+                       |
-| -------------------------- | ---------- | ------------------------ | -------------------- | --------------------------------- |
-| `hasDirectiveDependencies` | Omitted    | Set when imports present | Same                 | Same                              |
-| `externalStyles`           | Omitted    | Same                     | Available (not used) | Same                              |
-| `legacyOptionalChaining`   | N/A        | N/A                      | N/A                  | Omitted → `false` (ngtsc default) |
-| `foreignImports` (v22.1+)  | N/A        | N/A                      | N/A                  | Omitted → no foreign components   |
-| All other APIs             | Compatible | Compatible               | Compatible           | Compatible                        |
+| Feature                    | Angular 20+              | Angular 21+          | Angular 22+                       |
+| -------------------------- | ------------------------ | -------------------- | --------------------------------- |
+| `hasDirectiveDependencies` | Set when imports present | Same                 | Same                              |
+| `externalStyles`           | Omitted                  | Available (not used) | Same                              |
+| `legacyOptionalChaining`   | N/A                      | N/A                  | Omitted → `false` (ngtsc default) |
+| `foreignImports` (v22.1+)  | N/A                      | N/A                  | Omitted → no foreign components   |
+| All other APIs             | Compatible               | Compatible           | Compatible                        |
 
 Angular 22 introduced `legacyOptionalChaining` on `R3ComponentMetadata` (external builds default to `false`, which an omitted field also produces) and 22.1 added `foreignImports: R3ForeignComponentMetadata[] | null` plus the `ɵɵforeignComponent`/`ɵɵforeignContent` instructions for the experimental foreign-components feature. `compileComponentFromMetadata` guards the field with a truthiness check (`foreignImports && foreignImports.length > 0`), so omitting it is runtime-safe; templates that use the new `@content` block / foreign components are not supported by the fast compiler.
 
-Supported range: **Angular 17+** (with the v17 `@defer` runtime caveat noted above). Conformance tested against **Angular 17-22**, compatibility tested via per-version `pnpm.overrides` matrix on every PR.
+Supported range: **Angular 20–22**. Conformance tested against **Angular 20-22**, compatibility tested via per-version `pnpm.overrides` matrix on `beta`-targeted PRs that touch the compiler.
 
 ## Future Architecture (tsgo)
 
@@ -386,7 +386,7 @@ This compiler's architecture — single-file transforms using `@angular/compiler
 
 | File                            | Tests | Coverage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `conformance.spec.ts`           | 167   | Angular compliance test suite (v17-v22, 87%+ Ivy instruction match)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `conformance.spec.ts`           | 167   | Angular compliance test suite (v20-v22, 87%+ Ivy instruction match)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `component.spec.ts`             | 114   | All `@Component` features, signals (incl. required), control flow, `@defer` (triggers + dependency import shape), pipes, content projection, external resources + OXC inline resource inlining, providers, source maps, cross-component input binding, constant pool ordering, assignment precedence in ternary, templateUrl inlining in metadata, template ref vars, two-way binding with `model()`, computed/safe navigation, `@if as` alias, multiple components per file, duplicate i0 prevention, arrow object literal wrapping, decorator/field preservation, non-Angular passthrough, template-level styles, member decorator removal, self-referencing components, TS syntax preservation, lazy dependency array emission, Ivy fields as static class members + TDZ hoisting, hostDirectives metadata extraction (bare/object/forwardRef), signal query R3QueryReference wrapping, `usesInheritance` for `extends`, host raw embedded quote preservation, signal query `read`/`descendants` options, `@ViewChild` decorator with `read` option (regression for v19 query refresh emission), `styleUrl`/`styleUrls` merges into an existing `styles: [...]` array without producing duplicate object literal keys or sparse elements (including trailing-comma and empty-array cases) |
 | `type-elision.spec.ts`          | 58    | Type-only import detection, elision passes, MagicString integration, sourcemap accuracy after elision, `TSAsExpression` value preservation, constant pool helpers survive elision, hoisted nested-template helpers survive elision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `jit-transform.spec.ts`         | 37    | Decorator conversion, member/parameter decorator removal, constructor DI, signal API downleveling, external resources, `ReflectionCapabilities` integration, nested class support, auto-import of decorator classes for signal API downleveling                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -417,9 +417,6 @@ The compiler is validated against Angular's official compliance test suite. A co
 
 | Angular             | Pass Rate | Comparisons |
 | ------------------- | --------- | ----------- |
-| v17 (latest patch)  | 78.5%     | 409         |
-| v18 (latest patch)  | 77.8%     | 432         |
-| v19 (latest patch)  | 79.8%     | 445         |
 | v20 (latest patch)  | 88.2%     | 475         |
 | v21 (latest patch)  | 88.9%     | 504         |
 | v22 (latest patch)  | 88.7%     | 529         |
@@ -438,7 +435,7 @@ The `has no untriaged Angular compliance categories` test closes this. It enumer
 
 ```bash
 # Specific major version (resolves latest patch)
-bash packages/vite-plugin-angular/scripts/setup-conformance.sh 19
+bash packages/vite-plugin-angular/scripts/setup-conformance.sh 20
 ANGULAR_SOURCE_DIR=.angular-conformance npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
 
 # Exact version
@@ -455,22 +452,19 @@ bash packages/vite-plugin-angular/scripts/setup-conformance.sh next
 npx vitest run packages/vite-plugin-angular/src/lib/compiler/conformance.spec.ts
 ```
 
-CI runs a matrix of Angular 17, 18, 19, 20, 21, 22, latest, and next on every pull request via `.github/workflows/conformance.yml`.
+CI runs a matrix of Angular 20, 21, latest, and next on pull requests that touch the compiler via `.github/workflows/conformance.yml`.
 
 ### Compatibility Testing
 
 Conformance testing answers _"does our output match Angular's reference fixtures?"_ but uses the workspace-pinned `@angular/compiler` to do the compilation — so it cannot catch API-surface drift between Angular versions (e.g. a class export disappearing in a patch release). The compatibility matrix in `.github/workflows/compiler-compat.yml` complements it by:
 
-1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported version (`17.3.12`, `18.2.14`, `19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`, plus `next`) via `pnpm.overrides`.
+1. Overriding `@angular/compiler` and `@angular/compiler-cli` to each supported version (`20.0.0`, `21.0.0`, plus `next`) via `pnpm.overrides`.
 2. Running the regular `packages/vite-plugin-angular/src/lib/compiler/` test suite against the swapped version with `DEBUG=analog-fast-compile*` enabled, so silently-caught errors (e.g. constructor regressions) appear in CI logs.
 3. On a `push` to `beta`, auto-opening (or commenting on an existing) GitHub issue using the bug-report template's section structure when a numeric matrix slot fails. PR failures show in the PR check and don't open issues to avoid spam.
 
-The matrix mixes two version-pinning strategies:
+The matrix pins versions as follows:
 
-- **v17/v18 use the latest LTS patches** (`17.3.12`, `18.2.14`). These majors are in maintenance — the floor versions (`17.0.0`/`18.0.0`) predate the signal-input array shape and aren't worth supporting speculatively, so testing the LTS patches is a better signal for what users actually run.
-- **v19 through v22 use the floor of the major** (`19.0.0`, `20.0.0`, `21.0.0`, `22.0.0`). These majors are still receiving patches, so pinning the floor gives a deterministic CI signal — _"the lowest supported version of major N still works"_ — without forcing matrix bumps every time Angular ships a patch.
+- **Numeric slots use the floor of the major** (`20.0.0`, `21.0.0`). These majors are still receiving patches, so pinning the floor gives a deterministic CI signal — _"the lowest supported version of major N still works"_ — without forcing matrix bumps every time Angular ships a patch.
 - **`next`** tracks Angular's prerelease dist-tag and is allowed to fail (early warning when the next major lands a breaking change, without blocking the workflow).
 
-Known v17 limitation: components that use `@defer` at runtime are not supported on Angular 17. The v17 `@defer` ABI requires populated `meta.deferBlocks` and `meta.deferrableTypes` Maps that the compiler currently sets to empty. Non-`@defer` components compile cleanly. See `compile.ts` for the inline rationale.
-
-The workflow runs on `pull_request`, `push` to `beta`, and `workflow_dispatch`. When `packages/vite-plugin-angular/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot(s). When a new Angular major ships, add a new floor slot. When an LTS patch supersedes the current pinned patch for v17/v18, bump the patch in the matrix.
+The workflow runs on `pull_request` to `beta`, `push` to `beta`, and `workflow_dispatch`. When `packages/vite-plugin-angular/package.json` bumps the `peerDependencies` floor, drop the lowest matrix slot(s). When a new Angular major ships, add a new floor slot.

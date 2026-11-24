@@ -1,11 +1,11 @@
-import { parseCookies } from 'h3';
-import type { PageServerLoad } from '@analogjs/router';
+import { PageServerLoad } from '@analogjs/router';
+import { getCookie } from 'h3';
 
 export const load = async ({ event }: PageServerLoad) => {
   console.log('shipping');
-  const cookies = parseCookies(event);
+  const testCookie = getCookie(event, 'test');
 
-  console.log('test cookie', cookies['test']);
+  console.log('test cookie', testCookie);
 
   return {
     shipping: true,

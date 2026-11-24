@@ -1,29 +1,36 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
-import viteTsConfigPaths from 'vite-tsconfig-paths';
+import { angularCompilationPlugin } from '@analogjs/vite-plugin-angular';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
+import { getWorkspaceDependencyExcludes } from '../../tools/vite/get-workspace-dependency-excludes.js';
 
 export default defineConfig(() => {
   return {
-    root: import.meta.dirname,
+    root: __dirname,
     publicDir: 'src/assets',
     optimizeDeps: {
       include: ['@angular/common'],
+      // Keep workspace Angular libraries on the source-transform path so Analog
+      // can compile external templates/styles instead of Vite prebundling them.
+      exclude: getWorkspaceDependencyExcludes(__dirname),
     },
     build: {
-      outDir: '../../dist/apps/opt-catchall-app/client',
       reportCompressedSize: true,
       target: ['es2020'],
     },
     plugins: [
       analog({
-        liveReload: true,
+        experimental: { typedRouting: true },
         content: {
           highlighter: 'shiki',
         },
       }),
-      viteTsConfigPaths(),
+      angularCompilationPlugin({
+        liveReload: true,
+      }),
+      nitro(),
     ],
   };
 });

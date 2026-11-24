@@ -88,8 +88,8 @@ async function main() {
     { parent: appInjector },
   );
   check(
-    'POST getProduct invalid input -> 400',
-    invalid.status === 400 && !!(invalid.body as any)?.errors,
+    'POST getProduct invalid input -> 422',
+    invalid.status === 422 && !!(invalid.body as any)?.errors,
     invalid,
   );
 

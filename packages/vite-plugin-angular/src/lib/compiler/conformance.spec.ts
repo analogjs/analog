@@ -454,8 +454,6 @@ describe.skipIf(!angularAvailable)('Angular Compliance Tests', () => {
               } catch (e: any) {
                 // Some test cases use features we don't support — record as error
                 results.error++;
-                // Don't fail the test, just record the error
-                expect(true).toBe(true);
                 return;
               }
 

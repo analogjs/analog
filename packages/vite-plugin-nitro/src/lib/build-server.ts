@@ -14,13 +14,14 @@ export async function buildServer(
   nitroConfig: NitroConfig = {},
   routeSourceFiles?: Record<string, string>,
   i18nWorkers = false,
-) {
+): Promise<void> {
   if (i18nWorkers && options?.i18n) {
     validateI18nWorkers(options, nitroConfig);
     nitroConfig = {
       ...nitroConfig,
-      entry: fileURLToPath(
-        new URL('./runtime/locale-worker-entry.mjs', import.meta.url),
+      entry: join(
+        dirname(fileURLToPath(import.meta.url)),
+        'runtime/locale-worker-entry.mjs',
       ),
       externals: {
         ...nitroConfig.externals,
@@ -66,9 +67,8 @@ export async function buildServer(
 
     if (
       options?.ssr &&
-      nitroConfig?.prerender?.routes &&
-      (nitroConfig?.prerender?.routes.find((route) => route === '/') ||
-        nitroConfig?.prerender?.routes?.length === 0)
+      (!(options.static || nitro.options.static) ||
+        nitroConfig.prerender?.routes?.includes('/'))
     ) {
       const indexFileExts = ['', '.br', '.gz'];
 

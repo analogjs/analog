@@ -1,4 +1,4 @@
-import viteTsConfigPaths from 'vite-tsconfig-paths';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, Plugin } from 'vitest/config';
 import aotProject from './src/aot/vitest.project';
@@ -8,9 +8,11 @@ import resetTestBedBetweenTestsProject from './src/reset-test-bed-between-tests/
 import sourcemapProject from './src/sourcemap/vitest.project';
 
 export default defineConfig({
-  root: import.meta.dirname,
+  root: __dirname,
   cacheDir: '../../node_modules/.vite/tests/vitest-angular',
-  plugins: [viteTsConfigPaths()] as Plugin[],
+  plugins: [
+    viteStaticCopy({ targets: [{ src: '*.md', dest: '.' }] }),
+  ] as Plugin[],
   test: {
     watch: false,
     globals: true,

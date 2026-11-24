@@ -1,5 +1,5 @@
 import { injectRouteData, LinkTo, type RouteMeta } from '@analogjs/router';
-import { Component } from '@angular/core';
+import { Component, resource } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -8,10 +8,15 @@ import { findTeam } from '../../../../data';
 export const routeMeta = {
   data: { area: 'team' },
   resolve: {
-    team: (route) =>
-      of(findTeam(route.paramMap.get('orgId'), route.paramMap.get('teamId'))),
+    team: (route) => of(findTeam(route.params.orgId, route.params.teamId)),
   },
-} satisfies RouteMeta;
+  resources: (ctx) => ({
+    teamResource: resource({
+      params: ctx.params,
+      loader: async ({ params }) => findTeam(params.orgId, params.teamId),
+    }),
+  }),
+} satisfies RouteMeta<'/orgs/[orgId]/teams/[teamId]'>;
 
 @Component({
   imports: [LinkTo, RouterOutlet],

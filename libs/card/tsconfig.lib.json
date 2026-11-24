@@ -8,7 +8,8 @@
     "types": [],
     "esModuleInterop": true,
     "isolatedModules": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "composite": false
   },
   "exclude": ["src/**/*.spec.ts", "vite.config.ts"],
   "include": ["src/**/*.ts"]

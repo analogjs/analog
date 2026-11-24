@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { angularVitestPlugin } from './angular-vitest-plugin';
+import {
+  angularVitestPlugin,
+  angularVitestSourcemapPlugin,
+} from './angular-vitest-plugin';
 import { defineConfig, resolveConfig } from 'vite';
 
-describe(angularVitestPlugin.name, () => {
+describe('angularVitestPlugin', () => {
   /* Setting the pool to vmThreads by default to avoid issues related to global conflicts when using JSDOM.
    * This also aligns with the default pool setting in Jest.
    * This is not ideal as vmThreads comes with its own set of issues, but it's the best option we have for now.
@@ -31,24 +34,53 @@ describe(angularVitestPlugin.name, () => {
     expect(config.test?.pool).toBe('threads');
   });
 
-  /* In browser mode a Node pool is a no-op for execution but disables
-   * per-file isolation (`isolate` has no effect under VM pools, and browser
-   * isolation inherits it since Vitest 4.0.7), leaking global state such as
-   * fake timers across spec files. The plugin must not force a pool then.
-   * Cf. https://github.com/analogjs/analog/issues/2222 */
-  it('should not force a pool when browser mode is enabled', async () => {
+  it('should noExternal all vitest-angular setup entrypoints', async () => {
     const config = await resolveConfig(
       defineConfig({
         plugins: [angularVitestPlugin()],
-        test: {
-          browser: {
-            enabled: true,
-            instances: [{ browser: 'chromium' }],
-          },
-        },
       }),
       'serve',
     );
-    expect(config.test?.pool).toBeUndefined();
+
+    expect(config.ssr?.noExternal).toEqual(
+      expect.arrayContaining([
+        '@analogjs/vitest-angular/setup-testbed',
+        '@analogjs/vitest-angular/setup-zone',
+        '@analogjs/vitest-angular/setup-snapshots',
+        '@analogjs/vitest-angular/setup-serializers',
+      ]),
+    );
+  });
+});
+
+describe('angularVitestSourcemapPlugin', () => {
+  it('should match queried TypeScript module ids', () => {
+    const plugin = angularVitestSourcemapPlugin();
+    const filter =
+      typeof plugin.transform === 'object'
+        ? plugin.transform.filter
+        : undefined;
+    const idFilter =
+      filter && typeof filter === 'object' && 'id' in filter ? filter.id : null;
+
+    expect(idFilter).toBeInstanceOf(RegExp);
+    expect((idFilter as RegExp).test('/src/app.component.ts')).toBe(true);
+    expect((idFilter as RegExp).test('/src/app.component.ts?inline')).toBe(
+      true,
+    );
+    expect((idFilter as RegExp).test('/src/app.component.tsx')).toBe(false);
+  });
+
+  it('should skip inline virtual modules', async () => {
+    const plugin = angularVitestSourcemapPlugin();
+    const handler =
+      typeof plugin.transform === 'object'
+        ? plugin.transform.handler
+        : undefined;
+
+    expect(handler).toBeTypeOf('function');
+    await expect(
+      handler?.('export const template = ""', '/src/app.component.ts?inline'),
+    ).resolves.toBeUndefined();
   });
 });

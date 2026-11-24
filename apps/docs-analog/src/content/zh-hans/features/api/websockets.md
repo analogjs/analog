@@ -48,7 +48,7 @@ export default defineConfig({
 类似于 [API 路由](/docs/features/api/overview)，WebSocket 处理程序定义在 `src/server/routes/api` 文件夹中。
 
 ```typescript
-// src/server/api/routes/ws/chat.ts
+// src/server/routes/api/ws/chat.ts
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });
@@ -83,7 +83,9 @@ WebSocket 路由与 API 路由的路径相同。例如，`src/server/routes/api/
 
 ```typescript
 // src/server/routes/api/sse.ts
-export default defineEventHandler(async (event) => {
+import { defineHandler, createEventStream } from 'h3';
+
+export default defineHandler(async (event) => {
   const eventStream = createEventStream(event);
 
   const interval = setInterval(async () => {

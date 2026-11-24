@@ -47,7 +47,8 @@ pnpm install @angular/cdk @angular/material
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
-      analog({
+      analog(),
+      angular({
         inlineStylesExtension: 'scss',
       }),
     ],

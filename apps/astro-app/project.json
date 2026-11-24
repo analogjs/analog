@@ -4,18 +4,23 @@
   "projectType": "application",
   "sourceRoot": "apps/astro-app/src",
   "tags": [],
-  "implicitDependencies": ["astro-angular"],
   "targets": {
     "serve": {
-      "command": "astro dev --root apps/astro-app",
-      "continuous": true
+      "command": "astro dev --root apps/astro-app --port 43030"
     },
     "build": {
-      "command": "astro build --root apps/astro-app"
+      "command": "astro build --root apps/astro-app",
+      "dependsOn": ["astro-angular:build"]
     },
     "preview": {
-      "command": "astro preview --root apps/astro-app",
-      "continuous": true
+      "command": "astro preview --root apps/astro-app --port 43030"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/astro-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
+      }
     }
   }
 }

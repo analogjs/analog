@@ -1,12 +1,12 @@
 import { existsSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import * as vite from 'vite';
-import { defaultClientConditions } from 'vite';
 
 import {
   createCompilerPlugin,
   createRolldownCompilerPlugin,
 } from '../compiler-plugin.js';
+import { isRolldown } from './rolldown.js';
 import {
   createPersistentTransformCache,
   resolveTransformCacheDir,
@@ -24,11 +24,11 @@ import {
  * zero characters, and any non-`x` letter was admitted — so `.tsrx`
  * and similar extensions matched by accident.
  */
-export const TS_EXT_REGEX = /\.[cm]?ts(?![a-z])/;
+export const TS_EXT_REGEX: RegExp = /\.[cm]?ts(?![a-z])/;
 
 // Spec files stay included — a newly added spec must join the program's
 // root names in Vitest watch mode.
-export const EXCLUDED_TS_EXT_REGEX = /\.d\.[cm]?ts$/;
+export const EXCLUDED_TS_EXT_REGEX: RegExp = /\.d\.[cm]?ts$/;
 
 /**
  * Resolves whether Angular should be compiled for production. An explicit
@@ -44,6 +44,21 @@ export function isProdMode(mode: string | undefined): boolean {
   return mode === 'production' || process.env['NODE_ENV'] === 'production';
 }
 
+/**
+ * Whether a Vite environment runs on the server. `configEnvironment` sees the
+ * environment's options before Vite resolves them, so an unset `consumer`
+ * falls back to Vite's own default: every environment except `client` is a
+ * server environment.
+ */
+export function isServerEnvironment(
+  name: string,
+  config: { consumer?: string },
+): boolean {
+  return (
+    (config.consumer ?? (name === 'client' ? 'client' : 'server')) === 'server'
+  );
+}
+
 export interface TsConfigResolutionContext {
   root: string;
   isProd: boolean;
@@ -57,7 +72,7 @@ export function getTsConfigPath(
   isTest: boolean,
   isLib: boolean,
   workspaceRoot?: string,
-) {
+): string {
   if (tsconfig && isAbsolute(tsconfig)) {
     if (!existsSync(tsconfig)) {
       console.error(
@@ -116,7 +131,7 @@ export function getTsConfigPath(
 
 export function createTsConfigGetter(
   tsconfigOrGetter?: string | (() => string),
-) {
+): () => string {
   if (typeof tsconfigOrGetter === 'function') {
     return tsconfigOrGetter;
   }
@@ -133,9 +148,11 @@ export interface DepOptimizerOptions {
   isAstroIntegration: boolean;
 }
 
-export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
+export function createDepOptimizerConfig(opts: DepOptimizerOptions): {
+  optimizeDeps: vite.DepOptimizationOptions;
+} {
   const defineOptions = {
-    ngJitMode: 'false',
+    ...(opts.jit ? {} : { ngJitMode: 'false' }),
     ngI18nClosureMode: 'false',
     ...(opts.watchMode ? {} : { ngDevMode: 'false' }),
   };
@@ -183,14 +200,15 @@ export function createDepOptimizerConfig(opts: DepOptimizerOptions) {
     define: defineOptions,
   };
 
+  // No top-level `resolve` block: the `style` package-export condition
+  // is now scoped to `.css`-extension requests via
+  // `cssExtensionStyleResolverPlugin`, so this dep optimizer config no
+  // longer needs to leak it into Vite's global `resolve.conditions`.
   return {
     optimizeDeps: {
-      include: ['rxjs/operators', 'rxjs'],
+      include: ['rxjs/operators', 'rxjs', 'tslib'],
       exclude: ['@angular/platform-server'],
-      ...(vite.rolldownVersion ? { rolldownOptions } : { esbuildOptions }),
-    },
-    resolve: {
-      conditions: ['style'],
+      ...(isRolldown() ? { rolldownOptions } : { esbuildOptions }),
     },
   };
 }

@@ -1,4 +1,5 @@
 import { SourceMap } from 'node:module';
+import { resolve } from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import * as ts from 'typescript';
 import {
@@ -14,26 +15,6 @@ import {
   SUPPORTS_BOUNDARY_BLOCKS,
   SUPPORTS_INCREMENT_DECREMENT,
 } from './angular-version';
-
-// Angular 19 ships several features in fundamentally different shapes
-// from v20+: `@defer` dependency emission predates the
-// `import('./x').then(m => m.X)` runtime ABI, and the `??` operator is
-// polyfilled to a `tmp !== null && tmp !== void 0 ? tmp : default`
-// chain instead of being emitted directly. The compiler still produces
-// runtime-correct output for both shapes — we just can't assert against
-// v20+ string patterns on v19. Tests that depend on the v20+ shapes are
-// gated on this constant.
-const SUPPORTS_DEFER_DYNAMIC_IMPORTS = ANGULAR_MAJOR >= 20;
-const SUPPORTS_DIRECT_NULLISH_COALESCE_EMISSION = ANGULAR_MAJOR >= 20;
-
-// Angular v17 represents `@defer` block metadata as flat top-level
-// `meta.deferBlocks` / `meta.deferrableTypes` Maps that the compiler
-// reads ahead of template compilation. v18+ moved these to a nested
-// `meta.defer` object and the runtime ABI changed significantly. We
-// only emit the v18+ shape; components that use `@defer` at runtime
-// are not supported on v17. Tests that compile a component containing
-// `@defer` need to be skipped on v17.
-const SUPPORTS_DEFER_RUNTIME = ANGULAR_MAJOR >= 18;
 
 describe('@Component', () => {
   it('compiles a component with template and styles', () => {
@@ -608,7 +589,7 @@ describe('@Component', () => {
     });
   });
 
-  describe.skipIf(!SUPPORTS_DEFER_RUNTIME)('@defer', () => {
+  describe('@defer', () => {
     it('compiles @defer with loading/placeholder/error', () => {
       const result = compile(
         `
@@ -686,22 +667,20 @@ describe('@Component', () => {
       expect(result).toContain('ɵɵdeferOnTimer');
     });
 
-    it.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
-      'generates lazy import() for defer-only components',
-      () => {
-        const heavySrc = `
+    it('generates lazy import() for defer-only components', () => {
+      const heavySrc = `
         import { Component } from '@angular/core';
         @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
         export class HeavyWidget {}
       `;
 
-        const registry = new Map();
-        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
-          registry.set(entry.className, entry);
-        }
+      const registry = new Map();
+      for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+        registry.set(entry.className, entry);
+      }
 
-        const result = rawCompile(
-          `
+      const result = rawCompile(
+        `
         import { Component } from '@angular/core';
         import { HeavyWidget } from './heavy-widget';
         @Component({
@@ -718,18 +697,74 @@ describe('@Component', () => {
         })
         export class LazyDeferComponent {}
       `,
-          'lazy-defer.ts',
-          { registry },
-        );
+        'lazy-defer.ts',
+        { registry },
+      );
 
-        expectCompiles(result.code);
-        expect(result.code).toContain('ɵɵdefer');
-        // Dynamic import for lazy loading
-        expect(result.code).toContain('import("./heavy-widget")');
-        // Dependency function generated (not null)
-        expect(result.code).toContain('DepsFn');
-      },
-    );
+      expectCompiles(result.code);
+      expect(result.code).toContain('ɵɵdefer');
+      // Dynamic import for lazy loading
+      expect(result.code).toContain('import("./heavy-widget")');
+      // Dependency function generated (not null)
+      expect(result.code).toContain('DepsFn');
+    });
+
+    describe('defer-only dependencies are not eager', () => {
+      const heavySrc = `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
+        export class HeavyWidget {}
+      `;
+
+      function compileWithTemplate(template: string) {
+        const registry = new Map();
+        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+          registry.set(entry.className, entry);
+        }
+        return rawCompile(
+          `
+          import { Component } from '@angular/core';
+          import { HeavyWidget } from './heavy-widget';
+          @Component({
+            selector: 'app-page',
+            template: ${JSON.stringify(template)},
+            imports: [HeavyWidget]
+          })
+          export class Page {}
+        `,
+          'page.ts',
+          { registry },
+        ).code;
+      }
+
+      it('leaves a defer-only component out of the eager dependencies and metadata', () => {
+        const code = compileWithTemplate(
+          '@defer (on viewport) { <heavy-widget /> } @placeholder { <p>…</p> }',
+        );
+        // The dependency function returns the import promise itself, as
+        // Angular's runtime expects, not a function that would import it.
+        expect(code).toMatch(/DepsFn = \(\) => \[import\("\.\/heavy-widget"\)/);
+        expect(code).toMatch(/dependencies: \(\) => \[Page\]/);
+        // Class metadata resolves the deferred class through the dynamic import,
+        // so nothing references the static import and it can be dropped.
+        expect(code).toContain('ɵsetClassMetadataAsync');
+      });
+
+      it('keeps a component that is also used eagerly', () => {
+        const code = compileWithTemplate(
+          '<heavy-widget /> @defer (on viewport) { <heavy-widget /> } @placeholder { <p>…</p> }',
+        );
+        expect(code).toMatch(/dependencies: \(\) => \[HeavyWidget, Page\]/);
+        expect(code).not.toContain('ɵsetClassMetadataAsync');
+      });
+
+      it('keeps a component used in a @placeholder eager', () => {
+        const code = compileWithTemplate(
+          '@defer (on viewport) { <heavy-widget /> } @placeholder { <heavy-widget /> }',
+        );
+        expect(code).toMatch(/dependencies: \(\) => \[HeavyWidget, Page\]/);
+      });
+    });
 
     // Regression: Angular v21 renamed `SwitchBlock.cases` to
     // `SwitchBlock.groups` (each group holds the case body in
@@ -778,22 +813,20 @@ describe('@Component', () => {
       expect(result.match(/ɵɵdeferWhen\(/g)?.length ?? 0).toBe(3);
     });
 
-    it.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
-      'generates lazy import() for defer inside @switch / @case',
-      () => {
-        const heavySrc = `
+    it('generates lazy import() for defer inside @switch / @case', () => {
+      const heavySrc = `
         import { Component } from '@angular/core';
         @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
         export class HeavyWidget {}
       `;
 
-        const registry = new Map();
-        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
-          registry.set(entry.className, entry);
-        }
+      const registry = new Map();
+      for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+        registry.set(entry.className, entry);
+      }
 
-        const result = rawCompile(
-          `
+      const result = rawCompile(
+        `
         import { Component, signal } from '@angular/core';
         import { HeavyWidget } from './heavy-widget';
         @Component({
@@ -811,17 +844,16 @@ describe('@Component', () => {
           tab = signal(0);
         }
       `,
-          'switch-lazy-defer.ts',
-          { registry },
-        );
+        'switch-lazy-defer.ts',
+        { registry },
+      );
 
-        expectCompiles(result.code);
-        // Dynamic import emitted for the defer-only component reached
-        // via @switch / @case nesting.
-        expect(result.code).toContain('import("./heavy-widget")');
-        expect(result.code).toContain('DepsFn');
-      },
-    );
+      expectCompiles(result.code);
+      // Dynamic import emitted for the defer-only component reached
+      // via @switch / @case nesting.
+      expect(result.code).toContain('import("./heavy-widget")');
+      expect(result.code).toContain('DepsFn');
+    });
 
     // Regression: components referenced in `@placeholder` / `@loading` /
     // `@error` are *eager* dependencies (the placeholder must render
@@ -831,22 +863,20 @@ describe('@Component', () => {
     // the fallback render breaks. Earlier builds of this defer walker
     // skipped DeferredBlock subtrees entirely on the eager pass, which
     // dropped the shared component from static imports.
-    it.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
-      'keeps component used in @placeholder eager when also used in @defer body',
-      () => {
-        const heavySrc = `
+    it('keeps component used in @placeholder eager when also used in @defer body', () => {
+      const heavySrc = `
         import { Component } from '@angular/core';
         @Component({ selector: 'heavy-widget', template: '<p>Heavy</p>' })
         export class HeavyWidget {}
       `;
 
-        const registry = new Map();
-        for (const entry of scanFile(heavySrc, 'heavy.ts')) {
-          registry.set(entry.className, entry);
-        }
+      const registry = new Map();
+      for (const entry of scanFile(heavySrc, 'heavy.ts')) {
+        registry.set(entry.className, entry);
+      }
 
-        const result = rawCompile(
-          `
+      const result = rawCompile(
+        `
         import { Component } from '@angular/core';
         import { HeavyWidget } from './heavy-widget';
         @Component({
@@ -862,17 +892,16 @@ describe('@Component', () => {
         })
         export class SharedDeferComponent {}
       `,
-          'shared-defer.ts',
-          { registry },
-        );
+        'shared-defer.ts',
+        { registry },
+      );
 
-        expectCompiles(result.code);
-        // Component is shared between the defer body and the placeholder,
-        // so it stays in static imports and no dynamic import is emitted
-        // for it.
-        expect(result.code).not.toContain('import("./heavy-widget")');
-      },
-    );
+      expectCompiles(result.code);
+      // Component is shared between the defer body and the placeholder,
+      // so it stays in static imports and no dynamic import is emitted
+      // for it.
+      expect(result.code).not.toContain('import("./heavy-widget")');
+    });
   });
 
   describe.skipIf(!SUPPORTS_BOUNDARY_BLOCKS)('@boundary', () => {
@@ -1360,7 +1389,120 @@ export class BottomNav {}
       // Preprocessed CSS used in ɵcmp styles (ShadowCss applied)
       expect(result.code).toContain('padding: 1rem');
       expect(result.code).toContain('_nghost-%COMP%');
-      // Note: $var still appears in setClassMetadata (preserves original decorator args)
+    });
+
+    it('applies resolvedInlineStyles at their own positions in a styles array', () => {
+      const resolvedInlineStyles = new Map([
+        [0, '.a { padding: 1rem; }'],
+        [1, '.b { margin: 2rem; }'],
+      ]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        const shared = '.shared {}';
+        @Component({
+          selector: 'app-inline-scss',
+          template: '<p>hi</p>',
+          styles: ['.a { padding: $var; }', shared, \`.b { margin: $m; }\`]
+        })
+        export class InlineScssComponent {}
+      `,
+        'inline-scss.ts',
+        { resolvedInlineStyles },
+      );
+
+      const definition = result.code.slice(
+        result.code.indexOf('ɵɵdefineComponent'),
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      // The middle entry is `shared`'s, whatever ɵcmp makes of an identifier.
+      expect(definition).toMatch(
+        /styles: \[".a\[_ngcontent-%COMP%\] \{ padding: 1rem; \}", [^,]+, ".b\[_ngcontent-%COMP%\] \{ margin: 2rem; \}"\]/,
+      );
+    });
+
+    it('applies resolvedInlineStyles to the styles in setClassMetadata', () => {
+      // A TestBed override recompiles the component from its class metadata,
+      // so those styles must be the processed ones ɵcmp got.
+      const resolvedInlineStyles = new Map([
+        [0, '.a { padding: 1rem; }'],
+        [1, '.b { margin: 2rem; }'],
+      ]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        const shared = '.shared {}';
+        @Component({
+          selector: 'app-inline-scss',
+          template: '<p>hi</p>',
+          styles: ['.a { padding: $var; }', shared, \`.b { margin: $m; }\`]
+        })
+        export class InlineScssComponent {}
+      `,
+        'inline-scss.ts',
+        { resolvedInlineStyles },
+      );
+
+      const metadata = result.code.slice(
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      expect(metadata).toContain(
+        'styles: [".a { padding: 1rem; }", shared, ".b { margin: 2rem; }"]',
+      );
+    });
+
+    it('applies resolvedInlineStyles to a quoted styles key in setClassMetadata', () => {
+      const resolvedInlineStyles = new Map([[0, '.a { padding: 1rem; }']]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        @Component({
+          selector: 'app-inline-scss',
+          template: '<p>hi</p>',
+          'styles': ['.a { padding: $var; }']
+        })
+        export class InlineScssComponent {}
+      `,
+        'inline-scss.ts',
+        { resolvedInlineStyles },
+      );
+
+      const metadata = result.code.slice(
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      expect(metadata).toContain('styles: [".a { padding: 1rem; }"]');
+    });
+
+    it('merges a styleUrl the inliner leaves in place with inline styles into one setClassMetadata styles key', async () => {
+      // The inliner only inlines a string-literal styleUrl; compile() also
+      // reads a template-literal one, itself.
+      const fileName = resolve(__dirname, 'mixed.component.ts');
+      const { code } = await inlineResourceUrls(
+        `
+        import { Component } from '@angular/core';
+        @Component({
+          selector: 'app-mixed',
+          template: '<p>hi</p>',
+          styleUrl: \`./__fixtures__/test.component.css\`,
+          styles: ['.a { padding: $var; }']
+        })
+        export class MixedComponent {}
+      `,
+        fileName,
+      );
+      const resolvedInlineStyles = new Map([[0, '.a { padding: 1rem; }']]);
+
+      const result = rawCompile(code, fileName, { resolvedInlineStyles });
+
+      const metadata = result.code.slice(
+        result.code.indexOf('ɵsetClassMetadata'),
+      );
+      expect(metadata.match(/styles:/g)).toHaveLength(1);
+      expect(metadata).toContain('padding: 1rem');
+      expect(metadata).toContain('display: block');
     });
 
     it('applies resolvedInlineStyles to singular string style', () => {
@@ -1384,6 +1526,33 @@ export class BottomNav {}
       // Preprocessed CSS used in ɵcmp styles
       expect(result.code).toContain('font-size: 2rem');
       expect(result.code).toContain('_nghost-%COMP%');
+    });
+
+    it('applies file-wide resolvedInlineStyles indices to the owning component', () => {
+      const resolvedInlineStyles = new Map([
+        [0, '.first { color: red; }'],
+        [1, '.second { color: blue; }'],
+      ]);
+
+      const result = rawCompile(
+        `
+        import { Component } from '@angular/core';
+        @Component({ selector: 'app-first', template: '', styles: ['.first {}'] })
+        export class FirstComponent {}
+        @Component({ selector: 'app-second', template: '', styles: ['.second {}'] })
+        export class SecondComponent {}
+      `,
+        'two-components.ts',
+        { resolvedInlineStyles },
+      );
+
+      const [first, second] = result.code
+        .slice(0, result.code.indexOf('ɵsetClassMetadata'))
+        .split('class SecondComponent');
+      expect(first).toContain('color: red');
+      expect(first).not.toContain('color: blue');
+      expect(second).toContain('color: blue');
+      expect(second).not.toContain('color: red');
     });
 
     it('leaves inline styles untouched when no resolvedInlineStyles', () => {
@@ -1431,7 +1600,9 @@ export class BottomNav {}
     });
 
     it('handles missing templateUrl gracefully', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        /* noop */
+      });
       const result = compile(
         `
         import { Component } from '@angular/core';
@@ -1771,11 +1942,9 @@ describe('Operator precedence in template expressions', () => {
   // Angular 19 polyfills `??` to `(tmp = ctx.value() !== null && tmp !== void 0
   // ? tmp : 0) + 15` instead of emitting the literal `??` operator. The
   // semantics are equivalent but the string assertion only matches v20+.
-  it.skipIf(!SUPPORTS_DIRECT_NULLISH_COALESCE_EMISSION)(
-    'preserves grouping for ?? mixed with + in attribute binding',
-    () => {
-      const result = compile(
-        `
+  it('preserves grouping for ?? mixed with + in attribute binding', () => {
+    const result = compile(
+      `
       import { Component, signal } from '@angular/core';
       @Component({
         selector: 'app-node',
@@ -1785,15 +1954,14 @@ describe('Operator precedence in template expressions', () => {
         value = signal<number | null>(null);
       }
     `,
-        'node.ts',
-      );
+      'node.ts',
+    );
 
-      expectCompiles(result);
-      // The ?? subexpression must be parenthesized to prevent:
-      // ctx.value() ?? 0 + 15  →  ctx.value() ?? (0 + 15)
-      expect(result).toContain('(ctx.value() ?? 0) + 15');
-    },
-  );
+    expectCompiles(result);
+    // The ?? subexpression must be parenthesized to prevent:
+    // ctx.value() ?? 0 + 15  →  ctx.value() ?? (0 + 15)
+    expect(result).toContain('(ctx.value() ?? 0) + 15');
+  });
 });
 
 describe('templateUrl inlining in metadata', () => {
@@ -2089,7 +2257,7 @@ describe('Safe navigation in templates', () => {
   });
 });
 
-describe.skipIf(!SUPPORTS_DEFER_RUNTIME)('@defer triggers', () => {
+describe('@defer triggers', () => {
   it('compiles @defer with on interaction trigger', () => {
     const result = compile(
       `
@@ -2192,14 +2360,8 @@ describe('@if with as alias context', () => {
     // Variable name differs by Angular version: v18+ emits `tmp_X_Y`,
     // v17 emits `<ComponentName>_contFlowTmp`. Accept any identifier.
     expect(result).toMatch(/\(\w+ = ctx\.user\(\)\)/);
-    // The embedded template should use ctx (the alias value) for bindings.
-    // v18+ destructures the alias into a separate `const u_X = ctx` and
-    // references it from the bindings; v17 uses `ctx` directly without
-    // the re-binding step. Both shapes resolve `u.name` / `u.email`
-    // correctly at runtime.
-    if (ANGULAR_MAJOR >= 18) {
-      expect(result).toMatch(/const \w+ = ctx/);
-    }
+    // The embedded template destructures the alias into `const u_X = ctx`.
+    expect(result).toMatch(/const \w+ = ctx/);
     expect(result).toContain('.name');
     expect(result).toContain('.email');
   });
@@ -2438,12 +2600,12 @@ describe('OXC-based resource inlining', () => {
     expect(styles[1]).toBe('p { margin: 0 }');
   });
 
-  it('reports the source extension of an inlined external styleUrl', async () => {
-    // Regression: fastCompile must preprocess external `styleUrl`s by their own
-    // file extension (e.g. `.scss`), independent of `inlineStylesExtension`.
-    // `inlineResourceUrls` surfaces each inlined external style's extension at
+  it('reports the source path of an inlined external styleUrl', async () => {
+    // Regression: fastCompile must preprocess external `styleUrl`s as their own
+    // file (e.g. `.scss`), independent of `inlineStylesExtension`.
+    // `inlineResourceUrls` surfaces each inlined external style's path at
     // the flat index that `extractInlineStyles`/`resolvedInlineStyles` use.
-    const { styleExtensions } = await inlineResourceUrls(
+    const { stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2456,11 +2618,13 @@ describe('OXC-based resource inlining', () => {
       __dirname + '/__fixtures__/test.component.ts',
     );
 
-    expect(styleExtensions.get(0)).toBe('scss');
+    expect(stylePaths.get(0)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.scss'),
+    );
   });
 
-  it('reports a css extension for plain external styleUrls', async () => {
-    const { styleExtensions } = await inlineResourceUrls(
+  it('reports the source path of external styleUrls', async () => {
+    const { stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2473,13 +2637,15 @@ describe('OXC-based resource inlining', () => {
       __dirname + '/__fixtures__/test.component.ts',
     );
 
-    expect(styleExtensions.get(0)).toBe('css');
+    expect(stylePaths.get(0)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.css'),
+    );
   });
 
   it('indexes an external styleUrl after pre-existing inline styles', async () => {
     // Inline `styles: [...]` come first in the flat list; the external scss
     // styleUrl is appended after it, so it must map to index 1 (not 0).
-    const { styleExtensions } = await inlineResourceUrls(
+    const { stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2493,37 +2659,17 @@ describe('OXC-based resource inlining', () => {
       __dirname + '/__fixtures__/test.component.ts',
     );
 
-    expect(styleExtensions.has(0)).toBe(false);
-    expect(styleExtensions.get(1)).toBe('scss');
-  });
-
-  it('reports the source extension for each preprocessable styleUrl type', async () => {
-    // The fast-compile path preprocesses each external style by its own
-    // extension, so every preprocessable style language must be surfaced
-    // distinctly (not collapsed onto a single `inlineStylesExtension`).
-    for (const ext of ['css', 'scss', 'less']) {
-      const { styleExtensions } = await inlineResourceUrls(
-        `
-        import { Component } from '@angular/core';
-        @Component({
-          selector: 'app-ext',
-          template: '',
-          styleUrl: './test.component.${ext}'
-        })
-        export class ExtComponent {}
-      `,
-        __dirname + '/__fixtures__/test.component.ts',
-      );
-
-      expect(styleExtensions.get(0), `extension for .${ext}`).toBe(ext);
-    }
+    expect(stylePaths.has(0)).toBe(false);
+    expect(stylePaths.get(1)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.scss'),
+    );
   });
 
   it('merges a singular `styles` string with an external styleUrl without duplicating the key', async () => {
     // Regression: a non-array `styles` (single string/template) plus an
     // external `styleUrl` must collapse into one `styles` key, and the external
     // style must be indexed *after* the existing inline style (index 1).
-    const { code, styleExtensions } = await inlineResourceUrls(
+    const { code, stylePaths } = await inlineResourceUrls(
       `
       import { Component } from '@angular/core';
       @Component({
@@ -2542,23 +2688,23 @@ describe('OXC-based resource inlining', () => {
     // The original inline style is preserved.
     expect(code).toContain(':host { display: block; }');
     // External scss is mapped after the singular inline style.
-    expect(styleExtensions.has(0)).toBe(false);
-    expect(styleExtensions.get(1)).toBe('scss');
+    expect(stylePaths.has(0)).toBe(false);
+    expect(stylePaths.get(1)).toBe(
+      resolve(__dirname, '__fixtures__/test.component.scss'),
+    );
   });
 });
 
-describe.skipIf(!SUPPORTS_DEFER_RUNTIME)(
-  'Arrow function object literal wrapping',
-  () => {
-    // Test fixture uses `@defer (on viewport) { ... }` which can't be compiled
-    // on Angular v17 (the v17 @defer ABI requires populated `meta.deferBlocks`
-    // / `meta.deferrableTypes` Maps that we don't currently provide).
-    it('wraps object literal return in parens for arrow functions', () => {
-      // Angular emits arrow functions returning object literals in metadata
-      // like: () => ({key: val}). Without parens, () => {key: val} is parsed
-      // as a block with a labeled statement.
-      const result = compile(
-        `
+describe('Arrow function object literal wrapping', () => {
+  // Test fixture uses `@defer (on viewport) { ... }` which can't be compiled
+  // on Angular v17 (the v17 @defer ABI requires populated `meta.deferBlocks`
+  // / `meta.deferrableTypes` Maps that we don't currently provide).
+  it('wraps object literal return in parens for arrow functions', () => {
+    // Angular emits arrow functions returning object literals in metadata
+    // like: () => ({key: val}). Without parens, () => {key: val} is parsed
+    // as a block with a labeled statement.
+    const result = compile(
+      `
       import { Component, signal } from '@angular/core';
       @Component({
         selector: 'app-test',
@@ -2572,16 +2718,15 @@ describe.skipIf(!SUPPORTS_DEFER_RUNTIME)(
       })
       export class TestComponent {}
     `,
-        'test.ts',
-      );
+      'test.ts',
+    );
 
-      expectCompiles(result);
-      // Any arrow returning an object literal should be wrapped: => ({...})
-      // Not: => {...} which would be a block
-      expect(result).not.toMatch(/=> \{[a-zA-Z]+:/);
-    });
-  },
-);
+    expectCompiles(result);
+    // Any arrow returning an object literal should be wrapped: => ({...})
+    // Not: => {...} which would be a block
+    expect(result).not.toMatch(/=> \{[a-zA-Z]+:/);
+  });
+});
 
 describe('Decorator and class field preservation', () => {
   it('preserves signal field initializers (not moved to constructor)', () => {
@@ -3531,16 +3676,14 @@ describe('Signal query read/descendants options', () => {
 // without per-block dynamic `import('./x').then(m => m.X)` resolvers.
 // The dynamic-import shape was introduced in v20 and is what these
 // tests assert. Skip the entire describe on v19.
-describe.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
-  '@defer dependency import shape',
-  () => {
-    it('emits import().then(m => m.X) for named imports', () => {
-      const childSrc = `
+describe('@defer dependency import shape', () => {
+  it('emits import().then(m => m.X) for named imports', () => {
+    const childSrc = `
       import { Component } from '@angular/core';
       @Component({ selector: 'app-lazy', template: 'lazy' })
       export class LazyCmp {}
     `;
-      const parentSrc = `
+    const parentSrc = `
       import { Component } from '@angular/core';
       import { LazyCmp } from './lazy';
       @Component({
@@ -3550,19 +3693,19 @@ describe.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
       })
       export class Parent {}
     `;
-      const registry = buildRegistry({ 'lazy.ts': childSrc });
-      const result = compile(parentSrc, 'parent.ts', registry);
-      expectCompiles(result);
-      expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.LazyCmp/);
-    });
+    const registry = buildRegistry({ 'lazy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.LazyCmp/);
+  });
 
-    it('uses original export name for aliased imports, not the local binding', () => {
-      const childSrc = `
+  it('uses original export name for aliased imports, not the local binding', () => {
+    const childSrc = `
       import { Component } from '@angular/core';
       @Component({ selector: 'app-heavy', template: 'heavy' })
       export class HeavyWidget {}
     `;
-      const parentSrc = `
+    const parentSrc = `
       import { Component } from '@angular/core';
       import { HeavyWidget as Widget } from './heavy';
       @Component({
@@ -3572,25 +3715,25 @@ describe.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
       })
       export class Parent {}
     `;
-      const registry = buildRegistry({ 'heavy.ts': childSrc });
-      const result = compile(parentSrc, 'parent.ts', registry);
-      expectCompiles(result);
-      // Must reference the original export name `HeavyWidget`, NOT the
-      // local alias `Widget`. The module namespace exposes the original
-      // name regardless of how the consumer aliased it locally.
-      expect(result).toMatch(
-        /import\(['"]\.\/heavy['"]\)\.then\(\([^)]*\)\s*=>\s*\w+\.HeavyWidget\)/,
-      );
-      expect(result).not.toMatch(/m\.Widget(?!\w)/);
-    });
+    const registry = buildRegistry({ 'heavy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    // Must reference the original export name `HeavyWidget`, NOT the
+    // local alias `Widget`. The module namespace exposes the original
+    // name regardless of how the consumer aliased it locally.
+    expect(result).toMatch(
+      /import\(['"]\.\/heavy['"]\)\.then\(\([^)]*\)\s*=>\s*\w+\.HeavyWidget\)/,
+    );
+    expect(result).not.toMatch(/m\.Widget(?!\w)/);
+  });
 
-    it('emits import().then(m => m.default) for default imports', () => {
-      const childSrc = `
+  it('emits import().then(m => m.default) for default imports', () => {
+    const childSrc = `
       import { Component } from '@angular/core';
       @Component({ selector: 'app-lazy', template: 'lazy' })
       export default class LazyCmp {}
     `;
-      const parentSrc = `
+    const parentSrc = `
       import { Component } from '@angular/core';
       import LazyCmp from './lazy';
       @Component({
@@ -3600,13 +3743,12 @@ describe.skipIf(!SUPPORTS_DEFER_DYNAMIC_IMPORTS)(
       })
       export class Parent {}
     `;
-      const registry = buildRegistry({ 'lazy.ts': childSrc });
-      const result = compile(parentSrc, 'parent.ts', registry);
-      expectCompiles(result);
-      expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.default/);
-    });
-  },
-);
+    const registry = buildRegistry({ 'lazy.ts': childSrc });
+    const result = compile(parentSrc, 'parent.ts', registry);
+    expectCompiles(result);
+    expect(result).toMatch(/import\(['"]\.\/lazy['"]\).*then.*m\.default/);
+  });
+});
 
 describe('unary operators in templates', () => {
   const compileListener = (expression: string) =>

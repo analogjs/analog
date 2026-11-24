@@ -119,8 +119,8 @@ Adjust the `package.json` at the root of the project to point to the built outpu
   "description": "A description of the Angular library",
   "type": "module",
   "peerDependencies": {
-    "@angular/common": "^19.0.0",
-    "@angular/core": "^19.0.0"
+    "@angular/common": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0"
   },
   "dependencies": {
     "tslib": "^2.0.0"

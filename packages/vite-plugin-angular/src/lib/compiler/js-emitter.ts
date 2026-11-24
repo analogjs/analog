@@ -1,14 +1,4 @@
-import * as ts from 'typescript';
 import * as o from '@angular/compiler';
-
-/** Shared printer — only used as fallback for complex WrappedNodeExpr (e.g. decorator args). */
-const sharedPrinter = ts.createPrinter({ removeComments: true });
-const emptySourceFile = ts.createSourceFile(
-  '_.ts',
-  '',
-  ts.ScriptTarget.Latest,
-  false,
-);
 
 // Operator metadata table — name, JS string, and precedence (higher = tighter
 // binding). Used to build version-aware lookup maps below.
@@ -187,7 +177,7 @@ function emitReceiverForMemberAccess(
 const MAKE_TEMPLATE_OBJECT_POLYFILL =
   '(this&&this.__makeTemplateObject||function(e,t){return Object.defineProperty?Object.defineProperty(e,"raw",{value:t}):e.raw=t,e})';
 
-const SINGLE_QUOTE_ESCAPE_RE = /[\\\'\n\r]/g;
+const SINGLE_QUOTE_ESCAPE_RE = /[\\'\n\r]/g;
 
 /** Escape a string for use as a single-quoted string literal. */
 function escapeForLocalize(input: string): string {
@@ -200,12 +190,9 @@ function escapeForLocalize(input: string): string {
 }
 
 /**
- * Emits Angular output AST directly to JavaScript strings, bypassing
- * ts.factory node creation and ts.Printer serialization (~4x faster).
+ * Emits Angular output AST directly to JavaScript strings.
  */
 class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
-  /** Set by compile() so WrappedNodeExpr fallback can print with correct source context. */
-  static _currentSourceFile: ts.SourceFile | undefined;
   /** Set by compile() so OXC-based WrappedNodeExpr can slice original source. */
   static _currentSourceCode: string | undefined;
 
@@ -241,25 +228,7 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
       return 'null';
     }
 
-    // TypeScript AST nodes: identified by numeric `kind` property
-    if (node.kind === ts.SyntaxKind.Identifier)
-      return (node as ts.Identifier).escapedText as string;
-    if (node.kind === ts.SyntaxKind.StringLiteral)
-      return JSON.stringify((node as ts.StringLiteral).text);
-    if (node.kind === ts.SyntaxKind.NumericLiteral)
-      return (node as ts.NumericLiteral).text;
-    if (node.kind === ts.SyntaxKind.TrueKeyword) return 'true';
-    if (node.kind === ts.SyntaxKind.FalseKeyword) return 'false';
-    if (node.kind === ts.SyntaxKind.NullKeyword) return 'null';
-    if (node.kind === ts.SyntaxKind.NoSubstitutionTemplateLiteral)
-      return '`' + (node as ts.NoSubstitutionTemplateLiteral).text + '`';
-    // Fallback for complex wrapped TS nodes (e.g. decorator arguments, array literals).
-    // Use currentSourceFile when available for correct position-based printing.
-    return sharedPrinter.printNode(
-      ts.EmitHint.Unspecified,
-      node,
-      JSEmitter._currentSourceFile || emptySourceFile,
-    );
+    return 'null';
   }
   visitExternalExpr(ast: o.ExternalExpr) {
     const name = ast.value.name;
@@ -291,14 +260,16 @@ class JSEmitter implements o.ExpressionVisitor, o.StatementVisitor {
     // argument list binds to the arrow's *body* (`… => new X(a, b)(args)`)
     // instead of invoking the arrow. Parenthesizing any wrapped callee is
     // always semantically safe.
+    const call = ast.isOptional ? '?.(' : '(';
+
     if (
       ast.fn instanceof o.ArrowFunctionExpr ||
       ast.fn instanceof o.FunctionExpr ||
       ast.fn instanceof o.WrappedNodeExpr
     ) {
-      return '(' + fn + ')' + (ast.isOptional ? '?.(' : '(') + args + ')';
+      return '(' + fn + ')' + call + args + ')';
     }
-    return fn + (ast.isOptional ? '?.(' : '(') + args + ')';
+    return fn + call + args + ')';
   }
   visitReadVarExpr(ast: o.ReadVarExpr) {
     if (ast.name === 'this') return 'this';
@@ -614,11 +585,6 @@ export function emitAngularExpr(expr: o.Expression): string {
 /** Emit Angular output AST statement directly to a JavaScript string. */
 export function emitAngularStmt(stmt: o.Statement): string {
   return stmt.visitStatement(stringEmitter, null);
-}
-
-/** Set the current source file for WrappedNodeExpr fallback printing. */
-export function setEmitterSourceFile(sf: ts.SourceFile | undefined): void {
-  JSEmitter._currentSourceFile = sf;
 }
 
 /** Set the current source code for OXC-based WrappedNodeExpr slice fallback. */

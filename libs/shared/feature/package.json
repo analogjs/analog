@@ -1,0 +1,20 @@
+{
+  "name": "@analogjs/shared-feature",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "dependencies": {
+    "@analogjs/content": "workspace:*",
+    "h3": "catalog:nitroV2"
+  },
+  "devDependencies": {
+    "@analogjs/vitest-angular": "workspace:*"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  }
+}

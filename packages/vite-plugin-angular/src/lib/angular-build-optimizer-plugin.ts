@@ -1,13 +1,22 @@
 import type { Plugin, UserConfig } from 'vite';
+import {
+  isAngularBuildContext,
+  type AngularBuildContext,
+} from './angular-build-context.js';
 import { JavaScriptTransformer } from './utils/devkit.js';
-import { isProdMode } from './utils/plugin-config.js';
+import { isProdMode, isServerEnvironment } from './utils/plugin-config.js';
 
-export function buildOptimizerPlugin({
-  jit,
-}: {
-  supportedBrowsers: string[];
-  jit: boolean;
-}): Plugin {
+export interface BuildOptimizerPluginOptions {
+  jit?: boolean;
+}
+
+export function buildOptimizerPlugin(
+  ctxOrOptions?: AngularBuildContext | BuildOptimizerPluginOptions,
+): Plugin {
+  const jit = isAngularBuildContext(ctxOrOptions)
+    ? ctxOrOptions.options.jit
+    : (ctxOrOptions?.jit ?? false);
+
   const transformers = new Map<
     string,
     InstanceType<typeof JavaScriptTransformer>
@@ -64,18 +73,19 @@ export function buildOptimizerPlugin({
       } as UserConfig;
     },
     // The top-level define keys `ngServerMode` off the legacy `build.ssr`
-    // flag. Environment API builds run the server through an environment
-    // with `consumer: 'server'` while `build.ssr` stays unset, so give that
-    // environment its own value; otherwise the guard compiles to `false`
-    // and browser-only hydration features run during SSR.
-    configEnvironment(name, config) {
-      // `consumer` is unset here unless declared; apply Vite's default
-      const consumer =
-        config.consumer ?? (name === 'client' ? 'client' : 'server');
-      if (isProd && consumer === 'server') {
-        return { define: { ngServerMode: 'true' } };
-      }
-      return undefined;
+    // flag. Environment API builds run the server through a server
+    // environment while `build.ssr` stays unset, so give that environment its
+    // own value; otherwise the guard compiles to `false` and browser-only
+    // hydration features run during SSR. Runs after other plugins' hooks, so
+    // a consumer they set is taken into account.
+    configEnvironment: {
+      order: 'post',
+      handler(name, config) {
+        if (isProd && isServerEnvironment(name, config)) {
+          return { define: { ngServerMode: 'true' } };
+        }
+        return undefined;
+      },
     },
     configResolved(config) {
       preserveVendorMaps = !!config.build.sourcemap;
@@ -141,18 +151,37 @@ export function buildOptimizerPlugin({
   };
 }
 
-export function extractInlineSourceMap(code: string, id: string) {
-  const sourceMapMatch = code.match(
-    /\n?\/\/# sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?;base64,([A-Za-z0-9+/=]+)\s*$/,
-  );
-  if (!sourceMapMatch || sourceMapMatch.index === undefined) {
-    return {
-      code,
-      map: null,
-    };
+export function extractInlineSourceMap(
+  code: string,
+  _id: string,
+): { code: string; map: string | null } {
+  // Matching the whole comment with one regex can throw "Maximum call stack
+  // size exceeded" on multi-megabyte payloads (#2669), so search by index.
+  const prefix = '//# sourceMappingURL=data:application/json';
+  const separator = ';base64,';
+  const commentStart = code.lastIndexOf(prefix);
+  if (commentStart === -1) {
+    return { code, map: null };
   }
+
+  const tail = code.slice(commentStart + prefix.length).trimEnd();
+  const base64Start = tail.indexOf(separator);
+  const payload = tail.slice(base64Start + separator.length);
+  // Only a terminal comment counts: anything other than base64 characters
+  // and trailing whitespace after `;base64,` leaves the code untouched.
+  if (
+    base64Start === -1 ||
+    !/^(?:;charset=[^;,]+)?$/.test(tail.slice(0, base64Start)) ||
+    payload === '' ||
+    /[^A-Za-z0-9+/=]/.test(payload)
+  ) {
+    return { code, map: null };
+  }
+
+  const codeEnd =
+    code[commentStart - 1] === '\n' ? commentStart - 1 : commentStart;
   return {
-    code: code.slice(0, sourceMapMatch.index),
-    map: Buffer.from(sourceMapMatch[1]!, 'base64').toString(),
+    code: code.slice(0, codeEnd),
+    map: Buffer.from(payload, 'base64').toString(),
   };
 }

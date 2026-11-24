@@ -13,8 +13,8 @@ A continuación, se muestra una tabla de compatibilidad entre Angular con Analog
 | ^21.0.0         | **latest**     | ^7.0.0       |
 | ^20.0.0         | **latest**     | ^7.0.0       |
 | ^19.1.0         | **latest**     | ^6.0.0       |
-| ^18.0.0         | **latest**     | ^5.0.0       |
-| ^17.0.0         | **latest**     | ^5.0.0       |
+| ^18.0.0         | **latest**     | ^6.0.0       |
+| ^17.0.0         | **latest**     | ^6.0.0       |
 
 Incluso puedes [migrar una Angular SPA existente](/docs/guides/migrating) a Analog.
 
@@ -29,7 +29,7 @@ La siguiente tabla muestra la versión mínima de Nx, la versión de Angular adm
 | 22.x.x             | ^20.x.x         | **latest**     | ^7.0.0       |
 | 21.x.x             | ^20.x.x         | **latest**     | ^7.0.0       |
 | 20.4.0             | ^19.1.0         | **latest**     | ^6.0.0       |
-| 18.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
-| 17.0.0             | ^17.0.0         | **latest**     | ^5.0.0       |
+| 18.0.0             | ^17.0.0         | **latest**     | ^6.0.0       |
+| 17.0.0             | ^17.0.0         | **latest**     | ^6.0.0       |
 
 Adicionalmente, puedes consultar esta [guía de Nx](https://nx.dev/packages/angular/documents/angular-nx-version-matrix) para aprender más sobre la compatibilidad entre Nx y Angular.

@@ -11,7 +11,7 @@ describe('compiled content package discovery', () => {
   const code = readFileSync(
     resolve(
       workspaceRoot,
-      'node_modules/@analogjs/content/fesm2022/analogjs-content.mjs',
+      'packages/content/dist/fesm2022/content-list-loader.mjs',
     ),
     'utf8',
   );
@@ -22,11 +22,11 @@ describe('compiled content package discovery', () => {
     )!;
     (plugin.config as any)({ root });
 
-    const result = (plugin.transform as any)(code);
+    const result = (plugin.transform as any).handler(code);
 
     expect(result?.code).toContain('introduction.md?analog-content-list=true');
-    expect(result?.code).not.toContain('let ANALOG_CONTENT_FILE_LIST = {};');
-    expect(result?.code).toContain('return ANALOG_CONTENT_FILE_LIST;');
+    expect(result?.code).not.toContain('ANALOG_CONTENT_FILE_LIST = {};');
+    expect(result?.code).toContain('() => ANALOG_CONTENT_FILE_LIST');
   });
 
   it('populates the content loaders after library bundling', () => {
@@ -35,10 +35,10 @@ describe('compiled content package discovery', () => {
     )!;
     (plugin.config as any)({ root });
 
-    const result = (plugin.transform as any)(code);
+    const result = (plugin.transform as any).handler(code);
 
     expect(result?.code).toContain('introduction.md?analog-content-file=true');
-    expect(result?.code).not.toContain('let ANALOG_CONTENT_ROUTE_FILES = {};');
-    expect(result?.code).toContain('return ANALOG_CONTENT_ROUTE_FILES;');
+    expect(result?.code).not.toContain('ANALOG_CONTENT_ROUTE_FILES = {};');
+    expect(result?.code).toContain('() => ANALOG_CONTENT_ROUTE_FILES');
   });
 });

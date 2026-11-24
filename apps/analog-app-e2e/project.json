@@ -4,19 +4,21 @@
   "sourceRoot": "apps/analog-app-e2e/tests",
   "projectType": "application",
   "tags": [],
-  "implicitDependencies": ["analog-app"],
   "targets": {
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
-    },
     "e2e": {
       "executor": "nx:run-commands",
+      "dependsOn": ["analog-app:build"],
       "options": {
         "cwd": "apps/analog-app-e2e",
         "command": "playwright test"
-      },
-      "dependsOn": ["build"]
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/analog-app-e2e",
+        "command": "pnpm exec tsgo -p tsconfig.json --noEmit"
+      }
     }
   }
 }

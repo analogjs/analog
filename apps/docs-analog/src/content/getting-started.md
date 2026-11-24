@@ -7,7 +7,7 @@ Creating an Analog project can be done with minimal steps.
 Analog requires the following Node and Angular versions:
 
 - Node 22 and higher is recommended
-- Angular v17 or higher
+- Angular v20, v21, or v22
 
 ## Creating a New Application
 
@@ -45,6 +45,8 @@ bun create analog
 
   </TabItem>
 </Tabs>
+
+To serve the app from NestJS instead of Nitro, pass `--server nestjs`, as described in the [`create-analog` guide](/docs/packages/create-analog/overview#nestjs-server).
 
 You can also [scaffold a new project with Nx](/docs/integrations/nx).
 

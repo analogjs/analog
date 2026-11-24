@@ -5,10 +5,11 @@ import {
 import { Tree } from '@angular-devkit/schematics';
 import * as path from 'path';
 
-// Use the built collection from node_modules
+// Must use the built collection.json because the schematic runner resolves
+// the compiled CommonJS output rather than the TypeScript sources.
 const collectionPath = path.join(
   __dirname,
-  '../../../../../node_modules/@analogjs/vitest-angular/src/lib/tools/collection.json',
+  '../../../../vitest-angular/dist/src/lib/tools/collection.json',
 );
 
 describe('setup schematic', () => {
@@ -125,9 +126,14 @@ describe('setup schematic', () => {
       "import viteTsConfigPaths from 'vite-tsconfig-paths'",
     );
     expect(viteConfig).toContain('plugins: [angular(), viteTsConfigPaths()]');
+    expect(viteConfig).not.toContain('nxViteTsPaths');
+    expect(viteConfig).not.toContain(
+      '@nx/vite/plugins/nx-tsconfig-paths.plugin',
+    );
   });
 
-  it('should use vite-tsconfig-paths instead of nxViteTsPaths for Nx workspace', async () => {
+  it('should create vite.config.mts without path plugins for Nx workspace', async () => {
+    // Create nx.json to simulate Nx workspace
     tree.create('/nx.json', JSON.stringify({ version: 2 }));
 
     const resultTree = await runner.runSchematic(
@@ -137,8 +143,15 @@ describe('setup schematic', () => {
     );
 
     const viteConfig = resultTree.readContent('/vite.config.mts');
-    expect(viteConfig).toContain('plugins: [angular(), viteTsConfigPaths()]');
+    expect(viteConfig).toContain(
+      "import angular from '@analogjs/vite-plugin-angular'",
+    );
+    expect(viteConfig).toContain('plugins: [angular()]');
     expect(viteConfig).not.toContain('nxViteTsPaths');
+    expect(viteConfig).not.toContain('viteTsConfigPaths');
+    expect(viteConfig).not.toContain(
+      '@nx/vite/plugins/nx-tsconfig-paths.plugin',
+    );
   });
 
   it('should create test-setup.ts with BrowserTestingModule for Angular 20', async () => {
@@ -329,7 +342,7 @@ describe('setup schematic', () => {
       expect(viteConfig).not.toContain('browser: {');
     });
 
-    it('should create test-setup.ts with browserMode option for Angular 21+', async () => {
+    it('should create test-setup.ts with teardown option in browser mode for Angular 21+', async () => {
       // Update to Angular 21
       tree.overwrite(
         '/package.json',
@@ -348,10 +361,12 @@ describe('setup schematic', () => {
       );
 
       const setupContent = resultTree.readContent('/src/test-setup.ts');
-      expect(setupContent).toContain('setupTestBed({ browserMode: true })');
+      expect(setupContent).toContain(
+        'setupTestBed({ teardown: { destroyAfterEach: false } })',
+      );
     });
 
-    it('should create test-setup.ts without browserMode option when false', async () => {
+    it('should create test-setup.ts without options when browserMode is false', async () => {
       // Update to Angular 21
       tree.overwrite(
         '/package.json',
@@ -371,7 +386,7 @@ describe('setup schematic', () => {
 
       const setupContent = resultTree.readContent('/src/test-setup.ts');
       expect(setupContent).toContain('setupTestBed()');
-      expect(setupContent).not.toContain('browserMode');
+      expect(setupContent).not.toContain('teardown');
     });
   });
 });

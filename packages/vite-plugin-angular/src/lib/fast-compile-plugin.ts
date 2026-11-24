@@ -1,64 +1,60 @@
 import { promises as fsPromises } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './compiler/utils.js';
 import * as vite from 'vite';
 
 import * as compilerCli from '@angular/compiler-cli';
-import {
-  defaultClientConditions,
-  normalizePath,
-  Plugin,
-  preprocessCSS,
-  ResolvedConfig,
-} from 'vite';
+import { normalizePath, Plugin, preprocessCSS, ResolvedConfig } from 'vite';
 
+import {
+  createAngularBuildContext,
+  isAngularBuildContext,
+  type AngularBuildContext,
+  type AngularBuildContextOptions,
+} from './angular-build-context.js';
 import {
   compile,
   scanFile,
-  scanPackageDts,
-  collectImportedPackages,
+  declaresNonStandaloneComponent,
   collectRelativeReExports,
   collectAllImports,
   jitTransform,
   inlineResourceUrls,
   extractInlineStyles,
   generateHmrCode,
-  debugCompile,
   debugRegistry,
   ANGULAR_DECORATOR_CALL_RE,
   type ComponentRegistry,
 } from './compiler/index.js';
+import { reportStylesheetError } from './utils/stylesheet-warning.js';
 
 import {
   TS_EXT_REGEX,
+  EXCLUDED_TS_EXT_REGEX,
   getTsConfigPath,
   createDepOptimizerConfig,
   isProdMode,
   type TsConfigResolutionContext,
 } from './utils/plugin-config.js';
+import { isIgnoredHmrFile } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
-import { VIRTUAL_RAW_PREFIX, toVirtualRawId } from './utils/virtual-ids.js';
+import { isRolldown } from './utils/rolldown.js';
+import { TsconfigResolver } from './utils/tsconfig-resolver.js';
+import type { FastCompileApi } from './fast-compile-api.js';
+import { ComponentScanner, type ResolveImport } from './component-scanner.js';
+import type { StylePreprocessor } from './style-preprocessor.js';
+import { preprocessStylesheet } from './stylesheet-registry.js';
+import type { TypeCheckerOption } from './utils/lsp-type-checker.js';
 import {
-  loadVirtualRawModule,
-  resolveStyleInlineImport,
-  rewriteHtmlRawImport,
-} from './utils/virtual-resources.js';
-import { markStylePathSafe } from './utils/safe-module-paths.js';
-
-declare global {
-  /**
-   * Shared convention for out-of-tree compilers (e.g. `@tsrx/analog`) that
-   * produce Angular Ivy definitions from a non-TS source format. Populate
-   * this map with directive/component metadata for any class fastCompile
-   * can't reach through its own tsconfig-driven scan, and the per-compile
-   * registry lookup in `fastCompilePlugin` will merge those entries in —
-   * so TS `@Component({ imports: [X] })` references to such classes
-   * resolve statically instead of hitting the `_unresolved-${className}`
-   * sentinel.
-   */
-  // eslint-disable-next-line no-var
-  var __ANALOG_EXTERNAL_REGISTRY__: ComponentRegistry | undefined;
-}
+  discoverAnalogIntegrations,
+  type ComponentRegistryEntries,
+  type TransformFilter,
+} from './analog-plugin-interop.js';
+import {
+  loadAngularVirtualModule,
+  resolveAngularVirtualId,
+} from './virtual-modules-plugin.js';
 
 export interface FastCompilePluginOptions {
   tsconfigGetter: () => string;
@@ -66,11 +62,24 @@ export interface FastCompilePluginOptions {
   inlineStylesExtension: string;
   jit: boolean;
   liveReload: boolean;
-  supportedBrowsers: string[];
-  transformFilter?: (code: string, id: string) => boolean;
   isTest: boolean;
   isAstroIntegration: boolean;
   fastCompileMode?: 'full' | 'partial';
+  disableTypeChecking?: boolean;
+  typeChecker?: TypeCheckerOption;
+  include?: string[];
+}
+
+function isFastCompilePluginOptions(
+  value: unknown,
+): value is FastCompilePluginOptions {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !isAngularBuildContext(value) &&
+    'tsconfigGetter' in value &&
+    typeof (value as FastCompilePluginOptions).tsconfigGetter === 'function'
+  );
 }
 
 /**
@@ -87,18 +96,52 @@ export function getPathsBasePath(
 }
 
 export function fastCompilePlugin(
-  pluginOptions: FastCompilePluginOptions,
+  optionsOrCtx?:
+    | AngularBuildContext
+    | FastCompilePluginOptions
+    | AngularBuildContextOptions,
 ): Plugin {
+  const sharedCtx = isAngularBuildContext(optionsOrCtx)
+    ? optionsOrCtx
+    : isFastCompilePluginOptions(optionsOrCtx)
+      ? undefined
+      : createAngularBuildContext({
+          ...optionsOrCtx,
+          compilationBackend: 'fast',
+        });
+
+  const pluginOptions: FastCompilePluginOptions = sharedCtx
+    ? sharedCtx.options
+    : (optionsOrCtx as FastCompilePluginOptions);
+
+  // Component registry shared with source formats through `api.fastCompile`
+  const scanner = new ComponentScanner();
+  const registry = scanner.registry;
+
+  const tsconfigResolver =
+    sharedCtx?.tsconfigResolver ??
+    new TsconfigResolver({
+      workspaceRoot: pluginOptions.workspaceRoot,
+      include: pluginOptions.include ?? [],
+      liveReload: pluginOptions.liveReload,
+      isTest: pluginOptions.isTest,
+    });
+
   let resolvedConfig: ResolvedConfig;
+  let transformFilter: TransformFilter | undefined;
+  let componentRegistries: ComponentRegistryEntries[] = [];
+  let stylePreprocessor: StylePreprocessor | undefined;
   let tsConfigResolutionContext: TsConfigResolutionContext | null = null;
   let watchMode = false;
 
   // fast-compile plugin state
-  const registry: ComponentRegistry = new Map();
   const resourceToSource = new Map<string, string>();
-  const scannedDtsPackages = new Set<string>();
-  let projectRoot = '';
+  const emittedMaps = new Map<string, string>();
   let useDefineForClassFields = true;
+  let tsConfig: ReturnType<typeof compilerCli.readConfiguration>;
+
+  // The one-time whole-project scan non-standalone components fall back to.
+  let projectScan: Promise<void> | undefined;
 
   /**
    * Scan a file into the registry, then recursively walk its relative
@@ -127,8 +170,7 @@ export function fastCompilePlugin(
     visited.add(file);
     let code: string;
     try {
-      code =
-        fileContents?.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+      code = fileContents?.get(file) ?? (await scanner.readScanSource(file));
       fileContents?.set(file, code);
     } catch (e) {
       if (debugRegistry.enabled) {
@@ -146,7 +188,7 @@ export function fastCompilePlugin(
     // collectRelativeReExports swallows and returns []).
     let program: ReturnType<typeof parseSync>['program'] | undefined;
     try {
-      program = parseSync(file, code).program;
+      program = parseOxc(file, code).program;
     } catch {
       program = undefined;
     }
@@ -155,14 +197,10 @@ export function fastCompilePlugin(
       entries = scanFile(code, file, program);
       scanResults?.set(file, entries);
     }
-    for (const entry of entries) {
-      // At buildStart we want stable registry entries (don't overwrite
-      // an earlier scan with a barrel re-scan); HMR explicitly asks
-      // for overwrite so updated metadata replaces stale entries.
-      if (overwrite || !registry.has(entry.className)) {
-        registry.set(entry.className, entry);
-      }
-    }
+    // At buildStart we want stable registry entries (don't overwrite
+    // an earlier scan with a barrel re-scan); HMR explicitly asks
+    // for overwrite so updated metadata replaces stale entries.
+    scanner.recordFileEntries(file, entries, overwrite);
     // Collect every relative re-export specifier via OXC AST so
     // recursive scans can't trip over each other (a shared `/g` regex
     // would have its `lastIndex` reset by each recursive call and
@@ -207,28 +245,34 @@ export function fastCompilePlugin(
     }
   }
 
-  async function initFastCompile() {
+  async function initFastCompile(): Promise<void> {
+    emittedMaps.clear();
     if (pluginOptions.jit) return; // JIT: no registry scan needed
 
-    // Scan all source files to build the registry
-    registry.clear();
-    scannedDtsPackages.clear();
+    projectScan = undefined;
     const resolvedTsConfigPath = resolveTsConfigPath();
-    projectRoot = dirname(resolvedTsConfigPath);
-    const config = compilerCli.readConfiguration(resolvedTsConfigPath);
-    useDefineForClassFields = config.options?.useDefineForClassFields ?? true;
+    const projectRoot = dirname(resolvedTsConfigPath);
+    scanner.reset(projectRoot);
+    tsConfig = compilerCli.readConfiguration(resolvedTsConfigPath);
+    useDefineForClassFields = tsConfig.options?.useDefineForClassFields ?? true;
+  }
 
-    // Collect candidate files: tsconfig rootNames PLUS the entry points
-    // named in `compilerOptions.paths`. App tsconfigs typically only
-    // include the app's own sources, so workspace library entry barrels
-    // (e.g. `HlmSelectImports = [HlmSelect, HlmSelectContent, ...] as
-    // const`) live outside `rootNames` and would otherwise miss the
-    // initial scan. The compiler then can't see that `HlmSelectImports`
-    // is a tuple barrel and emits the bare identifier into the parent
-    // component's `dependencies()` list, where Angular's runtime
+  /** Scan all source files reachable from the tsconfig into the registry. */
+  async function scanProject(): Promise<void> {
+    const config = tsConfig;
+    const extraIncludes = tsconfigResolver.ensureIncludeCache();
+    // Collect candidate files: tsconfig rootNames PLUS explicit/integration
+    // include globs PLUS the entry points named in `compilerOptions.paths`.
+    // App tsconfigs typically only include the app's own sources, so workspace
+    // library entry barrels (e.g. `HlmSelectImports = [HlmSelect,
+    // HlmSelectContent, ...] as const`) live outside `rootNames` and would
+    // otherwise miss the initial scan. The compiler then can't see that
+    // `HlmSelectImports` is a tuple barrel and emits the bare identifier into
+    // the parent component's `dependencies()` list, where Angular's runtime
     // silently drops it because arrays don't have a directive def.
-    const candidates = new Set<string>(config.rootNames);
+    const candidates = new Set<string>([...config.rootNames, ...extraIncludes]);
     const tsPaths = config.options?.paths;
+    const projectRoot = scanner.projectRoot;
     const baseUrl = getPathsBasePath(config.options, projectRoot);
     // Cold-start dedup caches shared by the three scan phases below
     // (candidates scan, walkImports, scanBarrelExports). Scoped to this
@@ -248,11 +292,11 @@ export function fastCompilePlugin(
     const results = await Promise.all(
       Array.from(candidates).map(async (file) => {
         try {
-          const code = await fsPromises.readFile(file, 'utf-8');
+          const code = await scanner.readScanSource(file);
           fileContents.set(file, code);
           const entries = scanFile(code, file);
           scanResults.set(file, entries);
-          return entries;
+          return { file, entries };
         } catch (e) {
           if (debugRegistry.enabled) {
             debugRegistry(
@@ -261,15 +305,13 @@ export function fastCompilePlugin(
               (e as Error)?.message,
             );
           }
-          return []; // Skip unreadable files
+          return { file, entries: [] }; // Skip unreadable files
         }
       }),
     );
 
-    for (const entries of results) {
-      for (const entry of entries) {
-        registry.set(entry.className, entry);
-      }
+    for (const { file, entries } of results) {
+      scanner.recordFileEntries(file, entries, true);
     }
 
     // Walk the transitive import graph from the root files so the registry also
@@ -349,18 +391,17 @@ export function fastCompilePlugin(
       importWalkVisited.add(file);
       let code: string;
       try {
-        code =
-          fileContents.get(file) ?? (await fsPromises.readFile(file, 'utf-8'));
+        code = fileContents.get(file) ?? (await scanner.readScanSource(file));
         fileContents.set(file, code);
       } catch {
         return;
       }
-      // Single parse shared by scanFile, collectImportedPackages, and
+      // Single parse shared by scanFile, the package `.d.ts` scan, and
       // collectAllImports. On a parse error each consumer re-parses on
       // its own, preserving their individual failure semantics.
       let program: ReturnType<typeof parseSync>['program'] | undefined;
       try {
-        program = parseSync(file, code).program;
+        program = parseOxc(file, code).program;
       } catch {
         program = undefined;
       }
@@ -369,31 +410,13 @@ export function fastCompilePlugin(
         entries = scanFile(code, file, program);
         scanResults.set(file, entries);
       }
-      for (const entry of entries) {
-        if (!registry.has(entry.className))
-          registry.set(entry.className, entry);
-      }
+      scanner.recordFileEntries(file, entries);
       // Pre-scan the `.d.ts` of every external package this file imports (and,
       // transitively, packages those packages' NgModules re-export — e.g.
       // BrowserModule → CommonModule → NgIf). Doing this at buildStart means the
       // registry is complete before any component transforms, so non-standalone
       // component scope resolves regardless of file transform order.
-      for (const pkg of collectImportedPackages(code, file, program)) {
-        if (scannedDtsPackages.has(pkg)) continue;
-        scannedDtsPackages.add(pkg);
-        try {
-          for (const entry of scanPackageDts(
-            pkg,
-            projectRoot,
-            scannedDtsPackages,
-          )) {
-            if (!registry.has(entry.className))
-              registry.set(entry.className, entry);
-          }
-        } catch {
-          // Package may not have .d.ts or not be Angular
-        }
-      }
+      scanner.ensureDtsRegistryForSource(code, file, program);
       const dir = dirname(file);
       const targets = await Promise.all(
         collectAllImports(code, file, program).map((spec) => {
@@ -414,7 +437,8 @@ export function fastCompilePlugin(
         targets.filter((t): t is string => !!t).map((t) => walkImports(t)),
       );
     };
-    await Promise.all(config.rootNames.map((file) => walkImports(file)));
+    const walkRoots = [...new Set([...config.rootNames, ...extraIncludes])];
+    await Promise.all(walkRoots.map((file) => walkImports(file)));
 
     // Library barrels typically `export * from './lib/...'` rather than
     // declaring directives directly, so the entry file alone gives us
@@ -451,31 +475,10 @@ export function fastCompilePlugin(
     );
   }
 
-  function ensureDtsRegistryForSource(
-    code: string,
-    id: string,
-    program?: ReturnType<typeof parseSync>['program'],
-  ) {
-    for (const pkg of collectImportedPackages(code, id, program)) {
-      if (scannedDtsPackages.has(pkg)) continue;
-      scannedDtsPackages.add(pkg);
-
-      try {
-        const dtsEntries = scanPackageDts(pkg, projectRoot, scannedDtsPackages);
-        for (const entry of dtsEntries) {
-          if (!registry.has(entry.className)) {
-            registry.set(entry.className, entry);
-          }
-        }
-      } catch {
-        // Package may not have .d.ts files or may not be Angular
-      }
-    }
-  }
-
   async function handleFastCompileTransform(
     code: string,
     id: string,
+    resolveImport: ResolveImport,
   ): Promise<{ code: string; map: any } | undefined> {
     if (!ANGULAR_DECORATOR_CALL_RE.test(code)) {
       // Non-Angular file — strip TS-only syntax ourselves so barrels
@@ -539,12 +542,12 @@ export function fastCompilePlugin(
     }
 
     // Inline external templateUrl/styleUrl(s) into the source before compilation.
-    // `styleExtensions` carries the source extension of each inlined external
-    // style so it can be preprocessed by its own file type (e.g. an external
-    // `.scss` styleUrl) regardless of the `inlineStylesExtension` option.
+    // `stylePaths` carries the source path of each inlined external style so
+    // it is preprocessed as its own file (e.g. an external `.scss` styleUrl or
+    // a relative `@import`) regardless of the `inlineStylesExtension` option.
     const inlined = await inlineResourceUrls(code, id);
     code = inlined.code;
-    const { styleExtensions } = inlined;
+    const { stylePaths } = inlined;
 
     // Track inlined resources for HMR. `compile()` only reports resources it
     // reads through its own fallback (a templateUrl/styleUrl the inliner did
@@ -557,67 +560,87 @@ export function fastCompilePlugin(
     // Single OXC parse of the post-inline source, shared by every AST
     // consumer below. `inlineResourceUrls` parsed the PRE-inline string,
     // so its program can never be reused here.
-    const { program: oxcProgram } = parseSync(id, code);
+    const { program: oxcProgram } = parseOxc(id, code);
 
-    // Pre-resolve inline styles that need preprocessing (SCSS/Sass/Less). Run
-    // whenever a style needs a non-`css` preprocessor — either the configured
-    // `inlineStylesExtension` for truly-inline styles, or an external styleUrl's
-    // own extension.
+    // Pre-resolve component styles through the registered style preprocessor
+    // and Vite's CSS pipeline (Sass/Less, PostCSS, Tailwind), like ngtsc does.
+    // External styleUrls are processed as their own file; truly inline
+    // `styles: [...]` use `inlineStylesExtension`.
     let resolvedInlineStyles: Map<number, string> | undefined;
+    const styleStrings = extractInlineStyles(code, id, oxcProgram);
 
-    const inlineExt = pluginOptions.inlineStylesExtension;
-    const styleNeedsPreprocess = (ext: string) => ext !== '' && ext !== 'css';
-
-    if (styleNeedsPreprocess(inlineExt) || styleExtensions.size > 0) {
-      const styleStrings = extractInlineStyles(code, id, oxcProgram);
-
-      if (styleStrings.length > 0) {
-        resolvedInlineStyles = new Map();
-        for (let i = 0; i < styleStrings.length; i++) {
-          // External styleUrls are preprocessed by their own extension; truly
-          // inline `styles: [...]` fall back to `inlineStylesExtension`.
-          const ext = styleExtensions.get(i) ?? inlineExt;
-          if (!styleNeedsPreprocess(ext)) continue;
-          try {
-            const fakePath = id.replace(/\.ts$/, `.inline-${i}.${ext}`);
-            const processed = await preprocessCSS(
-              styleStrings[i],
-              fakePath,
-              resolvedConfig,
-            );
-            resolvedInlineStyles.set(i, processed.code);
-          } catch (e) {
-            if (debugCompile.enabled) {
-              debugCompile(
-                'inline style #%d preprocessing failed in %s: %s',
-                i,
-                id,
-                (e as Error)?.message,
-              );
-            }
-            // Skip styles that can't be preprocessed
-          }
+    if (styleStrings.length > 0) {
+      resolvedInlineStyles = new Map();
+      const activeConfig = sharedCtx?.resolvedConfig ?? resolvedConfig;
+      const activeStylePreprocessor =
+        sharedCtx?.stylePreprocessor ?? stylePreprocessor;
+      for (let i = 0; i < styleStrings.length; i++) {
+        const stylePath =
+          stylePaths.get(i) ??
+          (scanner.sourceFormatOf(id) ? id + '.ts' : id).replace(
+            /\.ts$/,
+            `.inline-${i}.${pluginOptions.inlineStylesExtension || 'css'}`,
+          );
+        try {
+          const preprocessed = preprocessStylesheet(
+            styleStrings[i],
+            stylePath,
+            activeStylePreprocessor,
+            {
+              filename: stylePath,
+              containingFile: id,
+              order: i,
+              inline: !stylePaths.has(i),
+            },
+          );
+          const processed = await preprocessCSS(
+            preprocessed,
+            stylePath,
+            activeConfig,
+          );
+          resolvedInlineStyles.set(i, processed.code);
+        } catch (e) {
+          reportStylesheetError(
+            activeConfig?.logger,
+            stylePath,
+            e,
+            activeConfig?.command === 'build',
+          );
         }
-        if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
       }
+      if (resolvedInlineStyles.size === 0) resolvedInlineStyles = undefined;
     }
 
-    ensureDtsRegistryForSource(code, id, oxcProgram);
+    scanner.ensureDtsRegistryForSource(code, id, oxcProgram);
 
-    // Merge entries from the shared external-registry global into this
-    // compile's lookup view. Convention: out-of-tree compilers populate
-    // `globalThis.__ANALOG_EXTERNAL_REGISTRY__` with directive metadata
-    // for classes fastCompile can't reach through its tsconfig-driven
-    // scan (e.g. `.tsrx` files compiled by `@tsrx/analog`). Without this
-    // merge, a TS `@Component({ imports: [X] })` that references such a
-    // class hits `_unresolved-${className}` as its selector and the tag
-    // never matches at runtime.
-    let compileRegistry: ComponentRegistry = registry;
-    const externalRegistry = globalThis.__ANALOG_EXTERNAL_REGISTRY__;
-    if (externalRegistry && externalRegistry.size > 0) {
-      compileRegistry = new Map(registry);
-      for (const [k, v] of externalRegistry) compileRegistry.set(k, v);
+    scanner.recordFileEntries(id, scanFile(code, id, oxcProgram), true);
+    // Scan what `id` imports, and recompile it when their metadata changes.
+    await scanner.resolveImportSpecifiers(
+      collectAllImports(code, id, oxcProgram),
+      id,
+      resolveImport,
+    );
+    if (declaresNonStandaloneComponent(oxcProgram)) {
+      projectScan ??= scanProject();
+      await projectScan;
     }
+
+    // Merge registries contributed through `analog.setup()` into this
+    // compile's lookup view. Out-of-tree compilers register directive
+    // metadata for classes fastCompile can't reach through its
+    // tsconfig-driven scan (e.g. `.tsrx` files compiled by `@tsrx/analog`).
+    // Without this merge, a TS `@Component({ imports: [X] })` that
+    // references such a class hits `_unresolved-${className}` as its
+    // selector and the tag never matches at runtime.
+    const activeComponentRegistries = sharedCtx
+      ? sharedCtx.componentRegistries
+      : componentRegistries;
+    const compileRegistry = buildCompileRegistry(
+      scanner,
+      oxcProgram,
+      id,
+      activeComponentRegistries,
+    );
 
     const result = compile(code, id, {
       registry: compileRegistry,
@@ -654,10 +677,9 @@ export function fastCompilePlugin(
     let outputCode = stripped.code;
 
     // Append HMR code in dev mode
-    if (watchMode && pluginOptions.liveReload) {
-      const fileDeclarations = [...registry.values()].filter(
-        (e) => e.fileName === id,
-      );
+    const activeWatchMode = sharedCtx ? sharedCtx.watchMode : watchMode;
+    if (activeWatchMode && pluginOptions.liveReload) {
+      const fileDeclarations = scanner.entriesOf(id);
       if (fileDeclarations.length > 0) {
         const localDepClassNames = fileDeclarations.map((e) => e.className);
         outputCode += generateHmrCode(fileDeclarations, localDepClassNames);
@@ -667,31 +689,93 @@ export function fastCompilePlugin(
     return { code: outputCode, map: stripped.map };
   }
 
-  function resolveTsConfigPath() {
-    const { root, isProd, isLib } = tsConfigResolutionContext!;
+  function resolveTsConfigPath(): string {
+    if (sharedCtx) {
+      return sharedCtx.resolveTsConfigPath();
+    }
+    const resolution = tsConfigResolutionContext ?? {
+      root: resolvedConfig?.root || '.',
+      isProd: isProdMode(resolvedConfig?.mode),
+      isLib: !!resolvedConfig?.build?.lib,
+    };
     return getTsConfigPath(
-      root,
+      resolution.root,
       pluginOptions.tsconfigGetter(),
-      isProd,
+      resolution.isProd,
       pluginOptions.isTest,
-      isLib,
+      resolution.isLib,
       pluginOptions.workspaceRoot,
     );
   }
 
+  const fastCompile: FastCompileApi = {
+    registerSourceFormat: (format) => scanner.registerSourceFormat(format),
+    scanImports: (specifiers, importer, resolve) =>
+      scanner.scanImports(specifiers, importer, resolve),
+    resolveSelector: (className, moduleSpecifier, containingFile) =>
+      scanner.lookupSelector(
+        className,
+        sharedCtx ? sharedCtx.componentRegistries : componentRegistries,
+        moduleSpecifier !== undefined && containingFile !== undefined
+          ? { moduleSpecifier, containingFile }
+          : undefined,
+      ),
+    async compile(code, id, { resolve, mapToSource }) {
+      const transformed = await handleFastCompileTransform(
+        code,
+        id,
+        scanner.toResolveImport(resolve),
+      );
+      if (!transformed) {
+        return undefined;
+      }
+      const map =
+        transformed.map && mapToSource
+          ? mapToSource(transformed.map)
+          : (transformed.map ?? null);
+      if (map) {
+        emittedMaps.set(
+          normalizePath(id),
+          typeof map === 'string' ? map : JSON.stringify(map),
+        );
+      }
+      return { code: transformed.code, map };
+    },
+  };
+
+  const compilerApi = {
+    angularCompiler: true as const,
+    getTsConfigPath: resolveTsConfigPath,
+    getSourceMap: (id: string): string | undefined =>
+      emittedMaps.get(normalizePath(id)),
+    hasEmitted: (id: string): boolean => emittedMaps.has(normalizePath(id)),
+    fastCompile,
+  };
+
+  sharedCtx?.registerCompiler({
+    name: '@analogjs/vite-plugin-angular-fast-compile',
+    getTsConfigPath: compilerApi.getTsConfigPath,
+    getSourceMap: compilerApi.getSourceMap,
+    hasEmitted: compilerApi.hasEmitted,
+  });
+
   return {
     name: '@analogjs/vite-plugin-angular-fast-compile',
-    api: { getTsConfigPath: resolveTsConfigPath },
+    api: compilerApi,
     enforce: 'pre' as const,
-    async config(config, { command }) {
+    async config(config, { command, mode }) {
       watchMode = command === 'serve';
       const isProd = isProdMode(config.mode);
 
-      tsConfigResolutionContext = {
-        root: config.root || '.',
-        isProd,
-        isLib: !!config?.build?.lib,
-      };
+      if (sharedCtx) {
+        sharedCtx.initConfig(config, { command, mode });
+      } else {
+        tsConfigResolutionContext = {
+          root: config.root || '.',
+          isProd,
+          isLib: !!config?.build?.lib,
+        };
+      }
 
       const preliminaryTsConfigPath = resolveTsConfigPath();
 
@@ -704,44 +788,48 @@ export function fastCompilePlugin(
         isAstroIntegration: pluginOptions.isAstroIntegration,
       });
 
+      // No `resolve.conditions` extension here: the `style` condition is
+      // scoped to `.css`-extension requests by
+      // `cssExtensionStyleResolverPlugin`.
       return {
-        ...(vite.rolldownVersion ? { oxc: {} as any } : { esbuild: false }),
+        ...(isRolldown() ? { oxc: {} as any } : { esbuild: false }),
         ...depOptimizer,
-        resolve: {
-          conditions: [
-            ...depOptimizer.resolve.conditions,
-            ...(config.resolve?.conditions || defaultClientConditions),
-          ],
-        },
       };
     },
-    configResolved(config) {
+    async configResolved(config) {
       resolvedConfig = config;
-    },
-    configureServer(server) {
-      // Watch for new .ts files and scan them into the registry. Use
-      // the barrel-aware scanner so a newly added re-export entry
-      // (`export * from './x'`) also expands its underlying directive
-      // classes — otherwise the registry stays stale until restart.
-      server.watcher.on('add', async (filePath) => {
-        if (
-          filePath.endsWith('.ts') &&
-          !filePath.endsWith('.spec.ts') &&
-          !filePath.endsWith('.d.ts')
-        ) {
-          await scanBarrelExports(filePath, new Set(), true);
-        }
-      });
+      if (sharedCtx) {
+        const integrations = await sharedCtx.resolveConfig(config);
+        transformFilter = integrations.transformFilter;
+        componentRegistries = integrations.componentRegistries;
+        stylePreprocessor = integrations.stylePreprocessor;
+      } else {
+        const integrations = await discoverAnalogIntegrations(config);
+        transformFilter = integrations.transformFilter;
+        componentRegistries = integrations.componentRegistries;
+        stylePreprocessor = integrations.stylePreprocessor;
+        tsconfigResolver.setIntegrationIncludes(integrations.include);
+      }
     },
     async buildStart() {
       await initFastCompile();
     },
     closeBundle() {
-      if (!watchMode) {
+      const activeWatchMode = sharedCtx ? sharedCtx.watchMode : watchMode;
+      if (!activeWatchMode) {
+        emittedMaps.clear();
         releaseCssPreprocessorWorkers();
       }
     },
     async handleHotUpdate(ctx) {
+      if (
+        sharedCtx
+          ? sharedCtx.hmr.isIgnoredFile(ctx.file)
+          : isIgnoredHmrFile(ctx.file)
+      ) {
+        return [];
+      }
+
       // Resource file changes → invalidate parent .ts module
       if (resourceToSource.has(ctx.file)) {
         const parentSource = resourceToSource.get(ctx.file)!;
@@ -751,66 +839,50 @@ export function fastCompilePlugin(
         }
       }
 
-      if (TS_EXT_REGEX.test(ctx.file)) {
+      if (scanner.isCompiledSource(ctx.file)) {
         const [fileId] = ctx.file.split('?');
 
-        // Remove old entries from this file
-        const oldEntries = [...registry.entries()]
-          .filter(([_, v]) => v.fileName === fileId)
-          .map(([k]) => k);
-        for (const key of oldEntries) {
-          registry.delete(key);
-        }
+        // Remove old entries from this file. Cached scans that pulled in
+        // this file may now be incomplete.
+        const oldEntries = scanner.entriesOf(fileId);
+        scanner.invalidate(fileId);
 
         // Rescan the changed file via the barrel-aware scanner so an
         // edited barrel re-export picks up newly-referenced files.
         // Pass overwrite=true so updated metadata replaces stale
         // entries from the previous scan.
         await scanBarrelExports(fileId, new Set(), true);
+
+        // Importers compiled the old selector/inputs/outputs into their
+        // templates, so recompile them when this file's metadata changed.
+        const metadataChanged =
+          JSON.stringify(oldEntries) !==
+          JSON.stringify(scanner.entriesOf(fileId));
+        if (metadataChanged) {
+          const importerModules = [
+            ...(scanner.importersByFile.get(fileId) ?? []),
+          ].flatMap((importer) => [
+            ...(ctx.server.moduleGraph.getModulesByFile(importer) ?? []),
+          ]);
+          return [...ctx.modules, ...importerModules];
+        }
       }
 
       // Let Vite handle the rest — the transform hook will recompile
       return ctx.modules;
     },
     resolveId(id, importer) {
-      if (id.startsWith(VIRTUAL_RAW_PREFIX)) {
-        return `\0${id}`;
-      }
-
-      if (pluginOptions.jit && id.startsWith('angular:jit:')) {
-        const filePath = normalizePath(
-          resolve(dirname(importer as string), id.split(';')[1]),
-        );
-        if (id.includes(':style')) {
-          markStylePathSafe(resolvedConfig, filePath);
-          return filePath + '?inline';
-        }
-        return toVirtualRawId(filePath);
-      }
-
-      const rawRewrite = rewriteHtmlRawImport(id, importer);
-      if (rawRewrite) return rawRewrite;
-
-      const styleImport = resolveStyleInlineImport(
-        id,
-        importer,
-        resolvedConfig,
-      );
-      if (styleImport) return styleImport;
-
-      return undefined;
+      return resolveAngularVirtualId(id, importer, {
+        jit: pluginOptions.jit,
+        resolvedConfig: sharedCtx?.resolvedConfig ?? resolvedConfig,
+      });
     },
     async load(id) {
-      const rawModule = await loadVirtualRawModule(this, id);
-      if (rawModule !== undefined) return rawModule;
-
-      // Vitest fallback: module-runner can skip resolveId, so the bare
-      // ?inline query reaches load. Mark safe and let Vite handle it.
-      if (/\.(css|scss|sass|less)\?inline$/.test(id)) {
-        markStylePathSafe(resolvedConfig, id.split('?')[0]);
-      }
-
-      return;
+      return loadAngularVirtualModule(
+        this,
+        id,
+        sharedCtx?.resolvedConfig ?? resolvedConfig,
+      );
     },
     transform: {
       filter: {
@@ -828,18 +900,106 @@ export function fastCompilePlugin(
         },
       },
       async handler(code, id) {
-        if (
-          pluginOptions.transformFilter &&
-          !(pluginOptions.transformFilter(code, id) ?? true)
-        ) {
+        const activeTransformFilter =
+          sharedCtx?.transformFilter ?? transformFilter;
+        if (activeTransformFilter && !activeTransformFilter(code, id)) {
           return;
         }
 
         if (id.includes('.ts?')) {
           id = id.replace(/\?(.*)/, '');
         }
-        return handleFastCompileTransform(code, id);
+        const resolveImport = scanner.toResolveImport((spec, importer) =>
+          this.resolve(spec, importer, { skipSelf: true }),
+        );
+
+        const transformed = await handleFastCompileTransform(
+          code,
+          id,
+          resolveImport,
+        );
+        if (transformed?.map) {
+          emittedMaps.set(
+            normalizePath(id),
+            typeof transformed.map === 'string'
+              ? transformed.map
+              : JSON.stringify(transformed.map),
+          );
+        }
+        return transformed;
       },
     },
   };
+}
+
+/**
+ * Builds the registry view for compiling `id`, overlaying external registries,
+ * this file's value import bindings (including aliases, default imports, and
+ * same-named components from distinct modules), and declarations from `id`
+ * itself. Reuses `scanner.registry` directly when no overrides apply.
+ */
+function buildCompileRegistry(
+  scanner: ComponentScanner,
+  program: ReturnType<typeof parseSync>['program'],
+  id: string,
+  externalRegistries: readonly ComponentRegistryEntries[],
+): ComponentRegistry {
+  let compileRegistry: ComponentRegistry = scanner.registry;
+  const ensureOverlay = (): ComponentRegistry => {
+    if (compileRegistry === scanner.registry) {
+      compileRegistry = new Map(scanner.registry);
+    }
+    return compileRegistry;
+  };
+
+  if (externalRegistries.some((external) => external.size > 0)) {
+    const overlay = ensureOverlay();
+    for (const external of externalRegistries) {
+      for (const [k, v] of external) overlay.set(k, v);
+    }
+  }
+
+  for (const stmt of program.body || []) {
+    if (
+      stmt.type !== 'ImportDeclaration' ||
+      (stmt as any).importKind === 'type' ||
+      !stmt.source?.value
+    ) {
+      continue;
+    }
+    const moduleSpecifier: string = stmt.source.value;
+    for (const spec of (stmt as any).specifiers || []) {
+      if (spec.importKind === 'type') continue;
+      let importedName: string | undefined;
+      let localName: string | undefined;
+      if (spec.type === 'ImportDefaultSpecifier') {
+        importedName = 'default';
+        localName = spec.local?.name;
+      } else if (spec.type === 'ImportSpecifier') {
+        importedName =
+          spec.imported?.type === 'Identifier'
+            ? spec.imported.name
+            : typeof spec.imported?.value === 'string'
+              ? spec.imported.value
+              : undefined;
+        localName = spec.local?.name;
+      }
+      if (!importedName || !localName) continue;
+      const entry = scanner.lookupEntry(importedName, externalRegistries, {
+        moduleSpecifier,
+        containingFile: id,
+      });
+      if (entry && compileRegistry.get(localName) !== entry) {
+        ensureOverlay().set(localName, entry);
+      }
+    }
+  }
+
+  for (const localEntry of scanner.entriesOf(id)) {
+    if (compileRegistry.get(localEntry.className) !== localEntry) {
+      ensureOverlay().set(localEntry.className, localEntry);
+    }
+  }
+
+  return compileRegistry;
 }

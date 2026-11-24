@@ -1,4 +1,5 @@
-import { parseSync } from 'oxc-parser';
+import type { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import { COMPILABLE_DECORATORS } from './constants.js';
 
 export interface RegistryInput {
@@ -49,6 +50,8 @@ export interface RegistryEntry {
   outputs?: Record<string, string>;
   /** The package this declaration was scanned from (e.g. "@angular/cdk") */
   sourcePackage?: string;
+  /** Whether this declaration is the file's default export */
+  isDefaultExport?: boolean;
 }
 
 /** Maps class name → registry entry */
@@ -74,7 +77,7 @@ export function scanFile(
     return entries;
   }
 
-  program ??= parseSync(fileName, code).program;
+  program ??= parseOxc(fileName, code).program;
 
   // First pass: collect tuple barrels — top-level `const X = [A, B, C]`
   // (with or without `export`/`as const`) where every element is a bare
@@ -119,6 +122,31 @@ export function scanFile(
     }
   }
 
+  // Collect the local identifier name of a separate `export default Foo` or
+  // `export { Foo as default }` so classes declared earlier are marked too.
+  let defaultExportedName: string | undefined;
+  for (const node of program.body) {
+    if (
+      node.type === 'ExportDefaultDeclaration' &&
+      (node as any).declaration?.type === 'Identifier'
+    ) {
+      defaultExportedName = (node as any).declaration.name;
+    } else if (
+      node.type === 'ExportNamedDeclaration' &&
+      !(node as any).source
+    ) {
+      for (const spec of (node as any).specifiers || []) {
+        const exported =
+          spec.exported?.type === 'Identifier'
+            ? spec.exported.name
+            : spec.exported?.value;
+        if (exported === 'default' && spec.local?.type === 'Identifier') {
+          defaultExportedName = spec.local.name;
+        }
+      }
+    }
+  }
+
   for (const node of program.body) {
     // Handle `class Foo {}`, `export class Foo {}`, and `export default class Foo {}`
     const decl =
@@ -131,6 +159,9 @@ export function scanFile(
     if (!decl.id?.name) continue;
 
     const className: string = decl.id.name;
+    const isDefaultExport =
+      node.type === 'ExportDefaultDeclaration' ||
+      className === defaultExportedName;
     const decorators: any[] = decl.decorators || [];
 
     for (const dec of decorators) {
@@ -207,6 +238,7 @@ export function scanFile(
           imports: moduleImports || [],
           fileName,
           className,
+          ...(isDefaultExport ? { isDefaultExport: true } : {}),
         });
       } else if (decoratorName === 'Pipe' && pipeName) {
         entries.push({
@@ -215,6 +247,7 @@ export function scanFile(
           pipeName,
           fileName,
           className,
+          ...(isDefaultExport ? { isDefaultExport: true } : {}),
         });
       } else if (selector) {
         // Extract inputs/outputs from class members
@@ -363,10 +396,47 @@ export function scanFile(
           className,
           ...(Object.keys(inputs).length > 0 ? { inputs } : {}),
           ...(Object.keys(outputs).length > 0 ? { outputs } : {}),
+          ...(isDefaultExport ? { isDefaultExport: true } : {}),
         });
       }
     }
   }
 
   return entries;
+}
+
+/**
+ * Whether the file declares a `@Component({ standalone: false })`. Such a
+ * component's template scope comes from the NgModule that declares it, which
+ * can only be found by scanning the whole project.
+ */
+export function declaresNonStandaloneComponent(
+  program: ReturnType<typeof parseSync>['program'],
+): boolean {
+  for (const node of program.body) {
+    const decl =
+      node.type === 'ExportNamedDeclaration' ||
+      node.type === 'ExportDefaultDeclaration'
+        ? (node as any).declaration
+        : node;
+    if (decl?.type !== 'ClassDeclaration') continue;
+    for (const dec of decl.decorators || []) {
+      const expr = dec.expression;
+      if (expr?.type !== 'CallExpression') continue;
+      if (expr.callee?.name !== 'Component') continue;
+      const arg = expr.arguments?.[0];
+      if (arg?.type !== 'ObjectExpression') continue;
+      for (const prop of arg.properties) {
+        if (
+          prop.type === 'Property' &&
+          (prop.key?.name || prop.key?.value) === 'standalone' &&
+          prop.value?.type === 'Literal' &&
+          prop.value.value === false
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }

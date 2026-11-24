@@ -16,7 +16,7 @@ export const SUPPORTS_INCREMENT_DECREMENT =
 // suite against multiple installed versions to catch this drift, and the
 // version-aware code paths in compile.ts / js-emitter.ts / metadata.ts
 // gate behavior on `ANGULAR_MAJOR` to keep the compiler working across
-// the supported `peerDependencies` range (currently >=19.0.0).
+// the supported `peerDependencies` range (currently >=20.0.0).
 //
 // Default fallback: when the version string is missing or unparseable
 // (vendored builds, monkey-patched test environments), assume the latest
@@ -42,7 +42,7 @@ export const ANGULAR_MAJOR: number = (() => {
  *   if (angularVersionAtLeast(21)) {
  *     // Use Angular 21+ API
  *   } else {
- *     // Fall back to v19/v20 behavior
+ *     // Fall back to v20 behavior
  *   }
  */
 export function angularVersionAtLeast(major: number): boolean {

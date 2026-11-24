@@ -79,6 +79,10 @@ export default class NewsletterComponent {
 
 `FormAction` 指令将表单数据提交到服务器，由其处理程序处理。
 
+### 增强表单
+
+增强的表单处理默认启用。该指令使用 `action` 或 `[action]` 作为提交目标，在提交期间更新 `data-state` 和 `aria-busy` 属性，并保留完整的重定向 URL。使用 `[enhanceForm]="false"` 可以退出并保留之前的行为。
+
 ## 处理表单操作
 
 要处理表单操作，请在包含异步 `action` 函数的 `.page.ts` 文件旁边定义 `.server.ts` 文件，以处理表单提交。
@@ -87,8 +91,15 @@ export default class NewsletterComponent {
 
 ```ts
 // src/app/pages/newsletter.server.ts
+import {
+  type PageServerAction,
+  redirect,
+  json,
+  fail,
+} from '@analogjs/router/server/actions';
+
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -128,7 +139,7 @@ export async function action({ event }: PageServerAction) {
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -175,13 +186,15 @@ export default class NewsletterComponent {
 
 ```ts
 // src/app/pages/search.server.ts
+import type { PageServerLoad } from '@analogjs/router';
+
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const searchTerm = event.url.searchParams.get('search') ?? '';
+  console.log('loaded search', searchTerm);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm,
   };
 }
 ```

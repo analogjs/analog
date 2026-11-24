@@ -1,9 +1,15 @@
 // Mocked at module level so the plugin sees our stubs for the OXC/esbuild
 // strip pass on the bypass path. Kept in a separate file from compile.spec.ts
 // because that suite uses real `vite.transformWithOxc` for end-to-end checks.
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
 import { normalizePath } from 'vite';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -36,7 +42,6 @@ function buildPlugin() {
     inlineStylesExtension: 'css',
     jit: false,
     liveReload: false,
-    supportedBrowsers: [],
     isTest: false,
     isAstroIntegration: false,
   });
@@ -68,7 +73,7 @@ describe('fastCompilePlugin bypass strips TS', () => {
 
     const code = `export { SomeClass, type SomeInterface } from './lib/some-file';\n`;
     const result = await handler.call(
-      { addWatchFile: () => undefined },
+      { addWatchFile: () => undefined, resolve: async () => null },
       code,
       '/src/lib/barrel.ts',
     );
@@ -100,7 +105,7 @@ describe('fastCompilePlugin bypass strips TS', () => {
     try {
       const code = `export { SomeClass, type SomeInterface } from './lib/some-file';\n`;
       const result = await handler.call(
-        { addWatchFile: () => undefined },
+        { addWatchFile: () => undefined, resolve: async () => null },
         code,
         '/src/lib/barrel.ts',
       );
@@ -126,7 +131,7 @@ describe('fastCompilePlugin bypass strips TS', () => {
 
     const code = `import type { Route } from '@angular/router';\nexport const ROUTES: Route[] = [];\n`;
     await handler.call(
-      { addWatchFile: () => undefined },
+      { addWatchFile: () => undefined, resolve: async () => null },
       code,
       '/src/app/app.routes.ts',
     );
@@ -155,7 +160,6 @@ describe('fastCompilePlugin bypass strips TS', () => {
       inlineStylesExtension: 'css',
       jit: true,
       liveReload: false,
-      supportedBrowsers: [],
       isTest: true,
       isAstroIntegration: false,
     });
@@ -168,7 +172,7 @@ export class App {
 }
 `;
     const result = await handler.call(
-      { addWatchFile: () => undefined },
+      { addWatchFile: () => undefined, resolve: async () => null },
       code,
       '/src/app/app.ts',
     );
@@ -209,7 +213,6 @@ export class App {
         inlineStylesExtension: 'css',
         jit: true,
         liveReload: false,
-        supportedBrowsers: [],
         isTest: true,
         isAstroIntegration: false,
       });
@@ -222,7 +225,7 @@ export class App {
 }
 `;
       const result = await handler.call(
-        { addWatchFile: () => undefined },
+        { addWatchFile: () => undefined, resolve: async () => null },
         code,
         '/src/app/app.ts',
       );
@@ -259,7 +262,7 @@ export class XComponent {}
 `;
     try {
       await handler.call(
-        { addWatchFile: () => undefined },
+        { addWatchFile: () => undefined, resolve: async () => null },
         code,
         '/src/app/x.component.ts',
       );
@@ -286,7 +289,7 @@ export class XComponent {
 `;
 
     const result = await handler.call(
-      { addWatchFile: () => undefined },
+      { addWatchFile: () => undefined, resolve: async () => null },
       code,
       '/src/app/x.component.ts',
     );
@@ -316,7 +319,7 @@ export class XComponent {
 `;
 
       const result = await handler.call(
-        { addWatchFile: () => undefined },
+        { addWatchFile: () => undefined, resolve: async () => null },
         code,
         '/src/app/x.component.ts',
       );
@@ -350,7 +353,7 @@ export class MyService {
 `;
     try {
       await handler.call(
-        { addWatchFile: () => undefined },
+        { addWatchFile: () => undefined, resolve: async () => null },
         code,
         '/src/app/my.service.ts',
       );
@@ -383,7 +386,11 @@ import { Component } from '@angular/core';
 export class ExtComponent {}
 `;
     try {
-      await handler.call({ addWatchFile: () => undefined }, code, id);
+      await handler.call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        code,
+        id,
+      );
     } catch {
       // The full compile path may throw under the mocked transforms; we only
       // assert the external scss was sent to the preprocessor as `.scss`.
@@ -395,9 +402,179 @@ export class ExtComponent {}
     );
     expect(scssCall).toBeDefined();
   });
+
+  async function transformCssStyleUrlComponent(
+    plugin: ReturnType<typeof buildPlugin>,
+  ) {
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    const code = `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`;
+    try {
+      await getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        code,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      );
+    } catch {
+      // Only the preprocessCSS calls are asserted.
+    }
+  }
+
+  it('runs an external .css styleUrl through preprocessCSS', async () => {
+    await transformCssStyleUrlComponent(buildPlugin());
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringContaining('display: block'),
+      expect.stringMatching(/\.css$/),
+      undefined,
+    );
+  });
+
+  it('puts the preprocessed styleUrl CSS into setClassMetadata', async () => {
+    await transformCssStyleUrlComponent(buildPlugin());
+
+    expect(mockTransformWithOxc).toHaveBeenCalledOnce();
+    const compiled: string = mockTransformWithOxc.mock.calls[0][0];
+    expect(compiled.slice(compiled.indexOf('ɵsetClassMetadata'))).toContain(
+      'styles: [":host{}\\n"]',
+    );
+  });
+
+  it('preprocesses an external styleUrl at its own path', async () => {
+    mockPreprocessCSS.mockResolvedValue({ code: ':host{}\n' });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    try {
+      await getTransformHandler(buildPlugin()).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './__fixtures__/test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/ext.component.ts`,
+      );
+    } catch {
+      // Only the preprocessCSS calls are asserted.
+    }
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringContaining('display: block'),
+      resolve(__dirname, 'compiler/__fixtures__/test.component.css'),
+      undefined,
+    );
+  });
+
+  it('warns when a stylesheet cannot be processed', async () => {
+    const plugin = buildPlugin();
+    const logger = { warn: vi.fn() };
+    await (plugin.configResolved as any)({ plugins: [], logger });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    mockPreprocessCSS.mockRejectedValue(new Error('Unknown utility'));
+    try {
+      await getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      );
+    } catch {
+      // Only the warning is asserted.
+    }
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringMatching(/\.css.*Unknown utility/s),
+      expect.anything(),
+    );
+  });
+
+  it('fails the build when a stylesheet cannot be processed', async () => {
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [],
+      command: 'build',
+      logger: { warn: vi.fn() },
+    });
+    mockTransformWithOxc.mockResolvedValue({ code: '', map: { mappings: '' } });
+    mockPreprocessCSS.mockRejectedValue(new Error('Unknown utility'));
+
+    await expect(
+      getTransformHandler(plugin).call(
+        { addWatchFile: () => undefined, resolve: async () => null },
+        `
+import { Component } from '@angular/core';
+@Component({ selector: 'app-ext', template: '', styleUrl: './test.component.css' })
+export class ExtComponent {}
+`,
+        `${__dirname}/compiler/__fixtures__/ext.component.ts`,
+      ),
+    ).rejects.toThrow(/\.css.*Unknown utility/s);
+  });
+
+  it('applies a registered style preprocessor before preprocessCSS', async () => {
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [
+        {
+          name: 'prepender',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerStylePreprocessor(
+                (code: string) => `@reference "tailwindcss";\n${code}`,
+              );
+            },
+          },
+        },
+      ],
+    });
+
+    await transformCssStyleUrlComponent(plugin);
+
+    expect(mockPreprocessCSS).toHaveBeenCalledWith(
+      expect.stringMatching(/^@reference "tailwindcss";\n:host/),
+      expect.stringMatching(/\.css$/),
+      expect.anything(),
+    );
+  });
 });
 
 describe('fastCompilePlugin transform filter', () => {
+  it('skips modules rejected by an analog.setup transform filter', async () => {
+    vi.clearAllMocks();
+    const plugin = buildPlugin();
+    await (plugin.configResolved as any)({
+      plugins: [
+        {
+          name: 'components-only',
+          analog: {
+            setup(ctx: any) {
+              ctx.registerTransformFilter((_code: string, id: string) =>
+                id.includes('src/components'),
+              );
+            },
+          },
+        },
+      ],
+    });
+    const handler = getTransformHandler(plugin);
+
+    const result = await handler.call(
+      { addWatchFile: () => undefined, resolve: async () => null },
+      'export const routes = [];\n',
+      '/src/app/routes.ts',
+    );
+
+    expect(result).toBeUndefined();
+    expect(mockTransformWithOxc).not.toHaveBeenCalled();
+    expect(mockTransformWithEsbuild).not.toHaveBeenCalled();
+  });
+
   it('excludes .ts?raw ids so Vite raw handling stands (#2356)', () => {
     const plugin = buildPlugin();
     const exclude = (plugin.transform as any).filter.id.exclude as unknown[];
@@ -412,29 +589,6 @@ describe('fastCompilePlugin transform filter', () => {
     expect(matchesExclude('/src/app/foo.ts')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?t=12345')).toBe(false);
     expect(matchesExclude('/src/app/foo.ts?component')).toBe(false);
-  });
-});
-
-describe('fastCompilePlugin resolveId', () => {
-  it('should resolve style ?inline imports to absolute ?inline paths', () => {
-    const plugin = buildPlugin();
-
-    (plugin as any).configResolved({ safeModulePaths: new Set() });
-
-    const resolveId = (plugin as any).resolveId;
-
-    expect(
-      resolveId(
-        './my-component.scss?inline',
-        '/project/src/app/my-component.ts',
-      ),
-    ).toBe(normalizePath('/project/src/app/my-component.scss') + '?inline');
-    expect(
-      resolveId(
-        '/project/src/app/my-component.css?inline',
-        '/project/src/app/other.ts',
-      ),
-    ).toBe(normalizePath('/project/src/app/my-component.css') + '?inline');
   });
 });
 
@@ -492,5 +646,186 @@ describe('getPathsBasePath', () => {
 
   it('falls back to the project root when no config anchors paths', () => {
     expect(getPathsBasePath(undefined, '/project')).toBe('/project');
+  });
+});
+
+describe('fastCompilePlugin on-demand registry', () => {
+  let root: string;
+
+  const write = (name: string, code: string) => {
+    const file = join(root, name);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, code);
+    return normalizePath(file);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockTransformWithOxc.mockImplementation(async (code: string) => ({
+      code,
+      map: { mappings: '' },
+    }));
+    root = mkdtempSync(join(tmpdir(), 'analog-lazy-registry-'));
+    write('tsconfig.json', JSON.stringify({ files: [] }));
+    write(
+      'child.ts',
+      `import { Component } from '@angular/core';
+@Component({ selector: 'app-a', template: '' })
+export class ChildA {}
+@Component({ selector: 'app-b', template: '' })
+export class ChildB {}
+export const ChildImports = [ChildA, ChildB] as const;
+`,
+    );
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  async function setup(aliases: Record<string, string> = {}) {
+    const plugin = fastCompilePlugin({
+      tsconfigGetter: () => join(root, 'tsconfig.json'),
+      workspaceRoot: root,
+      inlineStylesExtension: 'css',
+      jit: false,
+      liveReload: false,
+      isTest: false,
+      isAstroIntegration: false,
+    });
+    await (plugin.config as any)({ root }, { command: 'serve' });
+    await (plugin.buildStart as any)();
+    const resolve = async (spec: string) => {
+      const file = spec.startsWith('.')
+        ? join(root, `${spec}.ts`)
+        : aliases[spec] && join(root, aliases[spec]);
+      return file ? { id: normalizePath(file) } : null;
+    };
+    const parentId = normalizePath(join(root, 'parent.ts'));
+    const compileParent = async (imports: string, from: string) =>
+      (
+        await getTransformHandler(plugin).call(
+          { resolve },
+          `import { Component } from '@angular/core';
+import { ${imports} } from '${from}';
+@Component({ selector: 'app-parent', imports: [${imports}], template: '' })
+export class Parent {}
+`,
+          parentId,
+        )
+      ).code as string;
+    const hotUpdate = (file: string, modules: unknown[]) =>
+      (plugin.handleHotUpdate as any)({
+        file,
+        modules,
+        server: {
+          moduleGraph: {
+            getModuleById: () => undefined,
+            getModulesByFile: (f: string) =>
+              f === parentId ? new Set([{ id: parentId }]) : undefined,
+          },
+        },
+      });
+    return { compileParent, hotUpdate, parentId };
+  }
+
+  it('resolves imported declarations without a project scan', async () => {
+    const { compileParent } = await setup();
+
+    expect(await compileParent('ChildImports', './child')).toContain(
+      'dependencies: () => [ChildA, ChildB, Parent]',
+    );
+  });
+
+  it('follows re-exports through path aliases', async () => {
+    write('barrel.ts', `export { LibImports } from '@lib/lib';\n`);
+    write(
+      'lib/lib.ts',
+      `import { Directive } from '@angular/core';
+@Directive({ selector: '[libA]' })
+export class LibA {}
+export const LibImports = [LibA] as const;
+`,
+    );
+    const { compileParent } = await setup({ '@lib/lib': 'lib/lib.ts' });
+
+    expect(await compileParent('LibImports', './barrel')).toContain(
+      'dependencies: () => [LibA, Parent]',
+    );
+  });
+
+  it('registers package declarations imported by a scanned NgModule', async () => {
+    write(
+      'node_modules/fake-lib/package.json',
+      JSON.stringify({ name: 'fake-lib', types: 'index.d.ts' }),
+    );
+    write(
+      'node_modules/fake-lib/index.d.ts',
+      `import * as i0 from '@angular/core';
+export declare class FakeDir {
+  static ɵdir: i0.ɵɵDirectiveDeclaration<FakeDir, "[fake]", never, {}, {}, never, never, true, never>;
+}
+`,
+    );
+    write(
+      'shared.ts',
+      `import { NgModule } from '@angular/core';
+import { FakeDir } from 'fake-lib';
+@NgModule({ imports: [FakeDir], exports: [FakeDir] })
+export class SharedModule {}
+`,
+    );
+    const { compileParent } = await setup();
+
+    expect(await compileParent('SharedModule', './shared')).toMatch(
+      /dependencies: \(\) => \[[^\]]*FakeDir/,
+    );
+  });
+
+  it('rescans barrels after a file they re-export changes', async () => {
+    write('barrel.ts', `export * from './child';\n`);
+    const { compileParent, hotUpdate } = await setup();
+    await compileParent('ChildImports', './barrel');
+
+    write(
+      'extra.ts',
+      `import { Component } from '@angular/core';
+@Component({ selector: 'app-c', template: '' })
+export class ChildC {}
+export const ExtraImports = [ChildC] as const;
+`,
+    );
+    const childId = write(
+      'child.ts',
+      readFileSync(join(root, 'child.ts'), 'utf-8')
+        .replace(
+          "from '@angular/core';",
+          "from '@angular/core';\nimport { ExtraImports } from './extra';",
+        )
+        .replace('[ChildA, ChildB]', '[ChildA, ChildB, ExtraImports]'),
+    );
+    await hotUpdate(childId, []);
+
+    expect(await compileParent('ChildImports', './barrel')).toContain(
+      'dependencies: () => [ChildA, ChildB, ChildC, Parent]',
+    );
+  });
+
+  it('recompiles importers when an imported selector changes', async () => {
+    const { compileParent, hotUpdate, parentId } = await setup();
+    await compileParent('ChildImports', './child');
+    const childId = normalizePath(join(root, 'child.ts'));
+    const childModule = { id: childId };
+
+    expect(await hotUpdate(childId, [childModule])).toEqual([childModule]);
+
+    write(
+      'child.ts',
+      readFileSync(childId, 'utf-8').replace('app-a', 'app-renamed'),
+    );
+    expect(await hotUpdate(childId, [childModule])).toEqual([
+      childModule,
+      { id: parentId },
+    ]);
   });
 });

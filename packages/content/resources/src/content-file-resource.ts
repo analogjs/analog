@@ -1,35 +1,65 @@
-import { computed, inject, resource, Signal } from '@angular/core';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import {
-  ContentFile,
-  ContentRenderer,
-  parseRawContentFile,
-  injectContentFileLoader,
-  injectContentLocale,
-} from '@analogjs/content';
+  computed,
+  inject,
+  resource,
+  Signal,
+  type ResourceRef,
+} from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { toSignal } from '@angular/core/rxjs-interop';
-import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import type { ContentFile } from '../../src/lib/content-file';
+import { injectContentLocale } from '../../src/lib/content-locale';
+import { ContentRenderer } from '../../src/lib/content-renderer';
+import { FrontmatterValidationError } from '../../src/lib/frontmatter-validation-error';
+import type {
+  ContentFileLoader,
+  ContentFileModule,
+} from '../../src/lib/parse-content-file';
+import { injectContentFileLoader } from '../../src/lib/content-file-loader';
 
-type ContentFileParams = Signal<
-  | string
-  | {
-      customFilename: string;
-    }
->;
+export interface ContentFileResourceResult<
+  Attributes extends Record<string, any> = Record<string, any>,
+> extends ContentFile<Attributes | Record<string, never>> {
+  toc: Array<{ id: string; level: number; text: string }>;
+}
+
+type ContentFileParams =
+  | Signal<string | { customFilename: string }>
+  | Signal<string>
+  | Signal<{ customFilename: string }>;
+
+async function validateAttributes<TSchema extends StandardSchemaV1>(
+  schema: TSchema,
+  attributes: unknown,
+  filename?: string,
+) {
+  const result = await schema['~standard'].validate(attributes);
+  if (result.issues) {
+    throw new FrontmatterValidationError(result.issues, filename);
+  }
+
+  return result.value;
+}
+
+function getValidationFilename(filename: string): string {
+  return filename.replace(/^\/src\/content\//, '');
+}
 
 async function getContentFile<
   Attributes extends Record<string, any> = Record<string, any>,
 >(
-  contentFiles: Record<string, () => Promise<string>>,
+  contentFiles: Record<string, ContentFileLoader>,
   slug: string,
   fallback: string,
   locale?: string | null,
+  schema?: StandardSchemaV1,
 ): Promise<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
   // This mirrors normalization used elsewhere in the content pipeline.
-  const normalizedFiles: Record<string, () => Promise<string>> = {};
+  const normalizedFiles: Record<string, ContentFileLoader> = {};
   const stemToKey: Record<string, string> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
@@ -51,12 +81,7 @@ async function getContentFile<
 
   // Try direct file first, then directory index variants, then bare slug via stem
   const base = `/src/content/${slug}`.replace(/\/{2,}/g, '/');
-  const candidates = [
-    `${base}.md`,
-    `${base}.agx`,
-    `${base}/index.md`,
-    `${base}/index.agx`,
-  ];
+  const candidates = [`${base}.md`, `${base}/index.md`];
 
   // Try locale-prefixed paths first, then fall back to unprefixed, then bare slug via stem
   const localeCandidates = locale
@@ -78,46 +103,114 @@ async function getContentFile<
     } as ContentFile<Attributes | Record<string, never>>;
   }
 
-  const resolvedBase = matchKey!.replace(/\.(md|agx)$/, '');
+  const resolvedBase = matchKey!.replace(/\.md$/, '');
+  const validationFilename = getValidationFilename(matchKey!);
 
-  return contentFile().then(
-    (contentFile: string | { default: any; metadata: any }) => {
-      if (typeof contentFile === 'string') {
-        const { content, attributes } =
-          parseRawContentFile<Attributes>(contentFile);
-
-        return {
-          filename: resolvedBase,
-          slug,
-          attributes,
-          content,
-        } as ContentFile<Attributes | Record<string, never>>;
-      }
+  return contentFile().then(async (contentFile: string | ContentFileModule) => {
+    if (typeof contentFile === 'string') {
+      const { parseRawContentFile, parseRawContentFileAsync } =
+        await import('../../src/lib/parse-raw-content-file');
+      const { content, attributes } = schema
+        ? await parseRawContentFileAsync(
+            contentFile,
+            schema,
+            validationFilename,
+          )
+        : parseRawContentFile<Attributes>(contentFile);
 
       return {
         filename: resolvedBase,
         slug,
-        attributes: contentFile.metadata,
-        content: contentFile.default,
+        attributes,
+        content,
       } as ContentFile<Attributes | Record<string, never>>;
-    },
-  );
+    }
+
+    const attributes = schema
+      ? await validateAttributes(
+          schema,
+          contentFile.metadata,
+          validationFilename,
+        )
+      : contentFile.metadata;
+
+    return {
+      filename: resolvedBase,
+      slug,
+      attributes,
+      content: contentFile.default,
+    } as ContentFile<Attributes | Record<string, never>>;
+  });
 }
 
 /**
- * Resource for requesting an individual content file
+ * Resource for requesting an individual content file.
  *
- * @param params
- * @param fallback
- * @returns
+ * @example
+ * ```typescript
+ * // Without schema (existing behavior)
+ * const post = contentFileResource<BlogAttributes>();
+ *
+ * // With schema validation
+ * import * as v from 'valibot';
+ * const BlogSchema = v.object({
+ *   title: v.string(),
+ *   date: v.pipe(v.string(), v.isoDate()),
+ * });
+ * const post = contentFileResource({ schema: BlogSchema });
+ * ```
  */
 export function contentFileResource<
   Attributes extends Record<string, any> = Record<string, any>,
->(params?: ContentFileParams, fallback = 'No Content Found') {
+>(
+  params?: ContentFileParams,
+  fallback?: string,
+): ResourceRef<ContentFileResourceResult<Attributes> | undefined>;
+
+export function contentFileResource<TSchema extends StandardSchemaV1>(options: {
+  params?: ContentFileParams;
+  fallback?: string;
+  schema: TSchema;
+}): ResourceRef<
+  | ContentFileResourceResult<
+      StandardSchemaV1.InferOutput<TSchema> & Record<string, any>
+    >
+  | undefined
+>;
+
+export function contentFileResource(
+  paramsOrOptions?:
+    | ContentFileParams
+    | {
+        params?: ContentFileParams;
+        fallback?: string;
+        schema?: StandardSchemaV1;
+      },
+  fallbackArg = 'No Content Found',
+) {
+  // Detect options-object form vs legacy positional form
+  const isOptionsObject =
+    paramsOrOptions &&
+    typeof paramsOrOptions === 'object' &&
+    !('set' in paramsOrOptions) && // not a Signal
+    ('schema' in paramsOrOptions ||
+      'params' in paramsOrOptions ||
+      'fallback' in paramsOrOptions);
+
+  const params: ContentFileParams | undefined = isOptionsObject
+    ? (paramsOrOptions as { params?: ContentFileParams }).params
+    : (paramsOrOptions as ContentFileParams | undefined);
+  const fallback: string = isOptionsObject
+    ? ((paramsOrOptions as { fallback?: string }).fallback ??
+      'No Content Found')
+    : fallbackArg;
+  const schema: StandardSchemaV1 | undefined = isOptionsObject
+    ? (paramsOrOptions as { schema?: StandardSchemaV1 }).schema
+    : undefined;
+
   const loaderPromise = injectContentFileLoader();
   const contentRenderer = inject(ContentRenderer);
   const locale = injectContentLocale();
-  const contentFilesMap = toSignal(from(loaderPromise()));
   const input =
     params ||
     toSignal(
@@ -128,17 +221,18 @@ export function contentFileResource<
     );
 
   return resource({
-    params: computed(() => ({ input: input(), files: contentFilesMap() })),
-    loader: async ({ params }) => {
-      const { input: param, files } = params;
+    params: computed(() => ({ input: input() })),
+    loader: async ({ params: { input: param } }) => {
+      const files = await loaderPromise();
 
       if (typeof param === 'string') {
         if (param) {
-          const file = await getContentFile<Attributes>(
-            files!,
+          const file = await getContentFile(
+            files,
             param,
             fallback,
             locale,
+            schema,
           );
           if (typeof file.content === 'string') {
             const rendered = (await contentRenderer.render(file.content)) as {
@@ -161,13 +255,14 @@ export function contentFileResource<
           attributes: {},
           content: fallback,
           toc: [],
-        } as ContentFile<Attributes | Record<string, never>>;
+        };
       } else {
-        const file = await getContentFile<Attributes>(
-          files!,
+        const file = await getContentFile(
+          files,
           param.customFilename,
           fallback,
           locale,
+          schema,
         );
         if (typeof file.content === 'string') {
           const rendered = (await contentRenderer.render(file.content)) as {

@@ -3,7 +3,7 @@ import { Meta, MetaDefinition as NgMetaTag } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-export const ROUTE_META_TAGS_KEY = Symbol(
+export const ROUTE_META_TAGS_KEY: unique symbol = Symbol(
   '@analogjs/router Route Meta Tags Key',
 );
 
@@ -15,6 +15,7 @@ const NAME_KEY = 'name';
 const PROPERTY_KEY = 'property';
 const CONTENT_KEY = 'content';
 const ITEMPROP_KEY = 'itemprop';
+const ROUTE_META_ATTR = 'data-analog-route-meta';
 
 export type MetaTag =
   | (CharsetMetaTag & ExcludeRestMetaTagKeys<typeof CHARSET_KEY>)
@@ -48,22 +49,67 @@ type MetaTagSelector =
       | typeof ITEMPROP_KEY}="${string}"`;
 type MetaTagMap = Record<MetaTagSelector, MetaTag>;
 
-export function updateMetaTagsOnRouteChange(): void {
-  const router = inject(Router);
-  const metaService = inject(Meta);
-
+export function updateMetaTagsOnRouteChange(
+  router: Router = inject(Router),
+  metaService: Meta = inject(Meta),
+): void {
   router.events
     .pipe(filter((event) => event instanceof NavigationEnd))
     .subscribe(() => {
       const metaTagMap = getMetaTagMap(router.routerState.snapshot.root);
+      const metaTagSelectors = Object.keys(metaTagMap);
+
+      for (const ownedTag of metaService.getTags(ROUTE_META_ATTR)) {
+        if (
+          !metaTagSelectors.some((selector) =>
+            ownedTag.matches(`meta[${selector}]`),
+          )
+        ) {
+          releaseMetaTag(ownedTag, metaService);
+        }
+      }
 
       for (const metaTagSelector in metaTagMap) {
+        const existingTag = metaService.getTag(metaTagSelector);
+        const originalAttributes =
+          existingTag?.getAttribute(ROUTE_META_ATTR) ??
+          serializeAttributes(existingTag);
         const metaTag = metaTagMap[
           metaTagSelector as MetaTagSelector
         ] as NgMetaTag;
-        metaService.updateTag(metaTag, metaTagSelector);
+        metaService
+          .updateTag(metaTag, metaTagSelector)
+          ?.setAttribute(ROUTE_META_ATTR, originalAttributes);
       }
     });
+}
+
+function serializeAttributes(tag: HTMLMetaElement | null): string {
+  if (!tag) {
+    return '';
+  }
+
+  return JSON.stringify(
+    Object.fromEntries(
+      tag.getAttributeNames().map((name) => [name, tag.getAttribute(name)]),
+    ),
+  );
+}
+
+function releaseMetaTag(tag: HTMLMetaElement, metaService: Meta): void {
+  const originalAttributes = tag.getAttribute(ROUTE_META_ATTR);
+  if (!originalAttributes) {
+    metaService.removeTagElement(tag);
+    return;
+  }
+
+  for (const name of tag.getAttributeNames()) {
+    tag.removeAttribute(name);
+  }
+  const attributes: Record<string, string> = JSON.parse(originalAttributes);
+  for (const [name, value] of Object.entries(attributes)) {
+    tag.setAttribute(name, value);
+  }
 }
 
 function getMetaTagMap(route: ActivatedRouteSnapshot): MetaTagMap {

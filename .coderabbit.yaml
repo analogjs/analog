@@ -1,8 +1,8 @@
 language: en-US
 tone_instructions: >-
-  Prioritize regressions, API compatibility, test gaps, release impact, and monorepo consistency.
-  Flag breaking changes and require a BREAKING CHANGE footer with before/after examples per CONTRIBUTING.md.
-  Skip style-only and speculative nits.
+  Prioritize regressions, API compatibility, test gaps, release impact and monorepo consistency.
+  Flag breaking changes per CONTRIBUTING.md. Analyze all affected code paths including experimental flags.
+  Skip style-only nits.
 
 reviews:
   profile: chill
@@ -107,16 +107,6 @@ reviews:
       instructions: >-
         Review as the storybook-angular package scope. Prioritize integration correctness,
         example validity, and compatibility with Storybook and Angular tooling.
-    - path: 'packages/trpc/**'
-      instructions: >-
-        Review as the trpc package scope. Focus on runtime integration, API compatibility,
-        and targeted verification for behavior changes.
-    - path: 'apps/trpc-app/**'
-      instructions: >-
-        Treat this app as part of the trpc scope and review changes with the package behavior they validate.
-    - path: 'apps/trpc-app-e2e-playwright/**'
-      instructions: >-
-        Treat this test app as part of the trpc scope. Prioritize reliability and whether the tests validate the intended behavior change.
     - path: 'packages/nx-plugin/**'
       instructions: >-
         Treat as part of the platform package scope. Pay special attention to generators, schemas, migrations,
@@ -140,7 +130,8 @@ reviews:
         Review as repo scope. Keep scope mappings aligned with the actual package and auxiliary areas in the monorepo.
     - path: 'AGENTS.md'
       instructions: >-
-        Review as repo scope. Preserve the repository's guidance for minimal, targeted, backward-compatible changes.
+        Review as repo scope. Preserve the repository's guidance for minimal, targeted, backward-compatible changes,
+        including the requirement to analyze all affected code paths and Analog experimental Vite branches during implementation and review.
     - path: 'CONTRIBUTING.md'
       instructions: >-
         Review as repo/docs guidance. Keep contributor instructions aligned with current branch, PR, and testing expectations.
@@ -194,7 +185,7 @@ reviews:
       requirements: >-
         Prefer Conventional Commit style PR titles. Use type(scope): summary when a supported package scope applies.
         Supported package scopes are vite-plugin-angular, vite-plugin-nitro, vitest-angular, create-analog,
-        astro-angular, router, storybook-angular, platform, content, content-plugin, nx-plugin, and trpc.
+        astro-angular, router, storybook-angular, platform, content, content-plugin, and nx-plugin.
         For repo, docs, or CI-only changes, concise unscoped titles like docs: or ci: are acceptable.
     description:
       mode: warning

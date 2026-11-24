@@ -65,8 +65,6 @@ export const envConfig: ApplicationConfig = {
 3. Im CI-Produktionsbuild
 
 ```bash
-  # sets the base url for server-side data fetching
-  export VITE_ANALOG_PUBLIC_BASE_URL="https://domain.com/basehref"
   # prefixes all assets and html with /basehref/
   npx nx run appname:build:production --baseHref='/basehref/'
 ```

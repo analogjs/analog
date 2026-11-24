@@ -4,12 +4,18 @@ Analog also supports using markdown content as routes, and rendering markdown co
 
 ### Setup
 
-In the `src/app/app.config.ts`, add the `provideContent()` function, along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
+In the `src/app/app.config.ts`, add `withContentRoutes()` from `@analogjs/router/content` to the `provideFileRouter()` call, then add the `provideContent()` function along with the `withMarkdownRenderer()` feature to the `providers` array when bootstrapping the application.
 
 ```ts
+import { ApplicationConfig } from '@angular/core';
+import { provideContent, withMarkdownRenderer } from '@analogjs/content';
+import { provideFileRouter } from '@analogjs/router';
+import { withContentRoutes } from '@analogjs/router/content';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     // ... other providers
+    provideFileRouter(withContentRoutes()),
     provideContent(withMarkdownRenderer()),
   ],
 };
@@ -36,6 +42,8 @@ export default defineConfig(({ mode }) => ({
 
 Content routes include support for frontmatter, metatags, and syntax highlighting with PrismJS.
 
+If you want runtime validation for frontmatter attributes, use `contentFileResource({ schema })` or `parseRawContentFile()` with a Standard Schema-compatible library. See [Schema Validation](../data-fetching/validation#validating-content-frontmatter).
+
 The example route below in `src/app/pages/about.md` defines an `/about` route.
 
 ```md
@@ -57,24 +65,45 @@ Analog is a meta-framework for Angular.
 
 ### PrismJS Syntax Highlighting
 
-Analog supports syntax highlighting with PrismJS. To enable syntax highlighting with `PrismJS`, add `withPrismHighlighter()` to the `provideContent()` function in `app.config.ts`.
+Analog supports syntax highlighting with PrismJS. Code blocks are highlighted at build time, including the `angular` grammar. To enable syntax highlighting with `PrismJS`, set the `highlighter` to `prism` in the `analog` plugin in the `vite.config.ts`.
 
-```diff-ts
-+ import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... other providers
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withPrismHighlighter()),
+```ts
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'prism',
+      },
+    }),
   ],
-};
+});
+```
+
+Install `prismjs` in your application:
+
+```shell
+npm install prismjs
 ```
 
 Import a Prism theme into to your global stylesheet:
 
 ```css
 @import 'prismjs/themes/prism.css';
+```
+
+To use Prism plugins in the browser, such as the toolbar and copy-to-clipboard buttons, import them directly in the `app.config.ts`:
+
+```ts
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+```
+
+And include the toolbar CSS in your global stylesheet:
+
+```css
+@import 'prismjs/plugins/toolbar/prism-toolbar.css';
 ```
 
 #### Using the `diff` Highlight Plugin
@@ -102,18 +131,33 @@ export default defineConfig({
 Add the `diff-highlight` plugin import to the `app.config.ts`:
 
 ```ts
-+ import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... other providers
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
-  ],
-};
+import 'prismjs/components/prism-diff';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
-To enable build-time syntax highlighting with `shiki`, configure the `analog` plugin in the `vite.config.ts`.
+Use the `diff` language tag to highlight them or `diff-<language>` to highlight the diff changes in a specific language.
+
+````md
+```diff
+- This is a sentence.
++ This is a longer sentence.
+```
+
+```diff-typescript
+- const foo = 'bar';
++ const foo = 'baz';
+```
+````
+
+To highlight changed line backgrounds instead of just the text, add this import to your global stylesheet:
+
+```css
+@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
+### Shiki Syntax Highlighting
+
+Analog also supports build-time syntax highlighting with Shiki. To enable syntax highlighting with `shiki`, configure the `analog` plugin in the `vite.config.ts`.
 
 ```ts
 export default defineConfig({

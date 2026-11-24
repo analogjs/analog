@@ -5,9 +5,12 @@ import {
 } from '@angular/core';
 import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
 import type { H3Event } from 'h3';
+import type { ServerResponse } from 'node:http';
 
 import { detectLocale, getBaseUrl } from '../provide-server-context';
+import type { AnalogRequestContext } from '../request-handler';
 import { serverFnRegistry } from './registry';
+import { assertNodeContext, nodeContext } from './node-context';
 import { SERVER_FN_INTERCEPTORS, runInterceptors } from './interceptors';
 import {
   SERVER_FN_ALLOWED_ORIGINS,
@@ -57,7 +60,7 @@ export interface DispatchServerFnOptions {
  * 2. look up the function by id
  * 3. enforce the configured HTTP method (405 on mismatch)
  * 4. require a JSON body on input-bearing calls (415 otherwise)
- * 5. validate `input` against the Standard-Schema (4xx on failure)
+ * 5. validate `input` against the Standard-Schema (422 on failure)
  * 6. build a per-request injector (REQUEST/RESPONSE + app providers)
  * 7. run the interceptor chain, then the handler, re-entering
  *    `runInInjectionContext` at every hop so `inject()` works even after an
@@ -73,11 +76,25 @@ export interface DispatchServerFnOptions {
 export async function dispatchServerFn(
   id: string,
   rawInput: unknown,
-  event: Pick<H3Event, 'node'>,
+  event: Pick<H3Event, 'node'> & { req?: unknown },
   options: DispatchServerFnOptions = {},
 ): Promise<DispatchResult> {
+  if (event.node?.req || !(event.req instanceof Request)) {
+    return dispatchInContext(id, rawInput, assertNodeContext(event), options);
+  }
+  const context = nodeContext(event.req, new URL(event.req.url));
+  const result = await dispatchInContext(id, rawInput, context, options);
+  return withContextHeaders(result, context.res);
+}
+
+async function dispatchInContext(
+  id: string,
+  rawInput: unknown,
+  node: AnalogRequestContext,
+  options: DispatchServerFnOptions,
+): Promise<DispatchResult> {
   const { parent, providers = [], method, allowedOrigins = [] } = options;
-  const headers = (event.node.req.headers ?? {}) as HeaderBag;
+  const headers = (node.req.headers ?? {}) as HeaderBag;
 
   // Same-origin guard runs first — before we even confirm the function exists —
   // so a cross-origin page cannot probe which ids are registered. Gated on
@@ -125,7 +142,7 @@ export async function dispatchServerFn(
   if (def.config.input) {
     const result = await def.config.input['~standard'].validate(rawInput);
     if ('issues' in result && result.issues) {
-      return { status: 400, body: { errors: result.issues } };
+      return { status: 422, body: { errors: result.issues } };
     }
     input = (result as { value: unknown }).value;
   }
@@ -134,13 +151,13 @@ export async function dispatchServerFn(
   // services + interceptors resolve up the parent chain. All four are provided
   // here so a handler resolves them the same way it would inside a component
   // during SSR, whether it was reached over HTTP or in-process.
-  const req = event.node.req as Parameters<typeof getBaseUrl>[0];
+  const req = node.req as Parameters<typeof getBaseUrl>[0];
   const locale = detectLocale(req);
   const injector = Injector.create({
     parent,
     providers: [
-      { provide: REQUEST, useValue: event.node.req },
-      { provide: RESPONSE, useValue: event.node.res },
+      { provide: REQUEST, useValue: node.req },
+      { provide: RESPONSE, useValue: node.res },
       { provide: BASE_URL, useValue: getBaseUrl(req) },
       ...(locale ? [{ provide: LOCALE, useValue: locale }] : []),
       ...providers,
@@ -152,12 +169,12 @@ export async function dispatchServerFn(
   // handler outside the context and break `inject()`.
   const runInCtx = <T>(fn: () => T): T => runInInjectionContext(injector, fn);
   const interceptors = injector.get(SERVER_FN_INTERCEPTORS, []);
-  const outcome = await runInterceptors(
-    interceptors,
-    input,
-    def.handler,
-    runInCtx,
-  );
+  let outcome: unknown;
+  try {
+    outcome = await runInterceptors(interceptors, input, def.handler, runInCtx);
+  } finally {
+    injector.destroy();
+  }
 
   if (outcome instanceof Response) {
     const text = await outcome.text();
@@ -182,6 +199,24 @@ export async function dispatchServerFn(
   }
 
   return { status: 200, body: outcome };
+}
+
+/** Headers set through `RESPONSE`, under those of a returned `Response`. */
+function withContextHeaders(
+  result: DispatchResult,
+  res: ServerResponse,
+): DispatchResult {
+  const headers: Record<string, string | string[]> = {};
+  for (const [key, value] of Object.entries(res.getHeaders())) {
+    if (value !== undefined) {
+      headers[key] = Array.isArray(value) ? value : String(value);
+    }
+  }
+  for (const [key, value] of Object.entries(result.headers ?? {})) {
+    headers[key] =
+      key === 'set-cookie' ? [headers[key] ?? [], value].flat() : value;
+  }
+  return Object.keys(headers).length ? { ...result, headers } : result;
 }
 
 function isJsonContentType(headers: HeaderBag): boolean {

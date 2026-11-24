@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "types": ["node", "vitest/globals"],
-    "isolatedModules": true
+    "isolatedModules": true,
+    "composite": false
   },
   "files": ["src/test-setup.ts"],
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]

@@ -1,9 +1,6 @@
-import '@analogjs/vite-plugin-angular/setup-vitest';
 import '@angular/compiler';
+import '@analogjs/vitest-angular/setup-zone';
 
-/**
- * Initialize TestBed for all tests inside of content
- */
 import { TestBed } from '@angular/core/testing';
 import {
   BrowserDynamicTestingModule,

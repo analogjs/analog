@@ -17,7 +17,6 @@ describe('CONTENT_FILES_LIST_TOKEN', () => {
   it('should be the token', () => {
     const { CONTENT_FILES_LIST_TOKEN } = setup();
     const firstParsedFile = CONTENT_FILES_LIST_TOKEN[0];
-    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(firstParsedFile.filename).toEqual('/test.md');
     expect(firstParsedFile.slug).toEqual('test');
     expect(firstParsedFile.attributes['title']).toEqual('Test');
@@ -26,35 +25,30 @@ describe('CONTENT_FILES_LIST_TOKEN', () => {
   it('should extract the slug from nested path', () => {
     const { CONTENT_FILES_LIST_TOKEN } = setup();
     const firstParsedFile = CONTENT_FILES_LIST_TOKEN[1];
-    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(firstParsedFile.slug).toEqual('test');
   });
 
   it('should extract the slug from nested path (windows)', () => {
     const { CONTENT_FILES_LIST_TOKEN } = setup();
     const firstParsedFile = CONTENT_FILES_LIST_TOKEN[2];
-    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(firstParsedFile.slug).toEqual('test');
   });
 
   it('should extract the slug without spaces', () => {
     const { CONTENT_FILES_LIST_TOKEN } = setup();
     const firstParsedFile = CONTENT_FILES_LIST_TOKEN[3];
-    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(firstParsedFile.slug).toEqual('test%20with%20spaces');
   });
 
   it('should extract the slug for optional catch-all', () => {
     const { CONTENT_FILES_LIST_TOKEN } = setup();
     const parsedFile = CONTENT_FILES_LIST_TOKEN[5];
-    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(parsedFile.slug).toEqual('%5B%5B...slug%5D%5D');
   });
 
   it('should treat index.md as index route (empty slug)', () => {
     const { CONTENT_FILES_LIST_TOKEN } = setup();
     const parsedFile = CONTENT_FILES_LIST_TOKEN[4];
-    expect(CONTENT_FILES_LIST_TOKEN).toBeTruthy();
     expect(parsedFile.slug).toEqual('');
   });
 

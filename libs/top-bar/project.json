@@ -5,13 +5,31 @@
   "sourceRoot": "libs/top-bar/src",
   "prefix": "analogjs",
   "tags": [],
+  "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
-    "test": {
-      "executor": "@nx/vitest:test"
+    "assert-deps": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/assert-project-dependency.mts top-bar build vite-plugin-angular:build"
+      }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+    "build": {
+      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
+      "outputs": ["{projectRoot}/{options.outDir}", "{projectRoot}/dist"],
+      "defaultConfiguration": "production",
+      "options": {
+        "config": "./vite.config.ts",
+        "outDir": "../../dist/libs/top-bar"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": true,
+          "mode": "production"
+        }
+      }
     }
   }
 }

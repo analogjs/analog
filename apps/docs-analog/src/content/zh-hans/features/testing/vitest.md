@@ -10,13 +10,13 @@ title: 添加Vitest
 
 通过 Angular CLI 或者 Nx 工作区的原理器/生成器来安装和设置 Vitest。
 
-首先，安装 `@analogjs/platform` 包：
+首先，安装 `@analogjs/vitest-angular` 包：
 
 <Tabs groupId="package-manager">
   <TabItem value="npm">
 
 ```shell
-npm install @analogjs/platform --save-dev
+npm install @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -24,7 +24,7 @@ npm install @analogjs/platform --save-dev
   <TabItem label="Yarn" value="yarn">
 
 ```shell
-yarn add @analogjs/platform --dev
+yarn add @analogjs/vitest-angular --dev
 ```
 
   </TabItem>
@@ -32,7 +32,7 @@ yarn add @analogjs/platform --dev
   <TabItem value="pnpm">
 
 ```shell
-pnpm install -w @analogjs/platform --save-dev
+pnpm install -w @analogjs/vitest-angular --save-dev
 ```
 
   </TabItem>
@@ -41,7 +41,7 @@ pnpm install -w @analogjs/platform --save-dev
 下一步，运行原理器来设置 Vite 配置，测试配置文件并且更新测试配置。
 
 ```shell
-ng g @analogjs/platform:setup-vitest --project [your-project-name]
+ng g @analogjs/vitest-angular:setup --project [your-project-name]
 ```
 
 然后，[运行测试](#运行测试)

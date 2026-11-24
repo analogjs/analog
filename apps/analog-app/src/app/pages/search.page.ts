@@ -6,6 +6,7 @@ import type { load } from './search.server';
 
 @Component({
   selector: 'analogjs-search-page',
+  standalone: true,
   imports: [FormAction],
   template: `
     <h3>Search</h3>

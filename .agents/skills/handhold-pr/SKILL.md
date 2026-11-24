@@ -48,25 +48,29 @@ For each failure, answer: **is this caused by the diff on this branch?**
   (run it with `run_in_background`, then read the output file when notified).
 - After each run completes, go back to step 1. Keep looping until every non-skipping check passes or you hit something the user has to decide.
 
-## 6. Resolve CodeRabbit's major findings
+## 6. Validate and resolve CodeRabbit findings
 
-Green CI isn't done. CodeRabbit reports as a **passing check even when it has posted actionable inline comments**, so its review has to be read separately.
+Green CI isn't done. CodeRabbit reports as a **passing check even when it has posted actionable comments**, so its review has to be read separately.
 
-- `gh pr view <n> --json reviews` for the summary (it states how many actionable comments it posted), and `gh api repos/<owner>/<repo>/pulls/<n>/comments` for the inline findings. Each is tagged with a severity — `🟠 Major`, `🟡 Minor`, and so on.
-- **Verify every finding against the current code before acting** — CodeRabbit is wrong often enough that you should reproduce the claim first. Where the finding is a real code path, add a test and confirm it fails without the fix.
-- Fix the still-valid **major** findings on the branch, with their own commit. Lesser findings are a judgment call — apply the cheap correct ones, and say which you skipped and why rather than silently dropping them.
-- Note when a finding is pre-existing (the same defect exists on the base branch) — it's still worth fixing if it sits in code the PR touches, but say so.
-- Pushing the fix restarts CI, so go back to step 1 and wait for the new run.
+- Read both the review summary (`gh pr view <n> --json reviews`, which also contains outside-diff-range comments) and inline review comments (`gh api repos/<owner>/<repo>/pulls/<n>/comments`). Each finding is tagged with a severity — `🟠 Major`, `🟡 Minor`, `⚪ Trivial`, etc.
+- **Validate every finding before touching code** — CodeRabbit frequently produces false positives, misunderstands surrounding invariants, or suggests unnecessary churn. Treat every finding as a hypothesis:
+  - Read the actual implementation and callers to verify the claimed bug or edge case is real, reachable, and in scope.
+  - Check whether the suggestion conflicts with repo conventions or explicit user instructions (e.g. keeping changes minimal or skipping extra tests).
+  - Where a finding is a real bug on a reachable code path, verify/reproduce it first (and add a targeted test when appropriate to confirm it fails without the fix).
+- **Push back when a finding doesn't hold up** — don't blindly apply CodeRabbit's suggested diff just to quiet the bot. If a finding is a false positive, already handled elsewhere, out of scope, or adds unnecessary complexity, leave the code alone and push back by replying on the review thread (`gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment-id>/replies -f body="..."`) with a brief, factual explanation of why the code is correct or intentionally unchanged. (Confirm with the user before posting PR replies unless they already asked you to push back.)
+- Fix the validated **major** findings on the branch in their own commit. Lesser findings are a judgment call — apply the cheap, clearly correct ones, and explicitly report (or push back on) any you skip with the reason.
+- Note when a valid finding is pre-existing (the same defect exists on the base branch) — it's still worth fixing if it sits in code the PR touches, but say so.
+- Pushing a fix restarts CI, so go back to step 1 and wait for the new run.
 
 ## 7. Report
 
 - State the final status plainly: green, or still red with what's left and why.
-- For each failure you handled, give one line: what failed, root cause, what you did (fixed / re-ran as flake / left alone as pre-existing). Do the same for each CodeRabbit finding (fixed / skipped with reason).
+- For each failure you handled, give one line: what failed, root cause, what you did (fixed / re-ran as flake / left alone as pre-existing). Do the same for each CodeRabbit finding (fixed / pushed back / skipped with reason).
 - Don't claim green without having seen the checks pass — quote the actual `gh pr checks` result.
 - Flag latent problems you noticed but didn't fix (e.g. a flake worth its own issue) instead of silently absorbing them.
 
 ## Notes
 
 - Re-running CI and pushing commits are outward-facing. They're implied by "get this PR green", but confirm before anything broader (force-pushing, rewriting history, closing/reopening the PR).
-- Don't post comments on the PR unless asked.
+- Don't post top-level PR comments unless asked; confirm before replying to CodeRabbit threads unless the user explicitly authorized pushing back.
 - If CI stays red after two focused attempts at the same failure, stop and hand the user the evidence rather than continuing to churn.

@@ -19,11 +19,6 @@ const ANGULAR_TESTBED_SETUP = Symbol.for('testbed-setup');
 type TestBedSetupOptions = {
   zoneless?: boolean;
   providers?: (Provider | EnvironmentProviders)[];
-  /**
-   * @deprecated Use `teardown.destroyAfterEach` instead.
-   * @sunset 3.0.0
-   */
-  browserMode?: boolean;
   teardown?: {
     destroyAfterEach: boolean;
   };
@@ -34,11 +29,10 @@ type TestBedSetupOptions = {
 export function setupTestBed({
   zoneless = true,
   providers = [],
-  browserMode = false,
   teardown,
   errorOnUnknownElements,
   errorOnUnknownProperties,
-}: TestBedSetupOptions = {}) {
+}: TestBedSetupOptions = {}): void {
   beforeEach(getCleanupHook(false));
   afterEach(getCleanupHook(true));
 
@@ -58,7 +52,7 @@ export function setupTestBed({
       platformBrowserTesting(),
       {
         teardown: {
-          ...{ destroyAfterEach: !browserMode },
+          destroyAfterEach: true,
           ...teardown,
         },
         errorOnUnknownElements,

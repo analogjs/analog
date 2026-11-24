@@ -2,6 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
+  InputSignal,
   NgZone,
   PLATFORM_ID,
   Signal,
@@ -13,7 +14,7 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
-import { from, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { AnchorNavigationDirective } from './anchor-navigation.directive';
@@ -41,7 +42,7 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
   private contentSource: Signal<SafeHtml | string | undefined> = toSignal(
     this.getContentSource(),
   );
-  readonly htmlContent = computed(() => {
+  readonly htmlContent: Signal<SafeHtml | string | undefined> = computed(() => {
     const inputContent = this.content();
 
     if (inputContent) {
@@ -50,10 +51,12 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
 
     return this.contentSource();
   });
-  readonly content = input<string | object | null>();
-  readonly classes = input('analog-markdown');
+  readonly content: InputSignal<string | object | null | undefined> = input<
+    string | object | null
+  >();
+  readonly classes: InputSignal<string> = input('analog-markdown');
 
-  contentRenderer = inject(ContentRenderer);
+  contentRenderer: ContentRenderer = inject(ContentRenderer);
 
   constructor() {
     if (isPlatformBrowser(this.platformId) && this.mermaidImport) {
@@ -62,7 +65,7 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
     }
   }
 
-  getContentSource() {
+  getContentSource(): Observable<SafeHtml | string> {
     return this.route.data.pipe(
       map<Data, string>((data) => data['_analogContent'] ?? ''),
       switchMap((contentString) => this.renderContent(contentString)),
@@ -76,7 +79,7 @@ export default class AnalogMarkdownComponent implements AfterViewChecked {
     return rendered.content;
   }
 
-  ngAfterViewChecked() {
+  ngAfterViewChecked(): void {
     this.contentRenderer.enhance();
     this.zone.runOutsideAngular(() => this.mermaid?.default.run());
   }

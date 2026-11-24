@@ -44,15 +44,17 @@ describe('JIT Transform', () => {
       expect(result).toContain('type: Pipe');
     });
 
-    it('preserves @Injectable on the class (no ɵcompileInjectable JIT entry point)', () => {
+    it('applies @Injectable as a call (no ɵcompileInjectable JIT entry point)', () => {
       const result = transform(`
         import { Injectable } from '@angular/core';
         @Injectable({ providedIn: 'root' })
         export class MyService {}
       `);
 
-      // @Injectable must remain so Angular's decorator self-registers ɵprov
-      expect(result).toMatch(/@Injectable/);
+      // Angular's decorator function self-registers ɵprov when applied
+      expect(result).toContain(
+        "Injectable({ providedIn: 'root' })(MyService);",
+      );
       expect(result).not.toContain('MyService.decorators');
     });
 
@@ -549,63 +551,6 @@ describe('JIT Transform', () => {
       const result = jitTransform(code, 'test.ts');
       expect(result.code).toBe(code);
       expect(result.map).toBeNull();
-    });
-  });
-
-  describe('ReflectionCapabilities Integration', () => {
-    it('produces metadata readable by Angular JIT', async () => {
-      const { ɵReflectionCapabilities: ReflectionCapabilities } =
-        await import('@angular/core');
-      const { Component, Input, Output, Optional } =
-        await import('@angular/core');
-
-      // Simulate: the JIT transform output is evaluated and produces a class
-      // with static decorators/ctorParameters/propDecorators
-      class TestComp {
-        title: string = '';
-        saved: any;
-      }
-      (TestComp as any).decorators = [
-        {
-          type: Component,
-          args: [{ selector: 'test', template: '<p>hi</p>' }],
-        },
-      ];
-      (TestComp as any).propDecorators = {
-        title: [{ type: Input }],
-        saved: [{ type: Output }],
-      };
-
-      const reflect = new ReflectionCapabilities();
-
-      // Angular JIT reads class decorators
-      const annotations = reflect.annotations(TestComp);
-      expect(annotations.length).toBe(1);
-      expect(annotations[0].selector).toBe('test');
-      expect(annotations[0].template).toBe('<p>hi</p>');
-
-      // Angular JIT reads property decorators
-      const props = reflect.propMetadata(TestComp);
-      expect(props['title']).toBeDefined();
-      expect(props['saved']).toBeDefined();
-    });
-
-    it('produces ctorParameters readable by Angular JIT', async () => {
-      const { ɵReflectionCapabilities: ReflectionCapabilities } =
-        await import('@angular/core');
-      const { Injectable, Optional } = await import('@angular/core');
-
-      class MyService {}
-      class TestComp {}
-      (TestComp as any).decorators = [{ type: Injectable }];
-      (TestComp as any).ctorParameters = () => [
-        { type: MyService, decorators: [{ type: Optional }] },
-      ];
-
-      const reflect = new ReflectionCapabilities();
-      const params = reflect.parameters(TestComp);
-      expect(params.length).toBe(1);
-      expect(params[0].length).toBe(2); // [type, decorator]
     });
   });
 });

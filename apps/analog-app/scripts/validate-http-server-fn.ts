@@ -94,7 +94,7 @@ const badRes = await fetch(`${base}/_analog/fn/${ids.getProduct}`, {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ id: 42 }),
 });
-check('HTTP POST invalid input -> 400', badRes.status === 400, {
+check('HTTP POST invalid input -> 422', badRes.status === 422, {
   status: badRes.status,
 });
 

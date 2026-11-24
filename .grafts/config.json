@@ -1,0 +1,8 @@
+{
+  "upgrade": {
+    "nx": {
+      "command": "pnpm nx migrate {version} && pnpm install --no-frozen-lockfile && pnpm nx migrate --run-migrations --if-exists --agentic=claude-code",
+      "timeoutMinutes": 45
+    }
+  }
+}

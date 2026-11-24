@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "module": "preserve",
+    "types": ["node", "vitest/globals"],
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "composite": false
+  },
+  "include": ["**/*.test.ts", "**/*.spec.ts", "**/*.d.ts"]
+}

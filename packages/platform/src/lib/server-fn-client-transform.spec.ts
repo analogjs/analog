@@ -1,4 +1,4 @@
-import { deriveServerFnId } from '@analogjs/vite-plugin-nitro/server-fn-id';
+import { deriveServerFnId } from './server-fn-id.js';
 import { describe, expect, it } from 'vitest';
 
 import { scrubServerFnModule } from './server-fn-client-transform';

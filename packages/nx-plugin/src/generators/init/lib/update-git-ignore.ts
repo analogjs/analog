@@ -1,6 +1,6 @@
 import { Tree } from '@nx/devkit';
 
-export function updateGitIgnore(tree: Tree) {
+export function updateGitIgnore(tree: Tree): void {
   const gitIgnorePath = '/.gitignore';
   let gitIgnoreContents = tree.read(gitIgnorePath, 'utf-8') ?? '';
 

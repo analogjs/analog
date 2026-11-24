@@ -22,10 +22,10 @@ import { detectLocaleFromRoute, setHtmlLang } from '../utils/i18n-prerender.js';
 
 type ServerOptions = Options & { routeRules?: Record<string, any> | undefined };
 
-export function devServerPlugin(options: ServerOptions): Plugin {
-  const workspaceRoot = options?.workspaceRoot || process.cwd();
-  const sourceRoot = options?.sourceRoot ?? 'src';
-  const index = options.index || 'index.html';
+export function devServerPlugin(getOptions: () => ServerOptions): Plugin {
+  let options: ServerOptions;
+  let sourceRoot: string;
+  let index: string;
   let config: UserConfig;
   let root: string;
   let isTest = false;
@@ -33,6 +33,13 @@ export function devServerPlugin(options: ServerOptions): Plugin {
   return {
     name: 'analogjs-dev-ssr-plugin',
     config(userConfig, { mode }) {
+      options = getOptions();
+      if (!options.ssr) {
+        return;
+      }
+      const workspaceRoot = options.workspaceRoot || process.cwd();
+      sourceRoot = options.sourceRoot ?? 'src';
+      index = options.index || 'index.html';
       config = userConfig;
       root = normalizePath(resolve(workspaceRoot, config.root || '.') || '.');
       isTest = isTest ? isTest : mode === 'test';
@@ -46,7 +53,7 @@ export function devServerPlugin(options: ServerOptions): Plugin {
       };
     },
     configureServer(viteServer) {
-      if (isTest) {
+      if (isTest || !options.ssr) {
         return;
       }
 
@@ -147,6 +154,7 @@ function remove_html_middlewares(server: ViteDevServer['middlewares']) {
     'viteIndexHtmlMiddleware',
     'vite404Middleware',
     'viteSpaFallbackMiddleware',
+    'viteHtmlFallbackMiddleware',
   ];
   for (let i = server.stack.length - 1; i > 0; i--) {
     const handler = server.stack[i]?.handle;

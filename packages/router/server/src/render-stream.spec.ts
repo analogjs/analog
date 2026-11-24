@@ -35,6 +35,7 @@ vi.mock('./ssr-navigation', () => ({
 }));
 
 import { renderStream } from './render-stream';
+import { BUFFERED_STREAM } from './utils/stream-request';
 
 class App {}
 const document =
@@ -157,6 +158,14 @@ describe('streaming render lifetime', () => {
     });
     expect(await new Response(result).text()).toContain('buffered');
     expect(angular.platform).not.toHaveBeenCalled();
+  });
+
+  it('marks buffered renders so hosts may cache them', async () => {
+    const result = await renderStream(App, { providers: [] })('/', document, {
+      ...context(),
+      streaming: false,
+    });
+    expect(BUFFERED_STREAM in result).toBe(true);
   });
 
   it('aborts a render through the host signal and removes its listener', async () => {

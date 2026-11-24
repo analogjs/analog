@@ -3,8 +3,8 @@
   "schematics": {
     "setup": {
       "description": "Configure Vitest for an Angular project",
-      "factory": "./src/schematics/setup/index#setupSchematic",
-      "schema": "./src/schematics/setup/schema.json"
+      "factory": "./schematics/setup/index#setupSchematic",
+      "schema": "./schematics/setup/schema.json"
     }
   }
 }

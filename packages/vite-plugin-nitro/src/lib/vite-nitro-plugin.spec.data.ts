@@ -42,12 +42,8 @@ export const mockNitroConfig: NitroConfig = {
       },
     ],
   },
-  routeRules: undefined,
   runtimeConfig: {
     apiPrefix: 'api',
-  },
-  virtual: {
-    '#ANALOG_API_MIDDLEWARE': expect.anything(),
   },
 };
 
@@ -65,7 +61,7 @@ export async function mockBuildFunctions() {
 
 export async function runConfigAndCloseBundle(plugin: Plugin[]): Promise<void> {
   await (
-    plugin[1].config as (
+    plugin[0].config as (
       config: UserConfig,
       env: ConfigEnv,
     ) => Promise<UserConfig>

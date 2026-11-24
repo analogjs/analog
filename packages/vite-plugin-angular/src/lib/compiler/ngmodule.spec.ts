@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { parseSync } from 'oxc-parser';
+import { transformSync } from 'oxc-transform';
 import { compileCode as compile } from './test-helpers';
 import { expectCompiles, buildRegistry } from './test-helpers';
-import { ANGULAR_MAJOR } from './angular-version';
 
 describe('@NgModule', () => {
   it('compiles a basic NgModule', () => {
@@ -230,6 +231,48 @@ describe('NgModule export expansion', () => {
       'import { ButtonComponent } from "./shared.module"',
     );
   });
+
+  it('binds an expanded export that is also imported type-only to a runtime value', () => {
+    const moduleSrc = `
+      import { NgModule, Component } from '@angular/core';
+      @Component({ selector: 'p-autocomplete', template: '' })
+      export class AutoComplete {}
+      @NgModule({ imports: [AutoComplete], exports: [AutoComplete] })
+      export class AutoCompleteModule {}
+    `;
+    const appSrc = `
+      import { Component } from '@angular/core';
+      import { AutoCompleteModule, type AutoComplete } from './autocomplete';
+      @Component({
+        selector: 'app-root',
+        imports: [AutoCompleteModule],
+        template: '<p-autocomplete />'
+      })
+      export class AppComponent {
+        ac?: AutoComplete;
+      }
+    `;
+
+    const registry = buildRegistry({ 'autocomplete.ts': moduleSrc });
+    const { code } = transformSync(
+      'app.ts',
+      compile(appSrc, 'app.ts', registry),
+    );
+
+    const valueBindings = parseSync('app.js', code).program.body.flatMap((s) =>
+      s.type === 'ImportDeclaration'
+        ? s.specifiers.map((spec) => spec.local.name)
+        : s.type === 'ExportNamedDeclaration' &&
+            s.declaration?.type === 'ClassDeclaration'
+          ? [s.declaration.id?.name]
+          : [],
+    );
+    const deps = code.match(/dependencies: \(\) => \[([^\]]*)\]/)?.[1];
+    expect(deps).toContain('AutoComplete');
+    for (const dep of deps?.split(',') ?? []) {
+      expect(valueBindings).toContain(dep.trim());
+    }
+  });
 });
 
 describe('Recursive NgModule export expansion', () => {
@@ -332,10 +375,7 @@ describe('Dependency list deduplication', () => {
   // output so individual class references can be counted.
   function depsArrayFor(result: string): string {
     const m = result.match(/dependencies:\s*\(\)\s*=>\s*\[([\s\S]*?)\]/);
-    expect(
-      m,
-      'compiled output should contain a dependencies array',
-    ).not.toBeNull();
+    expect(m).not.toBeNull();
     return m![1];
   }
   function countRefs(deps: string, name: string): number {
@@ -570,11 +610,9 @@ describe('NgModule scope for declared (non-standalone) components', () => {
     expect(result).not.toContain('_unresolved-');
   });
 
-  it('treats a declared component that omits `standalone` per the Angular version', () => {
-    // Angular 19+ defaults `standalone` to true, so a component must set
-    // `standalone: false` to be NgModule-declared. On v17/v18 the flag is
-    // usually omitted (it defaulted to false), so the owning-module scope must
-    // still apply there. This asserts both sides of that version gate.
+  it('treats a declared component that omits `standalone` as standalone', () => {
+    // `standalone` defaults to true, so a component must set
+    // `standalone: false` to receive its owning module's scope.
     const componentSrc = `
       import { Component } from '@angular/core';
       @Component({ selector: 'app-bare', template: '<div sibling></div>' })
@@ -603,12 +641,6 @@ describe('NgModule scope for declared (non-standalone) components', () => {
     expectCompiles(result);
     const deps = depsArrayFor(result);
 
-    if (ANGULAR_MAJOR < 19) {
-      // pre-v19: omitted flag means non-standalone, so module scope applies
-      expect(deps).toContain('SiblingDirective');
-    } else {
-      // v19+: omitted flag means standalone, so no module scope is forced
-      expect(deps).not.toContain('SiblingDirective');
-    }
+    expect(deps).not.toContain('SiblingDirective');
   });
 });

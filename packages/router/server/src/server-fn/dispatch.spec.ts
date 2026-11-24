@@ -1,6 +1,6 @@
-import { Injectable, Injector, inject } from '@angular/core';
-import { BASE_URL, LOCALE, REQUEST } from '@analogjs/router/tokens';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { DestroyRef, Injectable, Injector, inject } from '@angular/core';
+import { BASE_URL, LOCALE, REQUEST, RESPONSE } from '@analogjs/router/tokens';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { dispatchServerFn } from './dispatch';
 import { serverFnRegistry } from './registry';
@@ -120,6 +120,51 @@ describe('dispatchServerFn', () => {
     expect(result.body).toBe('listed');
   });
 
+  it('dispatches an h3 event that only carries a fetch Request', async () => {
+    serverFn({ id: 'host' }, async () => inject(REQUEST).headers['host']);
+
+    const result = await dispatchServerFn(
+      'host',
+      undefined,
+      { req: new Request('http://example.com/_analog/fn/host') } as never,
+      { method: 'GET' },
+    );
+
+    expect(result).toEqual({ status: 200, body: 'example.com' });
+  });
+
+  it('returns headers set through RESPONSE on a fetch-only event', async () => {
+    serverFn({ id: 'cookies' }, async () => {
+      const res = inject(RESPONSE);
+      res.setHeader('set-cookie', ['a=1']);
+      res.setHeader('x-app', 'app');
+      res.setHeader('x-both', 'app');
+      return new Response(null, {
+        status: 303,
+        headers: [
+          ['location', '/next'],
+          ['x-both', 'response'],
+          ['set-cookie', 'b=2'],
+          ['set-cookie', 'c=3'],
+        ],
+      });
+    });
+
+    const result = await dispatchServerFn(
+      'cookies',
+      undefined,
+      { req: new Request('http://example.com/_analog/fn/cookies') } as never,
+      { method: 'GET' },
+    );
+
+    expect(result.headers).toEqual({
+      'set-cookie': ['a=1', 'b=2', 'c=3'],
+      'x-app': 'app',
+      'x-both': 'response',
+      location: '/next',
+    });
+  });
+
   it('404s an unknown function', async () => {
     const result = await dispatchServerFn('nope', undefined, eventFor(), {
       method: 'GET',
@@ -157,7 +202,7 @@ describe('dispatchServerFn', () => {
     expect(result.status).toBe(415);
   });
 
-  it('400s input that fails validation, without running the handler', async () => {
+  it('422s input that fails validation, without running the handler', async () => {
     let ran = false;
     serverFn({ id: 'validated', input: stringInput }, async () => {
       ran = true;
@@ -171,7 +216,7 @@ describe('dispatchServerFn', () => {
       { method: 'POST' },
     );
 
-    expect(result.status).toBe(400);
+    expect(result.status).toBe(422);
     expect(ran).toBe(false);
   });
 
@@ -239,5 +284,25 @@ describe('dispatchServerFn', () => {
     );
 
     expect(result).toEqual({ status: 200, body: 'ok' });
+  });
+
+  it('destroys the per-call injector after the handler settles', async () => {
+    const onDestroy = vi.fn();
+    serverFn({ id: 'ok' }, async () => {
+      inject(DestroyRef).onDestroy(onDestroy);
+      return 'ok';
+    });
+    serverFn({ id: 'throws' }, async () => {
+      inject(DestroyRef).onDestroy(onDestroy);
+      throw new Error('boom');
+    });
+
+    await dispatchServerFn('ok', undefined, eventFor());
+    expect(onDestroy).toHaveBeenCalledTimes(1);
+
+    await expect(
+      dispatchServerFn('throws', undefined, eventFor()),
+    ).rejects.toThrow('boom');
+    expect(onDestroy).toHaveBeenCalledTimes(2);
   });
 });

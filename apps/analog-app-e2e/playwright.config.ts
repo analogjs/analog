@@ -8,7 +8,7 @@ export default defineConfig({
   reporter: 'html',
   outputDir: '../../dist/.playwright/apps/analog-app-e2e/output',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:43000',
     trace: 'on-first-retry',
   },
   projects: [
@@ -18,10 +18,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx nx serve-nitro analog-app',
-    url: 'http://localhost:3000',
+    command: 'node dist/apps/analog-app/analog/server/index.mjs',
+    url: 'http://localhost:43000',
     reuseExistingServer: !process.env['CI'],
+    timeout: 120_000,
     cwd: '../..',
-    timeout: 120000,
+    env: { PORT: '43000' },
   },
 });

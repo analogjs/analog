@@ -15,3 +15,17 @@ exports[`CardComponent > should create the app 1`] = `
 }-->
 </lib-card>
 `;
+
+exports[`CardComponent > should match snapshot 1`] = `
+<lib-card2>
+  card-works
+
+  <button
+    color="primary"
+    mat-button=""
+  >
+    Render card2
+  </button>
+  <!--container-->
+</lib-card2>
+`;

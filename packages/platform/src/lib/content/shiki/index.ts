@@ -43,9 +43,8 @@ export function getShikiHighlighter({
   }
 
   if (skipLangs.length > 0) {
-    const skipSet = new Set<string>(skipLangs);
     highlighter.langs = highlighter.langs.filter(
-      (lang: unknown) => typeof lang !== 'string' || !skipSet.has(lang),
+      (lang) => !skipLangs.includes(lang),
     );
   }
 

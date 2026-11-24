@@ -4,7 +4,7 @@
 
 Analog benötigt die folgenden Node- und Angular-Versionen:
 
-- Node v18.13.0 und höher wird empfohlen
+- Node v22.0.0 und höher wird empfohlen
 - Angular v17 oder höher
 
 ## Erstellen einer neuen Anwendung

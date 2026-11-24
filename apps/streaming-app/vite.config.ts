@@ -1,6 +1,8 @@
 /// <reference types="vitest" />
 
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
 import viteTsConfigPaths from 'vite-tsconfig-paths';
 import { defineConfig } from 'vite';
 
@@ -25,12 +27,13 @@ export default defineConfig(() => {
         prerender: {
           routes: [],
         },
-        // Opt a route out of streaming — it falls back to a buffered render.
-        nitro: {
-          routeRules: {
-            '/buffered': { streaming: false },
-            '/fn-buffered': { streaming: false },
-          },
+      }),
+      angular(),
+      // Opt a route out of streaming — it falls back to a buffered render.
+      nitro({
+        routeRules: {
+          '/buffered': { streaming: false },
+          '/fn-buffered': { streaming: false },
         },
       }),
       viteTsConfigPaths(),

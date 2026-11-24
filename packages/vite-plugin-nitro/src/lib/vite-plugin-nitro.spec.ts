@@ -1,4 +1,6 @@
+import { defu } from 'defu';
 import { NitroConfig } from 'nitropack';
+import { toRouteMatcher, createRouter } from 'radix3';
 import { ConfigEnv, UserConfig, ViteBuilder } from 'vite';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -21,7 +23,100 @@ describe('nitro', () => {
   });
 
   it('should work', () => {
-    expect(nitro({})[1].name).toEqual('@analogjs/vite-plugin-nitro');
+    expect(nitro({})[0].name).toEqual('@analogjs/vite-plugin-nitro');
+  });
+
+  describe('with analog()', () => {
+    const analogPlugin = {
+      name: '@analogjs/platform-options',
+      api: { analogOptions: { entryServer: '/app/src/main.server.ts' } },
+    };
+
+    async function runConfig(plugin: ReturnType<typeof nitro>) {
+      return (plugin[0].config as any)(
+        { plugins: [[analogPlugin]], build: {} },
+        { command: 'build', mode: 'production' },
+      );
+    }
+
+    it('uses the options passed to analog() as defaults', async () => {
+      const config = await runConfig(nitro());
+
+      expect(config.environments.ssr.build.rollupOptions.input).toBe(
+        '/app/src/main.server.ts',
+      );
+    });
+
+    it('prefers the analog options passed to nitro()', async () => {
+      const config = await runConfig(
+        nitro({ analog: { entryServer: '/app/src/main-custom.server.ts' } }),
+      );
+
+      expect(config.environments.ssr.build.rollupOptions.input).toBe(
+        '/app/src/main-custom.server.ts',
+      );
+    });
+
+    it('stamps ssr: false route rules as a response header', async () => {
+      const { buildServer } = await import('./build-server');
+      const config = await runConfig(
+        nitro({ routeRules: { '/client': { ssr: false } } }),
+      );
+      await config.builder.buildApp({
+        build: vi.fn(),
+        environments: { client: {} },
+      });
+
+      const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
+      expect(nitroConfig.routeRules?.['/client']?.headers).toEqual({
+        'x-analog-no-ssr': 'true',
+      });
+    });
+
+    it('lets a narrower true route rule override a broader false one', async () => {
+      const { buildServer } = await import('./build-server');
+      const config = await runConfig(
+        nitro({
+          routeRules: {
+            '/**': { ssr: false, streaming: false },
+            '/live/**': { ssr: true, streaming: true },
+          },
+        }),
+      );
+      await config.builder.buildApp({
+        build: vi.fn(),
+        environments: { client: {} },
+      });
+
+      const nitroConfig = vi.mocked(buildServer).mock.calls.at(-1)![1];
+      // Merged the way Nitro v2 resolves the rules for a path.
+      const matcher = toRouteMatcher(
+        createRouter({ routes: nitroConfig.routeRules }),
+      );
+      const headersFor = (path: string) =>
+        defu({}, ...matcher.matchAll(path).reverse()).headers;
+      expect(headersFor('/live/page')).toEqual({
+        'x-analog-no-ssr': 'false',
+        'x-analog-no-streaming': 'false',
+      });
+      expect(headersFor('/other')).toEqual({
+        'x-analog-no-ssr': 'true',
+        'x-analog-no-streaming': 'true',
+      });
+    });
+
+    it('treats static as the Analog option', async () => {
+      const { buildServer } = await import('./build-server');
+      const config = await runConfig(nitro({ static: true }));
+      await config.builder.buildApp({
+        build: vi.fn(),
+        environments: { client: {} },
+      });
+
+      const [options, nitroConfig] = vi.mocked(buildServer).mock.calls.at(-1)!;
+      expect(options?.static).toBe(true);
+      expect(nitroConfig.static).toBeUndefined();
+    });
   });
 
   it(`should not call the route middleware in test mode `, async () => {
@@ -29,27 +124,33 @@ describe('nitro', () => {
     const spy = vi.spyOn(mockViteDevServer.middlewares, 'use');
 
     // Act
-    await (nitro({})[1].configureServer as any)(mockViteDevServer);
+    await (nitro({})[0].configureServer as any)(mockViteDevServer);
 
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
-    expect(spy).not.toHaveBeenCalledWith('/api', expect.anything());
   });
 
   describe('when building with the Vite Environment API', () => {
     it('builds the sitemap into the public assets before the server', async () => {
       // Arrange
-      const { buildServerImportSpy, buildSitemapImportSpy } =
-        await mockBuildFunctions();
+      const { buildServer } = await import('./build-server');
+      const { buildSitemap } = await import('./build-sitemap');
+      const buildServerMock = vi.mocked(buildServer);
+      const buildSitemapMock = vi.mocked(buildSitemap);
+      buildServerMock.mockClear();
+      buildSitemapMock.mockClear();
+
       const plugin = nitro({
-        ssr: true,
-        prerender: {
-          routes: ['/', '/about'],
-          sitemap: { host: 'https://example.com' },
+        analog: {
+          ssr: true,
+          prerender: {
+            routes: ['/', '/about'],
+            sitemap: { host: 'https://example.com' },
+          },
         },
       });
       const config = (await (
-        plugin[1].config as (
+        plugin[0].config as (
           config: UserConfig,
           env: ConfigEnv,
         ) => Promise<UserConfig>
@@ -63,18 +164,19 @@ describe('nitro', () => {
       await config.builder?.buildApp?.(builder);
 
       // Assert
-      expect(buildSitemapImportSpy).toHaveBeenCalledTimes(1);
-      expect(buildServerImportSpy).toHaveBeenCalledTimes(1);
-      expect(buildSitemapImportSpy.mock.invocationCallOrder[0]).toBeLessThan(
-        buildServerImportSpy.mock.invocationCallOrder[0],
+      expect(buildSitemapMock).toHaveBeenCalledTimes(1);
+      expect(buildServerMock).toHaveBeenCalledTimes(1);
+      expect(buildSitemapMock.mock.invocationCallOrder[0]).toBeLessThan(
+        buildServerMock.mock.invocationCallOrder[0],
       );
 
-      const nitroConfig = buildServerImportSpy.mock.calls[0][1] as NitroConfig;
-      const sitemapDir = buildSitemapImportSpy.mock.calls[0][3];
+      const nitroConfig = buildServerMock.mock.calls[0][1] as NitroConfig;
+      const sitemapDir = buildSitemapMock.mock.calls[0][3];
       expect(sitemapDir).toBe(
         (nitroConfig.publicAssets as { dir: string }[])[0].dir,
       );
       expect(sitemapDir).not.toBe(nitroConfig.output?.publicDir);
+      expect(buildSitemapMock.mock.calls[0][6]).toBe('/api');
     });
   });
 
@@ -84,7 +186,7 @@ describe('nitro', () => {
       const { buildServerImportSpy, buildSitemapImportSpy } =
         await mockBuildFunctions();
       const plugin = nitro({
-        ssr: true,
+        analog: { ssr: true },
       });
 
       // Act
@@ -112,7 +214,7 @@ describe('nitro', () => {
       const { buildServerImportSpy, buildSitemapImportSpy } =
         await mockBuildFunctions();
       const plugin = nitro({
-        ssr: false,
+        analog: { ssr: false },
       });
 
       // Act
@@ -146,8 +248,7 @@ describe('nitro', () => {
         },
       };
       const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
+        analog: { ssr: true, ...prerenderRoutes },
       });
 
       // Act
@@ -185,8 +286,7 @@ describe('nitro', () => {
         },
       };
       const plugin = nitro({
-        ssr: true,
-        ...prerenderRoutes,
+        analog: { ssr: true, ...prerenderRoutes },
       });
 
       // Act
@@ -246,8 +346,7 @@ describe('nitro', () => {
             },
           };
           const plugin = nitro({
-            ssr: true,
-            ...prerenderRoutes,
+            analog: { ssr: true, ...prerenderRoutes },
           });
 
           // Act
@@ -288,7 +387,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, {});
+      const plugin = nitro();
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -310,7 +409,9 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/some-other-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({ workspaceRoot: '/custom-root-directory' }, {});
+      const plugin = nitro({
+        analog: { workspaceRoot: '/custom-root-directory' },
+      });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -333,7 +434,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, { preset: 'vercel' });
+      const plugin = nitro({ preset: 'vercel' });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -355,7 +456,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, { preset: 'vercel-edge' });
+      const plugin = nitro({ preset: 'vercel-edge' });
 
       // Act
       await runConfigAndCloseBundle(plugin);
@@ -378,7 +479,7 @@ describe('nitro', () => {
       vi.spyOn(process, 'cwd').mockReturnValue('/custom-root-directory');
       const { buildServerImportSpy } = await mockBuildFunctions();
 
-      const plugin = nitro({}, {});
+      const plugin = nitro();
 
       // Act
       await runConfigAndCloseBundle(plugin);

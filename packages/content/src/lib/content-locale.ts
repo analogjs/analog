@@ -9,9 +9,8 @@ import { ContentFile } from './content-file';
  * When set, `injectContentFiles()` filters to content matching this locale,
  * and `injectContent()` resolves locale-prefixed content paths first.
  */
-export const CONTENT_LOCALE = new InjectionToken<string>(
-  '@analogjs/content Locale',
-);
+export const CONTENT_LOCALE: InjectionToken<string> =
+  new InjectionToken<string>('@analogjs/content Locale');
 
 /**
  * Injects the content locale, returning null if not configured.

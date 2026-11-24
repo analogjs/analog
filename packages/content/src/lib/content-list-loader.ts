@@ -7,9 +7,11 @@ import { injectContentFiles } from './inject-content-files';
 type ContentListLoaderFunction<Attributes extends Record<string, any>> =
   () => Promise<ContentFile<Attributes>[]>;
 
-export const CONTENT_LIST_LOADER = new InjectionToken<
+export const CONTENT_LIST_LOADER: InjectionToken<
   ContentListLoaderFunction<any>
->('@analogjs/content/resource List Loader');
+> = new InjectionToken<ContentListLoaderFunction<any>>(
+  '@analogjs/content/resource List Loader',
+);
 
 export function injectContentListLoader<
   Attributes extends Record<string, any>,
@@ -21,7 +23,8 @@ export function withContentListLoader(): Provider {
   return {
     provide: CONTENT_LIST_LOADER,
     useFactory() {
-      return async () => injectContentFiles();
+      const files = injectContentFiles();
+      return async () => files;
     },
   };
 }

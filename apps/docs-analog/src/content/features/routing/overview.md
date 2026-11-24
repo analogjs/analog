@@ -300,6 +300,8 @@ The filesystem-based router will generate the following routes:
 | `/products/1/edit` | `products/[productId].edit.page.ts` (layout: `products.page.ts`) |
 | `/unknown-url`     | `[...not-found].md`                                              |
 
+If your app uses markdown content routes like `.md` files in `src/app/pages`, add `withContentRoutes()` from `@analogjs/router/content` to your `provideFileRouter()` call.
+
 ## Providing Extra Routes
 
 Routes can be added manually in addition to the routes discovered through the filesystem. Use the `withExtraRoutes` with an array of routes to be prepended to the discovered routes array. All the routes are merged into a single array.
@@ -318,18 +320,57 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+## Routes from Workspace Libraries
+
+In a monorepo, pages, content, and API routes can live in workspace libraries. Pass their directories to `analog()` as workspace-relative paths that start with `/`:
+
+| Option                  | Description                                              |
+| ----------------------- | -------------------------------------------------------- |
+| `additionalPagesDirs`   | Directories with `.page.ts` and `.server.ts` route files |
+| `additionalContentDirs` | Directories with markdown content routes                 |
+| `additionalAPIDirs`     | Directories with API routes                              |
+| `workspaceRoot`         | Absolute workspace root these paths resolve against      |
+
+`workspaceRoot` defaults to `NX_WORKSPACE_ROOT`, then `process.cwd()`. Set it when Vite runs from the app directory instead of the workspace root.
+
+`discoverLibraryRoutes()` collects these directories from the `src/pages`, `src/content`, and `src/api` folders of libraries under `libs/`:
+
+```ts
+import { resolve } from 'node:path';
+import { defineConfig } from 'vite';
+import analog, { discoverLibraryRoutes } from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import nitro from '@analogjs/vite-plugin-nitro';
+
+const workspaceRoot = resolve(import.meta.dirname, '../..');
+const libs = discoverLibraryRoutes(workspaceRoot);
+
+export default defineConfig({
+  plugins: [
+    analog({
+      workspaceRoot,
+      additionalPagesDirs: libs.additionalPagesDirs,
+      additionalContentDirs: libs.additionalContentDirs,
+      additionalAPIDirs: libs.additionalAPIDirs,
+    }),
+    angular(),
+    nitro(),
+  ],
+});
+```
+
+Library pages are compiled automatically, so `angular()` doesn't need a matching `include`.
+
 ## Visualizing and Debugging Routes
 
-When you are building the pages for your application, it can help to visually see the routes based on the filesystem structure. You can use the `withDebugRoutes()` function to provide a debug route that displays the pages and layouts for your application.
+During development, Analog automatically registers a debug route that displays the pages and layouts for your application. Navigate to `/__analog/routes` in the browser to see the routes table. No configuration is needed — the debug route is available in any app using `provideFileRouter()` and is automatically removed from production builds.
 
-Use the `withDebugRoutes` function in the `app.config.ts`:
+If you need to register the debug route explicitly (for example, in a custom setup), you can use the `withDebugRoutes()` function:
 
 ```ts
 export const appConfig: ApplicationConfig = {
   providers: [provideFileRouter(withDebugRoutes())],
 };
 ```
-
-Navigate the `__analog/routes` URL in the browser to see the routes table.
 
 ![debug routes page](/img/debug-routes.png)

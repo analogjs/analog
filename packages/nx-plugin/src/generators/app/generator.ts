@@ -17,6 +17,7 @@ import { addHomePage } from './lib/add-home-page';
 import {
   belowMinimumSupportedNxVersion,
   belowMinimumSupportedOxlintNxVersion,
+  MINIMUM_SUPPORTED_NX_VERSION,
   MINIMUM_SUPPORTED_OXLINT_NX_VERSION,
 } from './versions/minimum-supported-versions';
 import { addAngularApp } from './lib/add-angular-app';
@@ -27,6 +28,7 @@ import { addTailwindConfig } from './lib/add-tailwind-config';
 import { cleanupFiles } from './lib/cleanup-files';
 import { addAnalogProjectConfig } from './lib/add-analog-project-config';
 import { updateIndex } from './lib/update-index-html';
+import { ANALOG_JS_VITE_PLUGIN_NITRO, H3 } from '../../utils/versions/versions';
 
 export interface NormalizedOptions
   extends AnalogNxApplicationGeneratorOptions, ReturnType<typeof names> {
@@ -72,15 +74,15 @@ function normalizeOptions(
   };
 }
 
-export async function appGenerator(
+async function appGenerator(
   tree: Tree,
   options: AnalogNxApplicationGeneratorOptions,
-) {
+): Promise<() => void> {
   const nxVersion = getInstalledPackageVersion(tree, 'nx');
 
   if (nxVersion && belowMinimumSupportedNxVersion(nxVersion)) {
     throw new Error(
-      stripIndents`Nx v15.2.0 or newer is required to install Analog`,
+      stripIndents`Nx v${MINIMUM_SUPPORTED_NX_VERSION} or newer is required to install Analog`,
     );
   }
 
@@ -127,17 +129,22 @@ export async function appGenerator(
   });
 
   const angularVersion = getInstalledPackageVersion(tree, '@angular/core');
-  const majorAngularVersion = major(coerce(angularVersion!)!);
+  const coercedAngularVersion = coerce(angularVersion ?? '');
+  if (!coercedAngularVersion) {
+    throw new Error('Could not determine installed Angular version.');
+  }
+  const majorAngularVersion = major(coercedAngularVersion);
   addFiles(tree, normalizedOptions, majorAngularVersion);
   addDependenciesToPackageJson(
     tree,
     {
       'front-matter': '^4.0.2',
-      marked: '^15.0.7',
+      h3: H3,
+      marked: '^18.0.0',
       mermaid: '^10.2.4',
       prismjs: '^1.29.0',
     },
-    {},
+    { '@analogjs/vite-plugin-nitro': ANALOG_JS_VITE_PLUGIN_NITRO },
   );
 
   updateJson<{

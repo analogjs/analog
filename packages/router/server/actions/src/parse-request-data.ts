@@ -1,5 +1,7 @@
 import type { H3Event } from 'h3';
-import { getRequestURL, readBody, readFormData, toWebRequest } from 'h3';
+import { getRequestURL, readBody, readFormData } from 'h3';
+
+import { fail } from './actions';
 
 type RequestEntryValue = string | File;
 type ParsedRequestValue = RequestEntryValue | RequestEntryValue[];
@@ -24,18 +26,24 @@ function appendEntry(
   target[key] = [existingValue, value];
 }
 
-function getRequest(event: H3Event): Request {
-  return event.web?.request ?? toWebRequest(event);
+// h3 v2 exposes the web Request as `event.req`; h3 v1 only has it on web
+// runtimes, so callers fall back to the h3 helpers shared by both versions.
+function getRequest(event: H3Event): Request | undefined {
+  const { web, req } = event as unknown as {
+    web?: { request?: Request };
+    req?: unknown;
+  };
+  return web?.request ?? (req instanceof Request ? req : undefined);
 }
 
 export function getRequestUrl(event: H3Event): string {
-  return event.web?.request?.url ?? getRequestURL(event).href;
+  return getRequest(event)?.url ?? getRequestURL(event).href;
 }
 
 function getContentType(event: H3Event): string {
   return (
-    event.web?.request?.headers.get('content-type') ??
-    event.headers.get('content-type') ??
+    getRequest(event)?.headers.get('content-type') ??
+    event.headers?.get('content-type') ??
     ''
   );
 }
@@ -72,6 +80,22 @@ export function parseFormData(
   return result;
 }
 
+async function readJsonBody(event: H3Event): Promise<unknown> {
+  try {
+    return await readBody(event, { strict: true });
+  } catch (error) {
+    const request = getRequest(event);
+    if (!request || request.bodyUsed) {
+      throw error;
+    }
+    const text = await request.text();
+    return text ? JSON.parse(text) : undefined;
+  }
+}
+
+/**
+ * Resolves to a 400 `Response` when a JSON body is malformed.
+ */
 export async function parseRequestData(event: H3Event): Promise<unknown> {
   const method = event.method.toUpperCase();
 
@@ -84,13 +108,10 @@ export async function parseRequestData(event: H3Event): Promise<unknown> {
 
   if (isJsonContentType(contentType)) {
     try {
-      return (await readBody(event)) ?? {};
+      const body = await readJsonBody(event);
+      return body === undefined ? {} : body;
     } catch {
-      try {
-        return await getRequest(event).json();
-      } catch {
-        return {};
-      }
+      return fail(400, { message: 'Invalid JSON body' });
     }
   }
 
@@ -99,7 +120,7 @@ export async function parseRequestData(event: H3Event): Promise<unknown> {
       return parseFormData(await readFormData(event));
     } catch {
       const request = getRequest(event);
-      if (typeof request.formData === 'function') {
+      if (request) {
         try {
           return parseFormData(await request.formData());
         } catch {
@@ -115,7 +136,7 @@ export async function parseRequestData(event: H3Event): Promise<unknown> {
     return (await readBody(event)) ?? {};
   } catch {
     try {
-      return await getRequest(event).json();
+      return (await getRequest(event)?.json()) ?? {};
     } catch {
       return {};
     }

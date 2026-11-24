@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { generateHmrCode } from './hmr';
 
 describe('HMR code generation', () => {
@@ -89,7 +89,7 @@ describe('HMR code generation', () => {
     // Should have both ɵɵreplaceMetadata for component and invalidate for directive
     expect(code).toContain('ɵɵreplaceMetadata');
     expect(code).toContain('newModule.ɵhmr_MyComponent');
-    expect(code).toContain('newModule.ɵhmr_MyDirective(MyDirective)');
+    expect(code).toContain('newModule.ɵhmr_MyDirective(ɵhmrTypes.MyDirective)');
     expect(code).toContain(
       "import.meta.hot.invalidate('Directive/pipe changed, reloading')",
     );
@@ -125,6 +125,45 @@ describe('HMR code generation', () => {
     ]);
 
     // Default: no local deps
-    expect(code).toMatch(/ɵɵreplaceMetadata\(\s*MyComponent[\s\S]*?\[\],/);
+    expect(code).toMatch(
+      /ɵɵreplaceMetadata\(\s*ɵhmrTypes\.MyComponent[\s\S]*?\[\],/,
+    );
+  });
+
+  it('patches the first-loaded class on every update', () => {
+    const body = generateHmrCode([
+      {
+        className: 'MyComponent',
+        selector: 'app-my',
+        kind: 'component',
+        fileName: 'my.ts',
+      },
+    ])
+      .replaceAll('export function', 'function')
+      .replaceAll('import.meta', 'meta');
+    const replaceMetadata = vi.fn();
+    const accepts: ((newModule: unknown) => void)[] = [];
+    const hot = { data: {}, accept: (cb: any) => accepts.push(cb) };
+    const runVersion = (version: number) => {
+      class MyComponent {
+        static ɵcmp = { version };
+      }
+      const module = new Function(
+        'MyComponent',
+        'meta',
+        'i0',
+        `${body}\nreturn { ɵhmr_MyComponent };`,
+      )(MyComponent, { hot }, { ɵɵreplaceMetadata: replaceMetadata });
+      return { MyComponent, module };
+    };
+
+    const first = runVersion(1);
+    accepts[0](runVersion(2).module);
+    accepts[1](runVersion(3).module);
+
+    expect(replaceMetadata.mock.calls.map(([type]) => type)).toEqual([
+      first.MyComponent,
+      first.MyComponent,
+    ]);
   });
 });

@@ -2,12 +2,13 @@ import { InjectionToken, Provider } from '@angular/core';
 import { inject } from '@angular/core';
 
 import { injectContentFilesMap } from './inject-content-files';
+import type { ContentFileLoader } from './parse-content-file';
 
 type ContentFileLoaderFunction = () => Promise<
-  Record<string, () => Promise<string>>
+  Record<string, ContentFileLoader>
 >;
 
-export const CONTENT_FILE_LOADER =
+export const CONTENT_FILE_LOADER: InjectionToken<ContentFileLoaderFunction> =
   new InjectionToken<ContentFileLoaderFunction>(
     '@analogjs/content/resource File Loader',
   );
@@ -20,7 +21,8 @@ export function withContentFileLoader(): Provider {
   return {
     provide: CONTENT_FILE_LOADER,
     useFactory() {
-      return async () => injectContentFilesMap();
+      const files = injectContentFilesMap();
+      return async () => files;
     },
   };
 }

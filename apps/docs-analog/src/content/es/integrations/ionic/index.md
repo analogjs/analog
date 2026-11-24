@@ -152,7 +152,8 @@ pnpm install ionicons
    export default defineConfig(({ mode }) => {
      return {
        plugins: [
-         analog({
+         analog(),
+         angular({
            inlineStylesExtension: 'scss',
          }),
        ],

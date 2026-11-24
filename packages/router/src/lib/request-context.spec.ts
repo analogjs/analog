@@ -1,109 +1,206 @@
-import { HttpParams, HttpRequest, HttpResponse } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpParams,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
+import { TransferState, makeStateKey } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { API_PREFIX, BASE_URL } from '@analogjs/router/tokens';
-import { firstValueFrom, of } from 'rxjs';
+import { $fetch } from 'ofetch';
+import { EMPTY, lastValueFrom, of } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { API_PREFIX, BASE_URL, INTERNAL_FETCH } from '../../tokens/src';
+
+import { makeCacheKey } from './cache-key';
 import { requestContextInterceptor } from './request-context';
 
 describe('requestContextInterceptor', () => {
-  const baseUrl = 'http://localhost:3000';
-  const endpoint = `${baseUrl}/api/_analog/pages/index`;
+  const originalFetch = (globalThis as typeof globalThis & { $fetch?: unknown })
+    .$fetch;
 
-  function setup() {
+  beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
-        { provide: BASE_URL, useValue: baseUrl },
         { provide: API_PREFIX, useValue: 'api' },
+        { provide: BASE_URL, useValue: 'http://localhost:3000' },
       ],
     });
-
-    const raw = vi.fn().mockResolvedValue({ _data: {}, headers: {} });
-    (global as any).$fetch = { raw };
-
-    return { raw };
-  }
+  });
 
   afterEach(() => {
-    delete (global as any).$fetch;
-    TestBed.resetTestingModule();
+    if (typeof originalFetch === 'undefined') {
+      delete (globalThis as typeof globalThis & { $fetch?: unknown }).$fetch;
+    } else {
+      (globalThis as typeof globalThis & { $fetch?: unknown }).$fetch =
+        originalFetch;
+    }
   });
 
-  function intercept(
-    req: HttpRequest<unknown>,
-    next: any = () => of(new HttpResponse()),
-  ) {
-    return TestBed.runInInjectionContext(() =>
-      requestContextInterceptor(req, next),
+  it('forwards HttpRequest params during prerender requests', async () => {
+    const raw = vi.fn().mockResolvedValue({
+      _data: { ok: true },
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+    });
+    (
+      globalThis as typeof globalThis & { $fetch?: { raw: typeof raw } }
+    ).$fetch = {
+      raw,
+    };
+
+    const request = new HttpRequest('GET', '/api/v1/todos', null, {
+      params: new HttpParams({
+        fromObject: {
+          page: '2',
+          filter: 'open',
+        },
+      }),
+    });
+
+    const response = await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(request, () => of(null as never)),
+      ),
     );
+
+    expect(raw).toHaveBeenCalledWith(
+      '/api/v1/todos',
+      expect.objectContaining({
+        params: {
+          filter: 'open',
+          page: '2',
+        },
+      }),
+    );
+    expect(response).toBeInstanceOf(HttpResponse);
+  });
+
+  it('lets HttpRequest params override duplicate query params from the url', async () => {
+    const raw = vi.fn().mockResolvedValue({
+      _data: { ok: true },
+      headers: { 'content-type': 'application/json; charset=utf-8' },
+    });
+    (
+      globalThis as typeof globalThis & { $fetch?: { raw: typeof raw } }
+    ).$fetch = {
+      raw,
+    };
+
+    const request = new HttpRequest('GET', '/api/v1/todos?page=1&tag=a', null, {
+      params: new HttpParams({
+        fromObject: {
+          page: '3',
+          tag: ['b', 'c'],
+        },
+      }),
+    });
+
+    await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(request, () => of(null as never)),
+      ),
+    );
+
+    expect(raw).toHaveBeenCalledWith(
+      '/api/v1/todos',
+      expect.objectContaining({
+        params: {
+          page: '3',
+          tag: ['b', 'c'],
+        },
+      }),
+    );
+  });
+
+  async function requestWithServerResponse(response: Response) {
+    TestBed.overrideProvider(INTERNAL_FETCH, {
+      useValue: $fetch.create({}, { fetch: async () => response }),
+    });
+
+    return TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(
+          new HttpRequest('GET', '/api/v1/todos'),
+          () => EMPTY,
+        ),
+      ),
+    ).catch((error: unknown) => error);
   }
 
-  it('should forward the query string to the internal fetch', async () => {
-    const { raw } = setup();
-
-    await firstValueFrom(
-      intercept(new HttpRequest('GET', `${endpoint}?level=middle&level=top`)),
+  it('rejects text error responses with an HttpErrorResponse', async () => {
+    const error = await requestWithServerResponse(
+      new Response('Not found', { status: 404 }),
     );
 
-    expect(raw).toHaveBeenCalledWith(
-      '/api/_analog/pages/index?level=middle&level=top',
-      expect.anything(),
-    );
+    expect(error).toBeInstanceOf(HttpErrorResponse);
+    expect(error).toMatchObject({ status: 404, error: 'Not found' });
+    expect(TestBed.inject(TransferState).isEmpty).toBe(true);
   });
 
-  it('should forward request params to the internal fetch', async () => {
-    const { raw } = setup();
+  it('rejects malformed JSON in a successful response with an HttpErrorResponse', async () => {
+    const error = await requestWithServerResponse(
+      new Response('{bad', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
 
-    await firstValueFrom(
-      intercept(
-        new HttpRequest('GET', endpoint, {
-          params: new HttpParams().set('level', 'middle'),
-        }),
+    expect(error).toBeInstanceOf(HttpErrorResponse);
+    expect(error).toMatchObject({
+      status: 200,
+      error: { error: expect.any(SyntaxError), text: '{bad' },
+    });
+    expect(TestBed.inject(TransferState).isEmpty).toBe(true);
+  });
+
+  it('rejects JSON error responses with an HttpErrorResponse', async () => {
+    const error = await requestWithServerResponse(
+      Response.json({ message: 'Missing' }, { status: 404 }),
+    );
+
+    expect(error).toBeInstanceOf(HttpErrorResponse);
+    expect(error).toMatchObject({ status: 404, error: { message: 'Missing' } });
+  });
+
+  it('does not store responses in TransferState when transferCache is false', async () => {
+    TestBed.overrideProvider(INTERNAL_FETCH, {
+      useValue: $fetch.create(
+        {},
+        { fetch: async () => Response.json({ ok: true }) },
+      ),
+    });
+
+    const response = await TestBed.runInInjectionContext(() =>
+      lastValueFrom(
+        requestContextInterceptor(
+          new HttpRequest('GET', '/api/v1/todos', null, {
+            transferCache: false,
+          }),
+          () => EMPTY,
+        ),
       ),
     );
 
-    expect(raw).toHaveBeenCalledWith(
-      '/api/_analog/pages/index?level=middle',
-      expect.anything(),
-    );
+    expect(response).toMatchObject({ body: { ok: true } });
+    expect(TestBed.inject(TransferState).isEmpty).toBe(true);
   });
 
-  it('should restore the transferred response for the matching query only', async () => {
-    setup();
-
-    const serverResponse = (await firstValueFrom(
-      intercept(new HttpRequest('GET', `${endpoint}?level=middle`)),
-    )) as HttpResponse<unknown>;
-    expect(serverResponse.url).toBe('/api/_analog/pages/index?level=middle');
-
-    delete (global as any).$fetch;
-
-    const restored = await firstValueFrom(
-      intercept(new HttpRequest('GET', `${endpoint}?level=middle`)),
+  it('ignores transferred responses on the client when transferCache is false', async () => {
+    const request = new HttpRequest('GET', '/api/v1/todos', null, {
+      transferCache: false,
+    });
+    TestBed.inject(TransferState).set(
+      makeStateKey<unknown>(`analog_${makeCacheKey(request, '/api/v1/todos')}`),
+      { body: { cached: true } },
     );
-    expect(restored).toBeInstanceOf(HttpResponse);
+    const next = vi.fn(() => of(new HttpResponse({ body: { fresh: true } })));
 
-    const notRestored = await firstValueFrom(
-      intercept(new HttpRequest('GET', `${endpoint}?level=top`), () =>
-        of('from network'),
-      ),
-    );
-    expect(notRestored).toBe('from network');
-  });
-
-  it('should restore the transferred response for a relative endpoint URL', async () => {
-    setup();
-
-    await firstValueFrom(
-      intercept(new HttpRequest('GET', `${endpoint}?level=middle`)),
+    const response = await TestBed.runInInjectionContext(() =>
+      lastValueFrom(requestContextInterceptor(request, next)),
     );
 
-    delete (global as any).$fetch;
-
-    const restored = await firstValueFrom(
-      intercept(
-        new HttpRequest('GET', '/api/_analog/pages/index?level=middle'),
-      ),
-    );
-    expect(restored).toBeInstanceOf(HttpResponse);
+    expect(next).toHaveBeenCalledOnce();
+    expect(response).toMatchObject({ body: { fresh: true } });
   });
 });

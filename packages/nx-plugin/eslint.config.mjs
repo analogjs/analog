@@ -30,7 +30,7 @@ export default [
     rules: {},
   },
   {
-    files: ['./package.json', './generators.json', './executors.json'],
+    files: ['./package.json', './generators.json'],
     rules: {
       '@nx/nx-plugin-checks': 'error',
     },

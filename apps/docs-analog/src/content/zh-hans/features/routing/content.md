@@ -40,24 +40,45 @@ Analog is a meta-framework on top of Angular.
 
 ### PrismJS 语法高亮
 
-Analog 支持基于 PrismJS 的语法高亮。通过在 `app.config.ts` 里的 `provideContent()` 添加 `withPrismHighlighter()` 参数来启用语法高亮
+Analog 支持基于 PrismJS 的语法高亮。代码块会在编译时高亮，包括 `angular` 语法。在 `vite.config.ts` 里的 `analog` 插件中将 `highlighter` 设置为 `prism` 来启用 `PrismJS` 语法高亮。
 
-```diff-ts
-+ import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... other providers
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withPrismHighlighter()),
+```ts
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'prism',
+      },
+    }),
   ],
-};
+});
 ```
 
-将 `prism.css` 样式添加到全局样式表里:
+在应用中安装 `prismjs`：
+
+```shell
+npm install prismjs
+```
+
+将 Prism 主题样式添加到全局样式表里:
 
 ```css
 @import 'prismjs/themes/prism.css';
+```
+
+如果要在浏览器中使用 Prism 插件，例如工具栏和复制到剪贴板按钮，直接在 `app.config.ts` 里导入它们：
+
+```ts
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+```
+
+并在全局样式表里添加工具栏样式：
+
+```css
+@import 'prismjs/plugins/toolbar/prism-toolbar.css';
 ```
 
 #### 使用 `diff` 高亮插件
@@ -72,6 +93,7 @@ export default defineConfig({
   plugins: [
     analog({
       content: {
+        highlighter: 'prism',
         prismOptions: {
           additionalLangs: ['prism-diff'],
         },
@@ -84,18 +106,33 @@ export default defineConfig({
 在 `app.config.ts` 里导入 `diff-highlight` 插件：
 
 ```ts
-+ import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... other providers
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
-  ],
-};
+import 'prismjs/components/prism-diff';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
-在 `vite.config.ts` 里的 `analog` 插件配置里添加 `shiki` 来启用编译时语法高亮。
+使用 `diff` 语法标签高亮或者 `diff-<language>` 来高亮指定的语言。
+
+````md
+```diff
+- This is a sentence.
++ This is a longer sentence.
+```
+
+```diff-typescript
+- const foo = 'bar';
++ const foo = 'baz';
+```
+````
+
+如果要高亮变更行的背景而不是文本自身，在全局样式里添加如下样式文件：
+
+```css
+@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
+### Shiki 语法高亮
+
+Analog 也支持基于 Shiki 的编译时语法高亮。在 `vite.config.ts` 里的 `analog` 插件配置里添加 `shiki` 来启用编译时语法高亮。
 
 ```ts
 export default defineConfig({

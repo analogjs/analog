@@ -407,17 +407,6 @@ describe('elideTypeOnlyImportsMagicString', () => {
     expect(ms.toString()).toContain('const x');
   });
 
-  it('produces a valid sourcemap after elision', () => {
-    const code = `import { MyType } from 'lib';\nimport { value } from 'other';\nconst x: MyType = value();\n`;
-    const ms = new MagicString(code);
-    elideTypeOnlyImportsMagicString(ms);
-    const map = ms.generateMap({ source: 'test.ts', hires: true });
-    // Map should reference the original source
-    expect(map.sources).toContain('test.ts');
-    // Mappings should be non-empty (not an identity map)
-    expect(map.mappings.length).toBeGreaterThan(0);
-  });
-
   it('detects type-only names from mutated code, positions from original', () => {
     // Simulate compile.ts: MagicString has been mutated (appended code)
     // but import positions match original

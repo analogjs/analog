@@ -19,6 +19,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/de/contributors': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/de/features/api/og-image-generation': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -143,6 +147,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/de/sponsoring': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/de/support': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -152,6 +160,10 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
     };
     '/es/contributing': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/es/contributors': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
@@ -315,6 +327,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/features/data-fetching/validation': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/features/deployment/overview': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -348,6 +364,10 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
     };
     '/features/routing/typed-routes': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/features/server/custom-server': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
@@ -387,7 +407,15 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/guides/debugging': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/guides/forms': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/guides/idiomatic': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
@@ -396,6 +424,18 @@ declare module '@analogjs/router' {
       query: Record<string, string | string[] | undefined>;
     };
     '/guides/migrating': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/guides/migrating-v1-to-v2': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/guides/migrating-v2-to-v3': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/guides/style-pipeline': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
@@ -411,6 +451,10 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/integrations/nestjs': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/integrations/nx': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
@@ -419,7 +463,15 @@ declare module '@analogjs/router' {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };
+    '/integrations/tailwind': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
     '/integrations/tanstack-query': {
+      params: Record<string, never>;
+      query: Record<string, string | string[] | undefined>;
+    };
+    '/integrations/tsrx': {
       params: Record<string, never>;
       query: Record<string, string | string[] | undefined>;
     };

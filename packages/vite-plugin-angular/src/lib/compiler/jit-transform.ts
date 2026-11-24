@@ -1,4 +1,4 @@
-import { parseSync } from 'oxc-parser';
+import { parseOxc } from './utils.js';
 import MagicString from 'magic-string';
 import { detectTypeOnlyImportNames } from './type-elision.js';
 import {
@@ -44,13 +44,23 @@ function findAllClasses(node: any): any[] {
 }
 
 /**
- * `@Injectable` and `@Service` stay on the class — their decorator functions
- * self-register ɵprov/ɵfac at class definition time and there is no JIT
- * compile entry point to call instead.
+ * `@Injectable` and `@Service` have no JIT compile entry point: their
+ * decorator functions self-register ɵprov/ɵfac when applied to the class.
  */
 function isSelfRegisteringDecorator(dec: any): boolean {
   const name: string | undefined = dec.expression?.callee?.name;
   return name === 'Injectable' || name === 'Service';
+}
+
+/**
+ * Whether jitTransform removes every class decorator. A decorator left for
+ * the TypeScript strip would run at class definition, ahead of a
+ * self-registering decorator applied after the class, reversing legacy order.
+ */
+function removesEveryClassDecorator(decorators: any[]): boolean {
+  return decorators.every((dec: any) =>
+    ANGULAR_DECORATORS.has(dec.expression?.callee?.name),
+  );
 }
 
 /** Remove a decorator along with its trailing whitespace. */
@@ -59,6 +69,23 @@ function removeDecorator(ms: MagicString, sourceCode: string, dec: any): void {
   while (trimEnd < sourceCode.length && /\s/.test(sourceCode[trimEnd]))
     trimEnd++;
   ms.remove(dec.start, trimEnd);
+}
+
+/**
+ * Remove a self-registering decorator and return the statement that applies
+ * it to the class, as a legacy decorator runs. The output then needs no
+ * decorator lowering, which the TypeScript strip only does when tsconfig
+ * sets `experimentalDecorators`.
+ */
+function applySelfRegisteringDecorator(
+  ms: MagicString,
+  sourceCode: string,
+  className: string,
+  dec: any,
+): string {
+  removeDecorator(ms, sourceCode, dec);
+  const call = sourceCode.slice(dec.expression.start, dec.expression.end);
+  return `${call}(${className});`;
 }
 
 const DI_PARAM_DECORATORS = new Set([
@@ -93,12 +120,9 @@ function ctorParamDecorators(classNode: any): any[] {
  * provider option replaces the constructor, or when a non-DI parameter
  * decorator must keep running as written.
  */
-function needsInjectableCtorParameters(node: any, decorators: any[]): boolean {
-  const dec = decorators.find(isSelfRegisteringDecorator);
-  const options = dec?.expression.arguments?.[0];
+function needsInjectableCtorParameters(node: any, dec: any): boolean {
+  const options = dec.expression.arguments?.[0];
   return (
-    !!dec &&
-    node.type === 'ClassDeclaration' &&
     !options?.properties?.some((p: any) => PROVIDER_KEYS.has(p.key?.name)) &&
     ctorParamDecorators(node).every((d: any) =>
       DI_PARAM_DECORATORS.has(d.expression?.callee?.name),
@@ -129,7 +153,7 @@ export function jitTransform(
   sourceCode: string,
   fileName: string,
 ): JitTransformResult {
-  const { program } = parseSync(fileName, sourceCode);
+  const { program } = parseOxc(fileName, sourceCode);
   const ms = new MagicString(sourceCode, { filename: fileName });
   const typeOnlyImports = detectTypeOnlyImportNames(sourceCode, program);
   let hasAngularClass = false;
@@ -162,24 +186,43 @@ export function jitTransform(
     const className: string | undefined = node.id?.name;
     if (!className) continue;
 
+    // A class expression's name is not in scope after it, so only
+    // declarations get their @Injectable/@Service applied after the class.
+    const selfRegistering =
+      node.type === 'ClassDeclaration'
+        ? decorators.find(isSelfRegisteringDecorator)
+        : undefined;
+    const appliesSelfRegistering =
+      !!selfRegistering && removesEveryClassDecorator(decorators);
+
     if (angularDecs.length === 0) {
-      // @Injectable/@Service keep their decorator, but without a type
-      // checker or emitDecoratorMetadata a param typed only by annotation
-      // has no runtime DI token unless captured in ctorParameters. A class
-      // expression's name is not in scope after it, so only declarations.
+      if (!selfRegistering) continue;
+      // Without a type checker or emitDecoratorMetadata a param typed only
+      // by annotation has no runtime DI token unless captured in
+      // ctorParameters.
+      const statements: string[] = [];
       const ctorParams =
-        needsInjectableCtorParameters(node, decorators) &&
+        needsInjectableCtorParameters(node, selfRegistering) &&
         buildCtorParameters(node, sourceCode, typeOnlyImports);
       if (ctorParams) {
-        hasAngularClass = true;
         for (const dec of ctorParamDecorators(node)) {
           removeDecorator(ms, sourceCode, dec);
         }
-        ms.appendLeft(
-          node.end,
-          `\n${className}.ctorParameters = () => [${ctorParams}];\n`,
+        statements.push(`${className}.ctorParameters = () => [${ctorParams}];`);
+      }
+      if (appliesSelfRegistering) {
+        statements.push(
+          applySelfRegisteringDecorator(
+            ms,
+            sourceCode,
+            className,
+            selfRegistering,
+          ),
         );
       }
+      if (statements.length === 0) continue;
+      hasAngularClass = true;
+      ms.appendLeft(node.end, `\n${statements.join('\n')}\n`);
       continue;
     }
     hasAngularClass = true;
@@ -328,6 +371,17 @@ export function jitTransform(
     }
     for (const dec of ctorParamDecorators(node)) {
       removeDecorator(ms, sourceCode, dec);
+    }
+
+    if (appliesSelfRegistering) {
+      classStatements.push(
+        applySelfRegisteringDecorator(
+          ms,
+          sourceCode,
+          className,
+          selfRegistering,
+        ),
+      );
     }
 
     // Insert this class's metadata statements directly after the class body

@@ -9,7 +9,7 @@ import {
   type BootstrapContext,
 } from '@angular/platform-browser';
 import { renderApplication } from '@angular/platform-server';
-import type { ServerContext } from '@analogjs/router/tokens';
+import type { ServerContext } from '../../tokens/src/index.js';
 
 import { provideServerContext } from './provide-server-context';
 import { resetComponentDefTViews } from './utils/reset-component-def-tviews';
@@ -27,7 +27,7 @@ if (import.meta.env?.PROD) {
  * @param rootComponent
  * @param config
  * @param platformProviders
- * @returns Promise<string | Reponse>
+ * @returns Promise<string>
  */
 export function render(
   rootComponent: Type<unknown>,
@@ -42,7 +42,7 @@ export function render(
     url: string,
     document: string,
     serverContext: ServerContext,
-  ) {
+  ): Promise<string> {
     resetComponentDefTViews();
 
     const html = await renderApplication(bootstrap, {

@@ -9,14 +9,18 @@ import { ContentFile } from './content-file';
 import { ContentRenderer } from './content-renderer';
 import { CONTENT_LOCALE, withLocaleCandidates } from './content-locale';
 import { CONTENT_FILES_TOKEN } from './content-files-token';
-import { parseRawContentFile } from './parse-raw-content-file';
+import {
+  type ContentFileLoader,
+  type ContentFileModule,
+  parseContentFile,
+} from './parse-content-file';
 import { waitFor } from './utils/zone-wait-for';
 import { RenderTaskService } from './render-task.service';
 
 function getContentFile<
   Attributes extends Record<string, any> = Record<string, any>,
 >(
-  contentFiles: Record<string, () => Promise<string>>,
+  contentFiles: Record<string, ContentFileLoader>,
   prefix: string,
   slug: string,
   fallback: string,
@@ -25,26 +29,21 @@ function getContentFile<
   locale?: string | null,
 ): Observable<ContentFile<Attributes | Record<string, never>>> {
   // Normalize file keys so both "/src/content/..." and "/<project>/src/content/..." resolve.
-  const normalizedFiles: Record<string, () => Promise<string>> = {};
+  const normalizedFiles: Record<string, ContentFileLoader> = {};
   for (const [key, resolver] of Object.entries(contentFiles)) {
     const normalizedKey = key
       .replace(/^(?:.*?)\/content(?=\/)/, '/src/content')
       .replace(/\/{2,}/g, '/');
-    normalizedFiles[normalizedKey] = resolver as () => Promise<string>;
+    normalizedFiles[normalizedKey] = resolver;
   }
 
   const base = `/src/content/${prefix}${slug}`.replace(/\/{2,}/g, '/');
-  const candidates = [
-    `${base}.md`,
-    `${base}.agx`,
-    `${base}/index.md`,
-    `${base}/index.agx`,
-  ];
+  const candidates = [`${base}.md`, `${base}/index.md`];
 
   const allCandidates = withLocaleCandidates(candidates, locale);
   const matchKey = allCandidates.find((k) => k in normalizedFiles);
   const contentFile = matchKey ? normalizedFiles[matchKey] : undefined;
-  const resolvedBase = (matchKey || `${base}.md`).replace(/\.(md|agx)$/, '');
+  const resolvedBase = (matchKey || `${base}.md`).replace(/\.md$/, '');
 
   if (!contentFile) {
     return of({
@@ -57,47 +56,31 @@ function getContentFile<
   }
 
   const contentTask = renderTaskService.addRenderTask();
-  return new Observable<string | { default: any; metadata: any }>(
-    (observer) => {
-      const contentResolver = contentFile();
+  return new Observable<string | ContentFileModule>((observer) => {
+    // `waitFor` is a no-op in non-Zone environments (browser without zone.js),
+    // so this branch works for both SSR and client. Keeping a single path also
+    // avoids Rolldown evaluating `import.meta.env.SSR` at library-build time
+    // and eliminating the task-clearing branch, which caused SSR to hang once
+    // the content map resolved a real lazy import.
+    waitFor(contentFile()).then((content) => {
+      observer.next(content);
+      observer.complete();
 
-      if (import.meta.env.SSR === true) {
-        waitFor(contentResolver).then((content) => {
-          observer.next(content);
-          observer.complete();
-
-          setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
-        });
-      } else {
-        contentResolver.then((content) => {
-          observer.next(content);
-          observer.complete();
-        });
-      }
-    },
-  ).pipe(
-    switchMap((contentFile) => {
-      if (typeof contentFile === 'string') {
-        const { content, attributes } =
-          parseRawContentFile<Attributes>(contentFile);
-        return from(contentRenderer.render(content)).pipe(
-          map((rendered) => ({
-            filename: resolvedBase,
-            slug,
-            attributes,
-            content,
-            toc: rendered.toc ?? [],
-          })),
-        );
-      }
-      return of({
-        filename: resolvedBase,
-        slug,
-        attributes: contentFile.metadata,
-        content: contentFile.default,
-        toc: [],
-      });
-    }),
+      setTimeout(() => renderTaskService.clearRenderTask(contentTask), 10);
+    });
+  }).pipe(
+    switchMap((contentFile) => parseContentFile<Attributes>(contentFile)),
+    switchMap(({ content, attributes }) =>
+      from(contentRenderer.render(content)).pipe(
+        map((rendered) => ({
+          filename: resolvedBase,
+          slug,
+          attributes,
+          content,
+          toc: rendered.toc ?? [],
+        })),
+      ),
+    ),
     finalize(() => {
       if (import.meta.env.SSR !== true) {
         renderTaskService.clearRenderTask(contentTask);

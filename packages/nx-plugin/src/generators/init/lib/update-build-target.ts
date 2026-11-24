@@ -11,7 +11,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 export function updateBuildTarget(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
 
   const commonConfig = {
@@ -38,38 +38,15 @@ export function updateBuildTarget(
 
     const projectConfig = projects.get(schema.project);
 
-    if (projectConfig) {
-      updateJson(tree, angularJsonPath, (json) => {
-        json.projects[schema.project].root = projectConfig.root;
-        json.projects[schema.project].sourceRoot = projectConfig.sourceRoot;
-        json.projects[schema.project].architect.build = {
-          builder: '@analogjs/platform:vite',
-          ...commonConfig,
-          options: {
-            configFile: `${joinPathFragments(
-              projectConfig.root,
-              'vite.config.ts',
-            )}`,
-            main: `${joinPathFragments(projectConfig.root, 'src/main.ts')}`,
-            outputPath: `dist/${joinPathFragments(projectConfig.root, 'client')}`,
-            tsConfig: `${joinPathFragments(
-              projectConfig.root,
-              'tsconfig.app.json',
-            )}`,
-          },
-        };
-
-        return json;
-      });
+    if (!projectConfig) {
+      throw new Error(`Project "${schema.project}" not found.`);
     }
-  } else {
-    const projects = getProjects(tree);
 
-    const projectConfig = projects.get(schema.project);
-
-    if (projectConfig && projectConfig?.targets) {
-      projectConfig.targets.build = {
-        executor: '@analogjs/platform:vite',
+    updateJson(tree, angularJsonPath, (json) => {
+      json.projects[schema.project].root = projectConfig.root;
+      json.projects[schema.project].sourceRoot = projectConfig.sourceRoot;
+      json.projects[schema.project].architect.build = {
+        builder: '@analogjs/platform:vite',
         ...commonConfig,
         options: {
           configFile: `${joinPathFragments(
@@ -85,7 +62,38 @@ export function updateBuildTarget(
         },
       };
 
-      updateProjectConfiguration(tree, schema.project, projectConfig);
+      return json;
+    });
+  } else {
+    const projects = getProjects(tree);
+
+    const projectConfig = projects.get(schema.project);
+
+    if (!projectConfig) {
+      throw new Error(`Project "${schema.project}" not found.`);
     }
+
+    if (!projectConfig.targets) {
+      throw new Error(`Project "${schema.project}" has no targets.`);
+    }
+
+    projectConfig.targets.build = {
+      executor: '@analogjs/platform:vite',
+      ...commonConfig,
+      options: {
+        configFile: `${joinPathFragments(
+          projectConfig.root,
+          'vite.config.ts',
+        )}`,
+        main: `${joinPathFragments(projectConfig.root, 'src/main.ts')}`,
+        outputPath: `dist/${joinPathFragments(projectConfig.root, 'client')}`,
+        tsConfig: `${joinPathFragments(
+          projectConfig.root,
+          'tsconfig.app.json',
+        )}`,
+      },
+    };
+
+    updateProjectConfiguration(tree, schema.project, projectConfig);
   }
 }

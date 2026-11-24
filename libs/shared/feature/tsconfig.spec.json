@@ -4,7 +4,8 @@
     "outDir": "../../dist/out-tsc",
     "types": ["node", "vitest/globals"],
     "target": "es2016",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "composite": false
   },
   "files": ["src/test-setup.ts"],
   "include": ["src/**/*.spec.ts", "src/**/*.d.ts"]

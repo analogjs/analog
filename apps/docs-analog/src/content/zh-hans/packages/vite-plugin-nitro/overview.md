@@ -76,7 +76,9 @@ API 路由定义在 `src/server/routes/api` 文件夹中。API 路由也是基�
 
 ```ts
 // src/server/routes/api/v1/hello
-export default defineEventHandler(() => ({ message: 'Hello World' }));
+import { defineHandler } from 'h3';
+
+export default defineHandler(() => ({ message: 'Hello World' }));
 ```
 
 该 API 路由可以通过 `/api/v1/hello` 访问。

@@ -91,9 +91,6 @@ const response = await firstValueFrom(
 
 4. Build a producción en CI
 
-**No establecer** `VITE_ANALOG_PUBLIC_BASE_URL`, deber a utilizar lo que esté en `vite.config.ts`.
-Si `VITE_ANALOG_PUBLIC_BASE_URL` está presente durante la construcción, los datos de SSR se obtienen en el servidor y en el cliente.
-
 ```bash
   # Si usa nx:
   npx nx run appname:build:production

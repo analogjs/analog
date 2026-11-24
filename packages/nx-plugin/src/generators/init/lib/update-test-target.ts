@@ -10,7 +10,7 @@ import { SetupAnalogGeneratorSchema } from '../schema';
 export function updateTestTarget(
   tree: Tree,
   schema: SetupAnalogGeneratorSchema,
-) {
+): void {
   const angularJsonPath = '/angular.json';
   const commonConfig = {
     options: {
@@ -37,13 +37,19 @@ export function updateTestTarget(
 
     const projectConfig = projects.get(schema.project);
 
-    if (projectConfig && projectConfig.targets) {
-      projectConfig.targets.test = {
-        executor: '@analogjs/vitest-angular:test',
-        ...commonConfig,
-      };
-
-      updateProjectConfiguration(tree, schema.project, projectConfig);
+    if (!projectConfig) {
+      throw new Error(`Project "${schema.project}" not found.`);
     }
+
+    if (!projectConfig.targets) {
+      throw new Error(`Project "${schema.project}" has no targets.`);
+    }
+
+    projectConfig.targets.test = {
+      executor: '@analogjs/vitest-angular:test',
+      ...commonConfig,
+    };
+
+    updateProjectConfiguration(tree, schema.project, projectConfig);
   }
 }

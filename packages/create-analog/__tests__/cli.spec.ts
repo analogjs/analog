@@ -1,4 +1,3 @@
-import type { ExecaSyncReturnValue, SyncOptions } from 'execa';
 import { execaCommandSync as commandSync } from 'execa';
 import {
   mkdirpSync,
@@ -9,17 +8,18 @@ import {
   writeFileSync,
 } from 'fs-extra';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { realpathSync } from 'node:fs';
 import { afterEach, beforeAll, expect, test } from 'vitest';
+import { loadConfigFromFile } from 'vite';
 
 const CLI_PATH = join(__dirname, '..');
 
 const projectName = 'test-app';
-const genPath = join(__dirname, projectName);
+const tmpDir = join(realpathSync(tmpdir()), 'create-analog-test');
+const genPath = join(tmpDir, projectName);
 
-const run = (
-  args: string[],
-  options: SyncOptions<string> = {},
-): ExecaSyncReturnValue<string> => {
+const run = (args: string[], options = {}) => {
   return commandSync(`node ${CLI_PATH} ${args.join(' ')}`, options);
 };
 
@@ -33,20 +33,50 @@ const createNonEmptyDir = () => {
   writeFileSync(pkgJson, '{ "foo": "bar" }');
 };
 
-// Angular v18 starter template
+const readGeneratedPackageJson = () =>
+  JSON.parse(readFileSync(join(genPath, 'package.json'), 'utf-8'));
+
+const readGeneratedViteConfig = () =>
+  readFileSync(join(genPath, 'vite.config.ts'), 'utf-8');
+
+const readGeneratedStyles = () =>
+  readFileSync(join(genPath, 'src/styles.css'), 'utf-8');
+
+const expectTailwindScaffold = () => {
+  const pkg = readGeneratedPackageJson();
+  const viteConfig = readGeneratedViteConfig();
+
+  expect(pkg.devDependencies['tailwindcss']).toBe('^4.2.2');
+  expect(pkg.devDependencies['postcss']).toBe('^8.5.6');
+  expect(pkg.devDependencies['@tailwindcss/postcss']).toBe('^4.2.2');
+  expect(pkg.devDependencies['@tailwindcss/vite']).toBe('^4.2.2');
+  expect(pkg.dependencies['tailwindcss']).toBeUndefined();
+  expect(pkg.dependencies['@tailwindcss/vite']).toBeUndefined();
+  expect(pkg.dependencies['@tailwindcss/postcss']).toBeUndefined();
+  expect(readGeneratedStyles()).toContain(`@import 'tailwindcss';`);
+  expect(viteConfig).toContain(`import tailwindcss from '@tailwindcss/vite';`);
+  expect(viteConfig).toMatch(
+    /plugins:\s*\[[\s\S]*analog\(\),[\s\S]*tailwindcss\(\)/,
+  );
+  expect(readFileSync(join(genPath, 'postcss.config.mjs'), 'utf-8')).toContain(
+    `'@tailwindcss/postcss': {}`,
+  );
+};
+
+// Latest starter template
 let templateFiles = readdirSync(join(CLI_PATH, 'template-latest'));
 templateFiles.push('.git');
 // _gitignore is renamed to .gitignore
 templateFiles = templateFiles
   .map((filePath) => (filePath === '_gitignore' ? '.gitignore' : filePath))
-  .sort();
-// starter with tailwind
-const templateFilesTailwind = [
-  ...templateFiles,
-  'tailwind.config.ts',
-  'postcss.config.js',
-].sort();
-beforeAll(() => remove(genPath));
+  .sort((a, b) => a.localeCompare(b));
+const tailwindTemplateFiles = [...templateFiles, 'postcss.config.mjs'].sort(
+  (a, b) => a.localeCompare(b),
+);
+beforeAll(async () => {
+  await remove(genPath);
+  mkdirpSync(tmpDir);
+});
 afterEach(() => remove(genPath));
 
 test('prompts for the project name if none supplied', () => {
@@ -74,7 +104,7 @@ test.skip('prompts for the framework on supplying an invalid template', () => {
 
 test('asks to overwrite non-empty target directory', () => {
   createNonEmptyDir();
-  const { stdout } = run([projectName], { cwd: __dirname });
+  const { stdout } = run([projectName], { cwd: tmpDir });
   expect(stdout).toContain(`Target directory "${projectName}" is not empty.`);
 });
 
@@ -87,38 +117,184 @@ test('asks to overwrite non-empty current directory', () => {
 test('successfully scaffolds a project based on angular starter template', () => {
   const { stdout } = run(
     [projectName, '--template', 'latest', '--skipTailwind', 'false'],
-    { cwd: __dirname },
+    { cwd: tmpDir },
   );
-  const generatedFiles = readdirSync(genPath).sort();
+  const generatedFiles = readdirSync(genPath).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
-  expect(templateFiles).toEqual(generatedFiles);
+  expect(tailwindTemplateFiles).toEqual(generatedFiles);
+  expectTailwindScaffold();
 });
 
 test('works with the -t alias', () => {
   const { stdout } = run(
     [projectName, '-t', 'latest', '--skipTailwind', 'false'],
-    { cwd: __dirname },
+    { cwd: tmpDir },
   );
-  const generatedFiles = readdirSync(genPath).sort();
+  const generatedFiles = readdirSync(genPath).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   // Assertions
   expect(stdout).toContain(`Scaffolding project in ${genPath}`);
-  expect(templateFiles).toEqual(generatedFiles);
+  expect(tailwindTemplateFiles).toEqual(generatedFiles);
+  expectTailwindScaffold();
 });
 
-test('keeps the vite/vitest overrides by default', () => {
+test(
+  'loads the generated tailwind vite config',
+  { timeout: 30_000 },
+  async () => {
+    // Scaffold inside the workspace so Vite can resolve node_modules
+    const localGenPath = join(__dirname, projectName);
+    await remove(localGenPath);
+
+    try {
+      run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
+        cwd: __dirname,
+      });
+
+      const loaded = await loadConfigFromFile(
+        {
+          command: 'build',
+          mode: 'production',
+        },
+        join(localGenPath, 'vite.config.ts'),
+      );
+
+      expect(loaded?.path).toBe(join(localGenPath, 'vite.config.ts'));
+      expect(loaded?.config).toBeTruthy();
+    } finally {
+      await remove(localGenPath);
+    }
+  },
+);
+
+test('scaffolds Nitro without the server prompt by default', () => {
+  const { stdout } = run(
+    [projectName, '--template', 'latest', '--skipTailwind', 'true'],
+    { cwd: tmpDir },
+  );
+
+  expect(stdout).not.toContain('Which server would you like to use?');
+  expect(readGeneratedViteConfig()).toMatch(
+    /import nitro from '@analogjs\/vite-plugin-nitro';[\s\S]*plugins:\s*\[\s*analog\(\),\s*angular\(\),\s*nitro\(\),\s*\]/,
+  );
+  expect(
+    readFileSync(join(genPath, 'src/server/routes/api/v1/hello.ts'), 'utf-8'),
+  ).toContain('defineEventHandler');
+});
+
+test(
+  'scaffolds a NestJS server with --server nestjs',
+  { timeout: 30_000 },
+  async () => {
+    // Scaffold inside the workspace so Vite can resolve node_modules
+    const localGenPath = join(__dirname, projectName);
+    await remove(localGenPath);
+
+    try {
+      run(
+        [
+          projectName,
+          '--template',
+          'latest',
+          '--server',
+          'nestjs',
+          '--skipTailwind',
+          'true',
+        ],
+        { cwd: __dirname },
+      );
+
+      const viteConfig = readFileSync(
+        join(localGenPath, 'vite.config.ts'),
+        'utf-8',
+      );
+      expect(viteConfig).toContain(
+        "analog({ server: { entry: 'src/server/main.ts' } })",
+      );
+      expect(viteConfig).not.toContain('nitro');
+      expect(viteConfig).not.toContain('__');
+
+      const loaded = await loadConfigFromFile(
+        { command: 'build', mode: 'production' },
+        join(localGenPath, 'vite.config.ts'),
+      );
+      expect(loaded?.config).toBeTruthy();
+
+      const serverFiles = readdirSync(join(localGenPath, 'src/server')).sort();
+      expect(serverFiles).toEqual([
+        'app.module.ts',
+        'hello.controller.ts',
+        'hello.service.ts',
+        'main.ts',
+      ]);
+
+      const pkg = readJsonSync(join(localGenPath, 'package.json'));
+      expect(Object.keys(pkg.dependencies)).toEqual(
+        expect.arrayContaining([
+          '@nestjs/common',
+          '@nestjs/core',
+          '@nestjs/platform-express',
+          'h3',
+          'reflect-metadata',
+          'srvx',
+        ]),
+      );
+      expect(
+        pkg.devDependencies['@analogjs/vite-plugin-nitro'],
+      ).toBeUndefined();
+      expect(pkg.scripts.preview).toBe('node dist/server/main.js');
+
+      const tsconfig = readJsonSync(join(localGenPath, 'tsconfig.json'));
+      expect(tsconfig.compilerOptions).toMatchObject({
+        experimentalDecorators: true,
+        emitDecoratorMetadata: true,
+      });
+    } finally {
+      await remove(localGenPath);
+    }
+  },
+);
+
+test('rejects --server nestjs for templates other than latest', () => {
+  expect(() =>
+    run(
+      [
+        projectName,
+        '--template',
+        'blog',
+        '--server',
+        'nestjs',
+        '--skipTailwind',
+        'true',
+      ],
+      { cwd: tmpDir },
+    ),
+  ).toThrow('only available for the Full-stack Application');
+});
+
+test('rejects an unknown --server', () => {
+  expect(() =>
+    run([projectName, '--template', 'latest', '--server', 'hono'], {
+      cwd: tmpDir,
+    }),
+  ).toThrow('Unknown server "hono"');
+});
+
+test('keeps the vite override by default', () => {
   run([projectName, '--template', 'latest', '--skipTailwind', 'false'], {
-    cwd: __dirname,
+    cwd: tmpDir,
   });
   const pkg = readJsonSync(join(genPath, 'package.json'));
-  expect(pkg.overrides).toBeDefined();
-  expect(pkg.overrides).toHaveProperty('vite');
-  expect(pkg.overrides).toHaveProperty('vitest');
+  expect(pkg.overrides).toEqual({ vite: '$vite' });
 });
 
-test('strips the vite/vitest overrides with --skipViteOverrides', () => {
+test('strips the vite override with --skipViteOverrides', () => {
   run(
     [
       projectName,
@@ -128,10 +304,69 @@ test('strips the vite/vitest overrides with --skipViteOverrides', () => {
       'false',
       '--skipViteOverrides',
     ],
-    { cwd: __dirname },
+    { cwd: tmpDir },
   );
   const pkg = readJsonSync(join(genPath, 'package.json'));
   expect(pkg.overrides).toBeUndefined();
+});
+
+test('publishes every template with current @analogjs versions', () => {
+  const cliPkg = readJsonSync(join(CLI_PATH, 'package.json'));
+  const templates = readdirSync(CLI_PATH).filter((entry) =>
+    entry.startsWith('template-'),
+  );
+
+  for (const template of templates) {
+    expect(cliPkg.files).toContain(template);
+
+    const pkg = readJsonSync(join(CLI_PATH, template, 'package.json'));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    for (const [name, version] of Object.entries(deps)) {
+      if (name.startsWith('@analogjs/')) {
+        expect(version, `${template} ${name}`).toBe(`^${cliPkg.version}`);
+      }
+    }
+  }
+});
+
+test('scaffolds a versioned Angular template', () => {
+  const { stdout } = run(
+    [projectName, '--template', 'angular-v21', '--skipTailwind', 'true'],
+    { cwd: tmpDir },
+  );
+
+  expect(stdout).toContain(`Scaffolding project in ${genPath}`);
+  expect(readGeneratedPackageJson().dependencies['@angular/core']).toBe(
+    '^21.0.0',
+  );
+});
+
+test('scaffolds the Angular v20 template with separate plugins', () => {
+  run([projectName, '--template', 'angular-v20', '--skipTailwind', 'false'], {
+    cwd: tmpDir,
+  });
+
+  expect(readGeneratedViteConfig()).toMatch(
+    /plugins:\s*\[\s*analog\(\),\s*angular\(\),\s*nitro\(\),\s*tailwindcss\(\),\s*\]/,
+  );
+  expect(
+    readGeneratedPackageJson().devDependencies['@analogjs/vite-plugin-nitro'],
+  ).toBeDefined();
+});
+
+test('configures the blog highlighter at build time only', () => {
+  run([projectName, '--template', 'blog', '--skipTailwind', 'true'], {
+    cwd: tmpDir,
+  });
+  const appConfig = readFileSync(
+    join(genPath, 'src/app/app.config.ts'),
+    'utf-8',
+  );
+
+  expect(appConfig).toContain('provideContent(withMarkdownRenderer())');
+  expect(appConfig).not.toContain('Highlighter');
+  expect(readGeneratedViteConfig()).toContain("highlighter: 'prism'");
+  expect(readGeneratedPackageJson().dependencies['prismjs']).toBeDefined();
 });
 
 test('templates wire up the agent context chain', () => {

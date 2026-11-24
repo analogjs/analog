@@ -6,7 +6,7 @@ export function addFiles(
   tree: Tree,
   options: NormalizedOptions,
   majorAngularVersion: number,
-) {
+): void {
   const isNx = tree.exists('/nx.json');
   const templateOptions = {
     ...options,

@@ -1,0 +1,70 @@
+{
+  "name": "tsrx-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/tsrx-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@analogjs/platform:vite",
+      "cache": false,
+      "dependsOn": [
+        "platform:build",
+        "router:build",
+        "content:build",
+        "tsrx-angular:build"
+      ],
+      "outputs": [
+        "{options.outputPath}",
+        "{workspaceRoot}/dist/apps/tsrx-app/ssr",
+        "{workspaceRoot}/dist/apps/tsrx-app/analog",
+        "{projectRoot}/node_modules/.analog/tsrx-types"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "configFile": "apps/tsrx-app/vite.config.ts",
+        "outputPath": "dist/apps/tsrx-app/client"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "sourcemap": false,
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@analogjs/platform:vite-dev-server",
+      "dependsOn": [
+        "platform:build",
+        "router:build",
+        "content:build",
+        "tsrx-angular:build"
+      ],
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "tsrx-app:build",
+        "port": 43060
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "tsrx-app:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "tsrx-app:build:production"
+        }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "apps/tsrx-app",
+        "command": "pnpm exec tsgo -p tsconfig.app.json --noEmit"
+      }
+    }
+  }
+}

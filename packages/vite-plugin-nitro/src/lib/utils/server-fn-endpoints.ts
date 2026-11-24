@@ -1,4 +1,6 @@
 import type { NitroEventHandler } from 'nitropack';
+import { createRequire } from 'node:module';
+import { join } from 'node:path';
 import { normalizePath } from 'vite';
 
 import type { ServerFnHandlerModule } from './get-server-fn-handlers';
@@ -42,6 +44,8 @@ export type BuildServerFnDispatchModuleArgs = {
    * app configured. When absent, handlers run with only `providedIn: 'root'`.
    */
   appConfigModule?: string;
+  /** The app's root directory, where `zone.js` is resolved from. */
+  root: string;
 };
 
 /**
@@ -55,6 +59,7 @@ export type BuildServerFnDispatchModuleArgs = {
 export function buildServerFnDispatchModule({
   modules,
   appConfigModule,
+  root,
 }: BuildServerFnDispatchModuleArgs): string {
   const registrationImports = modules
     .map((m) => `import ${JSON.stringify(normalizePath(m.file))};`)
@@ -72,16 +77,18 @@ export function buildServerFnDispatchModule({
   // `@analogjs/router/server` is a partially-compiled Angular library, and this
   // module is bundled by Nitro rather than by the app's Angular pipeline, so the
   // linker never runs over it. Loading the compiler gives it the JIT fallback.
-  // `zone.js` and the server platform init match the SSR entry, so bootstrapping
-  // the app injector below runs in the same environment a render would.
+  // `zone.js` (when installed; zoneless apps may omit it) and the server
+  // platform init match the SSR entry, so bootstrapping the app injector below
+  // runs in the same environment a render would.
   //
   // The transport itself — id decoding, the malformed-body contract, dispatch,
   // and response writing — lives in `createServerFnEventHandler`, so this module
   // is only wiring: bootstrap the app injector from the app's server config, and
   // hand it to that handler.
+  const zoneImport = hasZoneJs(root) ? `import 'zone.js/node';\n` : '';
+
   return `import '@angular/compiler';
-import 'zone.js/node';
-import '@angular/platform-server/init';
+${zoneImport}import '@angular/platform-server/init';
 import { createServerFnAppInjector, createServerFnEventHandler } from '@analogjs/router/server';
 
 // Discovered server-function modules (registration side-effects).
@@ -97,4 +104,13 @@ export default createServerFnEventHandler(
   createServerFnAppInjector(serverFnAppConfig),
 );
 `;
+}
+
+function hasZoneJs(root: string): boolean {
+  try {
+    createRequire(join(root, 'noop.js')).resolve('zone.js/node');
+    return true;
+  } catch {
+    return false;
+  }
 }

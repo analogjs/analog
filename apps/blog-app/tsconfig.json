@@ -16,6 +16,15 @@
   "include": [],
   "references": [
     {
+      "path": "../../packages/router"
+    },
+    {
+      "path": "../../packages/content"
+    },
+    {
+      "path": "../../packages/platform"
+    },
+    {
       "path": "./tsconfig.app.json"
     },
     {

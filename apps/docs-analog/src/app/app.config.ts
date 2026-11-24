@@ -1,8 +1,4 @@
-import {
-  provideHttpClient,
-  withFetch,
-  withInterceptors,
-} from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
   type ApplicationConfig,
   provideAppInitializer,
@@ -12,11 +8,7 @@ import {
   provideClientHydration,
   withEventReplay,
 } from '@angular/platform-browser';
-import {
-  provideFileRouter,
-  requestContextInterceptor,
-  withExtraRoutes,
-} from '@analogjs/router';
+import { provideFileRouter, withExtraRoutes } from '@analogjs/router';
 import { provideI18n } from '@analogjs/router/i18n';
 import {
   provideContent,
@@ -84,10 +76,7 @@ export const appConfig: ApplicationConfig = {
       }),
       withExtraRoutes([enRedirectRoute, localeHomeRoute]),
     ),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([requestContextInterceptor]),
-    ),
+    provideHttpClient(withFetch()),
     provideClientHydration(withEventReplay()),
     provideContent(
       withMarkdownRenderer(),

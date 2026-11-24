@@ -7,6 +7,8 @@ Analog supports defining API routes that can be used to serve data to the applic
 API routes are defined in the `src/server/routes/api` folder. API routes are also filesystem based, and are exposed under the default `/api` prefix.
 
 ```ts
+import { defineEventHandler } from 'h3';
+
 export default defineEventHandler(() => ({ message: 'Hello World' }));
 ```
 
@@ -46,18 +48,44 @@ export default defineApiRoute({
 Schemas may validate asynchronously. The handler also receives the original h3
 `event` for cookies, headers, and other request operations.
 
+### Inferring types on the client
+
+The route returned by `defineApiRoute` carries its validated `query`, `body`, and
+result types. Export it as a named `route` as well as the default export to share
+those types with the client:
+
+```ts
+// src/server/routes/api/v1/todos.get.ts
+import { defineApiRoute } from '@analogjs/router/server/actions';
+import * as v from 'valibot';
+
+export const route = defineApiRoute({
+  query: v.object({ scope: v.optional(v.string(), 'default') }),
+  handler: ({ query }) => [{ id: 1, title: `${query.scope} todo` }],
+});
+
+export default route;
+```
+
+Use `InferRouteQuery`, `InferRouteBody`, and `InferRouteResult` from
+`@analogjs/router/server/actions` with `typeof route`, or pass the route to the
+[TanStack Query integration](/docs/integrations/tanstack-query).
+
 ## Defining XML Content
 
 To create an RSS feed for your site, set the `content-type` to be `text/xml` and Analog serves up the correct content type for the route.
 
 ```ts
 //server/routes/api/rss.xml.ts
+
+import { defineEventHandler, setResponseHeader } from 'h3';
+
 export default defineEventHandler((event) => {
   const feedString = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 </rss>
   `;
-  setHeader(event, 'content-type', 'text/xml');
+  setResponseHeader(event, 'content-type', 'text/xml');
   return feedString;
 });
 ```
@@ -90,17 +118,21 @@ Dynamic API routes are defined by using the filename as the route path enclosed 
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
+import { defineEventHandler } from 'h3';
+
 export default defineEventHandler(
   (event) => `Hello ${event.context.params?.['name']}!`,
 );
 ```
 
-Another way to access route parameters is by using the `getRouterParam` function.
+Another way to access route parameters is by reading them from `event.context.params` inside the handler.
 
 ```ts
 // /server/routes/api/v1/hello/[name].ts
+import { defineEventHandler } from 'h3';
+
 export default defineEventHandler((event) => {
-  const name = getRouterParam(event, 'name');
+  const name = event.context.params?.['name'] ?? 'friend';
   return `Hello, ${name}!`;
 });
 ```
@@ -113,8 +145,10 @@ File names can be suffixed with `.get`, `.post`, `.put`, `.delete`, etc. to matc
 
 ```ts
 // /server/routes/api/v1/users/[id].get.ts
+import { defineEventHandler } from 'h3';
+
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id');
+  const id = event.context.params?.['id'];
   // TODO: fetch user by id
   return `User profile of ${id}!`;
 });
@@ -124,6 +158,8 @@ export default defineEventHandler(async (event) => {
 
 ```ts
 // /server/routes/api/v1/users.post.ts
+import { defineEventHandler, readBody } from 'h3';
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   // TODO: Handle body and add user
@@ -131,7 +167,7 @@ export default defineEventHandler(async (event) => {
 });
 ```
 
-The [h3 JSDocs](https://www.jsdocs.io/package/h3#package-index-functions) provide more info and utilities, including readBody.
+The [h3 JSDocs](https://www.jsdocs.io/package/h3#package-index-functions) provide more info and utilities for headers, cookies, redirects, and more.
 
 ## Requests with Query Parameters
 
@@ -139,35 +175,15 @@ Sample query `/api/v1/query?param1=Analog&param2=Angular`
 
 ```ts
 // routes/api/v1/query.ts
+import { defineEventHandler } from 'h3';
+
 export default defineEventHandler((event) => {
-  const { param1, param2 } = getQuery(event);
+  const param1 = event.url.searchParams.get('param1');
+  const param2 = event.url.searchParams.get('param2');
+
   return `Hello, ${param1} and ${param2}!`;
 });
 ```
-
-## Typed API Routes
-
-Use `defineServerRoute` from `@analogjs/router/server/actions` to validate the request with any [Standard Schema](https://standardschema.dev) library, such as Valibot or Zod, and return JSON from the handler. Validation failures respond with a `422` status and the schema issues.
-
-```ts
-// /server/routes/api/v1/todos.get.ts
-import { defineServerRoute } from '@analogjs/router/server/actions';
-import * as v from 'valibot';
-
-export const route = defineServerRoute({
-  query: v.object({ scope: v.optional(v.string(), 'default') }),
-  handler: ({ query }) => getTodos(query.scope),
-});
-
-export default route;
-```
-
-- `query` validates the URL search params and `body` validates the request body for `POST`, `PUT`, and `PATCH` requests.
-- `input` validates the body, or the search params on `GET`, and provides the result as `data`.
-- `params` validates the dynamic route params.
-- `output` validates the returned value in development and logs a warning on mismatch.
-
-Returning a `Response` from the handler sends it unchanged. Exporting the `route` lets the [TanStack Query integration](/docs/integrations/tanstack-query) infer the query, body, and result types on the client.
 
 ## Catch-all Routes
 
@@ -175,19 +191,24 @@ Catch-all routes are helpful for fallback route handling.
 
 ```ts
 // routes/api/[...].ts
-export default defineEventHandler((event) => `Default page`);
+import { defineEventHandler } from 'h3';
+
+export default defineEventHandler(() => `Default page`);
 ```
 
 ## Error Handling
 
 If no errors are thrown, a status code of 200 OK will be returned. Any uncaught errors will return a 500 Internal Server Error HTTP Error.
-To return other error codes, throw an exception with createError
+To return other error codes, throw an exception with `createError`.
 
 ```ts
 // routes/api/v1/[id].ts
+import { createError, defineEventHandler } from 'h3';
+
 export default defineEventHandler((event) => {
-  const param = getRouterParam(event, 'id');
-  const id = parseInt(param ? param : '');
+  const param = event.context.params?.['id'];
+  const id = Number.parseInt(param ?? '', 10);
+
   if (!Number.isInteger(id)) {
     throw createError({
       statusCode: 400,
@@ -206,6 +227,17 @@ Analog allows setting and reading cookies in your server-side calls.
 
 ```ts
 //(home).server.ts
+import { PageServerLoad } from '@analogjs/router';
+import { setCookie } from 'h3';
+
+import { Product } from '../products';
+
+export const load = async ({ fetch, event }: PageServerLoad) => {
+  setCookie(event, 'products', 'loaded', {
+    path: '/',
+  });
+  const products = await fetch<Product[]>('/api/v1/products');
+
   return {
     products: products,
   };
@@ -216,7 +248,13 @@ Analog allows setting and reading cookies in your server-side calls.
 
 ```ts
 //index.server.ts
-  console.log('products cookie', cookies['products']);
+import { PageServerLoad } from '@analogjs/router';
+import { getCookie } from 'h3';
+
+export const load = async ({ event }: PageServerLoad) => {
+  const productsCookie = getCookie(event, 'products');
+
+  console.log('products cookie', productsCookie);
 
   return {
     shipping: true,

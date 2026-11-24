@@ -36,7 +36,6 @@ import { injectLoad } from '@analogjs/router';
 import { load } from './index.server'; // not included in client build
 
 @Component({
-  standalone: true,
   template: `
     <h2>Home</h2>
 
@@ -79,7 +78,6 @@ import { LoadResult } from '@analogjs/router';
 import { load } from './index.server'; // not included in client build
 
 @Component({
-  standalone: true,
   template: `
     <h2>Home</h2>
     Loaded: {{ data.loaded }}
@@ -112,14 +110,3 @@ export const routeMeta: RouteMeta = {
   },
 };
 ```
-
-## Überschreiben der öffentlichen Basis-URL
-
-Analog ermittelt automatisch die öffentliche Basis-URL, die bei der Verwendung des serverseitigen Datenabrufs über den [Kontext der Serveranfrage](/de/docs/features/data-fetching/overview#kontext-der-serveranfrage) und den [Injektor des Anfragekontext](/de/docs/features/data-fetching/overview#injektor-des-anfragekontext) festgelegt wird. Um die Basis-URL explizit festzulegen, setze eine Umgebungsvariable durch die Verwendung einer `.env`-Datei, um die öffentliche Basis-URL zu definieren.
-
-```
-// .env
-VITE_ANALOG_PUBLIC_BASE_URL="http://localhost:5173"
-```
-
-Die Umgebungsvariable muss auch beim Erstellen der Veröffentlichung gesetzt werden.

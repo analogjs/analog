@@ -2,7 +2,7 @@ import baseConfig from '../../eslint.config.mjs';
 
 export default [
   {
-    ignores: ['**/dist', '**/out-tsc'],
+    ignores: ['**/dist', '**/out-tsc', 'ngp/**'],
   },
   ...baseConfig,
   {

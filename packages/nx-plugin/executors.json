@@ -1,7 +1,14 @@
 {
   "builders": {
-    "vite-dev-server": "@analogjs/vite-plugin-angular:vite-dev-server",
-    "vite": "@analogjs/vite-plugin-angular:vite",
-    "vitest": "@analogjs/vitest-angular:test"
+    "vite-dev-server": {
+      "implementation": "./src/builders/vite-dev-server/dev-server.js",
+      "schema": "./src/builders/vite-dev-server/schema.json",
+      "description": "Vite dev server."
+    },
+    "vite": {
+      "implementation": "./src/builders/vite/vite-build.js",
+      "schema": "./src/builders/vite/schema.json",
+      "description": "Build with Vite."
+    }
   }
 }

@@ -126,7 +126,8 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module'],
   },
   plugins: [
-    analog({
+    analog(),
+    angular({
       fileReplacements:
         mode === 'production'
           ? [
@@ -211,7 +212,8 @@ Angular soporta HMR/Live reload donde en la mayoría de los casos los componente
 export default defineConfig(({ mode }) => ({
   // .. otra configuración
   plugins: [
-    analog({
+    analog(),
+    angular({
       liveReload: true,
     }),
   ],

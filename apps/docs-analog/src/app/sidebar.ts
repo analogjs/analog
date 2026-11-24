@@ -120,6 +120,11 @@ export function getSidebar(): SidebarNode[] {
               id: 'features/server/streaming-ssr',
               label: $localize`:@@sidebar.streaming-ssr:Streaming SSR`,
             },
+            {
+              kind: 'doc',
+              id: 'features/server/custom-server',
+              label: $localize`:@@sidebar.custom-server:Custom Server`,
+            },
           ],
         },
         {
@@ -192,6 +197,16 @@ export function getSidebar(): SidebarNode[] {
           id: 'features/updating/overview',
           label: $localize`:@@sidebar.overview:Overview`,
         },
+        {
+          kind: 'doc',
+          id: 'guides/migrating-v2-to-v3',
+          label: $localize`:@@sidebar.migrating-v2-to-v3:Migrating from v2 to v3`,
+        },
+        {
+          kind: 'doc',
+          id: 'guides/migrating-v1-to-v2',
+          label: $localize`:@@sidebar.migrating-v1-to-v2:Migrating from v1 to v2`,
+        },
       ],
     },
     {
@@ -256,13 +271,28 @@ export function getSidebar(): SidebarNode[] {
         },
         {
           kind: 'doc',
+          id: 'integrations/nestjs/index',
+          label: $localize`:@@sidebar.nestjs:NestJS`,
+        },
+        {
+          kind: 'doc',
           id: 'integrations/storybook/index',
           label: $localize`:@@sidebar.storybook:Storybook`,
         },
         {
           kind: 'doc',
+          id: 'integrations/tailwind/index',
+          label: $localize`:@@sidebar.tailwind:Tailwind CSS`,
+        },
+        {
+          kind: 'doc',
           id: 'integrations/tanstack-query/index',
           label: $localize`:@@sidebar.tanstack-query:TanStack Query`,
+        },
+        {
+          kind: 'doc',
+          id: 'integrations/tsrx/index',
+          label: $localize`:@@sidebar.tsrx:TSRX`,
         },
       ],
     },

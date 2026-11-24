@@ -167,6 +167,8 @@ Analog 支持通过 [Netlify](https://netlify.com/) 进行部署，几乎无需�
 
 Analog 支持在 [Vercel](https://vercel.com/) 上进行部署，无需额外配置。
 
+请在 Vercel 项目设置中为构建和服务端运行时都使用 Node.js `24.x`。除非你覆盖 `nitro.vercel.functions.runtime`，否则 Analog 会默认将 Vercel Functions 的运行时设置为 `nodejs24.x`。
+
 ### 部署项目
 
 <Tabs groupId="porject-type">
@@ -197,7 +199,7 @@ Analog 支持在 [Vercel](https://vercel.com/) 上进行部署，无需额外配
 ```json [vercel.json]
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "nx build <app>"
+  "buildCommand": "pnpm exec nx build <app> --skip-nx-cache"
 }
 ```
 
@@ -206,14 +208,14 @@ Analog 支持在 [Vercel](https://vercel.com/) 上进行部署，无需额外配
 ```json [package.json]
 {
   "scripts": {
-    "build": "nx build <app>"
+    "build": "nx build <app> --skip-nx-cache"
   }
 }
 ```
 
 #### Nx 和 Vercel
 
-当在 Vercel 构建平台上使用 Nx 并重用构建缓存时，如果您在本地构建了它，可能会导致缓存被重用。这可能导致输出被放置在错误的位置。为了解决这个问题，您可以在 `vite.config.ts` 文件中使用预设作为解决方法。
+在 Vercel 构建平台上使用 Nx 时，请将项目的 Node.js 版本设置为 `24.x`，并优先在构建命令中使用 `--skip-nx-cache`。在 Vercel 上复用 Nx 缓存可能会把本地构建的输出恢复到错误的位置。如果 Vercel 仍然不能正确识别预设，你可以在 `vite.config.ts` 文件中手动设置预设作为解决方法。
 
   </TabItem>
 </Tabs>
@@ -479,7 +481,7 @@ Analog 支持通过 [Render](https://render.com/) 进行部署，几乎无需额
 
 2. 确保选择 'Node' 环境。
 
-3. [指定 Render 使用的 Node 版本](https://render.com/docs/node-version)（推荐使用 v18.13.0 或更高版本）- Render 默认使用 Node 14，这会导致 Analog 站点构建失败。
+3. [指定 Render 使用的 Node 版本](https://render.com/docs/node-version)（推荐使用 v22.0.0 或更高版本）- Render 默认使用 Node 14，这会导致 Analog 站点构建失败。
 
 4. 根据您的包管理器，将构建命令设置为 `yarn && yarn build`、`npm install && npm run build` 或 `pnpm i --shamefully-hoist && pnpm build`。
 
@@ -545,7 +547,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
       - uses: k9n-dev/analog-publish-gh-pages@v1.0.0
         with:
           access-token: ${{ secrets.ACCESS_TOKEN }}
@@ -574,7 +576,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.x'
+          node-version: '24.x'
       - name: Set environment variable based on branch
         run: |
           if [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/master ]]; then

@@ -2,7 +2,7 @@
 
 The AnalogJS Vite Plugin (`@analogjs/vite-plugin-angular`) compiles your Angular components, directives, and pipes to Ivy definitions during the Vite build. It provides two compilation paths:
 
-- **Default compilation**: Angular's own compiler (`ngtsc`), with full compile-time type checking.
+- **Default compilation**: Angular's own compiler (`ngtsc`), with opt-in compile-time type checking.
 - **Fast compile**: an in-tree single-pass compiler that produces the same Ivy output much faster.
 
 Both emit identical Ivy code and identical runtime behavior, because both ultimately call the same `@angular/compiler` lowering APIs.
@@ -25,7 +25,15 @@ export default defineConfig({
 });
 ```
 
-The default path runs Angular's compiler through the Angular Compilation API. It performs **full TypeScript and template type checking** (including `strictTemplates`), emits declaration files, and supports i18n message extraction. Use it when you want compile-time safety: wrong template bindings, missing inputs, and type mismatches fail the build.
+The default path runs Angular's compiler (`ngtsc`) directly. By default it reports only syntax errors, because `disableTypeChecking` defaults to `true`. Set it to `false` to also report TypeScript and Angular template diagnostics, including `strictTemplates` errors, from the Vite build:
+
+```ts
+angular({
+  disableTypeChecking: false,
+});
+```
+
+Library builds (`build.lib`) also emit declaration files.
 
 ### Editing multiple files
 
@@ -34,6 +42,22 @@ changes received within a 100 ms quiet window into one compilation. Reload and
 HMR notifications are coalesced after compilation, so saving several files at
 once avoids compiling separately for every file. Changes received during a
 compilation are queued for the next batch. This behavior requires no configuration.
+
+### Non-Angular TypeScript
+
+Analog leaves `.ts` and `.js` files to the Angular compiler and turns Vite's own TypeScript transform off for them. Files outside the Angular program, such as a custom Node server loaded through Vite, are then not compiled. To have Vite compile them, set the transform in your own config. Analog keeps your setting instead of adding its exclusions, and files it doesn't include stay with the Angular compiler:
+
+```ts
+// vite.config.ts
+import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  oxc: { include: [/\/src\/server\/.*\.ts$/] }, // `esbuild` on Vite 6 and 7
+  plugins: [analog(), angular()],
+});
+```
 
 ## Fast compile
 
@@ -58,13 +82,14 @@ export default defineConfig({
 ```
 
 :::note
-In an Analog application, configure the plugin through `@analogjs/platform` instead. Its `analog()` plugin forwards the same `fastCompile` option:
+In an Analog application, pass `fastCompile` to `angular()`, which sits next to `analog()` in the plugins array:
 
 ```ts
 import analog from '@analogjs/platform';
+import angular from '@analogjs/vite-plugin-angular';
 
 export default defineConfig({
-  plugins: [analog({ fastCompile: true })],
+  plugins: [analog(), angular({ fastCompile: true })],
 });
 ```
 
@@ -106,9 +131,90 @@ angular({
 
 See [Building an Angular library](/docs/guides/libraries) for the full library workflow.
 
+## NGP compilation (experimental)
+
+The `compilation` option selects the Angular compiler implementation:
+
+- `'ngtsc'` (default): Angular's standard compiler.
+- `'ngp'`: Angular's experimental hybrid preprocessor, with in-memory TypeScript 7 and Angular template type checking enabled by default.
+
+An explicit `compilation` takes precedence over `fastCompile`.
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+});
+```
+
+Vitest defaults to JIT, so set `jit: false` explicitly to use NGP. Without it,
+tests fall back to `'ngtsc'`.
+
+NGP is loaded only when selected. It resolves `@angular/ngp` from your
+application and otherwise uses an interim NGP build bundled with
+`@analogjs/vite-plugin-angular`, with a WebAssembly analyzer that runs on every
+platform. The bundled build tracks an unreleased Angular revision and is replaced
+by `@angular/ngp` once it is published. The bundled build requires Angular v22.2
+or later.
+
+NGP currently supports AOT application compilation and Vite preprocessing for
+component styles. Set `inlineStylesExtension` for inline
+SCSS/Sass/Less; external styles use their file extension. An explicit
+`jit: true` and `fastCompileMode: 'partial'` are rejected.
+
+TypeScript and Angular template type checking run in memory by default, without
+emitting intermediate files, and report errors at their template location. They
+require TypeScript 7; while Angular requires TypeScript 6, install the preview
+alongside it, or set `disableTypeChecking: true` to skip type checking:
+
+```shell
+npm install -D @typescript/native-preview
+```
+
+### Choosing a type checker
+
+The `typeChecker` option selects the TypeScript 7 language server NGP type-checks with:
+
+- `'tsgo'` (default): `typescript@^7` or `@typescript/native-preview`. Set the
+  `TSNATIVE_BINARY_PATH` environment variable to use a specific binary.
+- `'tsrs'`: [tsrs](https://github.com/oxc-project/tsrs), a Rust port of the
+  TypeScript 7 checker. Install the `tsrs` package.
+- `{ command, args }`: any executable that serves the TypeScript 7 language
+  server over stdio. `args` defaults to `['--lsp', '--stdio']`.
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+  typeChecker: 'tsrs',
+});
+```
+
+Diagnostics follow the TypeScript version the checker implements, so switching
+checkers can surface errors your current version does not report.
+
+### Component HMR
+
+NGP reloads the page on every change by default. Set `liveReload: true` to
+update components in place instead:
+
+```ts
+angular({
+  compilation: 'ngp',
+  jit: false,
+  liveReload: true,
+});
+```
+
+Components update in place after changes to their template and style files,
+including files those styles import, and after edits to a component file that
+only change its `template`, `templateUrl`, `styles`, `styleUrl`, or `stylesUrl`.
+Any other change, or a change that fails to compile, reloads the page. With
+HMR enabled, `@defer` dependencies load eagerly during development.
+
 ## Type checking
 
-Fast compile does not type-check your templates or TypeScript. To catch those errors, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:
+Fast compile does not type-check your templates or TypeScript, and the default path only does so with `disableTypeChecking: false`. NGP type-checks by default; see [NGP compilation](#ngp-compilation-experimental). To catch those errors without slowing the build, run Angular's compiler as a separate verification step against your app's tsconfig. Pass `--noEmit` so it only reports errors without writing output:
 
 ```bash
 ngc -p tsconfig.app.json --noEmit
@@ -166,23 +272,42 @@ The generator writes this target. Add `includeDeps: true` to also report diagnos
 }
 ```
 
+## Angular Compilation API (experimental)
+
+`angularCompilationPlugin()` compiles through the Angular Compilation API from `@angular/build`, the same API the Angular CLI uses. It requires Angular v20.1 or later with a matching `@angular/build` package installed. Use it in place of `angular()`:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { angularCompilationPlugin } from '@analogjs/vite-plugin-angular';
+
+export default defineConfig({
+  plugins: [angularCompilationPlugin()],
+});
+```
+
+It accepts `tsconfig`, `workspaceRoot`, `inlineStylesExtension`, `jit`, `liveReload`, `disableTypeChecking`, `fileReplacements`, `include`, and `debug`, which behave as they do on `angular()`. Fast compile options are not supported.
+
+:::caution
+This plugin is experimental. Its API and behavior may change in future releases.
+:::
+
 ## Compatibility
 
 ### Angular versions
 
-Fast compile is validated against Angular `17`, `18`, `19`, `20`, `21`, `22`, and `next` on every PR. Components that use `@defer` at runtime require Angular 18+.
+Fast compile is validated against Angular `20`, `21`, `latest`, and `next` conformance fixtures on PRs that touch the compiler, and against the `20.0.0` and `21.0.0` compiler APIs on `beta`-targeted PRs that touch the compiler.
 
 For overall Angular/Analog/Vite version support, see [Version Compatibility](/docs/guides/compatibility).
 
 ### Default vs fast compile
 
-|                                     | Default                 | Fast compile                          |
-| ----------------------------------- | ----------------------- | ------------------------------------- |
-| Ivy output                          | Full                    | Identical                             |
-| Cold build / hot rebuild            | Standard                | Significantly faster                  |
-| Compile-time template type checking | Yes (`strictTemplates`) | No (use the Angular Language Service) |
-| i18n message extraction             | Yes                     | `$localize` emitted                   |
-| Library / partial builds            | Yes                     | Yes (`fastCompileMode: 'partial'`)    |
+|                                     | Default                               | Fast compile                          |
+| ----------------------------------- | ------------------------------------- | ------------------------------------- |
+| Ivy output                          | Full                                  | Identical                             |
+| Cold build / hot rebuild            | Standard                              | Significantly faster                  |
+| Compile-time template type checking | Opt-in (`disableTypeChecking: false`) | No (use the Angular Language Service) |
+| Library / partial builds            | Yes                                   | Yes (`fastCompileMode: 'partial'`)    |
 
 ## Trade-offs
 
@@ -191,5 +316,5 @@ Fast compile trades compile-time safety for speed.
 
 **No compile-time template type checking.** Fast compile emits identical Ivy output and identical runtime behavior, but it does not validate template bindings, inputs, or types at build time. Run the **Angular Language Service** in your editor to catch these errors as you type; they appear as editor squiggles instead of failing the build.
 
-If you need template type errors to fail your build (for example in CI), add the [type-checking step](#type-checking) or use the default compilation path.
+If you need template type errors to fail your build (for example in CI), add the [type-checking step](#type-checking) or use the default compilation path with `disableTypeChecking: false`.
 :::

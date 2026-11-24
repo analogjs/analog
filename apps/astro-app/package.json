@@ -1,0 +1,11 @@
+{
+  "name": "@analogjs/astro-app",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "@analogjs/astro-angular": "workspace:*",
+    "@astrojs/mdx": "catalog:",
+    "@astrojs/react": "catalog:",
+    "astro": "catalog:"
+  }
+}

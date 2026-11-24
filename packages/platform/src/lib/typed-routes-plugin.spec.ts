@@ -11,6 +11,7 @@ import { parseSync } from 'oxc-parser';
 import { format } from 'prettier';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { typedRoutes } from './typed-routes-plugin.js';
+import { discoverLibraryRoutes } from './discover-library-routes.js';
 
 describe('typed route generation', () => {
   const roots: string[] = [];
@@ -61,6 +62,39 @@ describe('typed route generation', () => {
     configure(root);
     expect(readFileSync(join(root, 'src/main.ts'), 'utf8')).toBe(entry);
   });
+  it('generates declarations for discovered library pages and content, excluding APIs', () => {
+    const root = fixture();
+    for (const dir of ['pages', 'content', 'api']) {
+      mkdirSync(join(root, `libs/shared/src/${dir}`), { recursive: true });
+    }
+    writeFileSync(
+      join(root, 'libs/shared/src/pages/library.[id].page.ts'),
+      'export const routeMeta = { data: { shared: true } }; export default class Page {}',
+    );
+    writeFileSync(
+      join(root, 'libs/shared/src/pages/library.[id].server.ts'),
+      'export const load = async () => ({ shared: true });',
+    );
+    writeFileSync(
+      join(root, 'libs/shared/src/content/guide.md'),
+      '# Library guide',
+    );
+    writeFileSync(
+      join(root, 'libs/shared/src/api/private.ts'),
+      'export default () => null;',
+    );
+
+    configure(root, 'build', discoverLibraryRoutes(root));
+
+    const output = readFileSync(join(root, 'src/routeTree.gen.d.ts'), 'utf8');
+    expect(output).toContain('"/library/[id]"');
+    expect(output).toContain('params: { id: string }');
+    expect(output).toContain('library.[id].page").routeMeta');
+    expect(output).toContain('library.[id].server").load');
+    expect(output).toContain('"/guide"');
+    expect(output).not.toContain('private');
+  });
+
   it('does not require a conventional application entry', () => {
     const root = fixture();
     rmSync(join(root, 'src/main.ts'));

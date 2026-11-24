@@ -4,6 +4,20 @@ title: 'Using CSS Pre-processors'
 
 The Vite Plugin supports CSS pre-processing using external `styleUrls` and inline `styles` in the Component decorator metadata.
 
+## Tailwind v4 component styles
+
+Tailwind installation itself should follow Tailwind's docs. For Angular component styles that use Tailwind utilities such as `@apply`, add a `@reference` to your root stylesheet at the top of the component stylesheet:
+
+```css
+@reference '../styles.css';
+
+.card {
+  @apply rounded-lg p-4;
+}
+```
+
+For the broader Tailwind + Analog overview, including automated `@reference` injection through `analog.setup()`, see the [Tailwind CSS guide](/docs/integrations/tailwind).
+
 External `styleUrls` can be used without any additional configuration.
 
 An example with `styleUrls`:
@@ -16,7 +30,7 @@ An example with `styleUrls`:
 export class AppComponent {}
 ```
 
-In order to support pre-processing of inline `styles`, the plugin must be configured to provide the extension of the type of styles being used.
+In order to support pre-processing of inline `styles`, configure the plugin with the `inlineStylesExtension` for the style language being used.
 
 An example of using `scss` with inline `styles`:
 
@@ -40,7 +54,7 @@ An example of using `scss` with inline `styles`:
 export class AppComponent {}
 ```
 
-In the `vite.config.ts`, provide and object to the `angular` plugin function with the `inlineStylesExtension` property set to the CSS pre-processing file extension.
+In `vite.config.ts`, pass an object to the `angular` plugin with `inlineStylesExtension` set to the CSS pre-processing file extension.
 
 ```ts
 // https://vitejs.dev/config/

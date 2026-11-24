@@ -2,7 +2,7 @@ import { FlatCompat } from '@eslint/eslintrc';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import js from '@eslint/js';
-import nx from '@nx/eslint-plugin';
+import angular from 'angular-eslint';
 import baseConfig from '../../eslint.config.mjs';
 
 const compat = new FlatCompat({
@@ -16,10 +16,13 @@ export default [
   },
   ...baseConfig,
   ...compat.extends('plugin:storybook/recommended'),
-  ...nx.configs['flat/angular'],
-  ...nx.configs['flat/angular-template'],
+  ...angular.configs.tsRecommended.map((config) => ({
+    ...config,
+    files: ['**/*.ts'],
+  })),
   {
     files: ['**/*.ts'],
+    processor: angular.processInlineTemplates,
     rules: {
       '@angular-eslint/directive-selector': [
         'error',
@@ -40,10 +43,10 @@ export default [
       '@angular-eslint/prefer-standalone': 'off',
     },
   },
-  {
+  ...angular.configs.templateRecommended.map((config) => ({
+    ...config,
     files: ['**/*.html'],
-    rules: {},
-  },
+  })),
   {
     ignores: [
       '**/vite.config.*.timestamp*',

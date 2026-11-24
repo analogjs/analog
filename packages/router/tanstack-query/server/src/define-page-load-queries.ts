@@ -1,7 +1,7 @@
-import { QueryClient, dehydrate } from '@tanstack/angular-query-experimental';
-import type { DehydratedState } from '@tanstack/angular-query-experimental';
+import { QueryClient, dehydrate } from '@tanstack/angular-query';
+import type { DehydratedState } from '@tanstack/angular-query';
 import type { H3Event, H3EventContext } from 'h3';
-import type { $Fetch } from 'nitropack';
+import type { $Fetch } from 'ofetch';
 
 import {
   definePageLoad,
@@ -14,9 +14,28 @@ export { ANALOG_QUERIES_KEY } from '@analogjs/router/tanstack-query';
 
 type OptionalSchema = StandardSchemaV1 | undefined;
 
+// h3 v2 exposes the web Request as `event.req`; h3 v1 as `event.web.request`.
+function getRequestSignal(event: H3Event): AbortSignal | undefined {
+  const { web, req } = event as unknown as {
+    web?: { request?: Request };
+    req?: unknown;
+  };
+  return (web?.request ?? (req instanceof Request ? req : undefined))?.signal;
+}
+
 export interface PageLoadQueriesResult<TData> {
   __analogQueries: DehydratedState;
   data: TData;
+}
+
+export interface PageLoadQueries<TData> {
+  (ctx: {
+    params: H3EventContext['params'];
+    req: H3Event['node']['req'];
+    res: H3Event['node']['res'];
+    fetch: $Fetch;
+    event: H3Event;
+  }): Promise<PageLoadQueriesResult<TData> | Response>;
 }
 
 export interface DefinePageLoadQueriesOptions<
@@ -55,7 +74,7 @@ export interface DefinePageLoadQueriesOptions<
  * ```ts
  * // src/app/pages/posts.server.ts
  * import { definePageLoadQueries } from '@analogjs/router/tanstack-query/server';
- * import { queryOptions } from '@tanstack/angular-query-experimental';
+ * import { queryOptions } from '@tanstack/angular-query';
  *
  * export const postsQuery = queryOptions({
  *   queryKey: ['posts'],
@@ -76,23 +95,25 @@ export function definePageLoadQueries<
   TData = void,
 >(
   options: DefinePageLoadQueriesOptions<TParamsSchema, TQuerySchema, TData>,
-): (ctx: {
-  params: H3EventContext['params'];
-  req: H3Event['node']['req'];
-  res: H3Event['node']['res'];
-  fetch: $Fetch;
-  event: H3Event;
-}) => Promise<PageLoadQueriesResult<TData> | Response> {
+): PageLoadQueries<TData> {
   return definePageLoad({
     params: options.params,
     query: options.query,
     handler: async (ctx): Promise<PageLoadQueriesResult<TData>> => {
+      const signal = getRequestSignal(ctx.event);
+      signal?.throwIfAborted();
       const client = options.client?.() ?? new QueryClient();
-      const data = await options.handler({ ...ctx, client });
-      return {
-        [ANALOG_QUERIES_KEY]: dehydrate(client),
-        data,
-      };
+      const cancel = () => void client.cancelQueries();
+      signal?.addEventListener('abort', cancel, { once: true });
+      try {
+        const data = await options.handler({ ...ctx, client });
+        return {
+          [ANALOG_QUERIES_KEY]: dehydrate(client),
+          data,
+        };
+      } finally {
+        signal?.removeEventListener('abort', cancel);
+      }
     },
   });
 }

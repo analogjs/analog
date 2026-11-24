@@ -1,4 +1,10 @@
 {
   "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "schematics": {}
+  "schematics": {
+    "migrate-setup-vitest": {
+      "version": "3.0.0-alpha.16",
+      "description": "Migrate from @analogjs/vite-plugin-angular/setup-vitest to @analogjs/vitest-angular/setup-zone",
+      "factory": "./migrate-setup-vitest/migrate-setup-vitest"
+    }
+  }
 }

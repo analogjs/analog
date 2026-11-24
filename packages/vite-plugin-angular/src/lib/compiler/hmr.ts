@@ -13,6 +13,10 @@ import type { RegistryEntry } from './registry.js';
  *
  * For directives and pipes, ɵɵreplaceMetadata does not support them, so
  * we fall back to a full page reload via import.meta.hot.invalidate().
+ *
+ * Every update re-executes the module and defines new classes, but Angular
+ * keeps rendering the classes from the first load. Those are kept in
+ * `import.meta.hot.data` so each update patches them, not the previous copy.
  */
 export function generateHmrCode(
   declarations: RegistryEntry[],
@@ -44,7 +48,7 @@ export function ɵhmr_${c.className}(type) {
       (c) => `
       try {
         i0.ɵɵreplaceMetadata(
-          ${c.className},
+          ɵhmrTypes.${c.className},
           newModule.ɵhmr_${c.className},
           { i0 },
           ${localDepsArray},
@@ -63,7 +67,7 @@ export function ɵhmr_${c.className}(type) {
     .map(
       (c) => `
       try {
-        newModule.ɵhmr_${c.className}(${c.className});
+        newModule.ɵhmr_${c.className}(ɵhmrTypes.${c.className});
         swapped = true;
       } catch(e) {}`,
     )
@@ -91,8 +95,13 @@ export function ɵhmr_${c.className}(type) {
     }`;
   }
 
+  const keepTypes = declarations
+    .map((c) => `\n  ɵhmrTypes.${c.className} ??= ${c.className};`)
+    .join('');
+
   return `\n${applyFns}
 if (import.meta.hot) {
+  const ɵhmrTypes = (import.meta.hot.data.ɵhmrTypes ??= {});${keepTypes}
   import.meta.hot.accept((newModule) => {${acceptBody}
   });
 }`;

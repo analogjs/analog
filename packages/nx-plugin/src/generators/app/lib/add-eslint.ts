@@ -13,21 +13,12 @@ export async function addEslint(
     eslintFilePatterns: [`${options.projectRoot}/**/*.{ts,html}`],
     skipFormat: true,
   };
-  if (majorNxVersion >= 16) {
-    await (
-      await import(
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        '@nx/eslint'
-      )
-    ).lintProjectGenerator(tree, linterOptions);
-  } else {
-    await (
-      await import(
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        '@nrwl/linter'
-      )
-    ).lintProjectGenerator(tree, linterOptions);
-  }
+
+  await (
+    await import(
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      '@nx/eslint'
+    )
+  ).lintProjectGenerator(tree, linterOptions);
 }

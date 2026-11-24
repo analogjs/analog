@@ -7,14 +7,21 @@
   "tags": [],
   "implicitDependencies": ["vite-plugin-angular"],
   "targets": {
-    "build": {
-      "executor": "@nx/vite:build",
-      "outputs": ["{options.outputPath}"],
+    "assert-deps": {
+      "executor": "nx:run-commands",
       "options": {
-        "configFile": "libs/my-package/vite.config.ts",
-        "outputPath": "dist/libs/my-package"
-      },
+        "command": "node tools/scripts/assert-project-dependency.mts my-package build vite-plugin-angular:build"
+      }
+    },
+    "build": {
+      "cache": false,
+      "dependsOn": ["assert-deps", "vite-plugin-angular:build"],
+      "outputs": ["{projectRoot}/{options.outDir}", "{projectRoot}/dist"],
       "defaultConfiguration": "production",
+      "options": {
+        "config": "./vite.config.ts",
+        "outDir": "../../dist/libs/my-package"
+      },
       "configurations": {
         "development": {
           "mode": "development"
@@ -27,12 +34,10 @@
     },
     "test": {
       "command": "vitest",
+      "dependsOn": ["vite-plugin-angular:build"],
       "options": {
         "cwd": "libs/my-package"
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint"
     }
   }
 }

@@ -63,21 +63,20 @@ export function createRouteFileDiscovery(
     return path === dir || path.startsWith(`${dir}/`);
   }
 
+  /** Page route files: `.page.ts`, or `.page.tsrx` for TSRX components. */
+  function isPageFile(path: string): boolean {
+    return path.endsWith('.page.ts') || path.endsWith('.page.tsrx');
+  }
+
   function getAppLocalFileKind(path: string): 'route' | 'content' | null {
     if (
       path.endsWith('.md') &&
-      ['src/app/routes', 'src/app/pages', 'src/content'].some((dir) =>
+      ['src/app/pages', 'src/content'].some((dir) =>
         isWithinDir(path, `${root}/${dir}`),
       )
     )
       return 'content';
-    if (
-      (path.endsWith('.ts') &&
-        ['app/routes', 'src/app/routes'].some((dir) =>
-          isWithinDir(path, `${root}/${dir}`),
-        )) ||
-      (path.endsWith('.page.ts') && isWithinDir(path, `${root}/src/app/pages`))
-    )
+    if (isPageFile(path) && isWithinDir(path, `${root}/src/app/pages`))
       return 'route';
     return null;
   }
@@ -93,7 +92,7 @@ export function createRouteFileDiscovery(
       return 'content';
     }
     if (
-      normalized.endsWith('.page.ts') &&
+      isPageFile(normalized) &&
       additionalPagesRoots.some((dir) => isWithinDir(normalized, dir))
     ) {
       return 'route';
@@ -111,13 +110,13 @@ export function createRouteFileDiscovery(
 
   function scanRouteFiles(): string[] {
     const appLocalGlobs = [
-      `${root}/app/routes/**/*.ts`,
-      `${root}/src/app/routes/**/*.ts`,
       `${root}/src/app/pages/**/*.page.ts`,
+      `${root}/src/app/pages/**/*.page.tsrx`,
     ];
-    const additionalGlobs = additionalPagesDirs.map(
-      (dir) => `${joinDir(dir)}/**/*.page.ts`,
-    );
+    const additionalGlobs = additionalPagesDirs.flatMap((dir) => [
+      `${joinDir(dir)}/**/*.page.ts`,
+      `${joinDir(dir)}/**/*.page.tsrx`,
+    ]);
 
     const appLocal = globSync(appLocalGlobs, {
       dot: true,
@@ -138,7 +137,6 @@ export function createRouteFileDiscovery(
 
   function scanContentFiles(): string[] {
     const appLocalGlobs = [
-      `${root}/src/app/routes/**/*.md`,
       `${root}/src/app/pages/**/*.md`,
       `${root}/src/content/**/*.md`,
     ];

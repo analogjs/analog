@@ -1,0 +1,61 @@
+# Re-verifies the grafts in .grafts/ when their upstream packages release.
+# Skips upgrades when existing variants still fit unchanged (on-unchanged: skip);
+# opens a PR when a graft regenerates or an issue when a graft needs attention.
+#
+# Requires: Settings → Actions → General → "Allow GitHub Actions to create and
+# approve pull requests". Otherwise the action pushes the branch and opens an
+# issue with a link to open the PR.
+name: Graft sync
+
+on:
+  schedule:
+    - cron: '30 11 * * *'
+      timezone: 'America/Chicago'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency: graft-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: beta
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: npm install --global corepack@0.31.0
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - name: Install
+        run: pnpm install --frozen-lockfile --prefer-offline
+      # nx migrate --agentic=claude-code (.grafts/config.json) hands prompt-based migrations to
+      # Claude Code, and commits per migration.
+      - run: npm install --global @anthropic-ai/claude-code@2.1.328
+      - name: Git identity for nx's migration commits (Graft's commit uses it too)
+        env:
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
+        run: |
+          test -n "$GIT_USER_NAME" && test -n "$GIT_USER_EMAIL" || { echo "::error::Set the GIT_USER_NAME and GIT_USER_EMAIL secrets"; exit 1; }
+          git config user.name "$GIT_USER_NAME"
+          git config user.email "$GIT_USER_EMAIL"
+      - uses: brandonroberts/graft/packages/action@7da50797b60246804c030e1652275d785e8f5882 # v0.3.1
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          graft-command: npx -y @graftsync/cli@0.3.1
+          commit-author: ${{ secrets.GIT_USER_NAME }} <${{ secrets.GIT_USER_EMAIL }}>
+          install-command: pnpm install --frozen-lockfile
+          base-branch: beta
+          tags: latest

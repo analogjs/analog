@@ -1,4 +1,3 @@
-import { AsyncPipe } from '@angular/common';
 import {
   AfterViewChecked,
   Component,
@@ -15,7 +14,7 @@ import { AnchorNavigationDirective } from './anchor-navigation.directive';
 @Component({
   selector: 'analog-markdown-route',
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [],
   hostDirectives: [AnchorNavigationDirective],
   preserveWhitespaces: true,
   encapsulation: ViewEncapsulation.None,
@@ -24,7 +23,7 @@ import { AnchorNavigationDirective } from './anchor-navigation.directive';
 export default class AnalogMarkdownRouteComponent implements AfterViewChecked {
   private sanitizer = inject(DomSanitizer);
   private route = inject(ActivatedRoute);
-  contentRenderer = inject(ContentRenderer);
+  contentRenderer: ContentRenderer = inject(ContentRenderer);
 
   protected content: SafeHtml = this.sanitizer.bypassSecurityTrustHtml(
     this.route.snapshot.data['renderedAnalogContent'],
@@ -32,7 +31,7 @@ export default class AnalogMarkdownRouteComponent implements AfterViewChecked {
 
   @Input() classes = 'analog-markdown-route';
 
-  ngAfterViewChecked() {
+  ngAfterViewChecked(): void {
     this.contentRenderer.enhance();
   }
 }

@@ -57,24 +57,45 @@ Analog is a meta-framework for Angular.
 
 ### Resaltado de Sintaxis con PrismJS
 
-Analog soporta el resaltado de sintaxis con PrismJS. Para habilitar el resaltado de sintaxis con `PrismJS`, añade `withPrismHighlighter()` a la función `provideContent()` en `app.config.ts`.
+Analog soporta el resaltado de sintaxis con PrismJS. Los bloques de código se resaltan en tiempo de compilación, incluida la gramática `angular`. Para habilitar el resaltado de sintaxis con `PrismJS`, establece `highlighter` en `prism` en el plugin `analog` del `vite.config.ts`.
 
-```diff-ts
-+ import { withPrismHighlighter } from '@analogjs/content/prism-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... otros proveedores
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withPrismHighlighter()),
+```ts
+export default defineConfig({
+  // ...
+  plugins: [
+    analog({
+      content: {
+        highlighter: 'prism',
+      },
+    }),
   ],
-};
+});
+```
+
+Instala `prismjs` en tu aplicación:
+
+```shell
+npm install prismjs
 ```
 
 Importa un tema de Prism en tu hoja de estilos global:
 
 ```css
 @import 'prismjs/themes/prism.css';
+```
+
+Para usar plugins de Prism en el navegador, como la barra de herramientas y el botón de copiar al portapapeles, impórtalos directamente en el `app.config.ts`:
+
+```ts
+import 'prismjs';
+import 'prismjs/plugins/toolbar/prism-toolbar';
+import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
+```
+
+E incluye el CSS de la barra de herramientas en tu hoja de estilos global:
+
+```css
+@import 'prismjs/plugins/toolbar/prism-toolbar.css';
 ```
 
 #### Usando el Plugin de Resaltado `diff`
@@ -102,18 +123,33 @@ export default defineConfig({
 Añade la importación del plugin `diff-highlight` al `app.config.ts`:
 
 ```ts
-+ import { withShikiHighlighter } from '@analogjs/content/shiki-highlighter';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    // ... otros proveedores
--   provideContent(withMarkdownRenderer()),
-+   provideContent(withMarkdownRenderer(), withShikiHighlighter()),
-  ],
-};
+import 'prismjs/components/prism-diff';
+import 'prismjs/plugins/diff-highlight/prism-diff-highlight';
 ```
 
-Para habilitar el resaltado de sintaxis en tiempo de compilación con `shiki`, configura el plugin `analog` en el `vite.config.ts`.
+Usa la etiqueta de lenguaje `diff` para resaltar o `diff-<language>` para resaltar los cambios de diffs en un lenguaje específico.
+
+````md
+```diff
+- This is a sentence.
++ This is a longer sentence.
+```
+
+```diff-typescript
+- const foo = 'bar';
++ const foo = 'baz';
+```
+````
+
+Para resaltar los fondos de las líneas cambiadas en lugar de solo el texto, añade esta importación a tu hoja de estilos global:
+
+```css
+@import 'prismjs/plugins/diff-highlight/prism-diff-highlight.css';
+```
+
+### Resaltado de Sintaxis con Shiki
+
+Analog también soporta el resaltado de sintaxis en tiempo de compilación con Shiki. Para habilitar el resaltado de sintaxis con `shiki`, configura el plugin `analog` en el `vite.config.ts`.
 
 ```ts
 export default defineConfig({

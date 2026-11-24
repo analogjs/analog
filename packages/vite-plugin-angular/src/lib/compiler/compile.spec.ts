@@ -34,4 +34,58 @@ describe('NgLite Compiler', () => {
     expect(service).not.toContain('providedIn: "root"');
     expect(service).not.toContain("providedIn: 'root'");
   });
+
+  it('compiles decorated classes nested in function scopes', () => {
+    const result = compile(
+      `export function setup() {
+        @NgModule({ providers: [] })
+        class TestModule {}
+        @Component({ selector: 'x-nested', template: '<p>{{ v }}</p>' })
+        class Nested { v = input(0); }
+        return [TestModule, Nested];
+      }`,
+      'setup.ts',
+    );
+    expect(result).toContain('static ɵmod');
+    expect(result).toContain('static ɵcmp');
+    expect(result).not.toContain('@NgModule');
+    // setClassMetadata references the class, so it must stay inside setup().
+    const scopeEnd = result.indexOf('return [TestModule, Nested]');
+    for (const cls of ['TestModule', 'Nested']) {
+      const idx = result.indexOf(`ɵsetClassMetadata(${cls},`);
+      expect(idx).toBeGreaterThan(-1);
+      expect(idx).toBeLessThan(scopeEnd);
+    }
+  });
+
+  it('keeps constructor DI token imports for nested decorated classes', () => {
+    const result = compile(
+      `import { Logger } from './logger';
+      export function setup() {
+        @Injectable()
+        class Svc { constructor(private logger: Logger) {} }
+        return Svc;
+      }`,
+      'setup.ts',
+    );
+    expect(result).toContain("import { Logger } from './logger'");
+    expect(result).toContain('ɵɵinject(Logger)');
+    expect(result).not.toContain('ɵɵinvalidFactory');
+  });
+
+  it('keeps DI token imports used only by an overloaded constructor implementation', () => {
+    const result = compile(
+      `import { Logger } from './logger';
+      @Injectable()
+      export class Svc {
+        constructor();
+        constructor(logger: Logger);
+        constructor(private logger?: Logger) {}
+      }`,
+      'svc.ts',
+    );
+    expect(result).toContain("import { Logger } from './logger'");
+    expect(result).toContain('ɵɵinject(Logger');
+    expect(result).not.toContain('ɵɵinvalidFactory');
+  });
 });

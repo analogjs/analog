@@ -1,54 +1,94 @@
-import { VERSION } from '@angular/compiler-cli';
-import type { Plugin } from 'vite';
-import * as vite from 'vite';
+import { dirname, resolve } from 'node:path';
+import { normalizePath, type Plugin } from 'vite';
 import { crawlFrameworkPkgs } from 'vitefu';
 
+import { angularLinkerPlugin } from './nitro/angular-linker-plugin.js';
 import { Options } from './options.js';
+import { debugPlatform } from './utils/debug.js';
+import { getJsTransformConfigKey, isRolldown } from './utils/rolldown.js';
+
+const ANGULAR_LINKED_SSR_DEPS = [
+  '@angular/compiler',
+  '@angular/core',
+  '@angular/platform-browser',
+  '@angular/platform-server',
+];
 
 export function depsPlugin(options?: Options): Plugin[] {
-  const workspaceRoot = options?.workspaceRoot ?? process.cwd();
+  const workspaceRoot =
+    options?.workspaceRoot ?? process.env['NX_WORKSPACE_ROOT'] ?? process.cwd();
 
   return [
     {
       name: 'analogjs-deps-plugin',
-      config() {
-        const useCompilationAPI =
-          options?.vite === false ||
-          options?.vite?.experimental?.useAngularCompilationAPI;
-        const fastCompile =
-          options?.fastCompile ||
-          (options?.vite !== false && options?.vite?.fastCompile);
-
-        const esbuild =
-          useCompilationAPI || fastCompile
-            ? {}
-            : { exclude: ['**/*.ts', '**/*.js'] };
-
-        const oxc =
-          useCompilationAPI || fastCompile
-            ? {}
-            : { exclude: ['**/*.ts', '**/*.js'] };
+      config(userConfig) {
+        // Skip Vite's built-in ts/js transform so `@analogjs/vite-plugin-angular`
+        // (when the user includes it) owns Angular file compilation. Users who
+        // run an alternative compiler, or compile non-Angular server code with
+        // Vite, set the transform in their own Vite config. Theirs is kept
+        // as-is: merging would concatenate these excludes into it, and an
+        // exclude wins over any include they set.
+        const jsTransformKey = getJsTransformConfigKey();
+        // Vite 8 still converts a user's `esbuild` object to `oxc` (unless
+        // `oxc` is set), but `esbuild: false` no longer has any effect there.
+        const userTransform =
+          userConfig?.[jsTransformKey] !== undefined ||
+          (jsTransformKey === 'oxc' && !!userConfig?.esbuild);
+        // With `server`, Vite compiles the server entry's directory instead,
+        // which the Angular compiler leaves alone.
+        const transform = options?.server
+          ? {
+              include: [
+                `${normalizePath(
+                  resolve(
+                    userConfig?.root ?? process.cwd(),
+                    dirname(options.server.entry),
+                  ),
+                )}/**/*.ts`,
+              ],
+            }
+          : { exclude: ['**/*.ts', '**/*.js'] };
+        debugPlatform('deps transform config', {
+          jsTransformKey,
+          transform: userTransform ? 'user' : transform,
+        });
 
         return {
-          ...(vite.rolldownVersion ? { oxc } : { esbuild }),
+          ...(userTransform ? {} : { [jsTransformKey]: transform }),
           ssr: {
             noExternal: [
               '@analogjs/**',
+              'es-toolkit',
               'firebase/**',
               'firebase-admin/**',
               'rxfire',
               '@ng-web-apis/**',
               '@taiga-ui/**',
-              '@tanstack/angular-query-experimental',
+              /^@tanstack\/angular-/,
             ],
+            // The server pre-bundle is resolved separately from the client
+            // one, so a secondary entry point left out of it loads its own
+            // copy of `@angular/core`. `inject()` then runs against a runtime
+            // with no active injection context and SSR fails with NG0203.
+            // With Rolldown, the rest of Angular is pre-bundled too and the
+            // partial-compilation packages are linked, so the server needs no JIT.
+            optimizeDeps: {
+              include: [
+                ...(isRolldown() ? ANGULAR_LINKED_SSR_DEPS : []),
+                '@angular/common',
+                '@angular/common/http',
+                '@angular/core/rxjs-interop',
+              ],
+              ...(isRolldown()
+                ? { rolldownOptions: { plugins: [angularLinkerPlugin()] } }
+                : {}),
+            },
           },
           optimizeDeps: {
             include: [
               '@angular/common',
               '@angular/common/http',
-              ...(Number(VERSION.major) > 15
-                ? ['@angular/core/rxjs-interop']
-                : []),
+              '@angular/core/rxjs-interop',
               'front-matter',
             ],
             exclude: [

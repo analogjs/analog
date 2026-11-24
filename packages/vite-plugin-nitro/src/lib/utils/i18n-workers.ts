@@ -1,10 +1,14 @@
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { NitroConfig } from 'nitropack';
 import type { Options, I18nPrerenderOptions } from '../options.js';
 
 export const I18N_WORKER_SSR_ENTRY = 'virtual:analog-i18n/main.server';
 
-export function validateI18nWorkers(options: Options, nitro: NitroConfig) {
+export function validateI18nWorkers(
+  options: Options,
+  nitro: NitroConfig,
+): void {
   if (!options.i18n?.loader) {
     throw new Error('i18n.workers requires an i18n.loader module.');
   }
@@ -61,7 +65,7 @@ export function i18nWorkerSsrEntry(
 import '@angular/localize/init';
 import { loadTranslations } from '@angular/localize';
 import load from ${JSON.stringify(loader)};
-import { setHtmlLang } from ${JSON.stringify(fileURLToPath(new URL('./i18n-prerender.js', import.meta.url)))};
+import { setHtmlLang } from ${JSON.stringify(join(dirname(fileURLToPath(import.meta.url)), 'i18n-prerender.js'))};
 
 const locale = process.env['ANALOG_I18N_LOCALE'];
 let renderer;

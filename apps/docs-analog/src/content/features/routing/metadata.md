@@ -68,6 +68,15 @@ export const routeMeta: RouteMeta = {
 
 Navigating to `/cities` redirects to `/cities/new-york`.
 
+Dynamic redirects are also supported. `redirectTo` accepts Angular's `RedirectFunction`, which provides the matched route's params, query params and data, can use `inject()`, and returns the target path or a `UrlTree`:
+
+```ts
+export const routeMeta: RouteMeta = {
+  redirectTo: ({ params }) => `/cities/${params['cityId']}`,
+  pathMatch: 'full',
+};
+```
+
 :::note
 
 Nested redirects always require an absolute path.
@@ -100,6 +109,8 @@ export default class RefreshComponent {}
 ```
 
 The above example sets meta tag `<meta http-equiv="refresh" content="30">`, which forces the browser to refresh the page every 30 seconds.
+
+Meta tags from parent routes are merged with those of child routes, with child routes taking precedence. When you navigate to a route that no longer sets a meta tag, the tag is removed, or restored to its original value if it was defined in `index.html`.
 
 To read more about possible standard meta tags, please visit official [docs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta).
 
@@ -135,3 +146,39 @@ export const routeMeta: RouteMeta = {
 ```
 
 This example will allow social apps like Facebook or Twitter to display titles, descriptions, and images optimally.
+
+## JSON-LD Structured Data
+
+Routes can also provide JSON-LD structured data through `routeMeta.jsonLd`:
+
+```ts
+import { Component } from '@angular/core';
+import type { RouteMeta } from '@analogjs/router';
+import type { WithContext, Article } from 'schema-dts';
+
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'JSON-LD with Analog',
+} satisfies WithContext<Article>;
+
+export const routeMeta: RouteMeta = {
+  title: 'JSON-LD Example',
+  jsonLd: articleJsonLd,
+};
+
+@Component({
+  template: `<h1>JSON-LD Example</h1>`,
+})
+export default class JsonLdPageComponent {}
+```
+
+You can also return multiple JSON-LD entries:
+
+```ts
+export const routeMeta: RouteMeta = {
+  jsonLd: [articleJsonLd, breadcrumbJsonLd],
+};
+```
+
+Analog updates JSON-LD on route changes and includes it in SSR and prerendered HTML. For routes with `ssr: false`, JSON-LD can still be added on the client, but SEO-visible structured data is only guaranteed for SSR or prerendered routes.

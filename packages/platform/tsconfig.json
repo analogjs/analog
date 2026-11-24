@@ -16,6 +16,12 @@
   "include": [],
   "references": [
     {
+      "path": "../vite-plugin-nitro"
+    },
+    {
+      "path": "../vite-plugin-angular"
+    },
+    {
       "path": "./tsconfig.lib.json"
     },
     {

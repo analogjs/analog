@@ -25,7 +25,7 @@ The table below shows the features available across both choices.
 
 | Vitest               | Analog    | Angular      |
 | -------------------- | --------- | ------------ |
-| Angular Versions     | v17+      | v21+         |
+| Angular Versions     | v20+      | v21+         |
 | Support              | Community | Angular Team |
 | Builders             | ✅        | ✅           |
 | Schematics           | ✅        | ✅           |

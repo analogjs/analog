@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { readConfiguration } from '@angular/compiler-cli';
 import { parseSync } from 'oxc-parser';
-import { normalizePath, type Plugin } from 'vite';
+import { normalizePath, searchForWorkspaceRoot, type Plugin } from 'vite';
 
 import {
   createRouteFileDiscovery,
@@ -27,7 +27,6 @@ export interface TypedRoutesPluginOptions extends TypedRoutingOptions {
 }
 
 export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
-  const workspaceRoot = normalizePath(options.workspaceRoot ?? process.cwd());
   const outFile = options.outFile ?? 'src/routeTree.gen.d.ts';
   if (!outFile.endsWith('.d.ts')) {
     throw new Error(
@@ -35,6 +34,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
     );
   }
   let root: string;
+  let workspaceRoot: string;
   let command: 'build' | 'serve';
   let discovery: RouteFileDiscovery;
 
@@ -83,7 +83,7 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
         filename,
       ].find((file) => existsSync(file));
       if (!pageFile) return undefined;
-      const serverFile = pageFile.replace(/\.page\.ts$/, '.server.ts');
+      const serverFile = pageFile.replace(/\.page\.(?:ts|tsrx)$/, '.server.ts');
       return {
         routeMeta: hasNamedExport(pageFile, 'routeMeta')
           ? toImportSpecifier(dirname(outputPath), pageFile)
@@ -113,7 +113,14 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
     name: 'analog-typed-routes',
     config(config, env) {
       command = env.command;
-      root = normalizePath(resolve(workspaceRoot, config.root ?? '.'));
+      root = normalizePath(
+        resolve(options.workspaceRoot ?? process.cwd(), config.root ?? '.'),
+      );
+      workspaceRoot = normalizePath(
+        options.workspaceRoot ??
+          process.env['NX_WORKSPACE_ROOT'] ??
+          searchForWorkspaceRoot(root),
+      );
       discovery = createRouteFileDiscovery({
         root,
         workspaceRoot,
@@ -127,7 +134,9 @@ export function typedRoutes(options: TypedRoutesPluginOptions = {}): Plugin {
       const compiler = config.plugins.find(
         (plugin) =>
           plugin.name === '@analogjs/vite-plugin-angular' ||
-          plugin.name === '@analogjs/vite-plugin-angular-fast-compile',
+          plugin.name === '@analogjs/vite-plugin-angular-fast-compile' ||
+          plugin.name === '@analogjs/vite-plugin-angular-compilation-api' ||
+          plugin.name === '@analogjs/vite-plugin-angular-ngp',
       );
       getTsConfigPath = compiler?.api?.getTsConfigPath;
       if (compiler && !getTsConfigPath) {

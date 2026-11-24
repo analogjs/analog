@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: '<%= fileName %>-analog-welcome',
-  <% if (majorAngularVersion < 19) { %>standalone: true,<% } %>
   styles: [
     `
       :host {

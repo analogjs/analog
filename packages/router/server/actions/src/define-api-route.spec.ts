@@ -590,4 +590,63 @@ describe('defineApiRoute', () => {
 
     expect(handler.mock.calls[0][0].data).toEqual({ token: 'abc' });
   });
+
+  it('should validate query and body alongside input', async () => {
+    const input = createMockSchema<{ name: string }>((value) => ({
+      value: value as { name: string },
+    }));
+    const query = createMockSchema<{ preview: boolean }>((value) => ({
+      value: { preview: (value as { preview: string }).preview === 'true' },
+    }));
+    const body = createMockSchema<{ name: string }>((value) => ({
+      value: value as { name: string },
+    }));
+    const handler = vi.fn(({ data, query, body }) => ({ data, query, body }));
+
+    const route = defineApiRoute({ input, query, body, handler });
+    const response = await route(
+      createMockEvent(
+        'POST',
+        { name: 'Alice' },
+        'application/json',
+        'http://localhost/api/test?preview=true',
+      ),
+    );
+
+    expect(await response.json()).toEqual({
+      data: { name: 'Alice' },
+      query: { preview: true },
+      body: { name: 'Alice' },
+    });
+  });
+
+  it('should fall back to an empty object when form data cannot be parsed', async () => {
+    const input = createMockSchema<Record<string, unknown>>((value) =>
+      Object.keys(value as object).length === 0
+        ? { issues: [{ message: 'Missing fields' }] }
+        : { value: value as Record<string, unknown> },
+    );
+    const handler = vi.fn(({ data }) => data);
+    const requestHeaders = new Headers({
+      'content-type': 'multipart/form-data; boundary=test',
+    });
+    const request = {
+      headers: requestHeaders,
+      url: 'http://localhost/api/upload',
+      formData: async () => {
+        throw new Error('malformed multipart body');
+      },
+    } as any;
+    const event = {
+      method: 'POST',
+      headers: requestHeaders,
+      web: { request },
+    } as any;
+
+    const route = defineApiRoute({ input, handler });
+    const response = await route(event);
+
+    expect(response.status).toBe(422);
+    expect(handler).not.toHaveBeenCalled();
+  });
 });

@@ -5,7 +5,7 @@ import { injectContent, MarkdownComponent } from '@analogjs/content';
 import { AsyncPipe } from '@angular/common';
 
 @Component({
-  selector: 'app-docs-optional-catchall-page',
+  selector: 'app-docs-index-page',
   standalone: true,
   imports: [RouterLink],
   template: `

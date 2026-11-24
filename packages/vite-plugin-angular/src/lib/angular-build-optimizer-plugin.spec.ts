@@ -1,5 +1,5 @@
 import { afterEach, describe, it, expect } from 'vitest';
-import type { Plugin, UserConfig } from 'vite';
+import { resolveConfig, type Plugin, type UserConfig } from 'vite';
 import {
   buildOptimizerPlugin,
   extractInlineSourceMap,
@@ -7,7 +7,6 @@ import {
 
 function createPlugin(): Plugin {
   return buildOptimizerPlugin({
-    supportedBrowsers: [],
     jit: false,
   });
 }
@@ -111,40 +110,70 @@ describe('buildOptimizerPlugin config()', () => {
   it('should set ngServerMode to true for a production server environment', () => {
     const plugin = createPlugin() as Plugin & {
       config: (c: UserConfig) => UserConfig;
-      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+      configEnvironment: {
+        handler: (name: string, c: unknown) => UserConfig | undefined;
+      };
     };
     plugin.config({ mode: 'production' });
 
-    expect(plugin.configEnvironment('ssr', { consumer: 'server' })).toEqual({
+    expect(
+      plugin.configEnvironment.handler('ssr', { consumer: 'server' }),
+    ).toEqual({
       define: { ngServerMode: 'true' },
     });
     expect(
-      plugin.configEnvironment('client', { consumer: 'client' }),
+      plugin.configEnvironment.handler('client', { consumer: 'client' }),
     ).toBeUndefined();
   });
 
-  it('should treat environments without a consumer like Vite does', () => {
+  it('should treat an environment without a consumer as Vite does', () => {
     const plugin = createPlugin() as Plugin & {
       config: (c: UserConfig) => UserConfig;
-      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+      configEnvironment: {
+        handler: (name: string, c: unknown) => UserConfig | undefined;
+      };
     };
     plugin.config({ mode: 'production' });
 
-    expect(plugin.configEnvironment('ssr', { build: { ssr: true } })).toEqual({
+    expect(plugin.configEnvironment.handler('ssr', {})).toEqual({
       define: { ngServerMode: 'true' },
     });
-    expect(plugin.configEnvironment('client', {})).toBeUndefined();
+    expect(plugin.configEnvironment.handler('client', {})).toBeUndefined();
+  });
+
+  it("should respect a consumer set by a later plugin's configEnvironment", async () => {
+    const config = await resolveConfig(
+      {
+        configFile: false,
+        mode: 'production',
+        environments: { edge: {}, worker: {} },
+        plugins: [
+          createPlugin(),
+          {
+            name: 'later',
+            configEnvironment: (name) =>
+              name === 'edge' ? { consumer: 'client' } : undefined,
+          },
+        ],
+      },
+      'build',
+    );
+
+    expect(config.environments['edge'].define?.['ngServerMode']).toBe('false');
+    expect(config.environments['worker'].define?.['ngServerMode']).toBe('true');
   });
 
   it('should leave environment defines alone outside production', () => {
     const plugin = createPlugin() as Plugin & {
       config: (c: UserConfig) => UserConfig;
-      configEnvironment: (name: string, c: unknown) => UserConfig | undefined;
+      configEnvironment: {
+        handler: (name: string, c: unknown) => UserConfig | undefined;
+      };
     };
     plugin.config({ mode: 'development' });
 
     expect(
-      plugin.configEnvironment('ssr', { consumer: 'server' }),
+      plugin.configEnvironment.handler('ssr', { consumer: 'server' }),
     ).toBeUndefined();
   });
 
@@ -360,6 +389,61 @@ export class Greeter {
       code: 'console.log("test");',
       map: null,
     });
+  });
+
+  it('extracts a multi-megabyte inline sourcemap (#2669)', () => {
+    const mapObj = {
+      version: 3,
+      sources: ['compiler.ts'],
+      sourcesContent: ['x'.repeat(4 * 1024 * 1024)],
+      names: [],
+      mappings: 'AAAA',
+    };
+    const base64Map = Buffer.from(JSON.stringify(mapObj)).toString('base64');
+    const sourceCode = 'export const compiler = true;';
+    const code = `${sourceCode}\n//# sourceMappingURL=data:application/json;base64,${base64Map}`;
+
+    const result = extractInlineSourceMap(code, '/x/compiler.mjs');
+
+    expect(result.code).toBe(sourceCode);
+    expect(JSON.parse(result.map)).toEqual(mapObj);
+  });
+
+  it('ignores trailing whitespace after the sourceMappingURL comment', () => {
+    const base64Map = Buffer.from('{"version":3}').toString('base64');
+    const sourceCode = 'export const a = 1;';
+    const code = `${sourceCode}\n//# sourceMappingURL=data:application/json;base64,${base64Map} \r\n`;
+
+    const result = extractInlineSourceMap(code, '/x/test.js');
+
+    expect(result).toEqual({ code: sourceCode, map: '{"version":3}' });
+  });
+
+  it.each([
+    ['LF', '\n'],
+    ['CRLF', '\r\n'],
+    ['CR', '\r'],
+    ['LS', '\u2028'],
+    ['PS', '\u2029'],
+  ])(
+    'keeps code that follows the sourceMappingURL comment after %s',
+    (_name, lineTerminator) => {
+      const base64Map = Buffer.from('{"version":3}').toString('base64');
+      const code = `export const a = 1;\n//# sourceMappingURL=data:application/json;base64,${base64Map}${lineTerminator}console.log(a);`;
+
+      const result = extractInlineSourceMap(code, '/x/test.js');
+
+      expect(result).toEqual({ code, map: null });
+    },
+  );
+
+  it('keeps a sourceMappingURL that is part of a string literal', () => {
+    const base64Map = Buffer.from('{"version":3}').toString('base64');
+    const code = `export const url = "//# sourceMappingURL=data:application/json;base64,${base64Map}";`;
+
+    const result = extractInlineSourceMap(code, '/x/test.js');
+
+    expect(result).toEqual({ code, map: null });
   });
 });
 

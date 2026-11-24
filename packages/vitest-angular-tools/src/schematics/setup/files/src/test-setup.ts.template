@@ -5,11 +5,11 @@ import '@analogjs/vitest-angular/setup-serializers';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 <% if (browserMode) { %>
-setupTestBed({ browserMode: true });
+setupTestBed({ teardown: { destroyAfterEach: false } });
 <% } else { %>
 setupTestBed();
 <% } %>
-<% } else if (majorAngularVersion > 19) { %>
+<% } else { %>
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-zone';
 
@@ -22,18 +22,5 @@ import { getTestBed } from '@angular/core/testing';
 getTestBed().initTestEnvironment(
   BrowserTestingModule,
   platformBrowserTesting()
-);
-<% } else { %>
-import '@analogjs/vitest-angular/setup-zone';
-
-import {
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting,
-} from '@angular/platform-browser-dynamic/testing';
-import { getTestBed } from '@angular/core/testing';
-
-getTestBed().initTestEnvironment(
-  BrowserDynamicTestingModule,
-  platformBrowserDynamicTesting()
 );
 <% } %>

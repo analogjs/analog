@@ -45,10 +45,10 @@ export default defineConfig({
 
 ## WebSocket-Handler definieren
 
-Ähnlich wie [API-Routen](/de/docs/features/api/overview) werden WebSocket-Handler im Ordner `src/server/routes` definiert.
+Ähnlich wie [API-Routen](/de/docs/features/api/overview) werden WebSocket-Handler im Ordner `src/server/routes/api` definiert.
 
 ```typescript
-// src/server/routes/ws/chat.ts
+// src/server/routes/api/ws/chat.ts
 export default defineWebSocketHandler({
   open(peer) {
     peer.send({ user: 'server', message: `Welcome ${peer}!` });
@@ -75,18 +75,17 @@ export default defineWebSocketHandler({
 
 ### WebSocket-Routen
 
-Analog's internal API middleware is not applied to WebSocket routes, therefore, WebSocket routes are exposed without the `/api` prefix.
-Die interne API-Middleware von Analog wird nicht auf WebSocket-Routen angewendet, daher werden WebSocket-Routen ohne das Präfix `/api` verfügbar gemacht.
-
-Beispielsweise wird `src/server/routes/ws/chat.ts` als `ws://example.com/ws/chat` statt als `ws://example.com/api/ws/chat` verfügbar gemacht.
+WebSocket-Routen werden unter demselben Pfad wie API-Routen verfügbar gemacht. Beispielsweise wird `src/server/routes/api/ws/chat` als `ws://example.com/api/ws/chat` verfügbar gemacht.
 
 ## Server-Sent Event Handler definieren
 
 Server-Sent Event Handler können mit der Funktion `createEventStream` im Event-Handler erstellt werden.
 
 ```typescript
-// src/server/routes/sse.ts
-export default defineEventHandler(async (event) => {
+// src/server/routes/api/sse.ts
+import { defineHandler, createEventStream } from 'h3';
+
+export default defineHandler(async (event) => {
   const eventStream = createEventStream(event);
 
   const interval = setInterval(async () => {

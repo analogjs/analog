@@ -13,9 +13,12 @@ async function viteBuilder(
   context: BuilderContext,
 ): Promise<BuilderOutput> {
   const { createBuilder } = await Function('return import("vite")')();
-  const projectConfig = await context.getProjectMetadata(context.target!);
-  const projectName = context.target?.project;
-  const configuration = context.target?.configuration || 'production';
+  if (!context.target) {
+    throw new Error('Builder must be executed with a target');
+  }
+  const projectConfig = await context.getProjectMetadata(context.target);
+  const projectName = context.target.project;
+  const configuration = context.target.configuration || 'production';
   const buildTargetSpecifier = `::${configuration}`;
   const buildTarget = targetFromTargetString(
     buildTargetSpecifier,
@@ -56,7 +59,10 @@ async function viteBuilder(
   };
 
   try {
-    const builder = await createBuilder(buildConfig, false);
+    // Match Vite's CLI (`vite build`): passing `null` lets Vite select the
+    // legacy single-environment builder unless a plugin configures
+    // `config.builder`, avoiding an unconfigured `ssr` build on client-only apps.
+    const builder = await createBuilder(buildConfig, null);
     await builder.buildApp();
 
     return {

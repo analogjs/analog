@@ -9,9 +9,10 @@ import {
   toRoute,
   type LinkToInput,
   type RouteDataOutput,
+  type RouteMeta,
   type RouteResourcesOutput,
 } from '@analogjs/router';
-import type { ResourceRef } from '@angular/core';
+import { resource, type ResourceRef } from '@angular/core';
 
 import type { Org, Team, User } from './data';
 
@@ -128,20 +129,77 @@ export function routeTypeAssertions() {
   const anyData: Record<string, unknown> = injectRouteData()();
   const anyResources = injectResources();
   const anyRouteResources = injectRouteResources();
+  const anyResourceValue: unknown = anyResources['user']?.value();
+  const anyResourceReload: (() => boolean) | undefined =
+    anyRouteResources['user']?.reload;
+  void [anyResourceValue, anyResourceReload];
+  // @ts-expect-error untyped resources entries are Resource instances, not strings
+  const invalidAnyResource: string = anyResources['user'];
   // @ts-expect-error untyped values may be missing
   const anyUserId: string = injectParams()()['userId'];
 
-  // Route resources
+  // Route resources (including multi-level layout inheritance and context)
   const userResources: RouteResourcesOutput<'/users/[userId]'> =
     injectResources('/users/[userId]');
   const userResourceRef: ResourceRef<User | undefined> =
     userResources.userResource;
+  const inheritedDirectoryRef: ResourceRef<
+    { id: string; name: string }[] | undefined
+  > = userResources.directoryResource;
   const userName: string | undefined = userResources.userResource.value()?.name;
   // @ts-expect-error unknown resource name
   userResources.missing;
+  // @ts-expect-error dot notation is not wrapped by users.page.ts
+  void injectResources('/users/[userId]/posts/[postId]').directoryResource;
+  // @ts-expect-error users.page.ts and users/index.page.ts share /users
+  void injectResources('/users').directoryResource;
   const aliasedResources = injectRouteResources('/users/[userId]');
   const aliasedRef: ResourceRef<User | undefined> =
     aliasedResources.userResource;
+
+  const memberListResources = injectResources(
+    '/orgs/[orgId]/teams/[teamId]/members',
+  );
+  const listOrgRef: ResourceRef<Org | undefined> =
+    memberListResources.orgResource;
+  const listTeamRef: ResourceRef<Team | undefined> =
+    memberListResources.teamResource;
+
+  const memberResources: RouteResourcesOutput<typeof MEMBER> =
+    injectResources(MEMBER);
+  const memberOrgRef: ResourceRef<Org | undefined> =
+    memberResources.orgResource;
+  const memberTeamRef: ResourceRef<Team | undefined> =
+    memberResources.teamResource;
+
+  const memberMetaCheck = {
+    resolve: {
+      check: (route) => ({
+        memberId: route.params.memberId,
+        orgName: route.data.org?.name,
+        teamName: route.data.team?.name,
+      }),
+    },
+    resources: (ctx) => ({
+      memberSummary: resource({
+        params: () => ({
+          memberId: ctx.params().memberId,
+          org: ctx.resources().orgResource.value(),
+          team: ctx.resources().teamResource.value(),
+          projects: ctx.data().load.projects,
+        }),
+        loader: async ({ params }) => params,
+      }),
+    }),
+  } satisfies RouteMeta<typeof MEMBER>;
+  void [
+    inheritedDirectoryRef,
+    listOrgRef,
+    listTeamRef,
+    memberOrgRef,
+    memberTeamRef,
+    memberMetaCheck,
+  ];
 
   // LinkTo inputs
   const links: LinkToInput<'/users/[userId]'>[] = [

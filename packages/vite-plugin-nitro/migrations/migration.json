@@ -1,4 +1,10 @@
 {
   "$schema": "../../../node_modules/@angular-devkit/schematics/collection-schema.json",
-  "schematics": {}
+  "schematics": {
+    "update-nitro-options": {
+      "version": "3.0.0-alpha.92",
+      "description": "Move nitro() options from @analogjs/vite-plugin-nitro to its single argument, with Analog options under `analog`",
+      "factory": "./update-nitro-options/update-nitro-options"
+    }
+  }
 }

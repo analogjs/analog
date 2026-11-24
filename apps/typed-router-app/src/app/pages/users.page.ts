@@ -1,5 +1,5 @@
 import type { RouteMeta } from '@analogjs/router';
-import { Component } from '@angular/core';
+import { Component, resource } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -10,6 +10,11 @@ export const routeMeta = {
   resolve: {
     directory: () => of(USERS.map(({ id, name }) => ({ id, name }))),
   },
+  resources: () => ({
+    directoryResource: resource({
+      loader: async () => USERS.map(({ id, name }) => ({ id, name })),
+    }),
+  }),
 } satisfies RouteMeta;
 
 @Component({

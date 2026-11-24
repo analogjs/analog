@@ -79,6 +79,10 @@ export default class NewsletterComponent {
 
 A diretiva `FormAction` envia os dados do formulário para o servidor, que são processados pelo seu manipulador.
 
+### Formulários Aprimorados
+
+O tratamento aprimorado de formulários é habilitado por padrão. A diretiva usa `action` ou `[action]` como destino do envio, atualiza os atributos `data-state` e `aria-busy` durante o envio e preserva URLs de redirecionamento completas. Use `[enhanceForm]="false"` para desativá-lo e manter o comportamento anterior.
+
 ## Manipulando a Ação do Formulário
 
 Para manipular a ação do formulário, defina o arquivo `.server.ts` no mesmo diretório de `.page.ts`. O arquivo `.serve.ts` contém a função assíncrona `action` para processar o envio do formulário.
@@ -87,8 +91,15 @@ Na ação do servidor, você pode acessar variáveis de ambiente, ler cookies e 
 
 ```ts
 // src/app/pages/newsletter.server.ts
+import {
+  type PageServerAction,
+  redirect,
+  json,
+  fail,
+} from '@analogjs/router/server/actions';
+
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const email = body.get('email') as string;
 
   if (!email) {
@@ -128,7 +139,7 @@ Na ação do servidor, use o valor de `action`.
 
 ```ts
 export async function action({ event }: PageServerAction) {
-  const body = await readFormData(event);
+  const body = await event.req.formData();
   const action = body.get('action') as string;
 
   if (action === 'register') {
@@ -175,13 +186,15 @@ O parâmetro de consulta pode ser acessado através da ação do formulário no 
 
 ```ts
 // src/app/pages/search.server.ts
+import type { PageServerLoad } from '@analogjs/router';
+
 export async function load({ event }: PageServerLoad) {
-  const query = getQuery(event);
-  console.log('loaded search', query['search']);
+  const search = event.url.searchParams.get('search');
+  console.log('loaded search', search);
 
   return {
     loaded: true,
-    searchTerm: `${query['search']}`,
+    searchTerm: search ?? '',
   };
 }
 ```
