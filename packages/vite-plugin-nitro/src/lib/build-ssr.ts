@@ -14,6 +14,7 @@ export async function buildSSRApp(
   const sourceRoot = options?.sourceRoot ?? 'src';
   const rootDir = relative(workspaceRoot, config.root || '.') || '.';
   const ssrBuildConfig = mergeConfig(config, <UserConfig>{
+    configFile: false,
     build: {
       ssr: true,
       [vite.rolldownVersion ? 'rolldownOptions' : 'rollupOptions']: {
