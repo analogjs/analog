@@ -596,28 +596,6 @@ npx prisma deploy
 
 The command prints the public URL of your app when the deployment finishes. If you are not signed in yet, run `npx prisma auth login` first. The deploy writes its build artifacts to a `.prisma-composer` directory, which you can add to your `.gitignore` file.
 
-## Edgio
-
-Analog supports deploying on [Edgio](https://edg.io) with minimal configuration.
-
-1. Install the Edgio CLI:
-
-```bash
-npm i -g @edgio/cli
-```
-
-2. In your project's directory, initialize Edgio:
-
-```bash
-edgio init --connector=@edgio/analogjs
-```
-
-3. Deploy To Edgio
-
-```bash
-edgio deploy
-```
-
 ## GitHub Pages (Static Site Deployment)
 
 Analog supports deploying a static site on [GitHub Pages](https://pages.github.com/).

@@ -319,28 +319,6 @@ Wenn Analog zum Vorberechnen statischer Inhalte verwendet wird, kann eine statis
 3. Setze das Veröffentlichungsverzeichnis auf das Verzeichnis `public` innerhalb des `dist`-Build-Verzeichnisses (z.B. `dist/analog/public`)
 4. Klicke auf 'Create Static Site'
 
-## Edgio
-
-Analog unterstützt die Bereitstellung auf [Edgio] (https://edg.io) mit minimaler Konfiguration.
-
-1. Installiere die Edgio CLI:
-
-```bash
-npm i -g @edgio/cli
-```
-
-2. Initialisiere Edgio im Verzeichnis des Projekts:
-
-```bash
-edgio init --connector=@edgio/analogjs
-```
-
-3. Veröffentliche in Edgio
-
-```bash
-edgio deploy
-```
-
 ## GitHub Pages (Bereitstellung statischer Websites)
 
 Analog unterstützt die Bereitstellung einer statischen Website auf [GitHub Pages](https://pages.github.com/).
