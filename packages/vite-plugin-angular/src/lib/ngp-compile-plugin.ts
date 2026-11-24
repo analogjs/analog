@@ -288,7 +288,7 @@ export function ngpCompilePlugin(
   const hmrUpdateCode = new Map<string, string>();
   const classNames = sharedCtx
     ? sharedCtx.hmr.classNames
-    : new Map<string, string>();
+    : new Map<string, Set<string>>();
   const fileEmitter = (file: string, className: string) => ({
     hmrUpdateCode: hmrUpdateCode.get(`${file}@${className}`),
   });
@@ -901,7 +901,12 @@ export function ngpCompilePlugin(
         const sourceFile = sourceModules.get(file)?.sourceFile;
         const moduleFile = sourceFile ?? file;
         hmrUpdateCode.set(`${moduleFile}@${className}`, codes[index]!);
-        componentUpdates.classNames.set(moduleFile, className);
+        let fileClasses = componentUpdates.classNames.get(moduleFile);
+        if (!fileClasses) {
+          fileClasses = new Set<string>();
+          componentUpdates.classNames.set(moduleFile, fileClasses);
+        }
+        fileClasses.add(className);
         server.moduleGraph
           .getModulesByFile(moduleFile)
           ?.forEach((mod) => server.moduleGraph.invalidateModule(mod));

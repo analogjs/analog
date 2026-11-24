@@ -112,12 +112,12 @@ describe('composable Angular Vite plugins', () => {
         liveReload: true,
       });
 
-      ctxA.hmr.classNames.set(fileA, 'AComponent');
+      ctxA.hmr.addClassName(fileA, 'AComponent');
       ctxA.hmr.setFileEmitter((file) =>
         file === fileA ? { hmrUpdateCode: 'export const a = 1;' } : undefined,
       );
 
-      ctxB.hmr.classNames.set(fileB, 'BComponent');
+      ctxB.hmr.addClassName(fileB, 'BComponent');
       ctxB.hmr.setFileEmitter((file) =>
         file === fileB ? { hmrUpdateCode: 'export const b = 2;' } : undefined,
       );
@@ -140,7 +140,7 @@ describe('composable Angular Vite plugins', () => {
       // Clearing ctxA must not wipe ctxB's HMR registry
       ctxA.hmr.clear();
       expect(ctxA.hmr.classNames.size).toBe(0);
-      expect(ctxB.hmr.classNames.get(fileB)).toBe('BComponent');
+      expect(ctxB.hmr.classNames.get(fileB)).toEqual(new Set(['BComponent']));
     });
 
     it('mounts analogjs-live-reload-plugin at most once across all compilation backends', () => {

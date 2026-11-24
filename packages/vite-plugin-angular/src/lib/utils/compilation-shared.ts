@@ -96,24 +96,20 @@ export function toAngularCompilationFileReplacements(
  */
 export function mapTemplateUpdatesToFiles(
   templateUpdates: ReadonlyMap<string, string> | undefined,
-): Map<
-  string,
-  {
-    className: string;
-    code: string;
-  }
-> {
-  const updatesByFile = new Map<string, { className: string; code: string }>();
+): Map<string, Map<string, string>> {
+  const updatesByFile = new Map<string, Map<string, string>>();
 
   templateUpdates?.forEach((code, encodedUpdateId) => {
     const [file, className = ''] =
       decodeURIComponent(encodedUpdateId).split('@');
     const resolvedFile = normalizePath(resolve(process.cwd(), file));
 
-    updatesByFile.set(resolvedFile, {
-      className,
-      code,
-    });
+    let fileUpdates = updatesByFile.get(resolvedFile);
+    if (!fileUpdates) {
+      fileUpdates = new Map<string, string>();
+      updatesByFile.set(resolvedFile, fileUpdates);
+    }
+    fileUpdates.set(className, code);
   });
 
   return updatesByFile;

@@ -1,5 +1,9 @@
 import type ts from 'typescript';
 
+export interface HmrUpdateResult {
+  hmrUpdateCode?: string | null;
+}
+
 export interface EmitFileResult {
   content?: string;
   map?: string;
@@ -7,6 +11,6 @@ export interface EmitFileResult {
   hash?: Uint8Array;
   errors?: (string | ts.DiagnosticMessageChain)[];
   warnings?: (string | ts.DiagnosticMessageChain)[];
-  hmrUpdateCode?: string | null;
+  hmrUpdateCodes?: Map<string, string>;
   hmrEligible?: boolean | null;
 }

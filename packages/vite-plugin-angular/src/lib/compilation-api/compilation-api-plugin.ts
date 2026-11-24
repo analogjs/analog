@@ -210,7 +210,9 @@ export function compilationApiPlugin(
     return outputFiles.get(normalizedFile);
   };
 
-  ctx.hmr.setFileEmitter((file) => fileEmitter(file));
+  ctx.hmr.setFileEmitter((file, className) => ({
+    hmrUpdateCode: fileEmitter(file)?.hmrUpdateCodes?.get(className),
+  }));
 
   const compilerApi = {
     angularCompiler: true as const,
@@ -314,7 +316,7 @@ export function compilationApiPlugin(
           className?: string | null,
         ) {
           if (ctx.shouldEnableLiveReload() && className && containingFile) {
-            ctx.hmr.classNames.set(normalizePath(containingFile), className);
+            ctx.hmr.addClassName(normalizePath(containingFile), className);
           }
 
           const result = await ctx.styles.transformStylesheet({
@@ -426,10 +428,17 @@ export function compilationApiPlugin(
 
     for (const file of affectedFiles) {
       const normalizedFilename = normalizePath(file.filename);
-      const templateUpdate = templateUpdates.get(normalizedFilename);
+      const fileUpdates = templateUpdates.get(normalizedFilename);
+      const existingUpdates =
+        outputFiles.get(normalizedFilename)?.hmrUpdateCodes;
+      const mergedUpdates = fileUpdates?.size
+        ? new Map([...(existingUpdates ?? []), ...fileUpdates])
+        : existingUpdates;
 
-      if (templateUpdate) {
-        ctx.hmr.classNames.set(normalizedFilename, templateUpdate.className);
+      if (fileUpdates?.size) {
+        for (const className of fileUpdates.keys()) {
+          ctx.hmr.addClassName(normalizedFilename, className);
+        }
       }
 
       outputFiles.set(normalizedFilename, {
@@ -439,8 +448,8 @@ export function compilationApiPlugin(
         warnings: warnings.map(
           (warning: { text?: string }) => warning.text || '',
         ),
-        hmrUpdateCode: templateUpdate?.code,
-        hmrEligible: !!templateUpdate?.code,
+        hmrUpdateCodes: mergedUpdates?.size ? mergedUpdates : undefined,
+        hmrEligible: !!fileUpdates?.size,
       });
     }
 
@@ -554,19 +563,20 @@ export function compilationApiPlugin(
           debugHmr('TS file emitted', {
             fileId,
             hmrEligible: !!result?.hmrEligible,
-            hasClassName: !!ctx.hmr.classNames.get(fileId),
+            hasClassName: !!ctx.hmr.classNames.get(fileId)?.size,
           });
         }
 
-        if (
-          ctx.shouldEnableLiveReload() &&
-          result?.hmrEligible &&
-          ctx.hmr.classNames.get(fileId)
-        ) {
-          const relativeFileId = ctx.hmr.toComponentUpdateId(fileId);
+        const updateIds =
+          ctx.shouldEnableLiveReload() && result?.hmrEligible
+            ? ctx.hmr.toComponentUpdateIds(fileId)
+            : [];
 
-          debugHmr('sending component update', { relativeFileId });
-          ctx.hmr.sendComponentUpdate(hmrCtx.server, relativeFileId);
+        if (updateIds.length > 0) {
+          for (const relativeFileId of updateIds) {
+            debugHmr('sending component update', { relativeFileId });
+            ctx.hmr.sendComponentUpdate(hmrCtx.server, relativeFileId);
+          }
 
           return hmrCtx.modules.map((mod) => {
             if (mod.id === hmrCtx.file) {
