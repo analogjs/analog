@@ -67,13 +67,8 @@ function verifyReleaseArtifacts(): void {
 
   run('node', ['tools/scripts/verify-package-artifacts.mts']);
 
-  const tag = getPublishTag();
   for (const artifact of releaseArtifacts) {
-    run(
-      'npm',
-      ['publish', '--tag', tag, '--dry-run', '--provenance=false'],
-      resolve(root, artifact.publishDir),
-    );
+    run('npm', ['pack', '--dry-run'], resolve(root, artifact.publishDir));
   }
 }
 
