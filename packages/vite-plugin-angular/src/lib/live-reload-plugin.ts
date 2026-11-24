@@ -13,12 +13,39 @@ const ANGULAR_COMPONENT_PREFIX = '/@ng/component';
 const FILE_PREFIX = 'file:';
 
 export interface ComponentUpdates {
-  classNames: Map<string, string>;
+  classNames: Map<string, Set<string>>;
   fileEmitter: (
     file: string,
     className: string,
   ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined;
   rootDir?: string;
+}
+
+function createProxyMatchers(
+  proxy: ViteDevServer['config']['server']['proxy'],
+): Array<(url: string) => boolean> {
+  if (!proxy) {
+    return [];
+  }
+
+  const matchers: Array<(url: string) => boolean> = [];
+  for (const [context, opts] of Object.entries(proxy)) {
+    if (!opts) {
+      continue;
+    }
+    // Skip proxy rules with custom bypass handlers that may route local
+    // requests back to this dev server.
+    if (typeof opts === 'object' && typeof opts.bypass === 'function') {
+      continue;
+    }
+    if (context.startsWith('^')) {
+      const regex = new RegExp(context);
+      matchers.push((url) => regex.test(url));
+    } else {
+      matchers.push((url) => url.startsWith(context));
+    }
+  }
+  return matchers;
 }
 
 export function liveReloadPlugin(
@@ -27,7 +54,7 @@ export function liveReloadPlugin(
   const updates: ComponentUpdates = isAngularBuildContext(ctxOrUpdates)
     ? ctxOrUpdates.hmr
     : (ctxOrUpdates ?? {
-        classNames: new Map<string, string>(),
+        classNames: new Map<string, Set<string>>(),
         fileEmitter: () => undefined,
       });
 
@@ -43,6 +70,8 @@ export function liveReloadPlugin(
         return;
       }
 
+      const proxyMatchers = createProxyMatchers(server.config.server.proxy);
+
       const angularComponentMiddleware: Connect.HandleFunction = async (
         req: Connect.IncomingMessage,
         res: ServerResponse<Connect.IncomingMessage>,
@@ -52,7 +81,10 @@ export function liveReloadPlugin(
           return;
         }
 
-        if (!req.url.includes(ANGULAR_COMPONENT_PREFIX)) {
+        if (
+          !req.url.includes(ANGULAR_COMPONENT_PREFIX) ||
+          proxyMatchers.some((match) => match(req.url!))
+        ) {
           next();
 
           return;
@@ -70,13 +102,30 @@ export function liveReloadPlugin(
 
         const [fileId, className] = decodeURIComponent(componentId).split('@');
         const resolvedId = resolveFileId(fileId);
+        const moduleNode = server.moduleGraph.getModuleById(resolvedId);
+        const knownClasses = updates.classNames.get(resolvedId);
+
+        if (!moduleNode && !knownClasses?.size) {
+          debugHmr('middleware: passed through (unknown component)', {
+            resolvedId,
+            className,
+          });
+          next();
+          return;
+        }
+
+        const hasKnownClass = className
+          ? !!knownClasses?.has(className)
+          : !!knownClasses?.size;
         const invalidated =
-          !!server.moduleGraph.getModuleById(resolvedId)
-            ?.lastInvalidationTimestamp && updates.classNames.get(resolvedId);
+          !!moduleNode?.lastInvalidationTimestamp && hasKnownClass;
 
         // don't send an HMR update until the file has been invalidated
         if (!invalidated) {
-          debugHmr('middleware: skipped (not invalidated)', { resolvedId });
+          debugHmr('middleware: skipped (not invalidated)', {
+            resolvedId,
+            className,
+          });
           res.setHeader('Content-Type', 'text/javascript');
           res.setHeader('Cache-Control', 'no-cache');
           res.end('');
@@ -86,6 +135,7 @@ export function liveReloadPlugin(
         const result = updates.fileEmitter(resolvedId, className);
         debugHmr('middleware: served component update', {
           resolvedId,
+          className,
           hasCode: !!result?.hmrUpdateCode,
         });
         res.setHeader('Content-Type', 'text/javascript');

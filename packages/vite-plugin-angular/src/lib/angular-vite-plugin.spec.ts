@@ -1102,8 +1102,11 @@ describe('createFsWatcherCacheInvalidator', () => {
 
 describe('evictDeletedFileMetadata', () => {
   it('removes class name and transform entries for deleted files', () => {
-    const classNamesMap = new Map<string, string>([
-      ['/workspace/apps/demo/src/app/demo.component.ts', 'DemoComponent'],
+    const classNamesMap = new Map<string, Set<string>>([
+      [
+        '/workspace/apps/demo/src/app/demo.component.ts',
+        new Set(['DemoComponent']),
+      ],
     ]);
     const fileTransformMap = new Map<string, string>([
       ['/workspace/apps/demo/src/app/demo.component.ts', '@Component({})'],
@@ -1225,10 +1228,7 @@ describe('mapTemplateUpdatesToFiles', () => {
 
     expect(
       updates.get(`${process.cwd()}/apps/demo/src/app/demo.component.ts`),
-    ).toEqual({
-      className: 'DemoComponent',
-      code: 'export const hmr = true;',
-    });
+    ).toEqual(new Map([['DemoComponent', 'export const hmr = true;']]));
   });
 
   it('returns an empty map when input is undefined', () => {
@@ -1252,8 +1252,7 @@ describe('mapTemplateUpdatesToFiles', () => {
     );
 
     const entry = [...updates.values()][0];
-    expect(entry.className).toBe('');
-    expect(entry.code).toBe('export const hmr = true;');
+    expect(entry).toEqual(new Map([['', 'export const hmr = true;']]));
   });
 
   it('maps multiple updates across different files', () => {
@@ -1271,10 +1270,38 @@ describe('mapTemplateUpdatesToFiles', () => {
     );
 
     expect(updates.size).toBe(2);
-    expect([...updates.values()].map((v) => v.className).sort()).toEqual([
+    expect([...updates.values()].flatMap((v) => [...v.keys()]).sort()).toEqual([
       'BarComponent',
       'FooComponent',
     ]);
+  });
+
+  it('preserves updates for multiple components declared in the same file', () => {
+    const updates = mapTemplateUpdatesToFiles(
+      new Map([
+        [
+          encodeURIComponent('src/app/columns.ts@DateColumn'),
+          'export default function DateColumn_UpdateMetadata() {}',
+        ],
+        [
+          encodeURIComponent('src/app/columns.ts@ResizableDateColumn'),
+          'export default function ResizableDateColumn_UpdateMetadata() {}',
+        ],
+      ]),
+    );
+
+    expect(updates.get(`${process.cwd()}/src/app/columns.ts`)).toEqual(
+      new Map([
+        [
+          'DateColumn',
+          'export default function DateColumn_UpdateMetadata() {}',
+        ],
+        [
+          'ResizableDateColumn',
+          'export default function ResizableDateColumn_UpdateMetadata() {}',
+        ],
+      ]),
+    );
   });
 });
 

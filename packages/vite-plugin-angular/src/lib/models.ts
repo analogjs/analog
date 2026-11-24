@@ -8,5 +8,6 @@ export interface EmitFileResult {
   errors?: (string | ts.DiagnosticMessageChain)[];
   warnings?: (string | ts.DiagnosticMessageChain)[];
   hmrUpdateCode?: string | null;
+  hmrUpdateCodes?: Map<string, string>;
   hmrEligible?: boolean | null;
 }

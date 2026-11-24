@@ -56,6 +56,7 @@ import type {
 import {
   describeStylesheetContent,
   injectViteIgnoreForHmrMetadata,
+  selectHmrUpdateCode,
 } from './utils/compilation-shared.js';
 import { releaseCssPreprocessorWorkers } from './utils/css-preprocessor-workers.js';
 import {
@@ -99,6 +100,7 @@ export interface FileMetadataResult {
   errors?: string[];
   warnings?: (string | ts.DiagnosticMessageChain)[];
   hmrUpdateCode?: string | null;
+  hmrUpdateCodes?: Map<string, string>;
   hmrEligible?: boolean;
 }
 
@@ -108,7 +110,7 @@ export function evictDeletedFileMetadata(
     classNamesMap,
     fileTransformMap,
   }: {
-    classNamesMap: Map<string, string>;
+    classNamesMap: Map<string, Set<string>>;
     fileTransformMap: Map<string, string>;
   },
 ): void {
@@ -245,7 +247,9 @@ export function ngtscCompilePlugin(
     return emittedResult;
   };
 
-  ctx.hmr.setFileEmitter((file) => fileEmitter(file));
+  ctx.hmr.setFileEmitter((file, className) =>
+    selectHmrUpdateCode(fileEmitter(file), className),
+  );
 
   const compilerApi = {
     angularCompiler: true as const,
@@ -614,6 +618,7 @@ export function ngtscCompilePlugin(
         errors: metadata.errors,
         warnings: metadata.warnings,
         hmrUpdateCode: metadata.hmrUpdateCode,
+        hmrUpdateCodes: metadata.hmrUpdateCodes,
         hmrEligible: metadata.hmrEligible,
       });
       debugEmitV('registered ngtsc output', {
@@ -851,18 +856,19 @@ export function ngtscCompilePlugin(
 
         if (ctx.shouldEnableLiveReload()) {
           result = fileEmitter(fileId);
+          const fileClassNames = ctx.hmr.classNames.get(fileId);
           debugHmr('TS file emitted', {
             fileId,
             hmrEligible: !!result?.hmrEligible,
-            hasClassName: !!ctx.hmr.classNames.get(fileId),
+            hasClassName: !!fileClassNames?.size,
           });
           debugHmrV('ts hmr evaluation', {
             file: hmrCtx.file,
             fileId,
             hasResult: !!result,
             hmrEligible: !!result?.hmrEligible,
-            hasClassName: !!ctx.hmr.classNames.get(fileId),
-            className: ctx.hmr.classNames.get(fileId),
+            hasClassName: !!fileClassNames?.size,
+            classNames: fileClassNames ? [...fileClassNames] : undefined,
             updateCode: result?.hmrUpdateCode
               ? describeStylesheetContent(result.hmrUpdateCode)
               : undefined,
@@ -874,21 +880,21 @@ export function ngtscCompilePlugin(
           });
         }
 
-        if (
-          ctx.shouldEnableLiveReload() &&
-          result?.hmrEligible &&
-          ctx.hmr.classNames.get(fileId)
-        ) {
-          const relativeFileId = ctx.hmr.toComponentUpdateId(fileId);
+        const tsUpdateIds =
+          ctx.shouldEnableLiveReload() && result?.hmrEligible
+            ? ctx.hmr.toComponentUpdateIds(fileId)
+            : [];
 
-          debugHmr('sending component update', { relativeFileId });
-          debugHmrV('ts hmr component update payload', {
-            file: hmrCtx.file,
-            fileId,
-            relativeFileId,
-            className: ctx.hmr.classNames.get(fileId),
-          });
-          ctx.hmr.sendComponentUpdate(hmrCtx.server, relativeFileId);
+        if (tsUpdateIds.length > 0) {
+          for (const relativeFileId of tsUpdateIds) {
+            debugHmr('sending component update', { relativeFileId });
+            debugHmrV('ts hmr component update payload', {
+              file: hmrCtx.file,
+              fileId,
+              relativeFileId,
+            });
+            ctx.hmr.sendComponentUpdate(hmrCtx.server, relativeFileId);
+          }
 
           return hmrCtx.modules.map((mod) => {
             if (mod.id === hmrCtx.file) {
@@ -994,14 +1000,16 @@ export function ngtscCompilePlugin(
 
             await hotUpdates.schedule(hmrCtx.file, ownerIds);
 
-            const updates = ownerIds.filter((id) => ctx.hmr.classNames.get(id));
+            const updates = ownerIds.filter(
+              (id) => ctx.hmr.classNames.get(id)?.size,
+            );
             debugHmrV('template owner recompilation result', {
               file: hmrCtx.file,
               ownerIds,
               updates,
               updateClassNames: updates.map((id) => ({
                 id,
-                className: ctx.hmr.classNames.get(id),
+                classNames: [...(ctx.hmr.classNames.get(id) ?? [])],
               })),
               hint:
                 updates.length > 0
@@ -1015,10 +1023,11 @@ export function ngtscCompilePlugin(
                 updateCount: updates.length,
               });
               updates.forEach((updateId) => {
-                ctx.hmr.sendComponentUpdate(
-                  hmrCtx.server,
-                  ctx.hmr.toComponentUpdateId(updateId),
-                );
+                for (const relativeFileId of ctx.hmr.toComponentUpdateIds(
+                  updateId,
+                )) {
+                  ctx.hmr.sendComponentUpdate(hmrCtx.server, relativeFileId);
+                }
               });
 
               return ownerModules.map((mod) => markModuleSelfAccepting(mod));
@@ -1045,7 +1054,7 @@ export function ngtscCompilePlugin(
           if (
             ctx.shouldExternalizeStyles() &&
             imp.id &&
-            ctx.hmr.classNames.get(imp.id)
+            ctx.hmr.classNames.get(imp.id)?.size
           ) {
             updates.push(imp.id);
           } else {
@@ -1066,10 +1075,11 @@ export function ngtscCompilePlugin(
             updateCount: updates.length,
           });
           updates.forEach((updateId) => {
-            ctx.hmr.sendComponentUpdate(
-              hmrCtx.server,
-              ctx.hmr.toComponentUpdateId(updateId),
-            );
+            for (const relativeFileId of ctx.hmr.toComponentUpdateIds(
+              updateId,
+            )) {
+              ctx.hmr.sendComponentUpdate(hmrCtx.server, relativeFileId);
+            }
           });
 
           return fileModules.map((mod) => {
@@ -1335,7 +1345,7 @@ export function getFileMetadata(
   angularCompiler?: NgtscProgram['compiler'],
   hmrEnabled?: boolean,
   disableTypeChecking?: boolean,
-  classNamesMap: Map<string, string> = new Map(),
+  classNamesMap: Map<string, Set<string>> = new Map(),
 ): (file: string) => FileMetadataResult {
   const ts = require('typescript') as typeof import('typescript');
   return (file: string): FileMetadataResult => {
@@ -1363,24 +1373,37 @@ export function getFileMetadata(
       .filter((d) => d.category === ts.DiagnosticCategory?.Warning)
       .map((d) => d.messageText);
 
-    let hmrUpdateCode: string | null | undefined = undefined;
-
+    const hmrUpdateCodes = new Map<string, string>();
     let hmrEligible = false;
     if (hmrEnabled) {
       for (const node of sourceFile.statements) {
         if (ts.isClassDeclaration(node) && node.name != null) {
-          hmrUpdateCode = angularCompiler?.emitHmrUpdateModule(node);
-          if (hmrUpdateCode) {
+          const updateCode = angularCompiler?.emitHmrUpdateModule(node);
+          if (updateCode) {
             const className = node.name.getText();
-            classNamesMap.set(file, className);
+            hmrUpdateCodes.set(className, updateCode);
             hmrEligible = true;
             debugHmr('NgtscProgram emitHmrUpdateModule', { file, className });
           }
         }
       }
+
+      if (hmrUpdateCodes.size > 0) {
+        classNamesMap.set(file, new Set(hmrUpdateCodes.keys()));
+      } else {
+        classNamesMap.delete(file);
+      }
     }
 
-    return { errors, warnings, hmrUpdateCode, hmrEligible };
+    const hmrUpdateCode = hmrUpdateCodes.values().next().value;
+
+    return {
+      errors,
+      warnings,
+      hmrUpdateCode,
+      hmrUpdateCodes: hmrUpdateCodes.size > 0 ? hmrUpdateCodes : undefined,
+      hmrEligible,
+    };
   };
 }
 

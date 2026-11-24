@@ -643,6 +643,59 @@ describe('angularCompilationPlugin', () => {
     );
   });
 
+  it('serves separate HMR updates for multiple components declared in the same file', async () => {
+    const filename = join(tempRoot, 'columns.ts');
+    const dateUpdate = 'export default function DateColumn_UpdateMetadata() {}';
+    const resizableUpdate =
+      'export default function ResizableDateColumn_UpdateMetadata() {}';
+    createAngularCompilationMock.mockResolvedValue({
+      initialize: vi.fn().mockResolvedValue({
+        templateUpdates: new Map([
+          [encodeURIComponent(`${filename}@DateColumn`), dateUpdate],
+          [
+            encodeURIComponent(`${filename}@ResizableDateColumn`),
+            resizableUpdate,
+          ],
+        ]),
+      }),
+      diagnoseFiles: vi.fn().mockResolvedValue({ errors: [], warnings: [] }),
+      emitAffectedFiles: vi
+        .fn()
+        .mockResolvedValue([{ filename, contents: 'compiled' }]),
+      close: vi.fn(),
+    });
+    const plugins = angularCompilationPlugin({
+      tsconfig: join(tempRoot, 'tsconfig.json'),
+      jit: false,
+    });
+    const compiler = plugins.find(
+      (plugin) =>
+        plugin.name === '@analogjs/vite-plugin-angular-compilation-api',
+    )!;
+    const middleware = plugins.find(
+      (plugin) => plugin.name === 'analogjs-live-reload-plugin',
+    )!;
+    await configure(compiler);
+    await (compiler.buildStart as any)();
+
+    const dateReq =
+      '\0file:///@ng/component?c=' +
+      encodeURIComponent(`${filename}@DateColumn`);
+    const resizableReq =
+      '\0file:///@ng/component?c=' +
+      encodeURIComponent(`${filename}@ResizableDateColumn`);
+    const unknownReq =
+      '\0file:///@ng/component?c=' +
+      encodeURIComponent(`${filename}@OtherComponent`);
+
+    expect((middleware.load as any)(dateReq, { ssr: true })).toBe(dateUpdate);
+    expect((middleware.load as any)(resizableReq, { ssr: true })).toBe(
+      resizableUpdate,
+    );
+    expect((middleware.load as any)(unknownReq, { ssr: true })).toBe('');
+    await (compiler.closeBundle as any)();
+  });
+
   it('waits for initial compilation, preserves raw imports, and awaits cleanup', async () => {
     const filename = join(tempRoot, 'app.ts');
     let finishInitialize!: () => void;

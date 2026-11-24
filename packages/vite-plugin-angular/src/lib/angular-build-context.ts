@@ -191,7 +191,7 @@ export type HmrIgnorePredicate = (file: string) => boolean;
 
 export interface AngularHmrStore {
   readonly rootDir: string;
-  readonly classNames: Map<string, string>;
+  readonly classNames: Map<string, Set<string>>;
   fileEmitter: (
     file: string,
     className: string,
@@ -202,7 +202,9 @@ export interface AngularHmrStore {
       className: string,
     ) => Pick<EmitFileResult, 'hmrUpdateCode'> | undefined,
   ): void;
+  addClassName(fileId: string, className: string): void;
   toComponentUpdateId(fileId: string, className?: string): string;
+  toComponentUpdateIds(fileId: string): string[];
   resolveComponentFileId(fileId: string): string;
   sendComponentUpdate(server: ViteDevServer, id: string): void;
   addIgnoreFilter(predicate: HmrIgnorePredicate): void;
@@ -389,7 +391,7 @@ export function isAngularBuildContext(
 export function createAngularHmrStore(
   rootDir: string = process.cwd(),
 ): AngularHmrStore {
-  const classNames = new Map<string, string>();
+  const classNames = new Map<string, Set<string>>();
   const ignoreFilters: HmrIgnorePredicate[] = [isIgnoredHmrFile];
   let activeEmitter: (
     file: string,
@@ -405,9 +407,29 @@ export function createAngularHmrStore(
     setFileEmitter(emitter) {
       activeEmitter = emitter;
     },
+    addClassName(fileId: string, className: string): void {
+      if (!className) {
+        return;
+      }
+      let names = classNames.get(fileId);
+      if (!names) {
+        names = new Set<string>();
+        classNames.set(fileId, names);
+      }
+      names.add(className);
+    },
     toComponentUpdateId(fileId: string, className?: string): string {
-      const resolvedClassName = className ?? classNames.get(fileId) ?? '';
+      const resolvedClassName =
+        className ?? classNames.get(fileId)?.values().next().value ?? '';
       return `${normalizePath(relative(rootDir, fileId))}@${resolvedClassName}`;
+    },
+    toComponentUpdateIds(fileId: string): string[] {
+      const names = classNames.get(fileId);
+      if (!names?.size) {
+        return [];
+      }
+      const relativeFile = normalizePath(relative(rootDir, fileId));
+      return [...names].map((name) => `${relativeFile}@${name}`);
     },
     resolveComponentFileId(fileId: string): string {
       return normalizePath(resolve(rootDir, fileId));
@@ -421,7 +443,6 @@ export function createAngularHmrStore(
         id: encodeURIComponent(id),
         timestamp: Date.now(),
       });
-      classNames.delete(id);
     },
     addIgnoreFilter(predicate: HmrIgnorePredicate): void {
       if (!ignoreFilters.includes(predicate)) {
