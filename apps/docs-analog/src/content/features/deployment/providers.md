@@ -528,6 +528,74 @@ If using Analog to pre-render static content, you can deploy a static site on Re
 
 4. Click 'Create Static Site'
 
+## Prisma Compute
+
+Analog supports deploying server-side rendered apps on [Prisma Compute](https://www.prisma.io/compute) using the default build preset. Compute deploys apps that are declared with [Prisma Composer](https://www.prisma.io/docs/composer), which takes three small files in the root of your project.
+
+1. Install the Composer packages and the Prisma CLI:
+
+```bash
+npm install @prisma/composer @prisma/composer-prisma-cloud
+npm install -D prisma
+```
+
+2. Create a `service.ts` file that points to the build output of your app:
+
+```ts [service.ts]
+import node from '@prisma/composer/node';
+import { compute } from '@prisma/composer-prisma-cloud';
+
+export default compute({
+  name: 'app',
+  deps: {},
+  build: node({
+    module: import.meta.url,
+    dir: './dist/analog',
+    entry: 'server/index.mjs',
+  }),
+});
+```
+
+3. Create a `module.ts` file that names the project:
+
+```ts [module.ts]
+import { module } from '@prisma/composer';
+import app from './service.ts';
+
+export default module('my-analog-app', ({ provision }) => {
+  provision(app);
+});
+```
+
+4. Create a `prisma.config.ts` file that sets the region for the project:
+
+```ts [prisma.config.ts]
+import { defineConfig as composer } from '@prisma/composer/config';
+import { nodeBuild } from '@prisma/composer/node/control';
+import {
+  prismaCloud,
+  prismaState,
+} from '@prisma/composer-prisma-cloud/control';
+import { definePrismaConfig } from 'prisma/config';
+
+export default definePrismaConfig({
+  composer: composer({
+    entry: './module.ts',
+    extensions: [prismaCloud({ region: 'us-east-1' }), nodeBuild()],
+    state: prismaState(),
+  }),
+});
+```
+
+5. Build and deploy your app:
+
+```bash
+npm run build
+npx prisma deploy
+```
+
+The command prints the public URL of your app when the deployment finishes. If you are not signed in yet, run `npx prisma auth login` first. The deploy writes its build artifacts to a `.prisma-composer` directory, which you can add to your `.gitignore` file.
+
 ## Edgio
 
 Analog supports deploying on [Edgio](https://edg.io) with minimal configuration.
