@@ -1,5 +1,7 @@
 import { defu } from 'defu';
+import { NitroConfig } from 'nitropack';
 import { toRouteMatcher, createRouter } from 'radix3';
+import { ConfigEnv, UserConfig, ViteBuilder } from 'vite';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PrerenderContentFile } from './options';
@@ -126,6 +128,56 @@ describe('nitro', () => {
 
     // Assert
     expect(spy).toHaveBeenCalledTimes(0);
+  });
+
+  describe('when building with the Vite Environment API', () => {
+    it('builds the sitemap into the public assets before the server', async () => {
+      // Arrange
+      const { buildServer } = await import('./build-server');
+      const { buildSitemap } = await import('./build-sitemap');
+      const buildServerMock = vi.mocked(buildServer);
+      const buildSitemapMock = vi.mocked(buildSitemap);
+      buildServerMock.mockClear();
+      buildSitemapMock.mockClear();
+
+      const plugin = nitro({
+        analog: {
+          ssr: true,
+          prerender: {
+            routes: ['/', '/about'],
+            sitemap: { host: 'https://example.com' },
+          },
+        },
+      });
+      const config = (await (
+        plugin[0].config as (
+          config: UserConfig,
+          env: ConfigEnv,
+        ) => Promise<UserConfig>
+      )({}, { command: 'build' } as ConfigEnv)) as UserConfig;
+      const builder = {
+        environments: { client: {}, ssr: {} },
+        build: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ViteBuilder;
+
+      // Act
+      await config.builder?.buildApp?.(builder);
+
+      // Assert
+      expect(buildSitemapMock).toHaveBeenCalledTimes(1);
+      expect(buildServerMock).toHaveBeenCalledTimes(1);
+      expect(buildSitemapMock.mock.invocationCallOrder[0]).toBeLessThan(
+        buildServerMock.mock.invocationCallOrder[0],
+      );
+
+      const nitroConfig = buildServerMock.mock.calls[0][1] as NitroConfig;
+      const sitemapDir = buildSitemapMock.mock.calls[0][3];
+      expect(sitemapDir).toBe(
+        (nitroConfig.publicAssets as { dir: string }[])[0].dir,
+      );
+      expect(sitemapDir).not.toBe(nitroConfig.output?.publicDir);
+      expect(buildSitemapMock.mock.calls[0][6]).toBe('/api');
+    });
   });
 
   describe.skip('when prerendering is configured...', () => {
