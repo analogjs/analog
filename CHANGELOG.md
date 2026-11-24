@@ -1,3 +1,9 @@
+## [3.0.1-beta.2](https://github.com/analogjs/analog/compare/v3.0.1-beta.1...v3.0.1-beta.2) (2026-11-24)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** keep component stylesheet edits in place for direct stylesheet requests ([#2857](https://github.com/analogjs/analog/issues/2857)) ([09c3037](https://github.com/analogjs/analog/commit/09c3037221f98b6fd4541b7a184833c10862db19))
+
 ## [3.0.1-beta.1](https://github.com/analogjs/analog/compare/v3.0.0...v3.0.1-beta.1) (2026-11-24)
 
 ### Bug Fixes
