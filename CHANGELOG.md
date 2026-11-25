@@ -1,3 +1,9 @@
+## [3.0.1-beta.5](https://github.com/analogjs/analog/compare/v3.0.1-beta.4...v3.0.1-beta.5) (2026-11-25)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** allow host option to vite-dev-server builder ([#2863](https://github.com/analogjs/analog/issues/2863)) ([2fcbf3c](https://github.com/analogjs/analog/commit/2fcbf3cd6854d76bdd1e8a6a35c204bde0d2f119))
+
 ## [3.0.1-beta.4](https://github.com/analogjs/analog/compare/v3.0.1-beta.3...v3.0.1-beta.4) (2026-11-25)
 
 ### Bug Fixes
