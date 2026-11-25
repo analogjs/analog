@@ -45,6 +45,7 @@ async function viteDevServerBuilder(
     server: {
       hmr: options?.hmr,
       port: options?.port,
+      host: options?.host,
     },
   };
 
