@@ -6,7 +6,7 @@ Repo-local debugging guidance for Analog package development lives in [docs/debu
 
 ## Adding and updating an package
 
-Adding or updating a package requires some extra step if its part of `dependencies` or `devDependencies`.
+Adding or updating a package requires some extra step if it's part of `dependencies` or `devDependencies`.
 
 ### Add/Update package.json version migration
 
@@ -38,7 +38,7 @@ Adding or updating a package requires some extra step if its part of `dependenci
 - Choose the folder where this package needs to be added
 - For Nx 17 the folder is `packages/nx-plugin/src/generators/app/versions/nx_17_X`
 - Open `version.ts` and make an Key-Value entry like `export const V17_X_PACKAGENAME = '^package-version';` if the package already exists, update the `package-version`.
-- Next open `packages/nx-plugin/src/generators/app/versions/dependencies.ts` if its part of dependecies.
+- Next open `packages/nx-plugin/src/generators/app/versions/dependencies.ts` if it's part of dependencies.
 - If this is an existing package no change is needed, but if its a new package, import the `Key-Value` entry you made
 
 ```ts
@@ -65,7 +65,7 @@ return {
 };
 ```
 
-- For new packge make an entry into the return array
+- For new package make an entry into the return array
 
 ```ts
 // return latest 17.X deps for versions >= 17.0.0
