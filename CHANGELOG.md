@@ -1,3 +1,9 @@
+## [3.0.1-beta.3](https://github.com/analogjs/analog/compare/v3.0.1-beta.2...v3.0.1-beta.3) (2026-11-25)
+
+### Bug Fixes
+
+- **platform:** ship AGENTS.md, plugin.json, and agent skill ([#2860](https://github.com/analogjs/analog/issues/2860)) ([5ae6b79](https://github.com/analogjs/analog/commit/5ae6b793518fecd4f73db794f9e47ca650da8eb4))
+
 ## [3.0.1-beta.2](https://github.com/analogjs/analog/compare/v3.0.1-beta.1...v3.0.1-beta.2) (2026-11-24)
 
 ### Bug Fixes
