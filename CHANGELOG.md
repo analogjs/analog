@@ -1,3 +1,9 @@
+## [3.0.1-beta.4](https://github.com/analogjs/analog/compare/v3.0.1-beta.3...v3.0.1-beta.4) (2026-11-25)
+
+### Bug Fixes
+
+- **vite-plugin-nitro:** stop the SSR build from loading the config file ([#2859](https://github.com/analogjs/analog/issues/2859)) ([2d5042e](https://github.com/analogjs/analog/commit/2d5042ee28f7cad3ff358e39fd5a94fd7f220ac6))
+
 ## [3.0.1-beta.3](https://github.com/analogjs/analog/compare/v3.0.1-beta.2...v3.0.1-beta.3) (2026-11-25)
 
 ### Bug Fixes
