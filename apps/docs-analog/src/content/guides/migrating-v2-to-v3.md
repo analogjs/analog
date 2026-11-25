@@ -63,6 +63,22 @@ nx migrate @analogjs/platform@latest
   </TabItem>
 </Tabs>
 
+If your workspace uses Vite directly without an `angular.json` file, `ng update` will report that it is not inside an Angular workspace. Create a temporary minimal `angular.json` at the workspace root so the official migrations can run, then delete it afterwards:
+
+```json
+{
+  "version": 1,
+  "projects": {
+    "app": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "architect": {}
+    }
+  }
+}
+```
+
 ## v2 to v3 checklist
 
 ### General
@@ -379,7 +395,7 @@ import { provideFileRouter } from '@analogjs/router';
 providers: [provideFileRouter(), provideHttpClient(withFetch())];
 ```
 
-The interceptor runs after any interceptors you register with `withInterceptors()`.
+The interceptor runs after any interceptors you register with `withInterceptors()`. If one of your custom interceptors rewrites request URLs, running it before `requestContextInterceptor` can cause the server-side transfer cache to miss. In that case, keep `requestContextInterceptor` listed first in `withInterceptors([requestContextInterceptor, ...])` — Angular deduplicates interceptors and keeps the first occurrence, so it will not run twice.
 
 #### `VITE_ANALOG_PUBLIC_BASE_URL` was removed
 
