@@ -1,5 +1,5 @@
-import path, { resolve, dirname, join } from 'node:path';
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import path, { resolve, join } from 'node:path';
+import { copyFileSync, cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import {
   defineConfig,
   normalizePath,
@@ -23,6 +23,14 @@ function copyAssetsPlugin(): Plugin {
 
       // Copy package.json with dist-prefix stripping
       writeFileSync(join(outDir, 'package.json'), readDistPackageJson(pkgDir));
+
+      // Copy README, AGENTS.md, and Agent Plugins manifest + skills
+      for (const file of ['README.md', 'AGENTS.md', 'plugin.json']) {
+        copyFileSync(join(pkgDir, file), join(outDir, file));
+      }
+      cpSync(join(pkgDir, 'skills'), join(outDir, 'skills'), {
+        recursive: true,
+      });
 
       // Copy migrations/migration.json
       const migrationsDir = join(outDir, 'migrations');

@@ -118,6 +118,11 @@ const packageConfigs: Record<string, PackageValidationConfig> = {
     packageJsonPath: 'packages/platform/dist/package.json',
     manifestFields: ['builders', 'executors', 'generators', 'schematics'],
     requiredPaths: [
+      'packages/platform/dist/AGENTS.md',
+      'packages/platform/dist/README.md',
+      'packages/platform/dist/plugin.json',
+      'packages/platform/dist/skills/analogjs/SKILL.md',
+      'packages/platform/dist/migrations/migration.json',
       'packages/platform/dist/src/lib/nx-plugin',
       'packages/platform/dist/src/lib/nx-plugin/src/builders/vite/vite-build.js',
       'packages/platform/dist/src/lib/nx-plugin/src/builders/vite-dev-server/dev-server.js',
