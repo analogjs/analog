@@ -7,6 +7,30 @@ import {
 import type { InlineConfig } from 'vite';
 import { ViteDevServerSchema } from './schema';
 
+export function createServerConfig(
+  options: ViteDevServerSchema,
+  buildOptions: Record<string, unknown>,
+  root: string,
+): InlineConfig {
+  return {
+    configFile: buildOptions.configFile as string,
+    root,
+    // An explicit mode from the build options wins over an ambient NODE_ENV.
+    // See #2458.
+    mode: (buildOptions.mode ??
+      process.env.NODE_ENV ??
+      'development') as string,
+    build: {
+      sourcemap: !!buildOptions.sourcemap,
+    },
+    server: {
+      hmr: options?.hmr,
+      port: options?.port,
+      host: options?.host,
+    },
+  };
+}
+
 async function viteDevServerBuilder(
   options: ViteDevServerSchema,
   context: BuilderContext,
@@ -31,22 +55,11 @@ async function viteDevServerBuilder(
     browserBuilderName,
   );
 
-  const serverConfig: InlineConfig = {
-    configFile: buildOptions.configFile as string,
-    root: projectConfig.root as string,
-    // An explicit mode from the build options wins over an ambient NODE_ENV.
-    // See #2458.
-    mode: (buildOptions.mode ??
-      process.env.NODE_ENV ??
-      'development') as string,
-    build: {
-      sourcemap: !!buildOptions.sourcemap,
-    },
-    server: {
-      hmr: options?.hmr,
-      port: options?.port,
-    },
-  };
+  const serverConfig = createServerConfig(
+    options,
+    buildOptions,
+    projectConfig.root as string,
+  );
 
   try {
     const server = await createServer(serverConfig);

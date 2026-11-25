@@ -15,6 +15,10 @@
       "description": "Port to listen on.",
       "x-priority": "important"
     },
+    "host": {
+      "description": "Host to listen on. Use `0.0.0.0` or `true` to listen on all addresses, e.g. inside a container.",
+      "oneOf": [{ "type": "string" }, { "type": "boolean" }]
+    },
     "hmr": {
       "description": "Enable hot module replacement. For more options, use the 'hmr' option in the Vite configuration file.",
       "type": "boolean"
