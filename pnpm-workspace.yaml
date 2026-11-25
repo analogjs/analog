@@ -38,17 +38,17 @@ catalog:
   '@astrojs/markdown-component': ^1.0.5
   '@astrojs/react': ^5.0.2
   '@mdx-js/react': 3.1.1
-  '@nx/angular': 24.0.0
-  '@nx/devkit': 24.0.0
-  '@nx/eslint': 24.0.0
-  '@nx/eslint-plugin': 24.0.0
-  '@nx/js': 24.0.0
-  '@nx/playwright': 24.0.0
-  '@nx/plugin': 24.0.0
-  '@nx/storybook': 24.0.0
-  '@nx/vite': 24.0.0
-  '@nx/vitest': 24.0.0
-  '@nx/web': 24.0.0
+  '@nx/angular': 24.0.7
+  '@nx/devkit': 24.0.7
+  '@nx/eslint': 24.0.7
+  '@nx/eslint-plugin': 24.0.7
+  '@nx/js': 24.0.7
+  '@nx/playwright': 24.0.7
+  '@nx/plugin': 24.0.7
+  '@nx/storybook': 24.0.7
+  '@nx/vite': 24.0.7
+  '@nx/vitest': 24.0.7
+  '@nx/web': 24.0.7
   '@jridgewell/sourcemap-codec': ^1.5.5
   '@oxc-angular/vite': ^0.0.23
   '@oxc-project/runtime': ^0.124.0
@@ -71,10 +71,6 @@ catalog:
   '@vitest/browser-playwright': 5.0.0
   '@vitest/coverage-v8': 5.0.0
   '@vitest/ui': 5.0.0
-  # Nx 24.0.x deep-imports `@angular-devkit/architect/node/index.js`, which the
-  # exports map added in 0.2203.0 blocks. Patched by the graft in
-  # .grafts/nx-architect-node-subpath until Nx ships the fix.
-  # https://github.com/nrwl/nx/issues/37955, fixed by https://github.com/nrwl/nx/pull/37951
   '@angular-devkit/architect': 0.2203.0
   '@angular-devkit/build-angular': 22.3.0
   '@angular-devkit/core': 22.3.0
@@ -98,8 +94,8 @@ catalog:
   '@semantic-release/git': ^10.0.1
   '@storybook/addon-docs': ^10.6.0
   '@storybook/addon-links': ^10.6.0
-  '@storybook/addon-vitest': ^10.6.0
-  '@storybook/angular': 10.6.0
+  '@storybook/addon-vitest': 10.6.9
+  '@storybook/angular': 10.6.9
   '@typescript-eslint/eslint-plugin': 8.69.0
   '@typescript-eslint/parser': 8.69.0
   '@typescript-eslint/type-utils': 8.69.0
@@ -147,7 +143,7 @@ catalog:
   ng-packagr: 22.2.1
   h3: ^2.0.8
   nitro: 3.0.261103-rc
-  nx: 24.0.0
+  nx: 24.0.7
   obug: ^2.1.1
   ofetch: ^1.5.1
   oxc-parser: ^0.124.0
@@ -181,7 +177,7 @@ catalog:
   sharp: ^0.34.5
   srvx: ^1.0.8
   start-server-and-test: ^3.0.0
-  storybook: 10.6.0
+  storybook: 10.6.9
   tslib: ^2.3.0
   tinyglobby: ^0.2.15
   tailwindcss: ^4.2.2
@@ -271,9 +267,6 @@ catalogs:
   peerContentOptional:
     md4x: '>=0.0.29'
     satori: ^0.10.14
-patchedDependencies:
-  nx: .grafts/nx-architect-node-subpath/variants/v24.patch
-ignorePatchFailures: false
 
 # Build-script allowlists belong in the root package.json under pnpm.* config.
 # Keep this file focused on workspace membership and shared dependency versions.
