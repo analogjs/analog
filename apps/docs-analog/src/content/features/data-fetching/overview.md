@@ -65,7 +65,7 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-> The interceptor runs after any interceptors you register with `withInterceptors()`, so you don't need to add it yourself.
+> The interceptor runs after any interceptors you register with `withInterceptors()`, so you usually don't need to add it yourself. If one of your interceptors rewrites request URLs and causes the server-side transfer cache to miss, list `requestContextInterceptor` first in `withInterceptors([requestContextInterceptor, ...])` — Angular deduplicates interceptors and keeps the first occurrence, so it will not run twice.
 
 ## Making Requests
 
