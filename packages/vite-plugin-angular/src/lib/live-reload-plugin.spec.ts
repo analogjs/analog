@@ -1,4 +1,5 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import type { AddressInfo } from 'node:net';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -14,6 +15,15 @@ import {
   liveReloadPlugin,
   type ComponentUpdates,
 } from './live-reload-plugin.js';
+
+/**
+ * The URL of the address a server bound. Vite may bind `localhost` to ::1,
+ * which `fetch('http://localhost:…')` misses by connecting to 127.0.0.1.
+ */
+function originOf(addr: AddressInfo): string {
+  const host = addr.family === 'IPv6' ? `[${addr.address}]` : addr.address;
+  return `http://${host}:${addr.port}`;
+}
 
 function createMockResponse() {
   const headers = new Map<string, string>();
@@ -299,10 +309,7 @@ describe('liveReload ngtsc integration', () => {
     if (!addr || typeof addr === 'string') {
       throw new Error('Expected TCP server address');
     }
-    // The address the server bound, not `localhost`: Vite may bind `localhost`
-    // to ::1 while `fetch('http://localhost:…')` connects to 127.0.0.1.
-    const host = addr.family === 'IPv6' ? `[${addr.address}]` : addr.address;
-    return { server, origin: `http://${host}:${addr.port}` };
+    return { server, origin: originOf(addr) };
   }
 
   it('serves per-component HMR updates and broadcasts updates for every component in a multi-component file', async () => {
