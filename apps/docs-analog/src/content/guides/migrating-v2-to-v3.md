@@ -329,6 +329,8 @@ The deprecated `useAPIMiddleware` option, the generated `/api` proxy middleware 
 
 If your app has a `src/server/routes/api` directory, no change is needed — that is the default scaffold layout and the intended approach. Only apps that removed that directory and relied on `useAPIMiddleware` (or its `routeRules` proxy fallback) are affected: move your API handlers into `src/server/routes/api` and drop the `useAPIMiddleware` option from your config. Page endpoints (`.server.ts` files) for those apps are also now served under the API prefix (`/api/_analog/pages`) instead of `/_analog/pages`.
 
+This includes apps that never set `useAPIMiddleware` but kept handlers directly in `src/server/routes`, since the proxy was on by default. `ng update` and `nx migrate` warn about every handler outside `src/server/routes/api`. A page that requests such a handler under `/api` now reaches the page renderer instead, which can make SSR and prerendering wait forever.
+
 ### Router
 
 #### Content routes now require `withContentRoutes()`

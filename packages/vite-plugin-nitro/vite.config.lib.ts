@@ -59,6 +59,10 @@ export default defineConfig({
           pkgDir,
           'migrations/update-nitro-options/update-nitro-options.ts',
         ),
+        'migrations/warn-routes-outside-api/warn-routes-outside-api': resolve(
+          pkgDir,
+          'migrations/warn-routes-outside-api/warn-routes-outside-api.ts',
+        ),
         'src/lib/utils/derive-server-fn-id': resolve(
           pkgDir,
           'src/lib/utils/derive-server-fn-id.ts',

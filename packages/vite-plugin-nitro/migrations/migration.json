@@ -5,6 +5,11 @@
       "version": "3.0.0-alpha.92",
       "description": "Move nitro() options from @analogjs/vite-plugin-nitro to its single argument, with Analog options under `analog`",
       "factory": "./update-nitro-options/update-nitro-options"
+    },
+    "warn-routes-outside-api": {
+      "version": "3.0.1-beta.6",
+      "description": "Warn about server route handlers outside src/server/routes/api, which Analog 3 no longer serves under the API prefix",
+      "factory": "./warn-routes-outside-api/warn-routes-outside-api"
     }
   }
 }
