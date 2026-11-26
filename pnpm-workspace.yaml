@@ -52,7 +52,7 @@ catalog:
   '@jridgewell/sourcemap-codec': ^1.5.5
   '@oxc-angular/vite': ^0.0.23
   '@oxc-project/runtime': ^0.124.0
-  '@playwright/test': 1.60.0
+  '@playwright/test': 1.65.1
   '@swc-node/register': ~1.11.1
   '@swc/core': ~1.15.5
   '@swc/helpers': ~0.5.18
@@ -151,7 +151,7 @@ catalog:
   oxc-resolver: ^11.19.1
   oxlint: ^1.57.0
   oxlint-tsgolint: ^0.20.0
-  playwright: 1.60.0
+  playwright: 1.65.1
   postcss: ^8.5.8
   prettier: 3.8.4
   prismjs: ^1.30.0
@@ -212,8 +212,8 @@ overrides:
   '@angular/router': 22.3.0
   '@angular/compiler-cli': 22.3.0
   '@angular/language-service': 22.3.0
-  '@playwright/test': 1.60.0
-  playwright: 1.60.0
+  '@playwright/test': 1.65.1
+  playwright: 1.65.1
 
 catalogs:
   nitroV2:
