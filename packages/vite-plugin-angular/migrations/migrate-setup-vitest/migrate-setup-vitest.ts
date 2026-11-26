@@ -1,5 +1,6 @@
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
 import { createRequire } from 'node:module';
+import { visitWorkspaceFiles } from '../utils/visit-workspace-files';
 
 // CommonJS resolution supports `tasks` both before and after Angular 22.3
 // added an exports map, which native ESM imports cannot do with one specifier.
@@ -62,12 +63,9 @@ export default function migrateSetupVitest(): Rule {
   return (tree: Tree, context: SchematicContext) => {
     const filesToUpdate: string[] = [];
 
-    tree.visit((filePath) => {
+    visitWorkspaceFiles(tree, (filePath) => {
       const extension = filePath.slice(filePath.lastIndexOf('.'));
       if (!SUPPORTED_EXTENSIONS.has(extension)) {
-        return;
-      }
-      if (filePath.includes('/node_modules/')) {
         return;
       }
 
