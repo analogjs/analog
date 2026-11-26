@@ -42,12 +42,41 @@ describe('compilation selection', () => {
     ).toEqual([name]);
   });
 
-  it('uses ngtsc under Vitest when jit is not set', () => {
-    const names = angular({ compilation: 'ngp', liveReload: true }).map(
-      (plugin) => plugin.name,
-    );
-    expect(names).toContain('@analogjs/vite-plugin-angular');
-    expect(names).not.toContain('@analogjs/vite-plugin-angular-ngp');
+  describe('in test mode', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    it('uses ngtsc and warns when jit is not set', () => {
+      vi.stubEnv('VITEST', '1');
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const names = angular({ compilation: 'ngp', liveReload: true }).map(
+        (plugin) => plugin.name,
+      );
+
+      expect(names).toContain('@analogjs/vite-plugin-angular');
+      expect(names).not.toContain('@analogjs/vite-plugin-angular-ngp');
+      expect(warn).toHaveBeenCalledOnce();
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(/compilation: 'ngp'.*'ngtsc'.*jit: false/s),
+      );
+    });
+
+    it('uses NGP without warning when jit: false is set', () => {
+      vi.stubEnv('VITEST', '1');
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const names = angular({
+        compilation: 'ngp',
+        jit: false,
+        liveReload: true,
+      }).map((plugin) => plugin.name);
+
+      expect(names).toContain('@analogjs/vite-plugin-angular-ngp');
+      expect(warn).not.toHaveBeenCalled();
+    });
   });
 
   it('preserves companion plugins without loading NGP', () => {
