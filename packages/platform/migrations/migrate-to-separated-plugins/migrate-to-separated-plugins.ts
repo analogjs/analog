@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import * as ts from 'typescript';
 
 import { applyEdits, type Edit } from '../utils/source-edits';
+import { visitWorkspaceFiles } from '../utils/visit-workspace-files';
 
 // CommonJS resolution supports `tasks` both before and after Angular 22.3
 // added an exports map, which native ESM imports cannot do with one specifier.
@@ -281,8 +282,7 @@ export default function migrateToSeparatedPlugins(): Rule {
     const rewrittenFiles: string[] = [];
     const unhandledFiles: string[] = [];
 
-    tree.visit((filePath) => {
-      if (filePath.includes('/node_modules/')) return;
+    visitWorkspaceFiles(tree, (filePath) => {
       if (!isViteConfig(filePath)) return;
 
       const content = tree.read(filePath);
