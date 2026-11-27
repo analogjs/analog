@@ -1,4 +1,5 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import type { AddressInfo } from 'node:net';
 import { join, resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -14,6 +15,15 @@ import {
   liveReloadPlugin,
   type ComponentUpdates,
 } from './live-reload-plugin.js';
+
+/**
+ * The URL of the address a server bound. Vite may bind `localhost` to ::1,
+ * which `fetch('http://localhost:…')` misses by connecting to 127.0.0.1.
+ */
+function originOf(addr: AddressInfo): string {
+  const host = addr.family === 'IPv6' ? `[${addr.address}]` : addr.address;
+  return `http://${host}:${addr.port}`;
+}
 
 function createMockResponse() {
   const headers = new Map<string, string>();
@@ -274,7 +284,7 @@ describe('liveReload ngtsc integration', () => {
       base?: string;
       proxy?: ViteDevServer['config']['server']['proxy'];
     } = {},
-  ): Promise<{ server: ViteDevServer; port: number }> {
+  ): Promise<{ server: ViteDevServer; origin: string }> {
     process.env['NODE_ENV'] = 'development';
     delete process.env['VITEST'];
     process.chdir(root);
@@ -299,7 +309,7 @@ describe('liveReload ngtsc integration', () => {
     if (!addr || typeof addr === 'string') {
       throw new Error('Expected TCP server address');
     }
-    return { server, port: addr.port };
+    return { server, origin: originOf(addr) };
   }
 
   it('serves per-component HMR updates and broadcasts updates for every component in a multi-component file', async () => {
@@ -345,7 +355,7 @@ describe('liveReload ngtsc integration', () => {
       `,
     });
 
-    const { server, port } = await startNgtscServer(root);
+    const { server, origin } = await startNgtscServer(root);
     const sentComponentIds = new Set<string>();
     const origSend = server.ws.send.bind(server.ws);
     server.ws.send = ((...args: Parameters<typeof server.ws.send>) => {
@@ -392,7 +402,7 @@ describe('liveReload ngtsc integration', () => {
     expect(sentComponentIds).toContain('src/columns.ts@ResizableDateColumn');
 
     const dateRes = await fetch(
-      `http://localhost:${port}/src/@ng/component?c=${encodeURIComponent('src/columns.ts@DateColumn')}&t=1`,
+      `${origin}/src/@ng/component?c=${encodeURIComponent('src/columns.ts@DateColumn')}&t=1`,
     );
     const dateCode = await dateRes.text();
     expect(dateRes.status).toBe(200);
@@ -401,7 +411,7 @@ describe('liveReload ngtsc integration', () => {
     expect(dateCode).not.toContain('ResizableDateColumn_UpdateMetadata');
 
     const resizableRes = await fetch(
-      `http://localhost:${port}/src/@ng/component?c=${encodeURIComponent('src/columns.ts@ResizableDateColumn')}&t=1`,
+      `${origin}/src/@ng/component?c=${encodeURIComponent('src/columns.ts@ResizableDateColumn')}&t=1`,
     );
     const resizableCode = await resizableRes.text();
     expect(resizableRes.status).toBe(200);
@@ -434,7 +444,7 @@ describe('liveReload ngtsc integration', () => {
     await new Promise((r) => setTimeout(r, 350));
 
     const trailingRes = await fetch(
-      `http://localhost:${port}/src/@ng/component?c=${encodeURIComponent('src/trailing-class.ts@FirstComponent')}&t=1`,
+      `${origin}/src/@ng/component?c=${encodeURIComponent('src/trailing-class.ts@FirstComponent')}&t=1`,
     );
     const trailingCode = await trailingRes.text();
     expect(trailingRes.status).toBe(200);
@@ -467,7 +477,7 @@ describe('liveReload ngtsc integration', () => {
     const host = await startNgtscServer(hostRoot, {
       proxy: {
         '^/remote/': {
-          target: `http://localhost:${remote.port}`,
+          target: remote.origin,
           ws: true,
         },
       },
@@ -488,11 +498,11 @@ describe('liveReload ngtsc integration', () => {
 
     // Load remote components through the host proxy and invalidate them on remote
     const remoteLoad = await fetch(
-      `http://localhost:${host.port}/remote/src/remote.component.ts`,
+      `${host.origin}/remote/src/remote.component.ts`,
     );
     expect(remoteLoad.status).toBe(200);
     const remoteSharedLoad = await fetch(
-      `http://localhost:${host.port}/remote/src/shared.component.ts`,
+      `${host.origin}/remote/src/shared.component.ts`,
     );
     expect(remoteSharedLoad.status).toBe(200);
 
@@ -520,7 +530,7 @@ describe('liveReload ngtsc integration', () => {
 
     // Unique remote component is forwarded to remote and returns its update
     const proxiedRemote = await fetch(
-      `http://localhost:${host.port}/remote/src/@ng/component?c=${encodeURIComponent('src/remote.component.ts@RemoteComponent')}&t=1`,
+      `${host.origin}/remote/src/@ng/component?c=${encodeURIComponent('src/remote.component.ts@RemoteComponent')}&t=1`,
     );
     const proxiedRemoteCode = await proxiedRemote.text();
     expect(proxiedRemote.status).toBe(200);
@@ -531,7 +541,7 @@ describe('liveReload ngtsc integration', () => {
 
     // Same relative path in host & remote still forwards to remote (not host's update)
     const proxiedShared = await fetch(
-      `http://localhost:${host.port}/remote/src/@ng/component?c=${encodeURIComponent('src/shared.component.ts@SharedComponent')}&t=1`,
+      `${host.origin}/remote/src/@ng/component?c=${encodeURIComponent('src/shared.component.ts@SharedComponent')}&t=1`,
     );
     const proxiedSharedCode = await proxiedShared.text();
     expect(proxiedShared.status).toBe(200);
