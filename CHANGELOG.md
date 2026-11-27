@@ -1,3 +1,9 @@
+## [3.0.1-beta.6](https://github.com/analogjs/analog/compare/v3.0.1-beta.5...v3.0.1-beta.6) (2026-11-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** warn when ngp falls back to ngtsc in tests ([#2870](https://github.com/analogjs/analog/issues/2870)) ([dbf0fd3](https://github.com/analogjs/analog/commit/dbf0fd366dae1537370211484a037900000b4c87))
+
 ## [3.0.1-beta.5](https://github.com/analogjs/analog/compare/v3.0.1-beta.4...v3.0.1-beta.5) (2026-11-25)
 
 ### Bug Fixes
