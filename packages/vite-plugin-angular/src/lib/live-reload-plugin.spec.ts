@@ -17,8 +17,10 @@ import {
 } from './live-reload-plugin.js';
 
 /**
- * The URL of the address a server bound. Vite may bind `localhost` to ::1,
- * which `fetch('http://localhost:…')` misses by connecting to 127.0.0.1.
+ * The URL of the loopback address a server bound. Vite may bind `localhost`
+ * to ::1, which `fetch('http://localhost:…')` misses by connecting to
+ * 127.0.0.1. Not for a wildcard bind (`::`, `0.0.0.0`), which is no address
+ * to connect to.
  */
 function originOf(addr: AddressInfo): string {
   const host = addr.family === 'IPv6' ? `[${addr.address}]` : addr.address;
