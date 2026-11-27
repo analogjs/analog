@@ -460,12 +460,13 @@ function resolveBackend(
     return options.compilationBackend;
   }
 
-  const compilation =
-    options?.compilation === 'ngp' && !(isTest && options.jit === undefined)
-      ? 'ngp'
-      : 'ngtsc';
-
-  if (compilation === 'ngp') {
+  if (options?.compilation === 'ngp') {
+    if (isTest && options.jit === undefined) {
+      console.warn(
+        "[@analogjs/vite-plugin-angular] compilation: 'ngp' falls back to 'ngtsc' in tests, where jit defaults to true. Set jit: false to compile tests with NGP.",
+      );
+      return 'ngtsc';
+    }
     return 'ngp';
   }
 
