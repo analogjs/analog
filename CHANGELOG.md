@@ -1,3 +1,9 @@
+## [3.0.1-beta.7](https://github.com/analogjs/analog/compare/v3.0.1-beta.6...v3.0.1-beta.7) (2026-11-27)
+
+### Bug Fixes
+
+- **vite-plugin-angular:** prefix the ngp fallback warning like the plugin's other warnings ([#2875](https://github.com/analogjs/analog/issues/2875)) ([1f4b3a7](https://github.com/analogjs/analog/commit/1f4b3a7bec24b7e28825026a14eda24636a55f6c))
+
 ## [3.0.1-beta.6](https://github.com/analogjs/analog/compare/v3.0.1-beta.5...v3.0.1-beta.6) (2026-11-27)
 
 ### Bug Fixes
