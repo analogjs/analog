@@ -60,7 +60,9 @@ describe('compilation selection', () => {
       expect(names).not.toContain('@analogjs/vite-plugin-angular-ngp');
       expect(warn).toHaveBeenCalledOnce();
       expect(warn).toHaveBeenCalledWith(
-        expect.stringMatching(/compilation: 'ngp'.*'ngtsc'.*jit: false/s),
+        expect.stringMatching(
+          /^\[@analogjs\/vite-plugin-angular\]: compilation: 'ngp'.*'ngtsc'.*jit: false/s,
+        ),
       );
     });
 
