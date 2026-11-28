@@ -1,6 +1,6 @@
 // source: https://github.com/Myrmod/vitejs-theming/blob/master/build-plugins/rollup/replace-files.js
 import { isAbsolute, resolve } from 'node:path';
-import { Plugin } from 'vite';
+import { normalizePath, type Plugin } from 'vite';
 import {
   isAngularBuildContext,
   type AngularBuildContext,
@@ -40,18 +40,14 @@ export function replaceFiles(
         ...options,
         skipSelf: true,
       });
-      /**
-       * The reason we're using endsWith here is because the resolved id
-       * will be the absolute path to the file. We want to check if the
-       * file ends with the file we're trying to replace, which will be essentially
-       * the path from the root of our workspace.
-       */
+      const resolvedId = resolved?.id && normalizePath(resolved.id);
       const mappedReplacements = replacements.map((fr: FileReplacement) => {
         const frSSR = fr as FileReplacementSSR;
         const frWith = fr as FileReplacementWith;
 
         return {
           ...fr,
+          replace: normalizePath(resolve(workspaceRoot, fr.replace)),
           ssr: frSSR.ssr
             ? isAbsolute(frSSR.ssr)
               ? frSSR.ssr
@@ -64,8 +60,8 @@ export function replaceFiles(
             : '',
         };
       });
-      const foundReplace = mappedReplacements.find((replacement) =>
-        resolved?.id?.endsWith(replacement.replace),
+      const foundReplace = mappedReplacements.find(
+        (replacement) => resolvedId === replacement.replace,
       );
       if (foundReplace) {
         try {
