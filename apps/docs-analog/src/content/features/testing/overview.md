@@ -93,3 +93,17 @@ Tests can also be run directly from your IDE using the Vitest [IDE integrations]
     };
   });
   ```
+
+## Cypress Component Testing
+
+Set `NODE_ENV=test` when starting Cypress so `@analogjs/vite-plugin-angular`
+recognizes the component tests.
+
+```shell
+NODE_ENV=test npx cypress run --component
+```
+
+With the default Angular compiler, test mode preserves the metadata that
+`TestBed.overrideComponent()` needs to replace a component's template or
+providers. To keep using ahead-of-time (AOT) compilation, set `jit: false` in
+the plugin options.
