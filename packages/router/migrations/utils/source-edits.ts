@@ -1,4 +1,5 @@
 import type { Tree } from '@angular-devkit/schematics';
+import { visitWorkspaceFiles } from './visit-workspace-files';
 
 export interface Edit {
   start: number;
@@ -25,8 +26,7 @@ export function rewriteSourceFiles(
   rewrite: (filePath: string, source: string) => string | null,
 ): string[] {
   const rewritten: string[] = [];
-  tree.visit((filePath) => {
-    if (filePath.includes('/node_modules/')) return;
+  visitWorkspaceFiles(tree, (filePath) => {
     if (!SOURCE_EXTENSIONS.some((ext) => filePath.endsWith(ext))) return;
 
     const source = tree.read(filePath)?.toString('utf-8');

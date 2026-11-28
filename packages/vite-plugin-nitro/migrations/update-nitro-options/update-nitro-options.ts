@@ -1,5 +1,6 @@
 import { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
 import * as ts from 'typescript';
+import { visitWorkspaceFiles } from '../utils/visit-workspace-files';
 
 const NITRO_PLUGIN_PKG = '@analogjs/vite-plugin-nitro';
 const VITE_CONFIG_EXTENSIONS = ['.ts', '.mts', '.js', '.mjs'];
@@ -168,8 +169,8 @@ export default function updateNitroOptions(): Rule {
     const rewrittenFiles: string[] = [];
     const unhandledFiles: string[] = [];
 
-    tree.visit((filePath) => {
-      if (filePath.includes('/node_modules/') || !isViteConfig(filePath)) {
+    visitWorkspaceFiles(tree, (filePath) => {
+      if (!isViteConfig(filePath)) {
         return;
       }
       const content = tree.read(filePath);

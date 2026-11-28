@@ -1,5 +1,6 @@
 import type { Rule, SchematicContext, Tree } from '@angular-devkit/schematics';
 import * as ts from 'typescript';
+import { visitWorkspaceFiles } from '../utils/visit-workspace-files';
 
 const INTERCEPTOR = 'requestContextInterceptor';
 
@@ -204,8 +205,8 @@ export default function removeRequestContextInterceptor(): Rule {
     const updatedFiles: string[] = [];
     const remainingFiles: string[] = [];
 
-    tree.visit((filePath) => {
-      if (filePath.includes('/node_modules/') || !filePath.endsWith('.ts')) {
+    visitWorkspaceFiles(tree, (filePath) => {
+      if (!filePath.endsWith('.ts')) {
         return;
       }
       const source = tree.read(filePath)?.toString('utf-8');
